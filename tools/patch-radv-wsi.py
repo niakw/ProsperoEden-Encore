@@ -114,6 +114,48 @@ if changed:
         provenance.replace(provenance.with_suffix('.base.txt'))
 print(f'RADV WSI adaptation changed={changed} sha256={hashlib.sha256(text.encode()).hexdigest()}')
 
+# R03 PS5 RADV transfer/pipe barrier command-stream split oracle.
+# Shipping compiler sources are tracked whole files under encore-active, not
+# generated from these replacements during native builds.
+def r03_transfer_split(relative, body):
+    def once(before, after):
+        nonlocal body
+        assert body.count(before) == 1, ("R03 Mesa anchor drift", relative, before[:60])
+        body = body.replace(before, after)
+    call = '   radv_split_cmd_stream_if_due(cmd_buffer); /* Encore R03: bounded transfer stream */\n'
+    if relative == 'src/amd/vulkan/radv_cmd_buffer.c':
+        once('static void\nradv_split_cmd_stream_if_due(struct radv_cmd_buffer *cmd_buffer)',
+             'void\nradv_split_cmd_stream_if_due(struct radv_cmd_buffer *cmd_buffer)')
+        head = ('radv_CmdPipelineBarrier2(VkCommandBuffer commandBuffer, const VkDependencyInfo *pDependencyInfo)\n'
+                '{\n   VK_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);\n')
+        once(head, head + '   radv_split_cmd_stream_if_due(cmd_buffer); /* Encore R03: bounded barrier stream */\n')
+    elif relative in (
+        'src/amd/vulkan/meta/radv_meta_buffer.c',
+        'src/amd/vulkan/meta/radv_meta_copy.c',
+    ):
+        includes = '#include "radv_meta.h"\n'
+        once(includes, includes +
+             '\n/* Encore R03: split long stream at transfer entry points as before draws. */\n'
+             'void radv_split_cmd_stream_if_due(struct radv_cmd_buffer *cmd_buffer);\n')
+        buffer = (
+            'radv_CmdFillBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize fillSize,\n'
+            '                   uint32_t data)\n',
+            'radv_CmdCopyBuffer2(VkCommandBuffer commandBuffer, const VkCopyBufferInfo2 *pCopyBufferInfo)\n',
+            'radv_CmdUpdateBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize dataSize,\n'
+            '                     const void *pData)\n',
+        )
+        copy = (
+            'radv_CmdCopyBufferToImage2(VkCommandBuffer commandBuffer, const VkCopyBufferToImageInfo2 *pCopyBufferToImageInfo)\n',
+            'radv_CmdCopyImageToBuffer2(VkCommandBuffer commandBuffer, const VkCopyImageToBufferInfo2 *pCopyImageToBufferInfo)\n',
+            'radv_CmdCopyImage2(VkCommandBuffer commandBuffer, const VkCopyImageInfo2 *pCopyImageInfo)\n',
+        )
+        signatures = buffer if relative.endswith('radv_meta_buffer.c') else copy
+        for signature in signatures:
+            head = signature + '{\n   VK_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);\n'
+            once(head, head + call)
+    return body
+
+
 # Preserve the reason behind RADV's successful-but-empty device enumeration.
 # These startup-only diagnostics avoid repeated full game runs for each stage.
 for relative, replacements in {
@@ -126,6 +168,8 @@ for relative, replacements in {
         ("   poly_vertex_params_init(vp, gsc->vs_outputs, wg_size);\n   poly_geometry_params_init(gp, mode, wg_size);\n",
          "   poly_vertex_params_init(vp, gsc->vs_outputs, wg_size);\n   poly_geometry_params_init(gp, mode, wg_size);\n   /* GPU-side setup can drop a draw. Never leave its output pointers at 0. */\n   const uint64_t null_sink = radv_gs_compute_upload(cmd_buffer, 256, NULL, NULL);\n   vp->output_buffer = null_sink;\n   vp->index_buffer = null_sink;\n   gp->count_buffer = null_sink;\n   gp->output_index_buffer = null_sink;\n"),
     ],
+    'src/amd/vulkan/meta/radv_meta_buffer.c': [],
+    'src/amd/vulkan/meta/radv_meta_copy.c': [],
     # Cover rejected GPU-side geometry draws in the pinned-source oracle.
     'src/amd/vulkan/cl/radv_gs_compute.cl': [
         ("   if (!ok) {\n      vertex_count = 0;\n      instance_count = 0;\n",
@@ -204,6 +248,7 @@ radv_ps5_memory_grant_gpu(void *address, uint64_t bytes)
         # PS5 GS-compute raster path without bypassing any real draw packet.
         from radv_official_indirect_draw_fix import patch as patch_zero_indirect_draw
         adapted = patch_zero_indirect_draw(adapted)
+    adapted = r03_transfer_split(relative, adapted)
     if not destination.exists() or destination.read_text() != adapted:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(adapted)

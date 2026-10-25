@@ -1811,6 +1811,9 @@ int main(int argc, char** argv) {
                 ", deadzone " + std::to_string(controls.stick_deadzone) + "%, vibration " +
                 (controls.vibration ? std::to_string(controls.vibration_strength) + "%" : "off")).c_str());
             Settings::values.audio_output_device_id = "ps5";
+            // Voice-chat and microphone sessions must use the PS5 input adapter;
+            // it supplies the requested count of silence, never a null buffer.
+            Settings::values.audio_input_device_id = "ps5";
             Settings::values.vibration_enabled.SetValue(controls.vibration);
             // One Pro Controller per signed-in user's DualSense; later changes apply mid-game.
             const unsigned connected = pad->ConnectedPlayers();

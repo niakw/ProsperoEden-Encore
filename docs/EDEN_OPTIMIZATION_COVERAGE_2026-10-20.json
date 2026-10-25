@@ -152,9 +152,9 @@
       "path": "headless/devices_check.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "review_scope": "host-only-test",
-      "reviewed_source_git_blob": "c9a8b4e737e6b2238cab90de06e4ddaf5cd48aef",
+      "reviewed_source_git_blob": "99052f1d3915b935ba9fd29794fef1a43e08a4a3",
       "source_review_document": "docs/EDEN_NATIVE_NON_HOT_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Exact Git blob source inspected; Cible eden-devices-check séparée du jeu ; scénarios de manette/audio et ABI, aucun traitement dans une frame normale. Rouvrir uniquement sur changement de blob, problème reproductible ou usage hotpath constaté."
+      "evidence": "R04: source réexaminée après ajout de la preuve AudioIn silence exacte (taille zéro et 0xf00/sizeof(s16), échantillons tous à zéro). Cible eden-devices-check isolée du gameplay ; le probe compilé source-extracted UBSan est séparé du CMake host et de la PS5. Réouvrir sur changement de blob ou régression."
     },
     {
       "path": "headless/devices.h",
@@ -703,9 +703,9 @@
       "path": "headless/romfs_check.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "review_scope": "host-only-test",
-      "reviewed_source_git_blob": "901e5a7cedd19bfa875ca85695fcf9103f43d5e3",
+      "reviewed_source_git_blob": "4b523b7d63ae432f5125dde7b6df7c8c649c0bc7",
       "source_review_document": "docs/EDEN_NATIVE_LIGHTWEIGHT_SOURCE_REVIEW_2026-10-21.md",
-      "evidence": "Source inspected: Separate eden-romfs-check executable with isolated allocation-accounting and fiber ownership assertions; not the gameplay app target. Reopen if: this Git blob changes, new failure is reproduced, or a measured owner-specific cost appears."
+      "evidence": "R04: source inspectée après ajout du vrai test CreateRomFS/ExtractRomFS pour 32768 fichiers et 32768 dossiers sur une pile de 256 KiB; conserve le contrôle d'allocations et de fibres. Fixture host séparée de l'application en jeu; validation dans CMake host encore requise. Réouvrir si blob modifié ou régression."
     },
     {
       "path": "headless/ryujinx_check.cpp",

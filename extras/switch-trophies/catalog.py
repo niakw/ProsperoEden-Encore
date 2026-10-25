@@ -8,7 +8,6 @@ Designed to live in a separate repository and remain optional in Encore.
 """
 import argparse
 import json
-import os
 import re
 from pathlib import Path
 
@@ -66,8 +65,9 @@ def seed_games(infile: Path, outdir: Path, locale: str) -> tuple[int, int]:
         raise ValueError('input must contain {"games":[{"title_id":"...","title":"..."}]}')
     if not re.fullmatch(r"[a-z]{2}-[A-Z]{2}", locale):
         raise ValueError("invalid locale")
-    outdir.mkdir(parents=True, exist_ok=True)
-    created, unchanged, seen = 0, 0, set()
+    # Validate the entire inventory before any filesystem mutations.
+    validated = []
+    seen = set()
     for game in games:
         if not isinstance(game, dict):
             raise ValueError("game entry must be an object")
@@ -82,6 +82,11 @@ def seed_games(infile: Path, outdir: Path, locale: str) -> tuple[int, int]:
             "catalog_kind": "local_optional_unofficial",
             "trophies": [],
         })
+        validated.append(manifest)
+    outdir.mkdir(parents=True, exist_ok=True)
+    created, unchanged = 0, 0
+    for manifest in validated:
+        ident = manifest["title_id"]
         target = outdir / (ident + ".json")
         if target.exists():
             validate_manifest(json.loads(target.read_text(encoding="utf-8")))

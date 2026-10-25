@@ -19,6 +19,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  audited-source-ownership:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout experimental feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check tracked-file hygiene, native ownership and vendor parity
+        run: |
+          python3 -B tools/ci/check-repo-hygiene.py
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-vendor-consolidation-debt.py
+          python3 -B tools/check-eden-optimization-coverage.py
   offline-trophy-catalog:
     runs-on: ubuntu-24.04
     timeout-minutes: 5

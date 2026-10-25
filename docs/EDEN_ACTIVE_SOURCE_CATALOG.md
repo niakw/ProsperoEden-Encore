@@ -7,8 +7,8 @@ source OpenCL (`.c`, `.cpp`, `.h`, `.hpp`, `.inc`, `.cl` et variantes voisines)
 présent sous `vendor/encore-active`. Il est généré depuis l'arbre réel
 et contrôlé par `tools/check-active-source-inventory.py`.
 
-- **329 fichiers** de code et d'en-têtes enregistrés.
-- **329 fichiers** possèdent une correspondance de chemin *exacte*
+- **331 fichiers** de code et d'en-têtes enregistrés.
+- **331 fichiers** possèdent une correspondance de chemin *exacte*
   avec une ou plusieurs lignes du registre de fonctions.
 - **0 fichier** reste sans correspondance de chemin exacte dans le registre.
   Cette couverture ne prouve pas la sélection native ni le comportement console.
@@ -349,7 +349,9 @@ reste dans `docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md`.
 | `eden-vulkan/vulkan_window_adapt_pass.cpp` | `maintained-override` | V29 |
 | `eden-vulkan/vulkan_wrapper.cpp` | `maintained-override` | V30 |
 | `ps5-mesa/src/amd/vulkan/cl/radv_gs_compute.cl` | `driver-fork` | R23 |
+| `ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c` | `driver-fork` | R24 |
 | `ps5-mesa/src/amd/vulkan/meta/radv_meta_clear.c` | `driver-fork` | R12 |
+| `ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c` | `driver-fork` | R25 |
 | `ps5-mesa/src/amd/vulkan/meta/radv_meta_resolve.c` | `driver-fork` | R13 |
 | `ps5-mesa/src/amd/vulkan/radv_cmd_buffer.c` | `driver-fork` | R14 |
 | `ps5-mesa/src/amd/vulkan/radv_descriptor_update_template.c` | `driver-fork` | R15 |

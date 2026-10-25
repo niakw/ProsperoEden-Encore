@@ -1,0 +1,32 @@
+name: Encore optional feature lab
+
+on:
+  push:
+    branches:
+      - feat/graphics-network-achievements
+    paths:
+      - 'extras/switch-trophies/**'
+      - 'docs/FEATURE_FORK_AUDIT_2026-10-25.md'
+      - '.github/workflows/encore-feature-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: encore-feature-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-trophy-catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout isolated feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile source for Python syntax
+        run: python3 -B -m py_compile extras/switch-trophies/catalog.py extras/switch-trophies/test_catalog.py
+      - name: Run offline catalog contracts
+        run: python3 -B -m unittest discover -s extras/switch-trophies -p 'test_*.py' -v

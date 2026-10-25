@@ -17,6 +17,8 @@ on:
       - 'docs/EDEN_OVERRIDE_SOURCE_OF_TRUTH.md'
       - 'docs/EDEN_CORE_AUDIT_DEPENDENCIES.md'
       - 'tools/check-active-source-inventory.py'
+      - 'tools/check-ci-cache.py'
+      - 'tools/check-eden-optimization-coverage.py'
       - 'tools/check-vendor-consolidation-debt.py'
       - 'docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md'
       - 'docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json'
@@ -65,7 +67,7 @@ jobs:
             extras/graphics/test_framegen_capabilities.cpp -o /tmp/encore-feature-framegen-policy
           /tmp/encore-feature-framegen-policy
 
-  source-extracted-native-r04:
+  source-extracted-native-r03-r04:
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:

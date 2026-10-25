@@ -4,6 +4,14 @@
 **Branche de référence console** : `dev/ps5-sparse-jit` (validation technique F01–F06 = 6/6, F07 = test réel FC27 toujours ouvert).  
 **Attention au décalage de branches** : la branche expérimentale a été créée depuis `366104d` et **n'intègre pas encore** les huit commits ultérieurs de la branche principale (dont F06). Aucune fusion dans la branche console avant rebase/merge contrôlé, tests complets et qualification matérielle.
 
+## Journal d'exécution — chantier R00/R04
+
+- **R00 code fusionné** : [PR #18](https://github.com/niakw/Prospero.Eden-Encore/pull/18), commit `925661f`. La branche feature possède désormais les huit commits F06 validés. La branche principale n'a pas été modifiée.
+- **R04 implémenté sur la branche feature uniquement** : AudioIn PS5 ouvre un `SilentInputStream` qui produit un vrai tableau de samples à zéro, `main.cpp` route les sessions AudioIn vers l'adaptateur, `devices_check.cpp` vérifie les tailles et les échantillons. Le destructeur natif RomFS détache les chaînes `sibling/child/file`; `romfs_check.cpp` teste 32768 voisins fichiers puis répertoires sur pile de 256 KiB.
+- **Preuve complémentaire source-extracted** : `tools/check-feature-r04-native-boundary-host.py`, compile les corps *exacts* du C++ AudioIn et RomFS avec UBSan, en `-O0` et `-O2`. Ne remplace pas le test intégré `eden-romfs-check` ou `eden-devices-check`.
+- **Validation non anticipée** : CI feature, prévalidation complète, analyse CodeQL et compilation PS5 doivent être confirmées **sur un SHA identique**. R04 n'est pas considéré terminé avant les résultats correspondants.
+- **F07** : toujours réservé au test de base FC27 sur `cd4857c8`, sans ces changements.
+
 ## Convention de suivi : pas de faux progrès
 
 - Statuts : **À faire**, **Audit**, **Prototype host**, **Intégré natif**, **CI verte**, **Validé console**, **Reporté**. Un document ou un test de politique ne vaut pas intégration fonctionnelle.
@@ -16,11 +24,11 @@
 
 | Phase | ID | Livrable réellement attendu | Assistant — exécution/preuve | Utilisateur — intervention | État |
 |---|---|---|---|---|---|
-| 0 — garde-fous | R00 | Remettre à niveau la branche feature sans détériorer la validation F01–F06 ; verrouiller baseline F07 | Comparaison commits, résolution des conflits, diff natif, gates host, PS5 build, CodeQL | Aucun test demandé | À faire |
+| 0 — garde-fous | R00 | Remettre à niveau la branche feature sans détériorer la validation F01–F06 ; verrouiller baseline F07 | Comparaison commits, résolution des conflits, diff natif, gates host, PS5 build, CodeQL | Aucun test demandé | Code fusionné, CI feature en cours |
 | 0 — mesure | R01 | Banc de mesures commun : guest FPS, present FPS, displayed FPS, CPU/GPU frametime, latence pad, RAM/VRAM, caches, qualité HUD, audio, pause/mi-temps | Instrumentation bornée, test de non-régression des compteurs, export d'un rapport JSON | Choix des scènes FC27/BOTW, validation A/B seulement au jalon console | À faire |
 | 1 — correctifs | R02 | Audit des corrections Swordpdf/ProsperoEden et forks directs : classifications déjà présent/pertinent/incompatible | Comparer patches aux **sources compilées** vendor/overrides, numéro SHA, licences, régression host | Aucun | Audit en cours |
 | 1 — correctifs | R03 | Patches ciblés : shader NaN `e34338d`, transferts RADV `1862764` | Modifier la vraie source propriétaire/patch RADV, tests shaders, stress barrières/transferts et rebuild complet | Validation visuelle FC27 uniquement si build global vert | À faire |
-| 1 — robustesse | R04 | RomFS vaste arborescence `4f813a3`, AudioIn buffer silencieux `01e81e1`, durée de vie et arrêt corrects | Tests sanitizer à 256 KiB/32768 entrées, AudioIn longueur/données et zéro régression AudioOut | Aucun | À faire |
+| 1 — robustesse | R04 | RomFS vaste arborescence `4f813a3`, AudioIn buffer silencieux `01e81e1`, durée de vie et arrêt corrects | Tests sanitizer à 256 KiB/32768 entrées, AudioIn longueur/données et zéro régression AudioOut | Aucun | Correctifs natifs intégrés ; CI en cours |
 | 1 — opportunités | R05 | GPU page table `1390bf5`, RAM allocation, source pins, JIT, locks/pipelines, cache sérialisé et suppression des doubles correctifs | Comparer à Encore : vertex input, 512 draws, striped waits, écriture atomique déjà présents ; n'importer que les écarts | Aucun | Audit |
 | 2 — interface de rendu | R06 | **Rendu graphique modulaire** sous trois familles indépendantes : résolution améliorée, fluidité améliorée, rendu neuronal IA | Points d'insertion Vulkan (avant/après HUD), images/queues/fences, copie zero-copy si possible, toggles opt-in, recovery/fallback, profil par jeu | Choix des libellés et défauts | À faire |
 | 2 — résolution | R07 | Upscaling : Natif / FSR spatial / FSR temporel 3.1 si infos validées ; AA/FSR et HUD séparé | Vérifier depth, jitter et motion vectors issus du rendu émulé ; calcul du coût GPU et A/B fidélité | Retour sur netteté et textures de FC27/BOTW | À faire |

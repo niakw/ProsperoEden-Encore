@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <stdexcept>
-#include "audio_core/sink/null_sink.h"
+#include <vector>
 #include "common/logging.h"
 #include "native_audio.hpp"
 #include "audio_out_init.h"
@@ -12,6 +12,21 @@
 namespace Eden {
 using namespace AudioCore::Sink;
 using namespace ps5::native_audio;
+
+namespace {
+// PS5 microphone capture is unavailable. A guest AudioIn session still
+// expects exactly its requested number of samples: returning an empty
+// NullSink buffer could feed a null pointer to the HLE memory copy.
+class SilentInputStream final : public SinkStream {
+public:
+    explicit SilentInputStream(Core::System& system)
+        : SinkStream{system, StreamType::In} {}
+    void AppendBuffer(SinkBuffer&, std::span<s16>) override {}
+    std::vector<s16> ReleaseBuffer(u64 num_samples) override {
+        return std::vector<s16>(num_samples, 0);
+    }
+};
+} // namespace
 
 AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& name_, StreamType type)
     : SinkStream{system, type} {
@@ -99,7 +114,7 @@ SinkStream* AudioSink::AcquireSinkStream(Core::System& system, u32 channels,
     system_channels = channels;
     // Microphone capture is outside this output adapter.
     SinkStreamPtr stream = type == StreamType::In ?
-        SinkStreamPtr{std::make_unique<NullSinkStreamImpl>(system, type)} :
+        SinkStreamPtr{std::make_unique<SilentInputStream>(system)} :
         SinkStreamPtr{std::make_unique<AudioStream>(system, channels, name, type)};
     stream->SetDeviceVolume(device_volume);
     stream->SetSystemVolume(system_volume);

@@ -7,6 +7,10 @@ on:
     paths:
       - 'extras/switch-trophies/**'
       - 'extras/graphics/**'
+      - 'headless/**'
+      - 'vendor/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp'
+      - 'tools/check-feature-r04-native-boundary-host.py'
+      - 'docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md'
       - 'docs/FEATURE_FORK_AUDIT_2026-10-25.md'
       - '.github/workflows/encore-feature-lab.yml'
   workflow_dispatch:
@@ -51,3 +55,14 @@ jobs:
             -fno-sanitize-recover=all \
             extras/graphics/test_framegen_capabilities.cpp -o /tmp/encore-feature-framegen-policy
           /tmp/encore-feature-framegen-policy
+
+  source-extracted-native-r04:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout real source owners and native host regression fixtures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile exact AudioIn and RomFS C++ bodies with UBSan
+        run: python3 -B tools/check-feature-r04-native-boundary-host.py

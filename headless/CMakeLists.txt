@@ -692,6 +692,22 @@ endif()
 list(REMOVE_ITEM eden_shader_sources "frontend/maxwell/translate/impl/load_store_local_shared.cpp")
 list(APPEND eden_shader_sources "${EDEN_MAINTAINED_SHADER_LOCAL}")
 set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_shader_sources}")
+# R03: temporal renderpasses must not accumulate NaN fragment float colours.
+# Keep the pinned Eden shader source immutable and select exactly one complete
+# Encore-owned compilation unit. Integer fragment outputs are unmodified.
+set(EDEN_MAINTAINED_SPIRV_FRAG_COLOR
+    "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_SPIRV_FRAG_COLOR}")
+    message(FATAL_ERROR "Missing maintained SPIR-V fragment colour NaN guard")
+endif()
+get_target_property(eden_spirv_sources shader_recompiler SOURCES)
+list(FIND eden_spirv_sources "backend/spirv/emit_spirv_context_get_set.cpp" eden_frag_emit_position)
+if(eden_frag_emit_position LESS 0)
+    message(FATAL_ERROR "Pinned SPIR-V fragment output target changed")
+endif()
+list(REMOVE_ITEM eden_spirv_sources "backend/spirv/emit_spirv_context_get_set.cpp")
+list(APPEND eden_spirv_sources "${EDEN_MAINTAINED_SPIRV_FRAG_COLOR}")
+set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_spirv_sources}")
 # PS5_NATIVE is a CMake option, not a transitive preprocessor definition for
 # core or video_core. Only these two pinned TUs own the address guards below.
 # Do NOT enable it broadly for every upstream C++ source.

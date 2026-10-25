@@ -52,7 +52,8 @@ namespace spv { enum class StorageClass { Output }; }
 struct EmitContext {
     struct Runtime { std::array<AttributeType,4> color_output_types{}; } runtime_info;
     std::array<Id,4> frag_color{};
-    std::array<Id,2> F32{}, S32{}, U32{}, U1{};
+    std::array<Id,2> F32{}, S32{}, U32{};
+    Id U1=0;
     Id output_f32=0, output_u32=0, latest=0;
     unsigned stores=0;
     Id Const(u32 x) { return x; }

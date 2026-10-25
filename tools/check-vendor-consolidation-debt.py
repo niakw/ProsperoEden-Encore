@@ -930,7 +930,19 @@ romfs_rewrites = (
 for old,new in romfs_rewrites:
     assert romfs_pinned.count(old) == 2, ("pinned RomFS parent drift", old)
     romfs_pinned = romfs_pinned.replace(old,new)
-assert romfs_active == romfs_pinned, "maintained RomFS builder differs from former CMake unit"
+# R04: updated *native* owner adds iterative destruction of wide sibling
+# chains. Preserve all former CMake transformations and prove only the
+# shipping destructor differs from the pinned complete upstream source.
+romfs_destructor_old = "RomFSBuildContext::~RomFSBuildContext() = default;"
+romfs_destructor_new = "RomFSBuildContext::~RomFSBuildContext() {\n    // Vectors own every context. A recursively-released sibling chain may\n    // contain tens of thousands of nodes; break links while owners remain\n    // alive rather than exhausting the PS5 filesystem service's small stack.\n    for (auto& file : files) {\n        file->sibling.reset();\n    }\n    for (auto& dir : directories) {\n        dir->child.reset();\n        dir->sibling.reset();\n        dir->file.reset();\n    }\n}"
+assert romfs_pinned.count(romfs_destructor_old) == 1, "upstream RomFS destructor drift"
+assert romfs_pinned.count("RomFSBuildContext::~RomFSBuildContext()") == 1
+romfs_pinned = romfs_pinned.replace(romfs_destructor_old, romfs_destructor_new)
+assert romfs_active == romfs_pinned, "maintained RomFS builder differs from audited nonrecursive source"
+assert "file->sibling.reset();" in romfs_active
+assert "dir->child.reset();" in romfs_active
+assert "dir->sibling.reset();" in romfs_active
+assert "dir->file.reset();" in romfs_active
 assert c.count('list(REMOVE_ITEM core_sources file_sys/fsmitm_romfsbuild.cpp)') == 1
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_ROMFS_BUILDER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_ROMFS_BUILDER}")' in c

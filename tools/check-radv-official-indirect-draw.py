@@ -37,7 +37,19 @@ gs_sink = (
 )
 assert expected.count(gs_anchor) == 1, "Pinned GS-compute initializer drifted"
 expected = expected.replace(gs_anchor, gs_anchor + gs_sink)
-assert expected == active, "PS5 active cmd buffer must replay official fixes plus one exact GS sink guard"
+# The Encore R03 fork also exports the existing state-safe split helper and
+# calls it before pipeline barriers. Validate exact upstream+GS+R03 delta;
+# never relax the equality to a substring-only check.
+split_static = "static void\nradv_split_cmd_stream_if_due(struct radv_cmd_buffer *cmd_buffer)"
+split_export = "void\nradv_split_cmd_stream_if_due(struct radv_cmd_buffer *cmd_buffer)"
+assert expected.count(split_static) == 1
+expected = expected.replace(split_static, split_export)
+barrier = ("radv_CmdPipelineBarrier2(VkCommandBuffer commandBuffer, const VkDependencyInfo *pDependencyInfo)\n"
+           "{\n   VK_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);\n")
+assert expected.count(barrier) == 1
+expected = expected.replace(barrier, barrier +
+    "   radv_split_cmd_stream_if_due(cmd_buffer); /* Encore R03: bounded barrier stream */\n")
+assert expected == active, "PS5 active cmd buffer must replay official fixes, GS sink, and R03 guarded split"
 generator = (ROOT/"tools/patch-radv-wsi.py").read_text()
 assert "from radv_official_indirect_draw_fix import patch" in generator
 assert "radv_CmdDrawIndirectCount2KHR" in active

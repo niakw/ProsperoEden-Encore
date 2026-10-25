@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bind a reused native graphics archive to *all* maintained compiler inputs.
 
-The Mesa commit SHA alone is insufficient: Encore replaces 12 native Mesa
+The Mesa commit SHA alone is insufficient: Encore replaces 14 native Mesa
 source units after staging, while the old binary cache checked only the WSI
 file. Fingerprint every maintained translation unit, then stamp only after
 a successful RADV rebuild with those exact staged bytes.
@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ACTIVE = ROOT / "vendor/encore-active/ps5-mesa"
 INSTALLER = ROOT / "tools/install-vendored-radv.py"
 PATHS = tuple(runpy.run_path(str(INSTALLER))["PATHS"])
-assert len(PATHS) == len(set(PATHS)) == 12
+assert len(PATHS) == len(set(PATHS)) == 14
 
 
 def fingerprint(base: Path) -> str:

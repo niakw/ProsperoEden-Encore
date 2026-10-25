@@ -28,7 +28,7 @@
 | 0 — garde-fous | R00 | Remettre à niveau la branche feature sans détériorer la validation F01–F06 ; verrouiller baseline F07 | Comparaison commits, résolution des conflits, diff natif, gates host, PS5 build, CodeQL | Aucun test demandé | Code fusionné, CI feature en cours |
 | 0 — mesure | R01 | Banc de mesures commun : guest FPS, present FPS, displayed FPS, CPU/GPU frametime, latence pad, RAM/VRAM, caches, qualité HUD, audio, pause/mi-temps | Instrumentation bornée, test de non-régression des compteurs, export d'un rapport JSON | Choix des scènes FC27/BOTW, validation A/B seulement au jalon console | À faire |
 | 1 — correctifs | R02 | Audit des corrections Swordpdf/ProsperoEden et forks directs : classifications déjà présent/pertinent/incompatible | Comparer patches aux **sources compilées** vendor/overrides, numéro SHA, licences, régression host | Aucun | Audit en cours |
-| 1 — correctifs | R03 | Patches ciblés : shader NaN `e34338d`, transferts RADV `1862764` | Modifier la vraie source propriétaire/patch RADV, tests shaders, stress barrières/transferts et rebuild complet | Validation visuelle FC27 uniquement si build global vert | À faire |
+| 1 — correctifs | R03 | Patches ciblés : shader NaN `e34338d`, transferts RADV `1862764` | Modifier la vraie source propriétaire/patch RADV, tests shaders, stress barrières/transferts et rebuild complet | Validation visuelle FC27 uniquement si build global vert | Shader NaN intégré + CI labo verte ; RADV à intégrer ; PS5 non qualifié |
 | 1 — robustesse | R04 | RomFS vaste arborescence `4f813a3`, AudioIn buffer silencieux `01e81e1`, durée de vie et arrêt corrects | Tests sanitizer à 256 KiB/32768 entrées, AudioIn longueur/données et zéro régression AudioOut | Aucun | Correctifs natifs intégrés ; CI en cours |
 | 1 — opportunités | R05 | GPU page table `1390bf5`, RAM allocation, source pins, JIT, locks/pipelines, cache sérialisé et suppression des doubles correctifs | Comparer à Encore : vertex input, 512 draws, striped waits, écriture atomique déjà présents ; n'importer que les écarts | Aucun | Audit |
 | 2 — interface de rendu | R06 | **Rendu graphique modulaire** sous trois familles indépendantes : résolution améliorée, fluidité améliorée, rendu neuronal IA | Points d'insertion Vulkan (avant/après HUD), images/queues/fences, copie zero-copy si possible, toggles opt-in, recovery/fallback, profil par jeu | Choix des libellés et défauts | À faire |
@@ -46,6 +46,14 @@
 | 6 — hygiène | R18 | Nettoyage source/vendor/CMake/tools/test/README, permissions CI, code scanning, secrets/IP, licences, formats, fichiers morts | Rejouer `check-repo-hygiene.py`, `check-active-source-inventory.py`, `check-vendor-consolidation-debt.py`, `check-eden-optimization-coverage.py`, scan de fuites + builds | Aucun | Contrôles host déjà verts ; audit manuel restant |
 | 7 — intégration | R19 | Builds indépendants par fonctionnalité avec désactivation sûre + scénarios concurrents (NR+FG, FSR+FG, HUD) | CI hôte/sanitizers, bundle PS5, A/B baseline FC27/BOTW, latence GPU/cache, tableaux comparatifs | Un seul cycle de qualification consolidé, pas un test à chaque commit | À faire |
 | 7 — produit | R20 | Décision de fusion, release notes FR/EN, guide sécurité/limites, suivi par fonctionnalité | Merge seulement des modules validés, changelog/permissions et rollback, package avec SHA | Acceptation console matérielle par l'utilisateur | À faire |
+
+### Première livraison de code (25 octobre 2026)
+
+- **R00** : synchronisation base de référence F01–F06 de `dev/ps5-sparse-jit` dans la branche laboratoire [PR #18](https://github.com/niakw/Prospero.Eden-Encore/pull/18).
+- **R04** : AudioIn produit des échantillons silencieux à longueur demandée ; RomFS libère des arbres très larges sans chaîne de destruction récursive ; tests source-extracted `-O0`/`-O2` et audit de source réussis.
+- **R03 shader** : nouvelle unité entière `vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp`, sélection unique par `headless/CMakeLists.txt`, sortie NaN flottante remplacée par zéro. Pinned Eden conservé ; autres sorties non modifiées. Contrat V109, revue du registre 329 sources, tests [Feature Lab](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/40239451247) verts.
+- **R03 RADV** : toujours non intégré ; la source active dispose déjà du split before draw/dispatch ; ajouts pour transfers/barriers à porter uniquement après étude du driver patch oracle.
+- **Validation native** : build PS5 et prévalidation intégrale requis avant de qualifier R03/R04 ; pas de test utilisateur demandé. Aucun moteur NR/FSR FG/LDN réel ajouté dans ce lot.
 
 ### Séquence critique et dépendances
 

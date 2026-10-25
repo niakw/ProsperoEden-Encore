@@ -6,6 +6,7 @@ on:
       - feat/graphics-network-achievements
     paths:
       - 'extras/switch-trophies/**'
+      - 'extras/graphics/**'
       - 'docs/FEATURE_FORK_AUDIT_2026-10-25.md'
       - '.github/workflows/encore-feature-lab.yml'
   workflow_dispatch:
@@ -30,3 +31,9 @@ jobs:
         run: python3 -B -m py_compile extras/switch-trophies/catalog.py extras/switch-trophies/test_catalog.py
       - name: Run offline catalog contracts
         run: python3 -B -m unittest discover -s extras/switch-trophies -p 'test_*.py' -v
+      - name: Test frame generation capability policy without a PS5 backend
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined \
+            -fno-sanitize-recover=all \
+            extras/graphics/test_framegen_capabilities.cpp -o /tmp/encore-feature-framegen-policy
+          /tmp/encore-feature-framegen-policy

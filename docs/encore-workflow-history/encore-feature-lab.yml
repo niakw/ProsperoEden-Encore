@@ -12,6 +12,8 @@ on:
       - 'tools/check-feature-r04-native-boundary-host.py'
       - 'tools/check-feature-r03-spirv-nan-output-host.py'
       - 'tools/check-feature-r01-native-frame-metrics-host.py'
+      - 'tools/analyze-r01-frame-metrics.py'
+      - 'tools/test-analyze-r01-frame-metrics.py'
       - 'vendor/encore-active/eden-shader/**'
       - 'vendor/encore-active/ps5-mesa/**'
       - 'tools/install-vendored-radv.py'
@@ -87,3 +89,5 @@ jobs:
         run: python3 -B tools/check-feature-r03-spirv-nan-output-host.py
       - name: Verify live renderer and presenter frame metrics with concurrency tests
         run: python3 -B tools/check-feature-r01-native-frame-metrics-host.py
+      - name: Verify rate analysis and session-boundary integrity
+        run: python3 -B tools/test-analyze-r01-frame-metrics.py -v

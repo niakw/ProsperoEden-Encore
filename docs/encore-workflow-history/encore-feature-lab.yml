@@ -85,3 +85,5 @@ jobs:
         run: python3 -B tools/check-feature-r04-native-boundary-host.py
       - name: Compile exact SPIR-V fragment colour NaN guard at O0 and O2
         run: python3 -B tools/check-feature-r03-spirv-nan-output-host.py
+      - name: Verify live renderer and presenter frame metrics with concurrency tests
+        run: python3 -B tools/check-feature-r01-native-frame-metrics-host.py

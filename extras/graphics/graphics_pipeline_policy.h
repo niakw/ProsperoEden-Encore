@@ -54,6 +54,7 @@ struct SelectedPipeline {
     TextureStage textures{TextureStage::Original};
     std::uint16_t display_hz{60};
     Rejection resolution_reason{Rejection::None};
+    Rejection display_reason{Rejection::None};
     Rejection generation_reason{Rejection::None};
     Rejection neural_reason{Rejection::None};
     Rejection texture_reason{Rejection::None};
@@ -67,9 +68,9 @@ constexpr SelectedPipeline ResolveGraphicsPipeline(
     selected.display_hz = (request.display_hz == 120 && available.output_120hz_negotiated)
                               ? 120 : 60;
     if (request.display_hz != 60 && request.display_hz != 120)
-        selected.resolution_reason = Rejection::UnverifiedOutput;
+        selected.display_reason = Rejection::UnverifiedOutput;
     else if (request.display_hz == 120 && !available.output_120hz_negotiated)
-        selected.resolution_reason = Rejection::UnverifiedOutput;
+        selected.display_reason = Rejection::UnverifiedOutput;
     if (request.resolution == ResolutionStage::SpatialFsr) {
         if (available.fsr_spatial_backend_ready)
             selected.resolution = request.resolution;

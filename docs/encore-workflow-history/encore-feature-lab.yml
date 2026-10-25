@@ -74,6 +74,12 @@ jobs:
             -fno-sanitize-recover=all \
             extras/graphics/test_framegen_capabilities.cpp -o /tmp/encore-feature-framegen-policy
           /tmp/encore-feature-framegen-policy
+      - name: Test fail-closed independent postprocessing modes without native engines
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined \
+            -fno-sanitize-recover=all \
+            extras/graphics/test_graphics_pipeline_policy.cpp -o /tmp/encore-feature-pipeline-policy
+          /tmp/encore-feature-pipeline-policy
 
   source-extracted-native-r03-r04:
     runs-on: ubuntu-24.04

@@ -29,7 +29,7 @@ native_toolchain = workflow.split("      - name: Install build toolchain", 1)[1]
 # competing run; a newer native push intentionally supersedes an older one.
 host_push = host_workflow.split("  push:", 1)[1].split("  workflow_dispatch:", 1)[0]
 host_group = host_workflow.split("concurrency:", 1)[1].split("jobs:", 1)[0]
-assert "branches: [dev/ps5-sparse-jit]" in host_push
+assert "branches: [dev/ps5-sparse-jit, feat/graphics-network-achievements]" in host_push
 assert "paths:" in host_push
 for selected in (
     "'vendor/encore-active/**'",

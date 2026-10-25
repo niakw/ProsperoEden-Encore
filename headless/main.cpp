@@ -42,6 +42,7 @@
 #include "experimental_performance.h"
 #include "diagnostics.h"
 #include "display_refresh.h"
+#include "frame_metrics.h"
 #include "log_pipe.h"
 #include "network_domain_rules.h"
 #include "network_audit.h"
@@ -1012,6 +1013,12 @@ int main(int argc, char** argv) {
         // Previous title's sampled Vulkan timings must not leak into this game.
         Eden::Performance::ResetCachePhases();
         Eden::Performance::detailed_gpu_profile.store(deep_frame_profile, std::memory_order_relaxed);
+        // R01: current title only. No telemetry in normal-performance runs;
+        // previous render workers have already stopped before this point.
+        Eden::FrameMetrics::ResetForTitle(deep_frame_profile,
+            static_cast<std::uint64_t>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    std::chrono::steady_clock::now().time_since_epoch()).count()));
         Eden::Performance::texture_budget_log.store(deep_frame_profile, std::memory_order_relaxed);
         Eden::Performance::capture_passes.store(0, std::memory_order_relaxed);
         std::printf("EDEN_FRAME_PROFILE detailed=%u mode=%s\n",

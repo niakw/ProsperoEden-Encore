@@ -63,5 +63,6 @@ int main() {
     request.display_hz=360;
     p=ResolveGraphicsPipeline(request,caps);
     assert(p.display_hz==60);
-    assert(p.resolution_reason==Rejection::UnverifiedOutput);
+    assert(p.display_reason==Rejection::UnverifiedOutput);
+    assert(p.resolution_reason==Rejection::None);
 }

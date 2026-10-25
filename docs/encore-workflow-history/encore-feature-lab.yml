@@ -10,6 +10,7 @@ on:
       - 'headless/**'
       - 'vendor/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp'
       - 'tools/check-feature-r04-native-boundary-host.py'
+      - 'tools/check-vendor-consolidation-debt.py'
       - 'docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md'
       - 'docs/FEATURE_FORK_AUDIT_2026-10-25.md'
       - '.github/workflows/encore-feature-lab.yml'

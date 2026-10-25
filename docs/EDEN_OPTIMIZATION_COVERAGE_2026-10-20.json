@@ -3915,6 +3915,13 @@
       "contract_id": "R25",
       "proof_ref": "tools/check-vendored-radv-fork.py",
       "evidence": "R03: image-to-buffer, buffer-to-image and image-to-image transfer entrypoints split long stream using active command buffer guard. Byte-for-byte 14-unit oracle and installer tests; console still pending."
+    },
+    {
+      "path": "headless/frame_metrics.h",
+      "disposition": "new_source_issue_corrected",
+      "contract_id": "U86",
+      "proof_ref": "tools/check-feature-r01-native-frame-metrics-host.py",
+      "evidence": "R01 feature lab source: opt-in session counters for actual guest composite callback, real queued, generated queued, skipped, loading and returned Vulkan Present API calls, only emitted from existing five-second GPU diagnostic path. C++20 UBSan O0/O2 and two-thread tests prove 30->60 CPU-observed sample and per-title reset; real guest frame progress, physical scanout and end-to-end latency are unmeasured."
     }
   ],
   "inventoried_including_pinned": 538,
@@ -3945,6 +3952,7 @@
     "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
     "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c",
-    "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c"
+    "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c",
+    "headless/frame_metrics.h"
   ]
 }

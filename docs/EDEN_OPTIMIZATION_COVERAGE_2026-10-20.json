@@ -3901,6 +3901,20 @@
       "contract_id": "V109",
       "proof_ref": "tools/check-feature-r03-spirv-nan-output-host.py",
       "evidence": "R03: sole native/host shader_recompiler owner selected by CMake, source-extracted O0/O2 UBSan tests zero NaN float-only pixel output and preserve integer bits, with exact immutable-upstream parity. PS5 renderer/gameplay quality awaits separate qualification."
+    },
+    {
+      "path": "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c",
+      "disposition": "new_source_issue_corrected",
+      "contract_id": "R24",
+      "proof_ref": "tools/check-vendored-radv-fork.py",
+      "evidence": "R03: three transfer entrypoints invoke the existing state-aware RADV split; 14-unit staged compiler installer and exact pinned Mesa patch oracle verify this whole source. GPU/device lost and PS5 performance still unqualified."
+    },
+    {
+      "path": "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c",
+      "disposition": "new_source_issue_corrected",
+      "contract_id": "R25",
+      "proof_ref": "tools/check-vendored-radv-fork.py",
+      "evidence": "R03: image-to-buffer, buffer-to-image and image-to-image transfer entrypoints split long stream using active command buffer guard. Byte-for-byte 14-unit oracle and installer tests; console still pending."
     }
   ],
   "inventoried_including_pinned": 538,
@@ -3929,6 +3943,8 @@
   "post_snapshot_owned_additions": [
     "vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp",
     "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp",
-    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp"
+    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c",
+    "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c"
   ]
 }

@@ -187,7 +187,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         for old, updated in replacements:
             assert contents.count(old) == 1, ("R01 pinned Vulkan site drift", file_name, old[:75])
             contents = contents.replace(old, updated)
-        assert contents.count('::Eden::FrameMetrics::') >= 2, ("telemetry lost", file_name)
+        assert contents.count('::Eden::FrameMetrics::') == (5 if file_name == 'vulkan_renderer.cpp' else 1), ("telemetry count drift", file_name)
         path.write_text(contents)
 
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],expected[name],shallow=False)]

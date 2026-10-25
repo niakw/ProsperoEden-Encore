@@ -3894,6 +3894,13 @@
       "disposition": "new_source_issue_corrected",
       "proof_ref": "tools/check-fc27-f05-native-consumer-disconnect-host.py",
       "evidence": "F05 native source selected by CMake; consumer abandonment now wakes the host dequeue condition and the producer Binder guest event via a callback outside core->mutex. Source-extracted O0/O2 tests cover two blocked host waiters, exactly one mocked guest signal, no signal on invalid disconnect and safe callback teardown. Real guest HIPC and FC27 liveness NOT proven."
+    },
+    {
+      "path": "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+      "disposition": "new_source_issue_corrected",
+      "contract_id": "V109",
+      "proof_ref": "tools/check-feature-r03-spirv-nan-output-host.py",
+      "evidence": "R03: sole native/host shader_recompiler owner selected by CMake, source-extracted O0/O2 UBSan tests zero NaN float-only pixel output and preserve integer bits, with exact immutable-upstream parity. PS5 renderer/gameplay quality awaits separate qualification."
     }
   ],
   "inventoried_including_pinned": 538,
@@ -3921,6 +3928,7 @@
   ],
   "post_snapshot_owned_additions": [
     "vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp",
-    "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp"
+    "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp"
   ]
 }

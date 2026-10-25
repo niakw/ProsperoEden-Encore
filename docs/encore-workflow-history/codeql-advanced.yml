@@ -4,7 +4,7 @@
 name: Encore security analysis
 on:
   push:
-    branches: [dev/ps5-sparse-jit]
+    branches: [dev/ps5-sparse-jit, feat/graphics-network-achievements]
     paths:
       - '.github/workflows/**'
       - '.github/codeql/**'
@@ -15,7 +15,7 @@ on:
       - 'fixtures/**'
       - 'vendor/encore-active/**'
   pull_request:
-    branches: [dev/ps5-sparse-jit]
+    branches: [dev/ps5-sparse-jit, feat/graphics-network-achievements]
     paths:
       - '.github/**'
       - 'headless/**'

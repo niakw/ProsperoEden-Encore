@@ -226,6 +226,7 @@ jobs:
           python3 -B tools/check-native-gpu-worker-restart-drain-host.py
           python3 -B tools/audit-cloud-worklist.py
           python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-feature-r03-spirv-nan-output-host.py
           python3 -B tools/check-maintained-openssl-cert.py
           python3 -B tools/check-native-dma-indirect-dependencies-host.py
           python3 -B tools/check-native-dma-resume-boundary-host.py

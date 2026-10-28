@@ -46,6 +46,25 @@
 | 6 — hygiène | R18 | Nettoyage source/vendor/CMake/tools/test/README, permissions CI, code scanning, secrets/IP, licences, formats, fichiers morts | Rejouer `check-repo-hygiene.py`, `check-active-source-inventory.py`, `check-vendor-consolidation-debt.py`, `check-eden-optimization-coverage.py`, scan de fuites + builds | Aucun | Contrôles host déjà verts ; audit manuel restant |
 | 7 — intégration | R19 | Builds indépendants par fonctionnalité avec désactivation sûre + scénarios concurrents (NR+FG, FSR+FG, HUD) | CI hôte/sanitizers, bundle PS5, A/B baseline FC27/BOTW, latence GPU/cache, tableaux comparatifs | Un seul cycle de qualification consolidé, pas un test à chaque commit | À faire |
 | 7 — produit | R20 | Décision de fusion, release notes FR/EN, guide sécurité/limites, suivi par fonctionnalité | Merge seulement des modules validés, changelog/permissions et rollback, package avec SHA | Acceptation console matérielle par l'utilisateur | À faire |
+| 7 — distribution / maintenance | R21 | **Mise à jour de l'application Eden Encore depuis les GitHub Releases** dans Paramètres : vérification manuelle forcée et recherche automatique au lancement du launcher (opt-in), proposition par pop-up puis installation uniquement après accord | Comparateur de versions et canal release stable, client GitHub borné, vérification du paquet PS5 et SHA-256, installateur natif sûr selon capacités réelles, tests hors console puis CI/PS5, préservation des données utilisateur | Choix d'activer la recherche au démarrage ; confirmation/refus de la mise à jour lorsqu'elle est proposée ; essai final sur build qualifié | **À faire — spécification uniquement** |
+
+### R21 — Mise à jour intégrée d'Eden Encore (spécification, non implémentée)
+
+**Cible** : ajouter à `Paramètres → Application → Mises à jour` une fonction de mise à jour **de l'application native Eden Encore** depuis les releases GitHub officielles de [`niakw/Prospero.Eden-Encore`](https://github.com/niakw/Prospero.Eden-Encore/releases). Ne pas confondre cette fonction avec la mise à jour des jeux Switch, des DLC ou du firmware émulé.
+
+**UX à livrer** :
+1. **« Vérifier / mettre à jour maintenant »** : action manuelle disponible même si l'automatisme est désactivé. Elle force une **nouvelle consultation** de GitHub (pas seulement un cache) et, si une version compatible plus récente existe, permet de la télécharger et installer après confirmation. En l'absence de nouveauté, afficher clairement « Déjà à jour ». Ne jamais rétrograder ni réinstaller silencieusement la version courante.
+2. **« Rechercher les mises à jour au démarrage »** : interrupteur persistant, **désactivé par défaut**. À chaque entrée dans le launcher (une vérification par démarrage, et non par rafraîchissement d'écran), effectuer la détection **en arrière-plan sans bloquer l'affichage ni le lancement d'un jeu**. Si une release éligible est disponible, ouvrir une **pop-up à l'entrée** avec version installée, version proposée, résumé/changelog et boutons **« Mettre à jour » / « Plus tard »**. Aucune installation ni téléchargement intégral sans validation explicite. Si le joueur est déjà en jeu, différer la pop-up jusqu'au retour au launcher.
+3. Après acceptation : état de téléchargement/vérification/installation lisible à la manette ; en cas de succès, inviter à **redémarrer l'application** si nécessaire. Annulation ou « Plus tard » préserve la version existante et les préférences ; toute erreur réseau se traduit par une indication non bloquante et ne boucle pas sur des pop-ups.
+
+**Source et validation des releases** :
+- Canal **stable uniquement** : consulter les releases publiées du dépôt officiel (`GET https://api.github.com/repos/niakw/Prospero.Eden-Encore/releases/latest` ou équivalent API vérifié) ; rejeter les drafts, préreleases, branches expérimentales, assets non correspondants, paquets FTP et réponses inattendues. Ne jamais télécharger un exécutable depuis une URL dictée par un changelog ou une redirection non approuvée.
+- Comparer la version **réellement installée** à la version annoncée (version + identifiant de build lorsque nécessaire), sans comparer naïvement des chaînes lexicales ; ne proposer une version qu'en présence d'un **asset de release destiné à l'app PS5** et compatible avec l'identifiant de l'application, le format de paquet et les prérequis installateur/firmware. Ne pas présumer que le contenu d'une release GitHub est automatiquement installable sur la console.
+- Télécharger dans un emplacement temporaire avec quotas, limites de taille et timeouts ; contrôler l'origine HTTPS, les métadonnées du paquet et un **SHA-256 publié et fiable** avant toute installation. En l'absence de hash exploitable, d'asset compatible ou de privilèges/API d'installation prouvés : refuser l'installation automatique et expliquer l'indisponibilité, plutôt que tenter une copie hasardeuse.
+- **Ne jamais écraser l'exécutable en cours à chaud.** Vérifier l'API/mécanisme natif PS5 d'installation/upgrade, la possibilité de relancer l'app et le retour sur échec. Préserver `/data`, configurations, sauvegardes, caches utiles et bibliothèque ; aucune suppression implicite, aucune réinitialisation. Prévoir une stratégie de récupération réaliste plutôt que promettre un rollback système non démontré.
+- Éviter vérifications concurrentes, pop-ups doublons, notifications répétées après refus pendant la même session, ou requêtes réseau à chaque navigation. Le mode hors ligne et les erreurs GitHub/rate limit doivent laisser le launcher pleinement fonctionnel.
+
+**Preuves avant validation R21** : tests hôtes avec réponses GitHub simulées (aucune release, déjà à jour, version supérieure, prerelease/draft, asset manquant, manifest/hash altéré, réseau lent/absent, annulation, refus, reprise), tests de versionnement, non-régression boot/menus/manette, tests de sûreté de l'installateur réel, build PS5 et CI. Vérifier sur console seulement après qualification complète, et **uniquement sur la branche laboratoire** jusqu'à décision R20. **Statut : À faire ; aucun updater livré aujourd'hui.**
 
 ### Première livraison de code (25 octobre 2026)
 
@@ -82,7 +101,7 @@
 
 `R00 → R01 → R03/R04/R05 → R06 → {R07,R08,R09,R10} → R19 → R20`.
 
-En parallèle sans modifier la branche F07 : `{R11,R12,R13}`, `R14`, `{R15,R16}`, `R17/R18`. LDN et trophées ont des tests indépendants de la frame generation.
+En parallèle sans modifier la branche F07 : `{R11,R12,R13,R21}`, `R14`, `{R15,R16}`, `R17/R18`. R21 dépend du packaging/release de R20 et des capacités d'installation PS5 réellement validées ; aucune installation automatique n'est permise en l'absence de ces preuves. LDN et trophées ont des tests indépendants de la frame generation.
 
 **Point de départ le plus rationnel** : compiler et mesurer les fixes avérés puis construire une abstraction Vulkan commune aux modules de rendu. Sans ownership clair des images/fences/swapchain, MihawkGen+FSR+NR risque de recréer les défauts de HUD et les blocages de FC27.
 
@@ -133,7 +152,7 @@ Ne pas confondre **RDNA2 PC**, **Vulkan PC** et **PS5 native**. Aucune des impl�
 **Utilisateur ne teste la console qu'à trois points utiles** :
 1. **F07 baseline** : FC27 avec `dev/ps5-sparse-jit` code validé `cd4857c8`, enregistrer jeu/firmware/réglages, freeze/HUD/texture/frametime/input ; cela ne valide aucune feature branch.
 2. **RC Graphics** : version native stabilisée de R03/R06/R07/R08/R09, A/B en conditions identiques, qualité/cadence/manette/HUD.
-3. **RC fonctionnalités** : R11–R17 réunis, puis test deux instances pour LDN et trophées réels par jeux pilotes.
+3. **RC fonctionnalités** : R11–R17 et R21 réunis (R21 seulement si installateur/asset release qualifiés), puis test deux instances pour LDN et trophées réels par jeux pilotes.
 
 Pas de durée chiffrée inventée : la fin d'une phase dépend de ses **preuves** et de la disponibilité réelle des outils/hardware.
 
@@ -142,4 +161,4 @@ Pas de durée chiffrée inventée : la fin d'une phase dépend de ses **preuves*
 - **F01–F06 pré-console** : 6/6 prouvés sur tests host, build PS5 et sécurité GitHub sur `cd4857c8`.
 - **F07 vraie session de jeu** : pas encore réalisée.
 - **Branche feature** : audit en cours, `framegen_capabilities.h` (contrat de choix, pas moteur), catalogues de trophées vides + tests CI hôtes ; pas de FG/NR/FSR temporel/LDN natif intégré.
-- **R00–R20** : toutes les lignes sont un **backlog**, non un 21/21 validé. Le présent document accomplit uniquement la planification/traçabilité.
+- **R00–R21** : toutes les lignes sont un **backlog**, non un 21/21 validé. Le présent document accomplit uniquement la planification/traçabilité.

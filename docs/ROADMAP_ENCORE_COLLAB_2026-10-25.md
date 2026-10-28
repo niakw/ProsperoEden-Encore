@@ -4,7 +4,7 @@
 **Branche console distincte :** `dev/ps5-sparse-jit` ; F01–F06 ont des contrats hôte, **F07 reste ouvert jusqu'à preuve sur console**.  
 **Règle de séparation :** aucun merge ni activation expérimentale implicite sur la branche console. R00 avait fusionné historiquement la PR #18 ; l'écart entre les **HEAD actuels** doit être revérifié avant chaque import. Les nombres/SHAs des journaux anciens sont des **photos datées**, non des résultats CI actuels.
 
-**Lecture :** les identifiants R00–R23 restent stables, mais **leur ordre dans le document suit désormais la famille fonctionnelle et ses checks globaux**, pas le numéro ni l'ordre des demandes. La section A est le point de départ obligatoire. Chaque jalon est inscrit une seule fois dans les tableaux de suivi ; le détail technique, les historiques et les références restent sous sa famille.
+**Lecture :** les identifiants R00–R23 restent stables et R24 ajoute le chantier d'anti-aliasing perceptible ; **leur ordre dans le document suit désormais la famille fonctionnelle et ses checks globaux**, pas le numéro ni l'ordre des demandes. La section A est le point de départ obligatoire. Chaque jalon est inscrit une seule fois dans les tableaux de suivi ; le détail technique, les historiques et les références restent sous sa famille.
 
 ## Convention de suivi : pas de faux progrès
 
@@ -20,7 +20,7 @@
 |---|---|---|---|
 | **A — d'abord** | Base et audits de l'émulateur, dépendances, forks et mesures | R00 · R05 · R18 · R23 · R02 · R17 · R01 | Sources réellement compilées + inventaire dépendances/licences + matrice d'écarts + référence mesurable |
 | **B** | Moteur, stabilité, architecture CPU | R03 · R04 · R22 | Sémantique CPU/HLE/GPU préservée, tests de régression, recomp séparée |
-| **C** | Graphismes et qualité d'image | R06 · R07 · R08 · R09 · R10 | Une seule interface Vulkan sûre, modes et performances mesurés séparément |
+| **C** | Graphismes et qualité d'image | R06 · R07 · R24 · R08 · R09 · R10 | Une seule interface Vulkan sûre, AA réellement perceptible et modes/performances mesurés séparément |
 | **D** | Formats, bibliothèque, interface et mises à jour | R13 · R11 · R12 · R21 | Navigation/stockage/installation sûrs et testables |
 | **E** | Réseau et multijoueur privé | R14 | Sessions et sécurité réseau isolées du rendu |
 | **F** | Trophées et suivi de progression | R15 · R16 | Versionnement/événements fiables, pas de faux déblocages |
@@ -137,12 +137,13 @@ Intervenir sur les **fonctions cœur** déjà identifiées après l'audit A, san
 
 Construire **une seule base graphique vérifiable**, puis ajouter les familles de traitement sans recoder les mêmes hooks, buffers et fonctions de présentation.
 
-**Checks globaux C :** origine scene/HUD, images et ownership, layouts/barrières, fences/present, depth/motion/jitter, allocations et coûts GPU ; comparer vraie fréquence guest, fréquence présentée et fréquence synthétique. Refuser les filtres qui masquent un HUD périmé ou augmentent la latence.
+**Checks globaux C :** origine scene/HUD, images et ownership, layouts/barrières, fences/present, depth/motion/jitter, allocations et coûts GPU ; comparer les modes d'anti-aliasing sur images fixes **et en mouvement**, avec les mêmes résolutions internes/sorties ; comparer vraie fréquence guest, fréquence présentée et fréquence synthétique. Refuser les filtres qui masquent un HUD périmé ou augmentent la latence.
 
 | ID | Livrable / périmètre | Assistant — travail et preuves | Utilisateur — intervention | État au suivi |
 |---|---|---|---|---|
 | **R06** | **Architecture graphique modulaire** : résolution/AA, génération d'images, rendu neuronal et textures HD comme quatre familles indépendantes | Points d'insertion Vulkan (avant/après HUD), images/queues/fences, copie zero-copy si possible, toggles opt-in, recovery/fallback, profil par jeu | Choix des libellés et défauts | Contrat de sélection des 4 familles et tests hôtes verts ; aucun backend installé |
 | **R07** | Upscaling : Natif / FSR spatial / FSR temporel 3.1 si infos validées ; AA/FSR et HUD séparé | Vérifier depth, jitter et motion vectors issus du rendu émulé ; calcul du coût GPU et A/B fidélité | Retour sur netteté et textures de FC27/BOTW | À faire |
+| **R24** | **Anti-aliasing réellement efficace et réglable** : audit de l'efficacité actuelle None/FXAA/SMAA, paliers de qualité AA, examen du MSAA ×2/×4/×8 et des alternatives temporelles/SSAA, UI globale + par jeu | Vérifier les vrais passes Vulkan actifs et leur ordre par rapport à FSR/HUD ; comparer images fixes et mouvement, aliasing/shimmer, flou/ghosting, coût GPU/VRAM et latence ; n'afficher que des paliers réellement implémentés | Valider l'amélioration visible sur FC27 (pelouse/tribunes/HUD) et BOTW après build qualifié | **À faire — retour console : réglages actuels peu perceptibles ; aucune nouvelle méthode livrée** |
 | **R08** | MihawkGen (priorité native PS5), comparaison FSR 3 frame generation, LSFG facultatif si juridiquement/native viable | Porter petites unités isolées, poids + licence, pipeline de présentation, 30→60 *affichés* avec FPS du jeu constants, reset à la pause/menu | Test visuel et ressenti input après CI | À faire |
 | **R09** | **Neural Rendering AMD/Vulkan** : visages/peau/matériaux/lumière, sans modifier les vraies textures jeu | POC Vulkan natif SPIR-V, analyser RDNA2, budget mémoire+compute, pré-upscale vs post-upscale, alpha/UI, couleur HDR/gamma, scènes statiques et mouvement | Qualité artistique et artefacts visage, comparaison captures A/B | Recherche ; pas de runtime |
 | **R10** | **Textures HD IA** séparées du rendu neuronal : packs optionnels par Title ID, prétraitement hors PS5 si nécessaire | Pipeline autorisé modèles ouverts (Real-ESRGAN ou équivalent), validation dims/formats/quantification, ram budget, cache, fallback GPU | Choix éventuel des packs / style ; aucun fichier protégé demandé | À faire |
@@ -153,6 +154,26 @@ Construire **une seule base graphique vérifiable**, puis ajouter les familles d
 - Chaque choix reste **off par défaut** tant que shader/binaire Vulkan, masques HUD, motion/depth, modèle autorisé et fréquence négociée ne sont pas prouvés. Les causes de refus `resolution_reason`, `generation_reason`, `neural_reason`, `texture_reason` et `display_reason` sont indépendantes.
 - `extras/graphics/test_graphics_pipeline_policy.cpp` teste avec UBSan les modes incompatibles, 30 FPS → FG **potentielle**, données temporelles, séparation UI et licence modèle ; la CI [Feature Lab](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/40242290098) est verte. `runtime_qualified=false` reste obligatoire : **aucun MihawkGen, FSR temporel ou Neural AMD réellement branché par ce prototype**.
 - Les retours à l'upscaling spatial ou natif, et le repli 120→60 Hz, ne doivent jamais être confondus avec un gain d'images simulées. Le vrai pont Vulkan scene/depth/motion/UI et la gestion des images/fences sont toujours à coder.
+
+### R24 — Anti-aliasing : contrôle de qualité et résultat visible (nouvelle demande du 29/10/2026)
+
+**Problème observé sur console.** Dans les tests actuels, passer de **Aucun à FXAA/SMAA** a eu **très peu d'effet perceptible**. L'option ne doit pas être considérée satisfaisante au seul motif qu'elle existe dans l'interface ou qu'un shader est exécuté. Il faut vérifier en priorité le **chemin Vulkan natif effectivement compilé**, les dimensions source/cible, le pass AA sélectionné, le traitement du swapchain, les formats et l'ordre AA ↔ upscale ↔ HUD, ainsi que la persistance du réglage global/par jeu. Les anomalies de textures/HUD ou le shimmer dû au jeu lui-même ne se résolvent pas systématiquement par du post-AA.
+
+**Spécification fonctionnelle et nomenclature (éviter les faux ×2/×4/×8) :**
+
+1. **Audit de l'existant** : photographier pour les mêmes scènes les modes `None / FXAA / SMAA` actuellement disponibles, vérifier que chaque réglage modifie réellement le traitement en jeu et que le passage entre eux n'est ni neutralisé ni écrasé par un preset, le mode TV, FSR ou un override par titre. Contrôler le contraste visuel à échelle 1:1 et les artefacts en mouvement.
+2. **Paliers de qualité** : proposer une UX claire `Désactivé / FXAA (standard, qualité renforcée si algorithme réel) / SMAA (standard, qualité renforcée si algorithme réel)`, avec choix par défaut raisonnable et réglages globaux/par titre. Un niveau `Élevé` ou `Ultra` **n'apparaît que si** la variante technique est codée, réellement différenciée, compatible PS5 et validée ; éviter les sélecteurs décoratifs ou un simple `FXAA ×4`.
+3. **MSAA ×2 / ×4 / ×8 — étude de faisabilité distincte** : ces nombres désignent des **échantillons de rasterisation**, pas l'intensité FXAA/SMAA. Auditer les render targets du jeu émulé, le support des sample counts/formats, l'architecture de présentation et les coûts GPU/VRAM PS5. Ne proposer un vrai menu `MSAA : 2× / 4× / 8×` que si le moteur peut produire et résoudre des surfaces multisample **sans altérer la sémantique guest** ; sinon documenter explicitement l'impossibilité et ne pas simuler de faux MSAA en post-traitement.
+4. **Alternatives modernes** : évaluer un AA temporel (TAA ou équivalent compatible), seulement si les motion vectors, depth, jitter et données d'historique sont fiables ; vérifier le ghosting, les contours mobiles, l'herbe et les textes. Comparer au **supersampling** via l'option existante `Game resolution 1.25× / 1.5× / 2×` : ce sont des **facteurs de résolution**, non du MSAA ni des taux de FPS. Ne pas dupliquer artificiellement cette option sous un faux libellé AA ×2.
+5. **Composition** : appliquer l'AA au bon stade (scène avant composition du HUD quand séparables), préserver textes/glyphes/menu, ne pas rendre les textures manquantes « floues mais présentes ». Définir explicitement les combinaisons permises avec le scaler bilinéaire/bicubique, FSR spatial, FSR temporel et modes de génération d'images ; fallback vers une méthode légère ou `None` quand les préconditions manquent.
+
+**Preuves de sortie obligatoires (avant intégration console) :**
+- **Captures A/B reproductibles** de la même scène/résolution, sans et avec AA, sur FC27 (lignes du terrain, pelouse, tribunes, joueurs, HUD) et BOTW (végétation, arêtes fines, mouvement de caméra). Vérifier le résultat à 100 % sans confondre amélioration de netteté et diminution de l'aliasing.
+- **Séquences mobiles** : scintillement temporel, fourmillement, ghosting, flou de mouvement et stabilité des objets/overlays ; régressions du HUD, pause, mi-temps, changement de résolution, relance de jeu et overrides.
+- **Coût mesuré** : frametime CPU/GPU, cadence guest/present, latence si mesurable, consommation VRAM, allocations, stalls/caches ; éviter de sacrifier la fluidité de FC27 à une qualité peu visible. Les valeurs doivent provenir de mesures PS5, pas d'une estimation desktop.
+- **Gates** : audit du chemin compilé → prototype isolé sur branche feature → tests hôtes + sécurité/lifetime des ressources AA → CI/build PS5 vert → comparatif console → acceptation/rejet de chaque variante. Ne pas fusionner vers `dev/ps5-sparse-jit` par simple ajout documentaire.
+
+**Critère d'acceptation :** plusieurs paliers uniquement s'ils correspondent à des traitements et résultats **objectivement distincts**, avec gain de qualité visible sur scènes de référence et coût rendu acceptable ; aucune promesse que MSAA ×8 ou TAA sera réalisable sur le rendu émulé. **Statut R24 : À faire (spécification seulement, aucun correctif ni test exécuté ici).**
 
 ### R09 — Registre de recherche — IA « DLSS 5-like » sur AMD (état au 25/10/2026)
 

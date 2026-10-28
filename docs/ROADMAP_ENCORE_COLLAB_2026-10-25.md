@@ -101,7 +101,7 @@
 
 `R00 → R01 → R03/R04/R05 → R06 → {R07,R08,R09,R10} → R19 → R20`.
 
-En parallèle sans modifier la branche F07 : `{R11,R12,R13,R21}`, `R14`, `{R15,R16}`, `R17/R18`. R21 dépend du packaging/release de R20 et des capacités d'installation PS5 réellement validées ; aucune installation automatique n'est permise en l'absence de ces preuves. LDN et trophées ont des tests indépendants de la frame generation.
+En parallèle sans modifier la branche F07 : `{R11,R12,R13,R21}`, `R14`, `{R15,R16}`, `R17/R18`. R21 dépend du format des paquets/release préparé pour R20 et des capacités d'installation PS5 réellement validées ; aucune installation automatique n'est permise en l'absence de ces preuves. LDN et trophées ont des tests indépendants de la frame generation.
 
 **Point de départ le plus rationnel** : compiler et mesurer les fixes avérés puis construire une abstraction Vulkan commune aux modules de rendu. Sans ownership clair des images/fences/swapchain, MihawkGen+FSR+NR risque de recréer les défauts de HUD et les blocages de FC27.
 
@@ -161,4 +161,4 @@ Pas de durée chiffrée inventée : la fin d'une phase dépend de ses **preuves*
 - **F01–F06 pré-console** : 6/6 prouvés sur tests host, build PS5 et sécurité GitHub sur `cd4857c8`.
 - **F07 vraie session de jeu** : pas encore réalisée.
 - **Branche feature** : audit en cours, `framegen_capabilities.h` (contrat de choix, pas moteur), catalogues de trophées vides + tests CI hôtes ; pas de FG/NR/FSR temporel/LDN natif intégré.
-- **R00–R21** : toutes les lignes sont un **backlog**, non un 21/21 validé. Le présent document accomplit uniquement la planification/traçabilité.
+- **R00–R21** : toutes les lignes sont un **backlog**, non un 22/22 validé. Le présent document accomplit uniquement la planification/traçabilité.

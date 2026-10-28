@@ -47,6 +47,7 @@
 | 7 — intégration | R19 | Builds indépendants par fonctionnalité avec désactivation sûre + scénarios concurrents (NR+FG, FSR+FG, HUD) | CI hôte/sanitizers, bundle PS5, A/B baseline FC27/BOTW, latence GPU/cache, tableaux comparatifs | Un seul cycle de qualification consolidé, pas un test à chaque commit | À faire |
 | 7 — produit | R20 | Décision de fusion, release notes FR/EN, guide sécurité/limites, suivi par fonctionnalité | Merge seulement des modules validés, changelog/permissions et rollback, package avec SHA | Acceptation console matérielle par l'utilisateur | À faire |
 | 7 — distribution / maintenance | R21 | **Mise à jour de l'application Eden Encore depuis les GitHub Releases** dans Paramètres : vérification manuelle forcée et recherche automatique au lancement du launcher (opt-in), proposition par pop-up puis installation uniquement après accord | Comparateur de versions et canal release stable, client GitHub borné, vérification du paquet PS5 et SHA-256, installateur natif sûr selon capacités réelles, tests hors console puis CI/PS5, préservation des données utilisateur | Choix d'activer la recherche au démarrage ; confirmation/refus de la mise à jour lorsqu'elle est proposée ; essai final sur build qualifié | **À faire — spécification uniquement** |
+| 8 — recherche / architecture | R22 | **Question : une recompilation statique optionnelle de jeux Switch 1 ARM64 vers x86-64 PS5 peut-elle compléter Eden Encore ?** | Étude comparative JIT Dynarmic vs chaîne AArch64 → C/C++/LLVM → binaire PS5 ; analyse des barrières NSO/NRO, relocations, JIT/dynamiques, ABI, SVC/HLE, GPU Maxwell/NVN, licences et maintenance ; preuve de concept sur programme synthétique autorisé, puis A/B limité si faisable | Aucun test console avant prototype qualifié ; choix ultérieur seulement après preuves | **À étudier — question ouverte, aucune implémentation** |
 
 ### R21 — Mise à jour intégrée d'Eden Encore (spécification, non implémentée)
 
@@ -65,6 +66,22 @@
 - Éviter vérifications concurrentes, pop-ups doublons, notifications répétées après refus pendant la même session, ou requêtes réseau à chaque navigation. Le mode hors ligne et les erreurs GitHub/rate limit doivent laisser le launcher pleinement fonctionnel.
 
 **Preuves avant validation R21** : tests hôtes avec réponses GitHub simulées (aucune release, déjà à jour, version supérieure, prerelease/draft, asset manquant, manifest/hash altéré, réseau lent/absent, annulation, refus, reprise), tests de versionnement, non-régression boot/menus/manette, tests de sûreté de l'installateur réel, build PS5 et CI. Vérifier sur console seulement après qualification complète, et **uniquement sur la branche laboratoire** jusqu'à décision R20. **Statut : À faire ; aucun updater livré aujourd'hui.**
+
+### R22 — Étude de faisabilité : recompilation statique Switch 1 → PS5 (question ouverte)
+
+**Question de recherche :** une chaîne de recompilation statique, inspirée des approches type ReXGlue mais **non transposable telle quelle** à la Switch, pourrait-elle exécuter certains jeux Switch 1 sur PS5 plus efficacement que le JIT Dynarmic, **en complément de l'émulation classique et sans sacrifier la compatibilité** ?
+
+**Périmètre de l'étude, sans engagement d'implémentation :**
+1. Comparer les architectures (Switch 1 : AArch64 / ARMv8 ; PS5 : x86-64), la faisabilité d'une traduction statique du code NSO/NRO vers IR/C/C++/LLVM ou code natif, le traitement des relocations, branches indirectes, modules liés, données exécutables et génération dynamique de code. Établir explicitement les limites par titre et versions.
+2. Identifier les composants **qui resteraient émulés ou adaptés** : services Horizon/SVC/HLE, synchronisation, mémoire, entrées, audio et surtout API GPU NVN/Maxwell → Vulkan/RADV. Une recompilation CPU ne corrige pas automatiquement les shaders, le HUD, les textures ou les problèmes de synchronisation graphique.
+3. Évaluer les coûts de développement, maintenance, compilation, taille des binaires, cache, fiabilité et compatibilité ; comparer avec le JIT existant et les optimisations actuelles. Examiner les projets open source réutilisables, leurs licences, leur état réel, les contraintes d'outillage PS5 et le droit applicable ; ne pas redistribuer de jeux, clés, firmware ni code propriétaire.
+4. Si les obstacles précédents sont franchis, produire d'abord un **POC synthétique légal** avec tests d'instructions et d'appels HLE, puis un protocole d'évaluation ciblé (FC27 / BOTW uniquement si titres et droits disponibles) avec mêmes scènes, guest FPS, 1 % low, frametimes, HUD, stabilité, latence et usage RAM. Distinguer le coût de compilation hors ligne du coût d'exécution.
+5. Documenter une décision explicite : **abandon / recherche supplémentaire / prototype expérimental par jeu**. Aucun mode recomp n'est proposé dans la release ni fusionné avec `dev/ps5-sparse-jit` sans validation technique, CI et tests console.
+
+**Graphismes :** la recompilation seule n'améliore ni résolution, ni textures, ni éclairage, ni anticrénelage. Elle peut éventuellement libérer un budget CPU pour les fonctions graphiques déjà prévues en R06–R10 ; toute amélioration visuelle devra être développée, mesurée et validée séparément.
+
+**Statut : À étudier.** Ne pas annoncer de gain de FPS, de compatibilité générale, de portage automatique ou d'intégration IA avant démonstration.
+
 
 ### Première livraison de code (25 octobre 2026)
 

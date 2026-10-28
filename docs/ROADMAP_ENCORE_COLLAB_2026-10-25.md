@@ -48,6 +48,7 @@
 | 7 — produit | R20 | Décision de fusion, release notes FR/EN, guide sécurité/limites, suivi par fonctionnalité | Merge seulement des modules validés, changelog/permissions et rollback, package avec SHA | Acceptation console matérielle par l'utilisateur | À faire |
 | 7 — distribution / maintenance | R21 | **Mise à jour de l'application Eden Encore depuis les GitHub Releases** dans Paramètres : vérification manuelle forcée et recherche automatique au lancement du launcher (opt-in), proposition par pop-up puis installation uniquement après accord | Comparateur de versions et canal release stable, client GitHub borné, vérification du paquet PS5 et SHA-256, installateur natif sûr selon capacités réelles, tests hors console puis CI/PS5, préservation des données utilisateur | Choix d'activer la recherche au démarrage ; confirmation/refus de la mise à jour lorsqu'elle est proposée ; essai final sur build qualifié | **À faire — spécification uniquement** |
 | 8 — recherche / architecture | R22 | **Question : une recompilation statique optionnelle de jeux Switch 1 ARM64 vers x86-64 PS5 peut-elle compléter Eden Encore ?** | Étude comparative JIT Dynarmic vs chaîne AArch64 → C/C++/LLVM → binaire PS5 ; analyse des barrières NSO/NRO, relocations, JIT/dynamiques, ABI, SVC/HLE, GPU Maxwell/NVN, licences et maintenance ; preuve de concept sur programme synthétique autorisé, puis A/B limité si faisable | Aucun test console avant prototype qualifié ; choix ultérieur seulement après preuves | **À étudier — question ouverte, aucune implémentation** |
+| 8 — audit inter-émulateurs | R23 | **État des lieux systématique des forks Switch et matrice des améliorations réutilisables par Encore PS5** : moteur, compatibilité, graphismes, fonctionnalités | Auditer Eden, Citron Neo, ProsperoEden, Ryubing/Ryujinx, Kenji-NX, Sudachi et forks Yuzu utiles ; comparer **commits/fonctions aux sources réellement compilées dans Encore**, qualifier licences, PS5/RADV, tests et gains mesurables ; dédoublonner R02/R05/R07–R10/R13/R17 | Aucun test utilisateur avant candidat compilé et qualifié ; arbitrer les seules nouveautés perceptives | **À faire — audit transversal planifié, aucune intégration déclarée** |
 
 ### R21 — Mise à jour intégrée d'Eden Encore (spécification, non implémentée)
 
@@ -82,6 +83,50 @@
 
 **Statut : À étudier.** Ne pas annoncer de gain de FPS, de compatibilité générale, de portage automatique ou d'intégration IA avant démonstration.
 
+
+### R23 — Audit transversal des émulateurs Switch : correctifs, optimisations et fonctionnalités (spécification)
+
+**Objectif.** Faire l'inventaire systématique des améliorations disponibles dans d'autres moteurs/forks Switch **sans supposer qu'elles manquent dans Encore**. L'audit R02 traite les forks PS5 et les correctifs directs, R05 les optimisations internes, R17 PS5SX2 ; **R23 est la matrice inter-émulateurs** qui relie ces travaux aux sources compilées, sans re-cherry-pick. Il ne clôt **pas** le F07 de la branche console par simple comparaison de commits.
+
+**Dépôts et lignées à inventorier (état, licence, HEAD/SHA de référence, activité et origine réels à revérifier à la date de l'audit) :**
+- [Eden](https://github.com/eden-emulator/mirror) : base de l'émulateur, HLE, Dynarmic, shaders, GPU Vulkan, outils et interface ;
+- [Citron Neo](https://github.com/citron-neo/emulator) : optimisations de buffers, fences, workers, textures, compilation shader et correctifs de synchronisation ;
+- [ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden) et forks PS5 pertinents dont [Swordpdf/ProsperoEden](https://github.com/Swordpdf/ProsperoEden) : backend PS5/RADV, drivers, mémoire, manette, packaging, fonctions graphiques ;
+- [Ryubing](https://github.com/Leuconoe/Ryubing) / lignée Ryujinx et [Kenji-NX](https://github.com/Kenji-NX) : **références comportementales/architecturales**, portage direct C# → C++ **non présumé** ;
+- [Sudachi](https://github.com/Synoptikon/Sudachi), Suyu, Torzu et autres dérivés Yuzu **uniquement s'ils apportent un diff fonctionnel vérifiable**, pas un inventaire de clones identiques.
+- Vérifier si chaque dépôt est encore actif, accessible, maintenu et autorisé à être réutilisé ; les liens/lignées ci-dessus sont des **candidats de recherche**, non une garantie de statut/qualité.
+
+**Premiers commits à comparer, pas à importer automatiquement (28 octobre 2026) :**
+
+| Priorité de revue | Source / commit amont | Hypothèse utile | Point de comparaison Encore |
+| --- | --- | --- | --- |
+| P0 | [Citron `92960d1`](https://github.com/citron-neo/emulator/commit/92960d1f62500074df7a01d5c32a940e2c410c0c) | Regrouper les copies de téléchargement par buffer | F07 P0.3, fences/readback et ordre des écritures |
+| P0 | [Citron `3a32975`](https://github.com/citron-neo/emulator/commit/3a32975538bf452062563537c8e3f83fe02cec7a) | Éviter une soumission/flush GPU redondant après fence | F07 P0.2/P0.3, barrières et dépendances de frame |
+| P0 | [Citron `1aebfbd`](https://github.com/citron-neo/emulator/commit/1aebfbd6002f05436b797b485ded1ec6763bd4ac) | Réveils Vulkan moins fréquents, solution initialement **Android seulement** | Ordonnanceur et fréquence réelle PS5, pas de copie des seuils Android |
+| P1 | [Citron `a8ef09e`](https://github.com/citron-neo/emulator/commit/a8ef09ef61210e38166aa2f809aee149a5fb2f91) | Streaming de buffers uniformes réutilisés, sans uploads redondants | Buffer cache actif, cohérence CPU↔GPU et réutilisation |
+| P1 | [Citron `8a59863`](https://github.com/citron-neo/emulator/commit/8a598630a1dd1349a04b199c4a71fb413e26ac87) | Réutilisation de render targets avec padding | Texture cache, alias, taille, correction HUD et fences |
+| P1 (refonte risquée) | [Citron `db66e38`](https://github.com/citron-neo/emulator/commit/db66e3819d7b14498b6f4b46a1b26a32ed79b53e) | Stockage d'instructions IR par pipeline et indexation compacte | P0.1 : temps IR→SPIR-V, coût mémoire, parité des shaders ; bench avant refonte |
+| P1 compatibilité | [Eden `0689f73`](https://github.com/eden-emulator/mirror/commit/0689f73147ebeddb9ac5fb8b0edf2625425f8d71) | Résolution conditionnelle des handles de textures bindless | P0.4, shaders et fraîcheur des textures ; pas de diagnostic FC27 présumé |
+| P1 risque/régression | [Eden `26a03d2`](https://github.com/eden-emulator/mirror/commit/26a03d2473787abf3223b2d0e65b291eee00c1e1) | Retour arrière d'une amélioration async shader pour performances | Examiner la raison du revert, les artefacts graphiques et les attentes ordonnées |
+| P1 HLE/audio | [Citron `f07609c`](https://github.com/citron-neo/emulator/commit/f07609c52033797205de85826d5eb2b3d62c442a) / [`21813e8`](https://github.com/citron-neo/emulator/commit/21813e8cb3ea8194a5bcd8acc05b69e885f4d5c2) | ServiceManager host wait et initialisation audio différée | **Déjà retenus comme backports expérimentaux OFF** ; ne pas les compter intégrés au binaire normal |
+
+**Inventaire fonctionnel distinct des optimisations CPU/GPU :**
+1. Graphismes : post-traitement [Eden `ed56691`](https://github.com/eden-emulator/mirror/commit/ed566919f468e45ecb56e4e61185d98142a2cd1c), comparaison des AA, filtres de netteté, FSR spatial/temporel, colorimétrie, séparation HUD/scene ; raccorder aux jalons R06–R10, pas de bascule implicite dans le profil release.
+2. Gameplay/compatibilité : gestion de mods/cheats, mises à jour/DLC, correctifs par Title ID/version, profils par jeu, possibilités 60 FPS **natives au jeu seulement si timing/physics/audio restent corrects** ; raccorder à R13 et au travail de compatibilité.
+3. Fiabilité : shader/pipeline caches, thread scheduler, HLE/IPC, états mémoire, traitement du shutdown, sauvegardes, compatibilité manette ; comparer les **sémantiques** entre Ryujinx/Ryubing et l'architecture C++ de l'émulateur.
+4. Fonctionnalités graphiques avancées : frame generation, textures HD, packs et capture/profiling, uniquement comme **fonctionnalités optionnelles** séparées des FPS simulés ; raccorder aux travaux R07–R10 et R17.
+
+**Livrable obligatoire : une matrice versionnée par changement, et non un simple classement de projets.** Pour chaque entrée : projet/URL/commit, date et maintenance vérifiées, licence et attribution, fonction(s)/fichiers amont, source compilée Encore (et overrides/générateurs), preuve d'équivalence éventuelle, problème traité, dépendances PS5/RADV, risque de régression, résultat de test/benchmark, décision et propriétaire. Statuts exclusifs :
+- **Déjà intégré** (avec SHA et chemin compilé) ;
+- **Équivalent dans Encore** (avec test démontrant la parité) ;
+- **Absent et pertinent** (candidat à prototyper avec preuve) ;
+- **Incompatible / non transposable PS5** (raison documentée) ;
+- **À mesurer / non tranché** (pas de promesse de gains).
+Un patch ayant déjà son équivalent ne devient **pas** un nouveau travail ; une simple citation ou un titre de commit ne suffit jamais à conclure à son absence.
+
+**Ordre et portes de sortie :** (1) figer refs, licences, ancêtres communs et diffs ; (2) rechercher la fonction dans le **profil natif sélectionné** de la branche R23, pas seulement `vendor/sources` ; (3) éliminer doublons et changements spécifiques Android/PC ; (4) établir tests comportementaux et microbenchmarks à coût comparable ; (5) uniquement pour les candidats retenus, implémenter une adaptation isolée **dans la branche feature**, opt-in ou rollback sûr, provenance et tests O0/O2/sanitizers ; (6) build PS5 + CI et A/B console regroupé **après** qualification, jamais de validation FPS sur tests hôtes ; (7) décision explicite reprendre / reporter / rejeter. Pour FC27 comparer P0.1–P0.4, HUD/pixels, >50/>100 ms, FPS guest/present, latence manette et freezes ; ne jamais confondre FPS affichés et FPS du jeu.
+
+**Frontière stricte :** R23 reste **recherche/spec et éventuellement prototypes indépendants** sur `feat/graphics-network-achievements`. Aucun merge, changement de pins, activation expérimentale ni correctif F07 déclaré validé sur `dev/ps5-sparse-jit` sans passage distinct des contrats d'intégration, CI, build PS5 et tests matériels. **Statut : À faire ; cette inscription à la roadmap n'est pas un audit exhaustif exécuté ni une fonctionnalité livrée.**
 
 ### Première livraison de code (25 octobre 2026)
 
@@ -118,7 +163,7 @@
 
 `R00 → R01 → R03/R04/R05 → R06 → {R07,R08,R09,R10} → R19 → R20`.
 
-En parallèle sans modifier la branche F07 : `{R11,R12,R13,R21}`, `R14`, `{R15,R16}`, `R17/R18`. R21 dépend du format des paquets/release préparé pour R20 et des capacités d'installation PS5 réellement validées ; aucune installation automatique n'est permise en l'absence de ces preuves. LDN et trophées ont des tests indépendants de la frame generation.
+En parallèle sans modifier la branche F07 : `{R11,R12,R13,R21}`, `R14`, `{R15,R16}`, `R17/R18`, **`R22` (recomp) et `R23` (audit inter-émulateurs ; collecte et dédoublonnage avant tout portage)**. R21 dépend du format des paquets/release préparé pour R20 et des capacités d'installation PS5 réellement validées ; aucune installation automatique n'est permise en l'absence de ces preuves. LDN et trophées ont des tests indépendants de la frame generation.
 
 **Point de départ le plus rationnel** : compiler et mesurer les fixes avérés puis construire une abstraction Vulkan commune aux modules de rendu. Sans ownership clair des images/fences/swapchain, MihawkGen+FSR+NR risque de recréer les défauts de HUD et les blocages de FC27.
 
@@ -178,4 +223,4 @@ Pas de durée chiffrée inventée : la fin d'une phase dépend de ses **preuves*
 - **F01–F06 pré-console** : 6/6 prouvés sur tests host, build PS5 et sécurité GitHub sur `cd4857c8`.
 - **F07 vraie session de jeu** : pas encore réalisée.
 - **Branche feature** : audit en cours, `framegen_capabilities.h` (contrat de choix, pas moteur), catalogues de trophées vides + tests CI hôtes ; pas de FG/NR/FSR temporel/LDN natif intégré.
-- **R00–R21** : toutes les lignes sont un **backlog**, non un 22/22 validé. Le présent document accomplit uniquement la planification/traçabilité.
+- **R00–R23** : le tableau couvre 24 jalons, pas 24/24 validations. Les jalons R22/R23 restent des études ; les statuts d'implémentation et les preuves des autres jalons sont suivis séparément. Le présent document n'accorde aucune qualification console.

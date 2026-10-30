@@ -18,6 +18,8 @@ struct NativeTranslationCacheStats {
     u64 translations{};
     u64 rejected{};
     u64 evictions{};
+    u64 invalidations{};
+    u64 invalidated_translations{};
     std::size_t entries{};
     std::size_t bytes{};
 };
@@ -49,5 +51,7 @@ private:
     const std::size_t limit_bytes;
     const std::size_t limit_entries;
     NativeTranslationCacheStats stats{};
+    // Prevent in-flight lowering from resurrecting a cleared cache.
+    u64 generation{};
 };
 } // namespace Shader::Ampere

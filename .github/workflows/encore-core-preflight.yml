@@ -2,7 +2,7 @@ name: Encore source preflight (host only)
 
 on:
   push:
-    branches: [dev/ps5-sparse-jit]
+    branches: [main]
     # Run on actual native source/test edits, including commits authored in
     # other tools without special message suffixes. Docs-only/UI-only pushes
     # should not interrupt a running core validation.

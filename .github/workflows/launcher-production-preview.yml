@@ -5,7 +5,7 @@ on:
   # cached artwork pipeline, its fixtures or this preview workflow changes.
   # Unrelated GPU/JIT changes do not spend a full render CI run.
   push:
-    branches: [dev/ps5-sparse-jit]
+    branches: [main]
     paths:
       - 'vendor'
       - '.gitmodules'

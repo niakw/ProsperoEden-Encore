@@ -8,12 +8,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: dependency-comparison-dev
+  group: dependency-comparison-main
   cancel-in-progress: false
 
 jobs:
   audit:
-    if: github.ref == 'refs/heads/dev/ps5-sparse-jit'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-          ref: dev/ps5-sparse-jit
+          ref: main
           persist-credentials: true
       - name: Verify and refresh pinned dependency comparisons
         env:
@@ -41,5 +41,5 @@ jobs:
             exit 0
           fi
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: refresh dependency comparison [skip ci]'
-          git push origin HEAD:dev/ps5-sparse-jit
+          git push origin HEAD:main
           echo 'Pinned dependency comparisons updated.' >> "$GITHUB_STEP_SUMMARY"

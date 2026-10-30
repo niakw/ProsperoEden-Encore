@@ -2,7 +2,7 @@ name: Publish authentic Encore Home screenshot
 
 on:
   push:
-    branches: [dev/ps5-sparse-jit]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -107,7 +107,7 @@ jobs:
           PY
 
       - name: Persist real Home capture and README links on the same branch
-        if: ${{ github.ref == 'refs/heads/dev/ps5-sparse-jit' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           git add assets/screenshots/eden-encore-home-wallpaper-en.png README.md README.fr.md
           if git diff --cached --quiet; then
@@ -115,4 +115,4 @@ jobs:
             exit 0
           fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "docs(ui): capture English Home with original Eden wallpaper [skip ci]"
-          git push origin HEAD:dev/ps5-sparse-jit
+          git push origin HEAD:main

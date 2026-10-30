@@ -1,7 +1,7 @@
 name: Verify compact Encore clone and pinned vendor gitlink
 on:
   push:
-    branches: [dev/ps5-sparse-jit]
+    branches: [main]
     paths: ['.github/workflows/verify-compact-history.yml']
   workflow_dispatch:
 permissions:

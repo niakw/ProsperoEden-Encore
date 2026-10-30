@@ -3,7 +3,7 @@ name: Encore core fast gate
 on:
   push:
     branches:
-      - dev/ps5-sparse-jit
+      - main
     paths:
       - 'vendor'
       - '.gitmodules'

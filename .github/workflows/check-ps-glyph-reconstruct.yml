@@ -1,7 +1,7 @@
 name: Verify controller glyph reconstruction (host only)
 on:
   push:
-    branches: [dev/ps5-sparse-jit]
+    branches: [main]
     paths:
       - 'vendor'
       - '.gitmodules'

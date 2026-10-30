@@ -53,8 +53,8 @@ def main() -> int:
         require("GetScreenShotAndContinuousRecordingInitiallyEnabled" in am_impl and
                 "GetScreenShotAndContinuousRecordingInitiallyEnabled" in am_header,
                 "AM 320 declaration/handler missing")
-        require("GetTitleID" in am_impl,
-                "Maintained Encore application metadata behavior lost")
+        require("last_reported_title.exchange(title_id" in am_impl,
+                "Maintained Encore application metadata diagnostic behavior lost")
         require('eden_ns2_loader_origin' in CMAKE and
                 'eden_ns2_romdir_origin' in CMAKE and
                 'list(FIND eden_ns2_exefs_sources "${eden_ns2_original}"' in CMAKE,

@@ -3438,8 +3438,9 @@ apply_reviewed_delta(
     '''    const bool via_header_index{qmd.linked_tsc != 0};
 #ifdef PS5_NATIVE
     // Descriptor synchronization above fixes the TSC table for this dispatch.
-    // This bounded draw-local memo avoids duplicate sampler-table probes but
-    // NEVER carries sampler IDs across dispatches, remaps or channel switches.
+    // This dispatch-local memo preserves all 16 distinct sampler handles
+    // even when their low bits collide. No heap allocation or cross-dispatch
+    // reuse; an overflowing table resolves the handle normally.
     struct ComputeSamplerMemo {
         u32 handle{};
         VideoCommon::SamplerId id{};
@@ -3447,13 +3448,19 @@ apply_reviewed_delta(
     };
     std::array<ComputeSamplerMemo, 16> sampler_memo{};
     const auto resolve_sampler{[&](u32 handle) -> VideoCommon::SamplerId {
-        auto& entry = sampler_memo[handle & 15U];
-        if (!entry.valid || entry.handle != handle) {
+        const std::size_t first = (handle ^ (handle >> 4)) & 15U;
+        for (std::size_t offset = 0; offset < sampler_memo.size(); ++offset) {
+            auto& entry = sampler_memo[(first + offset) & 15U];
+            if (entry.valid) {
+                if (entry.handle == handle) return entry.id;
+                continue;
+            }
             entry.id = texture_cache.GetSamplerId(handle, true);
             entry.handle = handle;
             entry.valid = true;
+            return entry.id;
         }
-        return entry.id;
+        return texture_cache.GetSamplerId(handle, true);
     }};
 #endif
     const auto read_handle{[&](const auto& desc, u32 index) {''',
@@ -5829,3 +5836,41 @@ apply_reviewed_delta("vk_multi_range_buffer_cost.cpp",
     "    const u64 geometry = HashSources(sources);\n#ifdef PS5_NATIVE\n    const auto it = entries.find(key);",
     "#ifndef PS5_NATIVE\n    const u64 geometry = HashSources(sources);\n#else\n    // geometry was computed in the validation walk above.\n#endif\n#ifdef PS5_NATIVE\n    const auto it = entries.find(key);",
     "F07 merge native multi-range geometry fingerprint into validation walk hash reuse")
+
+# F07 C01/T01: collisions of the old direct-mapped 16-slot TIC memo
+# caused duplicate VisitImageView calls under the GPU texture-cache mutex.
+# Open addressing is bounded and draw-local; NULL/remapped/retry contracts
+# are preserved exactly. Keep the selected file byte-reproducible.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "void TextureCache<P>::FillImageViews(std::span<ImageViewInOut> views, bool compute, bool blacklist) {\n#ifdef PS5_NATIVE\n    // The empty descriptor pass only clears the deletion/retry latch.\n    // Avoid initializing the draw-local TIC memo and entering the retry\n    // loop when no view can possibly be visited or blacklisted.\n    if (views.empty()) {\n        has_deleted_images = false;\n        return;\n    }\n#endif\n    bool has_blacklisted = false;\n    do {\n        has_deleted_images = false;\n        if (blacklist) {\n            has_blacklisted = false;\n        }\n#ifdef PS5_NATIVE\n        // P0.3: reuse nonadjacent TIC descriptors only in this stable draw pass.\n        // Never bypass NULL recovery, deletion-driven retry or blacklist work.\n        struct ViewMemo {\n            u32 index{};\n            ImageViewId id{NULL_IMAGE_VIEW_ID};\n        };\n        // A single view or blacklist pass never gets a memo hit. Avoid\n        // zeroing all 16 memo slots while holding the texture-cache lock.\n        std::optional<std::array<ViewMemo, 16>> view_memo;\n        if (!blacklist && views.size() > 1) {\n            view_memo.emplace();\n        }\n#endif\n        for (ImageViewInOut& view : views) {\n#ifdef PS5_NATIVE\n            if (view_memo && !has_deleted_images) {\n                const auto& cached = (*view_memo)[view.index & 15U];\n                if (cached.id != NULL_IMAGE_VIEW_ID && cached.index == view.index) {\n                    const auto& cached_view = slot_image_views[cached.id];\n                    // A different TIC can remap this image during the pass.\n                    // VisitImageView must rebuild remapped descriptors.\n                    const bool remapped = !cached_view.IsBuffer() &&\n                        True(slot_images[cached_view.image_id].flags & ImageFlagBits::Remapped);\n                    if (!remapped) {\n                        view.id = cached.id;\n                        // Reuse the lookup only: PrepareImageView still\n                        // refreshes dirty pixels and synchronizes aliases.\n                        PrepareImageView(cached.id, false, false);\n                        continue;\n                    }\n                }\n            }\n#endif\n            view.id = VisitImageView(view.index, compute);\n#ifdef PS5_NATIVE\n            if (view_memo && !has_deleted_images) {\n                auto& cached = (*view_memo)[view.index & 15U];\n                cached.index = view.index;\n                cached.id = view.id;\n            }\n#endif\n            if (blacklist) {\n                if (view.blacklist && view.id != NULL_IMAGE_VIEW_ID) {\n                    const ImageViewBase& image_view = slot_image_views[view.id];\n                    auto& image = slot_images[image_view.image_id];\n                    has_blacklisted |= ScaleDown(image);\n                    image.scale_rating = 0;\n                }\n            }\n        }\n    } while (has_deleted_images || (blacklist && has_blacklisted));\n}",
+    "void TextureCache<P>::FillImageViews(std::span<ImageViewInOut> views, bool compute, bool blacklist) {\n#ifdef PS5_NATIVE\n    // The empty descriptor pass only clears the deletion/retry latch.\n    // Avoid initializing the draw-local TIC memo and entering the retry\n    // loop when no view can possibly be visited or blacklisted.\n    if (views.empty()) {\n        has_deleted_images = false;\n        return;\n    }\n#endif\n    bool has_blacklisted = false;\n    do {\n        has_deleted_images = false;\n        if (blacklist) {\n            has_blacklisted = false;\n        }\n#ifdef PS5_NATIVE\n        // P0.3: reuse nonadjacent TIC descriptors only in this stable draw pass.\n        // Never bypass NULL recovery, deletion-driven retry or blacklist work.\n        struct ViewMemo {\n            u32 index{};\n            ImageViewId id{NULL_IMAGE_VIEW_ID};\n        };\n        // A single view or blacklist pass never gets a memo hit. Avoid\n        // zeroing all 16 memo slots while holding the texture-cache lock.\n        std::optional<std::array<ViewMemo, 16>> view_memo;\n        if (!blacklist && views.size() > 1) {\n            view_memo.emplace();\n        }\n#endif\n        for (ImageViewInOut& view : views) {\n#ifdef PS5_NATIVE\n            // On a hot multi-texture HUD pass, several TIC indices may have\n            // the same low four bits. Preserve up to 16 distinct positive\n            // results without additional heap work or cross-draw caching.\n            ViewMemo* memo_slot = nullptr;\n            bool memo_hit = false;\n            if (view_memo && !has_deleted_images) {\n                auto& memo = *view_memo;\n                const std::size_t start = (view.index ^ (view.index >> 4)) & 15U;\n                for (std::size_t offset = 0; offset < memo.size(); ++offset) {\n                    auto& cached = memo[(start + offset) & 15U];\n                    if (cached.id == NULL_IMAGE_VIEW_ID) {\n                        memo_slot = &cached;\n                        break;\n                    }\n                    if (cached.index != view.index) continue;\n                    memo_slot = &cached;\n                    const auto& cached_view = slot_image_views[cached.id];\n                    // Never reuse a remapped view without rebuilding it.\n                    const bool remapped = !cached_view.IsBuffer() &&\n                        True(slot_images[cached_view.image_id].flags & ImageFlagBits::Remapped);\n                    if (!remapped) {\n                        view.id = cached.id;\n                        // A positive TIC hit still refreshes dirty pixels.\n                        PrepareImageView(cached.id, false, false);\n                        memo_hit = true;\n                    }\n                    break;\n                }\n            }\n            if (memo_hit) continue;\n#endif\n            view.id = VisitImageView(view.index, compute);\n#ifdef PS5_NATIVE\n            // A full table falls back to the original lookup without\n            // evicting any live descriptor in this draw. A deletion-driven\n            // retry uses a fresh table in the next do/while iteration.\n            if (memo_slot && !has_deleted_images) {\n                memo_slot->index = view.index;\n                memo_slot->id = view.id;\n            }\n#endif\n            if (blacklist) {\n                if (view.blacklist && view.id != NULL_IMAGE_VIEW_ID) {\n                    const ImageViewBase& image_view = slot_image_views[view.id];\n                    auto& image = slot_images[image_view.image_id];\n                    has_blacklisted |= ScaleDown(image);\n                    image.scale_rating = 0;\n                }\n            }\n        }\n    } while (has_deleted_images || (blacklist && has_blacklisted));\n}",
+    "F07 retain distinct draw-local TIC view IDs across sampler-index collisions")
+
+# F07 V01: pipeline may publish while the GPU worker is blocked acquiring
+# build_mutex. Preserve a real >1ms mutex-only stall, but no extra log for
+# an already-completed or uncontended pipeline. The earlier release/acquire
+# and FIFO semantics are unchanged.
+apply_reviewed_delta("vk_graphics_pipeline_cost.cpp",
+    "            keyed_wait.MarkLockAcquired();\n            if (is_built.load(std::memory_order_acquire)) return;\n#endif",
+    "            keyed_wait.MarkLockAcquired();\n            if (is_built.load(std::memory_order_acquire)) {\n                lock.unlock();\n                // A publisher may complete while this GPU callback waits\n                // for build_mutex. Do not call condvar; report only genuine\n                // (>1ms) mutex contention, never an instant ready callback.\n                if (keyed_wait.WasBlockedOnMutex())\n                    keyed_wait.Complete(\"graphics\", key.Hash(), CanExecuteDraw());\n                return;\n            }\n#endif",
+    "F07 V01 retain graphics mutex-only blocked publication attribution")
+apply_reviewed_delta("vk_compute_pipeline_cost.cpp",
+    "            keyed_wait.MarkLockAcquired();\n            if (is_built.load(std::memory_order_acquire)) return;\n#endif",
+    "            keyed_wait.MarkLockAcquired();\n            if (is_built.load(std::memory_order_acquire)) {\n                lock.unlock();\n                // A publisher may complete while this GPU callback waits\n                // for build_mutex. Do not call condvar; report only genuine\n                // (>1ms) mutex contention, never an instant ready callback.\n                if (keyed_wait.WasBlockedOnMutex())\n                    keyed_wait.Complete(\"compute\", diagnostic_cache_key_hash, IsBound());\n                return;\n            }\n#endif",
+    "F07 V01 retain compute mutex-only blocked publication attribution")
+
+# F07 compute: avoid repeated unordered-map probes for the same healthy
+# compute key. Only a positive per-owner entry is reused; null failures
+# still take the delayed retry, and DEV first-use tracing stays unchanged.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
+    "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n",
+    "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n#ifdef PS5_NATIVE\n    // GPU-owner-only: avoid hashing the same compute shader key for every\n    // dispatch. Only a successfully created pipeline may be cached here;\n    // failed/retired keys still take the map's bounded recovery path.\n    ComputePipelineCacheKey last_compute_key{};\n    ComputePipeline* last_compute_pipeline{};\n#endif\n",
+    "F07 compute positive owner cache fields")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
+    "#ifdef PS5_NATIVE\n    // A successful compute key is commonly reused by consecutive dispatches.\n    // Skip the unordered-map hash/probe, but never bypass null entries or\n    // development first-use tracing, which has a separate session lifetime.\n    if (!::Eden::DevVulkan::trace_pipelines && last_compute_pipeline &&\n        last_compute_key == key) {\n        return last_compute_pipeline;\n    }\n#endif\n    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
+    "F07 compute same-key skip map probe")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    }\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
+    "    }\n#ifdef PS5_NATIVE\n    // Cache only a positive map entry. Never retain a null failed shader,\n    // since its delayed one-shot recovery must still run through the map.\n    if (pipeline) {\n        last_compute_key = key;\n        last_compute_pipeline = pipeline.get();\n    } else {\n        last_compute_pipeline = nullptr;\n    }\n#endif\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
+    "F07 compute null-safe positive memo publication")

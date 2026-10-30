@@ -10,13 +10,13 @@ Tests source-extraits : `tools/check-release-case-index-dedup-host.py`, `tools/c
 
 | Source | Blob Git | Décision | Fonction/coût examiné |
 | --- | --- | --- | --- |
-| `headless/prosperoeden/eden_services.cpp` | `0e8df785961d` | Optimisation intégrée | LocaleCaseCandidates: linear-time stable regional dedup now replaces repeated vector search; actual release test. |
+| `headless/prosperoeden/eden_services.cpp` | `14db2ee513fe6` | Optimisation intégrée + revue Avatar | LocaleCaseCandidates inchangée ; PR #1 ajoute une lecture avatar PS5 optionnelle liée à l'utilisateur, hors boucle de rendu. |
 | `headless/prosperoeden/eden_services.h` | `b47c4b8a09e5` | Revue statique | EdenServices API and async media cancellation boundary; interface only. |
 | `headless/prosperoeden/fr_fr_embedded.h` | `7ebe8df590bf` | Données/constantes | Embedded French catalog data, not a per-frame algorithm. |
 | `headless/prosperoeden/frontend.cpp` | `6b0e980fb727` | Revue statique | RunApp input/render loop, language and capture entry; no further proven hotpath defect. |
 | `headless/prosperoeden/frontend.h` | `a2a7f8fffa99` | Revue statique | SelectProsperoEdenGame launcher interface only. |
 | `headless/prosperoeden/frontend_stub.cpp` | `386e9893835d` | Revue statique | Headless alternative frontend stub; not the shipping graphical path. |
-| `headless/prosperoeden/host/fake_services.cpp` | `00702b9d5b1f` | Test hôte | FakeServices scripted fixture/media creation used by host previews. |
+| `headless/prosperoeden/host/fake_services.cpp` | `f8f44ed15e49` | Test hôte | Fixture README : suppression du héros synthétique uniquement sous PE_PREVIEW_BRANDED_HOME ; hors moteur PS5. |
 | `headless/prosperoeden/host/fake_services.hpp` | `414360bf0fb1` | Test hôte | FakeServices host contract declarations; not PS5 runtime. |
 | `headless/prosperoeden/host/preview_main.cpp` | `84ef0e1466b1` | Test hôte | Preview Stage render/press/screenshot scripting, including timed waits, host-only. |
 | `headless/prosperoeden/pe/audio/mixer.cpp` | `6b814bbd5e3e` | Revue statique | Mixer::render/command bus, bounded live voice and command processing; no proven redundant native work. |
@@ -56,8 +56,8 @@ Tests source-extraits : `tools/check-release-case-index-dedup-host.py`, `tools/c
 | `headless/prosperoeden/pe/ui/dualsense_mask_asset.hpp` | `ba9a3d15e7cf` | Données/constantes | Immutable inline controller-mask artwork; no runtime decode/search. |
 | `headless/prosperoeden/pe/ui/hero_text_layout.hpp` | `9e76a77e987b` | Revue statique | wrap_description word-boundary layout, weak endings; bounded by hero text. |
 | `headless/prosperoeden/pe/ui/home.cpp` | `a40fd7f010aa` | Revue statique | refresh_home_hero/press_home and home draw, reused current game media. |
-| `headless/prosperoeden/pe/ui/launcher.cpp` | `c4e101f7dc6b` | Revue statique | Launcher update, asynchronous avatar discovery and screen transitions. |
-| `headless/prosperoeden/pe/ui/launcher.hpp` | `d49a244840e2` | Revue statique | Launcher screen/notification/selection state and async task ownership. |
+| `headless/prosperoeden/pe/ui/launcher.cpp` | `f7e26bfc8131` | Revue statique | Avatar : sonde stat/fingerprint dans le worker async ; refresh 5 s, aucune lecture de fichier dans la boucle de rendu. |
+| `headless/prosperoeden/pe/ui/launcher.hpp` | `821992032a8c` | Revue statique | Future typée ProfileAvatarProbe et état d'invalidation ; worker et teardown conservés. |
 | `headless/prosperoeden/pe/ui/mapping.cpp` | `2ce53b13a38b` | Revue statique | Button mapping UI, profile names and input binding page. |
 | `headless/prosperoeden/pe/ui/services.hpp` | `3d26738cbf0f` | Revue statique | Services abstract media and title interface; no implementation allocation. |
 | `headless/prosperoeden/pe/ui/settings.cpp` | `be3b42b9740e` | Revue statique | Settings press/render/dialog and preference labels; no frame-blocking I/O identified. |
@@ -66,10 +66,14 @@ Tests source-extraits : `tools/check-release-case-index-dedup-host.py`, `tools/c
 | `headless/prosperoeden/pe/ui/video_presets.hpp` | `05a735ec7b05` | Revue statique | Inline profile lookup/compare with no disk or GPU work. |
 | `headless/prosperoeden/pe/ui/widgets.cpp` | `7b50467e172a` | Revue statique | Canvas text/box/case-face drawing functions; batched GL and cover queries. |
 | `headless/prosperoeden/pe/ui/widgets.hpp` | `1b31fd1a9e39` | Revue statique | Widget layout/color/cover interfaces only. |
+| `headless/prosperoeden/ps5_profile_avatar_staging.hpp` | `bb125e8b2331` | Revue statique + témoin hôte | Nouveau lecteur de marqueur propriétaire : utilisateur/format exacts, O_NOFOLLOW, taille bornée ; aucune écriture ; test check-ps5-avatar-dds-host.py, console non qualifiée. |
 | `headless/prosperoeden/radio_input.c` | `e42b0ba4c27f` | Revue statique | Pad polling and bounded edge-event translation; no network/disk dependency. |
 | `headless/prosperoeden/radio_input.h` | `e994a36c5a1d` | Revue statique | Pad polling/event API declarations. |
 | `headless/prosperoeden/version.h` | `6b0dd31b2266` | Données/constantes | Canonical package/app version constants only. |
 
 ## Ce qui n'est pas clos
 
-Cette première passe est un **audit de couverture du code**. Les saccades du jeu, la fraîcheur du HUD, les verrous GPU, la qualité d'antialiasing et le comportement PS5 restent des critères indépendants, non certifiés par ces 59 décisions. Ne pas compter les fichiers inactifs ou hôte comme des FPS optimisés.
+Cette première passe est un **audit de couverture du code**. Les saccades du jeu, la fraîcheur du HUD, les verrous GPU, la qualité d'antialiasing et le comportement PS5 restent des critères indépendants, non certifiés par ces 60 décisions. Ne pas compter les fichiers inactifs ou hôte comme des FPS optimisés.
+## 2026-10-30 — standalone repository URL-only revalidation
+
+The new official repository is `niakw/ProsperoEden-Encore`. The single change to `headless/prosperoeden/pe/ui/browse.cpp` replaces the old GitHub URL shown in the launcher About screen. Verification compared complete file contents against the previously reviewed Git blob `96afbbbae783279625e88c18e39ec1115f2b4730` and proved that replacing exactly `github.com/niakw/Prospero.Eden-Encore` with `github.com/niakw/ProsperoEden-Encore` reproduces the current source byte-for-byte (Git blob `1f48fc883e2930704275b16e9333e33b1793d517`). **No other C++ logic, performance path or graphics/PS5 runtime change occurred.** The coverage ledger has been repinned to the new blob, retaining the exact-source invariant.

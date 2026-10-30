@@ -1,6 +1,6 @@
 # Eden Encore · Recherche de glyphes PlayStation par jeu Switch 1
 
-**Stockage persistant : dépôt GitHub `niakw/Prospero.Eden-Encore`, branche
+**Stockage persistant : dépôt GitHub `niakw/ProsperoEden-Encore`, branche
 `dev/ps5-sparse-jit`.** Ce dossier contient uniquement des métadonnées,
 liens et preuves de correspondance. Ne pas y ajouter de ROM, clés, textures
 Nintendo ni archives de mods redistribuables sans licence.

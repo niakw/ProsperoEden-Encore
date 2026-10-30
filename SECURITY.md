@@ -9,8 +9,8 @@ those areas are taken seriously.
 | Version / branch | Security support |
 | --- | --- |
 | Current **Prospero.Eden Encore 1.000.040** release line | ✅ Supported |
-| Active development branch `dev/ps5-sparse-jit` | Development only; fixes assessed case-by-case |
-| Historical and archived branches | ❌ Not supported |
+| Official active branch **`main`** | Current development and security fixes; source and hardware validation assessed separately |
+| Historical and secondary branches (including `dev/ps5-sparse-jit`) | ❌ Not actively maintained |
 | Upstream ProsperoEden / Eden | ❌ Report to the corresponding upstream project |
 
 Encore's primary validated console target is **firmware 13.60**. A security issue may still be

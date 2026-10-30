@@ -44,7 +44,11 @@ assert 'profile_avatar_scan_ = std::async(std::launch::async' in launcher
 assert 'profile_avatar_scan_.wait_for(std::chrono::seconds(0))' in launcher
 assert 'profile_avatar_scan_.wait();' in launcher
 assert 'list.rounded_image(avatar.texture,' in launcher
-assert 'std::future<std::string> profile_avatar_scan_;' in launcher_h
+assert 'std::future<ProfileAvatarProbe> profile_avatar_scan_;' in launcher_h
+assert 'static ProfileAvatarProbe probe_profile_avatar(Services &services);' in launcher_h
+assert 'profile_avatar_refresh_elapsed_ >= 5.0f' in launcher
+assert 'textures_.invalidate(profile_avatar_path_)' in launcher
+assert 'probe.inode' in launcher and 'probe.mtime' in launcher
 assert 'virtual std::string profile_avatar() { return {}; }' in ui_preferences
 assert 'sceUserServiceGetForegroundUser(&user_id)' in services
 # The prefix is deliberately constructed only after the foreground user ID

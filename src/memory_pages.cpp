@@ -492,16 +492,13 @@ bool CommitSparseJitCode(void* executable, std::size_t required) noexcept {
     // already known to be committed by this same worker. Cache only positive
     // answers, qualified by reservation epoch; a larger required span takes
     // the original locked ownership+allocation path.
-    struct CachedCommit {
-        void* executable{};
-        std::size_t committed{};
-        std::uint64_t generation{};
-    };
-    static thread_local CachedCommit local;
+    // A guest worker can alternate A64/A32 arenas. One positive TLS entry
+    // would then take the global mutex on every switch, even when both
+    // regions are already committed. Four MRU entries preserve the same
+    // generation/ownership contract without the avoidable lock round trips.
+    static thread_local ::Eden::Jit::SparseCommitPositiveCache local;
     const std::uint64_t generation = sparse_jit_generation.load(std::memory_order_acquire);
-    if (local.generation == generation && local.executable == executable &&
-        required <= local.committed)
-        return true;
+    if (local.Covers(executable, required, generation)) return true;
     const std::lock_guard lock{sparse_jit_mutex};
     const auto it = sparse_jit_regions.find(executable);
     if (it == sparse_jit_regions.end() || required > it->second.capacity) return false;
@@ -561,9 +558,8 @@ bool CommitSparseJitCode(void* executable, std::size_t required) noexcept {
     }
     // The page protection/mapping writes above happen before publishing a
     // positive hint. No unvalidated amount is ever returned from fastpath.
-    local.executable = executable;
-    local.committed = region.committed;
-    local.generation = sparse_jit_generation.load(std::memory_order_relaxed);
+    local.Remember(executable, region.committed,
+                   sparse_jit_generation.load(std::memory_order_relaxed));
     return true;
 }
 

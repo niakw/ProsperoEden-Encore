@@ -124,6 +124,7 @@ struct PipelineWaitTrace {
     // mutex/post-lock timings are compiled from performance.h in the
     // separate keyed-worker-wait source-extracted witness.
     void MarkLockAcquired() noexcept {}
+    bool WasBlockedOnMutex() const noexcept {return false;}
     void Complete(const char*,std::uint64_t,bool) const noexcept {}
 };
 }

@@ -18,7 +18,9 @@ source_dir="$root/headless/prosperoeden"
 build=${PROSPEROEDEN_LAUNCHER_BUILD:-"$HOME/.cache/prosperoeden-launcher"}
 cxx=${HOST_CXX:-c++}
 mkdir -p "$build/obj"
-python3 "$root/tools/launcher/render-art.py" brand fixed
+# Never use the checked-in legacy scenery: generate the OpenGL backdrop
+# from the very same JPEG used by the native PS5 packaging path.
+python3 "$root/tools/launcher/render-art.py" brand fixed backdrop
 python3 -B "$root/tools/deps.py" fetch harfbuzz
 harfbuzz=$(python3 -B "$root/tools/deps.py" path harfbuzz)
 harfbuzz=${harfbuzz%/harfbuzz.cc}

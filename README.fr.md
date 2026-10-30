@@ -14,11 +14,12 @@
     <a href="#-installation"><strong>Installation</strong></a> ·
     <a href="#-compatibilité-et-limites"><strong>Compatibilité</strong></a> ·
     <a href="#-compilations-et-validations"><strong>Builds</strong></a> ·
+    <a href="ACCESSIBILITY.md"><strong>Accessibilité</strong></a> ·
     <a href="README.md#credits"><strong>Crédits</strong></a>
   </p>
 </div>
 
-<p align="center"><img src="assets/screenshots/encore-home.png" alt="Accueil réel d'Eden Encore capturé depuis le lanceur C++/OpenGL" width="860"></p>
+<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png" alt="Eden Encore Home in English, showing the original Eden wallpaper from the actual C++/OpenGL launcher" width="860"></p>
 
 > [!IMPORTANT]
 > **FC27 — tableau maître :** [priorités F07 P0/P1/P2, sparse JIT et validation matérielle](docs/FC27_F07_MASTER_TRACKER.md). Les [critères F01–F06 validés sur hôte](docs/FC27_EXIT_GATES_2026-10-22.md) ne prouvent pas la jouabilité sur console. Le nombre de sources examinées ne mesure pas les optimisations restantes.
@@ -59,7 +60,7 @@ Une bonne expérience d'émulation ne se résume pas à lancer un jeu. Il faut p
 | **Graphismes** | Adaptations GPU vérifiées du code source jusqu'à l'archive native |
 | **Qualité** | Tests hôtes, compilation native et validation sur console clairement distingués |
 
-Encore reste un fork communautaire indépendant, et non une version officielle des projets amont.
+Encore est un dépôt communautaire indépendant, issu d'un fork historique, et non une version officielle des projets amont.
 
 </details>
 
@@ -85,7 +86,7 @@ La compression NCZ par blocs se lit directement. Un fichier « solid » peut êt
 ## 🚀 Installation
 
 > [!TIP]
-> Pour une version publiée et qualifiée, commence par [les releases GitHub](https://github.com/niakw/Prospero.Eden-Encore/releases). Les artefacts d'une CI verte sont des **versions de développement**, pas une garantie de fonctionnement en match.
+> Pour une version publiée et qualifiée, commence par [les releases GitHub](https://github.com/niakw/ProsperoEden-Encore/releases). Les artefacts d'une CI verte sont des **versions de développement**, pas une garantie de fonctionnement en match.
 
 Le paquet ZIP contient le dossier natif `PPSA99008/`. Une image FFPFSC peut également être proposée selon la release.
 
@@ -148,13 +149,13 @@ Sur le dernier match intégral archivé (`2efd8b3c`), nous avons mesuré **858 i
 
 ## 📦 Compilations et validations
 
-**Branche unique de développement : `dev/ps5-sparse-jit`.**
+**Branche officielle unique pour les nouveaux changements : `main`.**
 
 1. **Tests source/hôtes :** contrôlent le code, les adaptations, la mémoire, les entrées et les régressions.
 2. **Compilation native :** vérifie les exécutables et le contenu réel de l'archive téléchargeable.
 3. **Console :** valide ensuite le lancement, la réactivité, la qualité d'image, les commandes et la progression du jeu.
 
-[Tests du code](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Paquets natifs](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit)
+[Tests du code](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Paquets natifs](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain)
 
 Ne pas confondre une CI verte avec une version stable ou des performances validées sur la console.
 
@@ -162,10 +163,12 @@ Ne pas confondre une CI verte avec une version stable ou des performances valid�
 
 ## 🛡️ Sécurité, licences et crédits
 
+**Historique d'Encore — développement commencé le 4 octobre 2026.** Notre travail a débuté le **4 octobre 2026** sur [l'ancien fork `niakw/Prospero.Eden-Encore`](https://github.com/niakw/Prospero.Eden-Encore). Le **30 octobre 2026**, nous avons transféré ces travaux vers [ce dépôt indépendant](https://github.com/niakw/ProsperoEden-Encore), afin de rendre Encore plus facile à trouver sur GitHub. L'ancien fork reste référencé pour conserver l'historique du projet. Ce changement de dépôt ne remet pas la date de début à zéro et ne remplace pas les crédits des projets d'origine.
+
 Encore est un fork communautaire non officiel, distribué sous **GPL-3.0-or-later**. Le durcissement de l'accès aux fichiers n'est **pas** un bac à sable après élévation de privilèges.
 
 **Sources et auteurs :** [crédits détaillés dans le README principal](README.md#credits) · [composants tiers](THIRD_PARTY_NOTICES.md) · [textes complets](LICENSES/).
 
-[Licence](LICENSE) · [Sécurité](SECURITY.md) · [Contribuer](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Code de conduite](CODE_OF_CONDUCT.md).
+[Accessibilité (EN)](ACCESSIBILITY.md) · [Licence](LICENSE) · [Sécurité](SECURITY.md) · [Contribuer](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Code de conduite](CODE_OF_CONDUCT.md).
 
 Ce projet ne distribue aucun jeu commercial, aucune clé, aucun firmware ni aucun contenu propriétaire. Il ne confère aucun droit de redistribution sur les logiciels tiers.

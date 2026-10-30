@@ -98,11 +98,18 @@ def main() -> None:
             "Alias coherency check is absent")
     require('sceKernelReleaseDirectMemory(physical, LargePage)' in native,
             "Alias probe cleanup is missing")
+    # J01 replaced the single-entry TLS hint with a bounded 4-entry MRU
+    # from the source-linked, O0/O2 UBSan-tested header. Preserve the actual
+    # allocation ownership and all three sparse lifecycle invalidations.
+    sparse_header = read('headless/jit-sparse-commit.h')
     require('std::atomic<std::uint64_t> sparse_jit_generation{1};' in native and
-            'static thread_local CachedCommit local;' in native and
-            'local.generation == generation && local.executable == executable' in native and
-            'required <= local.committed' in native and
-            'local.committed = region.committed;' in native and
+            'static thread_local ::Eden::Jit::SparseCommitPositiveCache local;' in native and
+            'local.Covers(executable, required, generation)' in native and
+            'local.Remember(executable, region.committed,' in native and
+            'std::array<Entry, 4> entries{};' in sparse_header and
+            'if (generation != current) return false;' in sparse_header and
+            'required > entries[i].committed' in sparse_header and
+            'entries = {};' in sparse_header and
             native.count('sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);') == 3,
             "Sparse JIT committed-page hints must invalidate on create, trim and release")
     require('::Common::SparseJitUsage(&jit_reserved, &jit_committed)' in perf,

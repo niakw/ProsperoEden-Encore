@@ -14,17 +14,18 @@
     <a href="#-why-encore"><strong>Benefits</strong></a> ·
     <a href="#-compatibility--current-limits"><strong>Compatibility</strong></a> ·
     <a href="#-builds--validation"><strong>Builds</strong></a> ·
+    <a href="ACCESSIBILITY.md"><strong>Accessibility</strong></a> ·
     <a href="#credits"><strong>Credits</strong></a>
   </p>
 </div>
 
 <p align="center">
-  <a href="https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
-  <a href="https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Native build verification" src="https://img.shields.io/badge/build-native%20package%20checks-5e4db2"></a>
+  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
+  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain"><img alt="Native build verification" src="https://img.shields.io/badge/build-native%20package%20checks-5e4db2"></a>
   <a href="LICENSE"><img alt="License GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-31313a"></a>
 </p>
 
-<p align="center"><img src="assets/screenshots/encore-home.png" alt="Real Eden Encore Home screen captured from the C++/OpenGL launcher" width="860"></p>
+<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png" alt="Eden Encore Home in English, showing the original Eden wallpaper from the actual C++/OpenGL launcher" width="860"></p>
 
 > [!IMPORTANT]
 > **FC27 performance — live master tracker:** [F07 P0/P1/P2 priorities and sparse-JIT qualification](docs/FC27_F07_MASTER_TRACKER.md). [F01–F06 host exit gates](docs/FC27_EXIT_GATES_2026-10-22.md) are separate from on-console playability. Source-review totals are not remaining optimization counts.
@@ -48,6 +49,8 @@ Emulation on a console is more than booting a game. It should be navigable from 
 | **🎨 Graphics choices** | Vulkan/RADV and OpenGL, shader cache management, upscaling and anti-aliasing controls. |
 | **🔍 Explainable performance** | Frame-time windows, guest/JIT activity, memory pressure, cache locks and IPC—not FPS alone. |
 | **🔐 Safer native operation** | One-shot filesystem access, fail-closed recovery paths, bounded logs and package provenance checks. |
+
+**Accessibility:** [Larger text, High contrast, Reduce motion and controller navigation](ACCESSIBILITY.md) are documented with known limitations.
 
 **Our approach:** preserve a working native foundation, select and adapt upstream improvements, then validate **source → native package → real hardware** independently.
 
@@ -91,7 +94,7 @@ NCZ block compression permits random reads directly from the compressed file. So
 ## 🚀 Install Encore
 
 > [!TIP]
-> For a tested release, use [GitHub Releases](https://github.com/niakw/Prospero.Eden-Encore/releases), read the release's **specific firmware/gameplay validation notes**, and verify checksums. GitHub Actions artifacts are experimental unless separately qualified.
+> For a tested release, use [GitHub Releases](https://github.com/niakw/ProsperoEden-Encore/releases), read the release's **specific firmware/gameplay validation notes**, and verify checksums. GitHub Actions artifacts are experimental unless separately qualified.
 
 **Available packaging paths when published:** full ZIP with the application folder; optional FFPFSC image. The native title ID is `PPSA99008`.
 
@@ -158,13 +161,13 @@ See [Architecture](docs/PS5_NATIVE_ARCHITECTURE.md), [Performance roadmap](docs/
 
 ## 📦 Builds & validation
 
-<kbd>dev/ps5-sparse-jit</kbd> · <kbd>Source & host checks</kbd> · <kbd>Native package checks</kbd> · <kbd>On-device qualification</kbd>
+<kbd>main — official branch</kbd> · <kbd>Source & host checks</kbd> · <kbd>Native package checks</kbd> · <kbd>On-device qualification</kbd>
 
 1. **Source and host gates:** lock in memory/JIT lifetime, launcher contracts, source-provenance assertions and trace-derived regressions.
 2. **Native build:** compile, link, assemble, inspect the installable title and upload both application archives and debug symbols.
 3. **Real hardware:** independently verify startup, controls, frame pacing, content freshness, gameplay progression and safe return to the launcher.
 
-[Source preflight](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Native build artifacts](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Build guide](docs/BUILDING.md)
+[Source preflight](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Native build artifacts](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain) · [Build guide](docs/BUILDING.md)
 
 Download an artifact from a **successful run matching the commit you want to test**, not a previous green build. Passing CI alone does not make a release.
 
@@ -189,6 +192,8 @@ This is an unofficial community fork. It does not ship copyrighted commercial ga
 ---
 
 ## Credits
+
+**Encore project history — development since 4 October 2026.** Our work began on **4 October 2026** in the [original `niakw/Prospero.Eden-Encore` fork](https://github.com/niakw/Prospero.Eden-Encore). On **30 October 2026**, we moved that work to this [independent repository](https://github.com/niakw/ProsperoEden-Encore) to make Encore easier to discover. The former fork remains linked as part of the project's history; this repository move does **not** reset Encore's development start date or replace the upstream credits below.
 
 Encore is built from and depends on the work of many upstream projects. The list below covers the
 **direct repositories and pinned build/runtime inputs used by Encore**. Each entry identifies

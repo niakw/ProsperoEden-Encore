@@ -7,8 +7,9 @@
   brand.tga       Prospero.Eden Encore logo, for the header and games without cover art.
   controller.tga  a controller in white on transparent, tinted by the home screen.
 
-The old ProsperoEden scenic backdrop is intentionally no longer generated or loaded.
-render-art.py [name...] renders only the named pictures (brand, controller).
+The launcher preview generates the same wallpaper source used by the native PS5
+package: assets/encore-background.jpg, not the obsolete upstream scenery.
+render-art.py [name...] renders only the explicitly requested pictures.
 """
 
 import sys
@@ -17,7 +18,7 @@ from io import BytesIO
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT / "headless/prosperoeden/ui/art"
@@ -98,12 +99,41 @@ def fixed():
 
 
 
+
+def backdrop():
+    """Host preview: use the PS5 package's canonical Encore JPEG wallpaper.
+
+    The native package creates a 1920x1080 centre-cropped TGA with an
+    ImageMagick vertical flip for the OpenGL texture convention. Pillow's
+    equivalent keeps the host preview independent of ImageMagick.
+    The checked-in legacy TGA must NEVER be trusted as a preview source.
+    """
+    source = ROOT / "assets/encore-background.jpg"
+    with Image.open(source) as original:
+        wallpaper = ImageOps.fit(original.convert("RGB"), (1920, 1080),
+                                  method=Image.Resampling.LANCZOS)
+    wallpaper = ImageOps.flip(wallpaper)
+    target = ART / "backdrop.tga"
+    wallpaper.save(target, format="TGA")
+    # Pillow appends an optional 26-byte TGA footer. The native packager
+    # requires exactly the 18-byte header followed by uncompressed RGB.
+    length = 18 + 1920 * 1080 * 3
+    data = target.read_bytes()
+    if (len(data) < length or data[1] != 0 or data[2] != 2
+            or data[16] != 24 or data[12:16] != bytes((128, 7, 56, 4))):
+        raise RuntimeError("Encore canonical wallpaper TGA is malformed")
+    target.write_bytes(data[:length])
+    print(f"backdrop.tga: 1920x1080 from {source.relative_to(ROOT)}")
+
+
 def main():
     ART.mkdir(parents=True, exist_ok=True)
-    wanted = set(sys.argv[1:]) or {"brand", "controller", "fixed"}
-    unknown = wanted - {"brand", "controller", "fixed"}
+    wanted = set(sys.argv[1:]) or {"brand", "controller", "fixed", "backdrop"}
+    unknown = wanted - {"brand", "controller", "fixed", "backdrop"}
     if unknown:
         raise SystemExit("unknown Encore launcher art: " + ", ".join(sorted(unknown)))
+    if "backdrop" in wanted:
+        backdrop()
     if "brand" in wanted:
         source = ROOT / "assets/icon0.png"
         icon = Image.open(source).convert("RGBA")

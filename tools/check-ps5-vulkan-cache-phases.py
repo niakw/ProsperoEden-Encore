@@ -37,13 +37,18 @@ for phase, label, native in (
     selected = (root / "vendor/encore-active/eden-vulkan" / native).read_text()
     site = selected.index("scheduler.Record([this](vk::CommandBuffer) {")
     callback = selected[site:selected.index("        });", site)]
-    # PS5: only a genuinely unfinished pipeline under the build mutex is
-    # charged to the worker wait. Desktop retains the original lock order.
+    # Uncontended already-ready callbacks take the first lock-free exit.
+    # If publication races a genuinely blocked mutex acquisition, record the
+    # mutex-only stall but do not attribute it to condition-variable waiting.
     ready = "if (is_built.load(std::memory_order_acquire)) return;"
-    assert callback.count(ready) == 2
+    ready_under_lock = "if (is_built.load(std::memory_order_acquire)) {"
+    assert callback.count(ready) == 1
+    assert callback.count(ready_under_lock) == 1
     assert callback.index(ready) < callback.index("std::unique_lock lock{build_mutex};")
-    assert callback.index("std::unique_lock lock{build_mutex};") < callback.rindex(ready)
-    assert callback.rindex(ready) < callback.index("CachePhase::" + phase)
+    assert callback.index("std::unique_lock lock{build_mutex};") < callback.index(ready_under_lock)
+    assert callback.index(ready_under_lock) < callback.index("CachePhase::" + phase)
+    assert "if (keyed_wait.WasBlockedOnMutex())" in callback
+    assert callback.index("lock.unlock();") < callback.index("keyed_wait.WasBlockedOnMutex()")
     assert callback.index("CachePhase::" + phase) < callback.index("build_condvar.wait(")
     assert "#ifndef PS5_NATIVE\n            std::unique_lock lock{build_mutex};" in callback
     assert callback.count("detailed_gpu_profile.load(std::memory_order_relaxed)") == 1

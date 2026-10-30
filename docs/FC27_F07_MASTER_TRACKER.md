@@ -2,7 +2,7 @@
 
 **Suivi exécutable des optimisations restantes :** [F07_REMAINING_OPTIMIZATION_CHECKLIST.md](F07_REMAINING_OPTIMIZATION_CHECKLIST.md) — une case par contrôle, séparant décisions pré-build et preuves console post-build. Ne pas confondre nombre de cases et nombre de patchs nécessaires.
 
-**Date de référence :** 28 octobre 2026. **Branche :** `dev/ps5-sparse-jit`.
+**Date de référence historique :** 28 octobre 2026. **Branche actuelle : `main`** depuis le 30 octobre 2026. L'ancienne branche `dev/ps5-sparse-jit` n'est plus éditée ; ses cinq derniers correctifs ont été fusionnés via PR #5. Les résultats historiques liés à cette branche ne prouvent pas les CI récentes de `main`.
 **Source relue :** `3ca07a442d1fd85aa0cc5de08eb02099c46f2bac` (avant création de ce suivi).
 **Priorité produit :** fluidité réelle de FC 27, HUD/maillots/textures corrects, commandes réactives et absence de gel. **F07 ouvert.**
 

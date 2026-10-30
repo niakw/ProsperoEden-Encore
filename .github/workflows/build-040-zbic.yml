@@ -3,9 +3,9 @@ name: Encore native build and package
 on:
   push:
     branches:
-      - dev/ps5-sparse-jit
-      # On dev, build job is gated by the explicit [full-build] marker below.
-      # Ordinary dev commits do not compile or publish a native app.
+      - main
+      # On main, build job is gated by the explicit [full-build] marker below.
+      # Ordinary main commits do not compile or publish a native app.
   # workflow_dispatch remains available for deliberate build / stage-resume.
   workflow_dispatch:
     inputs:
@@ -29,19 +29,19 @@ permissions:
   contents: read
   actions: read
 
-# A skipped dev push must not cancel a running explicit native build.
+# A skipped main push must not cancel a running explicit native build.
 # Distinguish build-capable commits from ordinary UI/docs pushes, while
 # preserving one-at-a-time supersession for deliberate native candidates.
 # workflow_dispatch is already isolated by its event name.
 concurrency:
-  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/dev/ps5-sparse-jit' && github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[full-build]') && !contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
+  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[full-build]') && !contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
   cancel-in-progress: true
 
 jobs:
   build:
     if: >-
       ${{ !contains(github.event.head_commit.message || '', '[publish-existing]') &&
-          (github.ref == 'refs/heads/dev/ps5-sparse-jit' &&
+          (github.ref == 'refs/heads/main' &&
            github.event_name == 'workflow_dispatch' ||
            contains(github.event.head_commit.message || '', '[full-build]') ||
            contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')) }}
@@ -57,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          submodules: true
           persist-credentials: false
           # R revisions are sparse across documentation and CI commits.
           # Full history is required for an honest first-parent revision search.
@@ -532,7 +533,7 @@ jobs:
     needs: build
     if: >-
       ${{ needs.build.result == 'success' &&
-          github.ref == 'refs/heads/dev/ps5-sparse-jit' &&
+          github.ref == 'refs/heads/main' &&
           ((github.event_name == 'push' && contains(github.event.head_commit.message, '[release]')) ||
            (github.event_name == 'workflow_dispatch' && inputs.publish)) }}
     runs-on: ubuntu-24.04

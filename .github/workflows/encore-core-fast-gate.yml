@@ -3,14 +3,18 @@ name: Encore core fast gate
 on:
   push:
     branches:
-      - dev/ps5-sparse-jit
+      - main
     paths:
+      - 'vendor'
+      - '.gitmodules'
       - 'vendor/encore-active/eden-core/src/dynarmic/**'
       - 'vendor/encore-active/eden-core/src/common/sparse_large_vector.h'
       - 'src/host_memory.cpp'
       - 'src/memory_pages.cpp'
       - 'headless/jit-sparse-commit.h'
+      - 'tools/check-native-jit-sparse-positive-cache-host.py'
       - 'headless/jit-allocator.h'
+      - 'tools/check-native-jit-alias-lookup-host.py'
       - 'headless/CMakeLists.txt'
       - 'tools/check-native-sparse-jit-trim-host.py'
       - 'tools/check-native-sparse-decommit-lock-host.py'
@@ -36,6 +40,8 @@ on:
       - 'tools/check-ps5-f07-cold-stalls-host.py'
       - 'tools/check-ps5-f07-pipeline-transitions-host.py'
       - 'tools/check-ps5-f07-*.py'
+      - 'tools/check-ps5-consecutive-sampler-reuse-host.py'
+      - 'tools/check-ps5-compute-sampler-memo-host.py'
       - 'tools/check-ps5-known-empty-graphics-descriptors-host.py'
       - 'tools/check-ps5-graphics-payload-preflight-host.py'
       # A change to the gate itself must also rerun the gate.
@@ -54,6 +60,7 @@ on:
       - 'tools/fixtures/legacy-guest-write-deferred-bridge.cmake'
       - 'tools/prepare-vulkan-port.py'
       - 'tools/check-vendored-vulkan-fork.py'
+      - 'tools/check-ps5-radv-64bit-arithmetic-host.py'
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
       - 'vendor/encore-active/eden-backports/manifest.json'
@@ -234,6 +241,11 @@ on:
       - 'headless/backports/**'
       - 'vendor/encore-active/eden-backports/manifest.json'
       - '.github/workflows/encore-core-fast-gate.yml'
+  pull_request:
+    paths:
+      - 'vendor'
+      - '.gitmodules'
+      - '.github/workflows/encore-core-fast-gate.yml'
   workflow_dispatch:
 
 # Least privilege for the host-only gate (CodeQL workflow permissions #57).
@@ -254,7 +266,7 @@ jobs:
       - name: Fetch source
         uses: actions/checkout@v7
         with:
-          submodules: false
+          submodules: true
           persist-credentials: false
       - name: Install host-only C++ fixture headers
         run: |
@@ -274,6 +286,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B tools/check-vendored-vulkan-fork.py
+          python3 -B tools/check-ps5-radv-64bit-arithmetic-host.py
       # A CMake-selected native override must have exactly one graph owner
       # and one catalogue row before the longer GPU and JIT host replays.
       - name: Active native source ownership and graph parity
@@ -338,6 +351,8 @@ jobs:
           python3 -B tools/check-ps5-compute-descriptor-ring-preflight-host.py
           python3 -B tools/check-ps5-compute-descriptor-scratch-host.py
           python3 -B tools/check-ps5-f07-compute-descriptor-payload-reuse-host.py
+          python3 -B tools/check-ps5-f07-sampler-memo-collisions-host.py
+          python3 -B tools/check-ps5-f07-compute-key-positive-cache-host.py
           python3 -B tools/check-ps5-f07-texel-descriptor-stability-host.py
           python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
           python3 -B tools/check-ps5-f07-dma-clear-prelock-host.py
@@ -421,6 +436,8 @@ jobs:
           python3 -B tools/ci/check-final-engine-owner-contracts.py
           python3 -B tools/check-native-sparse-jit-release-selector-host.py
           python3 -B tools/check-jit-sparse-host.py
+          python3 -B tools/check-native-jit-sparse-positive-cache-host.py
+          python3 -B tools/check-native-jit-alias-lookup-host.py
           python3 -B tools/check-native-sparse-jit-trim-host.py
           python3 -B tools/check-native-sparse-decommit-lock-host.py
           python3 -B tools/check-sparse-zero-bounds-host.py

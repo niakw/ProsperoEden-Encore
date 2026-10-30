@@ -119,6 +119,8 @@ print(f'RADV WSI adaptation changed={changed} sha256={hashlib.sha256(text.encode
 for relative, replacements in {
     # Restore the pinned upload path: explicit CPU flush did not affect HUD corruption.
     'src/amd/vulkan/radv_cmd_buffer.c': [
+        # CodeQL #13-16: indexing byte offsets must widen before multiplication.
+        ("uint64_t index_va = state->index_buffer.va + draw->firstIndex * index_size;", "uint64_t index_va = state->index_buffer.va + (uint64_t)draw->firstIndex * index_size;"),
         # Mesa 26.2.4 (2026-10-01), upstream 1f4f4aeee9db552e2955db77ee5584aa729b0644:
         # Use the actual height, not the already clamped width, for GFX10 bin size.
         ('   extent.height = MAX2(extent.width, pdev->info.gfx_level >= GFX12 ? 128 : 64);',
@@ -141,6 +143,16 @@ for relative, replacements in {
          '''               .lower_array_layer_round_even = !compiler_info->ac->conformant_trunc_coord,'''),
     ],
     'src/amd/vulkan/meta/radv_meta_clear.c': [
+        # CodeQL #5-12: widen byte-count and metadata offsets before arithmetic.
+        ("cmask_offset += slice_size * range->baseArrayLayer;", "cmask_offset += (uint64_t)slice_size * range->baseArrayLayer;"),
+        ("size = slice_size * vk_image_subresource_layer_count(&image->vk, range);", "size = (uint64_t)slice_size * vk_image_subresource_layer_count(&image->vk, range);"),
+        ("fmask_offset += slice_size * range->baseArrayLayer;", "fmask_offset += (uint64_t)slice_size * range->baseArrayLayer;"),
+        ("dcc_offset += image->planes[0].surface.meta_slice_size * range->baseArrayLayer +", "dcc_offset += (uint64_t)image->planes[0].surface.meta_slice_size * range->baseArrayLayer +"),
+        ("size = image->planes[0].surface.u.gfx9.meta_levels[level].size * layer_count;", "size = (uint64_t)image->planes[0].surface.u.gfx9.meta_levels[level].size * layer_count;"),
+        ("dcc_offset += dcc_level->dcc_offset + dcc_level->dcc_slice_fast_clear_size * range->baseArrayLayer;", "dcc_offset += dcc_level->dcc_offset + (uint64_t)dcc_level->dcc_slice_fast_clear_size * range->baseArrayLayer;"),
+        ("size = dcc_level->dcc_slice_fast_clear_size * vk_image_subresource_layer_count(&image->vk, range);", "size = (uint64_t)dcc_level->dcc_slice_fast_clear_size * vk_image_subresource_layer_count(&image->vk, range);"),
+        ("uint64_t size = image->planes[0].surface.meta_slice_size * layer_count;", "uint64_t size = (uint64_t)image->planes[0].surface.meta_slice_size * layer_count;"),
+        ("image->planes[0].surface.meta_offset + image->planes[0].surface.meta_slice_size * range->baseArrayLayer;", "image->planes[0].surface.meta_offset + (uint64_t)image->planes[0].surface.meta_slice_size * range->baseArrayLayer;"),
         # Official Mesa 26.2.4 upstream 2752b54feeed5bb6fc7d21982b4c8acab0d0e613
         ("      if (ds_att->format == VK_FORMAT_UNDEFINED)\n         return;\n\n      VkClearDepthStencilValue clear_value", "      if (ds_att->format == VK_FORMAT_UNDEFINED)\n         return;\n\n      /* Vulkan dynamic rendering: ignore missing depth/stencil aspects. */\n      aspects &= render->ds_att_aspects;\n      if (!aspects)\n         return;\n\n      VkClearDepthStencilValue clear_value"),
         ("radv_fast_clear_depth(cmd_buffer, ds_att->iview, clear_att->clearValue.depthStencil, clear_att->aspectMask,", "radv_fast_clear_depth(cmd_buffer, ds_att->iview, clear_att->clearValue.depthStencil, aspects,"),
@@ -189,8 +201,13 @@ radv_ps5_memory_grant_gpu(void *address, uint64_t bytes)
     for old, new in replacements:
         # Mesa 26.2.4 resolves one depth/stencil image in both decompression
         # and resolve paths. Both identical source masks must be corrected.
-        expected = 2 if (relative == 'src/amd/vulkan/meta/radv_meta_resolve.c'
-                         and old == '.aspectMask = src_iview->vk.aspects,') else 1
+        expected = (
+            4 if (relative == 'src/amd/vulkan/radv_cmd_buffer.c' and
+                  old == "uint64_t index_va = state->index_buffer.va + draw->firstIndex * index_size;") else
+            2 if (relative == 'src/amd/vulkan/meta/radv_meta_clear.c' and
+                  old == "size = slice_size * vk_image_subresource_layer_count(&image->vk, range);") else
+            2 if (relative == 'src/amd/vulkan/meta/radv_meta_resolve.c' and
+                  old == '.aspectMask = src_iview->vk.aspects,') else 1)
         assert adapted.count(old) == expected, f'Pinned initialization anchor changed: {relative}'
         adapted = adapted.replace(old, new)
     if relative == 'src/amd/vulkan/radv_descriptor_update_template.c':

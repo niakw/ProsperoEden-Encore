@@ -488,9 +488,9 @@
       "path": "headless/jit-sparse-commit.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "J05",
-      "reviewed_source_git_blob": "abf0b4965d9f5927954f7c740428cc0cc86f2233",
+      "reviewed_source_git_blob": "5a26c0201572632a9e47fb4ef2fdd648bc99fb59",
       "source_review_document": "docs/FC27_F07_CROSS_SYSTEM_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Current source inspected: Plan de préengagement physique constexpr, borné par capacité virtuelle et budget restant ; ancien contrat hôte J05 déjà acquis. Ce n’est pas une autorisation d’activer le JIT sparse en production. Rerun this review only on source drift or Mesure native de pages sous-engagées ou dépassées. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven."
+      "evidence": "Current source inspected: Plan de préengagement physique constexpr, borné par capacité virtuelle et budget restant ; ancien contrat hôte J05 déjà acquis. Ce n’est pas une autorisation d’activer le JIT sparse en production. Rerun this review only on source drift or Mesure native de pages sous-engagées ou dépassées. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven. 30 October 2026 J01 follow-up: the prior unchanged-source review is superseded by a code change in the same header: a 4-entry thread-local positive physical-commit memo, guarded by sparse_jit_generation, keyed by executable alias and verified committed byte bound. Covers checks epoch and range before allowing a hit; Remember discards stale entries after epoch changes and promotes the most recent alias; it never authorizes virtual code emission and does not replace physical residency ownership checks. Explicit O0/O2 UBSan host fixture tools/check-native-jit-sparse-positive-cache-host.py checks alternation, capacity growth, LRU eviction and trim epoch. Preflight native build and PS5 13.60 runtime remain unproven."
     },
     {
       "path": "headless/jit-startup-retry.h",
@@ -716,9 +716,9 @@
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "disposition": "new_source_issue_corrected",
-      "reviewed_source_git_blob": "0e8df785961d6f87ec5b13eb99b93c5e7635ea3f",
+      "reviewed_source_git_blob": "14db2ee513fe68b203ee3fd94e4c7231b43a794e",
       "proof_ref": "tools/check-release-case-index-dedup-host.py",
-      "evidence": "LocaleCaseCandidates: linear-time stable regional dedup now replaces repeated vector search; actual release test. Exact selected source/O0/O2 host code parity; no PS5 FPS claim.",
+      "evidence": "LocaleCaseCandidates: linear-time stable regional dedup now replaces repeated vector search; actual release test. Exact selected source/O0/O2 host code parity; no PS5 FPS claim. PR #1: PS5-only owner-bound staged avatar, foreground-user lookup and readable-file check. LocaleCaseCandidates and its linear-time dedup remain byte-for-byte unchanged; no FPS claim.",
       "review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md"
     },
     {
@@ -764,10 +764,10 @@
     {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "00702b9d5b1f7898570cdec98bb6bcfb10b1448f",
+      "reviewed_source_git_blob": "f8f44ed15e49df2e5b5606997b3ead7f91e07b01",
       "review_scope": "host-only-test",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no shipping-path optimization affected. Host-only README preview now supports PE_PREVIEW_BRANDED_HOME, clearing synthetic sample-game Hero sources to reveal the already-packaged original Eden wallpaper. No PS5 production service, renderer or guest hotpath logic modified; the host C++/OpenGL real-capture workflow passed (run 41004671009). Host-only README wallpaper fixture now skips synthetic Echoes hero only when PE_PREVIEW_BRANDED_HOME is set; production native services untouched."
     },
     {
       "path": "headless/prosperoeden/host/fake_services.hpp",
@@ -1050,10 +1050,10 @@
     {
       "path": "headless/prosperoeden/pe/ui/browse.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "96afbbbae783279625e88c18e39ec1115f2b4730",
+      "reviewed_source_git_blob": "1f48fc883e2930704275b16e9333e33b1793d517",
       "review_scope": "launcher-release-hotpath",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "browse_to/press_files/draw_files path browser; disk navigation not guest GPU hotpath. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "browse_to/press_files/draw_files path browser; disk navigation not guest GPU hotpath. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. 2026-10-30 standalone migration proof: new browse.cpp differs from pinned reviewed source only by the literal About-screen GitHub repository URL; no control flow or hotpath changes."
     },
     {
       "path": "headless/prosperoeden/pe/ui/case_media_selection.hpp",
@@ -1090,18 +1090,18 @@
     {
       "path": "headless/prosperoeden/pe/ui/launcher.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "c4e101f7dc6b47134a104cee49e3e4bdc14a51d4",
+      "reviewed_source_git_blob": "f7e26bfc81315730b16e26ee6580bafba273c6c6",
       "review_scope": "launcher-release-hotpath",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Launcher update, asynchronous avatar discovery and screen transitions. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "Launcher update, asynchronous avatar discovery and screen transitions. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. PR #1: avatar filesystem fingerprint moved to async worker, five-second refresh; render loop only polls future and compares result, no synchronous stat/decode. No console proof."
     },
     {
       "path": "headless/prosperoeden/pe/ui/launcher.hpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "d49a244840e25071154d5e40854c11d6c500b20d",
+      "reviewed_source_git_blob": "821992032a8caff9c74fb1b476a8e2db89131406",
       "review_scope": "launcher-release-support",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Launcher screen/notification/selection state and async task ownership. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "Launcher screen/notification/selection state and async task ownership. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. PR #1: future payload changed from path string to ProfileAvatarProbe metadata; worker ownership and teardown wait preserved. No native build proof."
     },
     {
       "path": "headless/prosperoeden/pe/ui/library.cpp",
@@ -1184,6 +1184,14 @@
       "review_scope": "launcher-release-support",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
       "evidence": "Widget layout/color/cover interfaces only. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+    },
+    {
+      "path": "headless/prosperoeden/ps5_profile_avatar_staging.hpp",
+      "disposition": "reviewed_without_new_code_edit",
+      "reviewed_source_git_blob": "bb125e8b2331e14dbd6574531af2d6fabbf89aab",
+      "review_scope": "launcher-release-support",
+      "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
+      "evidence": "PR #1 new PS5-only optional NiakPS5 owner marker reader: O_NOFOLLOW|O_NONBLOCK, fstat regular-file and exact size, exact foreground-user/format match; no writes, no renderer/JIT path. Host fixture tools/check-ps5-avatar-dds-host.py tests same/other user, corruption and symlink rejection. Native console still unqualified."
     },
     {
       "path": "headless/prosperoeden/radio_input.c",
@@ -4450,6 +4458,7 @@
     "vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp",
     "vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h",
-    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h"
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h",
+    "headless/prosperoeden/ps5_profile_avatar_staging.hpp"
   ]
 }

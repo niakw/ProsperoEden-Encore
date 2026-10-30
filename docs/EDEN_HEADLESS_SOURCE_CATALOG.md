@@ -1,8 +1,8 @@
 # Eden Encore — catalogue des fichiers C/C++ hors encore-active : headless
 
-**Branche :** `dev/ps5-sparse-jit`. **Date du relevé :** 24 octobre 2026.
+**Branche :** `dev/ps5-sparse-jit`. **Date du relevé :** 30 octobre 2026.
 
-Ce registre complémentaire couvre les **175 chemins** de code, en-têtes et
+Ce registre complémentaire couvre les **176 chemins** de code, en-têtes et
 fragments `.c/.cc/.cpp/.h/.hpp/.inc/.cl` du dossier `headless/`.
 Il ne remplace pas `EDEN_ACTIVE_SOURCE_CATALOG.md` : les 326 fichiers
 de `vendor/encore-active` sont déjà inventoriés séparément.
@@ -13,9 +13,9 @@ pour suivi séparé et n'autorise aucune modification du launcher depuis
 l'audit moteur. Un chemin noté « À qualifier » peut avoir été audité sous
 une autre forme : il manque seulement la référence de chemin exacte.
 
-- **175** chemins sous `headless/`, dont **60** sources C/C++ et **115** en-têtes/fragments.
+- **176** chemins sous `headless/`, dont **60** sources C/C++ et **116** en-têtes/fragments.
 - **95** chemins déjà présents dans le graphe moteur.
-- **80** chemins sans propriétaire exact dans ce graphe, à trier selon leur rôle réel et leur sélection.
+- **81** chemins sans propriétaire exact dans ce graphe, à trier selon leur rôle réel et leur sélection.
 - Les deux générateurs de profils `headless/encore_overrides_generated.h`,
   `headless/glyph_overrides_generated.h` et les autres ressources générées
   sont des entrées de l'inventaire, **pas** de nouveaux patchs CMake.
@@ -24,18 +24,18 @@ une autre forme : il manque seulement la référence de chemin exacte.
 
 Ce décompte distingue l'incomplétude du **graphe de fonctions** des
 déplacements de sources réellement nécessaires. Le registre physique couvre
-toujours 175/175 chemins ; il n'y a pas 80 overrides de dépendances oubliés.
+toujours 176/176 chemins ; il n'y a pas 80 overrides de dépendances oubliés.
 
 | Rôle indicatif | Chemins sans ID exact |
 | --- | ---: |
-| `launcher/UI` | **64** |
+| `launcher/UI` | **65** |
 | `harness/test` | **10** |
 | `outil auxiliaire` | **4** |
 | `données générées` | **2** |
 | `en-tête/fragment` | **0** |
-| **Total non indexé** | **80** |
+| **Total non indexé** | **81** |
 
-Les 64 chemins du launcher sont réservés au périmètre UI séparé.
+Les 65 chemins du launcher sont réservés au périmètre UI séparé.
 Les 10 harnais, 4 outils et 2 ressources générées ne sont pas déclarés
 comme unités de correction moteur. `ps5_amd_topology_evidence.h` porte désormais l'ID U79 au statut
 **PARKED** : ses fonctions sont inventoriées, mais le commit d'origine
@@ -209,6 +209,7 @@ que des fichiers C/C++ apparaissent dans `headless/` sans être ajoutés
 | `headless/prosperoeden/pe/ui/video_presets.hpp` | launcher/UI | — | À qualifier |
 | `headless/prosperoeden/pe/ui/widgets.cpp` | launcher/UI | — | À qualifier |
 | `headless/prosperoeden/pe/ui/widgets.hpp` | launcher/UI | — | À qualifier |
+| `headless/prosperoeden/ps5_profile_avatar_staging.hpp` | launcher/UI | — | À qualifier |
 | `headless/prosperoeden/radio_input.c` | launcher/UI | — | À qualifier |
 | `headless/prosperoeden/radio_input.h` | launcher/UI | — | À qualifier |
 | `headless/prosperoeden/runtime_shims.cpp` | launcher/UI | — | À qualifier |

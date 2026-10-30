@@ -1,8 +1,17 @@
 # Nintendo Switch 2 (NS2) sur PS5 — étude de faisabilité, branche isolée
 
 **Date : 30 octobre 2026** · **État : RECHERCHE / NON INTÉGRÉ / NON TESTÉ SUR PS5**  
-**Branche :** `research/ns2-ps5-compatibility` créée depuis `dev/ps5-sparse-jit`.  
+**Branche :** `research/ns2-ps5-compatibility`, initialement issue de l’ancienne branche de développement puis resynchronisée sur `main` le 30 octobre 2026.  
 **Protection :** aucune modification du chemin de compilation/release F07, aucune PR vers la branche de production, aucun build PS5 de jeu NS2 autorisé à ce stade.
+
+## 0. Début concret du portage expérimental — 30/10/2026
+
+- **Socle :** branche de recherche resynchronisée avec `main` (conservation du sous-module `vendor` et du travail F07), sans modifier `main` ni publier de release.
+- **Premier composant adapté :** `headless/ns2/overrides/core/file_sys/program_metadata.{h,cpp}`, issu d'Eden-NS2 (fichiers `4682cf7ab52e7509802885d63dfc2498613e305f` et `074c6f7908b367e20a7d0c59eb2289aeccee5fec`, licences conservées), avec vérification explicite des bornes, des offsets relatifs FAC/FAH et détection ACID `0x200` (Switch 1) / `0x300` (Switch 2).
+- **Intégration CMake :** seul `EDEN_NS2_METADATA_EXPERIMENTAL=ON` sélectionne la source maintenue et son header ; **OFF par défaut**, aucune modification du snapshot `vendor/sources/eden`.
+- **Test reproductible :** `python3 tools/check-ns2-npdm-host.py` compile le helper exact `headless/ns2/npdm_layout.h` en C++20 `-O0` et `-O2` avec UBSan ; teste les deux dispositions, la priorité Switch 1, les données tronquées et les dépassements d'entiers.
+- **Limite :** le test vérifie le helper de sélection et la présence du câblage source ; la compilation réelle de `core`, les changements loader/HLE/JIT/GPU et tout lancement sur PS5 **restent à faire**. Ce chantier ne suffit pas à prendre en charge un jeu NS2.
+- **Prochain lot :** détection contrôlée ExeFS `main` et activation Dynarmic compatible avec ACID étendu, suivis d'une compilation hôte du chemin réellement sélectionné, avant les services et la traduction GPU.
 
 ## 1. Conclusion provisoire
 
@@ -65,11 +74,11 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 
 ## 6. Mesure de progrès honnête
 
-- **Branche créée : oui**.
+- **Branche créée et resynchronisée sur le socle de `main` : oui**.
 - **Sources NS2 lues / patches quantifiés : oui**.
 - **Patch porté dans l'exécutable Encore : non**.
 - **Tests de compilation NS2 sur PS5 : aucun**.
 - **Jeu NS2 démarré sur PS5 : aucun**.
-- **Verdict : investigation technique fondée, exécution PS5 non démontrée.**
+- **Verdict : premier composant adapté en recherche, sans intégration dans le binaire public ; exécution PS5 non démontrée.**
 
 En parallèle, un audit statique reproductible peut être lancé avec `python3 tools/ns2_patch_inventory.py --patch /chemin/eden-ns2-dkb.patch --root .` : il inspecte uniquement les chemins source et ne modifie pas le code.

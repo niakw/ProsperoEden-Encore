@@ -2,7 +2,7 @@
 
 **Plan de lots et reprise :** [F07_BATCH_EXECUTION_REGISTER.md](F07_BATCH_EXECUTION_REGISTER.md).
 
-**Branche unique :** `dev/ps5-sparse-jit`. **Périmètre actuel : 8 fichiers moteur, 38 points de fonction.** Cette liste sert à éviter les relectures circulaires. Elle ne prétend pas que 38 correctifs restent nécessaires : la plupart des fonctions ont déjà des gardes, et une revue source n'est pas une validation console.
+**Branche de travail actuelle :** `main` (transition du 30/10/2026 ; `dev/ps5-sparse-jit` conservée uniquement pour preuve historique). **Périmètre actuel : 8 fichiers moteur, 38 points de fonction.** Cette liste sert à éviter les relectures circulaires. Elle ne prétend pas que 38 correctifs restent nécessaires : la plupart des fonctions ont déjà des gardes, et une revue source n'est pas une validation console.
 
 | Priorité | Fichier source | Fonctions ciblées | Nombre |
 | --- | --- | --- | ---: |

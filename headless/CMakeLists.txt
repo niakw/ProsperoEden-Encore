@@ -6,6 +6,32 @@ if(NOT EDEN_VULKAN_DRIVER MATCHES "^(CUSTOM|RADV)$")
 endif()
 set(PORT_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
+
+# Isolated NS2 experiment: carry upstream NPDM/ACID handling without touching
+# the immutable Eden vendor snapshot or the default Switch 1 execution path.
+# This option must stay OFF for production until a complete console qualification.
+option(EDEN_NS2_METADATA_EXPERIMENTAL
+    "Experimental Switch 2 NPDM / ACID parsing (not full NS2 emulation)" OFF)
+if(EDEN_NS2_METADATA_EXPERIMENTAL)
+    set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/headless/ns2/overrides")
+    if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp"
+       OR NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.h")
+        message(FATAL_ERROR "Missing NS2 experimental NPDM source/header")
+    endif()
+    get_target_property(eden_ns2_metadata_core_sources core SOURCES)
+    list(FIND eden_ns2_metadata_core_sources
+         "file_sys/program_metadata.cpp" eden_ns2_metadata_idx)
+    if(eden_ns2_metadata_idx EQUAL -1)
+        message(FATAL_ERROR "Eden NPDM owner changed: re-audit NS2 overlay selection")
+    endif()
+    list(REMOVE_ITEM eden_ns2_metadata_core_sources "file_sys/program_metadata.cpp")
+    list(APPEND eden_ns2_metadata_core_sources
+         "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_metadata_core_sources}")
+    target_include_directories(core BEFORE PUBLIC
+        "${EDEN_NS2_METADATA_OVERLAY}" "${PORT_ROOT}/headless/ns2")
+endif()
+
 # Scalar-memory source fragments still consumed by modules trigger configure.
 set(EDEN_SCALAR_INPUT_DIR
     "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/scalar")

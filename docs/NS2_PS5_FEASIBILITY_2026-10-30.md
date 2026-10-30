@@ -18,7 +18,8 @@
 - `EDEN_NS2_EXEFS_EXPERIMENTAL=ON` (exige `EDEN_NS2_METADATA_EXPERIMENTAL=ON`) remplace deux fichiers du loader uniquement dans la branche de recherche.
 - Un fichier `main` doit être un vrai NSO dans un dossier ExeFS reconnu, et le loader de répertoire est examiné **avant** le loader NSO brut.
 - Le chemin standalone enregistre son `RomFSFactory`, recherche un `.romfs` ou un répertoire `romfs` à proximité, et évite d'utiliser NCE avec un ACID étendu.
-- Sources : portage ciblé de `0x2593/Eden-NS2` sur le snapshot Eden d'Encore, sans importer les autres modifications HLE/JIT/GPU de l'amont.
+- Sources : portage ciblé de `0x2593/Eden-NS2` sur les sources maintenues du sous-module `vendor` épinglé à `92c5829174a1169c507b72438021d3dfa9e5dfa2` ; le chargeur NSZ/XCZ et l'alignement 16 Kio sont conservés.
+- **Garde-fou :** `python3 tools/check-ns2-source-selection.py` contrôle la priorité CMake, le maintien NSZ/XCZ et l'alignement PS5.
 - **État : CODE RECHERCHE, PAS ENCORE COMPILÉ.** Vérifier la propriété réelle des fichiers CMake, la compilation et les API de ce snapshot avec les options ON avant de prétendre que le bootstrap NS2 fonctionne.
 
 ## 1. Conclusion provisoire

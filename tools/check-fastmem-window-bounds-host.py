@@ -173,7 +173,18 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-refresh-') as temp:
 # requests continue to publish updated bytes under the same owner mutex.
 protect_body = '    void Protect(' + source.split('    void Protect(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 assert protect_body.count('if (first == last && page_access[first] == access) return;') == 1
-assert 'first / PagesPerGranule == last / PagesPerGranule' in protect_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' not in protect_body
+assert 'first / PagesPerGranule != last / PagesPerGranule' not in protect_body
+# The two old no-op branches were logically exhaustive for each short span:
+# one granule has 4 guest pages, so any 2..16-page span is same or cross.
+for first in range(0, 64):
+    for count in range(1, min(64-first, 18)+1):
+        last = first + count - 1
+        old_same = (first < last and last - first < 4 and first // 4 == last // 4)
+        old_cross = (first < last and last - first < 16 and first // 4 != last // 4)
+        consolidated = first < last and last - first < 16
+        assert (old_same or old_cross) == consolidated, (first, last)
+assert protect_body.count('std::all_of(page_access.begin() + first') == 1
 assert 'std::all_of(page_access.begin() + first, page_access.begin() + last + 1' in protect_body
 assert 'first < last && last - first < 16' in protect_body
 assert protect_body.index('std::lock_guard lock{mutex};') < protect_body.index(

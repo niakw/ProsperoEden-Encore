@@ -807,3 +807,8 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 ### F07 — Neutral fallback partagé pour éviter 120 octets temporaires par échantillon
 
 La version source `abaab177` éliminait la copie de la structure native mais initialisait encore une structure neutre locale de 120 octets par échantillon. `Pad::Consume` publie désormais un `static constexpr Data neutral = neutral_data()` indépendant du batch ; les horodatages motion continuent à provenir de `raw.timestamp_us` seulement pour les entrées utilisables. Plus de construction du neutre dans la boucle. Gardes source F06 et Rxxx renforcées ; aucun changement de commandes. **22/29**, bénéfice console non mesuré.
+
+## F07 — Fastmem Protect : un seul chemin pour les permissions répétées (30 octobre 2026)
+
+- `src/host_memory.cpp::Window::Protect`: fusion des deux cas 2–16 pages identiques en un seul `std::all_of` borné ; aucune division de granule ni seconde branche. Les anciens prédicats same/cross couvrent exactement ces plages ; les mises à jour réelles continuent vers `std::fill` + `Refresh` et le compteur reste inchangé.
+- `tools/check-fastmem-window-bounds-host.py`: comparaison exhaustive des prédicats sur les plages du modèle 64 pages et tests C++ source-extraits O0/O2 ASan+UBSan (20 000 no-ops, 16/17 pages, changements traversant les granules et bornes). Aucune mesure PS5 ; F07 **22/29**, CI en attente.

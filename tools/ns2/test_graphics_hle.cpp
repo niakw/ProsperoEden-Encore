@@ -12,6 +12,7 @@
 #include "core/hle/service/nvdrv/devices/native_gpu_kind.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_context.h"
 #include "core/hle/service/am/service/graphics_syncpoint_cache.h"
+#include "core/hle/service/am/service/gpu_session_protocol.h"
 
 static int assertions=0;
 static void require(bool condition,const char* desc){
@@ -227,6 +228,80 @@ int main(){
     require(syncCounter.Observe(std::nullopt)==Cache::Unallocated &&
             syncCounter.previous==0x100000001ULL,
             "missing counter should not clear last observed value");
+
+    namespace GP=Service::AM::GpuSessionProtocol;
+    static_assert(GP::MaxDevices==256 && GP::MaxNotificationEvents==64 &&
+                  GP::MaxAddressSpaces==8);
+    constexpr std::array<GP::U32,8> createPacket{
+        0x39,6,0x12345678,0xabcdef01,0,0,0x55667788,0x99aabbcc};
+    const auto deviceRequest=GP::DecodeCreateDevice(createPacket);
+    require(deviceRequest && deviceRequest->name==0xabcdef0112345678ULL &&
+            deviceRequest->debug_label==0x99aabbcc55667788ULL,
+            "native GPU session device identity pairs");
+    GP::DeviceSlots devices;
+    const auto first=devices.Create(createPacket);
+    require(first.status==GP::Status::Success && first.id==1 &&
+            devices.Get(1) && devices.Get(1)->name==deviceRequest->name,
+            "GPU device slot starts at 1");
+    auto unsupportedDevice=createPacket;
+    unsupportedDevice[4]=1;
+    require(devices.Create(unsupportedDevice).status==GP::Status::Unsupported &&
+            devices.Count()==1,
+            "unsupported GPU creation flags do not allocate slots");
+    auto malformedDevice=createPacket;
+    malformedDevice[0]=0x38;
+    require(devices.Create(malformedDevice).status==GP::Status::InvalidPacket &&
+            devices.Count()==1,
+            "invalid GPU creation command does not allocate slots");
+    GP::DeviceSlots full;
+    for (GP::U32 id=1;id<GP::MaxDevices;++id) {
+        const auto result=full.Create(createPacket);
+        require(result.status==GP::Status::Success && result.id==id,
+                "GPU device slot ordering");
+    }
+    require(full.Count()==255 &&
+            full.Create(createPacket).status==GP::Status::OutOfResource,
+            "GPU device limit fails without overwriting slot zero");
+    const std::array<GP::U32,3> destroyDevice{0x3a,1,255};
+    require(full.Destroy(destroyDevice)==GP::Status::Success &&
+            full.Count()==254 && !full.Get(255),
+            "highest GPU device id can be destroyed");
+    require(full.Destroy(destroyDevice)==GP::Status::NotFound,
+            "duplicate GPU device destroy is reported");
+    require(full.Create(createPacket).id==255,
+            "freed GPU device ID reused");
+    const std::array<GP::U32,3> outOfRangeDevice{0x3a,1,256};
+    const std::array<GP::U32,3> truncatedDevice{0x3a,1,0x101};
+    const std::array<GP::U32,3> zeroDevice{0x3a,1,0};
+    require(full.Destroy(outOfRangeDevice)==GP::Status::InvalidPacket &&
+            full.Destroy(truncatedDevice)==GP::Status::InvalidPacket &&
+            full.Destroy(zeroDevice)==GP::Status::InvalidPacket &&
+            full.Count()==255,
+            "destroy must not truncate 32-bit ID to 8-bit alias");
+    const std::array<GP::U32,3> partition{219,1,17};
+    const auto part=GP::DecodeAddressSpacePartition(partition,203);
+    require(part && part->address_space==17 && part->user,
+            "TIPC user GPU address-space partition");
+    require(!GP::DecodeAddressSpacePartition(partition,202),
+            "GPU partition header must match command");
+    GP::NotificationSlots notifications;
+    const std::array<GP::U32,2> notifyRange{0x1b,0};
+    const std::array<GP::U32,3> requestWorker{0x25,1,63};
+    const std::array<GP::U32,3> badWorker{0x25,1,64};
+    const std::array<GP::U32,3> eventPacket{0x1c,1,63};
+    require(GP::IsGetNotificationRange(notifyRange) &&
+            GP::DecodeEventIndex(eventPacket,0x1c)==std::optional<GP::U32>{63},
+            "GPU notification range and maximum event index");
+    require(notifications.RequestWorker(requestWorker)==GP::Status::InvalidState &&
+            notifications.MarkEvent(63)==GP::Status::Success &&
+            notifications.RequestWorker(requestWorker)==GP::Status::Success,
+            "GPU worker requires a real allocated notification slot");
+    require(notifications.RequestWorker(badWorker)==GP::Status::InvalidPacket &&
+            notifications.MarkEvent(64)==GP::Status::InvalidPacket,
+            "out of range event index rejected");
+    const std::array<GP::U32,2> acquireWorker{0x26,0};
+    require(GP::IsAcquireWorker(acquireWorker),
+            "worker acquisition TIPC envelope validated");
 
     const auto generic=N::SelectNativeMemoryKind(6,6);
     require(generic && generic->selected==6 &&

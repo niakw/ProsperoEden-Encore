@@ -83,3 +83,10 @@ The `\default=false` keys are configuration override flags, not executable patch
 - The upstream notification setter expects an applet state member unavailable in pinned Encore. For correctness, command `1050` stays **unimplemented**, not fake-success. Debug service commands are likewise unimplemented.
 - `EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL` requires opt-in AM mode, replaces only the original `IApplicationProxy` source, and is rejected by the final release gate. CI syntax-compiles both actual owner source files; the existing owner and source-guard fixtures detect any missing CMake selection.
 - This is guest IPC service registration only. No NVIDIA session/channel, PS5 frame scaling, GPU supervisor, or game launch is claimed.
+
+## N4b — GPU Session command ownership and 256-device lifecycle
+
+- Extracted the bounded GPU-session command contract from `0x2593/Eden-NS2@5d2d3cf0` into `headless/ns2/hle/.../gpu_session_protocol.h`. It decodes command 41 (device create), 42 (destroy), 11/12 and 21/22 (notifications/worker), 202/203 (address-space partition) without exposing any guest GPU driver interfaces yet.
+- **Hardening beyond the upstream prototype:** device ID 0 remains reserved, exactly 255 live devices are allowed, unsupported creation flags do not mutate allocation state and destruction validates the complete 32-bit ID before indexing (the upstream's `static_cast<u8>(packet[2])` can alias indices). Worker requests require an allocated event slot; no fake event/signal is generated.
+- Synthetic host regression via `tools/check-ns2-graphics-hle-host.py` exercises 255 live devices, capacity exhaustion, reuse of id 255, double destruction, malformed packet lengths, out-of-range ID 256/257, 64 notification slots and TIPC partition headers under O0/O2 + UBSan.
+- This is an **integration prerequisite**. The real `IGpuSession` and the much larger `IGraphicsSupervisor` still require kernel event/session ownership, NVDRV fd lifecycle, GPU virtual address manager and a verified PS5-RADV render path. No runtime IPC service registration or release path is claimed.

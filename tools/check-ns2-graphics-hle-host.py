@@ -20,6 +20,7 @@ EXPECTED=[
     HEADERS/"core/hle/service/nvdrv/devices/native_sparse_remap.h",
     HEADERS/"core/hle/service/nvdrv/devices/native_gpu_context.h",
     HEADERS/"core/hle/service/am/service/graphics_syncpoint_cache.h",
+    HEADERS/"core/hle/service/am/service/gpu_session_protocol.h",
 ]
 def main()->int:
     if not all(f.is_file() for f in EXPECTED):

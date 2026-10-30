@@ -9,6 +9,7 @@
 #include "shader_recompiler/frontend/ampere/maxwell_image.h"
 
 namespace Shader::Ampere {
+class NativeTranslationCache;
 using GuestShaderRead = bool (*)(void* context, u64 gpu_address, void* buffer, std::size_t size);
 
 enum class NativeCaptureStatus : u8 {
@@ -34,5 +35,6 @@ struct NativeCaptureResult {
 // instructions. Its first 0x50 bytes are the Maxwell-compatible header.
 // Compute with a zero header needs different QMD metadata and is NOT enabled.
 [[nodiscard]] NativeCaptureResult CaptureNativeGraphicsShader(
-    u64 gpu_base, u32 stage, GuestShaderRead read, void* context);
+    u64 gpu_base, u32 stage, GuestShaderRead read, void* context,
+    NativeTranslationCache* cache = nullptr);
 } // namespace Shader::Ampere

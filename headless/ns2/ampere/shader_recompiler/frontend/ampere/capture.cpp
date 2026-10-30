@@ -3,6 +3,7 @@
 #include <array>
 #include <limits>
 #include "shader_recompiler/frontend/ampere/program_capture.h"
+#include "shader_recompiler/frontend/ampere/translation_cache.h"
 
 namespace Shader::Ampere {
 namespace {
@@ -12,7 +13,8 @@ constexpr u32 MaxCapturedInstructions = 4096;
 } // namespace
 
 NativeCaptureResult CaptureNativeGraphicsShader(
-    u64 gpu_base, u32 stage, GuestShaderRead read, void* context) {
+    u64 gpu_base, u32 stage, GuestShaderRead read, void* context,
+    NativeTranslationCache* cache) {
     NativeCaptureResult result;
     if (!read || gpu_base > std::numeric_limits<u64>::max() -
                                  NativeHeaderBytes -
@@ -61,8 +63,11 @@ NativeCaptureResult CaptureNativeGraphicsShader(
         if (observed != ProgramCaptureState::Result::Complete) continue;
 
         result.captured_native_bytes = static_cast<u32>(source.size());
-        result.image = BuildMaxwellShaderImage(
-            std::span<const u8>{header.data(), MaxwellHeaderBytes}, source, stage);
+        const auto maxwell_header =
+            std::span<const u8>{header.data(), MaxwellHeaderBytes};
+        result.image = cache
+            ? cache->GetOrTranslate(maxwell_header, source, stage)
+            : BuildMaxwellShaderImage(maxwell_header, source, stage);
         if (!result.image.Ready()) {
             result.status = NativeCaptureStatus::TranslationFailed;
             result.first_error_offset = NativeHeaderBytes +

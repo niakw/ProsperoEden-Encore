@@ -267,6 +267,23 @@ jobs:
               -o "build-ns2-a64/ampere-capture-${cxx//+/}"
             "build-ns2-a64/ampere-capture-${cxx//+/}"
           done
+      - name: Compile and run source-verified NS2 translation cache (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Wno-unused-parameter \
+              -Iheadless/ns2/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_ampere_translation_cache.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/capture.cpp \
+              -o "build-ns2-a64/ampere-cache-${cxx//+/}"
+            "build-ns2-a64/ampere-cache-${cxx//+/}"
+          done
       - name: Syntax-check actual Tegra GPU memory shader capture adapter (GCC)
         shell: bash
         run: |

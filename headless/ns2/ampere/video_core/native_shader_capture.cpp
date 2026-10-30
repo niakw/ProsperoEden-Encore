@@ -17,10 +17,11 @@ bool ReadNs2GpuShader(void* context, u64 address, void* dest, std::size_t size) 
 } // namespace
 
 Shader::Ampere::NativeCaptureResult CaptureNs2GraphicsShaderFromGpu(
-    Tegra::MemoryManager& memory, u64 gpu_program_address, u32 stage) {
+    Tegra::MemoryManager& memory, u64 gpu_program_address, u32 stage,
+    Shader::Ampere::NativeTranslationCache* cache) {
     // The GMMU mapping check is repeated for EVERY individual native
     // instruction. A fault aborts capture without populating a shader image.
     return Shader::Ampere::CaptureNativeGraphicsShader(
-        gpu_program_address, stage, ReadNs2GpuShader, &memory);
+        gpu_program_address, stage, ReadNs2GpuShader, &memory, cache);
 }
 } // namespace VideoCommon

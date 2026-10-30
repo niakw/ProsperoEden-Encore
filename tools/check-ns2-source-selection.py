@@ -318,6 +318,20 @@ def main() -> int:
                 'memory->IsFullyMappedRange(address, size)' in
                     (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'memory->ReadBlock(address, dest, size)' in
+                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                'EDEN_NS2_NATIVE_TRANSLATION_CACHE' in CMAKE and
+                'translation_cache.cpp' in CMAKE and
+                'translation_cache.h' in CMAKE and
+                (ROOT / "tools/ns2/test_ampere_translation_cache.cpp").is_file() and
+                'class NativeTranslationCache' in (ampere_root / "translation_cache.h").read_text() and
+                'std::equal(e.native.begin(), e.native.end(), native.begin())' in
+                    (ampere_root / "translation_cache.cpp").read_text() and
+                'lru.splice(lru.begin(), lru, it)' in
+                    (ampere_root / "translation_cache.cpp").read_text() and
+                '!image.Ready()' in (ampere_root / "translation_cache.cpp").read_text() and
+                'cache->GetOrTranslate(maxwell_header, source, stage)' in
+                    (ampere_root / "capture.cpp").read_text() and
+                'NativeTranslationCache* cache' in
                     (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text(),
                 "Ampere shader ISA probe must remain bounded, opt-in and release gated")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"

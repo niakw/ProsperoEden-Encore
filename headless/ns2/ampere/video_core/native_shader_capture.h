@@ -6,5 +6,6 @@
 namespace Tegra { class MemoryManager; }
 namespace VideoCommon {
 [[nodiscard]] Shader::Ampere::NativeCaptureResult CaptureNs2GraphicsShaderFromGpu(
-    Tegra::MemoryManager& memory, u64 gpu_program_address, u32 stage);
+    Tegra::MemoryManager& memory, u64 gpu_program_address, u32 stage,
+    Shader::Ampere::NativeTranslationCache* cache = nullptr);
 } // namespace VideoCommon

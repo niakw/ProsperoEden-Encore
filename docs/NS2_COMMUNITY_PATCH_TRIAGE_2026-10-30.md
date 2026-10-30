@@ -338,3 +338,29 @@ The actual NS2 loader overlay uses it. See:
   constant-buffer indirect branch target tables are not available to the
   adapter; a linear capture must never masquerade as complete when branches
   may jump beyond its last EXIT. Host regression includes this case.
+
+## N4v — Bounded source-verified native shader translation cache (research)
+
+- `NativeTranslationCache` is an **explicitly owned** opt-in bounded
+  64-entry / 16-MiB LRU of successful Ampere-to-Maxwell images. The owner
+  must be scoped to its NS2 graphics session and call `Clear()` on shader
+  invalidation or destruction; **no global cache and no Switch 1 cache keys
+  are modified**.
+- Cache lookup matches the **complete captured native shader bytes,
+  complete 0x50-byte header, and shader stage**, not the diagnostic 64-bit
+  hash or GPU address. A hash collision or a rewrite at the same GMMU VA
+  cannot silently reuse a different program.
+- The actual native GMMU capture adapter accepts an optional cache pointer.
+  It always **reads and validates all current guest shader bytes first**.
+  It never serves a hit after an unmapped read, invalid indirect branch
+  or incomplete capture. Failed translations and zero-capacity entries
+  are not retained.
+- Separate host Clang/GCC regressions cover repeated hits, in-place guest
+  instruction mutation at the same address, header/stage isolation, LRU
+  eviction and retranslation, unmapped pages, incomplete programs, failed
+  translations, zero retention and explicit invalidation.
+- This is a source-verified translation cache, **not** an active GPU
+  disk cache or completed engine integration. The existing shader
+  compilation/render loop has not yet been patched to pass an owned
+  cache instance. A PS5 full link and runtime game verification remain
+  outstanding.

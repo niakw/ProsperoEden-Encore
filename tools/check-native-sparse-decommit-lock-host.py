@@ -19,6 +19,8 @@ decommit_anchor = "void DecommitSparsePage(std::uintptr_t page) noexcept {"
 decommit_end = "\n// Address space the sparse tables span"
 assert source.count(lookup_anchor) == 1
 assert source.count(decommit_anchor) == 1
+assert "std::size_t sparse_used_prefix = 0;" in source
+assert "i < sparse_used_prefix" in source
 lookup = lookup_anchor + source.split(lookup_anchor, 1)[1].split(lookup_end, 1)[0]
 decommit = decommit_anchor + source.split(decommit_anchor, 1)[1].split(decommit_end, 1)[0]
 assert decommit.count("SparseRangeOf(page)") == 1, "avoid the unlocked duplicate 64-slot scan"
@@ -49,6 +51,7 @@ struct SparseRange {
     std::int64_t* physical = nullptr;
 };
 std::array<SparseRange, 64> sparse_ranges{};
+std::size_t sparse_used_prefix = 0;
 std::mutex sparse_mutex;
 std::atomic<std::size_t> sparse_committed{0};
 '''
@@ -69,6 +72,7 @@ int main() {
     range.physical = physical;
     range.end = reinterpret_cast<std::uintptr_t>(p) + 2 * SparseSlot;
     range.begin.store(reinterpret_cast<std::uintptr_t>(p), std::memory_order_release);
+    sparse_used_prefix = 1; // slot zero is now published, matching production
     sparse_committed.store(2 * SparseSlot);
     DecommitSparsePage(reinterpret_cast<std::uintptr_t>(p));
     assert(!owned[0].load() && owned[1].load());

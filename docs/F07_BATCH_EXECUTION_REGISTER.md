@@ -1,5 +1,7 @@
 # F07 — registre d'exécution par lots, reprise sans boucle
-_Mis en place le 28 octobre 2026 — branche d'exécution unique : `dev/ps5-sparse-jit`._
+_Mis en place le 28 octobre 2026 sur l'ancienne branche de travail ; **depuis le 30 octobre 2026, exécution exclusivement sur `main`**._
+
+> **Instruction du mainteneur (30/10/2026) :** ne plus committer, synchroniser ni travailler sur `dev/ps5-sparse-jit`. Les cinq derniers commits historiques de cette branche (`cff7bfc`, `9fa2cb4`, `e35debd`, `6f784a7`, `af92508`) ont été fusionnés sur `main` par la PR #5 (`81c1341`). L'historique ci-dessous conserve ses anciennes références pour audit, mais le HEAD de reprise, les CI et les nouveaux lots F07 doivent être ceux de `main`.
 
 > **Document de reprise opérationnel** : lire ce fichier AVANT chaque nouvelle session `continue`, puis lire `docs/F07_FUNCTION_SCOPE_2026-10-28.md` et `docs/FC27_F07_MASTER_TRACKER.md`. Toujours relire le HEAD réel et les checks CI avant de modifier. Conserver la branche unique et le générateur du fork Vulkan en synchronisation avec les sources sélectionnées. **Reprise horaire programmée** : l'automatisation « Eden Encore — reprise F07 » lit ce registre et tente de progresser sur le dépôt une fois par heure. Elle n'assure pas une exécution ininterrompue ni une validation sur console ; conserver les checkpoints et poursuivre manuellement avec « continue » reste possible.
 

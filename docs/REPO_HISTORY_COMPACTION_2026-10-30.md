@@ -29,7 +29,7 @@ The original open Avatar PR #19 was closed by GitHub when its history became inc
 Recommended: make a fresh clone into a **new directory**, preserving the old local checkout as a backup until all local uncommitted changes are accounted for.
 
 ```bash
-git clone --single-branch --branch dev/ps5-sparse-jit https://github.com/niakw/ProsperoEden-Encore.git Encore-clean
+git clone --single-branch --branch main https://github.com/niakw/ProsperoEden-Encore.git Encore-clean
 # Only when preparing a build or the source audits:
 git -C Encore-clean submodule update --init --recursive vendor
 ```
@@ -46,7 +46,7 @@ For a strict new GitHub repository storage-size target that excludes old pull-re
 
 ## Operational guardrails
 
-- Continue F07 on `dev/ps5-sparse-jit` at its current HEAD, not at historical SHAs.
+- Continue F07 exclusively on `main` at its current HEAD, not at historical SHAs.
 - Any `vendor/encore-active` edit must be committed to the vendor repository first, then reflected in Encore by a new pinned gitlink commit.
 - Keep source builds gated; this history cleanup is not a PS5 performance or FC27 proof.
 - Preserve the recovery release while any historical baseline, tag, or PR discussion may still be needed.

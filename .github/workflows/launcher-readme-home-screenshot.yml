@@ -37,6 +37,12 @@ jobs:
           grep -Fq 'load("art/backdrop.tga", &backdrop_)' headless/prosperoeden/pe/ui/textures.cpp
           grep -Fq 'PE_PREVIEW_BRANDED_HOME' headless/prosperoeden/host/fake_services.cpp
 
+      - name: Create original fictional cover art for the host-only sample titles
+        run: |
+          python3 tools/launcher/render-demo-covers.py build/readme-home
+          test "$(find build/readme-home -maxdepth 1 -name 'cover-*.tga' | wc -l)" -eq 12
+          echo "ENCORE_FICTIONAL_SAMPLE_COVERS: PASS"
+
       - name: Render the authentic Encore C++ and OpenGL home screen in English
         env:
           PE_LANG: en-US
@@ -103,8 +109,8 @@ jobs:
                       changed)
           published.parent.mkdir(parents=True, exist_ok=True)
           shutil.copyfile(screenshot, published)
-          alt = ("Eden Encore Home in English, showing the original Eden wallpaper "
-                 "from the actual C++/OpenGL launcher")
+          alt = ("Eden Encore Home in English with the original wallpaper "
+                 "and fictional sample game artwork")
           for filename in ("README.md", "README.fr.md"):
               path = Path(filename)
               source = path.read_text(encoding="utf-8")

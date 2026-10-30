@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 
 namespace pe::host
 {
@@ -48,6 +49,25 @@ constexpr Sample kSamples[] = {
     {"Caf\xC3\xA9 Nocturne", "NSP", "2.7 GB", "", 0, "French", "", 0x2b1d0e, 0xa9713c, 0xf6e7cb},
     {"Sky Shepherds", "XCI", "4.4 GB", "", 3, "English (US)", "", 0x457b9d, 0xa8dadc, 0xf1faee, true},
 };
+
+// Original fictional store-style descriptions for host-only sample titles.
+// They do not describe any commercially released game or its compatibility.
+constexpr const char *kSampleDescriptions[] = {
+    "Explore uncharted star systems, recruit a daring crew, and uncover the signal calling from beyond the last constellation.",
+    "Carry a lantern through a forgotten woodland, awaken its hidden spirits, and restore the light before the forest falls silent.",
+    "Race through spectacular festival circuits, master wild shortcuts, and battle your rivals with playful power-ups.",
+    "Build your dream seaside town, welcome passing travelers, and turn a quiet fishing pier into a bustling little harbor.",
+    "Follow the songs of an ancient valley, solve the mysteries of its ruins, and discover the stories whispered by the mountains.",
+    "Conquer dusty mountain passes, perfect every hairpin turn, and climb the ranks of the ultimate pocket-sized rally series.",
+    "Soar between floating cities, ride ever-changing winds, and uncover the secrets of a world suspended above the clouds.",
+    "Reunite the Ember Knights, forge elemental weapons, and stand against the darkness spreading across a shattered kingdom.",
+    "Fold and plant your way through a whimsical paper world, solving gentle puzzles to bring a long-forgotten garden to life.",
+    "Drift through electric midnight streets, challenge rival crews, and become a legend of the neon-lit underground.",
+    "Open your café after dusk, serve extraordinary drinks, and discover the secrets of the night through your guests' stories.",
+    "Guide a flock across skybound meadows, befriend the winds, and protect your floating village from an approaching storm.",
+};
+static_assert(sizeof(kSamples) / sizeof(kSamples[0]) ==
+              sizeof(kSampleDescriptions) / sizeof(kSampleDescriptions[0]));
 
 void put_pixel(std::vector<std::uint8_t> &pixels, int size, int x, int y, float r, float g, float b)
 {
@@ -238,6 +258,8 @@ FakeServices::FakeServices(const std::string &covers_directory)
         game.file = std::string(sample.name) + " [" + id + "]." +
                     (std::string(sample.format) == "NSP" ? "nsp" : "xci");
         game.title_id = 0x0100A00000001000ull + static_cast<std::uint64_t>(index) * 0x10000;
+        game.description = kSampleDescriptions[index];
+        game.intro = game.description;
         if (sample.update[0] != 0)
         {
             game.addons = fill(tr("Update {0}"), {sample.update});
@@ -254,11 +276,16 @@ FakeServices::FakeServices(const std::string &covers_directory)
         game.language = tr(sample.language);
         if (sample.missing[0] != 0)
             game.language_note = fill(tr("{0} not available"), {tr(sample.missing)});
-        // One game has no cover art, to show the placeholder.
-        if (index != 8)
+        // The README screenshot may use original, title-specific illustrated
+        // covers created in its temporary host directory. Normal fixture runs
+        // keep their existing deterministic covers and missing-cover test.
+        const bool branded = std::getenv("PE_PREVIEW_BRANDED_HOME") != nullptr &&
+            std::string_view(std::getenv("PE_PREVIEW_BRANDED_HOME")) == "1";
+        if (index != 8 || branded)
         {
             game.cover = covers_directory + "/cover-" + std::to_string(index) + ".tga";
-            if (!write_cover(game.cover, sample, index))
+            const bool provided = branded && std::filesystem::is_regular_file(game.cover);
+            if (!provided && !write_cover(game.cover, sample, index))
                 game.cover.clear();
         }
         // The dedicated README capture showcases Eden Encore's *own*
@@ -362,7 +389,8 @@ ui::Home FakeServices::home()
         home.last_title = last.name;
         // The normal UI specimen is not a warning state. Separate renders
         // exercise missing ROM/firmware/errors so the baseline stays legible.
-        home.last_caption = "A world of islands, mysteries and discovery.";
+        home.last_caption = last.description;
+        home.last_description = last.description;
         home.last_caption_warning = false;
         home.last_cover = last.cover;
         home.last_hero = last.hero;
@@ -382,6 +410,7 @@ ui::Home FakeServices::home()
             home.recents.back().title_id = game.title_id;
             home.recents.back().max_players = game.max_players;
             home.recents.back().intro = game.intro;
+            home.recents.back().description = game.description;
         }
     }
     // The README preview must display the *packaged Eden wallpaper*

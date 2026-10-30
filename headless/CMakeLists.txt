@@ -1894,7 +1894,7 @@ endif()
 option(EDEN_NS2_CPU6_EXPERIMENTAL
     "Research only: six guest cores and six-slot exclusive monitor" OFF)
 if(EDEN_NS2_CPU6_EXPERIMENTAL)
-    if(NOT EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_CPU6_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+    if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 six-core mode requires A64 and metadata experiments")
     endif()
     set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/headless/ns2/cpu6")

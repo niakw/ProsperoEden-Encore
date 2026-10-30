@@ -22,6 +22,15 @@ def main() -> int:
                 "No CPU6 opt-in")
         require('EDEN_NS2_CPU6_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject CPU6 experiment")
+        cpu6_condition = CMAKE.split("if(EDEN_NS2_CPU6_EXPERIMENTAL)", 1)[1].split(
+            "set(EDEN_NS2_CPU6_ROOT", 1
+        )[0]
+        require(
+            "if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)"
+            in cpu6_condition and
+            "OR EDEN_NS2_CPU6_EXPERIMENTAL OR" not in cpu6_condition,
+            "Six-core research selector must not reject itself"
+        )
         cpu6 = ROOT / "headless/ns2/cpu6"
         require("NUM_CPU_CORES = 6" in (cpu6 / "core/hardware_properties.h").read_text(),
                 "Six-core hardware map missing")

@@ -25,7 +25,8 @@ assert src.count(publish_begin) == 1 and src.count(publish_end) == 1
 publish = src[src.index(publish_begin):src.index(publish_end, src.index(publish_begin)) + len(publish_end)]
 fields = ("struct ComputePositive {",
           "std::array<ComputePositive, 4> recent_compute_pipelines{};",
-          "unsigned next_compute_positive{};")
+          "unsigned next_compute_positive{};",
+          "unsigned preferred_compute_positive{};")
 for s in fields:
     assert s in header
 for marker in ("F07 compute positive owner cache fields",
@@ -50,7 +51,9 @@ struct ComputePipelineCacheKey {
     u64 unique_hash{};
     u32 shared_memory_size{};
     u32 workgroup_size[3]{};
+    static inline unsigned equality_checks = 0;
     bool operator==(const ComputePipelineCacheKey& b) const noexcept {
+        ++equality_checks;
         return unique_hash == b.unique_hash &&
                shared_memory_size == b.shared_memory_size &&
                workgroup_size[0] == b.workgroup_size[0] &&
@@ -82,6 +85,7 @@ struct Cache {
     };
     std::array<ComputePositive, 4> recent_compute_pipelines{};
     unsigned next_compute_positive{};
+    unsigned preferred_compute_positive{};
 #endif
     ComputePipeline* Get(ComputePipelineCacheKey key) {
 __LOOKUP__
@@ -127,6 +131,13 @@ int main() {
     for (unsigned i=0; i<20000; ++i)
         assert(alternating.Get(keys[i%4]) == outputs[i%4]);
 #ifdef PS5_NATIVE
+    assert(alternating.compute_cache.probes == 4);
+    // Once the active shader is preferred, even after four keys were
+    // admitted, a repeated dispatch must compare exactly one key.
+    const auto comparisons = ComputePipelineCacheKey::equality_checks;
+    for (unsigned i=0; i<10000; ++i)
+        assert(alternating.Get(keys[3]) == outputs[3]);
+    assert(ComputePipelineCacheKey::equality_checks == comparisons + 10000);
     assert(alternating.compute_cache.probes == 4);
 #else
     assert(alternating.compute_cache.probes == 20004);
@@ -176,4 +187,4 @@ with tempfile.TemporaryDirectory(prefix="f07-compute-hot-key-") as td:
             run = subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert run.returncode==0,(native,opt,run.stderr[-4000:])
             print(f"F07_COMPUTE_KEY_POSITIVE_CACHE_PASS native={int(native)} opt={opt} "
-                  "same_key=1 alternating_4=1 overflow_5=1 failure=1 key_change=1 dev_trace=1 owner_scope=1")
+                  "same_key=1 alternating_4=1 preferred_hot=1 overflow_5=1 failure=1 key_change=1 dev_trace=1 owner_scope=1")

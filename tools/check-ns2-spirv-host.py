@@ -92,7 +92,17 @@ def main():
         path = OUT / f"synthetic-{mode}.spv"
         print(run([validator, "--target-env", "spv1.5", str(path)]).stdout, end="")
         print(f"spirv-val SPIR-V 1.5 {mode}: PASS")
-    print("Host modules valid; PS5 Vulkan pipeline not yet exercised.")
+        print(run([validator, "--target-env", "vulkan1.2", str(path)]).stdout, end="")
+        print(f"spirv-val Vulkan 1.2 {mode}: PASS")
+    module_test = OUT / "ns2-vulkan-modules"
+    run([cxx, "-std=c++20", "-O2",
+         str(ROOT / "tools/ns2/test_ampere_vulkan_module.cpp"),
+         "-o", str(module_test), "-lvulkan"])
+    print(run([str(module_test),
+               str(OUT / "synthetic-direct.spv"),
+               str(OUT / "synthetic-dispatcher.spv")]).stdout, end="")
+    print("SPIR-V validation and Vulkan shader-module creation passed; "
+          "PS5 graphics pipeline not yet exercised.")
 
 if __name__ == "__main__":
     try:

@@ -7,6 +7,7 @@ on:
     paths:
       - 'headless/ns2/ampere/**'
       - 'tools/ns2/test_ampere_real_spirv.cpp'
+      - 'tools/ns2/test_ampere_vulkan_module.cpp'
       - 'tools/check-ns2-spirv-host.py'
       - '.github/workflows/ns2-research-spirv.yml'
   workflow_dispatch:
@@ -29,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libboost-dev spirv-tools
+          sudo apt-get install -y --no-install-recommends libboost-dev spirv-tools libvulkan-dev mesa-vulkan-drivers
           mkdir -p build-ns2-deps
           git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-a64/fmt
           test "$(git -C build-ns2-a64/fmt rev-parse HEAD)" = "407c905e45ad75fc29bf0f9bb7c5c2fd3475976f"
@@ -37,7 +38,7 @@ jobs:
           test "$(git -C build-ns2-deps/sirit rev-parse HEAD)" = "b870b062998244231a4f08004d3b25151732c5c5"
           git clone --depth 1 --branch vulkan-sdk-1.4.341.0 https://github.com/KhronosGroup/SPIRV-Headers.git build-ns2-deps/spirv-headers
           test "$(git -C build-ns2-deps/spirv-headers rev-parse HEAD)" = "04f10f650d514df88b76d25e83db360142c7b174"
-      - name: Compile real SPIR-V emitter and validate direct/dispatcher graphics shaders
+      - name: Compile real SPIR-V and validate graphics shader modules against Vulkan
         shell: bash
         run: |
           set -euo pipefail

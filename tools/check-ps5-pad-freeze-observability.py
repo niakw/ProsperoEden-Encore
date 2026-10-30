@@ -14,7 +14,8 @@ assert '#include "pad_diagnostics.h"' in header
 assert '#include "log_pipe.h"' in source
 assert 'face_edges.Observe(last_buttons, pressed, kButtonCross, kButtonCircle,' in source
 assert 'kButtonSquare, kButtonTriangle);' in source
-assert 'player == 0 && is_usable(raw) && NativeLogs::Detailed()' in source
+assert 'const bool usable = is_usable(raw);' in source
+assert 'player == 0 && usable && NativeLogs::Detailed()' in source
 pad_poll = source.split("bool Pad::Poll() {", 1)[1].split("void Pad::Consume(", 1)[0]
 assert 'std::array<ps5::pad::Data, ps5::pad::kMaxSamples> samples;' in pad_poll
 assert 'std::array<ps5::pad::Data, ps5::pad::kMaxSamples> samples{};' not in pad_poll

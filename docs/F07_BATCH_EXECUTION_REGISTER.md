@@ -797,3 +797,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 
 - `headless/pad.cpp::Pad::Poll` : `scePadRead` publie toujours 0–64 entrées vers `Consume`, mêmes neutralisations sur erreur et mêmes commandes. Le **second parcours** du lot, chargé uniquement des statistiques du heartbeat détaillé (`samples_read`, `usable_samples`, `intercepted_samples`, `circle_samples`), est désormais exécuté seulement en `NativeLogs::Detailed()`; la période silencieuse n'est donc plus comptée dans ces quatre compteurs diagnostiques. Le vrai signal de vie GPU et les erreurs restent surveillés en permanence.
 - `tools/check-ps5-pad-freeze-observability.py` : garde source de la position du `Consume` hors logs, du second parcours optionnel et témoin C++20 64 quiet + 64 detailed avec 32 samples connectés, O0/O2 ASan+UBSan. Aucun gain FPS matériel revendiqué, F07 **22/29** inchangé, verdict CI en attente.
+
+## F07 — DualSense : éviter copie 120 octets par sample connecté (30 octobre 2026)
+
+- `Pad::Consume` : entrée `scePadRead` par référence constante au lieu du `auto sample = raw` (copie 120 octets). `usable` évalué une fois ; état neutre uniquement si déconnexion/interception, raccourcis HOME/overlay/menu appliqués localement à `mapped_buttons`. Axes, motion et événements conservés.
+- Témoins R390, F06, profil match, quiet logging et déduplication synchronisés. Test F06 source-extrait O0/O2/UBSan étendu : vérifie absence de mutation de l'échantillon natif.
+- Aucun FPS PS5 revendiqué ; 22/29 décisions prébuild inchangées. CI attendue.

@@ -54,7 +54,13 @@ curve_start = PAD.index(curve_anchor)
 curve_end = PAD.index("\n    }", curve_start) + len("\n    }")
 native_stick_curve = PAD[curve_start:curve_end]
 assert "std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x)" in native_stick_curve
-assert "create_is_capture && (sample.buttons & kButtonCreate)" in consume_source
+assert "create_is_capture && (mapped_buttons & kButtonCreate)" in consume_source
+assert "const bool usable = is_usable(raw);" in consume_source
+assert "const auto& sample = usable ? raw : neutral;" in consume_source
+assert "ButtonMask mapped_buttons = sample.buttons;" in consume_source
+assert "auto sample = is_usable(raw)" not in consume_source
+assert consume_source.count("is_usable(raw)") == 1
+assert consume_source.count("sample.buttons") == 1
 
 native_methods = "\n\n".join(extract(signature) for signature in (
     "void PadEngine::SetButtonState(std::size_t player, int button, bool value) {",
@@ -224,6 +230,14 @@ int main() {
     }
     assert(pad.engine->Rising(V::ButtonA)==5);
     assert(pad.engine->Rising(V::ButtonPlus)==5);
+    // Local shortcuts must not mutate the producer's native sample.
+    auto original = neutral_data(++time*4000);
+    original.connected = 1;
+    original.buttons = kButtonTouchPad | kButtonL1 | kButtonCross;
+    const auto unchanged_buttons = original.buttons;
+    pad.Consume({&original, 1});
+    assert(original.buttons == unchanged_buttons && original.connected == 1);
+    step(0);
     // Held action vanishes on intercepted/disconnected physical sampling.
     step(kButtonCircle);
     assert(pad.engine->Get(V::ButtonA));

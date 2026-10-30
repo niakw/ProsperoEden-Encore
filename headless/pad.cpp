@@ -407,7 +407,12 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
     const auto axis = [this](u8 raw) { return stick_curve[raw]; };
     auto& last_buttons = slots[player].last_buttons;
     for (const auto& raw : samples) {
-        auto sample = is_usable(raw) ? raw : neutral_data(raw.timestamp_us);
+        // Native input is a read-only 120-byte ABI structure. Refer to the
+        // connected sample directly; select neutral on interception/loss.
+        const bool usable = is_usable(raw);
+        const auto neutral = neutral_data(raw.timestamp_us);
+        const auto& sample = usable ? raw : neutral;
+        ButtonMask mapped_buttons = sample.buttons;
 
         // The guest title owns its saved gameplay assignments. Publish the
         // same physical-to-guest buttons in match, pause, and cinematics.
@@ -422,7 +427,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             (last_buttons & hud_chord) != hud_chord)
             hud_toggle = true;
         if ((pressed & menu_chord) == menu_chord || (pressed & hud_chord) == hud_chord)
-            sample.buttons &= ~(kButtonTouchPad | kButtonL1 | kButtonR1);
+            mapped_buttons &= ~(kButtonTouchPad | kButtonL1 | kButtonR1);
         // libScePad does not expose the physical Sony PS/Home button.
         // Touchpad + Options is a local guest HOME substitute, NEVER a
         // Nintendo system menu shortcut. It suppresses guest Plus and Minus
@@ -432,7 +437,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             (pressed & kButtonOptions) != 0,
             (pressed & (kButtonL1 | kButtonR1)) != 0);
         if (slot.guest_home.BlockChordButtons()) {
-            sample.buttons &= ~(kButtonTouchPad | kButtonOptions);
+            mapped_buttons &= ~(kButtonTouchPad | kButtonOptions);
             // A tap pulse from an earlier interaction must not leak through
             // during the guest HOME chord or immediately after its release.
             slot.select_pulse = 0;
@@ -454,7 +459,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             if (!slot.touch_chord && !slot.select_held) slot.select_pulse = kSelectTapPolls + 1;
             slot.select_held = false;
         }
-        if (!is_usable(raw)) {
+        if (!usable) {
             // A controller that went away neither tapped nor holds anything.
             slot.select_pulse = 0;
             slot.select_held = false;
@@ -466,13 +471,13 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             std::fprintf(stderr,
                          "EDEN_PAD_EVENT player=1 previous=%08x buttons=%08x timestamp_us=%llu usable=%d\n",
                          last_buttons, pressed, static_cast<unsigned long long>(raw.timestamp_us),
-                         is_usable(raw) ? 1 : 0);
+                         usable ? 1 : 0);
         }
 #endif
         // R332: record physical rising edges, not guest button labels, so a
         // missing Square/Triangle can be isolated from in-game remapping.
         // Quiet sessions never pay for or publish these counters.
-        if (player == 0 && is_usable(raw) && NativeLogs::Detailed()) {
+        if (player == 0 && usable && NativeLogs::Detailed()) {
             face_edges.Observe(last_buttons, pressed, kButtonCross, kButtonCircle,
                                kButtonSquare, kButtonTriangle);
             if ((pressed & kButtonOptions) && !(last_buttons & kButtonOptions))
@@ -482,27 +487,27 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         }
         last_buttons = pressed;
         for (const auto [mask, button] : fixed)
-            engine->SetButtonState(player, button, (sample.buttons & mask) != 0);
+            engine->SetButtonState(player, button, (mapped_buttons & mask) != 0);
         // The game's buttons are digital: the analog triggers count from the threshold.
         const bool left = sample.triggers.l2 / 255.0f >= trigger_threshold;
         const bool right = sample.triggers.r2 / 255.0f >= trigger_threshold;
         for (int game = 0; game < kGameButtons; ++game) {
             const int pad = active_mapping[game];
             if (pad == pad_touchpad) continue;  // set_touch
-            engine->SetButtonState(player, kGame[game], (sample.buttons & kPad[pad]) != 0 ||
+            engine->SetButtonState(player, kGame[game], (mapped_buttons & kPad[pad]) != 0 ||
                                                         (pad == pad_l2 && left) || (pad == pad_r2 && right));
         }
-        set_touch(sample.buttons);
+        set_touch(mapped_buttons);
         // Respect custom layouts that explicitly map Create to another guest
         // action. Only otherwise does physical Create become Switch Capture.
         engine->SetButtonState(player, Button::ButtonCapture,
-            create_is_capture && (sample.buttons & kButtonCreate) != 0);
+            create_is_capture && (mapped_buttons & kButtonCreate) != 0);
         engine->SetStickPosition(player, 0, axis(sample.left_stick.x), -axis(sample.left_stick.y));
         engine->SetStickPosition(player, 1, axis(sample.right_stick.x), -axis(sample.right_stick.y));
         // Motion: acceleration in G and angular velocity in rad/s, mapped to Eden's axes and units
         // the way its SDL driver maps a DualSense.
         auto& last_motion = slots[player].last_motion_us;
-        if (!is_usable(raw)) {
+        if (!usable) {
             // Away (disconnected, or input taken by the system): stop, rather than keep turning.
             if (last_motion) engine->SetMotionAtRest(player);
             last_motion = 0;

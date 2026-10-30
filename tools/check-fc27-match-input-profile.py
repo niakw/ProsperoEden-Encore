@@ -32,7 +32,7 @@ assert "game_action_profile_observed=0" in main
 assert "const int pad = active_mapping[game];" in pad
 assert "const int touch_button = MappedTo(active_mapping, pad_touchpad);" in pad
 assert "MappedTo(active_mapping, pad_create) < 0;" in pad
-assert "create_is_capture && (sample.buttons & kButtonCreate)" in pad
+assert "create_is_capture && (mapped_buttons & kButtonCreate)" in pad
 assert "next.own_mapping = true;" in ui and "next.mapping = mapping;" in ui
 assert 'game["mapping"] = Settings::MappingJson(value.mapping' in store
 assert "mapping_context.observe(" not in pad

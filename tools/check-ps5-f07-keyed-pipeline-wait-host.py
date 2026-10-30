@@ -20,6 +20,8 @@ begin = perf.index("struct PipelineWaitTrace {")
 end = perf.index("\n};", begin) + len("\n};")
 trace = perf[begin:end]
 assert "if (!enabled) return;" in trace
+assert "WasBlockedOnMutex() const noexcept" in trace
+assert "lock_acquired - started) >= std::chrono::milliseconds(1)" in trace
 assert "wait_ns=%llu usable=%u" in trace
 assert "finished - started" in trace
 assert "lock_acquired - started" in trace
@@ -51,12 +53,12 @@ def callback_body(text, kind):
     assert text.rfind("if (!is_built.load(std::memory_order_acquire)) {", 0, first) >= 0
     assert "if (is_built.load(std::memory_order_acquire)) return;" in block
     assert block.count("std::unique_lock lock{build_mutex};") == 2
-    assert block.count("if (is_built.load(std::memory_order_acquire)) return;") == 2
+    assert block.count("if (is_built.load(std::memory_order_acquire)) return;") == 1
+    assert "if (keyed_wait.WasBlockedOnMutex())" in block
     assert block.index("if (is_built.load(std::memory_order_acquire)) return;") < block.index("PipelineWaitTrace keyed_wait;")
-    assert block.index("PipelineWaitTrace keyed_wait;") < block.index("std::unique_lock lock{build_mutex};") < block.index("keyed_wait.MarkLockAcquired();") < block.rindex("if (is_built.load(std::memory_order_acquire)) return;")
-    # The first ready check is still before the timer, so completed builders
-    # skip diagnostics entirely. A publication after the first check but
-    # before locking remains a no-log fast exit under the mutex.
+    assert block.index("PipelineWaitTrace keyed_wait;") < block.index("std::unique_lock lock{build_mutex};") < block.index("keyed_wait.MarkLockAcquired();") < block.index("if (is_built.load(std::memory_order_acquire)) {")
+    # The first ready check still skips diagnostics entirely. A publication
+    # after it emits a trace ONLY for >1ms mutex contention; no condvar wait.
     assert "#ifndef PS5_NATIVE\n            std::unique_lock lock{build_mutex};" in block
     assert "build_condvar.wait(lock, [this] { return is_built.load(std::memory_order::relaxed); });" in block
     assert "lock.unlock();" in block
@@ -211,6 +213,33 @@ int main() {
         contended.scheduler.Run();
         publisher.join();
     }
+    // A shader builder may finish WHILE the GPU worker waits for its mutex.
+    // A real 14ms mutex stall must be traced without a condition wait.
+    {
+        Pipeline published_under_mutex;
+        published_under_mutex.Queue();
+        std::atomic<bool> locked{false};
+        std::atomic<bool> gpu_at_mutex{false};
+        std::thread publisher([&] {
+            std::unique_lock hold{published_under_mutex.build_mutex};
+            locked.store(true, std::memory_order_release);
+            locked.notify_one();
+            gpu_at_mutex.wait(false, std::memory_order_acquire);
+            std::this_thread::sleep_for(std::chrono::milliseconds(14));
+            published_under_mutex.is_built.store(true, std::memory_order_release);
+            hold.unlock();
+            published_under_mutex.build_condvar.notify_all();
+        });
+        locked.wait(false, std::memory_order_acquire);
+        published_under_mutex.on_before_lock = [&] {
+            gpu_at_mutex.store(true, std::memory_order_release);
+            gpu_at_mutex.notify_one();
+        };
+        published_under_mutex.on_before_wait = [&] {assert(false);};
+        published_under_mutex.scheduler.Run();
+        publisher.join();
+        assert(published_under_mutex.IsBound());
+    }
 #endif
     detailed_gpu_profile.store(false);
     {
@@ -246,13 +275,14 @@ with tempfile.TemporaryDirectory(prefix="f07-v01-worker-keyed-") as tmp:
                 lines = [line for line in out.stdout.splitlines()
                          if line.startswith("EDEN_VULKAN_PIPELINE_WAIT ")]
                 if native:
-                    assert len(lines) == 3, (kind, opt, lines)
+                    assert len(lines) == 4, (kind, opt, lines)
                     assert all(f"kind={kind}" in line for line in lines)
                     expected_key = "0000000000001234" if kind == "graphics" else "000000000000abcd"
                     assert all(f"key={expected_key}" in line for line in lines)
                     assert "usable=1" in lines[0]
                     assert "usable=0" in lines[1]
                     assert "usable=1" in lines[2]
+                    assert "usable=1" in lines[3]
                     assert all(int(line.split("wait_ns=")[1].split()[0]) > 0 for line in lines)
                     # The new recorded wait combines the forced 14ms mutex
                     # ownership plus 9ms condition wait; the old trace only
@@ -265,6 +295,7 @@ with tempfile.TemporaryDirectory(prefix="f07-v01-worker-keyed-") as tmp:
                         assert total == mutex + post, (kind, opt, item)
                     assert int(lines[2].split("mutex_ns=")[1].split()[0]) >= 12_000_000
                     assert int(lines[2].split("post_mutex_ns=")[1].split()[0]) >= 1_000_000
+                    assert int(lines[3].split("mutex_ns=")[1].split()[0]) >= 12_000_000
                 else:
                     assert not lines, (kind, opt, lines)
                 print(f"F07_KEYED_PIPELINE_WAIT_PASS kind={kind} native={int(native)} {opt}")

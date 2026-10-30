@@ -34,7 +34,9 @@
 - Depuis `0x2593/Eden-NS2`, portage ciblé des premières familles LSE : `CAS`, `LDADD`, `LDCLR`, `LDEOR`, `LDSET`, `SWP`, y compris les sous-formes 8/16 bits annoncées par les variantes `B/H`. Les fonctions sont ajoutées à `load_store_exclusive.cpp` et à la table/déclarations du frontend A64.
 - Modèle amont d'opérations atomiques : instructions traduites en lectures/écritures exclusives avec un chemin de réessai sur échec, sémantique d'ordre acquire/release spécifiée pour `A/R`. **La correction de ce modèle sous contention réelle n'est pas encore prouvée**.
 - La sélection reste confinée à `EDEN_NS2_A64_EXPERIMENTAL=ON` ; aucun changement de `main`, de l'archive Eden épinglée ni de release.
-- Témoins mis à jour pour les motifs du décodeur ; **le vrai frontend doit repasser en compilation sur le SHA de ce lot**. Restent notamment CASP, autres LSE, PAC complet, GPU SM86, HLE et budget 12 Gio.
+- Témoins mis à jour pour les motifs du décodeur ; **le vrai frontend a été recompilé en vérification syntaxique sur le SHA de ce lot (deux jobs verts)**. Restent notamment CASP, autres LSE, PAC complet, GPU SM86, HLE et budget 12 Gio.
+
+**Validation N2b sur le SHA `0f85999a52efeed594c364f56c45e56bd78e99b9` :** [CI #41023661808](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41023661808), deux jobs **SUCCESS** : C++20/UBSan O0/O2 pour la table réelle, et syntax-check `clang++` du vrai `a64_translate.cpp` maintenu avec l'overlay NS2 et `fmt 12.1.0` épinglé. **Cela n'est pas un test du comportement atomique sous contention, ni un build PS5, ni un lancement de jeu.**
 
 ### N1b — ExeFS expérimental, chargement par étapes
 

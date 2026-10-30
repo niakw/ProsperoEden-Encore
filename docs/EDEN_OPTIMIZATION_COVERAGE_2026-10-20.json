@@ -825,11 +825,10 @@
     },
     {
       "path": "headless/prosperoeden/pe/audio/stream_ring.hpp",
-      "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "48a7205d87f965cac77566850afff918c18f286d",
+      "disposition": "code_changed_in_batch",
+      "reviewed_source_git_blob": "85a3d6e4209b81ad378f0d7072534627512495be",
       "review_scope": "launcher-release-hotpath",
-      "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "StreamRing read/write circular float buffer; no filesystem or GL calls. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "2026-10-30 bc171c2: SPSC stereo float ring copies use two contiguous memcpy spans instead of modulo per sample, preserving release/acquire and empty behavior; tools/check-ps5-launcher-audio-stream-ring-host.py in fast gate validates wrap/zero/overflow/concurrent FIFO at O0/O2 with ASan/UBSan. Console performance not measured."
     },
     {
       "path": "headless/prosperoeden/pe/audio/wav.cpp",

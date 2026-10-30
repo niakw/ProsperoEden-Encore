@@ -23,7 +23,7 @@ Tests source-extraits : `tools/check-release-case-index-dedup-host.py`, `tools/c
 | `headless/prosperoeden/pe/audio/mixer.hpp` | `73bac058eccd` | Revue statique | Mixer command/voice fields and audio callback interface. |
 | `headless/prosperoeden/pe/audio/sounds.cpp` | `3fec935a1a77` | Revue statique | SoundBank::load occurs during startup; play posts cue through mixer. |
 | `headless/prosperoeden/pe/audio/sounds.hpp` | `8818b3923e5f` | Revue statique | Static sound cue and sample ownership declarations. |
-| `headless/prosperoeden/pe/audio/stream_ring.hpp` | `48a7205d87f9` | Revue statique | StreamRing read/write circular float buffer; no filesystem or GL calls. |
+| `headless/prosperoeden/pe/audio/stream_ring.hpp` | `85a3d6e4209b` | Optimisation intégrée, CI à qualifier | Deux copies `memcpy` contiguës au plus par accès ; suppression du modulo par échantillon, publication SPSC préservée. Témoin `tools/check-ps5-launcher-audio-stream-ring-host.py` O0/O2 ASan/UBSan ; gain console non mesuré. |
 | `headless/prosperoeden/pe/audio/wav.cpp` | `9f04abce17f6` | Revue statique | decode_wav PCM parser called on sound load, not each audio callback. |
 | `headless/prosperoeden/pe/audio/wav.hpp` | `ecc8a878f7c2` | Revue statique | DecodedWav representation and decode signature. |
 | `headless/prosperoeden/pe/core/file.hpp` | `63e01611dfc5` | Revue statique | read_file bounded to configured max size and only called by loaders. |

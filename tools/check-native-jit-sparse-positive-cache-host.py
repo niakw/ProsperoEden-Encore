@@ -19,6 +19,8 @@ assert "local.Remember(executable, region.committed," in source
 assert "sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);" in source
 cache_header = (ROOT / "headless/jit-sparse-commit.h").read_text()
 assert "if (!entries[i].executable) return false;" in cache_header
+assert "if (entries[0].executable == executable) {" in cache_header
+assert "return required <= entries[0].committed;" in cache_header
 compiler = shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 FIXTURE = r"""
@@ -68,6 +70,10 @@ int main() {
     assert(!cache.Covers(arenas[2], committed + 1, 7));
     cache.Remember(arenas[2], committed * 2, 7);
     assert(cache.Covers(arenas[2], committed * 2, 7));
+    assert(!cache.Covers(arenas[2], committed * 2 + 1, 7));
+    // A later physical commit refreshes the same arena in-place.
+    cache.Remember(arenas[2], committed * 4, 7);
+    assert(cache.Covers(arenas[2], committed * 4, 7));
     assert(cache.Covers(arenas[0], committed, 7));
     cache.Remember(arenas[4], committed, 7);
     assert(!cache.Covers(arenas[1], committed, 7)); // LRU evicted

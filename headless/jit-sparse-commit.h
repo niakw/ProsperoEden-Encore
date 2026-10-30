@@ -72,11 +72,15 @@ class SparseCommitPositiveCache {
 public:
     bool Covers(void* executable, std::size_t required, std::uint64_t current) noexcept {
         if (generation != current) return false;
-        for (std::size_t i = 0; i < entries.size(); ++i) {
+        // EnsureMemoryCommitted probes this path for every translated block.
+        // A same-core cache hit must not write to TLS: the former i=0 MRU
+        // promotion wrote entries[0] back to itself on every hot probe.
+        if (entries[0].executable == executable && required <= entries[0].committed)
+            return true;
+        for (std::size_t i = 1; i < entries.size(); ++i) {
             if (entries[i].executable != executable || required > entries[i].committed)
                 continue;
-            // The usual same-core hit does not move anything; a core switch
-            // promotes its entry so subsequent guest blocks cost one compare.
+            // Only cross-core hits require MRU promotion.
             const Entry hit = entries[i];
             for (std::size_t j = i; j > 0; --j) entries[j] = entries[j - 1];
             entries[0] = hit;

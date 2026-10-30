@@ -303,7 +303,9 @@ int main() {
     std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
                 "same_alias_noop=10000 unmap_noop=10000 crossing=1 O0_O2=1\n");
 }
-'''.replace('PAGES', method).replace('MAP', map_body).replace('UNMAP', unmap_body)
+'''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
+    '\nUNMAP\n', '\n' + unmap_body + '\n')
+assert '\nUNMAP\n' not in map_cpp and '\nMAP\n' not in map_cpp
 with tempfile.TemporaryDirectory(prefix='encore-fastmem-map-unmap-') as temp:
     path = Path(temp)/'map.cpp'
     path.write_text(map_cpp)

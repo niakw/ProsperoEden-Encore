@@ -404,17 +404,29 @@ int main() {
     // page's crossing guard as well as its own guard.
     TestWindow boundary;
     boundary.Map(4 * GuestPage, 4 * GuestPage, GuestPage, 3);
+    boundary.chunk_aliased[0] = 1;
+    boundary.page_access[3] = 3; // owned predecessor: its guard must change
     boundary.chunk_aliased[1] = 1;
     boundary.Map(4 * GuestPage, 4 * GuestPage, GuestPage, 1);
     assert(boundary.updates == 1 && boundary.guard_refreshes == 1);
+    assert(boundary.map[3] == 2); // blocked guest write in page 4
     assert(boundary.map[3] == (boundary.Own(3) | boundary.Own(4)));
     assert(boundary.map[4] == (boundary.Own(4) | boundary.Own(5)));
+    // The final page has no successor and must not index beyond the window.
+    TestWindow tail;
+    tail.Map((GuestPages - 1) * GuestPage, (GuestPages - 1) * GuestPage,
+             GuestPage, 3);
+    tail.chunk_aliased.back() = 1;
+    tail.Map((GuestPages - 1) * GuestPage, (GuestPages - 1) * GuestPage,
+             GuestPage, 1);
+    assert(tail.updates == 1 && tail.guard_refreshes == 1);
+    assert(tail.map.back() == (tail.Own(GuestPages - 1) | tail.Own(GuestPages)));
     // Failed native alias: unchanged backing MUST still retry Update.
     TestWindow missing_alias;
     missing_alias.Map(0, 0, GuestPage, 3);
     missing_alias.Map(0, 0, GuestPage, 1);
     assert(missing_alias.updates == 2 && missing_alias.guard_refreshes == 0);
-    std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 
+    std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
                 "same_alias_noop=10000 unmap_noop=10000 same16k=1 "
                 "cross16k=10000 permission_only=1 predecessor_guard=1 bound16=1 O0_O2=1\n");
 }

@@ -54,6 +54,20 @@ int main() {
     current = Eden::MakeHudSnapshot(clock, speed);
     assert(current.glyphs == Eden::HudText("VLK F30 S80 W200"));
     assert(!memo.RefreshNeeded(clock, speed));
+    // The real presentation clock advances every frame, even while the
+    // formatter is memoized. The next one-second window must become visible.
+    Eden::HudClock paced{};
+    Eden::HudSnapshotMemo paced_memo{};
+    paced.Present(100.0);
+    assert(paced_memo.RefreshNeeded(paced, 100.0));
+    for (int i = 1; i <= 60; ++i) {
+        paced.Present(100.0 + i / 60.0);
+        if (i < 60) assert(!paced_memo.RefreshNeeded(paced, 100.0));
+    }
+    assert(paced_memo.RefreshNeeded(paced, 100.0));
+    assert(Eden::MakeHudSnapshot(paced, 100.0).glyphs ==
+           Eden::HudText("VLK F60 S100 W17"));
+    assert(!paced_memo.RefreshNeeded(paced, 100.0));
     // A new game must replace the previous title's loading snapshot.
     memo.Reset();
     assert(memo.RefreshNeeded(clock, speed));

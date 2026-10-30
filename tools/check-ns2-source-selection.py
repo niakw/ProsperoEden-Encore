@@ -265,7 +265,9 @@ def main() -> int:
         isa_header = (ampere_root / "probe.h").read_text()
         isa_classifier = (ampere_root / "classify.h").read_text()
         require('option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in CMAKE and
-                'target_sources(shader_recompiler PRIVATE "${EDEN_NS2_AMPERE_PROBE}")' in CMAKE and
+                'target_sources(shader_recompiler PRIVATE' in CMAKE and
+                '"${EDEN_NS2_AMPERE_PROBE}" "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"' in CMAKE and
+                'EDEN_NS2_AMPERE_LOWER_BRIDGE' in CMAKE and
                 'target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")' in CMAKE and
                 'EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR' in CMAKE[release_gate:] and
                 'ISA_ROW_COUNT = 629' in isa_table and
@@ -276,7 +278,21 @@ def main() -> int:
                 'Classify(op12).kind' in isa_probe and
                 'enum class ProbeStatus' in isa_header and
                 'enum class OpKind' in isa_classifier and
-                (ROOT / "tools/ns2/test_ampere_isa_probe.cpp").is_file(),
+                (ROOT / "tools/ns2/test_ampere_isa_probe.cpp").is_file() and
+                (ROOT / "tools/ns2/test_ampere_lower_bridge.cpp").is_file() and
+                (ampere_root / "lower_to_maxwell.h").is_file() and
+                (ampere_root / "register_pressure.h").is_file() and
+                (ampere_root / "lower_bridge.h").is_file() and
+                "LowerReviewedToMaxwell(std::span<const u8> native_code)" in
+                    (ampere_root / "lower_bridge.cpp").read_text() and
+                "ProbeProgram(native_code)" in
+                    (ampere_root / "lower_bridge.cpp").read_text() and
+                "LowerToMaxwell(input)" in
+                    (ampere_root / "lower_bridge.cpp").read_text() and
+                "BridgeMaxInstructions = 4096" in
+                    (ampere_root / "lower_bridge.cpp").read_text() and
+                "LowerBridgeStatus::UnsupportedSemantics" in
+                    (ampere_root / "lower_bridge.cpp").read_text(),
                 "Ampere shader ISA probe must remain bounded, opt-in and release gated")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()

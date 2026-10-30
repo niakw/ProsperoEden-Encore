@@ -222,6 +222,20 @@ jobs:
               -o "build-ns2-a64/ampere-isa-${cxx//+/}"
             "build-ns2-a64/ampere-isa-${cxx//+/}"
           done
+      - name: Compile and run real Ampere-to-Maxwell lowering (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wno-unused-parameter \
+              -Iheadless/ns2/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_ampere_lower_bridge.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              -o "build-ns2-a64/ampere-lower-${cxx//+/}"
+            "build-ns2-a64/ampere-lower-${cxx//+/}"
+          done
       - name: Compile and run Switch 1/2 content-format recognition fixtures
         shell: bash
         run: |

@@ -242,3 +242,34 @@ The actual NS2 loader overlay uses it. See:
   lowering-to-Maxwell translator or full task/mesh shader execution.
   Correct Ampere shader generation, pipeline state, render passes and
   validation on PS5 are still needed. No Mario Kart World FPS claim.
+
+## N4s — First real Ampere -> Maxwell translation handoff (research only)
+
+- Imports `lower_to_maxwell.h` and `register_pressure.h` directly from
+  pinned `0x2593/Eden-NS2` commit
+  `e2f285ab1ecd3a2475c2ccad66f23b06b94ead5c`, GPL-3.0-or-later
+  (ISA encoding reference credits Mesa NAK MIT). No bulk video-core, texture,
+  CMake or shader backend port; no change to `vendor/`.
+- The new `lower_bridge.{h,cpp}` turns native guest **128-bit
+  instructions** into **real Maxwell words** plus a native-to-output
+  source-offset map through the upstream lowering routine. It requires an
+  opcode recognized in the pinned 629-entry ISA table and rejects unknown
+  bit fields, incorrect alignment, unsupported instructions, failed branch
+  relocation, missing unconditional exit, bad source map and oversized output.
+  This pathway is capped to **4096** native instructions, smaller than the
+  65,536-instruction bare-probe capacity, until allocations/real guest runtime
+  are validated. Error statuses are explicit and no partial output escapes
+  on a failure.
+- The existing `EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL` option (default OFF,
+  denied by PS5 final release gate) compiles the actual lowering bridge into
+  `shader_recompiler` alongside the earlier opcode probe.
+- Actual Clang and GCC host tests use **the real lowering implementation**,
+  checking simple native NOP/EXIT and MOV/EXIT streams, generated Maxwell
+  instructions and source mapping, unknown opcodes/fields, incomplete
+  programs, invalid lengths and bounded input. Static source-owner guards
+  enforce the dependency and CMake gates.
+- **Not a shader pipeline yet:** Maxwell environment scheduling/header
+  insertion, GPU-memory program capture, IR translation, cache identity,
+  native task/mesh shader semantics, Vulkan RADV and PS5 game runtime
+  remain separate gates. This implementation is a tested frontend
+  conversion step, not proof of Mario Kart World rendering or playable FPS.

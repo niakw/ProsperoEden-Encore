@@ -2093,11 +2093,11 @@ if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
 endif()
 
-# Isolated Ampere SM70+ shader ISA reconnaissance. This compiles the real
+# Isolated Ampere SM70+ ISA decode and reviewed native-to-Maxwell lowering.\n# This compiles the real
 # 128-bit decoder into shader_recompiler only for a deliberately selected NS2
 # research build. No shader translation or renderer enablement is implied.
 option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
-    "Research only: bounded Ampere 128-bit ISA opcode and field probe" OFF)
+    "Research only: bounded Ampere 128-bit ISA probe and reviewed Maxwell lowering" OFF)
 if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 Ampere ISA probe requires research metadata mode")
@@ -2105,7 +2105,8 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/headless/ns2/ampere")
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
-    foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h)
+    foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
+            lower_to_maxwell.h lower_bridge.h register_pressure.h)
         if(NOT EXISTS
            "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
             message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
@@ -2114,7 +2115,13 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_AMPERE_PROBE}")
         message(FATAL_ERROR "Missing NS2 Ampere shader instruction decoder")
     endif()
-    target_sources(shader_recompiler PRIVATE "${EDEN_NS2_AMPERE_PROBE}")
+    set(EDEN_NS2_AMPERE_LOWER_BRIDGE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/lower_bridge.cpp")
+    if(NOT EXISTS "${EDEN_NS2_AMPERE_LOWER_BRIDGE}")
+        message(FATAL_ERROR "Missing NS2 bounded native-to-Maxwell translation bridge")
+    endif()
+    target_sources(shader_recompiler PRIVATE
+        "${EDEN_NS2_AMPERE_PROBE}" "${EDEN_NS2_AMPERE_LOWER_BRIDGE}")
     target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
 endif()
 

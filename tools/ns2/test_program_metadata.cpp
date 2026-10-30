@@ -162,8 +162,9 @@ int main(int argc, char** argv) {
         std::copy_n(main_nso.data(), header.size(), header.data());
         require(Eden::NS2::ExeFS::PreflightNso(header, main_nso.size()).Ready(),
                 "Real NS2 ExeFS header guard rejected homebrew main");
+        constexpr char guest_text[] = "hello from HOS\n";
         require(std::search(main_nso.begin(), main_nso.end(),
-                            "hello from HOS\n", "hello from HOS\n" + 15)
+                            guest_text, guest_text + sizeof(guest_text) - 1)
                     != main_nso.end(), "Unexpected AArch64 public NSO test text");
         std::cout << "Real parser + NSO0 guard: paired public ExeFS fixture PASS"
                   << " (no KProcess or HLE boot)\\n";

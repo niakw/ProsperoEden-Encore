@@ -13,7 +13,7 @@
 using namespace Eden::NS2::ExeFS;
 using Header = std::array<std::uint8_t, NsoHeaderBytes>;
 
-static void Put(Header& h, std::size_t offset, std::uint32_t value) {
+static constexpr void Put(Header& h, std::size_t offset, std::uint32_t value) {
     for (std::size_t i = 0; i < 4; ++i)
         h[offset + i] = static_cast<std::uint8_t>(value >> (8 * i));
 }

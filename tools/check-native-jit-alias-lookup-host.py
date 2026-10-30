@@ -61,6 +61,14 @@ int main(){
  }
  for(unsigned i=0;i<100000;++i)
    assert(aliases.Find(rx[i%8],7)==rw[i%8]);
+ // Capacity is fixed at eight: the ninth distinct arena evicts exactly
+ // the oldest positive hint, not an arbitrary address-hash collision.
+ auto* ninth=reinterpret_cast<std::uint8_t*>(0x18000000ULL);
+ auto* ninth_rw=reinterpret_cast<std::uint8_t*>(0x98000000ULL);
+ aliases.Remember(ninth,ninth_rw,7);
+ assert(aliases.Find(ninth,7)==ninth_rw);
+ assert(!aliases.Find(rx[0],7));
+ for(unsigned i=1;i<8;++i) assert(aliases.Find(rx[i],7)==rw[i]);
  assert(!aliases.Find(rx[0],8)); // trim/release epoch flush
  assert(aliases.Find(rx[3],7)==rw[3]);
  aliases.Remember(rx[0],rw[0],8);
@@ -105,4 +113,4 @@ with tempfile.TemporaryDirectory(prefix="eden-jit-alias-") as temp:
   "-I",str(d),"-I",str(root/"headless"),str(d/"witness.cpp"),"-o",str(exe)],
   check=True,timeout=90)
  subprocess.run([str(exe)],check=True,timeout=90)
-print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 epoch=1 retirement=1 sanitizer=1")
+print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 eviction9=1 epoch=1 retirement=1 sanitizer=1")

@@ -73,3 +73,6 @@ Tests source-extraits : `tools/check-release-case-index-dedup-host.py`, `tools/c
 ## Ce qui n'est pas clos
 
 Cette première passe est un **audit de couverture du code**. Les saccades du jeu, la fraîcheur du HUD, les verrous GPU, la qualité d'antialiasing et le comportement PS5 restent des critères indépendants, non certifiés par ces 59 décisions. Ne pas compter les fichiers inactifs ou hôte comme des FPS optimisés.
+## 2026-10-30 — standalone repository URL-only revalidation
+
+The new official repository is `niakw/ProsperoEden-Encore`. The single change to `headless/prosperoeden/pe/ui/browse.cpp` replaces the old GitHub URL shown in the launcher About screen. Verification compared complete file contents against the previously reviewed Git blob `96afbbbae783279625e88c18e39ec1115f2b4730` and proved that replacing exactly `github.com/niakw/Prospero.Eden-Encore` with `github.com/niakw/ProsperoEden-Encore` reproduces the current source byte-for-byte (Git blob `1f48fc883e2930704275b16e9333e33b1793d517`). **No other C++ logic, performance path or graphics/PS5 runtime change occurred.** The coverage ledger has been repinned to the new blob, retaining the exact-source invariant.

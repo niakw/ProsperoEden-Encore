@@ -54,6 +54,7 @@ double LoadingCalm() {
 std::atomic<bool> hud_enabled{true};
 #ifdef EDEN_PS5_VULKAN
 HudClock vulkan_hud_clock;
+HudSnapshotMemo vulkan_hud_memo;
 double vulkan_hud_stats_time{}, vulkan_hud_speed{};
 #endif
 HudSnapshot vulkan_hud;
@@ -578,6 +579,7 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
 #ifdef EDEN_PS5_VULKAN
     if (vulkan) {
         vulkan_hud_clock = {};
+        vulkan_hud_memo.Reset();
         vulkan_hud = MakeLoadingSnapshot(0);
         vulkan_hud_stats_time = vulkan_hud_speed = 0;
         window_info.type = Core::Frontend::WindowSystemType::PS5;
@@ -685,7 +687,11 @@ void GraphicsWindow::OnFrameDisplayed() {
                 vulkan_hud_speed = system->GetAndResetPerfStats().emulation_speed * 100.0;
                 vulkan_hud_stats_time = now;
             }
-            vulkan_hud = MakeHudSnapshot(vulkan_hud_clock, vulkan_hud_speed);
+            // The glyphs change only with the clock's one-second window or
+            // the guest speed sample. A snapshot reset forces the first game
+            // frame to replace the loading scene, even when FPS is unknown.
+            if (vulkan_hud_memo.RefreshNeeded(vulkan_hud_clock, vulkan_hud_speed))
+                vulkan_hud = MakeHudSnapshot(vulkan_hud_clock, vulkan_hud_speed);
         }
 #endif
         ++frame_total;

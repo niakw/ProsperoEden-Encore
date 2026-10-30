@@ -684,6 +684,9 @@ std::mutex sparse_mutex;
 // the bound must still be searched; retire only a completely free tail.
 // Registering a new range grows the bound again before releasing the mutex.
 std::size_t sparse_used_prefix = 0;
+// Protected by sparse_mutex. Changing the range topology invalidates exact
+// negative lookup hints without touching the positive per-worker range hints.
+std::uint64_t sparse_range_generation = 1;
 std::atomic<std::size_t> sparse_reserved{0}, sparse_committed{0};
 std::atomic<int> sparse_state{0}; // 0 unknown, 1 in use, 2 not available (tables are dense)
 
@@ -698,6 +701,8 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     static thread_local std::array<SparseRange*, 2> last_ranges{};
     static thread_local unsigned next_slot = 0;
     static thread_local unsigned preferred_slot = 0;
+    static thread_local std::uintptr_t last_negative_address = 0;
+    static thread_local std::uint64_t last_negative_generation = 0;
     if (sparse_used_prefix != 0) {
         for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
             const unsigned slot = preferred_slot ^ probe;
@@ -711,6 +716,11 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
             }
         }
     }
+    // A dense fallback may repeatedly request the same guest-table address.
+    // The owner mutex serializes this hint with all range insertions/removals.
+    // Never cache a whole 2 MiB region: host reservations need not be aligned.
+    if (last_negative_generation == sparse_range_generation &&
+        last_negative_address == address) return nullptr;
     for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
         auto& range = sparse_ranges[i];
         // Already checked under the same lock; avoid a second atomic read.
@@ -728,6 +738,8 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     // through the 64-entry owner table adds avoidable cost. Every hint is
     // rechecked against the current begin/end under sparse_mutex, so a
     // retired or reused slot cannot return a stale range.
+    last_negative_address = address;
+    last_negative_generation = sparse_range_generation;
     return nullptr;
 }
 
@@ -822,6 +834,7 @@ void ReleaseSparse(SparseRange& range) {
     sparse_reserved.fetch_sub(span, std::memory_order_relaxed);
     sparse_committed.fetch_sub(owned * SparseSlot, std::memory_order_relaxed);
     range.begin.store(0, std::memory_order_release);
+    ++sparse_range_generation; // retire exact negative hints under sparse_mutex
     // No readers can inspect the non-atomic range metadata without
     // sparse_mutex. A released high slot cannot force later first commits
     // to scan 64 empty records across title restarts.
@@ -945,6 +958,7 @@ void* AllocateSparsePages(std::size_t size) noexcept {
     // Future lookups see this slot while retaining the original owner lock.
     sparse_used_prefix = (std::max)(
         sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);
+    ++sparse_range_generation; // publish exact negative-hint invalidation
     sparse_reserved.fetch_add(span, std::memory_order_relaxed);
     return address;
 }

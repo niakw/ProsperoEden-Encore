@@ -28,6 +28,12 @@ assert "next_slot ^= 1u;" in lookup
 assert "if (&range == last_ranges[0] || &range == last_ranges[1]) continue;" in lookup
 assert "if (sparse_used_prefix != 0)" in lookup
 assert "std::size_t sparse_used_prefix = 0;" in source
+assert "std::uint64_t sparse_range_generation = 1;" in source
+assert source.count("++sparse_range_generation;") == 2
+assert "last_negative_generation == sparse_range_generation" in lookup
+assert "last_negative_address == address" in lookup
+assert lookup.index("last_negative_address == address") < lookup.index("i < sparse_used_prefix")
+assert lookup.index("last_negative_address = address;") > lookup.index("i < sparse_used_prefix")
 assert source.count("sparse_used_prefix = (std::max)(") == 1
 pub_start = source.index("    sparse_used_prefix = (std::max)(")
 pub_end = source.index(";", pub_start) + 1
@@ -47,7 +53,8 @@ shrink = """    while (sparse_used_prefix > 0 &&
            sparse_ranges[sparse_used_prefix - 1].begin.load(std::memory_order_relaxed) == 0)
         --sparse_used_prefix;"""
 assert release.count(shrink) == 1
-assert release.index("range.begin.store(0, std::memory_order_release);") < release.index(shrink)
+assert release.index("range.begin.store(0, std::memory_order_release);") < release.index("++sparse_range_generation;") < release.index(shrink)
+assert source.index("sparse_used_prefix = (std::max)(") < source.index("++sparse_range_generation; // publish exact")
 for function in ("void FreeSparsePages(", "void CommitSparsePage(", "void DecommitSparsePage("):
     body = source[source.index(function):]
     assert body.index("const std::lock_guard lock{sparse_mutex};") < body.index(
@@ -83,6 +90,7 @@ struct SparseRange {
 std::array<SparseRange, 64> sparse_ranges{};
 std::mutex sparse_mutex;
 std::size_t sparse_used_prefix = 0;
+std::uint64_t sparse_range_generation = 1;
 __LOOKUP__
 SparseRange* ChooseFreeRange() {
     std::lock_guard lock{sparse_mutex};
@@ -97,11 +105,13 @@ void Register(unsigned slot, std::uintptr_t begin) {
     free_range->end = begin + 4096;
     free_range->begin.store(begin, std::memory_order_release);
 __PUBLISH__
+    ++sparse_range_generation;
 }
 void Release(unsigned slot) {
     std::lock_guard lock{sparse_mutex};
     sparse_ranges[slot].begin.store(0, std::memory_order_release);
 __SHRINK__
+    ++sparse_range_generation;
 }
 SparseRange* Lookup(std::uintptr_t address) {
     std::lock_guard lock{sparse_mutex};
@@ -121,6 +131,8 @@ int main() {
     assert(!Lookup(0x2000));
     assert(scans.load() == 1);
     Register(1, 0x2000);
+    // Same exact address was negatively cached before registration.
+    assert(Lookup(0x2000) == &sparse_ranges[1]);
     assert(Lookup(0x2001) == &sparse_ranges[1]);
     assert(sparse_used_prefix == 2);
     scans = 0;
@@ -154,6 +166,14 @@ int main() {
         assert(Lookup(0x5001) == &sparse_ranges[63]);
     }
     assert(scans.load() <= 40004); // <= 4 probes per alternating pair
+    // Full-prefix misses cost up to 64 atomics; repeat the exact same
+    // negative lookup without scanning the full table again.
+    scans = 0;
+    assert(!Lookup(0xdead0000));
+    assert(scans.load() >= 3);
+    scans = 0;
+    for (int i = 0; i < 10000; ++i) assert(!Lookup(0xdead0000));
+    assert(scans.load() <= 20000); // only two positive hints per miss
     // A dense-region miss must not erase valid sparse-table hints. The
     // subsequent high-slot lookup needs at most two revalidated probes, not
     // a 64-slot scan. Stale aliases are still checked after release/reuse.
@@ -167,7 +187,7 @@ int main() {
     scans = 0;
     // A negative lookup now rechecks two retained hints (one retired)
     // plus the one live unhinted table. Preserve the hints for later hits.
-    assert(!Lookup(0x5001) && scans.load() == 3);
+    assert(!Lookup(0x5001) && scans.load() <= 2); // negative memo, hints only
     for (int j = 0; j < 2000; ++j) {
         Register(63, 0x5000);
         assert(Lookup(0x5001) == &sparse_ranges[63]);
@@ -211,6 +231,7 @@ int main() {
     scans = 0;
     assert(ChooseFreeRange() == &sparse_ranges[40] && scans.load() == 41);
     Register(40, 0xdead0000);
+    assert(Lookup(0xdead0000) == &sparse_ranges[40]); // epoch invalidated miss
     for (int i = 63; i >= 0; --i) Release(i);
     scans = 0;
     assert(sparse_used_prefix == 0 && ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
@@ -230,4 +251,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 exact_negative_cache=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")

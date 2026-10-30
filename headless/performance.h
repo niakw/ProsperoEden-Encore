@@ -305,6 +305,12 @@ struct PipelineWaitTrace {
     void MarkLockAcquired() noexcept {
         if (enabled) lock_acquired = std::chrono::steady_clock::now();
     }
+    // If publication won the race during mutex acquisition, the condition
+    // wait is unnecessary, but a real lock stall must not disappear from V01.
+    // Reuse the already captured timestamp; no new clock read on the hot path.
+    [[nodiscard]] bool WasBlockedOnMutex() const noexcept {
+        return enabled && (lock_acquired - started) >= std::chrono::milliseconds(1);
+    }
     void Complete(const char* kind, std::uint64_t cache_key, bool usable) const {
         if (!enabled) return;
         const auto finished = std::chrono::steady_clock::now();

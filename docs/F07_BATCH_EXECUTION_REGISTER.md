@@ -803,3 +803,7 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 - `Pad::Consume` : entrée `scePadRead` par référence constante au lieu du `auto sample = raw` (copie 120 octets). `usable` évalué une fois ; état neutre uniquement si déconnexion/interception, raccourcis HOME/overlay/menu appliqués localement à `mapped_buttons`. Axes, motion et événements conservés.
 - Témoins R390, F06, profil match, quiet logging et déduplication synchronisés. Test F06 source-extrait O0/O2/UBSan étendu : vérifie absence de mutation de l'échantillon natif.
 - Aucun FPS PS5 revendiqué ; 22/29 décisions prébuild inchangées. CI attendue.
+
+### F07 — Neutral fallback partagé pour éviter 120 octets temporaires par échantillon
+
+La version source `abaab177` éliminait la copie de la structure native mais initialisait encore une structure neutre locale de 120 octets par échantillon. `Pad::Consume` publie désormais un `static constexpr Data neutral = neutral_data()` indépendant du batch ; les horodatages motion continuent à provenir de `raw.timestamp_us` seulement pour les entrées utilisables. Plus de construction du neutre dans la boucle. Gardes source F06 et Rxxx renforcées ; aucun changement de commandes. **22/29**, bénéfice console non mesuré.

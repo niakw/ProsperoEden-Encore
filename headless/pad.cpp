@@ -406,11 +406,14 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
     };
     const auto axis = [this](u8 raw) { return stick_curve[raw]; };
     auto& last_buttons = slots[player].last_buttons;
+    // Immutable fallback is shared between samples and poll calls.
+    // The neutral timestamp is never consumed: the motion path reads
+    // raw.timestamp_us only for usable controller samples.
+    static constexpr Data neutral = neutral_data();
     for (const auto& raw : samples) {
         // Native input is a read-only 120-byte ABI structure. Refer to the
         // connected sample directly; select neutral on interception/loss.
         const bool usable = is_usable(raw);
-        const auto neutral = neutral_data(raw.timestamp_us);
         const auto& sample = usable ? raw : neutral;
         ButtonMask mapped_buttons = sample.buttons;
 

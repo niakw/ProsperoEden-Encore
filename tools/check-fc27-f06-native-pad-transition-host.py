@@ -57,6 +57,8 @@ assert "std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x)" in nativ
 assert "create_is_capture && (mapped_buttons & kButtonCreate)" in consume_source
 assert "const bool usable = is_usable(raw);" in consume_source
 assert "const auto& sample = usable ? raw : neutral;" in consume_source
+assert "static constexpr Data neutral = neutral_data();" in consume_source
+assert "sample.timestamp_us" not in consume_source
 assert "ButtonMask mapped_buttons = sample.buttons;" in consume_source
 assert "auto sample = is_usable(raw)" not in consume_source
 assert consume_source.count("is_usable(raw)") == 1

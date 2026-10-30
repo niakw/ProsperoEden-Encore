@@ -60,6 +60,9 @@ assert "engine->ResetControllers();" in source
 assert "const bool usable = is_usable(raw);" in source
 assert "if (!usable)" in source
 assert "const auto& sample = usable ? raw : neutral;" in source
+assert "static constexpr Data neutral = neutral_data();" in source
+assert "const auto neutral = neutral_data(raw.timestamp_us);" not in source
+assert "sample.timestamp_us" not in source
 assert "ButtonMask mapped_buttons = sample.buttons;" in source
 assert "auto sample = is_usable(raw) ?" not in source
 

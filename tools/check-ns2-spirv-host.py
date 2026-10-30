@@ -102,7 +102,7 @@ def main():
                str(OUT / "synthetic-direct.spv"),
                str(OUT / "synthetic-dispatcher.spv")]).stdout, end="")
     print("SPIR-V validation and Vulkan shader-module creation passed; "
-          "PS5 graphics pipeline not yet exercised.")
+          "real PS5 Vulkan renderer not exercised.")
 
 if __name__ == "__main__":
     try:

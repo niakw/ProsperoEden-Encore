@@ -2108,7 +2108,7 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
             lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
             program_address_map.h capture.h program_capture.h translation_cache.h
-            maxwell_environment.h)
+            maxwell_environment.h ir_bridge.h)
         if(NOT EXISTS
            "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
             message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
@@ -2146,7 +2146,13 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER}")
         message(FATAL_ERROR "Missing NS2 Shader::Environment Maxwell frontend adapter")
     endif()
+    set(EDEN_NS2_MAXWELL_IR_BRIDGE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/ir_bridge.cpp")
+    if(NOT EXISTS "${EDEN_NS2_MAXWELL_IR_BRIDGE}")
+        message(FATAL_ERROR "Missing NS2 Maxwell CFG/IR research handoff")
+    endif()
     target_sources(shader_recompiler PRIVATE
+        "${EDEN_NS2_MAXWELL_IR_BRIDGE}"
         "${EDEN_NS2_AMPERE_PROBE}"
         "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"
         "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}"

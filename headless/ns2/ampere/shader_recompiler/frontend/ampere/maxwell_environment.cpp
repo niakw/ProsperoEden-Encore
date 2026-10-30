@@ -4,6 +4,24 @@
 #include <utility>
 
 namespace Shader::Ampere {
+namespace {
+// Metadata is consulted independently by Maxwell IR lowering. Never combine
+// instructions captured from one GPU header with stage/CBUF context from
+// another shader, including after GMMU remapping at the same guest VA.
+[[nodiscard]] bool MatchesCapturedHeader(const Shader::Environment& source,
+                                          const MaxwellShaderImage& image) {
+    constexpr std::size_t header_bytes = sizeof(Shader::ProgramHeader);
+    static_assert(header_bytes == 0x50);
+    if (image.code.size() < header_bytes / sizeof(u64)) return false;
+    const auto* raw = reinterpret_cast<const unsigned char*>(&source.SPH());
+    for (std::size_t i = 0; i < header_bytes; ++i) {
+        if (raw[i] != static_cast<unsigned char>(
+                image.code[i / sizeof(u64)] >> (8 * (i % sizeof(u64)))))
+            return false;
+    }
+    return true;
+}
+} // namespace
 
 NativeMaxwellEnvironment::NativeMaxwellEnvironment(
     std::unique_ptr<Shader::Environment> owned_source,
@@ -25,7 +43,8 @@ std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::Create(
     Shader::Environment& source, MaxwellShaderImage image) {
     if (!image.Ready() || image.code.empty() ||
         image.first_instruction_address != 0x50 ||
-        !image.ReadMaxwellInstruction(0x50))
+        !image.ReadMaxwellInstruction(0x50) ||
+        !MatchesCapturedHeader(source, image))
         return {};
     return std::unique_ptr<NativeMaxwellEnvironment>(
         new NativeMaxwellEnvironment({}, source, std::move(image)));
@@ -34,7 +53,8 @@ std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::CreateOwned(
     std::unique_ptr<Shader::Environment> source, MaxwellShaderImage image) {
     if (!source || !image.Ready() || image.code.empty() ||
         image.first_instruction_address != 0x50 ||
-        !image.ReadMaxwellInstruction(0x50)) {
+        !image.ReadMaxwellInstruction(0x50) ||
+        !MatchesCapturedHeader(*source, image)) {
         // Some C++ ABIs destroy by-value parameters at the end of the
         // caller's full expression, not at function return. Release the
         // rejected graphics context here so failure is deterministic.

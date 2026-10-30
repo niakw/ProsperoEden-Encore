@@ -758,3 +758,8 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 - `src/memory_pages.cpp::SparseRangeOf` : cache thread-local des échecs exacts étendu de 1 à 4 adresses sans supposer une granularité de réservation hôte ; les deux indices positifs gardent la priorité. Chaque publication/retrait actualise `sparse_range_generation` sous le mutex et invalide les quatre entrées au prochain échec. Aucun parcours ni écriture TLS sur un hit positif.
 - `tools/check-native-sparse-range-prefix-host.py` : vérification de quatre misses alternées (10 000 lectures), cinquième adresse/éviction, réutilisation et re-publication, 64 ranges, 4 threads, O0/O2/O3 ASan/UBSan (CI à confirmer). Manifeste remis au blob `26c36f874c43c11d84b47eae1db20ed310b624ac`.
 - Aucun FPS PS5 mesuré. **F07 22/29 inchangé** ; J01 attend les traces hardware des gaps FC27.
+
+## F07 — HUD masqué : horloge FPS hors callback chaud (30 octobre 2026)
+
+- `headless/graphics.cpp::OnFrameDisplayed` : lorsque l'overlay FPS est désactivé, ne plus calculer `HudClock::Present` par présentation. À la réactivation, repartir d'une nouvelle fenêtre FPS et forcer la première image HUD via une mémo invalidée. Les compteurs de présentation, timing Vulkan, transitions loading/jeu et télémétrie FC27 restent inchangés.
+- `tools/check-ps5-hud-snapshot-memo-host.py` : contrat source de garde de visibilité, alternance 10 000 frames cachées / 500 visibles / 9 500 cachées, O0/O2/O3 ASan/UBSan. Validation CI en attente. Manifeste : `d06815e584710bb31e016f98209032bdaded005a`. Pas de performance PS5 mesurée ni de nouvelle décision prébuild ; **22/29**.

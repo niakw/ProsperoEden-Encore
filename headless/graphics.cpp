@@ -55,6 +55,9 @@ std::atomic<bool> hud_enabled{true};
 #ifdef EDEN_PS5_VULKAN
 HudClock vulkan_hud_clock;
 HudSnapshotMemo vulkan_hud_memo;
+// Only the presenting thread advances the FPS clock. A hidden HUD needs
+// no per-frame clock bookkeeping; the first visible frame starts fresh.
+bool vulkan_hud_clock_active{};
 double vulkan_hud_stats_time{}, vulkan_hud_speed{};
 #endif
 HudSnapshot vulkan_hud;
@@ -579,6 +582,7 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
 #ifdef EDEN_PS5_VULKAN
     if (vulkan) {
         vulkan_hud_clock = {};
+        vulkan_hud_clock_active = false;
         vulkan_hud_memo.Reset();
         vulkan_hud = MakeLoadingSnapshot(0);
         vulkan_hud_stats_time = vulkan_hud_speed = 0;
@@ -678,11 +682,16 @@ void GraphicsWindow::OnFrameDisplayed() {
                         now - vulkan_loading_start);
         vulkan_loading = false;
 #ifdef EDEN_PS5_VULKAN
-        vulkan_hud_clock.Present(now);
-        // When FPS HUD is hidden (the default for most players), avoid
-        // a per-frame snprintf/glyph conversion and a per-second perf-stats
-        // reset on the compositor's frame callback.
+        // Hidden FPS overlay must not advance the optional HUD-only clock.
+        // A visible transition resets the clock and the glyph memo once,
+        // without disturbing mandatory game/presentation counters below.
         if (hud_enabled.load(std::memory_order_relaxed)) {
+            if (!vulkan_hud_clock_active) {
+                vulkan_hud_clock = {};
+                vulkan_hud_memo = {};
+                vulkan_hud_clock_active = true;
+            }
+            vulkan_hud_clock.Present(now);
             if (system && now - vulkan_hud_stats_time >= 1.0) {
                 vulkan_hud_speed = system->GetAndResetPerfStats().emulation_speed * 100.0;
                 vulkan_hud_stats_time = now;
@@ -692,6 +701,8 @@ void GraphicsWindow::OnFrameDisplayed() {
             // frame to replace the loading scene, even when FPS is unknown.
             if (vulkan_hud_memo.RefreshNeeded(vulkan_hud_clock, vulkan_hud_speed))
                 vulkan_hud = MakeHudSnapshot(vulkan_hud_clock, vulkan_hud_speed);
+        } else {
+            vulkan_hud_clock_active = false;
         }
 #endif
         ++frame_total;

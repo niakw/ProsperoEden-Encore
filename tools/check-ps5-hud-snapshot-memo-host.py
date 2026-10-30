@@ -13,6 +13,19 @@ source = (root / "headless/graphics.cpp").read_text()
 header = (root / "headless/hud.h").read_text()
 assert source.count("HudSnapshotMemo vulkan_hud_memo;") == 1
 assert source.count("vulkan_hud_memo.Reset();") == 1
+assert source.count("bool vulkan_hud_clock_active{};") == 1
+assert source.count("vulkan_hud_clock_active = false;") == 2
+assert "if (!vulkan_hud_clock_active) {" in source
+# HUD clock work must be entirely inside the visibility condition, while
+# game FPS/pacing counters still update on every actual presentation.
+callback = source.split("void GraphicsWindow::OnFrameDisplayed() {", 1)[1]
+callback = callback.split("++frame_total;", 1)[0]
+visible = callback.index("if (hud_enabled.load(std::memory_order_relaxed)) {")
+clock = callback.index("vulkan_hud_clock.Present(now);")
+hidden = callback.index("} else {\n            vulkan_hud_clock_active = false;")
+assert visible < clock < hidden
+assert callback.count("vulkan_hud_clock.Present(now);") == 1
+assert "vulkan_hud_memo = {};" in callback[visible:clock]
 guard = "if (vulkan_hud_memo.RefreshNeeded(vulkan_hud_clock, vulkan_hud_speed))"
 draw = "vulkan_hud = MakeHudSnapshot(vulkan_hud_clock, vulkan_hud_speed);"
 assert source.count(guard) == source.count(draw) == 1
@@ -68,6 +81,36 @@ int main() {
     assert(Eden::MakeHudSnapshot(paced, 100.0).glyphs ==
            Eden::HudText("VLK F60 S100 W17"));
     assert(!paced_memo.RefreshNeeded(paced, 100.0));
+    // A hidden HUD never advances the clock. Reopening must restart
+    // its interval and invalidate the memo, never display stale prior FPS.
+    Eden::HudClock gated{};
+    Eden::HudSnapshotMemo gated_memo{};
+    bool tracking = false;
+    unsigned sampled = 0;
+    for (int frame = 0; frame < 20000; ++frame) {
+        const bool visible = frame >= 10000 && frame < 10500;
+        if (visible) {
+            if (!tracking) {
+                gated = {};
+                gated_memo = {};
+                tracking = true;
+            }
+            gated.Present(1000.0 + frame / 60.0);
+            ++sampled;
+            (void)gated_memo.RefreshNeeded(gated, 100.0);
+        } else {
+            tracking = false;
+        }
+    }
+    assert(sampled == 500);
+    assert(gated.frames > 0);
+    assert(!tracking);
+    assert(gated.fps >= 0.0);
+    // A fresh activation may not inherit the pre-hide FPS window.
+    gated = {};
+    gated_memo = {};
+    gated.Present(2000.0);
+    assert(gated.fps < 0 && gated_memo.RefreshNeeded(gated, 100.0));
     // A new game must replace the previous title's loading snapshot.
     memo.Reset();
     assert(memo.RefreshNeeded(clock, speed));
@@ -91,4 +134,4 @@ with tempfile.TemporaryDirectory(prefix="eden-hud-memo-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-3000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-3000:])
-print("PS5_VULKAN_HUD_SNAPSHOT_MEMO_PASS O0_O2_O3=1 sanitizer=asan_ubsan repeated=50000 session_reset=1")
+print("PS5_VULKAN_HUD_SNAPSHOT_MEMO_PASS O0_O2_O3=1 sanitizer=asan_ubsan repeated=50000 session_reset=1 hidden_clock_elision=1")

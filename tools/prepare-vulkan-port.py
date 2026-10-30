@@ -5858,3 +5858,19 @@ apply_reviewed_delta("vk_compute_pipeline_cost.cpp",
     "            keyed_wait.MarkLockAcquired();\n            if (is_built.load(std::memory_order_acquire)) return;\n#endif",
     "            keyed_wait.MarkLockAcquired();\n            if (is_built.load(std::memory_order_acquire)) {\n                lock.unlock();\n                // A publisher may complete while this GPU callback waits\n                // for build_mutex. Do not call condvar; report only genuine\n                // (>1ms) mutex contention, never an instant ready callback.\n                if (keyed_wait.WasBlockedOnMutex())\n                    keyed_wait.Complete(\"compute\", diagnostic_cache_key_hash, IsBound());\n                return;\n            }\n#endif",
     "F07 V01 retain compute mutex-only blocked publication attribution")
+
+# F07 compute: avoid repeated unordered-map probes for the same healthy
+# compute key. Only a positive per-owner entry is reused; null failures
+# still take the delayed retry, and DEV first-use tracing stays unchanged.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
+    "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n",
+    "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n#ifdef PS5_NATIVE\n    // GPU-owner-only: avoid hashing the same compute shader key for every\n    // dispatch. Only a successfully created pipeline may be cached here;\n    // failed/retired keys still take the map's bounded recovery path.\n    ComputePipelineCacheKey last_compute_key{};\n    ComputePipeline* last_compute_pipeline{};\n#endif\n",
+    "F07 compute positive owner cache fields")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
+    "#ifdef PS5_NATIVE\n    // A successful compute key is commonly reused by consecutive dispatches.\n    // Skip the unordered-map hash/probe, but never bypass null entries or\n    // development first-use tracing, which has a separate session lifetime.\n    if (!::Eden::DevVulkan::trace_pipelines && last_compute_pipeline &&\n        last_compute_key == key) {\n        return last_compute_pipeline;\n    }\n#endif\n    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
+    "F07 compute same-key skip map probe")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    }\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
+    "    }\n#ifdef PS5_NATIVE\n    // Cache only a positive map entry. Never retain a null failed shader,\n    // since its delayed one-shot recovery must still run through the map.\n    if (pipeline) {\n        last_compute_key = key;\n        last_compute_pipeline = pipeline.get();\n    } else {\n        last_compute_pipeline = nullptr;\n    }\n#endif\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
+    "F07 compute null-safe positive memo publication")

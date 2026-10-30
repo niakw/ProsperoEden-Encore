@@ -1,0 +1,33 @@
+name: Audit independent Encore repository pointers
+on:
+  push:
+    branches: [dev/ps5-sparse-jit]
+    paths: ['.github/workflows/check-repo-identity.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - name: Locate obsolete parent-repository runtime references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git grep -n -F 'niakw/Prospero.Eden-Encore' -- . ':!docs/**' > "${RUNNER_TEMP}/old-encore-refs-all.txt" || true
+          grep -v 'niakw/Prospero.Eden-Encore-vendor' "${RUNNER_TEMP}/old-encore-refs-all.txt" > "${RUNNER_TEMP}/old-encore-refs.txt" || true
+          grep -v '^README\.md:' "${RUNNER_TEMP}/old-encore-refs.txt" | grep -v '^README\.fr\.md:' > "${RUNNER_TEMP}/source-refs.txt" || true
+          count="$(wc -l < "${RUNNER_TEMP}/source-refs.txt")"
+          echo "OBSOLETE_SOURCE_REPOSITORY_REFERENCES=${count}"
+          cat "${RUNNER_TEMP}/old-encore-refs.txt"
+          echo "## Repository path scan" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Obsolete links outside historical docs and README: ${count}" >> "${GITHUB_STEP_SUMMARY}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obsolete-encore-references
+          path: ${{ runner.temp }}/old-encore-refs.txt
+          retention-days: 7

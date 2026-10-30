@@ -104,7 +104,7 @@ def main() -> int:
         require("m_bootstrap.CanOpenGpuSession(packet, module != nullptr)" in sup_cpp and
                 'GetService<Nvidia::NVDRV>("nvdrv:s", true)' in sup_cpp and
                 "CreateMetadataSession(system, ctx," in sup_cpp and
-                "RegisterGpuAddressSpace(*id)" in sup_cpp and
+                "handler->RegisterAddressSpace(*id)" in sup_cpp and
                 "m_bootstrap.GpuContextReady()" in sup_cpp and
                 "Kernel::ResultNotImplemented.raw" in sup_cpp and
                 "{434, &IGraphicsSupervisor::RegisterGpuAddressSpace" in sup_cpp and

@@ -97,6 +97,19 @@ int main() {
     Check(fake.dumped==0,"NS2 image never dumps using a Switch 1 guest shader identity");
     Check(!NativeMaxwellEnvironment::Create(fake,MaxwellShaderImage{}),
           "invalid/untranslated image cannot enter existing Maxwell compiler");
+    std::array<u8,0x50> unrelated_header{};
+    unrelated_header[0] = 0x38;
+    Check(!NativeMaxwellEnvironment::Create(
+              fake, BuildMaxwellShaderImage(unrelated_header,native,3)),
+          "captured shader header must match the compiler's original SPH");
+    int mismatch_destroyed = 0;
+    auto mismatch_source = std::make_unique<FakeMaxwellEnvironment>();
+    mismatch_source->destroyed = &mismatch_destroyed;
+    Check(!NativeMaxwellEnvironment::CreateOwned(
+              std::move(mismatch_source),
+              BuildMaxwellShaderImage(unrelated_header,native,3)) &&
+          mismatch_destroyed == 1,
+          "mismatched owned GPU context is rejected and released before return");
     // Real shader caches defer IR compilation: a borrowed stack environment
     // would dangle after the surrounding renderer method returns. The new
     // ownership path must keep the source alive until the wrapper is freed.

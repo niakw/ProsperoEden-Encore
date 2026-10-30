@@ -112,7 +112,7 @@ void IGpuWorker::NormalMapGpuMemory4K(HLERequestContext& ctx) {
             m_shared->devices.Get(request->device).has_value() &&
             m_shared->events[request->notification] &&
             std::find(m_memory.begin(), m_memory.end(), request->memory) != m_memory.end()) {
-            const auto& nvmap = m_module->GetContainer().GetNvMapFile();
+            auto& nvmap = m_module->GetContainer().GetNvMapFile();
             const auto backing = nvmap.GetHandle(request->memory);
             result = Kernel::ResultInvalidCombination;
             if (backing && request->memory_offset <= backing->orig_size &&

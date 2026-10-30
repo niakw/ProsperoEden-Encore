@@ -118,9 +118,9 @@ jobs:
             -Ibuild-ns2-a64/fmt/include \
             -Iheadless/ns2/gpu_session \
             -Iheadless/ns2/hle \
+            -Iheadless/ns2/nvdrv_as \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            -Iheadless/ns2/nvdrv_as \
             headless/ns2/gpu_session/core/hle/service/am/service/gpu_worker.cpp
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \

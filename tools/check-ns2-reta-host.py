@@ -22,6 +22,8 @@ def main() -> int:
         or '#include "./a64.inc"' not in HEADER
         or 'INST(RETA, "RETA", "110101100101111100001M1111111111")' not in DEC
         or 'INST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")' not in DEC
+        or any(('INST('+opcode+',') not in DEC for opcode in ('CAS','LDADD','LDCLR','LDEOR','LDSET','SWP','SWPB','SWPH'))
+        or 'bool TranslatorVisitor::CAS(Imm<2> sz' not in (BASE/"dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp").read_text()
         or 'bool TranslatorVisitor::LDAPR(Imm<2> size, Reg Rn, Reg Rt)' not in (BASE/"dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp").read_text()
         or 'bool TranslatorVisitor::RETA(' not in BRANCH
         or 'return RET(Reg::R30);' not in BRANCH
@@ -41,7 +43,7 @@ def main() -> int:
                  str(ROOT/"tools/ns2/test_reta_decode.cpp"),"-o",target]
             subprocess.run(cmd,check=True)
             subprocess.run([target],check=True,env={**os.environ,"UBSAN_OPTIONS":"halt_on_error=1"})
-            print(f"NS2 RETAA/RETAB + LDAPR decoder table {opt}: PASS")
+            print(f"NS2 A64 RETA/LDAPR/LSE opcode decoder table {opt}: PASS")
     print("Not full Dynarmic JIT/PS5 compilation or PAUTH verification")
     return 0
 

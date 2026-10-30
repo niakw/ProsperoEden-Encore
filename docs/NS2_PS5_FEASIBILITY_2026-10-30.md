@@ -29,6 +29,13 @@
 - **Portée :** syntaxe/instanciation du vrai frontend et modèles de décodage avec UBSan O0/O2. Cela **ne vérifie pas** la compilation de tout Dynarmic, le fonctionnement du JIT A64 dans le runtime Encore, la mémoire NS2 ou des jeux PS5.
 - **Étape suivante prioritaire :** portage sécurisé des instructions atomiques LSE/CAS/SWP, avec des tests de valeurs et concurrence, et compilation réelle du `core` quand les services et le gestionnaire de mémoire seront prêts.
 
+### N2b — CPU LSE atomique (recherche uniquement)
+
+- Depuis `0x2593/Eden-NS2`, portage ciblé des premières familles LSE : `CAS`, `LDADD`, `LDCLR`, `LDEOR`, `LDSET`, `SWP`, y compris les sous-formes 8/16 bits annoncées par les variantes `B/H`. Les fonctions sont ajoutées à `load_store_exclusive.cpp` et à la table/déclarations du frontend A64.
+- Modèle amont d'opérations atomiques : instructions traduites en lectures/écritures exclusives avec un chemin de réessai sur échec, sémantique d'ordre acquire/release spécifiée pour `A/R`. **La correction de ce modèle sous contention réelle n'est pas encore prouvée**.
+- La sélection reste confinée à `EDEN_NS2_A64_EXPERIMENTAL=ON` ; aucun changement de `main`, de l'archive Eden épinglée ni de release.
+- Témoins mis à jour pour les motifs du décodeur ; **le vrai frontend doit repasser en compilation sur le SHA de ce lot**. Restent notamment CASP, autres LSE, PAC complet, GPU SM86, HLE et budget 12 Gio.
+
 ### N1b — ExeFS expérimental, chargement par étapes
 
 - `EDEN_NS2_EXEFS_EXPERIMENTAL=ON` (exige `EDEN_NS2_METADATA_EXPERIMENTAL=ON`) remplace deux fichiers du loader uniquement dans la branche de recherche.

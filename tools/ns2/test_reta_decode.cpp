@@ -42,6 +42,32 @@ constexpr int count_ldapr(std::uint32_t instruction) {
             ++count;
     return count;
 }
+
+constexpr std::uint32_t base_of(std::string_view name) {
+    for (auto entry : table) {
+        if (entry.mnemonic != name) continue;
+        std::uint32_t code = 0;
+        for (char b : entry.bits) code = (code << 1) | (b == '1' ? 1u : 0u);
+        return code;
+    }
+    return 0;
+}
+constexpr int count_named(std::uint32_t instruction, std::string_view name) {
+    int count = 0;
+    for (const auto& entry : table)
+        if (entry.mnemonic==name && match(instruction, entry.bits))
+            ++count;
+    return count;
+}
+static_assert(count_named(base_of("CAS"), "CAS") == 1);
+static_assert(count_named(base_of("LDADD"), "LDADD") == 1);
+static_assert(count_named(base_of("LDCLR"), "LDCLR") == 1);
+static_assert(count_named(base_of("LDEOR"), "LDEOR") == 1);
+static_assert(count_named(base_of("LDSET"), "LDSET") == 1);
+static_assert(count_named(base_of("SWP"), "SWP") == 1);
+static_assert(count_named(base_of("SWPB"), "SWPB") == 1);
+static_assert(count_named(base_of("SWPH"), "SWPH") == 1);
+static_assert(count_named(0xD65F0BFF, "CAS") == 0);
 static_assert(count_ldapr(0xB8BFC000) == 1); // LDAPR W0,[X0]
 static_assert(count_ldapr(0xF8BFC000) == 1); // LDAPR X0,[X0]
 static_assert(count_ldapr(0x38BFC000) == 1); // LDAPRB W0,[X0]

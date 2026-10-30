@@ -9,7 +9,7 @@
 #include <mutex>
 #include <optional>
 #include "core/hle/service/service.h"
-#include "core/hle/service/kernel_helpers.h"
+#include "core/hle/service/am/service/gpu_worker_shared.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 
 namespace Kernel { class KProcess; class KEvent; class KClientSession; }
@@ -32,13 +32,12 @@ private:
     void CreateGraphicsDevice(HLERequestContext& ctx);
     void DestroyGraphicsDevice(HLERequestContext& ctx);
     std::mutex m_lock;
-    GpuSessionProtocol::DeviceSlots m_devices;
+    std::shared_ptr<GpuWorkerSharedState> m_shared;
     GpuSessionProtocol::AddressSpaceSlots m_address_spaces;
     std::shared_ptr<Nvidia::Module> m_module;
     Kernel::KProcess* const m_process;
     std::optional<std::size_t> m_nv_session;
     Kernel::KClientSession* m_worker{};
-    KernelHelpers::ServiceContext m_event_context;
-    std::array<Kernel::KEvent*, GpuSessionProtocol::MaxNotificationEvents> m_events{};
+
 };
 } // namespace Service::AM

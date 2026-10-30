@@ -76,13 +76,13 @@ def main() -> int:
         service_cpp = (session_root / "gpu_session.cpp").read_text()
         service_h = (session_root / "gpu_session.h").read_text()
         require("RegisterHandlersTipc(functions)" in service_cpp and
-                "GpuSessionProtocol::DeviceSlots m_devices" in service_h and
+                "GpuSessionProtocol::DeviceSlots devices" in (session_root / "gpu_worker_shared.h").read_text() and
                 "GpuSessionProtocol::AddressSpaceSlots m_address_spaces" in service_h and
                 "rb.Push(Kernel::ResultNotImplemented.raw)" in service_cpp and
                 "{11, &IGpuSession::GetNotificationRange" in service_cpp and
                 "{12, &IGpuSession::GetNotificationEvent" in service_cpp and
-                "m_event_context.CreateEvent" in service_cpp and
-                "m_event_context.CloseEvent" in service_cpp and
+                "m_shared->event_context.CreateEvent" in service_cpp and
+                "event_context.CloseEvent" in (session_root / "gpu_worker_shared.h").read_text() and
                 "readable->Open(kernel)" in service_cpp and
                 "{21, &IGpuSession::RequestWorker" in service_cpp and
                 "{22, &IGpuSession::AcquireWorker" in service_cpp and
@@ -114,6 +114,16 @@ def main() -> int:
                 "Kernel::ResultNotImplemented.raw" in worker_hle_cpp and
                 "IGpuWorker::~IGpuWorker()" in worker_hle_cpp and
                 "m_process->Close(kernel)" in worker_hle_cpp and
+                "RegisterHandlersTipc(functions)" in worker_hle_cpp and
+                "{101, &IGpuWorker::CreateGpuAccessibleMemory" in worker_hle_cpp and
+                "{102, &IGpuWorker::DestroyGpuAccessibleMemory" in worker_hle_cpp and
+                "LockForMapDeviceAddressSpace" in worker_hle_cpp and
+                "UnlockForDeviceAddressSpace" in worker_hle_cpp and
+                "CreateHandle(size, handle)" in worker_hle_cpp and
+                "handle->dupes == 1" in worker_hle_cpp and
+                "Kernel::ResultBusy" in worker_hle_cpp and
+                "m_shared->events[notification]->Signal(kernel)" in worker_hle_cpp and
+                "DecodeGpuMemoryRelease(command)" in worker_hle_cpp and
                 '{211, &IGpuWorker::NormalMapGpuMemory4K' not in worker_hle_cpp,
                 "Native GPU worker IPC must reject unsupported mappings")
         require('target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE and

@@ -24,6 +24,7 @@
 #include "core/hle/service/nvdrv/devices/nvhost_as_gpu.h"
 #include "core/hle/service/am/service/gpu_session.h"
 #include "core/hle/service/am/service/gpu_worker.h"
+#include "core/hle/service/am/service/gpu_worker_shared.h"
 #include "core/hle/service/server_manager.h"
 #include "core/hle/service/ipc_helpers.h"
 
@@ -34,7 +35,7 @@ IGpuSession::IGpuSession(Core::System& system_,
                          std::shared_ptr<Nvidia::Module> module,
                          Kernel::KProcess* process)
     : ServiceFramework{system_, "IGpuSession"}, m_module{std::move(module)},
-      m_process{process}, m_event_context{system_, "NS2GpuNotification"} {
+      m_process{process}, m_shared{std::make_shared<GpuWorkerSharedState>(system_)} {
     m_process->Open(kernel);
     static const FunctionInfo functions[] = {
         {11, &IGpuSession::GetNotificationRange, "GetNotificationRange"},
@@ -53,9 +54,7 @@ IGpuSession::IGpuSession(Core::System& system_,
 }
 IGpuSession::~IGpuSession() {
     if (m_worker) m_worker->Close(kernel);
-    // Readable handles already moved to clients retain their own kernel refs.
-    for (auto* event : m_events)
-        if (event) m_event_context.CloseEvent(event);
+    // Shared event ownership survives guest worker handles until they close.
     // Close all NVDRV fds before the owning NVDRV process session.
     for (const auto id : m_address_spaces.OwnedIds())
         if (id) m_module->Close(static_cast<Nvidia::DeviceFD>(*id));
@@ -113,21 +112,21 @@ static Result CreateWorkerKernelSession(Core::System& system, HLERequestContext&
 }
 
 void IGpuSession::RequestWorker(HLERequestContext& ctx) {
-    const std::scoped_lock lock{m_lock};
+    const std::scoped_lock lock{m_lock, m_shared->mutex};
     const auto* packet = ctx.CommandBuffer();
     const std::array<GP::U32, 3> command{packet[0], packet[1], packet[2]};
     Result result = Kernel::ResultInvalidCombination;
     const auto index = GP::DecodeEventIndex(command, 0x25);
     if (index) {
         result = Kernel::ResultInvalidState;
-        if (m_events[*index]) {
+        if (m_shared->events[*index]) {
             if (m_worker) {
                 result = ResultSuccess;
             } else {
-                auto handler = std::make_shared<IGpuWorker>(system, m_module, m_process);
+                auto handler = std::make_shared<IGpuWorker>(system, m_module, m_process, m_shared);
                 result = CreateWorkerKernelSession(system, ctx, std::move(handler), &m_worker);
             }
-            if (result.IsSuccess()) m_events[*index]->Signal(kernel);
+            if (result.IsSuccess()) m_shared->events[*index]->Signal(kernel);
         }
     }
     IPC::ResponseBuilder rb{ctx, 2};
@@ -165,16 +164,16 @@ void IGpuSession::GetNotificationRange(HLERequestContext& ctx) {
 }
 
 void IGpuSession::GetNotificationEvent(HLERequestContext& ctx) {
-    const std::scoped_lock lock{m_lock};
+    const std::scoped_lock lock{m_shared->mutex};
     const auto* packet = ctx.CommandBuffer();
     const std::array<GP::U32, 3> command{packet[0], packet[1], packet[2]};
     const auto index = GP::DecodeEventIndex(command, 0x1c);
     Result result = Kernel::ResultInvalidCombination;
     Kernel::KReadableEvent* readable{};
     if (index) {
-        auto*& event = m_events[*index];
+        auto*& event = m_shared->events[*index];
         if (!event)
-            event = m_event_context.CreateEvent("GpuNotification");
+            event = m_shared->event_context.CreateEvent("GpuNotification");
         if (event) {
             readable = &event->GetReadableEvent();
             readable->Open(kernel); // Move handle retains a real reference.
@@ -287,21 +286,21 @@ void IGpuSession::GetAddressSpacePartition(HLERequestContext& ctx) {
 }
 
 void IGpuSession::CreateGraphicsDevice(HLERequestContext& ctx) {
-    const std::scoped_lock lock{m_lock};
+    const std::scoped_lock lock{m_shared->mutex};
     const auto* packet=ctx.CommandBuffer();
     const std::array<GP::U32,8> command{
         packet[0],packet[1],packet[2],packet[3],
         packet[4],packet[5],packet[6],packet[7]};
-    const auto outcome=m_devices.Create(command);
+    const auto outcome=m_shared->devices.Create(command);
     IPC::ResponseBuilder rb{ctx,3};
     rb.Push(Translate(outcome.status).raw);
     rb.Push(outcome.id);
 }
 void IGpuSession::DestroyGraphicsDevice(HLERequestContext& ctx) {
-    const std::scoped_lock lock{m_lock};
+    const std::scoped_lock lock{m_shared->mutex};
     const auto* packet=ctx.CommandBuffer();
     const std::array<GP::U32,3> command{packet[0],packet[1],packet[2]};
-    const auto result=m_devices.Destroy(command);
+    const auto result=m_shared->devices.Destroy(command);
     IPC::ResponseBuilder rb{ctx,2};
     rb.Push(Translate(result).raw);
 }

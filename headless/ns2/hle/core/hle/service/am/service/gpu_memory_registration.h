@@ -57,6 +57,26 @@ constexpr std::optional<GpuMemoryRegistration> DecodeGpuMemoryRegistration(std::
     return GpuMemoryRegistration{u64{packet[2]} | (u64{packet[3]} << 32),
         u64{packet[4]} | (u64{packet[5]} << 32), static_cast<u8>(packet[6]), static_cast<u8>(packet[7])};
 }
+struct GpuMemoryRelease {
+    u32 id;
+    u32 notification;
+};
+constexpr std::optional<GpuMemoryRelease> DecodeGpuMemoryRelease(
+    std::span<const u32> packet) {
+    if (packet.size() != 4 || packet[0] != 0x76 || packet[1] != 2 ||
+        !packet[2] || packet[3] >= 64) return std::nullopt;
+    return GpuMemoryRelease{packet[2], packet[3]};
+}
+
+// TIPC registration uses inclusive end addresses. Pure preflight avoids
+// allocating an NvMap handle for wrapped or unaligned ranges.
+constexpr bool IsValidGpuMemoryRegistrationRange(
+    const GpuMemoryRegistration& req) {
+    if (req.end < req.begin || req.end == ~u64{0} ||
+        !req.device || (req.begin & 0xfff)) return false;
+    const u64 size = req.end - req.begin + 1;
+    return size != 0 && (size & 0xfff) == 0;
+}
 struct GpuSparseRegionRequest {
     u32 address_space;
     u64 begin;

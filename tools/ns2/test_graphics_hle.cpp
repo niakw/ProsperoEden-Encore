@@ -31,6 +31,39 @@ int main(){
     require(r && r->flags==5 && r->device==6,"GPU registration padding ignored");
     require(!DecodeGpuMemoryRegistration(std::span<const u32>(reg.data(),7)),
             "GPU registration rejects short request");
+    const std::array<u32,8> gpuMemoryValid{0x75,6,0x1000,0,0x2fff,0,0,0x12340001};
+    const auto validMemory=DecodeGpuMemoryRegistration(gpuMemoryValid);
+    require(validMemory && IsValidGpuMemoryRegistrationRange(*validMemory) &&
+            validMemory->device==1 && validMemory->flags==0,
+            "GPU memory registration preflight accepts 4K aligned live device");
+    auto malformedMemory=gpuMemoryValid;
+    malformedMemory[2]=0x1001;
+    require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
+            "reject GPU memory page misalignment before NVMap locking");
+    malformedMemory=gpuMemoryValid;malformedMemory[4]=0x2000;
+    require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
+            "reject GPU memory fractional final page");
+    malformedMemory=gpuMemoryValid;malformedMemory[4]=0;malformedMemory[5]=0;
+    require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
+            "reject negative GPU memory inclusive size");
+    malformedMemory=gpuMemoryValid;malformedMemory[4]=0xffffffff;malformedMemory[5]=0xffffffff;
+    require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
+            "reject 64-bit max inclusive GPU memory end");
+    malformedMemory=gpuMemoryValid;malformedMemory[7]=0;
+    require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
+            "reject reserved zero device ID");
+    const std::array<u32,4> gpuMemoryRelease{0x76,2,4,63};
+    const auto release=DecodeGpuMemoryRelease(gpuMemoryRelease);
+    require(release && release->id==4 && release->notification==63,
+            "GPU memory release validates actual NVMap handle and notification");
+    auto invalidRelease=gpuMemoryRelease;invalidRelease[2]=0;
+    require(!DecodeGpuMemoryRelease(invalidRelease),"release refuses reserved NVMap handle");
+    invalidRelease=gpuMemoryRelease;invalidRelease[3]=64;
+    require(!DecodeGpuMemoryRelease(invalidRelease),"release refuses out-of-range notification");
+    invalidRelease=gpuMemoryRelease;invalidRelease[1]=3;
+    require(!DecodeGpuMemoryRelease(invalidRelease),"release rejects incorrect word count");
+    require(!DecodeGpuMemoryRelease(std::span<const u32>{gpuMemoryRelease.data(),3}),
+            "release refuses truncated TIPC packet");
     auto badreg=reg;badreg[1]=5;
     require(!DecodeGpuMemoryRegistration(badreg),"GPU registration rejects wrong size");
     badreg=reg;badreg[0]=0x76;

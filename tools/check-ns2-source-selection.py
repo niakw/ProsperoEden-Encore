@@ -63,6 +63,24 @@ def main() -> int:
         require("{1050, nullptr, \"SetGraphicsScaleChangedNotificationEnabled\"}" in scale and
                 "*out_parameters = {10, 1, 1}" in scale,
                 "Research graphics scale must not pretend to implement notifications")
+        session_selection = CMAKE.index("# Switch 2 GPU TIPC service body.")
+        require(session_selection < release_gate and
+                'option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL' in CMAKE and
+                'EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR' in CMAKE,
+                "NS2 GPU service must remain opt-in and forbidden in release")
+        require("if(NOT EDEN_NS2_NVDRV_EXPERIMENTAL)" in
+                CMAKE[session_selection:release_gate] and
+                'target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}")' in CMAKE,
+                "NS2 GPU service must require NVDRV and compile real source")
+        session_root = ROOT / "headless/ns2/gpu_session/core/hle/service/am/service"
+        service_cpp = (session_root / "gpu_session.cpp").read_text()
+        service_h = (session_root / "gpu_session.h").read_text()
+        require("RegisterHandlersTipc(functions)" in service_cpp and
+                "GpuSessionProtocol::DeviceSlots m_devices" in service_h and
+                "rb.Push(Kernel::ResultNotImplemented.raw)" in service_cpp and
+                "{41, &IGpuSession::CreateGraphicsDevice" in service_cpp and
+                "{42, &IGpuSession::DestroyGraphicsDevice" in service_cpp,
+                "NS2 GPU service must register real metadata commands only")
         nvdrv_selection = CMAKE.index("# Native Switch 2 GPU capabilities IOCTLs, experimental only;")
         require(am_selection < nvdrv_selection < release_gate,
                 "NVDRV research must select after maintained Encore owners and before release gate")

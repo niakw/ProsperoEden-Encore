@@ -1995,6 +1995,28 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}")
 endif()
 
+# Switch 2 GPU TIPC service body. Only local device ID lifecycle is
+# backed; address spaces, notifications, workers and submission stay rejected.
+option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL
+    "Research only: compile bounded NS2 GPU session HLE service" OFF)
+if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
+    if(NOT EDEN_NS2_NVDRV_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 GPU session requires native NVDRV research mode")
+    endif()
+    set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/headless/ns2/gpu_session")
+    set(EDEN_NS2_GPU_SESSION_SOURCE
+        "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.cpp")
+    if(NOT EXISTS "${EDEN_NS2_GPU_SESSION_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.h" OR
+       NOT EXISTS "${PORT_ROOT}/headless/ns2/hle/core/hle/service/am/service/gpu_session_protocol.h")
+        message(FATAL_ERROR "Missing isolated NS2 GPU session source/protocol")
+    endif()
+    target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}")
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_NS2_GPU_SESSION_ROOT}"
+        "${PORT_ROOT}/headless/ns2/hle")
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -2009,6 +2031,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
        EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR
+       EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR

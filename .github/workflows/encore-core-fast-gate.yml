@@ -221,6 +221,8 @@ on:
       - 'vendor/encore-active/eden-core/src/audio_core/sink/sink_stream.cpp'
       - 'tools/check-texture-convert-volume-host.py'
       - 'tools/check-audio-upmix-scratch-host.py'
+      - 'headless/prosperoeden/pe/audio/stream_ring.hpp'
+      - 'tools/check-ps5-launcher-audio-stream-ring-host.py'
       - 'vendor/encore-active/eden-core/src/hid_core/resource_manager.cpp'
       - 'tools/check-vendored-hid-resource-source.py'
       - 'tools/check-native-hid-cadence-host.py'
@@ -437,6 +439,7 @@ jobs:
           set -euo pipefail
           python3 -B tools/check-texture-convert-volume-host.py
           python3 -B tools/check-audio-upmix-scratch-host.py
+          python3 -B tools/check-ps5-launcher-audio-stream-ring-host.py
           python3 -B tools/check-ps5-audio-output-lock-scope-host.py
           python3 -B tools/check-ps5-hud-snapshot-memo-host.py
           python3 -B tools/check-maintained-audio-units.py

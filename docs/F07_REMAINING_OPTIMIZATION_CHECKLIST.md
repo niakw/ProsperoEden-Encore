@@ -33,6 +33,8 @@
 
 **30/10 — V01/C01, mutex de recyclage des chunks Vulkan (source à qualifier) :** `Scheduler::AcquireNewChunk` retire les chunks réutilisables sous `reserve_mutex`, mais crée désormais les nouveaux chunks **hors du verrou**. Le worker peut recycler ses chunks pendant qu'une allocation hôte se bloque/page-fault ; ordre FIFO et propriété des commandes inchangés, course d'arrivée du prochain chunk acceptée avec un seul allocateur propriétaire. Témoin source-extrait O0/O2 ASan/UBSan : allocation artificiellement ralentie, récupération concurrente du mutex, recyclage puis réutilisation sans nouvelle allocation. Fork/générateur `vendor@510458120e`. **CI et gain FC27 à qualifier, F07 22/29 inchangé.**
 
+**30/10 — C04/T01, retrait des ressources Vulkan par tick maximal (source à qualifier) :** `Layer::RefreshResources` (changement de pitch) et `Layer::ReleaseRawImages` sur PS5 attendent désormais uniquement le tick maximal des images utilisant la même timeline GPU, au lieu de répéter jusqu'à 7 attentes Vulkan. Ticks désordonnés/nuls, tableaux vides, préservation de l’AA, chemins desktop et destruction vues→images vérifiés par témoin C++ source-extrait O0/O2 ASan/UBSan intégré aux deux gates. Sous-module `vendor@af499cc12e`. Aucune barrière GPU supprimée ; **CI/console et FPS non encore qualifiés, 22/29 inchangé.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

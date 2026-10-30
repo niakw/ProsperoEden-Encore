@@ -451,6 +451,7 @@ jobs:
           python3 -B tools/check-ps5-vulkan-layer-lifetime.py
           python3 -B tools/check-ps5-vulkan-aa-lifetime.py
           python3 -B tools/check-ps5-vulkan-stride-reallocation.py
+          python3 -B tools/check-ps5-vulkan-layer-max-tick-host.py
           python3 -B tools/check-ps5-vulkan-raw-view-lifetime.py
           python3 -B tools/check-ps5-vulkan-present-frame-lifetime.py
           python3 -B tools/check-ps5-vulkan-present-retry-liveness.py

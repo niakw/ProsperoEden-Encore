@@ -404,6 +404,7 @@ jobs:
           python3 -B tools/check-ps5-freebsd11-ule-topology.py
           python3 -B tools/check-ps5-freeze-witness.py
           python3 -B tools/check-runtime-frame-budget.py
+          python3 -B tools/check-ps5-hud-snapshot-memo-host.py
           python3 -B tools/check-universal-emulation-policy.py
           python3 -B tools/check-network-domain-policy.py
           python3 -B tools/check-network-accepted-audit.py

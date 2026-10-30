@@ -1,6 +1,6 @@
 # Nintendo Switch 2 (NS2) sur PS5 — étude de faisabilité, branche isolée
 
-**Date : 30 octobre 2026** · **État : RECHERCHE / NON INTÉGRÉ / NON TESTÉ SUR PS5**  
+**Date : 30 octobre 2026** · **État : RECHERCHE / A64 FRONTEND SYNTAX CHECK VERT / NON TESTÉ SUR PS5**  
 **Branche :** `research/ns2-ps5-compatibility`, initialement issue de l’ancienne branche de développement puis resynchronisée sur `main` le 30 octobre 2026.  
 **Protection :** aucune modification du chemin de compilation/release F07, aucune PR vers la branche de production, aucun build PS5 de jeu NS2 autorisé à ce stade.
 
@@ -20,6 +20,14 @@
 - Cette traduction suppose les clés PAC désactivées. Elle ne simule pas la validation cryptographique, ne concerne pas encore les autres opcodes PAC et n'autorise pas à déclarer l'ARMv8.3 entièrement compatible.
 - Témoin hôte source-lié : `python3 tools/check-ns2-reta-host.py` compile la table `a64.inc` réelle, teste RETAA/RETAB, RET normal, LDAPR W/X et les non-correspondances, sous `-O0/-O2` avec UBSan.
 - Validation restant nécessaire : **compiler le vrai frontend Dynarmic avec l'option ON, puis tester les flux JIT sur PS5**, sans cette preuve la couverture reste au niveau source/decoder.
+
+#### Qualification hôte du frontend A64 — 30/10/2026
+
+- **Source expérimentale compilée :** `vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp` avec les cinq fichiers overlay sélectionnés de la famille A64, `EDEN_NS2_A64_EXPERIMENTAL=1`, `clang++ -std=c++20 -fsyntax-only`, et le sous-module épinglé. Aucun fichier de l'amont n'est altéré.
+- **CI verte sur le code :** [`#41023251179`](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41023251179), commit `7a778a04b88e519ed9e2dc3860d9d4b340b571b5` ; jobs `dynarmic-a64-syntax` et `research-host` **SUCCESS**.
+- **Environnement exact :** `fmt 12.1.0` (commit `407c905e45ad75fc29bf0f9bb7c5c2fd3475976f`, correspondant à `vendor/sources/eden/cpmfile.json`). Le premier essai avec `libfmt-dev` Ubuntu a échoué sur `fmt::format_string::get()` ; échec de dépendance hôte, pas un défaut établi du traducteur.
+- **Portée :** syntaxe/instanciation du vrai frontend et modèles de décodage avec UBSan O0/O2. Cela **ne vérifie pas** la compilation de tout Dynarmic, le fonctionnement du JIT A64 dans le runtime Encore, la mémoire NS2 ou des jeux PS5.
+- **Étape suivante prioritaire :** portage sécurisé des instructions atomiques LSE/CAS/SWP, avec des tests de valeurs et concurrence, et compilation réelle du `core` quand les services et le gestionnaire de mémoire seront prêts.
 
 ### N1b — ExeFS expérimental, chargement par étapes
 

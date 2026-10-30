@@ -204,3 +204,18 @@ Maxwell-era fixed-map IOCTLs must not be represented as full Switch 2 GPU suppor
 - Existing NVDRV `SubmitGPFIFO` 0x08/0x1b paths and ordinary host GPU scheduling remain real. Native channel preflight now refuses uninitialized GMMU/channel submission and unknown/contradictory fence flags; supports up to 64 C56F-style completion increments emitted *after* the actual ordered GPU pushbuffer, and retains legacy two-increment fences on the non-native path. Registered native context classes C797 (3D), C7C0 (compute), C7B5 (DMA), C56F (GPFIFO) are mapped into their existing channel slots. QueryEvent(7) uses the already-owned error notifier only in native mode.
 - Added C++ host tests for per-process opt-in and final-owner revocation, unknown fence flags, incomplete GPU channel, fence acquire/completion conflicts, native increment bound, and standard fence compatibility. Host CI syntax-checks actual NVDRV channel owner, not merely the pure protocol.
 - **Important:** this step connects correct process identification, GPFIFO ordering and bounded syncpoint semantics; it does **not** implement Turing/Ampere 3D and compute engine methods, shader translation, PS5 RADV output, or real hardware runtime verification. NS2 GPU correctness and playability remain unproven.
+
+## N4p — Switch 2 content formats and Mario Kart World loadability audit
+
+**MKW is Mario Kart World, not an archive suffix.** The 5-vs-30 FPS question
+from X is an unverified performance comparison; it must not drive acceptance
+of a new file extension or false claims of emulator readiness.
+
+Source audit: existing Encore experimental loader covers first-generation
+XCI/XCZ, NSP/NSZ, NCA/NAX, NSO/NRO/KIP, and standalone ExeFS `main`
+with NPDM; it does **not** establish retail Switch 2 archive decryption,
+package installation, card-key licensing or stable MKW gameplay.
+The pure `ns2_content_formats.h` now documents and tests existing filename
+routes without registering invented `.xci2`, `.nsp2` or `.mkw` handlers.
+The actual NS2 loader overlay uses it. See:
+**[NS2 content format matrix](NS2_CONTENT_FORMAT_MATRIX_2026-10-30.md)**.

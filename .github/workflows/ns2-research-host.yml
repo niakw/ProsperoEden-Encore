@@ -197,6 +197,15 @@ jobs:
       - name: Compile and run upstream Ampere ISA/address-map host probes
         run: |
           python3 tools/check-ns2-ampere-host.py
+      - name: Compile and run Switch 1/2 content-format recognition fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iheadless/ns2/overrides \
+            tools/ns2/test_content_formats.cpp \
+            -o build-ns2-a64/ns2-content-format-test
+          build-ns2-a64/ns2-content-format-test
       - name: Compile and run Switch 2 graphics HLE protocol fixtures
         run: python3 tools/check-ns2-graphics-hle-host.py
       - name: Run actual ProgramMetadata parser against synthetic Switch 1/2 NPDM

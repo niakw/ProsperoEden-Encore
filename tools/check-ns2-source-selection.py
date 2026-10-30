@@ -283,8 +283,21 @@ def main() -> int:
         loader = (NS2 / "loader/loader.cpp").read_text(encoding="utf-8")
         romdir = (NS2 / "loader/deconstructed_rom_directory.cpp").read_text(encoding="utf-8")
         header = (NS2 / "loader/deconstructed_rom_directory.h").read_text(encoding="utf-8")
-        require('extension == "nsz"' in loader and 'extension == "xcz"' in loader,
-                "NCZ/NSZ/XCZ loader behavior lost")
+        format_header = (NS2 / "loader/ns2_content_formats.h").read_text(
+            encoding="utf-8")
+        format_tests = (ROOT / "tools/ns2/test_content_formats.cpp").read_text(
+            encoding="utf-8")
+        require('core/loader/ns2_content_formats.h' in loader and
+                'Eden::NS2::Content::IdentifyName(name)' in loader and
+                'Kind::XCZ' in loader and 'Kind::NSZ' in loader and
+                'Kind::NPDMMetadata' in loader and
+                'Kind::RomFSData' in loader and
+                'return FileType::Unknown;' in loader and
+                'constexpr Kind IdentifyName(' in format_header and
+                'constexpr bool HasExistingLoaderRoute(' in format_header and
+                'mkw.xci2' in format_tests and
+                'game-card-key' in format_tests,
+                "NS2 content route audit or unsupported-format guard lost")
         require('<< 14) & 0xffc000' in romdir,
                 "16-KiB-aligned Encore ASLR offset lost")
         require('!metadata.UsesExtendedAcid()' in romdir,

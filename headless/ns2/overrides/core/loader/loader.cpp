@@ -29,6 +29,7 @@
 #include "core/loader/nso.h"
 #include "core/loader/nsp.h"
 #include "core/loader/xci.h"
+#include "core/loader/ns2_content_formats.h"
 
 namespace Loader {
 
@@ -166,27 +167,33 @@ bool IsBootableGameContainer(FileSys::VirtualFile file, FileType type, u64 progr
 }
 
 FileType GuessFromFilename(const std::string& name) {
-    if (name == "main")
+    // Route only formats already recognized by Eden's existing parsers.
+    // Extensions are hints; IdentifyFile still validates actual magic.
+    // Do not infer Switch 2 content support from XCI/NSP suffixes.
+    switch (Eden::NS2::Content::IdentifyName(name)) {
+    case Eden::NS2::Content::Kind::ExeFSMain:
         return FileType::DeconstructedRomDirectory;
-    else if (name == "00")
-        return FileType::NCA;
-
-    auto const extension =
-        Common::ToLower(std::string(Common::FS::GetExtensionFromFilename(name)));
-    if (extension == "nro")
+    case Eden::NS2::Content::Kind::NRO:
         return FileType::NRO;
-    else if (extension == "nso")
+    case Eden::NS2::Content::Kind::NSO:
         return FileType::NSO;
-    else if (extension == "nca")
+    case Eden::NS2::Content::Kind::NCA:
         return FileType::NCA;
-    else if (extension == "nax")
+    case Eden::NS2::Content::Kind::NAX:
         return FileType::NAX;
-    else if (extension == "xci" || extension == "xcz")
+    case Eden::NS2::Content::Kind::XCI:
+    case Eden::NS2::Content::Kind::XCZ:
         return FileType::XCI;
-    else if (extension == "nsp" || extension == "nsz")
+    case Eden::NS2::Content::Kind::NSP:
+    case Eden::NS2::Content::Kind::NSZ:
         return FileType::NSP;
-    else if (extension == "kip")
+    case Eden::NS2::Content::Kind::KIP:
         return FileType::KIP;
+    case Eden::NS2::Content::Kind::NPDMMetadata:
+    case Eden::NS2::Content::Kind::RomFSData:
+    case Eden::NS2::Content::Kind::Unsupported:
+        return FileType::Unknown;
+    }
     return FileType::Unknown;
 }
 

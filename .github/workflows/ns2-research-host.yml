@@ -1,0 +1,49 @@
+name: NS2 research host guards
+
+on:
+  push:
+    branches:
+      - research/ns2-ps5-compatibility
+    paths:
+      - 'headless/ns2/**'
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/**'
+      - 'tools/check-ns2-*.py'
+      - '.github/workflows/ns2-research-host.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ns2-research-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  research-host:
+    name: NS2 parsing and source-owner guards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Python syntax
+        run: |
+          python3 -m py_compile tools/check-ns2-npdm-host.py tools/check-ns2-source-selection.py tools/ns2_patch_inventory.py
+      - name: Patch inventory parser self-test
+        run: python3 tools/ns2_patch_inventory.py --self-test
+      - name: Ensure the experimental compiler selectors preserve the PS5/NCZ owners
+        run: python3 tools/check-ns2-source-selection.py
+      - name: Run C++20 ACID layout host regressions (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v clang++
+          command -v g++
+          python3 tools/check-ns2-npdm-host.py
+          PATH="/usr/bin:/bin" python3 tools/check-ns2-npdm-host.py
+      - name: Explain scope
+        run: |
+          echo "Research host checks only: no full Dynarmic, Eden native PS5 build, game or console claims."

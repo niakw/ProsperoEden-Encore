@@ -12,7 +12,7 @@ root = Path(__file__).resolve().parents[1]
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 checks = (
     "bool present_in_flight{}; // guarded by queue_mutex",
-    "std::size_t present_waiters{}; // guarded by queue_mutex",
+    "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex",
     "notify_drainers = present_waiters != 0;",
     "if (notify_drainers) frame_cv.notify_all();",
     "++present_waiters;",

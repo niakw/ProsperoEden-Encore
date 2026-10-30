@@ -31,6 +31,8 @@
 
 **30/10 — V01/C01, réveils du scheduler Vulkan (source à qualifier) :** dans `DispatchWork`, suppression des diffusions CV lorsqu'un worker traite déjà un chunk ou dispose de commandes en attente ; seul le passage de veille à travail déclenche une notification, tandis que `WaitWorker` et les erreurs gardent leurs réveils indispensables. Le drapeau `worker_in_flight` est protégé par `queue_mutex`, sans nouvelle attente ni mutex sur le chemin worker. Sous-module `vendor@b5d74d0473`, générateur et modèles source-extraits mis à jour. **CI/PS5 non encore qualifiés ; 22/29 inchangé.**
 
+**30/10 — V01/C01, mutex de recyclage des chunks Vulkan (source à qualifier) :** `Scheduler::AcquireNewChunk` retire les chunks réutilisables sous `reserve_mutex`, mais crée désormais les nouveaux chunks **hors du verrou**. Le worker peut recycler ses chunks pendant qu'une allocation hôte se bloque/page-fault ; ordre FIFO et propriété des commandes inchangés, course d'arrivée du prochain chunk acceptée avec un seul allocateur propriétaire. Témoin source-extrait O0/O2 ASan/UBSan : allocation artificiellement ralentie, récupération concurrente du mutex, recyclage puis réutilisation sans nouvelle allocation. Fork/générateur `vendor@510458120e`. **CI et gain FC27 à qualifier, F07 22/29 inchangé.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

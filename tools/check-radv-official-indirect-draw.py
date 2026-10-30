@@ -2,8 +2,9 @@
 """Upstream Mesa 26.2.2 zero-indirect-count regression against actual PS5 RADV.
 
 Upstream: a2f2518a9febf1b3b791cd2df079dbd25e56939b.
-The byte-equivalence gate covers *all* 11 draw call sites and the PS5 custom
-GS-compute raster draw, preventing a source generator/build fork mismatch.
+The byte-equivalence gate covers *all* 11 draw call sites, the PS5 custom
+GS-compute raster draw, and four approved 64-bit index offsets; this must
+match the complete generator output, not silently reject CodeQL fixes.
 """
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -37,9 +38,17 @@ gs_sink = (
 )
 assert expected.count(gs_anchor) == 1, "Pinned GS-compute initializer drifted"
 expected = expected.replace(gs_anchor, gs_anchor + gs_sink)
-assert expected == active, "PS5 active cmd buffer must replay official fixes plus one exact GS sink guard"
+# CodeQL #13-16: widening AFTER the 32-bit multiplication would preserve an
+# overflowing offset. The actual generator intentionally widens first at all
+# four indexed multi-draw paths; retain this protection in the exact oracle.
+narrow_index = "uint64_t index_va = state->index_buffer.va + draw->firstIndex * index_size;"
+wide_index = "uint64_t index_va = state->index_buffer.va + (uint64_t)draw->firstIndex * index_size;"
+assert expected.count(narrow_index) == 4
+expected = expected.replace(narrow_index, wide_index)
+assert expected == active, "PS5 active cmd buffer must exactly replay official fixes, GS sink and four widened offsets"
 generator = (ROOT/"tools/patch-radv-wsi.py").read_text()
 assert "from radv_official_indirect_draw_fix import patch" in generator
+assert generator.count('(\"uint64_t index_va = state->index_buffer.va + draw->firstIndex * index_size;\", \"uint64_t index_va = state->index_buffer.va + (uint64_t)draw->firstIndex * index_size;\")') == 1
 assert "radv_CmdDrawIndirectCount2KHR" in active
 assert "radv_before_draw(cmd_buffer, &info, 1, pInfo->maxDrawCount, false)" in active
 assert "radv_before_draw(cmd_buffer, &info, 1, pInfo->drawCount, false)" in active
@@ -80,4 +89,4 @@ with tempfile.TemporaryDirectory(prefix="eden-radv-indirect-2622-") as d:
                     "-fsanitize=address,undefined",str(src),"-o",str(exe)],
                    timeout=30,check=True)
     subprocess.run([str(exe)],timeout=10,check=True)
-print("PASS Mesa 26.2.2 zero-indirect count + PS5 GS/DGC caller semantics; exact 2-fix replay")
+print("PASS Mesa 26.2.2 zero-indirect + GS/DGC + 4x widened indexed offsets; exact active-source replay")

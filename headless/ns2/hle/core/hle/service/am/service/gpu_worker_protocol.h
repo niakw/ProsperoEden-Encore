@@ -39,6 +39,27 @@ constexpr std::optional<U64> RangeSize(U64 begin, U64 end) {
     return size;
 }
 
+struct SparseBatchCommand {
+    U32 address_space{};
+    U32 notification{};
+    U64 count{};
+    U8 sync{};
+};
+// Worker TIPC 216: count and element size are 64-bit values. Reject size
+// mismatch and oversize batches before allocating or reading guest buffers.
+inline std::optional<SparseBatchCommand> DecodeSparseBatch(
+    std::span<const U32> packet) {
+    if (packet.size() != 15 || packet[0] != 0x011000e8U || packet[1] != 7 ||
+        !packet[10] || packet[14] >= MaxNotifications ||
+        (packet[13] & 0xff) > 1)
+        return {};
+    const U64 count = Pair(packet[8], packet[9]);
+    if (!count || count > 256 || Pair(packet[11], packet[12]) != 40)
+        return {};
+    return SparseBatchCommand{packet[10], packet[14], count,
+                              static_cast<U8>(packet[13] & 0xff)};
+}
+
 struct Map4K {
     U32 address_space{};
     U32 memory{};
@@ -231,6 +252,21 @@ public:
         if (status != LedgerStatus::Success) return status;
         mappings.erase({as, address});
         return LedgerStatus::Success;
+    }
+    // The batch may replace mappings only inside an existing sparse region,
+    // and never within a normal 211 mapping or across two regions.
+    [[nodiscard]] bool ContainsSparse(U32 as, U64 address, U64 size) const {
+        if (!as || !size || !Aligned(address) || !Aligned(size) ||
+            address > std::numeric_limits<U64>::max() - size)
+            return false;
+        auto it = mappings.upper_bound({as, address});
+        if (it == mappings.begin()) return false;
+        --it;
+        const auto& entry = it->second;
+        return entry.sparse && entry.address_space == as &&
+               address >= entry.address &&
+               address - entry.address < entry.size &&
+               size <= entry.size - (address - entry.address);
     }
     [[nodiscard]] std::size_t Count() const { return mappings.size(); }
     [[nodiscard]] const auto& Mappings() const { return mappings; }

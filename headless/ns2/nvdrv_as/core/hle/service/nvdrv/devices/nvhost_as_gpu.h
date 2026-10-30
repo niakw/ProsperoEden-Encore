@@ -22,6 +22,7 @@
 #include "common/scratch_buffer.h"
 #include "common/swap.h"
 #include "core/hle/service/nvdrv/core/nvmap.h"
+#include "core/hle/service/nvdrv/devices/native_sparse_remap.h"
 #include "core/hle/service/nvdrv/devices/nvdevice.h"
 
 namespace Kernel { class KProcess; }
@@ -69,6 +70,7 @@ public:
     NvResult UnmapNative4K(u64 address, u64 size);
     NvResult ReserveNativeSparse4K(u64 address, u64 size);
     NvResult ReleaseNativeSparse4K(u64 address, u64 size);
+    NvResult RemapNativeSparse(std::span<const NativeSparseRemapEntry> entries);
     NvResult ModifyNativeKind(u64 address, u64 size, u8 kind);
 
     Kernel::KEvent* QueryEvent(u32 event_id) override;
@@ -201,6 +203,8 @@ private:
     //!< have been split into multiple GPU side buffers with the remap flag.
     // Sparse reservations have no NvMap pins until remap support is verified.
     std::map<u64, u64> native_sparse_regions;
+    NativeSparseMappingTable native_sparse_mappings;
+    std::map<u32, DAddr> native_sparse_pins;
     std::map<u64, Mapping> mapping_map;
     //!< Holds allocations created by AllocSpace from
     //!< which fixed buffers can be mapped into

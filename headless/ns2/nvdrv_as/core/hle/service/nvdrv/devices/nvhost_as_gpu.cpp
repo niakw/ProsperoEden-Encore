@@ -11,6 +11,8 @@
 #include "common/alignment.h"
 #include "common/assert.h"
 #include <limits>
+#include <set>
+#include <vector>
 #include "core/hle/kernel/k_process.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_kind.h"
 #include "common/common_types.h"
@@ -40,6 +42,10 @@ nvhost_as_gpu::~nvhost_as_gpu() {
         nvmap.UnpinHandle(mapping.handle);
     }
     mapping_map.clear();
+    for (const auto& [handle, address] : native_sparse_pins) {
+        nvmap.UnpinHandle(handle);
+    }
+    native_sparse_pins.clear();
     if (m_native_process) m_native_process->Close(system.Kernel());
 }
 
@@ -194,6 +200,99 @@ NvResult nvhost_as_gpu::ReserveNativeSparse4K(u64 address, u64 size) {
     return NvResult::Success;
 }
 
+// Remap the contents of already-reserved native 4-KiB sparse VA only.
+// Validate the COMPLETE batch, prepare new pins and mapping-table ownership,
+// then modify GMMU pages in order. No guest page-table change occurs before
+// all errors that can be reported have been checked.
+NvResult nvhost_as_gpu::RemapNativeSparse(std::span<const NativeSparseRemapEntry> entries) {
+    if (!m_native_process || entries.empty() || entries.size() > 256)
+        return NvResult::BadParameter;
+    const std::scoped_lock lock{mutex};
+    if (!vm.initialised || !gmmu) return NvResult::InvalidState;
+
+    NativeSparseMappingTable updated = native_sparse_mappings;
+    std::vector<NativeSparseRange> ranges;
+    std::vector<NativeMemoryKind> kinds;
+    ranges.reserve(entries.size());
+    kinds.reserve(entries.size());
+    for (const auto& entry : entries) {
+        const auto range = DecodeNativeSparseRemap(entry);
+        if (!range || (u32{entry.flags} & 0x7000U) != 0x1000U)
+            return NvResult::BadParameter;
+
+        const auto region = native_sparse_regions.upper_bound(range->address);
+        if (region == native_sparse_regions.begin()) return NvResult::BadParameter;
+        const auto owner = std::prev(region);
+        if (range->address < owner->first ||
+            range->address - owner->first >= owner->second ||
+            range->size > owner->second - (range->address - owner->first))
+            return NvResult::BadParameter;
+
+        NativeMemoryKind kind{};
+        if (range->handle) {
+            const auto handle = nvmap.GetHandle(range->handle);
+            const auto* session = handle ? container.GetSession(handle->session_id) : nullptr;
+            if (!handle || !handle->allocated || !session ||
+                session->process != m_native_process ||
+                range->source_offset > handle->orig_size ||
+                range->size > handle->orig_size - range->source_offset)
+                return NvResult::BadParameter;
+            if (u16{entry.kind} > 255 || u16{entry.fallback_kind} > 255)
+                return NvResult::NotSupported;
+            const auto selected = SelectNativeMemoryKind(
+                static_cast<u8>(u16{entry.kind}),
+                static_cast<u8>(u16{entry.fallback_kind}));
+            if (!selected) return NvResult::NotSupported;
+            kind = *selected;
+        }
+        updated.Replace(*range);
+        ranges.push_back(*range);
+        kinds.push_back(kind);
+    }
+    if (updated.Ranges().size() > 65536) return NvResult::InsufficientMemory;
+    const std::set<u32> retained = updated.ReferencedHandles();
+    if (retained.size() > 4096) return NvResult::InsufficientMemory;
+
+    // A handle overwritten later in this batch still needs a pin until
+    // all intermediate GMMU updates are applied in order.
+    auto needed = retained;
+    for (const auto& range : ranges) if (range.handle) needed.insert(range.handle);
+    if (needed.size() > 4096) return NvResult::InsufficientMemory;
+    std::map<u32, DAddr> newly_pinned;
+    for (const u32 handle : needed) {
+        if (native_sparse_pins.contains(handle)) continue;
+        const DAddr pinned = nvmap.PinHandle(handle, false);
+        if (!pinned) {
+            for (const auto& [id, address] : newly_pinned) nvmap.UnpinHandle(id);
+            return NvResult::InsufficientMemory;
+        }
+        newly_pinned.emplace(handle, pinned);
+    }
+
+    for (std::size_t i = 0; i < ranges.size(); ++i) {
+        const auto& range = ranges[i];
+        if (!range.handle) {
+            gmmu->MapSparse(range.address, range.size, false);
+            continue;
+        }
+        const auto old = native_sparse_pins.find(range.handle);
+        const DAddr pinned = old == native_sparse_pins.end()
+                                 ? newly_pinned.at(range.handle) : old->second;
+        gmmu->Map(range.address, pinned + range.source_offset, range.size,
+                  static_cast<Tegra::PTEKind>(kinds[i].backend), false);
+    }
+    // Replacement is now committed. Drop old pins only after their GMMU
+    // entries have been replaced; one pin serves all ranges using a handle.
+    native_sparse_mappings = std::move(updated);
+    native_sparse_pins.merge(newly_pinned);
+    for (auto it = native_sparse_pins.begin(); it != native_sparse_pins.end();) {
+        if (retained.contains(it->first)) { ++it; continue; }
+        nvmap.UnpinHandle(it->first);
+        it = native_sparse_pins.erase(it);
+    }
+    return NvResult::Success;
+}
+
 NvResult nvhost_as_gpu::ReleaseNativeSparse4K(u64 address, u64 size) {
     constexpr u64 page = VM::YUZU_PAGESIZE;
     if (!size || ((address | size) & (page - 1)) ||
@@ -214,7 +313,18 @@ NvResult nvhost_as_gpu::ReleaseNativeSparse4K(u64 address, u64 size) {
         (mapping != mapping_map.begin() &&
          std::prev(mapping)->first + std::prev(mapping)->second.size > address))
         return NvResult::BadParameter;
+    // Purge all physical mappings covered by this reservation; preserve
+    // handles still referenced by other independent native sparse regions.
+    auto updated = native_sparse_mappings;
+    updated.Replace(NativeSparseRange{address, size, 0, 0});
+    const auto retained = updated.ReferencedHandles();
     gmmu->Unmap(address, size);
+    native_sparse_mappings = std::move(updated);
+    for (auto it = native_sparse_pins.begin(); it != native_sparse_pins.end();) {
+        if (retained.contains(it->first)) { ++it; continue; }
+        nvmap.UnpinHandle(it->first);
+        it = native_sparse_pins.erase(it);
+    }
     vm.small_page_allocator->Free(static_cast<u32>(address >> VM::PAGE_SIZE_BITS),
                                   static_cast<u32>(size >> VM::PAGE_SIZE_BITS));
     allocation_map.erase(allocation);
@@ -397,6 +507,8 @@ NvResult nvhost_as_gpu::FreeSpace(IoctlFreeSpace& params) {
     if (!vm.initialised) {
         return NvResult::BadValue;
     }
+    if (native_sparse_regions.contains(params.offset))
+        return NvResult::BadParameter;
     if (auto const it = allocation_map.find(params.offset); it != allocation_map.end()) {
         auto const allocation = it->second;
         if (allocation.page_size != params.page_size || allocation.size != (u64(params.pages) * params.page_size))

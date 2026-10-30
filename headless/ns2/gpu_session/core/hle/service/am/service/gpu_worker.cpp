@@ -5,6 +5,7 @@
 // 4-KiB GMMU mappings and GPU command submission are *not* implemented here.
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -43,6 +44,7 @@ IGpuWorker::IGpuWorker(Core::System& system_, std::shared_ptr<Nvidia::Module> mo
         {213, &IGpuWorker::NormalUnmapGpuMemory4K, "NormalUnmapGpuMemory4K"},
         {214, &IGpuWorker::CreateSparseRegion, "CreateSparseRegion"},
         {215, &IGpuWorker::DestroySparseRegion, "DestroySparseRegion"},
+        {216, &IGpuWorker::ExecuteSparseMapRequests, "ExecuteSparseMapRequests"},
     };
     RegisterHandlersTipc(functions);
 }
@@ -83,8 +85,8 @@ Result IGpuWorker::HandleSyncRequest(Kernel::KServerSession& session,
     }
     const auto guard = LockService();
     InvokeRequestTipc(ctx);
-    // Sparse remap 216 and GPU command submission are still unavailable.
-    // 214/215 only reserve and release an otherwise empty sparse VA range.
+    // 216 remaps bounded, verified NVMap handles into native sparse VA;
+    // Ampere graphics queues and GPU submission remain unsupported.
     IPC::ResponseBuilder rb{ctx, 2};
     rb.Push(Kernel::ResultNotImplemented.raw);
     return system.IsPoweredOn() ? ctx.WriteToOutgoingCommandBuffer() : ResultSuccess;
@@ -286,6 +288,91 @@ void IGpuWorker::DestroySparseRegion(HLERequestContext& ctx) {
     }
     IPC::ResponseBuilder rb{ctx, 2};
     rb.Push(result.raw);
+}
+
+void IGpuWorker::ExecuteSparseMapRequests(HLERequestContext& ctx) {
+    std::array<GW::U32, 15> command{};
+    std::copy_n(ctx.CommandBuffer(), command.size(), command.begin());
+    u64 processed{};
+    Result result = Kernel::ResultInvalidCombination;
+    if (const auto request = GW::DecodeSparseBatch(command)) {
+        result = Kernel::ResultInvalidSize;
+        const std::size_t bytes =
+            static_cast<std::size_t>(request->count) * sizeof(GpuSparseMapRequest);
+        // Bounds must be checked before reading untrusted guest memory.
+        if (ctx.GetReadBufferSize() == bytes &&
+            ctx.GetWriteBufferSize() >= request->count) {
+            const auto input = ctx.ReadBuffer();
+            if (input.size() == bytes) {
+                const std::scoped_lock lock{m_mutex, m_shared->mutex};
+                result = Kernel::ResultNotFound;
+                if (m_shared->address_spaces.Owns(request->address_space) &&
+                    m_shared->events[request->notification]) {
+                    std::vector<Nvidia::Devices::NativeSparseRemapEntry> staged;
+                    std::vector<u8> selected;
+                    staged.reserve(request->count);
+                    selected.reserve(request->count);
+                    result = ResultSuccess;
+                    for (std::size_t i = 0; i < request->count; ++i) {
+                        GpuSparseMapRequest element{};
+                        std::memcpy(&element, input.data() + i * sizeof(element),
+                                    sizeof(element));
+                        const auto entry = DecodeGpuSparseMap(element);
+                        if (!entry) {
+                            result = Kernel::ResultNotImplemented;
+                            break;
+                        }
+                        const auto range = Nvidia::Devices::DecodeNativeSparseRemap(*entry);
+                        if (!range || !m_mappings.ContainsSparse(
+                                          request->address_space,
+                                          range->address, range->size)) {
+                            result = Kernel::ResultInvalidCurrentMemory;
+                            break;
+                        }
+                        u8 effective = element.fallback_kind;
+                        if (range->handle) {
+                            if (std::find(m_memory.begin(), m_memory.end(),
+                                          range->handle) == m_memory.end()) {
+                                result = Kernel::ResultNotFound;
+                                break;
+                            }
+                            const auto kind = Nvidia::Devices::SelectNativeMemoryKind(
+                                element.kind, element.fallback_kind);
+                            if (!kind) {
+                                result = Kernel::ResultNotImplemented;
+                                break;
+                            }
+                            auto& nvmap = m_module->GetContainer().GetNvMapFile();
+                            const auto handle = nvmap.GetHandle(range->handle);
+                            if (!handle || !handle->allocated ||
+                                range->source_offset > handle->orig_size ||
+                                range->size > handle->orig_size - range->source_offset) {
+                                result = Kernel::ResultInvalidCurrentMemory;
+                                break;
+                            }
+                            effective = kind->selected;
+                        }
+                        staged.push_back(*entry);
+                        selected.push_back(effective);
+                    }
+                    if (result.IsSuccess()) {
+                        result = Kernel::ResultInvalidState;
+                        const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+                            static_cast<Nvidia::DeviceFD>(request->address_space));
+                        if (as && as->RemapNativeSparse(staged) == Nvidia::NvResult::Success) {
+                            processed = request->count;
+                            ctx.WriteBuffer(selected);
+                            result = ResultSuccess;
+                            m_shared->events[request->notification]->Signal(kernel);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 4};
+    rb.Push(result.raw);
+    rb.Push(processed);
 }
 
 Result IGpuWorker::RegisterMemory(u64 begin, u64 end, u32 flags,

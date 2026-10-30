@@ -119,6 +119,8 @@ def main() -> int:
                 "RecordReleasedSparse(" in worker_cpp and
                 "CanReserveSparse(" in worker_cpp and
                 "CanReleaseSparse(" in worker_cpp and
+                "DecodeSparseBatch(" in worker_cpp and
+                "ContainsSparse(" in worker_cpp and
                 "MaxMappings = 4096" in worker_cpp,
                 "NS2 4K worker preflight / bounded ledger missing")
         shared_cpp = (session_root / "gpu_worker_shared.cpp").read_text()
@@ -156,7 +158,11 @@ def main() -> int:
                 'as->ModifyNativeKind(' in worker_hle_cpp and
                 '{214, &IGpuWorker::CreateSparseRegion' in worker_hle_cpp and
                 '{215, &IGpuWorker::DestroySparseRegion' in worker_hle_cpp and
-                '{216, &IGpuWorker::ExecuteSparseMapRequests' not in worker_hle_cpp and
+                '{216, &IGpuWorker::ExecuteSparseMapRequests' in worker_hle_cpp and
+                'as->RemapNativeSparse(staged)' in worker_hle_cpp and
+                'ctx.GetReadBufferSize() == bytes' in worker_hle_cpp and
+                'm_mappings.ContainsSparse(' in worker_hle_cpp and
+                'm_shared->events[request->notification]->Signal(kernel)' in worker_hle_cpp and
                 'as->ReserveNativeSparse4K(' in worker_hle_cpp and
                 'as->ReleaseNativeSparse4K(' in worker_hle_cpp and
                 'm_mappings.RecordSparse(' in worker_hle_cpp and
@@ -218,7 +224,14 @@ def main() -> int:
                 "UnmapNative4K(u64 address, u64 size)" in native_as_cpp and
                 "gmmu->MapSparse(address, size, false)" in native_as_cpp and
                 "native_sparse_regions.emplace(address, size)" in native_as_cpp and
-                "native_sparse_regions.erase(owned)" in native_as_cpp,
+                "native_sparse_regions.erase(owned)" in native_as_cpp and
+                "NativeSparseMappingTable native_sparse_mappings" in native_as_h and
+                "std::map<u32, DAddr> native_sparse_pins" in native_as_h and
+                "RemapNativeSparse(std::span<const NativeSparseRemapEntry>" in native_as_h and
+                "native_sparse_mappings = std::move(updated)" in native_as_cpp and
+                "native_sparse_pins.merge(newly_pinned)" in native_as_cpp and
+                "nvmap.UnpinHandle(it->first)" in native_as_cpp and
+                "needed.insert(range.handle)" in native_as_cpp,
                 "Native 4KiB NVDRV address-space owner must be isolated and bounded")
         require("EDEN_NS2_NVDRV_AS_SOURCE" in CMAKE[nvdrv_selection:release_gate],
                 "Native AS owner is not gated under research-only NVDRV switch")

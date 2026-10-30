@@ -637,6 +637,64 @@ int main(){
                 WP::LedgerStatus::Overlap,
             "sparse reservation cannot overwrite normal 4K mapping");
 
+    // 216 TIPC preflight is bounded before touching the guest buffer.
+    const std::array<WP::U32, 15> sparseBatchRaw{
+        0x011000e8, 7, 0, 0, 0, 0, 0, 0,
+        2, 0, 9, 40, 0, 1, 63};
+    const auto sparseBatch = WP::DecodeSparseBatch(sparseBatchRaw);
+    require(sparseBatch && sparseBatch->count == 2 &&
+            sparseBatch->address_space == 9 &&
+            sparseBatch->notification == 63 && sparseBatch->sync == 1,
+            "worker 216 batch count/stride/owner/notification decoded");
+    auto brokenBatch = sparseBatchRaw;
+    brokenBatch[8] = 257;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "sparse batch count strictly limited to 256");
+    brokenBatch = sparseBatchRaw;
+    brokenBatch[8] = 0;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "zero sparse map requests rejected");
+    brokenBatch = sparseBatchRaw;
+    brokenBatch[11] = 39;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "wrong sparse entry stride rejected");
+    brokenBatch = sparseBatchRaw;
+    brokenBatch[13] = 2;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "unsupported sparse sync mode rejected");
+    brokenBatch = sparseBatchRaw;
+    brokenBatch[14] = 64;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "out-of-range sparse completion event rejected");
+    brokenBatch = sparseBatchRaw;
+    brokenBatch[9] = 1;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "64-bit sparse count high-word overflow rejected");
+    brokenBatch = sparseBatchRaw;
+    brokenBatch[12] = 1;
+    require(!WP::DecodeSparseBatch(brokenBatch),
+            "64-bit sparse stride high-word overflow rejected");
+    require(!WP::DecodeSparseBatch(std::span<const WP::U32>{
+                sparseBatchRaw.data(), 14}),
+            "truncated sparse batch request rejected");
+    WP::MappingLedger containedSparse;
+    require(containedSparse.RecordSparse(9, 1, 0x8000, 0x4000) ==
+                WP::LedgerStatus::Success &&
+            containedSparse.ContainsSparse(9, 0x8000, 0x4000) &&
+            containedSparse.ContainsSparse(9, 0x9000, 0x1000),
+            "sparse remap must lie within an allocated 4K sparse VA region");
+    require(!containedSparse.ContainsSparse(9, 0x7000, 0x1000) &&
+            !containedSparse.ContainsSparse(9, 0xb000, 0x2000) &&
+            !containedSparse.ContainsSparse(10, 0x8000, 0x1000) &&
+            !containedSparse.ContainsSparse(9, 0x8001, 0x1000) &&
+            !containedSparse.ContainsSparse(9, 0x8000, 0) &&
+            !containedSparse.ContainsSparse(9, 0xfffffffffffff000ULL, 0x2000),
+            "sparse batch rejects cross-owner, overflow and out-of-region changes");
+    require(containedSparse.RecordReleasedSparse(9, 0x8000, 0x4000) ==
+                WP::LedgerStatus::Success &&
+            !containedSparse.ContainsSparse(9, 0x8000, 0x1000),
+            "released sparse reservation cannot be remapped");
+
     WP::MappingLedger bounded;
     auto fill=*map;fill.size=0x1000;
     for (std::size_t i=0;i<WP::MaxMappings;++i) {

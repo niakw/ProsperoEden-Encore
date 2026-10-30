@@ -44,6 +44,9 @@
 
 ### Correctifs déjà intégrés — ce qui avance sans fermer tout un chantier
 
+- [x] **J01 — quatre mémos positifs TLS pour l'engagement JIT sparse (30/10, `94e5961f`) :** `CommitSparseJitCode` n'exige plus `sparse_jit_mutex` lorsqu'un même worker alterne jusqu'à quatre arènes A32/A64 déjà engagées. MRU borné, génération globale et chemin verrouillé sur croissance/miss inchangés ; nouveau témoin C++20 source-lié O0/O2 UBSan, mock sparse intégral maintenu. **CI du nouveau SHA et mesure console non qualifiées** ; J01 et B5 restent ouverts, 22/29 décisions closes.
+
+
 - [x] **C01/V05 — fallback multi-range nul refusé avant interrogation du pilote (30/10)** : source native `cd35fb09` ; `MultiRangeBufferCache::Get` n'interroge plus `GetBufferDeviceAddress` ni ne met en cache un gathered/sparse tous deux nuls. `prepare-vulkan-port.py` et nouveau témoin source-extrait PS5/desktop O0/O2 synchronisés. Modèle C++ local ASan/UBSan **4/4 PASS**, **CI complète non encore qualifiée**, aucune mesure FC27 ; C01 reste `[ ]` et 22/29 décisions PRÉ-BUILD closes.
 
 - [x] **C04/V06 — réveil ciblé du worker de présentation (29/10) :** séparation de `present_ready_cv` (worker avec stop_token) et `frame_cv` (drain `WaitPresent`), supprimant les réveils inutiles du drain à chaque enqueue tout en évitant le mauvais waiter de l'ancien `notify_one` partagé. Source native, header, générateur et témoins source-extraits adaptés. Simulation indépendante C++20 30×200 frames O0/O2 UBSan **PASS** ; replay CI, gain de frametime et console **non qualifiés**. C04/V06 restent ouverts.

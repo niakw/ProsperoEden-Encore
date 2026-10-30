@@ -378,6 +378,20 @@ ui::Home FakeServices::home()
             home.recents.back().intro = game.intro;
         }
     }
+    // The README preview must display the *packaged Eden wallpaper*
+    // (ui/art/backdrop.tga, from assets/encore-background.jpg), not the
+    // synthetic 16:9 sunset used by general host fixture screenshots.
+    // Clear only the host specimen's Hero layers so Launcher::draw_home()
+    // falls through to the real production Backdrop renderer and textures.
+    if (const char* branded = std::getenv("PE_PREVIEW_BRANDED_HOME");
+        branded != nullptr && std::string_view(branded) == "1") {
+        home.last_hero.clear();
+        home.last_screenshot.clear();
+        for (ui::Recent& recent : home.recents) {
+            recent.hero.clear();
+            recent.screenshot.clear();
+        }
+    }
     home.system_status = fill(tr("{0} games installed"), {std::to_string(games_.size())}) + "  /  " +
                          (setup_ready ? tr("Firmware ready") : tr("Setup required"));
     return home;

@@ -12,6 +12,7 @@ on:
       - 'src/host_memory.cpp'
       - 'src/memory_pages.cpp'
       - 'headless/jit-sparse-commit.h'
+      - 'tools/check-native-jit-sparse-positive-cache-host.py'
       - 'headless/jit-allocator.h'
       - 'headless/CMakeLists.txt'
       - 'tools/check-native-sparse-jit-trim-host.py'
@@ -428,6 +429,7 @@ jobs:
           python3 -B tools/ci/check-final-engine-owner-contracts.py
           python3 -B tools/check-native-sparse-jit-release-selector-host.py
           python3 -B tools/check-jit-sparse-host.py
+          python3 -B tools/check-native-jit-sparse-positive-cache-host.py
           python3 -B tools/check-native-sparse-jit-trim-host.py
           python3 -B tools/check-native-sparse-decommit-lock-host.py
           python3 -B tools/check-sparse-zero-bounds-host.py

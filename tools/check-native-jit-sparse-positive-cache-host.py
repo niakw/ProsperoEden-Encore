@@ -21,6 +21,7 @@ cache_header = (ROOT / "headless/jit-sparse-commit.h").read_text()
 assert "if (!entries[i].executable) return false;" in cache_header
 assert "if (entries[0].executable == executable) {" in cache_header
 assert "return required <= entries[0].committed;" in cache_header
+assert "if (required > entries[i].committed) return false;" in cache_header
 compiler = shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 FIXTURE = r"""
@@ -47,6 +48,10 @@ int main() {
     for (unsigned i = 0; i < 100000; ++i)
         if (!cache.Covers(arenas[i % 4], committed, 7)) ++misses;
     assert(misses == 0);
+    // End of alternating probes leaves arena 3 hottest; arena 2 is cached
+    // but requires another physical page. The failed probe must not promote.
+    assert(!cache.Covers(arenas[2], committed + 1, 7));
+    assert(cache.Covers(arenas[3], committed, 7));
     // The most frequent single-core hit is strictly read-only. Catch a
     // redundant self-promotion store even at -O0 by protecting the page.
     const long page_size = sysconf(_SC_PAGESIZE);
@@ -56,12 +61,14 @@ int main() {
     assert(page != MAP_FAILED);
     auto* readonly = new (page) Eden::Jit::SparseCommitPositiveCache{};
     readonly->Remember(arenas[0], committed, 7);
+    readonly->Remember(arenas[1], committed, 7);
     assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ) == 0);
     for (unsigned i = 0; i < 1000; ++i) {
-        assert(readonly->Covers(arenas[0], committed, 7));
-        // A cold/missing arena must short-circuit at the vacant second slot
-        // without modifying a partially populated read-only cache.
-        assert(!readonly->Covers(arenas[1], committed, 7));
+        assert(readonly->Covers(arenas[1], committed, 7));
+        // Missing arena, hot-arena growth, and non-head arena growth are
+        // read-only misses and must not mutate MRU while finding a false hit.
+        assert(!readonly->Covers(arenas[2], committed, 7));
+        assert(!readonly->Covers(arenas[1], committed + 1, 7));
         assert(!readonly->Covers(arenas[0], committed + 1, 7));
     }
     assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ | PROT_WRITE) == 0);

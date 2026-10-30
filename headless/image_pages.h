@@ -19,6 +19,18 @@ constexpr std::uint64_t Bits(unsigned first, unsigned last) noexcept {
 // Publish the page BEFORE it is inserted into the registered image slot map.
 inline void Mark(std::uint64_t address, std::uint64_t size) noexcept {
     if (size == 0 || address >= kSpace) return;
+    // Registering a single 4 KiB page is common for small texture
+    // views. Avoid general range masks and the per-word loop, while keeping
+    // release publication for concurrent reader lock-elision probes.
+    constexpr std::uint64_t page_mask = (std::uint64_t{1} << kPageBits) - 1;
+    if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {
+        const auto page = address >> kPageBits;
+        const auto word = page / 64;
+        const auto bit = std::uint64_t{1} << (page % 64);
+        if (!(held[word].load(std::memory_order_relaxed) & bit))
+            held[word].fetch_or(bit, std::memory_order_release);
+        return;
+    }
     const auto first = address >> kPageBits;
     const auto last = ((std::min)(size, kSpace - address) + address - 1) >> kPageBits;
     for (auto word = first / 64; word <= last / 64; ++word) {

@@ -847,3 +847,9 @@ Fast gate `41145533639` sur `74fec6c` : échec de l’assertion source `sample.b
 - `Pad::Pad` calcule 256 booléens une seule fois à partir de la calibration immuable : `raw / 255.0f >= trigger_threshold`. `Pad::Consume` utilise deux lectures de tableau, sans opérations flottantes sur ces deux gâchettes par échantillon.
 - `check-fc27-f06-native-pad-transition-host.py` exécute le constructeur source-extrait et compare exactement **5 seuils × 256 valeurs**, en O0/O2 UBSan, sans déplacer la publication des boutons, du gyro ni du gameplay. `check-dualsense-input-hotpath.py` garde les nouveaux champs. `check-fastmem-window-bounds-host.py` retire la constante locale désormais inutilisée, seule origine de l'échec source-audit observé dans le run 41145966033.
 - Gain matériel non mesuré, CI en attente, décisions F07 **22/29** inchangées.
+
+## F07 — texture-cache : enregistrement d'une page image rapide (31 octobre 2026)
+
+- `headless/image_pages.h::Mark` : enregistrement des images dans une seule page 4 KiB avec un unique test atomique et `fetch_or` conditionnel, sans la boucle de masques génériques ; cas multi-pages et publications release/acquire inchangés. `NeverHeld` conserve son test bit-à-bit précédent.
+- `tools/check-ps5-image-pages-r433.py` : nouveau test de frontière mot 64 bits, région à cheval sur 4 KiB et huit éditeurs concurrents de pages qui partagent le même mot ; maintien de l'oracle indépendant 12 000 sondes et du sanitizer.
+- C01/T01 toujours ouverts, **F07 22/29**, tests CI à qualifier, aucun FPS console revendiqué.

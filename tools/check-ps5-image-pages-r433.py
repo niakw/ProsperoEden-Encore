@@ -34,6 +34,10 @@ assert cache.index("::Eden::ImagePages::Mark(cpu_addr, size);") < cache.index(
     "slot_map_views.insert(gpu_addr, cpu_addr")
 assert "ImagePages::NeverHeld" in generator and generator.count("ImagePages::Mark(") == 2
 assert "memory_order_acquire" in header and "memory_order_release" in header
+assert 'const auto word = page / 64;' in header
+assert 'const auto bit = std::uint64_t{1} << (page % 64);' in header
+assert 'held[word].fetch_or(bit, std::memory_order_release);' in header
+assert 'const auto last = ((std::min)(size, kSpace - address) + address - 1) >> kPageBits;' in header
 assert "size > 256 * 1024" in header
 assert 'if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {' in header
 assert 'const auto page = address >> kPageBits;' in header
@@ -66,6 +70,24 @@ int main() {
   assert(NeverHeld(10000*p,p));
   Mark(kSpace-1,1<<20);
   assert(!NeverHeld(kSpace-1,1) && !NeverHeld(kSpace-1,2));
+  // Single-page fast publication, crossing a 64-bit word, and unaligned
+  // two-page fallthrough must agree with the complete monotonic bitmap.
+  Mark(14000*p+17,1);
+  assert(!NeverHeld(14000*p,1) && NeverHeld(14001*p,1));
+  Mark(14079*p+4095,2);
+  assert(!NeverHeld(14079*p,1) && !NeverHeld(14080*p,1));
+  // Simultaneous insertions of distinct bits in one word cannot be lost
+  // by the load-before-fetch_or optimization.
+  std::vector<std::thread> overlapped;
+  for(unsigned t=0;t<8;++t) overlapped.emplace_back([t]{
+    for(unsigned n=0;n<500;++n) {
+      Mark((16000+t)*p,1);
+      Mark(16000*p,8*p);
+    }
+  });
+  for(auto& thread:overlapped) thread.join();
+  for(unsigned t=0;t<8;++t) assert(!NeverHeld((16000+t)*p,1));
+  assert(NeverHeld(16008*p,1));
   // Independent page-by-page baseline across all byte offsets, word
   // boundaries, empty spans, oversized ranges and partial ownership.
   // A false "never held" could suppress texture invalidation and leave

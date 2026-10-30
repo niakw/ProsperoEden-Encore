@@ -167,3 +167,153 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-refresh-') as temp:
                     '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
                     str(path), '-o', str(executable)], check=True, timeout=60)
     subprocess.run([str(executable)], check=True, timeout=15)
+
+# Exact source-extracted Window::Protect witness: one-page permission no-op
+# leaves JIT map bytes unchanged and saves a Refresh; changed and cross-page
+# requests continue to publish updated bytes under the same owner mutex.
+protect_body = '    void Protect(' + source.split('    void Protect(', 1)[1].split('\n    }', 1)[0] + '\n    }'
+assert protect_body.count('if (first == last && page_access[first] == access) return;') == 1
+assert protect_body.index('std::lock_guard lock{mutex};') < protect_body.index(
+    'if (first == last && page_access[first] == access) return;')
+protect_cpp = r'''
+#include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <mutex>
+#include <vector>
+constexpr std::size_t GuestPage = 0x1000;
+constexpr std::size_t GuestPages = 64;
+constexpr std::size_t WindowBytes = GuestPage * GuestPages;
+struct Counters { std::atomic<unsigned> protect_calls{0}; };
+Counters counters;
+struct TestWindow {
+    std::mutex mutex;
+    std::vector<std::uint8_t> page_access = std::vector<std::uint8_t>(GuestPages, 0);
+    std::vector<std::uint8_t> map = std::vector<std::uint8_t>(GuestPages, 0);
+    unsigned refresh_calls = 0;
+PAGES
+    void Refresh(std::size_t first, std::size_t last) {
+        ++refresh_calls;
+        for (std::size_t page = first; page <= last; ++page)
+            map[page] = page_access[page];
+    }
+PROTECT
+};
+int main() {
+    TestWindow w;
+    w.Protect(0x1000, 1, 0);
+    assert(w.refresh_calls == 0 && counters.protect_calls == 1);
+    w.Protect(0x1000, 1, 3);
+    assert(w.refresh_calls == 1 && w.map[1] == 3);
+    for (int i = 0; i < 20000; ++i) w.Protect(0x1000, 1, 3);
+    assert(w.refresh_calls == 1 && counters.protect_calls == 20002);
+    w.Protect(0x1000, 1, 1);
+    assert(w.refresh_calls == 2 && w.map[1] == 1);
+    w.Protect(0x1fff, 2, 2);
+    assert(w.refresh_calls == 3 && w.page_access[1] == 2 &&
+           w.page_access[2] == 2);
+    w.Protect(0x1fff, 2, 2);
+    assert(w.refresh_calls == 4);
+    w.Protect(WindowBytes - 1, 1, 3);
+    assert(w.refresh_calls == 5 && w.map[GuestPages - 1] == 3);
+    w.Protect(WindowBytes, 1, 3);
+    w.Protect(WindowBytes - 1, 0, 1);
+    assert(w.refresh_calls == 5 && counters.protect_calls == 20006);
+    std::printf("FASTMEM_PROTECT_SINGLE_PAGE_NOOP_PASS repeated=20000 "
+                "changed=1 adjacent=1 bounds=1\n");
+}
+'''.replace('PAGES', method).replace('\nPROTECT\n', '\n' + protect_body + '\n')
+assert '\nPROTECT\n' not in protect_cpp
+with tempfile.TemporaryDirectory(prefix='encore-fastmem-protect-') as temp:
+    path = Path(temp)/'protect.cpp'
+    path.write_text(protect_cpp)
+    for opt in ('-O0', '-O2'):
+        executable = Path(temp)/('protect'+opt)
+        subprocess.run([compiler, '-std=c++20', opt, '-Wall', '-Wextra', '-Werror',
+                        '-pthread', '-fsanitize=address,undefined',
+                        '-fno-sanitize-recover=all', str(path), '-o', str(executable)],
+                       check=True, timeout=60)
+        subprocess.run([str(executable)], check=True, timeout=20)
+
+# Source-extracted fastmem Map/Unmap redundant single-page probes.
+# Preserve a kernel retry when an otherwise-identical alias was NOT
+# published: a previous fixed-map operation could have failed.
+map_body = '    void Map(' + source.split('    void Map(', 1)[1].split('\n    }', 1)[0] + '\n    }'
+unmap_body = '    void Unmap(' + source.split('    void Unmap(', 1)[1].split('\n    }', 1)[0] + '\n    }'
+assert 'if (first == last && chunk_aliased[first / PagesPerGranule] &&' in map_body
+assert 'if (first == last && !page_backing[first] && !page_access[first]) return;' in unmap_body
+for body in (map_body, unmap_body):
+    assert body.index('std::lock_guard lock{mutex};') < body.index('if (first == last')
+map_cpp = r'''
+#include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <mutex>
+#include <vector>
+constexpr std::size_t GuestPage = 0x1000;
+constexpr std::size_t GuestPages = 64;
+constexpr std::size_t PagesPerGranule = 4;
+constexpr std::size_t WindowBytes = GuestPages * GuestPage;
+struct Counters {
+    std::atomic<unsigned> map_calls{0}, unmap_calls{0}, mapped_pages{0};
+};
+Counters counters;
+struct TestWindow {
+    std::mutex mutex;
+    std::vector<std::uint32_t> page_backing = std::vector<std::uint32_t>(GuestPages, 0);
+    std::vector<std::uint8_t> page_access = std::vector<std::uint8_t>(GuestPages, 0);
+    std::vector<std::uint8_t> chunk_aliased = std::vector<std::uint8_t>(GuestPages / PagesPerGranule, 0);
+    unsigned updates = 0;
+PAGES
+    void Update(std::size_t, std::size_t) { ++updates; }
+MAP
+UNMAP
+};
+int main() {
+    TestWindow w;
+    // A successful prior alias permits exact same-page Map to skip Update.
+    w.Map(0, 0, GuestPage, 3);
+    assert(w.updates == 1 && counters.mapped_pages == 1);
+    for (int i = 0; i < 10000; ++i) w.Map(0, 0, GuestPage, 3);
+    assert(w.updates == 10001); // not yet aliased: preserve kernel retry
+    w.chunk_aliased[0] = 1;
+    for (int i = 0; i < 10000; ++i) w.Map(0, 0, GuestPage, 3);
+    assert(w.updates == 10001);
+    w.Map(0, GuestPage, GuestPage, 3);
+    assert(w.updates == 10002 && w.page_backing[0] == 2);
+    w.Map(0, GuestPage, GuestPage, 1);
+    assert(w.updates == 10003 && w.page_access[0] == 1);
+    w.Unmap(0, GuestPage);
+    assert(w.updates == 10004 && counters.mapped_pages == 0);
+    for (int i = 0; i < 10000; ++i) w.Unmap(0, GuestPage);
+    assert(w.updates == 10004 && counters.unmap_calls == 10001);
+    // Overlap and the exact end boundary retain ordinary range semantics.
+    w.Map(GuestPage - 1, 0, 2, 3);
+    assert(w.updates == 10005 && counters.mapped_pages == 2);
+    w.Unmap(GuestPage - 1, 2);
+    assert(w.updates == 10006 && counters.mapped_pages == 0);
+    w.Map(WindowBytes, 0, 1, 3);
+    w.Unmap(WindowBytes, 1);
+    assert(w.updates == 10006);
+    std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
+                "same_alias_noop=10000 unmap_noop=10000 crossing=1 O0_O2=1\n");
+}
+'''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
+    '\nUNMAP\n', '\n' + unmap_body + '\n')
+assert '\nUNMAP\n' not in map_cpp and '\nMAP\n' not in map_cpp
+with tempfile.TemporaryDirectory(prefix='encore-fastmem-map-unmap-') as temp:
+    path = Path(temp)/'map.cpp'
+    path.write_text(map_cpp)
+    for opt in ('-O0', '-O2'):
+        binary = Path(temp)/('map'+opt)
+        subprocess.run([compiler, '-std=c++20', opt, '-Wall', '-Wextra',
+                        '-Werror', '-pthread', '-fsanitize=address,undefined',
+                        '-fno-sanitize-recover=all', str(path), '-o', str(binary)],
+                       check=True, timeout=60)
+        subprocess.run([str(binary)], check=True, timeout=30)

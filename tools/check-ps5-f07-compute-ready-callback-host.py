@@ -58,6 +58,7 @@ struct PipelineWaitTrace {
     // The real V01 trace measures the lock phase; this fixture only
     // verifies release/acquire publication and the optional early exit.
     void MarkLockAcquired() noexcept {}
+    bool WasBlockedOnMutex() const noexcept { return false; }
     void Complete(const char*, std::uint64_t, bool) {
         completed_traces.fetch_add(1, std::memory_order_relaxed);
     }

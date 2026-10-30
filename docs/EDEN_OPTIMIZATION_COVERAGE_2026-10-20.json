@@ -425,17 +425,17 @@
     {
       "path": "headless/graphics.cpp",
       "disposition": "code_changed_in_batch",
-      "reviewed_source_git_blob": "92912ebe7177ce56c299fe4a1717961bc07aa762",
+      "reviewed_source_git_blob": "56f3b37e5f0c18f04eea7f0da132f31ddca9b4da",
       "proof_ref": "tools/check-ps5-hud-snapshot-memo-host.py",
-      "evidence": "2026-10-30 main callback memo: HudClock::Present still executes per displayed frame, but MakeHudSnapshot runs only when FPS/worst/speed differ. Reset at title open preserves loading-to-game transition. Detailed FPS/JIT/C05 existing frame counters unchanged. Source-anchored host checks in preflight; console FPS still unmeasured. 30 October F07 present callback optimization: skip the quiet-mode 24-atomic GPU/HLE/JIT baseline snapshot on first frame and each five-second window, and invalidate baseline across runtime log toggles. Source check and toggle model added. No measured PS5 FPS claim."
+      "evidence": "2026-10-30 main callback memo: HudClock::Present still executes per displayed frame, but MakeHudSnapshot runs only when FPS/worst/speed differ. Reset at title open preserves loading-to-game transition. Detailed FPS/JIT/C05 existing frame counters unchanged. Source-anchored host checks in preflight; console FPS still unmeasured. 30 October F07 present callback optimization: skip the quiet-mode 24-atomic GPU/HLE/JIT baseline snapshot on first frame and each five-second window, and invalidate baseline across runtime log toggles. Source check and toggle model added. No measured PS5 FPS claim. 2026-10-30 C05: distinguish a valid detailed frame-pressure baseline from an OFF->ON logging cycle between five-second windows by comparing NativeLogs::Generation at both boundaries; do not report mixed GPU/JIT/HLE deltas as measured. No per-frame atomic loads added."
     },
     {
       "path": "headless/graphics.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U19",
-      "reviewed_source_git_blob": "c1a65969db96f601ed0255b47051138da565caa0",
+      "reviewed_source_git_blob": "4a958fea2d32bf897ecc3337293cb47fb909fce7",
       "source_review_document": "docs/EDEN_NATIVE_HOTPATH_FAST_REVIEW_2026-10-21.md",
-      "evidence": "Current source inspected: Déclarations de fenêtre et lignes de base des pressions de frame par instance ; pas de travail GPU dans ce header, pas de mémoire globale de mesures entre deux jeux. Rerun this review only on source drift or Défaut de propriété/contexte EGL prouvé dans l’implémentation. 30 October F07: added per-window logging-baseline validity bit to prevent stale pressure attribution when detailed logging is toggled."
+      "evidence": "Current source inspected: Déclarations de fenêtre et lignes de base des pressions de frame par instance ; pas de travail GPU dans ce header, pas de mémoire globale de mesures entre deux jeux. Rerun this review only on source drift or Défaut de propriété/contexte EGL prouvé dans l’implémentation. 30 October F07: added per-window logging-baseline validity bit to prevent stale pressure attribution when detailed logging is toggled. 2026-10-30: per-window logging-generation field guards detailed counter attribution across runtime toggle cycles."
     },
     {
       "path": "headless/guest_fault.h",

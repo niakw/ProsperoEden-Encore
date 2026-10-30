@@ -701,6 +701,7 @@ void GraphicsWindow::OnFrameDisplayed() {
             // A runtime logging toggle seeds a fresh baseline at its first
             // detailed window instead of attributing earlier quiet work.
             frame_pressure_was_detailed = Eden::NativeLogs::Detailed();
+            frame_pressure_logging_generation = Eden::NativeLogs::Generation();
             if (frame_pressure_was_detailed)
                 frame_pressure_previous = CaptureFramePressure();
 #ifdef EDEN_DEV_PROFILE
@@ -793,7 +794,12 @@ void GraphicsWindow::OnFrameDisplayed() {
                 // traversing development tables or locking the renderer.
                 const auto pressure_now = CaptureFramePressure();
                 FramePressureNumbers pressure_delta{};
-                bool pressure_valid = frame_pressure_was_detailed;
+                // Logging may toggle OFF then ON entirely between two
+                // reporting boundaries. The final bool alone would label
+                // that mixed 5-s interval as measured; reject its deltas.
+                const unsigned report_logging_generation = Eden::NativeLogs::Generation();
+                bool pressure_valid = frame_pressure_was_detailed &&
+                    frame_pressure_logging_generation == report_logging_generation;
                 for (std::size_t i = 0; pressure_valid && i < pressure_delta.size(); ++i) {
                     if (pressure_now[i] < frame_pressure_previous[i]) {
                         pressure_valid = false;
@@ -849,6 +855,7 @@ void GraphicsWindow::OnFrameDisplayed() {
 #endif
                 frame_pressure_previous = pressure_now;
                 frame_pressure_was_detailed = true;
+                frame_pressure_logging_generation = report_logging_generation;
                 Eden::Performance::ReportVulkan();
 #ifdef EDEN_DEV_PROFILE
                 // HLE table scan + CPU snapshot can stall the compositor itself.

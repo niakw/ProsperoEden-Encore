@@ -565,6 +565,78 @@ int main(){
     require(ledger.RecordUnmapped(*unmap)==WP::LedgerStatus::Success &&
             ledger.RecordUnmapped(*unmap)==WP::LedgerStatus::NotFound &&
             ledger.Count()==2, "exact unmap commits once");
+    // 214/215: sparse VA reservations and normal GPU mappings share one
+    // bounded address-space ledger; sparse pages must never be modified or
+    // torn down through normal 212/213 commands.
+    const std::array<WP::U32, 9> sparseRelease{
+        0xe7, 7, 9, 0x8000, 0, 0xafff, 0, 1, 63};
+    const auto sparseUnmap = WP::DecodeReleaseSparse(sparseRelease);
+    require(sparseUnmap && sparseUnmap->address == 0x8000 &&
+            sparseUnmap->size == 0x3000 && sparseUnmap->notification == 63,
+            "sparse release has its own TIPC command identity");
+    auto badSparseRelease = sparseRelease;
+    badSparseRelease[0] = 0xe5;
+    require(!WP::DecodeReleaseSparse(badSparseRelease),
+            "normal unmap command cannot release a sparse region");
+    badSparseRelease = sparseRelease;
+    badSparseRelease[5] = 0xb000;
+    require(!WP::DecodeReleaseSparse(badSparseRelease),
+            "sparse inclusive end must be 4K aligned");
+    badSparseRelease = sparseRelease;
+    badSparseRelease[8] = 64;
+    require(!WP::DecodeReleaseSparse(badSparseRelease),
+            "sparse release requires an allocated notification slot");
+    require(!WP::DecodeReleaseSparse(
+                std::span<const WP::U32>{sparseRelease.data(), 8}),
+            "reject truncated sparse release without out-of-bounds reads");
+
+    WP::MappingLedger sparse;
+    require(sparse.CanReserveSparse(9, 1, 0x8000, 0x3000) ==
+                WP::LedgerStatus::Success && sparse.Count() == 0 &&
+            sparse.RecordSparse(9, 1, 0x8000, 0x3000) ==
+                WP::LedgerStatus::Success && sparse.Count() == 1,
+            "reserve and record an actual backend-committed sparse region");
+    require(sparse.RecordSparse(9, 1, 0x8000, 0x3000) ==
+                WP::LedgerStatus::Overlap && sparse.Count() == 1,
+            "duplicate sparse reservation does not overwrite ownership");
+    auto normalVsSparse = *map;
+    normalVsSparse.address = 0x9000;
+    normalVsSparse.size = 0x1000;
+    require(sparse.CanMap(normalVsSparse) == WP::LedgerStatus::Overlap,
+            "normal 4K mapping cannot overwrite sparse reservation");
+    auto sparseModify = *modify;
+    sparseModify.address = 0x9000;
+    sparseModify.size = 0x1000;
+    require(sparse.CanModify(sparseModify) == WP::LedgerStatus::NotFound,
+            "sparse VA cannot be modified by normal kind command");
+    auto normalReleaseSparse = *unmap;
+    normalReleaseSparse.address = 0x8000;
+    normalReleaseSparse.size = 0x3000;
+    require(sparse.CanUnmap(normalReleaseSparse) == WP::LedgerStatus::NotFound,
+            "sparse VA cannot be released by normal 4K unmap");
+    require(sparse.CanReleaseSparse(9, 0x8000, 0x1000) ==
+                WP::LedgerStatus::NotFound &&
+            sparse.CanReleaseSparse(10, 0x8000, 0x3000) ==
+                WP::LedgerStatus::NotFound &&
+            sparse.Count() == 1,
+            "sparse teardown requires exact size and address-space owner");
+    require(sparse.RecordReleasedSparse(9, 0x8000, 0x3000) ==
+                WP::LedgerStatus::Success &&
+            sparse.RecordReleasedSparse(9, 0x8000, 0x3000) ==
+                WP::LedgerStatus::NotFound && sparse.Count() == 0,
+            "sparse release commits only once after native unmap");
+    require(sparse.CanReserveSparse(9, 1, 0x1001, 0x1000) ==
+                WP::LedgerStatus::Invalid &&
+            sparse.CanReserveSparse(9, 1, 0x1000, 0x1001) ==
+                WP::LedgerStatus::Invalid &&
+            sparse.CanReserveSparse(9, 1, 0xfffffffffffff000ULL, 0x2000) ==
+                WP::LedgerStatus::Invalid,
+            "sparse preflight rejects fractional pages and 64-bit overflow");
+    require(sparse.RecordMapped(*map) == WP::LedgerStatus::Success &&
+            sparse.CanReserveSparse(9, 1, 0x5000, 0x2000) ==
+                WP::LedgerStatus::Overlap,
+            "sparse reservation cannot overwrite normal 4K mapping");
+
     WP::MappingLedger bounded;
     auto fill=*map;fill.size=0x1000;
     for (std::size_t i=0;i<WP::MaxMappings;++i) {

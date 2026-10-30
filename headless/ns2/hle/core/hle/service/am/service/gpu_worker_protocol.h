@@ -115,6 +115,15 @@ inline std::optional<Modify4K> DecodeModify(std::span<const U32> packet) {
                     kind->backend, static_cast<U8>(packet[9])};
 }
 
+// Sparse region teardown shares the normal unmap ABI except for the TIPC ID.
+inline std::optional<Unmap4K> DecodeReleaseSparse(std::span<const U32> packet) {
+    if (packet.size() != 9 || packet[0] != 0xe7) return {};
+    std::array<U32, 9> normalized{};
+    for (std::size_t i = 0; i < normalized.size(); ++i) normalized[i] = packet[i];
+    normalized[0] = 0xe5;
+    return DecodeUnmap(normalized);
+}
+
 struct Mapping {
     U32 address_space{};
     U32 memory{};

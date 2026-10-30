@@ -16,6 +16,7 @@
 #include "core/hle/kernel/svc_results.h"
 #include "core/hle/service/am/service/gpu_memory_registration.h"
 #include "core/hle/service/am/service/gpu_worker.h"
+#include "core/hle/service/am/service/gpu_memory_registration.h"
 #include "core/hle/service/am/service/gpu_worker_shared.h"
 #include "core/hle/service/ipc_helpers.h"
 #include "core/hle/service/nvdrv/core/container.h"
@@ -40,6 +41,8 @@ IGpuWorker::IGpuWorker(Core::System& system_, std::shared_ptr<Nvidia::Module> mo
         {211, &IGpuWorker::NormalMapGpuMemory4K, "NormalMapGpuMemory4K"},
         {212, &IGpuWorker::NormalModifyGpuMemory4K, "NormalModifyGpuMemory4K"},
         {213, &IGpuWorker::NormalUnmapGpuMemory4K, "NormalUnmapGpuMemory4K"},
+        {214, &IGpuWorker::CreateSparseRegion, "CreateSparseRegion"},
+        {215, &IGpuWorker::DestroySparseRegion, "DestroySparseRegion"},
     };
     RegisterHandlersTipc(functions);
 }
@@ -50,7 +53,9 @@ IGpuWorker::~IGpuWorker() {
     for (const auto& [key, mapping] : m_mappings.Mappings()) {
         const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
             static_cast<Nvidia::DeviceFD>(mapping.address_space));
-        if (as && as->UnmapNative4K(mapping.address, mapping.size) !=
+        if (as && (mapping.sparse
+                       ? as->ReleaseNativeSparse4K(mapping.address, mapping.size)
+                       : as->UnmapNative4K(mapping.address, mapping.size)) !=
                       Nvidia::NvResult::Success)
             LOG_ERROR(Service_AM, "NS2 native GPU VA unmap failed as={} VA={:#x}",
                       mapping.address_space, mapping.address);
@@ -78,8 +83,8 @@ Result IGpuWorker::HandleSyncRequest(Kernel::KServerSession& session,
     }
     const auto guard = LockService();
     InvokeRequestTipc(ctx);
-    // Sparse region commands 214-216 and GPU submission are unsupported.
-    // The opt-in overlay handles only bounded native 4K mapping 211-213.
+    // Sparse remap 216 and GPU command submission are still unavailable.
+    // 214/215 only reserve and release an otherwise empty sparse VA range.
     IPC::ResponseBuilder rb{ctx, 2};
     rb.Push(Kernel::ResultNotImplemented.raw);
     return system.IsPoweredOn() ? ctx.WriteToOutgoingCommandBuffer() : ResultSuccess;
@@ -208,6 +213,79 @@ void IGpuWorker::NormalUnmapGpuMemory4K(HLERequestContext& ctx) {
     IPC::ResponseBuilder rb{ctx, 4};
     rb.Push(result.raw);
     rb.Push(unmapped);
+}
+
+void IGpuWorker::CreateSparseRegion(HLERequestContext& ctx) {
+    const auto request = DecodeGpuSparseRegion(
+        std::span<const u32>{ctx.CommandBuffer(), 12});
+    Result result = Kernel::ResultInvalidCombination;
+    if (request) {
+        result = Kernel::ResultNotImplemented;
+        if (IsValidGpuSparseRegionRange(*request) && request->page_shift == 12 &&
+            request->allocation_mode <= 1 && request->sync <= 1 &&
+            request->notification < GW::MaxNotifications) {
+            const std::scoped_lock lock{m_mutex, m_shared->mutex};
+            result = Kernel::ResultNotFound;
+            if (m_shared->events[request->notification] &&
+                m_shared->address_spaces.Owns(request->address_space) &&
+                m_shared->devices.Get(request->device).has_value()) {
+                const u64 size = request->end - request->begin + 1;
+                const auto preflight = m_mappings.CanReserveSparse(
+                    request->address_space, request->device, request->begin, size);
+                result = TranslateMappingStatus(preflight);
+                if (preflight == GW::LedgerStatus::Success) {
+                    result = Kernel::ResultInvalidState;
+                    const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+                        static_cast<Nvidia::DeviceFD>(request->address_space));
+                    if (as && as->ReserveNativeSparse4K(request->begin, size) ==
+                                  Nvidia::NvResult::Success) {
+                        const auto committed = m_mappings.RecordSparse(
+                            request->address_space, request->device, request->begin, size);
+                        if (committed == GW::LedgerStatus::Success) {
+                            result = ResultSuccess;
+                            m_shared->events[request->notification]->Signal(kernel);
+                        } else {
+                            as->ReleaseNativeSparse4K(request->begin, size);
+                            result = TranslateMappingStatus(committed);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 2};
+    rb.Push(result.raw);
+}
+
+void IGpuWorker::DestroySparseRegion(HLERequestContext& ctx) {
+    const auto* packet = ctx.CommandBuffer();
+    std::array<GW::U32, 9> command{};
+    std::copy_n(packet, command.size(), command.begin());
+    Result result = Kernel::ResultInvalidCombination;
+    if (const auto request = GW::DecodeReleaseSparse(command)) {
+        const std::scoped_lock lock{m_mutex, m_shared->mutex};
+        result = Kernel::ResultNotFound;
+        if (m_shared->events[request->notification] &&
+            m_shared->address_spaces.Owns(request->address_space)) {
+            const auto preflight = m_mappings.CanReleaseSparse(
+                request->address_space, request->address, request->size);
+            result = TranslateMappingStatus(preflight);
+            if (preflight == GW::LedgerStatus::Success) {
+                result = Kernel::ResultInvalidState;
+                const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+                    static_cast<Nvidia::DeviceFD>(request->address_space));
+                if (as && as->ReleaseNativeSparse4K(request->address, request->size) ==
+                              Nvidia::NvResult::Success) {
+                    m_mappings.RecordReleasedSparse(
+                        request->address_space, request->address, request->size);
+                    result = ResultSuccess;
+                    m_shared->events[request->notification]->Signal(kernel);
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 2};
+    rb.Push(result.raw);
 }
 
 Result IGpuWorker::RegisterMemory(u64 begin, u64 end, u32 flags,

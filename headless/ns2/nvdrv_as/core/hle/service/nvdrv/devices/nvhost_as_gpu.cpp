@@ -161,6 +161,67 @@ NvResult nvhost_as_gpu::MapNative4K(u32 handle_id, u64 address, u64 source, u64 
     return NvResult::Success;
 }
 
+NvResult nvhost_as_gpu::ReserveNativeSparse4K(u64 address, u64 size) {
+    constexpr u64 page = VM::YUZU_PAGESIZE;
+    if (!m_native_process || !size || ((address | size) & (page - 1)) ||
+        (size >> VM::PAGE_SIZE_BITS) > std::numeric_limits<u32>::max())
+        return NvResult::BadParameter;
+    const std::scoped_lock lock{mutex};
+    if (!vm.initialised || !vm.small_page_allocator ||
+        address < vm.va_range_start || address >= vm.va_range_split ||
+        size > vm.va_range_split - address ||
+        native_sparse_regions.size() >= 4096)
+        return NvResult::BadParameter;
+    const auto reservation = allocation_map.lower_bound(address);
+    if ((reservation != allocation_map.end() && reservation->first < address + size) ||
+        (reservation != allocation_map.begin() &&
+         std::prev(reservation)->first + std::prev(reservation)->second.size > address))
+        return NvResult::BadParameter;
+    const auto mapping = mapping_map.lower_bound(address);
+    if ((mapping != mapping_map.end() && mapping->first < address + size) ||
+        (mapping != mapping_map.begin() &&
+         std::prev(mapping)->first + std::prev(mapping)->second.size > address))
+        return NvResult::BadParameter;
+    if ((address >> VM::PAGE_SIZE_BITS) > std::numeric_limits<u32>::max() ||
+        ((address + size) >> VM::PAGE_SIZE_BITS) > std::numeric_limits<u32>::max())
+        return NvResult::BadParameter;
+    const u32 base = static_cast<u32>(address >> VM::PAGE_SIZE_BITS);
+    const u32 pages = static_cast<u32>(size >> VM::PAGE_SIZE_BITS);
+    vm.small_page_allocator->AllocateFixed(base, pages);
+    allocation_map.emplace(address, Allocation{{}, size, VM::YUZU_PAGESIZE, true, false});
+    native_sparse_regions.emplace(address, size);
+    gmmu->MapSparse(address, size, false);
+    return NvResult::Success;
+}
+
+NvResult nvhost_as_gpu::ReleaseNativeSparse4K(u64 address, u64 size) {
+    constexpr u64 page = VM::YUZU_PAGESIZE;
+    if (!size || ((address | size) & (page - 1)) ||
+        (size >> VM::PAGE_SIZE_BITS) > std::numeric_limits<u32>::max())
+        return NvResult::BadParameter;
+    const std::scoped_lock lock{mutex};
+    const auto owned = native_sparse_regions.find(address);
+    const auto allocation = allocation_map.find(address);
+    if (!vm.initialised || !vm.small_page_allocator ||
+        owned == native_sparse_regions.end() || owned->second != size ||
+        allocation == allocation_map.end() || !allocation->second.sparse ||
+        allocation->second.big_pages || allocation->second.page_size != page ||
+        allocation->second.size != size || !allocation->second.mappings.empty())
+        return NvResult::BadParameter;
+    // Refuse disposal of a VA range overlaid by a legacy or direct map.
+    auto mapping = mapping_map.lower_bound(address);
+    if ((mapping != mapping_map.end() && mapping->first < address + size) ||
+        (mapping != mapping_map.begin() &&
+         std::prev(mapping)->first + std::prev(mapping)->second.size > address))
+        return NvResult::BadParameter;
+    gmmu->Unmap(address, size);
+    vm.small_page_allocator->Free(static_cast<u32>(address >> VM::PAGE_SIZE_BITS),
+                                  static_cast<u32>(size >> VM::PAGE_SIZE_BITS));
+    allocation_map.erase(allocation);
+    native_sparse_regions.erase(owned);
+    return NvResult::Success;
+}
+
 NvResult nvhost_as_gpu::UnmapNative4K(u64 address, u64 size) {
     constexpr u64 page = VM::YUZU_PAGESIZE;
     if (!size || (address | size) & (page - 1) ||

@@ -30,6 +30,8 @@ private:
     void NormalMapGpuMemory4K(HLERequestContext& ctx);
     void NormalModifyGpuMemory4K(HLERequestContext& ctx);
     void NormalUnmapGpuMemory4K(HLERequestContext& ctx);
+    void CreateSparseRegion(HLERequestContext& ctx);
+    void DestroySparseRegion(HLERequestContext& ctx);
     Result RegisterMemory(u64 begin, u64 end, u32 flags, u32 device, u32& id);
     Result ReleaseMemory(u32 id, u32 notification);
     std::mutex m_mutex;

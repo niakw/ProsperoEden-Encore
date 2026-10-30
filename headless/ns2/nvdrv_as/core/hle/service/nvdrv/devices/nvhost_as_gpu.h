@@ -67,6 +67,8 @@ public:
     // Bounded NS2 research GMMU mappings. These do not enable Ampere shaders.
     NvResult MapNative4K(u32 handle_id, u64 address, u64 source, u64 size, u8 kind);
     NvResult UnmapNative4K(u64 address, u64 size);
+    NvResult ReserveNativeSparse4K(u64 address, u64 size);
+    NvResult ReleaseNativeSparse4K(u64 address, u64 size);
     NvResult ModifyNativeKind(u64 address, u64 size, u8 kind);
 
     Kernel::KEvent* QueryEvent(u32 event_id) override;
@@ -197,6 +199,8 @@ private:
     //!< This maps the base addresses of mapped buffers to their total sizes and
     //!< mapping type, this is needed as what was originally a single buffer may
     //!< have been split into multiple GPU side buffers with the remap flag.
+    // Sparse reservations have no NvMap pins until remap support is verified.
+    std::map<u64, u64> native_sparse_regions;
     std::map<u64, Mapping> mapping_map;
     //!< Holds allocations created by AllocSpace from
     //!< which fixed buffers can be mapped into

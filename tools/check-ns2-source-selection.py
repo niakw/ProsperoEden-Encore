@@ -114,6 +114,11 @@ def main() -> int:
                 "LedgerStatus RecordUnmapped" in worker_cpp and
                 "DecodeMap(" in worker_cpp and "DecodeUnmap(" in worker_cpp and
                 "DecodeModify(" in worker_cpp and
+                "DecodeReleaseSparse(" in worker_cpp and
+                "RecordSparse(" in worker_cpp and
+                "RecordReleasedSparse(" in worker_cpp and
+                "CanReserveSparse(" in worker_cpp and
+                "CanReleaseSparse(" in worker_cpp and
                 "MaxMappings = 4096" in worker_cpp,
                 "NS2 4K worker preflight / bounded ledger missing")
         shared_cpp = (session_root / "gpu_worker_shared.cpp").read_text()
@@ -149,7 +154,13 @@ def main() -> int:
                 'as->MapNative4K(' in worker_hle_cpp and
                 'as->UnmapNative4K(' in worker_hle_cpp and
                 'as->ModifyNativeKind(' in worker_hle_cpp and
-                '{214, &IGpuWorker::CreateSparseRegion' not in worker_hle_cpp,
+                '{214, &IGpuWorker::CreateSparseRegion' in worker_hle_cpp and
+                '{215, &IGpuWorker::DestroySparseRegion' in worker_hle_cpp and
+                '{216, &IGpuWorker::ExecuteSparseMapRequests' not in worker_hle_cpp and
+                'as->ReserveNativeSparse4K(' in worker_hle_cpp and
+                'as->ReleaseNativeSparse4K(' in worker_hle_cpp and
+                'm_mappings.RecordSparse(' in worker_hle_cpp and
+                'm_mappings.RecordReleasedSparse(' in worker_hle_cpp,
                 "Native GPU worker IPC must reject unsupported mappings")
         require('target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE and
                 '"${EDEN_NS2_GPU_WORKER_SOURCE}"' in CMAKE and
@@ -198,11 +209,16 @@ def main() -> int:
                 'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")' in CMAKE and
                 "MapNative4K(" in native_as_h and
                 "UnmapNative4K(" in native_as_h and
+                "ReserveNativeSparse4K(" in native_as_h and
+                "ReleaseNativeSparse4K(" in native_as_h and
                 "ModifyNativeKind(" in native_as_h and
                 "allocation_map.lower_bound(address)" in native_as_cpp and
                 "mapping_map.lower_bound(address)" in native_as_cpp and
                 "nvmap.PinHandle(handle_id, false)" in native_as_cpp and
-                "UnmapNative4K(u64 address, u64 size)" in native_as_cpp,
+                "UnmapNative4K(u64 address, u64 size)" in native_as_cpp and
+                "gmmu->MapSparse(address, size, false)" in native_as_cpp and
+                "native_sparse_regions.emplace(address, size)" in native_as_cpp and
+                "native_sparse_regions.erase(owned)" in native_as_cpp,
                 "Native 4KiB NVDRV address-space owner must be isolated and bounded")
         require("EDEN_NS2_NVDRV_AS_SOURCE" in CMAKE[nvdrv_selection:release_gate],
                 "Native AS owner is not gated under research-only NVDRV switch")

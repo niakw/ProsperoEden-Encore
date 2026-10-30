@@ -91,11 +91,19 @@ int main() {
     l.filters.aa=Settings::AntiAliasing::Smaa;
     l.SetAntiAliasPass(d);
     assert(std::holds_alternative<SMAA>(l.anti_alias));
+#ifdef PS5_NATIVE
     assert(l.scheduler.finishes==1 && Device::Logical::idles==1);
+#else
+    assert(l.scheduler.finishes==0 && Device::Logical::idles==0);
+#endif
     l.filters.aa=Settings::AntiAliasing::None;
     l.SetAntiAliasPass(d);
     assert(std::holds_alternative<std::monostate>(l.anti_alias));
+#ifdef PS5_NATIVE
     assert(l.scheduler.finishes==2 && Device::Logical::idles==2);
+#else
+    assert(l.scheduler.finishes==0 && Device::Logical::idles==0);
+#endif
     const auto none_scales=Settings::ResolutionInfo::scales;
     for(int i=0;i<256;++i) l.SetAntiAliasPass(d);
 #ifdef PS5_NATIVE
@@ -106,7 +114,11 @@ int main() {
     l.filters.aa=Settings::AntiAliasing::Smaa;
     l.SetAntiAliasPass(d);
     assert(std::holds_alternative<SMAA>(l.anti_alias));
+#ifdef PS5_NATIVE
     assert(l.scheduler.finishes==2 && Device::Logical::idles==2);
+#else
+    assert(l.scheduler.finishes==0 && Device::Logical::idles==0);
+#endif
 }
 """.replace("__ACTUAL_AA_METHOD__",method)
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")

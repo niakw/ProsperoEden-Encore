@@ -39,7 +39,7 @@ def main() -> int:
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 3,
+        require(sum(i > selection for i in property_sets) == 4,
                 "Unexpected source owner after ExeFS (expected ExeFS, AM and NVDRV)")
         require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject NS2 application-manager experiment")
@@ -47,6 +47,22 @@ def main() -> int:
                 'if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)' in CMAKE[am_selection:release_gate] and
                 'list(FIND eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}"' in CMAKE,
                 "NS2 application manager must require metadata and maintained source owner")
+        scale_selection = CMAKE.index("# Research-only AM proxy command 60 and graphics scaling service.")
+        require(am_selection < scale_selection < release_gate,
+                "Graphics scaling source owner must precede final release gate")
+        require("option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" in CMAKE and
+                "if(NOT EDEN_NS2_AM_EXPERIMENTAL)" in CMAKE[scale_selection:release_gate] and
+                "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR" in CMAKE,
+                "Graphics scaling option must depend on AM and remain release-forbidden")
+        scale_root = ROOT / "headless/ns2/am/core/hle/service/am/service"
+        proxy = (scale_root / "application_proxy.cpp").read_text()
+        scale = (scale_root / "graphics_scaling_parameters_functions.cpp").read_text()
+        require("{60, D<&IApplicationProxy::GetGraphicsScalingParametersFunctions>" in proxy and
+                "GetGraphicsScalingParametersFunctions(" in proxy,
+                "NS2 proxy command 60 must instantiate real graphics scaling service")
+        require("{1050, nullptr, \"SetGraphicsScaleChangedNotificationEnabled\"}" in scale and
+                "*out_parameters = {10, 1, 1}" in scale,
+                "Research graphics scale must not pretend to implement notifications")
         nvdrv_selection = CMAKE.index("# Native Switch 2 GPU capabilities IOCTLs, experimental only;")
         require(am_selection < nvdrv_selection < release_gate,
                 "NVDRV research must select after maintained Encore owners and before release gate")

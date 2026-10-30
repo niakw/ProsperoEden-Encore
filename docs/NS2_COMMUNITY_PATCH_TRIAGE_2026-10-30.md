@@ -76,3 +76,10 @@ The `\default=false` keys are configuration override flags, not executable patch
 - Host research CI (`.github/workflows/ns2-research-host.yml`) keeps C++ parser, A64 syntax, AM, NVDRV, HLE, GPU ISA probes and source-owner checks on each relevant change. Documentation-only edits no longer trigger a full build.
 - Full x86-64 Dynarmic JIT execution moved **unchanged** into `.github/workflows/ns2-research-jit.yml` with path filters for A64/CPU6, the JIT-host fixture, vendor pin and the workflow itself. This avoids repeating the heavy Dynarmic compile after unrelated GPU service or doc changes.
 - Both workflows support manual dispatch. A green host CI does **not** replace the latest green JIT runtime test when A64 code changes.
+
+## N4a — Real AM application proxy command 60 (graphics scaling query)
+
+- Selectable source owner `IApplicationProxy` is based on pinned Eden code at `92c5829174a1169c507b72438021d3dfa9e5dfa2`. Command `60` instantiates `IGraphicsScalingParametersFunctions` with the isolated new service source. `GetGraphicsScalingParameters` returns the **experimental default** (scale 10, screen ratio 1/1) from `0x2593/Eden-NS2@5d2d3cf0a966293fc9ddeac33cf86830a5de206e`. This is a provisional interpretation, not a verified Switch 2 OS contract.
+- The upstream notification setter expects an applet state member unavailable in pinned Encore. For correctness, command `1050` stays **unimplemented**, not fake-success. Debug service commands are likewise unimplemented.
+- `EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL` requires opt-in AM mode, replaces only the original `IApplicationProxy` source, and is rejected by the final release gate. CI syntax-compiles both actual owner source files; the existing owner and source-guard fixtures detect any missing CMake selection.
+- This is guest IPC service registration only. No NVIDIA session/channel, PS5 frame scaling, GPU supervisor, or game launch is claimed.

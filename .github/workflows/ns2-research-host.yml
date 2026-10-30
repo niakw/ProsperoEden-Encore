@@ -91,6 +91,18 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             headless/ns2/am/core/hle/service/am/service/application_functions.cpp
+      - name: Syntax-check real AM application proxy command 60 and graphics scaling service
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in application_proxy.cpp graphics_scaling_parameters_functions.cpp; do
+            clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+              -Ibuild-ns2-a64/fmt/include \
+              -Iheadless/ns2/am \
+              -Ivendor/sources/eden/src/dynarmic/src \
+              -Ivendor/sources/eden/src \
+              "headless/ns2/am/core/hle/service/am/service/${source}"
+          done
       - name: Syntax-check native NVDRV GPU ioctl source owner (GCC)
         shell: bash
         run: |

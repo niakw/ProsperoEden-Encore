@@ -1936,6 +1936,36 @@ if(EDEN_NS2_AM_EXPERIMENTAL)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_ROOT}")
 endif()
 
+# Research-only AM proxy command 60 and graphics scaling service.
+# Do not advertise notification success: pinned Encore lacks the applet event.
+option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL
+    "Research only: NS2 graphics scaling parameter query, no notifications" OFF)
+if(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL)
+    if(NOT EDEN_NS2_AM_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 graphics scaling requires experimental AM")
+    endif()
+    set(EDEN_NS2_SCALE_OWNER "${PORT_ROOT}/headless/ns2/am/core/hle/service/am/service")
+    foreach(eden_ns2_scale_file application_proxy.cpp application_proxy.h
+                                graphics_scaling_parameters_functions.cpp
+                                graphics_scaling_parameters_functions.h)
+        if(NOT EXISTS "${EDEN_NS2_SCALE_OWNER}/${eden_ns2_scale_file}")
+            message(FATAL_ERROR "Missing NS2 graphics scaling service: ${eden_ns2_scale_file}")
+        endif()
+    endforeach()
+    get_target_property(eden_ns2_scale_sources core SOURCES)
+    list(FIND eden_ns2_scale_sources
+        "hle/service/am/service/application_proxy.cpp" eden_ns2_scale_idx)
+    if(eden_ns2_scale_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned IApplicationProxy owner changed; audit needed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_scale_sources
+        "hle/service/am/service/application_proxy.cpp")
+    list(APPEND eden_ns2_scale_sources
+        "${EDEN_NS2_SCALE_OWNER}/application_proxy.cpp"
+        "${EDEN_NS2_SCALE_OWNER}/graphics_scaling_parameters_functions.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_scale_sources}")
+endif()
+
 # Native Switch 2 GPU capabilities IOCTLs, experimental only; original
 # Maxwell IOCTL path remains active for all other request IDs.
 option(EDEN_NS2_NVDRV_EXPERIMENTAL
@@ -1978,6 +2008,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
        EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
        EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR
+       EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR

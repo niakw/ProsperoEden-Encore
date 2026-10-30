@@ -91,7 +91,11 @@ public:
             // footprint has grown, no later slot can satisfy this request:
             // take the allocator path now instead of scanning the tail.
             if (required > entries[i].committed) return false;
-            // Only cross-core hits require MRU promotion.
+            // With only two cached arenas, neither can be evicted yet.
+            // Keep alternating A32/A64 hits read-only instead of moving
+            // two TLS entries on each translated guest block. Once a third
+            // arena appears, retain MRU promotion for eviction decisions.
+            if (i == 1 && !entries[2].executable) return true;
             const Entry hit = entries[i];
             for (std::size_t j = i; j > 0; --j) entries[j] = entries[j - 1];
             entries[0] = hit;

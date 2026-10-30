@@ -22,6 +22,7 @@ assert "if (!entries[i].executable) return false;" in cache_header
 assert "if (entries[0].executable == executable) {" in cache_header
 assert "return required <= entries[0].committed;" in cache_header
 assert "if (required > entries[i].committed) return false;" in cache_header
+assert "if (i == 1 && !entries[2].executable) return true;" in cache_header
 compiler = shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 FIXTURE = r"""
@@ -65,6 +66,9 @@ int main() {
     assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ) == 0);
     for (unsigned i = 0; i < 1000; ++i) {
         assert(readonly->Covers(arenas[1], committed, 7));
+        // With exactly two active arenas, secondary hits must also be
+        // read-only, even when alternated after a primary-core hit.
+        assert(readonly->Covers(arenas[0], committed, 7));
         // Missing arena, hot-arena growth, and non-head arena growth are
         // read-only misses and must not mutate MRU while finding a false hit.
         assert(!readonly->Covers(arenas[2], committed, 7));
@@ -109,6 +113,7 @@ int main() {
             for (unsigned i = 0; i < slots.size(); ++i) {
                 if (!slots[i].key) return false;
                 if (slots[i].key != ptr || slots[i].bytes < bytes) continue;
+                if (i == 1 && !slots[2].key) return true;
                 const Slot hit = slots[i];
                 for (unsigned j = i; j > 0; --j) slots[j] = slots[j - 1];
                 slots[0] = hit;
@@ -140,7 +145,7 @@ int main() {
             assert(reference.Covers(ptr, bytes, epoch) == verified.Covers(ptr, bytes, epoch));
         }
     }
-    std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1 readonly_hit=1 cold_miss=1\n", misses);
+    std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1 readonly_hit=1 readonly_two_arenas=1 cold_miss=1\n", misses);
 }
 """
 with tempfile.TemporaryDirectory(prefix="eden-sparse-jit-mru-") as tmp:

@@ -15,16 +15,17 @@ src = (root / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").rea
 header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 
-begin = "#ifdef PS5_NATIVE\n    // A successful compute key is commonly reused"
+begin = "#ifdef PS5_NATIVE\n    // Alternating successful compute shaders need no unordered-map hash"
 end = "    const auto [pair, is_new]{compute_cache.try_emplace(key)};"
 assert src.count(begin) == 1 and src.count(end) == 1
 lookup = src[src.index(begin):src.index(end, src.index(begin)) + len(end)]
-publish_begin = "#ifdef PS5_NATIVE\n    // Cache only a positive map entry."
+publish_begin = "#ifdef PS5_NATIVE\n    // Only successful pipelines enter the bounded owner-local memo."
 publish_end = "#endif\n    return pipeline.get();"
 assert src.count(publish_begin) == 1 and src.count(publish_end) == 1
 publish = src[src.index(publish_begin):src.index(publish_end, src.index(publish_begin)) + len(publish_end)]
-fields = ("ComputePipelineCacheKey last_compute_key{};",
-          "ComputePipeline* last_compute_pipeline{};")
+fields = ("struct ComputePositive {",
+          "std::array<ComputePositive, 4> recent_compute_pipelines{};",
+          "unsigned next_compute_positive{};")
 for s in fields:
     assert s in header
 for marker in ("F07 compute positive owner cache fields",
@@ -36,6 +37,7 @@ assert "failed_compute_retries.find(key)" in src
 assert "pipeline = CreateComputePipeline(key, shader);" in src
 
 cpp = r"""
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <memory>
@@ -74,8 +76,12 @@ struct Map {
 struct Cache {
     Map compute_cache;
 #ifdef PS5_NATIVE
-    ComputePipelineCacheKey last_compute_key{};
-    ComputePipeline* last_compute_pipeline{};
+    struct ComputePositive {
+        ComputePipelineCacheKey key{};
+        ComputePipeline* pipeline{};
+    };
+    std::array<ComputePositive, 4> recent_compute_pipelines{};
+    unsigned next_compute_positive{};
 #endif
     ComputePipeline* Get(ComputePipelineCacheKey key) {
 __LOOKUP__
@@ -108,6 +114,35 @@ int main() {
     assert(second && second != first && cache.compute_cache.probes == before+1);
     assert(cache.Get(same_shader_other_group) != first);
     assert(cache.Get(a)==first);
+    // Four alternating live compute keys (including dispatch geometry)
+    // must hit without repeated unordered-map probes once warmed.
+    Cache alternating;
+    ComputePipelineCacheKey keys[4]{
+        {700,32,{8,2,1}}, {701,32,{8,2,1}},
+        {700,32,{16,1,1}}, {702,64,{8,2,1}},
+    };
+    ComputePipeline* outputs[4]{};
+    for (unsigned i=0; i<4; ++i) outputs[i]=alternating.Get(keys[i]);
+    assert(alternating.compute_cache.probes == 4);
+    for (unsigned i=0; i<20000; ++i)
+        assert(alternating.Get(keys[i%4]) == outputs[i%4]);
+#ifdef PS5_NATIVE
+    assert(alternating.compute_cache.probes == 4);
+#else
+    assert(alternating.compute_cache.probes == 20004);
+#endif
+    // A fifth key may evict a positive hint, but must never return the wrong
+    // shader. Keeping failed entries OUT of the memo protects healthy ones.
+    ComputePipelineCacheKey fifth{703,32,{8,2,1}};
+    auto* new_shader=alternating.Get(fifth);
+    assert(new_shader && new_shader!=outputs[0]);
+    const unsigned old_probes=alternating.compute_cache.probes;
+    assert(alternating.Get(keys[0]) == outputs[0]);
+#ifdef PS5_NATIVE
+    assert(alternating.compute_cache.probes == old_probes+1);
+#else
+    assert(alternating.compute_cache.probes == old_probes+1);
+#endif
     // A new PipelineCache must never inherit a raw pointer from the old one.
     Cache separate;
     assert(separate.Get(a) != first);
@@ -141,4 +176,4 @@ with tempfile.TemporaryDirectory(prefix="f07-compute-hot-key-") as td:
             run = subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert run.returncode==0,(native,opt,run.stderr[-4000:])
             print(f"F07_COMPUTE_KEY_POSITIVE_CACHE_PASS native={int(native)} opt={opt} "
-                  "same_key=1 failure=1 key_change=1 dev_trace=1 owner_scope=1")
+                  "same_key=1 alternating_4=1 overflow_5=1 failure=1 key_change=1 dev_trace=1 owner_scope=1")

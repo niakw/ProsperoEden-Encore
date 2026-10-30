@@ -82,10 +82,12 @@ jobs:
           for source in \
             headless/ns2/overrides/core/file_sys/program_metadata.cpp \
             headless/ns2/overrides/core/loader/loader.cpp \
-            headless/ns2/overrides/core/loader/deconstructed_rom_directory.cpp; do
+            headless/ns2/overrides/core/loader/deconstructed_rom_directory.cpp \
+            headless/ns2/overrides/core/loader/nso.cpp; do
             echo "Checking: ${source}"
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
+              -Iheadless \
               -Iheadless/ns2/overrides \
               -Iheadless/ns2 \
               -Ivendor/sources/eden/src/dynarmic/src \

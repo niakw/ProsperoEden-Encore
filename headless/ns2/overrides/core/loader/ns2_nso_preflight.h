@@ -44,7 +44,8 @@ struct NsoPreflightResult {
     if (NsoWord(bytes, 4) != 0)
         return {NsoPreflightStatus::UnsupportedVersion, 0};
     const auto flags = NsoWord(bytes, 12);
-    if ((flags & ~0x3fU) != 0)
+    // ZBIC uses the high bit in Encore's native loader (Switch 22.0+).
+    if ((flags & ~0xbfU) != 0 || ((flags & 0x80U) && !(flags & 0x7U)))
         return {NsoPreflightStatus::InvalidFlags, 0};
 
     std::uint64_t end_image = 0;

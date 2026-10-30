@@ -130,3 +130,18 @@ still come from the pinned independently published AArch64 guest program.
 This uses a **host-only NSO image stager**, not the production
 `AppLoader_NSO::LoadModule`, `KProcess`, HLE services or native PS5 runtime.
 It proves NSO0 guest image layout plus Dynarmic execution, not a Switch 2 game boot.
+
+## N3t — native PS5 NSO owner, opt-in entry validation
+
+The actual native PS5 `AppLoader_NSO::LoadModule` is now guarded by
+`PreflightNso` at function entry, before its memory-layout prepass or
+allocations. This source override is selected **only** under
+`EDEN_NS2_METADATA_EXPERIMENTAL=ON` and
+`EDEN_NS2_EXEFS_EXPERIMENTAL=ON` with `PS5_NATIVE`. Default Switch 1 and
+release paths preserve the unchanged full Encore PS5 NSO loader, including
+sparse-BSS and ZBIC behavior. The NS2 admission guard now accepts the native
+ZBIC flag (bit 7) only alongside compressed segments.
+
+CI syntax-checks this actual loader source; GCC and Clang exercise header
+bounds and ZBIC flags. This is a **production-source entry safety path**,
+not yet demonstrated full `KProcess` creation, HLE services or NS2 boot.

@@ -55,6 +55,12 @@ int main(int argc, char** argv) {
     Reject(h, 0x280, NsoPreflightStatus::UnsupportedVersion);
     h = base; Put(h, 0x0c, 0x80000000);
     Reject(h, 0x280, NsoPreflightStatus::InvalidFlags);
+    h = base; Put(h, 0x0c, 0x40);
+    Reject(h, 0x280, NsoPreflightStatus::InvalidFlags);
+    h = base; Put(h, 0x0c, 0x80);
+    Reject(h, 0x280, NsoPreflightStatus::InvalidFlags);
+    h = base; Put(h, 0x0c, 0x81); Put(h, 0x60, 0x40);
+    assert(PreflightNso(h, 0x280).Ready()); // ZBIC + compressed text
     h = base; Put(h, 0x18, 0x20000000);
     Reject(h, 0x280, NsoPreflightStatus::InvalidSegment);
     h = base; Put(h, 0x60, 0x10);

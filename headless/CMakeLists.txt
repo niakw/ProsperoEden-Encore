@@ -1854,6 +1854,22 @@ if(EDEN_NS2_EXEFS_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/loader/deconstructed_rom_directory.h")
         message(FATAL_ERROR "Missing NS2 ExeFS maintained loader header")
     endif()
+    # Select a complete maintained native PS5 NSO source, preserving sparse
+    # BSS and ZBIC support. Do not accidentally fall back to pinned NSO.
+    if(PS5_NATIVE)
+        list(FIND eden_ns2_exefs_sources
+             "${PORT_BUILD_DIR}/nso.cpp" eden_ns2_native_nso_idx)
+        if(eden_ns2_native_nso_idx EQUAL -1)
+            message(FATAL_ERROR "NS2 native NSO owner changed: re-audit source selection")
+        endif()
+        set(eden_ns2_native_nso
+            "${EDEN_NS2_METADATA_OVERLAY}/core/loader/nso.cpp")
+        if(NOT EXISTS "${eden_ns2_native_nso}")
+            message(FATAL_ERROR "Missing NS2 native NSO owner: ${eden_ns2_native_nso}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_exefs_sources "${PORT_BUILD_DIR}/nso.cpp")
+        list(APPEND eden_ns2_exefs_sources "${eden_ns2_native_nso}")
+    endif()
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
 endif()
 

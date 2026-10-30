@@ -118,3 +118,15 @@ NSO/ExeFS demo with auditable build/source, boot through Encore's NS2 loader,
 record services/CPU instruction coverage, then verify display and input under
 PS5 Vulkan/RADV, shader cache invalidation, save/reload and Switch 1
 non-regression. A valid host SPIR-V corpus cannot replace these steps.
+
+## N3s — three NSO0 segments plus BSS before Dynarmic JIT
+
+The cross-built public HOS AArch64 NSO0 test now stages its **full virtual image**:
+text, rodata, data, zero-filled alignment gaps and BSS. The two synthetic
+non-executable segment markers are verified at their original virtual offsets.
+Instruction stepping is restricted to the text segment. The six SVC calls
+still come from the pinned independently published AArch64 guest program.
+
+This uses a **host-only NSO image stager**, not the production
+`AppLoader_NSO::LoadModule`, `KProcess`, HLE services or native PS5 runtime.
+It proves NSO0 guest image layout plus Dynarmic execution, not a Switch 2 game boot.

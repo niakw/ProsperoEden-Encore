@@ -2,7 +2,8 @@
 // N3r: execute independently published AArch64 HOS SVC code from a real NSO0
 // in the same maintained Dynarmic JIT already used by Encore's NS2 tests.
 //
-// This host test uses a six-SVC deterministic *test dispatcher*, not Encore's
+// The host test stages NSO text/rodata/data and zero-filled BSS, using a
+// deterministic six-SVC *test dispatcher*, not Encore's
 // production HLE, NPDM process creation, application loader or PS5 hardware.
 #include <algorithm>
 #include <array>
@@ -46,30 +47,70 @@ static std::vector<std::uint8_t> ReadFile(const char* path) {
     return {std::istreambuf_iterator<char>{input},
             std::istreambuf_iterator<char>{}};
 }
+// Full uncompressed NSO0 image layout, independent host-only staging.
+// Production ExeFS still uses the maintained AppLoader_NSO::LoadModule.
+struct StagedNso {
+    std::vector<std::uint8_t> bytes;
+    std::array<std::size_t, 3> positions{};
+    std::array<std::size_t, 3> sizes{};
+};
+static StagedNso StageNso(std::span<const std::uint8_t> file) {
+    Require(file.size() >= NsoHeaderBytes, "truncated NSO0 fixture");
+    const auto header = file.first(NsoHeaderBytes);
+    const auto result = PreflightNso(header, file.size());
+    Require(result.Ready() && result.image_bytes <= 0x100000 && result.image_bytes != 0,
+            "NSO0 fixture failed bounded header validation");
+    Require((NsoWord(header, 0x0c) & 7U) == 0,
+            "compressed NSO0 segments require actual decompression");
+    StagedNso staged;
+    staged.bytes.resize(static_cast<std::size_t>(result.image_bytes), 0);
+    for (std::size_t i = 0; i < 3; ++i) {
+        const auto offset = static_cast<std::size_t>(NsoWord(header, 0x10 + 16 * i));
+        const auto location = static_cast<std::size_t>(NsoWord(header, 0x14 + 16 * i));
+        const auto length = static_cast<std::size_t>(NsoWord(header, 0x18 + 16 * i));
+        const auto stored = static_cast<std::size_t>(NsoWord(header, 0x60 + 4 * i));
+        Require(stored == length && offset <= file.size() &&
+                    length <= file.size() - offset &&
+                    location <= staged.bytes.size() &&
+                    length <= staged.bytes.size() - location,
+                "NSO0 uncompressed segment did not fit its image");
+        if (length)
+            std::memcpy(staged.bytes.data() + location, file.data() + offset, length);
+        staged.positions[i] = location;
+        staged.sizes[i] = length;
+    }
+    const auto& p = staged.positions;
+    const auto& s = staged.sizes;
+    Require(p[0] == 0 && s[0] >= 64 && s[0] <= 0x10000,
+            "invalid NSO0 text segment");
+    constexpr char rodata[] = "open-source-loader-test";
+    constexpr char data[] = "NS2-DATA-SEGMENT";
+    Require(s[1] == sizeof(rodata) &&
+                std::memcmp(staged.bytes.data() + p[1], rodata, sizeof(rodata)) == 0,
+            "NSO0 rodata virtual mapping mismatch");
+    Require(s[2] == sizeof(data) - 1 &&
+                std::memcmp(staged.bytes.data() + p[2], data, sizeof(data) - 1) == 0,
+            "NSO0 data virtual mapping mismatch");
+    const auto zero = [&](std::size_t first, std::size_t last) {
+        return std::all_of(staged.bytes.begin() + first, staged.bytes.begin() + last,
+                           [](std::uint8_t b) { return b == 0; });
+    };
+    Require(zero(p[0] + s[0], p[1]) && zero(p[1] + s[1], p[2]) &&
+                zero(p[2] + s[2], staged.bytes.size()),
+            "NSO0 virtual gaps or BSS not initialized to zero");
+    return staged;
+}
 int main(int argc, char** argv) {
     try {
         Require(argc == 2, "usage: ns2_public_nso_jit_test hello.nso");
-        auto image = ReadFile(argv[1]);
-        Require(image.size() >= NsoHeaderBytes, "truncated on-disk NSO0");
-        std::span<const std::uint8_t> header{image.data(), NsoHeaderBytes};
-        const auto inspected = PreflightNso(header, image.size());
-        Require(inspected.Ready(), "actual NS2 NSO0 preflight rejected cross-built guest");
-        const auto flags = NsoWord(header, 0x0c);
-        Require((flags & 1U) == 0, "test must use real uncompressed text, never simulate LZ4");
-        const std::size_t text_file_offset = NsoWord(header, 0x10);
-        const std::size_t text_virtual_offset = NsoWord(header, 0x14);
-        const std::size_t text_bytes = NsoWord(header, 0x18);
-        const std::size_t stored_text_bytes = NsoWord(header, 0x60);
-        Require(text_virtual_offset == 0 && text_bytes >= 64 && text_bytes <= 0x10000 &&
-                stored_text_bytes == text_bytes &&
-                text_file_offset <= image.size() &&
-                text_bytes <= image.size() - text_file_offset,
-                "invalid NSO0 code segment");
+        const auto image = ReadFile(argv[1]);
+        const auto staged = StageNso(image);
+        const std::size_t text_bytes = staged.sizes[0];
         constexpr std::uint64_t guest_base = 0x08000000;
         SvcHost env;
         env.code_mem_start_address = guest_base;
-        env.code_mem.resize((text_bytes + 3) / 4, 0xD4200000U);
-        std::memcpy(env.code_mem.data(), image.data() + text_file_offset, text_bytes);
+        env.code_mem.resize((staged.bytes.size() + 3) / 4, 0);
+        std::memcpy(env.code_mem.data(), staged.bytes.data(), staged.bytes.size());
         Dynarmic::A64::UserConfig cfg{};
         cfg.callbacks = &env;
         cfg.global_monitor = &env.monitor;
@@ -83,6 +124,10 @@ int main(int argc, char** argv) {
         unsigned timer_reads = 0;
         bool exited = false;
         for (unsigned instruction = 0; instruction < 128 && !exited; ++instruction) {
+            Require(cpu.GetPC() >= guest_base &&
+                        cpu.GetPC() - guest_base < text_bytes &&
+                        (cpu.GetPC() - guest_base) % 4 == 0,
+                    "guest attempted instruction execution outside NSO0 text");
             const unsigned prior = env.callbacks;
             env.ticks_left = 1;
             cpu.Step(); // Real maintained x86-64 Dynarmic A64 JIT, one guest instruction
@@ -129,7 +174,7 @@ int main(int argc, char** argv) {
         Require(exited && calls == expected && timer_reads == 2 && notified_breaks == 1,
                 "real guest did not complete the expected HOS execution flow");
         std::cout << "NS2 A64 real NSO0 text -> maintained Dynarmic JIT -> HOS SVC"
-                  << " callbacks: PASS (" << calls.size() << " calls, no panic)\n"
+                  << " callbacks: PASS (" << calls.size() << " calls, three NSO segments + BSS, no panic)\n"
                   << "No production AppLoader/NPDM/HLE or native PS5 execution tested.\n";
         return 0;
     } catch (const std::exception& error) {

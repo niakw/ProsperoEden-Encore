@@ -31,8 +31,8 @@ def package_nso(text: bytes) -> bytes:
     if len(text) < 32 or len(text) > 0x8000 or b"hello from HOS\n" not in text:
         raise ValueError("Cross-assembled AArch64 hello text was not the expected fixture")
     # This fixture has the real original .text, a synthetic read-only marker,
-    # and one synthetic data word. No synthetic bytes are executed.
-    segments = (text, b"open-source-loader-test\0", b"\0" * 16)
+    # and an explicit synthetic data marker. No synthetic bytes are executed.
+    segments = (text, b"open-source-loader-test\0", b"NS2-DATA-SEGMENT")
     offsets = (0, 0x1000, 0x2000)
     header = bytearray(0x100)
     struct.pack_into("<4sIII", header, 0, b"NSO0", 0, 0, 0)

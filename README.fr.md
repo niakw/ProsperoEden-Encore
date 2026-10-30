@@ -18,7 +18,7 @@
   </p>
 </div>
 
-<p align="center"><img src="assets/screenshots/encore-home.png" alt="Accueil réel d'Eden Encore capturé depuis le lanceur C++/OpenGL" width="860"></p>
+<p align="center"><img src="assets/screenshots/encore-home.png" alt="Eden Encore Home in English, showing the original Eden wallpaper from the actual C++/OpenGL launcher" width="860"></p>
 
 > [!IMPORTANT]
 > **FC27 — tableau maître :** [priorités F07 P0/P1/P2, sparse JIT et validation matérielle](docs/FC27_F07_MASTER_TRACKER.md). Les [critères F01–F06 validés sur hôte](docs/FC27_EXIT_GATES_2026-10-22.md) ne prouvent pas la jouabilité sur console. Le nombre de sources examinées ne mesure pas les optimisations restantes.

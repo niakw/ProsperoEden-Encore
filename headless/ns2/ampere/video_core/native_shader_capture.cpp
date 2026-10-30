@@ -32,7 +32,10 @@ std::unique_ptr<Shader::Environment> CreateNs2GraphicsShaderEnvironment(
     Shader::Ampere::NativeTranslationCache* cache) {
     // Creating the environment requires BOTH a fully verified translation
     // and a caller-provided graphics context. Never publish invalid partials.
-    if (!original) return {};
+    // Reject stage mismatches before even touching guest GMMU mappings:
+    // expensive capture cannot make a graphics context from another stage.
+    if (!original || stage != static_cast<u32>(original->ShaderStage()))
+        return {};
     auto captured = CaptureNs2GraphicsShaderFromGpu(
         memory, gpu_program_address, stage, cache);
     if (!captured.Ready()) return {};

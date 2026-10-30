@@ -8,6 +8,7 @@
 #include <limits>
 #include <vector>
 #include "shader_recompiler/frontend/ampere/capture.h"
+#include "shader_recompiler/stage.h"
 
 using namespace Shader::Ampere;
 struct MappedMemory {
@@ -53,6 +54,16 @@ int main() {
             ok.image.TranslateNativeAddress(0).has_value(),
             "read mapped native program, detect EXIT and lower to Maxwell image");
     Require(mem.reads==3,"exact one 128-byte header and two native instruction reads");
+    const auto reads_before_invalid_stage=mem.reads;
+    Require(CaptureNativeGraphicsShader(
+                mem.base,static_cast<u32>(Shader::Stage::Compute),Read,&mem).status==
+                NativeCaptureStatus::InvalidInput,
+            "compute stage requires distinct QMD metadata, not graphics SPH");
+    Require(CaptureNativeGraphicsShader(mem.base,0xffffffffU,Read,&mem).status==
+                NativeCaptureStatus::InvalidInput,
+            "out-of-range stage cannot build graphics shader cache identity");
+    Require(mem.reads==reads_before_invalid_stage,
+            "invalid stages fail before a single guest GMMU read");
     auto stable=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
     Require(stable.Ready() &&
             stable.image.diagnostic_cache_key==ok.image.diagnostic_cache_key,

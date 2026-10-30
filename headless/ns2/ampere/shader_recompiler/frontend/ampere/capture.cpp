@@ -4,6 +4,7 @@
 #include <limits>
 #include "shader_recompiler/frontend/ampere/program_capture.h"
 #include "shader_recompiler/frontend/ampere/translation_cache.h"
+#include "shader_recompiler/stage.h"
 
 namespace Shader::Ampere {
 namespace {
@@ -16,6 +17,12 @@ NativeCaptureResult CaptureNativeGraphicsShader(
     u64 gpu_base, u32 stage, GuestShaderRead read, void* context,
     NativeTranslationCache* cache) {
     NativeCaptureResult result;
+    // Shader::Stage is the maintained compiler's stage domain, not a
+    // native GPU enum or an unbounded cache discriminator. Compute needs
+    // QMD metadata and must never pass through the graphics SPH path.
+    if (stage > static_cast<u32>(Shader::Stage::VertexA) ||
+        stage == static_cast<u32>(Shader::Stage::Compute))
+        return result;
     if (!read || gpu_base > std::numeric_limits<u64>::max() -
                                  NativeHeaderBytes -
                                  u64{MaxCapturedInstructions} * sizeof(Instruction))

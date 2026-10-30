@@ -130,6 +130,13 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 - CI distincte des simples vérifications de syntaxe : le succès doit être confirmé sur le commit de ce test avant de déclarer ce palier atteint.
 - **Ne teste toujours pas** `Shader::Maxwell::TranslateProgram`, l'optimisation IR, SPIR-V, Vulkan/RADV ou un jeu PS5.
 
+### N3g — cohérence stage avant capture GPU
+
+- **CFG Maxwell réel exécuté sur l'hôte :** [run 41077579174](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41077579174) : jobs réussis, test `NS2 actual Maxwell CFG: PASS` sous Clang et GCC, avec des shaders synthétiques NOP/MOV/EXIT et les deux formes de sortie dispatcher.
+- Le chemin de capture graphique rejette immédiatement les stages hors `Shader::Stage` et le stage `Compute` (nécessite QMD distinct) avant tout accès GMMU.
+- L'adaptateur GPU réel refuse une discordance entre le stage du contexte possédé et le stage demandé avant la capture mémoire, plutôt que d'échouer après décodage.
+- **Limites :** le compilateur `TranslateProgram` intégral n'est pas encore exécuté sur l'image traduite, et aucun module SPIR-V/Vulkan ou jeu NS2 PS5 n'est validé.
+
 ## 4. Plan d'intégration isolé — ordre d'exécution
 
 | Étape | Livraison et contrôle | État |

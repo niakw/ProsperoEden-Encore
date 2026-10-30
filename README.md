@@ -25,7 +25,7 @@
   <a href="LICENSE"><img alt="License GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-31313a"></a>
 </p>
 
-<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png" alt="Eden Encore Home in English with the original wallpaper and fictional sample game artwork" width="860"></p>
+<p align="center"><img src="assets/screenshots/eden-encore-home-sample-art.png" alt="Eden Encore Home in English with the original wallpaper and fictional sample game artwork" width="860"></p>
 
 <sub>Preview: the games, illustrated covers and descriptions are **fictional demonstration content**, not a compatibility list. The screenshot is rendered by Encore’s actual launcher.</sub>
 

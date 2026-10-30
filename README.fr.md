@@ -19,7 +19,7 @@
   </p>
 </div>
 
-<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png" alt="Eden Encore Home in English with the original wallpaper and fictional sample game artwork" width="860"></p>
+<p align="center"><img src="assets/screenshots/eden-encore-home-sample-art.png" alt="Eden Encore Home in English with the original wallpaper and fictional sample game artwork" width="860"></p>
 
 <sub>Aperçu : les jeux, jaquettes illustrées et descriptions sont **fictifs** et servent uniquement à présenter l’interface. La capture est produite par le véritable lanceur Encore.</sub>
 

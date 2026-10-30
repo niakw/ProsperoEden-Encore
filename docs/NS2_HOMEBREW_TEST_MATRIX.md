@@ -62,6 +62,33 @@ Third-party artifacts are fetched into CI ephemeral directories and are not
 committed, vendored, mirrored or attached to releases. The test implementation
 and its provenance tool are independently authored under Encore's GPL license.
 
+## N3q — independently built HOS NSO0 loader-admission fixture
+
+Test source: [switch2pc](https://github.com/ctj01/switch2pc)
+`examples/hello/hello.S` pinned to source revision
+`f1d25d5f92f62f46c4dcf92556757bdf72d5b073`
+and verified original Git blob
+`dff85100e23fe38ccde75d2034dd2a45ff89a54c`.
+CI uses a cross-compiler to assemble original AArch64 SVC code; Encore's
+independently authored script packages it into a standard `NSO0` header.
+The original fixture is Switch-compatible *generic HOS homebrew*, not
+Switch 2-only firmware, content or a verified game.
+
+The **actual experimental NS2 ExeFS loader** now invokes
+`Eden::NS2::ExeFS::PreflightNso` for all modules only when the
+parsed NPDM identifies a Switch 2 process. That bounds on-disk code
+segments, stored/compressed byte lengths, guest virtual layout, BSS, and
+the final image allocation *before* the maintained NSO loader is called.
+It rejects mismatched sizes and huge/overlapping segments without
+affecting the current Switch 1 load path; the final release gate
+continues to reject all experimental switches.
+
+The host test invokes that same production-linked preflight with malformed
+and valid synthetic headers, then an independently cross-built real NSO0.
+It is a **header admission** test, not an end-to-end
+`AppLoader_NSO::LoadModule`, Dynarmic execution, NPDM emulated process,
+Switch 2 software boot, or a test on actual PS5 GPU hardware.
+
 ## Next actual-console qualification
 
 Before declaring NS2 support: use an independently authorized native

@@ -88,6 +88,14 @@ def main() -> int:
         release_gate = CMAKE.index("# Release gate: Vulkan/RADV")
         require(selection < am_selection < release_gate,
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
+        preflight_header = ROOT / "headless/ns2/overrides/core/loader/ns2_nso_preflight.h"
+        romdir_source = ROOT / "headless/ns2/overrides/core/loader/deconstructed_rom_directory.cpp"
+        require(preflight_header.is_file() and "PreflightNso(" in preflight_header.read_text() and
+                "MaxImageBytes" in preflight_header.read_text() and
+                '"core/loader/ns2_nso_preflight.h"' in romdir_source.read_text() and
+                "if (metadata.IsSwitch2())" in romdir_source.read_text() and
+                "PreflightNso(header, module_file->GetSize())" in romdir_source.read_text(),
+                "NS2 ExeFS must validate actual NSO0 file length before legacy loader allocations")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
         require(sum(i > selection for i in property_sets) == 5,

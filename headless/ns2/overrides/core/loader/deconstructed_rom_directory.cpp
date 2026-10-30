@@ -19,6 +19,7 @@
 #include "core/hle/service/filesystem/filesystem.h"
 #include "core/loader/deconstructed_rom_directory.h"
 #include "core/loader/nso.h"
+#include "core/loader/ns2_nso_preflight.h"
 
 #ifdef HAS_NCE
 #include "core/arm/nce/patcher.h"
@@ -197,6 +198,24 @@ AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirect
     const std::array static_modules = {"rtld",    "main",    "subsdk0", "subsdk1", "subsdk2",
                                        "subsdk3", "subsdk4", "subsdk5", "subsdk6", "subsdk7",
                                        "subsdk8", "subsdk9", "sdk"};
+
+    // N3q: the maintained NSO0 loader sizes temporary buffers from
+    // untrusted segment headers. Before ANY process sizing or guest-memory
+    // admission, validate all NS2 ExeFS modules against the actual file
+    // length. Switch 1 and regular standalone NSO paths remain untouched.
+    if (metadata.IsSwitch2()) {
+        for (const auto* module : static_modules) {
+            const auto module_file = dir->GetFile(module);
+            if (!module_file) continue;
+            std::array<u8, Eden::NS2::ExeFS::NsoHeaderBytes> header{};
+            if (module_file->ReadBytes(header.data(), header.size(), 0) != header.size() ||
+                !Eden::NS2::ExeFS::PreflightNso(header, module_file->GetSize()).Ready()) {
+                LOG_ERROR(Loader, "NS2 ExeFS module {} rejected by NSO0 bounds preflight", module);
+                return {ResultStatus::ErrorLoadingNSO, {}};
+            }
+        }
+    }
+
 
     std::size_t code_size{};
 

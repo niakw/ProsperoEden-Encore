@@ -63,6 +63,18 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp
+      - name: Exercise real NS2 ExeFS NSO0 preflight with GCC and Clang
+        shell: bash
+        run: |
+          set -euo pipefail
+          for compiler in clang++ g++; do
+            "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
+              -fsanitize=undefined -fno-sanitize-recover=all \
+              -Iheadless/ns2/overrides \
+              tools/ns2/test_nso_preflight.cpp \
+              -o "build-ns2-a64/nso-preflight-${compiler//+/}"
+            "build-ns2-a64/nso-preflight-${compiler//+/}"
+          done
       - name: Syntax-check actual experimental NPDM and ExeFS loader owners
         shell: bash
         run: |

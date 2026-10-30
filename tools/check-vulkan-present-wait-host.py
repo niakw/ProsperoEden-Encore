@@ -13,7 +13,7 @@ generator = (root / "tools/prepare-vulkan-port.py").read_text()
 checks = (
     "bool present_in_flight{}; // guarded by queue_mutex",
     "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex",
-    "notify_drainers = present_waiters != 0;",
+    "notify_drainers = present_waiters != 0 && present_queue.empty();",
     "if (notify_drainers) frame_cv.notify_all();",
     "++present_waiters;",
     "--present_waiters;",
@@ -60,7 +60,7 @@ assert wait_present.index("frame_cv.wait(") < wait_present.index(
     "std::scoped_lock swapchain_lock{swapchain_mutex};")
 assert "present_in_flight = true;" in present_thread
 assert "present_in_flight = false;" in present_thread
-assert "notify_drainers = present_waiters != 0;" in present_thread
+assert "notify_drainers = present_waiters != 0 && present_queue.empty();" in present_thread
 assert "if (notify_drainers) frame_cv.notify_all();" in present_thread
 assert "++present_waiters;" in wait_present
 assert "--present_waiters;" in wait_present
@@ -141,7 +141,7 @@ struct Gate {
         {
             std::lock_guard queue_lock{queue_mutex};
             present_in_flight = false;
-            notify_drainers = present_waiters != 0;
+            notify_drainers = present_waiters != 0 && present_queue.empty();
         }
         ++completed;
         if (notify_drainers) {
@@ -265,6 +265,30 @@ int main() {
         drain.join();
         assert(waiting.drain_wake_calls == 1);
         assert(waiting.present_waiters == 0);
+    }
+    // With a pending burst and a registered drain waiter, intermediate
+    // completions MUST NOT wake a thread whose FIFO drain cannot succeed.
+    for (unsigned run=0; run<24; ++run) {
+        Gate burst;
+        for (int i=0; i<32; ++i) burst.Queue(i);
+        std::thread drain{[&] { burst.WaitPresent(); }};
+        bool observed = false;
+        for (unsigned tries=0; tries<1000000; ++tries) {
+            if (burst.wait_entered.load(std::memory_order_acquire) != 0) {
+                observed = true;
+                break;
+            }
+            std::this_thread::yield();
+        }
+        assert(observed);
+        for (int i=0; i<31; ++i) {
+            burst.CopyOne(false);
+            assert(burst.drain_wake_calls == 0);
+        }
+        burst.CopyOne(false);
+        drain.join();
+        assert(burst.drain_wake_calls == 1);
+        assert(burst.present_waiters == 0);
     }
     // If GPU fence wait keeps the free queue locked, the producer cannot
     // recycle an independent frame. Probe with try_lock while consumer is

@@ -130,7 +130,7 @@ assert worker.index("lock.unlock();") < worker.index("std::lock_guard queue_lock
 assert worker.index("std::lock_guard queue_lock{queue_mutex};") < worker.index(
     "present_in_flight = false;")
 assert worker.index("present_in_flight = false;") < worker.index("frame_cv.notify_all();")
-assert "notify_drainers = present_waiters != 0;" in worker
+assert "notify_drainers = present_waiters != 0 && present_queue.empty();" in worker
 assert "if (notify_drainers) frame_cv.notify_all();" in worker
 assert "void(std::exchange(lock, std::unique_lock{swapchain_mutex}));" in worker
 assert worker.count("present_in_flight = true;") == 1

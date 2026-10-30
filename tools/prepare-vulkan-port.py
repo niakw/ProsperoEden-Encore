@@ -937,8 +937,8 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
      '                std::lock_guard queue_lock{queue_mutex};\n'
      '                present_in_flight = false;\n'
      '                // A future WaitPresent sees an already idle queue under\n'
-     '                // this same mutex; no wake is lost if nobody waits now.\n'
-     '                notify_drainers = present_waiters != 0;\n'
+     '                // this same mutex; only the final queued completion can\n'\n     '                // satisfy a drain waiter. Backlog wakes are wasted.\n'
+     '                notify_drainers = present_waiters != 0 && present_queue.empty();\n'
      '            }\n'
      '            if (notify_drainers) frame_cv.notify_all();'),
     # Release free_mutex before waking the producer of the next frame.

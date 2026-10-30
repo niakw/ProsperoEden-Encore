@@ -97,11 +97,11 @@ int main() {
 with tempfile.TemporaryDirectory(prefix="eden-sparse-jit-mru-") as tmp:
     path = Path(tmp)
     (path / "test.cpp").write_text(FIXTURE)
-    for opt in (0, 2):
+    for opt in (0, 2, 3):
         exe = path / f"test-O{opt}"
         subprocess.run([compiler, "-std=c++20", f"-O{opt}", "-Wall", "-Wextra",
                         "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=all",
                         "-I", str(ROOT / "headless"), str(path / "test.cpp"),
                         "-o", str(exe)], check=True, timeout=90)
         subprocess.run([str(exe)], check=True, timeout=90)
-print("SPARSE_JIT_POSITIVE_CACHE_HOST_PASS O0=1 O2=1 source_linked=1")
+print("SPARSE_JIT_POSITIVE_CACHE_HOST_PASS O0=1 O2=1 O3=1 source_linked=1")

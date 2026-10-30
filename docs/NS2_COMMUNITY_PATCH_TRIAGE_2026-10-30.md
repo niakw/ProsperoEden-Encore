@@ -364,3 +364,32 @@ The actual NS2 loader overlay uses it. See:
   compilation/render loop has not yet been patched to pass an owned
   cache instance. A PS5 full link and runtime game verification remain
   outstanding.
+
+## N4w — Actual Maxwell Shader::Environment adapter (research only)
+
+- New `NativeMaxwellEnvironment` implements the **actual**
+  `Shader::Environment` polymorphic contract used by the maintained
+  `Shader::Maxwell::Flow::CFG` and IR translator. `ReadInstruction`
+  reads only a successfully translated `MaxwellShaderImage`, never
+  misinterprets raw 128-bit Ampere GMMU bytes as 64-bit Maxwell opcodes,
+  and throws for header/scheduling/metadata/out-of-range addresses.
+- The wrapper preserves the original `ProgramHeader`, shader stage,
+  passthrough mask and driver metadata. CBUF values, texture types,
+  pixel formats, constant replacements, viewport and shared/local
+  workgroup parameters delegate to the original real graphics
+  environment. A dump request deliberately never writes a misleading
+  Switch 1 shader file.
+- A new `CreateNs2GraphicsShaderEnvironment` in the actual
+  `video_core/native_shader_capture.cpp` binds the verified live
+  Tegra GMMU capture, optional source-verified translation cache,
+  native-to-Maxwell image, and environment wrapper. **Explicit caller
+  opt-in is required**: no blanket Switch 1 shader interception.
+- GCC and Clang host tests exercise a *real derived*
+  `Shader::Environment`, verified native NOP/EXIT lowering, stage/SPH
+  metadata, all forwarded virtual methods, invalid instruction reads
+  and fail-closed construction.
+- **Remaining:** a process-owned NS2 channel mode must call this bridge
+  from the real shader cache and select the appropriate guest graphics
+  register/QMD model. Vulkan compilation, GPU execution, cache invalidation
+  and task/mesh shaders remain unvalidated. This is the compiler ABI
+  handoff, not PS5 gameplay support.

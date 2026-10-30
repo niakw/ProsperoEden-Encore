@@ -320,6 +320,21 @@ def main() -> int:
                 'memory->ReadBlock(address, dest, size)' in
                     (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'EDEN_NS2_NATIVE_TRANSLATION_CACHE' in CMAKE and
+                'EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER' in CMAKE and
+                'maxwell_environment.h' in CMAKE and
+                (ampere_root / "maxwell_environment.h").is_file() and
+                (ampere_root / "maxwell_environment.cpp").is_file() and
+                'Shader::Environment' in
+                    (ampere_root / "maxwell_environment.h").read_text() and
+                'ReadInstruction(u32 address)' in
+                    (ampere_root / "maxwell_environment.cpp").read_text() and
+                'original.ReadCbufValue(index, offset)' in
+                    (ampere_root / "maxwell_environment.cpp").read_text() and
+                'image.ReadMaxwellInstruction(address)' in
+                    (ampere_root / "maxwell_environment.cpp").read_text() and
+                (ROOT / "tools/ns2/test_ampere_maxwell_environment.cpp").is_file() and
+                'CreateNs2GraphicsShaderEnvironment(' in
+                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'translation_cache.cpp' in CMAKE and
                 'translation_cache.h' in CMAKE and
                 (ROOT / "tools/ns2/test_ampere_translation_cache.cpp").is_file() and

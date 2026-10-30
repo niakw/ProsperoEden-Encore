@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "video_core/native_shader_capture.h"
 #include <limits>
+#include "shader_recompiler/frontend/ampere/maxwell_environment.h"
 #include "video_core/memory_manager.h"
 
 namespace VideoCommon {
@@ -23,5 +24,18 @@ Shader::Ampere::NativeCaptureResult CaptureNs2GraphicsShaderFromGpu(
     // instruction. A fault aborts capture without populating a shader image.
     return Shader::Ampere::CaptureNativeGraphicsShader(
         gpu_program_address, stage, ReadNs2GpuShader, &memory, cache);
+}
+
+std::unique_ptr<Shader::Environment> CreateNs2GraphicsShaderEnvironment(
+    Tegra::MemoryManager& memory, Shader::Environment& original,
+    u64 gpu_program_address, u32 stage,
+    Shader::Ampere::NativeTranslationCache* cache) {
+    // Creating the environment requires BOTH a fully verified translation
+    // and a caller-provided graphics context. Never publish invalid partials.
+    auto captured = CaptureNs2GraphicsShaderFromGpu(
+        memory, gpu_program_address, stage, cache);
+    if (!captured.Ready()) return {};
+    return Shader::Ampere::NativeMaxwellEnvironment::Create(
+        original, std::move(captured.image));
 }
 } // namespace VideoCommon

@@ -2107,7 +2107,8 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
             lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
-            program_address_map.h capture.h program_capture.h translation_cache.h)
+            program_address_map.h capture.h program_capture.h translation_cache.h
+            maxwell_environment.h)
         if(NOT EXISTS
            "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
             message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
@@ -2140,12 +2141,18 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_NATIVE_TRANSLATION_CACHE}")
         message(FATAL_ERROR "Missing bounded, process-owned NS2 translation cache")
     endif()
+    set(EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/maxwell_environment.cpp")
+    if(NOT EXISTS "${EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER}")
+        message(FATAL_ERROR "Missing NS2 Shader::Environment Maxwell frontend adapter")
+    endif()
     target_sources(shader_recompiler PRIVATE
         "${EDEN_NS2_AMPERE_PROBE}"
         "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"
         "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}"
         "${EDEN_NS2_NATIVE_SHADER_CAPTURE}"
-        "${EDEN_NS2_NATIVE_TRANSLATION_CACHE}")
+        "${EDEN_NS2_NATIVE_TRANSLATION_CACHE}"
+        "${EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER}")
     target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GMMU_CAPTURE}")
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")

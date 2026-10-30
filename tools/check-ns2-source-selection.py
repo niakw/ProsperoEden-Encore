@@ -20,7 +20,8 @@ def main() -> int:
                 "No ExeFS opt-in")
         require('option(EDEN_NS2_CPU6_EXPERIMENTAL' in CMAKE,
                 "No CPU6 opt-in")
-        require('EDEN_NS2_CPU6_EXPERIMENTAL OR' in CMAKE,
+        require('EDEN_NS2_CPU6_EXPERIMENTAL OR' in
+                CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
                 "Final release must reject CPU6 experiment")
         cpu6_condition = CMAKE.split("if(EDEN_NS2_CPU6_EXPERIMENTAL)", 1)[1].split(
             "set(EDEN_NS2_CPU6_ROOT", 1

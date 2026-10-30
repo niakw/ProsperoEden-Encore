@@ -93,10 +93,14 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             headless/ns2/am/core/hle/service/am/service/application_functions.cpp
-      - name: Syntax-check native NVDRV GPU ioctl source owner
+      - name: Syntax-check native NVDRV GPU ioctl source owner (GCC)
         shell: bash
         run: |
-          clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+          set -euo pipefail
+          # Clang 18 CI crashes while instantiating the pre-existing
+          # ioctl_serialization.h WrapFixedInlOut constrained template.
+          # Test this exact owner with a second real C++20 frontend instead.
+          g++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -Iheadless/ns2/nvdrv \
             -Ivendor/sources/eden/src/dynarmic/src \

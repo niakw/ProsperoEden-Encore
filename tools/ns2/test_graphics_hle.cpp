@@ -92,6 +92,85 @@ int main(){
     preferences[4]=4;preferences[6]=0;
     require(!CalculateNativeImageRequirements(preferences,1),"reject unknown color layout");
 
+    // Sparse NVGPU MMU ABI and mapping lifetime, sourced from latest pinned NS2.
+    N::NativeSparseRemapEntry entry{};
+    entry.flags=0x1000;entry.kind=6;entry.fallback_kind=6;
+    entry.handle=7;entry.source_pages=2;entry.destination_pages=0x10;entry.pages=4;
+    auto decoded=N::DecodeNativeSparseRemap(entry);
+    require(decoded && decoded->address==0x10000 && decoded->size==0x4000 &&
+            decoded->source_offset==0x2000 && decoded->handle==7,
+            "native sparse 4-KiB mapping");
+    entry.flags=0x2000;entry.pages=1;
+    decoded=N::DecodeNativeSparseRemap(entry);
+    require(decoded && decoded->size==0x10000,"native sparse 64-KiB page size");
+    entry.flags=0x3000;
+    require(!N::DecodeNativeSparseRemap(entry),"reject multiple page-size flags");
+    entry.flags=0x1000;entry.pages=0;
+    require(!N::DecodeNativeSparseRemap(entry),"reject empty sparse mapping");
+    entry.pages=4;entry.source_pages=~u64{0};
+    require(!N::DecodeNativeSparseRemap(entry),"reject sparse source overflow");
+    entry.source_pages=2;entry.handle=0;
+    require(!N::DecodeNativeSparseRemap(entry),"reject source on unmapped handle");
+    entry.handle=7;entry.reserved=1;
+    require(!N::DecodeNativeSparseRemap(entry),"reject sparse reserved field");
+    entry.reserved=0;entry.flags=0x1000;
+    require(N::DecodeNativeSparseRemap(entry).has_value(),"accept restored mapping");
+
+    N::NativeSparseMappingTable table;
+    table.Replace({0x1000,0x4000,0x10000,7});
+    table.Replace({0x2000,0x1000,0x20000,9});
+    const auto& ranges=table.Ranges();
+    require(ranges.size()==3,"split overlapping sparse mapping into three regions");
+    require(ranges.at(0x1000).size==0x1000 && ranges.at(0x1000).handle==7,
+            "preserve left sparse fragment");
+    require(ranges.at(0x2000).size==0x1000 && ranges.at(0x2000).handle==9,
+            "insert overlapping sparse owner");
+    require(ranges.at(0x3000).size==0x2000 &&
+            ranges.at(0x3000).source_offset==0x12000,
+            "advance right fragment physical offset");
+    require(table.ReferencedHandles().size()==2,"both sparse backing handles pinned");
+    table.Replace({0x2000,0x1000,0,0});
+    require(table.Ranges().size()==2 && table.ReferencedHandles().size()==1 &&
+            table.ReferencedHandles().contains(7),
+            "unmap sparse middle range and release old handle");
+
+    GpuSparseMapRequest gm{};
+    gm.address=0x10000;gm.size=0x2000;gm.kind=6;
+    gm.fallback_kind=6;gm.cache=1;gm.memory=7;gm.source_offset=0x4000;
+    const auto gpuMap=DecodeGpuSparseMap(gm);
+    require(gpuMap && gpuMap->flags==0x1004 &&
+            gpuMap->destination_pages==0x10 && gpuMap->source_pages==4,
+            "GPU request maps to 4-KiB sparse ioctl entry");
+    gm.address=0x10001;
+    require(!DecodeGpuSparseMap(gm),"reject unaligned sparse destination");
+    gm.address=0x10000;gm.read_only=1;
+    require(!DecodeGpuSparseMap(gm),"reject unsupported sparse read-only flag");
+    gm.read_only=0;gm.comptag_mode=1;
+    require(!DecodeGpuSparseMap(gm),"reject unsupported sparse compression tag");
+    gm.comptag_mode=0;gm.cache=2;
+    require(!DecodeGpuSparseMap(gm),"reject unsupported sparse caching mode");
+    gm.cache=1;gm.reserved2=1;
+    require(!DecodeGpuSparseMap(gm),"reject unknown sparse extension");
+
+    std::array<u32,12> region{0xe6,10,8,0x10000,0,0x1ffff,0,12,0,1,0,0};
+    auto regionReq=DecodeGpuSparseRegion(region);
+    require(regionReq && regionReq->address_space==8 &&
+            IsValidGpuSparseRegionRange(*regionReq),"valid sparse region boundary");
+    region[5]=0x1ffe0;
+    regionReq=DecodeGpuSparseRegion(region);
+    require(regionReq && !IsValidGpuSparseRegionRange(*regionReq),
+            "reject unaligned sparse end");
+    region[5]=0x1ffff;region[7]=15;
+    regionReq=DecodeGpuSparseRegion(region);
+    require(regionReq && !IsValidGpuSparseRegionRange(*regionReq),
+            "reject unsupported sparse page shift");
+    region[7]=12;region[5]=0xffffffff;region[6]=0xffffffff;
+    regionReq=DecodeGpuSparseRegion(region);
+    require(regionReq && !IsValidGpuSparseRegionRange(*regionReq),
+            "reject inclusive maximum end overflow");
+    require(!DecodeGpuSparseRegion(std::span<const u32>(region.data(),11)),
+            "reject truncated sparse region request");
+
     const auto generic=N::SelectNativeMemoryKind(6,6);
     require(generic && generic->selected==6 &&
             generic->backend==static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2),

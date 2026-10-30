@@ -252,16 +252,26 @@ public:
         // and never suppress a retry of an unaliased kernel chunk.
         if (first < last && last - first < 16 &&
             first / PagesPerGranule != last / PagesPerGranule) {
-            bool unchanged = true;
+            // All affected kernel chunks already expose the requested
+            // physical pages. A permission-only change cannot require
+            // remapping; refresh only the bounded JIT guard-byte span.
+            // Missing aliases and changed backing still retry Update.
+            bool live_aliases_match = true;
+            bool same_access = true;
             for (std::size_t p = first; p <= last; ++p) {
                 if (!chunk_aliased[p / PagesPerGranule] ||
-                    page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1) ||
-                    page_access[p] != access) {
-                    unchanged = false;
+                    page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1)) {
+                    live_aliases_match = false;
                     break;
                 }
+                if (page_access[p] != access) same_access = false;
             }
-            if (unchanged) return;
+            if (live_aliases_match) {
+                if (same_access) return;
+                for (std::size_t p = first; p <= last; ++p) page_access[p] = access;
+                Refresh(first, last);
+                return;
+            }
         }
         for (std::size_t p = first; p <= last; ++p) {
             if (!page_backing[p]) ++counters.mapped_pages;

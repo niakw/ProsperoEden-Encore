@@ -284,6 +284,11 @@ assert 'first / PagesPerGranule == last / PagesPerGranule' in unmap_body
 assert 'first < last && last - first < 16' in map_body
 assert 'first < last && last - first < 16' in unmap_body
 assert '!chunk_aliased[p / PagesPerGranule]' in map_body
+assert "bool live_aliases_match = true;" in map_body
+assert "if (live_aliases_match) {" in map_body
+assert "if (same_access) return;" in map_body
+assert map_body.count("Refresh(first, last);") == 2
+assert map_body.count("for (std::size_t p = first; p <= last; ++p) page_access[p] = access;") == 2
 for body in (map_body, unmap_body):
     assert body.index('std::lock_guard lock{mutex};') < body.index('if (first == last')
 map_cpp = r'''
@@ -388,11 +393,12 @@ int main() {
         two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
     assert(two.updates == 5); // both existing aliases: no-op
     two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 1);
-    assert(two.updates == 6); // changed access must republish
+    assert(two.updates == 5 && two.guard_refreshes == 2); // only JIT guards
+    assert(two.map[3] == (two.Own(3) | two.Own(4)));
     two.Unmap(3 * GuestPage, 2 * GuestPage);
-    assert(two.updates == 7 && counters.mapped_pages == 0);
+    assert(two.updates == 6 && counters.mapped_pages == 0);
     for (int i = 0; i < 10000; ++i) two.Unmap(3 * GuestPage, 2 * GuestPage);
-    assert(two.updates == 7);
+    assert(two.updates == 6);
     TestWindow short_span;
     short_span.Map(0, 0, 16 * GuestPage, 3);
     assert(short_span.updates == 1 && counters.mapped_pages == 16);
@@ -409,6 +415,13 @@ int main() {
     short_span.Unmap(0, 17 * GuestPage);
     short_span.Unmap(0, 17 * GuestPage);
     assert(short_span.updates == 6 && counters.mapped_pages == 0);
+    // A crossed span must retry if any one kernel granule lacks a
+    // published alias: changed access alone is not permission to skip it.
+    TestWindow missing_cross_alias;
+    missing_cross_alias.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    missing_cross_alias.chunk_aliased[0] = 1;
+    missing_cross_alias.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 1);
+    assert(missing_cross_alias.updates == 2 && missing_cross_alias.guard_refreshes == 0);
     // The first page in a native 16KiB granule changes the preceding
     // page's crossing guard as well as its own guard.
     TestWindow boundary;
@@ -437,7 +450,7 @@ int main() {
     assert(missing_alias.updates == 2 && missing_alias.guard_refreshes == 0);
     std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
                 "same_alias_noop=10000 unmap_noop=10000 same16k=1 "
-                "cross16k=10000 permission_only=1 permission_batch=1 predecessor_guard=1 bound16=1 O0_O2=1\n");
+                "cross16k=10000 permission_only=1 permission_batch=1 cross_permission_batch=1 predecessor_guard=1 bound16=1 O0_O2=1\n");
 }
 '''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
     '\nUNMAP\n', '\n' + unmap_body + '\n')

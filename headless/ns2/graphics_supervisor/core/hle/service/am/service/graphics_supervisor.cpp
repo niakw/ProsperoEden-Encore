@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Successful NS2 supervisor commands have real kernel IPC backing, but
 // NO native NVDRV address space, event, worker, queue or PS5 rendering path.
+#include <algorithm>
+#include <array>
 #include <memory>
+#include "core/hle/service/nvdrv/nvdrv_interface.h"
+#include "core/hle/service/sm/sm.h"
 #include <span>
 #include "core/core.h"
 #include "core/hle/kernel/k_client_session.h"
@@ -58,6 +62,7 @@ IGraphicsSupervisor::IGraphicsSupervisor(Core::System& system_, Kernel::KProcess
         {101, &IGraphicsSupervisor::CompleteBootstrap, "CompleteBootstrap"},
         {401, &IGraphicsSupervisor::InitializeGpuContext, "InitializeGpuContext"},
         {402, &IGraphicsSupervisor::InitializeGpuContext, "ActivateGpuContext"},
+        {434, &IGraphicsSupervisor::RegisterGpuAddressSpace, "RegisterGpuAddressSpace"},
         {497, &IGraphicsSupervisor::OpenGpuSession, "OpenGpuSession"},
     };
     RegisterHandlersTipc(functions);
@@ -109,14 +114,43 @@ void IGraphicsSupervisor::InitializeGpuContext(HLERequestContext& ctx) {
     IPC::ResponseBuilder rb{ctx, 2};
     rb.Push(result.raw);
 }
+
+void IGraphicsSupervisor::RegisterGpuAddressSpace(HLERequestContext& ctx) {
+    const auto* packet = ctx.CommandBuffer();
+    const std::array<u32, 3> command{packet[0], packet[1], packet[2]};
+    const auto id = GpuSessionProtocol::DecodeRegisterAddressSpace(command);
+    Result result = Kernel::ResultInvalidCombination;
+    if (id) {
+        result = Kernel::ResultInvalidState;
+        if (m_bootstrap.GpuContextReady()) {
+            result = Kernel::ResultNotFound;
+            std::erase_if(m_gpu_sessions, [](const auto& weak) { return weak.expired(); });
+            for (const auto& weak : m_gpu_sessions) {
+                if (auto handler = weak.lock()) {
+                    result = handler->RegisterAddressSpace(*id);
+                    if (result.IsSuccess()) break;
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 2};
+    rb.Push(result.raw);
+}
+
 void IGraphicsSupervisor::OpenGpuSession(HLERequestContext& ctx) {
     const std::span<const u32> packet{ctx.CommandBuffer(), IPC::COMMAND_BUFFER_LENGTH};
-    // true means the metadata HLE class is linked, NOT that native NVDRV is ready.
-    Result result = TranslateBootstrap(m_bootstrap.CanOpenGpuSession(packet, true));
+    // Only actual NVDRV service modules can back address-space FD creation.
+    const auto source = system.ServiceManager().GetService<Nvidia::NVDRV>("nvdrv:s", true);
+    const auto module = source ? source->GetModule() : nullptr;
+    Result result = TranslateBootstrap(m_bootstrap.CanOpenGpuSession(packet, module != nullptr));
     Kernel::KClientSession* client{};
     if (result.IsSuccess()) {
-        auto handler = std::make_shared<IGpuSession>(system);
-        result = CreateMetadataSession(system, ctx, std::move(handler), &client);
+        auto handler = std::make_shared<IGpuSession>(system, module, m_process);
+        result = CreateMetadataSession(system, ctx, handler, &client);
+        if (result.IsSuccess()) {
+            std::erase_if(m_gpu_sessions, [](const auto& weak) { return weak.expired(); });
+            m_gpu_sessions.emplace_back(handler);
+        }
     }
     IPC::ResponseBuilder rb{ctx, 2, 0, 1};
     rb.Push(result.raw);

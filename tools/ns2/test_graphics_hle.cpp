@@ -348,6 +348,55 @@ int main(){
             full.Destroy(zeroDevice)==GP::Status::InvalidPacket &&
             full.Count()==255,
             "destroy must not truncate 32-bit ID to 8-bit alias");
+    // Real fd lifecycle is owned by the NVDRV module, not this pure bounded
+    // registry. Failed opens/IOCTLs must not call Add().
+    GP::AddressSpaceSlots addressSpaces;
+    require(addressSpaces.HasCapacity() && addressSpaces.Count()==0 &&
+            !addressSpaces.Owns(1) && !addressSpaces.Registered(1) &&
+            addressSpaces.Register(1)==GP::Status::NotFound,
+            "unallocated GPU VA must not be advertised or registered");
+    const std::array<GP::U32,3> makeAs{0x31,1,0};
+    const std::array<GP::U32,3> registerAs{0x1c2,1,42};
+    const std::array<GP::U32,3> invalidMakeAs{0x31,1,1};
+    const std::array<GP::U32,3> badRegisterAs{0x1c2,1,0};
+    const std::array<GP::U32,3> wrappedRegister{0x1c2,1,0xffffffff};
+    require(GP::IsCreateAddressSpace(makeAs) &&
+            !GP::IsCreateAddressSpace(invalidMakeAs) &&
+            GP::DecodeRegisterAddressSpace(registerAs)==std::optional<GP::U32>{42} &&
+            !GP::DecodeRegisterAddressSpace(badRegisterAs) &&
+            !GP::DecodeRegisterAddressSpace(wrappedRegister),
+            "GPU VA commands reject invalid command words and full-width IDs");
+    require(addressSpaces.Add(0)==GP::Status::InvalidPacket &&
+            addressSpaces.Add(0xffffffff)==GP::Status::InvalidPacket &&
+            addressSpaces.Count()==0,
+            "GPU VA refuses reserved and overflowing fd");
+    require(addressSpaces.Add(42)==GP::Status::Success &&
+            addressSpaces.Add(42)==GP::Status::InvalidState &&
+            addressSpaces.Count()==1 && !addressSpaces.Registered(42),
+            "GPU VA fd ownership must be unique and initially unregistered");
+    require(addressSpaces.Register(42)==GP::Status::Success &&
+            addressSpaces.Registered(42) && addressSpaces.Count()==1,
+            "supervisor registers only owned successful NVDRV fds");
+    for(GP::U32 id=43;id<50;++id)
+        require(addressSpaces.Add(id)==GP::Status::Success,
+                "NVDRV fd allocation fills bounded GPU VA slots");
+    require(addressSpaces.Count()==8 && !addressSpaces.HasCapacity() &&
+            addressSpaces.Add(50)==GP::Status::OutOfResource &&
+            addressSpaces.Count()==8 &&
+            addressSpaces.Register(50)==GP::Status::NotFound,
+            "GPU VA capacity is eight and overflow cannot mutate ownership");
+    const auto owned=addressSpaces.OwnedIds();
+    require(owned[0]==std::optional<GP::U32>{42} &&
+            owned[7]==std::optional<GP::U32>{49} &&
+            !addressSpaces.Registered(49),
+            "GPU VA destructor can enumerate all owned fds for cleanup");
+    require(GP::AddressSpaceRegionEnd(0x1000,1,0x1000)==
+            std::optional<GP::U64>{0x1fff} &&
+            GP::AddressSpaceRegionEnd(0x1000,0,0x1000)==std::nullopt &&
+            GP::AddressSpaceRegionEnd(0x1000,1,0)==std::nullopt &&
+            GP::AddressSpaceRegionEnd(0x1000,std::numeric_limits<GP::U64>::max(),2)==std::nullopt &&
+            GP::AddressSpaceRegionEnd(std::numeric_limits<GP::U64>::max(),1,2)==std::nullopt,
+            "NVDRV VA region query must reject zero sizes and uint64 overflow");
     const std::array<GP::U32,3> partition{219,1,17};
     const auto part=GP::DecodeAddressSpacePartition(partition,203);
     require(part && part->address_space==17 && part->user,

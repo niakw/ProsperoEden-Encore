@@ -3,10 +3,13 @@
 #pragma once
 // Bounded research-only supervisor. The upstream NVDRV/VI2 implementation
 // remains unported; command 497 yields metadata-only IGpuSession.
+#include <memory>
+#include <vector>
 #include "core/hle/service/service.h"
 #include "core/hle/service/am/service/graphics_supervisor_bootstrap.h"
 namespace Kernel { class KProcess; }
 namespace Service::AM {
+class IGpuSession;
 class IGraphicsSupervisor final : public ServiceFramework<IGraphicsSupervisor> {
 public:
     IGraphicsSupervisor(Core::System& system, Kernel::KProcess* process, u64 aruid);
@@ -18,7 +21,9 @@ private:
     void CompleteBootstrap(HLERequestContext& ctx);
     void InitializeGpuContext(HLERequestContext& ctx);
     void OpenGpuSession(HLERequestContext& ctx);
+    void RegisterGpuAddressSpace(HLERequestContext& ctx);
     Kernel::KProcess* const m_process;
     GraphicsSupervisorBootstrap::State m_bootstrap;
+    std::vector<std::weak_ptr<IGpuSession>> m_gpu_sessions;
 };
 } // namespace Service::AM

@@ -9,6 +9,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <span>
 
@@ -58,6 +59,80 @@ inline constexpr std::optional<U32> DecodeDestroyDevice(std::span<const U32> pac
     }
     return packet[2];
 }
+// Command 33 is a real NVDRV address-space allocation, not a guest GPU
+// mapping. Reject reserved payload words and do not truncate handle IDs.
+inline constexpr bool IsCreateAddressSpace(std::span<const U32> packet) {
+    return packet.size() == 3 && packet[0] == 0x31 && packet[1] == 1 &&
+           packet[2] == 0;
+}
+inline constexpr std::optional<U32> DecodeRegisterAddressSpace(
+    std::span<const U32> packet) {
+    if (packet.size() != 3 || packet[0] != 0x1c2 || packet[1] != 1 ||
+        packet[2] == 0 || packet[2] > std::numeric_limits<std::int32_t>::max())
+        return {};
+    return packet[2];
+}
+
+// Bounds and ownership are enforced separately from the actual NVDRV
+// allocator; failed opens / ioctls must never consume a slot.
+class AddressSpaceSlots {
+public:
+    [[nodiscard]] bool HasCapacity() const { return count < MaxAddressSpaces; }
+    [[nodiscard]] std::size_t Count() const { return count; }
+    [[nodiscard]] bool Owns(U32 id) const {
+        for (const auto& slot : slots)
+            if (slot && slot->id == id) return true;
+        return false;
+    }
+    [[nodiscard]] bool Registered(U32 id) const {
+        for (const auto& slot : slots)
+            if (slot && slot->id == id) return slot->registered;
+        return false;
+    }
+    Status Add(U32 id) {
+        if (id == 0 || id > std::numeric_limits<std::int32_t>::max())
+            return Status::InvalidPacket;
+        if (Owns(id)) return Status::InvalidState;
+        for (auto& slot : slots) {
+            if (!slot) {
+                slot = Slot{id, false};
+                ++count;
+                return Status::Success;
+            }
+        }
+        return Status::OutOfResource;
+    }
+    Status Register(U32 id) {
+        for (auto& slot : slots) {
+            if (slot && slot->id == id) {
+                slot->registered = true;
+                return Status::Success;
+            }
+        }
+        return Status::NotFound;
+    }
+    [[nodiscard]] std::array<std::optional<U32>, MaxAddressSpaces> OwnedIds() const {
+        std::array<std::optional<U32>, MaxAddressSpaces> ids{};
+        for (std::size_t i = 0; i < slots.size(); ++i)
+            if (slots[i]) ids[i] = slots[i]->id;
+        return ids;
+    }
+private:
+    struct Slot { U32 id; bool registered; };
+    std::array<std::optional<Slot>, MaxAddressSpaces> slots{};
+    std::size_t count{};
+};
+
+// Verify the returned NVDRV user region before multiplying or adding.
+inline constexpr std::optional<U64> AddressSpaceRegionEnd(
+    U64 offset, U64 pages, U64 page_size) {
+    if (!pages || !page_size || pages >
+        std::numeric_limits<U64>::max() / page_size) return {};
+    const U64 bytes = pages * page_size;
+    if (offset > std::numeric_limits<U64>::max() - (bytes - 1)) return {};
+    return offset + bytes - 1;
+}
+
 inline constexpr bool IsGetNotificationRange(std::span<const U32> packet) {
     return packet.size() == 2 && packet[0] == 0x1b && packet[1] == 0;
 }

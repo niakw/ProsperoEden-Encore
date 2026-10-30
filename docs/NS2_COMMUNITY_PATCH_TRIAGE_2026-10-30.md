@@ -109,3 +109,11 @@ The `\default=false` keys are configuration override flags, not executable patch
 - A small actual TIPC `IGraphicsSupervisor` implementation registers **4/11/101/401/402/497**, checks the calling process, ARUID, and ordered bootstrap with the existing tested state machine. **497** returns a real moved kernel session to the existing `IGpuSession`.
 - The GPU session only implements **41/42 metadata device IDs**. Native VA/worker/event, NVDRV channel, VI2, submission and PS5 RADV rendering remain unimplemented and return explicit errors, never fabricated success.
 - The compiler selector `EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL` requires both AM and GPU-session research modes, defaults OFF and is forbidden in release. CI syntax-compiles the actual new service owners and guards their versioned source selection. No Switch 2 PS5 gameplay claim.
+
+## N4f — Live NVDRV address-space FD lifecycle (experimental only)
+
+- `IGraphicsSupervisor::OpenGpuSession` now acquires the **actual** existing Encore `nvdrv:s` module. If unavailable, command **497** fails; it no longer creates a GPU session backed only by metadata when NVDRV itself is absent.
+- The GPU session holds a process reference and opens a real NVDRV process session. TIPC **33** opens `/dev/nvhost-as-gpu`, executes the real allocation IOCTL **0x40284109**, and publishes an FD only on successful initialization. It tracks **up to eight** owned FDs; failed opens and IOCTLs cannot consume slots.
+- TIPC **202/203** resolve **owned FDs only**. User partition 203 calls the existing NVDRV VA-region IOCTL **0xc0404108**, checks zero sizes and 64-bit multiplication/addition overflow, and returns real region bounds. Supervisor **434** registers only FDs owned by live GPU sessions and only after GPU-context activation; destroying a GPU session closes all its fds and its NVDRV session.
+- O0/O2+UBSan host fixtures cover slot exhaustion, duplicated/invalid/truncated FD registration, capacity, cleanup enumeration and VA overflow. Source-selection checks enforce the original code paths and the switch remains OFF/forbidden for release.
+- **Important limit:** this is the existing Encore NVDRV address-space allocator, **not** native Switch 2 Ampere 4-KiB mapping or PS5 Vulkan submission. No GPU memory worker, notification signaling, rasterization, VI2 or Switch 2 gameplay is unlocked by this commit.

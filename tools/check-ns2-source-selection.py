@@ -77,10 +77,19 @@ def main() -> int:
         service_h = (session_root / "gpu_session.h").read_text()
         require("RegisterHandlersTipc(functions)" in service_cpp and
                 "GpuSessionProtocol::DeviceSlots m_devices" in service_h and
+                "GpuSessionProtocol::AddressSpaceSlots m_address_spaces" in service_h and
                 "rb.Push(Kernel::ResultNotImplemented.raw)" in service_cpp and
+                "{33, &IGpuSession::CreateAddressSpace" in service_cpp and
                 "{41, &IGpuSession::CreateGraphicsDevice" in service_cpp and
-                "{42, &IGpuSession::DestroyGraphicsDevice" in service_cpp,
-                "NS2 GPU service must register real metadata commands only")
+                "{42, &IGpuSession::DestroyGraphicsDevice" in service_cpp and
+                "{202, &IGpuSession::GetAddressSpacePartition" in service_cpp and
+                "{203, &IGpuSession::GetAddressSpacePartition" in service_cpp and
+                'm_module->Open("/dev/nvhost-as-gpu"' in service_cpp and
+                "ioctl.raw = 0x40284109" in service_cpp and
+                "ioctl.raw = 0xc0404108" in service_cpp and
+                "m_module->Close(" in service_cpp and
+                "CloseSession(Nvidia::NvCore::SessionId{" in service_cpp,
+                "NS2 GPU service must own real NVDRV descriptors and safely close them")
         supervisor_selection = CMAKE.index("# Research-only SelfController -> GraphicsSupervisor")
         require(session_selection < supervisor_selection < release_gate and
                 "EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR" in CMAKE and
@@ -92,11 +101,15 @@ def main() -> int:
                 "NS2 supervisor must replace only pinned CMIF SelfController owner")
         sup_cpp = (ROOT / "headless/ns2/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
         self_cpp = (ROOT / "headless/ns2/self_controller/core/hle/service/am/service/self_controller.cpp").read_text()
-        require("m_bootstrap.CanOpenGpuSession(packet, true)" in sup_cpp and
+        require("m_bootstrap.CanOpenGpuSession(packet, module != nullptr)" in sup_cpp and
+                'GetService<Nvidia::NVDRV>("nvdrv:s", true)' in sup_cpp and
                 "CreateMetadataSession(system, ctx," in sup_cpp and
+                "RegisterGpuAddressSpace(*id)" in sup_cpp and
+                "m_bootstrap.GpuContextReady()" in sup_cpp and
                 "Kernel::ResultNotImplemented.raw" in sup_cpp and
+                "{434, &IGraphicsSupervisor::RegisterGpuAddressSpace" in sup_cpp and
                 "{497, &IGraphicsSupervisor::OpenGpuSession" in sup_cpp,
-                "Supervisor must open bounded GPU metadata handle, not fake NVDRV")
+                "Supervisor must require real NVDRV module and register only owned GPU VA")
         require('{2000, &ISelfController::GetGraphicsSupervisor' in self_cpp and
                 "server.RegisterSession(&session->GetServerSession()" in self_cpp and
                 "rb.PushCopyObjects(ctx, m_graphics_supervisor_session)" in self_cpp,

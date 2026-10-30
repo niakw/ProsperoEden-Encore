@@ -209,8 +209,15 @@ public:
         // a non-aliased chunk: a prior kernel map may have failed and the
         // next unchanged Map must be allowed to retry its alias.
         if (first == last && chunk_aliased[first / PagesPerGranule] &&
-            page_backing[first] == static_cast<std::uint32_t>(host + 1) &&
-            page_access[first] == access) return;
+            page_backing[first] == static_cast<std::uint32_t>(host + 1)) {
+            if (page_access[first] == access) return;
+            // A live identical physical alias needs only the modified JIT
+            // permission byte and its predecessor's crossing guard updated.
+            // Avoid the three Update scans of an otherwise unchanged chunk.
+            page_access[first] = access;
+            Refresh(first, first);
+            return;
+        }
         // Small same-granule repeat mappings are common during guest page
         // setup. The active kernel alias proves the original fixed mapping
         // succeeded; compare at most four existing page records before

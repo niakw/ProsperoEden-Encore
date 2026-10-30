@@ -266,6 +266,9 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-protect-') as temp:
 map_body = '    void Map(' + source.split('    void Map(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 unmap_body = '    void Unmap(' + source.split('    void Unmap(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 assert 'if (first == last && chunk_aliased[first / PagesPerGranule] &&' in map_body
+assert "page_backing[first] == static_cast<std::uint32_t>(host + 1)) {" in map_body
+assert "page_access[first] = access;\n            Refresh(first, first);\n            return;" in map_body
+assert map_body.index("std::lock_guard lock{mutex};") < map_body.index("Refresh(first, first);")
 assert 'if (first == last && !page_backing[first] && !page_access[first]) return;' in unmap_body
 assert 'chunk_aliased[first / PagesPerGranule]) {' in map_body
 assert 'if (unchanged) return;' in map_body
@@ -300,8 +303,25 @@ struct TestWindow {
     std::vector<std::uint8_t> page_access = std::vector<std::uint8_t>(GuestPages, 0);
     std::vector<std::uint8_t> chunk_aliased = std::vector<std::uint8_t>(GuestPages / PagesPerGranule, 0);
     unsigned updates = 0;
+    unsigned guard_refreshes = 0;
+    std::vector<std::uint8_t> map = std::vector<std::uint8_t>(GuestPages, 0);
 PAGES
     void Update(std::size_t, std::size_t) { ++updates; }
+    std::uint8_t Own(std::size_t page) const {
+        if (page >= GuestPages || !chunk_aliased[page / PagesPerGranule]) return 3;
+        const auto access = page_access[page];
+        return ((access & 1) ? 0 : 1) | ((access & 2) ? 0 : 2);
+    }
+    void Refresh(std::size_t first, std::size_t last) {
+        ++guard_refreshes;
+        const std::size_t begin = first ? first - 1 : 0;
+        auto own = Own(begin);
+        for (std::size_t page = begin; page <= last; ++page) {
+            const auto next = Own(page + 1);
+            map[page] = own | next;
+            own = next;
+        }
+    }
 MAP
 UNMAP
 };
@@ -318,19 +338,21 @@ int main() {
     w.Map(0, GuestPage, GuestPage, 3);
     assert(w.updates == 10002 && w.page_backing[0] == 2);
     w.Map(0, GuestPage, GuestPage, 1);
-    assert(w.updates == 10003 && w.page_access[0] == 1);
+    assert(w.updates == 10002 && w.page_access[0] == 1);
+    assert(w.guard_refreshes == 1);
+    assert(w.map[0] == (w.Own(0) | w.Own(1)));
     w.Unmap(0, GuestPage);
-    assert(w.updates == 10004 && counters.mapped_pages == 0);
+    assert(w.updates == 10003 && counters.mapped_pages == 0);
     for (int i = 0; i < 10000; ++i) w.Unmap(0, GuestPage);
-    assert(w.updates == 10004 && counters.unmap_calls == 10001);
+    assert(w.updates == 10003 && counters.unmap_calls == 10001);
     // Overlap and the exact end boundary retain ordinary range semantics.
     w.Map(GuestPage - 1, 0, 2, 3);
-    assert(w.updates == 10005 && counters.mapped_pages == 2);
+    assert(w.updates == 10004 && counters.mapped_pages == 2);
     w.Unmap(GuestPage - 1, 2);
-    assert(w.updates == 10006 && counters.mapped_pages == 0);
+    assert(w.updates == 10005 && counters.mapped_pages == 0);
     w.Map(WindowBytes, 0, 1, 3);
     w.Unmap(WindowBytes, 1);
-    assert(w.updates == 10006);
+    assert(w.updates == 10005);
     TestWindow two;
     two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
     assert(two.updates == 1 && counters.mapped_pages == 2);
@@ -378,9 +400,23 @@ int main() {
     short_span.Unmap(0, 17 * GuestPage);
     short_span.Unmap(0, 17 * GuestPage);
     assert(short_span.updates == 6 && counters.mapped_pages == 0);
-    std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
+    // The first page in a native 16KiB granule changes the preceding
+    // page's crossing guard as well as its own guard.
+    TestWindow boundary;
+    boundary.Map(4 * GuestPage, 4 * GuestPage, GuestPage, 3);
+    boundary.chunk_aliased[1] = 1;
+    boundary.Map(4 * GuestPage, 4 * GuestPage, GuestPage, 1);
+    assert(boundary.updates == 1 && boundary.guard_refreshes == 1);
+    assert(boundary.map[3] == (boundary.Own(3) | boundary.Own(4)));
+    assert(boundary.map[4] == (boundary.Own(4) | boundary.Own(5)));
+    // Failed native alias: unchanged backing MUST still retry Update.
+    TestWindow missing_alias;
+    missing_alias.Map(0, 0, GuestPage, 3);
+    missing_alias.Map(0, 0, GuestPage, 1);
+    assert(missing_alias.updates == 2 && missing_alias.guard_refreshes == 0);
+    std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 
                 "same_alias_noop=10000 unmap_noop=10000 same16k=1 "
-                "cross16k=10000 bound16=1 O0_O2=1\n");
+                "cross16k=10000 permission_only=1 predecessor_guard=1 bound16=1 O0_O2=1\n");
 }
 '''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
     '\nUNMAP\n', '\n' + unmap_body + '\n')

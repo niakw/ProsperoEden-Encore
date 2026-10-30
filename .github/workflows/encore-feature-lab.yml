@@ -1,0 +1,99 @@
+name: Encore optional feature lab
+
+on:
+  push:
+    branches:
+      - feat/graphics-network-achievements
+    paths:
+      - 'extras/switch-trophies/**'
+      - 'extras/graphics/**'
+      - 'headless/**'
+      - 'vendor/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp'
+      - 'tools/check-feature-r04-native-boundary-host.py'
+      - 'tools/check-feature-r03-spirv-nan-output-host.py'
+      - 'tools/check-feature-r01-native-frame-metrics-host.py'
+      - 'tools/analyze-r01-frame-metrics.py'
+      - 'tools/test-analyze-r01-frame-metrics.py'
+      - 'vendor/encore-active/eden-shader/**'
+      - 'vendor/encore-active/ps5-mesa/**'
+      - 'tools/install-vendored-radv.py'
+      - 'tools/patch-radv-wsi.py'
+      - 'tools/check-vendored-radv-fork.py'
+      - 'headless/CMakeLists.txt'
+      - 'docs/EDEN_ACTIVE_SOURCE_CATALOG.md'
+      - 'docs/EDEN_OVERRIDE_SOURCE_OF_TRUTH.md'
+      - 'docs/EDEN_CORE_AUDIT_DEPENDENCIES.md'
+      - 'tools/check-active-source-inventory.py'
+      - 'tools/check-ci-cache.py'
+      - 'tools/check-eden-optimization-coverage.py'
+      - 'tools/check-vendor-consolidation-debt.py'
+      - 'docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md'
+      - 'docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json'
+      - 'docs/FEATURE_FORK_AUDIT_2026-10-25.md'
+      - '.github/workflows/encore-feature-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: encore-feature-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audited-source-ownership:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout experimental feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check tracked-file hygiene, native ownership and vendor parity
+        run: |
+          python3 -B tools/ci/check-repo-hygiene.py
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-vendor-consolidation-debt.py
+          python3 -B tools/check-vendored-radv-fork.py
+          python3 -B tools/check-eden-optimization-coverage.py
+  offline-trophy-catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout isolated feature branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile source for Python syntax
+        run: python3 -B -m py_compile extras/switch-trophies/catalog.py extras/switch-trophies/test_catalog.py
+      - name: Run offline catalog contracts
+        run: python3 -B -m unittest discover -s extras/switch-trophies -p 'test_*.py' -v
+      - name: Test frame generation capability policy without a console backend
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined \
+            -fno-sanitize-recover=all \
+            extras/graphics/test_framegen_capabilities.cpp -o /tmp/encore-feature-framegen-policy
+          /tmp/encore-feature-framegen-policy
+      - name: Test fail-closed independent postprocessing modes without native engines
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined \
+            -fno-sanitize-recover=all \
+            extras/graphics/test_graphics_pipeline_policy.cpp -o /tmp/encore-feature-pipeline-policy
+          /tmp/encore-feature-pipeline-policy
+
+  source-extracted-native-r03-r04:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout real source owners and native host regression fixtures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile exact AudioIn and RomFS C++ bodies with UBSan
+        run: python3 -B tools/check-feature-r04-native-boundary-host.py
+      - name: Compile exact SPIR-V fragment colour NaN guard at O0 and O2
+        run: python3 -B tools/check-feature-r03-spirv-nan-output-host.py
+      - name: Verify live renderer and presenter frame metrics with concurrency tests
+        run: python3 -B tools/check-feature-r01-native-frame-metrics-host.py
+      - name: Verify rate analysis and session-boundary integrity
+        run: python3 -B tools/test-analyze-r01-frame-metrics.py -v

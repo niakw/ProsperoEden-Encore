@@ -42,7 +42,8 @@ assert "size > 256 * 1024" in header
 assert 'if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {' in header
 assert 'const auto page = address >> kPageBits;' in header
 assert 'held[page / 64].load(std::memory_order_acquire)' in header
-assert header.index('if (size > 256 * 1024) return false;') < header.index(
+never_held = header[header.index('inline bool NeverHeld('):]
+assert never_held.index('if (size > 256 * 1024) return false;') < never_held.index(
     'const auto page = address >> kPageBits;')
 cxx = shutil.which("c++") or shutil.which("clang++") or shutil.which("g++")
 assert cxx

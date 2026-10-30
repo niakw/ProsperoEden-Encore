@@ -86,8 +86,11 @@ public:
             // holes. A negative lookup on the usual 1-2 live JIT arenas
             // need not probe the remaining unoccupied TLS entries.
             if (!entries[i].executable) return false;
-            if (entries[i].executable != executable || required > entries[i].committed)
-                continue;
+            if (entries[i].executable != executable) continue;
+            // An arena is represented at most once. If its required code
+            // footprint has grown, no later slot can satisfy this request:
+            // take the allocator path now instead of scanning the tail.
+            if (required > entries[i].committed) return false;
             // Only cross-core hits require MRU promotion.
             const Entry hit = entries[i];
             for (std::size_t j = i; j > 0; --j) entries[j] = entries[j - 1];

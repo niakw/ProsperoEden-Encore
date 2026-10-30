@@ -39,14 +39,31 @@ def main() -> int:
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 2,
-                "Unexpected source owner after ExeFS (expected ExeFS and AM only)")
+        require(sum(i > selection for i in property_sets) == 3,
+                "Unexpected source owner after ExeFS (expected ExeFS, AM and NVDRV)")
         require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject NS2 application-manager experiment")
         require('option(EDEN_NS2_AM_EXPERIMENTAL' in CMAKE and
                 'if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)' in CMAKE[am_selection:release_gate] and
                 'list(FIND eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}"' in CMAKE,
                 "NS2 application manager must require metadata and maintained source owner")
+        nvdrv_selection = CMAKE.index("# Native Switch 2 GPU capabilities IOCTLs, experimental only;")
+        require(am_selection < nvdrv_selection < release_gate,
+                "NVDRV research must select after maintained Encore owners and before release gate")
+        require('option(EDEN_NS2_NVDRV_EXPERIMENTAL' in CMAKE and
+                'EDEN_NS2_NVDRV_EXPERIMENTAL OR' in CMAKE and
+                'list(FIND eden_ns2_nvdrv_sources' in CMAKE and
+                '"hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp" eden_ns2_nvdrv_idx' in CMAKE,
+                "NVDRV opt-in, original source owner or final release protection missing")
+        nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
+        ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()
+        ioctl = (nvdrv_root / "native_characteristics_ioctl.h").read_text()
+        require('WriteNativeCharacteristicsIoctlReply(' in ctrl and
+                'return WrapFixedInlOut(this, &nvhost_ctrl_gpu::GetCharacteristics3' in ctrl and
+                'native_characteristics_ioctl.h' in ctrl,
+                "Research native response must preserve original ioctl fallback")
+        require('raw != 0xc0e04705U && raw != 0xc0e84705U' in ioctl,
+                "Native ioctl handler must match only exact native commands")
         am_root = ROOT / "headless/ns2/am/core/hle/service/am/service"
         am_impl = (am_root / "application_functions.cpp").read_text()
         am_header = (am_root / "application_functions.h").read_text()

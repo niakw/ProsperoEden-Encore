@@ -93,6 +93,17 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             headless/ns2/am/core/hle/service/am/service/application_functions.cpp
+      - name: Syntax-check native NVDRV GPU ioctl source owner
+        shell: bash
+        run: |
+          clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+            -Ibuild-ns2-a64/fmt/include \
+            -Iheadless/ns2/nvdrv \
+            -Ivendor/sources/eden/src/dynarmic/src \
+            -Ivendor/sources/eden/src \
+            headless/ns2/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
+      - name: Compile/run native GPU characteristics IOCTL host fixtures
+        run: python3 tools/check-ns2-native-gpu-ioctl-host.py
       - name: Compile and run upstream Ampere ISA/address-map host probes
         run: |
           python3 tools/check-ns2-ampere-host.py

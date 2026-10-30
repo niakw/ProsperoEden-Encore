@@ -14,6 +14,7 @@ assert "cache.Remember(pointer, writable, latest)" in source
 assert "const std::size_t slot = ((bits >> 12)" not in source
 memo = source
 assert "std::array<Entry, 8>" in memo
+assert "if (!entry.executable) return nullptr;" in memo
 assert "if (generation != current_generation) return nullptr;" in memo
 assert source.count("mapping_generation.fetch_add(1, std::memory_order_release);")==4
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
@@ -51,6 +52,8 @@ int main(){
  // PS5's 16 MiB-aligned executable arenas can all hash to the same
  // old single-slot memo entry: eight such keys must coexist, lock-free.
  Eden::Jit::AliasPositiveCache aliases;
+ auto* unknown=reinterpret_cast<std::uint8_t*>(0x20000000ULL);
+ assert(aliases.Find(unknown, 7)==nullptr); // empty cache stops immediately
  std::uint8_t* rx[8]{}; std::uint8_t* rw[8]{};
  for(unsigned i=0;i<8;++i){
    rx[i]=reinterpret_cast<std::uint8_t*>(0x10000000ULL+i*0x01000000ULL);

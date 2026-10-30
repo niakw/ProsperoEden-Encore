@@ -1,0 +1,53 @@
+name: NS2 research - external homebrew Vulkan corpus
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/ns2-ps5-compatibility]
+    paths:
+      - ".github/workflows/ns2-research-homebrew.yml"
+      - "tools/check-ns2-homebrew-corpus.py"
+      - "tools/ns2/test_homebrew_vulkan_corpus.cpp"
+permissions:
+  contents: read
+concurrency:
+  group: ns2-homebrew-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  blockfall-vulkan-host:
+    name: Pinned Blockfall SPIR-V on Mesa Vulkan (no console)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Install standalone Khronos validation and Vulkan runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libvulkan-dev mesa-vulkan-drivers spirv-tools
+      - name: Offline downloader negative cases
+        run: |
+          python3 -m py_compile tools/check-ns2-homebrew-corpus.py
+          python3 tools/check-ns2-homebrew-corpus.py --self-test
+      - name: Fetch original immutable public shader modules; verify Git blobs and SPIR-V
+        run: |
+          python3 tools/check-ns2-homebrew-corpus.py --output build-ns2-homebrew
+      - name: Compile independently owned Vulkan compute and graphics smoke test
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            tools/ns2/test_homebrew_vulkan_corpus.cpp \
+            -o build-ns2-homebrew/vulkan-test -lvulkan
+      - name: Create both real graphics stages and dispatch original compute shader
+        shell: bash
+        run: |
+          set -euo pipefail
+          ICD="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$ICD"
+          VK_ICD_FILENAMES="$ICD" \
+            build-ns2-homebrew/vulkan-test \
+              build-ns2-homebrew/app.vert.spv \
+              build-ns2-homebrew/app.frag.spv \
+              build-ns2-homebrew/app.comp.spv
+          echo "This proves host Vulkan shaders only, NOT native NS2/PS5 games."

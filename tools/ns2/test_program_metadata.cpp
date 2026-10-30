@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
         require(Eden::NS2::ExeFS::PreflightNso(header, main_nso.size()).Ready(),
                 "Real NS2 ExeFS header guard rejected homebrew main");
         require(std::search(main_nso.begin(), main_nso.end(),
-                            "hello from HOS\\n", "hello from HOS\\n" + 15)
+                            "hello from HOS\n", "hello from HOS\n" + 15)
                     != main_nso.end(), "Unexpected AArch64 public NSO test text");
         std::cout << "Real parser + NSO0 guard: paired public ExeFS fixture PASS"
                   << " (no KProcess or HLE boot)\\n";

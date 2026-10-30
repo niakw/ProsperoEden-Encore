@@ -230,6 +230,7 @@ int main(){
             syncCounter.previous==0x100000001ULL,
             "missing counter should not clear last observed value");
 
+    namespace GP=Service::AM::GpuSessionProtocol;
     namespace GS=Service::AM::GraphicsSupervisorBootstrap;
     GS::State state{0xabc};
     std::array<GP::U32,16> gsBootstrap{};
@@ -299,7 +300,6 @@ int main(){
             newer.NativeProfile()==0x808,
             "sm88 GPU profile negotiated without publishing GPU capabilities");
 
-    namespace GP=Service::AM::GpuSessionProtocol;
     static_assert(GP::MaxDevices==256 && GP::MaxNotificationEvents==64 &&
                   GP::MaxAddressSpaces==8);
     constexpr std::array<GP::U32,8> createPacket{

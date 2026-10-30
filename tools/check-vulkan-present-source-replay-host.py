@@ -61,7 +61,7 @@ for path, expected_sha in expected_blobs.items():
 header = rendered["src/video_core/renderer_vulkan/vk_present_manager.h"]
 source = rendered["src/video_core/renderer_vulkan/vk_present_manager.cpp"]
 assert "bool present_in_flight{}; // guarded by queue_mutex" in header
-assert "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex" in header
+assert "std::size_t present_waiters{}; // guarded by queue_mutex" in header
 assert "std::condition_variable_any present_ready_cv;" in header
 assert "#include <exception>" in header
 assert "std::exception_ptr present_failure;" in header

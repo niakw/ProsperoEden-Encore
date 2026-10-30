@@ -802,7 +802,7 @@ adapt('src/video_core/renderer_vulkan/vk_present_manager.h',
      '    std::condition_variable_any present_ready_cv;'),
     ('    std::jthread present_thread;',
      '    bool present_in_flight{}; // guarded by queue_mutex\n'
-     '    std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex\n'
+     '    std::size_t present_waiters{}; // guarded by queue_mutex\n'
      '    std::exception_ptr present_failure;\n    std::jthread present_thread;'),
     # R335: declare frame abandonment on repeated surface loss.
     ('    void SetImageCount();',

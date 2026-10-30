@@ -1050,10 +1050,10 @@
     {
       "path": "headless/prosperoeden/pe/ui/browse.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "96afbbbae783279625e88c18e39ec1115f2b4730",
+      "reviewed_source_git_blob": "1f48fc883e2930704275b16e9333e33b1793d517",
       "review_scope": "launcher-release-hotpath",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "browse_to/press_files/draw_files path browser; disk navigation not guest GPU hotpath. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "browse_to/press_files/draw_files path browser; disk navigation not guest GPU hotpath. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. 2026-10-30 standalone migration proof: new browse.cpp differs from pinned reviewed source only by the literal About-screen GitHub repository URL; no control flow or hotpath changes."
     },
     {
       "path": "headless/prosperoeden/pe/ui/case_media_selection.hpp",

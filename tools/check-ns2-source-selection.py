@@ -63,7 +63,7 @@ def main() -> int:
         require("{1050, nullptr, \"SetGraphicsScaleChangedNotificationEnabled\"}" in scale and
                 "*out_parameters = {10, 1, 1}" in scale,
                 "Research graphics scale must not pretend to implement notifications")
-        session_selection = CMAKE.index("# Switch 2 GPU TIPC service body.")
+        session_selection = CMAKE.index("# Switch 2 GPU TIPC service and bounded worker transport.")
         require(session_selection < release_gate and
                 'option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL' in CMAKE and
                 'EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR' in CMAKE,

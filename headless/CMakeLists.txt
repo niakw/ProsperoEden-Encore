@@ -2107,7 +2107,7 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
             lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
-            program_address_map.h)
+            program_address_map.h capture.h program_capture.h)
         if(NOT EXISTS
            "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
             message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
@@ -2126,11 +2126,23 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}")
         message(FATAL_ERROR "Missing NS2 native-to-Maxwell shader-environment image adapter")
     endif()
+    set(EDEN_NS2_NATIVE_SHADER_CAPTURE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/capture.cpp")
+    set(EDEN_NS2_NATIVE_GMMU_CAPTURE
+        "${EDEN_NS2_AMPERE_ROOT}/video_core/native_shader_capture.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_SHADER_CAPTURE}" OR
+       NOT EXISTS "${EDEN_NS2_NATIVE_GMMU_CAPTURE}" OR
+       NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/video_core/native_shader_capture.h")
+        message(FATAL_ERROR "Missing NS2 real GMMU-backed native shader capture owner")
+    endif()
     target_sources(shader_recompiler PRIVATE
         "${EDEN_NS2_AMPERE_PROBE}"
         "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"
-        "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}")
+        "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}"
+        "${EDEN_NS2_NATIVE_SHADER_CAPTURE}")
     target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
+    target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GMMU_CAPTURE}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
 endif()
 
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays

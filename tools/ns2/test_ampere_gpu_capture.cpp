@@ -1,0 +1,106 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Synthetic mapped-memory fixture for the actual Ampere GPU shader capture.
+// Does not execute GPU code or require access to copyrighted game images.
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <limits>
+#include <vector>
+#include "shader_recompiler/frontend/ampere/capture.h"
+
+using namespace Shader::Ampere;
+struct MappedMemory {
+    u64 base{0x100000};
+    std::vector<u8> data;
+    std::size_t mapped_bytes{};
+    u32 reads{};
+};
+static bool Read(void* opaque, u64 address, void* destination, std::size_t size) {
+    auto& mem = *static_cast<MappedMemory*>(opaque);
+    ++mem.reads;
+    if (!destination || !size || address < mem.base) return false;
+    const u64 offset = address - mem.base;
+    if (offset > mem.mapped_bytes || size > mem.mapped_bytes - offset ||
+        offset > mem.data.size() || size > mem.data.size() - offset)
+        return false;
+    std::memcpy(destination, mem.data.data() + offset, size);
+    return true;
+}
+static void Require(bool condition, const char* why) {
+    if (!condition) {
+        std::fprintf(stderr, "NS2 shader memory capture FAIL: %s\n", why);
+        std::exit(1);
+    }
+}
+static void Push(std::vector<u8>& dst, u32 a, u32 b=0, u32 c=0, u32 d=0) {
+    for (u32 word : {a,b,c,d})
+        for (u32 byte=0;byte!=4;++byte)
+            dst.push_back(static_cast<u8>(word >> (byte*8)));
+}
+int main() {
+    constexpr u32 pred_true=7u<<12;
+    constexpr u32 exit_true=7u<<23;
+    MappedMemory mem{};
+    mem.data.resize(0x80);
+    mem.data[0]=0x38;
+    Push(mem.data,pred_true|0x918); // native NOP
+    Push(mem.data,pred_true|0x94d,0,exit_true); // native EXIT
+    mem.mapped_bytes=mem.data.size();
+    auto ok=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(ok.Ready() && ok.captured_native_bytes==32 &&
+            ok.image.consumed_native_bytes==32 &&
+            ok.image.TranslateNativeAddress(0).has_value(),
+            "read mapped native program, detect EXIT and lower to Maxwell image");
+    Require(mem.reads==3,"exact one 128-byte header and two native instruction reads");
+    auto stable=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(stable.Ready() &&
+            stable.image.diagnostic_cache_key==ok.image.diagnostic_cache_key,
+            "source-verified repeated capture gives stable diagnostic identity");
+
+    mem.mapped_bytes=0x80+16;
+    auto fault=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(fault.status==NativeCaptureStatus::Unmapped &&
+            fault.first_error_offset==0x90 &&
+            fault.image.code.empty(),
+            "guest memory fault at second instruction yields no partial shader");
+    mem.mapped_bytes=0x4f;
+    auto header_fault=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(header_fault.status==NativeCaptureStatus::Unmapped &&
+            header_fault.image.code.empty(),
+            "native header must be fully mapped");
+    mem.mapped_bytes=mem.data.size();
+
+    mem.data.resize(0x80);
+    Push(mem.data,pred_true|0x947,0xffffffe0u,0); // BRA invalid target
+    mem.mapped_bytes=mem.data.size();
+    auto branch=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(branch.status==NativeCaptureStatus::InvalidBranch &&
+            branch.first_error_offset==0x80 &&
+            branch.image.code.empty(),
+            "out-of-bounds native branch is rejected before compiler");
+    mem.data.resize(0x80);
+    Push(mem.data,pred_true|0xfff);
+    Push(mem.data,pred_true|0x94d,0,exit_true);
+    mem.mapped_bytes=mem.data.size();
+    auto unsupported=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(unsupported.status==NativeCaptureStatus::TranslationFailed &&
+            unsupported.image.code.empty(),
+            "unrecognized native opcodes fail closed after capture");
+
+    mem.data.resize(0x80);
+    for(u32 i=0;i<4096;++i) Push(mem.data,pred_true|0x918);
+    mem.mapped_bytes=mem.data.size();
+    auto unterminated=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(unterminated.status==NativeCaptureStatus::NoTerminator &&
+            unterminated.captured_native_bytes==4096*16 &&
+            unterminated.image.code.empty(),
+            "bounded capture never invents a valid program without EXIT");
+    Require(CaptureNativeGraphicsShader(mem.base,4,nullptr,&mem).status==
+                NativeCaptureStatus::InvalidInput,
+            "null memory reader must fail before any guest access");
+    Require(CaptureNativeGraphicsShader(std::numeric_limits<u64>::max()-10,4,Read,&mem).status==
+                NativeCaptureStatus::InvalidInput,
+            "GPU address arithmetic overflow rejected before guest access");
+    std::puts("NS2 mapped native shader capture: PASS (no PS5 game execution)");
+}

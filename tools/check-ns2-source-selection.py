@@ -303,7 +303,22 @@ def main() -> int:
                 "MaxwellSchedulingPeriod = 0x20" in (ampere_root / "maxwell_image.cpp").read_text() and
                 "LowerReviewedToMaxwell(native_code)" in (ampere_root / "maxwell_image.cpp").read_text() and
                 "MaxwellImageStatus::InvalidLayout" in (ampere_root / "maxwell_image.cpp").read_text() and
-                (ROOT / "tools/ns2/test_ampere_maxwell_image.cpp").is_file(),
+                (ROOT / "tools/ns2/test_ampere_maxwell_image.cpp").is_file() and
+                (ROOT / "tools/ns2/test_ampere_gpu_capture.cpp").is_file() and
+                'EDEN_NS2_NATIVE_SHADER_CAPTURE' in CMAKE and
+                'EDEN_NS2_NATIVE_GMMU_CAPTURE' in CMAKE and
+                'target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GMMU_CAPTURE}")' in CMAKE and
+                'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")' in CMAKE and
+                (ampere_root / "capture.h").is_file() and
+                (ampere_root / "program_capture.h").is_file() and
+                'ProgramCaptureState capture' in (ampere_root / "capture.cpp").read_text() and
+                'BuildMaxwellShaderImage(' in (ampere_root / "capture.cpp").read_text() and
+                'MaxCapturedInstructions = 4096' in (ampere_root / "capture.cpp").read_text() and
+                'NativeCaptureStatus::NoTerminator' in (ampere_root / "capture.cpp").read_text() and
+                'memory->IsFullyMappedRange(address, size)' in
+                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                'memory->ReadBlock(address, dest, size)' in
+                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text(),
                 "Ampere shader ISA probe must remain bounded, opt-in and release gated")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()

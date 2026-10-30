@@ -301,3 +301,35 @@ The actual NS2 loader overlay uses it. See:
   capture from guest GPU memory into the existing `GenericEnvironment`
   and `ShaderCache`. This image is ready for such an integration but
   is **not yet an executing shader or evidence of gameplay**.
+
+## N4u — Real GMMU-backed Ampere shader capture bridge (research-only)
+
+- Imported pinned upstream `program_capture.h` from `0x2593/Eden-NS2`
+  commit `e2f285ab1ecd3a2475c2ccad66f23b06b94ead5c`.
+  Bounded `CaptureNativeGraphicsShader` reads a verified **0x80-byte
+  native graphics shader header**, preserves the first **0x50 bytes** as
+  Maxwell header, and captures exactly **16-byte Ampere instructions**
+  until the upstream forward-branch-aware termination detector reports
+  an unconditional EXIT/complete return.
+- Up to **4096** instructions are accepted. Invalid branch targets, missing
+  full guest memory mappings, incomplete programs, address overflow,
+  unsupported native instructions and translation mismatches fail closed:
+  no partial Maxwell shader image is returned.
+- Actual `Tegra::MemoryManager` adapter
+  `video_core/native_shader_capture.cpp` checks
+  `IsFullyMappedRange(address, size)` before each
+  `ReadBlock(address, dest, size)`. This is **real GPU address-space
+  integration at the source/API level**, not a simulated stand-in.
+- Research opt-in CMake wires `capture.cpp` into
+  `shader_recompiler` and the native GPU memory reader into
+  `video_core`. Both stay OFF by default and blocked in the final PS5
+  release configuration. CI compiles and executes real lowering/capture
+  fixtures with Clang/GCC, and syntax-checks the actual GMMU adapter.
+- Host tests include NOP/EXIT capture, deterministic translation identity,
+  unmapped header/second instruction, invalid branch target, unsupported
+  opcode, no-EXIT 4096-instruction limit, null reader and GPU VA overflow.
+- **Limits:** The capture entrypoint has not yet been invoked by the
+  existing `GenericEnvironment`/ShaderCache or PS5 rendering loop.
+  Compute QMD/zero-header shaders, indirect-branch target tables,
+  task/mesh shaders and runtime Vulkan pipelines are not yet implemented
+  by this bridge. No Switch 2 retail game or PS5 render proof is claimed.

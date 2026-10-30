@@ -21,6 +21,8 @@
 
 **30/10 — C01/V01, cache compute hotpath (SHA à qualifier) :** deux clés compute alternantes ne réécrivent plus `preferred_compute_positive` à chaque dispatch ; les recherches manquées arrêtent au premier slot non occupé (préfixe d'insertion contigu et cache de 4 entrées). Modification dans le vendor réel, générateur strict et témoin C++ source-extrait PS5/desktop. **CI et FPS console à qualifier, 22/29 inchangé.**
 
+**30/10 — C04, réveil du worker Vulkan (SHA en qualification) :** la file de présentation ne notifie son worker qu'à la transition vide→non vide, testée sous queue_mutex ; en cas de backlog, chaque nouvelle frame ne provoque plus d'appel CV inutile. WaitPresent continue d'attendre la fin de la copie et n'est jamais réveillé à l'enqueue. Vendor épinglé, générateur synchronisé, replays + modèle multithread/burst de 32 frames ; **CI, console et frametimes à qualifier, 22/29 inchangé**.
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

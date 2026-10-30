@@ -96,6 +96,9 @@ present_method = source.split("void PresentManager::Present(Frame* frame) {", 1)
 assert "scheduler.WaitWorker();" in present_method
 # The producer wakes only the presenter; the drain waits for completion.
 assert "present_ready_cv.notify_one();" in present_method
+assert "const bool wake_presenter = present_queue.empty();" in present_method
+assert "if (wake_presenter) present_ready_cv.notify_one();" in present_method
+assert present_method.index("const bool wake_presenter = present_queue.empty();") < present_method.index("present_queue.push_back(frame);")
 assert "frame_cv.notify_all();" not in present_method
 assert "frame_cv.notify_one();" not in present_method
 assert present_method.index("present_queue.push_back(frame);") < present_method.index(

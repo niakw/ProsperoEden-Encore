@@ -901,11 +901,15 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
     # The drain waiter and present worker have different predicates.
     # A dedicated CV avoids waking the drain on every frame enqueue.
     ('            present_queue.push_back(frame);\n            frame_cv.notify_one();',
+     '            // The worker can sleep only with an empty queue. After the\n'
+     '            // first frame wakes it, queued followers need no second wake.\n'
+     '            // Test under queue_mutex to avoid losing an empty->nonempty edge.\n'
+     '            const bool wake_presenter = present_queue.empty();\n'
      '            present_queue.push_back(frame);\n'
      '            // Only the presentation worker waits on present_ready_cv.\n'
      '            // Avoid waking WaitPresent on every enqueue; it needs completion.\n'
      '            lock.unlock();\n'
-     '            present_ready_cv.notify_one();'),
+     '            if (wake_presenter) present_ready_cv.notify_one();'),
     ('frame_cv.wait(lock, token, [this] { return !present_queue.empty(); });',
      'present_ready_cv.wait(lock, token, [this] { return !present_queue.empty(); });'),
     ('            // Take the frame and notify anyone waiting',

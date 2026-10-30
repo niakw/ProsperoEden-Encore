@@ -64,6 +64,10 @@ assert "present_ready_cv.notify_one();" in enqueue
 assert "frame_cv.notify_one();" not in enqueue
 assert "frame_cv.notify_all();" not in enqueue
 assert enqueue.index("lock.unlock();") < enqueue.index("present_ready_cv.notify_one();")
+assert "const bool wake_presenter = present_queue.empty();" in enqueue
+assert "if (wake_presenter) present_ready_cv.notify_one();" in enqueue
+assert enqueue.index("const bool wake_presenter = present_queue.empty();") < enqueue.index("present_queue.push_back(frame);")
+assert enqueue.index("present_queue.push_back(frame);") < enqueue.index("lock.unlock();")
 assert "frame_cv.notify_one();" not in present_thread
 assert "present_ready_cv.wait(lock, token," in present_thread
 assert present_thread.index("free_cv.notify_one();") > present_thread.index(
@@ -91,13 +95,19 @@ struct Gate {
     std::exception_ptr present_failure;
     bool present_in_flight{};
     std::atomic<int> completed{0};
+    std::atomic<unsigned> presenter_wakes{0};
     void Queue(int id) {
+        bool wake_presenter{};
         {
             std::lock_guard lock{queue_mutex};
             if (present_failure) return;
+            wake_presenter = present_queue.empty();
             present_queue.push_back(id);
         }
-        present_ready_cv.notify_one();
+        if (wake_presenter) {
+            presenter_wakes.fetch_add(1, std::memory_order_relaxed);
+            present_ready_cv.notify_one();
+        }
     }
     void CopyOne(bool fault) {
         std::unique_lock lock{queue_mutex};
@@ -233,6 +243,21 @@ int main() {
         t.join();
         assert(g.completed == 2);
         g.WaitFree();
+    }
+    // A queued burst requires exactly one presenter wake, regardless
+    // of the number of frames already pending behind its first element.
+    for (unsigned run = 0; run < 32; ++run) {
+        Gate g;
+        for (int id = 0; id < 32; ++id) g.Queue(id);
+        assert(g.presenter_wakes == 1);
+        for (int id = 0; id < 32; ++id) g.CopyOne(false);
+        assert(g.completed == 32 && g.free_queue.size() == 32);
+        assert(g.presenter_wakes == 1);
+        g.WaitPresent();
+        g.Queue(100);
+        assert(g.presenter_wakes == 2); // empty->nonempty after drain
+        g.CopyOne(false);
+        g.WaitPresent();
     }
     // Empty queue does NOT mean that popped, now-failing frame completed.
     for (int run=0; run<30; ++run) {

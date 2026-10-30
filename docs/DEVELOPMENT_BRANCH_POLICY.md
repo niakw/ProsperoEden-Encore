@@ -2,7 +2,7 @@
 
 **Effective 30 October 2026:** [`niakw/ProsperoEden-Encore`](https://github.com/niakw/ProsperoEden-Encore) is an independent GitHub repository, and **`main` is both its default branch and the only branch authorized for new development**.
 
-This supersedes the original October 13 policy that used `dev/ps5-sparse-jit`. That branch is retained as a **historical reference only**. Do **not** push, merge, fast-forward, cherry-pick, open new PRs against, or run new development automation on the old development branch. No parallel F07 branch or fork may become the source of truth.
+This supersedes the original October 13 policy that used `dev/ps5-sparse-jit`. Its obsolete branch reference has been **removed after merging its five final commits into `main`**; the commits and PR #5 remain accessible in Git history. Do **not** recreate, push to, merge, fast-forward, cherry-pick into, open new PRs against, or run new development automation on that old development branch. No parallel F07 branch or fork may become the source of truth.
 
 ## Rules for changes
 

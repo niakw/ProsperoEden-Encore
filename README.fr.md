@@ -163,6 +163,8 @@ Ne pas confondre une CI verte avec une version stable ou des performances valid�
 
 ## 🛡️ Sécurité, licences et crédits
 
+**Historique d'Encore — développement commencé le 4 octobre 2026.** Notre travail a débuté le **4 octobre 2026** sur [l'ancien fork `niakw/Prospero.Eden-Encore`](https://github.com/niakw/Prospero.Eden-Encore). Le **30 octobre 2026**, nous avons transféré ces travaux vers [ce dépôt indépendant](https://github.com/niakw/ProsperoEden-Encore), afin de rendre Encore plus facile à trouver sur GitHub. L'ancien fork reste référencé pour conserver l'historique du projet. Ce changement de dépôt ne remet pas la date de début à zéro et ne remplace pas les crédits des projets d'origine.
+
 Encore est un fork communautaire non officiel, distribué sous **GPL-3.0-or-later**. Le durcissement de l'accès aux fichiers n'est **pas** un bac à sable après élévation de privilèges.
 
 **Sources et auteurs :** [crédits détaillés dans le README principal](README.md#credits) · [composants tiers](THIRD_PARTY_NOTICES.md) · [textes complets](LICENSES/).

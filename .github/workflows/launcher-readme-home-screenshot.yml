@@ -29,9 +29,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends build-essential python3-pil libegl1-mesa-dev libgl1-mesa-dev libstb-dev nlohmann-json3-dev mesa-utils libgl1-mesa-dri ca-certificates git pkg-config
 
-      - name: Render the actual Encore C++ and OpenGL home screen
+      - name: Fetch real supported Home hero artwork (not synthetic preview scenery)
+        run: |
+          python3 -B tools/launcher/preview-botw-media.py build/readme-home
+          test -s build/readme-home/botw-hero.tga
+          grep -q '^botw-hero.tga' build/readme-home/source-receipts.txt
+
+      - name: Render the authentic Encore C++ and OpenGL home screen in English
         env:
-          PE_LANG: fr-FR
+          PE_LANG: en-US
+          PE_PREVIEW_BOTW: "1"
           PE_PREVIEW_HOME_ONLY: "1"
           PE_PREVIEW_JOBS: "2"
           PROSPEROEDEN_LAUNCHER_BUILD: ${{ runner.temp }}/encore-readme-home
@@ -45,20 +52,28 @@ jobs:
           from pathlib import Path
           from PIL import Image, ImageStat
           import shutil
+          # The production Home loads a real game-backed hero. Do not publish
+          # the synthetic Echoes of the Valley sunset used by isolated tests.
+          receipts = Path("build/readme-home/source-receipts.txt").read_text()
+          assert any(line.startswith("botw-hero.tga\t") and "sha256:" in line
+                     for line in receipts.splitlines()), "Real Home hero was not fetched"
+          assert Path("build/readme-home/botw-hero.tga").stat().st_size > 100_000
           screenshot = Path("build/readme-home/01-home.png")
           with Image.open(screenshot) as raw:
               assert raw.format == "PNG" and raw.size == (1920, 1080)
               rgb = raw.convert("RGB")
               assert max(ImageStat.Stat(rgb).stddev) > 22, "Unexpected blank Home capture"
               assert rgb.getbbox()
+              hero = rgb.crop((1140, 185, 1750, 640))
+              assert max(ImageStat.Stat(hero).stddev) > 25, "Home hero looks blank or synthetic"
           published = Path("assets/screenshots/encore-home.png")
           published.parent.mkdir(parents=True, exist_ok=True)
           shutil.copyfile(screenshot, published)
           targets = (
               ("README.md", "Encore tropical-night launcher artwork",
-               "Real Eden Encore Home screen captured from the C++/OpenGL launcher"),
+               "Eden Encore Home in English, rendered by the original C++/OpenGL launcher with real game hero artwork"),
               ("README.fr.md", "Identité visuelle tropicale néon d'Encore",
-               "Accueil réel d'Eden Encore capturé depuis le lanceur C++/OpenGL"),
+               "Eden Encore Home in English, rendered by the original C++/OpenGL launcher with real game hero artwork"),
           )
           for filename, old_alt, new_alt in targets:
               path = Path(filename)
@@ -86,5 +101,5 @@ jobs:
             echo "Native screenshot is unchanged."
             exit 0
           fi
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "docs(ui): replace decorative hero with actual Home screenshot [skip ci]"
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "docs(ui): refresh English Home with real game hero and native OpenGL [skip ci]"
           git push origin HEAD:dev/ps5-sparse-jit

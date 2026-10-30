@@ -204,6 +204,13 @@ public:
         std::lock_guard lock{mutex};
         ++counters.map_calls;
         const std::size_t host = host_offset / GuestPage;
+        // A repeated one-page guest mapping need not refresh the JIT guard
+        // bytes when its existing direct alias is already live. Never skip
+        // a non-aliased chunk: a prior kernel map may have failed and the
+        // next unchanged Map must be allowed to retry its alias.
+        if (first == last && chunk_aliased[first / PagesPerGranule] &&
+            page_backing[first] == static_cast<std::uint32_t>(host + 1) &&
+            page_access[first] == access) return;
         for (std::size_t p = first; p <= last; ++p) {
             if (!page_backing[p]) ++counters.mapped_pages;
             page_backing[p] = static_cast<std::uint32_t>(host + (p - first) + 1);
@@ -217,6 +224,10 @@ public:
         if (!Pages(offset, length, first, last)) return;
         std::lock_guard lock{mutex};
         ++counters.unmap_calls;
+        // Unmap already withdrew the alias under this mutex on its first
+        // call. An unchanged, unmapped guest page has nothing to withdraw
+        // or republish; retain the observable call counter.
+        if (first == last && !page_backing[first] && !page_access[first]) return;
         for (std::size_t p = first; p <= last; ++p) {
             if (page_backing[p]) --counters.mapped_pages;
             page_backing[p] = 0;

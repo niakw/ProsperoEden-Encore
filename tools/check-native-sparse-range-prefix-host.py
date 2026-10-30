@@ -18,11 +18,11 @@ lookup = source[start:stop]
 assert "i < sparse_used_prefix" in lookup
 assert "range.begin.load(std::memory_order_acquire)" in lookup
 assert "address < range.end" in lookup
-assert "static thread_local SparseRange* last_range = nullptr;" in lookup
-assert "sparse_used_prefix != 0 && last_range" in lookup
-assert "if (&range == last_range) continue;" in lookup
-assert "last_range = &range;" in lookup
-assert "last_range = nullptr;" in lookup
+assert "static thread_local std::array<SparseRange*, 2> last_ranges{};" in lookup
+assert "static thread_local unsigned next_slot = 0;" in lookup
+assert "next_slot ^= 1u;" in lookup
+assert "if (&range == last_ranges[0] || &range == last_ranges[1]) continue;" in lookup
+assert "if (sparse_used_prefix != 0)" in lookup
 assert "std::size_t sparse_used_prefix = 0;" in source
 assert source.count("sparse_used_prefix = (std::max)(") == 1
 pub_start = source.index("    sparse_used_prefix = (std::max)(")
@@ -122,6 +122,15 @@ int main() {
     for (int i = 0; i < 10000; ++i)
         assert(Lookup(0x5000 + (i % 64)) == &sparse_ranges[63]);
     assert(scans.load() == 10000); // previously 64 probes per high-slot hit
+    // A worker alternating low/high page tables cannot afford a 64-slot
+    // scan on every second access. Two hints stabilize after warmup without
+    // mutating TLS on hits; both pointers stay range-locked and revalidated.
+    scans = 0;
+    for (int i = 0; i < 10000; ++i) {
+        assert(Lookup(0x3001) == &sparse_ranges[0]);
+        assert(Lookup(0x5001) == &sparse_ranges[63]);
+    }
+    assert(scans.load() <= 30004); // <= 3 begin probes per alternating pair
     Release(63);
     assert(!Lookup(0x5001));
     assert(sparse_used_prefix == 2); // freed high tail is no longer scanned
@@ -173,4 +182,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_positive=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 alternating_10000=1 threads=4 O0_O2_O3=1")

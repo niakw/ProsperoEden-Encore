@@ -697,7 +697,12 @@ void GraphicsWindow::OnFrameDisplayed() {
         ++frame_total;
         if (frame_sample_start < 0) {
             frame_sample_start = frame_sample_last = now;
-            frame_pressure_previous = CaptureFramePressure();
+            // Do not read 24 GPU/HLE/JIT atomics in ordinary quiet mode.
+            // A runtime logging toggle seeds a fresh baseline at its first
+            // detailed window instead of attributing earlier quiet work.
+            frame_pressure_was_detailed = Eden::NativeLogs::Detailed();
+            if (frame_pressure_was_detailed)
+                frame_pressure_previous = CaptureFramePressure();
 #ifdef EDEN_DEV_PROFILE
             // A new game/window must not inherit the previous title's peak.
             vulkan_interval_witness.Reset();
@@ -788,8 +793,8 @@ void GraphicsWindow::OnFrameDisplayed() {
                 // traversing development tables or locking the renderer.
                 const auto pressure_now = CaptureFramePressure();
                 FramePressureNumbers pressure_delta{};
-                bool pressure_valid = true;
-                for (std::size_t i = 0; i < pressure_delta.size(); ++i) {
+                bool pressure_valid = frame_pressure_was_detailed;
+                for (std::size_t i = 0; pressure_valid && i < pressure_delta.size(); ++i) {
                     if (pressure_now[i] < frame_pressure_previous[i]) {
                         pressure_valid = false;
                         break;
@@ -843,6 +848,7 @@ void GraphicsWindow::OnFrameDisplayed() {
                 }
 #endif
                 frame_pressure_previous = pressure_now;
+                frame_pressure_was_detailed = true;
                 Eden::Performance::ReportVulkan();
 #ifdef EDEN_DEV_PROFILE
                 // HLE table scan + CPU snapshot can stall the compositor itself.
@@ -855,9 +861,10 @@ void GraphicsWindow::OnFrameDisplayed() {
                 // device log writer is delayed. LogPipe drains stdout off-thread.
                 // A native process fault has its own crash-only output path.
                 } else {
-                    // These baselines must not span a quiet session and later
-                    // explode into false five-second deltas if re-enabled.
-                    frame_pressure_previous = CaptureFramePressure();
+                    // Do not sample 24 counters every five seconds when the
+                    // log sink is disabled. Mark the baseline stale, so a
+                    // later runtime logging toggle never creates false deltas.
+                    frame_pressure_was_detailed = false;
                     experimental_pacing_bins = {};
 #ifdef EDEN_DEV_PROFILE
                     interval_hist = {};

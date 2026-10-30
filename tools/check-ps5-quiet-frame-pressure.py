@@ -42,6 +42,32 @@ assert present.index('EDEN_VULKAN_FRAME frames=') < present.index('EDEN_FRAME_PR
 assert "const auto pressure_now = CaptureFramePressure();" in present
 assert "frame_pressure_previous = CaptureFramePressure();" in present
 assert "frame_pressure_previous = pressure_now;" in present
+assert "bool pressure_valid = frame_pressure_was_detailed;" in present
+assert "frame_pressure_was_detailed = Eden::NativeLogs::Detailed();" in present
+assert "if (frame_pressure_was_detailed)\n                frame_pressure_previous = CaptureFramePressure();" in present
+assert "frame_pressure_was_detailed = true;\n                Eden::Performance::ReportVulkan();" in present
+quiet = present.split("} else {\n                    // Do not sample 24 counters every five seconds when the", 1)[1]
+assert "frame_pressure_was_detailed = false;" in quiet
+assert "CaptureFramePressure()" not in quiet.split("#ifdef EDEN_DEV_PROFILE", 1)[0]
+assert "bool frame_pressure_was_detailed{};" in header
+# Runtime toggle oracle: quiet -> first detailed window cannot emit an
+# old-session worker delta; later detailed windows use the new baseline.
+def windows(modes, values):
+    previous = None
+    valid = False
+    outcomes = []
+    for detail, current in zip(modes, values):
+        if not detail:
+            valid = False
+            outcomes.append(None)
+            continue
+        outcomes.append(current - previous if valid else None)
+        previous = current
+        valid = True
+    return outcomes
+assert windows([False, True, True, False, True, True],
+               [20, 25, 30, 150, 400, 405]) == [None, None, 5, None, None, 5]
+
 assert "if (pressure_now[i] < frame_pressure_previous[i])" in present
 assert "counter" in present  # explicit reset handling; no bogus negative deltas
 assert "std::this_thread::sleep" not in present

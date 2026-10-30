@@ -42,6 +42,7 @@ private:
     // shared across titles. R404 also attributes JIT activity to its four
     // guest cores from the same five-second counter snapshot (no frame hot path).
     std::array<unsigned long long, 24> frame_pressure_previous{};
+    bool frame_pressure_was_detailed{}; // a disabled log sink has no valid five-second baseline
     EGLDisplay display{EGL_NO_DISPLAY};
     EGLConfig config{};
     EGLContext root{EGL_NO_CONTEXT};

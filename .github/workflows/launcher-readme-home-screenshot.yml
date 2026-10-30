@@ -29,16 +29,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends build-essential python3-pil libegl1-mesa-dev libgl1-mesa-dev libstb-dev nlohmann-json3-dev mesa-utils libgl1-mesa-dri ca-certificates git pkg-config
 
-      - name: Fetch real supported Home hero artwork (not synthetic preview scenery)
+      - name: Verify the original Eden Encore wallpaper is packaged
         run: |
-          python3 -B tools/launcher/preview-botw-media.py build/readme-home
-          test -s build/readme-home/botw-hero.tga
-          grep -q '^botw-hero.tga' build/readme-home/source-receipts.txt
+          test -s assets/encore-background.jpg
+          test -s headless/prosperoeden/ui/art/backdrop.tga
+          test "$(stat -c %s headless/prosperoeden/ui/art/backdrop.tga)" -ge 1000000
+          grep -Fq 'load("art/backdrop.tga", &backdrop_)' headless/prosperoeden/pe/ui/textures.cpp
+          grep -Fq 'PE_PREVIEW_BRANDED_HOME' headless/prosperoeden/host/fake_services.cpp
 
       - name: Render the authentic Encore C++ and OpenGL home screen in English
         env:
           PE_LANG: en-US
-          PE_PREVIEW_BOTW: "1"
+          PE_PREVIEW_BRANDED_HOME: "1"
           PE_PREVIEW_HOME_ONLY: "1"
           PE_PREVIEW_JOBS: "2"
           PROSPEROEDEN_LAUNCHER_BUILD: ${{ runner.temp }}/encore-readme-home
@@ -50,47 +52,42 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          from PIL import Image, ImageStat
+          from PIL import Image, ImageStat, ImageChops
+          import re
           import shutil
-          # The production Home loads a real game-backed hero. Do not publish
-          # the synthetic Echoes of the Valley sunset used by isolated tests.
-          receipts = Path("build/readme-home/source-receipts.txt").read_text()
-          assert any(line.startswith("botw-hero.tga\t") and "sha256:" in line
-                     for line in receipts.splitlines()), "Real Home hero was not fetched"
-          assert Path("build/readme-home/botw-hero.tga").stat().st_size > 100_000
+          # Brand image is the USER-SUPPLIED source: assets/encore-background.jpg
+          # -> packaged ui/art/backdrop.tga -> production Backdrop::draw().
+          # The host-only branded fixture removes synthetic hero overlays.
+          assert Path("assets/encore-background.jpg").stat().st_size > 100_000
+          assert Path("headless/prosperoeden/ui/art/backdrop.tga").stat().st_size > 1000000
           screenshot = Path("build/readme-home/01-home.png")
           with Image.open(screenshot) as raw:
               assert raw.format == "PNG" and raw.size == (1920, 1080)
               rgb = raw.convert("RGB")
               assert max(ImageStat.Stat(rgb).stddev) > 22, "Unexpected blank Home capture"
               assert rgb.getbbox()
-              hero = rgb.crop((1140, 185, 1750, 640))
-              assert max(ImageStat.Stat(hero).stddev) > 25, "Home hero looks blank or synthetic"
           published = Path("assets/screenshots/encore-home.png")
+          if published.exists():
+              with Image.open(published) as previous:
+                  old = previous.convert("RGB").resize((1920, 1080))
+                  changed = ImageStat.Stat(ImageChops.difference(rgb, old)).mean
+                  assert max(changed) > 2.0, "Branded Home has not replaced old synthetic preview"
           published.parent.mkdir(parents=True, exist_ok=True)
           shutil.copyfile(screenshot, published)
-          targets = (
-              ("README.md", "Encore tropical-night launcher artwork",
-               "Eden Encore Home in English, rendered by the original C++/OpenGL launcher with real game hero artwork"),
-              ("README.fr.md", "Identité visuelle tropicale néon d'Encore",
-               "Eden Encore Home in English, rendered by the original C++/OpenGL launcher with real game hero artwork"),
-          )
-          for filename, old_alt, new_alt in targets:
+          alt = ("Eden Encore Home in English, showing the original Eden wallpaper "
+                 "from the actual C++/OpenGL launcher")
+          for filename in ("README.md", "README.fr.md"):
               path = Path(filename)
               source = path.read_text(encoding="utf-8")
-              old = ('<p align="center"><img src="assets/encore-background.jpg"'
-                     f' alt="{old_alt}" width="860"></p>')
+              pattern = (r'<p align="center"><img src="assets/'
+                         r'(?:encore-background\.jpg|screenshots/encore-home\.png)"'
+                         r' alt="[^"]+" width="860"></p>')
               new = ('<p align="center"><img src="assets/screenshots/encore-home.png"'
-                     f' alt="{new_alt}" width="860"></p>')
-              # Re-renders must work after the first README screenshot is
-              # published. Reject unrelated images instead of overwriting
-              # an arbitrary marketing graphic or silently duplicating it.
-              if source.count(old) == 1:
-                  source = source.replace(old, new)
-              else:
-                  assert source.count(old) == 0 and source.count(new) == 1, filename
+                     f' alt="{alt}" width="860"></p>')
+              source, count = re.subn(pattern, lambda _: new, source)
+              assert count == 1, (filename, "expected exactly one known Encore Home preview", count)
               path.write_text(source, encoding="utf-8")
-          print("REAL_ENCORE_HOME_SCREENSHOT_PREPARED")
+          print("REAL_EDEN_WALLPAPER_ENGLISH_HOME_SCREENSHOT_PREPARED")
           PY
 
       - name: Persist real Home capture and README links on the same branch
@@ -101,5 +98,5 @@ jobs:
             echo "Native screenshot is unchanged."
             exit 0
           fi
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "docs(ui): refresh English Home with real game hero and native OpenGL [skip ci]"
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "docs(ui): capture English Home with original Eden wallpaper [skip ci]"
           git push origin HEAD:dev/ps5-sparse-jit

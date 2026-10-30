@@ -47,6 +47,7 @@ def main():
         enabled = {**baseline,"EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL":True}
         on = test(path,"on",enabled,True)
         assert str(target) in on,on
+        assert "ns2_shader_spirv_compile.cpp" in on,on
         for name in baseline:
             test(path,"missing-"+name,{**enabled,name:False},False)
     print("NS2 renderer selector: PASS (OFF, ON, four missing prerequisite cases)")

@@ -48,6 +48,15 @@ def main() -> int:
                 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR'
                     in CMAKE[CMAKE.index("# Release gate: Vulkan/RADV"):],
                 "NS2 renderer compilation must be explicitly opt-in and release-forbidden")
+        require('target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")'
+                    in bridge_gate and
+                'ns2_shader_spirv_compile.cpp' in bridge_gate,
+                "Explicit NS2 GMMU shader compile source must only exist in bridge mode")
+        pipeline_source = ROOT / "headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp"
+        require(pipeline_source.is_file() and
+                "CaptureNs2GraphicsShaderFromGpu(" in pipeline_source.read_text() and
+                "CompileReviewedNativeVertexSpirv(" in pipeline_source.read_text(),
+                "Real GMMU-to-SPIR-V owner is missing")
         bridge_source = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
         require(bridge_source.is_file() and
                 "CompileReviewedNativeVertexSpirv(" in bridge_source.read_text() and

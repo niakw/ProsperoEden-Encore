@@ -2180,7 +2180,14 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
         message(FATAL_ERROR "Missing opt-in NS2 renderer-side SPIR-V compiler")
     endif()
+    set(EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE
+        "${PORT_ROOT}/headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}" OR
+       NOT EXISTS "${PORT_ROOT}/headless/ns2/ampere/video_core/ns2_shader_spirv_compile.h")
+        message(FATAL_ERROR "Missing verified NS2 GMMU-to-SPIR-V pipeline entrypoint")
+    endif()
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
+    target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
 endif()
 

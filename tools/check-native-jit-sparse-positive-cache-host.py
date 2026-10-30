@@ -91,6 +91,48 @@ int main() {
     assert(partial.Covers(arenas[0], committed, 20));
     assert(partial.Covers(arenas[1], committed, 20));
     assert(!partial.Covers(arenas[2], committed, 21));
+    // Deterministic state-machine oracle: four MRU entries, epoch reset,
+    // positive hits, capacity changes, evictions and cold probes.
+    struct Reference {
+        struct Slot { void* key{}; std::size_t bytes{}; };
+        std::array<Slot, 4> slots{};
+        std::uint64_t epoch{};
+        bool Covers(void* ptr, std::size_t bytes, std::uint64_t current) {
+            if (epoch != current) return false;
+            for (unsigned i = 0; i < slots.size(); ++i) {
+                if (!slots[i].key) return false;
+                if (slots[i].key != ptr || slots[i].bytes < bytes) continue;
+                const Slot hit = slots[i];
+                for (unsigned j = i; j > 0; --j) slots[j] = slots[j - 1];
+                slots[0] = hit;
+                return true;
+            }
+            return false;
+        }
+        void Remember(void* ptr, std::size_t bytes, std::uint64_t current) {
+            if (epoch != current) { slots = {}; epoch = current; }
+            unsigned i = 0;
+            while (i < slots.size() && slots[i].key != ptr) ++i;
+            if (i == slots.size()) i = slots.size() - 1;
+            for (; i > 0; --i) slots[i] = slots[i - 1];
+            slots[0] = {ptr, bytes};
+        }
+    } reference;
+    Eden::Jit::SparseCommitPositiveCache verified;
+    std::uint64_t seed = 0x9e3779b97f4a7c15ULL, epoch = 1;
+    for (unsigned i = 0; i < 250000; ++i) {
+        seed ^= seed << 13; seed ^= seed >> 7; seed ^= seed << 17;
+        if ((seed & 0xffu) == 0u) ++epoch;
+        void* ptr = reinterpret_cast<void*>(
+            std::uintptr_t{0x30000000} + ((seed >> 11) & 15u) * 0x1000000u);
+        const std::size_t bytes = ((seed >> 22) & 31u) * 0x200000u;
+        if ((seed & 7u) <= 2u) {
+            reference.Remember(ptr, bytes, epoch);
+            verified.Remember(ptr, bytes, epoch);
+        } else {
+            assert(reference.Covers(ptr, bytes, epoch) == verified.Covers(ptr, bytes, epoch));
+        }
+    }
     std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1 readonly_hit=1 cold_miss=1\n", misses);
 }
 """

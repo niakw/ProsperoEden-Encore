@@ -20,7 +20,6 @@
 
 #ifdef PS5_NATIVE
 #include "jit-sparse-commit.h"
-#include "jit-sparse-positive-cache.h"
 #endif
 
 #ifdef PS5_NATIVE

@@ -12,7 +12,6 @@ on:
       - 'src/host_memory.cpp'
       - 'src/memory_pages.cpp'
       - 'headless/jit-sparse-commit.h'
-      - 'headless/jit-sparse-positive-cache.h'
       - 'tools/check-native-jit-sparse-positive-cache-host.py'
       - 'headless/jit-allocator.h'
       - 'headless/CMakeLists.txt'

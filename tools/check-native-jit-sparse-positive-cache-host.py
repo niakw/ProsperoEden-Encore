@@ -12,7 +12,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / "src/memory_pages.cpp").read_text()
-assert '#include "jit-sparse-positive-cache.h"' in source
+assert '#include "jit-sparse-commit.h"' in source
 assert "static thread_local ::Eden::Jit::SparseCommitPositiveCache local;" in source
 assert "local.Covers(executable, required, generation)" in source
 assert "local.Remember(executable, region.committed," in source
@@ -24,7 +24,7 @@ FIXTURE = r"""
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include "jit-sparse-positive-cache.h"
+#include "jit-sparse-commit.h"
 int main() {
     Eden::Jit::SparseCommitPositiveCache cache;
     void* arenas[5] = {

@@ -13,6 +13,14 @@
 - **Limite :** le test vérifie le helper de sélection et la présence du câblage source ; la compilation réelle de `core`, les changements loader/HLE/JIT/GPU et tout lancement sur PS5 **restent à faire**. Ce chantier ne suffit pas à prendre en charge un jeu NS2.
 - **Prochain lot :** détection contrôlée ExeFS `main` et activation Dynarmic compatible avec ACID étendu, suivis d'une compilation hôte du chemin réellement sélectionné, avant les services et la traduction GPU.
 
+### N2a — RETAA/RETAB expérimentaux (frontend A64)
+
+- Sources amont retenues : `0x2593/Eden-NS2` RETA mais intégrées dans **l'ancienne base Dynarmic épinglée d'Encore**, sous `headless/ns2/dynarmic/` et **pas** dans `vendor`.
+- `EDEN_NS2_RETA_EXPERIMENTAL=ON` (exige le profil metadata) copie `a64.h`, `a64.inc` et `a64_branch.cpp` dans l'overlay prioritaire de compilation Dynarmic. La table de décodage reconnaît les encodages RETAA et RETAB et le traducteur utilise `RET(X30)` **uniquement en mode recherche**.
+- Cette traduction suppose les clés PAC désactivées. Elle ne simule pas la validation cryptographique, ne concerne pas encore les autres opcodes PAC et n'autorise pas à déclarer l'ARMv8.3 entièrement compatible.
+- Témoin hôte source-lié : `python3 tools/check-ns2-reta-host.py` compile la table `a64.inc` réelle, teste les deux encodages, RET normal et les non-correspondances, sous `-O0/-O2` avec UBSan.
+- Validation restant nécessaire : **compiler le vrai frontend Dynarmic avec l'option ON, puis tester les flux JIT sur PS5**, sans cette preuve la couverture reste au niveau source/decoder.
+
 ### N1b — ExeFS expérimental, chargement par étapes
 
 - `EDEN_NS2_EXEFS_EXPERIMENTAL=ON` (exige `EDEN_NS2_METADATA_EXPERIMENTAL=ON`) remplace deux fichiers du loader uniquement dans la branche de recherche.

@@ -2106,7 +2106,8 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
-            lower_to_maxwell.h lower_bridge.h register_pressure.h)
+            lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
+            program_address_map.h)
         if(NOT EXISTS
            "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
             message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
@@ -2120,8 +2121,15 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EXISTS "${EDEN_NS2_AMPERE_LOWER_BRIDGE}")
         message(FATAL_ERROR "Missing NS2 bounded native-to-Maxwell translation bridge")
     endif()
+    set(EDEN_NS2_MAXWELL_IMAGE_BRIDGE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/maxwell_image.cpp")
+    if(NOT EXISTS "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}")
+        message(FATAL_ERROR "Missing NS2 native-to-Maxwell shader-environment image adapter")
+    endif()
     target_sources(shader_recompiler PRIVATE
-        "${EDEN_NS2_AMPERE_PROBE}" "${EDEN_NS2_AMPERE_LOWER_BRIDGE}")
+        "${EDEN_NS2_AMPERE_PROBE}"
+        "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"
+        "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}")
     target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
 endif()
 

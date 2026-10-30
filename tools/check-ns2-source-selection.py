@@ -266,7 +266,10 @@ def main() -> int:
         isa_classifier = (ampere_root / "classify.h").read_text()
         require('option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in CMAKE and
                 'target_sources(shader_recompiler PRIVATE' in CMAKE and
-                '"${EDEN_NS2_AMPERE_PROBE}" "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"' in CMAKE and
+                '"${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}"' in CMAKE and
+                'EDEN_NS2_MAXWELL_IMAGE_BRIDGE' in CMAKE and
+                'program_address_map.h' in CMAKE and
+                'maxwell_image.h' in CMAKE and
                 'EDEN_NS2_AMPERE_LOWER_BRIDGE' in CMAKE and
                 'target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")' in CMAKE and
                 'EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR' in CMAKE[release_gate:] and
@@ -292,7 +295,15 @@ def main() -> int:
                 "BridgeMaxInstructions = 4096" in
                     (ampere_root / "lower_bridge.cpp").read_text() and
                 "LowerBridgeStatus::UnsupportedSemantics" in
-                    (ampere_root / "lower_bridge.cpp").read_text(),
+                    (ampere_root / "lower_bridge.cpp").read_text() and
+                "BuildMaxwellShaderImage(" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "AppendNativeAddressMap(" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "NativeProgramAddress(code, address)" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "ImageSalt =" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "MaxwellSchedulingPeriod = 0x20" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "LowerReviewedToMaxwell(native_code)" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "MaxwellImageStatus::InvalidLayout" in (ampere_root / "maxwell_image.cpp").read_text() and
+                (ROOT / "tools/ns2/test_ampere_maxwell_image.cpp").is_file(),
                 "Ampere shader ISA probe must remain bounded, opt-in and release gated")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()

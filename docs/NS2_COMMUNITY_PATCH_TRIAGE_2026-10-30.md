@@ -273,3 +273,31 @@ The actual NS2 loader overlay uses it. See:
   native task/mesh shader semantics, Vulkan RADV and PS5 game runtime
   remain separate gates. This implementation is a tested frontend
   conversion step, not proof of Mario Kart World rendering or playable FPS.
+
+## N4t — Maxwell shader-environment image ABI (research-only, not shipping)
+
+- Imported the pinned `program_address_map.h` from
+  `0x2593/Eden-NS2` commit `e2f285ab1ecd3a2475c2ccad66f23b06b94ead5c`.
+  The existing bounded `LowerReviewedToMaxwell` translator now feeds
+  `BuildMaxwellShaderImage`: an exact **0x50-byte** preserved guest shader
+  header, Maxwell instruction stream padded with **8-byte scheduling words
+  every 32 bytes**, one unreachable padding word, and the source-to-Maxwell
+  address table using the upstream `NativeAddressMapMagic`.
+- Explicit `ReadMaxwellInstruction` and `TranslateNativeAddress` APIs
+  refuse scheduling slots, unaligned addresses, missing destinations,
+  out-of-range accesses and appended metadata. Successful images preserve
+  consumed source size and the cached-image byte range.
+- An **NS2-only versioned diagnostic key** incorporates stage, native source
+  and shader-header bytes; it is intentionally not injected into the existing
+  Switch 1 GPU disk cache until the actual graphics/compute environment
+  selection can be validated. Invalid inputs produce no output or cache key.
+- This source is compiled into `shader_recompiler` under the same opt-in
+  `EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL` flag; final release gate still refuses
+  the experimental flag. Added actual Clang/GCC compiler tests with
+  NOP/MOV/EXIT, first three native address relocations, scheduler slot
+  exclusion, deterministic key isolation and fail-closed inputs. No
+  change to shipped GPU runtime, vendor sources or `main`.
+- **Next**: thread a process-scoped NS2 mode and correct native QMD/shader
+  capture from guest GPU memory into the existing `GenericEnvironment`
+  and `ShaderCache`. This image is ready for such an integration but
+  is **not yet an executing shader or evidence of gameplay**.

@@ -41,7 +41,7 @@ touch = pad.index("const int touch_button = MappedTo(active_mapping, pad_touchpa
 capture = pad.index("const bool create_is_capture = !samples.empty() &&")
 assert mapping < touch < capture < sample_loop
 assert "MappedTo(active_mapping, pad_create) < 0;" in pad[capture:sample_loop]
-assert "create_is_capture && (sample.buttons & kButtonCreate) != 0" in pad[sample_loop:]
+assert "create_is_capture && (mapped_buttons & kButtonCreate) != 0" in pad[sample_loop:]\nassert "ButtonMask mapped_buttons = sample.buttons;" in pad[sample_loop:]
 assert pad.count("MappedTo(active_mapping, pad_create)") == 1
 assert pad.count("MappedTo(active_mapping, pad_touchpad)") == 1
 assert 'engine->SetButtonState(player, Button::ButtonCapture,' in pad

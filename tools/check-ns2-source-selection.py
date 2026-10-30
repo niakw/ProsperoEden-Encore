@@ -18,6 +18,16 @@ def main() -> int:
                 "No metadata opt-in")
         require('option(EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,
                 "No ExeFS opt-in")
+        require('option(EDEN_NS2_CPU6_EXPERIMENTAL' in CMAKE,
+                "No CPU6 opt-in")
+        require('EDEN_NS2_CPU6_EXPERIMENTAL OR' in CMAKE,
+                "Final release must reject CPU6 experiment")
+        cpu6 = ROOT / "headless/ns2/cpu6"
+        require("NUM_CPU_CORES = 6" in (cpu6 / "core/hardware_properties.h").read_text(),
+                "Six-core hardware map missing")
+        require("MAX_NUM_CPU_CORES = 6" in
+                (cpu6 / "dynarmic/interface/exclusive_monitor.h").read_text(),
+                "Six-slot Dynarmic exclusive monitor missing")
         require('EDEN_NS2_METADATA_EXPERIMENTAL=ON' in CMAKE,
                 "ExeFS must require metadata opt-in")
         require('EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,

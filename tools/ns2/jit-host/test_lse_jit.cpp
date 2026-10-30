@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Executes the actual Dynarmic JIT with research A64 overlay.
+#include <atomic>
+#include <thread>
+#include <vector>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -36,7 +39,7 @@ static std::uint32_t encode(std::string_view name,
     return result;
 }
 struct Env: A64TestEnv {
-    Dynarmic::ExclusiveMonitor monitor{1};
+    Dynarmic::ExclusiveMonitor monitor{6};
     unsigned fail=0,writes=0;
     bool MemoryWriteExclusive64(u64 addr,u64 value,u64 expected) override {
         ++writes;
@@ -92,6 +95,36 @@ int main(){
         env.MemoryWrite64(0x200,0x12345678);
         jit.SetRegister(1,0x200);jit.SetPC(0);jit.Step();
         check(jit.GetRegister(3)==0x12345678,"LDAPR acquire");
+    }
+
+    // Six independent guest processors, shared reservation granule, concurrent
+    // retry. Validate exclusive monitor capacity and cross-core invalidation.
+    {
+        Dynarmic::ExclusiveMonitor shared{6};
+        check(shared.GetProcessorCount()==6,"six exclusive monitor slots");
+        std::atomic<std::uint64_t> counter{0};
+        std::atomic<bool> timed_out{false};
+        std::vector<std::thread> workers;
+        for (unsigned core=0;core<6;++core) {
+            workers.emplace_back([&,core] {
+                for (unsigned n=0;n<64;++n) {
+                    bool success=false;
+                    for (unsigned retries=0;retries<100000 && !success;++retries) {
+                        const auto observed=shared.ReadAndMark<std::uint64_t>(
+                            core,0x1000,[&] {return counter.load(std::memory_order_relaxed);});
+                        success=shared.DoExclusiveOperation<std::uint64_t>(
+                            core,0x1000,[&](std::uint64_t expected) {
+                                return counter.compare_exchange_strong(
+                                    expected,observed+1,std::memory_order_relaxed);
+                            });
+                    }
+                    if(!success){timed_out.store(true);return;}
+                }
+            });
+        }
+        for (auto& worker:workers)worker.join();
+        check(!timed_out.load(),"six-core contention terminated");
+        check(counter.load()==384,"six-core exclusive operation counted exactly");
     }
     std::cout<<"Actual Dynarmic NS2 LSE/RETA/LDAPR JIT PASS\n";
 }

@@ -1889,6 +1889,29 @@ if(EDEN_NS2_A64_EXPERIMENTAL)
     target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1)
 endif()
 
+# Six Switch 2 application cores (old 4-core mode remains the default).
+# Kernel threading and scheduler still require full PS5 qualification.
+option(EDEN_NS2_CPU6_EXPERIMENTAL
+    "Research only: six guest cores and six-slot exclusive monitor" OFF)
+if(EDEN_NS2_CPU6_EXPERIMENTAL)
+    if(NOT EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_CPU6_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 six-core mode requires A64 and metadata experiments")
+    endif()
+    set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/headless/ns2/cpu6")
+    foreach(eden_ns2_cpu6_header IN ITEMS
+            "core/hardware_properties.h"
+            "dynarmic/interface/exclusive_monitor.h")
+        if(NOT EXISTS "${EDEN_NS2_CPU6_ROOT}/${eden_ns2_cpu6_header}")
+            message(FATAL_ERROR "Missing experimental NS2 6-core header ${eden_ns2_cpu6_header}")
+        endif()
+    endforeach()
+    target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
+    target_include_directories(dynarmic BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
+    target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    target_compile_definitions(core PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)

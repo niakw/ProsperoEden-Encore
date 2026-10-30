@@ -29,6 +29,14 @@
 - **Portée :** syntaxe/instanciation du vrai frontend et modèles de décodage avec UBSan O0/O2. Cela **ne vérifie pas** la compilation de tout Dynarmic, le fonctionnement du JIT A64 dans le runtime Encore, la mémoire NS2 ou des jeux PS5.
 - **Étape suivante prioritaire :** portage sécurisé des instructions atomiques LSE/CAS/SWP, avec des tests de valeurs et concurrence, et compilation réelle du `core` quand les services et le gestionnaire de mémoire seront prêts.
 
+### N2d — Six cœurs invités et moniteur exclusif (opt-in)
+
+- **Blocage réel de la base Eden Switch 1 :** `Core::Hardware::NUM_CPU_CORES=4` et `Dynarmic::ExclusiveMonitor::MAX_NUM_CPU_CORES=4`. Eden-NS2 utilise **6** pour les cœurs applicatifs (avec 4 cœurs conservés pour les règles legacy et un remappage virtuel 6/7/63 vers le cœur système).
+- **Portage isolé :** `headless/ns2/cpu6/core/hardware_properties.h` et `headless/ns2/cpu6/dynarmic/interface/exclusive_monitor.h`, repris du fork `0x2593/Eden-NS2` sous leurs licences respectives. Les en-têtes sont ajoutés aux chemins de compilation **uniquement** si `EDEN_NS2_CPU6_EXPERIMENTAL=ON`, avec exigences `EDEN_NS2_A64_EXPERIMENTAL` et `EDEN_NS2_METADATA_EXPERIMENTAL`.
+- **Garde de release :** l'option à six cœurs reste **OFF par défaut** et est rejetée dans `EDEN_FINAL_RELEASE_PROFILE`. Aucun changement des limites globales pour les builds Switch 1 courants.
+- **Validation hôte :** le vrai JIT x86-64 expérimental utilise désormais un `ExclusiveMonitor{6}` et teste six workers concurrents avec réservations/retries sur un même emplacement mémoire. **Cette validation doit passer en CI avant toute déclaration de multicœur qualifié.**
+- **Limites :** les schedulers et services Switch 2, le chemin JIT PS5, les 6 cœurs invités réellement exécutés et le comportement mémoire console ne sont pas encore validés.
+
 ### N2b — CPU LSE atomique (recherche uniquement)
 
 - Depuis `0x2593/Eden-NS2`, portage ciblé des premières familles LSE : `CAS`, `LDADD`, `LDCLR`, `LDEOR`, `LDSET`, `SWP`, y compris les sous-formes 8/16 bits annoncées par les variantes `B/H`. Les fonctions sont ajoutées à `load_store_exclusive.cpp` et à la table/déclarations du frontend A64.

@@ -100,15 +100,23 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 
 **Mémoire PS5 :** la base ProsperoEden documente environ **12 288 Mio de direct memory** sur une PS5 standard sous 13.60 (13 504 Mio en mode PS5 Pro décrit dans l'upstream), partagés entre l'émulation, Vulkan, caches et JIT ; ces chiffres sont des indications de source, **pas** un budget garanti pour Encore. D'abord mesurer la taille du pool, les allocations courantes, la fragmentation et la charge réelle du titre ; ne jamais allouer directement 12 Gio pour « simuler 12 Gio ».
 
+### N3c — GPU/HLE et application-manager, 30/10/2026
+
+- **Provenance :** `0x2593/Eden-NS2@5d2d3cf0a966293fc9ddeac33cf86830a5de206e` pour les trois en-têtes ABI graphiques; décodeur `GpuMemoryRegistration` réduit issu de `NS2.patch.txt` fourni dans la conversation. Les sources sont isolées dans `headless/ns2/hle`.
+- **Tests :** `tools/check-ns2-graphics-hle-host.py` compile et exécute des fixtures TIPC, bootstrap, syncpoint, taille image et MMU kind en C++20 O0/O2 sous UBSan. Le [run #41031805494](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41031805494) est **3/3 SUCCESS** sur `dd2555bc707fb70e5ef5afecade9a9a5d8c7815c`.
+- **Intégration contrôlée :** `EDEN_NS2_AM_EXPERIMENTAL=ON` sélectionne le handler AM 320 provenant de l'implémentation *maintenue* d'Encore avec en-tête adapté. Il requiert le metadata mode et est refusé par `EDEN_FINAL_RELEASE_PROFILE`. La CI compile réellement le fichier de service, sans encore tester le chemin IPC d'un jeu.
+- **Maintien des optimisations :** merge **de `main` vers recherche seulement**, SHA `f2d8e44deb459bd59742c2e23b474ba43b2e2b46` (0 conflit, 43 blobs de recherche conservés, 28 commits F07 récupérés). Le workflow n'a pas encore été exécuté sur ce SHA de fusion ; ne pas substituer la preuve du parent à celle du nouveau commit.
+- **Portée :** GPU worker, submit, shaders Ampere→RADV, PS5 memory budget, VI2/display et titres NS2 restent à implémenter/qualifier.
+
 ## 4. Plan d'intégration isolé — ordre d'exécution
 
 | Étape | Livraison et contrôle | État |
 | --- | --- | --- |
-| **N0 — provenance / audit** | Geler les SHAs upstream, inventorier les 154/166 fichiers et licences ; catégoriser patches exploitables vs desktop-only | **En cours** : sources et volumes identifiés |
-| **N1 — compatibilité de sources** | Comparer `NS2.patch` puis `eden-ns2-dkb.patch` à l'archive Eden épinglée, et aux propriétaires *compilés* dans `vendor/encore-active` ; isoler chaque conflit JIT/Vulkan/HLE | **À faire**, pas de `git apply` de masse |
-| **N2 — prototype CPU/mémoire hôte** | Tests Dynarmic LSE, PAC/returns, noyau 6 cœurs, NPDM/ACID ; évaluation sparse et budget PS5 avec échec propre | **À faire** |
-| **N3 — prototype GPU hôte** | Shader tests SM86/Maxwell, geometry/compute, FIFO, QMD, GPU worker, syncpoint ; sécurité de cohérence et tests des échecs | **À faire** |
-| **N4 — services et contenu** | HLE réel vs stubs, audio/vidéo, identification de l'exécutable NS2 ; lancement d'un test homebrew/fixture non propriétaire avant jeu commercial | **À faire** |
+| **N0 — provenance / audit** | Geler les SHAs upstream, inventorier les 154/166 fichiers et licences ; catégoriser patches exploitables vs desktop-only | **Inventaire réalisé** ; provenance complète et licence tierce encore à confirmer |
+| **N1 — compatibilité de sources** | Comparer `NS2.patch` puis `eden-ns2-dkb.patch` à l'archive Eden épinglée, et aux propriétaires *compilés* dans `vendor/encore-active` ; isoler chaque conflit JIT/Vulkan/HLE | **Partiel** : loaders, A64, AM 320 et helpers GPU/HLE isolés ; portage global interdit |
+| **N2 — prototype CPU/mémoire hôte** | Tests Dynarmic LSE, PAC/returns, noyau 6 cœurs, NPDM/ACID ; évaluation sparse et budget PS5 avec échec propre | **Tests hôte verts** : JIT x86-64 réel, atomiques/concurrence, parseur NPDM ; budget et exécution PS5 non validés |
+| **N3 — prototype GPU hôte** | Shader tests SM86/Maxwell, geometry/compute, FIFO, QMD, GPU worker, syncpoint ; sécurité de cohérence et tests des échecs | **Partiel** : ISA/address-map Ampere et helpers ABI GPU/HLE testés ; traduction shaders et commandes GPU non intégrées |
+| **N4 — services et contenu** | HLE réel vs stubs, audio/vidéo, identification de l'exécutable NS2 ; lancement d'un test homebrew/fixture non propriétaire avant jeu commercial | **AM 320 sélectionnable en build expérimental** + loader ExeFS ; HLE général, GPU supervisor et bootstrap non validés |
 | **N5 — compilation native expérimentale** | Seulement après N1–N4 et preuves hôte ; aucun artefact final Switch 1 modifié et pas de fusion F07 | **Non autorisée à ce stade** |
 | **N6 — qualification PS5** | Mémoire peak, logs, frames, input, sauvegarde, sortie, redémarrage, crash, régression BOTW/FC27 ; preuve titre/SHA/console | **À faire** |
 
@@ -125,9 +133,9 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 
 - **Branche créée et resynchronisée sur le socle de `main` : oui**.
 - **Sources NS2 lues / patches quantifiés : oui**.
-- **Patch porté dans l'exécutable Encore : non**.
+- **Patch porté dans l'exécutable Encore : fragments sélectionnables par CMake en builds de recherche, désactivés en release ; exécutable PS5 NS2 non validé**.
 - **Tests de compilation NS2 sur PS5 : aucun**.
 - **Jeu NS2 démarré sur PS5 : aucun**.
-- **Verdict : premier composant adapté en recherche, sans intégration dans le binaire public ; exécution PS5 non démontrée.**
+- **Verdict : CPU/JIT, parseur, sondes GPU et un handler HLE vérifiés sur hôte ; aucun binaire public NS2 ni jeu Switch 2 PS5 validé.**
 
 En parallèle, un audit statique reproductible peut être lancé avec `python3 tools/ns2_patch_inventory.py --patch /chemin/eden-ns2-dkb.patch --root .` : il inspecte uniquement les chemins source et ne modifie pas le code.

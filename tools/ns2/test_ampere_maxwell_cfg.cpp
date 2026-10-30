@@ -6,8 +6,19 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
+#include "common/logging.h"
 #include "shader_recompiler/frontend/ampere/maxwell_environment.h"
 #include "shader_recompiler/frontend/maxwell/control_flow.h"
+
+// Link only the CFG and decoder, not the full emulator's logging runtime.
+// Never let a decoder assertion or log event count as a passing fixture.
+void AssertFailSoftImpl() { std::abort(); }
+namespace Common::Log {
+void FmtLogMessageImpl(Class, Level, const char*, unsigned int,
+                       const char*, fmt::string_view, const fmt::format_args&) {
+    std::abort();
+}
+} // namespace Common::Log
 
 using namespace Shader::Ampere;
 static void Require(bool pass, const char* reason) {

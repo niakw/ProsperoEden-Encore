@@ -15,7 +15,7 @@ Shader::IR::Program TranslateReviewedGraphicsIR(
     // ReadInstruction() receives byte addresses; both sides must agree
     // before allocating CFG blocks or executing any guest-dependent reads.
     static_assert(sizeof(Shader::ProgramHeader) == 0x50);
-    const auto address = env.StartAddress() + sizeof(Shader::ProgramHeader);
+    const u32 address = env.StartAddress() + static_cast<u32>(sizeof(Shader::ProgramHeader));
     if (!env.Image().ValidForCompiler() ||
         env.Image().native_stage != static_cast<u32>(env.ShaderStage()) ||
         env.ShaderStage() == Shader::Stage::Compute ||

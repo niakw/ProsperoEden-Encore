@@ -47,6 +47,11 @@ jobs:
         run: |
           bash tools/launcher/preview.sh build/readme-home 1920 1080
           test -s build/readme-home/01-home.png
+          # The old screenshot retained synthetic sunset scenery after an
+          # async Game media scan even when Home::home() cleared the hero.
+          # Validate the source itself was never created for this render.
+          test ! -e build/readme-home/preview-hero.tga
+          echo "EDEN_ORIGINAL_WALLPAPER_PREVIEW_NO_SYNTHETIC_HERO: PASS"
 
       - name: Verify the real screenshot and replace READMEs
         run: |
@@ -66,12 +71,23 @@ jobs:
               rgb = raw.convert("RGB")
               assert max(ImageStat.Stat(rgb).stddev) > 22, "Unexpected blank Home capture"
               assert rgb.getbbox()
-          published = Path("assets/screenshots/encore-home.png")
-          if published.exists():
-              with Image.open(published) as previous:
+          # A new path also invalidates GitHub's CDN/browser cached preview.
+          # Compare against the old capture that user reported as wrong.
+          previous_capture = Path("assets/screenshots/encore-home.png")
+          published = Path("assets/screenshots/eden-encore-home-wallpaper-en.png")
+          if previous_capture.exists():
+              with Image.open(previous_capture) as previous:
                   old = previous.convert("RGB").resize((1920, 1080))
-                  changed = ImageStat.Stat(ImageChops.difference(rgb, old)).mean
-                  assert max(changed) > 2.0, "Branded Home has not replaced old synthetic preview"
+                  # Compare the BACKGROUND region, not whole-frame text.
+                  # Earlier CI passed because English text changed while the
+                  # synthetic scenery behind it stayed effectively identical.
+                  viewport = (1100, 130, 1840, 750)
+                  changed = ImageStat.Stat(ImageChops.difference(
+                      rgb.crop(viewport), old.crop(viewport))).mean
+                  print("EDEN_WALLPAPER_BACKGROUND_REGION_CHANGE", changed)
+                  assert max(changed) > 9.0, (
+                      "Original Eden wallpaper still hidden by the synthetic Home hero",
+                      changed)
           published.parent.mkdir(parents=True, exist_ok=True)
           shutil.copyfile(screenshot, published)
           alt = ("Eden Encore Home in English, showing the original Eden wallpaper "
@@ -80,9 +96,9 @@ jobs:
               path = Path(filename)
               source = path.read_text(encoding="utf-8")
               pattern = (r'<p align="center"><img src="assets/'
-                         r'(?:encore-background\.jpg|screenshots/encore-home\.png)"'
+                         r'(?:encore-background\.jpg|screenshots/(?:encore-home|eden-encore-home-wallpaper-en)\.png)"'
                          r' alt="[^"]+" width="860"></p>')
-              new = ('<p align="center"><img src="assets/screenshots/encore-home.png"'
+              new = ('<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png"'
                      f' alt="{alt}" width="860"></p>')
               source, count = re.subn(pattern, lambda _: new, source)
               assert count == 1, (filename, "expected exactly one known Encore Home preview", count)
@@ -93,7 +109,7 @@ jobs:
       - name: Persist real Home capture and README links on the same branch
         if: ${{ github.ref == 'refs/heads/dev/ps5-sparse-jit' }}
         run: |
-          git add assets/screenshots/encore-home.png README.md README.fr.md
+          git add assets/screenshots/eden-encore-home-wallpaper-en.png README.md README.fr.md
           if git diff --cached --quiet; then
             echo "Native screenshot is unchanged."
             exit 0

@@ -132,6 +132,7 @@ struct Mapping {
     U64 size{};
     U8 selected_kind{};
     U8 backend_kind{};
+    bool sparse{};
 };
 
 enum class LedgerStatus {
@@ -180,7 +181,8 @@ public:
         if (!request.size || !Aligned(request.address) || !Aligned(request.size))
             return LedgerStatus::Invalid;
         const auto it = mappings.find({request.address_space, request.address});
-        return it != mappings.end() && it->second.size == request.size
+        return it != mappings.end() && !it->second.sparse &&
+               it->second.size == request.size
             ? LedgerStatus::Success : LedgerStatus::NotFound;
     }
     LedgerStatus RecordUnmapped(const Unmap4K& request) {
@@ -197,10 +199,37 @@ public:
         if (next == mappings.begin()) return LedgerStatus::NotFound;
         --next;
         const Mapping& m = next->second;
-        if (m.address_space != request.address_space ||
+        if (m.sparse || m.address_space != request.address_space ||
             request.address < m.address || request.address - m.address >= m.size ||
             request.size > m.size - (request.address - m.address))
             return LedgerStatus::NotFound;
+        return LedgerStatus::Success;
+    }
+    LedgerStatus CanReserveSparse(U32 as, U32 device, U64 address, U64 size) const {
+        if (!as || !device || device >= MaxDevices || !Aligned(address) ||
+            !size || !Aligned(size) || address > std::numeric_limits<U64>::max() - size ||
+            (size >> 12) > std::numeric_limits<U32>::max())
+            return LedgerStatus::Invalid;
+        return CanMap(Map4K{as, 1, device, 0, address, size, 0});
+    }
+    LedgerStatus RecordSparse(U32 as, U32 device, U64 address, U64 size) {
+        const auto status = CanReserveSparse(as, device, address, size);
+        if (status != LedgerStatus::Success) return status;
+        mappings.emplace(std::make_pair(as, address),
+                         Mapping{as, 0, device, address, size, 0, 0, true});
+        return LedgerStatus::Success;
+    }
+    LedgerStatus CanReleaseSparse(U32 as, U64 address, U64 size) const {
+        if (!as || !size || !Aligned(address) || !Aligned(size)) return LedgerStatus::Invalid;
+        const auto it = mappings.find({as, address});
+        if (it == mappings.end() || !it->second.sparse || it->second.size != size)
+            return LedgerStatus::NotFound;
+        return LedgerStatus::Success;
+    }
+    LedgerStatus RecordReleasedSparse(U32 as, U64 address, U64 size) {
+        const auto status = CanReleaseSparse(as, address, size);
+        if (status != LedgerStatus::Success) return status;
+        mappings.erase({as, address});
         return LedgerStatus::Success;
     }
     [[nodiscard]] std::size_t Count() const { return mappings.size(); }

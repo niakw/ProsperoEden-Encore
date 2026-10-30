@@ -167,6 +167,7 @@ jobs:
             -Ibuild-ns2-a64/fmt/include \
             -Iheadless/ns2/nvdrv_gpu \
             -Iheadless/ns2/nvdrv_as \
+            -Iheadless/ns2/nvdrv \
             -Iheadless/ns2/hle \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \

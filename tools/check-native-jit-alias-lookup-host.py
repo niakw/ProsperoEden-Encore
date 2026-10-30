@@ -7,8 +7,14 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 source=(root/"headless/jit-allocator.h").read_text()
-assert "std::array<CachedEntry, 8>" in source
-assert "static thread_local ThreadCache cache{}" in source
+assert '#include "jit-alias-cache.h"' in source
+assert "static thread_local ::Eden::Jit::AliasPositiveCache cache{}" in source
+assert "cache.Find(pointer, generation)" in source
+assert "cache.Remember(pointer, writable, latest)" in source
+assert "const std::size_t slot = ((bits >> 12)" not in source
+memo = (root / "headless/jit-alias-cache.h").read_text()
+assert "std::array<Entry, 8>" in memo
+assert "if (generation != current_generation) return nullptr;" in memo
 assert source.count("mapping_generation.fetch_add(1, std::memory_order_release);")==4
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler
@@ -42,6 +48,24 @@ void* MapExecutableAlias(void*, std::size_t) noexcept {return nullptr;}
 }
 int main(){
  auto* allocator=EdenJitAllocator();
+ // PS5's 16 MiB-aligned executable arenas can all hash to the same
+ // old single-slot memo entry: eight such keys must coexist, lock-free.
+ Eden::Jit::AliasPositiveCache aliases;
+ std::uint8_t* rx[8]{}; std::uint8_t* rw[8]{};
+ for(unsigned i=0;i<8;++i){
+   rx[i]=reinterpret_cast<std::uint8_t*>(0x10000000ULL+i*0x01000000ULL);
+   rw[i]=reinterpret_cast<std::uint8_t*>(0x90000000ULL+i*0x01000000ULL);
+   const auto bits=reinterpret_cast<std::uintptr_t>(rx[i]);
+   assert(((bits>>12)^(bits>>21))%8==0);
+   aliases.Remember(rx[i],rw[i],7);
+ }
+ for(unsigned i=0;i<100000;++i)
+   assert(aliases.Find(rx[i%8],7)==rw[i%8]);
+ assert(!aliases.Find(rx[0],8)); // trim/release epoch flush
+ assert(aliases.Find(rx[3],7)==rw[3]);
+ aliases.Remember(rx[0],rw[0],8);
+ assert(aliases.Find(rx[0],8)==rw[0]);
+ assert(!aliases.Find(rx[3],8));
  constexpr std::size_t size=2u*1024u*1024u;
  auto* a=allocator->alloc(size);auto* b=allocator->alloc(size);
  assert(a && b && a!=b);
@@ -81,4 +105,4 @@ with tempfile.TemporaryDirectory(prefix="eden-jit-alias-") as temp:
   "-I",str(d),"-I",str(root/"headless"),str(d/"witness.cpp"),"-o",str(exe)],
   check=True,timeout=90)
  subprocess.run([str(exe)],check=True,timeout=90)
-print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 retirement=1 sanitizer=1")
+print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 epoch=1 retirement=1 sanitizer=1")

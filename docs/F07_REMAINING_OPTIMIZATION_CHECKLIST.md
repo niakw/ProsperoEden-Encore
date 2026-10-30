@@ -41,6 +41,8 @@
 
 **30/10 — T05/C04, repli image guest absente :** lorsque le framebuffer brut est non mappé, `Layer::UpdateRawImage` PS5 ne calcule plus `Tegra::Texture::CalculateSize` (taille tuilée inutilisée), conserve exactement l'effacement complet des bytes de staging, la visibilité `buffer.Flush`, l'upload Vulkan et la restauration des pixels à la prochaine image valide. Source fork `vendor@76978dd92b`, générateur et témoin source-extrait PS5/desktop O0/O2 ASan/UBSan. **CI/console non encore qualifiés ; F07 22/29 inchangé.**
 
+**30/10 — T05/C04, suppression d'un double décodage pixel CPU du repli brut :** `Layer::UpdateRawImage` utilise directement `bytes_per_pixel` déjà calculé pour la longueur linéaire de staging native, évitant le second `GetSizeInBytes` → `GetBytesPerPixel` sur toutes les images brutes. Multiplication en `size_t` identique au code upstream, formats 2/4 bytes, dimensions nulles/étendues, source-extrait PS5/desktop O0/O2 ASan/UBSan. Desktop inchangé. `vendor@513964d2a3`. **CI/console non qualifiés ; F07 22/29 inchangé.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

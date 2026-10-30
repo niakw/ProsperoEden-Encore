@@ -374,8 +374,14 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
     auto& slot = slots[player];
     // Only the touchpad presses Minus (tap or hold). Physical Create now
     // provides virtual Switch Capture, not a second, surprise Minus press.
+    // The launch-time mapping cannot change while guest HID is open. Resolve
+    // inverse button lookups once per pad batch, not for every sampled frame.
+    // Empty 4 ms polls still need only the touch lookup for pulse expiry.
+    const auto& active_mapping = ActiveMapping();
+    const int touch_button = MappedTo(active_mapping, pad_touchpad);
+    const bool create_is_capture = !samples.empty() &&
+                                   MappedTo(active_mapping, pad_create) < 0;
     const auto set_touch = [&](u32 pressed) {
-        const int touch_button = MappedTo(ActiveMapping(), pad_touchpad);
         if (touch_button < 0) return;
         engine->SetButtonState(player, kGame[touch_button],
             !slot.guest_home.BlockChordButtons() &&
@@ -467,7 +473,6 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         // The game's buttons are digital: the analog triggers count from the threshold.
         const bool left = sample.triggers.l2 / 255.0f >= trigger_threshold;
         const bool right = sample.triggers.r2 / 255.0f >= trigger_threshold;
-        const auto& active_mapping = ActiveMapping();
         for (int game = 0; game < kGameButtons; ++game) {
             const int pad = active_mapping[game];
             if (pad == pad_touchpad) continue;  // set_touch
@@ -478,7 +483,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         // Respect custom layouts that explicitly map Create to another guest
         // action. Only otherwise does physical Create become Switch Capture.
         engine->SetButtonState(player, Button::ButtonCapture,
-            MappedTo(active_mapping, pad_create) < 0 && (sample.buttons & kButtonCreate) != 0);
+            create_is_capture && (sample.buttons & kButtonCreate) != 0);
         engine->SetStickPosition(player, 0, axis(sample.left_stick.x), -axis(sample.left_stick.y));
         engine->SetStickPosition(player, 1, axis(sample.right_stick.x), -axis(sample.right_stick.y));
         // Motion: acceleration in G and angular velocity in rad/s, mapped to Eden's axes and units

@@ -37,6 +37,16 @@ def extract(signature: str) -> str:
                 return PAD[start:end + 1]
     raise AssertionError("unbalanced native method " + signature)
 
+consume_source = extract("void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {")
+# Inverse 12-button scans are resolved before the sample loop; a session
+# mapping cannot change while guest HID is open.
+assert consume_source.count("MappedTo(active_mapping, pad_touchpad)") == 1
+assert consume_source.count("MappedTo(active_mapping, pad_create)") == 1
+assert consume_source.index("const int touch_button =") < consume_source.index("for (const auto& raw : samples)")
+assert consume_source.index("const bool create_is_capture =") < consume_source.index("for (const auto& raw : samples)")
+assert "MappedTo(ActiveMapping(), pad_touchpad)" not in consume_source
+assert "create_is_capture && (sample.buttons & kButtonCreate)" in consume_source
+
 native_methods = "\n\n".join(extract(signature) for signature in (
     "void PadEngine::SetButtonState(std::size_t player, int button, bool value) {",
     "void PadEngine::SetButtonState(std::size_t player, VirtualButton button, bool value) {",
@@ -211,6 +221,29 @@ int main() {
     assert(!pad.engine->Get(V::ButtonMinus));
     assert(pad.engine->Rising(V::ButtonMinus)==1);
     assert(pad.engine->Rising(V::ButtonPlus)==5);
+    // A full scePadRead burst must retain the same mapping and not publish
+    // redundant guest button transitions for held inputs.
+    std::array<Data,64> burst{};
+    for (auto& sample : burst) {
+        sample=neutral_data(++time*4000);
+        sample.connected=1;
+        sample.buttons=kButtonCircle;
+    }
+    const auto writes_before=pad.engine->Writes(V::ButtonA);
+    pad.Consume(burst);
+    assert(pad.engine->Get(V::ButtonA));
+    assert(pad.engine->Writes(V::ButtonA)==writes_before+1);
+    step(0);
+    // Create becomes Capture only if no guest action owns that physical key.
+    Pad mapped_create;
+    mapped_create.SetMapping(Assign(kPlayStationMapping,game_a,pad_create));
+    mapped_create.slots[0].handle=3;
+    auto create=neutral_data(4000);
+    create.connected=1;
+    create.buttons=kButtonCreate;
+    mapped_create.Consume({&create,1});
+    assert(mapped_create.engine->Get(V::ButtonA));
+    assert(!mapped_create.engine->Get(V::ButtonCapture));
     std::puts("F06_NATIVE_PAD_TRANSITIONS_PASS phases=5 action_edges=5 "
               "options_plus_edges=5 disconnect_releases=1 "
               "home_chords=1 menu_shortcuts=1 touch_taps=1 "

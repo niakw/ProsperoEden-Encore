@@ -43,6 +43,8 @@ def main() -> int:
         require('option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' in bridge_gate and
                 'NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in bridge_gate and
                 'NOT EDEN_NS2_METADATA_EXPERIMENTAL' in bridge_gate and
+                'NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL' in bridge_gate and
+                'NOT EDEN_NS2_NVDRV_EXPERIMENTAL' in bridge_gate and
                 'NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN' in bridge_gate and
                 'target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")'
                     in bridge_gate and

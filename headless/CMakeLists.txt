@@ -2171,9 +2171,11 @@ option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
     "Research only: explicit NS2 VertexB to Vulkan SPIR-V compiler API" OFF)
 if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     if(NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_NVDRV_EXPERIMENTAL OR
+       NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
         message(FATAL_ERROR
-            "NS2 Vulkan shader bridge requires native PS5 Vulkan and Ampere/metadata research")
+            "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, metadata and native PS5 Vulkan")
     endif()
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
         "${PORT_ROOT}/headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")

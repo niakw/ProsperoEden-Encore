@@ -33,15 +33,17 @@ def main():
             f'add_library(video_core STATIC "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/stub.cpp")\n'
             f'set(PORT_ROOT "{ROOT.as_posix()}")\n'
         )
-        for name in ("NATIVE","VULKAN","AMPERE","METADATA"):
+        for name in ("NATIVE","VULKAN","AMPERE","METADATA","GPU_SESSION","NVDRV"):
             key = {"NATIVE":"PS5_NATIVE","VULKAN":"EDEN_PS5_VULKAN",
                    "AMPERE":"EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL",
-                   "METADATA":"EDEN_NS2_METADATA_EXPERIMENTAL"}[name]
+                   "METADATA":"EDEN_NS2_METADATA_EXPERIMENTAL",
+                   "GPU_SESSION":"EDEN_NS2_GPU_SESSION_EXPERIMENTAL",
+                   "NVDRV":"EDEN_NS2_NVDRV_EXPERIMENTAL"}[name]
             cmake += f"set({key} {dollar}{{NS2_TEST_{name}}})\n"
         cmake += selector
         cmake += f'get_target_property(owner video_core SOURCES)\nfile(WRITE "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/owner.txt" "{dollar}{{owner}}")\n'
         (path/"CMakeLists.txt").write_text(cmake)
-        baseline = {f"NS2_TEST_{n}":True for n in ("NATIVE","VULKAN","AMPERE","METADATA")}
+        baseline = {f"NS2_TEST_{n}":True for n in ("NATIVE","VULKAN","AMPERE","METADATA","GPU_SESSION","NVDRV")}
         off = test(path,"off",baseline,True)
         assert "renderer_spirv_bridge" not in off,off
         enabled = {**baseline,"EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL":True}
@@ -50,7 +52,7 @@ def main():
         assert "ns2_shader_spirv_compile.cpp" in on,on
         for name in baseline:
             test(path,"missing-"+name,{**enabled,name:False},False)
-    print("NS2 renderer selector: PASS (OFF, ON, four missing prerequisite cases)")
+    print("NS2 renderer selector: PASS (OFF, ON, six missing prerequisite cases)")
 
 if __name__=="__main__":
     main()

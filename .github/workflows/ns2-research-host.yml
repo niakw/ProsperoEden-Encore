@@ -20,6 +20,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dynarmic-a64-syntax:
+    name: Compile actual maintained A64 frontend with NS2 overlay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: true
+          fetch-depth: 1
+      - name: Host dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libfmt-dev libboost-dev
+      - name: Copy selected experimental A64 sources like native CMake
+        shell: bash
+        run: |
+          set -euo pipefail
+          overlay=headless/ns2/dynarmic/dynarmic
+          base=build-ns2-a64/include/dynarmic
+          mkdir -p "$base/frontend/A64/decoder" "$base/frontend/A64/translate/impl"
+          cp "$overlay/frontend/A64/decoder/a64.h" "$base/frontend/A64/decoder/a64.h"
+          cp "$overlay/frontend/A64/decoder/a64.inc" "$base/frontend/A64/decoder/a64.inc"
+          for name in a64_branch.cpp impl.h load_store_exclusive.cpp; do
+            cp "$overlay/frontend/A64/translate/impl/$name" "$base/frontend/A64/translate/impl/$name"
+          done
+      - name: Syntax-check actual Encore A64 translator
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+            -DEDEN_NS2_A64_EXPERIMENTAL=1 \
+            -Ibuild-ns2-a64/include \
+            -Ivendor/sources/eden/src/dynarmic/src \
+            -Ivendor/sources/eden/src \
+            vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp
+
   research-host:
     name: NS2 parsing and source-owner guards
     runs-on: ubuntu-24.04

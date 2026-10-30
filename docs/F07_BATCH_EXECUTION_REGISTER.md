@@ -636,3 +636,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 - **Vérification locale limitée :** modèle équivalent compilé Clang C++20 O0/O2 UBSan, témoin `READONLY_TLS_HIT_PASS` aux deux niveaux. **Le test source-lié GitHub sur le SHA courant, les trois gates et le FPS console ne sont pas encore qualifiés**.
 - **Décision :** gain de coût CPU/écriture plausible mais non mesuré sur PS5 ; **J01 reste ouvert, F07 22/29**. Aucun nouveau build natif ni modification du sous-module vendor.
 
+## F07 — J01 : recherche négative bornée du mémo de commit sparse (30 octobre 2026)
+
+- **Source de production :** [`9cbf0ca9`](https://github.com/niakw/ProsperoEden-Encore/commit/9cbf0ca943572ba3b07f1d4c85052158e481e4e2), `headless/jit-sparse-commit.h::SparseCommitPositiveCache::Covers`. La table MRU est remplie contiguëment à partir de l'entrée zéro ; un premier slot vide prouve qu'aucun alias positif ne suit. Le cas courant avec une ou deux arènes n'a donc plus besoin de sonder les quatre entrées sur échec (nouvel arène, nouvel engagement). Le hit sans écriture TLS du lot précédent est conservé.
+- **Régression :** [`ddbbfe7d`](https://github.com/niakw/ProsperoEden-Encore/commit/ddbbfe7dc102555fef6b601ad5663d52f1ecfb28), `tools/check-native-jit-sparse-positive-cache-host.py`, cas froid sur page mémoire en lecture seule, croissance, promotion, cache de deux arènes, éviction et reset d'époque ; déjà appelé dans les workflows `encore-core-fast-gate` et `encore-core-preflight`.
+- **Exécution limitée :** logique C++20 équivalente reproduite et exécutée dans un conteneur indépendant : **Clang -O0/-O2, ASan/UBSan, PASS / PASS** ; aucune preuve de CI sur le SHA source du dépôt ou de gain PS5. Le témoin GitHub est source-lié mais doit encore tourner sur son HEAD.
+- **Statut :** optimisation source intégrée, **J01 non clos, 22/29** décisions PRÉ-BUILD ; 0 mesure console supplémentaire. Aucun build PS5 ni changement de vendor.

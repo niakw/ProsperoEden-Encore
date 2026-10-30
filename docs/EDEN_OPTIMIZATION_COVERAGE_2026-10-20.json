@@ -785,10 +785,10 @@
     {
       "path": "headless/prosperoeden/host/preview_main.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "84ef0e1466b10865f4df12e2c68824dfebe0a941",
+      "reviewed_source_git_blob": "e62c5d2b656016b6dfc0675b88c8379c039f7c72",
       "review_scope": "host-only-test",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Preview Stage render/press/screenshot scripting, including timed waits, host-only. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "Preview Stage render/press/screenshot scripting, including timed waits, host-only. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. 30 Oct 2026 host-only preview re-review: PE_PREVIEW_BRANDED_HOME waits for seven asynchronously decoded original game-cover GL textures (up to 20 s) and pumps frames before capture, and rejects an incomplete screenshot. No shipping code path, guest rendering, memory or Vulkan runtime modified. This is screenshot-test infrastructure only."
     },
     {
       "path": "headless/prosperoeden/pe/audio/mixer.cpp",

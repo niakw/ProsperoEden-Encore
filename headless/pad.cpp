@@ -270,7 +270,10 @@ bool Pad::Poll() {
     }
     ++polls;
     bool primary = false;
-    std::array<ps5::pad::Data, ps5::pad::kMaxSamples> samples{};
+    // scePadRead initializes only its returned sample prefix. Nothing reads
+    // the unused tail (including on errors/zero samples), so avoid clearing
+    // 64 * 120 bytes on every 4 ms controller poll.
+    std::array<ps5::pad::Data, ps5::pad::kMaxSamples> samples;
     for (std::size_t player = 0; player < kMaxPlayers; ++player) {
         const int handle = slots[player].handle;
         if (handle < 0) continue;

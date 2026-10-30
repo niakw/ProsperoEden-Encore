@@ -14,13 +14,14 @@
     <a href="#-why-encore"><strong>Benefits</strong></a> ·
     <a href="#-compatibility--current-limits"><strong>Compatibility</strong></a> ·
     <a href="#-builds--validation"><strong>Builds</strong></a> ·
+    <a href="ACCESSIBILITY.md"><strong>Accessibility</strong></a> ·
     <a href="#credits"><strong>Credits</strong></a>
   </p>
 </div>
 
 <p align="center">
-  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
-  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Native build verification" src="https://img.shields.io/badge/build-native%20package%20checks-5e4db2"></a>
+  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
+  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain"><img alt="Native build verification" src="https://img.shields.io/badge/build-native%20package%20checks-5e4db2"></a>
   <a href="LICENSE"><img alt="License GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-31313a"></a>
 </p>
 
@@ -48,6 +49,8 @@ Emulation on a console is more than booting a game. It should be navigable from 
 | **🎨 Graphics choices** | Vulkan/RADV and OpenGL, shader cache management, upscaling and anti-aliasing controls. |
 | **🔍 Explainable performance** | Frame-time windows, guest/JIT activity, memory pressure, cache locks and IPC—not FPS alone. |
 | **🔐 Safer native operation** | One-shot filesystem access, fail-closed recovery paths, bounded logs and package provenance checks. |
+
+**Accessibility:** [Larger text, High contrast, Reduce motion and controller navigation](ACCESSIBILITY.md) are documented with known limitations.
 
 **Our approach:** preserve a working native foundation, select and adapt upstream improvements, then validate **source → native package → real hardware** independently.
 
@@ -158,13 +161,13 @@ See [Architecture](docs/PS5_NATIVE_ARCHITECTURE.md), [Performance roadmap](docs/
 
 ## 📦 Builds & validation
 
-<kbd>dev/ps5-sparse-jit</kbd> · <kbd>Source & host checks</kbd> · <kbd>Native package checks</kbd> · <kbd>On-device qualification</kbd>
+<kbd>main — official branch</kbd> · <kbd>Source & host checks</kbd> · <kbd>Native package checks</kbd> · <kbd>On-device qualification</kbd>
 
 1. **Source and host gates:** lock in memory/JIT lifetime, launcher contracts, source-provenance assertions and trace-derived regressions.
 2. **Native build:** compile, link, assemble, inspect the installable title and upload both application archives and debug symbols.
 3. **Real hardware:** independently verify startup, controls, frame pacing, content freshness, gameplay progression and safe return to the launcher.
 
-[Source preflight](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Native build artifacts](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Build guide](docs/BUILDING.md)
+[Source preflight](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Native build artifacts](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain) · [Build guide](docs/BUILDING.md)
 
 Download an artifact from a **successful run matching the commit you want to test**, not a previous green build. Passing CI alone does not make a release.
 

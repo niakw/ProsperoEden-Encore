@@ -678,10 +678,9 @@ struct SparseRange {
 };
 std::array<SparseRange, 64> sparse_ranges;
 std::mutex sparse_mutex;
-// Highest slot ever published. All reads/writes happen under sparse_mutex,
-// including teardown; do not rescan 64 entries on first-commit/decommit
-// when a title has only a handful of sparse page tables. Never shrink the
-// bound, because free holes may be reused after a title reset.
+// Bound the owner-locked scan to currently published entries. Holes inside
+// the bound must still be searched; retire only a completely free tail.
+// Registering a new range grows the bound again before releasing the mutex.
 std::size_t sparse_used_prefix = 0;
 std::atomic<std::size_t> sparse_reserved{0}, sparse_committed{0};
 std::atomic<int> sparse_state{0}; // 0 unknown, 1 in use, 2 not available (tables are dense)
@@ -788,6 +787,12 @@ void ReleaseSparse(SparseRange& range) {
     sparse_reserved.fetch_sub(span, std::memory_order_relaxed);
     sparse_committed.fetch_sub(owned * SparseSlot, std::memory_order_relaxed);
     range.begin.store(0, std::memory_order_release);
+    // No readers can inspect the non-atomic range metadata without
+    // sparse_mutex. A released high slot cannot force later first commits
+    // to scan 64 empty records across title restarts.
+    while (sparse_used_prefix > 0 &&
+           sparse_ranges[sparse_used_prefix - 1].begin.load(std::memory_order_relaxed) == 0)
+        --sparse_used_prefix;
     delete[] range.owned;
     delete[] range.physical;
     range.owned = nullptr;

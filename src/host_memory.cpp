@@ -311,6 +311,15 @@ public:
             std::all_of(page_access.begin() + first, page_access.begin() + last + 1,
                         [access](std::uint8_t current) { return current == access; }))
             return;
+        // Short cross-granule permission requests can also be identical.
+        // Check at most 16 pages; a changed byte (or longer span) must
+        // republish every JIT guard, including the predecessor's crossing
+        // bits, via the original Refresh below.
+        if (first < last && last - first < 16 &&
+            first / PagesPerGranule != last / PagesPerGranule &&
+            std::all_of(page_access.begin() + first, page_access.begin() + last + 1,
+                        [access](std::uint8_t current) { return current == access; }))
+            return;
         std::fill(page_access.begin() + first, page_access.begin() + last + 1, access);
         Refresh(first, last);
     }

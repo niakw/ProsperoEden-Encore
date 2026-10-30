@@ -175,6 +175,7 @@ protect_body = '    void Protect(' + source.split('    void Protect(', 1)[1].spl
 assert protect_body.count('if (first == last && page_access[first] == access) return;') == 1
 assert 'first / PagesPerGranule == last / PagesPerGranule' in protect_body
 assert 'std::all_of(page_access.begin() + first, page_access.begin() + last + 1' in protect_body
+assert 'first < last && last - first < 16' in protect_body
 assert protect_body.index('std::lock_guard lock{mutex};') < protect_body.index(
     'if (first == last && page_access[first] == access) return;')
 protect_cpp = r'''
@@ -225,14 +226,26 @@ int main() {
     assert(w.refresh_calls == 4 && w.page_access[3] == 2 &&
            w.page_access[4] == 2);
     w.Protect(0x3fff, 2, 2);
-    assert(w.refresh_calls == 5);
+    assert(w.refresh_calls == 4); // unchanged cross-granule guards
+    w.Protect(0x3fff, 2, 1);
+    assert(w.refresh_calls == 5); // changed cross-granule guards
     w.Protect(WindowBytes - 1, 1, 3);
     assert(w.refresh_calls == 6 && w.map[GuestPages - 1] == 3);
     w.Protect(WindowBytes, 1, 3);
     w.Protect(WindowBytes - 1, 0, 1);
-    assert(w.refresh_calls == 6 && counters.protect_calls == 20008);
-    std::printf("FASTMEM_PROTECT_SAME_GRANULE_NOOP_PASS repeated=20000 "
-                "same16k=1 cross16k=1 changed=1 bounds=1\n");
+    assert(w.refresh_calls == 6 && counters.protect_calls == 20009);
+    TestWindow large;
+    large.Protect(0, 16 * GuestPage, 3);
+    assert(large.refresh_calls == 1);
+    large.Protect(0, 16 * GuestPage, 3);
+    assert(large.refresh_calls == 1); // bounded cross-granule no-op
+    large.Protect(0, 17 * GuestPage, 3);
+    large.Protect(0, 17 * GuestPage, 3);
+    assert(large.refresh_calls == 3); // long requests always republish
+    large.Protect(0, 16 * GuestPage, 1);
+    assert(large.refresh_calls == 4); // any changed permission republished
+    std::printf("FASTMEM_PROTECT_BOUNDED_NOOP_PASS repeated=20000 "
+                "same16k=1 cross16k=1 changed=1 bounded16=1 bounds=1\n");
 }
 '''.replace('PAGES', method).replace('\nPROTECT\n', '\n' + protect_body + '\n')
 assert '\nPROTECT\n' not in protect_cpp

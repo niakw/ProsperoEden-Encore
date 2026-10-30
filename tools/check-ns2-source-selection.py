@@ -295,6 +295,11 @@ def main() -> int:
                 'return FileType::Unknown;' in loader and
                 'constexpr Kind IdentifyName(' in format_header and
                 'constexpr bool HasExistingLoaderRoute(' in format_header and
+                'RequiresRecognizedContent(' in format_header and
+                'MayFallbackByName(' in format_header and
+                '!Eden::NS2::Content::MayFallbackByName(filename_kind)' in loader and
+                'type == FileType::Unknown' in loader and
+                'compressed alias must not enter loader through extension alone' in format_tests and
                 'mkw.xci2' in format_tests and
                 'game-card-key' in format_tests,
                 "NS2 content route audit or unsupported-format guard lost")

@@ -61,6 +61,15 @@ constexpr Route LoaderRoute(Kind kind) {
     default: return Route::Unknown;
     }
 }
+// A compressed .nsz/.xcz wrapper is not a reliable format signature.
+// When the normal NSP/XCI probes cannot identify its underlying container,
+// never blindly instantiate a loader from only its compressed extension.
+constexpr bool RequiresRecognizedContent(Kind kind) {
+    return kind == Kind::NSZ || kind == Kind::XCZ;
+}
+constexpr bool MayFallbackByName(Kind kind) {
+    return !RequiresRecognizedContent(kind);
+}
 constexpr bool HasExistingLoaderRoute(Kind kind) {
     return LoaderRoute(kind) == Route::Executable ||
            LoaderRoute(kind) == Route::ExistingArchive ||

@@ -55,6 +55,24 @@ int main() {
           "legacy registered 00 may still be NCA or NAX, magic wins");
     check(IdentifyName("nca2") == Kind::Unsupported,
           "NCA2 archive variant label is not a Switch 2 file extension");
+    // A malformed compressed wrapper must fail closed. For genuinely
+    // recognized PFS0/XCI contents, the real loader's magic probe wins.
+    check(RequiresRecognizedContent(Kind::XCZ) &&
+          RequiresRecognizedContent(Kind::NSZ) &&
+          !RequiresRecognizedContent(Kind::XCI) &&
+          !RequiresRecognizedContent(Kind::NSP) &&
+          !RequiresRecognizedContent(Kind::NCA),
+          "only compressed aliases require a successfully recognized probe");
+    for (const auto name : {"mkw.xcz", "mkw.XCZ", "mkw.nsz", "mkw.NSZ"}) {
+        check(!MayFallbackByName(IdentifyName(name)),
+              "compressed alias must not enter loader through extension alone");
+    }
+    for (const auto name : {"mkw.xci", "mkw.nsp", "mkw.nca", "main", "00"}) {
+        check(MayFallbackByName(IdentifyName(name)),
+              "existing regular file routes retain backwards-compatible handling");
+    }
+    check(MayFallbackByName(Kind::Unsupported),
+          "unknown files remain controlled by existing loader unsupported routing");
     check(IdentifyName("game-card-key") == Kind::Unsupported,
           "game-key card is a distribution entitlement, not a ROM image");
     std::puts("NS2 content filename recognition: PASS (no Switch 2 boot claim)");

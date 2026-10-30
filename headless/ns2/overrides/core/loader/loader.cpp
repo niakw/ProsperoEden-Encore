@@ -371,6 +371,17 @@ std::unique_ptr<AppLoader> GetLoader(Core::System& system, FileSys::VirtualFile 
     }
 
     FileType type = IdentifyFile(file);
+    const auto filename_kind = Eden::NS2::Content::IdentifyName(file->GetName());
+    // The first-generation loader enum has no distinct NSZ/XCZ variant.
+    // For compressed aliases, the underlying PFS0/XCI parser must really
+    // recognize the content before selecting a loader. A .xcz may hold a
+    // PFS0-shaped NSP; the successful magic probe always wins over its name.
+    if (type == FileType::Unknown &&
+        !Eden::NS2::Content::MayFallbackByName(filename_kind)) {
+        LOG_WARNING(Loader, "Compressed container {} has no recognized PFS0/XCI contents; "
+                            "refusing extension-only loader fallback", file->GetName());
+        return nullptr;
+    }
     const FileType filename_type = GuessFromFilename(file->GetName());
 
     // Special case: 00 is either a NCA or NAX.

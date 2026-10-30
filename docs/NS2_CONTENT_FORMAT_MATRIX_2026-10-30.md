@@ -95,3 +95,22 @@ stable 30-FPS Mario Kart World release or import its entire diff into PS5.
 The next compatibility audit should compare its ExeFS, NCA/content-ID,
 NPDM and graphics patches *per file* with Encore's isolated research overlay,
 then test in CI before any merge.
+
+## N4q — Compressed container loader fallback hardening (research only)
+
+The pinned Encore `FileType` enum lacks distinct `XCZ`/`NSZ` values.
+The research loader already probes the **actual content** with its NSP/XCI
+recognizers, while suffixes `.xcz` and `.nsz` previously fell back to
+regular XCI/NSP loaders if every content probe returned `Unknown`. That
+could present broken or unrelated input as a viable compressed container.
+
+The experimental loader now **rejects an unidentified** `.xcz`/`.nsz`
+before extension-only fallback. Properly identified PFS0-shaped contents
+still use NSP; XCI-shaped contents use XCI. Ordinary `.xci`, `.nsp`,
+`.nca`, standalone ExeFS and **shipping Switch 1** code are unchanged.
+Shared `ns2_content_formats.h` contains the pure policy, with host
+regressions and a source guard to prevent accidental bypass.
+
+This does **not** implement a new Switch 2 encrypted archive format or
+claim that XCZ/NSZ decompression succeeds. Real Nintendo Switch 2 content
+requirements remain separately unverified.

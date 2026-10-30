@@ -15,7 +15,7 @@ root = Path(__file__).resolve().parents[1]
 source = (root / "vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 function = source.index("void Layer::UpdateRawImage(")
-start = "#ifndef PS5_NATIVE\n    const u64 image_offset = GetRawImageOffset(framebuffer, image_index);"
+start = "    const std::span<u8> mapped_span = buffer.Mapped();\n\n#ifndef PS5_NATIVE\n    const u64 image_offset = GetRawImageOffset(framebuffer, image_index);"
 end = "#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure."
 assert source.count(start) == 1 and source.count(end) == 1
 fragment = source[source.index(start, function):source.index(end, function)].rstrip()

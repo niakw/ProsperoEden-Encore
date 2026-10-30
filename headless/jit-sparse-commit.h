@@ -78,6 +78,10 @@ public:
         if (entries[0].executable == executable && required <= entries[0].committed)
             return true;
         for (std::size_t i = 1; i < entries.size(); ++i) {
+            // Remember fills from slot zero; MRU promotion never creates
+            // holes. A negative lookup on the usual 1-2 live JIT arenas
+            // need not probe the remaining unoccupied TLS entries.
+            if (!entries[i].executable) return false;
             if (entries[i].executable != executable || required > entries[i].committed)
                 continue;
             // Only cross-core hits require MRU promotion.

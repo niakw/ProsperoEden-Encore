@@ -10,8 +10,6 @@ on:
       - 'tools/ns2/**'
       - 'tools/check-ns2-*.py'
       - '.github/workflows/ns2-research-host.yml'
-      - 'docs/NS2_PS5_FEASIBILITY_2026-10-30.md'
-      - 'docs/NS2_COMMUNITY_PATCH_TRIAGE_2026-10-30.md'
   workflow_dispatch:
 
 permissions:
@@ -128,68 +126,6 @@ jobs:
             -o build-ns2-a64/npdm-real-test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
             build-ns2-a64/npdm-real-test
-
-  dynarmic-jit-execution:
-    name: Execute actual Dynarmic x86-64 JIT atomic regressions
-    runs-on: ubuntu-24.04
-    timeout-minutes: 18
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          submodules: true
-          fetch-depth: 1
-      - name: Install host tools
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends cmake ninja-build libboost-dev
-      - name: Install Eden-pinned fmt/xbyak
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p build-ns2-jit
-          git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-jit/fmt
-          git clone --depth 1 --branch v7.40.1 https://github.com/herumi/xbyak.git build-ns2-jit/xbyak
-          test "$(git -C build-ns2-jit/fmt rev-parse HEAD)" = 407c905e45ad75fc29bf0f9bb7c5c2fd3475976f
-          for pkg in fmt xbyak; do
-            cmake -S "build-ns2-jit/$pkg" -B "build-ns2-jit/$pkg-build" -G Ninja \
-              -DCMAKE_BUILD_TYPE=Release -DFMT_TEST=OFF \
-              -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build-ns2-jit/prefix"
-            cmake --build "build-ns2-jit/$pkg-build" --parallel 2
-            cmake --install "build-ns2-jit/$pkg-build"
-          done
-      - name: Copy research overlay into disposable vendor checkout
-        shell: bash
-        run: |
-          set -euo pipefail
-          original=vendor/sources/eden/src/dynarmic/src/dynarmic
-          overlay=headless/ns2/dynarmic/dynarmic
-          cp vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp \
-             "$original/frontend/A64/translate/a64_translate.cpp"
-          for path in frontend/A64/decoder/a64.h frontend/A64/decoder/a64.inc \
-              frontend/A64/translate/impl/a64_branch.cpp \
-              frontend/A64/translate/impl/impl.h \
-              frontend/A64/translate/impl/load_store_exclusive.cpp; do
-            cp "$overlay/$path" "$original/$path"
-          done
-      - name: Build actual x64 Dynarmic core
-        shell: bash
-        run: |
-          set -euo pipefail
-          cmake -S tools/ns2/jit-host -B build-ns2-jit/runtime -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/build-ns2-jit/prefix"
-          cmake --build build-ns2-jit/runtime --target ns2_lse_jit_test --parallel 2
-      - name: Execute RETA/LDAPR/LSE memory and retry tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! ctest --test-dir build-ns2-jit/runtime --output-on-failure; then
-            if command -v gdb; then
-              gdb -batch -q -ex run -ex 'bt 24' --args build-ns2-jit/runtime/ns2_lse_jit_test || true
-            fi
-            exit 1
-          fi
 
   research-host:
     name: NS2 parsing and source-owner guards

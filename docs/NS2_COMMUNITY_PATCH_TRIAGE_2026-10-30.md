@@ -70,3 +70,9 @@ The `\default=false` keys are configuration override flags, not executable patch
 - Added `native_gpu_context.h` and `graphics_syncpoint_cache.h` from pinned `0x2593/Eden-NS2@5d2d3cf0a966293fc9ddeac33cf86830a5de206e`. The host harness validates TSG packet size and reserved bytes, 0–63 native subcontexts, known GPU engine class identities, the 192-slot syncpoint layout and 32→64-bit counter rollover.
 - Hardened `NativeSparseMappingTable::Replace` against zero-length, guest VA and source offset overflow, with regression checks preserving existing handle pins on invalid input.
 - These are synthetic ABI tests only. Live GPU session, PS5 GPU execution, register mapping and syncpoint notification are not yet wired to NVDRV/RADV.
+
+## CI throughput — separate expensive Dynarmic runtime build
+
+- Host research CI (`.github/workflows/ns2-research-host.yml`) keeps C++ parser, A64 syntax, AM, NVDRV, HLE, GPU ISA probes and source-owner checks on each relevant change. Documentation-only edits no longer trigger a full build.
+- Full x86-64 Dynarmic JIT execution moved **unchanged** into `.github/workflows/ns2-research-jit.yml` with path filters for A64/CPU6, the JIT-host fixture, vendor pin and the workflow itself. This avoids repeating the heavy Dynarmic compile after unrelated GPU service or doc changes.
+- Both workflows support manual dispatch. A green host CI does **not** replace the latest green JIT runtime test when A64 code changes.

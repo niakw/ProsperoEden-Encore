@@ -80,6 +80,15 @@ int main() {
             branch.image.code.empty(),
             "out-of-bounds native branch is rejected before compiler");
     mem.data.resize(0x80);
+    Push(mem.data,pred_true|0x949); // BRX requires unimplemented CBUF table
+    Push(mem.data,pred_true|0x94d,0,exit_true);
+    mem.mapped_bytes=mem.data.size();
+    auto indirect=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
+    Require(indirect.status==NativeCaptureStatus::UnresolvedIndirectBranch &&
+            indirect.first_error_offset==0x80 &&
+            indirect.image.code.empty(),
+            "BRX must not become a valid image without target-table resolution");
+    mem.data.resize(0x80);
     Push(mem.data,pred_true|0xfff);
     Push(mem.data,pred_true|0x94d,0,exit_true);
     mem.mapped_bytes=mem.data.size();

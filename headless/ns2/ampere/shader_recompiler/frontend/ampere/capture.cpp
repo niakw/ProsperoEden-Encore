@@ -43,6 +43,14 @@ NativeCaptureResult CaptureNativeGraphicsShader(
             for (u32 b = 0; b < 4; ++b)
                 inst.words[w] |= u32{bytes[w * 4 + b]} << (8 * b);
         }
+        // BRX uses a constant-buffer jump table that the standalone
+        // adapter cannot resolve. Never accept a truncated linear capture
+        // as a valid shader with arbitrary unseen branch destinations.
+        if (inst.Bits(0, 12) == 0x949) {
+            result.status = NativeCaptureStatus::UnresolvedIndirectBranch;
+            result.first_error_offset = NativeHeaderBytes + index * sizeof(Instruction);
+            return result;
+        }
         const auto observed = capture.Observe(inst, index);
         if (observed == ProgramCaptureState::Result::InvalidTarget) {
             result.status = NativeCaptureStatus::InvalidBranch;

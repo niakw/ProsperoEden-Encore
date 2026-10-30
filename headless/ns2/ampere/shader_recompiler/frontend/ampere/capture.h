@@ -16,6 +16,7 @@ enum class NativeCaptureStatus : u8 {
     InvalidInput,
     Unmapped,
     InvalidBranch,
+    UnresolvedIndirectBranch,
     NoTerminator,
     TranslationFailed,
 };

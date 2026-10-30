@@ -333,3 +333,8 @@ The actual NS2 loader overlay uses it. See:
   Compute QMD/zero-header shaders, indirect-branch target tables,
   task/mesh shaders and runtime Vulkan pipelines are not yet implemented
   by this bridge. No Switch 2 retail game or PS5 render proof is claimed.
+
+- Safety follow-up: reject native `BRX` (opcode `0x949`) while
+  constant-buffer indirect branch target tables are not available to the
+  adapter; a linear capture must never masquerade as complete when branches
+  may jump beyond its last EXIT. Host regression includes this case.

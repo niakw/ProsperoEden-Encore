@@ -123,6 +123,10 @@ private:
     void CloseSlot(std::size_t player);
     std::shared_ptr<PadEngine> engine;
     float deadzone;
+    // The calibration never changes after construction. Convert all 256
+    // possible DualSense axis bytes once; gameplay samples use a lookup
+    // instead of four floating-point divisions/branches per pad event.
+    std::array<float, 256> stick_curve{};
     float trigger_threshold;
     ButtonMapping mapping = kDefaultMapping;
     const ButtonMapping& ActiveMapping() const noexcept { return mapping; }

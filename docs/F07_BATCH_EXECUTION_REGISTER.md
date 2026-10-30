@@ -780,3 +780,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 
 - `headless/pad.cpp::Pad::Poll` : la zone `std::array<ps5::pad::Data, 64>` faisait 7 680 octets initialisés à zéro à chaque 4 ms ; `scePadRead` remplit uniquement les entrées `[0,count)`, toutes les lectures sont sous `count`, 0/erreurs utilisent les comportements existants. Déclaration sans `{}` : aucune écriture du tampon avant appel natif. Pas de modification des données HID ou du mapping.
 - `tools/check-ps5-pad-freeze-observability.py` : contrat source + C++20 réel de l'ABI `third_party/ps5_pad.hpp`, cas 64/0/3/-1/65/1, O0/O2 ASan+UBSan. Contrat déjà exécuté dans la prévalidation ; verdict CI en attente. Pas de FPS/latence PS5 mesuré ; **F07 22/29** inchangé.
+
+## F07 — PS5 DualSense : courbe des sticks précompilée (30 octobre 2026)
+
+- `headless/pad.cpp::Pad::Consume` : les quatre octets d'axes de chaque sample utilisent une table de 256 `float` préparée **une seule fois** au lancement du contrôleur, au lieu de recalculer normalisation, deadzone, `copysign` et divisions sur les 4 axes du batch. Aucune allocation ni mutex sur le hot path ; mappings guest/motion/rumbles inchangés.
+- `tools/check-fc27-f06-native-pad-transition-host.py` : extrait le vrai calcul constructeur et la vraie méthode `Consume`, rejoue 5 deadzones × 256 valeurs brutes en comparaison bitwise avec la formule précédente ; continue de vérifier 5 phases FC27, relâchements, 64 échantillons, Options/Home/Capture, O0/O2 UBSan.
+- **Portée :** économies CPU input sans prétendre résoudre les saccades GPU. Gates GitHub du SHA en attente, pas de mesure PS5. **Compteur F07 22/29 inchangé**, 0/12 postbuild.

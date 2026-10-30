@@ -45,6 +45,15 @@ assert consume_source.count("MappedTo(active_mapping, pad_create)") == 1
 assert consume_source.index("const int touch_button =") < consume_source.index("for (const auto& raw : samples)")
 assert consume_source.index("const bool create_is_capture =") < consume_source.index("for (const auto& raw : samples)")
 assert "MappedTo(ActiveMapping(), pad_touchpad)" not in consume_source
+assert "std::array<float, 256> stick_curve{};" in HEADER
+assert "const auto axis = [this](u8 raw) { return stick_curve[raw]; };" in consume_source
+assert "std::copysign" not in consume_source
+curve_anchor = "    for (std::size_t raw = 0; raw < stick_curve.size(); ++raw) {"
+assert PAD.count(curve_anchor) == 1
+curve_start = PAD.index(curve_anchor)
+curve_end = PAD.index("\n    }", curve_start) + len("\n    }")
+native_stick_curve = PAD[curve_start:curve_end]
+assert "std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x)" in native_stick_curve
 assert "create_is_capture && (sample.buttons & kButtonCreate)" in consume_source
 
 native_methods = "\n\n".join(extract(signature) for signature in (
@@ -57,6 +66,7 @@ cpp = r"""
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -140,6 +150,11 @@ public:
     std::array<Slot,4> slots{};
     ButtonMapping mapping=kDefaultMapping;
     float deadzone{0.08f},trigger_threshold{0.5f};
+    std::array<float,256> stick_curve{};
+    void RebuildCurve() {
+__NATIVE_STICK_CURVE__
+    }
+    Pad() { RebuildCurve(); }
     bool return_to_menu{},hud_toggle{};
     u64 options_edges{},create_edges{};
     EdgeDiagnostics face_edges{};
@@ -159,6 +174,22 @@ int main() {
     using namespace ps5::pad;
     using V = InputCommon::VirtualGamepad::VirtualButton;
     Pad pad;
+    // Exhaustive byte-for-byte equivalence with the old normalization,
+    // including boundaries, midrange deadzones and extreme valid values.
+    for (const float dz : {0.0f, 0.08f, 0.25f, 0.5f, 0.999f}) {
+        Pad curve_pad;
+        curve_pad.deadzone = dz;
+        curve_pad.RebuildCurve();
+        for (int byte = 0; byte < 256; ++byte) {
+            const float x = (byte - 128) / (byte < 128 ? 128.0f : 127.0f);
+            const float expected = std::abs(x) <= dz ? 0.0f :
+                std::copysign((std::abs(x) - dz) / (1.0f - dz), x);
+            assert(std::bit_cast<std::uint32_t>(curve_pad.stick_curve[byte]) ==
+                   std::bit_cast<std::uint32_t>(expected));
+        }
+    }
+    assert(pad.stick_curve[0] == -1.0f && pad.stick_curve[255] == 1.0f);
+    assert(pad.stick_curve[128] == 0.0f);
     // A physical Circle now presses guest A; physical Cross presses guest B.
     const auto custom=Assign(kPlayStationMapping,game_a,pad_circle);
     assert(ValidMapping(custom));
@@ -247,9 +278,10 @@ int main() {
     std::puts("F06_NATIVE_PAD_TRANSITIONS_PASS phases=5 action_edges=5 "
               "options_plus_edges=5 disconnect_releases=1 "
               "home_chords=1 menu_shortcuts=1 touch_taps=1 "
-              "scope=source_extracted_host_mock_virtual_input_no_guest_Npad");
+              "stick_curve_bytes=256 scope=source_extracted_host_mock_virtual_input_no_guest_Npad");
 }
-""".replace("__NATIVE_METHODS__",native_methods)
+""".replace("__NATIVE_METHODS__",native_methods).replace(
+    "__NATIVE_STICK_CURVE__",native_stick_curve)
 
 # Export the exact generated, source-extracted fixture for the linked F06
 # boundary regression. Default standalone execution remains unchanged.

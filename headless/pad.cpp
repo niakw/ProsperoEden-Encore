@@ -161,6 +161,14 @@ Pad::Pad(float deadzone_, float threshold)
     if (!std::isfinite(deadzone) || deadzone < 0 || deadzone >= 1 ||
         !std::isfinite(threshold) || threshold <= 0 || threshold > 1)
         throw std::invalid_argument("Invalid pad calibration");
+    // Match the old per-sample expression exactly, including asymmetric
+    // [-128,+127] normalization and the signed saturation endpoints.
+    // Constructor-only work; no allocation, lock, or new poll-time clock.
+    for (std::size_t raw = 0; raw < stick_curve.size(); ++raw) {
+        const float x = (static_cast<int>(raw) - 128) / (raw < 128 ? 128.0f : 127.0f);
+        stick_curve[raw] = std::abs(x) <= deadzone ? 0.0f :
+            std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x);
+    }
     Common::Input::RegisterInputFactory("virtual_gamepad",
         std::make_shared<InputCommon::InputFactory>(engine));
     Common::Input::RegisterOutputFactory("virtual_gamepad",
@@ -390,11 +398,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             !slot.guest_home.BlockChordButtons() &&
             (slot.select_held || slot.select_pulse > 0));
     };
-    const auto axis = [this](u8 raw) {
-        const float x = (static_cast<int>(raw) - 128) / (raw < 128 ? 128.0f : 127.0f);
-        return std::abs(x) <= deadzone ? 0.0f :
-            std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x);
-    };
+    const auto axis = [this](u8 raw) { return stick_curve[raw]; };
     auto& last_buttons = slots[player].last_buttons;
     for (const auto& raw : samples) {
         auto sample = is_usable(raw) ? raw : neutral_data(raw.timestamp_us);

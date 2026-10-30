@@ -802,6 +802,7 @@ adapt('src/video_core/renderer_vulkan/vk_present_manager.h',
      '    std::condition_variable_any present_ready_cv;'),
     ('    std::jthread present_thread;',
      '    bool present_in_flight{}; // guarded by queue_mutex\n'
+     '    std::size_t present_waiters{}; // guarded by queue_mutex\n'
      '    std::exception_ptr present_failure;\n    std::jthread present_thread;'),
     # R335: declare frame abandonment on repeated surface loss.
     ('    void SetImageCount();',
@@ -931,11 +932,15 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
      '            // Publish completion only AFTER presentation and frame handoff.\n'
      '            // Release swapchain mutex before reacquiring queue_mutex.\n'
      '            lock.unlock();\n'
+     '            bool notify_drainers{};\n'
      '            {\n'
      '                std::lock_guard queue_lock{queue_mutex};\n'
      '                present_in_flight = false;\n'
+     '                // A future WaitPresent sees an already idle queue under\n'
+     '                // this same mutex; no wake is lost if nobody waits now.\n'
+     '                notify_drainers = present_waiters != 0;\n'
      '            }\n'
-     '            frame_cv.notify_all();'),
+     '            if (notify_drainers) frame_cv.notify_all();'),
     # Release free_mutex before waking the producer of the next frame.
     ('                free_queue.push_back(frame);\n'
      '                free_cv.notify_one();\n'
@@ -948,8 +953,16 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
      '            free_cv.notify_one();\n'
      '            // Publish completion'),
     ('frame_cv.wait(queue_lock, [this] { return present_queue.empty(); });',
-     'frame_cv.wait(queue_lock, [this] { return present_failure || '
-     '(present_queue.empty() && !present_in_flight); });\n'
+     '// No drain waiter is needed when the queue is already idle.\n'
+     '        // Register real waiters under queue_mutex before sleeping so the\n'
+     '        // present worker can skip useless per-frame CV notifications.\n'
+     '        if (!present_failure && (!present_queue.empty() || present_in_flight)) {\n'
+     '            ++present_waiters;\n'
+     '            frame_cv.wait(queue_lock, [this] {\n'
+     '                return present_failure || (present_queue.empty() && !present_in_flight);\n'
+     '            });\n'
+     '            --present_waiters;\n'
+     '        }\n'
      '        if (present_failure) std::rethrow_exception(present_failure);'),
     # Synchronous presentation must publish its recycled frame under the
     # same mutex as GetRenderFrame and wake blocked frame consumers.

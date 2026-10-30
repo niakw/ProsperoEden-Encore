@@ -12,6 +12,11 @@ root = Path(__file__).resolve().parents[1]
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 checks = (
     "bool present_in_flight{}; // guarded by queue_mutex",
+    "std::size_t present_waiters{}; // guarded by queue_mutex",
+    "notify_drainers = present_waiters != 0;",
+    "if (notify_drainers) frame_cv.notify_all();",
+    "++present_waiters;",
+    "--present_waiters;",
     "present_queue.pop_front();\\n            present_in_flight = true;",
     "present_in_flight = false;",
     "(present_queue.empty() && !present_in_flight)",
@@ -55,6 +60,11 @@ assert wait_present.index("frame_cv.wait(") < wait_present.index(
     "std::scoped_lock swapchain_lock{swapchain_mutex};")
 assert "present_in_flight = true;" in present_thread
 assert "present_in_flight = false;" in present_thread
+assert "notify_drainers = present_waiters != 0;" in present_thread
+assert "if (notify_drainers) frame_cv.notify_all();" in present_thread
+assert "++present_waiters;" in wait_present
+assert "--present_waiters;" in wait_present
+assert wait_present.index("++present_waiters;") < wait_present.index("frame_cv.wait(") < wait_present.index("--present_waiters;")
 # Both WaitPresent and the present worker wait on frame_cv. A single notify_one
 # on enqueue could choose the drain waiter and leave the worker asleep.
 enqueue = section("void PresentManager::Present(Frame* frame) {",
@@ -94,6 +104,9 @@ struct Gate {
     std::deque<int> present_queue, free_queue;
     std::exception_ptr present_failure;
     bool present_in_flight{};
+    unsigned present_waiters{};
+    std::atomic<unsigned> drain_wake_calls{0};
+    std::atomic<unsigned> wait_entered{0};
     std::atomic<int> completed{0};
     std::atomic<unsigned> presenter_wakes{0};
     void Queue(int id) {
@@ -124,12 +137,17 @@ struct Gate {
         }
         free_cv.notify_one();
         swapchain_lock.unlock();
+        bool notify_drainers{};
         {
             std::lock_guard queue_lock{queue_mutex};
             present_in_flight = false;
+            notify_drainers = present_waiters != 0;
         }
         ++completed;
-        frame_cv.notify_all();
+        if (notify_drainers) {
+            drain_wake_calls.fetch_add(1, std::memory_order_relaxed);
+            frame_cv.notify_all();
+        }
     }
     void Fail(std::exception_ptr error) {
         {
@@ -144,9 +162,14 @@ struct Gate {
     void WaitPresent() {
         {
             std::unique_lock queue_lock{queue_mutex};
-            frame_cv.wait(queue_lock, [this] {
-                return present_failure || (present_queue.empty() && !present_in_flight);
-            });
+            if (!present_failure && (!present_queue.empty() || present_in_flight)) {
+                ++present_waiters;
+                wait_entered.fetch_add(1, std::memory_order_release);
+                frame_cv.wait(queue_lock, [this] {
+                    return present_failure || (present_queue.empty() && !present_in_flight);
+                });
+                --present_waiters;
+            }
             if (present_failure) std::rethrow_exception(present_failure);
         }
         std::scoped_lock swapchain_lock{swapchain_mutex};
@@ -213,6 +236,35 @@ int main() {
         drain.join();
         worker.join();
         assert(g.completed == 1);
+    }
+    // An idle queue has no drain waiter: repeated frame completions
+    // must not awaken any thread. With a registered drain waiter, the
+    // completion notification must be delivered before the join.
+    for (unsigned run=0; run<24; ++run) {
+        Gate quiet;
+        for (int i=0; i<20; ++i) {
+            quiet.Queue(i);
+            quiet.CopyOne(false);
+        }
+        assert(quiet.drain_wake_calls == 0);
+        quiet.WaitPresent();
+        assert(quiet.drain_wake_calls == 0);
+        Gate waiting;
+        waiting.Queue(10);
+        std::thread drain{[&] { waiting.WaitPresent(); }};
+        bool observed = false;
+        for (unsigned tries=0; tries<1000000; ++tries) {
+            if (waiting.wait_entered.load(std::memory_order_acquire) != 0) {
+                observed = true;
+                break;
+            }
+            std::this_thread::yield();
+        }
+        assert(observed);
+        waiting.CopyOne(false);
+        drain.join();
+        assert(waiting.drain_wake_calls == 1);
+        assert(waiting.present_waiters == 0);
     }
     // If GPU fence wait keeps the free queue locked, the producer cannot
     // recycle an independent frame. Probe with try_lock while consumer is

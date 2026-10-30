@@ -61,6 +61,7 @@ for path, expected_sha in expected_blobs.items():
 header = rendered["src/video_core/renderer_vulkan/vk_present_manager.h"]
 source = rendered["src/video_core/renderer_vulkan/vk_present_manager.cpp"]
 assert "bool present_in_flight{}; // guarded by queue_mutex" in header
+assert "std::size_t present_waiters{}; // guarded by queue_mutex" in header
 assert "std::condition_variable_any present_ready_cv;" in header
 assert "#include <exception>" in header
 assert "std::exception_ptr present_failure;" in header
@@ -88,6 +89,9 @@ assert "free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(
 wait_present = source.split("void PresentManager::WaitPresent() {", 1)[1].split(
     "void PresentManager::PresentThread(", 1)[0]
 assert "(present_queue.empty() && !present_in_flight)" in wait_present
+assert "++present_waiters;" in wait_present
+assert "--present_waiters;" in wait_present
+assert wait_present.index("++present_waiters;") < wait_present.index("frame_cv.wait(") < wait_present.index("--present_waiters;")
 assert wait_present.index("if (present_failure) std::rethrow_exception(present_failure);") < (
     wait_present.index("std::scoped_lock swapchain_lock{swapchain_mutex};")
 )
@@ -126,6 +130,8 @@ assert worker.index("lock.unlock();") < worker.index("std::lock_guard queue_lock
 assert worker.index("std::lock_guard queue_lock{queue_mutex};") < worker.index(
     "present_in_flight = false;")
 assert worker.index("present_in_flight = false;") < worker.index("frame_cv.notify_all();")
+assert "notify_drainers = present_waiters != 0;" in worker
+assert "if (notify_drainers) frame_cv.notify_all();" in worker
 assert "void(std::exchange(lock, std::unique_lock{swapchain_mutex}));" in worker
 assert worker.count("present_in_flight = true;") == 1
 assert worker.count("present_in_flight = false;") == 1

@@ -28,6 +28,12 @@ before submitting the change. The distributable PS5 legal bundle must retain thi
 - FPKG entitlement/PPR and external kstuff/jailbreak problems are outside Encore's emulator scope
   unless the report demonstrates a separate bug in Encore itself.
 
+## Active development branch
+
+**All new changes belong on `main`** in [niakw/ProsperoEden-Encore](https://github.com/niakw/ProsperoEden-Encore). Do not target the historical `dev/ps5-sparse-jit` branch or the former fork. Refresh the current `main` HEAD before writing; never force-push over concurrent F07 work. Base contributions on `main`.
+
+For UI or input changes, review [ACCESSIBILITY.md](ACCESSIBILITY.md) and report which launcher accessibility options were checked and whether real-PS5 validation exists.
+
 ## Development principles
 
 Prefer changes that are:
@@ -61,6 +67,7 @@ A useful pull request should:
 - identify security or compatibility trade-offs;
 - include tests or validation when practical;
 - keep documentation and translations in sync;
+- check accessibility and focus visibility for launcher/UI changes;
 - avoid unrelated refactors;
 - pass the release build and CodeQL.
 

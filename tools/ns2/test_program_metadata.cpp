@@ -4,6 +4,10 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <fstream>
+#include <iterator>
+#include <array>
+#include "core/loader/ns2_nso_preflight.h"
 #include <memory>
 #include <optional>
 #include <string>
@@ -100,7 +104,9 @@ static Loader::ResultStatus parse(const std::vector<u8>& bytes, bool* ns2=nullpt
         *program_id=metadata.GetTitleID();
     return status;
 }
-int main() {
+int main(int argc, char** argv) {
+    require(argc == 1 || argc == 3,
+            "usage: test_program_metadata [main.npdm main]");
     bool ns2=false;
     std::uint64_t id=0;
     const auto legacy=valid(false);
@@ -129,5 +135,38 @@ int main() {
             "overflowing ACID rejected");
     require(parse(std::vector<u8>(0x20))==Loader::ResultStatus::ErrorBadNPDMHeader,
             "truncated META rejected");
-    std::cout << "real ProgramMetadata::Load synthetic NPDM: PASS\n";
+    if (argc == 3) {
+        const auto read_file = [](const char* name) {
+            std::ifstream f(name, std::ios::binary);
+            require(bool(f), "ExeFS file cannot be opened");
+            return std::vector<u8>(std::istreambuf_iterator<char>{f},
+                                   std::istreambuf_iterator<char>{});
+        };
+        const auto npdm = read_file(argv[1]);
+        const auto main_nso = read_file(argv[2]);
+        require(npdm.size() == 0x600 && main_nso.size() >= Eden::NS2::ExeFS::NsoHeaderBytes,
+                "Invalid ExeFS research fixture size");
+        FileSys::ProgramMetadata actual;
+        require(actual.Load(std::make_shared<FixtureFile>(npdm)) ==
+                    Loader::ResultStatus::Success, "Real parser rejected ExeFS main.npdm");
+        require(actual.IsSwitch2() && actual.Is64BitProgram() &&
+                    actual.GetAddressSpaceType() == FileSys::ProgramAddressSpaceType::Is39Bit &&
+                    actual.GetPoolPartition() == FileSys::PoolPartition::Application &&
+                    actual.GetMainThreadCore() == 0 &&
+                    actual.GetMainThreadPriority() == 0x2C &&
+                    actual.GetMainThreadStackSize() == 0x100000 &&
+                    actual.GetTitleID() == 0x0100000000000420ULL &&
+                    actual.GetKernelCapabilities().empty(),
+                "Real parser rejected expected AArch64 NS2 process attributes");
+        std::array<std::uint8_t, Eden::NS2::ExeFS::NsoHeaderBytes> header{};
+        std::copy_n(main_nso.data(), header.size(), header.data());
+        require(Eden::NS2::ExeFS::PreflightNso(header, main_nso.size()).Ready(),
+                "Real NS2 ExeFS header guard rejected homebrew main");
+        require(std::search(main_nso.begin(), main_nso.end(),
+                            "hello from HOS\\n", "hello from HOS\\n" + 15)
+                    != main_nso.end(), "Unexpected AArch64 public NSO test text");
+        std::cout << "Real parser + NSO0 guard: paired public ExeFS fixture PASS"
+                  << " (no KProcess or HLE boot)\\n";
+    }
+    std::cout << "real ProgramMetadata::Load synthetic NPDM: PASS\\n";
 }

@@ -9,6 +9,9 @@ on:
       - 'headless/ns2/cpu6/**'
       - 'tools/ns2/jit-host/**'
       - 'tools/ns2/build_public_nso_fixture.py'
+      - 'tools/ns2/build_public_exefs_fixture.py'
+      - 'tools/ns2/test_program_metadata.cpp'
+      - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
       - 'headless/ns2/overrides/core/loader/ns2_nso_preflight.h'
       - 'vendor'
       - '.github/workflows/ns2-research-jit.yml'
@@ -72,6 +75,26 @@ jobs:
           python3 tools/ns2/build_public_nso_fixture.py \
             --output build-ns2-jit/public-nso/hello.nso
           file build-ns2-jit/public-nso/hello.elf build-ns2-jit/public-nso/hello.nso
+      - name: Validate paired public ExeFS with Encore's actual NPDM parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/build_public_exefs_fixture.py \
+            --nso build-ns2-jit/public-nso/hello.nso \
+            --output-dir build-ns2-jit/public-exefs
+          clang++ -std=c++20 -O1 -fno-omit-frame-pointer \
+            -fsanitize=address,undefined -fno-sanitize-recover=all \
+            -ffunction-sections -fdata-sections -Wl,--gc-sections \
+            -Ibuild-ns2-jit/prefix/include \
+            -Iheadless/ns2/overrides -Iheadless/ns2 \
+            -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
+            tools/ns2/test_program_metadata.cpp \
+            headless/ns2/overrides/core/file_sys/program_metadata.cpp \
+            -o build-ns2-jit/public-nso/exefs-pair-test
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
+            build-ns2-jit/public-nso/exefs-pair-test \
+              build-ns2-jit/public-exefs/main.npdm \
+              build-ns2-jit/public-exefs/main
       - name: Build actual x64 Dynarmic core
         shell: bash
         run: |

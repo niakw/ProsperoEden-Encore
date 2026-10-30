@@ -180,3 +180,23 @@ The generated source is checked for its exact owner anchors, syntax-compiled
 in CI, and the bounded process-specific gate runs under Clang and GCC. This
 makes live native NS2 SVC dispatch **observable on a future authorized boot**;
 it is not itself a proof that the kernel invoked those handlers on a console.
+
+## N3w — reproducible paired ExeFS input for a future native process boot
+
+`tools/ns2/build_public_exefs_fixture.py` takes only the already independently
+cross-assembled and Git-blob-verified public HOS AArch64 NSO0, and creates a
+disposable extracted ExeFS directory containing `main` and `main.npdm`.
+The NPDM is **synthetic, unsigned** and intentionally uses the experimental
+extended ACID location, AArch64 instructions, 39-bit guest address space,
+application memory pool, main-thread priority/core and a bounded stack.
+This is a research fixture, **not** a Nintendo Switch 2 title/firmware.
+
+The JIT workflow now combines those two physical files into an executable
+regression against the **actual** experimental
+`FileSys::ProgramMetadata::Load` and `PreflightNso`, verifies guest process
+attributes, then separately runs the public AArch64 homebrew in the real
+maintained host Dynarmic JIT with its existing deterministic six-SVC stub.
+These are distinct validation stages, **not** execution of the paired ExeFS
+through `Core::System::Load`, `KProcess`, native PS5 or production HLE.
+Full process initialization, actual service execution and native GPU output
+remain prerequisites for a real Switch 2 compatibility claim.

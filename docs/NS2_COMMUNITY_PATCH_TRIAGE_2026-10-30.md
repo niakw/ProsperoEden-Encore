@@ -123,3 +123,10 @@ The `\default=false` keys are configuration override flags, not executable patch
 - `IGpuSession` implements TIPC **11** (range 0–63) and **12** (per-index `KEvent`/readable handle) with the existing strict packet decoder. Events are lazily allocated, shared on repeated requests for the same index, moved with a real kernel reference, and cleaned up by `ServiceContext` when the session is destroyed.
 - A failed kernel allocation reports `ResultOutOfResource`; invalid indices/header report `ResultInvalidCombination`. It does **not** invent a GPU completion signal. **21/22 worker request/acquire** remain unimplemented pending actual NVDRV native mapping and queue submission.
 - The source owner guard ensures real event Create/Close and absence of fake worker handlers. CI syntax-compiles the full research service. This is not native PS5 GPU rendering or Switch 2 game support.
+
+## N4h — GPU worker 4-KiB mapping preflight and ownership ledger (host-only)
+
+- Added `gpu_worker_protocol.h` with strict TIPC **211/212/213** decoding: bounded words, inclusive-end overflow checks, 4-KiB alignment, max 32-bit page count, event IDs, byte parameter padding, and native kind fallback. Unsupported permissions/cache/mode/sync/kinds are rejected.
+- Added a bounded **4,096-entry mapping ledger** enforcing per-AS non-overlap, exact unmap, contained modification and backend-commit-only semantics. This ledger **does not** map GPU memory; a future native backend must call it after successful page-table operations.
+- C++20 O0/O2+UBSan host fixtures cover malformed/truncated messages, VA/offset overflow, duplicate/adjacent/intersecting allocations, and exhaustion. Source guards forbid registering worker commands without a real NVDRV mapping backend.
+- All NS2 options remain OFF for shipping builds; no changes to `main` or F07, and **no Switch 2 GPU rendering or game compatibility is claimed**.

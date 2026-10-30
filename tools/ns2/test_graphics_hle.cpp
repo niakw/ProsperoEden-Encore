@@ -14,6 +14,7 @@
 #include "core/hle/service/am/service/graphics_syncpoint_cache.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 #include "core/hle/service/am/service/graphics_supervisor_bootstrap.h"
+#include "core/hle/service/am/service/gpu_worker_protocol.h"
 
 static int assertions=0;
 static void require(bool condition,const char* desc){
@@ -421,6 +422,119 @@ int main(){
     const std::array<GP::U32,2> acquireWorker{0x26,0};
     require(GP::IsAcquireWorker(acquireWorker),
             "worker acquisition TIPC envelope validated");
+
+
+    // Native 4-KiB mapping ABI is tested independently; no live handler yet.
+    namespace WP=Service::AM::GpuWorkerProtocol;
+    static_assert(WP::PageSize==4096 && WP::MaxNotifications==64 &&
+                  WP::MaxMappings==4096);
+    std::array<WP::U32,18> rawMap{
+        0xe3,16,9,0x4000,0,0x5fff,0,17,0x1000,0,0,1,6,6,0,1,1,63};
+    const auto map=WP::DecodeMap(rawMap);
+    require(map && map->address_space==9 && map->memory==17 &&
+            map->address==0x4000 && map->size==0x2000 &&
+            map->memory_offset==0x1000 && map->selected_kind==6 &&
+            map->notification==63 && map->device==1,
+            "NS2 4K mapping packet decodes full-width VA, resource and native kind");
+    auto mutated=rawMap;
+    mutated[11]=0xdeadbe01;mutated[12]=0xcafe0006;mutated[13]=0xbeef0006;
+    mutated[15]=0x10001;mutated[16]=0xffffff01;
+    require(WP::DecodeMap(mutated).has_value(),
+            "TIPC byte fields ignore undefined upper padding bits");
+    mutated=rawMap;mutated[0]=0xe2;
+    require(!WP::DecodeMap(mutated), "wrong command header rejected");
+    mutated=rawMap;mutated[10]=1;
+    require(!WP::DecodeMap(mutated), "unsupported permission rejected");
+    mutated=rawMap;mutated[11]=2;
+    require(!WP::DecodeMap(mutated), "invalid cache mode rejected");
+    mutated=rawMap;mutated[14]=1;
+    require(!WP::DecodeMap(mutated), "unknown map mode rejected");
+    mutated=rawMap;mutated[16]=2;
+    require(!WP::DecodeMap(mutated), "invalid sync mode rejected");
+    mutated=rawMap;mutated[17]=64;
+    require(!WP::DecodeMap(mutated), "event index 64 rejected");
+    mutated=rawMap;mutated[15]=0;
+    require(!WP::DecodeMap(mutated), "device zero reserved");
+    mutated=rawMap;mutated[7]=0;
+    require(!WP::DecodeMap(mutated), "unallocated memory ID rejected");
+    mutated=rawMap;mutated[3]=0x4001;
+    require(!WP::DecodeMap(mutated), "unaligned VA rejected");
+    mutated=rawMap;mutated[5]=0x5000;
+    require(!WP::DecodeMap(mutated), "unaligned inclusive end rejected");
+    mutated=rawMap;mutated[8]=0x1001;
+    require(!WP::DecodeMap(mutated), "unaligned memory offset rejected");
+    mutated=rawMap;mutated[5]=0xffffffff;mutated[6]=0xffffffff;
+    require(!WP::DecodeMap(mutated), "uint64 inclusive end cannot wrap");
+    mutated=rawMap;mutated[8]=0xfffff000;mutated[9]=0xffffffff;
+    require(!WP::DecodeMap(mutated), "physical source offset overflow rejected");
+    mutated=rawMap;mutated[12]=8;mutated[13]=7;
+    require(!WP::DecodeMap(mutated), "unknown native kind rejected");
+    mutated=rawMap;mutated[12]=8;mutated[13]=6;
+    require(WP::DecodeMap(mutated) && WP::DecodeMap(mutated)->selected_kind==6,
+            "compressed kind explicitly falls back to supported one");
+    require(!WP::DecodeMap(std::span<const WP::U32>{rawMap.data(),17}),
+            "truncated raw worker message rejected");
+    const std::array<WP::U32,9> rawUnmap{
+        0xe5,7,9,0x4000,0,0x5fff,0,1,63};
+    const auto unmap=WP::DecodeUnmap(rawUnmap);
+    require(unmap && unmap->size==0x2000 && unmap->sync==1,
+            "unmap uses matching inclusive 4K range");
+    auto badUnmap=rawUnmap;badUnmap[8]=64;
+    require(!WP::DecodeUnmap(badUnmap), "unmap event index bounded");
+    badUnmap=rawUnmap;badUnmap[5]=0x6000;
+    require(!WP::DecodeUnmap(badUnmap), "unmap rejects fractional page");
+    const std::array<WP::U32,11> rawModify{
+        0xe4,9,9,0x5000,0,0x5fff,0,8,6,1,63};
+    const auto modify=WP::DecodeModify(rawModify);
+    require(modify && modify->size==4096 && modify->selected_kind==6,
+            "modify kind uses valid fallback and page size");
+    auto badModify=rawModify;badModify[10]=64;
+    require(!WP::DecodeModify(badModify), "modify event index bounded");
+    badModify=rawModify;badModify[8]=7;
+    require(!WP::DecodeModify(badModify), "unsupported modify kind rejected");
+
+    WP::MappingLedger ledger;
+    require(ledger.CanMap(*map)==WP::LedgerStatus::Success &&
+            ledger.RecordMapped(*map)==WP::LedgerStatus::Success &&
+            ledger.Count()==1, "ledger records only committed GPU mapping");
+    require(ledger.RecordMapped(*map)==WP::LedgerStatus::Overlap &&
+            ledger.Count()==1, "duplicate mapping cannot overwrite owner");
+    auto overlap=*map;overlap.address=0x5000;overlap.size=0x1000;
+    require(ledger.CanMap(overlap)==WP::LedgerStatus::Overlap,
+            "successor overlapping mapping denied");
+    overlap.address=0x3000;overlap.size=0x2000;
+    require(ledger.CanMap(overlap)==WP::LedgerStatus::Overlap,
+            "predecessor overlapping mapping denied");
+    overlap.address=0x6000;overlap.size=0x1000;
+    require(ledger.RecordMapped(overlap)==WP::LedgerStatus::Success &&
+            ledger.Count()==2, "adjacent mapping permitted");
+    overlap.address=0x4000;overlap.address_space=10;
+    require(ledger.RecordMapped(overlap)==WP::LedgerStatus::Success &&
+            ledger.Count()==3, "separate GPU address space independent");
+    require(ledger.CanModify(*modify)==WP::LedgerStatus::Success,
+            "valid contained kind update");
+    auto escaped=*modify;escaped.size=0x2000;
+    require(ledger.CanModify(escaped)==WP::LedgerStatus::NotFound,
+            "kind update cannot escape owned range");
+    auto partial=*unmap;partial.size=0x1000;
+    require(ledger.CanUnmap(partial)==WP::LedgerStatus::NotFound &&
+            ledger.RecordUnmapped(partial)==WP::LedgerStatus::NotFound &&
+            ledger.Count()==3, "partial unmap does not discard ownership");
+    require(ledger.RecordUnmapped(*unmap)==WP::LedgerStatus::Success &&
+            ledger.RecordUnmapped(*unmap)==WP::LedgerStatus::NotFound &&
+            ledger.Count()==2, "exact unmap commits once");
+    WP::MappingLedger bounded;
+    auto fill=*map;fill.size=0x1000;
+    for (std::size_t i=0;i<WP::MaxMappings;++i) {
+        fill.address=0x100000+(i*0x1000);
+        require(bounded.RecordMapped(fill)==WP::LedgerStatus::Success,
+                "bounded mapping table must accept all allowed slots");
+    }
+    fill.address=0x100000+(WP::MaxMappings*0x1000);
+    require(bounded.Count()==WP::MaxMappings &&
+            bounded.RecordMapped(fill)==WP::LedgerStatus::OutOfResource &&
+            bounded.Count()==WP::MaxMappings,
+            "4K mapping table exhaustion is deterministic");
 
     const auto generic=N::SelectNativeMemoryKind(6,6);
     require(generic && generic->selected==6 &&

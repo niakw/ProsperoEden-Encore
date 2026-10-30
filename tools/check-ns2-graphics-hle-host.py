@@ -22,6 +22,7 @@ EXPECTED=[
     HEADERS/"core/hle/service/am/service/graphics_syncpoint_cache.h",
     HEADERS/"core/hle/service/am/service/gpu_session_protocol.h",
     HEADERS/"core/hle/service/am/service/graphics_supervisor_bootstrap.h",
+    HEADERS/"core/hle/service/am/service/gpu_worker_protocol.h",
 ]
 def main()->int:
     if not all(f.is_file() for f in EXPECTED):

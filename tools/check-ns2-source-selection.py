@@ -97,6 +97,19 @@ def main() -> int:
                 "m_module->Close(" in service_cpp and
                 "CloseSession(Nvidia::NvCore::SessionId{" in service_cpp,
                 "NS2 GPU service must own real NVDRV descriptors and safely close them")
+        worker_header = ROOT / "headless/ns2/hle/core/hle/service/am/service/gpu_worker_protocol.h"
+        worker_cpp = worker_header.read_text()
+        require("class MappingLedger" in worker_cpp and
+                "LedgerStatus RecordMapped" in worker_cpp and
+                "LedgerStatus RecordUnmapped" in worker_cpp and
+                "DecodeMap(" in worker_cpp and "DecodeUnmap(" in worker_cpp and
+                "DecodeModify(" in worker_cpp and
+                "MaxMappings = 4096" in worker_cpp,
+                "NS2 4K worker preflight / bounded ledger missing")
+        require('{211, &IGpuWorker::NormalMapGpuMemory4K' not in service_cpp and
+                '{21, &IGpuSession::RequestWorker' not in service_cpp and
+                '{22, &IGpuSession::AcquireWorker' not in service_cpp,
+                "Native GPU workers require real NVDRV mapping before registration")
         supervisor_selection = CMAKE.index("# Research-only SelfController -> GraphicsSupervisor")
         require(session_selection < supervisor_selection < release_gate and
                 "EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR" in CMAKE and

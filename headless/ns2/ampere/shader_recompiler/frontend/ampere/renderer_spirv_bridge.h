@@ -19,6 +19,7 @@ enum class NativeSpirvStatus : u8 {
     Ready,
     UnsupportedStage,
     InvalidImage,
+    InactiveSession,
     CompilationFailed,
     InvalidModule,
 };

@@ -337,6 +337,17 @@ jobs:
               -Ivendor/sources/eden/src \
               headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp
           done
+      - name: Test native GPU session generation tickets under contention
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "${cxx}" -std=c++20 -O2 -Wall -Wextra -Werror -pthread \
+              -Iheadless/ns2/hle \
+              tools/ns2/test_native_gpu_process_registry.cpp \
+              -o "build-ns2-a64/ns2-registry-${cxx//+/}"
+            "build-ns2-a64/ns2-registry-${cxx//+/}"
+          done
       - name: Syntax-check explicitly owned NS2 GPU capture to SPIR-V API (Clang and GCC)
         shell: bash
         run: |
@@ -345,6 +356,7 @@ jobs:
             "${cxx}" -std=c++20 -fsyntax-only -Wall -Wextra -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless/ns2/ampere \
+              -Iheadless/ns2/hle \
               -Ivendor/sources/eden/src \
               headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp
           done

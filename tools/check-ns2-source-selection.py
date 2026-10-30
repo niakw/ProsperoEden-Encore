@@ -53,10 +53,22 @@ def main() -> int:
                     in bridge_gate and
                 'ns2_shader_spirv_compile.cpp' in bridge_gate,
                 "Explicit NS2 GMMU shader compile source must only exist in bridge mode")
+        registry_header = ROOT / "headless/ns2/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+        registry_code = registry_header.read_text()
+        require("CaptureTicket(" in registry_code and "IsCurrent(" in registry_code and
+                "generation" in registry_code and
+                "std::numeric_limits<std::uint64_t>::max()" in registry_code,
+                "NS2 shader ownership must use nonreusable session tickets")
+        require('target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/headless/ns2/hle")'
+                    in bridge_gate,
+                "NS2 video_core must compile with the session registry overlay")
         pipeline_source = ROOT / "headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp"
         require(pipeline_source.is_file() and
                 "CaptureNs2GraphicsShaderFromGpu(" in pipeline_source.read_text() and
-                "CompileReviewedNativeVertexSpirv(" in pipeline_source.read_text(),
+                "CompileReviewedNativeVertexSpirv(" in pipeline_source.read_text() and
+                "registry.CaptureTicket(process)" in pipeline_source.read_text() and
+                pipeline_source.read_text().count("registry.IsCurrent(*session)") == 2 and
+                "NativeSpirvStatus::InactiveSession" in pipeline_source.read_text(),
                 "Real GMMU-to-SPIR-V owner is missing")
         bridge_source = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
         require(bridge_source.is_file() and

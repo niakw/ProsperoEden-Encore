@@ -48,6 +48,7 @@ static void check(bool ok,const char* msg) {
     if(!ok){std::cerr<<"FAIL "<<msg<<"\n";std::exit(1);}
 }
 static void atomic(std::string_view op,u64 before,u64 src,u64 after,bool cas,unsigned fails=0){
+    std::cerr << "RUN " << op << " before=" << before << " src=" << src << " after=" << after << " fails=" << fails << std::endl;
     Env env;Dynarmic::A64::UserConfig conf{}; conf.callbacks=&env;
     conf.code_cache_size=16*1024*1024;
     Dynarmic::A64::Jit jit{conf};
@@ -73,6 +74,7 @@ int main(){
     atomic("LDSET",16,0x81,0x91,false);
     atomic("LDEOR",48,0x14,0x24,false);
     {
+        std::cerr << "RUN RETAA" << std::endl;
         Env env; Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;
         Dynarmic::A64::Jit jit{cfg};
         env.code_mem={0xD65F0BFF,0x14000000};
@@ -80,6 +82,7 @@ int main(){
         check(jit.GetPC()==4,"RETAA return");
     }
     {
+        std::cerr << "RUN LDAPR" << std::endl;
         Env env;Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;
         Dynarmic::A64::Jit jit{cfg};
         env.code_mem={encode("LDAPR",{{'s',3},{'n',1},{'t',3}}),0x14000000};

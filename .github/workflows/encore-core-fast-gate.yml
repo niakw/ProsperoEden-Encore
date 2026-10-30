@@ -442,6 +442,7 @@ jobs:
           python3 -B tools/check-native-jit-alias-lookup-host.py
           python3 -B tools/check-native-sparse-jit-trim-host.py
           python3 -B tools/check-native-sparse-decommit-lock-host.py
+          python3 -B tools/check-native-sparse-range-prefix-host.py
           python3 -B tools/check-sparse-zero-bounds-host.py
           python3 -B tools/check-maintained-sparse-vector.py
           python3 -B tools/check-fastmem-window-bounds-host.py

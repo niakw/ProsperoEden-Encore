@@ -1,10 +1,10 @@
-# Eden Encore — Roadmap collaborative par familles de fonctions (révision 28 octobre 2026)
+# Eden Encore — Roadmap collaborative par familles de fonctions (révision 30 octobre 2026)
 
 **Source de vérité du laboratoire fonctionnalités :** `feat/graphics-network-achievements`.  
 **Branche console distincte :** `dev/ps5-sparse-jit` ; F01–F06 ont des contrats hôte, **F07 reste ouvert jusqu'à preuve sur console**.  
 **Règle de séparation :** aucun merge ni activation expérimentale implicite sur la branche console. R00 avait fusionné historiquement la PR #18 ; l'écart entre les **HEAD actuels** doit être revérifié avant chaque import. Les nombres/SHAs des journaux anciens sont des **photos datées**, non des résultats CI actuels.
 
-**Lecture :** les identifiants R00–R23 restent stables et R24 ajoute le chantier d'anti-aliasing perceptible ; **leur ordre dans le document suit désormais la famille fonctionnelle et ses checks globaux**, pas le numéro ni l'ordre des demandes. La section A est le point de départ obligatoire. Chaque jalon est inscrit une seule fois dans les tableaux de suivi ; le détail technique, les historiques et les références restent sous sa famille.
+**Lecture :** les identifiants R00–R23 restent stables, R24 ajoute le chantier d'anti-aliasing perceptible et R25 la personnalisation des thèmes du launcher ; **leur ordre dans le document suit désormais la famille fonctionnelle et ses checks globaux**, pas le numéro ni l'ordre des demandes. La section A est le point de départ obligatoire. Chaque jalon est inscrit une seule fois dans les tableaux de suivi ; le détail technique, les historiques et les références restent sous sa famille.
 
 ## Convention de suivi : pas de faux progrès
 
@@ -21,7 +21,7 @@
 | **A — d'abord** | Base et audits de l'émulateur, dépendances, forks et mesures | R00 · R05 · R18 · R23 · R02 · R17 · R01 | Sources réellement compilées + inventaire dépendances/licences + matrice d'écarts + référence mesurable |
 | **B** | Moteur, stabilité, architecture CPU | R03 · R04 · R22 | Sémantique CPU/HLE/GPU préservée, tests de régression, recomp séparée |
 | **C** | Graphismes et qualité d'image | R06 · R07 · R24 · R08 · R09 · R10 | Une seule interface Vulkan sûre, AA réellement perceptible et modes/performances mesurés séparément |
-| **D** | Formats, bibliothèque, interface et mises à jour | R13 · R11 · R12 · R21 | Navigation/stockage/installation sûrs et testables |
+| **D** | Formats, bibliothèque, interface et mises à jour | R13 · R11 · R12 · R25 · R21 | Navigation/stockage/installation sûrs, thèmes persistants et testables |
 | **E** | Réseau et multijoueur privé | R14 | Sessions et sécurité réseau isolées du rendu |
 | **F** | Trophées et suivi de progression | R15 · R16 | Versionnement/événements fiables, pas de faux déblocages |
 | **G — à la fin** | Intégration, CI/PS5, publication | R19 · R20 | Gates natifs, jeux tests, sûreté, preuve console et décision explicite |
@@ -206,16 +206,31 @@ Ne pas confondre **RDNA2 PC**, **Vulkan PC** et **PS5 native**. Aucune des impl�
 
 ## D — Jeux, bibliothèque, interface et mise à jour applicative
 
-Regrouper les **fonctionnalités utilisateur et l'expérience launcher** : fichiers, mods/updates/DLC, artwork, navigation, paramètres et mise à jour de l'application.
+Regrouper les **fonctionnalités utilisateur et l'expérience launcher** : fichiers, mods/updates/DLC, artwork, navigation, personnalisation des thèmes, paramètres et mise à jour de l'application.
 
-**Checks globaux D :** formats/parsers avec corpus synthétique légal, séparation des données utilisateur et fichiers d'installation, cache/quotas, WebP 80 %, manette/FR-EN, compatibilité firmware, installation/reprise/échec sans perte de sauvegardes. R21 ne télécharge ni n'installe silencieusement.
+**Checks globaux D :** formats/parsers avec corpus synthétique légal, séparation des données utilisateur et fichiers d'installation, cache/quotas, WebP 80 %, manette/FR-EN, rendu des thèmes lisible/performant, persistance/restauration, compatibilité firmware, installation/reprise/échec sans perte de sauvegardes. R21 ne télécharge ni n'installe silencieusement.
 
 | ID | Livrable / périmètre | Assistant — travail et preuves | Utilisateur — intervention | État au suivi |
 |---|---|---|---|---|
 | **R13** | Formats Switch NSP/XCI/NSZ/XCZ, ZBIC/ZSTD et NRO/NSO/NCA/NAX/KIP, LZ4 selon contenu, mods/DLC/updates sans extraction fragile | Inventaire matrice **par forme d'entrée**, parsers concrets, corpus légal synthétique, fuzz/quotas, chemin happy+failure, pas d'affirmation sans lancement | Essais finaux uniquement des formats que l'utilisateur possède légalement | Audit/À faire |
 | **R11** | Jaquettes Switch 3D front/back recomposées : couche support plastique, vraie composition `cover`, haut du back complet, pas de double tranche ; logo et description GameDB | Cas réels sans box images, chargement LaunchBox **à la sélection uniquement**, placeholder opaque, WebP 80% avec décodeur natif, cache/quotas | Validation visuelle sur maquettes et photos une fois testable | À faire |
 | **R12** | Launcher : navigation L1/R1 des tâches de fond, profil/avatar si PS5 l'autorise, FR/EN, formats Go, focus/manette, 3D L2/R2, description README capture réelle | Tests hors console de génération/rendu et snapshots de composition, compat bibliothèque et mémoire | Validation ergonomie, seulement sur build de qualification | À faire |
+| **R25** | **Personnalisation des thèmes du launcher Encore (theming)** : conserver le thème Neon actuel par défaut, proposer des alternatives sobres (Dark / Light) et réglages utilisateur de couleurs/fonds | Inventaire des surfaces UI concernées (accueil, bibliothèque, Paramètres, modales, cartes, focus), système de tokens et assets locaux, sélecteur avec aperçu et restauration, persistance atomique, contrôles de contraste et de coût CPU/GPU/VRAM | Choisir le style préféré et valider lisibilité, navigation manette et affichage réel sur PS5 après qualification | **À faire — suggestion communautaire, spécification uniquement (P2)** |
 | **R21** | **Mise à jour de l'application Eden Encore depuis les GitHub Releases** dans Paramètres : vérification manuelle forcée et recherche automatique au lancement du launcher (opt-in), proposition par pop-up puis installation uniquement après accord | Comparateur de versions et canal release stable, client GitHub borné, vérification du paquet PS5 et SHA-256, installateur natif sûr selon capacités réelles, tests hors console puis CI/PS5, préservation des données utilisateur | Choix d'activer la recherche au démarrage ; confirmation/refus de la mise à jour lorsqu'elle est proposée ; essai final sur build qualifié | **À faire — spécification uniquement** |
+
+### R25 — Thèmes personnalisables du launcher (suggestion communautaire, non implémentée)
+
+**Origine et intention (30/10/2026).** Retour de [@f0li0_1 sur X](https://x.com/f0li0_1/status/2116094509977342237) : appréciation du projet, mais préférence pour une esthétique moins « Neon GTA VI ». Garder **l'identité Encore / Neon comme thème par défaut**, sans l'imposer aux autres utilisateurs. Il s'agit du **launcher et de ses écrans de paramètres**, pas d'un filtre graphique des jeux émulés ni d'une promesse de skin système PS5.
+
+**UX attendue :**
+1. `Paramètres → Apparence → Thèmes` : thèmes intégrés **Encore Neon (défaut)**, **Minimal Dark**, **Light / Neutral**, avec miniatures ou aperçu fidèle, choix applicable sans relancer si techniquement sûr, et **« Restaurer le thème par défaut »**.
+2. **Personnalisation facultative** : palette/accent, intensité des effets lumineux, transparence/contraste et fond statique sélectionnable ; étudier ultérieurement l'import d'un fond utilisateur local si les APIs, permissions et quotas PS5 le permettent. Aucune fonctionnalité d'import n'est déclarée implémentée.
+3. Couvrir de manière cohérente accueil, bibliothèque, boîtiers/cartes, arrière-plans, boutons/focus manette, dialogues, notifications, Paramètres et textes FR/EN ; ne pas casser la visibilité de la jaquette ni les informations essentielles.
+4. Préférences **persistées par profil/app selon les APIs réellement disponibles**, avec format versionné, valeurs bornées, repli sûr au thème d'origine si fichier corrompu ou asset manquant ; jamais de chargement distant arbitraire ni de modification des sauvegardes de jeux.
+
+**Architecture et performances :** isoler couleurs, typographie, textures et intensités d'effets en tokens/assets thématiques plutôt que multiplier les branches de rendu ; charger les seuls assets nécessaires, mutualiser le cache et éviter shaders/animations coûteux pour un thème sobre. Respecter les budgets mémoire PS5, WebP/cache, lisibilité du focus et contraste accessible ; aucun impact sur la boucle de présentation du jeu ni sur les optimisations F07.
+
+**Preuves et statut :** tests hôtes de chargement, sélection, rechargement, migration/corruption de config, fonds manquants, FR/EN et navigation contrôleur ; snapshots visuels et comparaison coûts de lancement/mémoire ; compilation native + CI, puis validation sur PS5. **P2 / À faire — cadrage uniquement, aucun nouveau thème livré.**
 
 ### R21 — Mise à jour intégrée d'Eden Encore (spécification, non implémentée)
 
@@ -274,7 +289,7 @@ Consolider **les modules terminés**, pas toutes les idées, dans un paquet test
 1. **Gate A0 — cartographie initiale :** R00 compare les deux branches ; R05 établit l'état réel du moteur, R18 établit le BOM complet (dépendances directes et transitives, pins, checksums, licence, ABI et sources réellement embarquées), R23/R02/R17 recensent les écarts **par fonction**, R01 permet de mesurer sans inventer de FPS. Si le code est déjà intégré/équivalent, fermer le doublon avec preuve plutôt que reprogrammer.
 2. **Gate B0 — correctifs du moteur :** R03/R04 n'acceptent de nouveau code qu'après le résultat de A0 pertinent et un test reproduisant le défaut. R22 est une étude indépendante de recompilation, non un préalable à la release ni une amélioration graphique.
 3. **Gate C0 — architecture graphique :** R06 d'abord (ownership, images, barrières, renderer, UI) puis R07/R08/R09/R10 selon la capacité matérielle et les mesures. Aucun moteur de frame generation ou NR n'est activé dans le profil de référence par la seule présence du code.
-4. **Gate D0 — fonctionnalités utilisateur :** R13 vérifie les fichiers et données, puis R11/R12 traitent médias et interaction. R21 peut développer UX/détection sans attendre la publication, **mais l'installation native doit disposer du format de release, de l'installateur et du mécanisme de reprise validés par R19/R20** ; pas de cycle de dépendance imposant une release avant le simple développement de l'interface.
+4. **Gate D0 — fonctionnalités utilisateur :** R13 vérifie les fichiers et données, puis R11/R12 traitent médias et interaction ; R25 ajoute les thèmes sans modifier les jeux ou la boucle de rendu native. R21 peut développer UX/détection sans attendre la publication, **mais l'installation native doit disposer du format de release, de l'installateur et du mécanisme de reprise validés par R19/R20** ; pas de cycle de dépendance imposant une release avant le simple développement de l'interface.
 5. **Gate E/F — services indépendants :** R14 et R15→R16 ont leurs tests propres ; aucun prérequis de frame generation, d'IA ou de recomp.
 6. **Gate G0 — régression totale :** R19 rassemble uniquement les modifications qualifiées et **rejoue l'audit R18** (licences, binaires, SDK/Mesa, sécurité, tests et provenance) sur le même SHA, puis R20 décide de publier ou de reporter. Comparer une build console stable, avec métriques HUD/latence/frames et compatibilité, jamais une suite de commits non compilés.
 
@@ -318,7 +333,7 @@ Consolider **les modules terminés**, pas toutes les idées, dans un paquet test
 **Utilisateur ne teste la console qu'à trois points utiles** :
 1. **F07 baseline** : FC27 avec `dev/ps5-sparse-jit` code validé `cd4857c8`, enregistrer jeu/firmware/réglages, freeze/HUD/texture/frametime/input ; cela ne valide aucune feature branch.
 2. **RC Graphics** : version native stabilisée de R03/R06/R07/R08/R09, A/B en conditions identiques, qualité/cadence/manette/HUD.
-3. **RC fonctionnalités** : R11–R17 et R21 réunis (R21 seulement si installateur/asset release qualifiés), puis test deux instances pour LDN et trophées réels par jeux pilotes.
+3. **RC fonctionnalités** : R11–R17, R25 et R21 réunis (R21 seulement si installateur/asset release qualifiés), puis test deux instances pour LDN et trophées réels par jeux pilotes.
 
 Pas de durée chiffrée inventée : la fin d'une phase dépend de ses **preuves** et de la disponibilité réelle des outils/hardware.
 
@@ -327,4 +342,4 @@ Pas de durée chiffrée inventée : la fin d'une phase dépend de ses **preuves*
 - **F01–F06 pré-console** : 6/6 prouvés sur tests host, build PS5 et sécurité GitHub sur `cd4857c8`.
 - **F07** : demeure ouvert ; sa situation actuelle se lit d'abord dans `docs/FC27_F07_MASTER_TRACKER.md` sur la branche console, et pas dans le SHA historique cité ici.
 - **Branche feature** : audit en cours, `framegen_capabilities.h` (contrat de choix, pas moteur), catalogues de trophées vides + tests CI hôtes ; pas de FG/NR/FSR temporel/LDN natif intégré.
-- **R00–R23** : les sept tableaux de catégories couvrent **24 jalons distincts** (pas 24/24 validations). Les jalons R22/R23 restent des études ; les statuts d'implémentation et les preuves des autres jalons sont suivis séparément. Le présent document n'accorde aucune qualification console.
+- **R00–R25** : les sept tableaux de catégories couvrent **26 jalons distincts** (pas 26/26 validations). Les jalons R22/R23 restent des études ; les statuts d'implémentation et les preuves des autres jalons sont suivis séparément. Le présent document n'accorde aucune qualification console.

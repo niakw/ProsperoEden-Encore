@@ -195,6 +195,7 @@ public:
         return LedgerStatus::Success;
     }
     [[nodiscard]] std::size_t Count() const { return mappings.size(); }
+    [[nodiscard]] const auto& Mappings() const { return mappings; }
 private:
     std::map<std::pair<U32, U64>, Mapping> mappings;
 };

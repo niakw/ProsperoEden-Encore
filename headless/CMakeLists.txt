@@ -1991,8 +1991,24 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
     list(REMOVE_ITEM eden_ns2_nvdrv_sources
         "hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp")
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_SOURCE}")
+    # Replace the pinned Maxwell-era nvhost-as-gpu owner only in NS2 research.
+    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/headless/ns2/nvdrv_as")
+    set(EDEN_NS2_NVDRV_AS_SOURCE
+        "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NVDRV_AS_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.h")
+        message(FATAL_ERROR "Missing NS2 native 4K GPU address-space overlay")
+    endif()
+    list(FIND eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_as_gpu.cpp" eden_ns2_as_idx)
+    if(eden_ns2_as_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV AS owner changed: re-audit NS2 overlay")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
+    list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_sources}")
-    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")
 endif()
 
 # Switch 2 GPU TIPC service and bounded worker transport. No native GPU

@@ -21,6 +21,7 @@
 #include "core/hle/service/nvdrv/core/container.h"
 #include "core/hle/service/nvdrv/core/nvmap.h"
 #include "core/hle/service/nvdrv/nvdrv.h"
+#include "core/hle/service/nvdrv/devices/nvhost_as_gpu.h"
 
 namespace Service::AM {
 namespace {
@@ -36,13 +37,25 @@ IGpuWorker::IGpuWorker(Core::System& system_, std::shared_ptr<Nvidia::Module> mo
     static const FunctionInfo functions[] = {
         {101, &IGpuWorker::CreateGpuAccessibleMemory, "CreateGpuAccessibleMemory"},
         {102, &IGpuWorker::DestroyGpuAccessibleMemory, "DestroyGpuAccessibleMemory"},
+        {211, &IGpuWorker::NormalMapGpuMemory4K, "NormalMapGpuMemory4K"},
+        {212, &IGpuWorker::NormalModifyGpuMemory4K, "NormalModifyGpuMemory4K"},
+        {213, &IGpuWorker::NormalUnmapGpuMemory4K, "NormalUnmapGpuMemory4K"},
     };
     RegisterHandlersTipc(functions);
 }
 
 IGpuWorker::~IGpuWorker() {
-    // No 211-216 mappings are enabled, so memory created here should be
-    // unpinned. Never force an unlock of memory still retained externally.
+    // Release GPU VA mappings before any backing NVMap handle or process
+    // memory is freed. A moved worker client retains shared FD ownership.
+    for (const auto& [key, mapping] : m_mappings.Mappings()) {
+        const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+            static_cast<Nvidia::DeviceFD>(mapping.address_space));
+        if (as && as->UnmapNative4K(mapping.address, mapping.size) !=
+                      Nvidia::NvResult::Success)
+            LOG_ERROR(Service_AM, "NS2 native GPU VA unmap failed as={} VA={:#x}",
+                      mapping.address_space, mapping.address);
+    }
+    // Never force an unlock of memory still retained externally.
     auto& nvmap = m_module->GetContainer().GetNvMapFile();
     for (const u32 id : m_memory) {
         if (const auto info = nvmap.FreeHandle(id, false); info && info->can_unlock) {
@@ -65,11 +78,136 @@ Result IGpuWorker::HandleSyncRequest(Kernel::KServerSession& session,
     }
     const auto guard = LockService();
     InvokeRequestTipc(ctx);
-    // Deliberately reject commands 211-216: native GPU VA 4-KiB page-table
-    // mappings and sparse graphics queues are not available in Encore yet.
+    // Sparse region commands 214-216 and GPU submission are unsupported.
+    // The opt-in overlay handles only bounded native 4K mapping 211-213.
     IPC::ResponseBuilder rb{ctx, 2};
     rb.Push(Kernel::ResultNotImplemented.raw);
     return system.IsPoweredOn() ? ctx.WriteToOutgoingCommandBuffer() : ResultSuccess;
+}
+
+namespace GW = GpuWorkerProtocol;
+namespace {
+Result TranslateMappingStatus(GW::LedgerStatus status) {
+    switch (status) {
+    case GW::LedgerStatus::Success: return ResultSuccess;
+    case GW::LedgerStatus::Invalid: return Kernel::ResultInvalidCombination;
+    case GW::LedgerStatus::Overlap: return Kernel::ResultInvalidState;
+    case GW::LedgerStatus::NotFound: return Kernel::ResultNotFound;
+    case GW::LedgerStatus::OutOfResource: return Kernel::ResultOutOfResource;
+    }
+    return Kernel::ResultInvalidState;
+}
+} // namespace
+
+void IGpuWorker::NormalMapGpuMemory4K(HLERequestContext& ctx) {
+    const auto* packet = ctx.CommandBuffer();
+    std::array<GW::U32, 18> command{};
+    std::copy_n(packet, command.size(), command.begin());
+    Result result = Kernel::ResultInvalidCombination;
+    u32 selected{};
+    if (const auto request = GW::DecodeMap(command)) {
+        const std::scoped_lock lock{m_mutex, m_shared->mutex};
+        result = Kernel::ResultNotFound;
+        if (m_shared->address_spaces.Owns(request->address_space) &&
+            m_shared->devices.Get(request->device).has_value() &&
+            m_shared->events[request->notification] &&
+            std::find(m_memory.begin(), m_memory.end(), request->memory) != m_memory.end()) {
+            const auto& nvmap = m_module->GetContainer().GetNvMapFile();
+            const auto backing = nvmap.GetHandle(request->memory);
+            result = Kernel::ResultInvalidCombination;
+            if (backing && request->memory_offset <= backing->orig_size &&
+                request->size <= backing->orig_size - request->memory_offset) {
+                const auto preflight = m_mappings.CanMap(*request);
+                result = TranslateMappingStatus(preflight);
+                if (preflight == GW::LedgerStatus::Success) {
+                    result = Kernel::ResultInvalidState;
+                    const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+                        static_cast<Nvidia::DeviceFD>(request->address_space));
+                    if (as && as->MapNative4K(request->memory, request->address,
+                                                request->memory_offset, request->size,
+                                                request->backend_kind) ==
+                                      Nvidia::NvResult::Success) {
+                        const auto committed = m_mappings.RecordMapped(*request);
+                        if (committed == GW::LedgerStatus::Success) {
+                            selected = request->selected_kind;
+                            result = ResultSuccess;
+                            m_shared->events[request->notification]->Signal(kernel);
+                        } else {
+                            as->UnmapNative4K(request->address, request->size);
+                            result = TranslateMappingStatus(committed);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 3};
+    rb.Push(result.raw);
+    rb.Push(selected);
+}
+
+void IGpuWorker::NormalModifyGpuMemory4K(HLERequestContext& ctx) {
+    const auto* packet = ctx.CommandBuffer();
+    std::array<GW::U32, 11> command{};
+    std::copy_n(packet, command.size(), command.begin());
+    Result result = Kernel::ResultInvalidCombination;
+    u32 selected{};
+    if (const auto request = GW::DecodeModify(command)) {
+        const std::scoped_lock lock{m_mutex, m_shared->mutex};
+        result = Kernel::ResultNotFound;
+        if (m_shared->address_spaces.Owns(request->address_space) &&
+            m_shared->events[request->notification]) {
+            const auto preflight = m_mappings.CanModify(*request);
+            result = TranslateMappingStatus(preflight);
+            if (preflight == GW::LedgerStatus::Success) {
+                result = Kernel::ResultInvalidState;
+                const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+                    static_cast<Nvidia::DeviceFD>(request->address_space));
+                if (as && as->ModifyNativeKind(request->address, request->size,
+                                                request->backend_kind) ==
+                                  Nvidia::NvResult::Success) {
+                    selected = request->selected_kind;
+                    result = ResultSuccess;
+                    m_shared->events[request->notification]->Signal(kernel);
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 3};
+    rb.Push(result.raw);
+    rb.Push(selected);
+}
+
+void IGpuWorker::NormalUnmapGpuMemory4K(HLERequestContext& ctx) {
+    const auto* packet = ctx.CommandBuffer();
+    std::array<GW::U32, 9> command{};
+    std::copy_n(packet, command.size(), command.begin());
+    Result result = Kernel::ResultInvalidCombination;
+    u64 unmapped{};
+    if (const auto request = GW::DecodeUnmap(command)) {
+        const std::scoped_lock lock{m_mutex, m_shared->mutex};
+        result = Kernel::ResultNotFound;
+        if (m_shared->address_spaces.Owns(request->address_space) &&
+            m_shared->events[request->notification]) {
+            const auto preflight = m_mappings.CanUnmap(*request);
+            result = TranslateMappingStatus(preflight);
+            if (preflight == GW::LedgerStatus::Success) {
+                result = Kernel::ResultInvalidState;
+                const auto as = m_module->GetDevice<Nvidia::Devices::nvhost_as_gpu>(
+                    static_cast<Nvidia::DeviceFD>(request->address_space));
+                if (as && as->UnmapNative4K(request->address, request->size) ==
+                                  Nvidia::NvResult::Success) {
+                    m_mappings.RecordUnmapped(*request);
+                    unmapped = request->size;
+                    result = ResultSuccess;
+                    m_shared->events[request->notification]->Signal(kernel);
+                }
+            }
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 4};
+    rb.Push(result.raw);
+    rb.Push(unmapped);
 }
 
 Result IGpuWorker::RegisterMemory(u64 begin, u64 end, u32 flags,

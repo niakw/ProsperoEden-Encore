@@ -141,7 +141,15 @@ def main() -> int:
                 "Kernel::ResultBusy" in worker_hle_cpp and
                 "m_shared->events[notification]->Signal(kernel)" in worker_hle_cpp and
                 "DecodeGpuMemoryRelease(command)" in worker_hle_cpp and
-                '{211, &IGpuWorker::NormalMapGpuMemory4K' not in worker_hle_cpp,
+                '{211, &IGpuWorker::NormalMapGpuMemory4K' in worker_hle_cpp and
+                '{212, &IGpuWorker::NormalModifyGpuMemory4K' in worker_hle_cpp and
+                '{213, &IGpuWorker::NormalUnmapGpuMemory4K' in worker_hle_cpp and
+                'm_mappings.RecordMapped(*request)' in worker_hle_cpp and
+                'm_mappings.RecordUnmapped(*request)' in worker_hle_cpp and
+                'as->MapNative4K(' in worker_hle_cpp and
+                'as->UnmapNative4K(' in worker_hle_cpp and
+                'as->ModifyNativeKind(' in worker_hle_cpp and
+                '{214, &IGpuWorker::CreateSparseRegion' not in worker_hle_cpp,
                 "Native GPU worker IPC must reject unsupported mappings")
         require('target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE and
                 '"${EDEN_NS2_GPU_WORKER_SOURCE}"' in CMAKE and
@@ -180,6 +188,24 @@ def main() -> int:
                 'list(FIND eden_ns2_nvdrv_sources' in CMAKE and
                 '"hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp" eden_ns2_nvdrv_idx' in CMAKE,
                 "NVDRV opt-in, original source owner or final release protection missing")
+        native_as_root = ROOT / "headless/ns2/nvdrv_as/core/hle/service/nvdrv/devices"
+        native_as_cpp = (native_as_root / "nvhost_as_gpu.cpp").read_text()
+        native_as_h = (native_as_root / "nvhost_as_gpu.h").read_text()
+        require('set(EDEN_NS2_NVDRV_AS_SOURCE' in CMAKE and
+                '"hle/service/nvdrv/devices/nvhost_as_gpu.cpp" eden_ns2_as_idx' in CMAKE and
+                'list(REMOVE_ITEM eden_ns2_nvdrv_sources' in CMAKE and
+                'list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")' in CMAKE and
+                'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")' in CMAKE and
+                "MapNative4K(" in native_as_h and
+                "UnmapNative4K(" in native_as_h and
+                "ModifyNativeKind(" in native_as_h and
+                "allocation_map.lower_bound(address)" in native_as_cpp and
+                "mapping_map.lower_bound(address)" in native_as_cpp and
+                "nvmap.PinHandle(handle_id, false)" in native_as_cpp and
+                "UnmapNative4K(u64 address, u64 size)" in native_as_cpp,
+                "Native 4KiB NVDRV address-space owner must be isolated and bounded")
+        require("EDEN_NS2_NVDRV_AS_SOURCE" in CMAKE[nvdrv_selection:release_gate],
+                "Native AS owner is not gated under research-only NVDRV switch")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()
         ioctl = (nvdrv_root / "native_characteristics_ioctl.h").read_text()

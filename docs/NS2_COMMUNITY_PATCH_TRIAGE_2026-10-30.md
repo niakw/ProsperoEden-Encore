@@ -161,3 +161,10 @@ All operations take the same state mutex; no native GPU mappings are attempted y
 This fix is preparatory safety work. The maintained vendor's nvhost_as_gpu does not have
 the Ampere-native MapNative4K/UnmapNative4K/ModifyNativeKind operations, and generic
 Maxwell-era fixed-map IOCTLs must not be represented as full Switch 2 GPU support.
+
+## N4l — Native 4-KiB NVDRV owner and GPU worker mappings (research only)
+
+- Isolated overlay for the *pinned* `nvhost_as_gpu.{h,cpp}` owner in the already-disabled `EDEN_NS2_NVDRV_EXPERIMENTAL` CMake branch. The Switch 1 / shipping NVDRV source remains unchanged in `vendor/`.
+- Added directly backed `MapNative4K`, `UnmapNative4K` and `ModifyNativeKind` operations to the experimental GMMU owner. Map validates owner process, live NVMap handle, page alignment, offset/size overflow, exact 4-KiB regions, address-space bounds, and overlap against both reserved VA and raw mappings. Reservation, pin, GMMU update, and mapping-table ownership are serialized by the existing AS mutex. Native unmap requires the matching live allocation and size, then unmaps/unpins/frees.
+- Worker TIPC **211 map**, **212 modify kind**, and **213 unmap** now use the actual address-space FD, only a memory handle owned by this worker, the shared device/notification slots, and the bounded mapping ledger; only successful GMMU operations update the ledger and signal completion. Worker destruction unmaps before releasing NVMap backing handles.
+- **Important limit:** this establishes an experimental 4-KiB address mapping path in Encore's inherited GMMU model, **not** a complete Ampere/T239 GPU implementation. Native shader interpretation, sparse 214–216, syncpoints/queues, and graphics output require separate verified work. This is not proof that a Switch 2 title boots or renders on PS5.

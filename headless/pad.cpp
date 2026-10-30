@@ -169,6 +169,12 @@ Pad::Pad(float deadzone_, float threshold)
         stick_curve[raw] = std::abs(x) <= deadzone ? 0.0f :
             std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x);
     }
+    // The physical trigger values are bytes; avoid two float normalizations
+    // on each 4 ms gamepad batch. Preserve the original >= comparison
+    // exactly, including thresholds at either valid endpoint.
+    for (std::size_t raw = 0; raw < trigger_pressed.size(); ++raw) {
+        trigger_pressed[raw] = static_cast<float>(raw) / 255.0f >= trigger_threshold;
+    }
     Common::Input::RegisterInputFactory("virtual_gamepad",
         std::make_shared<InputCommon::InputFactory>(engine));
     Common::Input::RegisterOutputFactory("virtual_gamepad",
@@ -492,8 +498,8 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         for (const auto [mask, button] : fixed)
             engine->SetButtonState(player, button, (mapped_buttons & mask) != 0);
         // The game's buttons are digital: the analog triggers count from the threshold.
-        const bool left = sample.triggers.l2 / 255.0f >= trigger_threshold;
-        const bool right = sample.triggers.r2 / 255.0f >= trigger_threshold;
+        const bool left = trigger_pressed[sample.triggers.l2];
+        const bool right = trigger_pressed[sample.triggers.r2];
         for (int game = 0; game < kGameButtons; ++game) {
             const int pad = active_mapping[game];
             if (pad == pad_touchpad) continue;  // set_touch

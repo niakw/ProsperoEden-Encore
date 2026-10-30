@@ -46,6 +46,16 @@ assert consume_source.index("const int touch_button =") < consume_source.index("
 assert consume_source.index("const bool create_is_capture =") < consume_source.index("for (const auto& raw : samples)")
 assert "MappedTo(ActiveMapping(), pad_touchpad)" not in consume_source
 assert "std::array<float, 256> stick_curve{};" in HEADER
+assert "std::array<bool, 256> trigger_pressed{};" in HEADER
+assert "const bool left = trigger_pressed[sample.triggers.l2];" in consume_source
+assert "const bool right = trigger_pressed[sample.triggers.r2];" in consume_source
+assert "sample.triggers.l2 / 255.0f" not in consume_source
+trigger_anchor = "    for (std::size_t raw = 0; raw < trigger_pressed.size(); ++raw) {"
+assert PAD.count(trigger_anchor) == 1
+trigger_start = PAD.index(trigger_anchor)
+trigger_end = PAD.index("\n    }", trigger_start) + len("\n    }")
+native_trigger_lookup = PAD[trigger_start:trigger_end]
+assert "static_cast<float>(raw) / 255.0f >= trigger_threshold" in native_trigger_lookup
 assert "const auto axis = [this](u8 raw) { return stick_curve[raw]; };" in consume_source
 assert "std::copysign" not in consume_source
 curve_anchor = "    for (std::size_t raw = 0; raw < stick_curve.size(); ++raw) {"
@@ -161,10 +171,14 @@ public:
     ButtonMapping mapping=kDefaultMapping;
     float deadzone{0.08f},trigger_threshold{0.5f};
     std::array<float,256> stick_curve{};
+    std::array<bool,256> trigger_pressed{};
     void RebuildCurve() {
 __NATIVE_STICK_CURVE__
     }
-    Pad() { RebuildCurve(); }
+    void RebuildTriggerLookup() {
+__NATIVE_TRIGGER_LOOKUP__
+    }
+    Pad() { RebuildCurve(); RebuildTriggerLookup(); }
     bool return_to_menu{},hud_toggle{};
     u64 options_edges{},create_edges{};
     EdgeDiagnostics face_edges{};
@@ -200,6 +214,18 @@ int main() {
     }
     assert(pad.stick_curve[0] == -1.0f && pad.stick_curve[255] == 1.0f);
     assert(pad.stick_curve[128] == 0.0f);
+    // Preserve every trigger byte's original floating-point comparison
+    // for five legal calibration thresholds, including the extreme ends.
+    for (const float threshold : {0.001f, 0.1f, 0.5f, 0.999f, 1.0f}) {
+        Pad trigger_pad;
+        trigger_pad.trigger_threshold = threshold;
+        trigger_pad.RebuildTriggerLookup();
+        for (int byte = 0; byte < 256; ++byte) {
+            const bool expected = static_cast<float>(byte) / 255.0f >= threshold;
+            assert(trigger_pad.trigger_pressed[byte] == expected);
+        }
+    }
+    assert(!pad.trigger_pressed[127] && pad.trigger_pressed[128]);
     // A physical Circle now presses guest A; physical Cross presses guest B.
     const auto custom=Assign(kPlayStationMapping,game_a,pad_circle);
     assert(ValidMapping(custom));
@@ -299,7 +325,8 @@ int main() {
               "stick_curve_bytes=256 scope=source_extracted_host_mock_virtual_input_no_guest_Npad");
 }
 """.replace("__NATIVE_METHODS__",native_methods).replace(
-    "__NATIVE_STICK_CURVE__",native_stick_curve)
+    "__NATIVE_STICK_CURVE__",native_stick_curve).replace(
+    "__NATIVE_TRIGGER_LOOKUP__",native_trigger_lookup)
 
 # Export the exact generated, source-extracted fixture for the linked F06
 # boundary regression. Default standalone execution remains unchanged.

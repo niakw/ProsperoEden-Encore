@@ -60,6 +60,7 @@ on:
       - 'tools/fixtures/legacy-guest-write-deferred-bridge.cmake'
       - 'tools/prepare-vulkan-port.py'
       - 'tools/check-vendored-vulkan-fork.py'
+      - 'tools/check-ps5-radv-64bit-arithmetic-host.py'
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
       - 'vendor/encore-active/eden-backports/manifest.json'
@@ -285,6 +286,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B tools/check-vendored-vulkan-fork.py
+          python3 -B tools/check-ps5-radv-64bit-arithmetic-host.py
       # A CMake-selected native override must have exactly one graph owner
       # and one catalogue row before the longer GPU and JIT host replays.
       - name: Active native source ownership and graph parity

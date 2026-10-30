@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cstdint>
+#include <initializer_list>
 #include <optional>
 
 namespace Eden::NS2 {

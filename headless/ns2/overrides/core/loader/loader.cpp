@@ -121,7 +121,7 @@ bool HasApplicationProgramContent(const std::shared_ptr<FileSys::NSP>& nsp) {
 } // namespace
 
 FileType IdentifyFile(FileSys::VirtualFile file) {
-    // Treat validated ExeFS/main as a complete directory before generic NSO.
+    // Standalone ExeFS/main must precede generic NSO identification.
     if (const auto romdir_type =
             IdentifyFileLoader<AppLoader_DeconstructedRomDirectory>(file)) {
         return *romdir_type;
@@ -179,9 +179,11 @@ FileType GuessFromFilename(const std::string& name) {
         return FileType::NSO;
     else if (extension == "nca")
         return FileType::NCA;
-    else if (extension == "xci")
+    else if (extension == "nax")
+        return FileType::NAX;
+    else if (extension == "xci" || extension == "xcz")
         return FileType::XCI;
-    else if (extension == "nsp")
+    else if (extension == "nsp" || extension == "nsz")
         return FileType::NSP;
     else if (extension == "kip")
         return FileType::KIP;

@@ -33,36 +33,6 @@ if(EDEN_NS2_METADATA_EXPERIMENTAL)
 endif()
 
 
-# Separate opt-in: extracted ExeFS bootstrapping still requires metadata parsing.
-# Do NOT enable in a production/release profile; no native PS5 game validation.
-option(EDEN_NS2_EXEFS_EXPERIMENTAL
-    "Experimental standalone ExeFS loader, requires NS2 metadata overlay" OFF)
-if(EDEN_NS2_EXEFS_EXPERIMENTAL)
-    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 ExeFS loader requires EDEN_NS2_METADATA_EXPERIMENTAL=ON")
-    endif()
-    get_target_property(eden_ns2_exefs_sources core SOURCES)
-    foreach(eden_ns2_exefs_unit IN ITEMS
-            "loader/loader.cpp"
-            "loader/deconstructed_rom_directory.cpp")
-        list(FIND eden_ns2_exefs_sources "${eden_ns2_exefs_unit}" eden_ns2_exefs_index)
-        if(eden_ns2_exefs_index EQUAL -1)
-            message(FATAL_ERROR "NS2 ExeFS original owner moved: ${eden_ns2_exefs_unit}")
-        endif()
-        if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/${eden_ns2_exefs_unit}")
-            message(FATAL_ERROR "Missing NS2 ExeFS source: ${eden_ns2_exefs_unit}")
-        endif()
-        list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_exefs_unit}")
-        list(APPEND eden_ns2_exefs_sources
-             "${EDEN_NS2_METADATA_OVERLAY}/core/${eden_ns2_exefs_unit}")
-    endforeach()
-    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
-    if(NOT EXISTS
-            "${EDEN_NS2_METADATA_OVERLAY}/core/loader/deconstructed_rom_directory.h")
-        message(FATAL_ERROR "Missing NS2 ExeFS loader header")
-    endif()
-endif()
-
 # Scalar-memory source fragments still consumed by modules trigger configure.
 set(EDEN_SCALAR_INPUT_DIR
     "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/scalar")
@@ -1846,6 +1816,47 @@ include("${CMAKE_CURRENT_LIST_DIR}/gpu_native_observability.cmake")
 # Disabled native GPU coherency bridge, explicit developer compilation only.
 include("${CMAKE_CURRENT_LIST_DIR}/guest_write_deferred_bridge.cmake")
 
+# Experimental ExeFS bridge must be selected AFTER all Encore-owned source
+# substitutions (NCZ/XCZ and the PS5 16-KiB aligned NSO loader).
+option(EDEN_NS2_EXEFS_EXPERIMENTAL
+    "Experimental Switch 2 extracted ExeFS boot (requires metadata overlay)" OFF)
+if(EDEN_NS2_EXEFS_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 ExeFS requires EDEN_NS2_METADATA_EXPERIMENTAL=ON")
+    endif()
+    set(eden_ns2_loader_origin
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/loader.cpp")
+    if(PS5_NATIVE)
+        set(eden_ns2_romdir_origin
+            "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp")
+    else()
+        set(eden_ns2_romdir_origin "loader/deconstructed_rom_directory.cpp")
+    endif()
+    get_target_property(eden_ns2_exefs_sources core SOURCES)
+    foreach(eden_ns2_pair IN ITEMS
+            "loader.cpp|${eden_ns2_loader_origin}"
+            "deconstructed_rom_directory.cpp|${eden_ns2_romdir_origin}")
+        string(REPLACE "|" ";" eden_ns2_parts "${eden_ns2_pair}")
+        list(GET eden_ns2_parts 0 eden_ns2_basename)
+        list(GET eden_ns2_parts 1 eden_ns2_original)
+        list(FIND eden_ns2_exefs_sources "${eden_ns2_original}" eden_ns2_original_idx)
+        if(eden_ns2_original_idx EQUAL -1)
+            message(FATAL_ERROR "NS2 ExeFS owner changed: ${eden_ns2_original}")
+        endif()
+        set(eden_ns2_replacement
+            "${EDEN_NS2_METADATA_OVERLAY}/core/loader/${eden_ns2_basename}")
+        if(NOT EXISTS "${eden_ns2_replacement}")
+            message(FATAL_ERROR "Missing NS2 ExeFS source: ${eden_ns2_replacement}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_original}")
+        list(APPEND eden_ns2_exefs_sources "${eden_ns2_replacement}")
+    endforeach()
+    if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/loader/deconstructed_rom_directory.h")
+        message(FATAL_ERROR "Missing NS2 ExeFS maintained loader header")
+    endif()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -1857,6 +1868,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
     if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH OR
        EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
+       EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

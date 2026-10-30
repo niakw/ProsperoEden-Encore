@@ -238,7 +238,7 @@ AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirect
 
     // TODO: this is bad form of ASLR, it sucks
     std::uintptr_t aslr_offset = ((::Settings::values.rng_seed_enabled.GetValue()
-        ? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;
+        ? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 14) & 0xffc000;
 
     // Setup the process code layout
     if (process.LoadFromMetadata(system.Kernel(), metadata, code_size, fastmem_base, aslr_offset).IsError()) {
@@ -288,7 +288,6 @@ ResultStatus AppLoader_DeconstructedRomDirectory::ReadRomFS(FileSys::VirtualFile
     if (romfs == nullptr && standalone && file) {
         const auto directory = file->GetContainingDirectory();
         if (directory) {
-            // Prefer a named RomFS blob, then a loose RomFS directory.
             for (const auto& entry : directory->GetFiles()) {
                 if (entry->GetExtension() == "romfs") {
                     romfs = entry;

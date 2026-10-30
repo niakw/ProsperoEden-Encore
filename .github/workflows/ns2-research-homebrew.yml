@@ -51,3 +51,38 @@ jobs:
               build-ns2-homebrew/app.frag.spv \
               build-ns2-homebrew/app.comp.spv
           echo "This proves host Vulkan shaders only, NOT native NS2/PS5 games."
+
+  hblauncher-aarch64-abi:
+    name: Pinned HBLauncher CPU ABI on host and QEMU AArch64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Install independent native AArch64 ABI test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            gcc gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu qemu-user
+      - name: Fetch only the fixed public HBLauncher source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="18b4748ba98eeac7df17beb5d3418985eb74897c"
+          git init -q build-ns2-hblauncher
+          git -C build-ns2-hblauncher fetch -q --depth=1 \
+            https://github.com/ravensclawx/HBLauncher.git "$SHA"
+          git -C build-ns2-hblauncher checkout -q --detach FETCH_HEAD
+          test "$(git -C build-ns2-hblauncher rev-parse HEAD)" = "$SHA"
+          test -f build-ns2-hblauncher/tests/abi/build.sh
+          test -f build-ns2-hblauncher/LICENSE
+      - name: Execute real CPU ABI fixtures in x86 host and QEMU AArch64
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build-ns2-hblauncher
+          sh tests/abi/build.sh
+          file build/tests/runtime_test_aarch64 build/tests/entry_test_aarch64
+          echo "HBLauncher ABI: host and AArch64 QEMU PASS; no Switch 2 firmware, console, or Encore loader tested."

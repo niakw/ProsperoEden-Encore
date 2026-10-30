@@ -9,7 +9,7 @@ of Switch 2 emulation on PlayStation 5.
 | Source | Public asset | What it really is | Encore test |
 | --- | --- | --- | --- |
 | [Blockfall](https://github.com/CostelaCNX/blockfallns2) @ `a29ca2a16ace030499233a6fe8dfb1e6a73c614e` | `app.vert.spv`, `app.frag.spv`, `app.comp.spv`, `app.json` | Shader-based HBLauncher GPU app; manifest `hblauncher.gpu-app`, ABI 1; NOT NSO, NRO, NSP or XCI | Verify immutable original Git blobs, compile graphics and compute Vulkan pipelines, dispatch actual compute shader on Mesa llvmpipe and read back initialized game state |
-| [HBLauncher](https://github.com/ravensclawx/HBLauncher) | `apps/hello-cpu`, `apps/gpu-triangle`, `sdk/`, `tests/abi` | Native AArch64 custom launcher with its own package/runtime ABI; builds required; NOT eShop title | Future: standalone AArch64 ABI/unit tests; a separate adapted loader is required for boot |
+| [HBLauncher](https://github.com/ravensclawx/HBLauncher) | `apps/hello-cpu`, `apps/gpu-triangle`, `sdk/`, `tests/abi` | Native AArch64 custom launcher with its own package/runtime ABI; builds required; NOT eShop title | **CI active:** compile and execute original SDK runtime/entry ABI fixtures on Linux x86 and QEMU AArch64, fixed at `18b4748ba98eeac7df17beb5d3418985eb74897c`; a separate adapted loader is still required for boot |
 | [switch2pc](https://github.com/ctj01/switch2pc) | `examples/hello/hello.S`, `kernel_test`, libnx examples | Independent Linux ARM64 Switch 1-style homebrew runners and sample NSO/NRO; not Switch 2 SM86 game binaries | Future: independently built NSO parser/boot/HLE fixtures, with artifact provenance and licensing |
 | [IZDOOM](https://github.com/byizmysh/IZDOOM) | `IZDOOM-...IZ2S.izm` | IZ2S GPU-platform module with game data; NOT an Encore loadable Nintendo container | None until a compatible IZ2S runtime exists |
 | [Oboromi](https://github.com/0xNikilite/oboromi) | Rust GPU/CPU research sources | Experimental emulator foundation; no established full game compatibility | Research only |
@@ -22,7 +22,7 @@ lowering, the HLE application manager, NSO/NPDM loading or PS5 RADV.
 
 ## Reproducible independent graphics test
 
-Workflow: `.github/workflows/ns2-research-homebrew.yml`.
+Workflow: `.github/workflows/ns2-research-homebrew.yml` (two independent jobs: Blockfall Vulkan and HBLauncher native AArch64 ABI).
 Commands on Ubuntu with `libvulkan-dev`, `spirv-tools` and Mesa:
 
 ```sh
@@ -50,6 +50,13 @@ Validation thresholds:
 5. **Boundaries:** a software Vulkan/Mesa host test is not a PS5 GPU test;
    the fixture is never advertised as a Nintendo Switch 2 game or
    automatically injected into Encore's production shader cache.
+
+The **HBLauncher CPU ABI** job retrieves only commit
+`18b4748ba98eeac7df17beb5d3418985eb74897c`, builds and runs its
+upstream host and QEMU AArch64 ABI tests. That verifies the source SDK
+runtime and entry trampoline, not Encore's Dynarmic JIT, Nintendo HLE or PS5.
+Its package format uses a custom `manifest.json` (`abi: 3`, `kind: native`)
+and is not an NSO/NSP game.
 
 Third-party artifacts are fetched into CI ephemeral directories and are not
 committed, vendored, mirrored or attached to releases. The test implementation

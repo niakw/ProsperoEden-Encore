@@ -261,7 +261,13 @@ FakeServices::FakeServices(const std::string &covers_directory)
             if (!write_cover(game.cover, sample, index))
                 game.cover.clear();
         }
-        if (std::string_view(sample.name) == "Echoes of the Valley") {
+        // The dedicated README capture showcases Eden Encore's *own*
+        // packaged wallpaper. Its fixture must not generate the artificial
+        // sunset Hero: the async full-library scan can rehydrate Game.hero
+        // AFTER Home::home() has cleared the snapshot (so the old capture
+        // still looked identical). Omit that source for this host mode only.
+        if (std::string_view(sample.name) == "Echoes of the Valley" &&
+            std::getenv("PE_PREVIEW_BRANDED_HOME") == nullptr) {
             const std::string image = covers_directory + "/preview-hero.tga";
             if (write_preview_hero(image)) {
                 game.hero = image;

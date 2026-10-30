@@ -25,10 +25,12 @@
     },
     {
       "path": "headless/audio.cpp",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U04",
-      "source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Source-read optimization triage, no additional hotpath edit justified: Audio worker is stop-aware, output is paced by 256-frame device calls, mutex protects PCM publish; do not disrupt device cadence."
+      "reviewed_source_git_blob": "da3990d8da9be49beb0d224f0040e247f1a14ad1",
+      "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-ps5-audio-output-lock-scope-host.py",
+      "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured."
     },
     {
       "path": "headless/boot_trace.h",
@@ -422,8 +424,10 @@
     },
     {
       "path": "headless/graphics.cpp",
-      "disposition": "reviewed_without_new_code_edit",
-      "evidence": "Read and triaged in docs/EDEN_P0_SOURCE_REVIEW_2026-10-20.md or docs/EDEN_P0_VULKAN_REVIEW_2026-10-20.md"
+      "disposition": "code_changed_in_batch",
+      "reviewed_source_git_blob": "9b39b6df573170070e846e13ee56c385961cf01b",
+      "proof_ref": "tools/check-ps5-hud-snapshot-memo-host.py",
+      "evidence": "2026-10-30 main callback memo: HudClock::Present still executes per displayed frame, but MakeHudSnapshot runs only when FPS/worst/speed differ. Reset at title open preserves loading-to-game transition. Detailed FPS/JIT/C05 existing frame counters unchanged. Source-anchored host checks in preflight; console FPS still unmeasured."
     },
     {
       "path": "headless/graphics.h",
@@ -458,11 +462,12 @@
     },
     {
       "path": "headless/hud.h",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U57",
-      "reviewed_source_git_blob": "9a688e1a03d618eda86f5430f3be6959ce902912",
-      "source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
-      "evidence": "Source inspected: Format HUD et glyphes en tableaux de taille fixe ; la métrique FPS exclut les pauses de présentation. Aucun I/O ou allocation dans le formateur. Reopen if: Coût par frame de composition HUD prouvé par profilage."
+      "reviewed_source_git_blob": "29100690d62e2c3981ad6cca3e94e616acd80396",
+      "previous_source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-ps5-hud-snapshot-memo-host.py",
+      "evidence": "2026-10-30 main HUD memo: header now has renderer-owner HudSnapshotMemo with reset between titles. The previous source review is superseded. Source-linked host test in fast and preflight gates checks 50k identical callbacks, changed FPS/worst/speed, and session reset; PS5 frame gains unmeasured."
     },
     {
       "path": "headless/image_pages.h",

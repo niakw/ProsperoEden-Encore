@@ -473,7 +473,7 @@
     {
       "path": "headless/image_pages.h",
       "disposition": "code_changed_in_batch",
-      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
+      "evidence": "2026-10-30 ImagePages::NeverHeld early one-page witness on native CPU write: exact single atomic acquire bit test, avoiding same-word mask construction; larger spans preserve original bounded logic, release/acquire publication preserved. Source-linked O1 ASan+UBSan test extended to 12,000 randomized queries against independent full page-by-page oracle. CI pending, PS5 latency unmeasured; C01/T01 open. Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
     },
     {
       "path": "headless/jit_list.h",

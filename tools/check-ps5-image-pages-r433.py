@@ -35,6 +35,11 @@ assert cache.index("::Eden::ImagePages::Mark(cpu_addr, size);") < cache.index(
 assert "ImagePages::NeverHeld" in generator and generator.count("ImagePages::Mark(") == 2
 assert "memory_order_acquire" in header and "memory_order_release" in header
 assert "size > 256 * 1024" in header
+assert 'if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {' in header
+assert 'const auto page = address >> kPageBits;' in header
+assert 'held[page / 64].load(std::memory_order_acquire)' in header
+assert header.index('if (size > 256 * 1024) return false;') < header.index(
+    'const auto page = address >> kPageBits;')
 cxx = shutil.which("c++") or shutil.which("clang++") or shutil.which("g++")
 assert cxx
 fixture = r"""
@@ -61,6 +66,31 @@ int main() {
   assert(NeverHeld(10000*p,p));
   Mark(kSpace-1,1<<20);
   assert(!NeverHeld(kSpace-1,1) && !NeverHeld(kSpace-1,2));
+  // Independent page-by-page baseline across all byte offsets, word
+  // boundaries, empty spans, oversized ranges and partial ownership.
+  // A false "never held" could suppress texture invalidation and leave
+  // the guest HUD permanently stale.
+  auto baseline = [](std::uint64_t address, std::uint64_t size) {
+    if (!size) size = 1;
+    if (address >= kSpace || size > kSpace-address || size > 256*1024) return false;
+    const auto first = address >> kPageBits;
+    const auto last = (address+size-1) >> kPageBits;
+    for (auto page = first; page <= last; ++page)
+      if ((held[page/64].load(std::memory_order_acquire) >> (page%64)) & 1u)
+        return false;
+    return true;
+  };
+  std::uint64_t rng = 0xa1c2b3d4f0012283ull;
+  constexpr std::uint64_t lengths[]{0,1,2,17,4095,4096,4097,8193,65536,262144,262145};
+  for (int i = 0; i < 12000; ++i) {
+    rng ^= rng << 13; rng ^= rng >> 7; rng ^= rng << 17;
+    const auto address = i%3 == 0 ? rng % (4096ull*12000) :
+                         i%3 == 1 ? kSpace - 1 - rng % 10000 : rng % kSpace;
+    const auto size = lengths[i%11];
+    assert(NeverHeld(address,size) == baseline(address,size));
+  }
+  assert(NeverHeld(4095,2) == baseline(4095,2));
+  assert(NeverHeld(63*p+4095,2) == baseline(63*p+4095,2));
   std::vector<std::thread> threads;
   std::atomic<unsigned> misses{0};
   for(unsigned i=0;i<8;++i) threads.emplace_back([i,&misses] {

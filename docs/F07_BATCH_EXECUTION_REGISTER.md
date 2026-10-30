@@ -820,3 +820,8 @@ Fast gate `6214410` a échoué sur `tools/check-ps5-autocontrol-context.py` (anc
 ### F07 — CI témoin contrôle mapping (30/10)
 
 Le commit précédent a écrit une séquence littérale `\\n` entre deux assertions Python dans `check-ps5-autocontrol-context.py`. Le compilateur Python de `source-early` l'a justement refusée. Remplacement par un vrai retour de ligne : les deux assertions strictes sont conservées. L'EMU n'est pas modifié. CI du correctif en qualification, 22/29.
+
+## F07 — Vulkan texture lock-elision : page unique sans masque de plage (30 octobre 2026)
+
+- `headless/image_pages.h::NeverHeld` : sur un CPU-write entièrement contenu dans une page 4 KiB, une seule lecture atomique acquire et un bit test, sans construire les bornes des masques multi-pages. Les écritures croisées, les 256 KiB maximum et la publication Mark release/acquire restent inchangées.
+- `tools/check-ps5-image-pages-r433.py` : source liée et témoin C++ ASan/UBSan, 12 000 sondes déterministes contre oracle indépendant par page (0, frontière 4 KiB, frontière mot 64 pages, fin 16 GiB, longueurs >256 KiB), plus registrations concurrentes. Tests et gain CPU réel à qualifier par CI ; aucun FPS console revendiqué. F07 22/29, C01/T01 ouverts.

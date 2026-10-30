@@ -34,6 +34,15 @@ inline bool NeverHeld(std::uint64_t address, std::uint64_t size) noexcept {
     if (size == 0) size = 1;
     if (address >= kSpace || size > kSpace - address) return false;
     if (size > 256 * 1024) return false;
+    // Most CPU writes are contained in a single 4 KiB page. One acquire
+    // load and a single bit test replace construction of a two-endpoint
+    // word mask. The larger/unaligned cross-page path stays unchanged.
+    constexpr std::uint64_t page_mask = (std::uint64_t{1} << kPageBits) - 1;
+    if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {
+        const auto page = address >> kPageBits;
+        return !(held[page / 64].load(std::memory_order_acquire) &
+                 (std::uint64_t{1} << (page % 64)));
+    }
     const auto first = address >> kPageBits;
     const auto last = (address + size - 1) >> kPageBits;
     // The 256 KiB cap covers at most 65 pages and two bitmap words.

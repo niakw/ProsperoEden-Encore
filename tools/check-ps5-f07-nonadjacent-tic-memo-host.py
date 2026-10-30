@@ -24,7 +24,10 @@ assert "view_memo" not in baseline
 assert "previous_view_id" in method(backports)
 assert "previous_view_id" not in source
 assert method(backports) != source
-assert source.count("(*view_memo)[view.index & 15U]")==2
+assert source.count("memo[(start + offset) & 15U]")==1
+assert "std::size_t start = (view.index ^ (view.index >> 4)) & 15U;" in source
+assert "if (memo_hit) continue;" in source
+assert "if (memo_slot && !has_deleted_images)" in source
 assert source.count("std::optional<std::array<ViewMemo, 16>> view_memo;")==1
 assert source.count("if (!blacklist && views.size() > 1) {")==1
 assert source.index("view_memo.emplace();") < source.index("for (ImageViewInOut& view : views)")
@@ -39,7 +42,7 @@ assert source.count("PrepareImageView(cached.id, false, false);") == 1
 assert "ImageFlagBits::Remapped" in source
 assert source.index("const bool remapped") < source.index("PrepareImageView(cached.id, false, false);")
 assert source.index("if (view_memo && !has_deleted_images)")<source.index("VisitImageView(view.index, compute)")
-assert source.count("cached.id != NULL_IMAGE_VIEW_ID")==1
+assert source.count("cached.id == NULL_IMAGE_VIEW_ID")==1
 code=r"""
 #include <array>
 #include <cassert>
@@ -111,8 +114,18 @@ int main(){
  c.FillImageViews(a,false,false);
  assert(c.total==3 && c.visits[1]==2 && c.remap_rebuilds==1);
  }
- {TextureCache<int> c;std::array<V,3> a{V{1},V{17},V{1}};
- c.FillImageViews(a,false,false);assert(c.total==3);}
+ // Four distinct TIC indices collide in the mixed hash, but must each
+ // be resolved only once during one draw and still retain pixel freshness.
+ {TextureCache<int> c;std::array<V,8> a{V{1},V{16},V{35},V{50},
+                                        V{1},V{16},V{35},V{50}};
+ c.FillImageViews(a,false,false);
+ #ifdef PS5_NATIVE
+ assert(c.total==4 && c.visits[1]==1 && c.visits[16]==1 &&
+        c.visits[35]==1 && c.visits[50]==1);
+ #else
+ assert(c.total==8);
+ #endif
+ }
  {TextureCache<int> c;std::array<V,3> a{V{7},V{7},V{7}};
  c.FillImageViews(a,true,false);assert(c.total==3 && a[0].id==0);}
  {TextureCache<int> c;c.delete_nine=true;std::array<V,3> a{V{5},V{9},V{5}};
@@ -154,4 +167,4 @@ with tempfile.TemporaryDirectory(prefix="f07-tic-reuse-") as tmp:
    assert p.returncode==0,(cmd,p.stderr[-5000:])
    p=subprocess.run([str(binary)],capture_output=True,text=True,timeout=20)
    assert p.returncode==0,(opt,native_on,p.stdout,p.stderr[-5000:])
-print("F07_NONADJACENT_TIC_MEMO_PASS duplicate=1 collisions=1 null=1 deletion=1 blacklist=1 empty_resets_deletion=1 desktop=1 O0_O2=1")
+print("F07_NONADJACENT_TIC_MEMO_PASS duplicate=1 collision4=1 null=1 deletion=1 blacklist=1 empty_resets_deletion=1 desktop=1 O0_O2=1")

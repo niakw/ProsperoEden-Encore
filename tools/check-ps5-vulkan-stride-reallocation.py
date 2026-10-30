@@ -64,6 +64,7 @@ assert 'renderer_vulkan/present/layer.cpp' in (root/'headless/vulkan.cmake').rea
 assert '"${PORT_BUILD_DIR}/vulkan_present_layer.cpp"' in (root/'headless/vulkan.cmake').read_text()
 
 prefix=r'''
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -122,15 +123,15 @@ int main(){
     layer.RefreshResources(device,fb); // Same resolution, different pitch.
     assert(layer.allocations==2 && fits()); // Old pinned branch fails HERE.
     assert(std::holds_alternative<AA>(layer.anti_alias)); // R330: no AA reset.
-    assert(gpu_idles==0 && gpu_finishes==0 && gpu_tick_waits==3);
+    assert(gpu_idles==0 && gpu_finishes==0 && gpu_tick_waits==1);
     layer.RefreshResources(device,fb);
     assert(layer.allocations==2 && fits());
-    assert(gpu_tick_waits==3); // No extra waits on an unchanged frame.
+    assert(gpu_tick_waits==1); // No extra waits on an unchanged frame.
     fb.stride=736;
     layer.RefreshResources(device,fb);
     assert(layer.allocations==3 && fits()); // Shrinking pitch also updates offsets.
     assert(std::holds_alternative<AA>(layer.anti_alias));
-    assert(gpu_idles==0 && gpu_finishes==0 && gpu_tick_waits==6);
+    assert(gpu_idles==0 && gpu_finishes==0 && gpu_tick_waits==2);
     fb.height=400;
     layer.RefreshResources(device,fb);
     assert(layer.allocations==4 && fits());

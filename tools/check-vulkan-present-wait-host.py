@@ -221,10 +221,9 @@ int main() {
     // Enqueue wakes only the presenter; completion wakes the drain.
     for (int run=0; run<30; ++run) {
         Gate g;
-        {
-            std::lock_guard lock{g.queue_mutex};
-            g.present_in_flight = true;
-        }
+        // The present worker is actually parked on present_ready_cv until
+        // the first enqueue. Marking it in-flight before the queue has work
+        // falsely suppressed its only wakeup (a nondeterministic deadlock).
         std::thread drain{[&] { g.WaitPresent(); }};
         std::thread worker{[&] {
             std::unique_lock lock{g.queue_mutex};
@@ -236,6 +235,7 @@ int main() {
         drain.join();
         worker.join();
         assert(g.completed == 1);
+        assert(g.presenter_wakes == 1);
     }
     // An idle queue has no drain waiter: repeated frame completions
     // must not awaken any thread. With a registered drain waiter, the

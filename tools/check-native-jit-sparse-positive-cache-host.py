@@ -100,7 +100,7 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-jit-mru-") as tmp:
     for opt in (0, 2, 3):
         exe = path / f"test-O{opt}"
         subprocess.run([compiler, "-std=c++20", f"-O{opt}", "-Wall", "-Wextra",
-                        "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                        "-Werror", "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
                         "-I", str(ROOT / "headless"), str(path / "test.cpp"),
                         "-o", str(exe)], check=True, timeout=90)
         subprocess.run([str(exe)], check=True, timeout=90)

@@ -118,6 +118,9 @@ def main() -> int:
                 "{101, &IGpuWorker::CreateGpuAccessibleMemory" in worker_hle_cpp and
                 "{102, &IGpuWorker::DestroyGpuAccessibleMemory" in worker_hle_cpp and
                 "LockForMapDeviceAddressSpace" in worker_hle_cpp and
+                "Kernel::KMemoryState::FlagCanAlignedDeviceMap" in worker_hle_cpp and
+                "Kernel::KMemoryState::FlagReferenceCounted" in worker_hle_cpp and
+                "KMemoryAttribute::GpuAccessible" not in worker_hle_cpp and
                 "UnlockForDeviceAddressSpace" in worker_hle_cpp and
                 "CreateHandle(size, handle)" in worker_hle_cpp and
                 "handle->dupes == 1" in worker_hle_cpp and

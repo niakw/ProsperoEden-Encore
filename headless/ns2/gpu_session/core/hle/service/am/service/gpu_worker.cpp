@@ -95,7 +95,15 @@ Result IGpuWorker::RegisterMemory(u64 begin, u64 end, u32 flags,
         Kernel::KMemoryInfo info{};
         Kernel::Svc::PageInfo page{};
         R_TRY(page_table.QueryInfo(&info, &page, address));
-        R_UNLESS(True(info.m_attribute & Kernel::KMemoryAttribute::GpuAccessible),
+        // Encore's maintained kernel has no upstream-only GpuAccessible
+        // attribute. Require precisely the aligned-device-map and referenced
+        // page-state capabilities consumed by LockForMapDeviceAddressSpace,
+        // and reject IPC/explicitly locked pages before taking a reference.
+        const auto required = Kernel::KMemoryState::FlagCanAlignedDeviceMap |
+                              Kernel::KMemoryState::FlagReferenceCounted;
+        R_UNLESS((info.m_state & required) == required &&
+                 False(info.m_attribute & (Kernel::KMemoryAttribute::IpcLocked |
+                                           Kernel::KMemoryAttribute::Locked)),
                  Kernel::ResultInvalidCurrentMemory);
         // Check progress and avoid overflowing a corrupt memory-info range.
         R_UNLESS(info.m_size > 0 &&

@@ -393,3 +393,22 @@ The actual NS2 loader overlay uses it. See:
   register/QMD model. Vulkan compilation, GPU execution, cache invalidation
   and task/mesh shaders remain unvalidated. This is the compiler ABI
   handoff, not PS5 gameplay support.
+
+## N4x — Owned compiler-environment lifetime, prerequisite for shader-cache integration
+
+- The experimental GMMU -> `Shader::Environment` entrypoint now
+  **requires** `std::unique_ptr<Shader::Environment>` and transfers ownership
+  to `NativeMaxwellEnvironment::CreateOwned`. Previously it accepted a
+  borrowed `Shader::Environment&`, which could dangle if the shader cache
+  retained the generated environment after its original caller returned.
+- The wrapper stores its owned source *before* the original source
+  reference; the delegated SPH, texture, constant-buffer and GPU metadata
+  remain alive until the wrapper's destruction. Null or invalid source
+  objects fail closed, releasing any transferred ownership immediately.
+- Both Clang/GCC host tests now verify live delegated CBUF queries after
+  transfer, destruction exactly once, failed-construction cleanup and
+  null-source rejection. Static source guards prevent a regression back
+  to the borrowed-graphics-context GPU entrypoint.
+- This is a **correctness/lifetime fix**, not the final renderer hook:
+  the active `ShaderCache::RefreshStages` / `GetGraphicsEnvironments`
+  and native QMD/mesh programming still need process-scoped integration.

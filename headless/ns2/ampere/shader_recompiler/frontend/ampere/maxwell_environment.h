@@ -15,6 +15,10 @@ class NativeMaxwellEnvironment final : public Shader::Environment {
 public:
     [[nodiscard]] static std::unique_ptr<NativeMaxwellEnvironment> Create(
         Shader::Environment& original, MaxwellShaderImage image);
+    // Ownership-preserving constructor for deferred CFG/IR compilation.
+    // The wrapped source remains alive until the generated environment dies.
+    [[nodiscard]] static std::unique_ptr<NativeMaxwellEnvironment> CreateOwned(
+        std::unique_ptr<Shader::Environment> original, MaxwellShaderImage image);
 
     [[nodiscard]] u64 ReadInstruction(u32 address) override;
     [[nodiscard]] u32 ReadCbufValue(u32 index, u32 offset) override;
@@ -34,7 +38,11 @@ public:
     [[nodiscard]] const MaxwellShaderImage& Image() const noexcept { return image; }
 
 private:
-    NativeMaxwellEnvironment(Shader::Environment& original, MaxwellShaderImage image);
+    NativeMaxwellEnvironment(std::unique_ptr<Shader::Environment> owned,
+                             Shader::Environment& original, MaxwellShaderImage image);
+    // Keep this declaration before original and image: it owns all
+    // delegated texture/CBUF metadata throughout the wrapper lifetime.
+    std::unique_ptr<Shader::Environment> owned;
     Shader::Environment& original;
     MaxwellShaderImage image;
 };

@@ -15,7 +15,7 @@ namespace VideoCommon {
 // Shader::Environment virtual interface used by the existing Maxwell CFG.
 // Never auto-detect by title name, GPU address or Switch 1 shader extension.
 [[nodiscard]] std::unique_ptr<Shader::Environment> CreateNs2GraphicsShaderEnvironment(
-    Tegra::MemoryManager& memory, Shader::Environment& original,
+    Tegra::MemoryManager& memory, std::unique_ptr<Shader::Environment> original,
     u64 gpu_program_address, u32 stage,
     Shader::Ampere::NativeTranslationCache* cache = nullptr);
 } // namespace VideoCommon

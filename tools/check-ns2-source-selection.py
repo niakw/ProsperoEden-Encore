@@ -335,6 +335,15 @@ def main() -> int:
                 (ROOT / "tools/ns2/test_ampere_maxwell_environment.cpp").is_file() and
                 'CreateNs2GraphicsShaderEnvironment(' in
                     (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                'CreateOwned(' in (ampere_root / "maxwell_environment.cpp").read_text() and
+                'std::unique_ptr<Shader::Environment> owned;' in
+                    (ampere_root / "maxwell_environment.h").read_text() and
+                'NativeMaxwellEnvironment::CreateOwned(' in
+                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                'std::unique_ptr<Shader::Environment> original' in
+                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.h").read_text() and
+                'destroyed==1' in
+                    (ROOT / "tools/ns2/test_ampere_maxwell_environment.cpp").read_text() and
                 'translation_cache.cpp' in CMAKE and
                 'translation_cache.h' in CMAKE and
                 (ROOT / "tools/ns2/test_ampere_translation_cache.cpp").is_file() and

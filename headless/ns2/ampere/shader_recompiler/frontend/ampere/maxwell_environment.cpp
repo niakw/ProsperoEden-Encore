@@ -6,8 +6,9 @@
 namespace Shader::Ampere {
 
 NativeMaxwellEnvironment::NativeMaxwellEnvironment(
+    std::unique_ptr<Shader::Environment> owned_source,
     Shader::Environment& source, MaxwellShaderImage translated)
-    : original{source}, image{std::move(translated)} {
+    : owned{std::move(owned_source)}, original{source}, image{std::move(translated)} {
     // Feed the existing Maxwell CFG its expected SPH, stage, passthrough
     // mask and first real 64-bit instruction address (after 0x50 SPH).
     sph = source.SPH();
@@ -23,7 +24,17 @@ std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::Create(
         !image.ReadMaxwellInstruction(0x50))
         return {};
     return std::unique_ptr<NativeMaxwellEnvironment>(
-        new NativeMaxwellEnvironment(source, std::move(image)));
+        new NativeMaxwellEnvironment({}, source, std::move(image)));
+}
+std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::CreateOwned(
+    std::unique_ptr<Shader::Environment> source, MaxwellShaderImage image) {
+    if (!source || !image.Ready() || image.code.empty() ||
+        image.first_instruction_address != 0x50 ||
+        !image.ReadMaxwellInstruction(0x50))
+        return {};
+    auto& ref = *source;
+    return std::unique_ptr<NativeMaxwellEnvironment>(
+        new NativeMaxwellEnvironment(std::move(source), ref, std::move(image)));
 }
 u64 NativeMaxwellEnvironment::ReadInstruction(u32 address) {
     // Fail closed instead of falling back to *native* GMMU bytes interpreted

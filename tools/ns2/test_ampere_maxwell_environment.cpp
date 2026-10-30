@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <type_traits>
+#include <memory>
 #include <vector>
 #include "shader_recompiler/frontend/ampere/maxwell_environment.h"
 
@@ -17,6 +18,10 @@ struct FakeMaxwellEnvironment final : Shader::Environment {
     u32 cbuf_reads{};
     u32 texture_reads{};
     u32 dumped{};
+    int* destroyed{};
+    ~FakeMaxwellEnvironment() override {
+        if (destroyed) ++*destroyed;
+    }
     FakeMaxwellEnvironment() {
         stage=Shader::Stage::VertexB;
         start_address=0x50;
@@ -91,5 +96,33 @@ int main() {
     Check(fake.dumped==0,"NS2 image never dumps using a Switch 1 guest shader identity");
     Check(!NativeMaxwellEnvironment::Create(fake,MaxwellShaderImage{}),
           "invalid/untranslated image cannot enter existing Maxwell compiler");
+    // Real shader caches defer IR compilation: a borrowed stack environment
+    // would dangle after the surrounding renderer method returns. The new
+    // ownership path must keep the source alive until the wrapper is freed.
+    int destroyed = 0;
+    auto source = std::make_unique<FakeMaxwellEnvironment>();
+    source->destroyed = &destroyed;
+    auto* live_source = source.get();
+    {
+        auto owned = NativeMaxwellEnvironment::CreateOwned(
+            std::move(source),BuildMaxwellShaderImage(hdr,native,3));
+        Check(!source && owned && destroyed==0,
+              "ownership transferred to native environment wrapper");
+        Check(owned->ReadCbufValue(3,2)==770 &&
+              live_source->cbuf_reads==1 &&
+              owned->ShaderStage()==Shader::Stage::VertexB,
+              "owned original is alive for deferred compiler CBUF queries");
+    }
+    Check(destroyed==1, "original graphics environment destroyed exactly once");
+    int invalid_destroyed = 0;
+    auto invalid_source = std::make_unique<FakeMaxwellEnvironment>();
+    invalid_source->destroyed = &invalid_destroyed;
+    Check(!NativeMaxwellEnvironment::CreateOwned(
+              std::move(invalid_source), MaxwellShaderImage{}) &&
+          invalid_destroyed==1,
+          "failed image construction also releases its guest graphics context");
+    Check(!NativeMaxwellEnvironment::CreateOwned(
+              {},BuildMaxwellShaderImage(hdr,native,3)),
+          "null source cannot publish an executable shader environment");
     std::puts("NS2 Maxwell Shader::Environment bridge: PASS");
 }

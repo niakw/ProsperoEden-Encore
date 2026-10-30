@@ -27,15 +27,16 @@ Shader::Ampere::NativeCaptureResult CaptureNs2GraphicsShaderFromGpu(
 }
 
 std::unique_ptr<Shader::Environment> CreateNs2GraphicsShaderEnvironment(
-    Tegra::MemoryManager& memory, Shader::Environment& original,
+    Tegra::MemoryManager& memory, std::unique_ptr<Shader::Environment> original,
     u64 gpu_program_address, u32 stage,
     Shader::Ampere::NativeTranslationCache* cache) {
     // Creating the environment requires BOTH a fully verified translation
     // and a caller-provided graphics context. Never publish invalid partials.
+    if (!original) return {};
     auto captured = CaptureNs2GraphicsShaderFromGpu(
         memory, gpu_program_address, stage, cache);
     if (!captured.Ready()) return {};
-    return Shader::Ampere::NativeMaxwellEnvironment::Create(
-        original, std::move(captured.image));
+    return Shader::Ampere::NativeMaxwellEnvironment::CreateOwned(
+        std::move(original), std::move(captured.image));
 }
 } // namespace VideoCommon

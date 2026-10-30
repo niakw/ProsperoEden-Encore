@@ -70,7 +70,7 @@ def main() -> int:
                 "NS2 GPU service must remain opt-in and forbidden in release")
         require("if(NOT EDEN_NS2_NVDRV_EXPERIMENTAL)" in
                 CMAKE[session_selection:release_gate] and
-                'target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}")' in CMAKE,
+                'target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE,
                 "NS2 GPU service must require NVDRV and compile real source")
         session_root = ROOT / "headless/ns2/gpu_session/core/hle/service/am/service"
         service_cpp = (session_root / "gpu_session.cpp").read_text()

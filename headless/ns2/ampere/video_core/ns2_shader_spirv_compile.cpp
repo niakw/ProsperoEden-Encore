@@ -9,11 +9,12 @@
 #include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 
 namespace VideoCommon {
-Shader::Ampere::NativeSpirvResult CompileCapturedNs2VertexSpirv(
-    Tegra::MemoryManager& memory,
+Shader::Ampere::NativeSpirvResult CompileCapturedNs2VertexSpirvFromReader(
     const Kernel::KProcess* process,
     std::unique_ptr<Shader::Environment> original,
     u64 gpu_program_address,
+    Shader::Ampere::GuestShaderRead read,
+    void* context,
     const Shader::HostTranslateInfo& host_info,
     const Shader::Profile& profile,
     const Shader::RuntimeInfo& runtime_info,
@@ -26,14 +27,14 @@ Shader::Ampere::NativeSpirvResult CompileCapturedNs2VertexSpirv(
     // No autodetection, no fallback to Switch 1 shader bytes or cache keys.
     // Reject BEFORE GMMU capture: unmerged VertexA/compute stages cannot
     // silently appear as valid Vulkan VertexB modules.
-    if (!original)
+    if (!read || !original)
         return {NativeSpirvStatus::InvalidImage, {}};
     if (original->ShaderStage() != Shader::Stage::VertexB)
         return {NativeSpirvStatus::UnsupportedStage, {}};
     try {
-        auto captured = CaptureNs2GraphicsShaderFromGpu(
-            memory, gpu_program_address,
-            static_cast<u32>(original->ShaderStage()), cache);
+        auto captured = Shader::Ampere::CaptureNativeGraphicsShader(
+            gpu_program_address, static_cast<u32>(original->ShaderStage()),
+            read, context, cache);
         if (!registry.IsCurrent(*session))
             return {NativeSpirvStatus::InactiveSession, {}};
         if (!captured.Ready())
@@ -54,5 +55,21 @@ Shader::Ampere::NativeSpirvResult CompileCapturedNs2VertexSpirv(
     } catch (const std::exception&) {
         return {NativeSpirvStatus::CompilationFailed, {}};
     }
+}
+
+Shader::Ampere::NativeSpirvResult CompileCapturedNs2VertexSpirv(
+    Tegra::MemoryManager& memory,
+    const Kernel::KProcess* process,
+    std::unique_ptr<Shader::Environment> original,
+    u64 gpu_program_address,
+    const Shader::HostTranslateInfo& host_info,
+    const Shader::Profile& profile,
+    const Shader::RuntimeInfo& runtime_info,
+    Shader::Ampere::NativeTranslationCache* cache,
+    bool exits_to_dispatcher) {
+    return CompileCapturedNs2VertexSpirvFromReader(
+        process, std::move(original), gpu_program_address,
+        ReadNs2GpuShader, &memory, host_info, profile, runtime_info,
+        cache, exits_to_dispatcher);
 }
 } // namespace VideoCommon

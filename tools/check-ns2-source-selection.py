@@ -66,7 +66,9 @@ def main() -> int:
                 "NS2 video_core must compile with the session registry overlay")
         pipeline_source = ROOT / "headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp"
         require(pipeline_source.is_file() and
-                "CaptureNs2GraphicsShaderFromGpu(" in pipeline_source.read_text() and
+                "CaptureNativeGraphicsShader(" in pipeline_source.read_text() and
+                "CompileCapturedNs2VertexSpirvFromReader(" in pipeline_source.read_text() and
+                "ReadNs2GpuShader, &memory" in pipeline_source.read_text() and
                 "CompileReviewedNativeVertexSpirv(" in pipeline_source.read_text() and
                 "registry.CaptureTicket(process)" in pipeline_source.read_text() and
                 pipeline_source.read_text().count("registry.IsCurrent(*session)") == 2 and

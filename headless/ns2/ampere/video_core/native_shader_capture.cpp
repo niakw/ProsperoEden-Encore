@@ -5,7 +5,6 @@
 #include "video_core/memory_manager.h"
 
 namespace VideoCommon {
-namespace {
 bool ReadNs2GpuShader(void* context, u64 address, void* dest, std::size_t size) {
     auto* const memory = static_cast<Tegra::MemoryManager*>(context);
     if (!memory || !dest || !size ||
@@ -15,7 +14,6 @@ bool ReadNs2GpuShader(void* context, u64 address, void* dest, std::size_t size) 
     memory->ReadBlock(address, dest, size);
     return true;
 }
-} // namespace
 
 Shader::Ampere::NativeCaptureResult CaptureNs2GraphicsShaderFromGpu(
     Tegra::MemoryManager& memory, u64 gpu_program_address, u32 stage,

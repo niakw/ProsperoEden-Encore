@@ -2008,15 +2008,19 @@ if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
         "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.cpp")
     set(EDEN_NS2_GPU_WORKER_SOURCE
         "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.cpp")
+    set(EDEN_NS2_GPU_SHARED_SOURCE
+        "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker_shared.cpp")
     if(NOT EXISTS "${EDEN_NS2_GPU_SESSION_SOURCE}" OR
        NOT EXISTS "${EDEN_NS2_GPU_WORKER_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_SHARED_SOURCE}" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.h" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.h" OR
        NOT EXISTS "${PORT_ROOT}/headless/ns2/hle/core/hle/service/am/service/gpu_session_protocol.h")
         message(FATAL_ERROR "Missing isolated NS2 GPU session source/protocol")
     endif()
     target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
-        "${EDEN_NS2_GPU_WORKER_SOURCE}")
+        "${EDEN_NS2_GPU_WORKER_SOURCE}"
+        "${EDEN_NS2_GPU_SHARED_SOURCE}")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_GPU_SESSION_ROOT}"
         "${PORT_ROOT}/headless/ns2/hle")

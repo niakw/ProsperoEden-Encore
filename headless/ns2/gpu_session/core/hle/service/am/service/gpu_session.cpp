@@ -35,7 +35,7 @@ IGpuSession::IGpuSession(Core::System& system_,
                          std::shared_ptr<Nvidia::Module> module,
                          Kernel::KProcess* process)
     : ServiceFramework{system_, "IGpuSession"}, m_module{std::move(module)},
-      m_process{process}, m_shared{std::make_shared<GpuWorkerSharedState>(system_)} {
+      m_process{process}, m_shared{std::make_shared<GpuWorkerSharedState>(system_, m_module)} {
     m_process->Open(kernel);
     static const FunctionInfo functions[] = {
         {11, &IGpuSession::GetNotificationRange, "GetNotificationRange"},
@@ -54,12 +54,9 @@ IGpuSession::IGpuSession(Core::System& system_,
 }
 IGpuSession::~IGpuSession() {
     if (m_worker) m_worker->Close(kernel);
-    // Shared event ownership survives guest worker handles until they close.
-    // Close all NVDRV fds before the owning NVDRV process session.
-    for (const auto id : m_address_spaces.OwnedIds())
-        if (id) m_module->Close(static_cast<Nvidia::DeviceFD>(*id));
-    if (m_nv_session)
-        m_module->GetContainer().CloseSession(Nvidia::NvCore::SessionId{*m_nv_session});
+    // Drop our shared reference while the process is still alive. Any guest
+    // worker client continues holding the process and the NVDRV FD owner.
+    m_shared.reset();
     m_process->Close(kernel);
 }
 
@@ -190,23 +187,23 @@ void IGpuSession::GetNotificationEvent(HLERequestContext& ctx) {
 }
 
 Result IGpuSession::RegisterAddressSpace(u32 id) {
-    const std::scoped_lock lock{m_lock};
-    return Translate(m_address_spaces.Register(id));
+    const std::scoped_lock lock{m_shared->mutex};
+    return Translate(m_shared->address_spaces.Register(id));
 }
 
 void IGpuSession::CreateAddressSpace(HLERequestContext& ctx) {
-    const std::scoped_lock lock{m_lock};
+    const std::scoped_lock lock{m_shared->mutex};
     const auto* packet = ctx.CommandBuffer();
     const std::array<GP::U32, 3> command{packet[0], packet[1], packet[2]};
     Result result = Kernel::ResultInvalidCombination;
     u32 id{};
     if (GP::IsCreateAddressSpace(command)) {
         result = Kernel::ResultOutOfResource;
-        if (m_address_spaces.HasCapacity()) {
-            if (!m_nv_session)
-                m_nv_session = m_module->GetContainer().OpenSession(m_process).id;
+        if (m_shared->address_spaces.HasCapacity()) {
+            if (!m_shared->nv_session)
+                m_shared->nv_session = m_module->GetContainer().OpenSession(m_process).id;
             const auto fd = m_module->Open("/dev/nvhost-as-gpu",
-                                           Nvidia::NvCore::SessionId{*m_nv_session});
+                                           Nvidia::NvCore::SessionId{*m_shared->nv_session});
             if (fd != Nvidia::INVALID_NVDRV_FD && fd > 0) {
                 // Initialise an actual NVDRV address-space FD. Native 4K
                 // shader/queue mappings are not provided by this path.
@@ -217,7 +214,7 @@ void IGpuSession::CreateAddressSpace(HLERequestContext& ctx) {
                 Nvidia::Ioctl ioctl{};
                 ioctl.raw = 0x40284109;
                 if (m_module->Ioctl1(fd, ioctl, input, output) == Nvidia::NvResult::Success) {
-                    const auto status = m_address_spaces.Add(static_cast<u32>(fd));
+                    const auto status = m_shared->address_spaces.Add(static_cast<u32>(fd));
                     if (status == GP::Status::Success) {
                         id = static_cast<u32>(fd);
                         result = ResultSuccess;
@@ -241,7 +238,7 @@ void IGpuSession::CreateAddressSpace(HLERequestContext& ctx) {
 }
 
 void IGpuSession::GetAddressSpacePartition(HLERequestContext& ctx) {
-    const std::scoped_lock lock{m_lock};
+    const std::scoped_lock lock{m_shared->mutex};
     const auto* packet = ctx.CommandBuffer();
     const std::array<GP::U32, 3> command{packet[0], packet[1], packet[2]};
     const bool user = ctx.GetCommand() == 203;
@@ -251,7 +248,7 @@ void IGpuSession::GetAddressSpacePartition(HLERequestContext& ctx) {
     const auto request = GP::DecodeAddressSpacePartition(command, ctx.GetCommand());
     if (request) {
         result = Kernel::ResultNotFound;
-        if (m_address_spaces.Owns(request->address_space)) {
+        if (m_shared->address_spaces.Owns(request->address_space)) {
             result = ResultSuccess;
             if (user) {
                 std::array<u8, 64> input{};

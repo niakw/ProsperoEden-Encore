@@ -77,7 +77,7 @@ def main() -> int:
         service_h = (session_root / "gpu_session.h").read_text()
         require("RegisterHandlersTipc(functions)" in service_cpp and
                 "GpuSessionProtocol::DeviceSlots devices" in (session_root / "gpu_worker_shared.h").read_text() and
-                "GpuSessionProtocol::AddressSpaceSlots m_address_spaces" in service_h and
+                "GpuSessionProtocol::AddressSpaceSlots address_spaces" in (session_root / "gpu_worker_shared.h").read_text() and
                 "rb.Push(Kernel::ResultNotImplemented.raw)" in service_cpp and
                 "{11, &IGpuSession::GetNotificationRange" in service_cpp and
                 "{12, &IGpuSession::GetNotificationEvent" in service_cpp and
@@ -97,8 +97,8 @@ def main() -> int:
                 'm_module->Open("/dev/nvhost-as-gpu"' in service_cpp and
                 "ioctl.raw = 0x40284109" in service_cpp and
                 "ioctl.raw = 0xc0404108" in service_cpp and
-                "m_module->Close(" in service_cpp and
-                "CloseSession(Nvidia::NvCore::SessionId{" in service_cpp,
+                "m_shared->address_spaces.HasCapacity()" in service_cpp and
+                "m_shared->address_spaces.Register(id)" in service_cpp,
                 "NS2 GPU service must own real NVDRV descriptors and safely close them")
         worker_header = ROOT / "headless/ns2/hle/core/hle/service/am/service/gpu_worker_protocol.h"
         worker_cpp = worker_header.read_text()
@@ -109,6 +109,13 @@ def main() -> int:
                 "DecodeModify(" in worker_cpp and
                 "MaxMappings = 4096" in worker_cpp,
                 "NS2 4K worker preflight / bounded ledger missing")
+        shared_cpp = (session_root / "gpu_worker_shared.cpp").read_text()
+        require("GpuWorkerSharedState::~GpuWorkerSharedState()" in shared_cpp and
+                "address_spaces.OwnedIds()" in shared_cpp and
+                "event_context.CloseEvent(event)" in shared_cpp and
+                "module->GetContainer().CloseSession(" in shared_cpp and
+                "module->Close(static_cast<Nvidia::DeviceFD>(*fd))" in shared_cpp,
+                "Live worker handles must retain NVDRV FD and event ownership")
         worker_hle_cpp = (session_root / "gpu_worker.cpp").read_text()
         require("IGpuWorker::HandleSyncRequest" in worker_hle_cpp and
                 "Kernel::ResultNotImplemented.raw" in worker_hle_cpp and
@@ -130,7 +137,8 @@ def main() -> int:
                 '{211, &IGpuWorker::NormalMapGpuMemory4K' not in worker_hle_cpp,
                 "Native GPU worker IPC must reject unsupported mappings")
         require('target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE and
-                '"${EDEN_NS2_GPU_WORKER_SOURCE}")' in CMAKE and
+                '"${EDEN_NS2_GPU_WORKER_SOURCE}"' in CMAKE and
+                '"${EDEN_NS2_GPU_SHARED_SOURCE}")' in CMAKE and
                 "EDEN_NS2_GPU_WORKER_SOURCE" in CMAKE[session_selection:release_gate],
                 "Native worker source must be gated with GPU session research owner")
         supervisor_selection = CMAKE.index("# Research-only SelfController -> GraphicsSupervisor")

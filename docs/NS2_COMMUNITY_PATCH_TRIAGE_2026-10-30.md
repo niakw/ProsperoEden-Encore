@@ -148,3 +148,16 @@ The `\default=false` keys are configuration override flags, not executable patch
 ### N4j compatibility: maintained Encore memory flags
 
 The maintained Encore kernel has no upstream-only GpuAccessible memory attribute. The worker uses the real FlagCanAlignedDeviceMap and FlagReferenceCounted state bits, rejects IPC-locked and explicitly locked regions, then relies on the kernel's own LockForMapDeviceAddressSpace validation under its page-table mutex. These checks are not a native NS2-specific memory attribute; supporting such a guest-only flag remains separate work.
+
+## N4k — Correct NVDRV GPU address-space FD lifetime for independently moved workers
+
+The GPU worker (kernel session handle 22) may remain alive after the GPU session closes.
+Previously the GPU session closed its owned NVDRV address-space FDs even while the
+worker's separately moved handle was still valid. Device IDs, event handles, address-space
+FDs and the owning NVDRV module/session now live together in a refcounted shared owner.
+The last worker/session owner closes all owned FDs before the NVDRV process session.
+All operations take the same state mutex; no native GPU mappings are attempted yet.
+
+This fix is preparatory safety work. The maintained vendor's nvhost_as_gpu does not have
+the Ampere-native MapNative4K/UnmapNative4K/ModifyNativeKind operations, and generic
+Maxwell-era fixed-map IOCTLs must not be represented as full Switch 2 GPU support.

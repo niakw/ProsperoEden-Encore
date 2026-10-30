@@ -33,10 +33,8 @@ private:
     void DestroyGraphicsDevice(HLERequestContext& ctx);
     std::mutex m_lock;
     std::shared_ptr<GpuWorkerSharedState> m_shared;
-    GpuSessionProtocol::AddressSpaceSlots m_address_spaces;
     std::shared_ptr<Nvidia::Module> m_module;
     Kernel::KProcess* const m_process;
-    std::optional<std::size_t> m_nv_session;
     Kernel::KClientSession* m_worker{};
 
 };

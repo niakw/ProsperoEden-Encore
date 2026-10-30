@@ -117,10 +117,14 @@ int main() {
     int invalid_destroyed = 0;
     auto invalid_source = std::make_unique<FakeMaxwellEnvironment>();
     invalid_source->destroyed = &invalid_destroyed;
-    Check(!NativeMaxwellEnvironment::CreateOwned(
-              std::move(invalid_source), MaxwellShaderImage{}) &&
-          invalid_destroyed==1,
-          "failed image construction also releases its guest graphics context");
+    // C++ permits a by-value function parameter to be destroyed at the
+    // end of its enclosing full expression (rather than before the logical
+    // && rhs). Keep the lifetime assertion in a distinct full expression.
+    auto rejected = NativeMaxwellEnvironment::CreateOwned(
+        std::move(invalid_source), MaxwellShaderImage{});
+    Check(!rejected, "invalid image cannot publish a Maxwell environment");
+    Check(invalid_destroyed == 1,
+          "failed image construction releases its guest graphics context");
     Check(!NativeMaxwellEnvironment::CreateOwned(
               {},BuildMaxwellShaderImage(hdr,native,3)),
           "null source cannot publish an executable shader environment");

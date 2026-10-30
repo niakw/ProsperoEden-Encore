@@ -315,6 +315,17 @@ jobs:
               -o "build-ns2-a64/ampere-environment-${cxx//+/}"
             "build-ns2-a64/ampere-environment-${cxx//+/}"
           done
+      - name: Compile real Maxwell CFG and shader IR bridge without Vulkan integration (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -fsyntax-only -Wall -Wextra -Wno-unused-parameter \
+              -Ibuild-ns2-a64/fmt/include \
+              -Iheadless/ns2/ampere \
+              -Ivendor/sources/eden/src \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/ir_bridge.cpp
+          done
       - name: Syntax-check actual Tegra GPU memory shader capture adapter (GCC)
         shell: bash
         run: |

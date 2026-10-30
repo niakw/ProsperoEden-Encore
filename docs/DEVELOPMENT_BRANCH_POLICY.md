@@ -1,21 +1,34 @@
-# Eden Encore — branche de développement unique
+# Eden Encore — main-only development policy
 
-**Branche unique et branche GitHub par défaut :** `dev/ps5-sparse-jit`.
+**Effective 30 October 2026:** [`niakw/ProsperoEden-Encore`](https://github.com/niakw/ProsperoEden-Encore) is an independent GitHub repository, and **`main` is both its default branch and the only branch authorized for new development**.
 
-Tous les prochains changements (performances PS5, rendu Vulkan, corrections de sécurité, documentation et tests) s'effectuent directement sur cette branche, avec vérification de son SHA avant chaque écriture. **Ne pas créer de branches temporaires** `work/*`, `security/*`, `fix/*` ou `feature/*`.
+This supersedes the original October 13 policy that used `dev/ps5-sparse-jit`. That branch is retained as a **historical reference only**. Do **not** push, merge, fast-forward, cherry-pick, open new PRs against, or run new development automation on the old development branch. No parallel F07 branch or fork may become the source of truth.
 
-## Nettoyage validé le 13 octobre 2026
+## Rules for changes
 
-- Les correctifs R419 à R427 avaient déjà été consolidés sur `dev/ps5-sparse-jit`.
-- Le portage R428 de ProsperoEden v1.001.000 a été intégré par **fast-forward** depuis sa branche de préparation, sans écraser les modifications existantes.
-- Les 10 branches secondaires ont été supprimées après vérification exacte de leurs SHA. Exécution GitHub Actions : https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38380839924 (succès).
-- Le workflow temporaire ayant réalisé cette suppression est lui-même retiré du dépôt dans le commit de clôture.
-- Vérification via l'API GitHub : **une seule branche distante demeure**, `dev/ps5-sparse-jit`.
+1. Fetch and verify the current **`main` HEAD** before every write. Concurrent F07 fixes must not be overwritten.
+2. Commit directly to `main`, preserving its existing commit history. Use a safe expected SHA or other optimistic-concurrency check when updating refs.
+3. Do not force-push or rewrite `main`. Do not resurrect the old history containing the oversized `vendor/` source tree.
+4. Keep the pinned `vendor` Git submodule in the original path; its repository is `niakw/Prospero.Eden-Encore-vendor`. Ordinary clones must initialize submodules.
+5. Test the exact commit changed. Source/host checks and CI are distinct from native PS5 compilation and from **hardware validation on firmware 13.60**.
+6. Do not launch a final native PS5 release build until the F07 optimization work is signed off. A green source test or a successful screenshot does not justify a release.
+7. Avoid using a secondary development branch for documentation, security, launcher, Vulkan or performance fixes. Existing secondary branches can remain for historical reference but must not receive new work.
 
-Les anciens objets Git restent dans l'historique normal ; supprimer une branche ne supprime ni le code fusionné ni les commits inclus dans `dev`.
+**All automation prompts, badges, README build links and issue templates must point to `main`.** GitHub's old branch-filtered runs remain usable as historical proof, not as the current active pipeline.
 
-## Contrôles
+## Migration checkpoints (historical)
 
-- `[core-ready]` déclenche le préflight source ; `[full-build]` et les contrôles du pipeline natif n'ont pas à être déclenchés pour un simple changement de documentation.
-- Les modifications des dépendances pinées passent par des dérivations CMake vérifiées et restent séparées des archives immuables.
-- Les workflows CodeQL, CI, compilation et releases doivent cibler exclusivement `dev/ps5-sparse-jit`.
+- **13 October 2026:** the former repository `niakw/Prospero.Eden-Encore` consolidated R419–R428 on its then-primary `dev/ps5-sparse-jit` branch. Older [CI evidence](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38380839924) describes the state **at that date only**.
+- **30 October 2026:** the active code and branches, release tags, release assets, and pinned `vendor` were moved to independent `niakw/ProsperoEden-Encore`. The old fork was reduced to a historical redirection containing a Git submodule link to the new repository.
+- **30 October 2026:** Avatar PR #1 and the main synchronization PR #4 were merged; `main` became the only active branch for subsequent work by explicit maintainer instruction.
+
+The archived fork's stars and historic release/issue metadata remain distinct from the new repository's GitHub metadata. The Git history rewrite and mirror are documented separately in [repository history compaction](REPO_HISTORY_COMPACTION_2026-10-30.md). Historical document references to `dev/ps5-sparse-jit` or older SHAs do **not** override this policy.
+
+## Current references
+
+- [Official repository and README](../README.md)
+- [Install and build instructions](../INSTALL.md)
+- [Contributing](../CONTRIBUTING.md)
+- [Accessibility](../ACCESSIBILITY.md)
+- [Security](../SECURITY.md)
+- [F07 source/hardware validation tracker](FC27_F07_MASTER_TRACKER.md)

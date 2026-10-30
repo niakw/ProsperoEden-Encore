@@ -304,6 +304,8 @@ constexpr std::size_t GuestPage = 0x1000;
 constexpr std::size_t GuestPages = 64;
 constexpr std::size_t PagesPerGranule = 4;
 constexpr std::size_t WindowBytes = GuestPages * GuestPage;
+constexpr std::uint8_t Readable = 1, Writable = 2;
+constexpr std::uint8_t ReadBlocked = 1, WriteBlocked = 2, Blocked = 3;
 struct Counters {
     std::atomic<unsigned> map_calls{0}, unmap_calls{0}, mapped_pages{0};
 };
@@ -318,21 +320,8 @@ struct TestWindow {
     std::vector<std::uint8_t> map = std::vector<std::uint8_t>(GuestPages, 0);
 PAGES
     void Update(std::size_t, std::size_t) { ++updates; }
-    std::uint8_t Own(std::size_t page) const {
-        if (page >= GuestPages || !chunk_aliased[page / PagesPerGranule]) return 3;
-        const auto access = page_access[page];
-        return ((access & 1) ? 0 : 1) | ((access & 2) ? 0 : 2);
-    }
-    void Refresh(std::size_t first, std::size_t last) {
-        ++guard_refreshes;
-        const std::size_t begin = first ? first - 1 : 0;
-        auto own = Own(begin);
-        for (std::size_t page = begin; page <= last; ++page) {
-            const auto next = Own(page + 1);
-            map[page] = own | next;
-            own = next;
-        }
-    }
+SOURCE_OWN
+SOURCE_REFRESH
 MAP
 UNMAP
 };
@@ -453,8 +442,15 @@ int main() {
                 "cross16k=10000 permission_only=1 permission_batch=1 cross_permission_batch=1 predecessor_guard=1 bound16=1 O0_O2=1\n");
 }
 '''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
-    '\nUNMAP\n', '\n' + unmap_body + '\n')
+    '\nUNMAP\n', '\n' + unmap_body + '\n').replace(
+    'SOURCE_OWN', '    std::uint8_t Own(' + source.split('    std::uint8_t Own(', 1)[1].split(
+        "    // A page's byte", 1)[0].rstrip()).replace(
+    'SOURCE_REFRESH', ('    void Refresh(' + source.split('    void Refresh(', 1)[1].split(
+        '    void Block(', 1)[0].rstrip()).replace(
+            '    void Refresh(std::size_t first, std::size_t last) {',
+            '    void Refresh(std::size_t first, std::size_t last) {\n        ++guard_refreshes;', 1))
 assert '\nUNMAP\n' not in map_cpp and '\nMAP\n' not in map_cpp
+assert 'SOURCE_OWN' not in map_cpp and 'SOURCE_REFRESH' not in map_cpp
 with tempfile.TemporaryDirectory(prefix='encore-fastmem-map-unmap-') as temp:
     path = Path(temp)/'map.cpp'
     path.write_text(map_cpp)

@@ -1351,6 +1351,7 @@ adapt('src/video_core/renderer_vulkan/present/window_adapt_pass.cpp', 'vulkan_wi
 # too late for the AA variant. Drain only if an AA pass actually exists.
 # Do not impose idle waits on normal draws or when the filter is disabled.
 adapt('src/video_core/renderer_vulkan/present/layer.cpp', 'vulkan_present_layer.cpp', [
+    ("void Layer::ReleaseRawImages() {\n    for (const u64 tick : resource_ticks) {\n        scheduler.Wait(tick);\n    }", "void Layer::ReleaseRawImages() {\n#ifdef PS5_NATIVE\n    // On this single Vulkan GPU timeline, the latest presentation resource\n    // tick subsumes all preceding image uses, including out-of-order slots.\n    const auto last_tick = std::max_element(resource_ticks.begin(), resource_ticks.end());\n    if (last_tick != resource_ticks.end() && *last_tick != 0) {\n        scheduler.Wait(*last_tick);\n    }\n#else\n    for (const u64 tick : resource_ticks) {\n        scheduler.Wait(tick);\n    }\n#endif"),
     # Never upload recycled staging bytes when the guest backing is missing.
     ("    if (host_ptr) {\n        Tegra::Texture::UnswizzleTexture(\n            mapped_span.subspan(image_offset, linear_size), std::span(host_ptr, tiled_size),\n            bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);\n        buffer.Flush();  // Ensure host writes are visible before the GPU copy.\n    }", "    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n        Tegra::Texture::UnswizzleTexture(\n            linear_span, std::span(host_ptr, tiled_size),\n            bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);\n    } else {\n        // Never upload stale staging bytes if the guest framebuffer is missing.\n        std::fill(linear_span.begin(), linear_span.end(), u8{0});\n    }\n    buffer.Flush();  // Both the upload and missing-memory clear need visibility."),
     ("#include <variant>", "#include <algorithm>\n#include <variant>"),
@@ -1378,8 +1379,12 @@ adapt('src/video_core/renderer_vulkan/present/layer.cpp', 'vulkan_present_layer.
     // a full-device WaitIdle or recreate the FXAA/SMAA pass on pitch changes.
     if (framebuffer.width == raw_width && framebuffer.height == raw_height &&
         framebuffer.pixel_format == pixel_format && !raw_images.empty()) {
-        for (const u64 tick : resource_ticks) {
-            scheduler.Wait(tick);
+        // All layer ticks share one monotonically increasing Vulkan GPU
+        // timeline. Waiting for the maximum retires every earlier user of
+        // the old upload staging buffer with one semaphore wait.
+        const auto last_tick = std::max_element(resource_ticks.begin(), resource_ticks.end());
+        if (last_tick != resource_ticks.end() && *last_tick != 0) {
+            scheduler.Wait(*last_tick);
         }
         CreateStagingBuffer(device, framebuffer);
         return;

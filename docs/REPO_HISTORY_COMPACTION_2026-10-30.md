@@ -1,5 +1,7 @@
 # Eden Encore — Git history compaction (2026-10-30)
 
+> **Official standalone repository (30 October 2026):** [niakw/ProsperoEden-Encore](https://github.com/niakw/ProsperoEden-Encore) replaces the former fork `niakw/Prospero.Eden-Encore`. Links below to runs/PRs on the former fork are historical evidence; new clone, CI, PR and release operations must use the standalone repository. The vendor submodule remains in its original `niakw/Prospero.Eden-Encore-vendor` repository.
+
 ## Result and boundaries
 
 The active Encore parent Git history was rewritten on 2026-10-30 after `vendor/` was externalized to `niakw/Prospero.Eden-Encore-vendor`. The original Git objects remain safely archived in the external vendor repository release. No PS5 release build was requested by this operation.
@@ -27,7 +29,7 @@ The original open Avatar PR #19 was closed by GitHub when its history became inc
 Recommended: make a fresh clone into a **new directory**, preserving the old local checkout as a backup until all local uncommitted changes are accounted for.
 
 ```bash
-git clone --single-branch --branch dev/ps5-sparse-jit https://github.com/niakw/Prospero.Eden-Encore.git Encore-clean
+git clone --single-branch --branch dev/ps5-sparse-jit https://github.com/niakw/ProsperoEden-Encore.git Encore-clean
 # Only when preparing a build or the source audits:
 git -C Encore-clean submodule update --init --recursive vendor
 ```

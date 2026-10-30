@@ -226,15 +226,24 @@ public:
         if (first < last && last - first < PagesPerGranule &&
             first / PagesPerGranule == last / PagesPerGranule &&
             chunk_aliased[first / PagesPerGranule]) {
-            bool unchanged = true;
+            // A live fixed alias is independent of guest permissions.
+            // Preserve it for permission-only changes across up to four
+            // neighbouring pages, and refresh only their JIT guard bytes.
+            bool same_backing = true;
+            bool same_access = true;
             for (std::size_t p = first; p <= last; ++p) {
-                if (page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1) ||
-                    page_access[p] != access) {
-                    unchanged = false;
+                if (page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1)) {
+                    same_backing = false;
                     break;
                 }
+                if (page_access[p] != access) same_access = false;
             }
-            if (unchanged) return;
+            if (same_backing) {
+                if (same_access) return;
+                for (std::size_t p = first; p <= last; ++p) page_access[p] = access;
+                Refresh(first, last);
+                return;
+            }
         }
         // Short repeated mappings may cross up to four native 16 KiB
         // granules. They are still inert ONLY when every affected chunk

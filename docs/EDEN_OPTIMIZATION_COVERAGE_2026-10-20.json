@@ -1440,7 +1440,7 @@
     {
       "path": "src/host_memory.cpp",
       "disposition": "code_changed_in_batch",
-      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement 30 October F07 A32 fastmem: identical live alias with a changed single-page permission republishes only current/predecessor JIT guards, bypassing repeated three-pass Update scans. Non-aliased mapping retries remain mandatory; source-linked host witness tests granule boundaries, guard bytes, missing aliases at O0/O2. Console validation remains open."
+      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement 30 October F07 A32 fastmem: identical live alias with a changed single-page permission republishes only current/predecessor JIT guards, bypassing repeated three-pass Update scans. Non-aliased mapping retries remain mandatory; source-linked host witness tests granule boundaries, guard bytes, missing aliases at O0/O2. Console validation remains open. 30 October continuation: for 2-4 pages sharing an active 16KiB guest alias with unchanged physical backing, a permission-only Map now refreshes just affected JIT guard bytes under the existing mutex instead of executing Update's three full scans; unaliased and changed backing preserve fallback. Source-linked host oracle updated. No console FPS measured."
     },
     {
       "path": "src/lifecycle.c",

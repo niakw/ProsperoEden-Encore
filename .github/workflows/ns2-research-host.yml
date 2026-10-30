@@ -285,6 +285,19 @@ jobs:
               -o "build-ns2-a64/ampere-cache-${cxx//+/}"
             "build-ns2-a64/ampere-cache-${cxx//+/}"
           done
+      - name: Verify in-flight shader cache invalidation under a deterministic race (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -pthread \
+              -Iheadless/ns2/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_ampere_cache_invalidation.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              -o "build-ns2-a64/ampere-invalidate-${cxx//+/}"
+            "build-ns2-a64/ampere-invalidate-${cxx//+/}"
+          done
       - name: Compile real Shader Environment Ampere Maxwell virtual adapter (Clang and GCC)
         shell: bash
         run: |

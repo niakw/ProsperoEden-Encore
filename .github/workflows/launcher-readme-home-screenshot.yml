@@ -71,9 +71,12 @@ jobs:
               rgb = raw.convert("RGB")
               assert max(ImageStat.Stat(rgb).stddev) > 22, "Unexpected blank Home capture"
               assert rgb.getbbox()
-          published = Path("assets/screenshots/encore-home.png")
-          if published.exists():
-              with Image.open(published) as previous:
+          # A new path also invalidates GitHub's CDN/browser cached preview.
+          # Compare against the old capture that user reported as wrong.
+          previous_capture = Path("assets/screenshots/encore-home.png")
+          published = Path("assets/screenshots/eden-encore-home-wallpaper-en.png")
+          if previous_capture.exists():
+              with Image.open(previous_capture) as previous:
                   old = previous.convert("RGB").resize((1920, 1080))
                   # Compare the BACKGROUND region, not whole-frame text.
                   # Earlier CI passed because English text changed while the
@@ -93,9 +96,9 @@ jobs:
               path = Path(filename)
               source = path.read_text(encoding="utf-8")
               pattern = (r'<p align="center"><img src="assets/'
-                         r'(?:encore-background\.jpg|screenshots/encore-home\.png)"'
+                         r'(?:encore-background\.jpg|screenshots/(?:encore-home|eden-encore-home-wallpaper-en)\.png)"'
                          r' alt="[^"]+" width="860"></p>')
-              new = ('<p align="center"><img src="assets/screenshots/encore-home.png"'
+              new = ('<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png"'
                      f' alt="{alt}" width="860"></p>')
               source, count = re.subn(pattern, lambda _: new, source)
               assert count == 1, (filename, "expected exactly one known Encore Home preview", count)
@@ -106,7 +109,7 @@ jobs:
       - name: Persist real Home capture and README links on the same branch
         if: ${{ github.ref == 'refs/heads/dev/ps5-sparse-jit' }}
         run: |
-          git add assets/screenshots/encore-home.png README.md README.fr.md
+          git add assets/screenshots/eden-encore-home-wallpaper-en.png README.md README.fr.md
           if git diff --cached --quiet; then
             echo "Native screenshot is unchanged."
             exit 0

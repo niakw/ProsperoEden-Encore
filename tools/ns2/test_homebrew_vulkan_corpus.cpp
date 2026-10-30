@@ -50,10 +50,12 @@ static uint32_t FindHostMemoryType(VkPhysicalDevice gpu, uint32_t bits) {
 }
 int main(int argc, char** argv) {
     Require(argc == 4, "usage: binary vertex.spv fragment.spv compute.spv");
-    VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
+    VkApplicationInfo app{};
+    app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app.pApplicationName = "Encore external homebrew research";
     app.apiVersion = VK_API_VERSION_1_1;
-    VkInstanceCreateInfo instance_ci{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+    VkInstanceCreateInfo instance_ci{};
+    instance_ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_ci.pApplicationInfo = &app;
     VkInstance instance{};
     Check(vkCreateInstance(&instance_ci, nullptr, &instance), "vkCreateInstance");
@@ -85,11 +87,13 @@ int main(int argc, char** argv) {
     vkGetPhysicalDeviceProperties(gpu, &props);
     std::printf("Homebrew corpus Vulkan device: %s\n", props.deviceName);
     const float priority = 1.0f;
-    VkDeviceQueueCreateInfo queue_ci{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+    VkDeviceQueueCreateInfo queue_ci{};
+    queue_ci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queue_ci.queueFamilyIndex = family;
     queue_ci.queueCount = 1;
     queue_ci.pQueuePriorities = &priority;
-    VkDeviceCreateInfo device_ci{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+    VkDeviceCreateInfo device_ci{};
+    device_ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_ci.queueCreateInfoCount = 1;
     device_ci.pQueueCreateInfos = &queue_ci;
     VkDevice device{};
@@ -98,7 +102,8 @@ int main(int argc, char** argv) {
     vkGetDeviceQueue(device, family, 0, &queue);
     auto make_module = [&](const char* file) {
         const auto words = ReadWords(file);
-        VkShaderModuleCreateInfo ci{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+        VkShaderModuleCreateInfo ci{};
+    ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         ci.codeSize = words.size() * sizeof(uint32_t);
         ci.pCode = words.data();
         VkShaderModule out{};
@@ -114,12 +119,14 @@ int main(int argc, char** argv) {
     binding.descriptorCount = 1;
     binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
-    VkDescriptorSetLayoutCreateInfo set_ci{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    VkDescriptorSetLayoutCreateInfo set_ci{};
+    set_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     set_ci.bindingCount = 1;
     set_ci.pBindings = &binding;
     VkDescriptorSetLayout set_layout{};
     Check(vkCreateDescriptorSetLayout(device, &set_ci, nullptr, &set_layout), "set layout");
-    VkPipelineLayoutCreateInfo layout_ci{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+    VkPipelineLayoutCreateInfo layout_ci{};
+    layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layout_ci.setLayoutCount = 1;
     layout_ci.pSetLayouts = &set_layout;
     VkPipelineLayout layout{};
@@ -139,7 +146,8 @@ int main(int argc, char** argv) {
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &color_ref;
-    VkRenderPassCreateInfo renderpass_ci{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+    VkRenderPassCreateInfo renderpass_ci{};
+    renderpass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderpass_ci.attachmentCount = 1;
     renderpass_ci.pAttachments = &color;
     renderpass_ci.subpassCount = 1;
@@ -154,30 +162,37 @@ int main(int argc, char** argv) {
         stages[i].module = i ? frag : vert;
         stages[i].pName = "main";
     }
-    VkPipelineVertexInputStateCreateInfo input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
-    VkPipelineInputAssemblyStateCreateInfo assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+    VkPipelineVertexInputStateCreateInfo input{};
+    input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    VkPipelineInputAssemblyStateCreateInfo assembly{};
+    assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     VkViewport viewport{0.f, 0.f, 64.f, 64.f, 0.f, 1.f};
     VkRect2D scissor{{0, 0}, {64, 64}};
-    VkPipelineViewportStateCreateInfo viewport_ci{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+    VkPipelineViewportStateCreateInfo viewport_ci{};
+    viewport_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewport_ci.viewportCount = 1;
     viewport_ci.pViewports = &viewport;
     viewport_ci.scissorCount = 1;
     viewport_ci.pScissors = &scissor;
-    VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+    VkPipelineRasterizationStateCreateInfo raster{};
+    raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     raster.polygonMode = VK_POLYGON_MODE_FILL;
     raster.cullMode = VK_CULL_MODE_NONE;
     raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     raster.lineWidth = 1.f;
-    VkPipelineMultisampleStateCreateInfo ms{VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+    VkPipelineMultisampleStateCreateInfo ms{};
+    ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     ms.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     VkPipelineColorBlendAttachmentState colorblend{};
     colorblend.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
                                 VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    VkPipelineColorBlendStateCreateInfo blend{VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
+    VkPipelineColorBlendStateCreateInfo blend{};
+    blend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     blend.attachmentCount = 1;
     blend.pAttachments = &colorblend;
-    VkGraphicsPipelineCreateInfo graphics_ci{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+    VkGraphicsPipelineCreateInfo graphics_ci{};
+    graphics_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     graphics_ci.stageCount = 2;
     graphics_ci.pStages = stages;
     graphics_ci.pVertexInputState = &input;
@@ -193,7 +208,8 @@ int main(int argc, char** argv) {
                                     nullptr, &graphics), "Blockfall graphics pipeline");
     std::puts("Blockfall: real vertex + fragment graphics pipeline PASS");
 
-    VkComputePipelineCreateInfo compute_ci{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+    VkComputePipelineCreateInfo compute_ci{};
+    compute_ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     compute_ci.layout = layout;
     compute_ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     compute_ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
@@ -207,7 +223,8 @@ int main(int argc, char** argv) {
     // Match the demo's >=8-MiB shared storage buffer; do not pretend
     // this is a Nintendo GMMU or a PS5 driver buffer.
     constexpr VkDeviceSize buffer_size = 8u * 1024u * 1024u;
-    VkBufferCreateInfo buffer_ci{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+    VkBufferCreateInfo buffer_ci{};
+    buffer_ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_ci.size = buffer_size;
     buffer_ci.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -215,7 +232,8 @@ int main(int argc, char** argv) {
     Check(vkCreateBuffer(device, &buffer_ci, nullptr, &buffer), "shared state buffer");
     VkMemoryRequirements req{};
     vkGetBufferMemoryRequirements(device, buffer, &req);
-    VkMemoryAllocateInfo alloc_ci{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+    VkMemoryAllocateInfo alloc_ci{};
+    alloc_ci.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     alloc_ci.allocationSize = req.size;
     alloc_ci.memoryTypeIndex = FindHostMemoryType(gpu, req.memoryTypeBits);
     VkDeviceMemory memory{};
@@ -229,20 +247,23 @@ int main(int argc, char** argv) {
     std::memcpy(static_cast<char*>(mapped) + 960, &transition, sizeof(transition));
 
     VkDescriptorPoolSize pool_size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1};
-    VkDescriptorPoolCreateInfo pool_ci{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+    VkDescriptorPoolCreateInfo pool_ci{};
+    pool_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_ci.maxSets = 1;
     pool_ci.poolSizeCount = 1;
     pool_ci.pPoolSizes = &pool_size;
     VkDescriptorPool pool{};
     Check(vkCreateDescriptorPool(device, &pool_ci, nullptr, &pool), "descriptor pool");
-    VkDescriptorSetAllocateInfo ds_ci{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    VkDescriptorSetAllocateInfo ds_ci{};
+    ds_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     ds_ci.descriptorPool = pool;
     ds_ci.descriptorSetCount = 1;
     ds_ci.pSetLayouts = &set_layout;
     VkDescriptorSet ds{};
     Check(vkAllocateDescriptorSets(device, &ds_ci, &ds), "descriptor set");
     VkDescriptorBufferInfo descriptor{buffer, 0, buffer_size};
-    VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstSet = ds;
     write.dstBinding = 0;
     write.descriptorCount = 1;
@@ -250,33 +271,39 @@ int main(int argc, char** argv) {
     write.pBufferInfo = &descriptor;
     vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 
-    VkCommandPoolCreateInfo cmd_pool_ci{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    VkCommandPoolCreateInfo cmd_pool_ci{};
+    cmd_pool_ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     cmd_pool_ci.queueFamilyIndex = family;
     VkCommandPool cmd_pool{};
     Check(vkCreateCommandPool(device, &cmd_pool_ci, nullptr, &cmd_pool), "command pool");
-    VkCommandBufferAllocateInfo cmd_ci{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+    VkCommandBufferAllocateInfo cmd_ci{};
+    cmd_ci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     cmd_ci.commandPool = cmd_pool;
     cmd_ci.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     cmd_ci.commandBufferCount = 1;
     VkCommandBuffer cmd{};
     Check(vkAllocateCommandBuffers(device, &cmd_ci, &cmd), "command buffer");
-    VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    VkCommandBufferBeginInfo begin{};
+    begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     Check(vkBeginCommandBuffer(cmd, &begin), "command begin");
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout,
                             0, 1, &ds, 0, nullptr);
     vkCmdDispatch(cmd, 1, 1, 1);
-    VkMemoryBarrier barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER};
+    VkMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
     barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
     vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                          VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &barrier,
                          0, nullptr, 0, nullptr);
     Check(vkEndCommandBuffer(cmd), "command end");
-    VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    VkSubmitInfo submit{};
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit.commandBufferCount = 1;
     submit.pCommandBuffers = &cmd;
-    VkFenceCreateInfo fence_ci{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    VkFenceCreateInfo fence_ci{};
+    fence_ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     VkFence fence{};
     Check(vkCreateFence(device, &fence_ci, nullptr, &fence), "create fence");
     Check(vkQueueSubmit(queue, 1, &submit, fence), "submit compute");

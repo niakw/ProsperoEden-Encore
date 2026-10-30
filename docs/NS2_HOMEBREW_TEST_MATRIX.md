@@ -89,6 +89,28 @@ It is a **header admission** test, not an end-to-end
 `AppLoader_NSO::LoadModule`, Dynarmic execution, NPDM emulated process,
 Switch 2 software boot, or a test on actual PS5 GPU hardware.
 
+## N3r — guest AArch64 from actual NSO0 on the maintained Dynarmic JIT
+
+An independent source file `switch2pc/examples/hello/hello.S` is pinned by
+Git commit and source Git blob, cross-assembled for AArch64, and packaged
+in an NSO0. The existing `PreflightNso` checks its real NSO0 segment
+layout before the text segment is installed into the official maintained
+Dynarmic A64 JIT test environment.
+
+A separate test runs every *actual guest AArch64 instruction* with
+`Dynarmic::A64::Jit::Step`, tracks `svcOutputDebugString`, SleepThread,
+GetSystemTick, notification-only Break, and ExitProcess, and verifies the
+real guest string, register arguments, monotonic tick check and exact
+six-call trace. It uses a minimal deterministic host-SVC handler solely
+for testing and a strict instruction cap to prevent guest hangs.
+
+CI: `.github/workflows/ns2-research-jit.yml` builds the maintained x86-64
+Dynarmic and runs both this NSO test and the existing LSE/RETA/LDAPR tests.
+This is **real guest AArch64 execution from an NSO0** but still **not**
+execution through Encore's full `AppLoader_NSO::LoadModule` process,
+Horizon/NS2 HLE services, CPU6 scheduler or native PS5 JIT. Therefore it
+does not validate Nintendo Switch 2 game compatibility.
+
 ## Next actual-console qualification
 
 Before declaring NS2 support: use an independently authorized native

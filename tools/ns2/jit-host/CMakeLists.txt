@@ -27,6 +27,21 @@ target_include_directories(ns2_lse_jit_test PRIVATE "${DYN}" "${DYN}/src")
 find_package(Threads REQUIRED)
 target_include_directories(ns2_lse_jit_test BEFORE PRIVATE "${REPO}/headless/ns2/cpu6")
 target_link_libraries(ns2_lse_jit_test PRIVATE dynarmic fmt::fmt Threads::Threads)
+# Link the same maintained Dynarmic JIT to the cross-built *real* HOS
+# NSO0 text rather than testing only instruction-level synthetic snippets.
+add_executable(ns2_public_nso_jit_test
+    "${CMAKE_CURRENT_LIST_DIR}/test_public_nso_jit.cpp")
+target_include_directories(ns2_public_nso_jit_test BEFORE PRIVATE
+    "${REPO}/headless/ns2/overrides"
+    "${REPO}/headless/ns2/cpu6")
+target_include_directories(ns2_public_nso_jit_test PRIVATE "${DYN}" "${DYN}/src")
+target_link_libraries(ns2_public_nso_jit_test PRIVATE
+    dynarmic fmt::fmt Threads::Threads)
 enable_testing()
 add_test(NAME ns2_lse_jit_test COMMAND ns2_lse_jit_test)
 set_tests_properties(ns2_lse_jit_test PROPERTIES TIMEOUT 20)
+
+add_test(NAME ns2_public_nso_jit_test
+    COMMAND ns2_public_nso_jit_test
+    "${REPO}/build-ns2-jit/public-nso/hello.nso")
+set_tests_properties(ns2_public_nso_jit_test PROPERTIES TIMEOUT 20)

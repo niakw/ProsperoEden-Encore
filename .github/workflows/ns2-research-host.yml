@@ -114,6 +114,23 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             headless/ns2/gpu_session/core/hle/service/am/service/gpu_session.cpp
+      - name: Syntax-check real NS2 SelfController and GraphicsSupervisor IPC services
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in \
+            headless/ns2/self_controller/core/hle/service/am/service/self_controller.cpp \
+            headless/ns2/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp; do
+            clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+              -Ibuild-ns2-a64/fmt/include \
+              -Iheadless/ns2/self_controller \
+              -Iheadless/ns2/graphics_supervisor \
+              -Iheadless/ns2/gpu_session \
+              -Iheadless/ns2/hle \
+              -Ivendor/sources/eden/src/dynarmic/src \
+              -Ivendor/sources/eden/src \
+              "${source}"
+          done
       - name: Syntax-check native NVDRV GPU ioctl source owner (GCC)
         shell: bash
         run: |

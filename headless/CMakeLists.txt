@@ -2017,6 +2017,41 @@ if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
         "${PORT_ROOT}/headless/ns2/hle")
 endif()
 
+# Research-only SelfController -> GraphicsSupervisor -> metadata-only GPU IPC.
+# Preserve the Switch 1 source owner unless explicitly selected for research.
+option(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL
+    "Research only: bounded NS2 graphics-supervisor / GPU metadata IPC" OFF)
+if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
+    if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_AM_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 supervisor requires experimental GPU session and AM")
+    endif()
+    set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/headless/ns2/graphics_supervisor")
+    set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/headless/ns2/self_controller")
+    foreach(eden_ns2_supervisor_file
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.h"
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp"
+        "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.h"
+        "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.cpp")
+        if(NOT EXISTS "${eden_ns2_supervisor_file}")
+            message(FATAL_ERROR "Missing NS2 supervisor owner: ${eden_ns2_supervisor_file}")
+        endif()
+    endforeach()
+    get_target_property(eden_ns2_supervisor_sources core SOURCES)
+    list(FIND eden_ns2_supervisor_sources
+        "hle/service/am/service/self_controller.cpp" eden_ns2_self_idx)
+    if(eden_ns2_self_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned SelfController owner changed: re-audit NS2 bridge")
+    endif()
+    list(REMOVE_ITEM eden_ns2_supervisor_sources
+        "hle/service/am/service/self_controller.cpp")
+    list(APPEND eden_ns2_supervisor_sources
+        "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.cpp"
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_supervisor_sources}")
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -2032,6 +2067,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR
        EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
+       EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR

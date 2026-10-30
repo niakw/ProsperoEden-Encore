@@ -39,8 +39,8 @@ def main() -> int:
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 4,
-                "Unexpected source owner after ExeFS (expected ExeFS, AM and NVDRV)")
+        require(sum(i > selection for i in property_sets) == 5,
+                "Unexpected source owner after ExeFS (expected ExeFS, AM, NVDRV, supervisor)")
         require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject NS2 application-manager experiment")
         require('option(EDEN_NS2_AM_EXPERIMENTAL' in CMAKE and
@@ -81,6 +81,26 @@ def main() -> int:
                 "{41, &IGpuSession::CreateGraphicsDevice" in service_cpp and
                 "{42, &IGpuSession::DestroyGraphicsDevice" in service_cpp,
                 "NS2 GPU service must register real metadata commands only")
+        supervisor_selection = CMAKE.index("# Research-only SelfController -> GraphicsSupervisor")
+        require(session_selection < supervisor_selection < release_gate and
+                "EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR" in CMAKE and
+                "if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_AM_EXPERIMENTAL)" in CMAKE,
+                "NS2 supervisor must require AM/GPU and be release-forbidden")
+        require('list(FIND eden_ns2_supervisor_sources' in CMAKE and
+                '"hle/service/am/service/self_controller.cpp" eden_ns2_self_idx' in CMAKE and
+                'set_property(TARGET core PROPERTY SOURCES "${eden_ns2_supervisor_sources}")' in CMAKE,
+                "NS2 supervisor must replace only pinned CMIF SelfController owner")
+        sup_cpp = (ROOT / "headless/ns2/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
+        self_cpp = (ROOT / "headless/ns2/self_controller/core/hle/service/am/service/self_controller.cpp").read_text()
+        require("m_bootstrap.CanOpenGpuSession(packet, true)" in sup_cpp and
+                "CreateMetadataSession(system, ctx," in sup_cpp and
+                "Kernel::ResultNotImplemented.raw" in sup_cpp and
+                "{497, &IGraphicsSupervisor::OpenGpuSession" in sup_cpp,
+                "Supervisor must open bounded GPU metadata handle, not fake NVDRV")
+        require('{2000, &ISelfController::GetGraphicsSupervisor' in self_cpp and
+                "server.RegisterSession(&session->GetServerSession()" in self_cpp and
+                "rb.PushCopyObjects(ctx, m_graphics_supervisor_session)" in self_cpp,
+                "CMIF SelfController must create a real supervisor copy-handle session")
         nvdrv_selection = CMAKE.index("# Native Switch 2 GPU capabilities IOCTLs, experimental only;")
         require(am_selection < nvdrv_selection < release_gate,
                 "NVDRV research must select after maintained Encore owners and before release gate")

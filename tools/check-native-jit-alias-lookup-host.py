@@ -7,12 +7,12 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 source=(root/"headless/jit-allocator.h").read_text()
-assert '#include "jit-alias-cache.h"' in source
+assert "class AliasPositiveCache" in source
 assert "static thread_local ::Eden::Jit::AliasPositiveCache cache{}" in source
 assert "cache.Find(pointer, generation)" in source
 assert "cache.Remember(pointer, writable, latest)" in source
 assert "const std::size_t slot = ((bits >> 12)" not in source
-memo = (root / "headless/jit-alias-cache.h").read_text()
+memo = source
 assert "std::array<Entry, 8>" in memo
 assert "if (generation != current_generation) return nullptr;" in memo
 assert source.count("mapping_generation.fetch_add(1, std::memory_order_release);")==4

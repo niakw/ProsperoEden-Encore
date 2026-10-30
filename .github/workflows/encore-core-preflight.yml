@@ -530,6 +530,7 @@ jobs:
           python3 -B tools/check-ps5-compute-descriptor-ring-preflight-host.py
           python3 -B tools/check-ps5-f07-compute-descriptor-payload-reuse-host.py
           python3 -B tools/check-ps5-f07-sampler-memo-collisions-host.py
+          python3 -B tools/check-ps5-f07-compute-key-positive-cache-host.py
           python3 -B tools/check-ps5-f07-texel-descriptor-stability-host.py
           python3 -B tools/check-ps5-quad-strip-draw-count-host.py
           python3 -B tools/check-ps5-draw-texture-guest-invalidation-host.py

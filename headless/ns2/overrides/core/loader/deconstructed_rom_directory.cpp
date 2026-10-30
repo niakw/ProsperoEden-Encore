@@ -20,6 +20,8 @@
 #include "core/loader/deconstructed_rom_directory.h"
 #include "core/loader/nso.h"
 #include "core/loader/ns2_nso_preflight.h"
+#include "core/loader/ns2_process_handoff.h"
+#include "core/memory.h"
 
 #ifdef HAS_NCE
 #include "core/arm/nce/patcher.h"
@@ -286,11 +288,48 @@ AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirect
             return {ResultStatus::ErrorLoadingNSO, {}};
         }
 
+        // N3u: prove the real KProcess contains text written by LoadModule.
+        // Do not compare compressed or modified text with on-disk bytes.
+        if (metadata.IsSwitch2()) {
+            std::array<u8, Eden::NS2::ExeFS::NsoHeaderBytes> header{};
+            if (module_file->ReadBytes(header.data(), header.size(), 0) != header.size()) {
+                LOG_ERROR(Loader, "NS2 KProcess handoff: unreadable {} header", module);
+                return {ResultStatus::ErrorLoadingNSO, {}};
+            }
+            FileSys::PatchManager::BuildID build_id{};
+            std::copy_n(header.data() + 0x40, build_id.size(), build_id.begin());
+            if (pm.HasNSOPatch(build_id, module) || Settings::values.dump_nso) {
+                LOG_DEBUG(Loader, "NS2 KProcess handoff: skip modified {} text", module);
+            } else {
+                const auto verdict = Eden::NS2::ExeFS::VerifyUncompressedTextHandoff(
+                    header, module_file->GetSize(), load_addr,
+                    [&](u64 offset, u8* out, std::size_t size) {
+                        return module_file->ReadBytes(out, size, offset);
+                    },
+                    [&](u64 address, u8* out, std::size_t size) {
+                        return process.GetMemory().ReadBlock(address, out, size);
+                    });
+                using Verdict = Eden::NS2::ExeFS::TextHandoffStatus;
+                if (verdict != Verdict::Verified &&
+                    verdict != Verdict::SkippedCompressed &&
+                    verdict != Verdict::SkippedEmptyText) {
+                    LOG_ERROR(Loader, "NS2 KProcess {} text readback failed ({})",
+                              module, static_cast<int>(verdict));
+                    return {ResultStatus::ErrorLoadingNSO, {}};
+                }
+                LOG_DEBUG(Loader, "NS2 KProcess {} text handoff status {}",
+                          module, static_cast<int>(verdict));
+            }
+        }
         next_load_addr = *tentative_next_load_addr;
         modules.insert_or_assign(load_addr, module);
         LOG_DEBUG(Loader, "loaded module {} @ {:#x}", module, load_addr);
     }
 
+    if (metadata.IsSwitch2()) {
+        LOG_INFO(Loader, "NS2 KProcess ExeFS handoff pid={} entry={:#x} modules={}",
+                 process.GetProcessId(), base_address, modules.size());
+    }
     is_loaded = true;
     if (standalone) {
         title_id = metadata.GetTitleID();

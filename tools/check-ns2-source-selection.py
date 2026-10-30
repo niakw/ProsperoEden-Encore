@@ -96,6 +96,13 @@ def main() -> int:
                 "if (metadata.IsSwitch2())" in romdir_source.read_text() and
                 "PreflightNso(header, module_file->GetSize())" in romdir_source.read_text(),
                 "NS2 ExeFS must validate actual NSO0 file length before legacy loader allocations")
+        handoff_header = ROOT / "headless/ns2/overrides/core/loader/ns2_process_handoff.h"
+        require(handoff_header.is_file() and
+                "VerifyUncompressedTextHandoff(" in handoff_header.read_text() and
+                '"core/loader/ns2_process_handoff.h"' in romdir_source.read_text() and
+                "process.GetMemory().ReadBlock(" in romdir_source.read_text() and
+                "metadata.IsSwitch2()" in romdir_source.read_text(),
+                "NS2 KProcess text handoff must use bounded process readback")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
         require(sum(i > selection for i in property_sets) == 5,

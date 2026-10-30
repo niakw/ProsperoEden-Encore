@@ -145,3 +145,20 @@ ZBIC flag (bit 7) only alongside compressed segments.
 CI syntax-checks this actual loader source; GCC and Clang exercise header
 bounds and ZBIC flags. This is a **production-source entry safety path**,
 not yet demonstrated full `KProcess` creation, HLE services or NS2 boot.
+
+## N3u — actual KProcess module-memory readback (opt-in)
+
+After each real `AppLoader_NSO::LoadModule` in the experimental NS2
+ExeFS process path, the owner now reads **up to 16 uncompressed, unmodified
+NSO text bytes** from `process.GetMemory().ReadBlock` and checks those
+bytes against the original NSO file, at the module's virtual code address.
+It fails closed if the file read, guest read, header validation or comparison
+fails; compressed and patched/dumped code are explicitly skipped to avoid
+false mismatches. Every NS2 process load records its PID, guest entry and
+module count only after the successful module loop.
+
+The same small verification helper is tested with host fakes for valid,
+corrupted, unreadable, compressed, empty and address-overflow cases. Those
+host tests **are not** proof that the full KProcess was instantiated or that
+Horizon HLE services executed. A signed-off native, authorized ExeFS fixture
+and actual full-core execution are still required before claiming NS2 boot.

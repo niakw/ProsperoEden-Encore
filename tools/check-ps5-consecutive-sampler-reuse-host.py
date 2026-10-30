@@ -22,9 +22,9 @@ begin = native.index(memo_marker)
 end = native.index("    const auto config_stage{[&](size_t stage)", begin)
 memo = native[begin:end]
 assert memo.count("std::array<SamplerMemo, 16> sampler_memo{};") == 1
-assert memo.count("texture_cache.GetSamplerId(handle, false)") == 1
+assert memo.count("texture_cache.GetSamplerId(handle, false)") == 2
 assert memo.count("entry.valid = true;") == 1
-assert memo.count("entry.handle != handle") == 1
+assert memo.count("entry.handle == handle") == 1
 loop_begin = native.index("        for (const auto& desc : info.texture_descriptors)", end)
 loop_end = native.index("        if constexpr (Spec::has_images) {", loop_begin)
 loop = native[loop_begin:loop_end]
@@ -208,25 +208,25 @@ int main() {
     assert(cache.lookups == 4); // No sampler ID outlives a draw.
     assert(b.samplers == a.samplers);
 
-    // Colliding indices are correctness-safe cache misses, not bad IDs.
+    // Colliding indices now retain both IDs within one draw.
     stages[0].texture_descriptors = {{{{1,7},{2,23},{3,7}},3}};
     stages[1].texture_descriptors = {{{{4,7}},1}};
     auto conflict = configure(stages, cache);
-    assert(cache.lookups == 7); // 7,23,7 miss; final 7 hit.
+    assert(cache.lookups == 6); // 7,23 each resolved once, later hits.
     assert((conflict.samplers == std::vector<u32>{107,123,107,107}));
 
     // Texture identity is independent of the sampler identity.
     stages[0].texture_descriptors = {{{{1,7},{1,9},{2,7}},3}};
     stages[1].texture_descriptors.clear();
     auto same_view = configure(stages, cache);
-    assert(cache.lookups == 9);
+    assert(cache.lookups == 8);
     assert((same_view.samplers == std::vector<u32>{107,109,107}));
     assert(same_view.views[0].index == same_view.views[1].index);
 
     // A later draw must never retain the previous descriptor generation.
     cache.generation_offset = 200;
     auto refreshed = configure(stages, cache);
-    assert(cache.lookups == 11);
+    assert(cache.lookups == 10);
     assert((refreshed.samplers == std::vector<u32>{207,209,207}));
 
     // Restore the identical cross-stage seven-descriptor workload after

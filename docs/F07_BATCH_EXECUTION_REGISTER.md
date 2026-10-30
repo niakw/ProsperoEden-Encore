@@ -763,3 +763,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 
 - `headless/graphics.cpp::OnFrameDisplayed` : lorsque l'overlay FPS est désactivé, ne plus calculer `HudClock::Present` par présentation. À la réactivation, repartir d'une nouvelle fenêtre FPS et forcer la première image HUD via une mémo invalidée. Les compteurs de présentation, timing Vulkan, transitions loading/jeu et télémétrie FC27 restent inchangés.
 - `tools/check-ps5-hud-snapshot-memo-host.py` : contrat source de garde de visibilité, alternance 10 000 frames cachées / 500 visibles / 9 500 cachées, O0/O2/O3 ASan/UBSan. Validation CI en attente. Manifeste : `d06815e584710bb31e016f98209032bdaded005a`. Pas de performance PS5 mesurée ni de nouvelle décision prébuild ; **22/29**.
+
+## F07 — Fastmem : une seule vérification par désallocation déjà vide (30 octobre 2026)
+
+- `src/host_memory.cpp::Window::Unmap` : fusion des deux scans `page_backing`/`page_access` sur les petites plages ≤16 pages ; mêmes frontières de granules, compteurs et `Update` si un seul octet/page est encore valide.
+- `tools/check-fastmem-window-bounds-host.py` : contrôle source modifié, tests hôte existants de 10 000 Unmap identiques, remaps, 2/16/17 pages, permissions et alias, C++ sous sanitizers (verdict CI à confirmer). Manifeste synchronisé sur `4ae5e572d0534fb2e40a999a419199f1b3a8f8cc`.
+- Optimisation sans benchmark hardware, **F07 reste 22/29**. Aucun build PS5 ni release.

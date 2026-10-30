@@ -764,10 +764,10 @@
     {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "00702b9d5b1f7898570cdec98bb6bcfb10b1448f",
+      "reviewed_source_git_blob": "c52418836c9b3dc0c79b09c8d73febc7bb156281",
       "review_scope": "host-only-test",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no shipping-path optimization affected. Host-only README preview now supports PE_PREVIEW_BRANDED_HOME, clearing synthetic sample-game Hero sources to reveal the already-packaged original Eden wallpaper. No PS5 production service, renderer or guest hotpath logic modified; the host C++/OpenGL real-capture workflow passed (run 41004671009)."
     },
     {
       "path": "headless/prosperoeden/host/fake_services.hpp",

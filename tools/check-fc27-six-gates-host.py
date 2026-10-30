@@ -832,12 +832,13 @@ def run() -> int:
                         r"phases=(\d+) action_edges=(\d+) options_plus_edges=(\d+) "
                         r"disconnect_releases=(\d+) home_chords=(\d+) "
                         r"menu_shortcuts=(\d+) touch_taps=(\d+) "
+                        r"stick_curve_bytes=(\d+) "
                         r"scope=source_extracted_host_mock_virtual_input_no_guest_Npad",
                         result.stdout)
                     missing_guest = (
                         "F06_REAL_GUEST_NPAD_GAMEPLAY_MAPPING_AND_MATCH_PROGRESS_NOT_PROVEN"
                         in result.stdout)
-                    if transitions != [("5","5","5","1","1","1","1")]*2 or not missing_guest:
+                    if transitions != [("5","5","5","1","1","1","1","256")]*2 or not missing_guest:
                         ok,reason=False,"f06_native_input_transition_witness_missing"
                     else:
                         fixture_metrics["F06_native_pad_transitions_host"] = {
@@ -848,6 +849,7 @@ def run() -> int:
                             "home_chords": 1,
                             "menu_shortcuts": 1,
                             "touch_taps": 1,
+                            "exact_stick_curve_bytes": 256,
                             "compile_modes": ["O0","O2"],
                             "scope": "actual PS5 Pad::Consume and PadEngine::SetButtonState "
                                      "with native DualSense ABI but mock virtual HID sink. "

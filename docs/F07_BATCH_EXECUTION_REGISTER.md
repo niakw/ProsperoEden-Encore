@@ -786,3 +786,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 - `headless/pad.cpp::Pad::Consume` : les quatre octets d'axes de chaque sample utilisent une table de 256 `float` préparée **une seule fois** au lancement du contrôleur, au lieu de recalculer normalisation, deadzone, `copysign` et divisions sur les 4 axes du batch. Aucune allocation ni mutex sur le hot path ; mappings guest/motion/rumbles inchangés.
 - `tools/check-fc27-f06-native-pad-transition-host.py` : extrait le vrai calcul constructeur et la vraie méthode `Consume`, rejoue 5 deadzones × 256 valeurs brutes en comparaison bitwise avec la formule précédente ; continue de vérifier 5 phases FC27, relâchements, 64 échantillons, Options/Home/Capture, O0/O2 UBSan.
 - **Portée :** économies CPU input sans prétendre résoudre les saccades GPU. Gates GitHub du SHA en attente, pas de mesure PS5. **Compteur F07 22/29 inchangé**, 0/12 postbuild.
+
+## F07 — réparation de l'oracle F06 après LUT DualSense (30 octobre 2026)
+
+- **Défaillance CI réellement observée** sur `ad46fee` : `source-f01-f06` du run [41141853751](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41141853751) échoue au témoin `F06-native-pad-transition` alors que les deux exécutions C++ `-O0/-O2` produisent `F06_NATIVE_PAD_TRANSITIONS_PASS` : l'agrégateur `tools/check-fc27-six-gates-host.py` attendait encore `touch_taps=1 scope=...` et rejetait le champ ajouté `stick_curve_bytes=256`.
+- **Réparation stricte** : exiger explicitement `stick_curve_bytes=256` dans l'agrégateur, conserver les 7 autres nombres attendus, les deux compilations et l'avertissement `REAL_GUEST_NPAD...NOT_PROVEN`. Le champ apparaît aussi dans la métrique de l'oracle ; aucun test contourné, aucune modification de commandes guest ni de code moteur.
+- Verdict du nouveau SHA encore en attente ; **F07 22/29 inchangé**, aucune mesure FC27 sur PS5.

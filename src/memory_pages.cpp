@@ -690,17 +690,23 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     // ownership must never be read across asynchronous table teardown.
     // Most guest/GPU page-table writes stay inside one sparse range; a
     // worker can also alternate between two tables. Keep both positive
-    // hints with zero TLS stores on repeated hits, regardless of ordering.
+    // hints; a stable same-table hot run does not write to TLS.
     // Every hint points into the process-lifetime static array and is
     // revalidated against its CURRENT begin/end under the owner mutex.
     static thread_local std::array<SparseRange*, 2> last_ranges{};
     static thread_local unsigned next_slot = 0;
+    static thread_local unsigned preferred_slot = 0;
     if (sparse_used_prefix != 0) {
-        for (SparseRange* candidate : last_ranges) {
-            if (!candidate) break; // inserts fill both slots consecutively
+        for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
+            const unsigned slot = preferred_slot ^ probe;
+            SparseRange* candidate = last_ranges[slot];
+            if (!candidate) continue;
             const auto begin = candidate->begin.load(std::memory_order_acquire);
-            if (begin != 0 && address >= begin && address < candidate->end)
+            if (begin != 0 && address >= begin && address < candidate->end) {
+                // One cold preference change; stable runs then need one load.
+                if (probe != 0) preferred_slot = slot;
                 return candidate;
+            }
         }
     }
     for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
@@ -710,10 +716,16 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
         const auto begin = range.begin.load(std::memory_order_acquire);
         if (begin != 0 && address >= begin && address < range.end) {
             last_ranges[next_slot] = &range;
+            preferred_slot = next_slot;
             next_slot ^= 1u;
             return &range;
         }
     }
+    // A miss (including dense fallback) should not keep retrying stale
+    // aliases, especially after sparse-table teardown on title change.
+    last_ranges = {};
+    next_slot = 0;
+    preferred_slot = 0;
     return nullptr;
 }
 

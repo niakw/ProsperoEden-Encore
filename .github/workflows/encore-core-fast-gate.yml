@@ -41,6 +41,7 @@ on:
       - 'tools/check-ps5-release-saved-diagnostics-host.py'
       - 'tools/check-ps5-f07-cold-stalls-host.py'
       - 'tools/check-ps5-f07-pipeline-transitions-host.py'
+      - 'tools/check-ps5-f07-attributeless-last-cache-host.py'
       - 'tools/check-ps5-f07-*.py'
       - 'tools/check-ps5-consecutive-sampler-reuse-host.py'
       - 'tools/check-ps5-compute-sampler-memo-host.py'
@@ -522,6 +523,7 @@ jobs:
           python3 -B tools/check-ps5-f07-driver-cache-flush-host.py
           python3 -B tools/check-ps5-f07-bounded-prewarm-host.py
           python3 -B tools/check-ps5-f07-shader-cache-drain-host.py
+          python3 -B tools/check-ps5-f07-attributeless-last-cache-host.py
           python3 -B tools/check-ps5-f07-bounded-failed-shader-retry-host.py
           python3 -B tools/check-ps5-f07-bounded-failed-compute-retry-host.py
           python3 -B tools/check-ps5-f07-prewarm-pipeline-admission-host.py

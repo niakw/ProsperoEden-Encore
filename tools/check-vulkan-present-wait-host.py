@@ -74,9 +74,9 @@ assert "present_ready_cv.notify_one();" in enqueue
 assert "frame_cv.notify_one();" not in enqueue
 assert "frame_cv.notify_all();" not in enqueue
 assert enqueue.index("lock.unlock();") < enqueue.index("present_ready_cv.notify_one();")
-assert "const bool wake_presenter = present_queue.empty();" in enqueue
+assert "const bool wake_presenter = present_queue.empty() && !present_in_flight;" in enqueue
 assert "if (wake_presenter) present_ready_cv.notify_one();" in enqueue
-assert enqueue.index("const bool wake_presenter = present_queue.empty();") < enqueue.index("present_queue.push_back(frame);")
+assert enqueue.index("const bool wake_presenter = present_queue.empty() && !present_in_flight;") < enqueue.index("present_queue.push_back(frame);")
 assert enqueue.index("present_queue.push_back(frame);") < enqueue.index("lock.unlock();")
 assert "frame_cv.notify_one();" not in present_thread
 assert "present_ready_cv.wait(lock, token," in present_thread
@@ -114,7 +114,7 @@ struct Gate {
         {
             std::lock_guard lock{queue_mutex};
             if (present_failure) return;
-            wake_presenter = present_queue.empty();
+            wake_presenter = present_queue.empty() && !present_in_flight;
             present_queue.push_back(id);
         }
         if (wake_presenter) {
@@ -320,7 +320,22 @@ int main() {
         assert(g.completed == 2);
         g.WaitFree();
     }
-    // A queued burst requires exactly one presenter wake, regardless
+    // The existing worker is already active. Enqueueing its successor
+    // while the deque is empty must not issue a redundant CV notification.
+    // The worker loops and observes the successor without waiting.
+    for (unsigned run = 0; run < 32; ++run) {
+        Gate active;
+        {
+            std::lock_guard guard{active.queue_mutex};
+            active.present_in_flight = true;
+        }
+        active.Queue(500);
+        assert(active.presenter_wakes == 0);
+        active.CopyOne(false);
+        active.WaitPresent();
+        assert(active.completed == 1);
+    }
+        // A queued burst requires exactly one presenter wake, regardless
     // of the number of frames already pending behind its first element.
     for (unsigned run = 0; run < 32; ++run) {
         Gate g;

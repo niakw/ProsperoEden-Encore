@@ -904,8 +904,9 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
     ('            present_queue.push_back(frame);\n            frame_cv.notify_one();',
      '            // The worker can sleep only with an empty queue. After the\n'
      '            // first frame wakes it, queued followers need no second wake.\n'
+     '            // A worker copying a frame is not asleep, even with an empty queue.\n'
      '            // Test under queue_mutex to avoid losing an empty->nonempty edge.\n'
-     '            const bool wake_presenter = present_queue.empty();\n'
+     '            const bool wake_presenter = present_queue.empty() && !present_in_flight;\n'
      '            present_queue.push_back(frame);\n'
      '            // Only the presentation worker waits on present_ready_cv.\n'
      '            // Avoid waking WaitPresent on every enqueue; it needs completion.\n'

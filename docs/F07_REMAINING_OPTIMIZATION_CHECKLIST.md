@@ -27,6 +27,8 @@
 
 **30/10 — C04, drain Vulkan sur dernière frame (source à qualifier) :** sous `queue_mutex`, la notification des waiters `WaitPresent` n'est autorisée qu'après le traitement de la **dernière frame** de la file. Les sorties sur erreur continuent de réveiller tous les consommateurs. Sous-module `vendor@a628126b83`, générateur identique et témoin de backlog 32 frames ; CI et gain PS5 non mesurés. **22/29 inchangé.**
 
+**30/10 — C04, suppressions supplémentaires de réveils Vulkan (source à qualifier) :** la mise en file de présentation ne signale pas `present_ready_cv` quand le thread de présentation est **déjà actif** (`present_in_flight`), même si la FIFO est momentanément vide. La transition réelle worker idle→queue non vide reste notifiée, sous le même mutex. Témoin d'un worker actif avec 32 itérations, générateur/vendeur alignés, `vendor@6c6b46a4e0`. CI et mesures FC27/PS5 restent à qualifier ; **22/29 inchangé**.
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

@@ -15,6 +15,9 @@ assert "const std::size_t slot = ((bits >> 12)" not in source
 memo = source
 assert "std::array<Entry, 8>" in memo
 assert "if (!entry.executable) return nullptr;" in memo
+assert "mutable std::size_t preferred_slot{};" in memo
+assert "if (i == preferred_slot) continue;" in memo
+assert "if (entries[2].executable) preferred_slot = i;" in memo
 assert "if (generation != current_generation) return nullptr;" in memo
 assert source.count("mapping_generation.fetch_add(1, std::memory_order_release);")==4
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
@@ -41,6 +44,7 @@ fixture=r"""
 #include <cstdlib>
 #include <cstring>
 #include <thread>
+#include <new>
 #include "jit-allocator.h"
 namespace Common {
 void* AllocateMemoryPages(std::size_t n) noexcept {return std::malloc(n);}
@@ -72,6 +76,37 @@ int main(){
  assert(aliases.Find(ninth,7)==ninth_rw);
  assert(!aliases.Find(rx[0],7));
  for(unsigned i=1;i<8;++i) assert(aliases.Find(rx[i],7)==rw[i]);
+ // The most recently used JIT code arena has a one-probe lookup.
+ // Verify that a hot run performs NO TLS writes: protecting the fixture
+ // with mprotect would crash if Find writes on same-arena hits.
+ const long page=sysconf(_SC_PAGESIZE);assert(page>0);
+ void* storage=mmap(nullptr,static_cast<std::size_t>(page),PROT_READ|PROT_WRITE,
+                    MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+ assert(storage!=MAP_FAILED);
+ auto* memo=new(storage) Eden::Jit::AliasPositiveCache{};
+ for(unsigned i=0;i<8;++i) memo->Remember(rx[i],rw[i],7);
+ assert(memo->Find(rx[7],7)==rw[7]);
+ assert(mprotect(storage,static_cast<std::size_t>(page),PROT_READ)==0);
+ for(unsigned i=0;i<10000;++i) assert(memo->Find(rx[7],7)==rw[7]);
+ assert(mprotect(storage,static_cast<std::size_t>(page),PROT_READ|PROT_WRITE)==0);
+ assert(memo->Find(rx[0],7)==rw[0]);
+ assert(mprotect(storage,static_cast<std::size_t>(page),PROT_READ)==0);
+ for(unsigned i=0;i<10000;++i) assert(memo->Find(rx[0],7)==rw[0]);
+ assert(mprotect(storage,static_cast<std::size_t>(page),PROT_READ|PROT_WRITE)==0);
+ memo->~AliasPositiveCache();
+ assert(munmap(storage,static_cast<std::size_t>(page))==0);
+ // With only two live JIT arenas, alternating hits also remain read-only.
+ storage=mmap(nullptr,static_cast<std::size_t>(page),PROT_READ|PROT_WRITE,
+              MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+ assert(storage!=MAP_FAILED);
+ memo=new(storage) Eden::Jit::AliasPositiveCache{};
+ memo->Remember(rx[0],rw[0],8);memo->Remember(rx[1],rw[1],8);
+ assert(mprotect(storage,static_cast<std::size_t>(page),PROT_READ)==0);
+ for(unsigned i=0;i<20000;++i)
+   assert(memo->Find(rx[i%2],8)==rw[i%2]);
+ assert(mprotect(storage,static_cast<std::size_t>(page),PROT_READ|PROT_WRITE)==0);
+ memo->~AliasPositiveCache();
+ assert(munmap(storage,static_cast<std::size_t>(page))==0);
  assert(!aliases.Find(rx[0],8)); // trim/release epoch flush
  assert(aliases.Find(rx[3],7)==rw[3]);
  aliases.Remember(rx[0],rw[0],8);
@@ -116,4 +151,4 @@ with tempfile.TemporaryDirectory(prefix="eden-jit-alias-") as temp:
   "-I",str(d),"-I",str(root/"headless"),str(d/"witness.cpp"),"-o",str(exe)],
   check=True,timeout=90)
  subprocess.run([str(exe)],check=True,timeout=90)
-print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 eviction9=1 epoch=1 retirement=1 sanitizer=1")
+print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 eviction9=1 epoch=1 retirement=1 preferred_readonly=1 dual_readonly=1 sanitizer=1")

@@ -26,16 +26,29 @@ class AliasPositiveCache {
     std::array<Entry, 8> entries{};
     std::uint64_t generation{};
     std::size_t next_slot{};
+    // Per-worker positive hint. The last active code arena is usually reused
+    // for many emitted blocks; repeated hits should probe only one RX key.
+    mutable std::size_t preferred_slot{};
 public:
     std::uint8_t* Find(std::uint8_t* executable,
                        std::uint64_t current_generation) const noexcept {
         if (generation != current_generation) return nullptr;
-        for (const Entry& entry : entries) {
+        const Entry& preferred = entries[preferred_slot];
+        if (preferred.executable == executable && preferred.executable)
+            return preferred.writable;
+        for (std::size_t i = 0; i < entries.size(); ++i) {
+            if (i == preferred_slot) continue; // already probed this key
+            const Entry& entry = entries[i];
             // Remember fills the array sequentially after each epoch reset.
-            // An empty slot means all later slots are empty too: do not scan
-            // the remaining entries on the common one- or two-arena path.
+            // The first empty slot ends a negative lookup, even with an
+            // occupied preferred slot later in the same contiguous prefix.
             if (!entry.executable) return nullptr;
-            if (entry.executable == executable) return entry.writable;
+            if (entry.executable == executable) {
+                // Two-arena alternation stays read-only; when three or more
+                // arenas are active, switch preference once per cold run.
+                if (entries[2].executable) preferred_slot = i;
+                return entry.writable;
+            }
         }
         return nullptr;
     }
@@ -46,8 +59,10 @@ public:
             entries = {};
             generation = current_generation;
             next_slot = 0;
+            preferred_slot = 0;
         }
         entries[next_slot] = {executable, writable};
+        preferred_slot = next_slot;
         next_slot = (next_slot + 1) % entries.size();
     }
 };

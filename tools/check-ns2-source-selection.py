@@ -89,7 +89,7 @@ def main() -> int:
                 "{11, &IGpuSession::GetNotificationRange" in service_cpp and
                 "{12, &IGpuSession::GetNotificationEvent" in service_cpp and
                 "m_shared->event_context.CreateEvent" in service_cpp and
-                "event_context.CloseEvent" in (session_root / "gpu_worker_shared.h").read_text() and
+                "event_context.CloseEvent" in (session_root / "gpu_worker_shared.cpp").read_text() and
                 "readable->Open(kernel)" in service_cpp and
                 "{21, &IGpuSession::RequestWorker" in service_cpp and
                 "{22, &IGpuSession::AcquireWorker" in service_cpp and

@@ -688,26 +688,32 @@ std::atomic<int> sparse_state{0}; // 0 unknown, 1 in use, 2 not available (table
 SparseRange* SparseRangeOf(std::uintptr_t address) {
     // Called only with sparse_mutex held; non-atomic range.end and slot
     // ownership must never be read across asynchronous table teardown.
-    // Consecutive guest/GPU table writes usually belong to the same sparse
-    // range. Reuse its last hit without another bounded linear scan.
-    // The hint always points into the static table. Even after release or
-    // slot reuse, owner locking makes revalidation of current begin/end safe.
-    static thread_local SparseRange* last_range = nullptr;
-    if (sparse_used_prefix != 0 && last_range) {
-        const auto begin = last_range->begin.load(std::memory_order_acquire);
-        if (begin != 0 && address >= begin && address < last_range->end)
-            return last_range;
+    // Most guest/GPU page-table writes stay inside one sparse range; a
+    // worker can also alternate between two tables. Keep both positive
+    // hints with zero TLS stores on repeated hits, regardless of ordering.
+    // Every hint points into the process-lifetime static array and is
+    // revalidated against its CURRENT begin/end under the owner mutex.
+    static thread_local std::array<SparseRange*, 2> last_ranges{};
+    static thread_local unsigned next_slot = 0;
+    if (sparse_used_prefix != 0) {
+        for (SparseRange* candidate : last_ranges) {
+            if (!candidate) break; // inserts fill both slots consecutively
+            const auto begin = candidate->begin.load(std::memory_order_acquire);
+            if (begin != 0 && address >= begin && address < candidate->end)
+                return candidate;
+        }
     }
     for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
         auto& range = sparse_ranges[i];
-        if (&range == last_range) continue; // already checked under this lock
+        // Already checked under the same lock; avoid a second atomic read.
+        if (&range == last_ranges[0] || &range == last_ranges[1]) continue;
         const auto begin = range.begin.load(std::memory_order_acquire);
         if (begin != 0 && address >= begin && address < range.end) {
-            last_range = &range;
+            last_ranges[next_slot] = &range;
+            next_slot ^= 1u;
             return &range;
         }
     }
-    last_range = nullptr; // no stale hint after a negative lookup
     return nullptr;
 }
 

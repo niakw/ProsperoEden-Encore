@@ -33,8 +33,10 @@ MaxwellShaderImage NativeTranslationCache::GetOrTranslate(
         ++stats.rejected;
         return {};
     }
+    u64 started_generation{};
     {
         std::scoped_lock lock{mutex};
+        started_generation = generation;
         for (auto it = lru.begin(); it != lru.end(); ++it) {
             if (!Matches(*it, header, native, stage)) continue;
             auto copy = it->image;
@@ -51,6 +53,12 @@ MaxwellShaderImage NativeTranslationCache::GetOrTranslate(
     {
         std::scoped_lock lock{mutex};
         ++stats.translations;
+        // Clear may race with expensive native lowering. Do not publish
+        // an image captured before the GPU/session cache was invalidated.
+        if (generation != started_generation) {
+            ++stats.invalidated_translations;
+            return {};
+        }
         if (!image.Ready()) {
             ++stats.rejected;
             return image; // Never cache invalid/partially decoded shaders.
@@ -88,6 +96,8 @@ NativeTranslationCacheStats NativeTranslationCache::Stats() const {
 }
 void NativeTranslationCache::Clear() {
     const std::scoped_lock lock{mutex};
+    ++generation;
+    ++stats.invalidations;
     lru.clear();
     stats.bytes = 0;
     stats.entries = 0;

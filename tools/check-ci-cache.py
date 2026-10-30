@@ -29,7 +29,7 @@ native_toolchain = workflow.split("      - name: Install build toolchain", 1)[1]
 # competing run; a newer native push intentionally supersedes an older one.
 host_push = host_workflow.split("  push:", 1)[1].split("  workflow_dispatch:", 1)[0]
 host_group = host_workflow.split("concurrency:", 1)[1].split("jobs:", 1)[0]
-assert "branches: [dev/ps5-sparse-jit]" in host_push
+assert "branches: [main]" in host_push
 assert "paths:" in host_push
 for selected in (
     "'vendor/encore-active/**'",
@@ -51,10 +51,10 @@ assert "clang++-18 -std=c++20 -x c++ -fsyntax-only -" in native_toolchain
 assert native_toolchain.index("libboost-container-dev") < native_toolchain.index(
     "clang++-18 -std=c++20 -x c++ -fsyntax-only -"
 )
-# Ordinary dev UI/docs pushes start a *skipped* native workflow.
+# Ordinary main UI/docs pushes start a *skipped* native workflow.
 # They must not cancel a long-running explicitly requested native package.
 native_group = workflow.split("concurrency:", 1)[1].split("jobs:", 1)[0]
-assert "github.ref == 'refs/heads/dev/ps5-sparse-jit'" in native_group
+assert "github.ref == 'refs/heads/main'" in native_group
 assert "github.event_name == 'push'" in native_group
 assert "!contains(github.event.head_commit.message || '', '[full-build]')" in native_group
 assert "!contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')" in native_group

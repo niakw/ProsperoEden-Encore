@@ -10,6 +10,7 @@ on:
       - 'tools/ns2/**'
       - 'tools/check-ns2-*.py'
       - '.github/workflows/ns2-research-host.yml'
+      - 'docs/NS2_PS5_FEASIBILITY_2026-10-30.md'
   workflow_dispatch:
 
 permissions:

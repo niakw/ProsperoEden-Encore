@@ -47,6 +47,13 @@
 - **Garde-fou :** `python3 tools/check-ns2-source-selection.py` contrôle la priorité CMake, le maintien NSZ/XCZ et l'alignement PS5.
 - **État : CODE RECHERCHE, PAS ENCORE COMPILÉ.** Vérifier la propriété réelle des fichiers CMake, la compilation et les API de ce snapshot avec les options ON avant de prétendre que le bootstrap NS2 fonctionne.
 
+### N2c — Tests NPDM réels et resynchronisation du socle F07
+
+- **Test comportemental :** `tools/ns2/test_program_metadata.cpp` exécute réellement `ProgramMetadata::Load` sur des NPDM synthétiques Switch 1 et 2, vérifie `IsSwitch2()`, les titres et les formats invalides. Il ne fournit aucun firmware, clé ou jeu.
+- **CI :** [#41024466016](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41024466016), commit `c0c17243f56473556c72401a4fb313f986b745e9`, **2 jobs verts**, compilations réelles des sources (syntax-check), tests d'exécution sous ASan/UBSan.
+- **Maintien du socle :** synchronisation de `main` **vers la branche de recherche seulement**, après contrôle de l'absence de chemins modifiés en commun (21 fichiers NS2 distincts des 8 fichiers F07 évolués). Aucun merge vers `main`.
+- **Non validé :** JIT exécuté, comportement atomique sous contention, mémoire 12 Gio, GPU Ampere, services HLE et jeu NS2 sur PS5.
+
 ## 1. Conclusion provisoire
 
 **Faisabilité technique : plausible à long terme, non démontrée pour Encore sur PS5.**

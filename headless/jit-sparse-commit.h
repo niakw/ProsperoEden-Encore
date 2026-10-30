@@ -75,11 +75,22 @@ public:
         // EnsureMemoryCommitted probes this path for every translated block.
         // A same-core cache hit must not write to TLS: the former i=0 MRU
         // promotion wrote entries[0] back to itself on every hot probe.
-        if (entries[0].executable == executable && required <= entries[0].committed)
-            return true;
+        if (entries[0].executable == executable) {
+            // The current arena cannot also occupy another slot. When the
+            // requested code span grows beyond its committed chunk, go
+            // directly to the allocator instead of scanning three misses.
+            return required <= entries[0].committed;
+        }
         for (std::size_t i = 1; i < entries.size(); ++i) {
-            if (entries[i].executable != executable || required > entries[i].committed)
-                continue;
+            // Remember fills from slot zero; MRU promotion never creates
+            // holes. A negative lookup on the usual 1-2 live JIT arenas
+            // need not probe the remaining unoccupied TLS entries.
+            if (!entries[i].executable) return false;
+            if (entries[i].executable != executable) continue;
+            // An arena is represented at most once. If its required code
+            // footprint has grown, no later slot can satisfy this request:
+            // take the allocator path now instead of scanning the tail.
+            if (required > entries[i].committed) return false;
             // Only cross-core hits require MRU promotion.
             const Entry hit = entries[i];
             for (std::size_t j = i; j > 0; --j) entries[j] = entries[j - 1];

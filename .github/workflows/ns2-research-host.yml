@@ -11,6 +11,7 @@ on:
       - 'tools/check-ns2-*.py'
       - '.github/workflows/ns2-research-host.yml'
       - 'docs/NS2_PS5_FEASIBILITY_2026-10-30.md'
+      - 'docs/NS2_COMMUNITY_PATCH_TRIAGE_2026-10-30.md'
   workflow_dispatch:
 
 permissions:
@@ -85,6 +86,8 @@ jobs:
       - name: Compile and run upstream Ampere ISA/address-map host probes
         run: |
           python3 tools/check-ns2-ampere-host.py
+      - name: Compile and run Switch 2 graphics HLE protocol fixtures
+        run: python3 tools/check-ns2-graphics-hle-host.py
       - name: Run actual ProgramMetadata parser against synthetic Switch 1/2 NPDM
         shell: bash
         run: |

@@ -31,7 +31,14 @@ assert "published_home_edges.fetch_add(1, std::memory_order_relaxed)" in pad
 assert "published_capture_edges.fetch_add(1, std::memory_order_relaxed)" in pad
 assert "create_edges=%llu" in pad
 assert "published_home_edges=%llu published_capture_edges=%llu" in pad
-assert "MappedTo(active_mapping, pad_create) < 0 && (sample.buttons & kButtonCreate) != 0" in pad
+# Capture's inverse mapping is computed once per input batch, outside the
+# 4 ms sample loop. Preserve the same unmapped-Create condition and
+# publication gate; do not reintroduce per-sample MappedTo scans.
+capture_start = pad.index("const bool create_is_capture = !samples.empty() &&")
+sample_loop = pad.index("for (const auto& raw : samples)", capture_start)
+assert "MappedTo(active_mapping, pad_create) < 0;" in pad[capture_start:sample_loop]
+assert "create_is_capture && (sample.buttons & kButtonCreate) != 0" in pad[sample_loop:]
+assert pad.count("MappedTo(active_mapping, pad_create)") == 1
 assert "create_free" not in pad
 assert "slot.select_held || slot.select_pulse > 0" in pad
 assert "if (touch && (pressed & (kButtonL1 | kButtonR1 | kButtonOptions)) != 0)" in pad

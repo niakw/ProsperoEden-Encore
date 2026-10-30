@@ -23,7 +23,7 @@ assert "static thread_local unsigned next_slot = 0;" in lookup
 assert "static thread_local unsigned preferred_slot = 0;" in lookup
 assert "if (probe != 0) preferred_slot = slot;" in lookup
 assert "last_ranges = {};" not in lookup
-assert "a retired or reused slot cannot return a stale range." in lookup
+assert "retired or reused slot cannot return a stale range." in lookup
 assert "next_slot ^= 1u;" in lookup
 assert "if (&range == last_ranges[0] || &range == last_ranges[1]) continue;" in lookup
 assert "if (sparse_used_prefix != 0)" in lookup

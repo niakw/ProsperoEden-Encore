@@ -35,6 +35,9 @@ for marker in ("F07 compute positive owner cache fields",
     assert marker in gen, marker
 assert "::Eden::DevVulkan::trace_pipelines && pipeline" in src
 assert "failed_compute_retries.find(key)" in src
+assert "if (!recent.pipeline) break;" in lookup
+assert "if (recent_compute_pipelines[2].pipeline)" in lookup
+assert lookup.index("if (!recent.pipeline) break;") < lookup.index("if (recent.key == key)")
 assert "pipeline = CreateComputePipeline(key, shader);" in src
 
 cpp = r"""
@@ -118,6 +121,21 @@ int main() {
     assert(second && second != first && cache.compute_cache.probes == before+1);
     assert(cache.Get(same_shader_other_group) != first);
     assert(cache.Get(a)==first);
+    // Two alternating keys never need to mutate the cache's preferred slot;
+    // after the second insertion one remains the one-probe preferred key
+    // and the other is only one additional read-only comparison away.
+    Cache two_way;
+    auto* one = two_way.Get(a);
+    auto* other = two_way.Get(b);
+    assert(one && other && one != other);
+    for (unsigned i = 0; i < 20000; ++i)
+        assert(two_way.Get((i & 1) ? b : a) == ((i & 1) ? other : one));
+#ifdef PS5_NATIVE
+    assert(two_way.preferred_compute_positive == 1);
+    assert(two_way.compute_cache.probes == 2);
+#else
+    assert(two_way.compute_cache.probes == 20002);
+#endif
     // Four alternating live compute keys (including dispatch geometry)
     // must hit without repeated unordered-map probes once warmed.
     Cache alternating;
@@ -187,4 +205,4 @@ with tempfile.TemporaryDirectory(prefix="f07-compute-hot-key-") as td:
             run = subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert run.returncode==0,(native,opt,run.stderr[-4000:])
             print(f"F07_COMPUTE_KEY_POSITIVE_CACHE_PASS native={int(native)} opt={opt} "
-                  "same_key=1 alternating_4=1 preferred_hot=1 overflow_5=1 failure=1 key_change=1 dev_trace=1 owner_scope=1")
+                  "same_key=1 alternating_2_readonly=1 sparse_miss=1 alternating_4=1 preferred_hot=1 overflow_5=1 failure=1 key_change=1 dev_trace=1 owner_scope=1")

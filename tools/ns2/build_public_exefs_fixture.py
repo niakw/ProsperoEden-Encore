@@ -62,9 +62,7 @@ def validate_nso(image: bytes) -> None:
                 length > 0x100000 - virtual):
             raise ValueError("Inconsistent NSO0 file/virtual layout")
         prev_end = virtual + length
-    if not image[0x100:].startswith(b""):
-        raise ValueError("Unreachable marker")
-    if b"hello from HOS\\n" not in image:
+    if b"hello from HOS\n" not in image:
         raise ValueError("Missing verified public AArch64 test message")
 
 

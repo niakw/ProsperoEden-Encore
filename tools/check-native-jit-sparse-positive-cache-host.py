@@ -24,6 +24,9 @@ FIXTURE = r"""
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <new>
+#include <sys/mman.h>
+#include <unistd.h>
 #include "jit-sparse-commit.h"
 int main() {
     Eden::Jit::SparseCommitPositiveCache cache;
@@ -40,6 +43,21 @@ int main() {
     for (unsigned i = 0; i < 100000; ++i)
         if (!cache.Covers(arenas[i % 4], committed, 7)) ++misses;
     assert(misses == 0);
+    // The most frequent single-core hit is strictly read-only. Catch a
+    // redundant self-promotion store even at -O0 by protecting the page.
+    const long page_size = sysconf(_SC_PAGESIZE);
+    assert(page_size > 0 && static_cast<std::size_t>(page_size) >= sizeof(cache));
+    void* page = mmap(nullptr, static_cast<std::size_t>(page_size),
+                      PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    assert(page != MAP_FAILED);
+    auto* readonly = new (page) Eden::Jit::SparseCommitPositiveCache{};
+    readonly->Remember(arenas[0], committed, 7);
+    assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ) == 0);
+    for (unsigned i = 0; i < 1000; ++i)
+        assert(readonly->Covers(arenas[0], committed, 7));
+    assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ | PROT_WRITE) == 0);
+    readonly->~SparseCommitPositiveCache();
+    assert(munmap(page, static_cast<std::size_t>(page_size)) == 0);
     assert(!cache.Covers(arenas[2], committed + 1, 7));
     cache.Remember(arenas[2], committed * 2, 7);
     assert(cache.Covers(arenas[2], committed * 2, 7));
@@ -51,7 +69,7 @@ int main() {
     cache.Remember(arenas[4], committed, 8);
     assert(cache.Covers(arenas[4], committed, 8));
     assert(!cache.Covers(arenas[4], committed, 9)); // recycled VA
-    std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1\n", misses);
+    std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1 readonly_hit=1\n", misses);
 }
 """
 with tempfile.TemporaryDirectory(prefix="eden-sparse-jit-mru-") as tmp:

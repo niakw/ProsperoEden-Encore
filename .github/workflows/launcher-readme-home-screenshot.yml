@@ -47,6 +47,11 @@ jobs:
         run: |
           bash tools/launcher/preview.sh build/readme-home 1920 1080
           test -s build/readme-home/01-home.png
+          # The old screenshot retained synthetic sunset scenery after an
+          # async Game media scan even when Home::home() cleared the hero.
+          # Validate the source itself was never created for this render.
+          test ! -e build/readme-home/preview-hero.tga
+          echo "EDEN_ORIGINAL_WALLPAPER_PREVIEW_NO_SYNTHETIC_HERO: PASS"
 
       - name: Verify the real screenshot and replace READMEs
         run: |
@@ -70,8 +75,16 @@ jobs:
           if published.exists():
               with Image.open(published) as previous:
                   old = previous.convert("RGB").resize((1920, 1080))
-                  changed = ImageStat.Stat(ImageChops.difference(rgb, old)).mean
-                  assert max(changed) > 2.0, "Branded Home has not replaced old synthetic preview"
+                  # Compare the BACKGROUND region, not whole-frame text.
+                  # Earlier CI passed because English text changed while the
+                  # synthetic scenery behind it stayed effectively identical.
+                  viewport = (1100, 130, 1840, 750)
+                  changed = ImageStat.Stat(ImageChops.difference(
+                      rgb.crop(viewport), old.crop(viewport))).mean
+                  print("EDEN_WALLPAPER_BACKGROUND_REGION_CHANGE", changed)
+                  assert max(changed) > 9.0, (
+                      "Original Eden wallpaper still hidden by the synthetic Home hero",
+                      changed)
           published.parent.mkdir(parents=True, exist_ok=True)
           shutil.copyfile(screenshot, published)
           alt = ("Eden Encore Home in English, showing the original Eden wallpaper "

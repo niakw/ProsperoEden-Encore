@@ -2007,8 +2007,24 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
     list(REMOVE_ITEM eden_ns2_nvdrv_sources
         "hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")
+    # Native GPFIFO/CMDDMA adapter: never replace the shipping source owner.
+    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/headless/ns2/nvdrv_gpu")
+    set(EDEN_NS2_NVDRV_GPU_SOURCE
+        "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NVDRV_GPU_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.h")
+        message(FATAL_ERROR "Missing NS2 native GPU channel adapter")
+    endif()
+    list(FIND eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_gpu.cpp" eden_ns2_gpu_idx)
+    if(eden_ns2_gpu_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV GPU channel source changed: re-audit overlay")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_gpu.cpp")
+    list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_GPU_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_sources}")
-    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_GPU_ROOT}" "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")
 endif()
 
 # Switch 2 GPU TIPC service and bounded worker transport. No native GPU

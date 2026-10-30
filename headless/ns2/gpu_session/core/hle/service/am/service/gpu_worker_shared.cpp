@@ -5,13 +5,20 @@
 #include "core/hle/service/am/service/gpu_worker_shared.h"
 #include "core/hle/service/nvdrv/core/container.h"
 #include "core/hle/service/nvdrv/nvdrv.h"
+#include "core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
 
 namespace Service::AM {
 GpuWorkerSharedState::GpuWorkerSharedState(Core::System& system,
-                                           std::shared_ptr<Nvidia::Module> module_)
-    : event_context{system, "NS2GpuNotification"}, module{std::move(module_)} {}
+                                           std::shared_ptr<Nvidia::Module> module_,
+                                           Kernel::KProcess* process)
+    : event_context{system, "NS2GpuNotification"}, module{std::move(module_)},
+      native_process{process} {
+    native_registered = Nvidia::Devices::NativeGpuProcessRegistry::Instance().Register(process);
+}
 
 GpuWorkerSharedState::~GpuWorkerSharedState() {
+    if (native_registered)
+        Nvidia::Devices::NativeGpuProcessRegistry::Instance().Unregister(native_process);
     // Worker clients can be moved to a different guest handle table. Kernel
     // events, live GPU address-space devices and NVDRV session therefore have
     // the lifetime of the last shared session/worker owner.

@@ -128,7 +128,9 @@ def main() -> int:
                 "address_spaces.OwnedIds()" in shared_cpp and
                 "event_context.CloseEvent(event)" in shared_cpp and
                 "module->GetContainer().CloseSession(" in shared_cpp and
-                "module->Close(static_cast<Nvidia::DeviceFD>(*fd))" in shared_cpp,
+                "module->Close(static_cast<Nvidia::DeviceFD>(*fd))" in shared_cpp and
+                "NativeGpuProcessRegistry::Instance().Register(process)" in shared_cpp and
+                "NativeGpuProcessRegistry::Instance().Unregister(native_process)" in shared_cpp,
                 "Live worker handles must retain NVDRV FD and event ownership")
         worker_hle_cpp = (session_root / "gpu_worker.cpp").read_text()
         require("IGpuWorker::HandleSyncRequest" in worker_hle_cpp and
@@ -212,7 +214,7 @@ def main() -> int:
                 '"hle/service/nvdrv/devices/nvhost_as_gpu.cpp" eden_ns2_as_idx' in CMAKE and
                 'list(REMOVE_ITEM eden_ns2_nvdrv_sources' in CMAKE and
                 'list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")' in CMAKE and
-                'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")' in CMAKE and
+                'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_GPU_ROOT}" "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")' in CMAKE and
                 "MapNative4K(" in native_as_h and
                 "UnmapNative4K(" in native_as_h and
                 "ReserveNativeSparse4K(" in native_as_h and
@@ -235,6 +237,28 @@ def main() -> int:
                 "Native 4KiB NVDRV address-space owner must be isolated and bounded")
         require("EDEN_NS2_NVDRV_AS_SOURCE" in CMAKE[nvdrv_selection:release_gate],
                 "Native AS owner is not gated under research-only NVDRV switch")
+        channel_root = ROOT / "headless/ns2/nvdrv_gpu/core/hle/service/nvdrv/devices"
+        native_channel_cpp = (channel_root / "nvhost_gpu.cpp").read_text()
+        native_channel_h = (channel_root / "nvhost_gpu.h").read_text()
+        process_registry = (
+            ROOT / "headless/ns2/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+        ).read_text()
+        fence_plan = (
+            ROOT / "headless/ns2/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h"
+        ).read_text()
+        require('set(EDEN_NS2_NVDRV_GPU_SOURCE' in CMAKE and
+                '"hle/service/nvdrv/devices/nvhost_gpu.cpp" eden_ns2_gpu_idx' in CMAKE and
+                'list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_GPU_SOURCE}")' in CMAKE and
+                "EDEN_NS2_NVDRV_GPU_SOURCE" in CMAKE[nvdrv_selection:release_gate] and
+                "UsesNativeAbi() const;" in native_channel_h and
+                "NativeGpuProcessRegistry::Instance().Contains(session->process)" in native_channel_cpp and
+                "if (native && !native_plan)" in native_channel_cpp and
+                "BuildIncrementCommandList(params.fence, native_completion)" in native_channel_cpp and
+                "GetNativeGpuContextSlot(params.class_num)" in native_channel_cpp and
+                "case 7:" in native_channel_cpp and
+                "class NativeGpuProcessRegistry" in process_registry and
+                "PlanNativeSubmission(" in fence_plan,
+                "Native NS2 GPU channel must be process-scoped and release gated")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()
         ioctl = (nvdrv_root / "native_characteristics_ioctl.h").read_text()

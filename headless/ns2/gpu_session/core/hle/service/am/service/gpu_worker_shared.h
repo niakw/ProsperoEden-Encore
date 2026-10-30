@@ -14,13 +14,14 @@
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 #include "core/hle/service/kernel_helpers.h"
 
-namespace Kernel { class KEvent; }
+namespace Kernel { class KEvent; class KProcess; }
 namespace Service::Nvidia { class Module; }
 namespace Service::AM {
 
 struct GpuWorkerSharedState {
     explicit GpuWorkerSharedState(Core::System& system,
-                                  std::shared_ptr<Nvidia::Module> module);
+                                  std::shared_ptr<Nvidia::Module> module,
+                                  Kernel::KProcess* process);
     ~GpuWorkerSharedState();
     GpuWorkerSharedState(const GpuWorkerSharedState&) = delete;
     GpuWorkerSharedState& operator=(const GpuWorkerSharedState&) = delete;
@@ -33,5 +34,7 @@ struct GpuWorkerSharedState {
     std::array<Kernel::KEvent*, GpuSessionProtocol::MaxNotificationEvents> events{};
     std::shared_ptr<Nvidia::Module> module;
     std::optional<std::size_t> nv_session;
+    Kernel::KProcess* native_process{};
+    bool native_registered{};
 };
 } // namespace Service::AM

@@ -196,3 +196,11 @@ Maxwell-era fixed-map IOCTLs must not be represented as full Switch 2 GPU suppor
 ### Next verified PS5 gates
 - PS5 native full link/package + kernel resources and actual NS2 ExeFS load; GPU queue/submission, syncpoints, shader ISA Turing/Ampere, textures on RADV.
 - Measure on PS5 before importing upstream GPU split: worker throughput, 1% lows, shader/sync waits, Vulkan queue idle and buffer-cache invalidation generation.
+
+## N4o — Process-scoped native GPU GPFIFO handoff (research only)
+
+- Unlike upstream `0x2593/Eden-NS2`, the pinned Encore kernel does **not** expose `KProcess::UsesPAuthReturns()`. A small bounded, refcounted `NativeGpuProcessRegistry` now marks only a guest process that actually opened a **research-only** `IGpuSession` through the NS2 graphics bootstrap. The final shared GPU session/worker owner removes this marker; an ordinary Switch 1 NVDRV session never activates it.
+- Research-only source overlay for `nvhost_gpu.{h,cpp}` replaces the old channel owner **only** under `EDEN_NS2_NVDRV_EXPERIMENTAL` and the final PS5 release gate still refuses the research flags. The pinned `vendor/` and `main` stay unchanged.
+- Existing NVDRV `SubmitGPFIFO` 0x08/0x1b paths and ordinary host GPU scheduling remain real. Native channel preflight now refuses uninitialized GMMU/channel submission and unknown/contradictory fence flags; supports up to 64 C56F-style completion increments emitted *after* the actual ordered GPU pushbuffer, and retains legacy two-increment fences on the non-native path. Registered native context classes C797 (3D), C7C0 (compute), C7B5 (DMA), C56F (GPFIFO) are mapped into their existing channel slots. QueryEvent(7) uses the already-owned error notifier only in native mode.
+- Added C++ host tests for per-process opt-in and final-owner revocation, unknown fence flags, incomplete GPU channel, fence acquire/completion conflicts, native increment bound, and standard fence compatibility. Host CI syntax-checks actual NVDRV channel owner, not merely the pure protocol.
+- **Important:** this step connects correct process identification, GPFIFO ordering and bounded syncpoint semantics; it does **not** implement Turing/Ampere 3D and compute engine methods, shader translation, PS5 RADV output, or real hardware runtime verification. NS2 GPU correctness and playability remain unproven.

@@ -35,7 +35,8 @@ IGpuSession::IGpuSession(Core::System& system_,
                          std::shared_ptr<Nvidia::Module> module,
                          Kernel::KProcess* process)
     : ServiceFramework{system_, "IGpuSession"}, m_module{std::move(module)},
-      m_process{process}, m_shared{std::make_shared<GpuWorkerSharedState>(system_, m_module)} {
+      m_shared{std::make_shared<GpuWorkerSharedState>(system_, m_module, process)},
+      m_process{process} {
     m_process->Open(kernel);
     static const FunctionInfo functions[] = {
         {11, &IGpuSession::GetNotificationRange, "GetNotificationRange"},

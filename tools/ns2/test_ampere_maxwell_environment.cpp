@@ -64,11 +64,12 @@ int main() {
     FakeMaxwellEnvironment fake;
     auto env=NativeMaxwellEnvironment::Create(
         fake, BuildMaxwellShaderImage(hdr,native,3));
-    Check(env && env->StartAddress()==0x50 &&
+    Check(env && env->StartAddress()==0 &&
+          env->StartAddress()+sizeof(Shader::ProgramHeader)==0x50 &&
           env->ShaderStage()==fake.ShaderStage() &&
           env->GpPassthroughMask()==fake.GpPassthroughMask() &&
           env->IsProprietaryDriver(),
-          "real Maxwell compiler contract preserves stage, SPH and config");
+          "real Maxwell compiler CFG start and environment metadata match graphics pipeline");
     Check(env->ReadInstruction(0x50)==env->Image().code[0x50/8] &&
           env->ReadInstruction(0x58)==env->Image().code[0x58/8],
           "native instruction stream fed to Maxwell ReadInstruction virtual");
@@ -110,7 +111,8 @@ int main() {
               "ownership transferred to native environment wrapper");
         Check(owned->ReadCbufValue(3,2)==770 &&
               live_source->cbuf_reads==1 &&
-              owned->ShaderStage()==Shader::Stage::VertexB,
+              owned->ShaderStage()==Shader::Stage::VertexB &&
+              owned->StartAddress()+sizeof(Shader::ProgramHeader)==0x50,
               "owned original is alive for deferred compiler CBUF queries");
     }
     Check(destroyed==1, "original graphics environment destroyed exactly once");

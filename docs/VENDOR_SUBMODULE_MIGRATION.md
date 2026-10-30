@@ -5,7 +5,7 @@ The directory `vendor/` remains at the same relative path as before, but is a pi
 ## Clone and checkout
 
 ```bash
-git clone --recurse-submodules https://github.com/niakw/Prospero.Eden-Encore.git
+git clone --recurse-submodules https://github.com/niakw/ProsperoEden-Encore.git
 # Or, in an existing working copy:
 git submodule sync --recursive
 git submodule update --init --recursive vendor

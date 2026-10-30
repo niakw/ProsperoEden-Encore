@@ -121,6 +121,7 @@ on:
       - 'tools/ci/check-ftp-archive-root.py'
       - 'tools/analyze-fc27-release-sessions.py'
       - 'tools/check-fc27-f07-blit-pipeline-state-host.py'
+      - 'tools/check-ps5-autocontrol-context.py'
       - 'tools/check-ps5-guest-system-buttons.py'
       - 'tools/check-fc27-f06-native-pad-transition-host.py'
       - 'tools/check-fc27-f06-native-npad-handoff-host.py'
@@ -334,6 +335,7 @@ jobs:
           python3 -B tools/check-fc27-f05-native-kernel-wait-publication-host.py
           python3 -B tools/check-fc27-f05-native-kthread-endwait-host.py
           python3 -B tools/check-fc27-f05-native-binder-handle-ipc-host.py
+          python3 -B tools/check-ps5-autocontrol-context.py
           python3 -B tools/check-ps5-guest-system-buttons.py
           python3 -B tools/check-fc27-f06-native-pad-transition-host.py
           python3 -B tools/check-fc27-f06-native-npad-handoff-host.py

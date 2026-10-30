@@ -30,8 +30,13 @@ std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::CreateOwned(
     std::unique_ptr<Shader::Environment> source, MaxwellShaderImage image) {
     if (!source || !image.Ready() || image.code.empty() ||
         image.first_instruction_address != 0x50 ||
-        !image.ReadMaxwellInstruction(0x50))
+        !image.ReadMaxwellInstruction(0x50)) {
+        // Some C++ ABIs destroy by-value parameters at the end of the
+        // caller's full expression, not at function return. Release the
+        // rejected graphics context here so failure is deterministic.
+        source.reset();
         return {};
+    }
     auto& ref = *source;
     return std::unique_ptr<NativeMaxwellEnvironment>(
         new NativeMaxwellEnvironment(std::move(source), ref, std::move(image)));

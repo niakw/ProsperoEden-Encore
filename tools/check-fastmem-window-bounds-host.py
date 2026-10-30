@@ -225,7 +225,8 @@ int main() {
     std::printf("FASTMEM_PROTECT_SINGLE_PAGE_NOOP_PASS repeated=20000 "
                 "changed=1 adjacent=1 bounds=1\n");
 }
-'''.replace('PAGES', method).replace('PROTECT', protect_body)
+'''.replace('PAGES', method).replace('\nPROTECT\n', '\n' + protect_body + '\n')
+assert '\nPROTECT\n' not in protect_cpp
 with tempfile.TemporaryDirectory(prefix='encore-fastmem-protect-') as temp:
     path = Path(temp)/'protect.cpp'
     path.write_text(protect_cpp)

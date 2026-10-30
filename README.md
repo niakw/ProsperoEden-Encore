@@ -193,6 +193,8 @@ This is an unofficial community fork. It does not ship copyrighted commercial ga
 
 ## Credits
 
+**Encore project history — development since 4 October 2026.** Our work began on **4 October 2026** in the [original `niakw/Prospero.Eden-Encore` fork](https://github.com/niakw/Prospero.Eden-Encore). On **30 October 2026**, we moved that work to this [independent repository](https://github.com/niakw/ProsperoEden-Encore) to make Encore easier to discover. The former fork remains linked as part of the project's history; this repository move does **not** reset Encore's development start date or replace the upstream credits below.
+
 Encore is built from and depends on the work of many upstream projects. The list below covers the
 **direct repositories and pinned build/runtime inputs used by Encore**. Each entry identifies
 its upstream author, known contributor or project-maintainer account; a project account is not

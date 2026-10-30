@@ -20,7 +20,8 @@ def main()->int:
             binary=Path(tmp)/("test"+opt)
             subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                             "-pedantic","-fsanitize=undefined","-fno-sanitize-recover=all",
-                            "-I",str(OVERLAY),"-I",str(EDEN),str(SOURCE),
+                            "-I",str(OVERLAY),"-I",str(EDEN),
+                            "-I",str(ROOT/"build-ns2-a64/fmt/include"),str(SOURCE),
                             "-o",str(binary)],check=True)
             subprocess.run([str(binary)],check=True)
             print(f"Ampere ISA/address map {opt}: PASS")

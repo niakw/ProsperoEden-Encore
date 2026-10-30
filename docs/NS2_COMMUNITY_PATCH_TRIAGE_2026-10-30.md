@@ -64,3 +64,9 @@ The `\default=false` keys are configuration override flags, not executable patch
 - Added host tests for invalid flags, zero pages, overflow, nonzero source with null handle, sparse region bounds and page shifts. `NativeSparseMappingTable` regression validates split/replacement of overlapping ranges, corrected physical source offsets and release of superseded handle references.
 - This does NOT yet map any PS5/GPU direct memory or hook NVIDIA memory allocation to RADV; live GPU virtual-address management, synchronization and OOM guards are separate requirements.
 - The NVDRV owner syntax-check uses GCC instead of Clang 18: Clang 18 crashed **inside the old `WrapFixedInlOut` template** in GitHub run `#41033393201`, without a source-level error. GCC must compile the actual research file before this lot is qualified.
+
+## N3e — Native GPU channel identities / syncpoint cache
+
+- Added `native_gpu_context.h` and `graphics_syncpoint_cache.h` from pinned `0x2593/Eden-NS2@5d2d3cf0a966293fc9ddeac33cf86830a5de206e`. The host harness validates TSG packet size and reserved bytes, 0–63 native subcontexts, known GPU engine class identities, the 192-slot syncpoint layout and 32→64-bit counter rollover.
+- Hardened `NativeSparseMappingTable::Replace` against zero-length, guest VA and source offset overflow, with regression checks preserving existing handle pins on invalid input.
+- These are synthetic ABI tests only. Live GPU session, PS5 GPU execution, register mapping and syncpoint notification are not yet wired to NVDRV/RADV.

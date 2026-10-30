@@ -10,6 +10,8 @@
 #include "core/hle/service/am/service/graphics_supervisor_protocol.h"
 #include "core/hle/service/am/service/native_image_layout.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_kind.h"
+#include "core/hle/service/nvdrv/devices/native_gpu_context.h"
+#include "core/hle/service/am/service/graphics_syncpoint_cache.h"
 
 static int assertions=0;
 static void require(bool condition,const char* desc){
@@ -129,6 +131,11 @@ int main(){
             ranges.at(0x3000).source_offset==0x12000,
             "advance right fragment physical offset");
     require(table.ReferencedHandles().size()==2,"both sparse backing handles pinned");
+    table.Replace({std::numeric_limits<u64>::max()-0xff,0x200,0,44});
+    table.Replace({0x6000,0,0,44});
+    table.Replace({0x6000,0x200,std::numeric_limits<u64>::max()-0xff,44});
+    require(table.Ranges().size()==3 && table.ReferencedHandles().size()==2,
+            "reject overflowing and empty sparse mapping without dropping handles");
     table.Replace({0x2000,0x1000,0,0});
     require(table.Ranges().size()==2 && table.ReferencedHandles().size()==1 &&
             table.ReferencedHandles().contains(7),
@@ -170,6 +177,56 @@ int main(){
             "reject inclusive maximum end overflow");
     require(!DecodeGpuSparseRegion(std::span<const u32>(region.data(),11)),
             "reject truncated sparse region request");
+
+    std::array<u8,4> legacyTsg{21,0,0,0};
+    auto tsg=N::DecodeNativeTsgBinding(legacyTsg,false);
+    require(tsg && tsg->channel_fd==21 && tsg->subcontext_id==0,
+            "legacy native GPU binding");
+    require(!N::DecodeNativeTsgBinding(legacyTsg,true),
+            "reject short extended native GPU binding");
+    legacyTsg.fill(0xff);
+    require(!N::DecodeNativeTsgBinding(legacyTsg,false),
+            "reject negative GPU file descriptor");
+    std::array<u8,24> extendedTsg{};
+    extendedTsg[0]=21;extendedTsg[4]=63;
+    tsg=N::DecodeNativeTsgBinding(extendedTsg,true);
+    require(tsg && tsg->channel_fd==21 && tsg->subcontext_id==63,
+            "largest native GPU subcontext id");
+    extendedTsg[4]=64;
+    require(!N::DecodeNativeTsgBinding(extendedTsg,true),
+            "reject out of range native GPU subcontext");
+    extendedTsg[4]=63;extendedTsg[23]=1;
+    require(!N::DecodeNativeTsgBinding(extendedTsg,true),
+            "reject nonzero native GPU extension bytes");
+    extendedTsg[23]=0;
+    require(!N::DecodeNativeTsgBinding(
+        std::span<const u8>(extendedTsg.data(),23),true),
+        "reject truncated GPU binding");
+    require(N::GetNativeGpuContextSlot(0xc797)==std::optional<u32>{1} &&
+            N::GetNativeGpuContextSlot(0xc7c0)==std::optional<u32>{2} &&
+            N::GetNativeGpuContextSlot(0xc7b5)==std::optional<u32>{4} &&
+            N::GetNativeGpuContextSlot(0xc56f)==std::optional<u32>{5},
+            "native context identities");
+    require(!N::GetNativeGpuContextSlot(0xb197),
+            "legacy Maxwell context is not native");
+    namespace Cache=Service::AM::GraphicsSyncpointCache;
+    static_assert(Cache::CounterCount==192 && Cache::GroupCount==3);
+    require(Cache::Header[0]==1 && Cache::Header[2]==191,
+            "graphics syncpoint memory layout");
+    require(Cache::ExtendCounter(Cache::Unallocated,12)==12,
+            "first syncpoint sample");
+    require(Cache::ExtendCounter(0x1fffffffeULL,1)==0x200000001ULL,
+            "extend 32-bit syncpoint across counter wrap");
+    Cache::CounterValue syncCounter{};
+    require(syncCounter.Observe(std::nullopt)==Cache::Unallocated,
+            "empty syncpoint observation");
+    require(syncCounter.Observe(0xfffffffe)==0xfffffffeULL,
+            "initial near-wrap counter");
+    require(syncCounter.Observe(1)==0x100000001ULL,
+            "syncpoint counter wrap");
+    require(syncCounter.Observe(std::nullopt)==Cache::Unallocated &&
+            syncCounter.previous==0x100000001ULL,
+            "missing counter should not clear last observed value");
 
     const auto generic=N::SelectNativeMemoryKind(6,6);
     require(generic && generic->selected==6 &&

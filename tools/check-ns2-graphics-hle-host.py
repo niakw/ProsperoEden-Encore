@@ -9,6 +9,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parent.parent
 HEADERS=ROOT/"headless/ns2/hle"
+NVDRV=ROOT/"headless/ns2/nvdrv"
 EDEN=ROOT/"vendor/sources/eden/src"
 SOURCE=ROOT/"tools/ns2/test_graphics_hle.cpp"
 EXPECTED=[
@@ -16,6 +17,9 @@ EXPECTED=[
     HEADERS/"core/hle/service/am/service/native_image_layout.h",
     HEADERS/"core/hle/service/am/service/gpu_memory_registration.h",
     HEADERS/"core/hle/service/nvdrv/devices/native_gpu_kind.h",
+    HEADERS/"core/hle/service/nvdrv/devices/native_sparse_remap.h",
+    HEADERS/"core/hle/service/nvdrv/devices/native_gpu_context.h",
+    HEADERS/"core/hle/service/am/service/graphics_syncpoint_cache.h",
 ]
 def main()->int:
     if not all(f.is_file() for f in EXPECTED):
@@ -30,7 +34,7 @@ def main()->int:
             exe=Path(tmp)/("test"+opt)
             command=[compiler,"-std=c++20","-Wall","-Wextra","-Werror",
                      "-pedantic","-fsanitize=undefined","-fno-sanitize-recover=all",
-                     opt,"-I",str(HEADERS),"-I",str(EDEN),str(SOURCE),
+                     opt,"-I",str(HEADERS),"-I",str(NVDRV),"-I",str(EDEN),str(SOURCE),
                      "-o",str(exe)]
             subprocess.run(command,check=True)
             subprocess.run([str(exe)],check=True,env={

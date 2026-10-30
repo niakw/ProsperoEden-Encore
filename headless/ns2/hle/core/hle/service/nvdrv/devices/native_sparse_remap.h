@@ -57,6 +57,12 @@ inline std::optional<NativeSparseRange> DecodeNativeSparseRemap(const NativeSpar
 class NativeSparseMappingTable {
 public:
     void Replace(const NativeSparseRange& range) {
+        // Avoid overflow or zero-length entries before changing the pin table.
+        const u64 maximum = std::numeric_limits<u64>::max();
+        if (range.size == 0 || range.address > maximum - range.size ||
+            (range.handle && range.source_offset > maximum - range.size)) {
+            return;
+        }
         const u64 end = range.address + range.size;
         auto it = ranges.lower_bound(range.address);
         if (it != ranges.begin()) {

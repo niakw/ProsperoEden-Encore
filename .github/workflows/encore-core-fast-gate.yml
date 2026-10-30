@@ -14,7 +14,6 @@ on:
       - 'headless/jit-sparse-commit.h'
       - 'tools/check-native-jit-sparse-positive-cache-host.py'
       - 'headless/jit-allocator.h'
-      - 'headless/jit-alias-cache.h'
       - 'tools/check-native-jit-alias-lookup-host.py'
       - 'headless/CMakeLists.txt'
       - 'tools/check-native-sparse-jit-trim-host.py'

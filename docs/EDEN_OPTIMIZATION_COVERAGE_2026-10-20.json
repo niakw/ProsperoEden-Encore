@@ -44,7 +44,7 @@
     {
       "path": "headless/buffer_pages.h",
       "disposition": "code_changed_in_batch",
-      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
+      "evidence": "2026-10-30 PS5 BufferPages: single-page guest-buffer registration fast path and single-page NeverRegistered fast negative check, retaining acquire/release, 256KiB cap and final coverage_unknown double-check. Source-linked R437 fixture extended with 18,000 oracle queries, 4KiB/256KiB/16GiB boundaries, concurrent publishers, O0/O2 UBSan, CI pending; CPU/FPS unmeasured. Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
     },
     {
       "path": "headless/buffer_write_ahead.h",

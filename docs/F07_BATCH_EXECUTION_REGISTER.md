@@ -825,3 +825,8 @@ Le commit précédent a écrit une séquence littérale `\\n` entre deux asserti
 
 - `headless/image_pages.h::NeverHeld` : sur un CPU-write entièrement contenu dans une page 4 KiB, une seule lecture atomique acquire et un bit test, sans construire les bornes des masques multi-pages. Les écritures croisées, les 256 KiB maximum et la publication Mark release/acquire restent inchangées.
 - `tools/check-ps5-image-pages-r433.py` : source liée et témoin C++ ASan/UBSan, 12 000 sondes déterministes contre oracle indépendant par page (0, frontière 4 KiB, frontière mot 64 pages, fin 16 GiB, longueurs >256 KiB), plus registrations concurrentes. Tests et gain CPU réel à qualifier par CI ; aucun FPS console revendiqué. F07 22/29, C01/T01 ouverts.
+
+## F07 — Vulkan buffer-page ownership fast path (31 octobre 2026)
+
+- `headless/buffer_pages.h` : `Mark` et `NeverRegistered` détectent directement les entrées contenues dans une seule page 4 KiB, sans parcours générique de masques. Les traitements multi-pages et la barrière `coverage_unknown` en lecture double sont conservés ; jamais de bypass de shader/HUD sur région connue.
+- `tools/check-ps5-buffer-pages-r437.py` : 18 000 requêtes comparées à un oracle page-par-page, frontières de bits/mots/espace 16 GiB, 8 éditeurs concurrents, O0/O2 UBSan, plus les gardes de génération natifs. **C01/T01 restent ouverts : aucune mesure FC27 sur PS5. F07 22/29.**

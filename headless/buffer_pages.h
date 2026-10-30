@@ -26,6 +26,17 @@ inline void Mark(std::uint64_t address,std::uint64_t size) noexcept {
     coverage_unknown.store(true,std::memory_order_release);
     return;
   }
+  // A one-page registration is common for guest uniform/state buffers.
+  // Avoid the generic word-range loop and two endpoint masks.
+  constexpr std::uint64_t page_mask=(std::uint64_t{1}<<kPageBits)-1;
+  if(size <= (std::uint64_t{1}<<kPageBits)-(address&page_mask)){
+    const auto page=address>>kPageBits;
+    const auto bit=std::uint64_t{1}<<(page%64);
+    const auto word=page/64;
+    if(!(registered[word].load(std::memory_order_acquire)&bit))
+      registered[word].fetch_or(bit,std::memory_order_release);
+    return;
+  }
   const auto first=address>>kPageBits,last=(address+size-1)>>kPageBits;
   for(auto word=first/64;word<=last/64;++word){
     const auto mask=Bits(word==first/64?first%64:0,
@@ -41,6 +52,16 @@ inline void Mark(std::uint64_t address,std::uint64_t size) noexcept {
 inline bool NeverRegistered(std::uint64_t address,std::uint64_t size) noexcept {
   if(coverage_unknown.load(std::memory_order_acquire))return false;
   if(!size || size>256*1024 || address>=kSpace || size>kSpace-address)return false;
+  // A CPU write contained in one 4 KiB page needs only one bit test,
+  // then the final unknown-coverage guard. Cross-page queries retain the
+  // existing bounded two-word scan and acquire/release correctness.
+  constexpr std::uint64_t page_mask=(std::uint64_t{1}<<kPageBits)-1;
+  if(size <= (std::uint64_t{1}<<kPageBits)-(address&page_mask)){
+    const auto page=address>>kPageBits;
+    if(registered[page/64].load(std::memory_order_acquire)&
+       (std::uint64_t{1}<<(page%64)))return false;
+    return !coverage_unknown.load(std::memory_order_acquire);
+  }
   const auto first=address>>kPageBits,last=(address+size-1)>>kPageBits;
   // Up to 256 KiB touches at most 65 4 KiB pages and two bitmap
   // words, including unaligned ends: the same two atomic loads as before.

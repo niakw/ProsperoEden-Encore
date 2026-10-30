@@ -83,3 +83,15 @@ not a new Nintendo Switch 2 suffix. Do not invent handlers for these labels.
   https://git.eden-emu.dev/mirror/OunceCake
 - Community experiment notes (not a validated 30 FPS build):
   https://git.eden-emu.dev/Takoroka/eden-nx2/releases
+
+## Upstream review alert — Eden's current NS2 draft
+
+Eden Forgejo now has a **draft, not merged** Switch 2 support PR
+[eden-emu/eden #4588](https://git.eden-emu.dev/eden-emu/eden/pulls/4588)
+with Ampere shader lowering, 6 CPU cores, Horizon services, video decoder
+and disk-cache changes. The public PR shows failed/blocked build checks and
+reported freezes in individual test scenes. Do **not** treat that WIP as a
+stable 30-FPS Mario Kart World release or import its entire diff into PS5.
+The next compatibility audit should compare its ExeFS, NCA/content-ID,
+NPDM and graphics patches *per file* with Encore's isolated research overlay,
+then test in CI before any merge.

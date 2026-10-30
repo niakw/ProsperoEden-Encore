@@ -13,6 +13,8 @@
 #include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 #include "shader_recompiler/frontend/ampere/ir_bridge.h"
 #include "shader_recompiler/host_translate_info.h"
+#include "shader_recompiler/profile.h"
+#include "shader_recompiler/runtime_info.h"
 
 namespace Settings { Values values{}; }
 using namespace Shader::Ampere;

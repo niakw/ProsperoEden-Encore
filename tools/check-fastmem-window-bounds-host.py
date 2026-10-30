@@ -254,6 +254,11 @@ map_body = '    void Map(' + source.split('    void Map(', 1)[1].split('\n    }'
 unmap_body = '    void Unmap(' + source.split('    void Unmap(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 assert 'if (first == last && chunk_aliased[first / PagesPerGranule] &&' in map_body
 assert 'if (first == last && !page_backing[first] && !page_access[first]) return;' in unmap_body
+assert 'chunk_aliased[first / PagesPerGranule]) {' in map_body
+assert 'if (unchanged) return;' in map_body
+assert 'std::all_of(page_backing.begin() + first, page_backing.begin() + last + 1' in unmap_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' in map_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' in unmap_body
 for body in (map_body, unmap_body):
     assert body.index('std::lock_guard lock{mutex};') < body.index('if (first == last')
 map_cpp = r'''
@@ -310,8 +315,34 @@ int main() {
     w.Map(WindowBytes, 0, 1, 3);
     w.Unmap(WindowBytes, 1);
     assert(w.updates == 10006);
+    TestWindow two;
+    two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 1 && counters.mapped_pages == 2);
+    // No active fixed alias: an identical request must still reach Update.
+    two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 2);
+    two.chunk_aliased[0] = 1;
+    for (int i = 0; i < 10000; ++i)
+        two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 2);
+    two.Map(GuestPage, GuestPage, 2 * GuestPage, 1);
+    assert(two.updates == 3 && two.page_access[1] == 1 && two.page_access[2] == 1);
+    two.Unmap(GuestPage, 2 * GuestPage);
+    assert(two.updates == 4 && counters.mapped_pages == 0);
+    for (int i = 0; i < 10000; ++i) two.Unmap(GuestPage, 2 * GuestPage);
+    assert(two.updates == 4);
+    // A two-page operation that crosses a 16 KiB granule still updates.
+    two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 5 && counters.mapped_pages == 2);
+    two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 6);
+    two.Unmap(3 * GuestPage, 2 * GuestPage);
+    assert(two.updates == 7 && counters.mapped_pages == 0);
+    two.Unmap(3 * GuestPage, 2 * GuestPage);
+    assert(two.updates == 8);
     std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
-                "same_alias_noop=10000 unmap_noop=10000 crossing=1 O0_O2=1\n");
+                "same_alias_noop=10000 unmap_noop=10000 same16k=1 "
+                "cross16k=1 O0_O2=1\n");
 }
 '''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
     '\nUNMAP\n', '\n' + unmap_body + '\n')

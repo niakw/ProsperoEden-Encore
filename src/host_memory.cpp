@@ -211,6 +211,24 @@ public:
         if (first == last && chunk_aliased[first / PagesPerGranule] &&
             page_backing[first] == static_cast<std::uint32_t>(host + 1) &&
             page_access[first] == access) return;
+        // Small same-granule repeat mappings are common during guest page
+        // setup. The active kernel alias proves the original fixed mapping
+        // succeeded; compare at most four existing page records before
+        // skipping Update. Never bypass a missing alias or a cross-granule
+        // request (which may need distinct kernel operations).
+        if (first < last && last - first < PagesPerGranule &&
+            first / PagesPerGranule == last / PagesPerGranule &&
+            chunk_aliased[first / PagesPerGranule]) {
+            bool unchanged = true;
+            for (std::size_t p = first; p <= last; ++p) {
+                if (page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1) ||
+                    page_access[p] != access) {
+                    unchanged = false;
+                    break;
+                }
+            }
+            if (unchanged) return;
+        }
         for (std::size_t p = first; p <= last; ++p) {
             if (!page_backing[p]) ++counters.mapped_pages;
             page_backing[p] = static_cast<std::uint32_t>(host + (p - first) + 1);
@@ -228,6 +246,16 @@ public:
         // call. An unchanged, unmapped guest page has nothing to withdraw
         // or republish; retain the observable call counter.
         if (first == last && !page_backing[first] && !page_access[first]) return;
+        // Up to four already-unmapped guest pages inside one kernel granule
+        // cannot have a live alias; no unmap or JIT byte update is needed.
+        // Wider/cross-granule requests use the original Update path.
+        if (first < last && last - first < PagesPerGranule &&
+            first / PagesPerGranule == last / PagesPerGranule &&
+            std::all_of(page_backing.begin() + first, page_backing.begin() + last + 1,
+                        [](std::uint32_t backing) { return backing == 0; }) &&
+            std::all_of(page_access.begin() + first, page_access.begin() + last + 1,
+                        [](std::uint8_t access_bits) { return access_bits == 0; }))
+            return;
         for (std::size_t p = first; p <= last; ++p) {
             if (page_backing[p]) --counters.mapped_pages;
             page_backing[p] = 0;

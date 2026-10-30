@@ -34,7 +34,8 @@ def main():
     sources = [SHADER / name for name in names] + [
         overlay / (name+".cpp") for name in
         ("ir_bridge","maxwell_environment","maxwell_image","lower_bridge","probe")
-    ] + [ROOT / "tools/ns2/jit-host/common_shim.cpp",
+    ] + [SRC / "common/settings_common.cpp",
+        ROOT / "tools/ns2/jit-host/common_shim.cpp",
          ROOT / "tools/ns2/test_ampere_real_ir.cpp"]
     if any(not x.is_file() for x in sources):
         raise RuntimeError("missing pinned shader source")

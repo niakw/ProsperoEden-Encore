@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
+#define CANNOT_EXPLICITLY_INSTANTIATE
 #include "common/settings.h"
 #include "shader_recompiler/frontend/ampere/ir_bridge.h"
 #include "shader_recompiler/host_translate_info.h"

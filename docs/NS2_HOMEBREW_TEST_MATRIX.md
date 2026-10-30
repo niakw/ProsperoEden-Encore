@@ -200,3 +200,17 @@ These are distinct validation stages, **not** execution of the paired ExeFS
 through `Core::System::Load`, `KProcess`, native PS5 or production HLE.
 Full process initialization, actual service execution and native GPU output
 remain prerequisites for a real Switch 2 compatibility claim.
+
+### N3w kernel-capability correction for real process eligibility
+
+The generated ACI0 now holds three **real** HOS KAC descriptors in a
+non-overlapping 0xC0-byte ACI section. They permit core 0, user thread
+priorities 16–63, and only the five distinct SVC numbers observed in the
+public homebrew's six-call trace: ExitProcess (0x07), SleepThread (0x0B),
+GetSystemTick (0x1E), Break (0x26) and OutputDebugString (0x27). Their
+encoding is derived from Encore's maintained
+`Kernel::KCapabilities::SetCorePriorityCapability` and
+`SetSyscallMaskCapability`, not from an unrestricted capability mask.
+The host test checks that the **real** NPDM parser returns these exact words.
+This corrects a necessary precondition for `KProcess::LoadFromMetadata`,
+not a completed or signed system boot.

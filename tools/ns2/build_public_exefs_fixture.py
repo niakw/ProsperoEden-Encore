@@ -21,27 +21,38 @@ def synthetic_npdm() -> bytes:
     npdm[0x0F] = 0     # core 0
     struct.pack_into("<I", npdm, 0x1C, 0x100000)  # stack
     npdm[0x20:0x2B] = b"NS2-HOST-HB"
+    # ACI is enlarged to keep the real KAC bytes outside the FAH data and
+    # avoid overlapping the signed-ACID container (which is unsigned here).
     struct.pack_into("<IIII", npdm, 0x70,
-                     0x80, 0x80, 0x100, 0x400)  # ACI, ACID
+                     0x80, 0xC0, 0x140, 0x400)  # ACI, ACID
     npdm[0x80:0x84] = b"ACI0"
     struct.pack_into("<Q", npdm, 0x90, 0x0100000000000420)
     struct.pack_into("<IIII", npdm, 0xA0,
                      0x40, 0x40, 0, 0)  # ACI FAH, SAC
-    struct.pack_into("<II", npdm, 0xB8, 0x78, 0)  # ACI KAC
+    struct.pack_into("<II", npdm, 0xB8, 0x80, 12)  # 3 KAC words
+    # KCapabilities::InitializeForUser requires core/priority permissions.
+    # Core 0, thread priorities 16..63, and ONLY the HOS hello SVCs:
+    # 0x07 ExitProcess, 0x0B SleepThread, 0x1E GetSystemTick,
+    # 0x26 Break, and 0x27 OutputDebugString.
+    core_priority = 0x7 | (63 << 4) | (16 << 10)
+    svc_mask0 = 0xF | ((1 << 7 | 1 << 11) << 5)
+    svc_mask1 = 0xF | ((1 << 6 | 1 << 14 | 1 << 15) << 5) | (1 << 29)
+    struct.pack_into("<III", npdm, 0x100,
+                     core_priority, svc_mask0, svc_mask1)
     npdm[0xC0] = 1  # FAH version
     struct.pack_into("<Q", npdm, 0xC4, 0xDEADBEEF)
 
     # The experimental NS2 parser uses an ACID body at +0x300; a
     # deliberately empty legacy ACID position forces the extended path.
-    acid = 0x400
+    acid = 0x440  # ACID container + 0x300 (extended body)
     npdm[acid:acid + 4] = b"ACID"
     # Application pool = 0. Neither a signed ACID nor retail metadata.
     struct.pack_into("<QQ", npdm, acid + 0x10,
                      0x0100000000000420, 0x0100000000000420)
     struct.pack_into("<IIII", npdm, acid + 0x20,
                      0x340, 0x40, 0, 0)
-    npdm[0x440] = 1  # FAC version
-    struct.pack_into("<Q", npdm, 0x444, 0x4321)
+    npdm[0x480] = 1  # FAC version
+    struct.pack_into("<Q", npdm, 0x484, 0x4321)
     return bytes(npdm)
 
 

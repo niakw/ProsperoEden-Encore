@@ -156,7 +156,8 @@ int main(int argc, char** argv) {
                     actual.GetMainThreadPriority() == 0x2C &&
                     actual.GetMainThreadStackSize() == 0x100000 &&
                     actual.GetTitleID() == 0x0100000000000420ULL &&
-                    actual.GetKernelCapabilities().empty(),
+                    actual.GetKernelCapabilities() ==
+                        (std::vector<u32>{0x000043F7U, 0x0001100FU, 0x2018080FU}),
                 "Real parser rejected expected AArch64 NS2 process attributes");
         std::array<std::uint8_t, Eden::NS2::ExeFS::NsoHeaderBytes> header{};
         std::copy_n(main_nso.data(), header.size(), header.data());

@@ -100,7 +100,7 @@ def main() -> None:
             "Alias probe cleanup is missing")
     # J01 replaced the single-entry TLS hint with a bounded 4-entry MRU
     # from the source-linked, O0/O2 UBSan-tested header. Preserve the actual
-    # allocation ownership and all three sparse lifecycle invalidations.
+    # allocation ownership and both destructive lifecycle invalidations.
     sparse_header = read('headless/jit-sparse-commit.h')
     require('std::atomic<std::uint64_t> sparse_jit_generation{1};' in native and
             'static thread_local ::Eden::Jit::SparseCommitPositiveCache local;' in native and
@@ -110,8 +110,11 @@ def main() -> None:
             'if (generation != current) return false;' in sparse_header and
             'required > entries[i].committed' in sparse_header and
             'entries = {};' in sparse_header and
-            native.count('sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);') == 3,
-            "Sparse JIT committed-page hints must invalidate on create, trim and release")
+            native.count('sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);') == 2 and
+            'sparse_jit_generation.fetch_add(' not in native.split(
+                'void* ReserveSparseJitCode(std::size_t size, void** writable_out) noexcept {', 1)[1].split(
+                'bool IsSparseJitCode(', 1)[0],
+            "Sparse JIT hints must survive creation and invalidate on trim/release")
     require('::Common::SparseJitUsage(&jit_reserved, &jit_committed)' in perf,
             "Physical JIT memory accounting must target global Common")
     require('#include <algorithm>' in native, "Sparse constructor bootstrap needs std::min")

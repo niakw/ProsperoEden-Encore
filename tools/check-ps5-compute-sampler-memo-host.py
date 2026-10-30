@@ -24,7 +24,7 @@ memo = source[begin:end]
 assert memo in generator, "selected native sampler memo diverged from strict generator"
 assert "std::array<ComputeSamplerMemo, 16> sampler_memo{};" in memo
 assert "entry.valid &&" not in memo
-assert "entry.handle != handle" in memo
+assert "entry.handle == handle" in memo
 assert "texture_cache.GetSamplerId(handle, true)" in memo
 start = source.index("bool ComputePipeline::Configure(")
 stop = source.index("\n} // namespace Vulkan", start)
@@ -76,19 +76,19 @@ int main() {
     const std::vector<u32> handles{2,2,18,18,2,1,1,17,1,17};
     const auto first = Run(cache, handles);
     assert(first.size() == handles.size());
-    assert(cache.calls == 7);  // modulo-16 collisions still resolve correctly
+    assert(cache.calls == 4);  // four unique IDs, including old modulo-16 collisions
     for (size_t i = 0; i < first.size(); ++i)
         assert(first[i].value == handles[i]);
     cache.epoch = 42; // new dispatch: the same IDs must be re-read, not stale
     const auto next = Run(cache, handles);
-    assert(cache.calls == 14);
+    assert(cache.calls == 8);
     for (size_t i = 0; i < next.size(); ++i)
         assert(next[i].value == 42000 + handles[i]);
     // Same hash bucket with distinct sampler handles cannot alias IDs.
     // A braced initializer contains commas: never place it inside assert().
     const std::vector<u32> colliding_handles{0,16,32,48,0};
     const auto colliding = Run(cache, colliding_handles);
-    assert(cache.calls == 19);
+    assert(cache.calls == 12);
     for (size_t i = 0; i < colliding.size(); ++i)
         assert(colliding[i].value == 42000 + colliding_handles[i]);
     // A descriptor-free compute dispatch does not look up a sampler.

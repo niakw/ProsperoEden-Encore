@@ -54,6 +54,10 @@ struct PipelineWaitTrace {
     // Source-extracted release/acquire tests keep diagnostics inert.
     // The keyed V01 source witness separately compiles the real timer.
     void MarkLockAcquired() noexcept {}
+    // The production callback now distinguishes a real (>1ms) build-mutex
+    // stall from a ready-on-recheck publication race. This host fixture
+    // intentionally makes diagnostics inert, but must keep that API.
+    bool WasBlockedOnMutex() const noexcept { return false; }
     void Complete(const char*, std::uint64_t, bool) {
         completed_traces.fetch_add(1, std::memory_order_relaxed);
     }
@@ -172,7 +176,8 @@ with tempfile.TemporaryDirectory(prefix="eden-pipeline-ready-wait-") as tmp:
             if native:
                 command.append("-DPS5_NATIVE")
             command.extend([str(src),"-o",str(binary)])
-            subprocess.run(command,check=True,capture_output=True,text=True,timeout=60)
+            built=subprocess.run(command,capture_output=True,text=True,timeout=60)
+            assert built.returncode == 0, (native,opt,built.stderr[-4000:])
             result=subprocess.run([str(binary)],capture_output=True,text=True,timeout=30)
             assert result.returncode == 0, (native,opt,result.returncode,result.stdout[-800:],result.stderr[-2000:])
 print("ENCORE_PIPELINE_READY_WAIT_HOST_PASS native_desktop=1 O0_O2=1 publication_race=1 quiet=1")

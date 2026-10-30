@@ -25,10 +25,12 @@
     },
     {
       "path": "headless/audio.cpp",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U04",
-      "source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Source-read optimization triage, no additional hotpath edit justified: Audio worker is stop-aware, output is paced by 256-frame device calls, mutex protects PCM publish; do not disrupt device cadence."
+      "reviewed_source_git_blob": "da3990d8da9be49beb0d224f0040e247f1a14ad1",
+      "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-ps5-audio-output-lock-scope-host.py",
+      "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured."
     },
     {
       "path": "headless/boot_trace.h",
@@ -422,8 +424,10 @@
     },
     {
       "path": "headless/graphics.cpp",
-      "disposition": "reviewed_without_new_code_edit",
-      "evidence": "Read and triaged in docs/EDEN_P0_SOURCE_REVIEW_2026-10-20.md or docs/EDEN_P0_VULKAN_REVIEW_2026-10-20.md"
+      "disposition": "code_changed_in_batch",
+      "reviewed_source_git_blob": "9b39b6df573170070e846e13ee56c385961cf01b",
+      "proof_ref": "tools/check-ps5-hud-snapshot-memo-host.py",
+      "evidence": "2026-10-30 main callback memo: HudClock::Present still executes per displayed frame, but MakeHudSnapshot runs only when FPS/worst/speed differ. Reset at title open preserves loading-to-game transition. Detailed FPS/JIT/C05 existing frame counters unchanged. Source-anchored host checks in preflight; console FPS still unmeasured."
     },
     {
       "path": "headless/graphics.h",
@@ -458,11 +462,12 @@
     },
     {
       "path": "headless/hud.h",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U57",
-      "reviewed_source_git_blob": "9a688e1a03d618eda86f5430f3be6959ce902912",
-      "source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
-      "evidence": "Source inspected: Format HUD et glyphes en tableaux de taille fixe ; la métrique FPS exclut les pauses de présentation. Aucun I/O ou allocation dans le formateur. Reopen if: Coût par frame de composition HUD prouvé par profilage."
+      "reviewed_source_git_blob": "29100690d62e2c3981ad6cca3e94e616acd80396",
+      "previous_source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-ps5-hud-snapshot-memo-host.py",
+      "evidence": "2026-10-30 main HUD memo: header now has renderer-owner HudSnapshotMemo with reset between titles. The previous source review is superseded. Source-linked host test in fast and preflight gates checks 50k identical callbacks, changed FPS/worst/speed, and session reset; PS5 frame gains unmeasured."
     },
     {
       "path": "headless/image_pages.h",
@@ -488,9 +493,9 @@
       "path": "headless/jit-sparse-commit.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "J05",
-      "reviewed_source_git_blob": "8be2291eee26afbe44fc0f2c12320474e310cf3d",
+      "reviewed_source_git_blob": "ec24f22a1144c7d0135c70a0092379a57d98b330",
       "source_review_document": "docs/FC27_F07_CROSS_SYSTEM_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Current source inspected: Plan de préengagement physique constexpr, borné par capacité virtuelle et budget restant ; ancien contrat hôte J05 déjà acquis. Ce n’est pas une autorisation d’activer le JIT sparse en production. Rerun this review only on source drift or Mesure native de pages sous-engagées ou dépassées. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven. 30 October 2026 J01 follow-up: the prior unchanged-source review is superseded by a code change in the same header: a 4-entry thread-local positive physical-commit memo, guarded by sparse_jit_generation, keyed by executable alias and verified committed byte bound. Covers checks epoch and range before allowing a hit; Remember discards stale entries after epoch changes and promotes the most recent alias; it never authorizes virtual code emission and does not replace physical residency ownership checks. Explicit O0/O2 UBSan host fixture tools/check-native-jit-sparse-positive-cache-host.py checks alternation, capacity growth, LRU eviction and trim epoch. Preflight native build and PS5 13.60 runtime remain unproven. 30 October 2026 follow-up on concurrent J01 source commit e5cbe2226197d933b086cd2068678b3d02aac602: non-head MRU hit with insufficient committed capacity now returns false immediately, avoiding a tail scan. Source blob 8be2291eee26afbe44fc0f2c12320474e310cf3d. Unique executable keys are preserved by Remember, and growth still reaches locked physical owner. This is a bounded lookup optimization, not measured console FPS. Host CI for the new SHA must be rechecked. 30 October 2026 J01 second review refresh: production header blob a6f4840a124bee3ed9183df4718783e346fb6e60 incorporates 089a1b0 (no TLS write on slot-zero hit), 9cbf0ca (stop negative probe at first vacant MRU slot), and 62de8e6 (immediate miss for active-arena capacity growth). Invariants inspected: entries are filled contiguously, Remember never duplicates an alias, epoch mismatch rejects hits, required committed bound is checked, and all growth still reaches owner mutex and physical commit. Source-linked fixture check-native-jit-sparse-positive-cache-host.py covers read-only positive/cold probes, capacity growth, eviction, epoch reset and deterministic 250k-operation MRU oracle with ASan/UBSan O0/O2/O3; host GitHub gate and PS5 firmware validation are separate and not asserted green."
+      "evidence": "Current source inspected: Plan de préengagement physique constexpr, borné par capacité virtuelle et budget restant ; ancien contrat hôte J05 déjà acquis. Ce n’est pas une autorisation d’activer le JIT sparse en production. Rerun this review only on source drift or Mesure native de pages sous-engagées ou dépassées. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven. 30 October 2026 J01 follow-up: the prior unchanged-source review is superseded by a code change in the same header: a 4-entry thread-local positive physical-commit memo, guarded by sparse_jit_generation, keyed by executable alias and verified committed byte bound. Covers checks epoch and range before allowing a hit; Remember discards stale entries after epoch changes and promotes the most recent alias; it never authorizes virtual code emission and does not replace physical residency ownership checks. Explicit O0/O2 UBSan host fixture tools/check-native-jit-sparse-positive-cache-host.py checks alternation, capacity growth, LRU eviction and trim epoch. Preflight native build and PS5 13.60 runtime remain unproven. 30 October 2026 follow-up on concurrent J01 source commit e5cbe2226197d933b086cd2068678b3d02aac602: non-head MRU hit with insufficient committed capacity now returns false immediately, avoiding a tail scan. Source blob 8be2291eee26afbe44fc0f2c12320474e310cf3d. Unique executable keys are preserved by Remember, and growth still reaches locked physical owner. This is a bounded lookup optimization, not measured console FPS. Host CI for the new SHA must be rechecked. 30 October 2026 J01 second review refresh: production header blob a6f4840a124bee3ed9183df4718783e346fb6e60 incorporates 089a1b0 (no TLS write on slot-zero hit), 9cbf0ca (stop negative probe at first vacant MRU slot), and 62de8e6 (immediate miss for active-arena capacity growth). Invariants inspected: entries are filled contiguously, Remember never duplicates an alias, epoch mismatch rejects hits, required committed bound is checked, and all growth still reaches owner mutex and physical commit. Source-linked fixture check-native-jit-sparse-positive-cache-host.py covers read-only positive/cold probes, capacity growth, eviction, epoch reset and deterministic 250k-operation MRU oracle with ASan/UBSan O0/O2/O3; host GitHub gate and PS5 firmware validation are separate and not asserted green. 30 October 2026 J01 two-arena read-only optimization (source commit 3ab6c21): on a valid non-head positive hit with only two populated aliases, skip a TLS MRU movement because both fit in the four-entry memo; MRU ordering remains active once three aliases are populated. All epoch, committed-bound and locked-growth guards are unchanged. Reviewed source blob ec24f22a1144c7d0135c70a0092379a57d98b330. A source-linked C++ witness checks a protected read-only cache and reference transitions O0/O2/O3 with ASan/UBSan. GitHub fast gate/preflight and PS5 FPS remain pending."
     },
     {
       "path": "headless/jit-startup-retry.h",
@@ -1450,7 +1455,9 @@
       "disposition": "code_changed_in_batch",
       "contract_id": "M01",
       "proof_ref": "tools/check-native-quiet-heap-commit-host.py",
-      "evidence": "PS5 CommitMemoryRange heap growth unconditionally sampled CLOCK_MONOTONIC four times, formatted a report, and called kernel Note even in quiet release, adding system calls on synchronous heap expansion. Gated only these diagnostics under EDEN_HEAP_GROWTH_TRACE, compiled for common in DEV; mandatory AllocateDirectOwned/MapDirectMemory, memset, rollback and physical_out untouched. Clang ASan/UBSan test compiles real production function in release/dev with SDK mapping stubs to compare clock/log calls and memory zeroing. No measured PS5 frame-time or heap map performance. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven."
+      "evidence": "PS5 CommitMemoryRange heap growth unconditionally sampled CLOCK_MONOTONIC four times, formatted a report, and called kernel Note even in quiet release, adding system calls on synchronous heap expansion. Gated only these diagnostics under EDEN_HEAP_GROWTH_TRACE, compiled for common in DEV; mandatory AllocateDirectOwned/MapDirectMemory, memset, rollback and physical_out untouched. Clang ASan/UBSan test compiles real production function in release/dev with SDK mapping stubs to compare clock/log calls and memory zeroing. No measured PS5 frame-time or heap map performance. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven. 30 October 2026: SparseRangeOf now scans only the monotonically published prefix of its 64 static sparse table slots under the pre-existing sparse_mutex; frees preserve holes, new registrations publish bound after range metadata. tools/check-native-sparse-range-prefix-host.py source-extracts the actual lookup/publication and tests empty, holes, reused slots, slot63, 4 readers under ASan/UBSan O0/O2/O3. This bounds CPU scans on sparse first-commit/decommit, not normal guest table reads. CI and PS5 measurements pending.",
+      "additional_proof_ref": "tools/check-native-sparse-range-prefix-host.py",
+      "reviewed_source_git_blob": "39c12ff3bb7da0f1bd96983fa73850d3b42309a9"
     },
     {
       "path": "vendor/encore-active/compiler-rt/emutls.c",

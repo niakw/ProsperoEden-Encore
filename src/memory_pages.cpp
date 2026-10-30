@@ -678,11 +678,19 @@ struct SparseRange {
 };
 std::array<SparseRange, 64> sparse_ranges;
 std::mutex sparse_mutex;
+// Highest slot ever published. All reads/writes happen under sparse_mutex,
+// including teardown; do not rescan 64 entries on first-commit/decommit
+// when a title has only a handful of sparse page tables. Never shrink the
+// bound, because free holes may be reused after a title reset.
+std::size_t sparse_used_prefix = 0;
 std::atomic<std::size_t> sparse_reserved{0}, sparse_committed{0};
 std::atomic<int> sparse_state{0}; // 0 unknown, 1 in use, 2 not available (tables are dense)
 
 SparseRange* SparseRangeOf(std::uintptr_t address) {
-    for (auto& range : sparse_ranges) {
+    // Called only with sparse_mutex held; non-atomic range.end and slot
+    // ownership must never be read across asynchronous table teardown.
+    for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
+        auto& range = sparse_ranges[i];
         const auto begin = range.begin.load(std::memory_order_acquire);
         if (begin != 0 && address >= begin && address < range.end) return &range;
     }
@@ -886,6 +894,10 @@ void* AllocateSparsePages(std::size_t size) noexcept {
     free_range->physical = physical;
     free_range->end = reinterpret_cast<std::uintptr_t>(address) + span;
     free_range->begin.store(reinterpret_cast<std::uintptr_t>(address), std::memory_order_release);
+    // Publish the finite scan bound only after metadata and begin are ready.
+    // Future lookups see this slot while retaining the original owner lock.
+    sparse_used_prefix = (std::max)(
+        sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);
     sparse_reserved.fetch_add(span, std::memory_order_relaxed);
     return address;
 }

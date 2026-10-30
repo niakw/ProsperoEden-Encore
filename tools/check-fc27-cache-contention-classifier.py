@@ -362,6 +362,12 @@ assert "window_end_frame=1010 peak_frame=1005" in peak_report
 assert "selected_interval_ms=201.500" in peak_report
 assert "selected_jit_cpu_ms=1.000" in peak_report
 assert "selected_jit_core_max_ms=0.400" in peak_report
+assert peak_rows[0]["peak_present_jit_calls"] == 7
+assert peak_rows[0]["peak_present_evacuations"] == 1
+assert peak_rows[0]["peak_present_gpu_dispatch_ms"] == 0.8
+assert "selected_jit_calls=7" in peak_report
+assert "selected_evacuations=1" in peak_report
+assert "selected_gpu_dispatch_ms=0.800" in peak_report
 assert "selected_cache_wait_ms=5.000" in peak_report
 assert "not a guest frame or causal GPU proof" in peak_report
 for invalid in (
@@ -377,6 +383,9 @@ for invalid in (
     bad = module.windows(record(1010, 23, 220, 1, 2) + invalid)
     assert len(bad) == 1
     assert "peak_present_interval_ms" not in bad[0]
+    assert "peak_present_gpu_dispatch_ms" not in bad[0]
+    assert "peak_present_jit_calls" not in bad[0]
+    assert "peak_present_evacuations" not in bad[0]
     assert "peak_present_interval: complete=0/1" in module.report(bad)
 # Independent per-field maxima belong to different windows. Select the
 # single worst presentation gap and retain ONLY its actual co-measured costs.
@@ -396,6 +405,9 @@ assert "window_end_frame=1010 peak_frame=1005" in discordant_report
 assert "selected_interval_ms=401.500" in discordant_report
 assert "selected_cache_wait_ms=5.000" in discordant_report
 assert "selected_cache_wait_ms=500.000" not in discordant_report
+assert "selected_gpu_dispatch_ms=0.800" in discordant_report
+assert "selected_jit_calls=7" in discordant_report
+assert "selected_evacuations=1" in discordant_report
 # A bad peak must not erase a valid frame window or the four JIT core series.
 with_core = module.windows(record(1010, 23, 220, 100, 2) +
                            [core_line(1010, 0, 25_000_000, 1, 0),

@@ -125,6 +125,25 @@ inline HudSnapshot MakeHudSnapshot(const HudClock& clock, double speed) {
     const std::string_view value{text.data()};
     return {HudText(value), static_cast<uint32_t>(value.size() * 16 + 24)};
 }
+// Renderer-owner memo: the visible FPS, worst interval and speed change at
+// most once per clock/statistics window, not on every 30/60 Hz callback.
+// Do not redo snprintf + glyph conversion (or copy the 112-byte snapshot)
+// while the source values are identical. Loading uses a separate snapshot
+// and Reset() is required when a new title starts.
+struct HudSnapshotMemo {
+    double fps{}, worst_ms{}, speed{};
+    bool valid{};
+    bool RefreshNeeded(const HudClock& clock, double current_speed) noexcept {
+        if (valid && fps == clock.fps && worst_ms == clock.worst_ms &&
+            speed == current_speed) return false;
+        fps = clock.fps;
+        worst_ms = clock.worst_ms;
+        speed = current_speed;
+        valid = true;
+        return true;
+    }
+    void Reset() noexcept { valid = false; }
+};
 // Read on the renderer thread; the scheduler captures the returned value per frame.
 HudSnapshot GetVulkanHud();
 } // namespace Eden

@@ -144,7 +144,10 @@ def windows(lines: list[str]) -> list[dict[str, float]]:
                 for field in ("peak_present_frame", "peak_present_interval_ms",
                               "peak_present_jit_cpu_ms",
                               "peak_present_jit_core_max_ms",
+                              "peak_present_jit_calls",
+                              "peak_present_evacuations",
                               "peak_present_cache_wait_ms",
+                              "peak_present_gpu_dispatch_ms",
                               "peak_present_gpu_fence_ms",
                               "peak_present_guest_sync_ms"):
                     phase_row.pop(field, None)
@@ -156,8 +159,12 @@ def windows(lines: list[str]) -> list[dict[str, float]]:
                 phase_row["peak_present_jit_cpu_ms"] = snapshot["jit_ns"] / 1_000_000
                 phase_row["peak_present_jit_core_max_ms"] = max(
                     snapshot[f"jit{core}_ns"] for core in range(4)) / 1_000_000
+                phase_row["peak_present_jit_calls"] = snapshot["jit_calls"]
+                phase_row["peak_present_evacuations"] = snapshot["evacuations"]
                 phase_row["peak_present_cache_wait_ms"] = (
                     snapshot["cache_wait_ns"] / 1_000_000)
+                phase_row["peak_present_gpu_dispatch_ms"] = (
+                    snapshot["gpu_dispatch_ns"] / 1_000_000)
                 phase_row["peak_present_gpu_fence_ms"] = (
                     snapshot["gpu_fence_ns"] / 1_000_000)
                 phase_row["peak_present_guest_sync_ms"] = (
@@ -259,7 +266,10 @@ def report(rows: list[dict[str, float]]) -> str:
             f"selected_interval_ms={peak['peak_present_interval_ms']:.3f} "
             f"selected_jit_cpu_ms={peak['peak_present_jit_cpu_ms']:.3f} "
             f"selected_jit_core_max_ms={peak['peak_present_jit_core_max_ms']:.3f} "
+            f"selected_jit_calls={peak['peak_present_jit_calls']:.0f} "
+            f"selected_evacuations={peak['peak_present_evacuations']:.0f} "
             f"selected_cache_wait_ms={peak['peak_present_cache_wait_ms']:.3f} "
+            f"selected_gpu_dispatch_ms={peak['peak_present_gpu_dispatch_ms']:.3f} "
             f"selected_gpu_fence_ms={peak['peak_present_gpu_fence_ms']:.3f} "
             f"selected_guest_sync_ms={peak['peak_present_guest_sync_ms']:.3f}"
         )

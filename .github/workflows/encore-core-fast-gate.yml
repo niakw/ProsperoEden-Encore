@@ -418,6 +418,8 @@ jobs:
           set -euo pipefail
           python3 -B tools/check-texture-convert-volume-host.py
           python3 -B tools/check-audio-upmix-scratch-host.py
+          python3 -B tools/check-ps5-audio-output-lock-scope-host.py
+          python3 -B tools/check-ps5-hud-snapshot-memo-host.py
           python3 -B tools/check-maintained-audio-units.py
           python3 -B tools/check-upstream-texture-memory-r428.py
       - name: Default JIT compiler and cache invalidation guards
@@ -440,6 +442,7 @@ jobs:
           python3 -B tools/check-native-jit-alias-lookup-host.py
           python3 -B tools/check-native-sparse-jit-trim-host.py
           python3 -B tools/check-native-sparse-decommit-lock-host.py
+          python3 -B tools/check-native-sparse-range-prefix-host.py
           python3 -B tools/check-sparse-zero-bounds-host.py
           python3 -B tools/check-maintained-sparse-vector.py
           python3 -B tools/check-fastmem-window-bounds-host.py

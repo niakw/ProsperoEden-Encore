@@ -404,6 +404,7 @@ jobs:
           python3 -B tools/check-ps5-freebsd11-ule-topology.py
           python3 -B tools/check-ps5-freeze-witness.py
           python3 -B tools/check-runtime-frame-budget.py
+          python3 -B tools/check-ps5-hud-snapshot-memo-host.py
           python3 -B tools/check-universal-emulation-policy.py
           python3 -B tools/check-network-domain-policy.py
           python3 -B tools/check-network-accepted-audit.py
@@ -464,6 +465,7 @@ jobs:
           python3 -B tools/check-maintained-logging-loader.py
           python3 -B tools/check-maintained-audio-units.py
           python3 -B tools/check-audio-upmix-scratch-host.py
+          python3 -B tools/check-ps5-audio-output-lock-scope-host.py
           python3 -B tools/check-ps5-title-cache-storage-host.py
           python3 -B tools/check-ps5-shader-local-bounds-host.py
           python3 -B tools/check-native-audio-pcm-offsets-host.py
@@ -577,6 +579,7 @@ jobs:
           python3 -B tools/check-native-jit-sparse-positive-cache-host.py
           python3 -B tools/check-native-sparse-jit-trim-host.py
           python3 -B tools/check-native-sparse-decommit-lock-host.py
+          python3 -B tools/check-native-sparse-range-prefix-host.py
           python3 -B tools/check-sparse-index-boundary.py
           python3 -B tools/check-sparse-zero-bounds-host.py
           python3 -B tools/check-sparse-slot-reuse-host.py

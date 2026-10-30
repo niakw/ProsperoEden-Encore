@@ -14,7 +14,11 @@ NativeMaxwellEnvironment::NativeMaxwellEnvironment(
     sph = source.SPH();
     stage = source.ShaderStage();
     gp_passthrough_mask = source.GpPassthroughMask();
-    start_address = image.first_instruction_address;
+    // Graphics PipelineCache adds sizeof(ProgramHeader) to StartAddress().
+    // The image already contains the 0x50-byte header; avoid a double
+    // offset that would begin Maxwell CFG at 0xA0 instead of 0x50.
+    static_assert(sizeof(Shader::ProgramHeader) == 0x50);
+    start_address = image.first_instruction_address - sizeof(Shader::ProgramHeader);
     is_proprietary_driver = source.IsProprietaryDriver();
 }
 std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::Create(

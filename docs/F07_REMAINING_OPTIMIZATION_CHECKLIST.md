@@ -1,6 +1,6 @@
 # F07 — checklist des optimisations restantes et critères de clôture
 
-**Créé : 29 octobre 2026 (Europe/Paris)** · **Branche unique : `dev/ps5-sparse-jit`** · **Référence à la création : `52e3334fe9e1f058cf50d0764af76ccdb197758d`** · **Statut global : OUVERT**.
+**Créé : 29 octobre 2026 (Europe/Paris)** · **Branche actuelle unique : `main` (`niakw/ProsperoEden-Encore`)** · **Branche historique de création : `dev/ps5-sparse-jit` (retirée)** · **Référence historique : `52e3334fe9e1f058cf50d0764af76ccdb197758d`** · **Statut global : OUVERT**.
 
 **But :** chaque optimisation restante *identifiée* doit disposer d'une case vérifiable et d'un résultat explicite. Ce document est le **tableau d'exécution** ; le [registre des 38 revues F07](F07_BATCH_EXECUTION_REGISTER.md), le [suivi maître](FC27_F07_MASTER_TRACKER.md) et les [critères de sortie FC27](FC27_EXIT_GATES_2026-10-22.md) sont les preuves de référence. Ne pas transformer « absence de défaut démontré » en « toutes les optimisations imaginables terminées ».
 
@@ -41,6 +41,8 @@
 **Deux autres décisions PRÉ-BUILD closes, sans altérer le jeu :** S04 — quotas/priorités/réessais shader prouvés par six témoins hôte ; Q01 — mode silencieux et instrumentation désactivée prouvés par les témoins source-extraits. La comparaison console reste S05/V06/C06.
 
 - [x] **S01 — clé de shader froid / coût CPU par tentative :** `d3d7035`/`da025b6` exposent les diagnostics Detailed Logging graphics/compute ; `45c6667` arrête les timers de phase **avant l'écriture**, pour ne pas attribuer le coût des logs à la traduction. `fe7d5fc`/`3f64d42` conservent la parité du générateur Vulkan. `7b64f9c` fournit l'analyseur **unique** `tools/analyze-ps5-cold-shader-misses.py` (cold/retry/success, p95, top 5), `69a054a` son témoin et `78cafbb` son appel en prévalidation ; la duplication temporaire dans l'analyseur des fenêtres a été supprimée (`d3a4b80`/`d32ea11`). `d35a37e`, `24d14ce` et `4a3f044` adaptent les trois fixtures C++ source-extrait à la nouvelle instrumentation. **Parité statique source/générateur vérifiée ; exécution des nouveaux témoins et replay complet en CI non confirmés.** La répartition CFG/IR/SPIR-V par clé et la relation avec chaque frame restent à établir : S01, B5 et la validation console restent ouverts.
+
+**Reprise `main` du 30/10 — J01, sans changement de score :** le cache positif RX→RW de `headless/jit-allocator.h::writableAddress` abandonne son index direct `((rx >> 12) ^ (rx >> 21)) & 7`. Des arènes exécutables alignées sur 16 MiB produisent le même index ; l'alternance A32/A64 réintroduisait le mutex global et la recherche `unordered_map` sur un miss. Nouveau mémo TLS associatif fixe de **8** alias, balayage positif sans verrou, remplacement FIFO seulement sur miss et invalidation conservée par `mapping_generation`. Témoin `tools/check-native-jit-alias-lookup-host.py` : 8 RX volontairement en collision, 100 000 alternances, neuvième entrée/éviction, changement de génération et mappings RX/RW réelles sous ASan/UBSan. **CI du nouveau SHA et mesures console à qualifier : J01 non clos, compteur 22/29.** Aucun cache physique JIT agrandi, aucun changement d'ordonnancement ni de taille d'arène.  
 
 ### Correctifs déjà intégrés — ce qui avance sans fermer tout un chantier
 

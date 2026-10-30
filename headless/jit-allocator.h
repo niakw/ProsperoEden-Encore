@@ -13,6 +13,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <xbyak/xbyak.h>
+#include "jit-alias-cache.h"
 #ifdef EDEN_JIT_ALIAS_NATIVE
 #include "experimental_performance.h"
 #endif
@@ -139,27 +140,21 @@ inline Xbyak::Allocator* EdenJitAllocator() {
         std::uint8_t* writableAddress(std::uint8_t* pointer) override {
             // Most emitted code reuses the same RX->RW alias many times.
             // Hits need neither allocator mutex nor unordered_map lookup.
-            struct CachedEntry { std::uint8_t* executable{}; std::uint8_t* writable{}; };
-            struct ThreadCache {
-                std::uint64_t generation{};
-                std::array<CachedEntry, 8> entries{};
-            };
-            static thread_local ThreadCache cache{};
+            // The old direct-mapped hash lost its entry whenever two 16 MiB-
+            // aligned JIT arenas shared the same low hash bits. Interleaving
+            // A32/A64 guest code then acquired the global map mutex per block.
+            // Eight associative entries retain all live core aliases without
+            // address-dependent collisions; generation still guards reuse.
+            static thread_local ::Eden::Jit::AliasPositiveCache cache{};
             const auto generation = mapping_generation.load(std::memory_order_acquire);
-            const auto bits = reinterpret_cast<std::uintptr_t>(pointer);
-            const std::size_t slot = ((bits >> 12) ^ (bits >> 21)) & (cache.entries.size() - 1);
-            if (cache.generation == generation && cache.entries[slot].executable == pointer)
-                return cache.entries[slot].writable;
+            if (auto* writable = cache.Find(pointer, generation))
+                return writable;
             const std::lock_guard lock(mutex);
             const auto entry = mappings.find(pointer);
             if (entry == mappings.end()) return pointer;
             const auto latest = mapping_generation.load(std::memory_order_relaxed);
-            if (cache.generation != latest) {
-                cache.entries.fill({});
-                cache.generation = latest;
-            }
             auto* writable = static_cast<std::uint8_t*>(entry->second.writable);
-            cache.entries[slot] = {pointer, writable};
+            cache.Remember(pointer, writable, latest);
             return writable;
         }
         void free(std::uint8_t* pointer) override {

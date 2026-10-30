@@ -114,3 +114,37 @@ regressions and a source guard to prevent accidental bypass.
 This does **not** implement a new Switch 2 encrypted archive format or
 claim that XCZ/NSZ decompression succeeds. Real Nintendo Switch 2 content
 requirements remain separately unverified.
+
+## N4q verification — maintained PS5 NCZ integration already exists
+
+The initial research overlay audit underreported compression support because
+it examined the **pinned** `sources/eden/src` files rather than the **actual
+maintained PS5 source owners** selected by `headless/CMakeLists.txt`.
+
+- `headless/ncz.h` and `headless/ncz.cpp` already implement the NCZ virtual
+  file adapter and `NCZBLOCK` reading, backed by pinned zstd.
+- `vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp`
+  already calls `Eden::Ncz::Open` for `.ncz` content.
+- The maintained `loader/nsp.cpp` recognizes `.ncz` entries; maintained
+  `loader/loader.cpp` recognizes `.nsz/.xcz` aliases.
+- The NS2 ExeFS overlay explicitly replaces the **maintained**
+  `loader.cpp` owner, not a generic source. Its contents retain the
+  existing NCZ/XCZ routing, and research host CI now verifies these
+  dependencies stay present. The N4q fail-closed rule applies only when
+  every actual compressed-container content probe fails.
+
+**No second NCZ implementation has been added.** The upstream
+`0x2593/Eden-NS2` reader is a different implementation, not evidence of
+a missing feature in Encore. A real Switch 2 retail NCA decryptor and
+card/distribution rights remain unverified.
+
+### Mario Kart World upstream reference — 30 October
+
+The `0x2593/Eden-NS2` README at commit
+`e2f285ab1ecd3a2475c2ccad66f23b06b94ead5c` lists
+Mario Kart World v1.8.0, title `0400C3F00006E000`,
+as **working in Free Roam** but hanging on a black screen in Grand Prix,
+with missing geometry from task/mesh shaders. Performance and FPS stability
+are not demonstrated for PS5 by this upstream note.
+Source:
+https://github.com/0x2593/Eden-NS2/blob/e2f285ab1ecd3a2475c2ccad66f23b06b94ead5c/README.md

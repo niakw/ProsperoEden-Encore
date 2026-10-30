@@ -197,6 +197,18 @@ jobs:
       - name: Compile and run upstream Ampere ISA/address-map host probes
         run: |
           python3 tools/check-ns2-ampere-host.py
+      - name: Verify pinned PS5 NCZBLOCK reader and source-owner preservation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f headless/ncz.cpp
+          test -f headless/ncz.h
+          test -f vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp
+          test -f vendor/encore-active/eden-core/src/core/loader/nsp.cpp
+          grep -Fq 'NCZBLOCK' headless/ncz.h
+          grep -Fq '::Eden::Ncz::Open(' vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp
+          grep -Fq '".ncz"' vendor/encore-active/eden-core/src/core/loader/nsp.cpp
+          grep -Fq 'NCZ/XCZ' headless/CMakeLists.txt
       - name: Compile and run Switch 1/2 content-format recognition fixtures
         shell: bash
         run: |

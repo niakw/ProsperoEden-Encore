@@ -204,6 +204,7 @@ on:
       - 'tools/check-ps5-vulkan-layer-max-tick-host.py'
       - 'tools/check-ps5-vulkan-layer-tick-reset-host.py'
       - 'tools/check-ps5-vulkan-disabled-aa-fastpath-host.py'
+      - 'tools/check-ps5-vulkan-missing-raw-tiled-size-host.py'
       - 'tools/check-ps5-vulkan-stride-reallocation.py'
       - 'tools/check-ps5-gpu-time-batch-host.py'
       - 'tools/check-vulkan-query-allocation-host.py'
@@ -308,6 +309,7 @@ jobs:
           python3 -B tools/check-ps5-vulkan-layer-max-tick-host.py
           python3 -B tools/check-ps5-vulkan-layer-tick-reset-host.py
           python3 -B tools/check-ps5-vulkan-disabled-aa-fastpath-host.py
+          python3 -B tools/check-ps5-vulkan-missing-raw-tiled-size-host.py
           python3 -B tools/check-ps5-vulkan-chunk-allocation-lock-host.py
           python3 -B tools/check-native-gpu-fence-release-publication-host.py
           python3 -B tools/check-native-gpu-composite-syncpoint-host.py

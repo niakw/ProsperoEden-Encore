@@ -1419,7 +1419,8 @@ adapt('src/video_core/renderer_vulkan/present/layer.cpp', 'vulkan_present_layer.
     anti_alias_setting = filters.get_anti_aliasing();
 
     const VkExtent2D render_area{'''),
-])
+    ("    const u64 tiled_size{Tegra::Texture::CalculateSize(\n        true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};\n    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n        Tegra::Texture::UnswizzleTexture(", "#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure.\n    // Keep the exact raw-zero upload, but skip tiled-size/format arithmetic\n    // on repeated missing-frame fallbacks (HUD, scene changes).\n    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n        const u64 tiled_size{Tegra::Texture::CalculateSize(\n            true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};\n#else\n    const u64 tiled_size{Tegra::Texture::CalculateSize(\n        true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};\n    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n#endif\n        Tegra::Texture::UnswizzleTexture("),
+]) 
 
 adapt('src/video_core/renderer_vulkan/vk_blit_screen.cpp', 'vulkan_blit_screen.cpp', [
     # R327: a change in the number of guest presentation layers destroys

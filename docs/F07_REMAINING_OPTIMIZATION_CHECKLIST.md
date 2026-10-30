@@ -39,6 +39,8 @@
 
 **30/10 — C04/T05, fast-path AA désactivé (source à qualifier) :** `Layer::SetAntiAliasPass` ne recalcule plus l'aire de rendu ni ne reconstruit `std::monostate` à chaque frame quand FXAA/SMAA restent désactivés sur PS5. Les vrais changements FXAA ↔ SMAA ↔ aucun et les reconstructions après resize gardent leur synchronisation GPU. Desktop inchangé ; test source-extrait natif/desktop -O0/-O2 sous ASan/UBSan ajouté aux deux portes. `vendor@ed464ca456`. **Qualification CI/console et gains FC27 ouverts, F07 22/29.**
 
+**30/10 — T05/C04, repli image guest absente :** lorsque le framebuffer brut est non mappé, `Layer::UpdateRawImage` PS5 ne calcule plus `Tegra::Texture::CalculateSize` (taille tuilée inutilisée), conserve exactement l'effacement complet des bytes de staging, la visibilité `buffer.Flush`, l'upload Vulkan et la restauration des pixels à la prochaine image valide. Source fork `vendor@76978dd92b`, générateur et témoin source-extrait PS5/desktop O0/O2 ASan/UBSan. **CI/console non encore qualifiés ; F07 22/29 inchangé.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

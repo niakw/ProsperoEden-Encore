@@ -300,11 +300,17 @@ bool Pad::Poll() {
             Consume(player, {&neutral, 1});
             continue;
         }
-        for (int i = 0; i < count; ++i) {
-            ++samples_read;
-            usable_samples += ps5::pad::is_usable(samples[i]);
-            intercepted_samples += (samples[i].buttons & ps5::pad::kButtonIntercepted) != 0;
-            circle_samples += ps5::pad::is_usable(samples[i]) && (samples[i].buttons & ps5::pad::kButtonCircle);
+        // These counters feed only the opt-in five-second pad heartbeat.
+        // Do not walk every input sample a second time in quiet gameplay:
+        // Consume below still sees the entire native batch unconditionally.
+        if (NativeLogs::Detailed()) {
+            for (int i = 0; i < count; ++i) {
+                const bool usable = ps5::pad::is_usable(samples[i]);
+                ++samples_read;
+                usable_samples += usable;
+                intercepted_samples += (samples[i].buttons & ps5::pad::kButtonIntercepted) != 0;
+                circle_samples += usable && (samples[i].buttons & ps5::pad::kButtonCircle);
+            }
         }
         Consume(player, {samples.data(), static_cast<std::size_t>(count)});
         primary |= player == 0;

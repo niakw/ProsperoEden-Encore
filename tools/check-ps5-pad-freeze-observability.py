@@ -30,8 +30,19 @@ assert 'continue;' in pad_poll[
     pad_poll.index(guard):pad_poll.index('for (int i = 0; i < count; ++i)')]
 # The only indexed reads use i < count; the count=0/error path must
 # never inspect uninitialized tail bytes.
-assert pad_poll.count('samples[i]') == 4
-assert pad_poll.index('samples[i]') > pad_poll.index('for (int i = 0; i < count; ++i)')
+assert pad_poll.count('samples[i]') == 3
+diagnostic_guard = pad_poll.index('if (NativeLogs::Detailed()) {')
+diagnostic_loop = pad_poll.index('for (int i = 0; i < count; ++i)')
+assert pad_poll.index(read) < pad_poll.index(guard) < diagnostic_guard < diagnostic_loop < pad_poll.index(consume)
+assert pad_poll.index('++samples_read;') > diagnostic_loop
+assert pad_poll.index('usable_samples += usable;') > diagnostic_loop
+assert pad_poll.index('const bool usable = ps5::pad::is_usable(samples[i]);') > diagnostic_loop
+assert pad_poll.count('ps5::pad::is_usable(samples[i])') == 1
+assert pad_poll.index('circle_samples += usable &&') < pad_poll.index(consume)
+# Source-visible input delivery and device-loss neutralization must remain
+# outside the optional diagnostics block.
+assert pad_poll.index('Consume(player, {&neutral, 1});') < diagnostic_guard
+assert pad_poll.index(consume) > pad_poll.index('circle_samples += usable &&')
 
 assert 'if (NativeLogs::Detailed() && polls % 1250 == 0)' in source
 assert 'if (polls % 1250 == 0) Performance::ReportInputThreadGpuLiveness();' in source
@@ -86,6 +97,26 @@ int main() {
             assert(scratch[std::size_t(i)].buttons == std::uint32_t(i) &&
                    scratch[std::size_t(i)].timestamp_us == std::uint64_t(i + 1));
     }
+    // The optional heartbeat scan must not be necessary for game input.
+    // Quiet batches do no diagnostics; the same 64 native samples are still
+    // available to the unconditional Consume call.
+    unsigned game_delivered = 0, diagnostic_count = 0, usable_count = 0;
+    for (bool detailed : {false, true}) {
+        for (std::size_t i = 0; i < scratch.size(); ++i) {
+            scratch[i] = ps5::pad::neutral_data(std::uint64_t(i + 1));
+            scratch[i].connected = i % 2 ? 1 : 0;
+        }
+        if (detailed) {
+            for (std::size_t i = 0; i < scratch.size(); ++i) {
+                const bool usable = ps5::pad::is_usable(scratch[i]);
+                ++diagnostic_count;
+                usable_count += usable;
+            }
+        }
+        game_delivered += unsigned(scratch.size()); // same Consume prefix
+    }
+    assert(game_delivered == 128);
+    assert(diagnostic_count == 64 && usable_count == 32);
     Eden::PadEdgeDiagnostics edges{};
     constexpr unsigned cross=1, circle=2, square=4, triangle=8;
     edges.Observe(0, 4, cross, circle, square, triangle);
@@ -121,4 +152,4 @@ with tempfile.TemporaryDirectory(prefix='eden-r332-pad-') as tmp:
         result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=15)
         assert result.returncode == 0, (opt, result.stderr)
         print(result.stdout.strip())
-print('R332 PASS: release+dev GPU stall monitor every 1250 polls; detailed pad logging optional, no per-sample I/O, pad_read_prefix_only=1 O0_O2_ASAN_UBSAN=1')
+print('R332 PASS: release+dev GPU stall monitor every 1250 polls; detailed pad logging optional, no per-sample I/O, quiet_pad_scan_elided=1 pad_read_prefix_only=1 O0_O2_ASAN_UBSAN=1')

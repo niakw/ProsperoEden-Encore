@@ -162,3 +162,21 @@ corrupted, unreadable, compressed, empty and address-overflow cases. Those
 host tests **are not** proof that the full KProcess was instantiated or that
 Horizon HLE services executed. A signed-off native, authorized ExeFS fixture
 and actual full-core execution are still required before claiming NS2 boot.
+
+## N3v — real Encore HLE SVC dispatch trace (opt-in)
+
+The existing `Kernel::Svc::Call` source (generated upstream SVC owner) is
+copied **during an opt-in native PS5 CMake configure** and augmented by a
+small diagnostics-only call. The original vendor file, the 32/64-bit SVC
+switches, the CPU thread scheduler and every production HLE handler remain
+**unchanged**. The real experimental `AppLoader_DeconstructedRomDirectory`
+registers the active KProcess PID only after it loads its modules; then the
+real kernel dispatcher can log the first **32 actual guest SVC calls** for
+that PID before forwarding to the original HLE functions. There are no
+fabricated HLE results; unrelated processes are ignored. Each new NS2 load
+resets the bounded trace, with no tracking outside the opt-in PS5 build.
+
+The generated source is checked for its exact owner anchors, syntax-compiled
+in CI, and the bounded process-specific gate runs under Clang and GCC. This
+makes live native NS2 SVC dispatch **observable on a future authorized boot**;
+it is not itself a proof that the kernel invoked those handlers on a console.

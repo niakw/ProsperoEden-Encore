@@ -103,6 +103,15 @@ def main() -> int:
                 "process.GetMemory().ReadBlock(" in romdir_source.read_text() and
                 "metadata.IsSwitch2()" in romdir_source.read_text(),
                 "NS2 KProcess text handoff must use bounded process readback")
+        svc_trace = ROOT / "headless/ns2/overrides/core/loader/ns2_svc_trace.h"
+        svc_generator = ROOT / "tools/ns2/prepare_svc_trace_owner.cmake"
+        require(svc_trace.is_file() and svc_generator.is_file() and
+                "SvcTrace::Register(process.GetProcessId())" in romdir_source.read_text() and
+                "Eden::NS2::SvcTrace::Next(process.GetProcessId())" in svc_generator.read_text() and
+                'list(REMOVE_ITEM eden_ns2_svc_sources "hle/kernel/svc.cpp")' in CMAKE and
+                'if(PS5_NATIVE)' in CMAKE[CMAKE.index("set(eden_ns2_svc_original")-300:
+                                          CMAKE.index("set(eden_ns2_svc_generated")],
+                "NS2 SVC probe must replace only the experimental native dispatcher")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
         require(sum(i > selection for i in property_sets) == 5,

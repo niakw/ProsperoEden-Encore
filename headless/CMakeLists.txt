@@ -1871,6 +1871,35 @@ if(EDEN_NS2_EXEFS_EXPERIMENTAL)
         list(APPEND eden_ns2_exefs_sources "${eden_ns2_native_nso}")
     endif()
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
+    if(PS5_NATIVE)
+        # Instrument the real maintained kernel SVC dispatcher only in this
+        # opt-in build, without changing or checking out the pinned vendor.
+        set(eden_ns2_svc_original
+            "${PORT_ROOT}/vendor/sources/eden/src/core/hle/kernel/svc.cpp")
+        set(eden_ns2_svc_generator
+            "${PORT_ROOT}/tools/ns2/prepare_svc_trace_owner.cmake")
+        set(eden_ns2_svc_generated "${PORT_BUILD_DIR}/ns2_svc.cpp")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+            "${eden_ns2_svc_original}" "${eden_ns2_svc_generator}")
+        execute_process(
+            COMMAND "${CMAKE_COMMAND}"
+                    "-DINPUT=${eden_ns2_svc_original}"
+                    "-DOUTPUT=${eden_ns2_svc_generated}"
+                    -P "${eden_ns2_svc_generator}"
+            RESULT_VARIABLE eden_ns2_svc_status)
+        if(NOT eden_ns2_svc_status EQUAL 0)
+            message(FATAL_ERROR "NS2 kernel SVC owner generation failed")
+        endif()
+        get_target_property(eden_ns2_svc_sources core SOURCES)
+        list(FIND eden_ns2_svc_sources
+            "hle/kernel/svc.cpp" eden_ns2_svc_owner_idx)
+        if(eden_ns2_svc_owner_idx EQUAL -1)
+            message(FATAL_ERROR "NS2 native SVC source owner changed")
+        endif()
+        list(REMOVE_ITEM eden_ns2_svc_sources "hle/kernel/svc.cpp")
+        list(APPEND eden_ns2_svc_sources "${eden_ns2_svc_generated}")
+        set_property(TARGET core PROPERTY SOURCES "${eden_ns2_svc_sources}")
+    endif()
 endif()
 
 # Experimental ARMv8.1 LDAPR and ARMv8.3 RETAA/RETAB decoding with PAUTH disabled.

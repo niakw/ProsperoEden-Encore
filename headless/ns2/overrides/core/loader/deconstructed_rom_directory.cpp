@@ -21,6 +21,7 @@
 #include "core/loader/nso.h"
 #include "core/loader/ns2_nso_preflight.h"
 #include "core/loader/ns2_process_handoff.h"
+#include "core/loader/ns2_svc_trace.h"
 #include "core/memory.h"
 
 #ifdef HAS_NCE
@@ -327,6 +328,9 @@ AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirect
     }
 
     if (metadata.IsSwitch2()) {
+        // The real KProcess is initialized and all NSO modules now exist in
+        // guest memory. Only THIS process is eligible for SVC instrumentation.
+        Eden::NS2::SvcTrace::Register(process.GetProcessId());
         LOG_INFO(Loader, "NS2 KProcess ExeFS handoff pid={} entry={:#x} modules={}",
                  process.GetProcessId(), base_address, modules.size());
     }

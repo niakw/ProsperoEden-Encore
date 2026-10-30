@@ -87,6 +87,28 @@ jobs:
               -o "build-ns2-a64/handoff-${compiler//+/}"
             "build-ns2-a64/handoff-${compiler//+/}"
           done
+      - name: Generate and compile the real kernel HLE SVC dispatch owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake \
+            -DINPUT=vendor/sources/eden/src/core/hle/kernel/svc.cpp \
+            -DOUTPUT=build-ns2-a64/ns2_svc.cpp \
+            -P tools/ns2/prepare_svc_trace_owner.cmake
+          for compiler in clang++ g++; do
+            "${compiler}" -std=c++20 -Wall -Wextra -Werror -O2 \
+              -fsanitize=undefined -fno-sanitize-recover=all \
+              -Iheadless/ns2/overrides \
+              tools/ns2/test_svc_trace.cpp \
+              -o "build-ns2-a64/svc-trace-${compiler//+/}"
+            "build-ns2-a64/svc-trace-${compiler//+/}"
+          done
+          clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+            -Ibuild-ns2-a64/fmt/include \
+            -Iheadless/ns2/overrides \
+            -Ivendor/sources/eden/src/dynarmic/src \
+            -Ivendor/sources/eden/src \
+            build-ns2-a64/ns2_svc.cpp
       - name: Syntax-check actual experimental NPDM and ExeFS loader owners
         shell: bash
         run: |

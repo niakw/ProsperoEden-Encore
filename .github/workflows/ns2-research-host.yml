@@ -263,6 +263,7 @@ jobs:
               headless/ns2/ampere/shader_recompiler/frontend/ampere/probe.cpp \
               headless/ns2/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
               headless/ns2/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
               headless/ns2/ampere/shader_recompiler/frontend/ampere/capture.cpp \
               -o "build-ns2-a64/ampere-capture-${cxx//+/}"
             "build-ns2-a64/ampere-capture-${cxx//+/}"

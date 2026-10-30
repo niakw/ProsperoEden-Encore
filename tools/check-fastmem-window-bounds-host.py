@@ -277,7 +277,9 @@ assert map_body.index("Refresh(first, last);") < map_body.index("// Short repeat
 assert map_body.index("std::lock_guard lock{mutex};") < map_body.index("Refresh(first, first);")
 assert 'if (first == last && !page_backing[first] && !page_access[first]) return;' in unmap_body
 assert 'chunk_aliased[first / PagesPerGranule]) {' in map_body
-assert 'if (unchanged) return;' in map_body
+assert map_body.count('if (same_access) return;') == 2
+assert map_body.count('if (live_aliases_match) {') == 1
+assert map_body.count('if (same_backing) {') == 1
 assert 'std::all_of(page_backing.begin() + first, page_backing.begin() + last + 1' in unmap_body
 assert 'first / PagesPerGranule == last / PagesPerGranule' in map_body
 assert 'first / PagesPerGranule == last / PagesPerGranule' in unmap_body

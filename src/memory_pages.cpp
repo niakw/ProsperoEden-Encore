@@ -723,11 +723,11 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
             return &range;
         }
     }
-    // A miss (including dense fallback) should not keep retrying stale
-    // aliases, especially after sparse-table teardown on title change.
-    last_ranges = {};
-    next_slot = 0;
-    preferred_slot = 0;
+    // A miss must not discard still-live positive hints. Dense/sparse
+    // accesses may interleave, and forcing the next valid high-slot lookup
+    // through the 64-entry owner table adds avoidable cost. Every hint is
+    // rechecked against the current begin/end under sparse_mutex, so a
+    // retired or reused slot cannot return a stale range.
     return nullptr;
 }
 

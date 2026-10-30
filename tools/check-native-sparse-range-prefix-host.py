@@ -22,7 +22,8 @@ assert "static thread_local std::array<SparseRange*, 2> last_ranges{};" in looku
 assert "static thread_local unsigned next_slot = 0;" in lookup
 assert "static thread_local unsigned preferred_slot = 0;" in lookup
 assert "if (probe != 0) preferred_slot = slot;" in lookup
-assert "last_ranges = {};" in lookup
+assert "last_ranges = {};" not in lookup
+assert "a retired or reused slot cannot return a stale range." in lookup
 assert "next_slot ^= 1u;" in lookup
 assert "if (&range == last_ranges[0] || &range == last_ranges[1]) continue;" in lookup
 assert "if (sparse_used_prefix != 0)" in lookup
@@ -134,6 +135,13 @@ int main() {
         assert(Lookup(0x5001) == &sparse_ranges[63]);
     }
     assert(scans.load() <= 40004); // <= 4 probes per alternating pair
+    // A dense-region miss must not erase valid sparse-table hints. The
+    // subsequent high-slot lookup needs at most two revalidated probes, not
+    // a 64-slot scan. Stale aliases are still checked after release/reuse.
+    assert(!Lookup(0xdead0000));
+    scans = 0;
+    assert(Lookup(0x5001) == &sparse_ranges[63]);
+    assert(scans.load() <= 2);
     Release(63);
     assert(!Lookup(0x5001));
     assert(sparse_used_prefix == 2); // freed high tail is no longer scanned
@@ -165,6 +173,7 @@ int main() {
     Register(63, 0x8000); // a later new high allocation re-expands safely
     assert(sparse_used_prefix == 64);
     assert(Lookup(0x8000) == &sparse_ranges[63]);
+    assert(!Lookup(0x5001)); // former mapping must not match reused slot
     scans = 0;
     assert(Lookup(0x8001) == &sparse_ranges[63] && scans.load() == 1);
     Release(63);
@@ -185,4 +194,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 alternating_10000=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 miss_preserves_hints=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")

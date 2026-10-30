@@ -28,10 +28,35 @@ constexpr u64 FnvPrime = 0x100000001b3ULL;
 }
 } // namespace
 
+bool MaxwellShaderImage::ValidForCompiler() const {
+    if (!Ready() || first_instruction_address != MaxwellHeaderSize ||
+        instruction_end_address <= first_instruction_address ||
+        instruction_end_address % sizeof(u64) ||
+        code.size() > std::numeric_limits<u32>::max() / sizeof(u64) ||
+        !HasNativeAddressMap(code) || code.size() < 5) return false;
+    const u64 count = code[code.size() - 2];
+    if (!count || count > 4096 || count + 3 > code.size()) return false;
+    const auto map_start = code.size() - static_cast<std::size_t>(count) - 2;
+    if (map_start != static_cast<std::size_t>(instruction_end_address / sizeof(u64)) + 1 ||
+        cached_highest_address != (code.size() - 1) * sizeof(u64) ||
+        code[map_start - 1] != 0) return false;
+    u64 previous = 0;
+    for (std::size_t i = map_start; i < code.size() - 2; ++i) {
+        const u64 address = code[i];
+        if (address < first_instruction_address ||
+            address >= instruction_end_address ||
+            address % sizeof(u64) || address % MaxwellSchedulingPeriod == 0 ||
+            address < previous) return false;
+        previous = address;
+    }
+    return true;
+}
+
 std::optional<u64> MaxwellShaderImage::ReadMaxwellInstruction(u32 addr) const {
     if (!Ready() || addr < first_instruction_address ||
         addr >= instruction_end_address || (addr & 7) ||
-        (addr % MaxwellSchedulingPeriod) == 0)
+        (addr % MaxwellSchedulingPeriod) == 0 ||
+        addr / sizeof(u64) >= code.size())
         return {};
     return code[addr / sizeof(u64)];
 }
@@ -88,11 +113,13 @@ MaxwellShaderImage BuildMaxwellShaderImage(
     image.cached_highest_address =
         static_cast<u32>((code.size() - 1) * sizeof(u64));
     image.diagnostic_cache_key = ImageKey(maxwell_header, native_code, shader_stage);
+    image.native_stage = shader_stage;
     image.code = std::move(code);
     for (u32 source = 0; source < lowered.source_instruction_offsets.size(); ++source) {
         const auto target = image.TranslateNativeAddress(source * 16);
         if (!target) return MaxwellShaderImage{MaxwellImageStatus::InvalidLayout};
     }
+    if (!image.ValidForCompiler()) return MaxwellShaderImage{MaxwellImageStatus::InvalidLayout};
     return image;
 }
 } // namespace Shader::Ampere

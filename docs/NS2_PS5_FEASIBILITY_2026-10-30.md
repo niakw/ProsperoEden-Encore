@@ -116,6 +116,13 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 - `ir_bridge.cpp` réutilise les vrais `Shader::Maxwell::Flow::CFG` et `Shader::Maxwell::TranslateProgram` du shader-recompiler maintenu. Ce fichier est compilé uniquement en recherche ; la CI vérifie sa syntaxe et son ABI côté Clang/GCC.
 - **Limite impérative :** il n'existe pas encore de branchement effectif du GPU worker Switch 2 vers les clés de pipeline, l'émission SPIR-V, les modules Vulkan/RADV ou une image PS5 testable. La syntaxe hôte ne prouve ni l'exécution du traducteur complet ni un frame Switch 2 sur PS5.
 
+### N3e — cohérence image/stage et protection du compilateur IR, 30/10/2026
+
+- La CI du code N3d est verte : [run 41073909833](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41073909833), SHA 47e8957.
+- Avant d'instancier le Maxwell CFG, le stage source `Shader::Stage` doit correspondre au stage capturé pour l'image (valeur numérique explicite), et non uniquement à un hash de cache ou un flag `Ready`.
+- Vérification de l'intégrité du stream, des limites, de la zone de padding et des adresses natives traduites. Tests host négatifs ajoutés pour map incohérente, stage divergent, extent falsifié.
+- Ces tests restent distincts de l'exécution complète du compilateur IR, de SPIR-V et de Vulkan/RADV : **aucun titre NS2 sur PS5 n'est validé**.
+
 ## 4. Plan d'intégration isolé — ordre d'exécution
 
 | Étape | Livraison et contrôle | État |

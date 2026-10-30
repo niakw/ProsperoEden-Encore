@@ -32,7 +32,8 @@ int main() {
     Emit(code,pt|0x94d,0,unconditional);        // EXIT
 
     auto image = BuildMaxwellShaderImage(header,code,4);
-    require(image.Ready() && image.lowering_status == LowerBridgeStatus::Ready,
+    require(image.Ready() && image.ValidForCompiler() &&
+            image.native_stage == 4 && image.lowering_status == LowerBridgeStatus::Ready,
             "real NOP/MOV/EXIT lowering and Maxwell image created");
     require(image.code.size() > 0x50/8 &&
             image.code[0] == 0x38 &&
@@ -65,6 +66,23 @@ int main() {
             !image.TranslateNativeAddress(0xfffffff0),
             "invalid/unaligned/end addresses rejected before code access");
 
+    auto corrupted=image;
+    corrupted.code[corrupted.code.size()-2]=65536;
+    require(!corrupted.ValidForCompiler(), "forged native address-map length rejected");
+    corrupted=image;
+    corrupted.code.back()=0;
+    require(!corrupted.ValidForCompiler(), "missing map magic rejected");
+    corrupted=image;
+    corrupted.code[corrupted.code.size()-4]=corrupted.instruction_end_address;
+    require(!corrupted.ValidForCompiler(), "map cannot target appended metadata");
+    corrupted=image;
+    corrupted.cached_highest_address+=8;
+    require(!corrupted.ValidForCompiler(), "cached extent mismatch rejected");
+    corrupted=image;
+    corrupted.instruction_end_address=0xffffffffU;
+    require(!corrupted.ValidForCompiler(), "forged instruction limit rejected");
+    require(!corrupted.ReadMaxwellInstruction(0xfffffff8U),
+            "untrusted instruction offset never reads beyond allocation");
     auto repeat=BuildMaxwellShaderImage(header,code,4);
     require(repeat.Ready() && repeat.code == image.code &&
             repeat.diagnostic_cache_key == image.diagnostic_cache_key,

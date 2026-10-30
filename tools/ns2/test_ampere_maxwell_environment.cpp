@@ -63,7 +63,7 @@ int main() {
     Emit(native,true_pred|0x94d,0,exit_true);
     FakeMaxwellEnvironment fake;
     auto env=NativeMaxwellEnvironment::Create(
-        fake, BuildMaxwellShaderImage(hdr,native,3));
+        fake, BuildMaxwellShaderImage(hdr,native,static_cast<u32>(Shader::Stage::VertexB)));
     Check(env && env->StartAddress()==0 &&
           env->StartAddress()+sizeof(Shader::ProgramHeader)==0x50 &&
           env->ShaderStage()==fake.ShaderStage() &&
@@ -95,19 +95,28 @@ int main() {
     Check(fake.texture_reads==1, "texture metadata delegated");
     env->Dump(1,2);
     Check(fake.dumped==0,"NS2 image never dumps using a Switch 1 guest shader identity");
+    Check(!NativeMaxwellEnvironment::Create(
+              fake, BuildMaxwellShaderImage(hdr,native,
+                  static_cast<u32>(Shader::Stage::Fragment))),
+          "stage-mismatched image cannot borrow shader compilation context");
+    auto forged=BuildMaxwellShaderImage(
+        hdr,native,static_cast<u32>(Shader::Stage::VertexB));
+    forged.cached_highest_address+=8;
+    Check(!NativeMaxwellEnvironment::Create(fake,std::move(forged)),
+          "corrupted image extent never reaches Maxwell CFG");
     Check(!NativeMaxwellEnvironment::Create(fake,MaxwellShaderImage{}),
           "invalid/untranslated image cannot enter existing Maxwell compiler");
     std::array<u8,0x50> unrelated_header{};
     unrelated_header[0] = 0x38;
     Check(!NativeMaxwellEnvironment::Create(
-              fake, BuildMaxwellShaderImage(unrelated_header,native,3)),
+              fake, BuildMaxwellShaderImage(unrelated_header,native,static_cast<u32>(Shader::Stage::VertexB))),
           "captured shader header must match the compiler's original SPH");
     int mismatch_destroyed = 0;
     auto mismatch_source = std::make_unique<FakeMaxwellEnvironment>();
     mismatch_source->destroyed = &mismatch_destroyed;
     Check(!NativeMaxwellEnvironment::CreateOwned(
               std::move(mismatch_source),
-              BuildMaxwellShaderImage(unrelated_header,native,3)) &&
+              BuildMaxwellShaderImage(unrelated_header,native,static_cast<u32>(Shader::Stage::VertexB))) &&
           mismatch_destroyed == 1,
           "mismatched owned GPU context is rejected and released before return");
     // Real shader caches defer IR compilation: a borrowed stack environment
@@ -119,7 +128,7 @@ int main() {
     auto* live_source = source.get();
     {
         auto owned = NativeMaxwellEnvironment::CreateOwned(
-            std::move(source),BuildMaxwellShaderImage(hdr,native,3));
+            std::move(source),BuildMaxwellShaderImage(hdr,native,static_cast<u32>(Shader::Stage::VertexB)));
         Check(!source && owned && destroyed==0,
               "ownership transferred to native environment wrapper");
         Check(owned->ReadCbufValue(3,2)==770 &&
@@ -141,7 +150,7 @@ int main() {
     Check(invalid_destroyed == 1,
           "failed image construction releases its guest graphics context");
     Check(!NativeMaxwellEnvironment::CreateOwned(
-              {},BuildMaxwellShaderImage(hdr,native,3)),
+              {},BuildMaxwellShaderImage(hdr,native,static_cast<u32>(Shader::Stage::VertexB))),
           "null source cannot publish an executable shader environment");
     std::puts("NS2 Maxwell Shader::Environment bridge: PASS");
 }

@@ -26,8 +26,12 @@ struct MaxwellShaderImage {
     u32 instruction_end_address{};
     u32 cached_highest_address{};
     u64 diagnostic_cache_key{};
+    // Concrete Shader::Stage index, not merely a cache hash input.
+    u32 native_stage{};
     std::vector<u64> code{};
     [[nodiscard]] bool Ready() const { return status == MaxwellImageStatus::Ready; }
+    // Ensure copied/movable images have an intact CFG-executable layout.
+    [[nodiscard]] bool ValidForCompiler() const;
     // ReadInstruction-compatible: rejects header, schedule slots and
     // appended branch maps, rather than exposing metadata as executable code.
     [[nodiscard]] std::optional<u64> ReadMaxwellInstruction(u32 address) const;

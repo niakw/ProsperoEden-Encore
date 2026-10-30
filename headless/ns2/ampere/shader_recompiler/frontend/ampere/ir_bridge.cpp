@@ -16,7 +16,8 @@ Shader::IR::Program TranslateReviewedGraphicsIR(
     // before allocating CFG blocks or executing any guest-dependent reads.
     static_assert(sizeof(Shader::ProgramHeader) == 0x50);
     const auto address = env.StartAddress() + sizeof(Shader::ProgramHeader);
-    if (!env.Image().Ready() ||
+    if (!env.Image().ValidForCompiler() ||
+        env.Image().native_stage != static_cast<u32>(env.ShaderStage()) ||
         env.ShaderStage() == Shader::Stage::Compute ||
         address != env.Image().first_instruction_address ||
         !env.Image().ReadMaxwellInstruction(address)) {

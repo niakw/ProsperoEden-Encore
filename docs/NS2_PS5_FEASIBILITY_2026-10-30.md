@@ -108,6 +108,14 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 - **Maintien des optimisations :** merge **de `main` vers recherche seulement**, SHA `f2d8e44deb459bd59742c2e23b474ba43b2e2b46` (0 conflit, 43 blobs de recherche conservés, 28 commits F07 récupérés). Le workflow n'a pas encore été exécuté sur ce SHA de fusion ; ne pas substituer la preuve du parent à celle du nouveau commit.
 - **Portée :** GPU worker, submit, shaders Ampere→RADV, PS5 memory budget, VI2/display et titres NS2 restent à implémenter/qualifier.
 
+### N3d — Pont shader Ampere → Maxwell CFG / IR, 30/10/2026
+
+- Le décodeur d'instructions 128-bit et l'abaissement natif → Maxwell restent **strictement opt-in** avec `EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL` ; seuls les opcodes/masques explicitement reconnus sont traduits.
+- `NativeMaxwellEnvironment` possède désormais son environnement source pour les compilations différées. Son `StartAddress()` est ramené à **0** pour les shaders graphiques : le constructeur CFG Vulkan ajoute déjà les **0x50 octets** de `ProgramHeader`. L'ancienne valeur 0x50 aurait démarré le CFG à 0xA0.
+- En-tête SPH et image native doivent être byte-identiques avant de transférer le contexte au traducteur. Les traductions en vol sont rejetées après `NativeTranslationCache::Clear()`, grâce à un numéro de génération.
+- `ir_bridge.cpp` réutilise les vrais `Shader::Maxwell::Flow::CFG` et `Shader::Maxwell::TranslateProgram` du shader-recompiler maintenu. Ce fichier est compilé uniquement en recherche ; la CI vérifie sa syntaxe et son ABI côté Clang/GCC.
+- **Limite impérative :** il n'existe pas encore de branchement effectif du GPU worker Switch 2 vers les clés de pipeline, l'émission SPIR-V, les modules Vulkan/RADV ou une image PS5 testable. La syntaxe hôte ne prouve ni l'exécution du traducteur complet ni un frame Switch 2 sur PS5.
+
 ## 4. Plan d'intégration isolé — ordre d'exécution
 
 | Étape | Livraison et contrôle | État |
@@ -115,7 +123,7 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 | **N0 — provenance / audit** | Geler les SHAs upstream, inventorier les 154/166 fichiers et licences ; catégoriser patches exploitables vs desktop-only | **Inventaire réalisé** ; provenance complète et licence tierce encore à confirmer |
 | **N1 — compatibilité de sources** | Comparer `NS2.patch` puis `eden-ns2-dkb.patch` à l'archive Eden épinglée, et aux propriétaires *compilés* dans `vendor/encore-active` ; isoler chaque conflit JIT/Vulkan/HLE | **Partiel** : loaders, A64, AM 320 et helpers GPU/HLE isolés ; portage global interdit |
 | **N2 — prototype CPU/mémoire hôte** | Tests Dynarmic LSE, PAC/returns, noyau 6 cœurs, NPDM/ACID ; évaluation sparse et budget PS5 avec échec propre | **Tests hôte verts** : JIT x86-64 réel, atomiques/concurrence, parseur NPDM ; budget et exécution PS5 non validés |
-| **N3 — prototype GPU hôte** | Shader tests SM86/Maxwell, geometry/compute, FIFO, QMD, GPU worker, syncpoint ; sécurité de cohérence et tests des échecs | **Partiel** : ISA/address-map Ampere et helpers ABI GPU/HLE testés ; traduction shaders et commandes GPU non intégrées |
+| **N3 — prototype GPU hôte** | Shader tests SM86/Maxwell, geometry/compute, FIFO, QMD, GPU worker, syncpoint ; sécurité de cohérence et tests des échecs | **Partiel** : ISA Ampere, images et capture GPU bornées, pont vers le vrai CFG/IR Maxwell ajouté en recherche ; aucune pipeline Vulkan/commande GPU native validée |
 | **N4 — services et contenu** | HLE réel vs stubs, audio/vidéo, identification de l'exécutable NS2 ; lancement d'un test homebrew/fixture non propriétaire avant jeu commercial | **AM 320 sélectionnable en build expérimental** + loader ExeFS ; HLE général, GPU supervisor et bootstrap non validés |
 | **N5 — compilation native expérimentale** | Seulement après N1–N4 et preuves hôte ; aucun artefact final Switch 1 modifié et pas de fusion F07 | **Non autorisée à ce stade** |
 | **N6 — qualification PS5** | Mémoire peak, logs, frames, input, sauvegarde, sortie, redémarrage, crash, régression BOTW/FC27 ; preuve titre/SHA/console | **À faire** |

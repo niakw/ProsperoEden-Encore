@@ -63,6 +63,23 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp
+      - name: Syntax-check actual experimental NPDM and ExeFS loader owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in \
+            headless/ns2/overrides/core/file_sys/program_metadata.cpp \
+            headless/ns2/overrides/core/loader/loader.cpp \
+            headless/ns2/overrides/core/loader/deconstructed_rom_directory.cpp; do
+            echo "Checking: ${source}"
+            clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+              -Ibuild-ns2-a64/fmt/include \
+              -Iheadless/ns2/overrides \
+              -Iheadless/ns2 \
+              -Ivendor/sources/eden/src/dynarmic/src \
+              -Ivendor/sources/eden/src \
+              "${source}"
+          done
 
   research-host:
     name: NS2 parsing and source-owner guards

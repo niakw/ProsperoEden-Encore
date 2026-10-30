@@ -60,9 +60,9 @@ jobs:
               expected = ImageOps.fit(photo.convert("RGB"), (1920, 1080),
                                       method=Image.Resampling.LANCZOS)
           with Image.open("headless/prosperoeden/ui/art/backdrop.tga") as tga:
-              actual = ImageOps.flip(tga.convert("RGB"))
+              actual = tga.convert("RGB")
           assert ImageChops.difference(expected, actual).getbbox() is None, (
-              "Host OpenGL backdrop does not match canonical PS5 wallpaper JPEG")
+              "Host OpenGL backdrop is inverted or does not match the source JPEG")
           print("ENCORE_HOST_WALLPAPER_MATCHES_PS5_SOURCE: PASS")
           PY
 

@@ -20,6 +20,8 @@ decommit_end = "\n// Address space the sparse tables span"
 assert source.count(lookup_anchor) == 1
 assert source.count(decommit_anchor) == 1
 assert "std::size_t sparse_used_prefix = 0;" in source
+assert "std::uint64_t sparse_range_generation = 1;" in source
+assert "last_negative_generation == sparse_range_generation" in source
 assert "i < sparse_used_prefix" in source
 lookup = lookup_anchor + source.split(lookup_anchor, 1)[1].split(lookup_end, 1)[0]
 decommit = decommit_anchor + source.split(decommit_anchor, 1)[1].split(decommit_end, 1)[0]
@@ -52,6 +54,7 @@ struct SparseRange {
 };
 std::array<SparseRange, 64> sparse_ranges{};
 std::size_t sparse_used_prefix = 0;
+std::uint64_t sparse_range_generation = 1; // same mutex-owned topology epoch as source
 std::mutex sparse_mutex;
 std::atomic<std::size_t> sparse_committed{0};
 '''
@@ -73,6 +76,7 @@ int main() {
     range.end = reinterpret_cast<std::uintptr_t>(p) + 2 * SparseSlot;
     range.begin.store(reinterpret_cast<std::uintptr_t>(p), std::memory_order_release);
     sparse_used_prefix = 1; // slot zero is now published, matching production
+    ++sparse_range_generation;
     sparse_committed.store(2 * SparseSlot);
     DecommitSparsePage(reinterpret_cast<std::uintptr_t>(p));
     assert(!owned[0].load() && owned[1].load());
@@ -84,6 +88,7 @@ int main() {
     assert(!owned[1].load() && sparse_committed.load() == 0);
     for (std::size_t i = 0; i < SparseSlot; ++i) assert(p[SparseSlot + i] == 0);
     DecommitSparsePage(reinterpret_cast<std::uintptr_t>(dense)); // dense fallback
+    DecommitSparsePage(reinterpret_cast<std::uintptr_t>(dense)); // exact negative memo
     assert(dense[0] == 0xCD && dense[SparseSlot - 1] == 0xCD);
 
     // Reuse the range slot while a dense lookup repeatedly scans it.
@@ -94,6 +99,7 @@ int main() {
             range.begin.store(0, std::memory_order_release);
             range.end = reinterpret_cast<std::uintptr_t>(p) + 2 * SparseSlot;
             range.begin.store(reinterpret_cast<std::uintptr_t>(p), std::memory_order_release);
+            ++sparse_range_generation; // retirement and re-registration invalidate misses
         }
     });
     for (int i = 0; i < 4096; ++i)

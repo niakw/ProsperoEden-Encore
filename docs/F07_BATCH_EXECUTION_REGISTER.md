@@ -816,3 +816,7 @@ La version source `abaab177` éliminait la copie de la structure native mais ini
 ### F07 — Témoin de Capture après fast path DualSense
 
 Fast gate `6214410` a échoué sur `tools/check-ps5-autocontrol-context.py` (ancien identifiant `sample.buttons`, remplacé par le masque guest `mapped_buttons` dans `Pad::Consume`). Assertion adaptée sans assouplir le contrôle de Capture ni le mapping immuable. Source et test mis à jour ; CI same-SHA à confirmer. Prébuild 22/29.
+
+### F07 — CI témoin contrôle mapping (30/10)
+
+Le commit précédent a écrit une séquence littérale `\\n` entre deux assertions Python dans `check-ps5-autocontrol-context.py`. Le compilateur Python de `source-early` l'a justement refusée. Remplacement par un vrai retour de ligne : les deux assertions strictes sont conservées. L'EMU n'est pas modifié. CI du correctif en qualification, 22/29.

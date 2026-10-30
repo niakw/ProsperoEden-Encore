@@ -62,7 +62,9 @@ assert "sample.timestamp_us" not in consume_source
 assert "ButtonMask mapped_buttons = sample.buttons;" in consume_source
 assert "auto sample = is_usable(raw)" not in consume_source
 assert consume_source.count("is_usable(raw)") == 1
-assert consume_source.count("sample.buttons") == 1
+assert consume_source.count("sample.buttons") == 2
+assert "const auto pressed = sample.buttons;" in consume_source
+assert "ButtonMask mapped_buttons = sample.buttons;" in consume_source
 
 native_methods = "\n\n".join(extract(signature) for signature in (
     "void PadEngine::SetButtonState(std::size_t player, int button, bool value) {",

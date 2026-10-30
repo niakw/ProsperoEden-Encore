@@ -830,3 +830,7 @@ Le commit précédent a écrit une séquence littérale `\\n` entre deux asserti
 
 - `headless/buffer_pages.h` : `Mark` et `NeverRegistered` détectent directement les entrées contenues dans une seule page 4 KiB, sans parcours générique de masques. Les traitements multi-pages et la barrière `coverage_unknown` en lecture double sont conservés ; jamais de bypass de shader/HUD sur région connue.
 - `tools/check-ps5-buffer-pages-r437.py` : 18 000 requêtes comparées à un oracle page-par-page, frontières de bits/mots/espace 16 GiB, 8 éditeurs concurrents, O0/O2 UBSan, plus les gardes de génération natifs. **C01/T01 restent ouverts : aucune mesure FC27 sur PS5. F07 22/29.**
+
+### F07 — réparation du témoin F06 du masque local DualSense
+
+Fast gate `41145533639` sur `74fec6c` : échec de l’assertion source `sample.buttons` == 1. Les deux lectures existantes sont intentionnelles : l’une prépare le masque guest modifiable `mapped_buttons`, l’autre conserve l’état **physique** `pressed` avant tout retrait des raccourcis pour les transitions HOME/Options et les traces. Le témoin exige explicitement les deux lectures, sans supprimer le replay source-extrait. Code moteur inchangé ; 22/29.

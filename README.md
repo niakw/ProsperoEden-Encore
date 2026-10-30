@@ -25,7 +25,7 @@
   <a href="LICENSE"><img alt="License GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-31313a"></a>
 </p>
 
-<p align="center"><img src="assets/screenshots/encore-home.png" alt="Eden Encore Home in English, showing the original Eden wallpaper from the actual C++/OpenGL launcher" width="860"></p>
+<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png" alt="Eden Encore Home in English, showing the original Eden wallpaper from the actual C++/OpenGL launcher" width="860"></p>
 
 > [!IMPORTANT]
 > **FC27 performance — live master tracker:** [F07 P0/P1/P2 priorities and sparse-JIT qualification](docs/FC27_F07_MASTER_TRACKER.md). [F01–F06 host exit gates](docs/FC27_EXIT_GATES_2026-10-22.md) are separate from on-console playability. Source-review totals are not remaining optimization counts.

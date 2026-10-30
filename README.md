@@ -19,8 +19,8 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
-  <a href="https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Native build verification" src="https://img.shields.io/badge/build-native%20package%20checks-5e4db2"></a>
+  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
+  <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit"><img alt="Native build verification" src="https://img.shields.io/badge/build-native%20package%20checks-5e4db2"></a>
   <a href="LICENSE"><img alt="License GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-31313a"></a>
 </p>
 
@@ -91,7 +91,7 @@ NCZ block compression permits random reads directly from the compressed file. So
 ## 🚀 Install Encore
 
 > [!TIP]
-> For a tested release, use [GitHub Releases](https://github.com/niakw/Prospero.Eden-Encore/releases), read the release's **specific firmware/gameplay validation notes**, and verify checksums. GitHub Actions artifacts are experimental unless separately qualified.
+> For a tested release, use [GitHub Releases](https://github.com/niakw/ProsperoEden-Encore/releases), read the release's **specific firmware/gameplay validation notes**, and verify checksums. GitHub Actions artifacts are experimental unless separately qualified.
 
 **Available packaging paths when published:** full ZIP with the application folder; optional FFPFSC image. The native title ID is `PPSA99008`.
 
@@ -164,7 +164,7 @@ See [Architecture](docs/PS5_NATIVE_ARCHITECTURE.md), [Performance roadmap](docs/
 2. **Native build:** compile, link, assemble, inspect the installable title and upload both application archives and debug symbols.
 3. **Real hardware:** independently verify startup, controls, frame pacing, content freshness, gameplay progression and safe return to the launcher.
 
-[Source preflight](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Native build artifacts](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Build guide](docs/BUILDING.md)
+[Source preflight](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Native build artifacts](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Build guide](docs/BUILDING.md)
 
 Download an artifact from a **successful run matching the commit you want to test**, not a previous green build. Passing CI alone does not make a release.
 

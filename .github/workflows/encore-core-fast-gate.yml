@@ -446,6 +446,7 @@ jobs:
           python3 -B tools/check-sparse-zero-bounds-host.py
           python3 -B tools/check-maintained-sparse-vector.py
           python3 -B tools/check-fastmem-window-bounds-host.py
+          python3 -B tools/check-ps5-fastmem-windowstats-host.py
           python3 -B tools/check-native-fastmem-signal-install-host.py
           python3 -B tools/check-native-quiet-shutdown-heap-host.py
           python3 -B tools/check-native-guest-memory-empty-read-host.py

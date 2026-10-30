@@ -3,6 +3,7 @@
 #include "fastmem.h"
 #include <algorithm>
 #include <atomic>
+#include <bit>
 #include <cerrno>
 #include <chrono>
 #include <csignal>
@@ -569,9 +570,19 @@ bool Requested() noexcept { return window_requested; }
 Stats WindowStats() noexcept {
     std::uint64_t direct_reads = 0, direct_writes = 0;
     if (const auto* map = current_map.load()) {
-        for (std::size_t page = 0; page < GuestPages; ++page) {
-            direct_reads += !(map[page] & ReadBlocked);
-            direct_writes += !(map[page] & WriteBlocked);
+        // Diagnostic-only full-window census (one MiB). The former byte
+        // loop ran over 1,048,576 guest pages on the reporting thread.
+        // Count the blocked bit of eight independent guest guards at once.
+        // memcpy handles the unaligned JIT guard-map address without
+        // aliasing/alignment UB; the two low bits preserve the exact result
+        // even when other marker bits are set in a guard byte.
+        constexpr std::uint64_t lane_bits = 0x0101010101010101ULL;
+        static_assert(GuestPages % sizeof(std::uint64_t) == 0);
+        for (std::size_t page = 0; page < GuestPages; page += sizeof(std::uint64_t)) {
+            std::uint64_t guards{};
+            std::memcpy(&guards, map + page, sizeof(guards));
+            direct_reads += 8u - std::popcount(guards & lane_bits);
+            direct_writes += 8u - std::popcount((guards >> 1) & lane_bits);
         }
     }
     return {counters.window, counters.mapped_pages, counters.aliased_chunks, direct_reads, direct_writes,

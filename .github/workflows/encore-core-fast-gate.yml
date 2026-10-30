@@ -14,6 +14,8 @@ on:
       - 'headless/jit-sparse-commit.h'
       - 'tools/check-native-jit-sparse-positive-cache-host.py'
       - 'headless/jit-allocator.h'
+      - 'headless/jit-alias-cache.h'
+      - 'tools/check-native-jit-alias-lookup-host.py'
       - 'headless/CMakeLists.txt'
       - 'tools/check-native-sparse-jit-trim-host.py'
       - 'tools/check-native-sparse-decommit-lock-host.py'
@@ -430,6 +432,7 @@ jobs:
           python3 -B tools/check-native-sparse-jit-release-selector-host.py
           python3 -B tools/check-jit-sparse-host.py
           python3 -B tools/check-native-jit-sparse-positive-cache-host.py
+          python3 -B tools/check-native-jit-alias-lookup-host.py
           python3 -B tools/check-native-sparse-jit-trim-host.py
           python3 -B tools/check-native-sparse-decommit-lock-host.py
           python3 -B tools/check-sparse-zero-bounds-host.py

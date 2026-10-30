@@ -13,6 +13,7 @@
 #include "core/hle/service/nvdrv/devices/native_gpu_context.h"
 #include "core/hle/service/am/service/graphics_syncpoint_cache.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
+#include "core/hle/service/am/service/graphics_supervisor_bootstrap.h"
 
 static int assertions=0;
 static void require(bool condition,const char* desc){
@@ -228,6 +229,75 @@ int main(){
     require(syncCounter.Observe(std::nullopt)==Cache::Unallocated &&
             syncCounter.previous==0x100000001ULL,
             "missing counter should not clear last observed value");
+
+    namespace GS=Service::AM::GraphicsSupervisorBootstrap;
+    GS::State state{0xabc};
+    std::array<GP::U32,16> gsBootstrap{};
+    gsBootstrap[0]=0x14;gsBootstrap[1]=0x8000000c;gsBootstrap[2]=2;
+    gsBootstrap[3]=0x1234;gsBootstrap[4]=0xabc;gsBootstrap[6]=5;
+    gsBootstrap[7]=0x80000000;
+    const std::array<GP::U32,3> bindProcess{0x1b,0x80000000,2};
+    const std::array<GP::U32,2> completeBootstrap{0x75,0};
+    const std::array<GP::U32,2> initGpu{417,0};
+    const std::array<GP::U32,2> activateGpu{418,0};
+    const std::array<GP::U32,4> openGpu{0x201,2,4,0};
+    require(state.Complete(completeBootstrap)==GS::Status::InvalidState &&
+            state.InitializeGpuContext(initGpu,401)==GS::Status::InvalidState &&
+            state.CanOpenGpuSession(openGpu,true)==GS::Status::InvalidState,
+            "graphics supervisor must reject calls before process bootstrap");
+    require(state.Initialize(gsBootstrap,false)==GS::Status::InvalidHandle &&
+            state.CurrentPhase()==GS::Phase::Created,
+            "invalid process handle must not advance bootstrap");
+    gsBootstrap[4]=0xdef;
+    require(state.Initialize(gsBootstrap,true)==GS::Status::InvalidArgument &&
+            state.CurrentPhase()==GS::Phase::Created,
+            "mismatched applet ARUID does not mutate state");
+    gsBootstrap[4]=0xabc;
+    require(state.Initialize(gsBootstrap,true)==GS::Status::Success &&
+            state.CurrentPhase()==GS::Phase::Initialized &&
+            state.NativeProfile()==0x807,
+            "valid graphics supervisor bootstrap negotiates sm87 profile");
+    require(state.Initialize(gsBootstrap,true)==GS::Status::InvalidState,
+            "duplicate bootstrap must not reinitialize GPU profile");
+    require(state.BindProcess(bindProcess,false)==GS::Status::InvalidHandle &&
+            state.CurrentPhase()==GS::Phase::Initialized,
+            "reject invalid process bind identity");
+    require(state.BindProcess(bindProcess,true)==GS::Status::Success &&
+            state.CurrentPhase()==GS::Phase::ProcessBound &&
+            state.Complete(completeBootstrap)==GS::Status::Success &&
+            state.CurrentPhase()==GS::Phase::Ready,
+            "graphics supervisor requires ordered bootstrap phases");
+    require(state.Complete(completeBootstrap)==GS::Status::InvalidState,
+            "duplicate graphics supervisor completion rejected");
+    require(state.InitializeGpuContext(activateGpu,402)==GS::Status::InvalidState &&
+            !state.GpuContextReady(),
+            "activate GPU context cannot precede initialization");
+    require(state.InitializeGpuContext(initGpu,401)==GS::Status::Success &&
+            state.InitializeGpuContext(activateGpu,402)==GS::Status::Success &&
+            state.GpuContextReady(),
+            "GPU context initialization followed by activation");
+    require(state.CanOpenGpuSession(openGpu,false)==GS::Status::InvalidState &&
+            state.CanOpenGpuSession(openGpu,true)==GS::Status::Success,
+            "GPU session requires completed bootstrap and real NVDRV module");
+    auto badOpen=openGpu;
+    badOpen[2]=8;
+    require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
+            "GPU session opening rejects unsupported flags");
+    badOpen=openGpu;badOpen[0]=0x202;
+    require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
+            "GPU session opening rejects wrong TIPC command");
+    GS::State unsupported{0xabc};
+    auto remoteBootstrap=gsBootstrap;
+    remoteBootstrap[8]=1;
+    require(unsupported.Initialize(remoteBootstrap,true)==GS::Status::Unsupported &&
+            unsupported.CurrentPhase()==GS::Phase::Created,
+            "remote graphics bootstrap cannot falsely report success");
+    GS::State newer{0xabc};
+    auto sm88Bootstrap=gsBootstrap;
+    sm88Bootstrap[6]=6;
+    require(newer.Initialize(sm88Bootstrap,true)==GS::Status::Success &&
+            newer.NativeProfile()==0x808,
+            "sm88 GPU profile negotiated without publishing GPU capabilities");
 
     namespace GP=Service::AM::GpuSessionProtocol;
     static_assert(GP::MaxDevices==256 && GP::MaxNotificationEvents==64 &&

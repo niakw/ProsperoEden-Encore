@@ -35,6 +35,18 @@ constexpr bool is_regular_ret(std::uint32_t instruction) {
             return true;
     return false;
 }
+constexpr int count_ldapr(std::uint32_t instruction) {
+    int count = 0;
+    for (const auto& entry : table)
+        if (entry.mnemonic=="LDAPR" && match(instruction, entry.bits))
+            ++count;
+    return count;
+}
+static_assert(count_ldapr(0xB8BFC000) == 1); // LDAPR W0,[X0]
+static_assert(count_ldapr(0xF8BFC000) == 1); // LDAPR X0,[X0]
+static_assert(count_ldapr(0x38BFC000) == 1); // LDAPRB W0,[X0]
+static_assert(count_ldapr(0xD65F0BFF) == 0); // RETAA is not LDAPR
+static_assert(count_ldapr(0xFFFFFFFF) == 0);
 static_assert(count_reta(0xD65F0BFF) == 1); // RETAA
 static_assert(count_reta(0xD65F0FFF) == 1); // RETAB
 static_assert(count_reta(0xD65F03C0) == 0); // RET X30
@@ -43,6 +55,8 @@ static_assert(!is_regular_ret(0xD65F0BFF));
 static_assert(!is_regular_ret(0xD65F0FFF));
 static_assert(count_reta(0xFFFFFFFF) == 0);
 int main() {
+    assert(count_ldapr(0xB8BFC000) == 1);
+    assert(count_ldapr(0xF8BFC000) == 1);
     assert(count_reta(0xD65F0BFF) == 1);
     assert(count_reta(0xD65F0FFF) == 1);
     assert(is_regular_ret(0xD65F03C0));

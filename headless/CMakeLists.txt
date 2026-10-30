@@ -1857,13 +1857,13 @@ if(EDEN_NS2_EXEFS_EXPERIMENTAL)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
 endif()
 
-# Experimental ARMv8.3 RETAA/RETAB decoding with PAUTH disabled.
+# Experimental ARMv8.1 LDAPR and ARMv8.3 RETAA/RETAB decoding with PAUTH disabled.
 # Copy both the decoder header (it includes ./a64.inc) and the instruction
 # table into the SAME build overlay to avoid accidentally reading the pinned
 # table. a64_translate.cpp in Encore includes a64_branch.cpp as source text.
-option(EDEN_NS2_RETA_EXPERIMENTAL
-    "Research only: translate RETAA/RETAB as raw LR return (no PAC keys)" OFF)
-if(EDEN_NS2_RETA_EXPERIMENTAL)
+option(EDEN_NS2_A64_EXPERIMENTAL
+    "Research only: LDAPR acquire + RETAA/RETAB no-PAC-authentication model" OFF)
+if(EDEN_NS2_A64_EXPERIMENTAL)
     if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 RETA requires experimental metadata profile")
     endif()
@@ -1871,7 +1871,9 @@ if(EDEN_NS2_RETA_EXPERIMENTAL)
     foreach(eden_ns2_dynarmic_file IN ITEMS
             "frontend/A64/decoder/a64.h"
             "frontend/A64/decoder/a64.inc"
-            "frontend/A64/translate/impl/a64_branch.cpp")
+            "frontend/A64/translate/impl/a64_branch.cpp"
+            "frontend/A64/translate/impl/impl.h"
+            "frontend/A64/translate/impl/load_store_exclusive.cpp")
         set(eden_ns2_origin
             "${EDEN_NS2_DYNARMIC_ROOT}/dynarmic/${eden_ns2_dynarmic_file}")
         if(NOT EXISTS "${eden_ns2_origin}")
@@ -1884,7 +1886,7 @@ if(EDEN_NS2_RETA_EXPERIMENTAL)
         configure_file("${eden_ns2_origin}" "${eden_ns2_output}" COPYONLY)
     endforeach()
     target_include_directories(dynarmic BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
-    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_RETA_EXPERIMENTAL=1)
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1)
 endif()
 
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
@@ -1899,7 +1901,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
        EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
-       EDEN_NS2_RETA_EXPERIMENTAL OR
+       EDEN_NS2_A64_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

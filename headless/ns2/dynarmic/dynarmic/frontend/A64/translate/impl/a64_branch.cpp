@@ -74,7 +74,7 @@ bool TranslatorVisitor::RET(Reg Rn) {
  // SCTLR.EnIA/EnIB disabled; both RETAA and RETAB use raw X30.
  // This is NOT pointer-authentication verification or key emulation.
 bool TranslatorVisitor::RETA([[maybe_unused]] bool M) {
-#if defined(EDEN_NS2_RETA_EXPERIMENTAL)
+#if defined(EDEN_NS2_A64_EXPERIMENTAL)
     return RET(Reg::R30);
 #else
     return UnallocatedEncoding();

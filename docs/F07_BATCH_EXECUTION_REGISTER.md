@@ -752,3 +752,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 
 - `src/memory_pages.cpp::SparseRangeOf` : une recherche négative répétée de la même adresse dense reparcourait jusqu'à 64 entrées sous `sparse_mutex`. Le résultat négatif exact est désormais gardé par thread, avec génération de topologie protégée par le même mutex ; chaque publication/retrait de table invalide ce mémo. Les deux indices positifs restent inchangés et prioritaires, aucune supposition d'alignement 2 Mio hôte.
 - `tools/check-native-sparse-range-prefix-host.py` : extraction de la véritable fonction, 10 000 misses répétées, re-publication sur l'adresse négative, réutilisation des slots et lecteurs concurrents ; tests -O0/-O2/-O3 ASan/UBSan à confirmer par CI. Audit propriétaire synchronisé sur blob `3ef4eeb0e499`. **J01 et 22/29 restent ouverts ; gain PS5 non mesuré.**
+
+## F07 — J01, quatre adresses négatives sparse alternées (30 octobre 2026)
+
+- `src/memory_pages.cpp::SparseRangeOf` : cache thread-local des échecs exacts étendu de 1 à 4 adresses sans supposer une granularité de réservation hôte ; les deux indices positifs gardent la priorité. Chaque publication/retrait actualise `sparse_range_generation` sous le mutex et invalide les quatre entrées au prochain échec. Aucun parcours ni écriture TLS sur un hit positif.
+- `tools/check-native-sparse-range-prefix-host.py` : vérification de quatre misses alternées (10 000 lectures), cinquième adresse/éviction, réutilisation et re-publication, 64 ranges, 4 threads, O0/O2/O3 ASan/UBSan (CI à confirmer). Manifeste remis au blob `26c36f874c43c11d84b47eae1db20ed310b624ac`.
+- Aucun FPS PS5 mesuré. **F07 22/29 inchangé** ; J01 attend les traces hardware des gaps FC27.

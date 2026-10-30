@@ -701,8 +701,13 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     static thread_local std::array<SparseRange*, 2> last_ranges{};
     static thread_local unsigned next_slot = 0;
     static thread_local unsigned preferred_slot = 0;
-    static thread_local std::uintptr_t last_negative_address = 0;
+    // Exact-address ring: dense page-table accesses often alternate between
+    // several addresses. Cache up to four negative probes without assuming
+    // host page alignment or caching a whole guest address region.
+    static thread_local std::array<std::uintptr_t, 4> last_negative_addresses{};
     static thread_local std::uint64_t last_negative_generation = 0;
+    static thread_local unsigned negative_count = 0;
+    static thread_local unsigned next_negative_slot = 0;
     if (sparse_used_prefix != 0) {
         for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
             const unsigned slot = preferred_slot ^ probe;
@@ -716,11 +721,18 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
             }
         }
     }
-    // A dense fallback may repeatedly request the same guest-table address.
-    // The owner mutex serializes this hint with all range insertions/removals.
-    // Never cache a whole 2 MiB region: host reservations need not be aligned.
-    if (last_negative_generation == sparse_range_generation &&
-        last_negative_address == address) return nullptr;
+    // Cache only exact misses: sparse reservations can be unaligned on
+    // hosts. Mutations bump the topology generation under this same mutex.
+    if (last_negative_generation == sparse_range_generation) {
+        for (unsigned i = 0; i < negative_count; ++i)
+            if (last_negative_addresses[i] == address) return nullptr;
+    } else {
+        // An insertion or retirement may have changed ANY cached answer.
+        // Clearing count is enough; old addresses cannot match this epoch.
+        last_negative_generation = sparse_range_generation;
+        negative_count = 0;
+        next_negative_slot = 0;
+    }
     for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
         auto& range = sparse_ranges[i];
         // Already checked under the same lock; avoid a second atomic read.
@@ -738,8 +750,9 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     // through the 64-entry owner table adds avoidable cost. Every hint is
     // rechecked against the current begin/end under sparse_mutex, so a
     // retired or reused slot cannot return a stale range.
-    last_negative_address = address;
-    last_negative_generation = sparse_range_generation;
+    last_negative_addresses[next_negative_slot] = address;
+    next_negative_slot = (next_negative_slot + 1u) & 3u;
+    if (negative_count < last_negative_addresses.size()) ++negative_count;
     return nullptr;
 }
 

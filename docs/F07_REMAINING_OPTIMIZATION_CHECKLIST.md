@@ -279,3 +279,5 @@ Les lignes **[x]** ci-dessous certifient **uniquement que le changement figure s
 ### 2026-10-29 — témoin de présentation CV dédiée, gate B03 encore ouvert
 
 Le [préflight #40905791419](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/40905791419) a échoué uniquement sur `check-vulkan-sync-recycle-host.py` après séparation `present_ready_cv`/`frame_cv` : le mock C++ ne contenait pas `present_ready_cv`. [Correctif témoin `3584d5e2`](https://github.com/niakw/Prospero.Eden-Encore/commit/3584d5e2e50662c30333159858e5a9db069394e4) : membre mock, compteur de notification async/sync et stderr de compilation affichable en échec. Aucun changement moteur. [Nouvelle prévalidation #40916659885](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/40916659885) et CodeQL du SHA correctif à qualifier ; B03/B05 non cochés, build natif interdit, B5 ouvert.
+
+**Ajout 30/10 (J01, sans fermeture) :** mémo négatif sparse désormais sur 4 adresses exactes alternées, génération de topologie invalidante, tests C++ hôte renforcés et manifeste synchronisé. Optimisation CPU source, **pas de preuve de gain FC27 ni de fermeture prébuild**.

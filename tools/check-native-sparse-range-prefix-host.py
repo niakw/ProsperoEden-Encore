@@ -30,10 +30,13 @@ assert "if (sparse_used_prefix != 0)" in lookup
 assert "std::size_t sparse_used_prefix = 0;" in source
 assert "std::uint64_t sparse_range_generation = 1;" in source
 assert source.count("++sparse_range_generation;") == 2
+assert "static thread_local std::array<std::uintptr_t, 4> last_negative_addresses{};" in lookup
 assert "last_negative_generation == sparse_range_generation" in lookup
-assert "last_negative_address == address" in lookup
-assert lookup.index("last_negative_address == address") < lookup.index("i < sparse_used_prefix")
-assert lookup.index("last_negative_address = address;") > lookup.index("i < sparse_used_prefix")
+assert "last_negative_addresses[i] == address" in lookup
+assert "negative_count = 0;" in lookup and "next_negative_slot = 0;" in lookup
+assert "next_negative_slot = (next_negative_slot + 1u) & 3u;" in lookup
+assert lookup.index("last_negative_addresses[i] == address") < lookup.index("i < sparse_used_prefix")
+assert lookup.index("last_negative_addresses[next_negative_slot] = address;") > lookup.index("i < sparse_used_prefix")
 assert source.count("sparse_used_prefix = (std::max)(") == 1
 pub_start = source.index("    sparse_used_prefix = (std::max)(")
 pub_end = source.index(";", pub_start) + 1
@@ -174,6 +177,19 @@ int main() {
     scans = 0;
     for (int i = 0; i < 10000; ++i) assert(!Lookup(0xdead0000));
     assert(scans.load() <= 20000); // only two positive hints per miss
+    // Four alternating exact dense addresses must remain negative-cache
+    // hits, without four repeated 64-entry scans each cycle.
+    const std::uintptr_t dense_addresses[4]{
+        0xcafe1000, 0xcafe2000, 0xcafe3000, 0xcafe4000
+    };
+    for (const auto address : dense_addresses) assert(!Lookup(address));
+    scans = 0;
+    for (int i = 0; i < 10000; ++i)
+        assert(!Lookup(dense_addresses[i & 3]));
+    assert(scans.load() <= 20000); // only the two retained positive hints
+    // A fifth distinct miss can evict the oldest negative hint safely.
+    assert(!Lookup(0xcafe5000));
+    assert(!Lookup(dense_addresses[0]));
     // A dense-region miss must not erase valid sparse-table hints. The
     // subsequent high-slot lookup needs at most two revalidated probes, not
     // a 64-slot scan. Stale aliases are still checked after release/reuse.
@@ -251,4 +267,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 exact_negative_cache=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 exact_negative_ring4=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")

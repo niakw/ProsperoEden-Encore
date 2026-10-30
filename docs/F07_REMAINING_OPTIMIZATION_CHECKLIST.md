@@ -29,6 +29,8 @@
 
 **30/10 — C04, suppressions supplémentaires de réveils Vulkan (source à qualifier) :** la mise en file de présentation ne signale pas `present_ready_cv` quand le thread de présentation est **déjà actif** (`present_in_flight`), même si la FIFO est momentanément vide. La transition réelle worker idle→queue non vide reste notifiée, sous le même mutex. Témoin d'un worker actif avec 32 itérations, générateur/vendeur alignés, `vendor@6c6b46a4e0`. CI et mesures FC27/PS5 restent à qualifier ; **22/29 inchangé**.
 
+**30/10 — V01/C01, réveils du scheduler Vulkan (source à qualifier) :** dans `DispatchWork`, suppression des diffusions CV lorsqu'un worker traite déjà un chunk ou dispose de commandes en attente ; seul le passage de veille à travail déclenche une notification, tandis que `WaitWorker` et les erreurs gardent leurs réveils indispensables. Le drapeau `worker_in_flight` est protégé par `queue_mutex`, sans nouvelle attente ni mutex sur le chemin worker. Sous-module `vendor@b5d74d0473`, générateur et modèles source-extraits mis à jour. **CI/PS5 non encore qualifiés ; 22/29 inchangé.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

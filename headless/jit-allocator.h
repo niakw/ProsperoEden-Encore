@@ -31,6 +31,10 @@ public:
                        std::uint64_t current_generation) const noexcept {
         if (generation != current_generation) return nullptr;
         for (const Entry& entry : entries) {
+            // Remember fills the array sequentially after each epoch reset.
+            // An empty slot means all later slots are empty too: do not scan
+            // the remaining entries on the common one- or two-arena path.
+            if (!entry.executable) return nullptr;
             if (entry.executable == executable) return entry.writable;
         }
         return nullptr;

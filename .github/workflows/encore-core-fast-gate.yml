@@ -352,6 +352,7 @@ jobs:
           python3 -B tools/check-ps5-compute-descriptor-scratch-host.py
           python3 -B tools/check-ps5-f07-compute-descriptor-payload-reuse-host.py
           python3 -B tools/check-ps5-f07-sampler-memo-collisions-host.py
+          python3 -B tools/check-ps5-f07-compute-key-positive-cache-host.py
           python3 -B tools/check-ps5-f07-texel-descriptor-stability-host.py
           python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
           python3 -B tools/check-ps5-f07-dma-clear-prelock-host.py

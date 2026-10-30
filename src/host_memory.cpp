@@ -229,6 +229,24 @@ public:
             }
             if (unchanged) return;
         }
+        // Short repeated mappings may cross up to four native 16 KiB
+        // granules. They are still inert ONLY when every affected chunk
+        // already has a successful fixed alias and all page records match.
+        // Keep a strict 16-page cap: no extra long-range scan on map misses,
+        // and never suppress a retry of an unaliased kernel chunk.
+        if (first < last && last - first < 16 &&
+            first / PagesPerGranule != last / PagesPerGranule) {
+            bool unchanged = true;
+            for (std::size_t p = first; p <= last; ++p) {
+                if (!chunk_aliased[p / PagesPerGranule] ||
+                    page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1) ||
+                    page_access[p] != access) {
+                    unchanged = false;
+                    break;
+                }
+            }
+            if (unchanged) return;
+        }
         for (std::size_t p = first; p <= last; ++p) {
             if (!page_backing[p]) ++counters.mapped_pages;
             page_backing[p] = static_cast<std::uint32_t>(host + (p - first) + 1);
@@ -251,6 +269,16 @@ public:
         // Wider/cross-granule requests use the original Update path.
         if (first < last && last - first < PagesPerGranule &&
             first / PagesPerGranule == last / PagesPerGranule &&
+            std::all_of(page_backing.begin() + first, page_backing.begin() + last + 1,
+                        [](std::uint32_t backing) { return backing == 0; }) &&
+            std::all_of(page_access.begin() + first, page_access.begin() + last + 1,
+                        [](std::uint8_t access_bits) { return access_bits == 0; }))
+            return;
+        // A fully-unmapped short cross-granule span cannot have live direct
+        // aliases to withdraw. Avoid the three Update walks and JIT guard
+        // rewrite, but only after checking both backing and permissions.
+        if (first < last && last - first < 16 &&
+            first / PagesPerGranule != last / PagesPerGranule &&
             std::all_of(page_backing.begin() + first, page_backing.begin() + last + 1,
                         [](std::uint32_t backing) { return backing == 0; }) &&
             std::all_of(page_access.begin() + first, page_access.begin() + last + 1,

@@ -42,6 +42,16 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
                 in_flight = true;
                 lock.unlock();
                 const int result = sceAudioOutOutput(handle, block.data());
+                // Diagnostic-only PCM scan needs no access to stream state.
+                // Keep the producer-facing stream mutex free while inspecting
+                // the worker-owned output block. On failed output the block
+                // was never accepted and must not contribute to counters.
+                u64 nonzero_in_block = 0;
+                if (result >= 0) {
+                    for (std::size_t frame = 0; frame < kAudioOutGrain; ++frame)
+                        nonzero_in_block += block[frame * 2] != 0 ||
+                                            block[frame * 2 + 1] != 0;
+                }
                 lock.lock();
                 in_flight = false;
                 wake.notify_all();
@@ -52,8 +62,7 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
                     break;
                 }
                 output_frames += kAudioOutGrain;
-                for (std::size_t frame = 0; frame < kAudioOutGrain; ++frame)
-                    nonzero_frames += block[frame * 2] != 0 || block[frame * 2 + 1] != 0;
+                nonzero_frames += nonzero_in_block;
             }
         });
     } catch (...) {

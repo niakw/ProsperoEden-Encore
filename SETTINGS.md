@@ -179,6 +179,8 @@ Launcher-only options:
 
 All are **Off by default**.
 
+For verified launcher behavior, limitations (including unverified screen-reader integration), controller guidance and a reporting checklist, see [ACCESSIBILITY.md](ACCESSIBILITY.md). These options do not modify game graphics or animation.
+
 ## Diagnostics
 
 Detailed logging is **Off by default**. In the **unreleased local release-profile candidate**,

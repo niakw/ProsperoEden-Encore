@@ -769,10 +769,10 @@
     {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "f8f44ed15e49df2e5b5606997b3ead7f91e07b01",
+      "reviewed_source_git_blob": "cdf5c2b5e52ec33afa8e1f713dcf8c5492fcd157",
       "review_scope": "host-only-test",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no shipping-path optimization affected. Host-only README preview now supports PE_PREVIEW_BRANDED_HOME, clearing synthetic sample-game Hero sources to reveal the already-packaged original Eden wallpaper. No PS5 production service, renderer or guest hotpath logic modified; the host C++/OpenGL real-capture workflow passed (run 41004671009). Host-only README wallpaper fixture now skips synthetic Echoes hero only when PE_PREVIEW_BRANDED_HOME is set; production native services untouched."
+      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no shipping-path optimization affected. Host-only README preview now supports PE_PREVIEW_BRANDED_HOME, clearing synthetic sample-game Hero sources to reveal the already-packaged original Eden wallpaper. No PS5 production service, renderer or guest hotpath logic modified; the host C++/OpenGL real-capture workflow passed (run 41004671009). Host-only README wallpaper fixture now skips synthetic Echoes hero only when PE_PREVIEW_BRANDED_HOME is set; production native services untouched. 30 October 2026 re-review: fixture-only changes add original fictional title descriptions, a branded-preview-specific cover preservation check and populated Home/recent descriptions. These are confined to host FakeServices; runtime PS5 native services, guest memory, renderer, pipeline and A32 fastmem owners remain unaffected. Reviewed against previous pinned blob f8f44ed15e49df2e5b5606997b3ead7f91e07b01."
     },
     {
       "path": "headless/prosperoeden/host/fake_services.hpp",

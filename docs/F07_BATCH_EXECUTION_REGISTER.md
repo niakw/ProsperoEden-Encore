@@ -834,3 +834,10 @@ Le commit précédent a écrit une séquence littérale `\\n` entre deux asserti
 ### F07 — réparation du témoin F06 du masque local DualSense
 
 Fast gate `41145533639` sur `74fec6c` : échec de l’assertion source `sample.buttons` == 1. Les deux lectures existantes sont intentionnelles : l’une prépare le masque guest modifiable `mapped_buttons`, l’autre conserve l’état **physique** `pressed` avant tout retrait des raccourcis pour les transitions HOME/Options et les traces. Le témoin exige explicitement les deux lectures, sans supprimer le replay source-extrait. Code moteur inchangé ; 22/29.
+
+
+## F07 — réparation CI du témoin Fastmem Protect (31 octobre 2026)
+
+- **HEAD contrôlé avant correction :** `fbe2302d8fd99b2b5d8122448a1bd79c2ebb00b3`. **Échec réel :** prévalidation hôte [#41145966033](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41145966033), suite `source-audit`, étape « Audit generic graphics, JIT, runtime and filtered game networking » : `tools/check-fastmem-window-bounds-host.py` génère `protect.cpp` contenant `PagesPerGranule = 4` inutilisé ; `clang++-18 -O0 -Wall -Wextra -Werror` rejette `-Wunused-const-variable`. Les assertions Python de comparaison des anciens prédicats avaient déjà réussi avant cette compilation.
+- **Correction minimale :** supprimer **uniquement** la constante devenue inutilisée du fixture C++ `protect_cpp`. La constante de l'autre fixture Map/Unmap reste présente et utilisée. Les gardes source, la compilation O0/O2 ASan/UBSan, les assertions de comptage et le traitement moteur `src/host_memory.cpp` restent inchangés. Le commit qui contient cette entrée porte le correctif ; vérifier son SHA exact dans l'historique Git et le verdict des nouvelles CI avant de qualifier la réparation.
+- **Preuve et limites :** échec avant correction visible dans le journal du job `124371500385`. Nouvelle CI hôte à qualifier sur le SHA publié. Aucune compilation native PS5, aucune release et aucun gain console revendiqués. **F07 reste 22/29 pré-build et 0/12 post-build.**

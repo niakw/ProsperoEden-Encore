@@ -200,7 +200,6 @@ protect_cpp = r'''
 #include <vector>
 constexpr std::size_t GuestPage = 0x1000;
 constexpr std::size_t GuestPages = 64;
-constexpr std::size_t PagesPerGranule = 4;
 constexpr std::size_t WindowBytes = GuestPage * GuestPages;
 struct Counters { std::atomic<unsigned> protect_calls{0}; };
 Counters counters;

@@ -35,6 +35,13 @@ publish = source[pub_start:pub_end]
 assert publish.endswith("free_range - sparse_ranges.data()) + 1);")
 assert source.index("free_range->begin.store(") < pub_start
 assert source.index("free_range->end =") < pub_start
+allocate = source.split("void* AllocateSparsePages(std::size_t size) noexcept {", 1)[1]
+choose_start = allocate.index("    SparseRange* free_range = nullptr;")
+choose_end = allocate.index("    const std::size_t slots =", choose_start)
+selection = allocate[choose_start:choose_end]
+assert "i < sparse_used_prefix" in selection
+assert "sparse_used_prefix < sparse_ranges.size()" in selection
+assert "free_range = &sparse_ranges[sparse_used_prefix];" in selection
 release = source.split("void ReleaseSparse(SparseRange& range) {", 1)[1].split("\n}", 1)[0]
 shrink = """    while (sparse_used_prefix > 0 &&
            sparse_ranges[sparse_used_prefix - 1].begin.load(std::memory_order_relaxed) == 0)
@@ -77,6 +84,11 @@ std::array<SparseRange, 64> sparse_ranges{};
 std::mutex sparse_mutex;
 std::size_t sparse_used_prefix = 0;
 __LOOKUP__
+SparseRange* ChooseFreeRange() {
+    std::lock_guard lock{sparse_mutex};
+__SELECT_FREE__
+    return free_range;
+}
 void Register(unsigned slot, std::uintptr_t begin) {
     std::lock_guard lock{sparse_mutex};
     assert(slot < sparse_ranges.size() && begin != 0);
@@ -98,7 +110,10 @@ SparseRange* Lookup(std::uintptr_t address) {
 int main() {
     scans = 0;
     assert(!Lookup(0x1000) && scans.load() == 0);
+    assert(ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
     Register(0, 0x1000);
+    scans = 0;
+    assert(ChooseFreeRange() == &sparse_ranges[1] && scans.load() == 1);
     scans = 0;
     assert(Lookup(0x1000) == &sparse_ranges[0]);
     assert(scans.load() == 1 && sparse_used_prefix == 1);
@@ -113,6 +128,8 @@ int main() {
         assert(Lookup(0x2000 + (i % 64)) == &sparse_ranges[1]);
     assert(scans.load() == 10000); // one load per adjacent in-range page
     Release(0);
+    scans = 0;
+    assert(ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 1);
     assert(!Lookup(0x1001));
     assert(Lookup(0x2001) == &sparse_ranges[1]);
     assert(sparse_used_prefix == 2); // holes may not end the scan
@@ -120,6 +137,8 @@ int main() {
     assert(Lookup(0x3001) == &sparse_ranges[0]);
     assert(Lookup(0x2001) == &sparse_ranges[1]);
     Register(63, 0x5000);
+    scans = 0;
+    assert(ChooseFreeRange() == &sparse_ranges[2] && scans.load() == 3);
     assert(sparse_used_prefix == 64);
     assert(Lookup(0x5001) == &sparse_ranges[63]);
     scans = 0;
@@ -180,8 +199,23 @@ int main() {
     assert(Lookup(0x8001) == &sparse_ranges[63] && scans.load() == 1);
     Release(63);
     assert(sparse_used_prefix == 0);
+    // Exercise every slot: first-free allocation, a hole in a full prefix,
+    // saturation, and complete tail release without any kernel mappings.
+    for (unsigned i = 0; i < 64; ++i) {
+        assert(ChooseFreeRange() == &sparse_ranges[i]);
+        Register(i, 0x100000 + i * 0x2000);
+    }
+    scans = 0;
+    assert(ChooseFreeRange() == nullptr && scans.load() == 64);
+    Release(40);
+    scans = 0;
+    assert(ChooseFreeRange() == &sparse_ranges[40] && scans.load() == 41);
+    Register(40, 0xdead0000);
+    for (int i = 63; i >= 0; --i) Release(i);
+    scans = 0;
+    assert(sparse_used_prefix == 0 && ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
 }
-""".replace("__LOOKUP__", lookup).replace("__PUBLISH__", publish).replace("__SHRINK__", shrink)
+""".replace("__LOOKUP__", lookup).replace("__SELECT_FREE__", selection).replace("__PUBLISH__", publish).replace("__SHRINK__", shrink)
 with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
     src = Path(tmp) / "sparse.cpp"
     src.write_text(fixture)
@@ -196,4 +230,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 miss_preserves_hints=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")

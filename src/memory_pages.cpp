@@ -908,11 +908,18 @@ void* AllocateSparsePages(std::size_t size) noexcept {
     if (size < 2 * SparseSlot || span < size || !SparseAvailable()) return AllocateMemoryPages(size);
     const std::lock_guard lock{sparse_mutex};
     SparseRange* free_range = nullptr;
-    for (auto& range : sparse_ranges)
+    // The mutex already protects both occupancy and the published prefix.
+    // Scan only live-or-reusable slots, then take the first unoccupied tail.
+    // With one active table this avoids probing the other 63 atomics.
+    for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
+        auto& range = sparse_ranges[i];
         if (range.begin.load(std::memory_order_relaxed) == 0) {
             free_range = &range;
             break;
         }
+    }
+    if (!free_range && sparse_used_prefix < sparse_ranges.size())
+        free_range = &sparse_ranges[sparse_used_prefix];
     const std::size_t slots = span / SparseSlot;
     auto* owned = free_range ? new (std::nothrow) std::atomic<bool>[slots] : nullptr;
     auto* physical = owned ? new (std::nothrow) std::int64_t[slots] : nullptr;

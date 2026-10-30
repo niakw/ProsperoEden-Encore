@@ -17,6 +17,8 @@
 
 **Point de reprise prébuild — 30/10/2026, source `348075f3` sur `main` :** deux gains de chemin mémoire sparse identifiés, intégrés, sans nouvelle preuve console ni fermeture artificielle de J01. `8bcdfb1` supprime l'invalidation des quatre mémos positifs JIT lors de la **simple création** d'une arène indépendante ; seuls `TrimSparseJitCode` et `ReleaseSparseJitCode` continuent d'invalider l'epoch. Témoin `check-native-jit-sparse-positive-cache-host.py` et garde `check-ps5-architecture.py` synchronisés (`d096873`). `3897a13` préserve deux hints positifs `SparseRangeOf` à travers les recherches négatives, chaque adresse étant revérifiée contre `begin/end` sous `sparse_mutex` ; témoin `check-native-sparse-range-prefix-host.py` étendu aux misses, slots retirés et réutilisés (`348075f`). **Gates fast/preflight/CodeQL du HEAD courant non encore qualifiées ; 22/29, J01 et autres chantiers toujours ouverts.** Aucun build natif PS5 ni FPS revendiqué.
 
+**F07 prébuild — allocation sparse (30/10, SHA source à qualifier) :** `AllocateSparsePages` n'inspecte plus systématiquement les 64 plages lors de la création d'une table ; parcours du préfixe publié, réutilisation des trous, puis premier slot libre. Mutex, publication et dense fallback inchangés. Témoin extrait O0/O2/O3 couvre 64 slots, saturation, retrait et recyclage. Tests CI/PS5 attendus ; **22/29 inchangé**.
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

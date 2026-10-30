@@ -622,6 +622,7 @@ jobs:
           python3 -B tools/check-crash-provenance-host.py
           python3 -B tools/check-ps5-guest-fault-recovery.py
           python3 -B tools/check-hle-tail-counters.py
+          python3 -B tools/check-dualsense-rumble-lock-host.py
 
       - name: Check approved user-facing UX invariants (no graphics compilation)
         if: ${{ matrix.suite == 'ux' }}

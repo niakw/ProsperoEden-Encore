@@ -20,6 +20,8 @@ on:
       - 'tools/check-native-sparse-decommit-lock-host.py'
       - 'headless/performance.h'
       - 'headless/performance.cpp'
+      - 'headless/pad.cpp'
+      - 'tools/check-dualsense-rumble-lock-host.py'
       - 'tools/check-native-quiet-gpu-report-host.py'
       - 'tools/check-native-quiet-heap-commit-host.py'
       - 'tools/check-native-quiet-counters-host.py'
@@ -466,6 +468,7 @@ jobs:
           python3 -B tools/verify/hle/check-native-hle-ipc-receive-index-host.py
           python3 -B tools/check-vendored-hid-resource-source.py
           python3 -B tools/check-native-hid-cadence-host.py
+          python3 -B tools/check-dualsense-rumble-lock-host.py
           python3 -B tools/audit-eden-progress-state.py
           python3 -B tools/check-ps5-release-saved-diagnostics-host.py
           python3 -B tools/check-ps5-f07-cold-stalls-host.py

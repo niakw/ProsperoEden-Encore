@@ -667,10 +667,11 @@
     },
     {
       "path": "headless/pad.cpp",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U03",
-      "source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Source-read optimization triage, no additional hotpath edit justified: Controller input and rumble path has release/acquire pending hint before mutex; no hotpath locking on silent polls, preserve paired publication."
+      "evidence": "F07 P1 input/HLE lock duration: TakeRumble snapshots both guest vibration sides and clears the pending hint under the producer mutex, then performs four pow/lround motor conversions after unlocking. Source-extracted O0/O2 ASan+UBSan witness exercises latest-command coalescing and concurrent publication. No PS5 latency or FC27 gain claimed.",
+      "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-dualsense-rumble-lock-host.py"
     },
     {
       "path": "headless/performance.cpp",

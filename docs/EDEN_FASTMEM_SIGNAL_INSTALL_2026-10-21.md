@@ -7,3 +7,7 @@ On the active A32 fastmem handler in `headless/fastmem_handler.cpp`, the former 
 The host test `tools/check-native-fastmem-signal-install-host.py` extracts the true initializer and range helper from maintained source, compiles them with C++20 ASan/UBSan and a deterministic `sigaction` mock, and verifies complete/partial-install rollback and boundary values. Fast gate and preflight execute it.
 
 **422/491 inventoried sources reviewed; 7 remaining engine/runtime paths, 62 launcher UI sources separate.** No assertion of improved FC27 FPS, JIT throughput or console crash behavior.
+
+## F07 / J07 — bounded fastmem fault lookup (30 October 2026)
+
+On the maintained native handler, `Handle` previously scanned all 64 code ranges for every unclaimed synchronous signal even when only one or two live JIT arenas had registered. The high-water mark `published_range_prefix` is raised with release CAS **only after** the callback, end address and executable begin are published. `Handle` acquires it once and scans at most that many entries; retirement never shrinks it (low-index reuse is safe). No added locks, allocations, clocks or logging in the handler; callback, forwarded signal and code registration order remain unchanged. Source-extracted C++20 ASan/UBSan test checks zero reads when empty, one-slot scans, sparse higher slots, retirement/reuse and callback return addresses under O0/O2. This reduces avoidable signal-path work, not a proven PS5 FPS/HUD improvement. F07 PRE-BUILD remains **22/29** pending CI and console measurements.

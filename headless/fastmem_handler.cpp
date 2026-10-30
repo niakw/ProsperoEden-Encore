@@ -29,6 +29,10 @@ struct CodeRange {
 // One entry per JIT code cache with fastmem (a few per emulated core). Lock-free so the
 // handler never waits on a thread that registers or retires a JIT.
 std::array<CodeRange, 64> ranges;
+// Only the highest ever published slot bounds the signal-time scan.
+// Do not shrink on retirement: concurrent handlers may still see the old
+// bound, while reuse of a low slot requires no changes to that bound.
+std::atomic<std::size_t> published_range_prefix{0};
 std::atomic<std::uint64_t> fault_count{0};
 struct sigaction previous_segv{}, previous_bus{};
 std::once_flag install_once;
@@ -55,7 +59,9 @@ void Forward(int signal, siginfo_t* info, void* context) {
 
 void Handle(int signal, siginfo_t* info, void* context) {
     const std::uint64_t pc = Eden::Fastmem::ContextRip(context);
-    for (auto& range : ranges) {
+    const std::size_t prefix = published_range_prefix.load(std::memory_order_acquire);
+    for (std::size_t i = 0; i < prefix; ++i) {
+        auto& range = ranges[i];
         const auto begin = range.begin.load(std::memory_order_acquire);
         if (!begin || pc < begin || pc >= range.end.load(std::memory_order_relaxed)) continue;
         const auto* callback = range.callback.load(std::memory_order_acquire);
@@ -128,6 +134,16 @@ void ExceptionHandler::SetFastmemCallback(std::function<FakeCall(u64)> cb) {
             range.end.store(impl->begin + impl->size, std::memory_order_relaxed);
             range.callback.store(&impl->callback, std::memory_order_release);
             range.begin.store(impl->begin, std::memory_order_release);
+            // Publish after callback/end/begin, before registration returns.
+            // Registration is cold; Handle must never scan 64 empty slots.
+            const std::size_t required_prefix =
+                static_cast<std::size_t>(&range - ranges.data()) + 1;
+            std::size_t previous_prefix =
+                published_range_prefix.load(std::memory_order_relaxed);
+            while (previous_prefix < required_prefix &&
+                   !published_range_prefix.compare_exchange_weak(
+                       previous_prefix, required_prefix,
+                       std::memory_order_release, std::memory_order_relaxed)) {}
             impl->range = &range;
             return;
         }

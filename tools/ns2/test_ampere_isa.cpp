@@ -20,11 +20,14 @@ static_assert(Classify(0x918).kind==OpKind::Nop);
 static_assert(Classify(0x210).pure);
 static_assert(BaseOf(0x210)==0x10);
 static_assert(FormOf(0x210)==1);
-static_assert(RelativeOffset48(Instruction{{0,0,0,0}})==0);
-static_assert(RelativeOffset30(Instruction{{0,0,0,0}})==0);
-static_assert(RelativeOffset48(Instruction{{0,0,0x20000,0}})<0);
+
+
+
 
 int main() {
+    assert(RelativeOffset48(Instruction{{0,0,0,0}})==0);
+    assert(RelativeOffset30(Instruction{{0,0,0,0}})==0);
+    assert(RelativeOffset48(Instruction{{0,0,0x20000,0}})<0);
     assert(ISA_ROW_COUNT==629);
     const auto* add=LookupRow(0x210);
     assert(add && std::string_view(add->name)=="IAdd3/IAdd3X");

@@ -186,6 +186,9 @@ jobs:
           PATH="/usr/bin:/bin" python3 tools/check-ns2-npdm-host.py
       - name: Test real Dynarmic RETAA/RETAB decoder table
         run: python3 tools/check-ns2-reta-host.py
+      - name: Compile and run upstream Ampere ISA/address-map host probes
+        run: |
+          python3 tools/check-ns2-ampere-host.py
       - name: Explain scope
         run: |
           echo "Research host checks only: no full Dynarmic, Eden native PS5 build, game or console claims."

@@ -22,7 +22,7 @@
 #include "video_core/control/channel_state.h"
 #include "video_core/engines/puller.h"
 #include "video_core/gpu.h"
-#include "video_core/host1x/host1x.h"
+// GPU pushbuffer and syncpoint method types come from dma_pusher.h.
 
 namespace Service::Nvidia::Devices {
 namespace {

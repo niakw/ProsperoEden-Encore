@@ -202,6 +202,7 @@ on:
       - 'tools/check-ps5-vulkan-worker-wake.py'
       - 'tools/check-ps5-vulkan-chunk-allocation-lock-host.py'
       - 'tools/check-ps5-vulkan-layer-max-tick-host.py'
+      - 'tools/check-ps5-vulkan-layer-tick-reset-host.py'
       - 'tools/check-ps5-vulkan-stride-reallocation.py'
       - 'tools/check-ps5-gpu-time-batch-host.py'
       - 'tools/check-vulkan-query-allocation-host.py'
@@ -304,6 +305,7 @@ jobs:
           set -euo pipefail
           python3 -B tools/check-vulkan-renderpass-clear-bounds-host.py
           python3 -B tools/check-ps5-vulkan-layer-max-tick-host.py
+          python3 -B tools/check-ps5-vulkan-layer-tick-reset-host.py
           python3 -B tools/check-ps5-vulkan-chunk-allocation-lock-host.py
           python3 -B tools/check-native-gpu-fence-release-publication-host.py
           python3 -B tools/check-native-gpu-composite-syncpoint-host.py

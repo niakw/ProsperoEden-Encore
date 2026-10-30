@@ -35,6 +35,8 @@
 
 **30/10 — C04/T01, retrait des ressources Vulkan par tick maximal (source à qualifier) :** `Layer::RefreshResources` (changement de pitch) et `Layer::ReleaseRawImages` sur PS5 attendent désormais uniquement le tick maximal des images utilisant la même timeline GPU, au lieu de répéter jusqu'à 7 attentes Vulkan. Ticks désordonnés/nuls, tableaux vides, préservation de l’AA, chemins desktop et destruction vues→images vérifiés par témoin C++ source-extrait O0/O2 ASan/UBSan intégré aux deux gates. Sous-module `vendor@af499cc12e`. Aucune barrière GPU supprimée ; **CI/console et FPS non encore qualifiés, 22/29 inchangé.**
 
+**30/10 — C04, purge des fences de slots Vulkan après resize (source à qualifier) :** une fois `ReleaseRawImages()` achevé et ses anciens ticks GPU effectivement retirés, `CreateRawImages()` PS5 remet les ticks des images nouvellement créées à zéro. Évite de re-sonder les fences d'anciennes images sur les premiers passages après changement de résolution ; chemin desktop inchangé. Témoin natif source-extrait O0/O2 ASan/UBSan, agrandissement/réduction de l'anneau. `vendor@66bc402610`. **CI et mesure FC27 à qualifier, compteur 22/29 inchangé.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

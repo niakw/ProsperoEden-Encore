@@ -259,6 +259,25 @@ def main() -> int:
                 "class NativeGpuProcessRegistry" in process_registry and
                 "PlanNativeSubmission(" in fence_plan,
                 "Native NS2 GPU channel must be process-scoped and release gated")
+        ampere_root = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere"
+        isa_table = (ampere_root / "ampere_isa_table.h").read_text()
+        isa_probe = (ampere_root / "probe.cpp").read_text()
+        isa_header = (ampere_root / "probe.h").read_text()
+        isa_classifier = (ampere_root / "classify.h").read_text()
+        require('option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in CMAKE and
+                'target_sources(shader_recompiler PRIVATE "${EDEN_NS2_AMPERE_PROBE}")' in CMAKE and
+                'target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")' in CMAKE and
+                'EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR' in CMAKE[release_gate:] and
+                'ISA_ROW_COUNT = 629' in isa_table and
+                'ProbeProgram(std::span<const u8> code)' in isa_probe and
+                'FirstUnreviewedBit(' in isa_probe and
+                'MaxInstructions = 65536' in isa_probe and
+                'ProbeStatus::UnknownOpcode' in isa_probe and
+                'Classify(op12).kind' in isa_probe and
+                'enum class ProbeStatus' in isa_header and
+                'enum class OpKind' in isa_classifier and
+                (ROOT / "tools/ns2/test_ampere_isa_probe.cpp").is_file(),
+                "Ampere shader ISA probe must remain bounded, opt-in and release gated")
         nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()
         ioctl = (nvdrv_root / "native_characteristics_ioctl.h").read_text()

@@ -2093,6 +2093,31 @@ if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
 endif()
 
+# Isolated Ampere SM70+ shader ISA reconnaissance. This compiles the real
+# 128-bit decoder into shader_recompiler only for a deliberately selected NS2
+# research build. No shader translation or renderer enablement is implied.
+option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
+    "Research only: bounded Ampere 128-bit ISA opcode and field probe" OFF)
+if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 Ampere ISA probe requires research metadata mode")
+    endif()
+    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/headless/ns2/ampere")
+    set(EDEN_NS2_AMPERE_PROBE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
+    foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h)
+        if(NOT EXISTS
+           "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
+            message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${EDEN_NS2_AMPERE_PROBE}")
+        message(FATAL_ERROR "Missing NS2 Ampere shader instruction decoder")
+    endif()
+    target_sources(shader_recompiler PRIVATE "${EDEN_NS2_AMPERE_PROBE}")
+    target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -2109,7 +2134,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR
        EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
-       EDEN_NS2_NVDRV_EXPERIMENTAL OR
+       EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

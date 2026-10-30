@@ -219,3 +219,26 @@ The pure `ns2_content_formats.h` now documents and tests existing filename
 routes without registering invented `.xci2`, `.nsp2` or `.mkw` handlers.
 The actual NS2 loader overlay uses it. See:
 **[NS2 content format matrix](NS2_CONTENT_FORMAT_MATRIX_2026-10-30.md)**.
+
+## N4r — Ampere SM70+ 128-bit shader ISA probe (research only)
+
+- Independently pinned the **629-row** SM70+ opcode/mask table from
+  `0x2593/Eden-NS2` commit `e2f285ab1ecd3a2475c2ccad66f23b06b94ead5c`,
+  plus its instruction bit layout and opcode/control-flow classification
+  (`src/shader_recompiler/frontend/ampere/` upstream). The table itself
+  credits Mesa NAK SM70 field layouts, MIT licensed.
+- The new `shader_recompiler/frontend/ampere/probe.{h,cpp}` reads a bounded
+  stream of native **16-byte** instructions, validates exact alignment and
+  65,536-instruction maximum, looks up the actual opcode, classifies
+  branch/exit/control flow and records unknown opcodes or instruction bits
+  outside the reviewed ISA masks. No arbitrary guest input can be claimed
+  as a successfully decoded shader merely because a program blob exists.
+- CMake option `EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL` **OFF by default**
+  adds the real source to `shader_recompiler` under an isolated overlay;
+  the final PS5 release profile explicitly refuses it. Clang and GCC host
+  fixtures exercise MOV/BRA/EXIT, unknown opcodes, unreviewed fields,
+  truncated instructions and size-cap rejection.
+- This is a **foundational ISA decoder**, not the upstream 255-KiB
+  lowering-to-Maxwell translator or full task/mesh shader execution.
+  Correct Ampere shader generation, pipeline state, render passes and
+  validation on PS5 are still needed. No Mario Kart World FPS claim.

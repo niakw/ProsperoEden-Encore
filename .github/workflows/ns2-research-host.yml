@@ -209,6 +209,19 @@ jobs:
           grep -Fq '::Eden::Ncz::Open(' vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp
           grep -Fq '".ncz"' vendor/encore-active/eden-core/src/core/loader/nsp.cpp
           grep -Fq 'NCZ/XCZ' headless/CMakeLists.txt
+      - name: Compile and run real Ampere 128-bit ISA decoder (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -O2 -Wall -Wextra -Werror \
+              -Iheadless/ns2/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_ampere_isa_probe.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              -o "build-ns2-a64/ampere-isa-${cxx//+/}"
+            "build-ns2-a64/ampere-isa-${cxx//+/}"
+          done
       - name: Compile and run Switch 1/2 content-format recognition fixtures
         shell: bash
         run: |

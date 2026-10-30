@@ -85,7 +85,7 @@ La compression NCZ par blocs se lit directement. Un fichier « solid » peut êt
 ## 🚀 Installation
 
 > [!TIP]
-> Pour une version publiée et qualifiée, commence par [les releases GitHub](https://github.com/niakw/Prospero.Eden-Encore/releases). Les artefacts d'une CI verte sont des **versions de développement**, pas une garantie de fonctionnement en match.
+> Pour une version publiée et qualifiée, commence par [les releases GitHub](https://github.com/niakw/ProsperoEden-Encore/releases). Les artefacts d'une CI verte sont des **versions de développement**, pas une garantie de fonctionnement en match.
 
 Le paquet ZIP contient le dossier natif `PPSA99008/`. Une image FFPFSC peut également être proposée selon la release.
 
@@ -154,7 +154,7 @@ Sur le dernier match intégral archivé (`2efd8b3c`), nous avons mesuré **858 i
 2. **Compilation native :** vérifie les exécutables et le contenu réel de l'archive téléchargeable.
 3. **Console :** valide ensuite le lancement, la réactivité, la qualité d'image, les commandes et la progression du jeu.
 
-[Tests du code](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Paquets natifs](https://github.com/niakw/Prospero.Eden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit)
+[Tests du code](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Adev%2Fps5-sparse-jit) · [Paquets natifs](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Adev%2Fps5-sparse-jit)
 
 Ne pas confondre une CI verte avec une version stable ou des performances validées sur la console.
 

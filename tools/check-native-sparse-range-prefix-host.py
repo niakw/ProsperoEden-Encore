@@ -146,7 +146,9 @@ int main() {
     assert(!Lookup(0x5001));
     assert(sparse_used_prefix == 2); // freed high tail is no longer scanned
     scans = 0;
-    assert(!Lookup(0x5001) && scans.load() == 2);
+    // A negative lookup now rechecks two retained hints (one retired)
+    // plus the one live unhinted table. Preserve the hints for later hits.
+    assert(!Lookup(0x5001) && scans.load() == 3);
     for (int j = 0; j < 2000; ++j) {
         Register(63, 0x5000);
         assert(Lookup(0x5001) == &sparse_ranges[63]);

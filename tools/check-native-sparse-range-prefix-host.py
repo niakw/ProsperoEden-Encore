@@ -20,6 +20,9 @@ assert "range.begin.load(std::memory_order_acquire)" in lookup
 assert "address < range.end" in lookup
 assert "static thread_local std::array<SparseRange*, 2> last_ranges{};" in lookup
 assert "static thread_local unsigned next_slot = 0;" in lookup
+assert "static thread_local unsigned preferred_slot = 0;" in lookup
+assert "if (probe != 0) preferred_slot = slot;" in lookup
+assert "last_ranges = {};" in lookup
 assert "next_slot ^= 1u;" in lookup
 assert "if (&range == last_ranges[0] || &range == last_ranges[1]) continue;" in lookup
 assert "if (sparse_used_prefix != 0)" in lookup
@@ -130,7 +133,7 @@ int main() {
         assert(Lookup(0x3001) == &sparse_ranges[0]);
         assert(Lookup(0x5001) == &sparse_ranges[63]);
     }
-    assert(scans.load() <= 30004); // <= 3 begin probes per alternating pair
+    assert(scans.load() <= 40004); // <= 4 probes per alternating pair
     Release(63);
     assert(!Lookup(0x5001));
     assert(sparse_used_prefix == 2); // freed high tail is no longer scanned
@@ -182,4 +185,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 alternating_10000=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 alternating_10000=1 threads=4 O0_O2_O3=1")

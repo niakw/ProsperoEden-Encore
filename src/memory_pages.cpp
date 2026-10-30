@@ -305,10 +305,10 @@ std::size_t sparse_jit_committed = 0;
 // owner-locked exact counters. Both are updated only after ownership changes.
 std::atomic<std::size_t> sparse_jit_reserved_live{0};
 std::atomic<std::size_t> sparse_jit_committed_live{0};
-// JIT executable aliases are immutable during an active title. The epoch
-// invalidates per-thread "already committed" hints whenever a region is
-// created or released, preventing an old pointer/VA from being mistaken for
-// a new code cache in a subsequent title.
+// JIT executable aliases are immutable during an active title. A new region
+// cannot change already committed pages in any live region, so it must not
+// flush other workers' positive hints. Only trim or release invalidates the
+// epoch: both can retire physical backing or recycle an old RX address.
 std::atomic<std::uint64_t> sparse_jit_generation{1};
 }
 
@@ -449,7 +449,9 @@ void* ReserveSparseJitCode(std::size_t size, void** writable_out) noexcept {
         if (!sparse_jit_regions.emplace(rx, std::move(region)).second)
             std::abort();
         sparse_jit_reserved_live.fetch_add(size, std::memory_order_relaxed);
-        sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);
+        // No epoch bump on insertion: previously live committed RX regions
+        // retain their positive per-worker cache entries. Trim and release
+        // still invalidate the epoch before any backing can be reclaimed.
     } catch (...) {
         if (munmap(rx, size) != 0 || munmap(rw, size) != 0) std::abort();
         errno = ENOMEM;

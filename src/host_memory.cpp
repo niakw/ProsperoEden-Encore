@@ -246,6 +246,15 @@ public:
         // cannot change either its own JIT map byte or its predecessor's
         // cross-page guard; leave both bytes alone on this no-op path.
         if (first == last && page_access[first] == access) return;
+        // The native fastmem permission granule spans four guest pages.
+        // A repeated update WITHIN one granule changes neither its map
+        // bytes nor any cross-page guard. Check at most four bytes; never
+        // scan long/changed mappings or suppress cross-granule updates.
+        if (first < last && last - first < PagesPerGranule &&
+            first / PagesPerGranule == last / PagesPerGranule &&
+            std::all_of(page_access.begin() + first, page_access.begin() + last + 1,
+                        [access](std::uint8_t current) { return current == access; }))
+            return;
         std::fill(page_access.begin() + first, page_access.begin() + last + 1, access);
         Refresh(first, last);
     }

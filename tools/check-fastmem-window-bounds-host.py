@@ -173,6 +173,8 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-refresh-') as temp:
 # requests continue to publish updated bytes under the same owner mutex.
 protect_body = '    void Protect(' + source.split('    void Protect(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 assert protect_body.count('if (first == last && page_access[first] == access) return;') == 1
+assert 'first / PagesPerGranule == last / PagesPerGranule' in protect_body
+assert 'std::all_of(page_access.begin() + first, page_access.begin() + last + 1' in protect_body
 assert protect_body.index('std::lock_guard lock{mutex};') < protect_body.index(
     'if (first == last && page_access[first] == access) return;')
 protect_cpp = r'''
@@ -186,6 +188,7 @@ protect_cpp = r'''
 #include <vector>
 constexpr std::size_t GuestPage = 0x1000;
 constexpr std::size_t GuestPages = 64;
+constexpr std::size_t PagesPerGranule = 4;
 constexpr std::size_t WindowBytes = GuestPage * GuestPages;
 struct Counters { std::atomic<unsigned> protect_calls{0}; };
 Counters counters;
@@ -216,14 +219,20 @@ int main() {
     assert(w.refresh_calls == 3 && w.page_access[1] == 2 &&
            w.page_access[2] == 2);
     w.Protect(0x1fff, 2, 2);
-    assert(w.refresh_calls == 4);
+    assert(w.refresh_calls == 3); // same-granule repeat is now a no-op
+    // A repeated access that crosses 16 KiB retains its original refresh.
+    w.Protect(0x3fff, 2, 2);
+    assert(w.refresh_calls == 4 && w.page_access[3] == 2 &&
+           w.page_access[4] == 2);
+    w.Protect(0x3fff, 2, 2);
+    assert(w.refresh_calls == 5);
     w.Protect(WindowBytes - 1, 1, 3);
-    assert(w.refresh_calls == 5 && w.map[GuestPages - 1] == 3);
+    assert(w.refresh_calls == 6 && w.map[GuestPages - 1] == 3);
     w.Protect(WindowBytes, 1, 3);
     w.Protect(WindowBytes - 1, 0, 1);
-    assert(w.refresh_calls == 5 && counters.protect_calls == 20006);
-    std::printf("FASTMEM_PROTECT_SINGLE_PAGE_NOOP_PASS repeated=20000 "
-                "changed=1 adjacent=1 bounds=1\n");
+    assert(w.refresh_calls == 6 && counters.protect_calls == 20008);
+    std::printf("FASTMEM_PROTECT_SAME_GRANULE_NOOP_PASS repeated=20000 "
+                "same16k=1 cross16k=1 changed=1 bounds=1\n");
 }
 '''.replace('PAGES', method).replace('\nPROTECT\n', '\n' + protect_body + '\n')
 assert '\nPROTECT\n' not in protect_cpp

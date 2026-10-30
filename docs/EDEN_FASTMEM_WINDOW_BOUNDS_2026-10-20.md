@@ -37,3 +37,7 @@ measurement, not a PS5 frame-time benchmark.
 ### 30 October 2026 — fastmem repeat Map/Unmap skip, fail-safe kernel retry
 
 `src/host_memory.cpp::Window::Map/Unmap` bypasses redundant per-page guard refresh for an identical, **already aliased** one-page mapping, or for a one-page Unmap whose backing and permissions are already absent. Map never skips an unaliased chunk, even when metadata is identical, preserving the attempted retry after a refused fixed kernel alias. Calls still increment diagnostics counters, while changed mappings and requests spanning pages retain the original Update and guard publication. The source-extracted C++20 O0/O2 ASan/UBSan witness checks 10,000 repeat unchanged aliases, 10,000 repeat unmaps, nonaliased retries and crossing page boundaries. No PS5 frame-time claim. **F07 remains 22/29**.
+
+### 30 October 2026 — no-op permission updates within one PS5 16 KiB granule
+
+`Window::Protect` now bypasses the metadata fill and JIT guard rebuild for unchanged permissions over **2–4** contiguous guest 4 KiB pages *inside one 16 KiB PS5 granule*. This extends the proven single-page no-op without a full-window search or modifications to native virtual mapping. Checks are bounded to at most four existing permission bytes under the original mutex; a changed byte or any cross-granule range takes the original publication path. The source-extracted O0/O2 ASan/UBSan witness distinguishes repeated same-granule requests from cross-granule requests, plus 20,000 repeated single-page calls. No console FPS measurements. F07 **22/29**.

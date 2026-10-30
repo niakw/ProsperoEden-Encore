@@ -19,6 +19,7 @@ start=SOURCE.index("Frame* PresentManager::GetRenderFrame() {")
 end=SOURCE.index("\nsize_t PresentManager::MaxExtraFrames() const {", start)
 METHODS=SOURCE[start:end]
 assert METHODS.count("void PresentManager::Present(Frame* frame) {")==1
+assert "const bool wake_presenter = present_queue.empty() && !present_in_flight;" in METHODS
 sync=METHODS.split("    } else {\n        scheduler.WaitWorker();",1)[1]
 assert sync.index("CopyToSwapchain(frame);") < sync.index("std::scoped_lock lock{free_mutex};")
 assert sync.index("free_queue.push_back(frame);") < sync.index("free_cv.notify_one();")
@@ -112,6 +113,8 @@ struct PresentManager {
     CheckedFrames free_queue;
     std::mutex queue_mutex;
     std::deque<Frame*> present_queue;
+    // Mirrors the queue-mutex-guarded state read by the extracted Present().
+    bool present_in_flight{};
     std::condition_variable frame_cv;
     PresentReadyCV present_ready_cv;
     std::exception_ptr present_failure;

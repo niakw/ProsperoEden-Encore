@@ -769,3 +769,9 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 - `src/host_memory.cpp::Window::Unmap` : fusion des deux scans `page_backing`/`page_access` sur les petites plages ≤16 pages ; mêmes frontières de granules, compteurs et `Update` si un seul octet/page est encore valide.
 - `tools/check-fastmem-window-bounds-host.py` : contrôle source modifié, tests hôte existants de 10 000 Unmap identiques, remaps, 2/16/17 pages, permissions et alias, C++ sous sanitizers (verdict CI à confirmer). Manifeste synchronisé sur `4ae5e572d0534fb2e40a999a419199f1b3a8f8cc`.
 - Optimisation sans benchmark hardware, **F07 reste 22/29**. Aucun build PS5 ni release.
+
+## F07 — réparation du témoin de recyclage Vulkan (30 octobre 2026)
+
+- **Échec CI réel :** prévalidation hôte [#41094609661](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41094609661), suite `source-audit`, sur `main@3838aa802ef5e966e8b803bbd82038a365264608` : `check-vulkan-sync-recycle-host.py` échouait à compiler son C++ source-extrait car `PresentManager::Present` lit `present_in_flight`, absent du modèle du témoin. Les cinq autres suites source ont réussi ; fast gate et CodeQL ont réussi sur ce même SHA.
+- **Correction ciblée :** `tools/check-vulkan-sync-recycle-host.py` déclare `present_in_flight{}` dans son faux `PresentManager` sous le même contrat `queue_mutex` que le code réel, et exige explicitement le prédicat de réveil extrait du moteur. Aucun contournement du compilateur, aucune suppression de test ni assouplissement de l'oracle source.
+- **Portée et preuve :** le témoin conserve les scénarios sync/async, recyclage sous `free_mutex`, exception de copie et ASan/UBSan. Revalidation complète à attendre sur la CI du commit réparateur ; aucune performance PS5/FW13.60 ni image console n'est revendiquée. Aucun changement de `vendor/`, du moteur ou des déclencheurs de build natif. **F07 reste 22/29 pré-build, 0/12 post-build.**

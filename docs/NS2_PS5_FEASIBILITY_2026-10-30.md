@@ -123,6 +123,13 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 - Vérification de l'intégrité du stream, des limites, de la zone de padding et des adresses natives traduites. Tests host négatifs ajoutés pour map incohérente, stage divergent, extent falsifié.
 - Ces tests restent distincts de l'exécution complète du compilateur IR, de SPIR-V et de Vulkan/RADV : **aucun titre NS2 sur PS5 n'est validé**.
 
+### N3f — CFG exécuté sur hôte (objectif de validation)
+
+- Une fixture NOP/MOV/EXIT synthétique transmet une image Ampere revue au `NativeMaxwellEnvironment`, puis construit le **vrai** `Shader::Maxwell::Flow::CFG` d'Eden, en modes `exits_to_dispatcher=false/true`.
+- Le test vise à vérifier que le CFG lit les instructions Maxwell transcodées, franchit les slots de scheduling, produit des blocs cohérents et n'interroge jamais l'instruction native source.
+- CI distincte des simples vérifications de syntaxe : le succès doit être confirmé sur le commit de ce test avant de déclarer ce palier atteint.
+- **Ne teste toujours pas** `Shader::Maxwell::TranslateProgram`, l'optimisation IR, SPIR-V, Vulkan/RADV ou un jeu PS5.
+
 ## 4. Plan d'intégration isolé — ordre d'exécution
 
 | Étape | Livraison et contrôle | État |

@@ -326,6 +326,29 @@ jobs:
               -Ivendor/sources/eden/src \
               headless/ns2/ampere/shader_recompiler/frontend/ampere/ir_bridge.cpp
           done
+      - name: Execute actual Maxwell CFG against reviewed Ampere image (Clang and GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "${cxx}" -std=c++20 -O0 -g0 -DFMT_HEADER_ONLY \
+              -Wno-unused-parameter -pthread \
+              -Ibuild-ns2-a64/fmt/include \
+              -Iheadless/ns2/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_ampere_maxwell_cfg.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              headless/ns2/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp \
+              vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp \
+              vendor/sources/eden/src/shader_recompiler/frontend/maxwell/decode.cpp \
+              vendor/sources/eden/src/shader_recompiler/frontend/maxwell/opcodes.cpp \
+              vendor/sources/eden/src/shader_recompiler/frontend/maxwell/indirect_branch_table_track.cpp \
+              vendor/sources/eden/src/shader_recompiler/frontend/ir/condition.cpp \
+              -o "build-ns2-a64/ampere-cfg-${cxx//+/}"
+            "build-ns2-a64/ampere-cfg-${cxx//+/}"
+          done
       - name: Syntax-check actual Tegra GPU memory shader capture adapter (GCC)
         shell: bash
         run: |

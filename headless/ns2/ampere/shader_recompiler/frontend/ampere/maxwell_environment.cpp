@@ -42,6 +42,8 @@ NativeMaxwellEnvironment::NativeMaxwellEnvironment(
 std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::Create(
     Shader::Environment& source, MaxwellShaderImage image) {
     if (!image.ValidForCompiler() ||
+        source.ShaderStage() == Shader::Stage::Compute ||
+        static_cast<u32>(source.ShaderStage()) > static_cast<u32>(Shader::Stage::VertexA) ||
         image.native_stage != static_cast<u32>(source.ShaderStage()) ||
         image.first_instruction_address != 0x50 ||
         !image.ReadMaxwellInstruction(0x50) ||
@@ -53,6 +55,8 @@ std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::Create(
 std::unique_ptr<NativeMaxwellEnvironment> NativeMaxwellEnvironment::CreateOwned(
     std::unique_ptr<Shader::Environment> source, MaxwellShaderImage image) {
     if (!source || !image.ValidForCompiler() ||
+        source->ShaderStage() == Shader::Stage::Compute ||
+        static_cast<u32>(source->ShaderStage()) > static_cast<u32>(Shader::Stage::VertexA) ||
         image.native_stage != static_cast<u32>(source->ShaderStage()) ||
         image.first_instruction_address != 0x50 ||
         !image.ReadMaxwellInstruction(0x50) ||

@@ -137,6 +137,12 @@ Le dépôt Encore pointe aujourd'hui vers l'archive Eden **`5f142c7926d0c7fcbbd0
 - L'adaptateur GPU réel refuse une discordance entre le stage du contexte possédé et le stage demandé avant la capture mémoire, plutôt que d'échouer après décodage.
 - **Limites :** le compilateur `TranslateProgram` intégral n'est pas encore exécuté sur l'image traduite, et aucun module SPIR-V/Vulkan ou jeu NS2 PS5 n'est validé.
 
+### N3h — vérification exécutable du contrat CFG → IR
+
+- Test hôte Clang/GCC qui exécute le véritable `TranslateReviewedGraphicsIR` sur une image Ampere traduite, reconstruit un **véritable** CFG Maxwell et vérifie les modes de sortie dispatcher avec les pools et les métadonnées de l'hôte.
+- **Limite explicite :** `Shader::Maxwell::TranslateProgram` est remplacé dans **ce test seulement** par un espion de liaison. Ni le vrai compilateur IR, ni les passes SSA, ni SPIR-V/Vulkan ne sont exécutés. Le prochain jalon doit remplacer cet espion par les objets de la bibliothèque de production.
+- Le constructeur de contexte graphique rejette `Compute` et les stages hors plage, même si l'appelant tente de fournir une image de shader déjà abaissée.
+
 ## 4. Plan d'intégration isolé — ordre d'exécution
 
 | Étape | Livraison et contrôle | État |

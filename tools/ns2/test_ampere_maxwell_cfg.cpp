@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Actual Eden Maxwell Flow::CFG execution, not just a bridge syntax check.
+// Execute actual Eden Maxwell CFG and the NS2 IR handoff ABI.
+// TranslateProgram is an explicit link-time SPY here, NOT the maintained IR compiler.
 // Synthetic NOP/MOV/EXIT only; no copyrighted game shader or GPU execution.
 #include <array>
 #include <cstdio>
@@ -9,6 +10,9 @@
 #include "common/logging.h"
 #include "shader_recompiler/frontend/ampere/maxwell_environment.h"
 #include "shader_recompiler/frontend/maxwell/control_flow.h"
+#include "shader_recompiler/frontend/ampere/ir_bridge.h"
+#include "shader_recompiler/host_translate_info.h"
+#include <stdexcept>
 
 // Link only the CFG and decoder, not the full emulator's logging runtime.
 // Never let a decoder assertion or log event count as a passing fixture.
@@ -25,8 +29,8 @@ static void Require(bool pass, const char* reason) {
     if (!pass) { std::fprintf(stderr, "NS2 Maxwell CFG: %s\n", reason); std::exit(1); }
 }
 struct NativeSource final : Shader::Environment {
-    NativeSource() {
-        stage=Shader::Stage::VertexB;
+    explicit NativeSource(Shader::Stage shader_stage = Shader::Stage::VertexB) {
+        stage=shader_stage;
         start_address=0;
     }
     u64 ReadInstruction(u32) override {
@@ -51,6 +55,34 @@ static void Emit(std::vector<u8>& v,u32 a,u32 b=0,u32 c=0,u32 d=0) {
         for (u32 shift=0;shift<32;shift+=8)
             v.push_back(static_cast<u8>(w>>shift));
 }
+
+namespace {
+// Deliberate stub, allowing actual TranslateReviewedGraphicsIR + CFG to be
+// executed independently of the hundreds of maintained IR translation units.
+Shader::Environment* expected_env{};
+bool expected_dispatcher{};
+u32 calls{};
+}
+namespace Shader::Maxwell {
+Shader::IR::Program TranslateProgram(
+    Shader::ObjectPool<Shader::IR::Inst>&,
+    Shader::ObjectPool<Shader::IR::Block>&,
+    Shader::Environment& actual,
+    Shader::Maxwell::Flow::CFG& cfg,
+    const Shader::HostTranslateInfo& info) {
+    Require(&actual == expected_env &&
+            cfg.ExitsToDispatcher() == expected_dispatcher &&
+            !cfg.Functions().empty() &&
+            cfg.Functions().front().entrypoint.Offset() == 0x50 &&
+            info.min_ssbo_alignment == 64,
+            "bridge passes actual Maxwell CFG, owned environment and host info");
+    ++calls;
+    Shader::IR::Program sentinel{};
+    sentinel.stage = actual.ShaderStage();
+    return sentinel;
+}
+} // namespace Shader::Maxwell
+
 int main() {
     std::array<u8,0x50> header{};
     constexpr u32 pt=7U<<12, exit_true=7U<<23;
@@ -87,5 +119,34 @@ int main() {
         }
         Require(saw_exit,"translated EXIT yields a terminating CFG edge");
     }
-    std::puts("NS2 actual Maxwell CFG: PASS (IR/SPIR-V/Vulkan not executed)");
+    Shader::HostTranslateInfo host{};
+    host.min_ssbo_alignment = 64;
+    expected_env = env.get();
+    Shader::ObjectPool<Shader::IR::Inst> inst_pool{4};
+    Shader::ObjectPool<Shader::IR::Block> block_pool{4};
+    Shader::ObjectPool<Shader::Maxwell::Flow::Block> flow_pool{64};
+    for (bool dispatcher : {false, true}) {
+        expected_dispatcher = dispatcher;
+        auto sentinel = TranslateReviewedGraphicsIR(
+            inst_pool, block_pool, flow_pool, *env, host, dispatcher);
+        Require(sentinel.stage == Shader::Stage::VertexB,
+                "IR bridge calls the supplied compiler interface");
+    }
+    Require(calls == 2, "IR bridge invoked exactly once per dispatcher mode");
+    // A pretranslated native image must never smuggle Compute/QMD or
+    // an unknown stage into the graphics Maxwell compiler.
+    auto compute_image=BuildMaxwellShaderImage(
+        header,native,static_cast<u32>(Shader::Stage::Compute));
+    Require(compute_image.ValidForCompiler(), "compute image is structurally valid");
+    Require(!NativeMaxwellEnvironment::CreateOwned(
+                std::make_unique<NativeSource>(Shader::Stage::Compute),
+                std::move(compute_image)),
+            "Compute stage rejected before GPU IR bridge");
+    auto unknown_image=BuildMaxwellShaderImage(header,native,0xffffffffU);
+    Require(!NativeMaxwellEnvironment::CreateOwned(
+                std::make_unique<NativeSource>(static_cast<Shader::Stage>(0xffffffffU)),
+                std::move(unknown_image)),
+            "Unknown stage rejected before GPU IR bridge");
+    std::puts("NS2 actual Maxwell CFG and IR handoff ABI: PASS "
+              "(TranslateProgram spy only; real IR/SPIR-V/Vulkan not executed)");
 }

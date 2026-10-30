@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "dynarmic/tests/A64/testenv.h"
 #include "dynarmic/interface/A64/a64.h"
+#include "dynarmic/interface/exclusive_monitor.h"
 
 struct Pattern {std::string_view name,bits;};
 static constexpr Pattern patterns[]={
@@ -35,6 +36,7 @@ static std::uint32_t encode(std::string_view name,
     return result;
 }
 struct Env: A64TestEnv {
+    Dynarmic::ExclusiveMonitor monitor{1};
     unsigned fail=0,writes=0;
     bool MemoryWriteExclusive64(u64 addr,u64 value,u64 expected) override {
         ++writes;
@@ -50,6 +52,7 @@ static void check(bool ok,const char* msg) {
 static void atomic(std::string_view op,u64 before,u64 src,u64 after,bool cas,unsigned fails=0){
     std::cerr << "RUN " << op << " before=" << before << " src=" << src << " after=" << after << " fails=" << fails << std::endl;
     Env env;Dynarmic::A64::UserConfig conf{}; conf.callbacks=&env;
+    conf.global_monitor=&env.monitor;
     conf.code_cache_size=16*1024*1024;
     Dynarmic::A64::Jit jit{conf};
     env.code_mem={encode(op,{{'z',3},{'s',2},{'n',1},{'t',3},
@@ -75,7 +78,7 @@ int main(){
     atomic("LDEOR",48,0x14,0x24,false);
     {
         std::cerr << "RUN RETAA" << std::endl;
-        Env env; Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;
+        Env env; Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;cfg.global_monitor=&env.monitor;
         Dynarmic::A64::Jit jit{cfg};
         env.code_mem={0xD65F0BFF,0x14000000};
         jit.SetRegister(30,4);jit.SetPC(0);jit.Step();
@@ -83,7 +86,7 @@ int main(){
     }
     {
         std::cerr << "RUN LDAPR" << std::endl;
-        Env env;Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;
+        Env env;Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;cfg.global_monitor=&env.monitor;
         Dynarmic::A64::Jit jit{cfg};
         env.code_mem={encode("LDAPR",{{'s',3},{'n',1},{'t',3}}),0x14000000};
         env.MemoryWrite64(0x200,0x12345678);

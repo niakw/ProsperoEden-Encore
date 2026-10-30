@@ -52,6 +52,19 @@ jobs:
           # Validate the source itself was never created for this render.
           test ! -e build/readme-home/preview-hero.tga
           echo "EDEN_ORIGINAL_WALLPAPER_PREVIEW_NO_SYNTHETIC_HERO: PASS"
+          # Independently prove the OpenGL texture came from the same
+          # user-supplied JPEG as the PS5 package, not the stale source TGA.
+          python3 - <<'PY'
+          from PIL import Image, ImageOps, ImageChops
+          with Image.open("assets/encore-background.jpg") as photo:
+              expected = ImageOps.fit(photo.convert("RGB"), (1920, 1080),
+                                      method=Image.Resampling.LANCZOS)
+          with Image.open("headless/prosperoeden/ui/art/backdrop.tga") as tga:
+              actual = ImageOps.flip(tga.convert("RGB"))
+          assert ImageChops.difference(expected, actual).getbbox() is None, (
+              "Host OpenGL backdrop does not match canonical PS5 wallpaper JPEG")
+          print("ENCORE_HOST_WALLPAPER_MATCHES_PS5_SOURCE: PASS")
+          PY
 
       - name: Verify the real screenshot and replace READMEs
         run: |

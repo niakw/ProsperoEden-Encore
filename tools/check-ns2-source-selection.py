@@ -37,6 +37,22 @@ def main() -> int:
         require("MAX_NUM_CPU_CORES = 6" in
                 (cpu6 / "dynarmic/interface/exclusive_monitor.h").read_text(),
                 "Six-slot Dynarmic exclusive monitor missing")
+        bridge_gate = CMAKE[CMAKE.index("# N3m: compile a renderer-callable"):
+                           CMAKE.index("# Release gate: Vulkan/RADV")]
+        require('option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' in bridge_gate and
+                'NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in bridge_gate and
+                'NOT EDEN_NS2_METADATA_EXPERIMENTAL' in bridge_gate and
+                'NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN' in bridge_gate and
+                'target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")'
+                    in bridge_gate and
+                'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR'
+                    in CMAKE[CMAKE.index("# Release gate: Vulkan/RADV"):],
+                "NS2 renderer compilation must be explicitly opt-in and release-forbidden")
+        bridge_source = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
+        require(bridge_source.is_file() and
+                "CompileReviewedNativeVertexSpirv(" in bridge_source.read_text() and
+                "Shader::Stage::VertexB" in bridge_source.read_text(),
+                "Real VertexB-only SPIR-V bridge owner is missing")
         require('EDEN_NS2_METADATA_EXPERIMENTAL=ON' in CMAKE,
                 "ExeFS must require metadata opt-in")
         require('EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,

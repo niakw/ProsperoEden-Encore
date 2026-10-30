@@ -2164,6 +2164,26 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
 endif()
 
+# N3m: compile a renderer-callable, explicitly scoped NS2 VertexB IR -> SPIR-V
+# adapter. The active PS5 Vulkan pipeline owner is NOT replaced or modified:
+# only a session-verified NS2 caller may invoke this isolated API.
+option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
+    "Research only: explicit NS2 VertexB to Vulkan SPIR-V compiler API" OFF)
+if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
+    if(NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR
+            "NS2 Vulkan shader bridge requires native PS5 Vulkan and Ampere/metadata research")
+    endif()
+    set(EDEN_NS2_VULKAN_SHADER_BRIDGE
+        "${PORT_ROOT}/headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
+    if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
+        message(FATAL_ERROR "Missing opt-in NS2 renderer-side SPIR-V compiler")
+    endif()
+    target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -2181,6 +2201,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
+        EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

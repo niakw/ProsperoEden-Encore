@@ -10,7 +10,7 @@
 #include <vector>
 #define CANNOT_EXPLICITLY_INSTANTIATE
 #include "common/settings.h"
-#include "shader_recompiler/backend/spirv/emit_spirv.h"
+#include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 #include "shader_recompiler/frontend/ampere/ir_bridge.h"
 #include "shader_recompiler/host_translate_info.h"
 
@@ -20,7 +20,7 @@ static void Require(bool ok, const char* why) {
     if (!ok) { std::fprintf(stderr, "NS2 SPIR-V: %s\n", why); std::exit(1); }
 }
 struct SyntheticSource final : Shader::Environment {
-    SyntheticSource() { stage=Shader::Stage::VertexB; start_address=0; }
+    explicit SyntheticSource(Shader::Stage stage_=Shader::Stage::VertexB) { stage=stage_; start_address=0; }
     u64 ReadInstruction(u32) override { std::abort(); }
     u32 ReadCbufValue(u32,u32) override { return 0; }
     Shader::TextureType ReadTextureType(u32) override { return {}; }
@@ -62,12 +62,10 @@ int main(int argc,char** argv) {
     Shader::Profile profile{};
     profile.supported_spirv=0x00010500; // SPIR-V 1.5
     for (bool dispatcher:{false,true}) {
-        Shader::ObjectPool<Shader::IR::Inst> inst_pool{4096};
-        Shader::ObjectPool<Shader::IR::Block> block_pool{256};
-        Shader::ObjectPool<Shader::Maxwell::Flow::Block> flow_pool{256};
-        auto ir=TranslateReviewedGraphicsIR(inst_pool,block_pool,flow_pool,*env,host,dispatcher);
-        Require(ir.stage==Shader::Stage::VertexB&&!ir.blocks.empty(),"invalid real graphics IR");
-        const auto words=Shader::Backend::SPIRV::EmitSPIRV(profile,ir);
+        const auto compiled=CompileReviewedNativeVertexSpirv(
+            *env,host,profile,Shader::RuntimeInfo{},dispatcher);
+        Require(compiled.Ready(),"real PS5 renderer bridge must produce owned SPIR-V");
+        const auto& words=compiled.words;
         Require(words.size()>5&&words[0]==0x07230203U,"missing SPIR-V magic");
         Require(words[1]==profile.supported_spirv&&words[3]>0,"bad version or ID bound");
         const auto output=std::string(argv[1])+(dispatcher?"-dispatcher.spv":"-direct.spv");
@@ -79,5 +77,16 @@ int main(int argc,char** argv) {
         Require(bool(file),"cannot flush complete SPIR-V");
         std::printf("SPIR-V emitted: %s (%zu words)\n",output.c_str(),words.size());
     }
+    auto vertex_a_image=BuildMaxwellShaderImage(
+        header,code,static_cast<u32>(Shader::Stage::VertexA));
+    Require(vertex_a_image.ValidForCompiler(),"VertexA negative fixture failed");
+    auto vertex_a_env=NativeMaxwellEnvironment::CreateOwned(
+        std::make_unique<SyntheticSource>(Shader::Stage::VertexA),
+        std::move(vertex_a_image));
+    Require(bool(vertex_a_env),"VertexA environment must exist before stage gate");
+    const auto rejected=CompileReviewedNativeVertexSpirv(
+        *vertex_a_env,host,profile,Shader::RuntimeInfo{});
+    Require(rejected.status==NativeSpirvStatus::UnsupportedStage &&
+            rejected.words.empty(),"unmerged VertexA must fail closed");
     std::puts("NS2 real SPIR-V emitter PASS (host-only; Vulkan and PS5 not executed)");
 }

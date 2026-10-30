@@ -55,7 +55,7 @@ def main():
     overlay = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere"
     sources = [SHADER / name for name in shaders] + [
         overlay / (name + ".cpp") for name in
-        ("ir_bridge", "maxwell_environment", "maxwell_image", "lower_bridge", "probe")
+        ("ir_bridge", "renderer_spirv_bridge", "maxwell_environment", "maxwell_image", "lower_bridge", "probe")
     ] + [SRC / "common/settings_common.cpp",
          ROOT / "tools/ns2/jit-host/common_shim.cpp",
          ROOT / "tools/ns2/test_ampere_real_spirv.cpp"]

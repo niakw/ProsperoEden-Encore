@@ -284,9 +284,13 @@ FakeServices::FakeServices(const std::string &covers_directory)
         if (index != 8 || branded)
         {
             game.cover = covers_directory + "/cover-" + std::to_string(index) + ".tga";
-            const bool provided = branded && std::filesystem::is_regular_file(game.cover);
-            if (!provided && !write_cover(game.cover, sample, index))
+            // A README preview must never silently fall back to the generic art.
+            if (branded) {
+                if (!std::filesystem::is_regular_file(game.cover))
+                    game.cover.clear();
+            } else if (!write_cover(game.cover, sample, index)) {
                 game.cover.clear();
+            }
         }
         // The dedicated README capture showcases Eden Encore's *own*
         // packaged wallpaper. Its fixture must not generate the artificial

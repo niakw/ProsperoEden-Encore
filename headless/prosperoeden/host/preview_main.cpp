@@ -387,6 +387,32 @@ void pictures(Stage &s)
     s.wait(0.42f);
     s.shoot("00-arriving");
     s.wait(3.0f);
+    // Host-only screenshot gate. The simulated 60 Hz ticks advance much
+    // faster than wall time, so asynchronous cover uploads may still be
+    // pending when the Home image is written. Require all seven GL textures.
+    if (const char *branded = std::getenv("PE_PREVIEW_BRANDED_HOME");
+        branded != nullptr && std::strcmp(branded, "1") == 0) {
+        const auto recents = s.services.home().recents;
+        const std::size_t count = std::min<std::size_t>(7, recents.size());
+        std::size_t ready = 0;
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(20);
+        do {
+            ready = 0;
+            for (std::size_t i = 0; i < count; ++i)
+                if (!recents[i].cover.empty() &&
+                    s.textures.cover(recents[i].cover, 214.0f).texture != 0)
+                    ++ready;
+            if (ready == 7 && count == 7) break;
+            s.frame(); // normal upload/decoder pump, never a rendering bypass
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        } while (std::chrono::steady_clock::now() < deadline);
+        std::fprintf(stderr, "ENCORE_PREVIEW_CARD_ART_READY: %zu/%zu\n", ready, count);
+        if (ready != 7 || count != 7) {
+            std::fprintf(stderr, "README preview: missing illustrated game tiles\n");
+            s.ok = false;
+        }
+        s.wait(0.5f); // finish tile opacity transitions
+    }
     s.shoot("01-home");
     s.press({Key::right});
     s.wait(0.6f);

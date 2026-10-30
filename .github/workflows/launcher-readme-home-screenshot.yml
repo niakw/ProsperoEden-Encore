@@ -93,7 +93,9 @@ jobs:
           # A new path also invalidates GitHub's CDN/browser cached preview.
           # Compare against the old capture that user reported as wrong.
           previous_capture = Path("assets/screenshots/encore-home.png")
-          published = Path("assets/screenshots/eden-encore-home-wallpaper-en.png")
+          prior_readme = Path("assets/screenshots/eden-encore-home-wallpaper-en.png")
+          # Cache-busting filename: GitHub can keep the older preview in its CDN.
+          published = Path("assets/screenshots/eden-encore-home-sample-art.png")
           if previous_capture.exists():
               with Image.open(previous_capture) as previous:
                   old = previous.convert("RGB").resize((1920, 1080))
@@ -107,17 +109,31 @@ jobs:
                   assert max(changed) > 9.0, (
                       "Original Eden wallpaper still hidden by the synthetic Home hero",
                       changed)
+          # Verify the actual visible artwork rail, not just the wallpaper.
+          for index in range(7):
+              card_x = round(76 + index * ((1770 - 16 * 6) / 7 + 16))
+              tile = rgb.crop((card_x + 24, 575, card_x + 200, 735))
+              contrast = max(ImageStat.Stat(tile).stddev)
+              print("ENCORE_RENDERED_CARD_CONTRAST", index, round(contrast, 1))
+              assert contrast > 16.0, ("Preview game tile appears blank", index, contrast)
+          if prior_readme.exists():
+              with Image.open(prior_readme) as previous:
+                  old = previous.convert("RGB").crop((76, 551, 1850, 765))
+                  new_cards = rgb.crop((76, 551, 1850, 765))
+                  print("ENCORE_SAMPLE_ART_REGION_CHANGE",
+                        ImageStat.Stat(ImageChops.difference(new_cards, old)).mean)
           published.parent.mkdir(parents=True, exist_ok=True)
           shutil.copyfile(screenshot, published)
+          prior_readme.unlink(missing_ok=True)
           alt = ("Eden Encore Home in English with the original wallpaper "
                  "and fictional sample game artwork")
           for filename in ("README.md", "README.fr.md"):
               path = Path(filename)
               source = path.read_text(encoding="utf-8")
               pattern = (r'<p align="center"><img src="assets/'
-                         r'(?:encore-background\.jpg|screenshots/(?:encore-home|eden-encore-home-wallpaper-en)\.png)"'
+                         r'(?:encore-background\.jpg|screenshots/(?:encore-home|eden-encore-home-wallpaper-en|eden-encore-home-sample-art)\.png)"'
                          r' alt="[^"]+" width="860"></p>')
-              new = ('<p align="center"><img src="assets/screenshots/eden-encore-home-wallpaper-en.png"'
+              new = ('<p align="center"><img src="assets/screenshots/eden-encore-home-sample-art.png"'
                      f' alt="{alt}" width="860"></p>')
               source, count = re.subn(pattern, lambda _: new, source)
               assert count == 1, (filename, "expected exactly one known Encore Home preview", count)
@@ -128,7 +144,7 @@ jobs:
       - name: Persist real Home capture and README links on the same branch
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          git add assets/screenshots/eden-encore-home-wallpaper-en.png README.md README.fr.md
+          git add -A -- assets/screenshots/eden-encore-home-wallpaper-en.png assets/screenshots/eden-encore-home-sample-art.png README.md README.fr.md
           if git diff --cached --quiet; then
             echo "Native screenshot is unchanged."
             exit 0

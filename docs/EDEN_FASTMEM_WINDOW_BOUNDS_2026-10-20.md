@@ -29,3 +29,7 @@ Compare the entire output map against the previous loop across page/alias
 boundaries and the final guard page, while counting helper evaluations. N map
 bytes should require N+1 evaluations instead of 2N. This is a source-work
 measurement, not a PS5 frame-time benchmark.
+
+### 30 October 2026 — redundant single-page fastmem permission no-op
+
+`src/host_memory.cpp::Window::Protect` now skips the redundant `Refresh` for a single guest page whose requested permission matches its current permission. All Map/Unmap/Protect publishers already serialize under the same mutex and refresh their own map-byte modifications, so an unchanged page cannot change its own direct-JIT guard or the preceding page's cross-boundary guard. Existing accounting remains; changed protections and multi-page ranges use the original path. The `tools/check-fastmem-window-bounds-host.py` C++20 source-extracted host ASan/UBSan fixture exercises 20,000 repeated no-op calls under -O0/-O2 plus changed, adjacent and invalid requests. No console FPS claim; F07 still **22/29**.

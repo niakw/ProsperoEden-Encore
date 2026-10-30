@@ -230,6 +230,11 @@ public:
         if (!Pages(offset, length, first, last)) return;
         std::lock_guard lock{mutex};
         ++counters.protect_calls;
+        // Map/Unmap/Protect serialize all backing and permission-byte
+        // publications under this mutex. A repeated one-page permission
+        // cannot change either its own JIT map byte or its predecessor's
+        // cross-page guard; leave both bytes alone on this no-op path.
+        if (first == last && page_access[first] == access) return;
         std::fill(page_access.begin() + first, page_access.begin() + last + 1, access);
         Refresh(first, last);
     }

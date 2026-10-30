@@ -167,3 +167,72 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-refresh-') as temp:
                     '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
                     str(path), '-o', str(executable)], check=True, timeout=60)
     subprocess.run([str(executable)], check=True, timeout=15)
+
+# Exact source-extracted Window::Protect witness: one-page permission no-op
+# leaves JIT map bytes unchanged and saves a Refresh; changed and cross-page
+# requests continue to publish updated bytes under the same owner mutex.
+protect_body = '    void Protect(' + source.split('    void Protect(', 1)[1].split('\n    }', 1)[0] + '\n    }'
+assert protect_body.count('if (first == last && page_access[first] == access) return;') == 1
+assert protect_body.index('std::lock_guard lock{mutex};') < protect_body.index(
+    'if (first == last && page_access[first] == access) return;')
+protect_cpp = r'''
+#include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <mutex>
+#include <vector>
+constexpr std::size_t GuestPage = 0x1000;
+constexpr std::size_t GuestPages = 64;
+constexpr std::size_t WindowBytes = GuestPage * GuestPages;
+struct Counters { std::atomic<unsigned> protect_calls{0}; };
+Counters counters;
+struct TestWindow {
+    std::mutex mutex;
+    std::vector<std::uint8_t> page_access = std::vector<std::uint8_t>(GuestPages, 0);
+    std::vector<std::uint8_t> map = std::vector<std::uint8_t>(GuestPages, 0);
+    unsigned refresh_calls = 0;
+PAGES
+    void Refresh(std::size_t first, std::size_t last) {
+        ++refresh_calls;
+        for (std::size_t page = first; page <= last; ++page)
+            map[page] = page_access[page];
+    }
+PROTECT
+};
+int main() {
+    TestWindow w;
+    w.Protect(0x1000, 1, 0);
+    assert(w.refresh_calls == 0 && counters.protect_calls == 1);
+    w.Protect(0x1000, 1, 3);
+    assert(w.refresh_calls == 1 && w.map[1] == 3);
+    for (int i = 0; i < 20000; ++i) w.Protect(0x1000, 1, 3);
+    assert(w.refresh_calls == 1 && counters.protect_calls == 20002);
+    w.Protect(0x1000, 1, 1);
+    assert(w.refresh_calls == 2 && w.map[1] == 1);
+    w.Protect(0x1fff, 2, 2);
+    assert(w.refresh_calls == 3 && w.page_access[1] == 2 &&
+           w.page_access[2] == 2);
+    w.Protect(0x1fff, 2, 2);
+    assert(w.refresh_calls == 4);
+    w.Protect(WindowBytes - 1, 1, 3);
+    assert(w.refresh_calls == 5 && w.map[GuestPages - 1] == 3);
+    w.Protect(WindowBytes, 1, 3);
+    w.Protect(WindowBytes - 1, 0, 1);
+    assert(w.refresh_calls == 5 && counters.protect_calls == 20006);
+    std::printf("FASTMEM_PROTECT_SINGLE_PAGE_NOOP_PASS repeated=20000 "
+                "changed=1 adjacent=1 bounds=1\n");
+}
+'''.replace('PAGES', method).replace('PROTECT', protect_body)
+with tempfile.TemporaryDirectory(prefix='encore-fastmem-protect-') as temp:
+    path = Path(temp)/'protect.cpp'
+    path.write_text(protect_cpp)
+    for opt in ('-O0', '-O2'):
+        executable = Path(temp)/('protect'+opt)
+        subprocess.run([compiler, '-std=c++20', opt, '-Wall', '-Wextra', '-Werror',
+                        '-pthread', '-fsanitize=address,undefined',
+                        '-fno-sanitize-recover=all', str(path), '-o', str(executable)],
+                       check=True, timeout=60)
+        subprocess.run([str(executable)], check=True, timeout=20)

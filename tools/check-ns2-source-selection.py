@@ -79,6 +79,13 @@ def main() -> int:
                 "GpuSessionProtocol::DeviceSlots m_devices" in service_h and
                 "GpuSessionProtocol::AddressSpaceSlots m_address_spaces" in service_h and
                 "rb.Push(Kernel::ResultNotImplemented.raw)" in service_cpp and
+                "{11, &IGpuSession::GetNotificationRange" in service_cpp and
+                "{12, &IGpuSession::GetNotificationEvent" in service_cpp and
+                "m_event_context.CreateEvent" in service_cpp and
+                "m_event_context.CloseEvent" in service_cpp and
+                "readable->Open(kernel)" in service_cpp and
+                "{21, &IGpuSession::RequestWorker" not in service_cpp and
+                "{22, &IGpuSession::AcquireWorker" not in service_cpp and
                 "{33, &IGpuSession::CreateAddressSpace" in service_cpp and
                 "{41, &IGpuSession::CreateGraphicsDevice" in service_cpp and
                 "{42, &IGpuSession::DestroyGraphicsDevice" in service_cpp and

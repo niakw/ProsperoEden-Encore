@@ -117,3 +117,9 @@ The `\default=false` keys are configuration override flags, not executable patch
 - TIPC **202/203** resolve **owned FDs only**. User partition 203 calls the existing NVDRV VA-region IOCTL **0xc0404108**, checks zero sizes and 64-bit multiplication/addition overflow, and returns real region bounds. Supervisor **434** registers only FDs owned by live GPU sessions and only after GPU-context activation; destroying a GPU session closes all its fds and its NVDRV session.
 - O0/O2+UBSan host fixtures cover slot exhaustion, duplicated/invalid/truncated FD registration, capacity, cleanup enumeration and VA overflow. Source-selection checks enforce the original code paths and the switch remains OFF/forbidden for release.
 - **Important limit:** this is the existing Encore NVDRV address-space allocator, **not** native Switch 2 Ampere 4-KiB mapping or PS5 Vulkan submission. No GPU memory worker, notification signaling, rasterization, VI2 or Switch 2 gameplay is unlocked by this commit.
+
+## N4g — Real kernel notification-event lifetime (worker still blocked)
+
+- `IGpuSession` implements TIPC **11** (range 0–63) and **12** (per-index `KEvent`/readable handle) with the existing strict packet decoder. Events are lazily allocated, shared on repeated requests for the same index, moved with a real kernel reference, and cleaned up by `ServiceContext` when the session is destroyed.
+- A failed kernel allocation reports `ResultOutOfResource`; invalid indices/header report `ResultInvalidCombination`. It does **not** invent a GPU completion signal. **21/22 worker request/acquire** remain unimplemented pending actual NVDRV native mapping and queue submission.
+- The source owner guard ensures real event Create/Close and absence of fake worker handlers. CI syntax-compiles the full research service. This is not native PS5 GPU rendering or Switch 2 game support.

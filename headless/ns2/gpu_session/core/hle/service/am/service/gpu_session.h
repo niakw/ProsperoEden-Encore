@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
-// An intentionally incomplete but real TIPC service owner. Graphics/NVDRV
-// commands are NOT advertised until their actual backing services exist.
+// Bounded research TIPC service. GPU VA FDs and notification events have
+// real kernel/NVDRV lifetimes; worker submission remains unsupported.
+#include <array>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include "core/hle/service/service.h"
+#include "core/hle/service/kernel_helpers.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 
-namespace Kernel { class KProcess; }
+namespace Kernel { class KProcess; class KEvent; }
 namespace Service::Nvidia { class Module; }
 namespace Service::AM {
 class IGpuSession final : public ServiceFramework<IGpuSession> {
@@ -21,6 +23,8 @@ public:
     ~IGpuSession() override;
     Result HandleSyncRequest(Kernel::KServerSession& session, HLERequestContext& ctx) override;
 private:
+    void GetNotificationRange(HLERequestContext& ctx);
+    void GetNotificationEvent(HLERequestContext& ctx);
     void CreateAddressSpace(HLERequestContext& ctx);
     void GetAddressSpacePartition(HLERequestContext& ctx);
     void CreateGraphicsDevice(HLERequestContext& ctx);
@@ -31,5 +35,7 @@ private:
     std::shared_ptr<Nvidia::Module> m_module;
     Kernel::KProcess* const m_process;
     std::optional<std::size_t> m_nv_session;
+    KernelHelpers::ServiceContext m_event_context;
+    std::array<Kernel::KEvent*, GpuSessionProtocol::MaxNotificationEvents> m_events{};
 };
 } // namespace Service::AM

@@ -130,3 +130,10 @@ The `\default=false` keys are configuration override flags, not executable patch
 - Added a bounded **4,096-entry mapping ledger** enforcing per-AS non-overlap, exact unmap, contained modification and backend-commit-only semantics. This ledger **does not** map GPU memory; a future native backend must call it after successful page-table operations.
 - C++20 O0/O2+UBSan host fixtures cover malformed/truncated messages, VA/offset overflow, duplicate/adjacent/intersecting allocations, and exhaustion. Source guards forbid registering worker commands without a real NVDRV mapping backend.
 - All NS2 options remain OFF for shipping builds; no changes to `main` or F07, and **no Switch 2 GPU rendering or game compatibility is claimed**.
+
+## N4i — Real bounded IGpuWorker IPC transport (no native mapping yet)
+
+- Experimental GPU session commands **21 RequestWorker** and **22 AcquireWorker** now create one real kernel `KSession` with a `SessionRequestManager`. Requests require an existing notification event (0–63); successful registration signals it, and acquisition returns an independently opened move handle.
+- The retained worker client reference is closed on GPU-session destruction, while guest-owned handles have independent kernel references. Malformed commands, absent notification events or worker, and kernel session exhaustion return explicit errors.
+- The separate `IGpuWorker` implementation owns process/module references and returns `ResultNotImplemented` for **101/102** and **211–216**. This is *IPC transport only*: native 4-KiB mapping, command execution and Switch 2 rendering are not yet available.
+- Both C++ source owners are compiled by the NS2 host CI and protected by source-selection guards. The PS5 release profile continues to forbid experimental NS2.

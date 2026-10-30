@@ -114,6 +114,13 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             headless/ns2/gpu_session/core/hle/service/am/service/gpu_session.cpp
+          clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+            -Ibuild-ns2-a64/fmt/include \
+            -Iheadless/ns2/gpu_session \
+            -Iheadless/ns2/hle \
+            -Ivendor/sources/eden/src/dynarmic/src \
+            -Ivendor/sources/eden/src \
+            headless/ns2/gpu_session/core/hle/service/am/service/gpu_worker.cpp
       - name: Syntax-check real NS2 SelfController and GraphicsSupervisor IPC services
         shell: bash
         run: |

@@ -1995,8 +1995,8 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}")
 endif()
 
-# Switch 2 GPU TIPC service body. Only local device ID lifecycle is
-# backed; address spaces, notifications, workers and submission stay rejected.
+# Switch 2 GPU TIPC service and bounded worker transport. No native GPU
+# submission or 4-KiB memory mapping is advertised.
 option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL
     "Research only: compile bounded NS2 GPU session HLE service" OFF)
 if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
@@ -2006,12 +2006,17 @@ if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
     set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/headless/ns2/gpu_session")
     set(EDEN_NS2_GPU_SESSION_SOURCE
         "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.cpp")
+    set(EDEN_NS2_GPU_WORKER_SOURCE
+        "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.cpp")
     if(NOT EXISTS "${EDEN_NS2_GPU_SESSION_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_WORKER_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.h" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.h" OR
        NOT EXISTS "${PORT_ROOT}/headless/ns2/hle/core/hle/service/am/service/gpu_session_protocol.h")
         message(FATAL_ERROR "Missing isolated NS2 GPU session source/protocol")
     endif()
-    target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}")
+    target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
+        "${EDEN_NS2_GPU_WORKER_SOURCE}")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_GPU_SESSION_ROOT}"
         "${PORT_ROOT}/headless/ns2/hle")

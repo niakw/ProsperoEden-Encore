@@ -84,8 +84,11 @@ def main() -> int:
                 "m_event_context.CreateEvent" in service_cpp and
                 "m_event_context.CloseEvent" in service_cpp and
                 "readable->Open(kernel)" in service_cpp and
-                "{21, &IGpuSession::RequestWorker" not in service_cpp and
-                "{22, &IGpuSession::AcquireWorker" not in service_cpp and
+                "{21, &IGpuSession::RequestWorker" in service_cpp and
+                "{22, &IGpuSession::AcquireWorker" in service_cpp and
+                "CreateWorkerKernelSession(system, ctx" in service_cpp and
+                "m_worker->Close(kernel)" in service_cpp and
+                "client->Open(kernel)" in service_cpp and
                 "{33, &IGpuSession::CreateAddressSpace" in service_cpp and
                 "{41, &IGpuSession::CreateGraphicsDevice" in service_cpp and
                 "{42, &IGpuSession::DestroyGraphicsDevice" in service_cpp and
@@ -106,10 +109,17 @@ def main() -> int:
                 "DecodeModify(" in worker_cpp and
                 "MaxMappings = 4096" in worker_cpp,
                 "NS2 4K worker preflight / bounded ledger missing")
-        require('{211, &IGpuWorker::NormalMapGpuMemory4K' not in service_cpp and
-                '{21, &IGpuSession::RequestWorker' not in service_cpp and
-                '{22, &IGpuSession::AcquireWorker' not in service_cpp,
-                "Native GPU workers require real NVDRV mapping before registration")
+        worker_hle_cpp = (session_root / "gpu_worker.cpp").read_text()
+        require("IGpuWorker::HandleSyncRequest" in worker_hle_cpp and
+                "Kernel::ResultNotImplemented.raw" in worker_hle_cpp and
+                "IGpuWorker::~IGpuWorker()" in worker_hle_cpp and
+                "m_process->Close(kernel)" in worker_hle_cpp and
+                '{211, &IGpuWorker::NormalMapGpuMemory4K' not in worker_hle_cpp,
+                "Native GPU worker IPC must reject unsupported mappings")
+        require('target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE and
+                '"${EDEN_NS2_GPU_WORKER_SOURCE}")' in CMAKE and
+                "EDEN_NS2_GPU_WORKER_SOURCE" in CMAKE[session_selection:release_gate],
+                "Native worker source must be gated with GPU session research owner")
         supervisor_selection = CMAKE.index("# Research-only SelfController -> GraphicsSupervisor")
         require(session_selection < supervisor_selection < release_gate and
                 "EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR" in CMAKE and

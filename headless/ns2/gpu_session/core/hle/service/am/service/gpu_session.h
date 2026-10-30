@@ -12,7 +12,7 @@
 #include "core/hle/service/kernel_helpers.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 
-namespace Kernel { class KProcess; class KEvent; }
+namespace Kernel { class KProcess; class KEvent; class KClientSession; }
 namespace Service::Nvidia { class Module; }
 namespace Service::AM {
 class IGpuSession final : public ServiceFramework<IGpuSession> {
@@ -23,6 +23,8 @@ public:
     ~IGpuSession() override;
     Result HandleSyncRequest(Kernel::KServerSession& session, HLERequestContext& ctx) override;
 private:
+    void RequestWorker(HLERequestContext& ctx);
+    void AcquireWorker(HLERequestContext& ctx);
     void GetNotificationRange(HLERequestContext& ctx);
     void GetNotificationEvent(HLERequestContext& ctx);
     void CreateAddressSpace(HLERequestContext& ctx);
@@ -35,6 +37,7 @@ private:
     std::shared_ptr<Nvidia::Module> m_module;
     Kernel::KProcess* const m_process;
     std::optional<std::size_t> m_nv_session;
+    Kernel::KClientSession* m_worker{};
     KernelHelpers::ServiceContext m_event_context;
     std::array<Kernel::KEvent*, GpuSessionProtocol::MaxNotificationEvents> m_events{};
 };

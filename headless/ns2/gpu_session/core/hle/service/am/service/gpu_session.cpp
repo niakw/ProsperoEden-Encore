@@ -15,11 +15,16 @@
 #include "core/core.h"
 #include "core/hle/kernel/svc_results.h"
 #include "core/hle/kernel/k_process.h"
+#include "core/hle/kernel/k_client_session.h"
+#include "core/hle/kernel/k_session.h"
+#include "core/hle/kernel/k_scoped_resource_reservation.h"
 #include "core/hle/kernel/k_event.h"
 #include "core/hle/kernel/k_readable_event.h"
 #include "core/hle/service/nvdrv/nvdrv.h"
 #include "core/hle/service/nvdrv/devices/nvhost_as_gpu.h"
 #include "core/hle/service/am/service/gpu_session.h"
+#include "core/hle/service/am/service/gpu_worker.h"
+#include "core/hle/service/server_manager.h"
 #include "core/hle/service/ipc_helpers.h"
 
 namespace Service::AM {
@@ -34,17 +39,20 @@ IGpuSession::IGpuSession(Core::System& system_,
     static const FunctionInfo functions[] = {
         {11, &IGpuSession::GetNotificationRange, "GetNotificationRange"},
         {12, &IGpuSession::GetNotificationEvent, "GetNotificationEvent"},
+        {21, &IGpuSession::RequestWorker, "RequestWorker"},
+        {22, &IGpuSession::AcquireWorker, "AcquireWorker"},
         {33, &IGpuSession::CreateAddressSpace, "CreateAddressSpace"},
         {41, &IGpuSession::CreateGraphicsDevice, "CreateGraphicsDevice"},
         {42, &IGpuSession::DestroyGraphicsDevice, "DestroyGraphicsDevice"},
         {202, &IGpuSession::GetAddressSpacePartition, "GetGsvPartition"},
         {203, &IGpuSession::GetAddressSpacePartition, "GetUserPartition"},
-        // Commands 21/22, worker, native-memory mapping and GPU
-        // submission are still unimplemented (not fake-success).
+        // Worker transport 21/22 is real; native GPU worker operations
+        // 101/102 and 211-216 remain explicitly unsupported.
     };
     RegisterHandlersTipc(functions);
 }
 IGpuSession::~IGpuSession() {
+    if (m_worker) m_worker->Close(kernel);
     // Readable handles already moved to clients retain their own kernel refs.
     for (auto* event : m_events)
         if (event) m_event_context.CloseEvent(event);
@@ -80,6 +88,70 @@ static Result Translate(GP::Status status) {
     return Kernel::ResultNotImplemented;
 }
 
+
+// Actual worker KSession, not a dummy IPC object. The client reference is
+// retained until IGpuSession destruction and acquired separately by guests.
+static Result CreateWorkerKernelSession(Core::System& system, HLERequestContext& ctx,
+                                        std::shared_ptr<IGpuWorker> handler,
+                                        Kernel::KClientSession** out_client) {
+    auto& kernel = system.Kernel();
+    Kernel::KScopedResourceReservation reservation{
+        kernel, Kernel::GetCurrentProcessPointer(kernel),
+        Kernel::LimitableResource::SessionCountMax};
+    R_UNLESS(reservation.Succeeded(), Kernel::ResultLimitReached);
+    auto* session = Kernel::KSession::Create(kernel);
+    R_UNLESS(session != nullptr, Kernel::ResultOutOfResource);
+    session->Initialize(kernel, nullptr, 0);
+    reservation.Commit();
+    Kernel::KSession::Register(kernel, session);
+    auto& server = ctx.GetManager()->GetServerManager();
+    auto manager = std::make_shared<SessionRequestManager>(kernel, server);
+    manager->SetSessionHandler(std::move(handler));
+    R_TRY(server.RegisterSession(&session->GetServerSession(), std::move(manager)));
+    *out_client = &session->GetClientSession();
+    R_SUCCEED();
+}
+
+void IGpuSession::RequestWorker(HLERequestContext& ctx) {
+    const std::scoped_lock lock{m_lock};
+    const auto* packet = ctx.CommandBuffer();
+    const std::array<GP::U32, 3> command{packet[0], packet[1], packet[2]};
+    Result result = Kernel::ResultInvalidCombination;
+    const auto index = GP::DecodeEventIndex(command, 0x25);
+    if (index) {
+        result = Kernel::ResultInvalidState;
+        if (m_events[*index]) {
+            if (m_worker) {
+                result = ResultSuccess;
+            } else {
+                auto handler = std::make_shared<IGpuWorker>(system, m_module, m_process);
+                result = CreateWorkerKernelSession(system, ctx, std::move(handler), &m_worker);
+            }
+            if (result.IsSuccess()) m_events[*index]->Signal(kernel);
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 2};
+    rb.Push(result.raw);
+}
+
+void IGpuSession::AcquireWorker(HLERequestContext& ctx) {
+    const std::scoped_lock lock{m_lock};
+    const auto* packet = ctx.CommandBuffer();
+    const std::array<GP::U32, 2> command{packet[0], packet[1]};
+    Result result = Kernel::ResultInvalidCombination;
+    Kernel::KClientSession* client{};
+    if (GP::IsAcquireWorker(command)) {
+        result = Kernel::ResultInvalidState;
+        if (m_worker) {
+            client = m_worker;
+            client->Open(kernel);
+            result = ResultSuccess;
+        }
+    }
+    IPC::ResponseBuilder rb{ctx, 2, 0, 1};
+    rb.Push(result.raw);
+    ctx.AddMoveObject(client);
+}
 
 void IGpuSession::GetNotificationRange(HLERequestContext& ctx) {
     const auto* packet = ctx.CommandBuffer();

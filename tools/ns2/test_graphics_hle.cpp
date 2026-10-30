@@ -422,6 +422,15 @@ int main(){
     const std::array<GP::U32,2> acquireWorker{0x26,0};
     require(GP::IsAcquireWorker(acquireWorker),
             "worker acquisition TIPC envelope validated");
+    const std::array<GP::U32,2> badAcquireWorker{0x26,1};
+    const std::array<GP::U32,3> badWorkerCommand{0x24,1,63};
+    require(!GP::IsAcquireWorker(badAcquireWorker) &&
+            !GP::DecodeEventIndex(badWorkerCommand,0x25) &&
+            !GP::DecodeEventIndex(std::span<const GP::U32>{requestWorker.data(),2},0x25),
+            "worker requests must reject malformed TIPC envelopes");
+    require(notifications.RequestWorker(requestWorker)==GP::Status::Success &&
+            notifications.HasEvent(63) && !notifications.HasEvent(64),
+            "worker request can repeat only for a real notification event");
 
 
     // Native 4-KiB mapping ABI is tested independently; no live handler yet.

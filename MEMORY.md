@@ -1,5 +1,7 @@
 # Eden Encore — Project Memory
 
+> **Active GitHub repository:** https://github.com/niakw/ProsperoEden-Encore (independent). The former fork `niakw/Prospero.Eden-Encore` is a read-only historical archive; links to its earlier CI runs, issues and pull requests below are intentional historical evidence. The pinned vendor submodule remains in `niakw/Prospero.Eden-Encore-vendor`. Do not push new F07 work to the former fork.
+
 - NATIVE CONFIG/METADATA SOURCE TRIAGE (21 Oct): 4 more Git-blob-pinned reviewed code paths (`headless/ryujinx_saves.h`, `settings_store.h`, `watch.h`, `metadata_bridge.cpp`) handle save imports, JSON settings, dev memory watch, game metadata/library extraction, not normal guest frames. Documented in `docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md`. Counters: 396/491 handled, 33 engine/runtime review pending, 62 launcher UI separate, 95 all. These four are not new performance improvements or PS5 validation.
 
 
@@ -55,7 +57,7 @@
 
 - LATEST FENCE HOST QUALIFICATION (20 October): V16's actual maintained/pinned `InnerFence::Queue`, `IsSignaled`, `Wait` and FenceManager delegation are exercised together under ASan/UBSan by `tools/check-vulkan-fence-completed-wait-host.py`. It validates stubbed fences, queued tick capture, pending waits and completed-tick elision; it does **not** prove native GPU timing, resumed guest frames or FC27 freeze relief. Register HOST 62, SOURCE 393, OPEN 15, PARKED 8; **397 files / 95 P0 files / 408 SOURCE+OPEN contracts remain**. Earlier 398/96/409 notes below are historical snapshots. Only the designated development branch is used.
 
-> Continuity file for work on `niakw/Prospero.Eden-Encore`.
+> Continuity file for work on `niakw/ProsperoEden-Encore`.
 > Read this file before changing architecture, UX, build/release behaviour or performance policy.
 > Keep it concise but authoritative. Update it whenever a project-level decision changes.
 
@@ -131,7 +133,7 @@ This section and the dedicated pre-test audit take precedence.
 
 ## Repository / branch
 
-- Repository: `niakw/Prospero.Eden-Encore`
+- Repository: `niakw/ProsperoEden-Encore`
 - Remote release line: `fix/0.40-zbic-13.60` (untouched); active **GitHub-only PS5 test** branch: `dev/ps5-sparse-jit`. Old local audit branches mentioned below are historical, not the current edit target.
 - PS5 title ID: `PPSA99008`
 - Current release line: Encore R1 / package `01.000.041`

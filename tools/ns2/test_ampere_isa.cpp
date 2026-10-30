@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Synthetic SM70+/Ampere instruction and native-to-Maxwell address-map tests.
+// This does not claim SM86 shader execution or RADV compatibility.
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <string_view>
+#include <vector>
+#include "shader_recompiler/frontend/ampere/instruction.h"
+#include "shader_recompiler/frontend/ampere/classify.h"
+#include "shader_recompiler/frontend/ampere/isa.h"
+#include "shader_recompiler/frontend/ampere/program_address_map.h"
+
+using namespace Shader::Ampere;
+static_assert(sizeof(Instruction)==16);
+static_assert(Classify(0x947).kind==OpKind::Bra);
+static_assert(Classify(0x94d).kind==OpKind::Exit);
+static_assert(Classify(0x950).kind==OpKind::Ret);
+static_assert(Classify(0x918).kind==OpKind::Nop);
+static_assert(Classify(0x210).pure);
+static_assert(BaseOf(0x210)==0x10);
+static_assert(FormOf(0x210)==1);
+static_assert(RelativeOffset48(Instruction{{0,0,0,0}})==0);
+static_assert(RelativeOffset30(Instruction{{0,0,0,0}})==0);
+static_assert(RelativeOffset48(Instruction{{0,0,0x20000,0}})<0);
+
+int main() {
+    assert(ISA_ROW_COUNT==629);
+    const auto* add=LookupRow(0x210);
+    assert(add && std::string_view(add->name)=="IAdd3/IAdd3X");
+    assert(LookupRow(0x1210)==add); // Explicit 12-bit opcode mask
+    assert(LookupRow(0xfff)==nullptr);
+    Instruction zero{{0,0,0,0}};
+    assert(FirstUnknownBit(zero,*add)==-1);
+    Instruction unknown{{0,0,0,1}};
+    assert(FirstUnknownBit(unknown,*add)==96);
+    assert(zero.Bits(0,12)==0);
+    Instruction cross{{0xffffffff,0xffffffff,0,0}};
+    assert(cross.Bits(29,8)==0xff);
+    assert(cross.Bits(63,2)==1);
+
+    std::vector<std::uint64_t> code(100,0);
+    assert(!HasNativeAddressMap(code));
+    assert(!NativeProgramAddress(code,0));
+    std::array<std::uint32_t,3> offsets{0,1,2};
+    AppendNativeAddressMap(code,offsets);
+    assert(HasNativeAddressMap(code));
+    assert(NativeProgramAddress(code,0)==std::optional<std::uint32_t>{0x50});
+    assert(NativeProgramAddress(code,16)==std::optional<std::uint32_t>{0x58});
+    assert(NativeProgramAddress(code,32)==std::optional<std::uint32_t>{0x68});
+    assert(!NativeProgramAddress(code,1)); // Ampere instructions align to 16 bytes
+    assert(!NativeProgramAddress(code,48)); // count=3
+    // SYNC -> barrier must not be reached by an illegal computed branch.
+    code[0x50/8]=0xf0f800000007000fULL;
+    code[0x58/8]=0xef98000000070100ULL;
+    assert(!NativeProgramAddress(code,16));
+    code[code.size()-2]=65537;
+    assert(!NativeProgramAddress(code,0));
+    code[code.size()-2]=3;
+    code.back()=0;
+    assert(!NativeProgramAddress(code,0));
+}

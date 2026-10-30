@@ -40,7 +40,7 @@ template <typename FileReader, typename GuestReader>
 
     // Sample exactly the first 16 original AArch64 text bytes, never a whole
     // guest image. NSO0 preflight already checked the file range.
-    const std::size_t count = static_cast<std::size_t>(std::min(text_size, 16ULL));
+    const std::size_t count = static_cast<std::size_t>(std::min<std::uint64_t>(text_size, 16));
     if (text_offset > std::numeric_limits<std::uint64_t>::max() - module_base)
         return TextHandoffStatus::InvalidGuestAddress;
     const std::uint64_t guest_addr = module_base + text_offset;

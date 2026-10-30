@@ -1912,6 +1912,30 @@ if(EDEN_NS2_CPU6_EXPERIMENTAL)
     target_compile_definitions(dynarmic PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
 endif()
 
+# Research-only Switch 2 AM command 320. Keep the Encore-maintained application
+# metadata service as the source ancestor: title-version diagnostics must survive.
+option(EDEN_NS2_AM_EXPERIMENTAL
+    "Research only: Switch 2 application-manager command 320" OFF)
+if(EDEN_NS2_AM_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 AM command 320 requires experimental metadata")
+    endif()
+    set(EDEN_NS2_AM_ROOT "${PORT_ROOT}/headless/ns2/am")
+    if(NOT EXISTS "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp"
+       OR NOT EXISTS "${PORT_ROOT}/headless/ns2/am/core/hle/service/am/service/application_functions.h")
+        message(FATAL_ERROR "Missing experimental NS2 AM implementation/header")
+    endif()
+    get_target_property(eden_ns2_am_sources core SOURCES)
+    list(FIND eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}" eden_ns2_am_idx)
+    if(eden_ns2_am_idx EQUAL -1)
+        message(FATAL_ERROR "Encore maintained AM owner changed: re-audit NS2 port")
+    endif()
+    list(REMOVE_ITEM eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}")
+    list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_am_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_ROOT}")
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -1924,7 +1948,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
        EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
-       EDEN_NS2_A64_EXPERIMENTAL OR
+       EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

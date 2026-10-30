@@ -73,6 +73,13 @@ def main() -> int:
                 'target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE,
                 "NS2 GPU service must require NVDRV and compile real source")
         session_root = ROOT / "headless/ns2/gpu_session/core/hle/service/am/service"
+        require('std::shared_ptr<Nvidia::Module> m_module;' in
+                (session_root / "gpu_session.h").read_text() and
+                (session_root / "gpu_session.h").read_text().index(
+                    "std::shared_ptr<Nvidia::Module> m_module") <
+                (session_root / "gpu_session.h").read_text().index(
+                    "std::shared_ptr<GpuWorkerSharedState> m_shared"),
+                "NVDRV module must initialize before shared GPU FD owner")
         service_cpp = (session_root / "gpu_session.cpp").read_text()
         service_h = (session_root / "gpu_session.h").read_text()
         require("RegisterHandlersTipc(functions)" in service_cpp and

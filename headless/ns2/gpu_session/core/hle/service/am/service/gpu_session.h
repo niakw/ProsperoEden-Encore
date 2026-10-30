@@ -32,8 +32,9 @@ private:
     void CreateGraphicsDevice(HLERequestContext& ctx);
     void DestroyGraphicsDevice(HLERequestContext& ctx);
     std::mutex m_lock;
-    std::shared_ptr<GpuWorkerSharedState> m_shared;
+    // Module must be initialized before constructing the shared FD owner.
     std::shared_ptr<Nvidia::Module> m_module;
+    std::shared_ptr<GpuWorkerSharedState> m_shared;
     Kernel::KProcess* const m_process;
     Kernel::KClientSession* m_worker{};
 

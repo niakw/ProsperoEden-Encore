@@ -17,6 +17,8 @@ assert "static thread_local ::Eden::Jit::SparseCommitPositiveCache local;" in so
 assert "local.Covers(executable, required, generation)" in source
 assert "local.Remember(executable, region.committed," in source
 assert "sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);" in source
+cache_header = (ROOT / "headless/jit-sparse-commit.h").read_text()
+assert "if (!entries[i].executable) return false;" in cache_header
 compiler = shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 FIXTURE = r"""
@@ -53,8 +55,13 @@ int main() {
     auto* readonly = new (page) Eden::Jit::SparseCommitPositiveCache{};
     readonly->Remember(arenas[0], committed, 7);
     assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ) == 0);
-    for (unsigned i = 0; i < 1000; ++i)
+    for (unsigned i = 0; i < 1000; ++i) {
         assert(readonly->Covers(arenas[0], committed, 7));
+        // A cold/missing arena must short-circuit at the vacant second slot
+        // without modifying a partially populated read-only cache.
+        assert(!readonly->Covers(arenas[1], committed, 7));
+        assert(!readonly->Covers(arenas[0], committed + 1, 7));
+    }
     assert(mprotect(page, static_cast<std::size_t>(page_size), PROT_READ | PROT_WRITE) == 0);
     readonly->~SparseCommitPositiveCache();
     assert(munmap(page, static_cast<std::size_t>(page_size)) == 0);
@@ -69,7 +76,16 @@ int main() {
     cache.Remember(arenas[4], committed, 8);
     assert(cache.Covers(arenas[4], committed, 8));
     assert(!cache.Covers(arenas[4], committed, 9)); // recycled VA
-    std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1 readonly_hit=1\n", misses);
+    // Two active slots after an epoch reset retain MRU order while all
+    // negative lookups exit on the first never-populated entry.
+    Eden::Jit::SparseCommitPositiveCache partial;
+    partial.Remember(arenas[0], committed, 20);
+    partial.Remember(arenas[1], committed, 20);
+    assert(!partial.Covers(arenas[4], committed, 20));
+    assert(partial.Covers(arenas[0], committed, 20));
+    assert(partial.Covers(arenas[1], committed, 20));
+    assert(!partial.Covers(arenas[2], committed, 21));
+    std::printf("SPARSE_JIT_POSITIVE_CACHE_PASS alternating_misses=%zu epochs=1 growth=1 eviction=1 readonly_hit=1 cold_miss=1\n", misses);
 }
 """
 with tempfile.TemporaryDirectory(prefix="eden-sparse-jit-mru-") as tmp:

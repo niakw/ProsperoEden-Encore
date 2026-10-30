@@ -13,6 +13,14 @@
 - **Limite :** le test vérifie le helper de sélection et la présence du câblage source ; la compilation réelle de `core`, les changements loader/HLE/JIT/GPU et tout lancement sur PS5 **restent à faire**. Ce chantier ne suffit pas à prendre en charge un jeu NS2.
 - **Prochain lot :** détection contrôlée ExeFS `main` et activation Dynarmic compatible avec ACID étendu, suivis d'une compilation hôte du chemin réellement sélectionné, avant les services et la traduction GPU.
 
+### N1b — ExeFS expérimental, chargement par étapes
+
+- `EDEN_NS2_EXEFS_EXPERIMENTAL=ON` (exige `EDEN_NS2_METADATA_EXPERIMENTAL=ON`) remplace deux fichiers du loader uniquement dans la branche de recherche.
+- Un fichier `main` doit être un vrai NSO dans un dossier ExeFS reconnu, et le loader de répertoire est examiné **avant** le loader NSO brut.
+- Le chemin standalone enregistre son `RomFSFactory`, recherche un `.romfs` ou un répertoire `romfs` à proximité, et évite d'utiliser NCE avec un ACID étendu.
+- Sources : portage ciblé de `0x2593/Eden-NS2` sur le snapshot Eden d'Encore, sans importer les autres modifications HLE/JIT/GPU de l'amont.
+- **État : CODE RECHERCHE, PAS ENCORE COMPILÉ.** Vérifier la propriété réelle des fichiers CMake, la compilation et les API de ce snapshot avec les options ON avant de prétendre que le bootstrap NS2 fonctionne.
+
 ## 1. Conclusion provisoire
 
 **Faisabilité technique : plausible à long terme, non démontrée pour Encore sur PS5.**

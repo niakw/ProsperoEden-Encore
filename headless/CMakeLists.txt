@@ -32,6 +32,37 @@ if(EDEN_NS2_METADATA_EXPERIMENTAL)
         "${EDEN_NS2_METADATA_OVERLAY}" "${PORT_ROOT}/headless/ns2")
 endif()
 
+
+# Separate opt-in: extracted ExeFS bootstrapping still requires metadata parsing.
+# Do NOT enable in a production/release profile; no native PS5 game validation.
+option(EDEN_NS2_EXEFS_EXPERIMENTAL
+    "Experimental standalone ExeFS loader, requires NS2 metadata overlay" OFF)
+if(EDEN_NS2_EXEFS_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 ExeFS loader requires EDEN_NS2_METADATA_EXPERIMENTAL=ON")
+    endif()
+    get_target_property(eden_ns2_exefs_sources core SOURCES)
+    foreach(eden_ns2_exefs_unit IN ITEMS
+            "loader/loader.cpp"
+            "loader/deconstructed_rom_directory.cpp")
+        list(FIND eden_ns2_exefs_sources "${eden_ns2_exefs_unit}" eden_ns2_exefs_index)
+        if(eden_ns2_exefs_index EQUAL -1)
+            message(FATAL_ERROR "NS2 ExeFS original owner moved: ${eden_ns2_exefs_unit}")
+        endif()
+        if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/${eden_ns2_exefs_unit}")
+            message(FATAL_ERROR "Missing NS2 ExeFS source: ${eden_ns2_exefs_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_exefs_unit}")
+        list(APPEND eden_ns2_exefs_sources
+             "${EDEN_NS2_METADATA_OVERLAY}/core/${eden_ns2_exefs_unit}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
+    if(NOT EXISTS
+            "${EDEN_NS2_METADATA_OVERLAY}/core/loader/deconstructed_rom_directory.h")
+        message(FATAL_ERROR "Missing NS2 ExeFS loader header")
+    endif()
+endif()
+
 # Scalar-memory source fragments still consumed by modules trigger configure.
 set(EDEN_SCALAR_INPUT_DIR
     "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/scalar")

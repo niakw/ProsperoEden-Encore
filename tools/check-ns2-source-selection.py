@@ -264,6 +264,20 @@ def main() -> int:
         isa_probe = (ampere_root / "probe.cpp").read_text()
         isa_header = (ampere_root / "probe.h").read_text()
         isa_classifier = (ampere_root / "classify.h").read_text()
+        # A valid shader image must enter the same CFG byte-address
+        # convention as the shipping Vulkan graphics compiler, but only
+        # through the explicit NS2 research selector.
+        ir_bridge = (ampere_root / "ir_bridge.cpp").read_text()
+        maxwell_env = (ampere_root / "maxwell_environment.cpp").read_text()
+        require('EDEN_NS2_MAXWELL_IR_BRIDGE' in CMAKE and
+                '"${EDEN_NS2_MAXWELL_IR_BRIDGE}"' in CMAKE and
+                'ir_bridge.h' in CMAKE and
+                (ampere_root / "ir_bridge.h").is_file() and
+                'Shader::Maxwell::Flow::CFG cfg{env, flow_pool, address, exits_to_dispatcher}' in ir_bridge and
+                'Shader::Maxwell::TranslateProgram(inst_pool, block_pool, env, cfg, host_info)' in ir_bridge and
+                'start_address = image.first_instruction_address - sizeof(Shader::ProgramHeader)' in maxwell_env and
+                'EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR' in CMAKE[release_gate:],
+                "Native Maxwell graphics IR bridge must remain explicit, offset-correct and release-gated")
         require('option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in CMAKE and
                 'target_sources(shader_recompiler PRIVATE' in CMAKE and
                 '"${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}"' in CMAKE and

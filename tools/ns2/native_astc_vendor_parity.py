@@ -32,6 +32,22 @@ def once(text: str, old: str, new: str) -> str:
 def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
+        if name == "vk_texture_cache.h":
+            n73 = path.read_text()
+            before = "    void Finish();\n"
+            extension = (
+                "#ifdef EDEN_NS2_SPARSE_CACHE_PROBE\n"
+                "    // N73: native cache-side Vulkan sparse admission/bind/retire probe.\n"
+                "    // Never replaces the dense guest texture or samples an unbound image.\n"
+                "    [[nodiscard]] bool ProbeSparseImage(const VideoCommon::ImageInfo& info);\n"
+                "#endif\n"
+            )
+            assert n73.count(before + extension) == 1, "N73 ASTC header drift"
+            stripped = n73.replace(before + extension, before)
+            assert stripped.count(before + "\n\n") == 1, "N73 header whitespace drift"
+            stripped = stripped.replace(before + "\n\n", before + "\n", 1)
+            assert git_blob(stripped.encode()) == expected, ("N73 auxiliary drift", name)
+            continue
         assert git_blob(path.read_bytes()) == expected, ("N57 auxiliary source drift", name)
 
     extra = (root / ASTC / "ns2_astc_assemble_layers.inc").read_text()
@@ -44,6 +60,29 @@ def normalized(root: Path) -> dict[str, str]:
     result = {}
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
+        if name == "vk_texture_cache_cost.cpp":
+            # N73 is an additive native runtime probe. Strip its exact source
+            # changes before applying N57's original hardcoded SHA oracle.
+            n73_include = (
+                "#include \"video_core/renderer_vulkan/vk_texture_cache.h\"\n"
+                "#ifdef EDEN_NS2_SPARSE_CACHE_PROBE\n"
+                "#include \"video_core/renderer_vulkan/ns2_sparse_cache_admission.h\"\n"
+                "#include \"video_core/renderer_vulkan/ns2_sparse_bind_transaction.h\"\n"
+                "#endif"
+            )
+            assert text.count(n73_include) == 1, "N73 source include drift"
+            text = text.replace(n73_include,
+                '#include "video_core/renderer_vulkan/vk_texture_cache.h"')
+            begin = "// NS2 N73 BEGIN: one real cache-side VkImage sparse admission/bind/retire probe."
+            end = "// NS2 N73 END\n\n"
+            assert text.count(begin) == text.count(end) == 1, "N73 source body drift"
+            i,j=text.index(begin),text.index(end)
+            code=text[i:j + len(end)]
+            for witness in ("memory_allocator.CreateSparseImage(image_ci)",
+                            "AdmitSparseCacheImage(", "owner.Bind(",
+                            "owner.RetireAfterDeviceIdle(", "candidate = {};"):
+                assert witness in code, ("N73 changed native VkImage ownership", witness)
+            text = text[:i] + text[j + len(end):]
         assert git_blob(text.encode()) == current_sha, ("N57 maintained source drift", name)
         if name == "vk_texture_cache_cost.cpp":
             # N49's single vendor-owner addition, reversed without masking F07.

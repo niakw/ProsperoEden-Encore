@@ -1483,6 +1483,38 @@ if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
 endif()
 
 # Vulkan sparse support is maintained in vendor (same PS5 Vulkan owners).
+# N73: isolated native texture-cache probe. All layers must be resident before
+# the test image is used. Standard game textures remain on the dense path.
+option(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
+    "Research only: native VkImage sparse cache admission/bind/retire probe" OFF)
+if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE OR
+       NOT EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL OR
+       NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
+        message(FATAL_ERROR "N73 requires native research Vulkan, N72 queue and N57 cache header")
+    endif()
+    foreach(eden_n73_file IN ITEMS
+        "video_core/renderer_vulkan/ns2_sparse_cache_admission.h"
+        "video_core/renderer_vulkan/ns2_sparse_bind_transaction.h"
+        "video_core/renderer_vulkan/ns2_sparse_layer_budget.h")
+        if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/${eden_n73_file}")
+            message(FATAL_ERROR "N73 missing vendor native cache helper: ${eden_n73_file}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h")
+        message(FATAL_ERROR "N73 requires the maintained vendor ASTC texture cache header")
+    endif()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp" eden_n73_cache_idx)
+    if(eden_n73_cache_idx EQUAL -1)
+        message(FATAL_ERROR "N73 requires the existing native PS5 Vulkan cache source")
+    endif()
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_CACHE_PROBE=1)
+endif()
+
+
 # N72: serialize sparse binds on the same native Vulkan submit mutex.
 option(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
     "Research only: serialize sparse binds on the existing PS5 graphics queue" OFF)

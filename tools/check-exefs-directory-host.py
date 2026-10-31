@@ -43,6 +43,16 @@ assert 'Eden::FindGameFolderInput(entry.path())' in main
 assert 'selected_path.filename() == "main"' in main
 assert 'IsSafeDeconstructedGamePath(selected_root, selected_relative)' in main
 assert "symlink_status(folder / name, error)" in header
+# The real launcher must read the owning NPDM for extracted program identity,
+# rather than claiming the 20-40 MiB 'main' executable is a complete game.
+bridge = (root / "headless/metadata_bridge.cpp").read_text()
+assert 'ReadExtractedProgramMetadata(rom_path, vfs, &extracted)' in bridge
+assert 'metadata->Load(npdm) == Loader::ResultStatus::Success' in bridge
+assert 'IsSafeDeconstructedGamePath(root, relative)' in bridge
+assert 'extracted.GetTitleID()' in bridge
+assert 'ExtractedBaseBytes(entry.path(), cancel)' in library
+assert 'ExtractedLocalCover(entry.path())' in library
+assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
 
 source = r"""
 #include <cassert>
@@ -263,3 +273,80 @@ with tempfile.TemporaryDirectory(prefix="encore-exefs-host-") as temp:
                 compiler, opt, check.stdout, check.stderr[-4000:]
             )
             print("EXEFS_REAL_SOURCE_HOST_PASS", Path(compiler).name, opt)
+
+# Replay the exact directory-sizing and local cover fallback helpers extracted
+# from the shipping launcher service, not a reimplementation of their logic.
+def extract_owner(begin, end):
+    assert library.count(begin) == 1, begin
+    remainder = library.split(begin, 1)[1]
+    assert end in remainder, end
+    return begin + remainder.split(end, 1)[0]
+
+sizing = extract_owner("std::optional<std::uint64_t> ExtractedBaseBytes(",
+                       "\n// Local user-supplied covers")
+covers = extract_owner("std::string ExtractedLocalCover(",
+                       "\nstd::uint64_t ResolveTitleId(")
+fixture = r"""
+#include <atomic>
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <optional>
+#include <string>
+#include <unistd.h>
+#include "game_files.h"
+
+SIZING
+COVERS
+
+int main() {
+    namespace fs = std::filesystem;
+    char scratch[] = "/tmp/eden-base-size-XXXXXX";
+    const auto* tmp = ::mkdtemp(scratch);
+    assert(tmp);
+    const fs::path root{tmp};
+    const auto game = root / "Extracted Game";
+    fs::create_directories(game / "base" / "exefs");
+    fs::create_directories(game / "base" / "romfs");
+    fs::create_directories(game / "updates" / "458752");
+    fs::create_directories(game / "dlc" / "010074a01bf13001");
+    std::ofstream(game / "base" / "exefs" / "main") << "exec";
+    std::ofstream(game / "base" / "exefs" / "main.npdm") << "program!";
+    std::ofstream(game / "base" / "romfs" / "data.bin") << std::string(4096, 'r');
+    std::ofstream(game / "updates" / "458752" / "update.bin") << std::string(65536, 'u');
+    std::ofstream(game / "dlc" / "010074a01bf13001" / "asset.bin") <<
+        std::string(32768, 'd');
+    assert(Eden::FindDeconstructedGameMain(game) == "base/exefs/main");
+    const auto bytes = ExtractedBaseBytes(game, nullptr);
+    assert(bytes && *bytes == 4 + 8 + 4096);
+    assert(ExtractedLocalCover(game).empty());
+    std::ofstream(game / "cover.png") << std::string(160, 'p');
+    assert(ExtractedLocalCover(game) == (game / "cover.png").string());
+    fs::remove(game / "cover.png");
+    const auto outside = root / "outside.jpg";
+    std::ofstream(outside) << std::string(4096, 'x');
+    fs::create_symlink(outside, game / "cover.jpg");
+    assert(ExtractedLocalCover(game).empty());
+    const auto cancel = [] { std::atomic<bool> stop{true}; return stop; }();
+    assert(!ExtractedBaseBytes(game, &cancel));
+    fs::remove_all(root);
+    std::puts("EXTRACTED_BASE_FOOTPRINT_AND_ARTWORK_PASS");
+}
+""".replace("SIZING", sizing).replace("COVERS", covers)
+with tempfile.TemporaryDirectory(prefix="encore-extracted-library-") as temp:
+    cpp = Path(temp) / "test.cpp"
+    cpp.write_text(fixture)
+    for compiler in dict.fromkeys(compilers):
+        for opt in ("-O0", "-O2"):
+            exe = Path(temp) / (Path(compiler).name + opt)
+            built = subprocess.run(
+                [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
+                 "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                 "-I", str(root / "headless"), str(cpp), "-o", str(exe)],
+                capture_output=True, text=True, timeout=60)
+            assert built.returncode == 0, (compiler, opt, built.stderr[-5000:])
+            check = subprocess.run([str(exe)], capture_output=True, text=True, timeout=20)
+            assert check.returncode == 0, (compiler, opt, check.stdout, check.stderr)
+            print("EXTRACTED_LIBRARY_REAL_OWNER_HOST_PASS", Path(compiler).name, opt)

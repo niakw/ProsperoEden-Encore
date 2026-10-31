@@ -698,6 +698,11 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     // hints; a stable same-table hot run does not write to TLS.
     // Every hint points into the process-lifetime static array and is
     // revalidated against its CURRENT begin/end under the owner mutex.
+    // With no published table, avoid touching any per-thread lookup/negative
+    // cache on the dense fallback and after complete sparse teardown.
+    // Callers already hold sparse_mutex; registration grows the prefix
+    // before unlocking, so the next lookup cannot miss a new range.
+    if (sparse_used_prefix == 0) return nullptr;
     static thread_local std::array<SparseRange*, 2> last_ranges{};
     static thread_local unsigned next_slot = 0;
     static thread_local unsigned preferred_slot = 0;
@@ -708,17 +713,15 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     static thread_local std::uint64_t last_negative_generation = 0;
     static thread_local unsigned negative_count = 0;
     static thread_local unsigned next_negative_slot = 0;
-    if (sparse_used_prefix != 0) {
-        for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
-            const unsigned slot = preferred_slot ^ probe;
-            SparseRange* candidate = last_ranges[slot];
-            if (!candidate) continue;
-            const auto begin = candidate->begin.load(std::memory_order_acquire);
-            if (begin != 0 && address >= begin && address < candidate->end) {
-                // One cold preference change; stable runs then need one load.
-                if (probe != 0) preferred_slot = slot;
-                return candidate;
-            }
+    for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
+        const unsigned slot = preferred_slot ^ probe;
+        SparseRange* candidate = last_ranges[slot];
+        if (!candidate) continue;
+        const auto begin = candidate->begin.load(std::memory_order_acquire);
+        if (begin != 0 && address >= begin && address < candidate->end) {
+            // One cold preference change; stable runs then need one load.
+            if (probe != 0) preferred_slot = slot;
+            return candidate;
         }
     }
     // Cache only exact misses: sparse reservations can be unaligned on

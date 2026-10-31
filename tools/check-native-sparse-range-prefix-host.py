@@ -26,7 +26,10 @@ assert "last_ranges = {};" not in lookup
 assert "retired or reused slot cannot return a stale range." in lookup
 assert "next_slot ^= 1u;" in lookup
 assert "if (&range == last_ranges[0] || &range == last_ranges[1]) continue;" in lookup
-assert "if (sparse_used_prefix != 0)" in lookup
+assert "if (sparse_used_prefix == 0) return nullptr;" in lookup
+assert lookup.index("if (sparse_used_prefix == 0) return nullptr;") < lookup.index(
+    "static thread_local std::array<SparseRange*, 2> last_ranges{};")
+assert "if (sparse_used_prefix != 0)" not in lookup
 assert "std::size_t sparse_used_prefix = 0;" in source
 assert "std::uint64_t sparse_range_generation = 1;" in source
 assert source.count("++sparse_range_generation;") == 2
@@ -122,7 +125,8 @@ SparseRange* Lookup(std::uintptr_t address) {
 }
 int main() {
     scans = 0;
-    assert(!Lookup(0x1000) && scans.load() == 0);
+    for (int i = 0; i < 10000; ++i) assert(!Lookup(0x1000 + (i & 63)));
+    assert(scans.load() == 0); // zero-prefix avoids TLS hints and all 64 slots
     assert(ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
     Register(0, 0x1000);
     scans = 0;

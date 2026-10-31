@@ -1387,6 +1387,28 @@ if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 endif()
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
+# Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
+# or Switch 1 changes; the full pinned original owner is retained otherwise.
+option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
+    "Research only: reject cross-dimension 3D shader/image views" OFF)
+if(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "Eglantine NS2 image view guard requires native PS5 Vulkan and NS2 metadata")
+    endif()
+    list(FIND video_sources "renderer_vulkan/vk_texture_cache.cpp" eden_ns2_egl_view_owner)
+    if(eden_ns2_egl_view_owner EQUAL -1)
+        message(FATAL_ERROR "Pinned Vulkan texture-cache owner changed: re-audit Eglantine port")
+    endif()
+    set(eden_ns2_egl_view_file
+        "${PORT_ROOT}/headless/ns2/eglantine/video_core/renderer_vulkan/vk_texture_cache.cpp")
+    if(NOT EXISTS "${eden_ns2_egl_view_file}")
+        message(FATAL_ERROR "Missing Eglantine experimental Vulkan owner")
+    endif()
+    list(REMOVE_ITEM video_sources "renderer_vulkan/vk_texture_cache.cpp")
+    list(APPEND video_sources "${eden_ns2_egl_view_file}")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/headless/ns2/eglantine")
+endif()
 set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")
 
 if(PS5_NATIVE)
@@ -2257,6 +2279,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
+       EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

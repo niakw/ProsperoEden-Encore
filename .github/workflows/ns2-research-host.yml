@@ -298,6 +298,22 @@ jobs:
               -o "build-ns2-a64/ampere-lower-${cxx//+/}"
             "build-ns2-a64/ampere-lower-${cxx//+/}"
           done
+      - name: Eglantine N49 owner parity and 3D image view / R0 shader regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_egl_view_overlay.py
+          for cxx in clang++ g++; do
+            "${cxx}" -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined \
+              -Iheadless/ns2/eglantine tools/ns2/test_egl_view_type.cpp \
+              -o "build-ns2-a64/egl-view-${cxx//+/}"
+            "build-ns2-a64/egl-view-${cxx//+/}"
+            "${cxx}" -std=c++20 -O1 -Wall -Wno-unused-parameter \
+              -Iheadless/ns2/ampere -Ivendor/sources/eden/src \
+              tools/ns2/test_egl_ampere_ret.cpp \
+              -o "build-ns2-a64/egl-ret-${cxx//+/}"
+            "build-ns2-a64/egl-ret-${cxx//+/}"
+          done
       - name: Compile and run Maxwell shader-environment image adapter (Clang and GCC)
         shell: bash
         run: |

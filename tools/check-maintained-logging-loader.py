@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check maintained translation-unit parity against pinned sources (host-only)."""
 from pathlib import Path
+import hashlib
 
 root = Path(__file__).resolve().parents[1]
 base = root / "vendor/sources/eden/src"
@@ -11,7 +12,24 @@ loader = (base / "core/loader/deconstructed_rom_directory.cpp").read_text()
 old = "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;"
 new = "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 14) & 0xffc000;"
 assert loader.count(old) == 1
-assert (active / "core/loader/deconstructed_rom_directory.cpp").read_text() == loader.replace(old, new)
+# The maintained loader now contains a reviewed native RNG policy change
+# PLUS the extracted ExeFS/RomFS bridge and versioned update-file overlays.
+# Keep immutable-source provenance and verify the entire audited new Git blob:
+# never weaken this to checking only a few loosely selected snippets.
+loader_path = active / "core/loader/deconstructed_rom_directory.cpp"
+loader_data = loader_path.read_bytes()
+loader_text = loader_data.decode("utf-8")
+assert loader_text.count(new) == 1 and old not in loader_text
+assert loader_text.count("FileSys::CreateRomFS(std::move(extracted_romfs), nullptr)") == 1
+assert loader_text.count("FileSys::LayeredVfsDirectory::MakeLayeredDirectory(") >= 2
+assert "UpdateCandidate" in loader_text and "candidate.depth >= 5" in loader_text
+assert "cursor == game_root" in loader_text
+loader_git_blob = hashlib.sha1(
+    b"blob " + str(len(loader_data)).encode() + b"\\0" + loader_data
+).hexdigest()
+assert loader_git_blob == "af269102b7e8e41e8ba9dca6c2d68b88fba86e3f", (
+    "maintained loader changed: repeat owner review", loader_git_blob
+)
 
 logging = (base / "common/logging.cpp").read_text()
 old_flush = """            if (write_limit_exceeded)

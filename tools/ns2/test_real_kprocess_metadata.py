@@ -302,7 +302,7 @@ int main(int argc, char** argv) {
         const auto error=denied.LoadFromMetadata(kernel,metadata,code_bytes,
                                                   start,offset);
         Require(error.IsError() && error.code==123 && denied.initialized &&
-                !denied.interfaces_initialized && 
+                !denied.interfaces_initialized &&
                 Kernel::KResourceLimit::created==1 &&
                 Kernel::KResourceLimit::closed==1,
                 "real KProcess metadata failure did not close resource and stop");

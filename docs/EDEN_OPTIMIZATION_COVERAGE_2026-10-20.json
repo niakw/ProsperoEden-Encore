@@ -533,9 +533,9 @@
       "path": "headless/metadata_bridge.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U13",
-      "reviewed_source_git_blob": "0eb7bd4cb4cbf615b4cbd870d6bc87bf30fed9d5",
+      "reviewed_source_git_blob": "de4a9dea7f03c8edf929be72227fd1b90923d2f1",
       "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
-      "evidence": "Re-reviewed 2026-10-23 against prior blob c15a5f3: game_files.h format guards switch package/card metadata and glyph-version entry points to Eden::IsPackageFile/IsCardImageFile, rejecting direct executable inputs that have no Control RomFS. No GPU/JIT hotpath modified. Review documented in docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md; every further source mutation reopens the review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
+      "evidence": "Re-reviewed 2026-10-23 against prior blob c15a5f3: game_files.h format guards switch package/card metadata and glyph-version entry points to Eden::IsPackageFile/IsCardImageFile, rejecting direct executable inputs that have no Control RomFS. No GPU/JIT hotpath modified. Review documented in docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md; every further source mutation reopens the review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Extracted AOC library counts share the title-ID path scanner with native guest services; reviewed 2026-10-31."
     },
     {
       "path": "headless/metadata_bridge.h",

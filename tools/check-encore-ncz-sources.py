@@ -64,7 +64,7 @@ cmake=(root/"headless/CMakeLists.txt").read_text()
 segment=cmake.split("# NSZ/XCZ: select reviewed full C++ source owners",1)[1].split("# Extracted AOC: use the shared vendor source owners",1)[0]
 assert "write_derived" not in segment
 assert segment.count("list(REMOVE_ITEM core_sources")==1
-assert "ncz.cpp" in segment
+assert 'list(APPEND core_sources "${EDEN_PORT_DIR}/ncz.cpp")' in cmake.split("# Extracted AOC: use the shared vendor source owners", 1)[1].split("# The guest title is the owner", 1)[0]
 for rel,_,_ in pairs: assert '"'+rel+'"' in segment
 for path in ["headless/main.cpp","headless/settings_store.h",
              "headless/prosperoeden/eden_services.cpp"]:

@@ -22,6 +22,12 @@
 #include "dynarmic/interface/exclusive_monitor.h"
 #include "core/loader/ns2_nso_preflight.h"
 
+// Dynarmic's x64 BlockOfCode prelude commits 16 MiB before guest code
+// generation. A 16-MiB total cache is insufficient for these host regressions.
+// Keep ample headroom without modifying PS5's separately tuned sparse JIT.
+static constexpr std::size_t HostJitCodeCacheBytes = 64ULL * 1024 * 1024;
+static_assert(HostJitCodeCacheBytes > 16ULL * 1024 * 1024);
+
 using Eden::NS2::ExeFS::NsoHeaderBytes;
 using Eden::NS2::ExeFS::NsoWord;
 using Eden::NS2::ExeFS::PreflightNso;
@@ -114,7 +120,7 @@ int main(int argc, char** argv) {
         Dynarmic::A64::UserConfig cfg{};
         cfg.callbacks = &env;
         cfg.global_monitor = &env.monitor;
-        cfg.code_cache_size = 16 * 1024 * 1024;
+        cfg.code_cache_size = HostJitCodeCacheBytes;
         Dynarmic::A64::Jit cpu{cfg};
         cpu.SetPC(guest_base);
         cpu.SetSP(0x90000000);

@@ -83,3 +83,7 @@ This change is **source ownership only**. Whole-translation-unit experimental se
 ## Final helper relocation
 
 The bounded NPDM/ACID layout implementation now lives alongside its actual `ProgramMetadata` source at `vendor/encore-active/ns2-helpers/include/npdm_layout.h` (vendor commit `15a1267ec65e`). The last old `headless/ns2/npdm_layout.h` was removed. The application has no `headless/ns2` source files remaining; source-owner CI refuses their reintroduction. These are code-ownership and build-input corrections only, not NSW2 game support proof.
+
+## Host JIT regression allocation correction
+
+At app commit `465019ff`, the independent x86-64 Dynarmic host tests both threw `boost::container::bad_alloc`. The pinned `BlockOfCode` constructor commits a 16 MiB prelude and also needs guest-generated code space; both host fixtures had set the **entire** JIT cache to exactly 16 MiB. The test harness now uses a bounded 64 MiB cache with an explicit minimum-size assertion. **This changes no PS5 runtime settings or production allocator.** The cause is supported by source inspection; success requires a new CI run, not an assumed pass.

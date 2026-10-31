@@ -13,6 +13,12 @@
 #include "dynarmic/interface/A64/a64.h"
 #include "dynarmic/interface/exclusive_monitor.h"
 
+// Dynarmic's x64 BlockOfCode prelude commits 16 MiB before guest code
+// generation. A 16-MiB total cache is insufficient for these host regressions.
+// Keep ample headroom without modifying PS5's separately tuned sparse JIT.
+static constexpr std::size_t HostJitCodeCacheBytes = 64ULL * 1024 * 1024;
+static_assert(HostJitCodeCacheBytes > 16ULL * 1024 * 1024);
+
 struct Pattern {std::string_view name,bits;};
 static constexpr Pattern patterns[]={
 #define INST(method,name,bits) {#method,bits},
@@ -56,7 +62,7 @@ static void atomic(std::string_view op,u64 before,u64 src,u64 after,bool cas,uns
     std::cerr << "RUN " << op << " before=" << before << " src=" << src << " after=" << after << " fails=" << fails << std::endl;
     Env env;Dynarmic::A64::UserConfig conf{}; conf.callbacks=&env;
     conf.global_monitor=&env.monitor;
-    conf.code_cache_size=16*1024*1024;
+    conf.code_cache_size=HostJitCodeCacheBytes;
     Dynarmic::A64::Jit jit{conf};
     env.code_mem={encode(op,{{'z',3},{'s',2},{'n',1},{'t',3},
                               {'L',0},{'o',0},{'A',0},{'R',0}}),0x14000000};

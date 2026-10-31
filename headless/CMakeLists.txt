@@ -1440,6 +1440,37 @@ if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
     target_include_directories(video_core BEFORE PUBLIC "${eden_ns2_scratch_generated}")
 endif()
 
+# N56: ignore truncated Vulkan driver cache before any size_t underflow.
+# Preserve the existing PS5 atomic staged save path; research only.
+option(EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL
+    "Research only: validate PS5 Vulkan driver cache header length" OFF)
+if(EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N56 requires native PS5 Vulkan NS2 research")
+    endif()
+    set(eden_ns2_pipeline_owner "${PORT_BUILD_DIR}/vk_pipeline_cache_cost.cpp")
+    list(FIND video_sources "${eden_ns2_pipeline_owner}" eden_ns2_pipeline_owner_idx)
+    if(eden_ns2_pipeline_owner_idx EQUAL -1)
+        message(FATAL_ERROR "Native PS5 Vulkan driver cache owner changed; re-audit N56")
+    endif()
+    set(eden_ns2_pipeline_overlay "${PORT_BUILD_DIR}/ns2_vk_pipeline_cache_cost.cpp")
+    set(eden_ns2_pipeline_generator
+        "${PORT_ROOT}/tools/ns2/prepare_egl_pipeline_cache.cmake")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${eden_ns2_pipeline_owner}" "${eden_ns2_pipeline_generator}")
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+        "-DINPUT=${eden_ns2_pipeline_owner}"
+        "-DOUTPUT=${eden_ns2_pipeline_overlay}"
+        -P "${eden_ns2_pipeline_generator}"
+        RESULT_VARIABLE eden_ns2_pipeline_guard_result)
+    if(NOT eden_ns2_pipeline_guard_result EQUAL 0)
+        message(FATAL_ERROR "N56 PS5 Vulkan cache guard overlay rejected")
+    endif()
+    list(REMOVE_ITEM video_sources "${eden_ns2_pipeline_owner}")
+    list(APPEND video_sources "${eden_ns2_pipeline_overlay}")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2379,6 +2410,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
+       EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

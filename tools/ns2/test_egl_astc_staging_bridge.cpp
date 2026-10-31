@@ -68,7 +68,9 @@ static void Failures() {
         });
     assert(race.status==AstcTransferStatus::ConcurrentWrite);
     assert(p.Snapshot().status==LayerPlanStatus::Partial);
-    auto overflow=Planner();
+    AstcDirtyLayerPlanner overflow(BASE,STRIDE*68,STRIDE,68,0,64ULL<<20);
+    assert(overflow.Valid() && overflow.ResetAfterFullUpload());
+    assert(overflow.MarkWrite(BASE+2*STRIDE,64));
     auto result=UploadAstcDirtyLayerBatches(overflow,
         (std::numeric_limits<std::uint64_t>::max)()-100,
         [&](std::uint32_t,std::uint64_t) {return true;},

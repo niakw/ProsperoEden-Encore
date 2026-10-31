@@ -49,6 +49,7 @@ template<class BeginBatch, class ReadGuest, class DecodeBatch>
         return out;
     }
     const auto max = (std::numeric_limits<std::uint64_t>::max)();
+    try {
     for (std::size_t b = 0; b < plan.batch_bytes.size(); ++b) {
         const auto bytes = plan.batch_bytes[b];
         if (!begin_batch(static_cast<std::uint32_t>(b), bytes)) {
@@ -84,6 +85,12 @@ template<class BeginBatch, class ReadGuest, class DecodeBatch>
             return out;
         }
         ++out.dispatched_batches;
+    }
+    } catch (...) {
+        // An exception during staging/dispatch leaves partial GPU updates
+        // possible. Require a full upload before returning control upstream.
+        planner.Invalidate();
+        throw;
     }
     if (!planner.Commit(plan)) {
         // Concurrent guest writes after the initial snapshot are still dirty.

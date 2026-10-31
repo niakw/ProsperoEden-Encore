@@ -102,6 +102,13 @@ int main(){
     invalid=ci;invalid.extent.depth=2;
     assert(!m.CreateSparseImage(invalid));
     assert(creates==0);
+    m.device.dld.vkCreateImage=nullptr;
+    assert(!m.CreateSparseImage(ci));
+    m.device.dld.vkCreateImage=Create;
+    m.device.dld.vkDestroyImage=nullptr;
+    assert(!m.CreateSparseImage(ci));
+    m.device.dld.vkDestroyImage=Destroy;
+    assert(creates==0);
     fail=1;assert(!m.CreateSparseImage(ci));
     fail=2;assert(!m.CreateSparseImage(ci));assert(destroys==1);
     fail=0;auto image=m.CreateSparseImage(ci);

@@ -24,6 +24,11 @@ def generate(header,code):
         ci.extent.width == 0 || ci.extent.height == 0 || ci.extent.depth != 1) {
         return {};
     }
+    // PS5 Vulkan shim can leave optional entry points unbound.
+    if (!device.GetDispatchLoader().vkCreateImage ||
+        !device.GetDispatchLoader().vkDestroyImage) {
+        return {};
+    }
     VkImageCreateInfo sparse_ci = ci;
     sparse_ci.flags |= VK_IMAGE_CREATE_SPARSE_BINDING_BIT |
                        VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;

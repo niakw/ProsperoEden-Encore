@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Overstappen vanaf het oorspronkelijke project (Nederlands)
 
-[← Nederlands](../../README.nl.md) · [Volledige Engelse installatiehandleiding](../../INSTALL.md) · [Alle talen](../../LANGUAGES.md)
+[← Nederlands](README.nl.md) · [Volledige Engelse installatiehandleiding](../../INSTALL.md) · [Alle talen](../../LANGUAGES.md)
 
 ## Snel beginnen
 

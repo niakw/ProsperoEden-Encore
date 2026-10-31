@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — 从原版迁移或更新 (简体中文)
 
-[← 简体中文](../../README.zh-Hans.md) · [英语完整安装说明](../../INSTALL.md) · [所有语言](../../LANGUAGES.md)
+[← 简体中文](README.zh-Hans.md) · [英语完整安装说明](../../INSTALL.md) · [所有语言](../../LANGUAGES.md)
 
 ## 快速开始
 

@@ -16,8 +16,8 @@ assert source.count(begin) == source.count(end) == 1
 chunk = source[source.index(begin):source.index(end)]
 for item in (
     "memory_allocator.CreateSparseImage(image_ci)",
-    "logical.GetImageMemoryRequirements(*candidate)",
-    "logical.GetSparseImageMemoryRequirements(*candidate)",
+    "logical.GetImageMemoryRequirements(**candidate)",
+    "logical.GetSparseImageMemoryRequirements(**candidate)",
     "AdmitSparseCacheImage(",
     "SparseBindOwner<MemoryAllocator>",
     "owner.Bind(",

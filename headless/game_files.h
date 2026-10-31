@@ -101,6 +101,11 @@ inline bool IsSafeExtractedDirectory(const std::filesystem::path& folder) {
 inline std::string FindDeconstructedGameMain(const std::filesystem::path& title) {
     namespace fs = std::filesystem;
     if (!IsSafeExtractedDirectory(title)) return {};
+    // Root-level content stores are not games, even when an update happens
+    // to carry its own valid ExeFS. Only <title>/base is a launchable title.
+    const auto root_name = title.filename().string();
+    if (root_name == "updates" || root_name == "dlc" || root_name == "romfs")
+        return {};
     if (IsDeconstructedGameDirectory(title)) return "main";
     std::size_t visited = 0;
     const auto search = [&](const auto& self, const fs::path& dir,

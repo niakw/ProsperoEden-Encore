@@ -1901,15 +1901,7 @@ if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)
     if(NOT n76_legacy_owner_idx EQUAL -1)
         message(FATAL_ERROR "N76 must not compile the unqualified legacy A64 owner")
     endif()
-    file(READ "${EDEN_N76_NATIVE_JIT_SOURCE}" n76_g11_source)
-    string(FIND "${n76_g11_source}" "#ifdef EDEN_NS2_GUEST_COUNTER"
-         n76_g11_counter_guard_idx)
-    string(FIND "${n76_g11_source}"
-         "config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());"
-         n76_g11_counter_rate_idx)
-    if(n76_g11_counter_guard_idx EQUAL -1 OR n76_g11_counter_rate_idx EQUAL -1)
-        message(FATAL_ERROR "N76 counter rate not integrated into audited G11 A64 owner")
-    endif()
+    # The dedicated host selector guard verifies the opt-in G11 source bytes.
     foreach(n76_target IN ITEMS core common)
         target_compile_definitions(${n76_target} PRIVATE EDEN_NS2_GUEST_COUNTER=1)
         target_include_directories(${n76_target} BEFORE PRIVATE

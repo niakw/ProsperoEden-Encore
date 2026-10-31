@@ -74,6 +74,7 @@ with tempfile.TemporaryDirectory(prefix="n52-os-process-") as d:
                         "-Wno-unused-variable","-Werror","-fsanitize=undefined",
                         "-fno-sanitize-recover=all",
                         "-I",str(root/"headless/ns2/overrides"),
+                        "-I",str(root/"vendor/encore-active/ns2-helpers/include"),
                         str(src),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)
 print("N52_REAL_PROCESS_RUN_HOST_LIFECYCLE_PASS")

@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/'vendor/sources/eden/src/core/hle/service/os/process.cpp'
 PORT=ROOT/'headless/ns2/overrides/core/hle/service/os/process.cpp'
-TRACE=ROOT/'headless/ns2/overrides/core/loader/ns2_svc_trace.h'
+TRACE=ROOT/'vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 def once(s,a,b):
     assert s.count(a)==1,'OS process source owner drift: '+a[:80]

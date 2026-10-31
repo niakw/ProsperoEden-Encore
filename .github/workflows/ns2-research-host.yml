@@ -90,7 +90,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Iheadless/ns2/overrides \
+              -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides \
               tools/ns2/test_nso_preflight.cpp \
               -o "build-ns2-a64/nso-preflight-${compiler//+/}"
             "build-ns2-a64/nso-preflight-${compiler//+/}"
@@ -102,7 +102,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Iheadless/ns2/overrides \
+              -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides \
               tools/ns2/test_nso_process_handoff.cpp \
               -o "build-ns2-a64/handoff-${compiler//+/}"
             "build-ns2-a64/handoff-${compiler//+/}"
@@ -116,33 +116,30 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=address,undefined -fno-sanitize-recover=all \
-              -Iheadless/ns2/overrides \
+              -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides \
               tools/ns2/test_kprocess_code_admission.cpp \
               -o "build-ns2-a64/kprocess-code-${compiler//+/}"
             "build-ns2-a64/kprocess-code-${compiler//+/}"
           done
-      - name: Generate and compile the real kernel HLE SVC dispatch owner
+      - name: Compile maintained SVC owner and test bounded native trace
         shell: bash
         run: |
           set -euo pipefail
-          cmake \
-            -DINPUT=vendor/sources/eden/src/core/hle/kernel/svc.cpp \
-            -DOUTPUT=build-ns2-a64/ns2_svc.cpp \
-            -P tools/ns2/prepare_svc_trace_owner.cmake
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -Wall -Wextra -Werror -O2 \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Iheadless/ns2/overrides \
+              -Ivendor/encore-active/ns2-helpers/include \
               tools/ns2/test_svc_trace.cpp \
               -o "build-ns2-a64/svc-trace-${compiler//+/}"
             "build-ns2-a64/svc-trace-${compiler//+/}"
           done
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+            -DEDEN_NS2_SVC_TRACE=1 \
             -Ibuild-ns2-a64/fmt/include \
-            -Iheadless/ns2/overrides \
+            -Ivendor/encore-active/ns2-helpers/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            build-ns2-a64/ns2_svc.cpp
+            vendor/sources/eden/src/core/hle/kernel/svc.cpp
       - name: Syntax-check actual experimental NPDM and ExeFS loader owners
         shell: bash
         run: |
@@ -156,7 +153,7 @@ jobs:
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless \
-              -Iheadless/ns2/overrides \
+              -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides \
               -Iheadless/ns2 \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
@@ -382,7 +379,7 @@ jobs:
           python3 tools/ns2/test_process_run_source.py
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Iheadless/ns2/overrides \
+            -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             headless/ns2/overrides/core/hle/service/os/process.cpp
@@ -569,7 +566,7 @@ jobs:
         run: |
           set -euo pipefail
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
-            -Iheadless/ns2/overrides \
+            -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides \
             tools/ns2/test_content_formats.cpp \
             -o build-ns2-a64/ns2-content-format-test
           build-ns2-a64/ns2-content-format-test
@@ -583,7 +580,7 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-a64/fmt/include \
-            -Iheadless/ns2/overrides -Iheadless/ns2 \
+            -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides -Iheadless/ns2 \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
             headless/ns2/overrides/core/file_sys/program_metadata.cpp \

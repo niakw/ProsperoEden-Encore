@@ -31,3 +31,7 @@ N54 scratch and its frame trim are now maintained in the single vendor root `enc
 The strict `check-vendored-vulkan-fork.py` and F07 allocator OOM oracles continue to compare all generated native source files byte-for-byte apart from the **exact audited additive N65 sparse methods**, with N65 separately exercised by Clang/GCC source extraction. Do not simply disable a parity assertion to accommodate a new feature.
 
 N60's temporary buffers now wait for Vulkan completion via `runtime.Finish()` before release. This is a safety gate, not a frame-time optimization; an asynchronous fence lifecycle and real GPU validation are still required before activation.
+
+## Kernel SVC owner (N3v)
+
+N3v now compiles in the **real** `vendor/sources/eden/src/core/hle/kernel/svc.cpp` behind `EDEN_NS2_SVC_TRACE`; the bounded trace helper lives under `vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h`. The CMake-generated duplicate SVC translation unit and its generator are removed. The host workflow syntax-checks that production source with the research macro. Runtime success and PS5 validation are not claimed.

@@ -116,18 +116,19 @@ def main() -> int:
                 "IsPublicHelloFixture(metadata.GetTitleID()" in romdir_source.read_text() and
                 "process.IsPermittedSvc(svc)" in romdir_source.read_text(),
                 "Public homebrew fixture must verify actual kernel SVC grants")
-        svc_trace = ROOT / "headless/ns2/overrides/core/loader/ns2_svc_trace.h"
-        svc_generator = ROOT / "tools/ns2/prepare_svc_trace_owner.cmake"
-        require(svc_trace.is_file() and svc_generator.is_file() and
+        svc_trace = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h"
+        svc_owner = ROOT / "vendor/sources/eden/src/core/hle/kernel/svc.cpp"
+        require(svc_trace.is_file() and svc_owner.is_file() and
                 "SvcTrace::Register(process.GetProcessId())" in romdir_source.read_text() and
-                "Eden::NS2::SvcTrace::Next(process.GetProcessId())" in svc_generator.read_text() and
-                'list(REMOVE_ITEM eden_ns2_svc_sources "hle/kernel/svc.cpp")' in CMAKE and
-                'if(PS5_NATIVE)' in CMAKE[CMAKE.index("set(eden_ns2_svc_original")-300:
-                                          CMAKE.index("set(eden_ns2_svc_generated")],
-                "NS2 SVC probe must replace only the experimental native dispatcher")
+                "Eden::NS2::SvcTrace::Next(process.GetProcessId())" in svc_owner.read_text() and
+                "#ifdef EDEN_NS2_SVC_TRACE" in svc_owner.read_text() and
+                "target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)" in CMAKE and
+                "prepare_svc_trace_owner.cmake" not in CMAKE and
+                "ns2_svc.cpp" not in CMAKE,
+                "NS2 SVC probe must use vendor-owned real dispatcher without generation")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 7 and
+        require(sum(i > selection for i in property_sets) == 6 and
                 'set_property(TARGET core PROPERTY SOURCES "${eden_ns2_os_sources}")' in CMAKE and
                 'EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR' in CMAKE,
                 "Unexpected NS2 core source owner: ExeFS, SVC, process-run, AM, NVDRV and supervisor must stay isolated")

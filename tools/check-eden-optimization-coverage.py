@@ -43,9 +43,9 @@ hygiene_owners = {
 }
 assert hygiene_owners <= all_owners, sorted(hygiene_owners - all_owners)
 assert "tools/install-eden-header-hygiene.py" in tracked
-# The mainline extracted AOC implementation adds four production source owners
-# after the dated F07 review. Account for them independently; they are neither
-# already optimized F07 entries nor opt-in NS2 experiment files.
+# The four mainline extracted AOC owners are explicitly reviewed in the
+# post-snapshot F07 source ledger. Do not silently drop their proof entries
+# or misclassify them as opt-in NS2 experiments.
 extracted_aoc_owners = {
     "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
     "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
@@ -54,14 +54,15 @@ extracted_aoc_owners = {
 }
 assert extracted_aoc_owners <= all_owners, sorted(extracted_aoc_owners - all_owners)
 assert not extracted_aoc_owners & (research_owners | hygiene_owners)
-owners=all_owners-research_owners-hygiene_owners-extracted_aoc_owners
-print("ENCORE_EXTRACTED_AOC_F07_ISOLATION_PASS", f"new_shipping={len(extracted_aoc_owners)}")
-assert len(owners)==511, ("F07 historical source owner drift",len(owners))
-print("NS2_F07_TRIAGE_ISOLATION_PASS", "unreviewed_research_sources=103",
+owners=all_owners-research_owners-hygiene_owners
+print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
+assert len(owners)==515, ("F07 reviewed shipping source owner drift",len(owners))
+print("NS2_F07_TRIAGE_ISOLATION_PASS", f"unreviewed_research_sources={len(research_owners)}",
       "separate_shared_warning_headers=2")
 entries=STATE["handled_paths"]
 handled={e["path"] for e in entries}
 assert len(entries)==len(handled),"duplicate optimization owner"
+assert extracted_aoc_owners<=handled, ("AOC source review missing", sorted(extracted_aoc_owners-handled))
 assert handled<=owners,sorted(handled-owners)
 allowed={"code_changed_in_batch","reviewed_without_new_code_edit",
          "historical_host_contract_reviewed","previously_integrated_source_change",

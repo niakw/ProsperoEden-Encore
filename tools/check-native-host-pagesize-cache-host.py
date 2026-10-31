@@ -30,7 +30,7 @@ cpp = r"""
 #include <cstdio>
 #include <thread>
 #include <vector>
-constexpr int _SC_PAGESIZE = 30;
+#include <unistd.h>
 std::atomic<unsigned> queries{};
 long host_sysconf(int name) {
     assert(name == _SC_PAGESIZE);

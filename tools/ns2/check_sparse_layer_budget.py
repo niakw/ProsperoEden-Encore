@@ -10,6 +10,7 @@ assert "sparseResidencyImage2D" in N58
 assert "VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT" in N62
 assert "ResetAfterGpuRetire" in HEADER.read_text()
 assert "bind_shared_tail" in HEADER.read_text()
+assert "MakeSparsePhysicalBindPlan" in HEADER.read_text()
 with tempfile.TemporaryDirectory(prefix="n63-sparse-budget-") as td:
     for cxx in ("clang++","g++"):
         exe=Path(td)/("n63-"+cxx.replace("+","p"))
@@ -19,4 +20,4 @@ with tempfile.TemporaryDirectory(prefix="n63-sparse-budget-") as td:
              str(ROOT/"tools/ns2/test_sparse_layer_budget.cpp"),
              "-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)
-print("N63_SPARSE_IMAGE_PLAN_ORACLE_PASS")
+print("N63_N68_SPARSE_IMAGE_PLAN_AND_PHYSICAL_LAYOUT_PASS")

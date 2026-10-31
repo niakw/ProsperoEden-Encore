@@ -87,4 +87,50 @@ static void Randomized(){
     }
     assert(accepted>0&&accepted<68);
 }
-int main(){Basic();SharedTail();Invalid();Randomized();std::puts("N63_SPARSE_LAYER_BUDGET_AND_MIPTAIL_PASS");}
+static void PhysicalRegions(){
+    auto s=Spec();
+    SparseLayerBudget budget(s);
+    auto logical=budget.Plan(std::vector<std::uint32_t>{1,2});
+    const auto layout=MakeSparsePhysicalBindPlan(
+        s,logical,134217728,131072,200000000);
+    assert(layout.valid);
+    assert(layout.tiles.size()==672 && layout.tails.size()==2);
+    assert(layout.tiles[0].layer==1 && layout.tiles[0].level==0);
+    assert(layout.tiles[0].x==0 && layout.tiles[0].y==0);
+    assert(layout.tiles[1].x==64 && layout.tiles[1].width==64);
+    assert(layout.tiles[256].level==1);
+    assert(layout.tails[0].resource_offset==134217728+131072);
+    assert(layout.tails[1].resource_offset==134217728+262144);
+    assert(layout.backing_bytes==logical.bytes_new);
+    assert(!MakeSparsePhysicalBindPlan(s,logical,134217728,4096,200000000).valid);
+    assert(!MakeSparsePhysicalBindPlan(s,logical,134217728,131072,1000).valid);
+    assert(!MakeSparsePhysicalBindPlan(s,logical,134217729,131072,200000000).valid);
+    auto forged=logical; ++forged.bytes_new;
+    assert(!MakeSparsePhysicalBindPlan(s,forged,134217728,131072,200000000).valid);
+    forged=logical; forged.new_layers={1,1};
+    assert(!MakeSparsePhysicalBindPlan(s,forged,134217728,131072,200000000).valid);
+
+    s.single_mip_tail=true;s.tail_bytes=65536;
+    SparseLayerBudget shared(s);
+    auto first=shared.Plan(std::vector<std::uint32_t>{3,4});
+    auto bound=MakeSparsePhysicalBindPlan(s,first,134217728,0,200000000);
+    assert(bound.valid && bound.tiles.size()==672 && bound.tails.size()==1);
+    assert(bound.tails.front().shared);
+    assert(bound.backing_bytes==first.bytes_new);
+    assert(shared.Commit(first));
+    auto second=shared.Plan(std::vector<std::uint32_t>{5});
+    bound=MakeSparsePhysicalBindPlan(s,second,134217728,0,200000000);
+    assert(bound.valid && bound.tiles.size()==336 && bound.tails.empty());
+
+    // N66 limits the number of image tile binds per submission.
+    auto huge=Spec();huge.width=16384;huge.height=16384;
+    huge.layers=2;huge.levels=1;huge.tail_first_lod=1;
+    huge.tail_bytes=0;huge.tile_alignment=4096;
+    huge.max_bound_bytes=SparseLayerBudget::CapForDeviceMemory(std::uint64_t{7}<<30);
+    SparseLayerBudget large(huge);
+    assert(large.Valid());
+    auto oversized=large.Plan(std::vector<std::uint32_t>{0,1});
+    assert(oversized.status==SparsePlanStatus::Ready);
+    assert(!MakeSparsePhysicalBindPlan(huge,oversized,0,0,1024).valid);
+}
+int main(){Basic();SharedTail();Invalid();Randomized();PhysicalRegions();std::puts("N68_SPARSE_PHYSICAL_TILE_MIPTAIL_LAYOUT_PASS");}

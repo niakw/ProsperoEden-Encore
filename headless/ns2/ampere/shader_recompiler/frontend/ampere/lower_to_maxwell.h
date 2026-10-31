@@ -3611,7 +3611,9 @@ inline LoweredProgram LowerToMaxwell(std::span<const Instruction> code,
                      relocation.output_index < result.source_instruction_offsets[upper_link_setup]) ||
                     (inplace_link && relocation.target > active_entry && relocation.target < index &&
                      relocation.output_index < result.source_instruction_offsets[active_entry]) ||
-                    relocation.target == index ||
+                    (relocation.target == index &&
+                     !(verified_short_inplace && relocation.call &&
+                       relocation.target == active_entry)) ||
                     (relocation.target == index - 1 &&
                      !(verified_immediate_copy && relocation.call &&
                        relocation.target == active_entry) &&

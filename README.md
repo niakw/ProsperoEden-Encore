@@ -7,7 +7,7 @@
 
   <p><strong>A controller-first PS5 emulator fork for firmware 13.60: NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX and KIP loaders, LZ4 + ZBIC/zstd decoding, TV navigation and reproducible builds.</strong></p>
 
-  <p><strong>English</strong> · <a href="README.fr.md">Français</a> · <a href="README.es.md">Español</a></p>
+  <p><strong>English (default)</strong> · <a href="README.zh-Hans.md">简体中文</a> · <a href="README.zh-Hant.md">繁體中文</a> · <a href="README.es-419.md">Español (LatAm)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <a href="README.fr-CA.md">Français (CA)</a> · <a href="README.pt-BR.md">Português (BR)</a> · <a href="README.pt-PT.md">Português (PT)</a> · <a href="LANGUAGES.md"><strong>All 18 choices</strong></a></p>
   <p><kbd>Firmware 13.60 · hardware-tested target</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>TV-first UI</kbd> <kbd>Dynarmic</kbd></p>
   <p>
     <a href="INSTALL.md"><strong>Install</strong></a> ·
@@ -38,6 +38,17 @@
 > **Recommended/tested firmware: 13.60, the only firmware actually tested with Encore on a console.** Earlier firmware versions **may work** when the homebrew loader, PS5 native APIs, Vulkan and filesystem access are compatible; this remains **unverified**, and no minimum firmware has been established. Newer versions are also untested. Even on 13.60, frame pacing and gameplay freezes remain under investigation. This is **not** advice to update your console.
 >
 > **Before a console test:** [source, logs, upstream and package checklist](docs/PRETEST_AUDIT_2026-10-14.md) — verify that the artifact and symbols match the exact tested SHA.
+
+---
+
+## Start here — install in four steps
+
+1. Choose a **complete Encore release package** from [Releases](https://github.com/niakw/ProsperoEden-Encore/releases). A green development CI job does not automatically mean it was tested on PS5.
+2. **Back up** your old `/data/homebrew/PPSA99008/` app, `/data/prosperoeden/` and any external storage root. The original native port uses the **same title ID**.
+3. Follow [the complete installation guide](INSTALL.md) for **ZIP/FTP or FFPFSC/ShadowMountPlus**. Copy the full `PPSA99008/` app tree, including `ui/lang/`, not only `eboot.bin`.
+4. Open Encore and check **Settings → Storage / Language**, game Library and existing saves. If anything fails, use [Troubleshooting](TROUBLESHOOTING.md).
+
+**Firmware 13.60 is the only console-tested target.** No earlier firmware minimum is verified, and this is not advice to update your PS5. [Choose any launcher language](LANGUAGES.md).
 
 ---
 

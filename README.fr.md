@@ -7,7 +7,7 @@
 
   <p><strong>Un fork d'émulateur natif PS5 pour le firmware 13.60 : chargeurs NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX et KIP, décompression LZ4 + ZBIC/zstd, interface TV et compilation reproductible.</strong></p>
 
-  <p><a href="README.md"><strong>English</strong></a> · <strong>Français</strong> · <a href="README.es.md">Español</a></p>
+  <p><a href="README.md">English (default)</a> · <a href="README.zh-Hans.md">简体中文</a> · <a href="README.es-419.md">Español (LatAm)</a> · <a href="README.es.md">Español</a> · <strong>Français</strong> · <a href="README.fr-CA.md">Français (CA)</a> · <a href="README.pt-BR.md">Português (BR)</a> · <a href="LANGUAGES.md"><strong>18 choix</strong></a></p>
   <p><kbd>Firmware 13.60 · testé sur matériel</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>Interface TV</kbd> <kbd>Dynarmic</kbd></p>
   <p>
     <a href="#-pourquoi-encore-"><strong>Avantages</strong></a> ·
@@ -32,6 +32,17 @@
 > **Firmware recommandé/testé pour Encore : 13.60, seule version effectivement essayée sur notre PS5.** Les versions **antérieures devraient pouvoir fonctionner dans certains environnements homebrew compatibles**, mais cela reste **à vérifier sur Encore** et aucun firmware minimum n'est établi. Les firmwares ultérieurs ne sont pas qualifiés non plus. Même sur 13.60, les saccades et gels en jeu restent à résoudre. « Recommandé » ne signifie **pas** qu'il faut mettre à jour sa console.
 >
 > **Avant un test console :** [audit des logs, mises à jour, build et fichiers à conserver](docs/PRETEST_AUDIT_2026-10-14.md). Vérifier le SHA exact du paquet et des symboles.
+
+---
+
+## Démarrer en quatre étapes
+
+1. Télécharger une archive **complète** des [Releases Encore](https://github.com/niakw/ProsperoEden-Encore/releases). Une CI verte ne prouve pas une version testée sur console.
+2. **Sauvegarder** l’ancienne application `/data/homebrew/PPSA99008/`, le stockage `/data/prosperoeden/` et les supports externes. Le port d’origine partage le **même identifiant PS5**.
+3. Suivre [le guide d’installation français](docs/i18n/INSTALL.fr-FR.md) pour ZIP/FTP ou FFPFSC/ShadowMountPlus. Copier **tout** `PPSA99008/` et `ui/lang/`, jamais uniquement `eboot.bin`.
+4. Contrôler **Settings → Storage / Language**, la bibliothèque et les sauvegardes. En cas de souci, consulter le [dépannage (EN)](TROUBLESHOOTING.md).
+
+**Seul le firmware 13.60 a été testé sur console.** Aucun minimum antérieur n’est qualifié ; ce n’est pas un conseil de mise à jour. [18 choix linguistiques](LANGUAGES.md).
 
 ---
 

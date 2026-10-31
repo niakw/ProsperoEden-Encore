@@ -7,7 +7,7 @@
 
   <p><strong>Un proyecto comunitario de emulación nativa para PS5, centrado en el firmware 13.60: carga de NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX y KIP, descompresión LZ4 y ZBIC/zstd, interfaz para TV y compilaciones reproducibles.</strong></p>
 
-  <p><a href="README.md">English</a> · <a href="README.fr.md">Français</a> · <strong>Español</strong></p>
+  <p><a href="README.md">English (default)</a> · <a href="README.zh-Hans.md">简体中文</a> · <a href="README.es-419.md">Español (LatAm)</a> · <strong>Español</strong> · <a href="README.fr.md">Français</a> · <a href="README.pt-BR.md">Português (BR)</a> · <a href="LANGUAGES.md"><strong>18 opciones</strong></a></p>
   <p><kbd>Firmware 13.60 · probado en hardware</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>Interfaz para TV</kbd> <kbd>Dynarmic</kbd></p>
   <p>
     <a href="#por-que-encore"><strong>Ventajas</strong></a> ·
@@ -36,6 +36,17 @@
 > **FC27 sigue teniendo problemas conocidos:** tirones, algunas imágenes y textos HUD retrasados, controles personalizados en partido y bloqueos durante la pausa, el descanso o el final. [Seguimiento técnico FC27/F07](docs/FC27_F07_MASTER_TRACKER.md). Los tests del código y una compilación correcta **no equivalen a una prueba de jugabilidad**.
 >
 > **Antes de probar un paquete:** verifica el commit SHA exacto, el archivo compilado y los símbolos correspondientes. [Lista de comprobaciones](docs/PRETEST_AUDIT_2026-10-14.md).
+
+---
+
+## Empezar en cuatro pasos
+
+1. Descarga un paquete **completo** desde [Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases). Una CI correcta no demuestra pruebas en consola.
+2. **Respalda** la aplicación `/data/homebrew/PPSA99008/`, los datos `/data/prosperoeden/` y los medios externos. El port original usa el **mismo ID de PS5**.
+3. Sigue [la guía de instalación en español](docs/i18n/INSTALL.es-ES.md) para ZIP/FTP o FFPFSC/ShadowMountPlus. Copia **todo** `PPSA99008/`, incluida `ui/lang/`, no solo `eboot.bin`.
+4. Comprueba **Settings → Storage / Language**, la biblioteca y los guardados. Si algo falla, consulta [solución de problemas (EN)](TROUBLESHOOTING.md).
+
+**Solo se ha probado el firmware 13.60 en consola.** No se ha verificado ningún firmware mínimo anterior; no actualices tu PS5 por este motivo. [18 opciones de idioma](LANGUAGES.md).
 
 ---
 

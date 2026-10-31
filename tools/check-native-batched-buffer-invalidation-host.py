@@ -10,6 +10,10 @@ begin = native.index("void RasterizerVulkan::InnerInvalidation(")
 end = native.index("\nbool RasterizerVulkan::OnCPUWrite(", begin)
 method = native[begin:end]
 assert "bool buffer_may_overlap = false;" in method
+assert "if (texture_may_overlap && buffer_may_overlap) break;" in method
+preflight = method.split("bool texture_may_overlap = false;", 1)[1].split("if (texture_may_overlap) {", 1)[0]
+assert preflight.count("for (const auto& [addr, size] : sequences)") == 1
+assert "::Eden::BufferPages::NeverRegistered(addr, size)" in preflight
 assert method.count("::Eden::BufferPages::NeverRegistered(addr, size)") == 2
 assert "query_cache.InvalidateRegion(addr, size);" in method
 assert "pipeline_cache.InvalidateRegion(addr, size);" in method

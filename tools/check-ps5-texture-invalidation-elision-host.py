@@ -41,6 +41,13 @@ assert new != original
 assert new[0].count("::Eden::ImagePages::NeverHeld(addr, size)") == 3
 assert new[1].count("::Eden::ImagePages::NeverHeld(addr, size)") == 1
 assert "bool texture_may_overlap = false;" in new[0]
+assert "bool buffer_may_overlap = false;" in new[0]
+assert "if (texture_may_overlap && buffer_may_overlap) break;" in new[0]
+# The two monotonic owner domains must share ONE bounded preflight range walk.
+prefetch = new[0].split("bool texture_may_overlap = false;", 1)[1].split("if (texture_may_overlap) {", 1)[0]
+assert prefetch.count("for (const auto& [addr, size] : sequences)") == 1
+assert prefetch.index("::Eden::ImagePages::NeverHeld(addr, size)") < prefetch.index("::Eden::BufferPages::NeverRegistered(addr, size)")
+assert "if (texture_may_overlap && buffer_may_overlap) break;" in oracle
 assert "Recheck under the texture mutex" in new[0]
 assert "if (texture_may_overlap)" in new[0]
 assert "R: skip provably unnecessary Vulkan texture-cache invalidation locks" in oracle

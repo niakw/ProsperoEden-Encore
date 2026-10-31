@@ -26,6 +26,8 @@
 
 **31/10 — C04, libre frame Vulkan (prébuild en qualification) :** le producteur (présentation asynchrone ou synchrone) ne déclenche plus `free_cv.notify_one()` quand aucun consommateur n'attend un `GetRenderFrame`. Le compteur `free_waiters` est inscrit et retiré sous `free_mutex`, la publication du frame et le contrôle d'échec conservent l'ordre et `notify_all` sur erreur. Source `vendor` épinglée, générateur strict et témoins hôte source-extraits synchronisés ; CI du SHA à qualifier. **Aucun gain de frametime PS5 revendiqué ; F07 22/29.**
 
+**31/10 — C01/T01, invalidations GPU par lot (qualification host) :** `RasterizerVulkan::InnerInvalidation` fusionne les deux pré-parcours de plages (occupation images et buffers) en **une seule traversée**. Chaque domaine cesse ses sondes après son premier recouvrement ; les reprises sous les mutex séparés et l'ordre texture → buffer → query → shader restent inchangés. Variante guest-bridge maintenue en parité, générateur et deux témoins source-extraits mis à jour. **Gains PS5 non mesurés, compteur F07 22/29 ; gates du SHA à qualifier.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

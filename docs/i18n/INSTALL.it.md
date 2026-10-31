@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Migrazione dal progetto originale (Italiano)
 
-[← Italiano](../../README.it.md) · [Guida completa in inglese](../../INSTALL.md) · [Tutte le lingue](../../LANGUAGES.md)
+[← Italiano](README.it.md) · [Guida completa in inglese](../../INSTALL.md) · [Tutte le lingue](../../LANGUAGES.md)
 
 ## Primi passi
 

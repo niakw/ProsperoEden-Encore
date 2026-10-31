@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — 기존 버전에서 이전하기 (한국어)
 
-[← 한국어](../../README.ko.md) · [영어 전체 설치 안내](../../INSTALL.md) · [모든 언어](../../LANGUAGES.md)
+[← 한국어](README.ko.md) · [영어 전체 설치 안내](../../INSTALL.md) · [모든 언어](../../LANGUAGES.md)
 
 ## 시작하기
 

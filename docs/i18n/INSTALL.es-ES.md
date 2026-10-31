@@ -1,6 +1,6 @@
 # Instalar y actualizar Encore — Español (España)
 
-[← README en español](../../README.es.md) · [Todos los idiomas](../../LANGUAGES.md) · [Instalación completa (inglés)](../../INSTALL.md)
+[← README en español](README.es.md) · [Todos los idiomas](../../LANGUAGES.md) · [Instalación completa (inglés)](../../INSTALL.md)
 
 **Firmware probado con Encore en PS5 real: únicamente 13.60.** Otras versiones podrían funcionar, pero no están verificadas y no existe un mínimo confirmado. No actualices la consola solo porque se mencione 13.60.
 

@@ -1,6 +1,6 @@
 # Installer et mettre à jour Encore — Français
 
-[← README français](../../README.fr.md) · [Toutes les langues](../../LANGUAGES.md) · [Installation détaillée (anglais)](../../INSTALL.md)
+[← README français](README.fr.md) · [Toutes les langues](../../LANGUAGES.md) · [Installation détaillée (anglais)](../../INSTALL.md)
 
 **Firmware PS5 testé avec Encore : 13.60 uniquement.** Les versions antérieures pourraient fonctionner, mais ne sont pas validées. Aucun minimum n'est établi ; ce guide n'est pas une invitation à mettre à jour la console.
 

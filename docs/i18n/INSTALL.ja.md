@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — 元の版からの移行と更新 (日本語)
 
-[← 日本語](../../README.ja.md) · [英語の完全なインストールガイド](../../INSTALL.md) · [すべての言語](../../LANGUAGES.md)
+[← 日本語](README.ja.md) · [英語の完全なインストールガイド](../../INSTALL.md) · [すべての言語](../../LANGUAGES.md)
 
 ## はじめに
 

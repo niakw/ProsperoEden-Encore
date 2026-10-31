@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Migration depuis le projet d’origine (Français (Canada))
 
-[← Français (Canada)](../../README.fr-CA.md) · [Guide complet en anglais](../../INSTALL.md) · [Toutes les langues](../../LANGUAGES.md)
+[← Français (Canada)](README.fr-CA.md) · [Guide complet en anglais](../../INSTALL.md) · [Toutes les langues](../../LANGUAGES.md)
 
 ## Bien démarrer
 

@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Wechsel vom Originalprojekt (Deutsch)
 
-[← Deutsch](../../README.de.md) · [Vollständige Installationsanleitung (Englisch)](../../INSTALL.md) · [Alle Sprachen](../../LANGUAGES.md)
+[← Deutsch](README.de.md) · [Vollständige Installationsanleitung (Englisch)](../../INSTALL.md) · [Alle Sprachen](../../LANGUAGES.md)
 
 ## Schnellstart
 

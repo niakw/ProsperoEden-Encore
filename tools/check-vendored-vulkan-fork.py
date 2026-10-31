@@ -274,6 +274,31 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         p.write_text(value)
         normalized_expected[name] = p
 
+    # N56: compare the source generator to the exact pre-experiment owner.
+    # The driver-cache guard is compiled only by opt-in NS2 research builds.
+    n56_name = 'vk_pipeline_cache_cost.cpp'
+    n56_before = '        u32 cache_version;\n        file.read(magic_number.data(), magic_number.size())'
+    n56_after = '''        u32 cache_version;
+#ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
+        // Reject truncated (including failed tellg) Vulkan driver cache headers
+        // before reading or subtracting an unsigned header size.
+        if (end < std::streampos{static_cast<std::streamoff>(
+                      magic_number.size() + sizeof(cache_version))}) {
+            file.close();
+            LOG_WARNING(Common_Filesystem, "Short Vulkan driver cache; rebuilding fresh");
+            Common::FS::RemoveFile(filename);
+            return create_pipeline_cache(0, nullptr);
+        }
+#endif
+        file.read(magic_number.data(), magic_number.size())'''
+    n56_current = expected[n56_name].read_text()
+    assert n56_current.count(n56_after) == 1, 'N56 vendor guard differs from exact owner'
+    assert n56_current.count('Saved PS5 driver pipeline cache atomically') == 1
+    n56_baseline = n56_current.replace(n56_after, n56_before)
+    n56_file = temp/'normalized-vendor-n56'/n56_name
+    n56_file.parent.mkdir(parents=True, exist_ok=True)
+    n56_file.write_text(n56_baseline)
+    normalized_expected[n56_name] = n56_file
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

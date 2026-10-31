@@ -223,8 +223,8 @@ override_inventory = (root / "docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md").read_t
 root_call = "appel générateur" if root_generator_count == 1 else "appels générateurs"
 assert f"**{root_generator_count} {root_call}**" in override_inventory
 # Source comments describing retired rewrites must not be counted as CMake calls.
-active_reads = len(re.findall(r'^\\s*file\\(READ', root_cmake, re.M))
-active_replacements = len(re.findall(r'^\\s*string\\(REPLACE', root_cmake, re.M))
+active_reads = len(re.findall(r'^\s*file\(READ', root_cmake, re.M))
+active_replacements = len(re.findall(r'^\s*string\(REPLACE', root_cmake, re.M))
 assert f"**{active_reads} lectures `file(READ`**" in override_inventory
 assert f"**{active_replacements} remplacements" in override_inventory
 

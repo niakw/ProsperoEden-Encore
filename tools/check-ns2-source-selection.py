@@ -118,14 +118,18 @@ def main() -> int:
                 "Public homebrew fixture must verify actual kernel SVC grants")
         svc_trace = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h"
         svc_owner = ROOT / "vendor/sources/eden/src/core/hle/kernel/svc.cpp"
-        require(svc_trace.is_file() and svc_owner.is_file() and
-                "SvcTrace::Register(process.GetProcessId())" in romdir_source.read_text() and
-                "Eden::NS2::SvcTrace::Next(process.GetProcessId())" in svc_owner.read_text() and
-                "#ifdef EDEN_NS2_SVC_TRACE" in svc_owner.read_text() and
-                "target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)" in CMAKE and
-                "prepare_svc_trace_owner.cmake" not in CMAKE and
-                "ns2_svc.cpp" not in CMAKE,
-                "NS2 SVC probe must use vendor-owned real dispatcher without generation")
+        svc_contracts = {
+            "vendor_trace_header": svc_trace.is_file(),
+            "vendor_real_dispatcher": svc_owner.is_file(),
+            "real_process_registration": "SvcTrace::Register(process.GetProcessId())" in romdir_source.read_text(),
+            "real_kernel_trace_call": svc_owner.is_file() and "Eden::NS2::SvcTrace::Next(process.GetProcessId())" in svc_owner.read_text(),
+            "single_dispatcher_macro": svc_owner.is_file() and "#ifdef EDEN_NS2_SVC_TRACE" in svc_owner.read_text(),
+            "research_compiler_gate": "target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)" in CMAKE,
+            "generator_removed": "prepare_svc_trace_owner.cmake" not in CMAKE,
+            "generated_tu_removed": "ns2_svc.cpp" not in CMAKE,
+        }
+        require(all(svc_contracts.values()),
+                "NS2 SVC owner drift: " + ",".join(k for k, good in svc_contracts.items() if not good))
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
         require(sum(i > selection for i in property_sets) == 6 and

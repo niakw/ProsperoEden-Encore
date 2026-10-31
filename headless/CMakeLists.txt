@@ -2533,6 +2533,18 @@ endif()
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
+    # Fail closed for *all* opt-in NS2 engines, including future flags.
+    # Otherwise an option absent from the older explicit release list below
+    # could silently ship in the NS1 package after a direct CMake invocation.
+    get_cmake_property(eden_release_cache_vars CACHE_VARIABLES)
+    foreach(eden_release_flag IN LISTS eden_release_cache_vars)
+        if(eden_release_flag MATCHES "^EDEN_NS2_.*_EXPERIMENTAL$")
+            if(${eden_release_flag})
+                message(FATAL_ERROR
+                    "Final Encore cannot ship unqualified NS2 research: ${eden_release_flag}=ON")
+            endif()
+        endif()
+    endforeach()
     target_compile_definitions(eden-headless PRIVATE EDEN_FINAL_RELEASE_PROFILE=1)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR NOT EDEN_PS5_OPENGL OR
        NOT EDEN_VULKAN_DRIVER STREQUAL "RADV")

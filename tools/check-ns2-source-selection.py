@@ -190,7 +190,7 @@ def main() -> int:
                 'ns2_public_homebrew_svc.h' not in romdir_source.read_text(),
                 "Fixture-only SVC checks must stay in host tests, not the generic NSW2 runtime")
         svc_trace = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h"
-        svc_owner = ROOT / "vendor/sources/eden/src/core/hle/kernel/svc.cpp"
+        svc_owner = ROOT / "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc.cpp"
         svc_contracts = {
             "vendor_trace_header": svc_trace.is_file(),
             "vendor_real_dispatcher": svc_owner.is_file(),
@@ -198,6 +198,8 @@ def main() -> int:
             "real_kernel_trace_call": svc_owner.is_file() and "Eden::NS2::SvcTrace::Next(process.GetProcessId())" in svc_owner.read_text(),
             "single_dispatcher_macro": svc_owner.is_file() and "#ifdef EDEN_NS2_SVC_TRACE" in svc_owner.read_text(),
             "research_compiler_gate": "target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)" in CMAKE,
+            "native_core_selection": 'list(APPEND eden_ns2_svc_sources "${EDEN_NS2_NATIVE_SVC_SOURCE}")' in CMAKE and
+                'list(REMOVE_ITEM eden_ns2_svc_sources "hle/kernel/svc.cpp")' in CMAKE,
             "generator_removed": "prepare_svc_trace_owner.cmake" not in CMAKE,
             "generated_tu_removed": "ns2_svc.cpp" not in CMAKE,
         }
@@ -205,8 +207,10 @@ def main() -> int:
                 "NS2 SVC owner drift: " + ",".join(k for k, good in svc_contracts.items() if not good))
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 5 and
+        require(sum(i > selection for i in property_sets) == 7 and
                 'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE and
+                'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE and
+                'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE and
                 'EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR' in CMAKE,
                 "Unexpected NS2 core source owner: ExeFS, SVC, process-run, AM, NVDRV and supervisor must stay isolated")
         require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,

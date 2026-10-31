@@ -100,6 +100,7 @@
     "ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h",
     "ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h",
     "ns2-runtime/hle/core/hle/service/nvdrv/devices/native_sparse_remap.h",
+    "ns2-runtime/kernel/core/hle/kernel/svc.cpp",
     "ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_characteristics_ioctl.h",
     "ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h",
     "ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp",
@@ -107,6 +108,7 @@
     "ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h",
     "ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
     "ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h",
+    "ns2-runtime/process/core/hle/service/os/process.cpp",
     "ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp",
     "ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h"
   ]

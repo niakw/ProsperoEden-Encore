@@ -172,7 +172,7 @@ jobs:
             -Ivendor/encore-active/ns2-helpers/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/sources/eden/src/core/hle/kernel/svc.cpp
+            vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc.cpp
       - name: Syntax-check actual experimental NPDM and ExeFS loader owners
         shell: bash
         run: |
@@ -420,7 +420,7 @@ jobs:
             -DEDEN_NS2_PROCESS_RUN_GUARD=1 -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/sources/eden/src/core/hle/service/os/process.cpp
+            vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp
       - name: NS2 N51 native GPU PTE batching source parity and host oracle
         shell: bash
         run: |

@@ -70,7 +70,7 @@ inline bool IsDeconstructedGameSelection(std::string_view name) {
         const auto slash = name.find('/');
         const auto segment = name.substr(0, slash);
         if (segment.empty() || segment == "." || segment == ".." ||
-            IsAddOnContainerName(segment) || EndsWithNoCase(segment, "romfs"))
+            IsAddOnContainerName(segment) || (segment.size() == 5 && EndsWithNoCase(segment, "romfs")))
             return false;
         for (unsigned char c : segment)
             if (c < 32 || c == 127 || c == '\\') return false;
@@ -117,7 +117,7 @@ inline std::string FindDeconstructedGameMain(const std::filesystem::path& title)
     // Root-level content stores are not games, even when an update happens
     // to carry its own valid ExeFS. Only <title>/base is a launchable title.
     const auto root_name = title.filename().string();
-    if (IsAddOnContainerName(root_name) || EndsWithNoCase(root_name, "romfs"))
+    if (IsAddOnContainerName(root_name) || (root_name.size() == 5 && EndsWithNoCase(root_name, "romfs")))
         return {};
     if (IsDeconstructedGameDirectory(title)) return "main";
     std::size_t visited = 0;
@@ -134,7 +134,7 @@ inline std::string FindDeconstructedGameMain(const std::filesystem::path& title)
             const auto path = it->path();
             const auto name = path.filename().string();
             if (name.empty() || name.front() == '.' ||
-                EndsWithNoCase(name, "romfs") || IsAddOnContainerName(name))
+                (name.size() == 5 && EndsWithNoCase(name, "romfs")) || IsAddOnContainerName(name))
                 continue;
             if (IsSafeExtractedDirectory(path)) subdirs.push_back(path);
         }
@@ -188,7 +188,7 @@ inline bool IsNestedGameFileSelection(std::string_view selection) {
         for (const unsigned char c : segment)
             if (c < 32 || c == 127 || c == '\\') return false;
         if (slash == std::string_view::npos) break;
-        if (IsAddOnContainerName(segment) || EndsWithNoCase(segment, "romfs"))
+        if (IsAddOnContainerName(segment) || (segment.size() == 5 && EndsWithNoCase(segment, "romfs")))
             return false;
         if (++levels > 8) return false;
         selection.remove_prefix(slash + 1);
@@ -203,7 +203,7 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
     namespace fs = std::filesystem;
     if (!IsSafeExtractedDirectory(title)) return {};
     const auto root_name = title.filename().string();
-    if (IsAddOnContainerName(root_name) || EndsWithNoCase(root_name, "romfs"))
+    if (IsAddOnContainerName(root_name) || (root_name.size() == 5 && EndsWithNoCase(root_name, "romfs")))
         return {};
     std::vector<std::string> candidates;
     std::size_t visited = 0;
@@ -219,7 +219,7 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
             const auto path = it->path();
             const auto name = path.filename().string();
             if (name.empty() || name.front() == '.' || IsAddOnContainerName(name) ||
-                EndsWithNoCase(name, "romfs")) continue;
+                (name.size() == 5 && EndsWithNoCase(name, "romfs"))) continue;
             if (IsSafeExtractedDirectory(path)) {
                 subdirs.push_back(path);
                 continue;

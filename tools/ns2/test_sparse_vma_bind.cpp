@@ -52,7 +52,7 @@ struct FakeQueue {
     VkResult BindSparseImage(VkImage image,const T& t,const U& u,VkFence fence,
                              VkSemaphore wait,VkSemaphore signal) const {
         assert(image && fence);
-        ++calls;tiles={t.begin(),t.end()};tails={u.begin(),u.end()};
+        ++calls;tiles.assign(t.begin(),t.end());tails.assign(u.begin(),u.end());
         last_wait=wait;last_signal=signal;
         return result;
     }

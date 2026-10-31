@@ -32,6 +32,8 @@
 
 **31/10 — F07 C01/V05 GPU multi-plages (source, prévalidation) :** les copies consécutives issues d'un même buffer Vulkan sont regroupées par blocs de 8 `VkBufferCopy` au maximum, sans allocation de scratch heap ; le regroupement réduit les callbacks du scheduler et laisse intactes les barrières pré/post, les offsets guest et l'ordre des commandes. Parcours desktop inchangé. Témoin source-extrait : 14 plages mélangées → 4 callbacks natifs contre 14 avant, vérification de chaque offset/longueur sous O0/O2 et UBSan. **Aucun gain FC27/PS5 revendiqué, 22/29.**
 
+**31/10 — C01/V05 : copies Vulkan multi-plages contiguës.** Après le regroupement par `VkBuffer` (8 régions), les segments adjacents en source **et** destination deviennent un unique `VkBufferCopy`. Pas de changement de propriétaire, ordre FIFO, tailles, barrières ou sémantique desktop. Témoin source-extrait O0/O2 : 6 plages dont 3 contiguës → 2 callbacks PS5 / 3 régions plutôt que 6 commandes ; cas non contigus conservés, oracle SHA historique préservé. **F07 22/29, gain console inconnu.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

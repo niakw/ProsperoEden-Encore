@@ -248,6 +248,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     header = expected[hname].read_text()
     anchor = '    VkMemoryRequirements GetImageMemoryRequirements(VkImage image) const noexcept;'
     extension = '''
+
     // N65: query the actual sparse 2D tile/mip-tail requirements.
     // No DeviceDispatch layout change: resolve entrypoint on demand.
     [[nodiscard]] std::vector<VkSparseImageMemoryRequirements>

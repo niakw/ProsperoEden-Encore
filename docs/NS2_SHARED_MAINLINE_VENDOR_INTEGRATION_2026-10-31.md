@@ -4,9 +4,9 @@ The NS2 research branch is a **compatibility extension of the existing Encore em
 
 ## Mainline ancestry
 
-- Git merge parent main: `50d260fca0f3fd8a56999ce91d51e3e43bfd2314` (all 146 commits formerly missing, including the newer F07 delta).
+- Git merge parent main: `86ef6f2d1acc9471205d0f9c006369a2a4c1057a` (includes latest F07 contiguous multirange copy work).
 - Research-only implementation stays in `research/ns2-ps5-compatibility`; never merge it into production `main` until the full integration and release gates have passed.
-- Vendor branch `niakw/Prospero.Eden-Encore-vendor:research/ns2-shared-core`: parent includes mainline vendor `cb244e3f4ab8f834e254663fb8bf4b34c66079b9`, with N58/N62/N64/N65 additions. The app submodule pins the exact merge commit `8927f89c445ab1101381c7af454fa66c2eead2ca`.
+- Vendor branch `niakw/Prospero.Eden-Encore-vendor:research/ns2-shared-core`: parent includes mainline vendor `cb244e3f4ab8f834e254663fb8bf4b34c66079b9`, with N58/N62/N64/N65 additions. The research app submodule pins the merged vendor research owner (latest shared F07 PS5 changes + N54 + sparse API); see the gitlink for the exact commit.
 
 ## Single maintained source owner
 
@@ -18,13 +18,13 @@ The NS2 research branch is a **compatibility extension of the existing Encore em
 | N65 Vulkan sparse memory requirement query | `vendor/encore-active/eden-vulkan/vulkan_wrapper.cpp` and companion header | Generic Vulkan requirements |
 | N63 sparse budget planner | Research-only pure helper with host tests | Generic dimension/layer/mip-tail arithmetic |
 
-The four historical `prepare_egl_sparse_*` build-time source rewrite generators are removed. Existing Clang/GCC host tests validate the **real vendor methods** instead of generating copies of maintained engine files. Mainline PS5 native Vulkan source preparation and performance backports are preserved.
+The four historical `prepare_egl_sparse_*` build-time source rewrite generators and N54's `prepare_astc_scratch_owner.cmake` have been removed. Existing Clang/GCC host tests validate the **real vendor methods** instead of generating copies of maintained engine files. Mainline PS5 native Vulkan source preparation and performance backports are preserved.
 
 ## Scope and remaining migration
 
 Names such as FC27 in tests, traces and synthetic workloads indicate **stress profiles**, not runtime compatibility branches. Do not introduce Title IDs/game names into core optimization predicates. Regressions should be fixed by GPU command, texture format, memory, CPU instruction or service semantics and reused across Switch 1 and Switch 2.
 
-N54 scratch, N57 decoder, N60 texture cache and other older NS2 overlays are **not yet fully migrated** into the shared vendor source owners. Their default is OFF. These still require a separate exact native API/compile audit before promotion; synthetic host oracle success is not PS5 execution proof. Vulkan queue sparse binding, fence lifetime and complete NS2 user titles remain unimplemented. No console testing requested.
+N54 scratch and its frame trim are now maintained in the single vendor root `encore-active/ns2-astc/include` (upstream scratch + shipping patched texture cache parity). N54 no longer generates source headers. N57 decoder, N60 texture cache and other older NS2 overlays are **not yet fully migrated** into shared vendor owners. Their default is OFF. These still require a separate exact native API/compile audit before promotion; synthetic host oracle success is not PS5 execution proof. Vulkan queue sparse binding, fence lifetime and complete NS2 user titles remain unimplemented. No console testing requested.
 
 ## Verification
 

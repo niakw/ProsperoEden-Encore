@@ -1,15 +1,15 @@
-# NSW2 N54 — release huge ASTC/texture scratch at frame boundaries
+# NSW2 N54 — maintained vendor ASTC scratch trim (31 October 2026)
 
-Commit scope: `research/ns2-ps5-compatibility` only. `main`, pinned vendor, default native build, final release unchanged.
+N54 is a generic **experimental** CPU scratch optimization. It remains OFF by default and cannot be enabled in the final PS5 release profile. No title IDs or game-specific behavior are used.
 
-Eglantine [97ce27a](https://github.com/Djihads80/Eglantine/commit/97ce27ab35153884d2fd05c278433928e429cd91) observed temporary texture processing buffers retained after huge layered terrain uploads, including 341 MiB-class intermediate allocations. Native PS5 Encore still uses the pinned `Common::ScratchBuffer` without `release()`, and its generic `TextureCache<P>::TickFrame` does not trim these CPU scratch allocations.
+## Maintained source
+- `vendor/encore-active/ns2-astc/include/common/scratch_buffer.h`: `release()` drops oversized transient storage, and zero-byte copy after release is avoided.
+- `vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h`: **based on the shipping patched Eden backport**, with >64 MiB swizzle/unswizzle scratch trimmed at `TickFrame`. A capacity of exactly 64 MiB stays cached.
+- The old N54 CMake header generator was removed. The pinned research submodule points to one versioned vendor owner; the original Eden source archive remains immutable.
 
-N54 implements an **experimental actual source overlay**, not an inert planner:
+## Build and verification
+The optional `EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL=ON` requires PS5-native NSW2 research metadata. Its include override applies to `common` and `video_core` only for opt-in development builds, not the normal Switch 1/release execution. When N60 is enabled, its still-experimental ASTC adapter reads the exact same vendored N54 texture owner.
 
-- The CMake-only owner generator derives the full `common/scratch_buffer.h` and `video_core/texture_cache/texture_cache.h` headers from the *prepared* build source, avoiding vendored 110-KB duplicates and preserving all PS5 backports.
-- `release()` frees the scratch allocation and resets capacity/size. The existing `resize()` path now skips a zero-byte `memcpy` after release.
-- At the start of `TextureCache<P>::TickFrame`, both swizzle and unswizzle scratch buffers drop allocations **larger than** 64 MiB. Exactly 64 MiB stays cached. It does not modify GPU residency, decode scheduling, dispatch or buffer-cache invalidation.
-- Explicit CMake gate `EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL=ON` requires native PS5+NS2 metadata, is OFF by default and forbidden in `EDEN_FINAL_RELEASE_PROFILE`.
-- Parity script reconstructs exact original headers and the altered span, then compiles/runs the **extracted actual frame-trim snippet** against real `ScratchBuffer` under Clang/GCC with ASan/UBSan. Exercises >64 MiB release, 64 MiB preservation, post-release allocation, preserved resize data and repeated releases.
+The N54 host gate checks byte-for-byte source parity against the upstream scratch buffer and the audited shipping backport texture header. Clang/GCC ASan/UBSan exercise the **actual vendor header** and extracted `TickFrame` logic; N60 checks that both contracts compose. No real GPU readback, PS5 RAM/FPS measurements, concurrent decode proof, or console tests are claimed.
 
-This trims retained CPU scratch, **not** selective ASTC per-layer upload or sparse Vulkan binding. Those still need complete image/mip/queue integration and native PS5 validation. A green host test does not measure PS5 memory usage or FPS, and no console test is requested.
+Remaining migration: N57 and N60 ASTC Vulkan/cache adapters; older N56 and kernel overlays. Sparse residency is not activated.

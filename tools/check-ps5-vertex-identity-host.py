@@ -29,8 +29,19 @@ assert helper == generated_helper
 assert "using EdenVertexIdentity = std::array<u64, 2>;" in helper
 assert "std::set<EdenVertexIdentity> eden_attributeless_vertex" in helper
 assert "EdenResetStaticVertexInputBinding() noexcept" in helper
-assert "std::array<Lookup, 64> lookups{}" in helper
-assert "lookup.generation == generation && lookup.hash == vertex_hash" in helper
+assert "struct Bucket {" in helper
+assert "std::array<Lookup, 4> ways{}" in helper
+assert "static thread_local std::array<Bucket, 16> buckets{}" in helper
+assert "bucket.next_slot = (bucket.next_slot + 1) & (bucket.ways.size() - 1);" in helper
+assert "lookup.hash == vertex_hash &&" in helper
+assert "(lookup.result || lookup.generation == generation)" in helper
+# Instrument ONLY the shader memo's locked lookup; do not change any production
+# branch. In a warmed four-key collision sequence, all subsequent hits must
+# take zero set mutexes, not merely return the same values.
+slow_anchor = "    const std::scoped_lock lock{eden_attributeless_mutex};\n    const bool result = eden_attributeless_vertex.contains(vertex_hash);"
+assert helper.count(slow_anchor) == 1
+instrumented_helper = helper.replace(slow_anchor,
+    "    slow_lookups.fetch_add(1, std::memory_order_relaxed);\n" + slow_anchor)
 for text in (active, generator):
     assert "EdenAttributeless({graphics_key.unique_hashes[0], graphics_key.unique_hashes[1]})" in text
     assert "EdenRecordAttributeless({key.unique_hashes[0], key.unique_hashes[1]}, programs[1].info)" in text
@@ -58,6 +69,7 @@ struct Info {
  } loads;
 };
 }
+std::atomic<std::uint64_t> slow_lookups{0};
 __EXACT_HELPER__
 int main() {
  Shader::Info without{}, with{};
@@ -86,6 +98,38 @@ int main() {
    const u64 key=0x1000+i*64;
    assert(EdenAttributeless({key,0x55})==((i&1)==0));
  }
+ // Four colliding shader keys, all built before warmup: no generation
+ // change while the hot draw loop alternates among world/HUD variants.
+ for(u64 i=0;i<4;++i) EdenRecordAttributeless({0x99000+i*64,0x55}, without);
+ const auto before=slow_lookups.load(std::memory_order_relaxed);
+ for(u64 i=0;i<4;++i) assert(EdenAttributeless({0x99000+i*64,0x55}));
+ const auto warmed=slow_lookups.load(std::memory_order_relaxed);
+ assert(warmed-before<=4);
+ for(unsigned j=0;j<20000;++j)
+   assert(EdenAttributeless({0x99000+u64(j%4)*64,0x55}));
+ assert(slow_lookups.load(std::memory_order_relaxed)==warmed);
+ // Positive identities are monotonic: publication of an unrelated shader
+ // must not force the same four successful shaders back under the mutex.
+ EdenRecordAttributeless({0x12345601,0x7a}, without);
+ const auto after_publication=slow_lookups.load(std::memory_order_relaxed);
+ for(unsigned j=0;j<20000;++j)
+   assert(EdenAttributeless({0x99000+u64(j%4)*64,0x55}));
+ assert(slow_lookups.load(std::memory_order_relaxed)==after_publication);
+ // A negative answer is NOT monotonic; it must be refreshed when a new
+ // shader is registered under that exact key after a generation change.
+ constexpr EdenVertexIdentity formerly_negative{0x12349876,0x47};
+ assert(!EdenAttributeless(formerly_negative));
+ const auto neg_warm=slow_lookups.load(std::memory_order_relaxed);
+ assert(!EdenAttributeless(formerly_negative));
+ assert(slow_lookups.load(std::memory_order_relaxed)==neg_warm);
+ EdenRecordAttributeless(formerly_negative, without);
+ assert(EdenAttributeless(formerly_negative));
+ assert(slow_lookups.load(std::memory_order_relaxed)>neg_warm);
+ // The fifth colliding key may evict a memo entry, but must not alias a
+ // different shader or suppress generation-based invalidation.
+ assert(!EdenAttributeless({0x99000+u64{4}*64,0x55}));
+ EdenRecordAttributeless({0x99000+u64{4}*64,0x55}, without);
+ assert(EdenAttributeless({0x99000+u64{4}*64,0x55}));
  eden_static_vertex_input_bound=true;
  EdenResetStaticVertexInputBinding();
  assert(!eden_static_vertex_input_bound);
@@ -93,15 +137,16 @@ int main() {
  Eden::DevVulkan::ResetForTitle();
  assert(Eden::DevVulkan::static_vertex_input);
 }
-""".replace("__EXACT_HELPER__", start + helper)
+""".replace("__EXACT_HELPER__", start + instrumented_helper)
 with tempfile.TemporaryDirectory(prefix="encore-vertex-identity-") as folder:
     path = Path(folder)
     src = path / "identity.cpp"
-    exe = path / "identity"
     src.write_text(cpp)
-    subprocess.run([compiler,"-std=c++20","-O1","-g","-pthread","-Wall",
-                    "-Wextra","-Werror","-fsanitize=address,undefined",
-                    "-fno-sanitize-recover=all","-I",str(root/"headless"),
-                    str(src),"-o",str(exe)],check=True,timeout=45)
-    subprocess.run([str(exe)],check=True,timeout=30)
-print("VERTEX_IDENTITY_HOST_PASS pair=1 shared_second_hash=1 title_reset=1 generator_parity=1")
+    for opt in ("-O0", "-O2"):
+        exe = path / ("identity"+opt)
+        subprocess.run([compiler,"-std=c++20",opt,"-g","-pthread","-Wall",
+                        "-Wextra","-Werror","-fsanitize=address,undefined",
+                        "-fno-sanitize-recover=all","-I",str(root/"headless"),
+                        str(src),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=30)
+print("VERTEX_IDENTITY_HOST_PASS pair=1 collision4_hot_nolock=1 overflow=1 generation=1 monotonic_positive=1 negative_revalidated=1 sanitizer_O0_O2=1 generator_parity=1")

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -134,6 +135,19 @@ bool LargePagesEnabled() {
     }
     return value == 1;
 }
+// The host page size is immutable for the life of the process. Heap/JIT
+// allocation, alias accounting and teardown previously called sysconf again
+// for every block. Cache ONLY a successful page-size query: an early failure
+// must not poison later allocations, and concurrent cold calls may retry.
+long CachedHostPageSize() noexcept {
+    static std::atomic<long> positive_page{0};
+    const long cached = positive_page.load(std::memory_order_relaxed);
+    if (cached > 0) return cached;
+    const long current = sysconf(_SC_PAGESIZE);
+    if (current > 0)
+        positive_page.store(current, std::memory_order_relaxed);
+    return current;
+}
 std::size_t lead_size(std::size_t size, std::size_t page) {
     return size >= LargePage && LargePagesEnabled() ? LargePage : page;
 }
@@ -151,7 +165,7 @@ const Header& header_of(const void* pointer, std::size_t page) {
 // when it is first touched. A block from here is dense and zeroed. What must not be dense (the
 // guest page tables, the heap) uses the two families below.
 void* AllocateMemoryPages(std::size_t size) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     const std::size_t lead = page > 0 ? lead_size(size, static_cast<std::size_t>(page)) : 0;
     const auto total = page > 0 ? allocation_size(size, page, lead) : 0;
     if (!total) { errno = EINVAL; return nullptr; }
@@ -203,7 +217,7 @@ void* AllocateMemoryPages(std::size_t size) noexcept {
 // The caller's payload size is not a physical ownership measurement.
 std::size_t AllocatedMemoryPagesSpan(const void* pointer) noexcept {
     if (!pointer) return 0;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     return header_of(pointer, static_cast<std::size_t>(page)).total;
 }
@@ -211,7 +225,7 @@ std::size_t AllocatedMemoryPagesSpan(const void* pointer) noexcept {
 #ifdef PS5_NATIVE
 // Direct-memory start of an AllocateMemoryPages block's first data byte.
 std::int64_t DirectMemoryStart(const void* pointer) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (!pointer || page <= 0) std::abort();
     const auto& header = header_of(pointer, page);
     return header.physical + static_cast<std::int64_t>(header.lead);
@@ -223,7 +237,7 @@ std::int64_t DirectMemoryStart(const void* pointer) noexcept {
 static std::atomic<std::size_t> dense_jit_direct_bytes{0};
 void CountDenseJitDirect(void* writable, bool acquire) noexcept {
     if (!writable) return;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     const std::size_t bytes = header_of(writable, page).total;
     if (acquire) {
@@ -241,7 +255,7 @@ std::size_t DenseJitDirectBytes() noexcept {
 // size: large-page direct allocations can round, for example, 3 MiB to 4 MiB.
 // Free must unmap the WHOLE executable view before releasing direct RAM.
 std::size_t ExecutableAliasSpan(void* writable) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (!writable || page <= 0) std::abort();
     const auto header = header_of(writable, page);
     return header.total - header.lead;
@@ -249,7 +263,7 @@ std::size_t ExecutableAliasSpan(void* writable) noexcept {
 
 // A second view of our own direct allocation; ownership stays with pointer.
 void* MapExecutableAlias(void* pointer, std::size_t size) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (!pointer || page <= 0) return nullptr;
     const auto header = header_of(pointer, page);
     if (header.total != allocation_size(size, page, header.lead)) std::abort();
@@ -305,10 +319,10 @@ std::size_t sparse_jit_committed = 0;
 // owner-locked exact counters. Both are updated only after ownership changes.
 std::atomic<std::size_t> sparse_jit_reserved_live{0};
 std::atomic<std::size_t> sparse_jit_committed_live{0};
-// JIT executable aliases are immutable during an active title. The epoch
-// invalidates per-thread "already committed" hints whenever a region is
-// created or released, preventing an old pointer/VA from being mistaken for
-// a new code cache in a subsequent title.
+// JIT executable aliases are immutable during an active title. A new region
+// cannot change already committed pages in any live region, so it must not
+// flush other workers' positive hints. Only trim or release invalidates the
+// epoch: both can retire physical backing or recycle an old RX address.
 std::atomic<std::uint64_t> sparse_jit_generation{1};
 }
 
@@ -449,7 +463,9 @@ void* ReserveSparseJitCode(std::size_t size, void** writable_out) noexcept {
         if (!sparse_jit_regions.emplace(rx, std::move(region)).second)
             std::abort();
         sparse_jit_reserved_live.fetch_add(size, std::memory_order_relaxed);
-        sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);
+        // No epoch bump on insertion: previously live committed RX regions
+        // retain their positive per-worker cache entries. Trim and release
+        // still invalidate the epoch before any backing can be reclaimed.
     } catch (...) {
         if (munmap(rx, size) != 0 || munmap(rw, size) != 0) std::abort();
         errno = ENOMEM;
@@ -632,7 +648,7 @@ void ReleaseSparseJitCode(void* executable) noexcept {
 
 void FreeMemoryPages(void* pointer, std::size_t size) noexcept {
     if (!pointer) return;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     const auto header = header_of(pointer, page);
     auto* base = static_cast<std::uint8_t*>(pointer) - header.lead;
@@ -645,7 +661,7 @@ void FreeMemoryPages(void* pointer, std::size_t size) noexcept {
 // header already records the exact mapped size; retain the same checked free.
 void FreeMemoryPages(void* pointer) noexcept {
     if (!pointer) return;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     const auto header = header_of(pointer, page);
     if (header.total <= header.lead) std::abort();
@@ -682,6 +698,12 @@ std::mutex sparse_mutex;
 // the bound must still be searched; retire only a completely free tail.
 // Registering a new range grows the bound again before releasing the mutex.
 std::size_t sparse_used_prefix = 0;
+// Under sparse_mutex, skip free slots in a 64-entry table with holes.
+static_assert(sparse_ranges.size() == 64);
+std::uint64_t sparse_live_slots = 0;
+// Protected by sparse_mutex. Changing the range topology invalidates exact
+// negative lookup hints without touching the positive per-worker range hints.
+std::uint64_t sparse_range_generation = 1;
 std::atomic<std::size_t> sparse_reserved{0}, sparse_committed{0};
 std::atomic<int> sparse_state{0}; // 0 unknown, 1 in use, 2 not available (tables are dense)
 
@@ -693,24 +715,61 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     // hints; a stable same-table hot run does not write to TLS.
     // Every hint points into the process-lifetime static array and is
     // revalidated against its CURRENT begin/end under the owner mutex.
+    // With no published table, avoid touching any per-thread lookup/negative
+    // cache on the dense fallback and after complete sparse teardown.
+    // Callers already hold sparse_mutex; registration grows the prefix
+    // before unlocking, so the next lookup cannot miss a new range.
+    if (sparse_used_prefix == 0) return nullptr;
     static thread_local std::array<SparseRange*, 2> last_ranges{};
     static thread_local unsigned next_slot = 0;
     static thread_local unsigned preferred_slot = 0;
-    if (sparse_used_prefix != 0) {
-        for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
-            const unsigned slot = preferred_slot ^ probe;
-            SparseRange* candidate = last_ranges[slot];
-            if (!candidate) continue;
-            const auto begin = candidate->begin.load(std::memory_order_acquire);
-            if (begin != 0 && address >= begin && address < candidate->end) {
-                // One cold preference change; stable runs then need one load.
-                if (probe != 0) preferred_slot = slot;
-                return candidate;
-            }
+    // Exact-address ring: dense page-table accesses often alternate between
+    // several addresses. Cache up to four negative probes without assuming
+    // host page alignment or caching a whole guest address region.
+    static thread_local std::array<std::uintptr_t, 4> last_negative_addresses{};
+    static thread_local std::uint64_t last_negative_generation = 0;
+    static thread_local unsigned negative_count = 0;
+    static thread_local unsigned next_negative_slot = 0;
+    // The last exact miss is cheap to reject without touching an atomic
+    // sparse-range begin. Any registration/retirement changes the locked
+    // topology epoch and makes this hint ineligible immediately.
+    if (last_negative_generation == sparse_range_generation && negative_count != 0 &&
+        last_negative_addresses[(next_negative_slot + 3u) & 3u] == address)
+        return nullptr;
+    // A live range hit is the common sparse page-table path. Check its
+    // preferred positive hint BEFORE scanning four unrelated negative
+    // addresses; no TLS write or extra cache-line walk on a stable run.
+    if (SparseRange* candidate = last_ranges[preferred_slot]) {
+        const auto begin = candidate->begin.load(std::memory_order_acquire);
+        if (begin != 0 && address >= begin && address < candidate->end)
+            return candidate;
+    }
+    // Cache only exact misses: sparse reservations can be unaligned on
+    // hosts. Mutations bump the topology generation under this same mutex.
+    if (last_negative_generation == sparse_range_generation) {
+        for (unsigned i = 0; i < negative_count; ++i)
+            if (last_negative_addresses[i] == address) return nullptr;
+    } else {
+        // An insertion or retirement may have changed ANY cached answer.
+        // Clearing count is enough; old addresses cannot match this epoch.
+        last_negative_generation = sparse_range_generation;
+        negative_count = 0;
+        next_negative_slot = 0;
+    }
+    // Only cold hits in the second positive slot promote the preference.
+    const unsigned alternate = preferred_slot ^ 1u;
+    if (SparseRange* candidate = last_ranges[alternate]) {
+        const auto begin = candidate->begin.load(std::memory_order_acquire);
+        if (begin != 0 && address >= begin && address < candidate->end) {
+            preferred_slot = alternate;
+            return candidate;
         }
     }
-    for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
-        auto& range = sparse_ranges[i];
+    auto remaining_slots = sparse_live_slots;
+    while (remaining_slots != 0) {
+        const auto index = static_cast<std::size_t>(std::countr_zero(remaining_slots));
+        remaining_slots &= remaining_slots - 1;
+        auto& range = sparse_ranges[index];
         // Already checked under the same lock; avoid a second atomic read.
         if (&range == last_ranges[0] || &range == last_ranges[1]) continue;
         const auto begin = range.begin.load(std::memory_order_acquire);
@@ -721,11 +780,14 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
             return &range;
         }
     }
-    // A miss (including dense fallback) should not keep retrying stale
-    // aliases, especially after sparse-table teardown on title change.
-    last_ranges = {};
-    next_slot = 0;
-    preferred_slot = 0;
+    // A miss must not discard still-live positive hints. Dense/sparse
+    // accesses may interleave, and forcing the next valid high-slot lookup
+    // through the 64-entry owner table adds avoidable cost. Every hint is
+    // rechecked against the current begin/end under sparse_mutex, so a
+    // retired or reused slot cannot return a stale range.
+    last_negative_addresses[next_negative_slot] = address;
+    next_negative_slot = (next_negative_slot + 1u) & 3u;
+    if (negative_count < last_negative_addresses.size()) ++negative_count;
     return nullptr;
 }
 
@@ -820,6 +882,8 @@ void ReleaseSparse(SparseRange& range) {
     sparse_reserved.fetch_sub(span, std::memory_order_relaxed);
     sparse_committed.fetch_sub(owned * SparseSlot, std::memory_order_relaxed);
     range.begin.store(0, std::memory_order_release);
+    sparse_live_slots &= ~(std::uint64_t{1} << static_cast<unsigned>(&range - sparse_ranges.data()));
+    ++sparse_range_generation; // retire exact negative hints under sparse_mutex
     // No readers can inspect the non-atomic range metadata without
     // sparse_mutex. A released high slot cannot force later first commits
     // to scan 64 empty records across title restarts.
@@ -904,40 +968,54 @@ bool SparseTablesAvailable() noexcept {
 void* AllocateSparsePages(std::size_t size) noexcept {
     const std::size_t span = (size + SparseSlot - 1) / SparseSlot * SparseSlot;
     if (size < 2 * SparseSlot || span < size || !SparseAvailable()) return AllocateMemoryPages(size);
-    const std::lock_guard lock{sparse_mutex};
-    SparseRange* free_range = nullptr;
-    for (auto& range : sparse_ranges)
-        if (range.begin.load(std::memory_order_relaxed) == 0) {
-            free_range = &range;
-            break;
-        }
+    // Kernel reservation/maps and bitmap allocation are potentially slow
+    // (one shared-zero mapping per 2 MiB slot on PS5). Prepare the unpublished
+    // range WITHOUT blocking commits/decommits and live table lookups.
+    // SparseAvailable() completed the global zero-page probe before entry.
     const std::size_t slots = span / SparseSlot;
-    auto* owned = free_range ? new (std::nothrow) std::atomic<bool>[slots] : nullptr;
+    auto* owned = new (std::nothrow) std::atomic<bool>[slots];
     auto* physical = owned ? new (std::nothrow) std::int64_t[slots] : nullptr;
     void* address = physical ? ReserveSparse(span) : nullptr;
-    if (address == nullptr) {
-        delete[] owned;
-        delete[] physical;
-        // The platform took the check's two slots but not this table: it is dense, as before.
-        char line[96];
-        const int length = std::snprintf(line, sizeof(line), "EDEN_SPARSE_TABLES dense bytes=%zu\n", size);
-        if (length > 0) Report(line);
-        return AllocateMemoryPages(size);
+    if (address != nullptr) {
+        for (std::size_t slot = 0; slot < slots; ++slot) {
+            owned[slot].store(false, std::memory_order_relaxed);
+            physical[slot] = -1;
+        }
+        {
+            const std::lock_guard lock{sparse_mutex};
+            SparseRange* free_range = nullptr;
+            // Lowest zero bit is the first reusable owner slot, with no
+            // 64-entry atomic scan while claiming a new table under mutex.
+            const std::size_t free_slot = static_cast<std::size_t>(std::countr_one(sparse_live_slots));
+            if (free_slot < sparse_ranges.size())
+                free_range = &sparse_ranges[free_slot];
+            if (free_range) {
+                free_range->owned = owned;
+                free_range->physical = physical;
+                free_range->end = reinterpret_cast<std::uintptr_t>(address) + span;
+                free_range->begin.store(reinterpret_cast<std::uintptr_t>(address), std::memory_order_release);
+                sparse_live_slots |= std::uint64_t{1} << static_cast<unsigned>(free_range - sparse_ranges.data());
+                // Only initialized metadata is published to readers/commits.
+                sparse_used_prefix = (std::max)(
+                    sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);
+                ++sparse_range_generation; // publish exact negative-hint invalidation
+                sparse_reserved.fetch_add(span, std::memory_order_relaxed);
+                return address;
+            }
+        }
+        // At most 64 live tables. Another allocator may have filled the last
+        // slot while we were reserving. Drop this unclaimed VA before dense
+        // fallback; never free a range after publishing it to readers.
+        if (munmap(address, span) != 0) std::abort();
     }
-    for (std::size_t slot = 0; slot < slots; ++slot) {
-        owned[slot].store(false, std::memory_order_relaxed);
-        physical[slot] = -1;
-    }
-    free_range->owned = owned;
-    free_range->physical = physical;
-    free_range->end = reinterpret_cast<std::uintptr_t>(address) + span;
-    free_range->begin.store(reinterpret_cast<std::uintptr_t>(address), std::memory_order_release);
-    // Publish the finite scan bound only after metadata and begin are ready.
-    // Future lookups see this slot while retaining the original owner lock.
-    sparse_used_prefix = (std::max)(
-        sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);
-    sparse_reserved.fetch_add(span, std::memory_order_relaxed);
-    return address;
+    delete[] owned;
+    delete[] physical;
+    // Failed reserve or all 64 ownership slots occupied: original dense path.
+    // Never allocate dense memory while holding the sparse owner mutex.
+    char line[96];
+    const int length = std::snprintf(line, sizeof(line), "EDEN_SPARSE_TABLES dense bytes=%zu\n", size);
+    if (length > 0) Report(line);
+    return AllocateMemoryPages(size);
 }
 
 void FreeSparsePages(void* base, std::size_t size) noexcept {

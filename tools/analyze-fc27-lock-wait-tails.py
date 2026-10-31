@@ -35,10 +35,18 @@ def analyze(text):
     for line in text.splitlines():
         if line.startswith("EDEN_VULKAN_FRAME "):
             d=numbers(line)
-            if "total" in d:frames[int(d["total"])]=d
+            if "total" in d:
+                frame=int(d["total"])
+                if frame in frames:
+                    raise ValueError("duplicate renderer frame total: split reset sessions")
+                frames[frame]=d
         elif line.startswith("EDEN_FRAME_PRESSURE "):
             d=numbers(line)
-            if "frame" in d:pressure[int(d["frame"])]=d
+            if "frame" in d:
+                frame=int(d["frame"])
+                if frame in pressure:
+                    raise ValueError("duplicate pressure frame: split reset sessions")
+                pressure[frame]=d
         elif line.startswith("EDEN_GUEST_CACHE_LOCK_TAIL "):
             d=numbers(line)
             m=DOMAIN.search(line)
@@ -53,10 +61,16 @@ def analyze(text):
     for frame in common:
         item=frames[frame]
         p=pressure[frame]
+        # Older logs without these counters cannot be assigned a zero-late
+        # window: that would manufacture a correlation against lock waits.
+        if not {"fps","late50","worst_ms"} <= item.keys():
+            continue
+        if item["late50"] < 0 or item["worst_ms"] < 0:
+            continue
         wait=tails.get(frame,{})
-        rows.append({"frame":frame,"fps":item.get("fps"),
-                     "late50":int(item.get("late50",0)),
-                     "worst_ms":item.get("worst_ms"),
+        rows.append({"frame":frame,"fps":item["fps"],
+                     "late50":int(item["late50"]),
+                     "worst_ms":item["worst_ms"],
                      "jit_ms":p.get("jit_ms"),
                      "buffer":wait.get("buffer"),"texture":wait.get("texture")})
     complete=[r for r in rows if r["buffer"] is not None and r["texture"] is not None]
@@ -111,7 +125,17 @@ def self_test():
     assert old["tail_status"]=="NOT_MEASURED"
     partial=analyze(text.replace("frame=450 domain=texture","frame=450 domain=other"))
     assert partial["tail_status"]=="PARTIAL" and partial["missing_windows"]==1
-    print("GUEST_LOCK_TAIL_REPLAY_PASS complete/partial/not-measured distinguished")
+    # A pre-counter log is UNKNOWN, never a synthetic zero-late window.
+    missing_late=analyze(text.replace("total=300 late50=3","total=300"))
+    assert missing_late["windows"]==3 and missing_late["measured_windows"]==3
+    for duplicate in (text+"\n"+window(300,3,1,0),
+                      text+"\nEDEN_FRAME_PRESSURE frame=300 jit_ms=99"):
+        try:
+            analyze(duplicate)
+            assert False, "cross-session frame reuse must be rejected"
+        except ValueError as exc:
+            assert "duplicate" in str(exc)
+    print("GUEST_LOCK_TAIL_REPLAY_PASS complete/partial/not-measured duplicate-session missing-late guarded")
 
 def main():
     p=argparse.ArgumentParser()

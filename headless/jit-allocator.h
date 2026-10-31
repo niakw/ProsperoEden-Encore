@@ -93,7 +93,7 @@ inline Xbyak::Allocator* EdenJitAllocator() {
         struct Mapping { void* writable; std::size_t size; bool sparse = false; };
         std::mutex mutex;
         std::unordered_map<std::uint8_t*, Mapping> mappings;
-        std::atomic<std::uint64_t> mapping_generation{1}; // invalidates per-worker alias memo
+        std::atomic<std::uint64_t> mapping_generation{1}; // retirement invalidates per-worker alias memo
         std::uint8_t* alloc(std::size_t size) override {
 #ifdef EDEN_JIT_ALIAS_NATIVE
             auto* diagnostics = stdout; // Native stdout is the separate heap log.
@@ -129,7 +129,9 @@ inline Xbyak::Allocator* EdenJitAllocator() {
                         if (!mappings.emplace(pointer,
                                               Mapping{writable, sparse_span, true}).second)
                             std::abort(); // A live executable VA must be unique
-                        mapping_generation.fetch_add(1, std::memory_order_release);
+                        // Publishing a NEW RX/RW mapping cannot invalidate a
+                        // cached alias for another live arena. Only retirement
+                        // changes the generation and flushes worker TLS hints.
                     } catch (...) {
                         Common::ReleaseSparseJitCode(executable);
                         return nullptr;
@@ -169,7 +171,8 @@ inline Xbyak::Allocator* EdenJitAllocator() {
                     std::lock_guard lock(mutex);
                     if (!mappings.emplace(pointer, Mapping{writable, mapped_span}).second)
                         std::abort(); // never alias two live code arenas at one RX VA
-                    mapping_generation.fetch_add(1, std::memory_order_release);
+                    // Insertion preserves all previously published aliases;
+                    // only free() must invalidate the per-worker memo.
                     std::fprintf(diagnostics,
                                  "EDEN_JIT_ALIAS rx=%p rw=%p bytes=%zu active=1\n",
                                  static_cast<void*>(pointer), writable, mapped_span);

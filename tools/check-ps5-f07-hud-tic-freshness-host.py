@@ -18,9 +18,11 @@ end = file.index("\n}\n", begin) + 2
 actual = file[begin:end]
 assert "if (views.empty()) {" in actual
 assert "has_deleted_images = false;" in actual
-assert "std::optional<std::array<ViewMemo, 16>> view_memo;" in actual
-assert "view_memo.emplace();" in actual
-assert "if (!blacklist && views.size() > 1)" in actual
+assert "std::array<ViewMemo, 16> view_memo;" in actual
+assert "u32 occupied_view_slots = 0;" in actual
+assert "const bool memo_enabled = !blacklist && views.size() > 1;" in actual
+assert "occupied_view_slots |= memo_bit;" in actual
+assert "memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID" in actual
 assert "cached_view.IsBuffer()" in actual
 assert "ImageFlagBits::Remapped" in actual
 assert "PrepareImageView(cached.id, false, false);" in actual

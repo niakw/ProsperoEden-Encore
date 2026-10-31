@@ -14,7 +14,37 @@ assert '#include "pad_diagnostics.h"' in header
 assert '#include "log_pipe.h"' in source
 assert 'face_edges.Observe(last_buttons, pressed, kButtonCross, kButtonCircle,' in source
 assert 'kButtonSquare, kButtonTriangle);' in source
-assert 'player == 0 && is_usable(raw) && NativeLogs::Detailed()' in source
+assert 'const bool usable = is_usable(raw);' in source
+assert 'player == 0 && usable && NativeLogs::Detailed()' in source
+pad_poll = source.split("bool Pad::Poll() {", 1)[1].split("void Pad::Consume(", 1)[0]
+assert 'std::array<ps5::pad::Data, ps5::pad::kMaxSamples> samples;' in pad_poll
+assert 'std::array<ps5::pad::Data, ps5::pad::kMaxSamples> samples{};' not in pad_poll
+read = 'const int count = scePadRead(handle, samples.data(), samples.size());'
+guard = 'if (count < 0 || count > static_cast<int>(samples.size())) {'
+consume = 'Consume(player, {samples.data(), static_cast<std::size_t>(count)});'
+assert pad_poll.count(read) == pad_poll.count(guard) == pad_poll.count(consume) == 1
+assert pad_poll.index(read) < pad_poll.index(guard) < pad_poll.index(
+    'for (int i = 0; i < count; ++i)') < pad_poll.index(consume)
+assert 'Consume(player, {&neutral, 1});' in pad_poll[
+    pad_poll.index(guard):pad_poll.index('for (int i = 0; i < count; ++i)')]
+assert 'continue;' in pad_poll[
+    pad_poll.index(guard):pad_poll.index('for (int i = 0; i < count; ++i)')]
+# The only indexed reads use i < count; the count=0/error path must
+# never inspect uninitialized tail bytes.
+assert pad_poll.count('samples[i]') == 3
+diagnostic_guard = pad_poll.index('if (NativeLogs::Detailed()) {')
+diagnostic_loop = pad_poll.index('for (int i = 0; i < count; ++i)')
+assert pad_poll.index(read) < pad_poll.index(guard) < diagnostic_guard < diagnostic_loop < pad_poll.index(consume)
+assert pad_poll.index('++samples_read;') > diagnostic_loop
+assert pad_poll.index('usable_samples += usable;') > diagnostic_loop
+assert pad_poll.index('const bool usable = ps5::pad::is_usable(samples[i]);') > diagnostic_loop
+assert pad_poll.count('ps5::pad::is_usable(samples[i])') == 1
+assert pad_poll.index('circle_samples += usable &&') < pad_poll.index(consume)
+# Source-visible input delivery and device-loss neutralization must remain
+# outside the optional diagnostics block.
+assert pad_poll.index('Consume(player, {&neutral, 1});') < diagnostic_guard
+assert pad_poll.index(consume) > pad_poll.index('circle_samples += usable &&')
+
 assert 'if (NativeLogs::Detailed() && polls % 1250 == 0)' in source
 assert 'if (polls % 1250 == 0) Performance::ReportInputThreadGpuLiveness();' in source
 assert source.index('if (polls % 1250 == 0) Performance::ReportInputThreadGpuLiveness();') < source.index('if (NativeLogs::Detailed() && polls % 1250 == 0)')
@@ -42,9 +72,52 @@ assert 'Eden::Performance::ResetGpuReportForTitle();' in main
 
 unit = r'''
 #include "pad_diagnostics.h"
+#include "ps5_pad.hpp"
+#include <array>
 #include <cassert>
 #include <cstdio>
+#include <type_traits>
 int main() {
+    static_assert(std::is_trivially_default_constructible_v<ps5::pad::Data>);
+    static_assert(sizeof(ps5::pad::Data) * ps5::pad::kMaxSamples == 7680);
+    // The real platform writes exactly the reported prefix. A zero/invalid
+    // count must not expose stale data left by the previous controller.
+    std::array<ps5::pad::Data, ps5::pad::kMaxSamples> scratch;
+    for (int count : {64, 0, 3, -1, 65, 1}) {
+        const bool valid = count >= 0 && count <= int(scratch.size());
+        if (!valid) {
+            const auto neutral = ps5::pad::neutral_data();
+            assert(neutral.left_stick.x == 128);
+            continue;
+        }
+        for (int i = 0; i < count; ++i) {
+            scratch[std::size_t(i)] = ps5::pad::neutral_data(std::uint64_t(i + 1));
+            scratch[std::size_t(i)].buttons = std::uint32_t(i);
+        }
+        for (int i = 0; i < count; ++i)
+            assert(scratch[std::size_t(i)].buttons == std::uint32_t(i) &&
+                   scratch[std::size_t(i)].timestamp_us == std::uint64_t(i + 1));
+    }
+    // The optional heartbeat scan must not be necessary for game input.
+    // Quiet batches do no diagnostics; the same 64 native samples are still
+    // available to the unconditional Consume call.
+    unsigned game_delivered = 0, diagnostic_count = 0, usable_count = 0;
+    for (bool detailed : {false, true}) {
+        for (std::size_t i = 0; i < scratch.size(); ++i) {
+            scratch[i] = ps5::pad::neutral_data(std::uint64_t(i + 1));
+            scratch[i].connected = i % 2 ? 1 : 0;
+        }
+        if (detailed) {
+            for (std::size_t i = 0; i < scratch.size(); ++i) {
+                const bool usable = ps5::pad::is_usable(scratch[i]);
+                ++diagnostic_count;
+                usable_count += usable;
+            }
+        }
+        game_delivered += unsigned(scratch.size()); // same Consume prefix
+    }
+    assert(game_delivered == 128);
+    assert(diagnostic_count == 64 && usable_count == 32);
     Eden::PadEdgeDiagnostics edges{};
     constexpr unsigned cross=1, circle=2, square=4, triangle=8;
     edges.Observe(0, 4, cross, circle, square, triangle);
@@ -70,10 +143,14 @@ with tempfile.TemporaryDirectory(prefix='eden-r332-pad-') as tmp:
     if sys.platform == 'darwin' and not env.get('SDKROOT'):
         sdk = Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
         if sdk.is_dir(): env['SDKROOT'] = str(sdk)
-    subprocess.run(['c++', '-std=c++20', '-Wall', '-Wextra', '-Werror', '-O2',
-                    '-I', str(root/'headless'), str(path/'test.cpp'), '-o', str(path/'test')],
-                   check=True, env=env, timeout=30)
-    result = subprocess.run([str(path/'test')], capture_output=True, text=True, timeout=15)
-    assert result.returncode == 0, result.stderr
-    print(result.stdout.strip())
-print('R332 PASS: release+dev GPU stall monitor every 1250 polls; detailed pad logging optional, no per-sample I/O')
+    for opt in ('0', '2'):
+        exe = path / ('test-O' + opt)
+        subprocess.run(['c++', '-std=c++20', '-Wall', '-Wextra', '-Werror', '-O' + opt,
+                        '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
+                        '-I', str(root/'headless'), '-I', str(root/'third_party'),
+                        str(path/'test.cpp'), '-o', str(exe)],
+                       check=True, env=env, timeout=30)
+        result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=15)
+        assert result.returncode == 0, (opt, result.stderr)
+        print(result.stdout.strip())
+print('R332 PASS: release+dev GPU stall monitor every 1250 polls; detailed pad logging optional, no per-sample I/O, quiet_pad_scan_elided=1 pad_read_prefix_only=1 O0_O2_ASAN_UBSAN=1')

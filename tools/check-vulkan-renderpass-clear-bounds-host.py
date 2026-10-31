@@ -13,18 +13,22 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
 workflow = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
-start = "    std::array<VkClearValue, 9> values{};"
-end = "    Record([renderpass, framebuffer_handle, render_area, values, bounded_clear_value_count]("
+start = "        std::array<VkClearValue, 9> values{};"
+end = "        record_pass(values, bounded_clear_value_count);"
 assert source.count(start) == 1
 assert source.count(end) == 1
 body = source[source.index(start):source.index(end)]
 assert "const u32 bounded_clear_value_count =" in body
 assert "(std::min)(clear_value_count, static_cast<u32>(values.size()))" in body
-assert "clear_values ?" in body
 assert "i < bounded_clear_value_count" in body
-command = source[source.index(end):source.index("cmdbuf.BeginRenderPass(renderpass_bi", source.index(end))]
+assert "values[i] = clear_values[i];" in body
+assert "record_pass(std::array<VkClearValue, 0>{}, 0);" in source
+assert "if (!clear_values || clear_value_count == 0) {" in source
+assert source.index("record_pass(std::array<VkClearValue, 0>{}, 0);") < source.index(start)
+command = source[source.index("const auto record_pass ="):source.index("    if (!clear_values || clear_value_count == 0) {", source.index("const auto record_pass ="))]
 assert ".clearValueCount = bounded_clear_value_count," in command
 assert ".pClearValues = bounded_clear_value_count != 0 ? values.data() : nullptr," in command
+assert "cmdbuf.BeginRenderPass(renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);" in command
 assert "python3 -B tools/check-vulkan-renderpass-clear-bounds-host.py" in workflow
 
 test = r"""
@@ -36,7 +40,14 @@ test = r"""
 #include <limits>
 using u32 = std::uint32_t;
 struct VkClearValue { std::uint64_t marker{}; };
+static_assert(sizeof(std::array<VkClearValue, 0>) < sizeof(std::array<VkClearValue, 9>));
 static void Probe(const VkClearValue* clear_values, u32 clear_value_count, u32 expected) {
+    // Mirror the shipping zero-clear branch: a null pointer or zero count
+    // does not enter the bounded 9-element copy path.
+    if (!clear_values || clear_value_count == 0) {
+        assert(expected == 0);
+        return;
+    }
 INJECT
     assert(bounded_clear_value_count == expected);
     for (u32 i = 0; i < expected; ++i)
@@ -63,11 +74,12 @@ assert compiler, "C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="encore-vulkan-clear-bounds-") as folder:
     temp = Path(folder)
     src = temp / "clear.cpp"
-    binary = temp / "clear"
     src.write_text(test)
-    subprocess.run([compiler, "-std=c++20", "-O1", "-g", "-Wall", "-Wextra",
-                    "-Werror", "-fsanitize=address,undefined",
-                    "-fno-sanitize-recover=all", str(src), "-o", str(binary)],
-                   check=True, timeout=90)
-    subprocess.run([str(binary)], check=True, timeout=30)
-print("HOST_CLEAR_COUNT_BOUNDS_PASS; native build/FPS unverified")
+    for opt in ("-O0", "-O2"):
+        binary = temp / ("clear_" + opt[1:])
+        subprocess.run([compiler, "-std=c++20", opt, "-g", "-Wall", "-Wextra",
+                        "-Werror", "-fsanitize=address,undefined",
+                        "-fno-sanitize-recover=all", str(src), "-o", str(binary)],
+                       check=True, timeout=90)
+        subprocess.run([str(binary)], check=True, timeout=30)
+print("HOST_CLEAR_COUNT_BOUNDS_PASS O0_O2=1 zero_payload=1; native build/FPS unverified")

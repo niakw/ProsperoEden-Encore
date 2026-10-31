@@ -107,6 +107,7 @@ jobs:
           python3 -B tools/ci/check-final-engine-owner-contracts.py
           python3 -B tools/check-native-quiet-shutdown-heap-host.py
           python3 -B tools/check-native-quiet-gpu-report-host.py
+          python3 -B tools/check-native-host-pagesize-cache-host.py
           python3 -B tools/check-native-quiet-heap-commit-host.py
           python3 -B tools/check-native-quiet-counters-host.py
           python3 -B tools/ci/check-final-one-profile-source.py
@@ -236,6 +237,7 @@ jobs:
           python3 -B tools/check-native-guest-span-host.py
           python3 -B tools/check-native-guest-range-overflow-host.py
           python3 -B tools/check-fastmem-window-bounds-host.py
+          python3 -B tools/check-ps5-fastmem-windowstats-host.py
           python3 -B tools/check-native-fastmem-signal-install-host.py
           python3 -B tools/verify/hle/check-native-hle-condvar-access-host.py
           python3 -B tools/verify/hle/check-native-hle-condvar-key-host.py
@@ -364,6 +366,7 @@ jobs:
           python3 -B tools/check-native-nvnflinger-dequeue-profile-host.py
           python3 -B tools/check-ps5-buffer-presentation-state-space.py
           python3 -B tools/check-ps5-vulkan-worker-wake.py
+          python3 -B tools/check-ps5-vulkan-chunk-allocation-lock-host.py
           python3 -B tools/check-vulkan-worker-fatal-drain-host.py
           python3 -B tools/check-ps5-gpu-time-batch-host.py
           python3 -B tools/check-vulkan-renderpass-clear-bounds-host.py
@@ -448,8 +451,13 @@ jobs:
           python3 -B tools/check-ps5-present-equal-copy.py
           python3 -B tools/check-ps5-vulkan-layer-lifetime.py
           python3 -B tools/check-ps5-vulkan-aa-lifetime.py
+          python3 -B tools/check-ps5-vulkan-disabled-aa-fastpath-host.py
           python3 -B tools/check-ps5-vulkan-stride-reallocation.py
+          python3 -B tools/check-ps5-vulkan-layer-max-tick-host.py
+          python3 -B tools/check-ps5-vulkan-layer-tick-reset-host.py
           python3 -B tools/check-ps5-vulkan-raw-view-lifetime.py
+          python3 -B tools/check-ps5-vulkan-missing-raw-tiled-size-host.py
+          python3 -B tools/check-ps5-vulkan-raw-pixel-size-reuse-host.py
           python3 -B tools/check-ps5-vulkan-present-frame-lifetime.py
           python3 -B tools/check-ps5-vulkan-present-retry-liveness.py
           python3 -B tools/check-ps5-vulkan-swapchain-snapshot.py
@@ -621,6 +629,7 @@ jobs:
           python3 -B tools/check-crash-provenance-host.py
           python3 -B tools/check-ps5-guest-fault-recovery.py
           python3 -B tools/check-hle-tail-counters.py
+          python3 -B tools/check-dualsense-rumble-lock-host.py
 
       - name: Check approved user-facing UX invariants (no graphics compilation)
         if: ${{ matrix.suite == 'ux' }}

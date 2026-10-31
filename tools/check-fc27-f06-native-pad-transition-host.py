@@ -37,6 +37,45 @@ def extract(signature: str) -> str:
                 return PAD[start:end + 1]
     raise AssertionError("unbalanced native method " + signature)
 
+consume_source = extract("void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {")
+# Inverse 12-button scans are resolved before the sample loop; a session
+# mapping cannot change while guest HID is open.
+assert consume_source.count("MappedTo(active_mapping, pad_touchpad)") == 1
+assert consume_source.count("MappedTo(active_mapping, pad_create)") == 1
+assert consume_source.index("const int touch_button =") < consume_source.index("for (const auto& raw : samples)")
+assert consume_source.index("const bool create_is_capture =") < consume_source.index("for (const auto& raw : samples)")
+assert "MappedTo(ActiveMapping(), pad_touchpad)" not in consume_source
+assert "std::array<float, 256> stick_curve{};" in HEADER
+assert "std::array<bool, 256> trigger_pressed{};" in HEADER
+assert "const bool left = trigger_pressed[sample.triggers.l2];" in consume_source
+assert "const bool right = trigger_pressed[sample.triggers.r2];" in consume_source
+assert "sample.triggers.l2 / 255.0f" not in consume_source
+trigger_anchor = "    for (std::size_t raw = 0; raw < trigger_pressed.size(); ++raw) {"
+assert PAD.count(trigger_anchor) == 1
+trigger_start = PAD.index(trigger_anchor)
+trigger_end = PAD.index("\n    }", trigger_start) + len("\n    }")
+native_trigger_lookup = PAD[trigger_start:trigger_end]
+assert "static_cast<float>(raw) / 255.0f >= trigger_threshold" in native_trigger_lookup
+assert "const auto axis = [this](u8 raw) { return stick_curve[raw]; };" in consume_source
+assert "std::copysign" not in consume_source
+curve_anchor = "    for (std::size_t raw = 0; raw < stick_curve.size(); ++raw) {"
+assert PAD.count(curve_anchor) == 1
+curve_start = PAD.index(curve_anchor)
+curve_end = PAD.index("\n    }", curve_start) + len("\n    }")
+native_stick_curve = PAD[curve_start:curve_end]
+assert "std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x)" in native_stick_curve
+assert "create_is_capture && (mapped_buttons & kButtonCreate)" in consume_source
+assert "const bool usable = is_usable(raw);" in consume_source
+assert "const auto& sample = usable ? raw : neutral;" in consume_source
+assert "static constexpr Data neutral = neutral_data();" in consume_source
+assert "sample.timestamp_us" not in consume_source
+assert "ButtonMask mapped_buttons = sample.buttons;" in consume_source
+assert "auto sample = is_usable(raw)" not in consume_source
+assert consume_source.count("is_usable(raw)") == 1
+assert consume_source.count("sample.buttons") == 2
+assert "const auto pressed = sample.buttons;" in consume_source
+assert "ButtonMask mapped_buttons = sample.buttons;" in consume_source
+
 native_methods = "\n\n".join(extract(signature) for signature in (
     "void PadEngine::SetButtonState(std::size_t player, int button, bool value) {",
     "void PadEngine::SetButtonState(std::size_t player, VirtualButton button, bool value) {",
@@ -47,6 +86,7 @@ cpp = r"""
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -130,6 +170,15 @@ public:
     std::array<Slot,4> slots{};
     ButtonMapping mapping=kDefaultMapping;
     float deadzone{0.08f},trigger_threshold{0.5f};
+    std::array<float,256> stick_curve{};
+    std::array<bool,256> trigger_pressed{};
+    void RebuildCurve() {
+__NATIVE_STICK_CURVE__
+    }
+    void RebuildTriggerLookup() {
+__NATIVE_TRIGGER_LOOKUP__
+    }
+    Pad() { RebuildCurve(); RebuildTriggerLookup(); }
     bool return_to_menu{},hud_toggle{};
     u64 options_edges{},create_edges{};
     EdgeDiagnostics face_edges{};
@@ -149,6 +198,34 @@ int main() {
     using namespace ps5::pad;
     using V = InputCommon::VirtualGamepad::VirtualButton;
     Pad pad;
+    // Exhaustive byte-for-byte equivalence with the old normalization,
+    // including boundaries, midrange deadzones and extreme valid values.
+    for (const float dz : {0.0f, 0.08f, 0.25f, 0.5f, 0.999f}) {
+        Pad curve_pad;
+        curve_pad.deadzone = dz;
+        curve_pad.RebuildCurve();
+        for (int byte = 0; byte < 256; ++byte) {
+            const float x = (byte - 128) / (byte < 128 ? 128.0f : 127.0f);
+            const float expected = std::abs(x) <= dz ? 0.0f :
+                std::copysign((std::abs(x) - dz) / (1.0f - dz), x);
+            assert(std::bit_cast<std::uint32_t>(curve_pad.stick_curve[byte]) ==
+                   std::bit_cast<std::uint32_t>(expected));
+        }
+    }
+    assert(pad.stick_curve[0] == -1.0f && pad.stick_curve[255] == 1.0f);
+    assert(pad.stick_curve[128] == 0.0f);
+    // Preserve every trigger byte's original floating-point comparison
+    // for five legal calibration thresholds, including the extreme ends.
+    for (const float threshold : {0.001f, 0.1f, 0.5f, 0.999f, 1.0f}) {
+        Pad trigger_pad;
+        trigger_pad.trigger_threshold = threshold;
+        trigger_pad.RebuildTriggerLookup();
+        for (int byte = 0; byte < 256; ++byte) {
+            const bool expected = static_cast<float>(byte) / 255.0f >= threshold;
+            assert(trigger_pad.trigger_pressed[byte] == expected);
+        }
+    }
+    assert(!pad.trigger_pressed[127] && pad.trigger_pressed[128]);
     // A physical Circle now presses guest A; physical Cross presses guest B.
     const auto custom=Assign(kPlayStationMapping,game_a,pad_circle);
     assert(ValidMapping(custom));
@@ -183,6 +260,14 @@ int main() {
     }
     assert(pad.engine->Rising(V::ButtonA)==5);
     assert(pad.engine->Rising(V::ButtonPlus)==5);
+    // Local shortcuts must not mutate the producer's native sample.
+    auto original = neutral_data(++time*4000);
+    original.connected = 1;
+    original.buttons = kButtonTouchPad | kButtonL1 | kButtonCross;
+    const auto unchanged_buttons = original.buttons;
+    pad.Consume({&original, 1});
+    assert(original.buttons == unchanged_buttons && original.connected == 1);
+    step(0);
     // Held action vanishes on intercepted/disconnected physical sampling.
     step(kButtonCircle);
     assert(pad.engine->Get(V::ButtonA));
@@ -211,12 +296,37 @@ int main() {
     assert(!pad.engine->Get(V::ButtonMinus));
     assert(pad.engine->Rising(V::ButtonMinus)==1);
     assert(pad.engine->Rising(V::ButtonPlus)==5);
+    // A full scePadRead burst must retain the same mapping and not publish
+    // redundant guest button transitions for held inputs.
+    std::array<Data,64> burst{};
+    for (auto& sample : burst) {
+        sample=neutral_data(++time*4000);
+        sample.connected=1;
+        sample.buttons=kButtonCircle;
+    }
+    const auto writes_before=pad.engine->Writes(V::ButtonA);
+    pad.Consume(burst);
+    assert(pad.engine->Get(V::ButtonA));
+    assert(pad.engine->Writes(V::ButtonA)==writes_before+1);
+    step(0);
+    // Create becomes Capture only if no guest action owns that physical key.
+    Pad mapped_create;
+    mapped_create.SetMapping(Assign(kPlayStationMapping,game_a,pad_create));
+    mapped_create.slots[0].handle=3;
+    auto create=neutral_data(4000);
+    create.connected=1;
+    create.buttons=kButtonCreate;
+    mapped_create.Consume({&create,1});
+    assert(mapped_create.engine->Get(V::ButtonA));
+    assert(!mapped_create.engine->Get(V::ButtonCapture));
     std::puts("F06_NATIVE_PAD_TRANSITIONS_PASS phases=5 action_edges=5 "
               "options_plus_edges=5 disconnect_releases=1 "
               "home_chords=1 menu_shortcuts=1 touch_taps=1 "
-              "scope=source_extracted_host_mock_virtual_input_no_guest_Npad");
+              "stick_curve_bytes=256 scope=source_extracted_host_mock_virtual_input_no_guest_Npad");
 }
-""".replace("__NATIVE_METHODS__",native_methods)
+""".replace("__NATIVE_METHODS__",native_methods).replace(
+    "__NATIVE_STICK_CURVE__",native_stick_curve).replace(
+    "__NATIVE_TRIGGER_LOOKUP__",native_trigger_lookup)
 
 # Export the exact generated, source-extracted fixture for the linked F06
 # boundary regression. Default standalone execution remains unchanged.

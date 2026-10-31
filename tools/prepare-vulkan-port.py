@@ -40,11 +40,11 @@ adapt('src/video_core/renderer_vulkan/vk_rasterizer.cpp', 'vulkan_rasterizer.cpp
     ("    {\n        std::scoped_lock lock_texture{texture_cache.mutex};\n        texture_cache.WriteMemory(*cpu_addr, copy_size);\n    }", "    // DMA inline writes do not need the texture mutex when these CPU pages\n    // have never belonged to an image. Unknown and large ranges fail closed.\n    if (!::Eden::ImagePages::NeverHeld(*cpu_addr, copy_size)) {\n        std::scoped_lock lock_texture{texture_cache.mutex};\n        texture_cache.WriteMemory(*cpu_addr, copy_size);\n    }"),
     # R: skip provably unnecessary Vulkan texture-cache invalidation locks.
     ("void RasterizerVulkan::InvalidateRegion(DAddr addr, u64 size, VideoCommon::CacheType which) {\n    if (addr == 0 || size == 0) {\n        return;\n    }\n    if (True(which & VideoCommon::CacheType::TextureCache)) {", "void RasterizerVulkan::InvalidateRegion(DAddr addr, u64 size, VideoCommon::CacheType which) {\n    if (addr == 0 || size == 0) {\n        return;\n    }\n    // The monotonic image page map is published before registration.\n    // Only bypass the texture mutex when the range never held an image.\n    if (True(which & VideoCommon::CacheType::TextureCache) &&\n        !::Eden::ImagePages::NeverHeld(addr, size)) {"),
-    ("void RasterizerVulkan::InnerInvalidation(std::span<const std::pair<DAddr, std::size_t>> sequences) {\n    {\n        std::scoped_lock lock{texture_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            texture_cache.WriteMemory(addr, size);\n        }\n    }", "void RasterizerVulkan::InnerInvalidation(std::span<const std::pair<DAddr, std::size_t>> sequences) {\n    // Omit the texture lock entirely if no range could own an image.\n    // For mixed batches keep the original lock and order, but avoid expensive\n    // image-slot searches for individual pages never registered as textures.\n    bool texture_may_overlap = false;\n    for (const auto& [addr, size] : sequences) {\n        if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n            texture_may_overlap = true;\n            break;\n        }\n    }\n    if (texture_may_overlap) {\n        std::scoped_lock lock{texture_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            // Recheck under the texture mutex, so a concurrent registration\n            // cannot be mistaken for an image-free page in a mixed batch.\n            if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n                texture_cache.WriteMemory(addr, size);\n            }\n        }\n    }"),
+    ("void RasterizerVulkan::InnerInvalidation(std::span<const std::pair<DAddr, std::size_t>> sequences) {\n    {\n        std::scoped_lock lock{texture_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            texture_cache.WriteMemory(addr, size);\n        }\n    }", "void RasterizerVulkan::InnerInvalidation(std::span<const std::pair<DAddr, std::size_t>> sequences) {\n    // One owner-witness traversal for the whole batch. Texture and buffer\n    // page occupancy are monotonic, independently published before cache\n    // registration. Preserve the original texture -> buffer -> shader order.\n    // Stop probing a domain once an overlapping range is known.\n    bool texture_may_overlap = false;\n    bool buffer_may_overlap = false;\n    for (const auto& [addr, size] : sequences) {\n        if (!texture_may_overlap && !::Eden::ImagePages::NeverHeld(addr, size))\n            texture_may_overlap = true;\n        if (!buffer_may_overlap && !::Eden::BufferPages::NeverRegistered(addr, size))\n            buffer_may_overlap = true;\n        if (texture_may_overlap && buffer_may_overlap) break;\n    }\n    if (texture_may_overlap) {\n        std::scoped_lock lock{texture_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            // Recheck under the texture mutex, so a concurrent registration\n            // cannot be mistaken for an image-free page in a mixed batch.\n            if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n                texture_cache.WriteMemory(addr, size);\n            }\n        }\n    }"),
     ("void RasterizerVulkan::OnCacheInvalidation(DAddr addr, u64 size) {\n    if (addr == 0 || size == 0) {\n        return;\n    }\n\n    {\n        std::scoped_lock lock{texture_cache.mutex};\n        texture_cache.WriteMemory(addr, size);\n    }", "void RasterizerVulkan::OnCacheInvalidation(DAddr addr, u64 size) {\n    if (addr == 0 || size == 0) {\n        return;\n    }\n\n    // A never-owned image page cannot have texture descriptors to evict.\n    // Unknown, large and previously mapped spans still acquire the mutex.\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        std::scoped_lock lock{texture_cache.mutex};\n        texture_cache.WriteMemory(addr, size);\n    }"),
     # Preserve buffer first-registration CPU-dirty semantics while eliding
     # proven-empty batched buffer invalidations on the native GPU hot path.
-    ("    {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            buffer_cache.WriteMemory(addr, size);\n        }\n    }", "    // A never-registered buffer page has no GPU-owned content to invalidate.\n    // A future first registration starts CPU-dirty (WordManager default).\n    // BufferPages::Mark publishes ownership before insertion into page_table.\n    // Unknown/large ranges conservatively retain the original path.\n    bool buffer_may_overlap = false;\n    for (const auto& [addr, size] : sequences) {\n        if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n            buffer_may_overlap = true;\n            break;\n        }\n    }\n    if (buffer_may_overlap) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n                buffer_cache.WriteMemory(addr, size);\n            }\n        }\n    }"),
+    ("    {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            buffer_cache.WriteMemory(addr, size);\n        }\n    }", "    // BufferPages::Mark publishes before insertion; a future registration\n    // begins CPU-dirty. The shared preflight above still fails closed for\n    // unknown/large ranges. Keep rechecks under the original cache mutex.\n    if (buffer_may_overlap) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : sequences) {\n            if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n                buffer_cache.WriteMemory(addr, size);\n            }\n        }\n    }"),
     # FC27 reviewed P0: avoid buffer mutex on never-owned guest pages for
     # the two *single-range* invalidation paths. Leave independent texture,
     # shader and query paths in original source order.
@@ -802,10 +802,13 @@ adapt('src/video_core/renderer_vulkan/vk_present_manager.h',
      '    std::condition_variable_any present_ready_cv;'),
     ('    std::jthread present_thread;',
      '    bool present_in_flight{}; // guarded by queue_mutex\n'
+     '    std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex\n'
      '    std::exception_ptr present_failure;\n    std::jthread present_thread;'),
     # R335: declare frame abandonment on repeated surface loss.
     ('    void SetImageCount();',
      '    void DiscardFrame(Frame* frame);\n\n    void SetImageCount();'),
+    ("    std::mutex free_mutex;",
+     "    std::mutex free_mutex;\n    std::size_t free_waiters{}; // guarded by free_mutex"),
 ])
 adapt('src/video_core/renderer_vulkan/vk_present_manager.cpp', 'vulkan_present_manager.cpp', [
     # R335: bounded recovery from VK_ERROR_SURFACE_LOST_KHR. Upstream #4509
@@ -901,11 +904,16 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
     # The drain waiter and present worker have different predicates.
     # A dedicated CV avoids waking the drain on every frame enqueue.
     ('            present_queue.push_back(frame);\n            frame_cv.notify_one();',
+     '            // The worker can sleep only with an empty queue. After the\n'
+     '            // first frame wakes it, queued followers need no second wake.\n'
+     '            // A worker copying a frame is not asleep, even with an empty queue.\n'
+     '            // Test under queue_mutex to avoid losing an empty->nonempty edge.\n'
+     '            const bool wake_presenter = present_queue.empty() && !present_in_flight;\n'
      '            present_queue.push_back(frame);\n'
      '            // Only the presentation worker waits on present_ready_cv.\n'
      '            // Avoid waking WaitPresent on every enqueue; it needs completion.\n'
      '            lock.unlock();\n'
-     '            present_ready_cv.notify_one();'),
+     '            if (wake_presenter) present_ready_cv.notify_one();'),
     ('frame_cv.wait(lock, token, [this] { return !present_queue.empty(); });',
      'present_ready_cv.wait(lock, token, [this] { return !present_queue.empty(); });'),
     ('            // Take the frame and notify anyone waiting',
@@ -927,11 +935,16 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
      '            // Publish completion only AFTER presentation and frame handoff.\n'
      '            // Release swapchain mutex before reacquiring queue_mutex.\n'
      '            lock.unlock();\n'
+     '            bool notify_drainers{};\n'
      '            {\n'
      '                std::lock_guard queue_lock{queue_mutex};\n'
      '                present_in_flight = false;\n'
+     '                // A future WaitPresent sees an already idle queue under\n'
+     '                // this same mutex; only the final queued completion can\n'
+     '                // satisfy a drain waiter. Backlog wakes are wasted.\n'
+     '                notify_drainers = present_waiters != 0 && present_queue.empty();\n'
      '            }\n'
-     '            frame_cv.notify_all();'),
+     '            if (notify_drainers) frame_cv.notify_all();'),
     # Release free_mutex before waking the producer of the next frame.
     ('                free_queue.push_back(frame);\n'
      '                free_cv.notify_one();\n'
@@ -944,8 +957,16 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
      '            free_cv.notify_one();\n'
      '            // Publish completion'),
     ('frame_cv.wait(queue_lock, [this] { return present_queue.empty(); });',
-     'frame_cv.wait(queue_lock, [this] { return present_failure || '
-     '(present_queue.empty() && !present_in_flight); });\n'
+     '// No drain waiter is needed when the queue is already idle.\n'
+     '        // Register real waiters under queue_mutex before sleeping so the\n'
+     '        // present worker can skip useless per-frame CV notifications.\n'
+     '        if (!present_failure && (!present_queue.empty() || present_in_flight)) {\n'
+     '            ++present_waiters;\n'
+     '            frame_cv.wait(queue_lock, [this] {\n'
+     '                return present_failure || (present_queue.empty() && !present_in_flight);\n'
+     '            });\n'
+     '            --present_waiters;\n'
+     '        }\n'
      '        if (present_failure) std::rethrow_exception(present_failure);'),
     # Synchronous presentation must publish its recycled frame under the
     # same mutex as GetRenderFrame and wake blocked frame consumers.
@@ -976,6 +997,13 @@ void PresentManager::CopyToSwapchain(Frame* frame) {'''),
     # R424: preserve the pre-existing generated presenter body as a precise
     # equivalence anchor, then replace only the FIFO/fence timing phases.
     ("Frame* PresentManager::GetRenderFrame() {\n\n    // Wait for free presentation frames\n    ::Eden::Performance::DiagnosticTimer present_wait_timer(::Eden::Performance::gpu_present_wait);\n    std::unique_lock lock{free_mutex};\n    free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });\n    if (present_failure) std::rethrow_exception(present_failure);\n\n    // Take the frame from the queue\n    Frame* frame = free_queue.front();\n    free_queue.pop_front();\n    // Exclusive ownership transferred to this caller. Let the present\n    // thread recycle OTHER frames during our Vulkan GPU fence wait.\n    lock.unlock();\n\n    // Wait for the presentation to be finished so all frame resources are free\n    frame->present_done.Wait();\n    frame->present_done.Reset();\n\n    return frame;\n}\n", "Frame* PresentManager::GetRenderFrame() {\n\n    // Keep the original aggregate for existing FPS/parsing tools.\n    ::Eden::Performance::DiagnosticTimer present_wait_timer(::Eden::Performance::gpu_present_wait);\n    Frame* frame{};\n    {\n        // Wait for a free presentation frame without holding free_mutex\n        // during the later GPU completion fence.\n        ::Eden::Performance::DiagnosticTimer free_wait(\n            ::Eden::Performance::gpu_present_free_wait);\n        std::unique_lock lock{free_mutex};\n        free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });\n        if (present_failure) std::rethrow_exception(present_failure);\n        frame = free_queue.front();\n        free_queue.pop_front();\n    }\n\n    // The fence wait is distinct from FIFO backpressure. Both phases are\n    // measured ONLY in detailed logging; quiet path semantics are unchanged.\n    {\n        ::Eden::Performance::DiagnosticTimer fence_wait(\n            ::Eden::Performance::gpu_present_fence_wait);\n        frame->present_done.Wait();\n    }\n    frame->present_done.Reset();\n\n    return frame;\n}\n"),
+    # C04: free-frame CV is signaled only if a consumer registered under free_mutex.
+    ("        free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });\n        if (present_failure) std::rethrow_exception(present_failure);",
+     "        // Only sleepers need a free-frame wake. Register before releasing\n        // free_mutex in condition_variable::wait to avoid a lost notify.\n        if (free_queue.empty() && !present_failure) {\n            ++free_waiters;\n            free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });\n            --free_waiters;\n        }\n        if (present_failure) std::rethrow_exception(present_failure);"),
+    ("        {\n            std::scoped_lock lock{free_mutex};\n            free_queue.push_back(frame);\n        }\n        free_cv.notify_one();",
+     "        bool wake_free_waiter{};\n        {\n            std::scoped_lock lock{free_mutex};\n            free_queue.push_back(frame);\n            wake_free_waiter = free_waiters != 0;\n        }\n        if (wake_free_waiter) free_cv.notify_one();"),
+    ("            {\n                std::scoped_lock fl{free_mutex};\n                free_queue.push_back(frame);\n            }\n            // Notify only after releasing free_mutex to avoid waking into\n            // an immediately contended queue lock.\n            free_cv.notify_one();",
+     "            bool wake_free_waiter{};\n            {\n                std::scoped_lock fl{free_mutex};\n                free_queue.push_back(frame);\n                wake_free_waiter = free_waiters != 0;\n            }\n            // Notify after releasing free_mutex, and only for an actual\n            // sleeping frame consumer. Never skip the error broadcast.\n            if (wake_free_waiter) free_cv.notify_one();"),
 ])
 # Descriptor buffers: Eden's null buffer (nullDescriptor devices) has device address 0,
 # but WriteDescriptorBuffer passed it with the binding's range. RADV then builds a real
@@ -1191,9 +1219,12 @@ adapt('src/video_core/renderer_vulkan/vk_scheduler.h',
         }
 #endif
 '''),
-    ("    std::condition_variable_any event_cv;\n    std::jthread worker_thread;", "    std::condition_variable_any event_cv;\n    // Protected by queue_mutex. Only a draining WaitWorker needs a wakeup\n    // when the Vulkan worker consumes a queued command chunk.\n    unsigned queue_drain_waiters{};\n    std::jthread worker_thread;"),
+    ("    std::condition_variable_any event_cv;\n    std::jthread worker_thread;", "    std::condition_variable_any event_cv;\n    // Protected by queue_mutex. Only a draining WaitWorker needs a wakeup\n    // when the Vulkan worker consumes a queued command chunk.\n    unsigned queue_drain_waiters{};\n    // Protected by queue_mutex. The worker is executing a chunk (and thus\n    // cannot be sleeping on event_cv) until its next queue acquisition.\n    bool worker_in_flight{};\n    std::jthread worker_thread;"),
 ])
 adapt('src/video_core/renderer_vulkan/vk_scheduler.cpp', 'vulkan_scheduler.cpp', [
+    ("void Scheduler::AcquireNewChunk() {\n    std::scoped_lock rl{reserve_mutex};\n\n    if (chunk_reserve.empty()) {\n        // If we don't have anything reserved, we need to make a new chunk.\n        chunk = std::make_unique<CommandChunk>();\n    } else {\n        // Otherwise, we can just take from the reserve.\n        chunk = std::move(chunk_reserve.back());\n        chunk_reserve.pop_back();\n    }\n}", "void Scheduler::AcquireNewChunk() {\n    {\n        std::scoped_lock rl{reserve_mutex};\n        if (!chunk_reserve.empty()) {\n            // The producer can reuse a completed command chunk immediately.\n            chunk = std::move(chunk_reserve.back());\n            chunk_reserve.pop_back();\n            return;\n        }\n    }\n    // Allocation can page fault or invoke allocator locks. Never hold the\n    // recycling mutex across it: the GPU worker must remain free to return\n    // finished chunks while the producer creates another command batch.\n    chunk = std::make_unique<CommandChunk>();\n}"),
+    ("void Scheduler::DispatchWork() {\n    if (chunk && !chunk->Empty()) {\n        {\n            std::scoped_lock ql{queue_mutex};\n            work_queue.push(std::move(chunk));\n        }\n        event_cv.notify_all();\n        AcquireNewChunk();\n    }\n}", "void Scheduler::DispatchWork() {\n    if (chunk && !chunk->Empty()) {\n        bool wake_worker{};\n        {\n            std::scoped_lock ql{queue_mutex};\n            // If the worker is executing a chunk, it will consume queued\n            // successors on its next loop without sleeping. Only the idle\n            // transition requires a broadcast (drain waiters share this CV).\n            wake_worker = work_queue.empty() && !worker_in_flight;\n            work_queue.push(std::move(chunk));\n        }\n        if (wake_worker) event_cv.notify_all();\n        AcquireNewChunk();\n    }\n}"),
+    ("            std::unique_lock lk{queue_mutex};\n\n            // Wait for work.\n            event_cv.wait(lk, stop_token, [&] { return TryPopQueue(work); });\n\n            // If we've been asked to stop, we're done.\n            if (stop_token.stop_requested()) {\n                return;\n            }\n\n            // Exchange lock ownership", "            std::unique_lock lk{queue_mutex};\n            // This lock also guards DispatchWork's idle-to-active wake test.\n            // A producer cannot miss the wake when the queue is empty.\n            worker_in_flight = false;\n\n            // Wait for work.\n            event_cv.wait(lk, stop_token, [&] { return TryPopQueue(work); });\n\n            // If we've been asked to stop, we're done.\n            if (stop_token.stop_requested()) {\n                return;\n            }\n            worker_in_flight = true;\n\n            // Exchange lock ownership"),
     ("        std::unique_lock ql{queue_mutex};\n        event_cv.wait(ql, [this] { return work_queue.empty(); });", "        std::unique_lock ql{queue_mutex};\n        ++queue_drain_waiters;\n        event_cv.wait(ql, [this] { return work_queue.empty(); });\n        --queue_drain_waiters;"),
     ("        ++queue_drain_waiters;\n        event_cv.wait(ql, [this] { return work_queue.empty(); });\n        --queue_drain_waiters;\n    }\n\n    // Now wait for execution to finish.\n    std::scoped_lock el{execution_mutex};\n}", "        ++queue_drain_waiters;\n        event_cv.wait(ql, [this] {\n#ifdef PS5_NATIVE\n            return work_queue.empty() || static_cast<bool>(::Eden::PeekGpuFailure());\n#else\n            return work_queue.empty();\n#endif\n        });\n        --queue_drain_waiters;\n#ifdef PS5_NATIVE\n        if (auto failure = ::Eden::PeekGpuFailure())\n            std::rethrow_exception(failure);\n#endif\n    }\n\n    // Now wait for execution to finish.\n    std::scoped_lock el{execution_mutex};\n#ifdef PS5_NATIVE\n    // In-flight work publishes errors before releasing execution_mutex.\n    if (auto failure = ::Eden::PeekGpuFailure())\n        std::rethrow_exception(failure);\n#endif\n}"),
 
@@ -1329,6 +1360,9 @@ adapt('src/video_core/renderer_vulkan/present/window_adapt_pass.cpp', 'vulkan_wi
 # too late for the AA variant. Drain only if an AA pass actually exists.
 # Do not impose idle waits on normal draws or when the filter is disabled.
 adapt('src/video_core/renderer_vulkan/present/layer.cpp', 'vulkan_present_layer.cpp', [
+    ("    if (!std::holds_alternative<std::monostate>(anti_alias) && anti_alias_setting == filters.get_anti_aliasing())\n        return;", "#ifdef PS5_NATIVE\n    const auto requested_aa = filters.get_anti_aliasing();\n    // Disabled AA has no GPU resources to rebuild. The old guard skipped\n    // only live FXAA/SMAA and reconstructed the monostate on every frame,\n    // including when the filter remained disabled across thousands of draws.\n    // A resize resets a live pass to monostate, so FXAA/SMAA still rebuild.\n    if (anti_alias_setting == requested_aa &&\n        (!std::holds_alternative<std::monostate>(anti_alias) ||\n         (requested_aa != Settings::AntiAliasing::Fxaa &&\n          requested_aa != Settings::AntiAliasing::Smaa))) {\n        return;\n    }\n#else\n    if (!std::holds_alternative<std::monostate>(anti_alias) && anti_alias_setting == filters.get_anti_aliasing())\n        return;\n#endif"),
+    ("    resource_ticks.resize(image_count);\n    raw_images.resize(image_count);", "    // ReleaseRawImages waited for every old timeline use. Reusing its tick\n    // values after rebuilding the layer would cause redundant Wait calls on\n    // newly allocated images, although those old fences have retired.\n#ifdef PS5_NATIVE\n    resource_ticks.assign(image_count, 0);\n#else\n    resource_ticks.resize(image_count);\n#endif\n    raw_images.resize(image_count);"),
+    ("void Layer::ReleaseRawImages() {\n    for (const u64 tick : resource_ticks) {\n        scheduler.Wait(tick);\n    }", "void Layer::ReleaseRawImages() {\n#ifdef PS5_NATIVE\n    // On this single Vulkan GPU timeline, the latest presentation resource\n    // tick subsumes all preceding image uses, including out-of-order slots.\n    const auto last_tick = std::max_element(resource_ticks.begin(), resource_ticks.end());\n    if (last_tick != resource_ticks.end() && *last_tick != 0) {\n        scheduler.Wait(*last_tick);\n    }\n#else\n    for (const u64 tick : resource_ticks) {\n        scheduler.Wait(tick);\n    }\n#endif"),
     # Never upload recycled staging bytes when the guest backing is missing.
     ("    if (host_ptr) {\n        Tegra::Texture::UnswizzleTexture(\n            mapped_span.subspan(image_offset, linear_size), std::span(host_ptr, tiled_size),\n            bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);\n        buffer.Flush();  // Ensure host writes are visible before the GPU copy.\n    }", "    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n        Tegra::Texture::UnswizzleTexture(\n            linear_span, std::span(host_ptr, tiled_size),\n            bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);\n    } else {\n        // Never upload stale staging bytes if the guest framebuffer is missing.\n        std::fill(linear_span.begin(), linear_span.end(), u8{0});\n    }\n    buffer.Flush();  // Both the upload and missing-memory clear need visibility."),
     ("#include <variant>", "#include <algorithm>\n#include <variant>"),
@@ -1356,8 +1390,12 @@ adapt('src/video_core/renderer_vulkan/present/layer.cpp', 'vulkan_present_layer.
     // a full-device WaitIdle or recreate the FXAA/SMAA pass on pitch changes.
     if (framebuffer.width == raw_width && framebuffer.height == raw_height &&
         framebuffer.pixel_format == pixel_format && !raw_images.empty()) {
-        for (const u64 tick : resource_ticks) {
-            scheduler.Wait(tick);
+        // All layer ticks share one monotonically increasing Vulkan GPU
+        // timeline. Waiting for the maximum retires every earlier user of
+        // the old upload staging buffer with one semaphore wait.
+        const auto last_tick = std::max_element(resource_ticks.begin(), resource_ticks.end());
+        if (last_tick != resource_ticks.end() && *last_tick != 0) {
+            scheduler.Wait(*last_tick);
         }
         CreateStagingBuffer(device, framebuffer);
         return;
@@ -1390,6 +1428,9 @@ adapt('src/video_core/renderer_vulkan/present/layer.cpp', 'vulkan_present_layer.
     anti_alias_setting = filters.get_anti_aliasing();
 
     const VkExtent2D render_area{'''),
+    ("    const u64 tiled_size{Tegra::Texture::CalculateSize(\n        true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};\n    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n        Tegra::Texture::UnswizzleTexture(", "#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure.\n    // Keep the exact raw-zero upload, but skip tiled-size/format arithmetic\n    // on repeated missing-frame fallbacks (HUD, scene changes).\n    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n        const u64 tiled_size{Tegra::Texture::CalculateSize(\n            true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};\n#else\n    const u64 tiled_size{Tegra::Texture::CalculateSize(\n        true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};\n    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);\n    if (host_ptr) {\n#endif\n        Tegra::Texture::UnswizzleTexture("),
+    ("    const u64 image_offset = GetRawImageOffset(framebuffer, image_index);\n\n", "#ifndef PS5_NATIVE\n    const u64 image_offset = GetRawImageOffset(framebuffer, image_index);\n#endif\n\n"),
+    ("    const u32 bytes_per_pixel = GetBytesPerPixel(framebuffer);\n    const u64 linear_size{GetSizeInBytes(framebuffer)};", "    const u32 bytes_per_pixel = GetBytesPerPixel(framebuffer);\n#ifdef PS5_NATIVE\n    // This raw upload already resolved the guest pixel format above. Do not\n    // decode that same format a second time through GetSizeInBytes every\n    // time the CPU reads back a guest framebuffer.\n    const u64 linear_size{\n        static_cast<std::size_t>(framebuffer.stride) *\n        static_cast<std::size_t>(framebuffer.height) * bytes_per_pixel};\n    // Staging slots have the same guest row pitch: do not decode BPP again\n    // through GetRawImageOffset for every non-accelerated presentation.\n    const u64 image_offset = linear_size * image_index;\n#else\n    const u64 linear_size{GetSizeInBytes(framebuffer)};\n#endif"),
 ])
 
 adapt('src/video_core/renderer_vulkan/vk_blit_screen.cpp', 'vulkan_blit_screen.cpp', [
@@ -2237,25 +2278,49 @@ void EdenRecordAttributeless(EdenVertexIdentity vertex_hash, const Shader::Info&
 
 // GPU thread: whether the vertex shader reads no attribute, as far as built pipelines tell.
 bool EdenAttributeless(EdenVertexIdentity vertex_hash) {
-    // The graphics thread owns this bounded memo. Shader builders only update
-    // the set under its mutex and publish a new generation on insertion.
-    // Alternating shader pairs should not lock or tree-search on every draw.
+    // The GPU thread owns this fixed 64-entry memo; builder threads publish
+    // updates through the generation. Four-way sets prevent colliding vertex
+    // shaders (especially alternating HUD/world keys) from taking the global
+    // shader-set mutex on every draw. No allocation or lock on a cache hit.
     struct Lookup {
         EdenVertexIdentity hash{};
         u32 generation = ~0u;
         bool result = false;
     };
-    static std::array<Lookup, 64> lookups{};
+    struct Bucket {
+        std::array<Lookup, 4> ways{};
+        unsigned next_slot{};
+    };
+    static thread_local std::array<Bucket, 16> buckets{};
+    // Same vertex shader across successive draws: skip bucket hashing,
+    // four-way probes and even the epoch load for proven positive keys.
+    // The builder-owned set only inserts; negative results must be
+    // invalidated by a newly published generation.
+    static thread_local Lookup last{};
+    if (last.result && last.hash == vertex_hash) return true;
     const u32 generation = eden_attributeless_generation.load(std::memory_order_acquire);
-    const size_t slot = (vertex_hash[0] ^ std::rotl(vertex_hash[1], 11)) & (lookups.size() - 1);
-    auto& lookup = lookups[slot];
-    if (lookup.generation == generation && lookup.hash == vertex_hash)
-        return lookup.result;
+    if (!last.result && last.hash == vertex_hash && last.generation == generation)
+        return false;
+    auto& bucket = buckets[(vertex_hash[0] ^ std::rotl(vertex_hash[1], 11)) &
+                           (buckets.size() - 1)];
+    for (const auto& lookup : bucket.ways) {
+        // The builder-owned set only INSERTS attributeless shader keys.
+        // A proven positive therefore remains valid across unrelated new
+        // shader publications. Negatives still require the current epoch.
+        if (lookup.hash == vertex_hash &&
+            (lookup.result || lookup.generation == generation)) {
+            last = lookup;
+            return lookup.result;
+        }
+    }
     const std::scoped_lock lock{eden_attributeless_mutex};
     const bool result = eden_attributeless_vertex.contains(vertex_hash);
+    auto& lookup = bucket.ways[bucket.next_slot];
     lookup.hash = vertex_hash;
     lookup.result = result;
     lookup.generation = generation;
+    bucket.next_slot = (bucket.next_slot + 1) & (bucket.ways.size() - 1);
+    last = lookup;
     return result;
 }
 
@@ -3047,6 +3112,13 @@ def apply_reviewed_delta(relative, old, new, label, *, allow_preapplied=False):
     raise RuntimeError(f"Reviewed native Vulkan anchor drift: {label} "
                        f"(before={before}, after={after})")
 
+# Keep zero-clear Vulkan render passes from capturing nine unneeded VkClearValues.
+# This change is PS5 selected-only: a smaller Record closure for ordinary draws,
+# with the original nine-slot bounded payload for actual clears.
+apply_reviewed_delta("vulkan_scheduler.cpp", "    std::array<VkClearValue, 9> values{};\n    // The Vulkan pointer below owns exactly these nine entries. Never publish\n    // the caller's unchecked clearValueCount after clipping the copy.\n    const u32 bounded_clear_value_count =\n        clear_values ? (std::min)(clear_value_count, static_cast<u32>(values.size())) : 0;\n    for (u32 i = 0; i < bounded_clear_value_count; ++i) {\n        values[i] = clear_values[i];\n    }\n    Record([renderpass, framebuffer_handle, render_area, values, bounded_clear_value_count](\n               vk::CommandBuffer cmdbuf) {\n        const VkRenderPassBeginInfo renderpass_bi{\n            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,\n            .pNext = nullptr,\n            .renderPass = renderpass,\n            .framebuffer = framebuffer_handle,\n            .renderArea =\n                {\n                    .offset = {.x = 0, .y = 0},\n                    .extent = render_area,\n                },\n            .clearValueCount = bounded_clear_value_count,\n            .pClearValues = bounded_clear_value_count != 0 ? values.data() : nullptr,\n        };\n        cmdbuf.BeginRenderPass(renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);\n    });",
+                     "    // Most ordinary draws start a render pass without any clear values.\n    // Do not zero/copy nine VkClearValue entries into every zero-clear\n    // deferred command. The exact same Vulkan begin-info path remains shared.\n    const auto record_pass = [this, renderpass, framebuffer_handle, render_area](\n                                 auto values, u32 bounded_clear_value_count) {\n        Record([renderpass, framebuffer_handle, render_area, values, bounded_clear_value_count](\n                   vk::CommandBuffer cmdbuf) {\n            const VkRenderPassBeginInfo renderpass_bi{\n                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,\n                .pNext = nullptr,\n                .renderPass = renderpass,\n                .framebuffer = framebuffer_handle,\n                .renderArea =\n                    {\n                        .offset = {.x = 0, .y = 0},\n                        .extent = render_area,\n                    },\n                .clearValueCount = bounded_clear_value_count,\n                .pClearValues = bounded_clear_value_count != 0 ? values.data() : nullptr,\n            };\n            cmdbuf.BeginRenderPass(renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);\n        });\n    };\n    if (!clear_values || clear_value_count == 0) {\n        // Empty std::array specializes the queued closure down to the\n        // render-pass handles/extents; no nine-slot clear payload or copy.\n        record_pass(std::array<VkClearValue, 0>{}, 0);\n    } else {\n        std::array<VkClearValue, 9> values{};\n        const u32 bounded_clear_value_count =\n            (std::min)(clear_value_count, static_cast<u32>(values.size()));\n        for (u32 i = 0; i < bounded_clear_value_count; ++i) {\n            values[i] = clear_values[i];\n        }\n        record_pass(values, bounded_clear_value_count);\n    }",
+                     "F07 zero-clear render pass command payload")
+
 pipeline = 'vk_graphics_pipeline_cost.cpp'
 mark = '''    if (shader_notify) {
         shader_notify->MarkShaderBuilding();
@@ -3442,22 +3514,26 @@ apply_reviewed_delta(
     // even when their low bits collide. No heap allocation or cross-dispatch
     // reuse; an overflowing table resolves the handle normally.
     struct ComputeSamplerMemo {
-        u32 handle{};
-        VideoCommon::SamplerId id{};
-        bool valid{};
+        u32 handle;
+        VideoCommon::SamplerId id;
     };
-    std::array<ComputeSamplerMemo, 16> sampler_memo{};
+    // Only a 16-bit occupancy mask needs zeroing for each compute dispatch.
+    // Cold entries are never read until their handle/id have both been set.
+    std::array<ComputeSamplerMemo, 16> sampler_memo;
+    u32 occupied_sampler_slots{};
     const auto resolve_sampler{[&](u32 handle) -> VideoCommon::SamplerId {
         const std::size_t first = (handle ^ (handle >> 4)) & 15U;
         for (std::size_t offset = 0; offset < sampler_memo.size(); ++offset) {
-            auto& entry = sampler_memo[(first + offset) & 15U];
-            if (entry.valid) {
+            const std::size_t slot = (first + offset) & 15U;
+            const u32 bit = u32{1} << slot;
+            auto& entry = sampler_memo[slot];
+            if (occupied_sampler_slots & bit) {
                 if (entry.handle == handle) return entry.id;
                 continue;
             }
             entry.id = texture_cache.GetSamplerId(handle, true);
             entry.handle = handle;
-            entry.valid = true;
+            occupied_sampler_slots |= bit;
             return entry.id;
         }
         return texture_cache.GetSamplerId(handle, true);
@@ -5864,13 +5940,31 @@ apply_reviewed_delta("vk_compute_pipeline_cost.cpp",
 # still take the delayed retry, and DEV first-use tracing stays unchanged.
 apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
     "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n",
-    "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n#ifdef PS5_NATIVE\n    // GPU-owner-only: avoid hashing the same compute shader key for every\n    // dispatch. Only a successfully created pipeline may be cached here;\n    // failed/retired keys still take the map's bounded recovery path.\n    ComputePipelineCacheKey last_compute_key{};\n    ComputePipeline* last_compute_pipeline{};\n#endif\n",
+    "    ::Common::unordered_map<ComputePipelineCacheKey, std::unique_ptr<ComputePipeline>> compute_cache;\n#ifdef PS5_NATIVE\n    // GPU-owner-only: four fixed positive entries avoid repeatedly hashing\n    // alternating compute shaders. The map owns these pipeline objects for\n    // this PipelineCache's lifetime. Failed keys are never memoized.\n    struct ComputePositive {\n        ComputePipelineCacheKey key{};\n        ComputePipeline* pipeline{};\n    };\n    std::array<ComputePositive, 4> recent_compute_pipelines{};\n    unsigned next_compute_positive{};\n    unsigned preferred_compute_positive{};\n#endif\n",
     "F07 compute positive owner cache fields")
 apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
     "    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
-    "#ifdef PS5_NATIVE\n    // A successful compute key is commonly reused by consecutive dispatches.\n    // Skip the unordered-map hash/probe, but never bypass null entries or\n    // development first-use tracing, which has a separate session lifetime.\n    if (!::Eden::DevVulkan::trace_pipelines && last_compute_pipeline &&\n        last_compute_key == key) {\n        return last_compute_pipeline;\n    }\n#endif\n    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
+    "#ifdef PS5_NATIVE\n    // Alternating successful compute shaders need no unordered-map hash or\n    // probe. Four fixed owner-local entries cover common dispatch sequences,\n    // while failed keys and development first-use tracing retain the map path.\n    if (!::Eden::DevVulkan::trace_pipelines) {\n        // Most dispatches reuse the last key. Probe its slot first rather\n        // than scanning four hints on each call after several shaders load.\n        const auto& preferred = recent_compute_pipelines[preferred_compute_positive];\n        if (preferred.pipeline && preferred.key == key) return preferred.pipeline;\n        for (unsigned i = 0; i < recent_compute_pipelines.size(); ++i) {\n            if (i == preferred_compute_positive) continue;\n            const auto& recent = recent_compute_pipelines[i];\n            // Positive slots fill contiguously before the four-entry ring\n            // wraps. A cold lookup need not compare the unused tail.\n            if (!recent.pipeline) break;\n            if (recent.key == key) {\n                // With only two active shaders, the newest preferred slot\n                // handles one key and the other is always at most one probe\n                // away. Avoid a cache-line write on every A/B dispatch.\n                if (recent_compute_pipelines[2].pipeline)\n                    preferred_compute_positive = i;\n                return recent.pipeline;\n            }\n        }\n    }\n#endif\n    const auto [pair, is_new]{compute_cache.try_emplace(key)};",
     "F07 compute same-key skip map probe")
 apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
     "    }\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
-    "    }\n#ifdef PS5_NATIVE\n    // Cache only a positive map entry. Never retain a null failed shader,\n    // since its delayed one-shot recovery must still run through the map.\n    if (pipeline) {\n        last_compute_key = key;\n        last_compute_pipeline = pipeline.get();\n    } else {\n        last_compute_pipeline = nullptr;\n    }\n#endif\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
+    "    }\n#ifdef PS5_NATIVE\n    // Only successful pipelines enter the bounded owner-local memo.\n    // A null shader still reaches the map's delayed one-shot retry on every\n    // dispatch, without disturbing other valid compute pipeline keys.\n    if (pipeline && !::Eden::DevVulkan::trace_pipelines) {\n        auto& recent = recent_compute_pipelines[next_compute_positive];\n        recent.key = key;\n        recent.pipeline = pipeline.get();\n        preferred_compute_positive = next_compute_positive;\n        next_compute_positive = (next_compute_positive + 1) & 3u;\n    }\n#endif\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
     "F07 compute null-safe positive memo publication")
+
+# F07 P0.3: finalize TIC memo without per-draw zero clearing under cache mutex.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "        struct ViewMemo {\n            u32 index{};\n            ImageViewId id{NULL_IMAGE_VIEW_ID};\n        };\n        // A single view or blacklist pass never gets a memo hit. Avoid\n        // zeroing all 16 memo slots while holding the texture-cache lock.\n        std::optional<std::array<ViewMemo, 16>> view_memo;\n        if (!blacklist && views.size() > 1) {\n            view_memo.emplace();\n        }",
+    "        struct ViewMemo {\n            u32 index;\n            ImageViewId id;\n        };\n        // Use a mask instead of clearing sixteen keys under the texture lock.\n        // Unoccupied entries are never read, NULL IDs never memoized.\n        std::array<ViewMemo, 16> view_memo;\n        u32 occupied_view_slots = 0;\n        const bool memo_enabled = !blacklist && views.size() > 1;",
+    "F07 occupancy-mask memo storage and mask")
+
+# F07 P0.3: finalize TIC memo without per-draw zero clearing under cache mutex.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "            ViewMemo* memo_slot = nullptr;\n            bool memo_hit = false;\n            if (view_memo && !has_deleted_images) {\n                auto& memo = *view_memo;\n                const std::size_t start = (view.index ^ (view.index >> 4)) & 15U;\n                for (std::size_t offset = 0; offset < memo.size(); ++offset) {\n                    auto& cached = memo[(start + offset) & 15U];\n                    if (cached.id == NULL_IMAGE_VIEW_ID) {\n                        memo_slot = &cached;\n                        break;\n                    }\n                    if (cached.index != view.index) continue;\n                    memo_slot = &cached;",
+    "            ViewMemo* memo_slot = nullptr;\n            u32 memo_bit = 0;\n            bool memo_hit = false;\n            if (memo_enabled && !has_deleted_images) {\n                const std::size_t start = (view.index ^ (view.index >> 4)) & 15U;\n                for (std::size_t offset = 0; offset < view_memo.size(); ++offset) {\n                    const std::size_t slot = (start + offset) & 15U;\n                    const u32 bit = u32{1} << slot;\n                    auto& cached = view_memo[slot];\n                    if (!(occupied_view_slots & bit)) {\n                        memo_slot = &cached;\n                        memo_bit = bit;\n                        break;\n                    }\n                    if (cached.index != view.index) continue;\n                    memo_slot = &cached;\n                    memo_bit = bit;",
+    "F07 occupancy-mask memo lookup")
+
+# F07 P0.3: finalize TIC memo without per-draw zero clearing under cache mutex.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "            if (memo_slot && !has_deleted_images) {\n                memo_slot->index = view.index;\n                memo_slot->id = view.id;\n            }",
+    "            if (memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID) {\n                memo_slot->index = view.index;\n                memo_slot->id = view.id;\n                occupied_view_slots |= memo_bit;\n            }",
+    "F07 occupancy-mask memo positive publication")

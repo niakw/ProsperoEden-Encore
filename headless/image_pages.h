@@ -19,11 +19,33 @@ constexpr std::uint64_t Bits(unsigned first, unsigned last) noexcept {
 // Publish the page BEFORE it is inserted into the registered image slot map.
 inline void Mark(std::uint64_t address, std::uint64_t size) noexcept {
     if (size == 0 || address >= kSpace) return;
+    // Registering a single 4 KiB page is common for small texture
+    // views. Avoid general range masks and the per-word loop, while keeping
+    // release publication for concurrent reader lock-elision probes.
+    constexpr std::uint64_t page_mask = (std::uint64_t{1} << kPageBits) - 1;
+    if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {
+        const auto page = address >> kPageBits;
+        const auto word = page / 64;
+        const auto bit = std::uint64_t{1} << (page % 64);
+        if (!(held[word].load(std::memory_order_relaxed) & bit))
+            held[word].fetch_or(bit, std::memory_order_release);
+        return;
+    }
     const auto first = address >> kPageBits;
     const auto last = ((std::min)(size, kSpace - address) + address - 1) >> kPageBits;
-    for (auto word = first / 64; word <= last / 64; ++word) {
-        const auto bits = Bits(word == first / 64 ? first % 64 : 0,
-                               word == last / 64 ? last % 64 : 63);
+    const auto first_word = first / 64;
+    const auto last_word = last / 64;
+    // Multi-page image views commonly fit in a single 256 KiB bitmap word.
+    // Avoid the generic range walk and its endpoint branches for that case.
+    if (first_word == last_word) {
+        const auto bits = Bits(first % 64, last % 64);
+        if ((held[first_word].load(std::memory_order_relaxed) & bits) != bits)
+            held[first_word].fetch_or(bits, std::memory_order_release);
+        return;
+    }
+    for (auto word = first_word; word <= last_word; ++word) {
+        const auto bits = Bits(word == first_word ? first % 64 : 0,
+                               word == last_word ? last % 64 : 63);
         if ((held[word].load(std::memory_order_relaxed) & bits) != bits)
             held[word].fetch_or(bits, std::memory_order_release);
     }
@@ -34,6 +56,15 @@ inline bool NeverHeld(std::uint64_t address, std::uint64_t size) noexcept {
     if (size == 0) size = 1;
     if (address >= kSpace || size > kSpace - address) return false;
     if (size > 256 * 1024) return false;
+    // Most CPU writes are contained in a single 4 KiB page. One acquire
+    // load and a single bit test replace construction of a two-endpoint
+    // word mask. The larger/unaligned cross-page path stays unchanged.
+    constexpr std::uint64_t page_mask = (std::uint64_t{1} << kPageBits) - 1;
+    if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {
+        const auto page = address >> kPageBits;
+        return !(held[page / 64].load(std::memory_order_acquire) &
+                 (std::uint64_t{1} << (page % 64)));
+    }
     const auto first = address >> kPageBits;
     const auto last = (address + size - 1) >> kPageBits;
     // The 256 KiB cap covers at most 65 pages and two bitmap words.

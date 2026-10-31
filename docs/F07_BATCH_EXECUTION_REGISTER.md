@@ -718,3 +718,145 @@ Les vérifications de staging citées plus haut imposent **handle Vulkan réel E
 - **Test source-extrait [`5f849b3e`](https://github.com/niakw/ProsperoEden-Encore/commit/5f849b3ebe076ab959bdea4ec254311aba9c94c3) :** extrait la vraie fonction de recherche et l'expression de publication ; vérifie préfixe vide, première/dernière plage, recherches manquées, trous, réutilisation, 2 000 cycles de recyclage et quatre lecteurs synchronisés sous **ASan/UBSan O0/O2/O3**. Raccordé aux CI fast/preflight [`1a536aa9`](https://github.com/niakw/ProsperoEden-Encore/commit/1a536aa9aca6ded204bea9dd0ff7e67e8b2f846d)/[`a1280fb1`](https://github.com/niakw/ProsperoEden-Encore/commit/a1280fb1b13cb1ba1ad053ab7e6b948961b2705e).
 - **Audit :** [`3be3969f`](https://github.com/niakw/ProsperoEden-Encore/commit/3be3969f2a8b7863b4321e147f8609bc2cd5cd3d) épingle le blob courant de `memory_pages.cpp` et la référence du témoin. Cette optimisation réduit le coût de recherche sur des commits/décommits de tables, **pas** le coût du GPU, d'une frame ordinaire ni des syscalls physiques ; CI du SHA courant et gain console encore à vérifier.
 - **Compteur : 22/29**, aucun des sept points V01/C01/C04/C05/T01/T05/J01 clos. Aucun build final.
+
+## F07 — J01 : préserver les mémos RX/RW lors des créations d'arènes indépendantes (30 octobre 2026)
+
+- **HEAD source de référence :** [`34f864e286d1f70968e614ba633d51513a904fc6`](https://github.com/niakw/ProsperoEden-Encore/commit/34f864e286d1f70968e614ba633d51513a904fc6), parent `0508cc96e60e4d2590a91c0797e604efbd438b74`, sur **`main` uniquement**. Source `headless/jit-allocator.h` : blob `b0edb506329a25689407d39e95e8d1a4a0ea4d15`. Témoin : `tools/check-native-jit-alias-lookup-host.py`, blob `14e4d31e3caf3b5239eca4a3ddc5883680adb05e`.
+- **Coût évitable démontré dans le propriétaire :** `Allocator::alloc` augmentait `mapping_generation` à chaque nouvelle arène RX/RW native sparse **et** desktop. Cela invalidait les huit indices TLS positifs de chaque worker alors qu'aucune des anciennes associations RX→RW encore vivantes n'avait changé ; l'alternance A32/A64 pouvait donc retomber sur le mutex global et `unordered_map` au prochain accès. Les **deux incréments d'allocation** sont retirés ; les **deux incréments de `free`** restent `release`, pour interdire la réutilisation d'une adresse retirée après une libération et préserver la génération de sécurité.
+- **Preuve reproductible prévue :** témoin source-lié vérifiant que `alloc` n'incrémente jamais l'epoch et que `free` possède les deux publications de retraite, plus allocations/libérations intercalées de huit arènes supplémentaires, contrôle des deux alias RX/RW persistants, retirement et réutilisation, avec ASan/UBSan `-O0/-O2`. **Ne pas présumer de sa réussite :** [fast gate #41043733534](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41043733534), [prévalidation hôte #41043733572](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41043733572) et [CodeQL #41043733596](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41043733596) ont été déclenchés sur le SHA source ; résultats encore non qualifiés à cette écriture. Le workflow natif a été **skipped**.
+- **Périmètre / dette :** aucun changement `vendor`, aucun changement de capacité JIT, de pages engagées, d'ordonnancement ou de traduction shader. **J01 reste ouvert, 22/29 PRÉ-BUILD et 0/12 POST-BUILD** ; pas de métrique FPS ni de preuve console FC27/BOTW. **Prochain acte :** requalifier les gates du HEAD final et rechercher une latence P0/P1 démontrée dans les phases shader/worker Vulkan, cache/HUD ou IPC ; aucune compilation native finale ni release sans autorisation.
+
+## F07 — checkpoint source PS5 sparse, 30 octobre 2026 (22/29 inchangé)
+
+- Départ réel `main@614052258e` ; `d096873a94` et `8bcdfb1c2e` : la réservation d'une nouvelle arène JIT ne modifie aucun engagement physique d'une arène existante. Suppression de l'incrément `sparse_jit_generation` dans `src/memory_pages.cpp::ReserveSparseJitCode`. Les deux incréments lors de `TrimSparseJitCode` et `ReleaseSparseJitCode` sont préservés pour invalider avant retrait ou recyclage du backing. Propriété couverte par le témoin source-lié O0/O2/O3 ASan/UBSan et par le garde architectural ; leur verdict CI du HEAD actuel n'est pas encore démontré.
+- `3897a1310e` → `348075f3d6` : `src/memory_pages.cpp::SparseRangeOf` conserve ses deux dernières plages positives après un miss (dense, trou ou adresse inconnue) et revérifie systématiquement `begin/end` sous le mutex existant. Le test réel extrait de la source vérifie qu'un hit dans le slot 63 redevient à deux sondes maximum malgré le miss, puis vérifie retrait et réutilisation ; le compteur de sondes négatives a été adapté à ce comportement. Aucune modification de mappage kernel ou des gardes mémoire.
+- Source HEAD avant ce journal : `348075f3d6dc485ca617c8cbc1df235203df9253`. **Fast/preflight/CodeQL du HEAD source à requalifier**, build natif volontairement ignoré, aucune métrique FC27/BOTW. Les 7 décisions prébuild restent `V01/C01/C04/C05/T01/T05/J01` ; priorité au verdict CI puis aux preuves de liaison frame GPU/JIT, pas à une nouvelle revue des 38 fonctions.
+
+## F07 — P1 HLE/input : conversion DualSense hors verrou producteur (30 octobre 2026)
+
+- **Base contrôlée :** `main@cb2a7728a193d95e1144586027ea9e35eb59b8d3` ; changement limité à `headless/pad.cpp::PadEngine::TakeRumble`, témoin `tools/check-dualsense-rumble-lock-host.py`, deux workflows hôte et manifeste d'audit U03. Aucun chemin `vendor/` modifié, gitlink conservé.
+- **Coût source démontré :** les quatre calculs `std::pow`/`std::lround` des moteurs DualSense s'exécutaient sous `rumble_mutex`, partagé avec `SetVibration` sur les threads HLE. Une commande invité pouvait donc attendre la conversion CPU de la commande précédente.
+- **Correction :** copier `Sides` et remettre `changed`/`rumble_pending` à zéro sous le même mutex, puis relâcher le verrou **avant** la conversion. Une nouvelle commande concurrente réarme le hint sous verrou et ne peut pas être effacée par le consommateur. La courbe moteur et les sorties restent inchangées.
+- **Preuve :** témoin C++20 extrait du corps réel, vérification structurelle de la frontière du mutex, course producteur/consommateur (30 000 commandes), fusion des dernières commandes, `-O0/-O2` ASan+UBSan. Une reproduction autonome du même corps a passé `-O0/-O2` ASan+UBSan avant publication ; les **CI GitHub de ce commit restent à qualifier**. Aucun gain de latence manette/rumble ou FPS console mesuré.
+- **État :** optimisation supplémentaire hors des 38 décisions historiques ; **22/29 pré-build inchangé**, P0/P1 et B5 ouverts. Prochaine tâche : vérifier les CI du nouveau HEAD puis attribuer les coûts shader/pipeline Vulkan et cache HUD, sans build PS5 ni release.
+
+## F07 — P1 HLE/input : recherches inverses résolues par lot DualSense (30 octobre 2026)
+
+- **Base de lecture :** `main@fc36a86a26a22d05df4b4575a30007fa68d9c689`. **Blobs exacts :** `headless/pad.cpp@a7ffaa077ab25e2cafbcdb7bb9428344062200ab`, témoin F06 `fa8fb3c411da86e62bab2341b752fe3234db5409`, témoin profil `fc1d8e75319d3792bd0a9265b4db4ec94af53211`.
+- **Coût source identifié :** le mapping physique→invité est fixé avant `Pad::Open` ; `Pad::Consume` effectuait néanmoins deux recherches linéaires `MappedTo` (jusqu'à 12 entrées chacune) par échantillon et une troisième en fin de poll. Pour N échantillons, 2N+1 recherches, soit 129 pour une rafale de 64.
+- **Correction non-vendor :** calcul de l'indice touchpad une seule fois par `Consume`, et du statut Create/Capture une seule fois **pour les lots non vides**. Un poll vide conserve une recherche ; un lot non vide, même de 64, n'en exécute que deux. `SetButtonState`, ordre des échantillons, raccourcis, impulsions et mapping de session restent inchangés. Comparaisons évitées, **pas** de latence ou de FPS mesurés.
+- **Témoins hôte renforcés :** `tools/check-fc27-f06-native-pad-transition-host.py` extrait le vrai `Pad::Consume`, vérifie les recherches hors boucle, les cinq phases de jeu, une rafale de 64 échantillons, le cache de publication et un Create explicitement affecté à une action invité. `tools/check-fc27-match-input-profile.py` garde le contrat du mapping fixe. Les deux sont déjà raccordés à `encore-core-preflight.yml` ; **verdict CI de ce lot à qualifier**.
+- **État :** `vendor/` non modifié (gitlink `160000`), 38/38 revues historiques, **22/29 pré-build** et B5 toujours ouverts. Aucun build natif, release ni preuve console FC27/BOTW. **Suite :** qualifier CI puis reprendre shader froid, attentes Vulkan et caches HUD selon les traces réelles.
+
+## F07 — J01, mémo négatif exact des tables sparse (30 octobre 2026)
+
+- `src/memory_pages.cpp::SparseRangeOf` : une recherche négative répétée de la même adresse dense reparcourait jusqu'à 64 entrées sous `sparse_mutex`. Le résultat négatif exact est désormais gardé par thread, avec génération de topologie protégée par le même mutex ; chaque publication/retrait de table invalide ce mémo. Les deux indices positifs restent inchangés et prioritaires, aucune supposition d'alignement 2 Mio hôte.
+- `tools/check-native-sparse-range-prefix-host.py` : extraction de la véritable fonction, 10 000 misses répétées, re-publication sur l'adresse négative, réutilisation des slots et lecteurs concurrents ; tests -O0/-O2/-O3 ASan/UBSan à confirmer par CI. Audit propriétaire synchronisé sur blob `3ef4eeb0e499`. **J01 et 22/29 restent ouverts ; gain PS5 non mesuré.**
+
+## F07 — J01, quatre adresses négatives sparse alternées (30 octobre 2026)
+
+- `src/memory_pages.cpp::SparseRangeOf` : cache thread-local des échecs exacts étendu de 1 à 4 adresses sans supposer une granularité de réservation hôte ; les deux indices positifs gardent la priorité. Chaque publication/retrait actualise `sparse_range_generation` sous le mutex et invalide les quatre entrées au prochain échec. Aucun parcours ni écriture TLS sur un hit positif.
+- `tools/check-native-sparse-range-prefix-host.py` : vérification de quatre misses alternées (10 000 lectures), cinquième adresse/éviction, réutilisation et re-publication, 64 ranges, 4 threads, O0/O2/O3 ASan/UBSan (CI à confirmer). Manifeste remis au blob `26c36f874c43c11d84b47eae1db20ed310b624ac`.
+- Aucun FPS PS5 mesuré. **F07 22/29 inchangé** ; J01 attend les traces hardware des gaps FC27.
+
+## F07 — HUD masqué : horloge FPS hors callback chaud (30 octobre 2026)
+
+- `headless/graphics.cpp::OnFrameDisplayed` : lorsque l'overlay FPS est désactivé, ne plus calculer `HudClock::Present` par présentation. À la réactivation, repartir d'une nouvelle fenêtre FPS et forcer la première image HUD via une mémo invalidée. Les compteurs de présentation, timing Vulkan, transitions loading/jeu et télémétrie FC27 restent inchangés.
+- `tools/check-ps5-hud-snapshot-memo-host.py` : contrat source de garde de visibilité, alternance 10 000 frames cachées / 500 visibles / 9 500 cachées, O0/O2/O3 ASan/UBSan. Validation CI en attente. Manifeste : `d06815e584710bb31e016f98209032bdaded005a`. Pas de performance PS5 mesurée ni de nouvelle décision prébuild ; **22/29**.
+
+## F07 — Fastmem : une seule vérification par désallocation déjà vide (30 octobre 2026)
+
+- `src/host_memory.cpp::Window::Unmap` : fusion des deux scans `page_backing`/`page_access` sur les petites plages ≤16 pages ; mêmes frontières de granules, compteurs et `Update` si un seul octet/page est encore valide.
+- `tools/check-fastmem-window-bounds-host.py` : contrôle source modifié, tests hôte existants de 10 000 Unmap identiques, remaps, 2/16/17 pages, permissions et alias, C++ sous sanitizers (verdict CI à confirmer). Manifeste synchronisé sur `4ae5e572d0534fb2e40a999a419199f1b3a8f8cc`.
+- Optimisation sans benchmark hardware, **F07 reste 22/29**. Aucun build PS5 ni release.
+
+## F07 — réparation du témoin de recyclage Vulkan (30 octobre 2026)
+
+- **Échec CI réel :** prévalidation hôte [#41094609661](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41094609661), suite `source-audit`, sur `main@3838aa802ef5e966e8b803bbd82038a365264608` : `check-vulkan-sync-recycle-host.py` échouait à compiler son C++ source-extrait car `PresentManager::Present` lit `present_in_flight`, absent du modèle du témoin. Les cinq autres suites source ont réussi ; fast gate et CodeQL ont réussi sur ce même SHA.
+- **Correction ciblée :** `tools/check-vulkan-sync-recycle-host.py` déclare `present_in_flight{}` dans son faux `PresentManager` sous le même contrat `queue_mutex` que le code réel, et exige explicitement le prédicat de réveil extrait du moteur. Aucun contournement du compilateur, aucune suppression de test ni assouplissement de l'oracle source.
+- **Portée et preuve :** le témoin conserve les scénarios sync/async, recyclage sous `free_mutex`, exception de copie et ASan/UBSan. Revalidation complète à attendre sur la CI du commit réparateur ; aucune performance PS5/FW13.60 ni image console n'est revendiquée. Aucun changement de `vendor/`, du moteur ou des déclencheurs de build natif. **F07 reste 22/29 pré-build, 0/12 post-build.**
+
+## F07 — DualSense : suppression du memset implicite par poll (30 octobre 2026)
+
+- `headless/pad.cpp::Pad::Poll` : la zone `std::array<ps5::pad::Data, 64>` faisait 7 680 octets initialisés à zéro à chaque 4 ms ; `scePadRead` remplit uniquement les entrées `[0,count)`, toutes les lectures sont sous `count`, 0/erreurs utilisent les comportements existants. Déclaration sans `{}` : aucune écriture du tampon avant appel natif. Pas de modification des données HID ou du mapping.
+- `tools/check-ps5-pad-freeze-observability.py` : contrat source + C++20 réel de l'ABI `third_party/ps5_pad.hpp`, cas 64/0/3/-1/65/1, O0/O2 ASan+UBSan. Contrat déjà exécuté dans la prévalidation ; verdict CI en attente. Pas de FPS/latence PS5 mesuré ; **F07 22/29** inchangé.
+
+## F07 — PS5 DualSense : courbe des sticks précompilée (30 octobre 2026)
+
+- `headless/pad.cpp::Pad::Consume` : les quatre octets d'axes de chaque sample utilisent une table de 256 `float` préparée **une seule fois** au lancement du contrôleur, au lieu de recalculer normalisation, deadzone, `copysign` et divisions sur les 4 axes du batch. Aucune allocation ni mutex sur le hot path ; mappings guest/motion/rumbles inchangés.
+- `tools/check-fc27-f06-native-pad-transition-host.py` : extrait le vrai calcul constructeur et la vraie méthode `Consume`, rejoue 5 deadzones × 256 valeurs brutes en comparaison bitwise avec la formule précédente ; continue de vérifier 5 phases FC27, relâchements, 64 échantillons, Options/Home/Capture, O0/O2 UBSan.
+- **Portée :** économies CPU input sans prétendre résoudre les saccades GPU. Gates GitHub du SHA en attente, pas de mesure PS5. **Compteur F07 22/29 inchangé**, 0/12 postbuild.
+
+## F07 — réparation de l'oracle F06 après LUT DualSense (30 octobre 2026)
+
+- **Défaillance CI réellement observée** sur `ad46fee` : `source-f01-f06` du run [41141853751](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41141853751) échoue au témoin `F06-native-pad-transition` alors que les deux exécutions C++ `-O0/-O2` produisent `F06_NATIVE_PAD_TRANSITIONS_PASS` : l'agrégateur `tools/check-fc27-six-gates-host.py` attendait encore `touch_taps=1 scope=...` et rejetait le champ ajouté `stick_curve_bytes=256`.
+- **Réparation stricte** : exiger explicitement `stick_curve_bytes=256` dans l'agrégateur, conserver les 7 autres nombres attendus, les deux compilations et l'avertissement `REAL_GUEST_NPAD...NOT_PROVEN`. Le champ apparaît aussi dans la métrique de l'oracle ; aucun test contourné, aucune modification de commandes guest ni de code moteur.
+- Verdict du nouveau SHA encore en attente ; **F07 22/29 inchangé**, aucune mesure FC27 sur PS5.
+
+## F07 — DualSense : aucun second balayage d'échantillons en mode silencieux (30 octobre 2026)
+
+- `headless/pad.cpp::Pad::Poll` : `scePadRead` publie toujours 0–64 entrées vers `Consume`, mêmes neutralisations sur erreur et mêmes commandes. Le **second parcours** du lot, chargé uniquement des statistiques du heartbeat détaillé (`samples_read`, `usable_samples`, `intercepted_samples`, `circle_samples`), est désormais exécuté seulement en `NativeLogs::Detailed()`; la période silencieuse n'est donc plus comptée dans ces quatre compteurs diagnostiques. Le vrai signal de vie GPU et les erreurs restent surveillés en permanence.
+- `tools/check-ps5-pad-freeze-observability.py` : garde source de la position du `Consume` hors logs, du second parcours optionnel et témoin C++20 64 quiet + 64 detailed avec 32 samples connectés, O0/O2 ASan+UBSan. Aucun gain FPS matériel revendiqué, F07 **22/29** inchangé, verdict CI en attente.
+
+## F07 — DualSense : éviter copie 120 octets par sample connecté (30 octobre 2026)
+
+- `Pad::Consume` : entrée `scePadRead` par référence constante au lieu du `auto sample = raw` (copie 120 octets). `usable` évalué une fois ; état neutre uniquement si déconnexion/interception, raccourcis HOME/overlay/menu appliqués localement à `mapped_buttons`. Axes, motion et événements conservés.
+- Témoins R390, F06, profil match, quiet logging et déduplication synchronisés. Test F06 source-extrait O0/O2/UBSan étendu : vérifie absence de mutation de l'échantillon natif.
+- Aucun FPS PS5 revendiqué ; 22/29 décisions prébuild inchangées. CI attendue.
+
+### F07 — Neutral fallback partagé pour éviter 120 octets temporaires par échantillon
+
+La version source `abaab177` éliminait la copie de la structure native mais initialisait encore une structure neutre locale de 120 octets par échantillon. `Pad::Consume` publie désormais un `static constexpr Data neutral = neutral_data()` indépendant du batch ; les horodatages motion continuent à provenir de `raw.timestamp_us` seulement pour les entrées utilisables. Plus de construction du neutre dans la boucle. Gardes source F06 et Rxxx renforcées ; aucun changement de commandes. **22/29**, bénéfice console non mesuré.
+
+## F07 — Fastmem Protect : un seul chemin pour les permissions répétées (30 octobre 2026)
+
+- `src/host_memory.cpp::Window::Protect`: fusion des deux cas 2–16 pages identiques en un seul `std::all_of` borné ; aucune division de granule ni seconde branche. Les anciens prédicats same/cross couvrent exactement ces plages ; les mises à jour réelles continuent vers `std::fill` + `Refresh` et le compteur reste inchangé.
+- `tools/check-fastmem-window-bounds-host.py`: comparaison exhaustive des prédicats sur les plages du modèle 64 pages et tests C++ source-extraits O0/O2 ASan+UBSan (20 000 no-ops, 16/17 pages, changements traversant les granules et bornes). Aucune mesure PS5 ; F07 **22/29**, CI en attente.
+
+### F07 — Témoin de Capture après fast path DualSense
+
+Fast gate `6214410` a échoué sur `tools/check-ps5-autocontrol-context.py` (ancien identifiant `sample.buttons`, remplacé par le masque guest `mapped_buttons` dans `Pad::Consume`). Assertion adaptée sans assouplir le contrôle de Capture ni le mapping immuable. Source et test mis à jour ; CI same-SHA à confirmer. Prébuild 22/29.
+
+### F07 — CI témoin contrôle mapping (30/10)
+
+Le commit précédent a écrit une séquence littérale `\\n` entre deux assertions Python dans `check-ps5-autocontrol-context.py`. Le compilateur Python de `source-early` l'a justement refusée. Remplacement par un vrai retour de ligne : les deux assertions strictes sont conservées. L'EMU n'est pas modifié. CI du correctif en qualification, 22/29.
+
+## F07 — Vulkan texture lock-elision : page unique sans masque de plage (30 octobre 2026)
+
+- `headless/image_pages.h::NeverHeld` : sur un CPU-write entièrement contenu dans une page 4 KiB, une seule lecture atomique acquire et un bit test, sans construire les bornes des masques multi-pages. Les écritures croisées, les 256 KiB maximum et la publication Mark release/acquire restent inchangées.
+- `tools/check-ps5-image-pages-r433.py` : source liée et témoin C++ ASan/UBSan, 12 000 sondes déterministes contre oracle indépendant par page (0, frontière 4 KiB, frontière mot 64 pages, fin 16 GiB, longueurs >256 KiB), plus registrations concurrentes. Tests et gain CPU réel à qualifier par CI ; aucun FPS console revendiqué. F07 22/29, C01/T01 ouverts.
+
+## F07 — Vulkan buffer-page ownership fast path (31 octobre 2026)
+
+- `headless/buffer_pages.h` : `Mark` et `NeverRegistered` détectent directement les entrées contenues dans une seule page 4 KiB, sans parcours générique de masques. Les traitements multi-pages et la barrière `coverage_unknown` en lecture double sont conservés ; jamais de bypass de shader/HUD sur région connue.
+- `tools/check-ps5-buffer-pages-r437.py` : 18 000 requêtes comparées à un oracle page-par-page, frontières de bits/mots/espace 16 GiB, 8 éditeurs concurrents, O0/O2 UBSan, plus les gardes de génération natifs. **C01/T01 restent ouverts : aucune mesure FC27 sur PS5. F07 22/29.**
+
+### F07 — réparation du témoin F06 du masque local DualSense
+
+Fast gate `41145533639` sur `74fec6c` : échec de l’assertion source `sample.buttons` == 1. Les deux lectures existantes sont intentionnelles : l’une prépare le masque guest modifiable `mapped_buttons`, l’autre conserve l’état **physique** `pressed` avant tout retrait des raccourcis pour les transitions HOME/Options et les traces. Le témoin exige explicitement les deux lectures, sans supprimer le replay source-extrait. Code moteur inchangé ; 22/29.
+
+
+## F07 — réparation CI du témoin Fastmem Protect (31 octobre 2026)
+
+- **HEAD contrôlé avant correction :** `fbe2302d8fd99b2b5d8122448a1bd79c2ebb00b3`. **Échec réel :** prévalidation hôte [#41145966033](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41145966033), suite `source-audit`, étape « Audit generic graphics, JIT, runtime and filtered game networking » : `tools/check-fastmem-window-bounds-host.py` génère `protect.cpp` contenant `PagesPerGranule = 4` inutilisé ; `clang++-18 -O0 -Wall -Wextra -Werror` rejette `-Wunused-const-variable`. Les assertions Python de comparaison des anciens prédicats avaient déjà réussi avant cette compilation.
+- **Correction minimale :** supprimer **uniquement** la constante devenue inutilisée du fixture C++ `protect_cpp`. La constante de l'autre fixture Map/Unmap reste présente et utilisée. Les gardes source, la compilation O0/O2 ASan/UBSan, les assertions de comptage et le traitement moteur `src/host_memory.cpp` restent inchangés. Le commit qui contient cette entrée porte le correctif ; vérifier son SHA exact dans l'historique Git et le verdict des nouvelles CI avant de qualifier la réparation.
+- **Preuve et limites :** échec avant correction visible dans le journal du job `124371500385`. Nouvelle CI hôte à qualifier sur le SHA publié. Aucune compilation native PS5, aucune release et aucun gain console revendiqués. **F07 reste 22/29 pré-build et 0/12 post-build.**
+
+## F07 — CPU DualSense : seuils gâchettes pré-calculés (31 octobre 2026)
+
+- `Pad::Pad` calcule 256 booléens une seule fois à partir de la calibration immuable : `raw / 255.0f >= trigger_threshold`. `Pad::Consume` utilise deux lectures de tableau, sans opérations flottantes sur ces deux gâchettes par échantillon.
+- `check-fc27-f06-native-pad-transition-host.py` exécute le constructeur source-extrait et compare exactement **5 seuils × 256 valeurs**, en O0/O2 UBSan, sans déplacer la publication des boutons, du gyro ni du gameplay. `check-dualsense-input-hotpath.py` garde les nouveaux champs. `check-fastmem-window-bounds-host.py` retire la constante locale désormais inutilisée, seule origine de l'échec source-audit observé dans le run 41145966033.
+- Gain matériel non mesuré, CI en attente, décisions F07 **22/29** inchangées.
+
+## F07 — texture-cache : enregistrement d'une page image rapide (31 octobre 2026)
+
+- `headless/image_pages.h::Mark` : enregistrement des images dans une seule page 4 KiB avec un unique test atomique et `fetch_or` conditionnel, sans la boucle de masques génériques ; cas multi-pages et publications release/acquire inchangés. `NeverHeld` conserve son test bit-à-bit précédent.
+- `tools/check-ps5-image-pages-r433.py` : nouveau test de frontière mot 64 bits, région à cheval sur 4 KiB et huit éditeurs concurrents de pages qui partagent le même mot ; maintien de l'oracle indépendant 12 000 sondes et du sanitizer.
+- C01/T01 toujours ouverts, **F07 22/29**, tests CI à qualifier, aucun FPS console revendiqué.
+
+## F07 — correction de l'assertion TIC non adjacente (31 octobre 2026)
+
+- **HEAD source audité :** `3bba34d2126e3a50cd605c825af7be3414def8ca` ; lot HUD/TIC `3bba34d2126e3a50cd605c825af7be3414def8ca`, vendor gitlink `6aa61904b6e41cd5244708199cc4d86a0d88da88` (`160000`).
+- **Défaut prouvé dans le témoin hôte** `tools/check-ps5-f07-nonadjacent-tic-memo-host.py` : l'ancienne assertion exigeait littéralement `if (memo_slot && !has_deleted_images)` alors que le code natif sélectionné exige le garde renforcé `if (memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID)`. L'assertion était donc toujours fausse sur la source du lot TIC, avant même l'exécution du témoin C++.
+- **Réparation de ce commit :** exiger exactement le garde natif renforcé ; les tests source-extraits PS5/desktop `-O0/-O2`, UBSan, collisions, NULL, remap, suppression, blacklist et reconstruction du générateur restent obligatoires. Preuve statique : ancien garde absent, nouveau garde présent dans le vendor épinglé ; verdict des CI du commit réparateur **à qualifier**, aucune revendication de gain console.
+- **Intégrité :** aucun changement moteur, vendor, `.gitmodules`, branche historique, déclencheur PS5 ou release. **F07 22/29 pré-build, 0/12 post-build** inchangé.

@@ -156,6 +156,9 @@ assert 'bool buffer_may_overlap = false;' in r
 assert 'if (buffer_may_overlap)' in r
 witness=(root/'headless/buffer_pages.h').read_text()
 assert 'registered[word].load(std::memory_order_acquire) & mask' in witness
+assert witness.count('if(size <= (std::uint64_t{1}<<kPageBits)-(address&page_mask)){') == 2
+assert 'registered[page/64].load(std::memory_order_acquire)' in witness
+assert 'return !coverage_unknown.load(std::memory_order_acquire);' in witness
 assert 'registered[word].fetch_or(mask,std::memory_order_release)' in witness
 assert g.count('::Eden::BufferPages::NeverRegistered(addr, size)')==8
 pos=r.index('bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size)')
@@ -171,6 +174,7 @@ cxx=shutil.which('c++') or shutil.which('clang++') or shutil.which('g++')
 assert cxx
 cpp=r"""
 #include "buffer_pages.h"
+#include <array>
 #include <cassert>
 #include <thread>
 #include <vector>
@@ -214,6 +218,34 @@ int main(){
    assert(!NeverRegistered(b+511*p,1));
    assert(NeverRegistered(b+512*p,1));
  }
+ // Compare against an independent page-by-page owner oracle, including
+ // registered, empty, crossing, oversized, near-end and unaligned writes.
+ auto oracle=[](std::uint64_t address,std::uint64_t size){
+   if(coverage_unknown.load(std::memory_order_acquire) ||
+      !size || size>256*1024 || address>=kSpace || size>kSpace-address)return false;
+   auto first=address>>kPageBits;
+   auto last=(address+size-1)>>kPageBits;
+   for(auto page=first;page<=last;++page)
+     if((registered[page/64].load(std::memory_order_acquire)>>(page%64))&1u)
+       return false;
+   return !coverage_unknown.load(std::memory_order_acquire);
+ };
+ std::uint64_t rng=0xfed3c689a5b72d41ull;
+ constexpr std::uint64_t lens[]{0,1,2,7,4095,4096,4097,65536,262144,262145};
+ for(unsigned i=0;i<18000;++i){
+   rng^=rng<<13;rng^=rng>>7;rng^=rng<<17;
+   const auto address=i%3==0 ? rng%(4096ull*12000) :
+                      i%3==1 ? kSpace-1-rng%10000 : rng%kSpace;
+   const auto bytes=lens[i%10];
+   assert(NeverRegistered(address,bytes)==oracle(address,bytes));
+ }
+ for(std::uint64_t addr : std::array<std::uint64_t,5>{0,4095,63*p+4095,64*p,kSpace-1})
+   for(std::uint64_t bytes : lens)
+     assert(NeverRegistered(addr,bytes)==oracle(addr,bytes));
+ // Marking a one-page span must publish the exact same bit as the
+ // previous generic word-range algorithm, including the word boundary.
+ Mark(192*p+1,4094);
+ assert(!NeverRegistered(192*p,1) && NeverRegistered(193*p,1));
  Mark(kSpace+1,1);
  assert(!NeverRegistered(66*p,1));
 }
@@ -221,7 +253,10 @@ int main(){
 with tempfile.TemporaryDirectory(prefix='eden-r437-') as d:
  src=Path(d)/'b.cpp';exe=Path(d)/'b'
  src.write_text(cpp)
- subprocess.run([cxx,'-std=c++20','-O1','-pthread','-Wall','-Wextra','-Werror',
-  '-fsanitize=undefined','-I'+str(root/'headless'),str(src),'-o',str(exe)],check=True,timeout=90)
- subprocess.run([str(exe)],check=True,timeout=90)
+ for opt in ('-O0','-O2'):
+  exe=Path(d)/('b'+opt)
+  subprocess.run([cxx,'-std=c++20',opt,'-pthread','-Wall','-Wextra','-Werror',
+   '-fsanitize=undefined','-fno-sanitize-recover=all','-I'+str(root/'headless'),
+   str(src),'-o',str(exe)],check=True,timeout=90)
+  subprocess.run([str(exe)],check=True,timeout=90)
 print('PASS R437 buffer-page witness and protected HUD invalidation')

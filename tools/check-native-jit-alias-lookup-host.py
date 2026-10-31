@@ -19,7 +19,16 @@ assert "mutable std::size_t preferred_slot{};" in memo
 assert "if (i == preferred_slot) continue;" in memo
 assert "if (entries[2].executable) preferred_slot = i;" in memo
 assert "if (generation != current_generation) return nullptr;" in memo
-assert source.count("mapping_generation.fetch_add(1, std::memory_order_release);")==4
+# A newly inserted alias cannot invalidate any previously live RX/RW mapping.
+# Only free() retires aliases and advances the TLS generation. Verify the
+# actual allocator source, not merely an equivalent cache model.
+alloc_body=source.split("std::uint8_t* alloc(std::size_t size) override {",1)[1].split(
+    "std::uint8_t* writableAddress(",1)[0]
+free_body=source.split("void free(std::uint8_t* pointer) override {",1)[1].split(
+    "bool useProtect() const override",1)[0]
+assert "mapping_generation.fetch_add(" not in alloc_body
+assert free_body.count("mapping_generation.fetch_add(1, std::memory_order_release);")==2
+assert source.count("mapping_generation.fetch_add(1, std::memory_order_release);")==2
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler
 stub="""
@@ -120,6 +129,20 @@ int main(){
  std::memset(aw,0xA5,size);std::memset(bw,0x5A,size);
  assert(a[0]==0xA5 && a[size-1]==0xA5);
  assert(b[0]==0x5A && b[size-1]==0x5A);
+ // Adding a third arena must preserve the two existing RX/RW aliases;
+ // its subsequent retirement must still invalidate stale TLS hints.
+ for(unsigned cycle=0;cycle<8;++cycle){
+   auto* extra=allocator->alloc(size);
+   assert(extra && extra!=a && extra!=b);
+   auto* extra_rw=allocator->writableAddress(extra);
+   assert(extra_rw && extra_rw!=extra);
+   std::memset(extra_rw,0x6B,size);
+   assert(extra[0]==0x6B && extra[size-1]==0x6B);
+   assert(allocator->writableAddress(a)==aw);
+   assert(allocator->writableAddress(b)==bw);
+   allocator->free(extra);
+   assert(allocator->writableAddress(extra)==extra);
+ }
  for(unsigned i=0;i<100000;++i){
   assert(allocator->writableAddress(a)==aw);
   assert(allocator->writableAddress(b)==bw);
@@ -145,10 +168,11 @@ with tempfile.TemporaryDirectory(prefix="eden-jit-alias-") as temp:
  d=Path(temp);(d/"xbyak").mkdir()
  (d/"xbyak/xbyak.h").write_text(stub)
  (d/"witness.cpp").write_text(fixture)
- exe=d/"witness"
- subprocess.run([compiler,"-std=c++20","-O1","-g","-pthread","-Wall","-Wextra",
-  "-Werror","-fsanitize=address,undefined","-fno-sanitize-recover=all",
-  "-I",str(d),"-I",str(root/"headless"),str(d/"witness.cpp"),"-o",str(exe)],
-  check=True,timeout=90)
- subprocess.run([str(exe)],check=True,timeout=90)
-print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 eviction9=1 epoch=1 retirement=1 preferred_readonly=1 dual_readonly=1 sanitizer=1")
+ for opt in ("-O0","-O2"):
+  exe=d/("witness_"+opt[1:])
+  subprocess.run([compiler,"-std=c++20",opt,"-g","-pthread","-Wall","-Wextra",
+   "-Werror","-fsanitize=address,undefined","-fno-sanitize-recover=all",
+   "-I",str(d),"-I",str(root/"headless"),str(d/"witness.cpp"),"-o",str(exe)],
+   check=True,timeout=90)
+  subprocess.run([str(exe)],check=True,timeout=90)
+print("JIT_ALIAS_LOOKUP_HOST_PASS real_rx_rw=1 alternating=1 collision8=1 eviction9=1 epoch=1 retirement=1 insertion_preserves=1 preferred_readonly=1 dual_readonly=1 sanitizer=1 O0_O2=1")

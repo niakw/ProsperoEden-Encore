@@ -25,6 +25,9 @@ assert "RecordGpuFailure(std::current_exception())" in CTOR
 assert "RecordGpuFailure(std::current_exception())" in WORKER
 assert "PeekGpuFailure()" in WAIT
 assert WAIT.count("--queue_drain_waiters;")==1
+assert "worker_in_flight = false;" in WORKER
+assert "worker_in_flight = true;" in WORKER
+assert "bool worker_in_flight{};" in (ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
 assert "event_cv.notify_all();" in CTOR and "event_cv.notify_all();" in WORKER
 assert "try {" in WORKER and "catch (...)" in WORKER
 assert WORKER.index("::Eden::RecordGpuFailure(")<WORKER.index("event_cv.notify_all();",WORKER.index("::Eden::RecordGpuFailure("))
@@ -76,6 +79,7 @@ public:
     std::mutex execution_mutex, reserve_mutex, queue_mutex;
     std::condition_variable_any event_cv;
     unsigned queue_drain_waiters{};
+    bool worker_in_flight{};
     std::jthread worker_thread;
     std::atomic<unsigned> completed{0};
     int current_cmdbuf=0,current_upload_cmdbuf=0;

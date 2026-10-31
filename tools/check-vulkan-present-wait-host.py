@@ -12,6 +12,15 @@ root = Path(__file__).resolve().parents[1]
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 checks = (
     "bool present_in_flight{}; // guarded by queue_mutex",
+    "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex",
+    "std::size_t free_waiters{}; // guarded by free_mutex",
+    "++free_waiters;",
+    "--free_waiters;",
+    "if (wake_free_waiter) free_cv.notify_one();",
+    "notify_drainers = present_waiters != 0 && present_queue.empty();",
+    "if (notify_drainers) frame_cv.notify_all();",
+    "++present_waiters;",
+    "--present_waiters;",
     "present_queue.pop_front();\\n            present_in_flight = true;",
     "present_in_flight = false;",
     "(present_queue.empty() && !present_in_flight)",
@@ -47,6 +56,8 @@ wait_present = section("void PresentManager::WaitPresent() {",
 present_thread = section("void PresentManager::PresentThread(std::stop_token token) {",
                          "void PresentManager::RecreateSwapchain(Frame* frame)")
 assert "free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });" in render_frame
+assert "++free_waiters;" in render_frame and "--free_waiters;" in render_frame
+assert render_frame.index("++free_waiters;") < render_frame.index("free_cv.wait(") < render_frame.index("--free_waiters;")
 assert "if (present_failure) std::rethrow_exception(present_failure);" in render_frame
 assert "free_queue.pop_front();\n    }" in render_frame
 assert render_frame.index("free_queue.pop_front();") < render_frame.index("frame->present_done.Wait();")
@@ -55,6 +66,11 @@ assert wait_present.index("frame_cv.wait(") < wait_present.index(
     "std::scoped_lock swapchain_lock{swapchain_mutex};")
 assert "present_in_flight = true;" in present_thread
 assert "present_in_flight = false;" in present_thread
+assert "notify_drainers = present_waiters != 0 && present_queue.empty();" in present_thread
+assert "if (notify_drainers) frame_cv.notify_all();" in present_thread
+assert "++present_waiters;" in wait_present
+assert "--present_waiters;" in wait_present
+assert wait_present.index("++present_waiters;") < wait_present.index("frame_cv.wait(") < wait_present.index("--present_waiters;")
 # Both WaitPresent and the present worker wait on frame_cv. A single notify_one
 # on enqueue could choose the drain waiter and leave the worker asleep.
 enqueue = section("void PresentManager::Present(Frame* frame) {",
@@ -64,10 +80,16 @@ assert "present_ready_cv.notify_one();" in enqueue
 assert "frame_cv.notify_one();" not in enqueue
 assert "frame_cv.notify_all();" not in enqueue
 assert enqueue.index("lock.unlock();") < enqueue.index("present_ready_cv.notify_one();")
+assert "const bool wake_presenter = present_queue.empty() && !present_in_flight;" in enqueue
+assert "if (wake_presenter) present_ready_cv.notify_one();" in enqueue
+assert enqueue.index("const bool wake_presenter = present_queue.empty() && !present_in_flight;") < enqueue.index("present_queue.push_back(frame);")
+assert enqueue.index("present_queue.push_back(frame);") < enqueue.index("lock.unlock();")
 assert "frame_cv.notify_one();" not in present_thread
 assert "present_ready_cv.wait(lock, token," in present_thread
 assert present_thread.index("free_cv.notify_one();") > present_thread.index(
-    "// Notify only after releasing free_mutex")
+    "// Notify after releasing free_mutex")
+assert "wake_free_waiter = free_waiters != 0;" in present_thread
+assert "if (wake_free_waiter) free_cv.notify_one();" in present_thread
 assert present_thread.index("lock.unlock();") < present_thread.index(
     "present_in_flight = false;")
 assert present_thread.index("free_queue.push_back(frame);") < present_thread.index(
@@ -90,14 +112,24 @@ struct Gate {
     std::deque<int> present_queue, free_queue;
     std::exception_ptr present_failure;
     bool present_in_flight{};
+    unsigned present_waiters{};
+    unsigned free_waiters{};
+    std::atomic<unsigned> drain_wake_calls{0};
+    std::atomic<unsigned> wait_entered{0};
     std::atomic<int> completed{0};
+    std::atomic<unsigned> presenter_wakes{0};
     void Queue(int id) {
+        bool wake_presenter{};
         {
             std::lock_guard lock{queue_mutex};
             if (present_failure) return;
+            wake_presenter = present_queue.empty() && !present_in_flight;
             present_queue.push_back(id);
         }
-        present_ready_cv.notify_one();
+        if (wake_presenter) {
+            presenter_wakes.fetch_add(1, std::memory_order_relaxed);
+            present_ready_cv.notify_one();
+        }
     }
     void CopyOne(bool fault) {
         std::unique_lock lock{queue_mutex};
@@ -108,18 +140,25 @@ struct Gate {
         std::unique_lock swapchain_lock{swapchain_mutex};
         lock.unlock();
         if (fault) throw std::runtime_error("present worker failure");
+        bool wake_free_waiter{};
         {
             std::scoped_lock fl{free_mutex};
             free_queue.push_back(id);
+            wake_free_waiter = free_waiters != 0;
         }
-        free_cv.notify_one();
+        if (wake_free_waiter) free_cv.notify_one();
         swapchain_lock.unlock();
+        bool notify_drainers{};
         {
             std::lock_guard queue_lock{queue_mutex};
             present_in_flight = false;
+            notify_drainers = present_waiters != 0 && present_queue.empty();
         }
         ++completed;
-        frame_cv.notify_all();
+        if (notify_drainers) {
+            drain_wake_calls.fetch_add(1, std::memory_order_relaxed);
+            frame_cv.notify_all();
+        }
     }
     void Fail(std::exception_ptr error) {
         {
@@ -134,16 +173,25 @@ struct Gate {
     void WaitPresent() {
         {
             std::unique_lock queue_lock{queue_mutex};
-            frame_cv.wait(queue_lock, [this] {
-                return present_failure || (present_queue.empty() && !present_in_flight);
-            });
+            if (!present_failure && (!present_queue.empty() || present_in_flight)) {
+                ++present_waiters;
+                wait_entered.fetch_add(1, std::memory_order_release);
+                frame_cv.wait(queue_lock, [this] {
+                    return present_failure || (present_queue.empty() && !present_in_flight);
+                });
+                --present_waiters;
+            }
             if (present_failure) std::rethrow_exception(present_failure);
         }
         std::scoped_lock swapchain_lock{swapchain_mutex};
     }
     void WaitFree() {
         std::unique_lock lock{free_mutex};
-        free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });
+        if (free_queue.empty() && !present_failure) {
+            ++free_waiters;
+            free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });
+            --free_waiters;
+        }
         if (present_failure) std::rethrow_exception(present_failure);
     }
 };
@@ -188,10 +236,9 @@ int main() {
     // Enqueue wakes only the presenter; completion wakes the drain.
     for (int run=0; run<30; ++run) {
         Gate g;
-        {
-            std::lock_guard lock{g.queue_mutex};
-            g.present_in_flight = true;
-        }
+        // The present worker is actually parked on present_ready_cv until
+        // the first enqueue. Marking it in-flight before the queue has work
+        // falsely suppressed its only wakeup (a nondeterministic deadlock).
         std::thread drain{[&] { g.WaitPresent(); }};
         std::thread worker{[&] {
             std::unique_lock lock{g.queue_mutex};
@@ -203,6 +250,60 @@ int main() {
         drain.join();
         worker.join();
         assert(g.completed == 1);
+        assert(g.presenter_wakes == 1);
+    }
+    // An idle queue has no drain waiter: repeated frame completions
+    // must not awaken any thread. With a registered drain waiter, the
+    // completion notification must be delivered before the join.
+    for (unsigned run=0; run<24; ++run) {
+        Gate quiet;
+        for (int i=0; i<20; ++i) {
+            quiet.Queue(i);
+            quiet.CopyOne(false);
+        }
+        assert(quiet.drain_wake_calls == 0);
+        quiet.WaitPresent();
+        assert(quiet.drain_wake_calls == 0);
+        Gate waiting;
+        waiting.Queue(10);
+        std::thread drain{[&] { waiting.WaitPresent(); }};
+        bool observed = false;
+        for (unsigned tries=0; tries<1000000; ++tries) {
+            if (waiting.wait_entered.load(std::memory_order_acquire) != 0) {
+                observed = true;
+                break;
+            }
+            std::this_thread::yield();
+        }
+        assert(observed);
+        waiting.CopyOne(false);
+        drain.join();
+        assert(waiting.drain_wake_calls == 1);
+        assert(waiting.present_waiters == 0);
+    }
+    // With a pending burst and a registered drain waiter, intermediate
+    // completions MUST NOT wake a thread whose FIFO drain cannot succeed.
+    for (unsigned run=0; run<24; ++run) {
+        Gate burst;
+        for (int i=0; i<32; ++i) burst.Queue(i);
+        std::thread drain{[&] { burst.WaitPresent(); }};
+        bool observed = false;
+        for (unsigned tries=0; tries<1000000; ++tries) {
+            if (burst.wait_entered.load(std::memory_order_acquire) != 0) {
+                observed = true;
+                break;
+            }
+            std::this_thread::yield();
+        }
+        assert(observed);
+        for (int i=0; i<31; ++i) {
+            burst.CopyOne(false);
+            assert(burst.drain_wake_calls == 0);
+        }
+        burst.CopyOne(false);
+        drain.join();
+        assert(burst.drain_wake_calls == 1);
+        assert(burst.present_waiters == 0);
     }
     // If GPU fence wait keeps the free queue locked, the producer cannot
     // recycle an independent frame. Probe with try_lock while consumer is
@@ -233,6 +334,36 @@ int main() {
         t.join();
         assert(g.completed == 2);
         g.WaitFree();
+    }
+    // The existing worker is already active. Enqueueing its successor
+    // while the deque is empty must not issue a redundant CV notification.
+    // The worker loops and observes the successor without waiting.
+    for (unsigned run = 0; run < 32; ++run) {
+        Gate active;
+        {
+            std::lock_guard guard{active.queue_mutex};
+            active.present_in_flight = true;
+        }
+        active.Queue(500);
+        assert(active.presenter_wakes == 0);
+        active.CopyOne(false);
+        active.WaitPresent();
+        assert(active.completed == 1);
+    }
+        // A queued burst requires exactly one presenter wake, regardless
+    // of the number of frames already pending behind its first element.
+    for (unsigned run = 0; run < 32; ++run) {
+        Gate g;
+        for (int id = 0; id < 32; ++id) g.Queue(id);
+        assert(g.presenter_wakes == 1);
+        for (int id = 0; id < 32; ++id) g.CopyOne(false);
+        assert(g.completed == 32 && g.free_queue.size() == 32);
+        assert(g.presenter_wakes == 1);
+        g.WaitPresent();
+        g.Queue(100);
+        assert(g.presenter_wakes == 2); // empty->nonempty after drain
+        g.CopyOne(false);
+        g.WaitPresent();
     }
     // Empty queue does NOT mean that popped, now-failing frame completed.
     for (int run=0; run<30; ++run) {

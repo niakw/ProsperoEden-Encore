@@ -15,6 +15,16 @@ device = (root / "vendor/sources/eden/src/core/device_memory_manager.h").read_te
 dirty = (root / "vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text()
 port = (root / "headless/CMakeLists.txt").read_text()
 header = (root / "headless/gpu_dirty_region_split.h").read_text()
+assert "if (size == 0) return;" in header
+assert "const auto first_span = kRegionBytes - (address & (kRegionBytes - 1));" in header
+assert "if (size <= first_span)" in header
+assert "collect(address, size);" in header
+assert "collect(address, first_span);" in header
+assert "auto amount = std::min" not in header
+assert "while (size >= kRegionBytes)" in header
+assert "collect(address, kRegionBytes);" in header
+assert "if (size != 0) collect(address, size);" in header
+assert "static_assert((kRegionBytes & (kRegionBytes - 1)) == 0" in header
 replay = (root / "headless/gpu_deferred_replay.h").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 
@@ -71,7 +81,25 @@ struct ActualPinnedMask {
 @@MASK_SOURCE@@
 };
 
+// Independent historical splitter oracle: compare the exact ordered
+// callback sequence, not just a final union of changed 64-byte cells.
+void CompareOriginalSplit(std::uint64_t address, std::uint64_t bytes) {
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> expected, actual;
+    std::uint64_t remaining = bytes, cursor = address;
+    while (remaining != 0) {
+        const auto span = std::min(remaining, kRegionBytes - (cursor & (kRegionBytes - 1)));
+        expected.emplace_back(cursor, span);
+        cursor += span;
+        remaining -= span;
+    }
+    ForEachRegion(address, bytes, [&](std::uint64_t addr, std::uint64_t n) {
+        actual.emplace_back(addr, n);
+    });
+    assert(expected == actual);
+}
+
 void Verify(std::uint64_t address, std::uint64_t bytes) {
+    CompareOriginalSplit(address, bytes);
     std::uint64_t cursor = address, total = 0;
     unsigned emitted = 0;
     ForEachRegion(address, bytes, [&](std::uint64_t position, std::uint64_t size) {
@@ -128,6 +156,18 @@ int main(int argc, char**) {
         (void)ActualPinnedMask{}.CreateMask<std::uint32_t>(top_bit, 0);
         return 0; // UndefinedBehaviorSanitizer must abort first.
     }
+    // The hot single-region path must call Collect exactly once; an
+    // empty guest write must never publish an incorrect dirty mask.
+    unsigned hot_calls = 0;
+    ForEachRegion(0x1001, 8, [&](std::uint64_t addr, std::uint64_t count) {
+        assert(addr == 0x1001 && count == 8);
+        ++hot_calls;
+    });
+    assert(hot_calls == 1);
+    ForEachRegion(0x1001, 0, [&](std::uint64_t, std::uint64_t) {
+        ++hot_calls;
+    });
+    assert(hot_calls == 1);
     unsigned calls = 0;
     ForEachRegion(0x1000, 4096, [&](std::uint64_t a, std::uint64_t n) {
         assert(a == 0x1000 + calls * 2048 && n == 2048);
@@ -141,6 +181,16 @@ int main(int argc, char**) {
         ++calls;
     });
     assert(calls == 2);
+    // Aligned full regions and one partial tail after the peeled fragment.
+    calls = 0;
+    ForEachRegion(0x1801, 3 * 2048 + 17, [&](std::uint64_t a, std::uint64_t n) {
+        if (calls == 0) assert(a == 0x1801 && n == 2047);
+        if (calls == 1) assert(a == 0x2000 && n == 2048);
+        if (calls == 2) assert(a == 0x2800 && n == 2048);
+        if (calls == 3) assert(a == 0x3000 && n == 18);
+        ++calls;
+    });
+    assert(calls == 4);
     for (const auto& [addr, bytes] : std::vector<std::pair<std::uint64_t, std::uint64_t>>{
         {0,0},{0,1},{63,2},{2047,1},{2047,2},{2047,4096},
         {2048,2048},{4095,64},{8190,8193},{0x1000,4096},

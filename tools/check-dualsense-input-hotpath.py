@@ -57,7 +57,18 @@ assert "std::scoped_lock lock(rumble_mutex);" in producer
 assert "std::scoped_lock lock(rumble_mutex);" in consumer
 assert "SetMotionAtRest(player);" in source
 assert "engine->ResetControllers();" in source
-assert "if (!is_usable(raw))" in source
+assert "std::array<bool, 256> trigger_pressed{};" in header
+assert "const bool left = trigger_pressed[sample.triggers.l2];" in source
+assert "const bool right = trigger_pressed[sample.triggers.r2];" in source
+assert "sample.triggers.l2 / 255.0f" not in source
+assert "const bool usable = is_usable(raw);" in source
+assert "if (!usable)" in source
+assert "const auto& sample = usable ? raw : neutral;" in source
+assert "static constexpr Data neutral = neutral_data();" in source
+assert "const auto neutral = neutral_data(raw.timestamp_us);" not in source
+assert "sample.timestamp_us" not in source
+assert "ButtonMask mapped_buttons = sample.buttons;" in source
+assert "auto sample = is_usable(raw) ?" not in source
 
 # Illustrative event count model, not an executed physical input test.
 def events(values):

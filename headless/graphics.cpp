@@ -55,6 +55,9 @@ std::atomic<bool> hud_enabled{true};
 #ifdef EDEN_PS5_VULKAN
 HudClock vulkan_hud_clock;
 HudSnapshotMemo vulkan_hud_memo;
+// Only the presenting thread advances the FPS clock. A hidden HUD needs
+// no per-frame clock bookkeeping; the first visible frame starts fresh.
+bool vulkan_hud_clock_active{};
 double vulkan_hud_stats_time{}, vulkan_hud_speed{};
 #endif
 HudSnapshot vulkan_hud;
@@ -579,6 +582,7 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
 #ifdef EDEN_PS5_VULKAN
     if (vulkan) {
         vulkan_hud_clock = {};
+        vulkan_hud_clock_active = false;
         vulkan_hud_memo.Reset();
         vulkan_hud = MakeLoadingSnapshot(0);
         vulkan_hud_stats_time = vulkan_hud_speed = 0;
@@ -678,11 +682,16 @@ void GraphicsWindow::OnFrameDisplayed() {
                         now - vulkan_loading_start);
         vulkan_loading = false;
 #ifdef EDEN_PS5_VULKAN
-        vulkan_hud_clock.Present(now);
-        // When FPS HUD is hidden (the default for most players), avoid
-        // a per-frame snprintf/glyph conversion and a per-second perf-stats
-        // reset on the compositor's frame callback.
+        // Hidden FPS overlay must not advance the optional HUD-only clock.
+        // A visible transition resets the clock and the glyph memo once,
+        // without disturbing mandatory game/presentation counters below.
         if (hud_enabled.load(std::memory_order_relaxed)) {
+            if (!vulkan_hud_clock_active) {
+                vulkan_hud_clock = {};
+                vulkan_hud_memo = {};
+                vulkan_hud_clock_active = true;
+            }
+            vulkan_hud_clock.Present(now);
             if (system && now - vulkan_hud_stats_time >= 1.0) {
                 vulkan_hud_speed = system->GetAndResetPerfStats().emulation_speed * 100.0;
                 vulkan_hud_stats_time = now;
@@ -692,12 +701,20 @@ void GraphicsWindow::OnFrameDisplayed() {
             // frame to replace the loading scene, even when FPS is unknown.
             if (vulkan_hud_memo.RefreshNeeded(vulkan_hud_clock, vulkan_hud_speed))
                 vulkan_hud = MakeHudSnapshot(vulkan_hud_clock, vulkan_hud_speed);
+        } else {
+            vulkan_hud_clock_active = false;
         }
 #endif
         ++frame_total;
         if (frame_sample_start < 0) {
             frame_sample_start = frame_sample_last = now;
-            frame_pressure_previous = CaptureFramePressure();
+            // Do not read 24 GPU/HLE/JIT atomics in ordinary quiet mode.
+            // A runtime logging toggle seeds a fresh baseline at its first
+            // detailed window instead of attributing earlier quiet work.
+            frame_pressure_was_detailed = Eden::NativeLogs::Detailed();
+            frame_pressure_logging_generation = Eden::NativeLogs::Generation();
+            if (frame_pressure_was_detailed)
+                frame_pressure_previous = CaptureFramePressure();
 #ifdef EDEN_DEV_PROFILE
             // A new game/window must not inherit the previous title's peak.
             vulkan_interval_witness.Reset();
@@ -788,8 +805,13 @@ void GraphicsWindow::OnFrameDisplayed() {
                 // traversing development tables or locking the renderer.
                 const auto pressure_now = CaptureFramePressure();
                 FramePressureNumbers pressure_delta{};
-                bool pressure_valid = true;
-                for (std::size_t i = 0; i < pressure_delta.size(); ++i) {
+                // Logging may toggle OFF then ON entirely between two
+                // reporting boundaries. The final bool alone would label
+                // that mixed 5-s interval as measured; reject its deltas.
+                const unsigned report_logging_generation = Eden::NativeLogs::Generation();
+                bool pressure_valid = frame_pressure_was_detailed &&
+                    frame_pressure_logging_generation == report_logging_generation;
+                for (std::size_t i = 0; pressure_valid && i < pressure_delta.size(); ++i) {
                     if (pressure_now[i] < frame_pressure_previous[i]) {
                         pressure_valid = false;
                         break;
@@ -843,6 +865,8 @@ void GraphicsWindow::OnFrameDisplayed() {
                 }
 #endif
                 frame_pressure_previous = pressure_now;
+                frame_pressure_was_detailed = true;
+                frame_pressure_logging_generation = report_logging_generation;
                 Eden::Performance::ReportVulkan();
 #ifdef EDEN_DEV_PROFILE
                 // HLE table scan + CPU snapshot can stall the compositor itself.
@@ -855,9 +879,10 @@ void GraphicsWindow::OnFrameDisplayed() {
                 // device log writer is delayed. LogPipe drains stdout off-thread.
                 // A native process fault has its own crash-only output path.
                 } else {
-                    // These baselines must not span a quiet session and later
-                    // explode into false five-second deltas if re-enabled.
-                    frame_pressure_previous = CaptureFramePressure();
+                    // Do not sample 24 counters every five seconds when the
+                    // log sink is disabled. Mark the baseline stale, so a
+                    // later runtime logging toggle never creates false deltas.
+                    frame_pressure_was_detailed = false;
                     experimental_pacing_bins = {};
 #ifdef EDEN_DEV_PROFILE
                     interval_hist = {};

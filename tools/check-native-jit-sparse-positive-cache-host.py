@@ -16,7 +16,21 @@ assert '#include "jit-sparse-commit.h"' in source
 assert "static thread_local ::Eden::Jit::SparseCommitPositiveCache local;" in source
 assert "local.Covers(executable, required, generation)" in source
 assert "local.Remember(executable, region.committed," in source
-assert "sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);" in source
+# A newly reserved region cannot invalidate hints for other live arenas.
+# Only trimming committed pages or retiring an RX mapping can make an
+# existing positive hint unsafe. Check the *real* owner method boundaries.
+reserve_body = source.split("void* ReserveSparseJitCode(std::size_t size, void** writable_out) noexcept {", 1)[1].split(
+    "bool IsSparseJitCode(", 1)[0]
+trim_body = source.split("bool TrimSparseJitCode(void* executable, std::size_t live_code_end) noexcept {", 1)[1].split(
+    "void ReleaseSparseJitCode(void* executable) noexcept {", 1)[0]
+release_body = source.split("void ReleaseSparseJitCode(void* executable) noexcept {", 1)[1].split(
+    "void FreeMemoryPages(void* pointer, std::size_t size) noexcept {", 1)[0]
+epoch_bump = "sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);"
+assert epoch_bump not in reserve_body
+assert trim_body.count(epoch_bump) == 1
+assert release_body.count(epoch_bump) == 1
+assert source.count(epoch_bump) == 2
+
 cache_header = (ROOT / "headless/jit-sparse-commit.h").read_text()
 assert "if (!entries[i].executable) return false;" in cache_header
 assert "if (entries[0].executable == executable) {" in cache_header
@@ -82,6 +96,16 @@ int main() {
     cache.Remember(arenas[2], committed * 2, 7);
     assert(cache.Covers(arenas[2], committed * 2, 7));
     assert(!cache.Covers(arenas[2], committed * 2 + 1, 7));
+    // Reserving a third independent RX/RW arena preserves already live
+    // positive entries at the unchanged reservation epoch. Physical trim or
+    // release, unlike insertion, must invalidate those entries.
+    Eden::Jit::SparseCommitPositiveCache preserved;
+    preserved.Remember(arenas[0], committed, 70);
+    preserved.Remember(arenas[1], committed, 70);
+    assert(preserved.Covers(arenas[0], committed, 70));
+    assert(preserved.Covers(arenas[1], committed, 70));
+    assert(!preserved.Covers(arenas[0], committed, 71));
+    assert(!preserved.Covers(arenas[1], committed, 71));
     // A later physical commit refreshes the same arena in-place.
     cache.Remember(arenas[2], committed * 4, 7);
     assert(cache.Covers(arenas[2], committed * 4, 7));
@@ -158,4 +182,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-jit-mru-") as tmp:
                         "-I", str(ROOT / "headless"), str(path / "test.cpp"),
                         "-o", str(exe)], check=True, timeout=90)
         subprocess.run([str(exe)], check=True, timeout=90)
-print("SPARSE_JIT_POSITIVE_CACHE_HOST_PASS O0=1 O2=1 O3=1 source_linked=1")
+print("SPARSE_JIT_POSITIVE_CACHE_HOST_PASS O0=1 O2=1 O3=1 source_linked=1 reservation_epoch=1 trim_release_epoch=1")

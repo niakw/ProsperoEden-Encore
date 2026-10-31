@@ -19,9 +19,12 @@ start=SOURCE.index("Frame* PresentManager::GetRenderFrame() {")
 end=SOURCE.index("\nsize_t PresentManager::MaxExtraFrames() const {", start)
 METHODS=SOURCE[start:end]
 assert METHODS.count("void PresentManager::Present(Frame* frame) {")==1
+assert "const bool wake_presenter = present_queue.empty() && !present_in_flight;" in METHODS
 sync=METHODS.split("    } else {\n        scheduler.WaitWorker();",1)[1]
 assert sync.index("CopyToSwapchain(frame);") < sync.index("std::scoped_lock lock{free_mutex};")
 assert sync.index("free_queue.push_back(frame);") < sync.index("free_cv.notify_one();")
+assert "wake_free_waiter = free_waiters != 0;" in sync
+assert "if (wake_free_waiter) free_cv.notify_one();" in sync
 assert "std::scoped_lock lock{free_mutex};" in sync
 assert "free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });" in METHODS
 assert "std::unique_lock lock{queue_mutex};" in METHODS
@@ -109,9 +112,12 @@ struct PresentManager {
     unsigned copies=0;
     CheckedMutex free_mutex;
     FreeCV free_cv;
+    std::size_t free_waiters{}; // guarded by free_mutex
     CheckedFrames free_queue;
     std::mutex queue_mutex;
     std::deque<Frame*> present_queue;
+    // Mirrors the queue-mutex-guarded state read by the extracted Present().
+    bool present_in_flight{};
     std::condition_variable frame_cv;
     PresentReadyCV present_ready_cv;
     std::exception_ptr present_failure;
@@ -144,6 +150,7 @@ int main() {
         assert(frame.present_done.resets==1 && p.scheduler.drains==1);
         assert(p.copies==1 && p.free_cv.notifications.load()==1);
         assert(p.present_ready_cv.notifications.load()==0);
+        assert(p.free_waiters==0);
         assert(p.free_mutex.locks.load()>=2 && p.free_queue.empty());
     }
     {

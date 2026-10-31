@@ -61,6 +61,8 @@ for path, expected_sha in expected_blobs.items():
 header = rendered["src/video_core/renderer_vulkan/vk_present_manager.h"]
 source = rendered["src/video_core/renderer_vulkan/vk_present_manager.cpp"]
 assert "bool present_in_flight{}; // guarded by queue_mutex" in header
+assert "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex" in header
+assert "std::size_t free_waiters{}; // guarded by free_mutex" in header
 assert "std::condition_variable_any present_ready_cv;" in header
 assert "#include <exception>" in header
 assert "std::exception_ptr present_failure;" in header
@@ -85,9 +87,15 @@ else:
     assert "DiagnosticTimer free_wait(" in get_frame
     assert "DiagnosticTimer fence_wait(" in get_frame
 assert "free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });" in get_frame
+assert "++free_waiters;" in get_frame and "--free_waiters;" in get_frame
+assert get_frame.index("++free_waiters;") < get_frame.index("free_cv.wait(") < get_frame.index("--free_waiters;")
+assert "if (free_queue.empty() && !present_failure)" in get_frame
 wait_present = source.split("void PresentManager::WaitPresent() {", 1)[1].split(
     "void PresentManager::PresentThread(", 1)[0]
 assert "(present_queue.empty() && !present_in_flight)" in wait_present
+assert "++present_waiters;" in wait_present
+assert "--present_waiters;" in wait_present
+assert wait_present.index("++present_waiters;") < wait_present.index("frame_cv.wait(") < wait_present.index("--present_waiters;")
 assert wait_present.index("if (present_failure) std::rethrow_exception(present_failure);") < (
     wait_present.index("std::scoped_lock swapchain_lock{swapchain_mutex};")
 )
@@ -96,6 +104,9 @@ present_method = source.split("void PresentManager::Present(Frame* frame) {", 1)
 assert "scheduler.WaitWorker();" in present_method
 # The producer wakes only the presenter; the drain waits for completion.
 assert "present_ready_cv.notify_one();" in present_method
+assert "const bool wake_presenter = present_queue.empty() && !present_in_flight;" in present_method
+assert "if (wake_presenter) present_ready_cv.notify_one();" in present_method
+assert present_method.index("const bool wake_presenter = present_queue.empty() && !present_in_flight;") < present_method.index("present_queue.push_back(frame);")
 assert "frame_cv.notify_all();" not in present_method
 assert "frame_cv.notify_one();" not in present_method
 assert present_method.index("present_queue.push_back(frame);") < present_method.index(
@@ -107,6 +118,8 @@ assert present_method.index("std::scoped_lock lock{free_mutex};") < present_meth
 assert present_method.index("free_queue.push_back(frame);") < present_method.index(
     "free_cv.notify_one();")
 assert present_method.index("free_cv.notify_one();") < present_method.rindex("}")
+assert "wake_free_waiter = free_waiters != 0;" in present_method
+assert "if (wake_free_waiter) free_cv.notify_one();" in present_method
 worker = source.split("void PresentManager::PresentThread(", 1)[1].split(
     "void PresentManager::RecreateSwapchain(", 1)[0]
 assert worker.index("present_queue.pop_front();") < worker.index("present_in_flight = true;")
@@ -116,13 +129,17 @@ assert "present_ready_cv.wait(lock, token," in worker
 assert worker.index("free_queue.push_back(frame);") < worker.index(
     "free_cv.notify_one();")
 assert worker.index("free_cv.notify_one();") > worker.index(
-    "// Notify only after releasing free_mutex")
+    "// Notify after releasing free_mutex")
+assert "wake_free_waiter = free_waiters != 0;" in worker
+assert "if (wake_free_waiter) free_cv.notify_one();" in worker
 assert worker.index("CopyToSwapchain(frame);") < worker.index("free_queue.push_back(frame);")
 assert worker.index("free_queue.push_back(frame);") < worker.index("lock.unlock();")
 assert worker.index("lock.unlock();") < worker.index("std::lock_guard queue_lock{queue_mutex};")
 assert worker.index("std::lock_guard queue_lock{queue_mutex};") < worker.index(
     "present_in_flight = false;")
 assert worker.index("present_in_flight = false;") < worker.index("frame_cv.notify_all();")
+assert "notify_drainers = present_waiters != 0 && present_queue.empty();" in worker
+assert "if (notify_drainers) frame_cv.notify_all();" in worker
 assert "void(std::exchange(lock, std::unique_lock{swapchain_mutex}));" in worker
 assert worker.count("present_in_flight = true;") == 1
 assert worker.count("present_in_flight = false;") == 1

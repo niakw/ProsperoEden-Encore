@@ -3,6 +3,7 @@
 #include "fastmem.h"
 #include <algorithm>
 #include <atomic>
+#include <bit>
 #include <cerrno>
 #include <chrono>
 #include <csignal>
@@ -209,8 +210,38 @@ public:
         // a non-aliased chunk: a prior kernel map may have failed and the
         // next unchanged Map must be allowed to retry its alias.
         if (first == last && chunk_aliased[first / PagesPerGranule] &&
-            page_backing[first] == static_cast<std::uint32_t>(host + 1) &&
-            page_access[first] == access) return;
+            page_backing[first] == static_cast<std::uint32_t>(host + 1)) {
+            if (page_access[first] == access) return;
+            // A live identical physical alias needs only the modified JIT
+            // permission byte and its predecessor's crossing guard updated.
+            // Avoid the three Update scans of an otherwise unchanged chunk.
+            page_access[first] = access;
+            Refresh(first, first);
+            return;
+        }
+        // Exact same physical alias and permissions can be reused for any
+        // 2..16-page mapping. Same-16KiB and cross-16KiB requests both
+        // require every affected native chunk to be live; use one bounded
+        // scan instead of duplicating loops and granule-boundary branches.
+        // A missing alias MUST still reach Update to retry kernel mapping.
+        if (first < last && last - first < 16) {
+            bool live_aliases_match = true;
+            bool same_access = true;
+            for (std::size_t p = first; p <= last; ++p) {
+                if (!chunk_aliased[p / PagesPerGranule] ||
+                    page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1)) {
+                    live_aliases_match = false;
+                    break;
+                }
+                if (page_access[p] != access) same_access = false;
+            }
+            if (live_aliases_match) {
+                if (same_access) return;
+                for (std::size_t p = first; p <= last; ++p) page_access[p] = access;
+                Refresh(first, last);
+                return;
+            }
+        }
         for (std::size_t p = first; p <= last; ++p) {
             if (!page_backing[p]) ++counters.mapped_pages;
             page_backing[p] = static_cast<std::uint32_t>(host + (p - first) + 1);
@@ -228,6 +259,20 @@ public:
         // call. An unchanged, unmapped guest page has nothing to withdraw
         // or republish; retain the observable call counter.
         if (first == last && !page_backing[first] && !page_access[first]) return;
+        // Every 2..16-page span is either inside one 4-page granule or
+        // crosses granules. The old two predicates cover exactly the same
+        // range, but divide page indices twice on the common Unmap path.
+        // Keep the scan bounded: long invalidations go directly to Update.
+        if (first < last && last - first < 16) {
+            bool all_clear = true;
+            for (std::size_t p = first; p <= last; ++p) {
+                if (page_backing[p] != 0 || page_access[p] != 0) {
+                    all_clear = false;
+                    break;
+                }
+            }
+            if (all_clear) return;
+        }
         for (std::size_t p = first; p <= last; ++p) {
             if (page_backing[p]) --counters.mapped_pages;
             page_backing[p] = 0;
@@ -246,6 +291,14 @@ public:
         // cannot change either its own JIT map byte or its predecessor's
         // cross-page guard; leave both bytes alone on this no-op path.
         if (first == last && page_access[first] == access) return;
+        // Every 2..16-page repeat is either inside one 4-page granule
+        // or crosses granules. The old two branches had identical bodies;
+        // use one bounded scan and avoid granule division on the hot path.
+        // Longer/changed permissions still republish predecessor JIT guards.
+        if (first < last && last - first < 16 &&
+            std::all_of(page_access.begin() + first, page_access.begin() + last + 1,
+                        [access](std::uint8_t current) { return current == access; }))
+            return;
         std::fill(page_access.begin() + first, page_access.begin() + last + 1, access);
         Refresh(first, last);
     }
@@ -469,9 +522,19 @@ bool Requested() noexcept { return window_requested; }
 Stats WindowStats() noexcept {
     std::uint64_t direct_reads = 0, direct_writes = 0;
     if (const auto* map = current_map.load()) {
-        for (std::size_t page = 0; page < GuestPages; ++page) {
-            direct_reads += !(map[page] & ReadBlocked);
-            direct_writes += !(map[page] & WriteBlocked);
+        // Diagnostic-only full-window census (one MiB). The former byte
+        // loop ran over 1,048,576 guest pages on the reporting thread.
+        // Count the blocked bit of eight independent guest guards at once.
+        // memcpy handles the unaligned JIT guard-map address without
+        // aliasing/alignment UB; the two low bits preserve the exact result
+        // even when other marker bits are set in a guard byte.
+        constexpr std::uint64_t lane_bits = 0x0101010101010101ULL;
+        static_assert(GuestPages % sizeof(std::uint64_t) == 0);
+        for (std::size_t page = 0; page < GuestPages; page += sizeof(std::uint64_t)) {
+            std::uint64_t guards{};
+            std::memcpy(&guards, map + page, sizeof(guards));
+            direct_reads += 8u - std::popcount(guards & lane_bits);
+            direct_writes += 8u - std::popcount((guards >> 1) & lane_bits);
         }
     }
     return {counters.window, counters.mapped_pages, counters.aliased_chunks, direct_reads, direct_writes,

@@ -173,6 +173,20 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-refresh-') as temp:
 # requests continue to publish updated bytes under the same owner mutex.
 protect_body = '    void Protect(' + source.split('    void Protect(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 assert protect_body.count('if (first == last && page_access[first] == access) return;') == 1
+assert 'first / PagesPerGranule == last / PagesPerGranule' not in protect_body
+assert 'first / PagesPerGranule != last / PagesPerGranule' not in protect_body
+# The two old no-op branches were logically exhaustive for each short span:
+# one granule has 4 guest pages, so any 2..16-page span is same or cross.
+for first in range(0, 64):
+    for count in range(1, min(64-first, 18)+1):
+        last = first + count - 1
+        old_same = (first < last and last - first < 4 and first // 4 == last // 4)
+        old_cross = (first < last and last - first < 16 and first // 4 != last // 4)
+        consolidated = first < last and last - first < 16
+        assert (old_same or old_cross) == consolidated, (first, last)
+assert protect_body.count('std::all_of(page_access.begin() + first') == 1
+assert 'std::all_of(page_access.begin() + first, page_access.begin() + last + 1' in protect_body
+assert 'first < last && last - first < 16' in protect_body
 assert protect_body.index('std::lock_guard lock{mutex};') < protect_body.index(
     'if (first == last && page_access[first] == access) return;')
 protect_cpp = r'''
@@ -216,14 +230,32 @@ int main() {
     assert(w.refresh_calls == 3 && w.page_access[1] == 2 &&
            w.page_access[2] == 2);
     w.Protect(0x1fff, 2, 2);
-    assert(w.refresh_calls == 4);
+    assert(w.refresh_calls == 3); // same-granule repeat is now a no-op
+    // A repeated access that crosses 16 KiB retains its original refresh.
+    w.Protect(0x3fff, 2, 2);
+    assert(w.refresh_calls == 4 && w.page_access[3] == 2 &&
+           w.page_access[4] == 2);
+    w.Protect(0x3fff, 2, 2);
+    assert(w.refresh_calls == 4); // unchanged cross-granule guards
+    w.Protect(0x3fff, 2, 1);
+    assert(w.refresh_calls == 5); // changed cross-granule guards
     w.Protect(WindowBytes - 1, 1, 3);
-    assert(w.refresh_calls == 5 && w.map[GuestPages - 1] == 3);
+    assert(w.refresh_calls == 6 && w.map[GuestPages - 1] == 3);
     w.Protect(WindowBytes, 1, 3);
     w.Protect(WindowBytes - 1, 0, 1);
-    assert(w.refresh_calls == 5 && counters.protect_calls == 20006);
-    std::printf("FASTMEM_PROTECT_SINGLE_PAGE_NOOP_PASS repeated=20000 "
-                "changed=1 adjacent=1 bounds=1\n");
+    assert(w.refresh_calls == 6 && counters.protect_calls == 20009);
+    TestWindow large;
+    large.Protect(0, 16 * GuestPage, 3);
+    assert(large.refresh_calls == 1);
+    large.Protect(0, 16 * GuestPage, 3);
+    assert(large.refresh_calls == 1); // bounded cross-granule no-op
+    large.Protect(0, 17 * GuestPage, 3);
+    large.Protect(0, 17 * GuestPage, 3);
+    assert(large.refresh_calls == 3); // long requests always republish
+    large.Protect(0, 16 * GuestPage, 1);
+    assert(large.refresh_calls == 4); // any changed permission republished
+    std::printf("FASTMEM_PROTECT_BOUNDED_NOOP_PASS repeated=20000 "
+                "same16k=1 cross16k=1 changed=1 bounded16=1 bounds=1\n");
 }
 '''.replace('PAGES', method).replace('\nPROTECT\n', '\n' + protect_body + '\n')
 assert '\nPROTECT\n' not in protect_cpp
@@ -243,8 +275,106 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-protect-') as temp:
 # published: a previous fixed-map operation could have failed.
 map_body = '    void Map(' + source.split('    void Map(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 unmap_body = '    void Unmap(' + source.split('    void Unmap(', 1)[1].split('\n    }', 1)[0] + '\n    }'
+# Every short Map used to select one of two duplicate fast paths.
+# Compare effective results (skip / refresh / Update) for one-page, same-
+# granule, cross-granule, missing alias, changed backing and permissions,
+# and the >=17-page fallback, without assuming console performance.
+def map_old(first, last, live, backing, access, requested=3, host=17):
+    if first == last:
+        if live[first // 4] and backing[first] == host + 1:
+            return "skip" if access[first] == requested else "refresh"
+        return "update"
+    if last - first < 4 and first // 4 == last // 4 and live[first // 4]:
+        if all(backing[p] == host + (p-first) + 1 for p in range(first,last+1)):
+            return ("skip" if all(access[p] == requested for p in range(first,last+1))
+                    else "refresh")
+    if last - first < 16 and first // 4 != last // 4:
+        if all(live[p//4] and backing[p] == host + (p-first) + 1
+               for p in range(first,last+1)):
+            return ("skip" if all(access[p] == requested for p in range(first,last+1))
+                    else "refresh")
+    return "update"
+
+def map_new(first, last, live, backing, access, requested=3, host=17):
+    if first == last:
+        if live[first//4] and backing[first] == host + 1:
+            return "skip" if access[first] == requested else "refresh"
+        return "update"
+    if last-first < 16 and all(
+        live[p//4] and backing[p] == host + (p-first) + 1
+        for p in range(first,last+1)
+    ):
+        return ("skip" if all(access[p] == requested for p in range(first,last+1))
+                else "refresh")
+    return "update"
+
+map_oracle_cases = 0
+for first in range(64):
+    for count in range(1, min(64-first, 32)+1):
+        last = first + count-1
+        for scenario in range(8):
+            live = [bool(scenario & 1)]*16
+            backing = [17+(p-first)+1 for p in range(64)]
+            access = [3]*64
+            if scenario & 2:
+                live[first//4] = False
+            if scenario & 4:
+                backing[last] = 0
+                access[first] = 1
+            if scenario == 3:
+                access[last] = 1
+                live = [True]*16
+            if scenario == 5:
+                live = [True]*16
+                access[first] = 1
+            if scenario == 7:
+                live = [True]*16
+                backing[last] = 0
+            assert map_old(first,last,live,backing,access) == map_new(
+                first,last,live,backing,access), (first,last,scenario)
+            map_oracle_cases += 1
+print(f"FASTMEM_MAP_UNIFIED_BRANCH_ORACLE_PASS cases={map_oracle_cases} exact_outcome=1")
 assert 'if (first == last && chunk_aliased[first / PagesPerGranule] &&' in map_body
+assert "page_backing[first] == static_cast<std::uint32_t>(host + 1)) {" in map_body
+assert "page_access[first] = access;\n            Refresh(first, first);\n            return;" in map_body
+assert "bool same_backing = true;" not in map_body
+assert "bool same_access = true;" in map_body
+assert "if (same_backing) {" not in map_body
+assert "for (std::size_t p = first; p <= last; ++p) page_access[p] = access;" in map_body
+assert "Refresh(first, last);\n                return;" in map_body
+assert map_body.index("Refresh(first, first);") < map_body.index("if (first < last && last - first < 16) {")
+assert map_body.index("std::lock_guard lock{mutex};") < map_body.index("Refresh(first, first);")
 assert 'if (first == last && !page_backing[first] && !page_access[first]) return;' in unmap_body
+assert 'chunk_aliased[first / PagesPerGranule] &&' in map_body
+assert map_body.count('if (same_access) return;') == 1
+assert map_body.count('if (live_aliases_match) {') == 1
+assert map_body.count('if (same_backing) {') == 0
+assert 'if (first < last && last - first < 16) {' in unmap_body
+assert 'short_single_granule' not in unmap_body
+assert 'short_cross_granule' not in unmap_body
+# Exhaustively prove the old same-16K / cross-16K predicates are precisely
+# equivalent to the reduced bound for single, short and 17+-page spans,
+# including all 16K start/end boundary permutations.
+for first in range(1024):
+    for count in range(1, min(128, 1024 - first) + 1):
+        last = first + count - 1
+        old_same = first < last and last - first < 4 and first // 4 == last // 4
+        old_cross = first < last and last - first < 16 and first // 4 != last // 4
+        assert (old_same or old_cross) == (first < last and last - first < 16), (first, last)
+assert 'if (page_backing[p] != 0 || page_access[p] != 0)' in unmap_body
+assert 'if (all_clear) return;' in unmap_body
+assert 'std::all_of(page_backing.begin() + first' not in unmap_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' not in map_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' not in unmap_body
+assert 'first < last && last - first < 16' in map_body
+assert 'first < last && last - first < 16' in unmap_body
+assert unmap_body.count('for (std::size_t p = first; p <= last; ++p)') == 2
+assert '!chunk_aliased[p / PagesPerGranule]' in map_body
+assert "bool live_aliases_match = true;" in map_body
+assert "if (live_aliases_match) {" in map_body
+assert "if (same_access) return;" in map_body
+assert map_body.count("Refresh(first, last);") == 1
+assert map_body.count("for (std::size_t p = first; p <= last; ++p) page_access[p] = access;") == 1
 for body in (map_body, unmap_body):
     assert body.index('std::lock_guard lock{mutex};') < body.index('if (first == last')
 map_cpp = r'''
@@ -260,6 +390,8 @@ constexpr std::size_t GuestPage = 0x1000;
 constexpr std::size_t GuestPages = 64;
 constexpr std::size_t PagesPerGranule = 4;
 constexpr std::size_t WindowBytes = GuestPages * GuestPage;
+constexpr std::uint8_t Readable = 1, Writable = 2;
+constexpr std::uint8_t ReadBlocked = 1, WriteBlocked = 2, Blocked = 3;
 struct Counters {
     std::atomic<unsigned> map_calls{0}, unmap_calls{0}, mapped_pages{0};
 };
@@ -270,8 +402,12 @@ struct TestWindow {
     std::vector<std::uint8_t> page_access = std::vector<std::uint8_t>(GuestPages, 0);
     std::vector<std::uint8_t> chunk_aliased = std::vector<std::uint8_t>(GuestPages / PagesPerGranule, 0);
     unsigned updates = 0;
+    unsigned guard_refreshes = 0;
+    std::vector<std::uint8_t> map = std::vector<std::uint8_t>(GuestPages, 0);
 PAGES
     void Update(std::size_t, std::size_t) { ++updates; }
+SOURCE_OWN
+SOURCE_REFRESH
 MAP
 UNMAP
 };
@@ -288,25 +424,119 @@ int main() {
     w.Map(0, GuestPage, GuestPage, 3);
     assert(w.updates == 10002 && w.page_backing[0] == 2);
     w.Map(0, GuestPage, GuestPage, 1);
-    assert(w.updates == 10003 && w.page_access[0] == 1);
+    assert(w.updates == 10002 && w.page_access[0] == 1);
+    assert(w.guard_refreshes == 1);
+    assert(w.map[0] == (w.Own(0) | w.Own(1)));
     w.Unmap(0, GuestPage);
-    assert(w.updates == 10004 && counters.mapped_pages == 0);
+    assert(w.updates == 10003 && counters.mapped_pages == 0);
     for (int i = 0; i < 10000; ++i) w.Unmap(0, GuestPage);
-    assert(w.updates == 10004 && counters.unmap_calls == 10001);
+    assert(w.updates == 10003 && counters.unmap_calls == 10001);
     // Overlap and the exact end boundary retain ordinary range semantics.
     w.Map(GuestPage - 1, 0, 2, 3);
-    assert(w.updates == 10005 && counters.mapped_pages == 2);
+    assert(w.updates == 10004 && counters.mapped_pages == 2);
     w.Unmap(GuestPage - 1, 2);
-    assert(w.updates == 10006 && counters.mapped_pages == 0);
+    assert(w.updates == 10005 && counters.mapped_pages == 0);
     w.Map(WindowBytes, 0, 1, 3);
     w.Unmap(WindowBytes, 1);
-    assert(w.updates == 10006);
+    assert(w.updates == 10005);
+    TestWindow two;
+    two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 1 && counters.mapped_pages == 2);
+    // No active fixed alias: an identical request must still reach Update.
+    two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 2);
+    two.chunk_aliased[0] = 1;
+    for (int i = 0; i < 10000; ++i)
+        two.Map(GuestPage, GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 2);
+    two.Map(GuestPage, GuestPage, 2 * GuestPage, 1);
+    assert(two.updates == 2 && two.guard_refreshes == 1 &&
+           two.page_access[1] == 1 && two.page_access[2] == 1);
+    assert(two.map[0] == (two.Own(0) | two.Own(1)));
+    assert(two.map[2] == (two.Own(2) | two.Own(3)));
+    two.Unmap(GuestPage, 2 * GuestPage);
+    assert(two.updates == 3 && counters.mapped_pages == 0);
+    for (int i = 0; i < 10000; ++i) two.Unmap(GuestPage, 2 * GuestPage);
+    assert(two.updates == 3);
+    // A two-page operation that crosses a 16 KiB granule still updates.
+    two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 4 && counters.mapped_pages == 2);
+    two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 5); // second kernel chunk not aliased: retry
+    two.chunk_aliased[1] = 1;
+    for (int i = 0; i < 10000; ++i)
+        two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    assert(two.updates == 5); // both existing aliases: no-op
+    two.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 1);
+    assert(two.updates == 5 && two.guard_refreshes == 2); // only JIT guards
+    assert(two.map[3] == (two.Own(3) | two.Own(4)));
+    two.Unmap(3 * GuestPage, 2 * GuestPage);
+    assert(two.updates == 6 && counters.mapped_pages == 0);
+    for (int i = 0; i < 10000; ++i) two.Unmap(3 * GuestPage, 2 * GuestPage);
+    assert(two.updates == 6);
+    TestWindow short_span;
+    short_span.Map(0, 0, 16 * GuestPage, 3);
+    assert(short_span.updates == 1 && counters.mapped_pages == 16);
+    for (std::size_t chunk = 0; chunk < 4; ++chunk) short_span.chunk_aliased[chunk] = 1;
+    short_span.Map(0, 0, 16 * GuestPage, 3);
+    assert(short_span.updates == 1);
+    short_span.Unmap(0, 16 * GuestPage);
+    short_span.Unmap(0, 16 * GuestPage);
+    assert(short_span.updates == 2 && counters.mapped_pages == 0);
+    // The bound protects large requests from speculative scans.
+    short_span.Map(0, 0, 17 * GuestPage, 3);
+    short_span.Map(0, 0, 17 * GuestPage, 3);
+    assert(short_span.updates == 4 && counters.mapped_pages == 17);
+    short_span.Unmap(0, 17 * GuestPage);
+    short_span.Unmap(0, 17 * GuestPage);
+    assert(short_span.updates == 6 && counters.mapped_pages == 0);
+    // A crossed span must retry if any one kernel granule lacks a
+    // published alias: changed access alone is not permission to skip it.
+    TestWindow missing_cross_alias;
+    missing_cross_alias.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 3);
+    missing_cross_alias.chunk_aliased[0] = 1;
+    missing_cross_alias.Map(3 * GuestPage, 3 * GuestPage, 2 * GuestPage, 1);
+    assert(missing_cross_alias.updates == 2 && missing_cross_alias.guard_refreshes == 0);
+    // The first page in a native 16KiB granule changes the preceding
+    // page's crossing guard as well as its own guard.
+    TestWindow boundary;
+    boundary.Map(4 * GuestPage, 4 * GuestPage, GuestPage, 3);
+    boundary.chunk_aliased[0] = 1;
+    boundary.page_access[3] = 3; // owned predecessor: its guard must change
+    boundary.chunk_aliased[1] = 1;
+    boundary.Map(4 * GuestPage, 4 * GuestPage, GuestPage, 1);
+    assert(boundary.updates == 1 && boundary.guard_refreshes == 1);
+    assert(boundary.map[3] == 2); // blocked guest write in page 4
+    assert(boundary.map[3] == (boundary.Own(3) | boundary.Own(4)));
+    assert(boundary.map[4] == (boundary.Own(4) | boundary.Own(5)));
+    // The final page has no successor and must not index beyond the window.
+    TestWindow tail;
+    tail.Map((GuestPages - 1) * GuestPage, (GuestPages - 1) * GuestPage,
+             GuestPage, 3);
+    tail.chunk_aliased.back() = 1;
+    tail.Map((GuestPages - 1) * GuestPage, (GuestPages - 1) * GuestPage,
+             GuestPage, 1);
+    assert(tail.updates == 1 && tail.guard_refreshes == 1);
+    assert(tail.map.back() == (tail.Own(GuestPages - 1) | tail.Own(GuestPages)));
+    // Failed native alias: unchanged backing MUST still retry Update.
+    TestWindow missing_alias;
+    missing_alias.Map(0, 0, GuestPage, 3);
+    missing_alias.Map(0, 0, GuestPage, 1);
+    assert(missing_alias.updates == 2 && missing_alias.guard_refreshes == 0);
     std::printf("FASTMEM_MAP_UNMAP_REPEAT_HOST_PASS nonaliased_retry=1 "
-                "same_alias_noop=10000 unmap_noop=10000 crossing=1 O0_O2=1\n");
+                "same_alias_noop=10000 unmap_noop=10000 same16k=1 "
+                "cross16k=10000 permission_only=1 permission_batch=1 cross_permission_batch=1 predecessor_guard=1 bound16=1 O0_O2=1\n");
 }
 '''.replace('PAGES', method).replace('\nMAP\n', '\n' + map_body + '\n').replace(
-    '\nUNMAP\n', '\n' + unmap_body + '\n')
+    '\nUNMAP\n', '\n' + unmap_body + '\n').replace(
+    'SOURCE_OWN', '    std::uint8_t Own(' + source.split('    std::uint8_t Own(', 1)[1].split(
+        "    // A page's byte", 1)[0].rstrip()).replace(
+    'SOURCE_REFRESH', ('    void Refresh(' + source.split('    void Refresh(', 1)[1].split(
+        '    void Block(', 1)[0].rstrip()).replace(
+            '    void Refresh(std::size_t first, std::size_t last) {',
+            '    void Refresh(std::size_t first, std::size_t last) {\n        ++guard_refreshes;', 1))
 assert '\nUNMAP\n' not in map_cpp and '\nMAP\n' not in map_cpp
+assert 'SOURCE_OWN' not in map_cpp and 'SOURCE_REFRESH' not in map_cpp
 with tempfile.TemporaryDirectory(prefix='encore-fastmem-map-unmap-') as temp:
     path = Path(temp)/'map.cpp'
     path.write_text(map_cpp)

@@ -12,8 +12,8 @@ assert "Never upload recycled staging bytes" in generator
 assert "std::fill(linear_span.begin(), linear_span.end(), u8{0});" in active
 start="    if (host_ptr) {"
 stop="\n\n    const VkBufferImageCopy copy{"
-new_start="    const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);"
-assert active.count(start)==1 and pinned.count(start)==1 and active.count(new_start)==1
+new_start="#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure."
+assert active.count(start)==2 and pinned.count(start)==1 and active.count(new_start)==1
 old=pinned[pinned.index(start):pinned.index(stop,pinned.index(start))]
 new=active[active.index(new_start):active.index(stop,active.index(new_start))]
 cpp=r"""
@@ -24,10 +24,14 @@ cpp=r"""
 #include <span>
 #include <vector>
 using u8=std::uint8_t;using u32=std::uint32_t;using u64=std::uint64_t;
-struct Framebuffer{u32 width=2,height=2;};
+struct Framebuffer{u32 width=2,height=2,stride=2;};
 struct Buffer{unsigned flushes=0;void Flush(){++flushes;}};
-static unsigned unswizzles=0;
+static unsigned unswizzles=0, tiled_calculations=0;
 namespace Tegra::Texture{
+u64 CalculateSize(bool,u32 bpp,u32 stride,u32 height,u32,u32,u32){
+    ++tiled_calculations;
+    return static_cast<u64>(bpp)*stride*height;
+}
 void UnswizzleTexture(std::span<u8> dst,std::span<const u8> src,u32,u32,u32,u32,u32,u32){
     ++unswizzles;assert(src.size()>=dst.size());
     std::copy_n(src.begin(),dst.size(),dst.begin());
@@ -43,6 +47,7 @@ void RunNew(std::span<u8> mapped_span,u64 image_offset,u64 linear_size,
             const u8* host_ptr,u64 tiled_size,u32 bytes_per_pixel,
             Framebuffer framebuffer,Buffer& buffer){
     constexpr u32 block_height_log2=4;
+    (void)tiled_size; // PS5 computes this only for an actually mapped framebuffer.
 INJECT_NEW
 }
 int main(){
@@ -51,12 +56,12 @@ int main(){
     assert(baseline.flushes==0 && unswizzles==0);
     assert(std::all_of(pixels.begin(),pixels.end(),[](u8 x){return x==0xAB;}));
     Buffer corrected;RunNew(pixels,4,4,nullptr,4,1,{},corrected);
-    assert(corrected.flushes==1 && unswizzles==0);
+    assert(corrected.flushes==1 && unswizzles==0 && tiled_calculations==0);
     for(size_t i=0;i<pixels.size();++i)
         assert(pixels[i]==(i>=4&&i<8?0:0xAB));
     const u8 fresh[]={1,2,3,4};
     RunNew(pixels,4,4,fresh,4,1,{},corrected);
-    assert(corrected.flushes==2 && unswizzles==1);
+    assert(corrected.flushes==2 && unswizzles==1 && tiled_calculations==1);
     for(size_t i=0;i<4;++i)assert(pixels[i+4]==fresh[i]);
     assert(pixels.front()==0xAB && pixels.back()==0xAB);
     std::puts("ENCORE_STALE_STAGE_CLEAR_PASS");
@@ -66,7 +71,7 @@ compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("
 assert compiler,"C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="encore-layer-stale-") as folder:
     src=Path(folder)/"layer.cpp";exe=Path(folder)/"layer";src.write_text(cpp)
-    subprocess.run([compiler,"-std=c++20","-O1","-g","-Wall","-Wextra","-Werror",
+    subprocess.run([compiler,"-std=c++20","-DPS5_NATIVE=1","-O1","-g","-Wall","-Wextra","-Werror",
                     "-fsanitize=address,undefined","-fno-sanitize-recover=all",
                     str(src),"-o",str(exe)],check=True,timeout=90)
     subprocess.run([str(exe)],check=True,timeout=30)

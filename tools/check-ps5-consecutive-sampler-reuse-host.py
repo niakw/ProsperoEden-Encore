@@ -21,9 +21,11 @@ assert 'PORT_BUILD_DIR' in cmake
 begin = native.index(memo_marker)
 end = native.index("    const auto config_stage{[&](size_t stage)", begin)
 memo = native[begin:end]
-assert memo.count("std::array<SamplerMemo, 16> sampler_memo{};") == 1
+assert memo.count("std::array<SamplerMemo, 16> sampler_memo;") == 1
+assert memo.count("u32 occupied_sampler_slots{};") == 1
 assert memo.count("texture_cache.GetSamplerId(handle, false)") == 2
-assert memo.count("entry.valid = true;") == 1
+assert memo.count("occupied_sampler_slots |= bit;") == 1
+assert "entry.valid" not in memo
 assert memo.count("entry.handle == handle") == 1
 loop_begin = native.index("        for (const auto& desc : info.texture_descriptors)", end)
 loop_end = native.index("        if constexpr (Spec::has_images) {", loop_begin)

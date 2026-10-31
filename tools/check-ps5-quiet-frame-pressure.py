@@ -42,6 +42,57 @@ assert present.index('EDEN_VULKAN_FRAME frames=') < present.index('EDEN_FRAME_PR
 assert "const auto pressure_now = CaptureFramePressure();" in present
 assert "frame_pressure_previous = CaptureFramePressure();" in present
 assert "frame_pressure_previous = pressure_now;" in present
+assert "const unsigned report_logging_generation = Eden::NativeLogs::Generation();" in present
+assert "bool pressure_valid = frame_pressure_was_detailed &&" in present
+assert "frame_pressure_logging_generation == report_logging_generation;" in present
+assert "frame_pressure_logging_generation = Eden::NativeLogs::Generation();" in present
+assert "frame_pressure_logging_generation = report_logging_generation;" in present
+assert "unsigned frame_pressure_logging_generation{};" in header
+assert 'generation.fetch_add(1, std::memory_order_relaxed)' in read("headless/log_pipe.h")
+assert "frame_pressure_was_detailed = Eden::NativeLogs::Detailed();" in present
+assert "if (frame_pressure_was_detailed)\n                frame_pressure_previous = CaptureFramePressure();" in present
+assert "frame_pressure_was_detailed = true;\n                frame_pressure_logging_generation = report_logging_generation;\n                Eden::Performance::ReportVulkan();" in present
+quiet = present.split("} else {\n                    // Do not sample 24 counters every five seconds when the", 1)[1]
+assert "frame_pressure_was_detailed = false;" in quiet
+assert "CaptureFramePressure()" not in quiet.split("#ifdef EDEN_DEV_PROFILE", 1)[0]
+assert "bool frame_pressure_was_detailed{};" in header
+# Runtime toggle oracle: quiet -> first detailed window cannot emit an
+# old-session worker delta; later detailed windows use the new baseline.
+def windows(modes, values):
+    previous = None
+    valid = False
+    outcomes = []
+    for detail, current in zip(modes, values):
+        if not detail:
+            valid = False
+            outcomes.append(None)
+            continue
+        outcomes.append(current - previous if valid else None)
+        previous = current
+        valid = True
+    return outcomes
+assert windows([False, True, True, False, True, True],
+               [20, 25, 30, 150, 400, 405]) == [None, None, 5, None, None, 5]
+# Even if the logger ends a five-second interval enabled, an OFF->ON
+# transition inside it invalidates worker-counter attribution.
+def windows_with_generation(modes, generations, values):
+    prev = None
+    was_detailed = False
+    prev_generation = None
+    outcomes = []
+    for detailed, gen, now in zip(modes, generations, values):
+        outcomes.append(now - prev if detailed and was_detailed and
+                        gen == prev_generation else None)
+        was_detailed = detailed
+        if detailed:
+            prev, prev_generation = now, gen
+    return outcomes
+assert windows_with_generation([True, True, True, True],
+                               [0, 0, 2, 2], [100, 110, 300, 315]) == [None, 10, None, 15]
+assert windows_with_generation([False, True, True, False, True],
+                               [0, 1, 1, 2, 3], [10, 20, 24, 30, 40]) == [None, None, 4, None, None]
+
+
 assert "if (pressure_now[i] < frame_pressure_previous[i])" in present
 assert "counter" in present  # explicit reset handling; no bogus negative deltas
 assert "std::this_thread::sleep" not in present

@@ -20,7 +20,10 @@ on:
       - 'tools/check-native-sparse-decommit-lock-host.py'
       - 'headless/performance.h'
       - 'headless/performance.cpp'
+      - 'headless/pad.cpp'
+      - 'tools/check-dualsense-rumble-lock-host.py'
       - 'tools/check-native-quiet-gpu-report-host.py'
+      - 'tools/check-native-host-pagesize-cache-host.py'
       - 'tools/check-native-quiet-heap-commit-host.py'
       - 'tools/check-native-quiet-counters-host.py'
       - 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
@@ -39,6 +42,7 @@ on:
       - 'tools/check-ps5-release-saved-diagnostics-host.py'
       - 'tools/check-ps5-f07-cold-stalls-host.py'
       - 'tools/check-ps5-f07-pipeline-transitions-host.py'
+      - 'tools/check-ps5-f07-attributeless-last-cache-host.py'
       - 'tools/check-ps5-f07-*.py'
       - 'tools/check-ps5-consecutive-sampler-reuse-host.py'
       - 'tools/check-ps5-compute-sampler-memo-host.py'
@@ -118,6 +122,8 @@ on:
       - 'tools/ci/check-ftp-archive-root.py'
       - 'tools/analyze-fc27-release-sessions.py'
       - 'tools/check-fc27-f07-blit-pipeline-state-host.py'
+      - 'tools/check-ps5-autocontrol-context.py'
+      - 'tools/check-ps5-guest-system-buttons.py'
       - 'tools/check-fc27-f06-native-pad-transition-host.py'
       - 'tools/check-fc27-f06-native-npad-handoff-host.py'
       - 'tools/check-fc27-f06-native-npad-lifo-host.py'
@@ -197,6 +203,15 @@ on:
       - 'vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp'
       - 'tools/check-vulkan-renderpass-clear-bounds-host.py'
       - 'tools/check-vulkan-worker-fatal-drain-host.py'
+      - 'tools/check-ps5-vulkan-worker-wake.py'
+      - 'tools/check-ps5-vulkan-chunk-allocation-lock-host.py'
+      - 'tools/check-ps5-vulkan-layer-max-tick-host.py'
+      - 'tools/check-ps5-vulkan-layer-tick-reset-host.py'
+      - 'tools/check-ps5-vulkan-disabled-aa-fastpath-host.py'
+      - 'tools/check-ps5-vulkan-missing-raw-tiled-size-host.py'
+      - 'tools/check-ps5-vulkan-raw-pixel-size-reuse-host.py'
+      - 'tools/check-vulkan-present-missing-guest-host.py'
+      - 'tools/check-ps5-vulkan-stride-reallocation.py'
       - 'tools/check-ps5-gpu-time-batch-host.py'
       - 'tools/check-vulkan-query-allocation-host.py'
       - 'tools/check-vulkan-query-grouping-host.py'
@@ -209,6 +224,8 @@ on:
       - 'vendor/encore-active/eden-core/src/audio_core/sink/sink_stream.cpp'
       - 'tools/check-texture-convert-volume-host.py'
       - 'tools/check-audio-upmix-scratch-host.py'
+      - 'headless/prosperoeden/pe/audio/stream_ring.hpp'
+      - 'tools/check-ps5-launcher-audio-stream-ring-host.py'
       - 'vendor/encore-active/eden-core/src/hid_core/resource_manager.cpp'
       - 'tools/check-vendored-hid-resource-source.py'
       - 'tools/check-native-hid-cadence-host.py'
@@ -297,6 +314,13 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B tools/check-vulkan-renderpass-clear-bounds-host.py
+          python3 -B tools/check-ps5-vulkan-layer-max-tick-host.py
+          python3 -B tools/check-ps5-vulkan-layer-tick-reset-host.py
+          python3 -B tools/check-ps5-vulkan-disabled-aa-fastpath-host.py
+          python3 -B tools/check-ps5-vulkan-missing-raw-tiled-size-host.py
+          python3 -B tools/check-ps5-vulkan-raw-pixel-size-reuse-host.py
+          python3 -B tools/check-vulkan-present-missing-guest-host.py
+          python3 -B tools/check-ps5-vulkan-chunk-allocation-lock-host.py
           python3 -B tools/check-native-gpu-fence-release-publication-host.py
           python3 -B tools/check-native-gpu-composite-syncpoint-host.py
           python3 -B tools/check-native-host1x-register-reentrant-host.py
@@ -312,6 +336,8 @@ jobs:
           python3 -B tools/check-fc27-f05-native-kernel-wait-publication-host.py
           python3 -B tools/check-fc27-f05-native-kthread-endwait-host.py
           python3 -B tools/check-fc27-f05-native-binder-handle-ipc-host.py
+          python3 -B tools/check-ps5-autocontrol-context.py
+          python3 -B tools/check-ps5-guest-system-buttons.py
           python3 -B tools/check-fc27-f06-native-pad-transition-host.py
           python3 -B tools/check-fc27-f06-native-npad-handoff-host.py
           python3 -B tools/check-fc27-f06-native-npad-lifo-host.py
@@ -418,6 +444,7 @@ jobs:
           set -euo pipefail
           python3 -B tools/check-texture-convert-volume-host.py
           python3 -B tools/check-audio-upmix-scratch-host.py
+          python3 -B tools/check-ps5-launcher-audio-stream-ring-host.py
           python3 -B tools/check-ps5-audio-output-lock-scope-host.py
           python3 -B tools/check-ps5-hud-snapshot-memo-host.py
           python3 -B tools/check-maintained-audio-units.py
@@ -446,9 +473,11 @@ jobs:
           python3 -B tools/check-sparse-zero-bounds-host.py
           python3 -B tools/check-maintained-sparse-vector.py
           python3 -B tools/check-fastmem-window-bounds-host.py
+          python3 -B tools/check-ps5-fastmem-windowstats-host.py
           python3 -B tools/check-native-fastmem-signal-install-host.py
           python3 -B tools/check-native-quiet-shutdown-heap-host.py
           python3 -B tools/check-native-guest-memory-empty-read-host.py
+          python3 -B tools/check-native-host-pagesize-cache-host.py
           python3 -B tools/check-native-quiet-heap-commit-host.py
           python3 -B tools/check-native-quiet-counters-host.py
           python3 -B tools/check-native-quiet-gpu-report-host.py
@@ -465,6 +494,7 @@ jobs:
           python3 -B tools/verify/hle/check-native-hle-ipc-receive-index-host.py
           python3 -B tools/check-vendored-hid-resource-source.py
           python3 -B tools/check-native-hid-cadence-host.py
+          python3 -B tools/check-dualsense-rumble-lock-host.py
           python3 -B tools/audit-eden-progress-state.py
           python3 -B tools/check-ps5-release-saved-diagnostics-host.py
           python3 -B tools/check-ps5-f07-cold-stalls-host.py
@@ -504,6 +534,7 @@ jobs:
           python3 -B tools/check-ps5-f07-driver-cache-flush-host.py
           python3 -B tools/check-ps5-f07-bounded-prewarm-host.py
           python3 -B tools/check-ps5-f07-shader-cache-drain-host.py
+          python3 -B tools/check-ps5-f07-attributeless-last-cache-host.py
           python3 -B tools/check-ps5-f07-bounded-failed-shader-retry-host.py
           python3 -B tools/check-ps5-f07-bounded-failed-compute-retry-host.py
           python3 -B tools/check-ps5-f07-prewarm-pipeline-admission-host.py

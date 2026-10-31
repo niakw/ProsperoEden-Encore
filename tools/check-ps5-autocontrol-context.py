@@ -3,8 +3,7 @@
 
 The title's HID stream does NOT expose a reliable menu/match semantic event.
 Like PC emulators, resolve global/title preferences before boot and keep the
-guest A/B/X/Y mapping unchanged for the entire session. This test is staged
-but MUST NOT be executed until the user authorizes a CI run.
+guest A/B/X/Y mapping unchanged for the entire session. The host regression is run by both the source preflight and core fast gate.
 """
 from pathlib import Path
 import shutil
@@ -33,8 +32,19 @@ assert 'adaptive_playstation' not in pad
 assert 'manual_toggle' not in pad
 assert 'layout_chord' not in pad
 assert 'const int pad = active_mapping[game];' in pad
-assert 'MappedTo(ActiveMapping(), pad_touchpad);' in pad
-assert 'MappedTo(active_mapping, pad_create) < 0 && (sample.buttons & kButtonCreate) != 0' in pad
+# Both inverse lookups are resolved once per Consume batch, before the
+# sample loop, rather than on each guest controller sample. Ensure the
+# capture guard still respects an explicit user mapping of Create.
+sample_loop = pad.index("for (const auto& raw : samples)")
+mapping = pad.index("const auto& active_mapping = ActiveMapping();")
+touch = pad.index("const int touch_button = MappedTo(active_mapping, pad_touchpad);")
+capture = pad.index("const bool create_is_capture = !samples.empty() &&")
+assert mapping < touch < capture < sample_loop
+assert "MappedTo(active_mapping, pad_create) < 0;" in pad[capture:sample_loop]
+assert "create_is_capture && (mapped_buttons & kButtonCreate) != 0" in pad[sample_loop:]
+assert "ButtonMask mapped_buttons = sample.buttons;" in pad[sample_loop:]
+assert pad.count("MappedTo(active_mapping, pad_create)") == 1
+assert pad.count("MappedTo(active_mapping, pad_touchpad)") == 1
 assert 'engine->SetButtonState(player, Button::ButtonCapture,' in pad
 assert 'slot.guest_home.BlockChordButtons()' in pad
 assert 'engine->SetButtonState(player, kGame[touch_button],' in pad

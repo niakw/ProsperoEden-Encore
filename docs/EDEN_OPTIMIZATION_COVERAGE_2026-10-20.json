@@ -44,7 +44,7 @@
     {
       "path": "headless/buffer_pages.h",
       "disposition": "code_changed_in_batch",
-      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
+      "evidence": "2026-10-30 PS5 BufferPages: single-page guest-buffer registration fast path and single-page NeverRegistered fast negative check, retaining acquire/release, 256KiB cap and final coverage_unknown double-check. Source-linked R437 fixture extended with 18,000 oracle queries, 4KiB/256KiB/16GiB boundaries, concurrent publishers, O0/O2 UBSan, CI pending; CPU/FPS unmeasured. Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement 31 October 2026: same-256KiB-word multi-page Mark path publishes its exact contiguous bit mask using one acquire probe and release fetch_or; cross-word and one-page paths unchanged. Source-selected wide-probe host tests add seven-page, unaligned edge and neighboring empty-page witnesses. CI and FPS console unproven."
     },
     {
       "path": "headless/buffer_write_ahead.h",
@@ -161,11 +161,12 @@
     },
     {
       "path": "headless/devices.h",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U52",
-      "reviewed_source_git_blob": "0a819622e35d9d89ce83c3937190fae6dc822ae6",
-      "source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
-      "evidence": "Source inspected: L’interface manette borne le nombre de joueurs et le chemin vibration utilise une indication atomique sur les polls silencieux. Le mapping réel reste dans les implémentations et mérite ses tests de jeu. Reopen if: Une régression d’actions FC27 imputable à la définition des états HID."
+      "reviewed_source_git_blob": "edb7d13b125e554bd91c7c259fcfafcf91db984b",
+      "previous_source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-fc27-f06-native-pad-transition-host.py",
+      "evidence": "2026-10-31 DualSense: immutable std::array<bool,256> trigger_pressed precomputed on controller construction, no per-batch allocations or mutable calibration; source-extracted F06 threshold boundary oracle, CI pending. 2026-10-30 PS5 DualSense: constructor-only 256-byte-axis LUT, exact same normalization, no four per-axis float computations per sample; F06 native source-extracted mock validates 5 valid deadzones × all 256 bytes bitwise with O0/O2 UBSan, plus gameplay/chord/release mapping. Validated CI pending, no console FPS claim. Source inspected: L’interface manette borne le nombre de joueurs et le chemin vibration utilise une indication atomique sur les polls silencieux. Le mapping réel reste dans les implémentations et mérite ses tests de jeu. Reopen if: Une régression d’actions FC27 imputable à la définition des états HID."
     },
     {
       "path": "headless/diagnostics.h",
@@ -383,12 +384,12 @@
     },
     {
       "path": "headless/gpu_dirty_region_split.h",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "R04",
       "prior_status": "SOURCE",
       "proof_ref": "tools/check-native-gpu-dirty-subregion-host.py",
-      "source_review_document": "docs/EDEN_GPU_MEMORY_POLICY_REVIEW_2026-10-21.md",
-      "evidence": "Previously maintained GPU/memory performance guard reviewed; 32-bit dirty mask split into 2 KiB regions with overflow check before any callback; preserves per-region order. No additional correction justified without new failing evidence."
+      "evidence": "Previously maintained GPU/memory performance guard reviewed; 32-bit dirty mask split into 2 KiB regions with overflow check before any callback; preserves per-region order. No additional correction justified without new failing evidence. 31 October 2026 follow-up code change (owner R04): The actual PS5 native GpuDirty::ForEachRegion callback loop now peels the first 2 KiB dirty subregion, so a typical small guest write avoids an extra loop back-edge; bitwise mask replaces modulo only under compile-time 2 KiB power-of-two assertion. Full-spans keep existing tail loop, overflow termination, callback order and 32-bit mask boundaries. Source selected ASan/UBSan witness checks zero writes, 8-byte single region, 4KiB/8KiB splits, 5000 randomized ranges and actual Collect/Gather; no PS5 frame-time claim. Original 21 October review remains historical; this is a new source change with new SHA and separate CI qualification. 31 October R04 source edit: following the first 2KiB boundary, consume complete aligned 2KiB blocks without a per-region mask/min, with exact final tail and strict overflow validation. Actual mask/Collect/Gather host sanitizer and boundary witness extended; PS5 frame effects unknown. Follow-up in same R04 pre-build batch: avoid second and third branch checks for sub-2KiB guest writes by early-returning after the first boundary comparison; source-selected fixture asserts early branch and ordered callback parity, with 200000-case independent UBSan/ASan oracle. No additional PS5 FPS proof.",
+      "reviewed_source_git_blob": "c11c7f35c5ef44d81b7678deff13a20e4012839d"
     },
     {
       "path": "headless/gpu_failure.h",
@@ -425,17 +426,17 @@
     {
       "path": "headless/graphics.cpp",
       "disposition": "code_changed_in_batch",
-      "reviewed_source_git_blob": "9b39b6df573170070e846e13ee56c385961cf01b",
+      "reviewed_source_git_blob": "d06815e584710bb31e016f98209032bdaded005a",
       "proof_ref": "tools/check-ps5-hud-snapshot-memo-host.py",
-      "evidence": "2026-10-30 main callback memo: HudClock::Present still executes per displayed frame, but MakeHudSnapshot runs only when FPS/worst/speed differ. Reset at title open preserves loading-to-game transition. Detailed FPS/JIT/C05 existing frame counters unchanged. Source-anchored host checks in preflight; console FPS still unmeasured."
+      "evidence": "2026-10-30 native quiet display: gated HUD FPS clock by overlay visibility; first visible callback resets clock + memo, hidden callbacks retain mandatory presentation counters and no frame clock work. Source-linked host test O0/O2/O3 ASan/UBSan pending CI; GPU latency unmeasured. 2026-10-30 main callback memo: HudClock::Present still executes per displayed frame, but MakeHudSnapshot runs only when FPS/worst/speed differ. Reset at title open preserves loading-to-game transition. Detailed FPS/JIT/C05 existing frame counters unchanged. Source-anchored host checks in preflight; console FPS still unmeasured. 30 October F07 present callback optimization: skip the quiet-mode 24-atomic GPU/HLE/JIT baseline snapshot on first frame and each five-second window, and invalidate baseline across runtime log toggles. Source check and toggle model added. No measured PS5 FPS claim. 2026-10-30 C05: distinguish a valid detailed frame-pressure baseline from an OFF->ON logging cycle between five-second windows by comparing NativeLogs::Generation at both boundaries; do not report mixed GPU/JIT/HLE deltas as measured. No per-frame atomic loads added."
     },
     {
       "path": "headless/graphics.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U19",
-      "reviewed_source_git_blob": "6d1a4fe17e1ea638d6de2f0dd07d06aa8792356e",
+      "reviewed_source_git_blob": "4a958fea2d32bf897ecc3337293cb47fb909fce7",
       "source_review_document": "docs/EDEN_NATIVE_HOTPATH_FAST_REVIEW_2026-10-21.md",
-      "evidence": "Current source inspected: Déclarations de fenêtre et lignes de base des pressions de frame par instance ; pas de travail GPU dans ce header, pas de mémoire globale de mesures entre deux jeux. Rerun this review only on source drift or Défaut de propriété/contexte EGL prouvé dans l’implémentation."
+      "evidence": "Current source inspected: Déclarations de fenêtre et lignes de base des pressions de frame par instance ; pas de travail GPU dans ce header, pas de mémoire globale de mesures entre deux jeux. Rerun this review only on source drift or Défaut de propriété/contexte EGL prouvé dans l’implémentation. 30 October F07: added per-window logging-baseline validity bit to prevent stale pressure attribution when detailed logging is toggled. 2026-10-30: per-window logging-generation field guards detailed counter attribution across runtime toggle cycles."
     },
     {
       "path": "headless/guest_fault.h",
@@ -472,7 +473,7 @@
     {
       "path": "headless/image_pages.h",
       "disposition": "code_changed_in_batch",
-      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
+      "evidence": "2026-10-31 ImagePages::Mark one-page registration returns after a single atomic word bit test/fetch_or, preserving release publication, generic clamped multi-page span and concurrent register safety. R433 adds 64-bit word-boundary, 4KiB spill and 8-thread overlapping bitmap tests. No PS5 FPS claim; CI pending. 2026-10-30 ImagePages::NeverHeld early one-page witness on native CPU write: exact single atomic acquire bit test, avoiding same-word mask construction; larger spans preserve original bounded logic, release/acquire publication preserved. Source-linked O1 ASan+UBSan test extended to 12,000 randomized queries against independent full page-by-page oracle. CI pending, PS5 latency unmeasured; C01/T01 open. Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement 31 October 2026: same-256KiB-word multi-page image Mark fast path avoids a generic range walk while retaining relaxed bitmap test, release OR publication and existing clamped word-spanning path. R433 fixture tests unaligned seven-page and two-word spill alongside its randomized oracle and concurrent writer tests. CI and FPS console unproven."
     },
     {
       "path": "headless/jit_list.h",
@@ -487,7 +488,7 @@
       "disposition": "code_changed_in_batch",
       "contract_id": "J06",
       "proof_ref": "tools/check-native-jit-alias-lookup-host.py",
-      "evidence": "Real Xbyak allocator writableAddress checked shared mappings unordered_map under mutex for every repeated RX->RW query. Added 8-entry per-thread positive lookup with global generation release on each successful new mapping and retired mapping. Revisit 30 October: preferred alias index cuts steady same-arena lookups to one pointer check; keep two-ISA alternating readonly and preserve FIFO, epoch, ownership and map fallback. Host ASan/UBSan witness exercises production header and real Linux memfd RX/RW, alternating threads, retirement/reuse. Native PS5 FPS and crash qualification separate. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven."
+      "evidence": "Real Xbyak allocator writableAddress checked shared mappings unordered_map under mutex for every repeated RX->RW query. Added 8-entry per-thread positive lookup with generation release only on retired mappings (new insertions preserve live RX/RW aliases). Revisit 30 October: preferred alias index cuts steady same-arena lookups to one pointer check; keep two-ISA alternating readonly and preserve FIFO, epoch, ownership and map fallback. Host ASan/UBSan witness exercises production header and real Linux memfd RX/RW, alternating threads, retirement/reuse. Native PS5 FPS and crash qualification separate. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven."
     },
     {
       "path": "headless/jit-sparse-commit.h",
@@ -667,10 +668,11 @@
     },
     {
       "path": "headless/pad.cpp",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "U03",
-      "source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Source-read optimization triage, no additional hotpath edit justified: Controller input and rumble path has release/acquire pending hint before mutex; no hotpath locking on silent polls, preserve paired publication."
+      "evidence": "2026-10-31 DualSense trigger LUT (256 bytes): exact original >= normalization for each trigger byte, two indexed bool reads per sample, zero per-sample float compares; F06 source-extracted 5*256 threshold/byte oracle O0/O2 UBSan, SDK/FC27 unverified. 2026-10-30 PS5 native Pad::Consume eliminates the per-sample full 120-byte ABI copy on connected input: const reference to raw, neutral only for intercepted/disconnected input, local mapped_buttons preserves HOME/HUD/Menu masking, one is_usable test. Source-extracted F06 O0/O2 UBSan transition replay extended for shortcut immutability; CI pending, no PS5 FPS claim. 2026-10-30 DualSense quiet performance: diagnostic-only 64-sample status sweep and stats counter updates now gated on Detailed logging; native Consume remains unconditional, errors retain neutralization, input edge/motion updates and GPU stall heartbeat unchanged. Source anchored host O0/O2 ASan+UBSan asserts quiet/diagnostics batches; CI pending, PS5 FPS unmeasured. 2026-10-30 PS5 DualSense axis table replaces four floating-point normalization/curve calculations per sample with four table reads, initialized with original exact expression once per Pad. Source-linked F06 transitions + exhaustive 1280 byte/deadzone pairs validated in CI pending. 2026-10-30 PS5 Pad::Poll avoids the 7680-byte zero-initialization per 4 ms poll; the platform scePadRead prefix is consumed only after validated count, errors use synthesized neutral. Source-linked C++20 O0/O2 ASan/UBSan regression for full/empty/short/invalid counts, CI pending; hardware gain unmeasured. F07 P1 input/HLE lock duration: TakeRumble snapshots both guest vibration sides and clears the pending hint under the producer mutex, then performs four pow/lround motor conversions after unlocking. Source-extracted O0/O2 ASan+UBSan witness exercises latest-command coalescing and concurrent publication. No PS5 latency or FC27 gain claimed.",
+      "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
+      "proof_ref": "tools/check-dualsense-rumble-lock-host.py"
     },
     {
       "path": "headless/performance.cpp",
@@ -769,10 +771,10 @@
     {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "f8f44ed15e49df2e5b5606997b3ead7f91e07b01",
+      "reviewed_source_git_blob": "9f9d60e050cc7bbe65b7afb8852f8b3fc6c49792",
       "review_scope": "host-only-test",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no shipping-path optimization affected. Host-only README preview now supports PE_PREVIEW_BRANDED_HOME, clearing synthetic sample-game Hero sources to reveal the already-packaged original Eden wallpaper. No PS5 production service, renderer or guest hotpath logic modified; the host C++/OpenGL real-capture workflow passed (run 41004671009). Host-only README wallpaper fixture now skips synthetic Echoes hero only when PE_PREVIEW_BRANDED_HOME is set; production native services untouched."
+      "evidence": "FakeServices scripted fixture/media creation used by host previews. Reviewed for shipping-path optimization relevance; no shipping-path optimization affected. Host-only README preview now supports PE_PREVIEW_BRANDED_HOME, clearing synthetic sample-game Hero sources to reveal the already-packaged original Eden wallpaper. No PS5 production service, renderer or guest hotpath logic modified; the host C++/OpenGL real-capture workflow passed (run 41004671009). Host-only README wallpaper fixture now skips synthetic Echoes hero only when PE_PREVIEW_BRANDED_HOME is set; production native services untouched. 30 October 2026 re-review: fixture-only changes add original fictional title descriptions, a branded-preview-specific cover preservation check and populated Home/recent descriptions. These are confined to host FakeServices; runtime PS5 native services, guest memory, renderer, pipeline and A32 fastmem owners remain unaffected. Reviewed against previous pinned blob f8f44ed15e49df2e5b5606997b3ead7f91e07b01. 30 October 2026 follow-up: inspected the host-only README branded-artwork branch; missing generated cover assets are now cleared instead of replaced by generic art, while ordinary host fixture coverage still generates its deterministic sample cover. No native PS5 renderer, Vulkan cache, guest memory, JIT or shipping services touched. Reviewed blob cdf5c2b5e52ec33afa8e1f713dcf8c5492fcd157."
     },
     {
       "path": "headless/prosperoeden/host/fake_services.hpp",
@@ -785,10 +787,10 @@
     {
       "path": "headless/prosperoeden/host/preview_main.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "84ef0e1466b10865f4df12e2c68824dfebe0a941",
+      "reviewed_source_git_blob": "e62c5d2b656016b6dfc0675b88c8379c039f7c72",
       "review_scope": "host-only-test",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Preview Stage render/press/screenshot scripting, including timed waits, host-only. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "Preview Stage render/press/screenshot scripting, including timed waits, host-only. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. 30 Oct 2026 host-only preview re-review: PE_PREVIEW_BRANDED_HOME waits for seven asynchronously decoded original game-cover GL textures (up to 20 s) and pumps frames before capture, and rejects an incomplete screenshot. No shipping code path, guest rendering, memory or Vulkan runtime modified. This is screenshot-test infrastructure only."
     },
     {
       "path": "headless/prosperoeden/pe/audio/mixer.cpp",
@@ -824,11 +826,10 @@
     },
     {
       "path": "headless/prosperoeden/pe/audio/stream_ring.hpp",
-      "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "48a7205d87f965cac77566850afff918c18f286d",
+      "disposition": "code_changed_in_batch",
+      "reviewed_source_git_blob": "85a3d6e4209b81ad378f0d7072534627512495be",
       "review_scope": "launcher-release-hotpath",
-      "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "StreamRing read/write circular float buffer; no filesystem or GL calls. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "2026-10-30 bc171c2: SPSC stereo float ring copies use two contiguous memcpy spans instead of modulo per sample, preserving release/acquire and empty behavior; tools/check-ps5-launcher-audio-stream-ring-host.py in fast gate validates wrap/zero/overflow/concurrent FIFO at O0/O2 with ASan/UBSan. Console performance not measured."
     },
     {
       "path": "headless/prosperoeden/pe/audio/wav.cpp",
@@ -1440,7 +1441,8 @@
     {
       "path": "src/host_memory.cpp",
       "disposition": "code_changed_in_batch",
-      "evidence": "Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement"
+      "reviewed_source_git_blob": "ec24e06318667c63e5efaf5694c32eb9368594dd",
+      "evidence": "2026-10-30 PS5 fastmem Protect: short 2..16-page unchanged permissions consolidated to one bounded read-only scan instead of duplicated same/cross granule branches; all live permission updates and predecessor guard Refresh preserved. Exhaustive oracle across 64-page model and source-extracted O0/O2 ASan+UBSan witness; CI pending, console impact unmeasured. 2026-10-30 native fastmem Unmap: short already-empty spans inspect backing/access together in one bounded pass (up to 16 pages) instead of two scans; changed ranges still take the original Update. Host source-extracted O0/O2 ASan/UBSan regression pending CI; FPS unmeasured. Git comparison 82c531d08..05846723c: real C/C++ source/header delta; not necessarily a performance improvement 30 October F07 A32 fastmem: identical live alias with a changed single-page permission republishes only current/predecessor JIT guards, bypassing repeated three-pass Update scans. Non-aliased mapping retries remain mandatory; source-linked host witness tests granule boundaries, guard bytes, missing aliases at O0/O2. Console validation remains open. 30 October continuation: for 2-4 pages sharing an active 16KiB guest alias with unchanged physical backing, a permission-only Map now refreshes just affected JIT guard bytes under the existing mutex instead of executing Update's three full scans; unaliased and changed backing preserve fallback. Source-linked host oracle updated. No console FPS measured. 30 October F07: cross-16KiB short Map with unchanged live physical aliases now republishes only <=16 guest-page JIT guards on access change. Missing alias, changed backing and long spans continue Update, with source-linked O0/O2 fixtures. PS5 A/B not yet measured. 2026-10-30: PS5 detailed-only WindowStats uses 64-bit memcpy/popcount census for 1 MiB A32 JIT guard map (eight pages per iteration), preserving read/write counts, unaligned inputs, all marker bits, and zero/no-window behavior; new source-extracted O0/O2/O3 ASan+UBSan oracle added. Host microbenchmark showed lower CPU time, NOT verified on PS5 or as FC27 FPS improvement. 31 October F07 A32 Unmap follow-up: the two mutually exclusive same-granule/cross-granule short-range predicates are replaced by their exhaustive union `first < last && last - first < 16`, removing redundant 16KiB-granule divisions. The exact Unmap source-linked O0/O2 ASan+UBSan regression remains; Python oracle compares 122,944 offset/count combinations including 16K boundaries and >16-page fallback. Counters, locks, alias retry and live Update path unchanged. CI and PS5 FPS not measured. 31 October A32-U02: Mapped 2..16 guest pages now use one bounded positive-alias scan for both same and cross 16KiB granule spans, avoiding duplicate branch and extra source paths. If ANY native alias is missing or backing differs, the original Update/kernel retry is preserved. Separate eight-scenario exhaustive source oracle and existing O0/O2 ASan/UBSan source-extracted Map/Unmap fixture in the preflight; unchanged permission and predecessor guard refresh. Reviewed Git blob ec24e06318667c63e5efaf5694c32eb9368594dd. CI and PS5 frametimes not yet qualified."
     },
     {
       "path": "src/lifecycle.c",
@@ -1455,9 +1457,9 @@
       "disposition": "code_changed_in_batch",
       "contract_id": "M01",
       "proof_ref": "tools/check-native-quiet-heap-commit-host.py",
-      "evidence": "PS5 CommitMemoryRange heap growth unconditionally sampled CLOCK_MONOTONIC four times, formatted a report, and called kernel Note even in quiet release, adding system calls on synchronous heap expansion. Gated only these diagnostics under EDEN_HEAP_GROWTH_TRACE, compiled for common in DEV; mandatory AllocateDirectOwned/MapDirectMemory, memset, rollback and physical_out untouched. Clang ASan/UBSan test compiles real production function in release/dev with SDK mapping stubs to compare clock/log calls and memory zeroing. No measured PS5 frame-time or heap map performance. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven. 30 October 2026: SparseRangeOf now scans only the monotonically published prefix of its 64 static sparse table slots under the pre-existing sparse_mutex; frees preserve holes, new registrations publish bound after range metadata. tools/check-native-sparse-range-prefix-host.py source-extracts the actual lookup/publication and tests empty, holes, reused slots, slot63, 4 readers under ASan/UBSan O0/O2/O3. This bounds CPU scans on sparse first-commit/decommit, not normal guest table reads. CI and PS5 measurements pending.",
+      "evidence": "PS5 CommitMemoryRange heap growth unconditionally sampled CLOCK_MONOTONIC four times, formatted a report, and called kernel Note even in quiet release, adding system calls on synchronous heap expansion. Gated only these diagnostics under EDEN_HEAP_GROWTH_TRACE, compiled for common in DEV; mandatory AllocateDirectOwned/MapDirectMemory, memset, rollback and physical_out untouched. Clang ASan/UBSan test compiles real production function in release/dev with SDK mapping stubs to compare clock/log calls and memory zeroing. No measured PS5 frame-time or heap map performance. 26 October F07 single-profile follow-up: reviewed native sparse RX/RW allocation, 2MiB demand commits, quiesced full-clear physical trim, lifetime generation invalidation, firmware probe/fail-closed path and release-only source selection. New source-extracted O0/O2 and full native build gates required. Dynamic GPU/CPU arbitration and console FPS not yet proven. 30 October 2026: SparseRangeOf now scans only the monotonically published prefix of its 64 static sparse table slots under the pre-existing sparse_mutex; frees preserve holes, new registrations publish bound after range metadata. tools/check-native-sparse-range-prefix-host.py source-extracts the actual lookup/publication and tests empty, holes, reused slots, slot63, 4 readers under ASan/UBSan O0/O2/O3. This bounds CPU scans on sparse first-commit/decommit, not normal guest table reads. CI and PS5 measurements pending. 30 October follow-up: new-arena reservation retains live sparse JIT per-thread positive entries, while trim/release still invalidate the generation; table lookups retain validated TLS range hints after unrelated misses, with release/reuse guards. Source-level review and dedicated O0/O2/O3 regression witnesses are updated; CI remains required and PS5 gains are unmeasured. 30 October 2026 continuation: AllocateSparsePages now scans only published slots and reuses a hole or the first free tail; it avoids 64 unconditional atomic reads during cold sparse table creation. Exact source extraction validates all 64 slots, a full map, holes, and reclamation under ASan/UBSan O0/O2/O3; no PS5 runtime win claimed. 30 October follow-up: exact-address negative SparseRangeOf lookups are cached per sparse_mutex-protected range topology epoch; insertion and retirement invalidate old misses before reuse, with no extra cost on positive hint hits. Source-extracted sanitizer witness tests 10k repeated misses, publication and slot reuse. Hardware effect unmeasured. 31 October 2026 repeat review: 62e885e38 keys exact sparse-range misses to a topology generation, advanced on both publication and retirement under sparse_mutex; 0f1bb4064 bounds four distinct exact negative addresses without caching whole pages; 78f71b18d exits before probing TLS if the locked published prefix is empty. Existing positive hints still revalidate begin/end under the mutex, and the source-extracted tools/check-native-sparse-range-prefix-host.py witness pins the revised branch and 10k cold empty lookups. No locking/barrier removed, no proven console speedup. 31 October follow-up: J01 prefers a valid positive range over all but the most recent topology-epoch negative hint, while short-circuiting repeated exact misses and preserving retired-slot checks. Source-extracted sanitizer witness covers 10k repeated exact misses, four alternating misses, and 10k positive hits after a full negative cache. SHA 830a80b6 reviewed, with CI gates required. 31 October follow-up, commit c26c1d27: AllocateSparsePages now initializes ownership bitmaps and completes PS5 shared-zero ReserveSparse outside the global sparse_mutex; only slot claim plus begin/end/epoch publication remains locked. Reservation failure and a 64-slot race release unpublished VA before dense fallback outside the mutex. Source-extracted check-native-sparse-range-prefix-host.py now includes deterministic paused-reservation vs reader concurrency, 64-slot saturation and failure rollback under O0/O2/O3 ASan/UBSan. Recorded current source blob a4d430106; fast/preflight/CodeQL requalification pending; no PS5 FPS or latency gains claimed. 31 October follow-up: CachedHostPageSize is a positive-only, relaxed atomic cache for the immutable host page size, shared by all eight dense allocation/alias/free metadata paths; one sysconf query remains. Source-extracted tools/check-native-host-pagesize-cache-host.py proves initial failure retry and 160,000 concurrent positive calls under O0/O2/O3 sanitizers. Reviewed source Git blob d55a20b17815c16558dbdd83e996fd5b1d3eccef; CI and PS5 latency measurements pending. 31 October 2026 bitmap follow-up: owner-locked 64-bit occupancy now selects the lowest free slot via countr_one and skips retired holes on countr_zero range scans. Source-extracted O0/O2/O3 sanitizer oracle covers all 64 one-hole masks, saturation, slot reuse and concurrent teardown. Reviewed blob 3da466df34881442f95c7ba3225c14b7bc2ae700; CI and PS5 performance still unverified. Type-safe follow-up: explicit size_t cast on std::countr_one result prevents -Wsign-compare with std::array::size under source-extracted -Wall -Wextra -Werror; updated reviewed blob 30676a42a10ac7d03e812ce69d39bc38a499bc44, CI pending.",
       "additional_proof_ref": "tools/check-native-sparse-range-prefix-host.py",
-      "reviewed_source_git_blob": "c3519f91f84a95ecc95c20a538ac2ddb2f7e275e"
+      "reviewed_source_git_blob": "30676a42a10ac7d03e812ce69d39bc38a499bc44"
     },
     {
       "path": "vendor/encore-active/compiler-rt/emutls.c",
@@ -4215,7 +4217,7 @@
       "disposition": "code_changed_in_batch",
       "contract_id": "V07",
       "proof_ref": "tools/check-ps5-vertex-identity-host.py",
-      "evidence": "Active default PS5 Vulkan static vertex input used a single (hash,generation) memo; alternating vertex shaders locked eden_attributeless_mutex and queried std::set per transition. Replaced with a 64-slot GPU-thread-owned direct-mapped memo, generation-invalidated by shader workers. Generator and selected maintained C++ stay in lockstep; sanitizer host witness extended for generation flips and deliberate collisions. No PS5 FPS validation claimed."
+      "evidence": "Active default PS5 Vulkan static vertex input used a single (hash,generation) memo; alternating vertex shaders locked eden_attributeless_mutex and queried std::set per transition. Initially replaced with a 64-slot GPU-thread-owned direct-mapped memo; now a 16-set four-way fixed positive memo (still 64 entries) prevents up to four colliding vertex keys from repeatedly taking the global shader-set mutex, generation-invalidated for negative keys by shader workers while positive keys remain valid across insertions (the authoritative set only inserts). Generator and selected maintained C++ stay in lockstep; sanitizer host witness extended for generation flips and deliberate collisions. Additional compute pipeline hot path now uses a fixed four-entry owner-local positive memo (formerly one key) preserving failed shader retries and diagnostic first-use tracing, covered by the source-extracted compute-key host sanitizer witness. No PS5 FPS validation claimed."
     },
     {
       "path": "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp",

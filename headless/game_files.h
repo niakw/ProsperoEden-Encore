@@ -224,7 +224,10 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
                 stem.starts_with("update-") || stem.starts_with("dlc_") ||
                 stem.starts_with("dlc-")) continue;
             const auto candidate = relative.empty() ? name : relative + "/" + name;
-            if (IsNestedGameFileSelection(candidate)) candidates.push_back(candidate);
+            // The validator consumes a ROM-root-relative persisted selection.
+            // A package in the title folder itself is still nested from roms/.
+            const auto selection = title.filename().string() + "/" + candidate;
+            if (IsNestedGameFileSelection(selection)) candidates.push_back(candidate);
         }
         std::sort(subdirs.begin(), subdirs.end(), [](const fs::path& a, const fs::path& b) {
             const auto a_name = a.filename().string();

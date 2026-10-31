@@ -12,6 +12,7 @@ on:
       - 'tools/ns2/build_public_exefs_fixture.py'
       - 'tools/ns2/test_program_metadata.cpp'
       - 'tools/ns2/test_real_kcapabilities.py'
+      - 'tools/ns2/test_real_kprocess_loadmodule.py'
       - 'headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h'
       - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
       - 'headless/ns2/overrides/core/loader/ns2_nso_preflight.h'
@@ -103,6 +104,12 @@ jobs:
           set -euo pipefail
           python3 tools/ns2/test_real_kcapabilities.py \
             --npdm build-ns2-jit/public-exefs/main.npdm
+      - name: Run unchanged KProcess LoadModule on real public NSO under host memory fakes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/test_real_kprocess_loadmodule.py \
+            --nso build-ns2-jit/public-exefs/main
       - name: Build actual x64 Dynarmic core
         shell: bash
         run: |

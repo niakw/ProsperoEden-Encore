@@ -48,9 +48,18 @@ def valid(source: str) -> bool:
 # Reverse these additive methods exactly before the pinned OOM-source oracle.
 # This is a stronger oracle than generic source/token assertions.
 reconstructed = fork.replace("#include <array>\n#include <cstdio>\n", "")
-start_sparse = reconstructed.index("vk::Image MemoryAllocator::CreateSparseImage(")
-end_sparse = reconstructed.index("vk::Buffer MemoryAllocator::CreateBuffer(", start_sparse)
-added_sparse = reconstructed[start_sparse:end_sparse]
+# NS2's sparse allocation methods exist only under an explicit research
+# compile gate. Reverse the WHOLE guarded block, not just the methods: a
+# dangling preprocessor guard would invalidate the strict F07 source witness.
+guard = "#ifdef EDEN_NS2_SPARSE_CACHE_PROBE\\n".replace("\\\\n", "\\n")
+tail_guard = "#endif // EDEN_NS2_SPARSE_CACHE_PROBE\\n\\n".replace("\\\\n", "\\n")
+assert reconstructed.count(guard) == reconstructed.count(tail_guard) == 1
+start_sparse = reconstructed.index(guard)
+method_start = reconstructed.index("vk::Image MemoryAllocator::CreateSparseImage(", start_sparse)
+assert method_start == start_sparse + len(guard)
+end_sparse = reconstructed.index("vk::Buffer MemoryAllocator::CreateBuffer(", method_start)
+assert reconstructed[end_sparse-len(tail_guard):end_sparse] == tail_guard
+added_sparse = reconstructed[method_start:end_sparse-len(tail_guard)]
 assert added_sparse.count("vk::Image MemoryAllocator::CreateSparseImage(") == 1
 assert added_sparse.count("bool MemoryAllocator::AllocateSparseMemory(") == 1
 assert added_sparse.count("void MemoryAllocator::ReleaseSparseMemory(") == 1

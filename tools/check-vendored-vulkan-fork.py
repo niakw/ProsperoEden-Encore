@@ -53,8 +53,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # All generated Vulkan translation units still remain byte-identical.
     helper='include/video_core/renderer_vulkan/striped_wait.h'
     allocator='vulkan_memory_allocator.cpp'
-    subprocess.run([sys.executable, '-B', str(root/'tools/check-ps5-vulkan-oom-source.py')],
-                   check=True, timeout=15, capture_output=True, text=True)
+    oom_check = subprocess.run(
+        [sys.executable, '-B', str(root/'tools/check-ps5-vulkan-oom-source.py')],
+        timeout=15, capture_output=True, text=True)
+    if oom_check.returncode != 0:
+        raise RuntimeError('F07 allocator source parity failed (code %d):\n%s\n%s' % (
+            oom_check.returncode, oom_check.stdout, oom_check.stderr))
     assert allocator not in actual, 'generated Vulkan port unexpectedly owns the allocator'
     assert set(actual)==set(expected)-{helper, allocator}, (
         f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')

@@ -22,7 +22,7 @@ not proof of commercial Switch 2 game boot or PS5 hardware qualification.
         458752/romfs/
         patch-v2.nsp                    # packaged update
       dlc/
-        040074a01bf13001/0/romfs/      # extracted DLC (NOT mounted yet)
+        040074a01bf13001/0/romfs/      # extracted DLC (explicit AOC Title ID)
         bonus.nsp                       # packaged DLC
     AnotherGame/
       base.nsp                          # packaged base
@@ -76,8 +76,14 @@ come from the package metadata, never from the folder name.
 
 ## Known limits — not to be presented as functional
 
-- **Extracted DLC** (`dlc/<id>/<slot>/romfs`) still needs native AOC
-  registration and an independent RomFS mount. A folder alone is not DLC.
+- **Extracted DLC** (`dlc/<16-hex-AOC-TitleID>/<slot>/romfs`) now has
+  a native guest `aoc:u` discovery path and an independent read-only RomFS
+  data-storage fallback. This is a source integration, not PS5 runtime proof.
+  It requires an explicit, syntactically valid AOC Title ID from the owning
+  base-title family. Anonymous `dlc/bonus/romfs` directories are intentionally
+  unsupported: there is no NCA/CNMT metadata to infer ownership safely.
+  Ambiguous duplicate IDs are rejected. See
+  [the extracted-AOC source review](EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md).
 - **Extracted update overlays** are file-level experiments, not Nintendo
   NCA patch/BKTR semantics. The lookup is bounded to five levels and
   128 visited directories, requires a numeric version component, and

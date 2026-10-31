@@ -103,16 +103,17 @@ def fixed():
 def backdrop():
     """Host preview: use the PS5 package's canonical Encore JPEG wallpaper.
 
-    The native package creates a 1920x1080 centre-cropped TGA with an
-    original top-to-bottom pixel order. The TGA decoder already normalizes
-    rows, and the launcher samples its textures using top-left UI UVs.
+    The native package reverses the 1920x1080 cropped TGA for GL's UI
+    texture-upload convention, just like the brand logo. Apply that same
+    correction to the README preview. The source JPEG remains untouched.
     The checked-in legacy TGA must NEVER be trusted as a preview source.
     """
     source = ROOT / "assets/encore-background.jpg"
     with Image.open(source) as original:
         wallpaper = ImageOps.fit(original.convert("RGB"), (1920, 1080),
                                   method=Image.Resampling.LANCZOS)
-    # Do not vertically flip: the 2D launcher samples UV(0,0) at screen top.
+    # Match tools/package-headless-native.sh: flip only the baked TGA.
+    wallpaper = ImageOps.flip(wallpaper)
     target = ART / "backdrop.tga"
     wallpaper.save(target, format="TGA")
     # Pillow appends an optional 26-byte TGA footer. The native packager

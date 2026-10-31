@@ -74,10 +74,12 @@ else
 fi
 # One canonical Eden background is reused for the PS5 shell art, launcher and in-game loading
 # screen. 1080p is enough for the launcher/loading texture while keeping its transient VRAM cost
-# small; the PS5 home-screen DDS stays native 4K. Preserve top-to-bottom pixel orientation:
-# load_tga() normalizes TGA origin, and the UI shader samples UV(0,0) at the screen top.
+# small; the PS5 home-screen DDS stays native 4K. The launcher GL
+# texture upload uses the same reversed vertical convention as brand.tga:
+# normalize the TGA in load_tga(), then flip exactly once for GL sampling.
+# Never flip the canonical JPG or PS5 home-screen artwork.
 "${image_convert[@]}" "$root/assets/encore-background.jpg" -resize '1920x1080^' -gravity center -extent 1920x1080 \
-    -alpha off -define tga:bits-per-pixel=24 -compress None "$app/ui/art/backdrop.tga"
+    -flip -alpha off -define tga:bits-per-pixel=24 -compress None "$app/ui/art/backdrop.tga"
 python3 - "$app/ui/art/backdrop.tga" <<'PY2'
 import pathlib, sys
 data = pathlib.Path(sys.argv[1]).read_bytes()

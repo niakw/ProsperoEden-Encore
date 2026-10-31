@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
         std::thread([] {
             Eden::Crash::NameThread("audio");
             Eden::Crash::audio_worker_thread.store(
-                static_cast<std::uintptr_t>(pthread_self()), std::memory_order_release);
+                (std::uintptr_t)pthread_self(), std::memory_order_release);
             Eden::Crash::audio_worker_phase.store(3, std::memory_order_relaxed);
             Eden::Crash::audio_completed_blocks.store(41, std::memory_order_relaxed);
             Eden::Crash::audio_last_output_result.store(-5, std::memory_order_relaxed);

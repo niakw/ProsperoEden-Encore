@@ -7,6 +7,7 @@ This is a host concurrency/source witness, not an AudioOut device benchmark.
 """
 from pathlib import Path
 import shutil
+import re
 import subprocess
 import tempfile
 
@@ -36,6 +37,19 @@ scan = scan.replace(
 )
 compiler = shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
+
+# Extract the exact production and crash-harness conversions. PS5 uses a
+# pointer pthread_t while the Linux host uses an integer pthread_t.
+thread_store = re.compile(
+    r"(?:Eden::)?Crash::audio_worker_thread\\.store\\(\\s*([^,]+),\\s*std::memory_order_release\\)"
+)
+audio_tokens = thread_store.findall(audio)
+crash_tokens = thread_store.findall((ROOT / "tools/check-crash-report.py").read_text())
+assert audio_tokens == ["(std::uintptr_t)pthread_self()"], audio_tokens
+assert crash_tokens == audio_tokens, crash_tokens
+assert "(std::uintptr_t)pthread_self()" in (ROOT / "headless/crash_report.cpp").read_text()
+assert "(std::uintptr_t)pthread_self()" in (ROOT / "headless/crash_report.h").read_text()
+thread_token = audio_tokens[0]
 model = r"""
 #include <array>
 #include <cassert>
@@ -91,4 +105,31 @@ with tempfile.TemporaryDirectory(prefix="eden-audio-lock-") as tmp:
             check=True, timeout=90,
         )
         subprocess.run([str(exe)], check=True, timeout=90)
+# Compile and execute the extracted conversion with both pthread_t ABIs.
+# No PS5 SDK or device is needed for this exact C++ expression check.
+with tempfile.TemporaryDirectory(prefix="eden-audio-thread-token-") as tmp:
+    for name, pthread_type, returned, expected in (
+        ("pointer", "void*", "&sentinel", "reinterpret_cast<std::uintptr_t>(&sentinel)"),
+        ("integer", "unsigned long", "12345UL", "12345UL"),
+    ):
+        source = Path(tmp) / (name + ".cpp")
+        source.write_text(
+            "#include <cstdint>\\n"
+            f"using pthread_t = {pthread_type};\\n"
+            "int sentinel = 7;\\n"
+            f"pthread_t pthread_self() {{ return {returned}; }}\\n"
+            "int main() {\\n"
+            f"  const std::uintptr_t token = {thread_token};\\n"
+            f"  return token == {expected} ? 0 : 1;\\n"
+            "}\\n"
+        )
+        for opt in ("0", "2"):
+            exe = Path(tmp) / (name + "-O" + opt)
+            subprocess.run(
+                [compiler, "-std=c++20", "-O" + opt, "-Wall", "-Wextra",
+                 "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=all",
+                 str(source), "-o", str(exe)], check=True, timeout=90,
+            )
+            subprocess.run([str(exe)], check=True, timeout=90)
+print("PS5_AUDIO_PTHREAD_TOKEN_HOST_PASS pointer=1 integer=1 O0=1 O2=1")
 print("PS5_AUDIO_OUTPUT_LOCK_SCOPE_HOST_PASS O0=1 O2=1 O3=1 sanitizer=asan_ubsan")

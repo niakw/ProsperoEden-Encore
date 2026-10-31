@@ -38,7 +38,7 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
             Crash::audio_completed_blocks.store(0, std::memory_order_relaxed);
             Crash::audio_last_output_result.store(0, std::memory_order_relaxed);
             Crash::audio_worker_thread.store(
-                static_cast<std::uintptr_t>(pthread_self()), std::memory_order_release);
+                (std::uintptr_t)pthread_self(), std::memory_order_release);
             std::unique_lock lock(mutex);
             while (!stop.stop_requested()) {
                 Crash::audio_worker_phase.store(1, std::memory_order_relaxed);

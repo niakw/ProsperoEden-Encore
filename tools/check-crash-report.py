@@ -186,6 +186,16 @@ int main(int argc, char** argv) {
     if (mode == "readable") return ReadableCheck();
     if (mode != "again")
         Eden::Crash::SetSession("game Test.nsp (0100000000000000), Vulkan, resolution 2x, AMD FSR", true);
+    if (mode == "audio-probe")
+        std::thread([] {
+            Eden::Crash::NameThread("audio");
+            Eden::Crash::audio_worker_thread.store(
+                static_cast<std::uintptr_t>(pthread_self()), std::memory_order_release);
+            Eden::Crash::audio_worker_phase.store(3, std::memory_order_relaxed);
+            Eden::Crash::audio_completed_blocks.store(41, std::memory_order_relaxed);
+            Eden::Crash::audio_last_output_result.store(-5, std::memory_order_relaxed);
+            Outer(reinterpret_cast<volatile int*>(bad));
+        }).join();
     if (mode == "abort") std::abort();
     if (mode == "ill") __builtin_trap();
     if (mode == "throw")
@@ -340,6 +350,16 @@ def check(binary, console):
     assert re.search(r'^  eboot\+0x[0-9a-f]+   Middle\(', named, re.M) and \
         re.search(r'^  eboot\+0x[0-9a-f]+   Outer\(', named, re.M) and ' ?' not in named, named
     assert '\n1 stack values that point into the code but do not follow a call were left out.' in named, named
+
+    # A real crash on the audio worker must include its last lock-free phase,
+    # without allocating or resolving symbols on the signal handler path.
+    status, out, err, reports, note = run(binary, 'audio-probe', console)
+    assert status == 42 and len(reports) == 1, (status, err[-300:])
+    snapshot = reports[0].read_text()
+    assert 'thread: audio (0x' in snapshot
+    assert 'audio worker snapshot: phase=3 ' in snapshot
+    assert 'blocks=41 output_result=0xfffffffb' in snapshot
+    assert 'audio worker snapshot:' not in report  # non-audio threads excluded
 
     # Other ways to end.
     status, out, err, reports, note = run(binary, 'abort', console)

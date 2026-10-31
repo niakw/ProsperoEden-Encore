@@ -344,6 +344,19 @@ void Compose(const Kind* kind, int code, std::uint64_t address, const Registers&
     t.Put(")\nrunning: ");
     t.Put(sessions[session_now.load(std::memory_order_acquire) & 1]);
     t.Put('\n');
+    // The audio worker publishes only lock-free scalars. A crashing audio
+    // thread can be identified even if the heap or logging mutex is corrupt.
+    // Do not confuse a different thread with a stale completed audio stream.
+    if (self != 0 && self == audio_worker_thread.load(std::memory_order_acquire)) {
+        t.Put("audio worker snapshot: phase=");
+        t.Dec(audio_worker_phase.load(std::memory_order_relaxed));
+        t.Put(" (1=wait 2=render 3=output 4=accounting 5=exit) blocks=");
+        t.Dec(audio_completed_blocks.load(std::memory_order_relaxed));
+        t.Put(" output_result=0x");
+        t.Hex(static_cast<std::uint32_t>(
+            audio_last_output_result.load(std::memory_order_relaxed)), 8);
+        t.Put('\n');
+    }
 #ifdef PS5_NATIVE
     // No periodic log file in quiet mode. Preserve coarse progress inside
     // the crash report itself, even if the last GPU command never returned.

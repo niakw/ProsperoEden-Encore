@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "devices.h"
+#include "crash_report.h"
 #include "preferences.h"
 #include <algorithm>
 #include <array>
@@ -34,12 +35,19 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
     try {
         worker = std::jthread([this](std::stop_token stop) {
             std::array<s16, kAudioOutGrain * 2> block{};
+            Crash::audio_completed_blocks.store(0, std::memory_order_relaxed);
+            Crash::audio_last_output_result.store(0, std::memory_order_relaxed);
+            Crash::audio_worker_thread.store(
+                static_cast<std::uintptr_t>(pthread_self()), std::memory_order_release);
             std::unique_lock lock(mutex);
             while (!stop.stop_requested()) {
+                Crash::audio_worker_phase.store(1, std::memory_order_relaxed);
                 if (!wake.wait(lock, stop, [this] { return !IsPaused(); })) break;
+                Crash::audio_worker_phase.store(2, std::memory_order_relaxed);
                 ProcessAudioOutAndRender(block, kAudioOutGrain);
                 // AudioOut paces complete 256-frame, 48 kHz stereo blocks.
                 in_flight = true;
+                Crash::audio_worker_phase.store(3, std::memory_order_relaxed);
                 lock.unlock();
                 const int result = sceAudioOutOutput(handle, block.data());
                 // Diagnostic-only PCM scan needs no access to stream state.
@@ -54,6 +62,8 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
                 }
                 lock.lock();
                 in_flight = false;
+                Crash::audio_worker_phase.store(4, std::memory_order_relaxed);
+                Crash::audio_last_output_result.store(result, std::memory_order_relaxed);
                 wake.notify_all();
                 if (result < 0) {
                     failed = true;
@@ -63,7 +73,10 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
                 }
                 output_frames += kAudioOutGrain;
                 nonzero_frames += nonzero_in_block;
+                Crash::audio_completed_blocks.fetch_add(1, std::memory_order_relaxed);
             }
+            Crash::audio_worker_phase.store(5, std::memory_order_relaxed);
+            Crash::audio_worker_thread.store(0, std::memory_order_release);
         });
     } catch (...) {
         sceAudioOutClose(handle);

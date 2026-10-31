@@ -30,6 +30,14 @@ namespace Eden::Crash {
 inline std::atomic<std::uint64_t> gpu_completed_commands{0};
 // Watchdog writes only in memory; dump its suspicion count on fatal crash.
 inline std::atomic<unsigned> gpu_stall_suspicions{0};
+// Low-frequency audio worker breadcrumbs, sampled ONLY on fatal crash. This
+// distinguishes a crash during PCM rendering from the PS5 AudioOut syscall
+// without logging every 256-frame block or taking a signal-unsafe mutex.
+// 0=inactive, 1=wait, 2=render, 3=device output, 4=accounting, 5=exit.
+inline std::atomic<std::uintptr_t> audio_worker_thread{0};
+inline std::atomic<unsigned> audio_worker_phase{0};
+inline std::atomic<std::uint64_t> audio_completed_blocks{0};
+inline std::atomic<int> audio_last_output_result{0};
 // Threads that named themselves (the SetCurrentThreadName hook, performance.cpp), for the
 // report's "thread" line. Lock-free: the handler reads it on a thread that may hold any lock.
 struct NamedThread {

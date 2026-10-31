@@ -27,10 +27,12 @@
       "path": "headless/audio.cpp",
       "disposition": "code_changed_in_batch",
       "contract_id": "U04",
-      "reviewed_source_git_blob": "da3990d8da9be49beb0d224f0040e247f1a14ad1",
+      "reviewed_source_git_blob": "2d1e0a7a5aa6034a6ada1d41b41dc9d617c997be",
       "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
       "proof_ref": "tools/check-ps5-audio-output-lock-scope-host.py",
-      "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured."
+      "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured. Crash-phase instrumentation source reviewed 2026-10-31: fatal-handler-only audio phase snapshot; no performance or gameplay validation. See docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "source_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "supplemental_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md"
     },
     {
       "path": "headless/boot_trace.h",
@@ -86,8 +88,10 @@
       "path": "headless/crash_report.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U11",
-      "source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Source-read optimization triage, no additional hotpath edit justified: Crash reporter keeps signal path separate from helper threads, uses fixed buffer and atomics; startup/report failure handling isn't a per-frame cost, do not simplify signal safety without fault trace."
+      "source_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "evidence": "Source-read optimization triage, no additional hotpath edit justified: Crash reporter keeps signal path separate from helper threads, uses fixed buffer and atomics; startup/report failure handling isn't a per-frame cost, do not simplify signal safety without fault trace. Crash-phase instrumentation source reviewed 2026-10-31: fatal-handler-only audio phase snapshot; no performance or gameplay validation. See docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "reviewed_source_git_blob": "467c87d8473eccf24942d9870a9ce43b35d525ec",
+      "supplemental_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md"
     },
     {
       "path": "headless/crash_report.h",
@@ -95,8 +99,10 @@
       "contract_id": "U48",
       "prior_status": "SOURCE",
       "proof_ref": "tools/check-headless-app-policy-owners.py",
-      "source_review_document": "docs/EDEN_NATIVE_POLICY_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Source read: Crash lifecycle and atomic diagnostic counters are already separated; no performance defect localized. Contract U48; no new CPU/GPU optimization justified by current evidence. Hardware/functional validation separate."
+      "source_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "evidence": "Source read: Crash lifecycle and atomic diagnostic counters are already separated; no performance defect localized. Contract U48; no new CPU/GPU optimization justified by current evidence. Hardware/functional validation separate. Crash-phase instrumentation source reviewed 2026-10-31: fatal-handler-only audio phase snapshot; no performance or gameplay validation. See docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "reviewed_source_git_blob": "6d4a9e37e243f99424a5af9f89fc35e30bcf3337",
+      "supplemental_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md"
     },
     {
       "path": "headless/crash_site.h",

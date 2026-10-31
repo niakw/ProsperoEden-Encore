@@ -322,7 +322,7 @@ jobs:
           python3 tools/ns2/check_egl_view_overlay.py
           for cxx in clang++ g++; do
             "${cxx}" -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined \
-              -Iheadless/ns2/eglantine tools/ns2/test_egl_view_type.cpp \
+              -Ivendor/encore-active/ns2-helpers/include tools/ns2/test_egl_view_type.cpp \
               -o "build-ns2-a64/egl-view-${cxx//+/}"
             "build-ns2-a64/egl-view-${cxx//+/}"
             "${cxx}" -std=c++20 -O1 -Wall -Wno-unused-parameter \

@@ -35,3 +35,7 @@ N60's temporary buffers now wait for Vulkan completion via `runtime.Finish()` be
 ## Kernel SVC owner (N3v)
 
 N3v now compiles in the **real** `vendor/sources/eden/src/core/hle/kernel/svc.cpp` behind `EDEN_NS2_SVC_TRACE`; the bounded trace helper lives under `vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h`. The CMake-generated duplicate SVC translation unit and its generator are removed. The host workflow syntax-checks that production source with the research macro. Runtime success and PS5 validation are not claimed.
+
+## N49 consolidated Vulkan dimensionality guard
+
+The Eglantine 2D/3D view-mismatch safety check now runs behind `EDEN_NS2_VIEW_DIMENSION_GUARD` inside the **same maintained native PS5 Vulkan `vk_texture_cache_cost.cpp`** as N57. Its generic helper lives in `vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h`. The obsolete complete translation-unit copy in `headless/ns2/eglantine/` is deleted. Host checks reconstruct and verify the pre-N49 and pre-N57 Git source hashes without accepting unrelated differences.

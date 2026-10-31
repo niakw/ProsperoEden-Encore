@@ -1524,27 +1524,26 @@ endif()
 
 # Sparse VMA, VkImage factory and requirements are in the shared vendor fork.
 
-# Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
-# or Switch 1 changes; the full pinned original owner is retained otherwise.
+# N49: opt-in image-view safety in one maintained PS5 Vulkan source owner.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
     "Research only: reject cross-dimension 3D shader/image views" OFF)
 if(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-        message(FATAL_ERROR "Eglantine NS2 image view guard requires native PS5 Vulkan and NS2 metadata")
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 image view guard requires PS5 Vulkan research")
     endif()
-    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp" eden_ns2_egl_view_owner)
-    if(eden_ns2_egl_view_owner EQUAL -1)
-        message(FATAL_ERROR "PS5 Vulkan texture-cache fork owner changed: re-audit Eglantine port")
+    set(EDEN_NS2_N49_HELPER
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h")
+    if(NOT EXISTS "${EDEN_NS2_N49_HELPER}")
+        message(FATAL_ERROR "N49 maintained view-dimension guard missing")
     endif()
-    set(eden_ns2_egl_view_file
-        "${PORT_ROOT}/headless/ns2/eglantine/video_core/renderer_vulkan/vk_texture_cache.cpp")
-    if(NOT EXISTS "${eden_ns2_egl_view_file}")
-        message(FATAL_ERROR "Missing Eglantine experimental Vulkan owner")
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp" eden_ns2_view_owner)
+    if(eden_ns2_view_owner EQUAL -1)
+        message(FATAL_ERROR "N49 native Vulkan source selection changed")
     endif()
-    list(REMOVE_ITEM video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp")
-    list(APPEND video_sources "${eden_ns2_egl_view_file}")
     target_include_directories(video_core BEFORE PRIVATE
-        "${PORT_ROOT}/headless/ns2/eglantine")
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
 endif()
 set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")
 

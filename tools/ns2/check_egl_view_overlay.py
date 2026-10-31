@@ -1,32 +1,26 @@
 #!/usr/bin/env python3
-"""N49: exact source-owner parity guard for the Eglantine Vulkan view fix."""
+"""N49: verify single maintained native Vulkan view owner, not a second TU."""
 from pathlib import Path
+from native_astc_vendor_parity import normalized
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
-PORT = ROOT / "headless/ns2/eglantine/video_core/renderer_vulkan/vk_texture_cache.cpp"
-CMAKE = ROOT / "headless/CMakeLists.txt"
-anchor = '    VkImageViewType view_type = ImageViewType(type);\n    VkImageSubresourceRange subresource_range = MakeSubresourceRange(aspect_mask, range);\n    if (texture_type) {'
-replacement = '''    VkImageViewType view_type = ImageViewType(type);
-    VkImageSubresourceRange subresource_range = MakeSubresourceRange(aspect_mask, range);
-    // Eglantine ca524c9: shader-declared dimensionality must not turn a
-    // Vulkan 2D resource into a 3D image view or the other way around.
-    if (texture_type &&
-        Eden::NS2::Vulkan::CrossDimensionView(view_type, ImageViewType(*texture_type),
-                                               VK_IMAGE_VIEW_TYPE_3D)) {
-        LOG_WARNING(Render_Vulkan,
-                    "NS2 shader image dimension mismatches physical image at 0x{:x}; "
-                    "keeping the real image view type", gpu_addr);
-        texture_type.reset();
-    }
-    if (texture_type) {'''
-include = '#include "video_core/renderer_vulkan/vk_texture_cache.h"'
-original = SOURCE.read_text()
-assert original.count(anchor) == 1 and original.count(include) == 1, "owner changed"
-expected = original.replace(anchor, replacement).replace(
-    include, include + '\n#include "video_core/renderer_vulkan/ns2_view_type_guard.h"')
-assert PORT.read_text() == expected, "the experimental Vulkan TU has diverged from its pinned owner"
-cmake = CMAKE.read_text()
-assert 'EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL' in cmake
-assert cmake.count('list(REMOVE_ITEM video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp")') == 1
-assert 'EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR' in cmake
-print("N49_VIEW_OWNER_PARITY_PASS full_ps5_fork_owner=1 release_forbidden=1")
+HEADER = ROOT / "vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h"
+CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
+src = SOURCE.read_text()
+assert "#ifdef EDEN_NS2_VIEW_DIMENSION_GUARD" in src
+assert "CrossDimensionView(view_type, ImageViewType(*texture_type)" in src
+assert src.count("VkImageViewType view_type = ImageViewType(type);") == 1
+assert HEADER.exists()
+assert "CrossDimensionView(" in HEADER.read_text()
+assert "EDEN_NS2_VIEW_DIMENSION_GUARD=1" in CMAKE
+assert "EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR" in CMAKE
+assert "eden_ns2_egl_view_file" not in CMAKE
+assert "headless/ns2/eglantine/video_core/renderer_vulkan/vk_texture_cache.cpp" not in CMAKE
+
+# N49 and N57 are both removed by the byte-strict shared F07 source oracle.
+native = normalized(ROOT)
+assert "EDEN_NS2_VIEW_DIMENSION_GUARD" not in native["vk_texture_cache_cost.cpp"]
+assert "EDEN_NS2_ASTC_LAYER_DECODE" not in native["vk_texture_cache_cost.cpp"]
+assert "EDEN_NS2_ASTC_LAYER_DECODE" not in native["vk_compute_pass_cost.cpp"]
+print("N49_VIEW_NATIVE_VENDOR_PARITY_AND_DEFAULT_SOURCE_PASS")

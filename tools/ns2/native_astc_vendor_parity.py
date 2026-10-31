@@ -10,7 +10,7 @@ import subprocess
 OWNER = Path("vendor/encore-active/eden-vulkan")
 ASTC = Path("vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan")
 BASELINE = {
-    "vk_texture_cache_cost.cpp": ("46be65804131d8ffcc4951fc70d2cc6a449c2e85",
+    "vk_texture_cache_cost.cpp": ("b2b08b577c3a3f9a4aeda10beb208a1b6d0a07e6",
                                   "3e8c9b250fc97d2d8366cacee3d1b089d3945149"),
     "vk_compute_pass_cost.cpp": ("f6de3b8406e0c312a84b677f6a1c4637ec0cc0f2",
                                  "596f86f2d27c1190f5d57ce6a591e32d419c7f08"),
@@ -46,6 +46,19 @@ def normalized(root: Path) -> dict[str, str]:
         text = (root / OWNER / name).read_text()
         assert git_blob(text.encode()) == current_sha, ("N57 maintained source drift", name)
         if name == "vk_texture_cache_cost.cpp":
+            # N49's single vendor-owner addition, reversed without masking F07.
+            text = once(text,
+                '#include "video_core/renderer_vulkan/vk_texture_cache.h"\n'
+                '#ifdef EDEN_NS2_VIEW_DIMENSION_GUARD\n'
+                '#include "video_core/renderer_vulkan/ns2_view_type_guard.h"\n#endif',
+                '#include "video_core/renderer_vulkan/vk_texture_cache.h"')
+            start = '#ifdef EDEN_NS2_VIEW_DIMENSION_GUARD\n    // Keep physical 2D/3D dimensionality'
+            end = '#endif\n    if (texture_type) {'
+            assert text.count(start) == text.count(end) == 1, "N49 guard differs"
+            i = text.index(start)
+            j = text.index(end, i)
+            text = text[:i] + '    if (texture_type) {' + text[j + len(end):]
+            assert git_blob(text.encode()) == "46be65804131d8ffcc4951fc70d2cc6a449c2e85", "N49 touched unrelated PS5 GPU source"
             text = once(text, '#include "performance.h"\n#ifdef EDEN_NS2_ASTC_LAYER_DECODE\n#include <stdexcept>\n#endif',
                         '#include "performance.h"')
             text = once(text,

@@ -154,3 +154,20 @@ Le run CI, son commit et les éventuels écarts de validation sont renseignés
 une fois la vérification GitHub terminée. Cette étape est menée **sans
 solliciter de test console** : la validation s'arrête aux preuves que les
 runners et les tests hôtes permettent effectivement d'établir.
+
+## 8. N42 — contrôle CRC de textures intégral et corruption d'un octet
+
+**Commit source :** [`7a86fcee66fbdf253a69acabb23a5635c45eef46`](https://github.com/niakw/ProsperoEden-Encore/commit/7a86fcee66fbdf253a69acabb23a5635c45eef46).
+**CI :** [run 41150976739](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41150976739) — **SUCCESS, 2/2 jobs**.
+**Artefact :** [`ns2-fc27-synthetic-stress` (ID 13023665238)](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41150976739/artifacts/13023665238), rétention de 7 jours.
+
+- NSP PFS0 de **8 391 065 octets**, SHA-256 `5d090faa03b00be3a30f8a6f43fd479b2543e846b6c5d3d29d376412fa4993cd`. L'augmentation de taille par rapport au premier run provient du manifeste corrigé, et non de nouveaux assets EA.
+- `REAL_ENCORE_EXTRACTED_NSP_PFS0_PASS` sous **Clang -O1 et GCC -O2**, avec ASan/UBSan : six entrées, route ExeFS extraite vraie, `main` **407 octets** et `main.npdm` **1536 octets** identiques au référentiel.
+- **CRC32 intégral des trois charges** `hud.rgba`, `pitch.rgba`, `kits.rgba` calculé par un parseur Python indépendant et comparé aux octets relus par le constructeur C++ réel, sous les deux compilateurs.
+- Mutation négative : **1 octet** altéré dans la fin du payload maillot, avec en-tête PFS0 inchangé ; `REAL_PFS0_TEXTURE_BYTE_CORRUPTION_DETECTED` sous Clang et GCC. Le test échoue si cette mutation échappe au contrôle.
+- Les autres rejets (`magic` erroné, table tronquée, `main` absent) continuent de réussir. Les tests F03/F04/F07 précédents restent verts.
+- **Limite :** CRC de **fichiers PFS0 lus en mémoire hôte**, pas CRC d'une surface Vulkan réelle. Cela ne valide aucun rendu de maillot, HUD ou terrain sur PS5.
+
+## 9. N43 — extension de la validation des gels et de la fraîcheur du présentateur
+
+Le workflow FC27 est renforcé avec trois tests de sources de production exécutés avec GPU simulé : récupération TIC → rendu → gestionnaire de présentation F03 ; parcours nvdisp/Host1x → Vulkan → présentation F05 sur **260 soumissions** ; publication de l'événement noyau / réveil d'attente F05. Ces scénarios complètent le test des seules métadonnées de textures. Le run N43 sera distingué des résultats N42 une fois la CI terminée ; **aucune mesure console n'est prévue ni demandée**.

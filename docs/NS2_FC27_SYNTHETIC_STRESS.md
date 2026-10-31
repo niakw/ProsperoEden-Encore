@@ -45,3 +45,16 @@ present timestamps, with logs and original game files kept private.
 Le rapport versionne avec SHA de source, chiffres historiques, x1/x4/x8,
 injections de bogues, sorties des tests natifs, lien artefact, et limitations
 se trouve dans [NS2_FC27_STRESS_RESULTS_2026-10-31.md](NS2_FC27_STRESS_RESULTS_2026-10-31.md).
+
+## Host-only extension: texture-to-present and freeze/wait regression
+
+The CI also executes source-extracted F03 texture-to-async-present freshness,
+F05 nvdisp/Host1x-to-Vulkan presentation with ordered frame delivery and
+F05 kernel wait publication under mock host scheduling. These exercises
+bridge distinct failure modes (stale texture, independent compositor
+liveness, and blocked guest progress), **not** live PS5 GPU pixels.
+
+The project owner cannot perform console tests; treat them as outside this
+qualification cycle. Do not report an FPS gain or a confirmed game fix on
+this evidence alone. The detailed result ledger is
+[NS2_FC27_STRESS_RESULTS_2026-10-31.md](NS2_FC27_STRESS_RESULTS_2026-10-31.md).

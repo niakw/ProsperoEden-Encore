@@ -67,11 +67,14 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B tools/check-fc27-f03-native-texture-feedback-chain-host.py
+          python3 -B tools/check-fc27-f03-native-present-freshness-host.py
           python3 -B tools/check-fc27-f04-native-remap-dma-upload-chain-host.py
           python3 -B tools/check-fc27-f07-blit-pipeline-state-host.py
+          python3 -B tools/check-fc27-f05-native-nvdisp-vulkan-present-chain-host.py
           python3 -B tools/check-ps5-f07-hud-tic-freshness-host.py
       - name: Frame-cache lock and contention contracts
         run: |
           set -euo pipefail
           python3 -B tools/check-ps5-f07-frame-cache-ownership-host.py
+          python3 -B tools/check-fc27-f05-native-kernel-wait-publication-host.py
           python3 -B tools/check-fc27-cache-contention-classifier.py

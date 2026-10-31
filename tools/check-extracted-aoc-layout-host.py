@@ -22,6 +22,7 @@ assert "romfs_factory.cpp" in cmake and "addon_content_manager.cpp" in cmake
 assert "file_sys/romfs_factory.cpp" in cmake
 assert "hle/service/aoc/addon_content_manager.cpp" in cmake
 assert "CreateRomFS(std::move(directory))" in wrapper.read_text()
+assert 'std::find(disabled.begin(), disabled.end(), "DLC")' in wrapper.read_text()
 ui = (root / "headless/metadata_bridge.cpp").read_text()
 assert "FileSys::ExtractedAoc::Scan(scan_paths)" in ui
 assert "dlc.insert(entry.title_id).second" in ui

@@ -266,8 +266,18 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
         if (stem == "base" || stem == "game") named_base.push_back(candidate);
     }
     if (named_base.size() == 1) return named_base.front();
-    if (named_base.empty() && candidates.size() == 1) return candidates.front();
-    return {};
+    if (named_base.size() > 1) return {};
+    if (candidates.size() == 1) return candidates.front();
+    // A unique game-card image is a safer base candidate than an NSP when
+    // a mixed folder also contains packaged updates and DLC. Never guess
+    // between two NSPs or two card images without content metadata.
+    std::string unique_card;
+    for (const auto& candidate : candidates) {
+        if (!IsCardImageFile(candidate)) continue;
+        if (!unique_card.empty()) return {};
+        unique_card = candidate;
+    }
+    return unique_card;
 }
 
 inline std::string FindGameFolderInput(const std::filesystem::path& title) {

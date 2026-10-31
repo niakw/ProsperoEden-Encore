@@ -43,6 +43,7 @@
 #include <future>
 #include <initializer_list>
 #include <mutex>
+#include <optional>
 #include <nlohmann/json.hpp>
 #include <stb_image.h>
 #include <sys/stat.h>
@@ -86,6 +87,64 @@ bool IsReadableAvatarFile(const std::string& path) {
     return readable;
 }
 #endif
+
+// Only a deconstructed title's base content counts towards its Library size.
+// Its executable 'main' is just one 20-40 MiB NSO; counting that alone makes
+// a multi-gigabyte game appear as a 32 MB title. Do NOT add updates or DLC,
+// follow symlinks, block on network media, or guess if traversal is incomplete.
+// The entire walk runs on the cancellable Library background scan.
+std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& title,
+                                                const std::atomic<bool>* cancel) {
+    namespace fs = std::filesystem;
+    std::error_code error;
+    if (!Eden::IsSafeExtractedDirectory(title)) return std::nullopt;
+    fs::recursive_directory_iterator it(title, fs::directory_options::skip_permission_denied, error);
+    if (error) return std::nullopt;
+    const fs::recursive_directory_iterator end;
+    std::uint64_t total = 0;
+    std::size_t examined = 0;
+    for (; it != end; it.increment(error)) {
+        if (error || ++examined > 40000 || it.depth() > 16 ||
+            (cancel && cancel->load(std::memory_order_acquire)))
+            return std::nullopt;
+        const auto status = it->symlink_status(error);
+        if (error) return std::nullopt;
+        if (fs::is_symlink(status)) {
+            it.disable_recursion_pending();
+            continue;
+        }
+        if (fs::is_directory(status)) {
+            if (Eden::IsAddOnContainerName(it->path().filename().string()))
+                it.disable_recursion_pending();
+            continue;
+        }
+        if (!fs::is_regular_file(status)) continue;
+        const auto size = it->file_size(error);
+        if (error || size > UINT64_MAX - total) return std::nullopt;
+        total += static_cast<std::uint64_t>(size);
+    }
+    if (error) return std::nullopt;
+    return total > 0 ? std::optional<std::uint64_t>{total} : std::nullopt;
+}
+
+// Local user-supplied covers are a safe offline fallback for extracted titles
+// with no packaged Control NCA or Nlib match. No game-name-specific artwork.
+std::string ExtractedLocalCover(const std::filesystem::path& title) {
+    namespace fs = std::filesystem;
+    if (!Eden::IsSafeExtractedDirectory(title)) return {};
+    for (const char* relative : {"cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
+                                 "icon.tga", "icon.png", "icon.jpg",
+                                 "base/cover.tga", "base/cover.png", "base/cover.jpg",
+                                 "base/icon.png", "base/icon.jpg"}) {
+        const fs::path candidate = title / relative;
+        std::error_code error;
+        const auto status = fs::symlink_status(candidate, error);
+        if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
+        const auto size = fs::file_size(candidate, error);
+        if (!error && size >= 128 && size <= (16u << 20)) return candidate.string();
+    }
+    return {};
+}
 
 std::uint64_t ResolveTitleId(const std::string& path, const std::string& file) {
     const std::uint64_t metadata_id = eden_game_title_id(path.c_str());
@@ -1657,14 +1716,23 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             ++non_regular;
             continue;
         }
-        char size[32];
-        const double bytes = static_cast<double>(info.st_size);
-        if (bytes >= 1073741824.0) std::snprintf(size, sizeof(size), "%.1f GB", bytes / 1073741824.0);
-        else std::snprintf(size, sizeof(size), "%.1f MB", bytes / 1048576.0);
+        char size[32]{};
+        const auto complete_base_size = deconstructed ?
+            ExtractedBaseBytes(entry.path(), cancel) :
+            std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};
+        if (cancel && cancel->load(std::memory_order_acquire)) return {};
+        if (complete_base_size) {
+            const double bytes = static_cast<double>(*complete_base_size);
+            if (bytes >= 1073741824.0)
+                std::snprintf(size, sizeof(size), "%.1f GB", bytes / 1073741824.0);
+            else
+                std::snprintf(size, sizeof(size), "%.1f MB", bytes / 1048576.0);
+        }
         pe::ui::Game game;
         game.name = CleanTitle(entry_name);
         game.format = format;
-        game.size = size;
+        // Unknown size is more truthful than the 32 MB 'main' executable.
+        game.size = complete_base_size ? std::string{size} : std::string{"—"};
         game.file = file;
         // A game whose data cannot be read is still listed, by its file name.
         try {
@@ -1680,8 +1748,11 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             }
             if ((metadata & EDEN_METADATA_COVER) && std::rename(staged.c_str(), cover.c_str()) == 0)
                 game.cover = cover;
-            else
+            else {
                 (void)std::remove(staged.c_str());
+                if (IsFile(cover)) game.cover = cover; // previous successful extraction
+                else if (deconstructed) game.cover = ExtractedLocalCover(entry.path());
+            }
             if (cancel && cancel->load(std::memory_order_acquire))
                 return {}; // extraction finished; skip ID/Nlib/add-on metadata
             game.title_id = ResolveTitleId(path, file);

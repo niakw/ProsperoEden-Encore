@@ -9,7 +9,7 @@ The historical F01–F07 optimization findings are not reclassified as closed.
 
 | Source | Reviewed Git blob | New behavior, safety and review outcome |
 | --- | --- | --- |
-| `headless/game_files.h` | `95e61b884c245efaa6a4de857d2bf91a4b88d5d5` | Bound/symlink-free nested source selection, isolated add-on roots, one base candidate; avoid scanning RomFS/ExeFS during discovery |
+| `headless/game_files.h` | `736230b434d58406841e702e5dbd70d4c391f578` | Bound/symlink-free nested source selection, isolated add-on roots, one base candidate; avoid scanning RomFS/ExeFS during discovery |
 | `headless/main.cpp` | `598d7632a39c4e58ab31acb26c789eae34762520` | Launch-time revalidation and native provider roots for the selected title; no GPU/JIT frame loop changed |
 | `headless/metadata_bridge.cpp` | `0eb7bd4cb4cbf615b4cbd870d6bc87bf30fed9d5` | UI add-on snapshot aggregates global and collocated provider roots; same metadata-aware Update/AOC classification |
 | `headless/metadata_bridge.h` | `a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9` | C ABI scanner receives ROM root for collocated add-ons; both headless call sites updated |
@@ -26,7 +26,7 @@ The historical F01–F07 optimization findings are not reclassified as closed.
    case-variant named containers.
 2. **Package add-ons** use `ExternalContentProvider` and their own Nintendo
    content records/title IDs. Folder names alone never grant DLC ownership.
-   Locally collocated update/DLC folders are discovered without copying games
+   Both named and arbitrarily named nested folders containing packaged add-ons are discovered (excluding the selected base package) without copying games
    into process memory.
 3. **Extracted updates** are a separately marked experimental virtual
    file overlay, not native NCA/BKTR patch emulation. The lookup is bounded

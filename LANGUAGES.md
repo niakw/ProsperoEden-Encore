@@ -2,7 +2,7 @@
 
 [← English README](README.md) · [English full installation guide](INSTALL.md)
 
-The launcher supports **18 language/region selections in 13 distinct languages**. This table covers every entry in `headless/settings_store.h::kLanguageKeys`. **English (US) is the default.**
+The launcher supports **18 language/region selections in 13 distinct languages**. The codes in the table are the exact selector keys in `headless/settings_store.h::kLanguageKeys` (they can differ from catalog filenames; e.g. `fr` selects the `fr-FR` catalog). **English (US) is the default.**
 
 English appears first. Other languages are broadly ordered by worldwide speaking audience, with regional variants grouped together. This is not an exact speaker-count ranking or a ranking of Encore players.
 
@@ -13,19 +13,19 @@ English appears first. Other languages are broadly ordered by worldwide speaking
 | 简体中文 (`zh-Hans`) | [Read](README.zh-Hans.md) | [Install](docs/i18n/INSTALL.zh-Hans.md) |
 | 繁體中文 (`zh-Hant`) | [Read](README.zh-Hant.md) | [Install](docs/i18n/INSTALL.zh-Hant.md) |
 | Español (Latinoamérica) (`es-419`) | [Read](README.es-419.md) | [Install](docs/i18n/INSTALL.es-419.md) |
-| Español (España) (`es-ES`) | [Read](README.es.md) | [Install](docs/i18n/INSTALL.es-ES.md) |
-| Français (France) (`fr-FR`) | [Read](README.fr.md) | [Install](docs/i18n/INSTALL.fr-FR.md) |
+| Español (España) (`es`) | [Read](README.es.md) | [Install](docs/i18n/INSTALL.es-ES.md) |
+| Français (France) (`fr`) | [Read](README.fr.md) | [Install](docs/i18n/INSTALL.fr-FR.md) |
 | Français (Canada) (`fr-CA`) | [Read](README.fr-CA.md) | [Install](docs/i18n/INSTALL.fr-CA.md) |
 | Português (Brasil) (`pt-BR`) | [Read](README.pt-BR.md) | [Install](docs/i18n/INSTALL.pt-BR.md) |
-| Português (Portugal) (`pt-PT`) | [Read](README.pt-PT.md) | [Install](docs/i18n/INSTALL.pt-PT.md) |
-| Русский (`ru-RU`) | [Read](README.ru.md) | [Install](docs/i18n/INSTALL.ru.md) |
-| Deutsch (`de-DE`) | [Read](README.de.md) | [Install](docs/i18n/INSTALL.de.md) |
-| 日本語 (`ja-JP`) | [Read](README.ja.md) | [Install](docs/i18n/INSTALL.ja.md) |
-| 한국어 (`ko-KR`) | [Read](README.ko.md) | [Install](docs/i18n/INSTALL.ko.md) |
-| Italiano (`it-IT`) | [Read](README.it.md) | [Install](docs/i18n/INSTALL.it.md) |
-| ไทย (`th-TH`) | [Read](README.th.md) | [Install](docs/i18n/INSTALL.th.md) |
-| Polski (`pl-PL`) | [Read](README.pl.md) | [Install](docs/i18n/INSTALL.pl.md) |
-| Nederlands (`nl-NL`) | [Read](README.nl.md) | [Install](docs/i18n/INSTALL.nl.md) |
+| Português (Portugal) (`pt`) | [Read](README.pt-PT.md) | [Install](docs/i18n/INSTALL.pt-PT.md) |
+| Русский (`ru`) | [Read](README.ru.md) | [Install](docs/i18n/INSTALL.ru.md) |
+| Deutsch (`de`) | [Read](README.de.md) | [Install](docs/i18n/INSTALL.de.md) |
+| 日本語 (`ja`) | [Read](README.ja.md) | [Install](docs/i18n/INSTALL.ja.md) |
+| 한국어 (`ko`) | [Read](README.ko.md) | [Install](docs/i18n/INSTALL.ko.md) |
+| Italiano (`it`) | [Read](README.it.md) | [Install](docs/i18n/INSTALL.it.md) |
+| ไทย (`th`) | [Read](README.th.md) | [Install](docs/i18n/INSTALL.th.md) |
+| Polski (`pl`) | [Read](README.pl.md) | [Install](docs/i18n/INSTALL.pl.md) |
+| Nederlands (`nl`) | [Read](README.nl.md) | [Install](docs/i18n/INSTALL.nl.md) |
 
 ## How languages work
 

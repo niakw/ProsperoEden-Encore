@@ -1,9 +1,35 @@
-# Prospero.Eden Encore — 日本語
+<table width="100%">
+  <tr><td align="center">
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="README.md">English</a> &nbsp; · &nbsp; <a href="README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>
+    <a href="README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="README.de.md">Deutsch</a> &nbsp; · &nbsp; <strong>日本語</strong> &nbsp; · &nbsp; <a href="README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
+  </td></tr>
+</table>
 
-> リビングで楽しむ PS5 エミュレーション · [English (default)](README.md) · [すべての言語](LANGUAGES.md)
+<table width="100%">
+  <tr>
+    <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>
+    <td width="79%" align="left" valign="middle">
+      <h1>Prospero.Eden Encore</h1>
+      <p><strong>リビングで楽しむ PS5 エミュレーション</strong></p>
+      <p>Encore はコントローラー操作のランチャー、ゲームライブラリ、映像設定、診断機能を備えた独立コミュニティプロジェクトです。Sony や任天堂の公式製品ではありません。</p>
+      <p><kbd>13.60 · PS5 実機テスト済み</kbd> &nbsp; <kbd>Vulkan + OpenGL</kbd> &nbsp; <kbd>テレビ向け UI</kbd> &nbsp; <kbd>Dynarmic</kbd></p>
+    </td>
+  </tr>
+</table>
 
-Encore はコントローラー操作のランチャー、ゲームライブラリ、映像設定、診断機能を備えた独立コミュニティプロジェクトです。Sony や任天堂の公式製品ではありません。
+<table width="100%">
+  <tr>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/releases"><strong>ダウンロード</strong></a></td>
+    <td align="center"><a href="docs/i18n/INSTALL.ja.md"><strong>インストール</strong></a></td>
+    <td align="center"><a href="#getting-started"><strong>はじめに</strong></a></td>
+    <td align="center"><a href="#compatibility"><strong>互換性</strong></a></td>
+    <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
+    <td align="center"><a href="TROUBLESHOOTING.md"><strong>ヘルプ</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>計画</strong></a></td>
+  </tr>
+</table>
 
+<a id="getting-started"></a>
 ## はじめに
 
 1. Encore Releases から完全な配布パッケージを入手し、チェックサムを確認します。
@@ -21,12 +47,14 @@ Encore と元の ProsperoEden は同じアプリ ID PPSA99008 を使うため、
 
 [元の版からの移行と更新 — 手順](docs/i18n/INSTALL.ja.md) · [英語の完全なインストールガイド](INSTALL.md)
 
+<a id="compatibility"></a>
 ## 互換性と既知の問題
 
 Encore を PS5 実機で確認したファームウェアは 13.60 のみです。旧版は動く可能性がありますが未確認で、最低対応版も決まっていません。カクつき、HUD の遅延、ゲーム中のボタン問題、一時停止でのフリーズが残る場合があります。ビルド成功は実機動作の保証ではありません。
 
 開発中のコードは NSP/XCI、実験的に NSZ/XCZ を扱います。NRO/NSO/NCA/NAX/KIP の直接読み込みには適切な内容が必要で、拡張子を認識しても起動するとは限りません。
 
+<a id="faq"></a>
 ## よくある質問
 
 Switch 2 は別ブランチで研究中で、現在の PS5 版には含まれません。フレーム生成と自動更新も計画段階です。

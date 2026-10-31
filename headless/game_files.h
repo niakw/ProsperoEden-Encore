@@ -358,17 +358,22 @@ inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
     scan(scan, title_root, 0);
     std::sort(found.begin(), found.end());
     found.erase(std::unique(found.begin(), found.end()), found.end());
-    // An already-selected parent covers its descendants for the provider.
-    found.erase(std::remove_if(found.begin(), found.end(), [&](const fs::path& child) {
+    // Keep only minimal roots; a provider scans their descendants. Build a
+    // separate result to avoid mutating the same vector under std::remove_if.
+    std::vector<fs::path> minimal;
+    for (const auto& child : found) {
+        bool covered = false;
         for (const auto& parent : found) {
             if (child == parent) continue;
             const auto relative = child.lexically_relative(parent);
             if (!relative.empty() && *relative.begin() != ".." &&
-                *relative.begin() != ".")
-                return true;
+                *relative.begin() != ".") {
+                covered = true;
+                break;
+            }
         }
-        return false;
-    }), found.end());
-    return found;
+        if (!covered) minimal.push_back(child);
+    }
+    return minimal;
 }
 } // namespace Eden

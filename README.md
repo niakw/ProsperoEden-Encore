@@ -118,6 +118,8 @@ NCZ block compression permits random reads directly from the compressed file. So
 
 Changing to external storage changes the **root**, not the subdirectory layout. Do **not** delete your persistent data root when upgrading an installation. Encore does not provide commercial software, keys, games or firmware.
 
+**Replacing the original native ProsperoEden folder?** Both apps use title ID `PPSA99008` and the application directory `/data/homebrew/PPSA99008/`. **Back up that entire folder (including any old `assets/`), `/data/prosperoeden/` and any external data root first**; copy the complete Encore application tree over the native app without deleting legacy data, then launch and verify migration. This is an **in-place replacement**, not a second installation. Read the [native ProsperoEden → Encore upgrade guide](INSTALL.md#upgrade-from-native) before copying files. An original-upstream ZIP is **not** an Encore update.
+
 **Full setup and upgrades:** [INSTALL.md](INSTALL.md) · [Build from source](docs/BUILDING.md) · [Support](SUPPORT.md).
 
 ---

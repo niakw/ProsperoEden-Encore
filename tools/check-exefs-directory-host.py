@@ -329,7 +329,7 @@ int main() {
     std::ofstream(outside) << std::string(4096, 'x');
     fs::create_symlink(outside, game / "cover.jpg");
     assert(ExtractedLocalCover(game).empty());
-    const auto cancel = [] { std::atomic<bool> stop{true}; return stop; }();
+    std::atomic<bool> cancel{true};
     assert(!ExtractedBaseBytes(game, &cancel));
     fs::remove_all(root);
     std::puts("EXTRACTED_BASE_FOOTPRINT_AND_ARTWORK_PASS");

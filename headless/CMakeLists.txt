@@ -1851,7 +1851,7 @@ endif()
 add_dependencies(eden-headless eden-metadata)
 
 # N76 -- NS2 guest CNTPCT calibration through Encore's shared CPU/JIT.
-# Based on Eglantine nx2 0218eac. Opt-in, default NS1 unchanged.
+# Upstream-compatible guest tick semantics. Opt-in, default NS1 unchanged.
 option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL
     "Research only: per-program NSW2 31.25 MHz CPU system counter" OFF)
 if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)

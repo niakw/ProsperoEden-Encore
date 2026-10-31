@@ -265,22 +265,26 @@ jobs:
           # Clang 18 CI crashes while instantiating the pre-existing
           # ioctl_serialization.h WrapFixedInlOut constrained template.
           # Test this exact owner with a second real C++20 frontend instead.
-          g++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+          g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -Ivendor/encore-active/ns2-runtime/nvdrv \
+            -Ivendor/encore-active/eden-header-hygiene/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
+      - name: Verify unmodified upstream Eden pin and two warning-free active headers
+        run: python3 -B tools/install-eden-header-hygiene.py --verify
       - name: Syntax-check real process-scoped native GPFIFO channel owner (GCC)
         shell: bash
         run: |
           set -euo pipefail
-          g++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+          g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
             -Ivendor/encore-active/ns2-runtime/nvdrv_as \
             -Ivendor/encore-active/ns2-runtime/nvdrv \
             -Ivendor/encore-active/ns2-runtime/hle \
+            -Ivendor/encore-active/eden-header-hygiene/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp
@@ -297,10 +301,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          g++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
+          g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -Ivendor/encore-active/ns2-runtime/nvdrv_as \
             -Ivendor/encore-active/ns2-runtime/hle \
+            -Ivendor/encore-active/eden-header-hygiene/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp

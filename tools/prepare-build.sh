@@ -45,6 +45,9 @@ python3 -B tools/install-vendored-eden-build-flags.py "$eden"
 step "Always-on guest I-cache and host-service wait backports"
 python3 -B tools/install-active-core-backports.py "$eden"
 python3 -B tools/install-active-core-backports.py "$eden" --check
+step "Two audited, warning-free shared Eden headers (original pin unchanged)"
+python3 -B tools/install-eden-header-hygiene.py "$eden"
+python3 -B tools/install-eden-header-hygiene.py "$eden" --check
 step "R352 fence-safe NVNflinger layer/display cleanup (versioned complete source)"
 python3 -B tools/install-vendored-surface-lifecycle.py "$eden"
 python3 -B tools/check-nvnflinger-dequeue-wakeup.py "$eden"

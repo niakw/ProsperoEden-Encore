@@ -105,7 +105,7 @@ int main() {
     for (bool dispatcher : {false,true}) {
         Shader::ObjectPool<Shader::Maxwell::Flow::Block> blocks{64};
         Shader::Maxwell::Flow::CFG cfg{
-            *env,blocks,env->StartAddress()+sizeof(Shader::ProgramHeader),dispatcher};
+            *env,blocks,static_cast<u32>(env->StartAddress()+sizeof(Shader::ProgramHeader)),dispatcher};
         Require(cfg.ExitsToDispatcher()==dispatcher && !cfg.Functions().empty(),
                 "real Maxwell CFG decoded reviewed native translation");
         const auto& first=cfg.Functions().front();

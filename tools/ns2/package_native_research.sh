@@ -59,6 +59,10 @@ receipt={
  "hardware_qualified":False,
  "release":False,
  "eboot_sha256":hashlib.sha256((app/"eboot.bin").read_bytes()).hexdigest(),
+ "core_homebrew_sha256":hashlib.sha256((app/"core-homebrew.nro").read_bytes()).hexdigest(),
+ "compiled_cmake_profile_sha256":hashlib.sha256(
+     (app.parent.parent.parent/"headless-native/CMakeCache.txt").read_bytes()
+ ).hexdigest(),
 }
 out=app.parent/"NS2_RESEARCH_BUILD_RECEIPT.json"
 out.write_text(json.dumps(receipt,indent=2)+"\n")

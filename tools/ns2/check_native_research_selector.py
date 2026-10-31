@@ -10,7 +10,7 @@ cmake = (root / "headless/CMakeLists.txt").read_text()
 native_script = root / "tools/build-headless-native.sh"
 script = native_script.read_text()
 
-declared = re.findall(r"option\\((EDEN_NS2_[A-Z0-9_]+)\\s", cmake)
+declared = re.findall(r"option\((EDEN_NS2_[A-Z0-9_]+)\s", cmake)
 assert declared and len(declared) == len(set(declared)), "missing/duplicate NS2 CMake options"
 start = script.index("# The shipping PS5 package must never silently acquire")
 end = script.index('cmake -S "$scratch/source"', start)
@@ -25,7 +25,7 @@ assert 'EDEN_FINAL_RELEASE_PROFILE=ON' in gate
 assert 'EDEN_NS2_NATIVE_EXPERIMENTAL=ON' in gate
 
 subprocess.run(["bash", "-n", str(native_script)], check=True)
-test_code = "set -euo pipefail\\n" + gate + '\\nprintf "%s\\n" "${ns2_cmake_args[@]}"\\n'
+test_code = "set -euo pipefail\n" + gate + '\nprintf "%s\n" "${ns2_cmake_args[@]}"\n'
 
 def verify(overrides, expected_exit):
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin")}

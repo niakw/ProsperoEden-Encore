@@ -851,10 +851,10 @@ int main(int argc, char** argv) {
             std::error_code rom_error;
             for (const auto& entry : Eden::ReadNativeDirectory(folder, rom_error)) {
                 const auto filename = entry.path().filename().string();
-                const auto extracted = Eden::FindDeconstructedGameMain(entry.path());
-                if (!Eden::IsGameFile(filename) && extracted.empty()) continue;
+                const auto discovered = Eden::FindGameFolderInput(entry.path());
+                if (!Eden::IsGameFile(filename) && discovered.empty()) continue;
                 const auto path = folder + "/" + filename +
-                    (extracted.empty() ? "" : "/" + extracted);
+                    (discovered.empty() ? "" : "/" + discovered);
                 if (filename.find(development_id) != std::string::npos ||
                     eden_game_title_id(path.c_str()) == development_title) {
                     selected_game = path;
@@ -1117,6 +1117,17 @@ int main(int argc, char** argv) {
             }
             if (!Eden::IsSafeDeconstructedGamePath(selected_root, selected_relative))
                 throw std::runtime_error("Extracted ExeFS title is incomplete or unsafe");
+        }
+        if (selected_path.filename() != "main") {
+            std::filesystem::path selected_root = Eden::AssetsPath("roms");
+            auto relative = selected_path.lexically_relative(selected_root).generic_string();
+            if (!Eden::IsNestedGameFileSelection(relative)) {
+                selected_root = "/data/assets/roms";
+                relative = selected_path.lexically_relative(selected_root).generic_string();
+            }
+            if (Eden::IsNestedGameFileSelection(relative) &&
+                !Eden::IsSafeNestedGameFilePath(selected_root, relative))
+                throw std::runtime_error("Nested game package is missing or unsafe");
         }
         const bool game = std::filesystem::is_regular_file(selected_game);
         if (!game) throw std::runtime_error("Selected ROM is no longer available");

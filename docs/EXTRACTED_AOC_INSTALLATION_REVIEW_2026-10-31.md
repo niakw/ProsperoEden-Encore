@@ -51,7 +51,7 @@ remain experimental file-level overlays rather than complete BKTR/NCA patching.
 | --- | --- | --- |
 | \`vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h\` | \`b08428c7e79be3f86f235f0450bca0bd61c042ef\` | Pure bounded parsing, base ID scoping, symlink and duplicate protection |
 | \`vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h\` | \`c436b14fe6ab9fee2af267fdc706f2e9226524a7\` | Shared runtime registry and read-only virtual RomFS |
-| \`vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp\` | \`5ee2ca1afcee9eb725e57490227a9f12c6de8cf5\` | NCA-first extracted AOC Data storage fallback |
+| \`vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp\` | \`cd11cb32429efcceaf6b3e1144d495cce1569383\` | NCA-first extracted AOC Data storage fallback |
 | \`vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp\` | \`c329c6ba2c60c2641046f282c412567ada8c4aac\` | Combined packaged/extracted AOC enumeration through aoc:u |
 
 \`python3 -B tools/check-extracted-aoc-layout-host.py\` compiles the actual

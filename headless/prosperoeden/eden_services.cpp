@@ -1180,13 +1180,14 @@ int CountFiles(const std::string& directory, std::initializer_list<const char*> 
     return ok ? count : -1;
 }
 
-// Unlike the nine regular file extensions, an extracted ExeFS game is a
-// symlink-free directory containing "main" and "main.npdm".
+// Preserve the original count entry point while including BOTH extracted
+// ExeFS and packaged base inputs inside a title folder. The Home setup
+// counter must agree with the actual Library and CountInstalledGames.
 int CountExeFsFolders(const std::string& directory) {
     bool ok = false;
     int count = 0;
     for (const auto& name : ListEntries(directory, true, ok)) {
-        if (!Eden::FindDeconstructedGameMain(std::filesystem::path(directory) / name).empty())
+        if (!Eden::FindGameFolderInput(std::filesystem::path(directory) / name).empty())
             ++count;
     }
     return ok ? count : -1;

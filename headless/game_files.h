@@ -7,6 +7,8 @@
 #pragma once
 #include <algorithm>
 #include <cctype>
+#include <charconv>
+#include <cstdint>
 #include <filesystem>
 #include <string>
 #include <string_view>
@@ -47,6 +49,17 @@ inline bool IsAddOnContainerName(std::string_view name) {
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return lower == "updates" || lower == "update" || lower == "patches" ||
            lower == "dlc" || lower == "addons" || lower == "add-ons";
+}
+// Extracted AOC stores can also sit beneath arbitrary wrapper names.
+// Discover only canonical 16-digit hex AOC Title IDs; the vendor filesystem
+// revalidates IDs and the actual read-only RomFS before mounting.
+inline bool LooksLikeExtractedAocTitleId(std::string_view name) {
+    if (name.size() != 16) return false;
+    std::uint64_t id = 0;
+    const auto [end, error] =
+        std::from_chars(name.data(), name.data() + name.size(), id, 16);
+    return error == std::errc{} && end == name.data() + name.size() &&
+           (id & 0x1fffU) >= 0x1000U && (id & 0x1fffU) <= 0x17ffU;
 }
 inline bool IsExtractedAssetFolderName(std::string_view name) {
     std::string lower{name};
@@ -334,7 +347,10 @@ inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
                 // add-on container: the native package provider handles the
                 // latter recursively using package CNMT/Title ID metadata.
                 if (IsExtractedAssetFolderName(name)) continue;
-                if (IsAddOnContainerName(name)) {
+                if (IsAddOnContainerName(name) ||
+                    LooksLikeExtractedAocTitleId(name)) {
+                    // A full AOC Title ID is enough to locate an extracted
+                    // DLC candidate even in custom/wrapper/ directories.
                     found.push_back(path);
                 } else {
                     subdirs.push_back(path);

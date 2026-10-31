@@ -63,6 +63,10 @@ jobs:
         with:
           persist-credentials: false
           submodules: true
+      - name: Install maintained nvdisp fixture's Boost header dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libboost-dev
       - name: Compile real texture/DMA/HUD/native pipeline fragments
         run: |
           set -euo pipefail

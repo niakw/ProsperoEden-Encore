@@ -10,6 +10,7 @@
 
 namespace Eden::GpuDirty {
 inline constexpr std::uint64_t kRegionBytes = 2048;
+static_assert((kRegionBytes & (kRegionBytes - 1)) == 0, "mask region must be power of two");
 
 template <class Collect>
 void ForEachRegion(std::uint64_t address, std::uint64_t size, Collect&& collect) {
@@ -17,8 +18,16 @@ void ForEachRegion(std::uint64_t address, std::uint64_t size, Collect&& collect)
     if (size > std::numeric_limits<std::uint64_t>::max() - address) {
         std::terminate();
     }
+    if (size == 0) return;
+    // Most guest dirty writes fit in one 2 KiB mask. Peel the first
+    // collection so they avoid the generic loop back-edge and second size
+    // check, without changing the exact 64-byte mask boundaries.
+    auto amount = std::min(size, kRegionBytes - (address & (kRegionBytes - 1)));
+    collect(address, amount);
+    address += amount;
+    size -= amount;
     while (size != 0) {
-        const auto amount = std::min(size, kRegionBytes - (address % kRegionBytes));
+        amount = std::min(size, kRegionBytes - (address & (kRegionBytes - 1)));
         collect(address, amount);
         address += amount;
         size -= amount;

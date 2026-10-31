@@ -15,6 +15,9 @@ device = (root / "vendor/sources/eden/src/core/device_memory_manager.h").read_te
 dirty = (root / "vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text()
 port = (root / "headless/CMakeLists.txt").read_text()
 header = (root / "headless/gpu_dirty_region_split.h").read_text()
+assert "if (size == 0) return;" in header
+assert "auto amount = std::min(size, kRegionBytes - (address & (kRegionBytes - 1)));" in header
+assert "while (size != 0)" in header
 replay = (root / "headless/gpu_deferred_replay.h").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 
@@ -128,6 +131,18 @@ int main(int argc, char**) {
         (void)ActualPinnedMask{}.CreateMask<std::uint32_t>(top_bit, 0);
         return 0; // UndefinedBehaviorSanitizer must abort first.
     }
+    // The hot single-region path must call Collect exactly once; an
+    // empty guest write must never publish an incorrect dirty mask.
+    unsigned hot_calls = 0;
+    ForEachRegion(0x1001, 8, [&](std::uint64_t addr, std::uint64_t count) {
+        assert(addr == 0x1001 && count == 8);
+        ++hot_calls;
+    });
+    assert(hot_calls == 1);
+    ForEachRegion(0x1001, 0, [&](std::uint64_t, std::uint64_t) {
+        ++hot_calls;
+    });
+    assert(hot_calls == 1);
     unsigned calls = 0;
     ForEachRegion(0x1000, 4096, [&](std::uint64_t a, std::uint64_t n) {
         assert(a == 0x1000 + calls * 2048 && n == 2048);

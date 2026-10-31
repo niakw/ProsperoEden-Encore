@@ -384,12 +384,12 @@
     },
     {
       "path": "headless/gpu_dirty_region_split.h",
-      "disposition": "reviewed_without_new_code_edit",
+      "disposition": "code_changed_in_batch",
       "contract_id": "R04",
       "prior_status": "SOURCE",
       "proof_ref": "tools/check-native-gpu-dirty-subregion-host.py",
-      "source_review_document": "docs/EDEN_GPU_MEMORY_POLICY_REVIEW_2026-10-21.md",
-      "evidence": "Previously maintained GPU/memory performance guard reviewed; 32-bit dirty mask split into 2 KiB regions with overflow check before any callback; preserves per-region order. No additional correction justified without new failing evidence."
+      "evidence": "Previously maintained GPU/memory performance guard reviewed; 32-bit dirty mask split into 2 KiB regions with overflow check before any callback; preserves per-region order. No additional correction justified without new failing evidence. 31 October 2026 follow-up code change (owner R04): The actual PS5 native GpuDirty::ForEachRegion callback loop now peels the first 2 KiB dirty subregion, so a typical small guest write avoids an extra loop back-edge; bitwise mask replaces modulo only under compile-time 2 KiB power-of-two assertion. Full-spans keep existing tail loop, overflow termination, callback order and 32-bit mask boundaries. Source selected ASan/UBSan witness checks zero writes, 8-byte single region, 4KiB/8KiB splits, 5000 randomized ranges and actual Collect/Gather; no PS5 frame-time claim. Original 21 October review remains historical; this is a new source change with new SHA and separate CI qualification.",
+      "reviewed_source_git_blob": "9949e40ce73a0f81be460e04fb86415cf7150ee1"
     },
     {
       "path": "headless/gpu_failure.h",

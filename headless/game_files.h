@@ -320,6 +320,25 @@ inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
         }
     };
     scan(scan, title_root, 0);
+    // A loose NSP/XCI beside a base can itself be an update or DLC.
+    // Include the title folder when such a package exists, allowing the
+    // native provider to decide from actual CNMT metadata. The provider
+    // explicitly skips expanded romfs/exefs trees. Selecting the whole
+    // folder here avoids inventing a fragile name/version convention.
+    const auto base_input = FindGameFolderInput(title_root);
+    std::error_code loose_error;
+    for (fs::directory_iterator it{
+             title_root, fs::directory_options::skip_permission_denied, loose_error},
+         end; !loose_error && it != end; it.increment(loose_error)) {
+        const auto path = it->path();
+        const auto name = path.filename().string();
+        if ((!IsPackageFile(name) && !IsCardImageFile(name)) ||
+            name == base_input) continue;
+        const auto status = fs::symlink_status(path, loose_error);
+        if (loose_error) break;
+        if (!fs::is_regular_file(status) || fs::is_symlink(status)) continue;
+        return {title_root}; // A single root covers its nested add-on paths.
+    }
     std::sort(found.begin(), found.end());
     found.erase(std::unique(found.begin(), found.end()), found.end());
     return found;

@@ -95,7 +95,7 @@ Le script `tools/ns2/build_fc27_synthetic_nsp.py` construit un **PFS0 structurel
 
 - Fichier : `fc27-synthetic.nsp` — **8 390 979 octets**, SHA-256 **`97851dd4409d612d24dc5f0c2a89d816f76adb25b5d12a4f8d4214546bf18229`**.
 - Membres : `main`, `main.npdm`, `stress.json`, `hud.rgba`, `pitch.rgba`, `kits.rgba` ; les trois dernières charges sont des octets procéduraux, **aucun asset FC27**.
-- Le vrai chargeur NSP attend des archives programme **NCA**. Ce PFS0 **n’en contient aucune** : **il n’est pas jouable, installable comme titre ni capable de produire des FPS/du HUD réel**.
+- **Correction après audit du code source :** le chargeur Encore sait aussi charger des **NSP de type ExeFS extrait** (`main` + `main.npdm`) sans NCA. Le PFS0 créé peut donc **atteindre cette route de chargement**. Il n'a toutefois pas été lancé dans le `KProcess` ni sur PS5 : sa capacité à terminer le boot, produire des FPS ou afficher du HUD **reste non démontrée**. Les assets procéduraux ne sont pas utilisés par le programme AArch64 ; ils servent au stress hôte seulement.
 - L’ExeFS indépendant `main` + `main.npdm` inclus dans l’artefact sert au futur essai de chargement natif opt-in, sans signature ou contenu Nintendo.
 
 ## 5. Exécution reproductible
@@ -124,3 +124,29 @@ Les régressions natives sont déclarées dans [`.github/workflows/ns2-fc27-stre
 **Validation finale après compilation :** le run complémentaire [NS2 host guards 41149975928](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41149975928) est désormais **SUCCESS (2/2 jobs)** au même commit de test `7fec9a5c` : contrôles de sources et compilation C++ AArch64 complète verts. Le banc stress [41149975993](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41149975993) est lui aussi **SUCCESS (2/2)**. Les commits ultérieurs `4c1b24b` et `62d9253` ne changent que la documentation et n'introduisent aucun changement de moteur ou de tests.
 
 **Règle de suivi :** conserver systématiquement SHA de source, run CI, données réellement mesurées, données simulées, cas négatifs, niveau de preuve, et validations PS5 encore ouvertes. Ne jamais transformer un succès hôte en affirmation de FPS ou de textures corrigées sur console.
+
+## 7. Révision N41 — véritable parseur PFS0 et route ExeFS extraite
+
+L'audit des sources maintenues épinglées apporte une correction importante :
+`FileSys::NSP::NSP` choisit `extracted = true` dès que
+`FileSys::IsDirectoryExeFS(pfs)` constate `main` et `main.npdm`.
+`AppLoader_NSP` instancie alors `AppLoader_DeconstructedRomDirectory`
+plutôt que de rechercher un programme NCA. Le faux NSP de la section 4
+est donc un **candidat réel à la route ExeFS extraite**, et non un NSP
+nécessairement rejeté pour absence de NCA. Cela ne valide pas son boot complet.
+
+La CI N41 compile et exécute sans modification le **constructeur C++ réel**
+`PartitionFilesystem::PartitionFilesystem`, le vrai
+`Header::HasValidMagicValue` et le prédicat original
+`IsDirectoryExeFS`. Les objets périphériques VFS sont substitués par
+des fichiers mémoires hôtes : **ce n'est ni l'exécution de l'entièreté de
+`NSP::NSP`, ni un démarrage `KProcess`**. Les assertions portent sur :
+six fichiers récupérés ; identité octet par octet de `main` et
+`main.npdm` ; présence des trois charges procédurales ; rejet de
+magic corrompu, table tronquée et conteneur sans `main` ; cohérence de
+la route NSP extrait. Tests Clang et GCC sous ASan/UBSan.
+
+Le run CI, son commit et les éventuels écarts de validation sont renseignés
+une fois la vérification GitHub terminée. Cette étape est menée **sans
+solliciter de test console** : la validation s'arrête aux preuves que les
+runners et les tests hôtes permettent effectivement d'établir.

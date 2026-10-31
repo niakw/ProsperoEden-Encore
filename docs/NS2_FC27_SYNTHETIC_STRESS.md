@@ -20,8 +20,17 @@ The generated fc27-synthetic.nsp is a structurally valid PFS0 archive with
 a lawful source-verified AArch64 HOS main, an unsigned synthetic main.npdm,
 procedural HUD/pitch/kit bytes, and a small explanatory manifest.
 It contains NO NCA, licensed game code, game art, title keys or Nintendo
-firmware. Thus it is deliberately NOT BOOTABLE with Encore's NSP loader.
-For real KProcess launch research, use the separate paired ExeFS/main file.
+firmware. The maintained NSP owner explicitly recognizes PFS0 archives with
+`main` and `main.npdm` as **extracted ExeFS** without requiring NCA.
+The fixture is therefore a **potentially loadable unsigned homebrew NSP
+research input**, not a commercial or Nintendo-signed title. The new CI
+executes the maintained `PartitionFilesystem` constructor and
+`IsDirectoryExeFS` predicate with mocked VFS objects, confirms the
+real file offsets and rejects malformed files. Full `AppLoader_NSP::Load`,
+`KProcess`, native AArch64 SVC execution and PS5 rendering are still
+**not demonstrated**. Its included procedural bytes are inert data, not
+GPU image draw calls; the host stress exercises them separately.
+For NSO-level research, the paired ExeFS/main remains available.
 CI publishes the fixture and stress-report.json for seven days.
 
 Passing CI means only that the model and source-extracted host regressions

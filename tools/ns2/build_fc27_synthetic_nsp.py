@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PFS0 .nsp stress DATA corpus, explicitly non-bootable and copyright-clean."""
+"""PFS0 .nsp stress DATA corpus, source-verified, unsigned and copyright-clean; native boot unproven."""
 from __future__ import annotations
 import argparse
 import hashlib
@@ -68,9 +68,10 @@ def build(exefs: Path, output: Path, mib: int) -> dict:
     size = mib * (1 << 20)
     hud, pitch = size // 4, size // 2
     manifest = {
-        "kind": "NONBOOTABLE PFS0 data stress, not an EA FC27 game",
+        "kind": "Unsigned extracted-ExeFS NSP research input, not an EA FC27 game",
         "source": SHA, "historical_windows": n, "stress": [1, 4, 8],
         "texture_bytes": size, "valid_nca_count": 0,
+        "extracted_exefs_route_expected": True, "native_boot_verified": False,
     }
     files = {
         "main": nso,
@@ -95,7 +96,8 @@ def build(exefs: Path, output: Path, mib: int) -> dict:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_bytes(blob)
     return {"members": list(files), "bytes": len(blob),
-            "sha256": hashlib.sha256(blob).hexdigest(), "bootable": False}
+            "sha256": hashlib.sha256(blob).hexdigest(),
+            "extracted_exefs_route_expected": True, "native_boot_verified": False}
 
 
 def main() -> None:

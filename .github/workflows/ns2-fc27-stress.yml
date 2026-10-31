@@ -5,6 +5,7 @@ on:
     paths:
       - 'tools/ns2/fc27_stress_replay.py'
       - 'tools/ns2/build_fc27_synthetic_nsp.py'
+      - 'tools/ns2/test_real_extracted_nsp.py'
       - 'tools/fixtures/fc27-2efd8b3c-stutter-windows.json'
       - '.github/workflows/ns2-fc27-stress.yml'
   workflow_dispatch:
@@ -31,12 +32,18 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
-      - name: Cross-build lawful HOS NSO and synthetic non-bootable NSP
+      - name: Cross-build lawful HOS NSO and unsigned extracted-ExeFS NSP
         run: |
           python3 tools/ns2/build_public_nso_fixture.py --output build-ns2-fc27/hello.nso
           python3 tools/ns2/build_public_exefs_fixture.py --nso build-ns2-fc27/hello.nso --output-dir build-ns2-fc27/exefs
           python3 tools/ns2/build_fc27_synthetic_nsp.py --exefs build-ns2-fc27/exefs --out build-ns2-fc27/fc27-synthetic.nsp --texture-mib 8
-      - name: Publish clearly non-bootable PFS0 and paired ExeFS
+      - name: Execute maintained Eden PFS0 constructor and extracted ExeFS route
+        run: |
+          python3 tools/ns2/test_real_extracted_nsp.py \
+            --nsp build-ns2-fc27/fc27-synthetic.nsp \
+            --main build-ns2-fc27/exefs/main \
+            --npdm build-ns2-fc27/exefs/main.npdm
+      - name: Publish unsigned extracted-ExeFS NSP research input
         uses: actions/upload-artifact@v4
         with:
           name: ns2-fc27-synthetic-stress

@@ -132,6 +132,7 @@ The program does not provide games, proprietary keys or firmware.
 
 ---
 
+<a id="upgrade-from-native"></a>
 ## Upgrading from the original native ProsperoEden to Encore
 
 **This is an in-place application upgrade, not a second installation.** The original native
@@ -407,27 +408,35 @@ shasum -a 256 Prospero.Eden-Encore-R1.ffpfsc
 
 ## Updating Encore
 
-### Application
+**For both a native ProsperoEden → Encore migration and a later Encore → Encore
+upgrade, follow the [backed-up in-place upgrade procedure above](#upgrade-from-native).**
+Both use the same application title ID, so do not mix original-native and Encore
+executable files. Only the complete Encore application tree should replace the
+installed application; the persistent data directory must be preserved.
 
-Replace the old `PPSA99008` application files with the new release.
+### Application folder / ZIP
 
-Do **not** delete:
-
-```text
-/data/prosperoeden
-```
-
-unless you intentionally want to remove Encore's persistent internal data.
+For an official new Encore release, verify its SHA-256 and full
+`PPSA99008/` contents, make an offline backup, then replace the complete
+`/data/homebrew/PPSA99008/` application files. **Do not delete
+`/data/prosperoeden/` or an existing legacy `assets/` directory before
+checking the migration.** A copied folder does not itself mean the
+migration succeeded: verify library, storage and saves after first launch.
 
 ### External storage
 
-If you use an external root, keep that root in place. Encore continues to expect the same standard
-subfolders after an update.
+Keep the selected external root and its standard subdirectories in place.
+Backup and verify it alongside the internal data root when upgrading.
 
 ### FFPFSC
 
-Replace the old Encore `.ffpfsc` image with the new one and remount/rescan it using the same
-ShadowMountPlus workflow.
+Replace the existing Encore `.ffpfsc` image with the official new image,
+then remount/rescan using your ShadowMountPlus workflow. Do not mix it with
+an ordinary-folder application install for the same title ID without
+confirming which one your launcher will execute.
+
+**There is currently no shipped automatic updater.** The proposed R21
+feature is described in the [separate collaborative roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
 
 ---
 

@@ -1520,6 +1520,35 @@ if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
         "${eden_ns2_astc_root}/include" "${PORT_ROOT}/headless/ns2/eglantine")
 endif()
 
+# N58: distinguish sparseBinding from sparseResidencyImage2D before
+# permitting future layered sparse terrain allocation; opt-in API query only.
+option(EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL
+    "Research only: PS5 Vulkan sparse image capability admission" OFF)
+if(EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N58 requires PS5 Vulkan NS2 research")
+    endif()
+    set(eden_ns2_sparse_device_source
+        "${PROJECT_SOURCE_DIR}/src/video_core/vulkan_common/vulkan_device.h")
+    set(eden_ns2_sparse_device_output
+        "${PORT_BUILD_DIR}/ns2-sparse-vulkan/include/video_core/vulkan_common/vulkan_device.h")
+    set(eden_ns2_sparse_device_generator
+        "${PORT_ROOT}/tools/ns2/prepare_egl_sparse_device_owner.cmake")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${eden_ns2_sparse_device_source}" "${eden_ns2_sparse_device_generator}")
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+        "-DINPUT=${eden_ns2_sparse_device_source}"
+        "-DOUTPUT=${eden_ns2_sparse_device_output}"
+        -P "${eden_ns2_sparse_device_generator}"
+        RESULT_VARIABLE eden_ns2_sparse_gate_status)
+    if(NOT eden_ns2_sparse_gate_status EQUAL 0)
+        message(FATAL_ERROR "N58 sparse residency owner generator failed")
+    endif()
+    target_include_directories(video_core BEFORE PUBLIC
+        "${PORT_BUILD_DIR}/ns2-sparse-vulkan/include")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2461,6 +2490,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
+       EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

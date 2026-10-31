@@ -30,6 +30,8 @@
 
 **31/10 — T01/C01, mémo TIC de HUD par masque (qualification host) :** le mémo `FillImageViews` utilise désormais 16 bits d'occupation au lieu d'initialiser 16 identifiants à chaque draw multi-texture sous `texture_cache.mutex`. Aucun résultat nul mémorisé, vues remappées revalidées, rafraîchissement `PrepareImageView`, retries et blacklist conservés. Générateur + tests source-extraits O0/O2/UBSan actualisés. **F07 reste 22/29 tant que gates du SHA non vertes ; gain FPS non mesuré.**
 
+**31/10 — F07 C01/V05 GPU multi-plages (source, prévalidation) :** les copies consécutives issues d'un même buffer Vulkan sont regroupées par blocs de 8 `VkBufferCopy` au maximum, sans allocation de scratch heap ; le regroupement réduit les callbacks du scheduler et laisse intactes les barrières pré/post, les offsets guest et l'ordre des commandes. Parcours desktop inchangé. Témoin source-extrait : 14 plages mélangées → 4 callbacks natifs contre 14 avant, vérification de chaque offset/longueur sous O0/O2 et UBSan. **Aucun gain FC27/PS5 revendiqué, 22/29.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

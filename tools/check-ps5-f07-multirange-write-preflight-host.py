@@ -25,11 +25,16 @@ body = source[source.index(begin):source.index(end,source.index(begin))]
 assert "if (is_written && !multi_range_buffers.use_sparse)" in body
 assert body.index("if (is_written && !multi_range_buffers.use_sparse)") < body.index("multi_range_buffers.Get(")
 assert body.count("if (is_written && !ref.sparse)") == 1
+assert "#ifdef PS5_NATIVE" in body and "std::array<VideoCommon::BufferCopy, 8> grouped_copies{};" in body
+assert "if (source.handle != grouped_source || grouped_count == grouped_copies.size())" in body
+assert "flush_group();" in body and "multi_range_buffers.MarkGathered(key);" in body
+assert "F07 coalesce adjacent native multirange gather slices into bounded FIFO batches" in generator
 cpp = r"""
 #include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <vector>
 using u64 = std::uint64_t;
 using VkDeviceSize = std::uint64_t;
@@ -70,13 +75,19 @@ struct BufferCacheRuntime {
     std::vector<MultiRangeSource> multi_range_sources{{}};
     VkDeviceSize multi_range_total{8};
     Queue guest_descriptor_queue{};
+    struct ActualCopy { VkBuffer source{}; u64 src{}, dst{}, size{}; };
+    std::vector<ActualCopy> recorded;
+    std::vector<std::size_t> group_sizes;
     unsigned before{},after{},copies{};
     void PreCopyBarrier(){++before;}
     void PostCopyBarrier(){++after;}
     template<class T>
-    void CopyBuffer(VkBuffer,VkBuffer,const T& regions,bool) {
-        assert(regions.size()==1);
+    void CopyBuffer(VkBuffer target,VkBuffer src,const T& regions,bool barrier) {
+        assert(target==5 && !barrier);
+        assert(!regions.empty() && regions.size() <= 8);
         ++copies;
+        group_sizes.push_back(regions.size());
+        for (const auto& v:regions)recorded.push_back({src,v.src_offset,v.dst_offset,v.size});
     }
     bool BindMultiRangeStorageBuffer(u64,bool);
 };
@@ -97,7 +108,39 @@ int main() {
         assert(c.BindMultiRangeStorageBuffer(1,false));
         assert(c.multi_range_buffers.gets==1 && c.copies==1);
         assert(c.before==1 && c.after==1);
+        assert(c.recorded.size()==1 && c.recorded[0].source==2);
         assert(c.multi_range_buffers.marked==1 && c.guest_descriptor_queue.adds==1);
+    }
+    {
+        // 3 repeated owner slices, 2 of a new owner, 9 of a third.
+        // PS5: one + one + two bounded batches; desktop unchanged.
+        BufferCacheRuntime c;
+        c.multi_range_sources.clear();
+        u64 total=0;
+        std::vector<BufferCacheRuntime::ActualCopy> expected;
+        for (unsigned i=0;i<14;++i) {
+            const VkBuffer owner = i<3?2:(i<5?7:11);
+            const u64 size = static_cast<u64>(i%5+1)*8;
+            const u64 offset = static_cast<u64>(i*64);
+            c.multi_range_sources.push_back({owner,offset,size});
+            expected.push_back({owner,offset,total,size});
+            total+=size;
+        }
+        c.multi_range_total=total;
+        assert(c.BindMultiRangeStorageBuffer(5,false));
+        assert(c.before==1 && c.after==1 && c.multi_range_buffers.marked==1);
+        assert(c.recorded.size()==14 && c.guest_descriptor_queue.adds==1);
+        for(std::size_t i=0;i<expected.size();++i) {
+            const auto& actual=c.recorded[i];
+            const auto& wanted=expected[i];
+            assert(actual.source==wanted.source && actual.src==wanted.src &&
+                   actual.dst==wanted.dst && actual.size==wanted.size);
+        }
+#ifdef PS5_NATIVE
+        assert(c.copies==4 && (c.group_sizes==std::vector<std::size_t>{3,2,8,1}));
+#else
+        assert(c.copies==14 && c.group_sizes.size()==14);
+#endif
     }
     {
         BufferCacheRuntime c;

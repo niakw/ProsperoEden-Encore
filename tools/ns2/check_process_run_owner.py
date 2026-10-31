@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib
 
 ROOT=Path(__file__).resolve().parents[2]
-SRC=ROOT/"vendor/sources/eden/src/core/hle/service/os/process.cpp"
+SRC=ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp"
 TRACE=ROOT/"vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h"
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 
@@ -31,5 +31,7 @@ assert 'inline void Unregister(std::uint64_t pid)' in TRACE.read_text()
 assert 'EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR' in CMAKE
 assert 'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE
 assert 'NOT PS5_NATIVE OR NOT EDEN_NS2_EXEFS_EXPERIMENTAL OR' in CMAKE
+assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE
+assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE
 assert 'headless/ns2/overrides/core/hle/service/os/process.cpp' not in CMAKE
 print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS")

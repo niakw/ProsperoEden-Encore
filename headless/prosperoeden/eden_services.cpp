@@ -1447,7 +1447,8 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
     if (cancelled()) return {};
     const int selected_language = Eden::LoadPreferences().language;
     if (home.setup_ready)
-        eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
+        eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
+                         Eden::AssetsPath("roms").c_str());
     if (cancelled()) return {};
     if (home.setup_ready && home.last_exists) {
         const uint64_t title_id = ResolveTitleId(last_path, home.last_file);
@@ -1611,7 +1612,8 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
         throw std::system_error(directory_error, "ROM directory scan failed");
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return games;
-    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
+    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
+                         Eden::AssetsPath("roms").c_str());
     if (cancel && cancel->load(std::memory_order_acquire)) return {};
     const int language_choice = Eden::LoadPreferences().language;
     // A failed stat or unexpected file type previously hid a title with no

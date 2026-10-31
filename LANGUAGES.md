@@ -2,6 +2,8 @@
 
 [← English README](README.md) · [English full installation guide](INSTALL.md)
 
+All localized README pages and their installation guides are grouped under [`docs/i18n/`](docs/i18n/) to keep the repository root readable. **Only `README.md` remains at the top level.**
+
 The launcher supports **18 language/region selections in 13 distinct languages**. The codes in the table are the exact selector keys in `headless/settings_store.h::kLanguageKeys` (they can differ from catalog filenames; e.g. `fr` selects the `fr-FR` catalog). **English (US) is the default.**
 
 English appears first. Other languages are broadly ordered by worldwide speaking audience, with regional variants grouped together. This is not an exact speaker-count ranking or a ranking of Encore players.

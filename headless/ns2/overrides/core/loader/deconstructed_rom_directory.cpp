@@ -21,6 +21,7 @@
 #include "core/loader/nso.h"
 #include "core/loader/ns2_nso_preflight.h"
 #include "core/loader/ns2_process_handoff.h"
+#include "core/loader/ns2_kprocess_code_admission.h"
 #include "core/loader/ns2_main_thread_admission.h"
 #include "core/loader/ns2_public_homebrew_svc.h"
 #include "core/loader/ns2_svc_trace.h"
@@ -257,8 +258,19 @@ AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirect
         return 0;
     }();
 
-    // Add patch size to the total module size
-    code_size += patch_ctx.GetTotalPatchSize();
+    // N45: the real KProcess loader narrows code_size / 4 KiB to s32 pages.
+    // Admit only a positive, aligned and representable total, including patches.
+    const std::size_t patch_bytes = patch_ctx.GetTotalPatchSize();
+    if (metadata.IsSwitch2()) {
+        const auto admitted = Eden::NS2::ExeFS::AdmitKProcessCode(code_size, patch_bytes);
+        if (!admitted.Ready()) {
+            LOG_ERROR(Loader,
+                      "NS2 ExeFS KProcess code admission denied (status={} modules={} patches={})",
+                      static_cast<unsigned>(admitted.status), code_size, patch_bytes);
+            return {ResultStatus::ErrorUnableToParseKernelMetadata, {}};
+        }
+    }
+    code_size += patch_bytes;
 
     // TODO: this is bad form of ASLR, it sucks
     std::uintptr_t aslr_offset = ((::Settings::values.rng_seed_enabled.GetValue()

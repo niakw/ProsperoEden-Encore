@@ -61,10 +61,15 @@ for rel,sha,marker in pairs:
     assert marker in text,rel
     print("NCZ_SOURCE_OWNER_PASS",rel)
 cmake=(root/"headless/CMakeLists.txt").read_text()
-segment=cmake.split("# NSZ/XCZ: select reviewed full C++ source owners",1)[1].split("# The guest title is the owner",1)[0]
+segment=cmake.split("# NSZ/XCZ: select reviewed full C++ source owners",1)[1].split("# Extracted AOC:",1)[0]
 assert "write_derived" not in segment
 assert segment.count("list(REMOVE_ITEM core_sources")==1
-assert "ncz.cpp" in segment
+assert "ncz.cpp" in cmake.split("# Extracted AOC:",1)[1].split("# The guest title is the owner",1)[0]
+aoc_segment=cmake.split("# Extracted AOC:",1)[1].split('list(APPEND core_sources "${EDEN_PORT_DIR}/ncz.cpp")',1)[0]
+assert "write_derived" not in aoc_segment
+assert aoc_segment.count("list(REMOVE_ITEM core_sources")==1
+for rel in ("file_sys/romfs_factory.cpp", "hle/service/aoc/addon_content_manager.cpp"):
+    assert '"' + rel + '"' in aoc_segment
 for rel,_,_ in pairs: assert '"'+rel+'"' in segment
 for path in ["headless/main.cpp","headless/settings_store.h",
              "headless/prosperoeden/eden_services.cpp"]:

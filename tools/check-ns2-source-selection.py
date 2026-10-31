@@ -175,9 +175,14 @@ def main() -> int:
         public_svc = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_public_homebrew_svc.h"
         require(public_svc.is_file() and
                 "MissingPublicHelloSvcs(" in public_svc.read_text() and
-                "IsPublicHelloFixture(metadata.GetTitleID()" in romdir_source.read_text() and
-                "process.IsPermittedSvc(svc)" in romdir_source.read_text(),
-                "Public homebrew fixture must verify actual kernel SVC grants")
+                "MissingPublicHelloSvcs(" in
+                    (ROOT / "tools/ns2/test_real_kcapabilities.py").read_text() and
+                "MissingPublicHelloSvcs(" in
+                    (ROOT / "tools/ns2/test_nso_process_handoff.cpp").read_text() and
+                "IsPublicHelloFixture(" not in romdir_source.read_text() and
+                "MissingPublicHelloSvcs(" not in romdir_source.read_text() and
+                'ns2_public_homebrew_svc.h' not in romdir_source.read_text(),
+                "Fixture-only SVC checks must stay in host tests, not the generic NSW2 runtime")
         svc_trace = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h"
         svc_owner = ROOT / "vendor/sources/eden/src/core/hle/kernel/svc.cpp"
         svc_contracts = {

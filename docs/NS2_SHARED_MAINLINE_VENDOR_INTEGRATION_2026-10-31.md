@@ -87,3 +87,7 @@ The bounded NPDM/ACID layout implementation now lives alongside its actual `Prog
 ## Host JIT regression allocation correction
 
 At app commit `465019ff`, the independent x86-64 Dynarmic host tests both threw `boost::container::bad_alloc`. The pinned `BlockOfCode` constructor commits a 16 MiB prelude and also needs guest-generated code space; both host fixtures had set the **entire** JIT cache to exactly 16 MiB. The test harness now uses a bounded 64 MiB cache with an explicit minimum-size assertion. **This changes no PS5 runtime settings or production allocator.** The cause is supported by source inspection; success requires a new CI run, not an assumed pass.
+
+## No per-title runtime admission
+
+Removed the `IsPublicHelloFixture(metadata.GetTitleID(), ...)` special-case from the experimental `AppLoader_DeconstructedRomDirectory` in vendor commit `b34ec82d9f3b`. Guest KCapabilities and per-SVC enforcement remain generic and unchanged. The five-SVC homebrew contract is verified only by independent host test fixtures. A static source-owner guard now rejects any return of that title-ID runtime branch. No compatibility claim for a real Switch 2 title is implied.

@@ -1408,6 +1408,38 @@ if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 endif()
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
+# N54: bound memory retained by transient, extremely large CPU texture staging.
+# Header overlays derive from the *prepared* build source at configure time.
+option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
+    "Research only: trim scratch buffers >64 MiB after large texture workloads" OFF)
+if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N54 scratch trimming requires native PS5 NS2 research")
+    endif()
+    set(eden_ns2_scratch_source
+        "${PROJECT_SOURCE_DIR}/src/common/scratch_buffer.h")
+    set(eden_ns2_texture_source
+        "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache/texture_cache.h")
+    set(eden_ns2_scratch_generated "${PORT_BUILD_DIR}/ns2-astc-scratch/include")
+    set(eden_ns2_scratch_generator
+        "${PORT_ROOT}/tools/ns2/prepare_astc_scratch_owner.cmake")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${eden_ns2_scratch_source}" "${eden_ns2_texture_source}"
+        "${eden_ns2_scratch_generator}")
+    execute_process(COMMAND "${CMAKE_COMMAND}"
+        "-DSCRATCH_INPUT=${eden_ns2_scratch_source}"
+        "-DTEXTURE_INPUT=${eden_ns2_texture_source}"
+        "-DOUTPUT_DIR=${eden_ns2_scratch_generated}"
+        -P "${eden_ns2_scratch_generator}"
+        RESULT_VARIABLE eden_ns2_scratch_result)
+    if(NOT eden_ns2_scratch_result EQUAL 0)
+        message(FATAL_ERROR "N54 scratch owner selection failed")
+    endif()
+    # Use one header identity for all consumers; class layout is unchanged.
+    target_include_directories(common BEFORE PUBLIC "${eden_ns2_scratch_generated}")
+    target_include_directories(video_core BEFORE PUBLIC "${eden_ns2_scratch_generated}")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2346,6 +2378,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
+       EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

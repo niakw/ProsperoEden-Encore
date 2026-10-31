@@ -21,6 +21,10 @@ int main() {
                                    std::vector<AstcMipSlice>{{21ULL<<20,0}}));
     assert(!PreflightAstcLayerDecode(68,3,21ULL<<20,5ULL*(21ULL<<20),layers,
                                    std::vector<AstcMipSlice>{{0,0},{1,0}}));
+    assert(!PreflightAstcLayerDecode(68,3,21ULL<<20,5ULL*(21ULL<<20),layers,
+                                   std::vector<AstcMipSlice>{{4096,1}}));
+    assert(!PreflightAstcLayerDecode(68,3,21ULL<<20,5ULL*(21ULL<<20),layers,
+                                   std::vector<AstcMipSlice>{{1024,0}}));
     assert(!PreflightAstcLayerDecode(68,3,
         (std::numeric_limits<std::uint32_t>::max)()+1ULL,
         (std::numeric_limits<std::uint64_t>::max)(),layers,mips));

@@ -33,6 +33,8 @@ with tempfile.TemporaryDirectory(prefix='n57-astc-vulkan-') as t:
     assert 'cmdbuf.Dispatch(dx, dy, 1)' in compute
     assert 'image.IsInitializedForLayerUpload()' in compute
     assert 'PreflightAstcLayerDecode(' in compute
+    assert 'image.host_level_offset' not in compute, 'unsupported pinned mip-owner field'
+    assert '#include <stdexcept>' in compute
     assert 'scheduler.Flush();' in compute
     assert 'void ASTCDecoderPass::Assemble(Image& image' in compute
     assert 'void TextureCacheRuntime::AccelerateImageUpload(' in cache

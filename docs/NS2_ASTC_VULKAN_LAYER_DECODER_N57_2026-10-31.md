@@ -11,3 +11,6 @@ This adds a **real but not yet invoked** per-layer ASTC compute entrypoint, gene
 The full normal `ASTCDecoderPass::Assemble` remains unchanged. CMake replaces only two actual native PS5 Vulkan translation-unit sources and two pinned headers, keeping PS5 HDR, screen, rasterizer, scheduler and normal Switch 1 path unchanged.
 
 Tests: source-conservative generator / exact owner checks and Clang/GCC UBSan contract tests. **Limitation:** the texture-cache writer still uses the full-image upload path: N55's dirty-layer planner is not yet wired to this decoder. No native PS5 compilation/console result, image readback, FC27 regression conclusion or NSW2 title compatibility claim. Next: safely connect the dirty-write recorder, staged batches and GPU completion barrier, then attempt automated Vulkan readback validation. No console test requested.
+
+## N57b pinned image metadata correction
+N57 initially referenced `Image::host_level_offset`, present upstream but absent from the pinned native PS5 vendor. N57b removes the nonexistent member and rejects skipped-mip staging where the first level or first buffer offset is nonzero. It also explicitly includes `<stdexcept>` in the generated Vulkan compute source and tests these guards. Full native PS5 Vulkan compilation remains unverified.

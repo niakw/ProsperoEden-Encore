@@ -10,7 +10,8 @@ for key in ("AllocateSparseMemory(page_request, token)", "queue.BindSparseImage(
             "fence.Wait(timeout_ns)", "budget_.Commit(logical)",
             "RetireAfterDeviceIdle", "budget_.Poison()",
             "image_memory.memoryTypeBits", "sparse_requirements.size() != 1",
-            "image_ && image_ != image", "image_ = image;"):
+            "image_ && image_ != image", "image_ = image;",
+            "image, tiles, tails, *fence, wait, signal);"):
     assert key in s, key
 vulkan_stub = r"""
 #pragma once

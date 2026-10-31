@@ -4448,9 +4448,9 @@
     {
       "path": "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
       "disposition": "new_source_issue_corrected",
-      "reviewed_source_git_blob": "c436b14fe6ab9fee2af267fdc706f2e9226524a7",
+      "reviewed_source_git_blob": "31805b346029990e22040fc7e957f91ca2b0ef0f",
       "proof_ref": "tools/check-extracted-aoc-layout-host.py",
-      "evidence": "Shared runtime AOC index and virtual RomFS mount. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+      "evidence": "Shared runtime AOC index and virtual RomFS mount. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build. Disabled-DLC guard enforced even on direct raw data storage requests."
     },
     {
       "path": "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",

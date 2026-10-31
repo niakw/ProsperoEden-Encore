@@ -34,6 +34,8 @@
 
 **31/10 — C01/V05 : copies Vulkan multi-plages contiguës.** Après le regroupement par `VkBuffer` (8 régions), les segments adjacents en source **et** destination deviennent un unique `VkBufferCopy`. Pas de changement de propriétaire, ordre FIFO, tailles, barrières ou sémantique desktop. Témoin source-extrait O0/O2 : 6 plages dont 3 contiguës → 2 callbacks PS5 / 3 régions plutôt que 6 commandes ; cas non contigus conservés, oracle SHA historique préservé. **F07 22/29, gain console inconnu.**
 
+**31/10 — GPU sparse F07 (optimisation source, CI à qualifier) :** `MultiRangeBufferCache::CreateSparse` fusionne les bindings Vulkan uniquement lorsque les plages sont contiguës à la fois dans la ressource et en mémoire physique, avec le même `VkDeviceMemory`. Les allocations séparées et discontinuités restent isolées. Test hôte source-extrait PS5/desktop, pages 4 Kio, 64 plages contiguës, 73 motifs mixtes, O0/O2, ASan/UBSan dans fast gate et prévalidation. Aucun gain FPS revendiqué et **7 décisions F07 toujours soumises à qualification**.
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

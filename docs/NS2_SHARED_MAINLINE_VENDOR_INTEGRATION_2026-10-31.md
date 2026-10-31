@@ -4,9 +4,9 @@ The NS2 research branch is a **compatibility extension of the existing Encore em
 
 ## Mainline ancestry
 
-- Git merge parent main: `86ef6f2d1acc9471205d0f9c006369a2a4c1057a` (includes latest F07 contiguous multirange copy work).
+- Git merge parent main: `c3acdc0f6ea48061ceca67b40bb32c518588bbec` (includes latest F07 sparse bind coalescing with its exact source and test oracles).
 - Research-only implementation stays in `research/ns2-ps5-compatibility`; never merge it into production `main` until the full integration and release gates have passed.
-- Vendor branch `niakw/Prospero.Eden-Encore-vendor:research/ns2-shared-core`: parent includes mainline vendor `cb244e3f4ab8f834e254663fb8bf4b34c66079b9`, with N58/N62/N64/N65 additions. The research app submodule pins the merged vendor research owner (latest shared F07 PS5 changes + N54 + sparse API); see the gitlink for the exact commit.
+- Vendor branch `niakw/Prospero.Eden-Encore-vendor:research/ns2-shared-core`: parent includes mainline vendor `2281ef2780179febb927662c3ce4a83b09f252a6`, with N58/N62/N64/N65 additions. The research app submodule pins the merged vendor research owner (latest shared F07 PS5 changes + N54 + sparse API); see the gitlink for the exact commit.
 
 ## Single maintained source owner
 

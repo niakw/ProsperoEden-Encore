@@ -8,6 +8,7 @@ on:
       - '.github/workflows/ns2-native-ps5-research.yml'
       - 'tools/build-headless-native.sh'
       - 'tools/ns2/check_native_research_selector.py'
+      - 'tools/check-vendor-consolidation-debt.py'
       - 'headless/CMakeLists.txt'
       - 'vendor'
   workflow_dispatch:

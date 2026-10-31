@@ -255,7 +255,7 @@ std::mutex& ScanAddOnsJobMutex() {
 // Never hold this mutex while reading/decrypting game files.
 }
 
-void eden_scan_addons(const char* updates_dir, const char* keys_dir) {
+void eden_scan_addons(const char* updates_dir, const char* keys_dir, const char* roms_dir) {
     // Serialise concurrent library rescans: otherwise an older scan can
     // publish after a later refresh, replacing fresh update metadata.
     // The job lock is independent of the short reader snapshot lock.
@@ -278,18 +278,44 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir) {
     try {
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
         FileSys::RealVfsFilesystem vfs;
-        auto directory = vfs.OpenDirectory(updates_dir, FileSys::OpenMode::Read);
-        if (!directory) {
-            // A player with no updates/ folder has *zero updates*, not an
-            // unreadable update. Allow verified base-NACP art selection only
-            // if the directory is genuinely ABSENT; permission/I/O failures
-            // remain unknown and fail closed to original Nintendo visuals.
+        std::vector<FileSys::VirtualDir> add_on_roots;
+        // Preserve the legacy global content directory, but do not let an
+        // absent directory prevent add-ons collocated with installed titles.
+        const auto append_root = [&](const std::filesystem::path& path) {
+            if (!Eden::IsSafeExtractedDirectory(path)) return;
+            if (auto dir = vfs.OpenDirectory(path.string(), FileSys::OpenMode::Read))
+                add_on_roots.push_back(std::move(dir));
+        };
+        append_root(updates_dir);
+        if (roms_dir && Eden::IsSafeExtractedDirectory(roms_dir)) {
+            // Enumerate immediate game roots; scan each for named add-on
+            // containers with a bounded traversal. Never recursively open
+            // a game's extracted base RomFS just to find update packages.
             std::error_code error;
-            const bool exists = std::filesystem::exists(updates_dir, error);
-            if (!error && !exists) publish(true);
+            std::size_t scanned_titles = 0;
+            for (std::filesystem::directory_iterator it{
+                     roms_dir, std::filesystem::directory_options::skip_permission_denied, error},
+                 end;
+                 !error && it != end && scanned_titles++ < 2048; it.increment(error)) {
+                const auto path = it->path();
+                if (!Eden::IsSafeExtractedDirectory(path)) continue;
+                if (Eden::IsAddOnContainerName(path.filename().string())) {
+                    append_root(path); // /roms/updates or /roms/dlc
+                    continue;
+                }
+                for (const auto& directory : Eden::FindAddOnContentDirectories(path))
+                    append_root(directory);
+            }
+        }
+        if (add_on_roots.empty()) {
+            // No add-ons is a complete scan only if the old global directory
+            // is missing, not present-but-unreadable.
+            std::error_code error;
+            const bool global_exists = std::filesystem::exists(updates_dir, error);
+            if (!error && !global_exists) publish(true);
             return;
         }
-        const FileSys::ExternalContentProvider provider({std::move(directory)});
+        const FileSys::ExternalContentProvider provider(std::move(add_on_roots));
         for (const auto& entry : provider.ListEntriesFilter(FileSys::TitleType::Update, std::nullopt, std::nullopt)) {
             auto& addons = scanned[FileSys::GetBaseTitleID(entry.title_id)];
             addons.update_present = true;

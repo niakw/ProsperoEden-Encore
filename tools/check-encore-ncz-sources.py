@@ -36,6 +36,23 @@ for rel,sha,marker in pairs:
         nax_after=nax_before+'\n    else if (extension == "nax")\n        return FileType::NAX;'
         assert expected.count(nax_before)==1
         expected=expected.replace(nax_before,nax_after)
+    if rel == "file_sys/registered_cache.cpp":
+        # Reviewed second delta: when add-on providers scan an extracted
+        # title folder, never enumerate potentially enormous romfs/exefs
+        # directory trees looking for packaged NSP/XCI files.
+        original='    for (const auto& subdir : dir->GetSubdirectories()) {\n        ScanDirectory(subdir);\n    }'
+        guarded=('    for (const auto& subdir : dir->GetSubdirectories()) {\n'
+                 '        // Package scanning may start at a mixed extracted-title add-on root.\n'
+                 '        // Never recursively enumerate large unpacked RomFS/ExeFS payloads:\n'
+                 '        // extracted overlays have their own loader route, while packaged\n'
+                 '        // updates/DLC are identified from NSP/XCI metadata here.\n'
+                 '        const auto name = Common::ToLower(subdir->GetName());\n'
+                 '        if (name == "romfs" || name == "exefs")\n'
+                 '            continue;\n'
+                 '        ScanDirectory(subdir);\n'
+                 '    }')
+        assert expected.count(original) == 1, "expected pinned external scanner changed"
+        expected = expected.replace(original, guarded)
     if header:
         expected=expected.replace('#include <memory>', '#include <memory>\n#include "ncz_vfs.h"')
         if '#include "ncz_vfs.h"' not in expected:
@@ -69,7 +86,7 @@ library=(root/"headless/prosperoeden/eden_services.cpp").read_text()
 # The TV scanner also accepts validated ExeFS folders, so it must use
 # ValidRomFilename rather than the old extension-only IsGameFile gate.
 assert "if (!Eden::ValidRomFilename(file)) continue;" in library
-assert "Eden::IsDeconstructedGameDirectory(entry.path())" in library
+assert "Eden::FindDeconstructedGameMain(entry.path())" in library
 assert 'format != "NSP" && format != "XCI"' not in library
 assert "game.format = format;" in library
 formats=(".nsp",".xci",".nsz",".xcz",".nro",".nso",".nca",".nax",".kip")

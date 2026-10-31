@@ -50,6 +50,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_image_owner.py
+      - name: N75 generation-independent shared GPU/CPU pool budget (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_shared_gpu_budget.py
       - name: N73 native sparse cache full-residency admission (Clang/GCC)
         shell: bash
         run: |

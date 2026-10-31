@@ -53,6 +53,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # All generated Vulkan translation units still remain byte-identical.
     helper='include/video_core/renderer_vulkan/striped_wait.h'
     allocator='vulkan_memory_allocator.cpp'
+    # Shared native GPU budget admission owner, usable by both NS1 and NS2.
+    # It is additive, never regenerated from the original upstream Vulkan.
+    pool_policy='include/video_core/renderer_vulkan/vk_shared_gpu_budget.h'
+    assert pool_policy not in actual, 'native GPU budget leaked into generator'
+    assert subprocess.check_output(
+        ['git','hash-object',str(expected[pool_policy])],text=True
+    ).strip() == '8f39056a5eb9d219685b2319c504375559db21d3', 'shared GPU policy drift'
     oom_check = subprocess.run(
         [sys.executable, '-B', str(root/'tools/check-ps5-vulkan-oom-source.py')],
         timeout=15, capture_output=True, text=True)
@@ -60,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         raise RuntimeError('F07 allocator source parity failed (code %d):\n%s\n%s' % (
             oom_check.returncode, oom_check.stdout, oom_check.stderr))
     assert allocator not in actual, 'generated Vulkan port unexpectedly owns the allocator'
-    assert set(actual)==set(expected)-{helper, allocator}, (
+    assert set(actual)==set(expected)-{helper, allocator, pool_policy}, (
         f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')
     helper_file=expected[helper]
     assert subprocess.check_output(['git','hash-object',str(helper_file)],text=True).strip()==(

@@ -26,6 +26,8 @@ for item in (
     "logical.CreateImageView(view_info)",
     "gpu_unsafe.load(std::memory_order_acquire)",
     "owner.ReadyForSampling()",
+    "graphics_usage_from_pool.load(std::memory_order_relaxed)",
+    "shared_pool_measured ? device.GetDeviceMemoryUsage() : 0",
     ".viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY",
     "sampled_view = std::make_unique<vk::ImageView>",
 ):

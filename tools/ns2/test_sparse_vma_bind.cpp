@@ -41,7 +41,9 @@ struct FakeAllocator {
 struct FakeFence {
     VkResult status=VK_NOT_READY,wait_result=VK_SUCCESS;
     mutable int waited{};
-    operator VkFence() const {return reinterpret_cast<void*>(0x789a);}
+    // Mirror the actual Vulkan::vk::Fence wrapper, which exposes a raw
+    // handle via operator*() and deliberately has no VkFence conversion.
+    VkFence operator*() const {return reinterpret_cast<void*>(0x789a);}
     VkResult GetStatus() const {return status;}
     VkResult Wait(std::uint64_t timeout) const {assert(timeout);++waited;return wait_result;}
 };

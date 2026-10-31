@@ -5,6 +5,7 @@
   </td></tr>
 </table>
 
+<a id="encore"></a>
 <table width="100%">
   <tr>
     <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>

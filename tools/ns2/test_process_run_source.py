@@ -3,7 +3,7 @@
 from pathlib import Path
 import os,subprocess,tempfile
 root=Path(__file__).resolve().parents[2]
-owner=(root/'headless/ns2/overrides/core/hle/service/os/process.cpp').read_text()
+owner=(root/'vendor/sources/eden/src/core/hle/service/os/process.cpp').read_text()
 start=owner.index('bool Process::Run() {')
 end=owner.index('\nvoid Process::Terminate()',start)
 real=owner[start:end]
@@ -73,6 +73,7 @@ with tempfile.TemporaryDirectory(prefix="n52-os-process-") as d:
         subprocess.run([cxx,"-std=c++20","-O1","-Wall","-Wextra",
                         "-Wno-unused-variable","-Werror","-fsanitize=undefined",
                         "-fno-sanitize-recover=all",
+                        "-DEDEN_NS2_PROCESS_RUN_GUARD=1",
                         "-I",str(root/"headless/ns2/overrides"),
                         "-I",str(root/"vendor/encore-active/ns2-helpers/include"),
                         str(src),"-o",str(exe)],check=True)

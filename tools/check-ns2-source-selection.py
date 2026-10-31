@@ -132,8 +132,8 @@ def main() -> int:
                 "NS2 SVC owner drift: " + ",".join(k for k, good in svc_contracts.items() if not good))
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 6 and
-                'set_property(TARGET core PROPERTY SOURCES "${eden_ns2_os_sources}")' in CMAKE and
+        require(sum(i > selection for i in property_sets) == 5 and
+                'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE and
                 'EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR' in CMAKE,
                 "Unexpected NS2 core source owner: ExeFS, SVC, process-run, AM, NVDRV and supervisor must stay isolated")
         require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,

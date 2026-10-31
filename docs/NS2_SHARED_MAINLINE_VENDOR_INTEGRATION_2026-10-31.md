@@ -43,3 +43,7 @@ The Eglantine 2D/3D view-mismatch safety check now runs behind `EDEN_NS2_VIEW_DI
 ## ExeFS and NPDM helper ownership
 
 Eight unchanged loader/metadata/NSO admission headers have moved from `headless/ns2/overrides` to `vendor/encore-active/ns2-helpers/include` as the single research source owner. The CMake source selector still uses the **existing** core loader implementation; includes for metadata, ExeFS and host tests now resolve from vendor. These are generic, host-tested admission checks, **not proof of Switch 2 game execution**. Remaining whole-translation-unit loader/process research overlays are still isolated; no release promotion is implied.
+
+## N52 source owner
+
+Experimental `Service::Process::Run` return-code checking is now compiled from the original `vendor/sources/eden/src/core/hle/service/os/process.cpp` under `EDEN_NS2_PROCESS_RUN_GUARD`. Its old cloned C++ translation unit in `headless/ns2/overrides` has been removed; default Switch 1 behavior is unchanged. Host regressions extract the real vendor method with Clang/GCC.

@@ -1202,7 +1202,8 @@ unsigned int HashPath(const std::string& path) {
 // ("Name [0100...][v0]", "Name (USA)").
 std::string CleanTitle(const std::string& filename) {
     const auto selected_path = std::filesystem::path(filename);
-    const std::string base = Eden::IsDeconstructedGameSelection(filename)
+    const std::string base = Eden::IsDeconstructedGameSelection(filename) ||
+                             Eden::IsNestedGameFileSelection(filename)
                                  ? (*selected_path.begin()).string()
                                  : selected_path.stem().string();
     std::string title = base;
@@ -1280,8 +1281,8 @@ int CountInstalledGames() {
     int count = 0;
     for (const auto& entry : entries) {
         const std::string filename = entry.path().filename().string();
-        const auto extracted = Eden::FindDeconstructedGameMain(entry.path());
-        const std::string selection = extracted.empty() ? filename : filename + "/" + extracted;
+        const auto discovered = Eden::FindGameFolderInput(entry.path());
+        const std::string selection = discovered.empty() ? filename : filename + "/" + discovered;
         if (Eden::ValidRomFilename(selection) &&
             IsFile(Eden::AssetsPath("roms/" + selection))) ++count;
     }
@@ -1626,14 +1627,17 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             return {}; // discard partial results and stop per-title disk work
         const std::string entry_name = entry.path().filename().string();
         const std::string extracted = Eden::FindDeconstructedGameMain(entry.path());
+        const std::string nested_package = extracted.empty() ?
+            Eden::FindNestedGamePackage(entry.path()) : std::string{};
         const bool deconstructed = !extracted.empty();
-        // Persist the actual nested main input, while keeping a single library
-        // card named for the top-level folder (never one card per update/DLC).
-        const std::string file = deconstructed ? entry_name + "/" + extracted : entry_name;
+        // Persist a validated relative base input as one library entry,
+        // without listing the update and DLC subtrees as independent games.
+        const std::string discovered = deconstructed ? extracted : nested_package;
+        const std::string file = discovered.empty() ? entry_name : entry_name + "/" + discovered;
         if (!Eden::ValidRomFilename(file)) continue;
-        const std::size_t dot = entry_name.find_last_of('.');
+        const std::size_t dot = file.find_last_of('.');
         std::string format = deconstructed ? "EXEFS" :
-            (dot == std::string::npos ? std::string{} : entry_name.substr(dot + 1));
+            (dot == std::string::npos ? std::string{} : file.substr(dot + 1));
         std::transform(format.begin(), format.end(), format.begin(),
                        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
         ++rom_candidates;

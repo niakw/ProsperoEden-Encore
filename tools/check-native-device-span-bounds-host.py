@@ -21,7 +21,23 @@ new_return = ('    // Reuse the validated physical backing instead of loading th
               '    return GetPointerFromRaw<u8>((PAddr(backing - 1U) << page_bits) + (src_addr & page_mask));')
 assert original_span_block.count(old_return) == 2
 expected = backport[:span_start] + original_span_block.replace(old_return, new_return) + backport[span_end:]
-assert native == expected, 'Native device implementation drifted beyond the reviewed span reuse'
+# N50 is an opt-in, additive GPU continuity guard. Preserve byte-exact
+# parity of the shipping NS1 device span/ASID owner after removing ONLY the
+# two reviewed guarded map/unmap insertions and its single include.
+ns2_header = '#ifdef EDEN_NS2_DEVICE_CONTINUITY\n#include "core/ns2_egl_continuity_guard.h"\n#endif\n'
+ns2_cut = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
+    // End a previously tracked physical run before mapping state changes.
+    Eden::NS2::GpuMemory::CutContinuityAt(start_page_d,
+        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },
+        [&](size_t index, u32 new_count) {
+            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);
+        });
+#endif
+'''
+assert native.count(ns2_header) == 1, 'N50 include duplicated or modified'
+assert native.count(ns2_cut) == 2, 'N50 map/unmap continuity blocks drifted'
+unqualified_native = native.replace(ns2_header, '', 1).replace(ns2_cut, '', 2)
+assert unqualified_native == expected, 'Native device implementation drifted beyond the reviewed span reuse'
 assert 'id_pool' not in native + header
 map_body = native.split('void DeviceMemoryManager<Traits>::Map(', 1)[1].split('void DeviceMemoryManager<Traits>::Unmap(', 1)[0]
 assert map_body.index('std::shared_lock registry_lk(process_registry_guard);') < map_body.index('std::unique_lock lk(mapping_guard);')

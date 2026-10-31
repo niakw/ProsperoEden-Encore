@@ -9,6 +9,7 @@ on:
       - 'tools/build-headless-native.sh'
       - 'tools/ns2/check_native_research_selector.py'
       - 'tools/check-vendor-consolidation-debt.py'
+      - 'tools/check-ns2-source-selection.py'
       - 'headless/CMakeLists.txt'
       - 'vendor'
   workflow_dispatch:

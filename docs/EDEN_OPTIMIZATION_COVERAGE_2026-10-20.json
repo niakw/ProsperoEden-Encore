@@ -4437,6 +4437,34 @@
       "path": "vendor/encore-active/ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c",
       "disposition": "reviewed_without_new_code_edit",
       "evidence": "Source-level P0 optimization triage; docs/EDEN_OPTIMIZATION_REVIEW_MESA_VULKAN_2026-10-20.md"
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "b08428c7e79be3f86f235f0450bca0bd61c042ef",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Bounded read-only extracted DLC discovery and explicit 16-digit Title ID policy. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "c436b14fe6ab9fee2af267fdc706f2e9226524a7",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Shared runtime AOC index and virtual RomFS mount. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "5ee2ca1afcee9eb725e57490227a9f12c6de8cf5",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Native NCA-first AOC Data mount fallback; shared NS1/NS2 engine. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "c329c6ba2c60c2641046f282c412567ada8c4aac",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Native aoc:u guest enumeration of packaged and extracted DLC IDs. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
     }
   ],
   "inventoried_including_pinned": 538,
@@ -4469,6 +4497,10 @@
     "vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h",
-    "headless/prosperoeden/ps5_profile_avatar_staging.hpp"
+    "headless/prosperoeden/ps5_profile_avatar_staging.hpp",
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp"
   ]
 }

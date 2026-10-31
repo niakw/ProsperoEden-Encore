@@ -51,8 +51,8 @@ reconstructed = fork.replace("#include <array>\n#include <cstdio>\n", "")
 # NS2's sparse allocation methods exist only under an explicit research
 # compile gate. Reverse the WHOLE guarded block, not just the methods: a
 # dangling preprocessor guard would invalidate the strict F07 source witness.
-guard = "#ifdef EDEN_NS2_SPARSE_CACHE_PROBE\\n".replace("\\\\n", "\\n")
-tail_guard = "#endif // EDEN_NS2_SPARSE_CACHE_PROBE\\n\\n".replace("\\\\n", "\\n")
+guard = "#ifdef EDEN_NS2_SPARSE_CACHE_PROBE\n"
+tail_guard = "#endif // EDEN_NS2_SPARSE_CACHE_PROBE\n\n"
 assert reconstructed.count(guard) == reconstructed.count(tail_guard) == 1
 start_sparse = reconstructed.index(guard)
 method_start = reconstructed.index("vk::Image MemoryAllocator::CreateSparseImage(", start_sparse)

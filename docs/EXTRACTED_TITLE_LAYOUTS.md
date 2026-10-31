@@ -99,3 +99,18 @@ This is a host source test, not actual NCA patch/gameplay validation.
 Launcher/UI and scanning changes live in `headless/`. Vendor filesystem
 and loader changes live in the pinned vendor repository, not copied into
 a second NS2-specific engine. There are no game-name-specific rules.
+
+## Native build qualification — 31 October 2026
+
+The shared NS1/experimental-NS2 file-layout integration has reached `main`.
+Its earlier host-source preflight failure was traced to a strict
+`check-maintained-logging-loader.py` parity witness that still expected
+the pre-RomFS vendor source. The revised witness retains the exact
+reviewed Git-blob pin and checks the extracted bridge invariants.
+
+A **non-publishing** native PS5 build is requested through the repository's
+existing `[full-build]` push gate. A triggered workflow, green host tests,
+and successful native compilation are three distinct outcomes; the last
+two must be read from that build's actual jobs and package artifact.
+Do not claim extracted AOC/DLC mounting or commercial Switch 2 game
+execution merely because a folder scanner or a native binary builds.

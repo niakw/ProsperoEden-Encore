@@ -275,4 +275,53 @@ inline bool IsSafeNestedGameFilePath(const std::filesystem::path& roms_root,
     const auto status = fs::symlink_status(path / relative.filename(), error);
     return !error && fs::is_regular_file(status) && !fs::is_symlink(status);
 }
+
+// Discover add-on content roots without treating each update/DLC as a game.
+// These roots may contain arbitrary deeper subdirectories: the existing
+// ExternalContentProvider classifies packages by Nintendo title metadata.
+// Keep traversal bounded and do not inspect extracted ExeFS/RomFS payloads.
+inline bool IsAddOnContainerName(std::string_view name) {
+    std::string lower{name};
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return lower == "updates" || lower == "update" || lower == "patches" ||
+           lower == "dlc" || lower == "addons" || lower == "add-ons";
+}
+
+inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
+    const std::filesystem::path& title_root) {
+    namespace fs = std::filesystem;
+    std::vector<fs::path> found;
+    if (!IsSafeExtractedDirectory(title_root)) return found;
+    std::size_t visited = 0;
+    const auto scan = [&](const auto& self, const fs::path& dir, unsigned depth) -> void {
+        if (depth > 5 || ++visited > 128 || found.size() >= 32) return;
+        std::error_code error;
+        std::vector<fs::path> subdirs;
+        std::size_t enumerated = 0;
+        for (fs::directory_iterator it{dir, fs::directory_options::skip_permission_denied, error},
+                                    end;
+             !error && it != end && enumerated++ < 128; it.increment(error)) {
+            const fs::path path = it->path();
+            const auto name = path.filename().string();
+            if (name.empty() || name.front() == '.' ||
+                name == "romfs" || name == "exefs") continue;
+            if (!IsSafeExtractedDirectory(path)) continue;
+            if (IsAddOnContainerName(name)) {
+                found.push_back(path);
+            } else {
+                subdirs.push_back(path);
+            }
+        }
+        std::sort(subdirs.begin(), subdirs.end());
+        for (const auto& child : subdirs) {
+            if (visited >= 128 || found.size() >= 32) break;
+            self(self, child, depth + 1);
+        }
+    };
+    scan(scan, title_root, 0);
+    std::sort(found.begin(), found.end());
+    found.erase(std::unique(found.begin(), found.end()), found.end());
+    return found;
+}
 } // namespace Eden

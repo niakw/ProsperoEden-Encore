@@ -1623,6 +1623,47 @@ if(EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL)
     target_include_directories(video_core BEFORE PUBLIC "${eden_ns2_vma_root}/include")
 endif()
 
+# N64: VkImage sparse 2D array factory with no full backing, derived from
+# the maintained N62 native PS5 VMA allocator, not a desktop Vulkan owner.
+option(EDEN_NS2_SPARSE_IMAGE_FACTORY_EXPERIMENTAL
+    "Research only: create unbacked PS5 Vulkan sparse 2D arrays" OFF)
+if(EDEN_NS2_SPARSE_IMAGE_FACTORY_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR
+       NOT EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL OR
+       EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N64 sparse VkImage requires N58 and N62 PS5 research")
+    endif()
+    set(eden_ns2_sparse_n62_source
+        "${eden_ns2_vma_root}/vulkan_memory_allocator.cpp")
+    list(FIND video_sources "${eden_ns2_sparse_n62_source}" eden_ns2_sparse_n62_idx)
+    if(eden_ns2_sparse_n62_idx EQUAL -1)
+        message(FATAL_ERROR "N64 native allocator source owner changed")
+    endif()
+    set(eden_ns2_sparse_n64_root "${PORT_BUILD_DIR}/ns2-sparse-image")
+    set(eden_ns2_sparse_n64_generator
+        "${PORT_ROOT}/tools/ns2/prepare_egl_sparse_image_owner.py")
+    set(eden_ns2_sparse_n62_header
+        "${eden_ns2_vma_root}/include/video_core/vulkan_common/vulkan_memory_allocator.h")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${eden_ns2_sparse_n62_source}" "${eden_ns2_sparse_n62_header}"
+        "${eden_ns2_sparse_n64_generator}")
+    execute_process(COMMAND "${EDEN_NS2_VMA_PYTHON_EXECUTABLE}"
+        "${eden_ns2_sparse_n64_generator}"
+        "--header" "${eden_ns2_sparse_n62_header}"
+        "--source" "${eden_ns2_sparse_n62_source}"
+        "--output" "${eden_ns2_sparse_n64_root}"
+        RESULT_VARIABLE eden_ns2_sparse_image_result)
+    if(NOT eden_ns2_sparse_image_result EQUAL 0)
+        message(FATAL_ERROR "N64 native sparse Vulkan image source changed")
+    endif()
+    list(REMOVE_ITEM video_sources "${eden_ns2_sparse_n62_source}")
+    list(APPEND video_sources "${eden_ns2_sparse_n64_root}/vulkan_memory_allocator.cpp")
+    target_include_directories(video_core BEFORE PUBLIC
+        "${eden_ns2_sparse_n64_root}/include")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2567,6 +2608,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR
        EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL OR
+       EDEN_NS2_SPARSE_IMAGE_FACTORY_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

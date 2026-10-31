@@ -1,26 +1,33 @@
-<div align="center">
-  <img src="assets/icon0.png" alt="Logo Prospero.Eden Encore" width="154">
+<table width="100%">
+  <tr><td align="center">
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="README.md">English</a> &nbsp; · &nbsp; <a href="README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <strong>Français</strong> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>
+    <a href="README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
+  </td></tr>
+</table>
 
-  <h1>Prospero.Eden Encore</h1>
+<table width="100%">
+  <tr>
+    <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>
+    <td width="79%" align="left" valign="middle">
+      <h1>Prospero.Eden Encore</h1>
+      <p><strong>L'émulation native, pensée pour jouer depuis son canapé.</strong></p>
+      <p>Un fork d'émulateur natif PS5 pour le firmware 13.60 : chargeurs NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX et KIP, décompression LZ4 + ZBIC/zstd, interface TV et compilation reproductible.</p>
+      <p><kbd>Firmware 13.60 · testé sur PS5</kbd> &nbsp; <kbd>Vulkan + OpenGL</kbd> &nbsp; <kbd>Interface TV</kbd> &nbsp; <kbd>Dynarmic</kbd></p>
+    </td>
+  </tr>
+</table>
 
-  <h3>L'émulation native, pensée pour jouer depuis son canapé.</h3>
-
-  <p><strong>Un fork d'émulateur natif PS5 pour le firmware 13.60 : chargeurs NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX et KIP, décompression LZ4 + ZBIC/zstd, interface TV et compilation reproductible.</strong></p>
-
-  <p><a href="README.md">English (default)</a> · <a href="README.zh-Hans.md">简体中文</a> · <a href="README.es-419.md">Español (LatAm)</a> · <a href="README.es.md">Español</a> · <strong>Français</strong> · <a href="README.fr-CA.md">Français (CA)</a> · <a href="README.pt-BR.md">Português (BR)</a> · <a href="LANGUAGES.md"><strong>18 choix</strong></a></p>
-  <p><kbd>Firmware 13.60 · testé sur matériel</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>Interface TV</kbd> <kbd>Dynarmic</kbd></p>
-  <p>
-    <a href="#-pourquoi-encore-"><strong>Avantages</strong></a> ·
-    <a href="#-installation"><strong>Installation</strong></a> ·
-    <a href="#-compatibilité-et-limites"><strong>Compatibilité</strong></a> ·
-    <a href="#-compilations-et-validations"><strong>Builds</strong></a> ·
-    <a href="ACCESSIBILITY.md"><strong>Accessibilité</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility"><strong>Switch 2</strong></a> ·
-    <a href="#faq"><strong>FAQ</strong></a> ·
-    <a href="README.md#credits"><strong>Crédits</strong></a>
-  </p>
-</div>
+<table width="100%">
+  <tr>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/releases"><strong>Télécharger</strong></a></td>
+    <td align="center"><a href="docs/i18n/INSTALL.fr-FR.md"><strong>Installer</strong></a></td>
+    <td align="center"><a href="#getting-started"><strong>Démarrer</strong></a></td>
+    <td align="center"><a href="#compatibility"><strong>Compatibilité</strong></a></td>
+    <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
+    <td align="center"><a href="TROUBLESHOOTING.md"><strong>Aide</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+  </tr>
+</table>
 
 <p align="center"><img src="assets/screenshots/eden-encore-home-sample-art.png" alt="Eden Encore Home in English with the original wallpaper and fictional sample game artwork" width="860"></p>
 
@@ -35,6 +42,7 @@
 
 ---
 
+<a id="getting-started"></a>
 ## Démarrer en quatre étapes
 
 1. Télécharger une archive **complète** des [Releases Encore](https://github.com/niakw/ProsperoEden-Encore/releases). Une CI verte ne prouve pas une version testée sur console.
@@ -157,6 +165,7 @@ Le mapping physique du launcher et la configuration des actions mémorisée **à
 
 ---
 
+<a id="compatibility"></a>
 ## 🧪 Compatibilité et limites
 
 | Cas | État vérifié |

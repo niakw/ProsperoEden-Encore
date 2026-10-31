@@ -1,9 +1,35 @@
-# Prospero.Eden Encore — Español (Latinoamérica)
+<table width="100%">
+  <tr><td align="center">
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="README.md">English</a> &nbsp; · &nbsp; <a href="README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <strong>Español LatAm</strong> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>
+    <a href="README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
+  </td></tr>
+</table>
 
-> Emulación comunitaria para jugar en PS5 desde el sillón · [English (default)](README.md) · [Todos los idiomas](LANGUAGES.md)
+<table width="100%">
+  <tr>
+    <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>
+    <td width="79%" align="left" valign="middle">
+      <h1>Prospero.Eden Encore</h1>
+      <p><strong>Emulación comunitaria para jugar en PS5 desde el sillón</strong></p>
+      <p>Encore es una bifurcación comunitaria independiente con una interfaz para control, biblioteca de juegos, ajustes gráficos y herramientas de diagnóstico. No es un producto oficial de Sony ni Nintendo.</p>
+      <p><kbd>Firmware 13.60 · probado en PS5</kbd> &nbsp; <kbd>Vulkan + OpenGL</kbd> &nbsp; <kbd>Interfaz TV</kbd> &nbsp; <kbd>Dynarmic</kbd></p>
+    </td>
+  </tr>
+</table>
 
-Encore es una bifurcación comunitaria independiente con una interfaz para control, biblioteca de juegos, ajustes gráficos y herramientas de diagnóstico. No es un producto oficial de Sony ni Nintendo.
+<table width="100%">
+  <tr>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/releases"><strong>Descargar</strong></a></td>
+    <td align="center"><a href="docs/i18n/INSTALL.es-419.md"><strong>Instalar</strong></a></td>
+    <td align="center"><a href="#getting-started"><strong>Empezar</strong></a></td>
+    <td align="center"><a href="#compatibility"><strong>Compatibilidad</strong></a></td>
+    <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
+    <td align="center"><a href="TROUBLESHOOTING.md"><strong>Ayuda</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+  </tr>
+</table>
 
+<a id="getting-started"></a>
 ## Primeros pasos
 
 1. Descarga el paquete completo en Encore Releases y verifica su checksum.
@@ -21,12 +47,14 @@ Encore y ProsperoEden nativo comparten el ID PPSA99008: no son dos apps que se p
 
 [Migrar desde el proyecto original — paso a paso](docs/i18n/INSTALL.es-419.md) · [Instalación completa en inglés](INSTALL.md)
 
+<a id="compatibility"></a>
 ## Compatibilidad y problemas conocidos
 
 Encore solo ha sido probado en una consola PS5 con firmware 13.60. Los anteriores podrían funcionar, pero no están confirmados ni existe una versión mínima verificada. Algunos juegos aún presentan tirones, HUD atrasado, controles incorrectos y bloqueos durante pausas. Una compilación correcta no prueba la jugabilidad.
 
 El código en desarrollo admite contenedores NSP/XCI y experimentalmente NSZ/XCZ; los cargadores directos NRO/NSO/NCA/NAX/KIP requieren contenido adecuado. Reconocer la extensión no garantiza que el juego funcione.
 
+<a id="faq"></a>
 ## Preguntas frecuentes
 
 Switch 2 se investiga en una rama independiente y no funciona en la versión PS5 actual. La generación de cuadros y el actualizador automático figuran en los planes, pero no se han lanzado.

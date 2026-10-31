@@ -1,26 +1,33 @@
-<div align="center">
-  <img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="154">
+<table width="100%">
+  <tr><td align="center">
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <strong>English</strong> &nbsp; · &nbsp; <strong>English UK</strong> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>
+    <a href="README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
+  </td></tr>
+</table>
 
-  <h1>Prospero.Eden Encore</h1>
+<table width="100%">
+  <tr>
+    <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>
+    <td width="79%" align="left" valign="middle">
+      <h1>Prospero.Eden Encore</h1>
+      <p><strong>Console-native emulation, made for the living room.</strong></p>
+      <p>A controller-first PS5 emulator fork for firmware 13.60: NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX and KIP loaders, LZ4 + ZBIC/zstd decoding, TV navigation and reproducible builds.</p>
+      <p><kbd>Firmware 13.60 · hardware-tested target</kbd> &nbsp; <kbd>Vulkan + OpenGL</kbd> &nbsp; <kbd>TV-first UI</kbd> &nbsp; <kbd>Dynarmic</kbd></p>
+    </td>
+  </tr>
+</table>
 
-  <h3>Console-native emulation, made for the living room.</h3>
-
-  <p><strong>A controller-first PS5 emulator fork for firmware 13.60: NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX and KIP loaders, LZ4 + ZBIC/zstd decoding, TV navigation and reproducible builds.</strong></p>
-
-  <p><strong>English (default)</strong> · <a href="README.zh-Hans.md">简体中文</a> · <a href="README.zh-Hant.md">繁體中文</a> · <a href="README.es-419.md">Español (LatAm)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <a href="README.fr-CA.md">Français (CA)</a> · <a href="README.pt-BR.md">Português (BR)</a> · <a href="README.pt-PT.md">Português (PT)</a> · <a href="LANGUAGES.md"><strong>All 18 choices</strong></a></p>
-  <p><kbd>Firmware 13.60 · hardware-tested target</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>TV-first UI</kbd> <kbd>Dynarmic</kbd></p>
-  <p>
-    <a href="INSTALL.md"><strong>Install</strong></a> ·
-    <a href="#-why-encore"><strong>Benefits</strong></a> ·
-    <a href="#-compatibility--current-limits"><strong>Compatibility</strong></a> ·
-    <a href="#-builds--validation"><strong>Builds</strong></a> ·
-    <a href="ACCESSIBILITY.md"><strong>Accessibility</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility"><strong>Switch 2</strong></a> ·
-    <a href="#faq"><strong>FAQ</strong></a> ·
-    <a href="#credits"><strong>Credits</strong></a>
-  </p>
-</div>
+<table width="100%">
+  <tr>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/releases"><strong>Download</strong></a></td>
+    <td align="center"><a href="INSTALL.md"><strong>Install</strong></a></td>
+    <td align="center"><a href="#getting-started"><strong>Get started</strong></a></td>
+    <td align="center"><a href="#compatibility"><strong>Compatibility</strong></a></td>
+    <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
+    <td align="center"><a href="TROUBLESHOOTING.md"><strong>Help</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+  </tr>
+</table>
 
 <p align="center">
   <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
@@ -41,6 +48,7 @@
 
 ---
 
+<a id="getting-started"></a>
 ## Start here — install in four steps
 
 1. Choose a **complete Encore release package** from [Releases](https://github.com/niakw/ProsperoEden-Encore/releases). A green development CI job does not automatically mean it was tested on PS5.
@@ -165,6 +173,7 @@ See [Architecture](docs/PS5_NATIVE_ARCHITECTURE.md), [Performance roadmap](docs/
 
 ---
 
+<a id="compatibility"></a>
 ## 🧪 Compatibility & current limits
 
 | Target | Evidence | Status |

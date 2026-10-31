@@ -10,6 +10,7 @@
 #include <vector>
 #include "core/loader/ns2_process_handoff.h"
 #include "core/loader/ns2_main_thread_admission.h"
+#include "core/loader/ns2_public_homebrew_svc.h"
 
 using namespace Eden::NS2::ExeFS;
 using Header = std::array<std::uint8_t, NsoHeaderBytes>;
@@ -17,6 +18,18 @@ static void Put(Header& h, std::size_t p, std::uint32_t n) {
     for (int i = 0; i < 4; ++i) h[p + i] = static_cast<std::uint8_t>(n >> (8 * i));
 }
 int main() {
+    constexpr std::array<std::uint8_t, 16> public_name{
+        'N','S','2','-','H','O','S','T','-','H','B',0,0,0,0,0};
+    constexpr std::array<std::uint8_t, 16> other_name{
+        'G','A','M','E',0,0,0,0,0,0,0,0,0,0,0,0};
+    static_assert(IsPublicHelloFixture(PublicHelloProgramId, public_name));
+    static_assert(!IsPublicHelloFixture(PublicHelloProgramId + 1, public_name));
+    static_assert(!IsPublicHelloFixture(PublicHelloProgramId, other_name));
+    static_assert(MissingPublicHelloSvcs([](auto) { return true; }) == 0);
+    static_assert(MissingPublicHelloSvcs([](std::uint32_t id) { return id != 0x27; })
+                  == (1U << 4));
+    static_assert(MissingPublicHelloSvcs([](std::uint32_t id) { return id == 0x07; })
+                  == 0x1EU);
     constexpr auto main_priority = std::uint64_t{1} << 44;
     static_assert(MainThreadPermitted(1, main_priority, 0, 44));
     static_assert(!MainThreadPermitted(0, main_priority, 0, 44));

@@ -11,6 +11,7 @@ on:
       - 'tools/ns2/build_public_nso_fixture.py'
       - 'tools/ns2/build_public_exefs_fixture.py'
       - 'tools/ns2/test_program_metadata.cpp'
+      - 'headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h'
       - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
       - 'headless/ns2/overrides/core/loader/ns2_nso_preflight.h'
       - 'vendor'
@@ -113,4 +114,12 @@ jobs:
             fi
             exit 1
           fi
-
+      - name: Publish unsigned public HOS homebrew ExeFS for opt-in PS5 testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: ns2-public-hos-hello-exefs
+          path: |
+            build-ns2-jit/public-exefs/main
+            build-ns2-jit/public-exefs/main.npdm
+          if-no-files-found: error
+          retention-days: 7

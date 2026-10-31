@@ -237,3 +237,20 @@ The genuine kernel SVC dispatcher trace now records
 `process.IsPermittedSvc(imm)` alongside the SVC ID, without replacing any
 handler or modifying service return values. These source-level checks do
 not constitute full-core, native PS5 or Switch 2 game boot evidence.
+
+## N3z — public fixture real KProcess SVC rights and CI test artifact
+
+Only the strictly identified synthetic `NS2-HOST-HB` process with program
+ID `0100000000000420` is checked for the five public HOS SVCs (0x07,
+0x0B, 0x1E, 0x26, 0x27) by calling the genuine
+`KProcess::IsPermittedSvc` after `LoadFromMetadata`. Missing rights
+are diagnosed and rejected; no kernel privilege is invented and all other
+titles are unaffected. Clang/GCC host tests cover the identification and
+five-bit denial bitmap; a real native launch is still outstanding.
+
+When the existing JIT runtime tests pass, GitHub Actions publishes the two
+research fixture files `main` and `main.npdm` as the artifact
+`ns2-public-hos-hello-exefs` (7-day retention). The artifact includes no
+firmware, keys or commercial game, and is **not** evidence of full Switch 2
+boot. It can be supplied to a separately compiled opt-in PS5 build for
+an authorized console test; record real KProcess PID and SVC logs.

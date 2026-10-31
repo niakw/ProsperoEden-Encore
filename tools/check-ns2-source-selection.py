@@ -110,6 +110,12 @@ def main() -> int:
                 "process.GetCoreMask()" in romdir_source.read_text() and
                 "process.GetPriorityMask()" in romdir_source.read_text(),
                 "NS2 guest process must check real kernel scheduling permissions")
+        public_svc = ROOT / "headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h"
+        require(public_svc.is_file() and
+                "MissingPublicHelloSvcs(" in public_svc.read_text() and
+                "IsPublicHelloFixture(metadata.GetTitleID()" in romdir_source.read_text() and
+                "process.IsPermittedSvc(svc)" in romdir_source.read_text(),
+                "Public homebrew fixture must verify actual kernel SVC grants")
         svc_trace = ROOT / "headless/ns2/overrides/core/loader/ns2_svc_trace.h"
         svc_generator = ROOT / "tools/ns2/prepare_svc_trace_owner.cmake"
         require(svc_trace.is_file() and svc_generator.is_file() and

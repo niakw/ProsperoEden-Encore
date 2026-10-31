@@ -99,6 +99,9 @@ static void Successful(){
     assert(q.tails[1].resourceOffset==134217728+262144);
     assert(q.tails[1].memoryOffset+q.tails[1].size==
            131072+request.bytes_new);
+    assert(owner.Bind(reinterpret_cast<VkImage>(0xabce),mem,Requirements(s),
+                      request,q,fence)==VK_ERROR_INITIALIZATION_FAILED);
+    assert(owner.HasLiveBacking() && owner.ReadyForSampling());
     assert(owner.Bind(Image(),mem,Requirements(s),request,q,fence)==
            VK_ERROR_INITIALIZATION_FAILED);
     assert(q.calls==1);
@@ -109,6 +112,12 @@ static void Successful(){
     bool dropped=false;
     assert(owner.RetireAfterDeviceIdle(dev,[&]{dropped=true;}));
     assert(dropped && dev.calls==1 && a.releases==2);
+    // The image identity gate is reset only after the original VkImage
+    // is destroyed by RetireAfterDeviceIdle.
+    auto fresh=b.Plan(std::vector<std::uint32_t>{5});
+    assert(owner.Bind(reinterpret_cast<VkImage>(0xabce),mem,Requirements(s),
+                      fresh,q,fence)==VK_SUCCESS);
+    assert(owner.RetireAfterDeviceIdle(dev,[]{}));
     assert(!owner.HasLiveBacking()&&!owner.ReadyForSampling()&&!b.IsBound(1));
 }
 static void Failures(){

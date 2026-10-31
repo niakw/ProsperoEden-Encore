@@ -656,6 +656,24 @@ foreach(eden_ncz_relative IN ITEMS
     list(REMOVE_ITEM core_sources "${eden_ncz_relative}")
     list(APPEND core_sources "${eden_ncz_maintained}")
 endforeach()
+# Extracted AOC: use the shared vendor source owners for both NS1 and
+# experimental NS2, not duplicated frontend implementations. These are
+# complete maintained units selected in place of pristine upstream sources.
+foreach(eden_aoc_relative IN ITEMS
+        "file_sys/romfs_factory.cpp"
+        "hle/service/aoc/addon_content_manager.cpp")
+    set(eden_aoc_maintained
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_aoc_relative}")
+    if(NOT EXISTS "${eden_aoc_maintained}")
+        message(FATAL_ERROR "Missing maintained extracted AOC source: ${eden_aoc_relative}")
+    endif()
+    list(FIND core_sources "${eden_aoc_relative}" eden_aoc_index)
+    if(eden_aoc_index LESS 0)
+        message(FATAL_ERROR "Pristine AOC owner missing from core sources: ${eden_aoc_relative}")
+    endif()
+    list(REMOVE_ITEM core_sources "${eden_aoc_relative}")
+    list(APPEND core_sources "${eden_aoc_maintained}")
+endforeach()
 list(APPEND core_sources "${EDEN_PORT_DIR}/ncz.cpp")
 # Both the adapter and the two NCZ-aware full source owners use this header.
 target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")

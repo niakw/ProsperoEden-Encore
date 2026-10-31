@@ -23,6 +23,11 @@ actual_validator = settings[start:end]
 assert "IsDeconstructedGameSelection(name)" in actual_validator
 assert "c == '/' && !exefs" in actual_validator
 assert 'FindDeconstructedGameMain(entry.path())' in library
+assert 'FindNestedGamePackage(entry.path())' in library
+assert 'FindGameFolderInput(entry.path())' in library
+assert 'IsNestedGameFileSelection(name)' in settings
+assert 'IsSafeNestedGameFilePath(selected_root, relative)' in main
+assert 'FindGameFolderInput(entry.path())' in main
 assert 'if (!Eden::ValidRomFilename(file)) continue;' in library
 assert 'game.name = CleanTitle(entry_name);' in library
 assert 'game.format = format;' in library
@@ -69,6 +74,12 @@ int main() {
     assert(!Eden::ValidRomFilename("My Game/../main"));
     assert(!Eden::ValidRomFilename("My Game/sub/main"));
     assert(Eden::ValidRomFilename("My Game/base/exefs/main"));
+    assert(Eden::ValidRomFilename("My Game/base/game.XCI"));
+    assert(Eden::ValidRomFilename("My Game/wrapper/second/title.nsp"));
+    assert(!Eden::ValidRomFilename("My Game/updates/001/update.nsp"));
+    assert(!Eden::ValidRomFilename("My Game/dlc/addon.nsp"));
+    assert(!Eden::ValidRomFilename("My Game/../base/game.nsp"));
+    assert(!Eden::ValidRomFilename("My Game\\game.nsp"));
     assert(Eden::ValidRomFilename("My Game/base/extra/sub/exefs/main"));
     assert(!Eden::ValidRomFilename("My Game/updates/458752/exefs/main"));
     assert(!Eden::ValidRomFilename("updates/458752/exefs/main"));
@@ -127,6 +138,31 @@ int main() {
     fs::create_directory_symlink(nested / "base", bad / "base");
     assert(Eden::FindDeconstructedGameMain(bad).empty());
     assert(!Eden::IsSafeDeconstructedGamePath(root, "Unsafe Game/base/exefs/main"));
+    const auto packaged = root / "Packaged Game";
+    fs::create_directories(packaged / "base" / "container");
+    fs::create_directories(packaged / "updates" / "458752");
+    fs::create_directories(packaged / "dlc" / "addon");
+    std::ofstream(packaged / "base" / "container" / "base.nsp") << "base";
+    std::ofstream(packaged / "updates" / "458752" / "update.nsp") << "update";
+    std::ofstream(packaged / "dlc" / "addon" / "dlc.nsp") << "addon";
+    assert(Eden::FindGameFolderInput(packaged) == "base/container/base.nsp");
+    assert(Eden::IsSafeNestedGameFilePath(root, "Packaged Game/base/container/base.nsp"));
+    const auto standalone = root / "Single Package";
+    fs::create_directory(standalone);
+    std::ofstream(standalone / "some-title.xci") << "game";
+    assert(Eden::FindGameFolderInput(standalone) == "some-title.xci");
+    const auto ambiguous = root / "Ambiguous";
+    fs::create_directory(ambiguous);
+    std::ofstream(ambiguous / "one.nsp") << "base?";
+    std::ofstream(ambiguous / "two.nsp") << "base?";
+    assert(Eden::FindGameFolderInput(ambiguous).empty());
+    const auto linked_package = root / "Linked Package";
+    fs::create_directory(linked_package);
+    fs::create_symlink(standalone / "some-title.xci", linked_package / "base.xci");
+    assert(Eden::FindNestedGamePackage(linked_package).empty());
+    assert(!Eden::IsSafeNestedGameFilePath(root, "Linked Package/base.xci"));
+    assert(Eden::FindDeconstructedGameMain(root / "updates").empty());
+    assert(Eden::FindNestedGamePackage(root / "dlc").empty());
     fs::remove_all(root);
     std::puts("EXEFS_DIRECTORY_AND_SELECTION_PASS");
 }

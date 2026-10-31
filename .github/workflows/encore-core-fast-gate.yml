@@ -23,6 +23,7 @@ on:
       - 'headless/pad.cpp'
       - 'tools/check-dualsense-rumble-lock-host.py'
       - 'tools/check-native-quiet-gpu-report-host.py'
+      - 'tools/check-native-host-pagesize-cache-host.py'
       - 'tools/check-native-quiet-heap-commit-host.py'
       - 'tools/check-native-quiet-counters-host.py'
       - 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'

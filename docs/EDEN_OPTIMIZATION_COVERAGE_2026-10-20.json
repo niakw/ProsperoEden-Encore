@@ -27,10 +27,10 @@
       "path": "headless/audio.cpp",
       "disposition": "code_changed_in_batch",
       "contract_id": "U04",
-      "reviewed_source_git_blob": "2d1e0a7a5aa6034a6ada1d41b41dc9d617c997be",
+      "reviewed_source_git_blob": "a927dcc543fea01f7f548a9a614abf81180e923d",
       "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
       "proof_ref": "tools/check-ps5-audio-output-lock-scope-host.py",
-      "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured. Crash-phase instrumentation source reviewed 2026-10-31: fatal-handler-only audio phase snapshot; no performance or gameplay validation. See docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
+      "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured. Crash-phase instrumentation source reviewed 2026-10-31: fatal-handler-only audio phase snapshot; no performance or gameplay validation. See docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md ABI re-review 2026-10-31: native pthread_t pointer conversion corrected by 0f02ffe4fefc7a37d7536f7faafcb7982e4e3d75; exact source Git blob a927dcc543fea01f7f548a9a614abf81180e923d; source-extracted pointer/integer witness and worker-token cleanup contract; host CI requalification required.",
       "supplemental_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md"
     },
     {

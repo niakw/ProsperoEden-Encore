@@ -45,8 +45,10 @@ thread_store = re.compile(
 )
 audio_tokens = thread_store.findall(audio)
 crash_tokens = thread_store.findall((ROOT / "tools/check-crash-report.py").read_text())
-assert audio_tokens == ["(std::uintptr_t)pthread_self()"], audio_tokens
-assert crash_tokens == audio_tokens, crash_tokens
+assert audio_tokens == ["(std::uintptr_t)pthread_self()", "0"], audio_tokens
+# The production worker must publish its token once and clear it on exit;
+# the deliberate-crash harness has only the publication, not the cleanup.
+assert crash_tokens == audio_tokens[:1], crash_tokens
 assert "(std::uintptr_t)pthread_self()" in (ROOT / "headless/crash_report.cpp").read_text()
 assert "(std::uintptr_t)pthread_self()" in (ROOT / "headless/crash_report.h").read_text()
 thread_token = audio_tokens[0]

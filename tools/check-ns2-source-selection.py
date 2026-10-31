@@ -14,6 +14,29 @@ def require(condition: bool, reason: str) -> None:
 
 def main() -> int:
     try:
+        # Refuse the regression to duplicated/outdated whole engine owners.
+        # One versioned vendor submodule owns every experimental native overlay.
+        for legacy in ("overrides", "eglantine", "dynarmic"):
+            root = ROOT / "headless" / "ns2" / legacy
+            require(not root.exists() or not any(root.rglob("*")),
+                    "Stale NSW2 engine clone reappeared: " + str(root))
+            require(("headless/ns2/" + legacy) not in CMAKE,
+                    "Native CMake selected obsolete NSW2 owner: " + legacy)
+        vendor = ROOT / "vendor" / "encore-active"
+        maintained = [
+            "ns2-a64/dynarmic/frontend/A64/decoder/a64.inc",
+            "ns2-a64/dynarmic/frontend/A64/translate/impl/a64_branch.cpp",
+            "ns2-experimental/src/core/file_sys/program_metadata.cpp",
+            "ns2-experimental/src/core/loader/nso.cpp",
+            "ns2-helpers/include/core/loader/ns2_nso_preflight.h",
+            "ns2-helpers/include/core/ns2_egl_continuity_guard.h",
+            "ns2-helpers/include/video_core/ns2_egl_gpu_range_batch.h",
+            "eden-core/overrides/core/device_memory_manager.inc",
+            "eden-core/src/video_core/memory_manager.cpp",
+            "eden-vulkan/vk_texture_cache_cost.cpp",
+        ]
+        require(all((vendor / path).is_file() for path in maintained),
+                "NSW2 vendor source ownership or checkout is incomplete")
         require('option(EDEN_NS2_METADATA_EXPERIMENTAL' in CMAKE,
                 "No metadata opt-in")
         require('option(EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,

@@ -2261,6 +2261,23 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
 endif()
 
+# Eglantine PR #48: protect the actual PS5 device-memory page-run owner
+# only for explicit NSW2 research. Keep prior atomic/reverse-map fixes.
+option(EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL
+    "Research only: stop stale GPU mapping runs at Map/Unmap boundaries" OFF)
+if(EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 Eglantine device-memory fix requires PS5 and NS2 metadata")
+    endif()
+    set(eden_ns2_egl_memory_root "${PORT_ROOT}/headless/ns2/eglantine")
+    if(NOT EXISTS "${eden_ns2_egl_memory_root}/core/device_memory_manager.inc"
+       OR NOT EXISTS "${eden_ns2_egl_memory_root}/core/ns2_egl_continuity_guard.h")
+        message(FATAL_ERROR "Missing Eglantine PS5 device-memory continuity overlay")
+    endif()
+    target_include_directories(core BEFORE PUBLIC "${eden_ns2_egl_memory_root}")
+    target_include_directories(video_core BEFORE PRIVATE "${eden_ns2_egl_memory_root}")
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
@@ -2280,6 +2297,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR
+       EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

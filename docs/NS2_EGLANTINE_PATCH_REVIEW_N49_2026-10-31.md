@@ -67,3 +67,30 @@ The native CMake path `headless/vulkan.cmake` replaces upstream
 must replace **that** source and preserve its existing PS5 texture/upload
 optimizations. The earlier direct pinned-owner path was not selected in native
 CMake. Corrected before claiming native compilation or validation.
+
+## N50 — Splatoon Raiders device-page continuity
+
+The direct PS5 maintained owner has already implemented atomic store/reset
+of continuity for every touched GPU page. It was still missing the PR #48
+boundary rule: pages **before** the changed Map/Unmap range retained a
+continuity count that crossed into the invalidated range. A bounded prefix
+walk under the existing `mapping_guard` now clamps these counts before
+the existing page loop executes. It uses the unchanged PS5
+`AtomicLoadContinuity`/`AtomicStoreContinuity` helpers; all existing
+physical reverse mapping, GPU cache invalidation, remap validation and
+scheduler behavior stay in the maintained `.inc`.
+
+Experimental selection:
+`EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL=ON` with `PS5_NATIVE`
+and `EDEN_NS2_METADATA_EXPERIMENTAL`, otherwise OFF; forbidden under
+`EDEN_FINAL_RELEASE_PROFILE`. The full `.inc` is derived **only** from
+`vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc`,
+not from old upstream device memory. The parity check rejects any drift.
+Clang/GCC+UBSan host tests cover mapped/unmapped prefix cuts,
+unchanged old runs, zero/end boundaries, and deterministic long-run cases.
+
+Eglantine gameplay proof: PR #48 reported that an unmapped page previously
+included in a device-memory run zeroed the uniform data used for dialogue
+glyphs in *Splatoon Raiders*. The test here proves only local run-count
+correctness; **it does not prove real GPU vertex buffers, console output
+or successful Switch 2 game boot**.

@@ -1,3 +1,4 @@
+<a id="encore"></a>
 <table width="100%">
   <tr><td align="center">
     <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <strong>English</strong> &nbsp; · &nbsp; <strong>English UK</strong> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr.md">Français</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pt-BR.md">Português BR</a><br>
@@ -5,7 +6,6 @@
   </td></tr>
 </table>
 
-<a id="encore"></a>
 <table width="100%">
   <tr>
     <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>

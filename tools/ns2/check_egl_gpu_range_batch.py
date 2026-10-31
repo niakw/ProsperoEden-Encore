@@ -17,7 +17,7 @@ def once(t: str, old: str, new: str) -> str:
     return t.replace(old, new)
 
 t = OWNER.read_text()
-assert blob(t) == "f1d32ed9c48f21c0f4890e814a19b70f6de1d29c"
+assert blob(t) == "c7923dbbef27a9088dbfcb33c162e3c7069679c1"
 assert HELPER.is_file() and "class ChangedPageRuns" in HELPER.read_text()
 t = once(t,
     '#include "video_core/memory_manager.h"\n#ifdef EDEN_NS2_GPU_RANGE_BATCH\n'

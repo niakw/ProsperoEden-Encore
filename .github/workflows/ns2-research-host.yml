@@ -314,6 +314,11 @@ jobs:
               -o "build-ns2-a64/egl-ret-${cxx//+/}"
             "build-ns2-a64/egl-ret-${cxx//+/}"
           done
+      - name: N55 ASTC selective layer planner and bounded staging oracle (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_egl_astc_layer_plan.py
       - name: N54 native ASTC scratch source extraction and lifecycle (Clang and GCC ASan)
         shell: bash
         run: |

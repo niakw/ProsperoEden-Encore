@@ -48,9 +48,16 @@ int main() {
             native->increment_total == 3,
             "native 3-count completion follows GPU work");
     const auto legacyStyle = N::PlanNativeSubmission(2u | 0x100u, 7, true);
-    require(legacyStyle && legacyStyle->completion_count == 0 &&
+    require(legacyStyle && legacyStyle->completion_count == 7 &&
             legacyStyle->increment_total == 9,
-            "ordinary fence increment and value unchanged");
+            "combined native and normal fence emits all nine promised increments");
+    // Regression: native max incremented by 9, ordered queue must emit 2+7.
+    for (std::uint32_t count = 0; count <= 64; ++count) {
+        const auto mixed = N::PlanNativeSubmission(2u | 0x100u, count, true);
+        require(mixed && mixed->completion_count == count &&
+                mixed->increment_total == count + 2,
+                "mixed fence count exactly matches scheduled queue increments");
+    }
     const auto fence = N::PlanNativeSubmission(2u | 16u, 0, true);
     require(fence && fence->completion_count == 0 &&
             fence->increment_total == 2,

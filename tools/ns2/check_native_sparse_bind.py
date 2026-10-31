@@ -32,6 +32,7 @@ using VkFence=void*;
 using VkResult=std::int32_t;
 constexpr VkResult VK_SUCCESS=0, VK_ERROR_INITIALIZATION_FAILED=-3;
 constexpr VkResult VK_ERROR_DEVICE_LOST=-4, VK_ERROR_FEATURE_NOT_PRESENT=-8;
+constexpr std::nullptr_t VK_NULL_HANDLE=nullptr;
 constexpr u32 VK_STRUCTURE_TYPE_BIND_SPARSE_INFO=7;
 struct Subresource { u32 aspectMask{},mipLevel{},arrayLayer{}; };
 struct Extent { u32 width{},height{},depth{}; };

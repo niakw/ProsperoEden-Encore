@@ -476,6 +476,7 @@ jobs:
           python3 -B tools/check-native-fastmem-signal-install-host.py
           python3 -B tools/check-native-quiet-shutdown-heap-host.py
           python3 -B tools/check-native-guest-memory-empty-read-host.py
+          python3 -B tools/check-native-host-pagesize-cache-host.py
           python3 -B tools/check-native-quiet-heap-commit-host.py
           python3 -B tools/check-native-quiet-counters-host.py
           python3 -B tools/check-native-quiet-gpu-report-host.py

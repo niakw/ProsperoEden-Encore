@@ -134,6 +134,19 @@ bool LargePagesEnabled() {
     }
     return value == 1;
 }
+// The host page size is immutable for the life of the process. Heap/JIT
+// allocation, alias accounting and teardown previously called sysconf again
+// for every block. Cache ONLY a successful page-size query: an early failure
+// must not poison later allocations, and concurrent cold calls may retry.
+long CachedHostPageSize() noexcept {
+    static std::atomic<long> positive_page{0};
+    const long cached = positive_page.load(std::memory_order_relaxed);
+    if (cached > 0) return cached;
+    const long current = sysconf(_SC_PAGESIZE);
+    if (current > 0)
+        positive_page.store(current, std::memory_order_relaxed);
+    return current;
+}
 std::size_t lead_size(std::size_t size, std::size_t page) {
     return size >= LargePage && LargePagesEnabled() ? LargePage : page;
 }
@@ -151,7 +164,7 @@ const Header& header_of(const void* pointer, std::size_t page) {
 // when it is first touched. A block from here is dense and zeroed. What must not be dense (the
 // guest page tables, the heap) uses the two families below.
 void* AllocateMemoryPages(std::size_t size) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     const std::size_t lead = page > 0 ? lead_size(size, static_cast<std::size_t>(page)) : 0;
     const auto total = page > 0 ? allocation_size(size, page, lead) : 0;
     if (!total) { errno = EINVAL; return nullptr; }
@@ -203,7 +216,7 @@ void* AllocateMemoryPages(std::size_t size) noexcept {
 // The caller's payload size is not a physical ownership measurement.
 std::size_t AllocatedMemoryPagesSpan(const void* pointer) noexcept {
     if (!pointer) return 0;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     return header_of(pointer, static_cast<std::size_t>(page)).total;
 }
@@ -211,7 +224,7 @@ std::size_t AllocatedMemoryPagesSpan(const void* pointer) noexcept {
 #ifdef PS5_NATIVE
 // Direct-memory start of an AllocateMemoryPages block's first data byte.
 std::int64_t DirectMemoryStart(const void* pointer) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (!pointer || page <= 0) std::abort();
     const auto& header = header_of(pointer, page);
     return header.physical + static_cast<std::int64_t>(header.lead);
@@ -223,7 +236,7 @@ std::int64_t DirectMemoryStart(const void* pointer) noexcept {
 static std::atomic<std::size_t> dense_jit_direct_bytes{0};
 void CountDenseJitDirect(void* writable, bool acquire) noexcept {
     if (!writable) return;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     const std::size_t bytes = header_of(writable, page).total;
     if (acquire) {
@@ -241,7 +254,7 @@ std::size_t DenseJitDirectBytes() noexcept {
 // size: large-page direct allocations can round, for example, 3 MiB to 4 MiB.
 // Free must unmap the WHOLE executable view before releasing direct RAM.
 std::size_t ExecutableAliasSpan(void* writable) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (!writable || page <= 0) std::abort();
     const auto header = header_of(writable, page);
     return header.total - header.lead;
@@ -249,7 +262,7 @@ std::size_t ExecutableAliasSpan(void* writable) noexcept {
 
 // A second view of our own direct allocation; ownership stays with pointer.
 void* MapExecutableAlias(void* pointer, std::size_t size) noexcept {
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (!pointer || page <= 0) return nullptr;
     const auto header = header_of(pointer, page);
     if (header.total != allocation_size(size, page, header.lead)) std::abort();
@@ -634,7 +647,7 @@ void ReleaseSparseJitCode(void* executable) noexcept {
 
 void FreeMemoryPages(void* pointer, std::size_t size) noexcept {
     if (!pointer) return;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     const auto header = header_of(pointer, page);
     auto* base = static_cast<std::uint8_t*>(pointer) - header.lead;
@@ -647,7 +660,7 @@ void FreeMemoryPages(void* pointer, std::size_t size) noexcept {
 // header already records the exact mapped size; retain the same checked free.
 void FreeMemoryPages(void* pointer) noexcept {
     if (!pointer) return;
-    const long page = sysconf(_SC_PAGESIZE);
+    const long page = CachedHostPageSize();
     if (page <= 0) std::abort();
     const auto header = header_of(pointer, page);
     if (header.total <= header.lead) std::abort();

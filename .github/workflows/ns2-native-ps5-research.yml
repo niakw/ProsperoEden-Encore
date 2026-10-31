@@ -5,7 +5,8 @@ on:
     branches:
       - research/ns2-ps5-compatibility
     paths:
-      - '.github/workflows/ns2-native-ps5-research.yml'
+      # Workflow-only edits never cancel an already compiling native candidate.
+      - 'tools/ns2/package_native_research.sh'
       - 'tools/build-headless-native.sh'
       - 'tools/ns2/check_native_research_selector.py'
       - 'tools/check-vendor-consolidation-debt.py'
@@ -99,6 +100,18 @@ jobs:
       - name: Build native PS5 ELF with opt-in NS2 research engine
         run: |
           bash tools/build-headless-native.sh --graphics
+      - name: Stage native NS1/NS2 experimental PS5 app with SHA receipt
+        run: |
+          bash tools/ns2/package_native_research.sh
+      - name: Upload separately staged unqualified PS5 app
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: encore-ns1-ns2-research-${{ github.sha }}
+          path: |
+            build/ns2-research/PPSA99008/
+            build/ns2-research/NS2_RESEARCH_BUILD_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Explain the qualification boundary
         if: always()
         run: |

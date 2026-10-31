@@ -71,6 +71,8 @@ int main() {
     assert(Eden::ValidRomFilename("My Game/base/exefs/main"));
     assert(Eden::ValidRomFilename("My Game/base/extra/sub/exefs/main"));
     assert(!Eden::ValidRomFilename("My Game/updates/458752/exefs/main"));
+    assert(!Eden::ValidRomFilename("updates/458752/exefs/main"));
+    assert(!Eden::ValidRomFilename("dlc/exefs/main"));
     assert(!Eden::ValidRomFilename("My Game/dlc/0/exefs/main"));
     assert(!Eden::ValidRomFilename("My Game/../base/exefs/main"));
     assert(!Eden::ValidRomFilename("/main"));
@@ -104,6 +106,17 @@ int main() {
     std::ofstream(nested / "updates" / "458752" / "exefs" / "main.npdm") << "patchmeta";
     assert(Eden::FindDeconstructedGameMain(nested) == "base/exefs/main");
     assert(Eden::IsSafeDeconstructedGamePath(root, "Nested Game/base/exefs/main"));
+    // Top-level content stores cannot surface as independent library games.
+    const fs::path external_updates = root / "updates" / "458752" / "exefs";
+    fs::create_directories(external_updates);
+    std::ofstream(external_updates / "main") << "update";
+    std::ofstream(external_updates / "main.npdm") << "meta";
+    assert(Eden::FindDeconstructedGameMain(root / "updates").empty());
+    const fs::path external_dlc = root / "dlc" / "abc" / "exefs";
+    fs::create_directories(external_dlc);
+    std::ofstream(external_dlc / "main") << "addon";
+    std::ofstream(external_dlc / "main.npdm") << "meta";
+    assert(Eden::FindDeconstructedGameMain(root / "dlc").empty());
     const fs::path deeper = root / "Deep Game";
     fs::create_directories(deeper / "base" / "some" / "path" / "exefs");
     std::ofstream(deeper / "base" / "some" / "path" / "exefs" / "main") << "code";

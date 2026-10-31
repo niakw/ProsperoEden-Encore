@@ -68,4 +68,41 @@ for profile in ("normal", "dev"):
     assert owner.count("config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());") == 1
     assert owner.count("config.cntfrq_el0 = Hardware::CNTFREQ;") == 1
 
+# Exercise the *actual* final-release CMake cache-variable gate with
+# cmake -P. Individual flags must all fail closed even if someone bypasses the
+# build-headless-native.sh environment selector and invokes CMake directly.
+import tempfile
+release_start = cmake.index("    # Fail closed for *all* opt-in NS2 engines")
+release_end = cmake.index(
+    "    target_compile_definitions(eden-headless PRIVATE EDEN_FINAL_RELEASE_PROFILE=1)",
+    release_start
+)
+release_fragment = cmake[release_start:release_end]
+assert 'get_cmake_property(eden_release_cache_vars CACHE_VARIABLES)' in release_fragment
+assert 'MATCHES "^EDEN_NS2_.*_EXPERIMENTAL$"' in release_fragment
+
+with tempfile.TemporaryDirectory(prefix="encore-ns2-release-gate-") as temporary:
+    scenario = Path(temporary) / "release-gate.cmake"
+    def run_release_cache(enabled):
+        lines = ["set(EDEN_FINAL_RELEASE_PROFILE ON)"]
+        for flag in declared:
+            state = "ON" if flag == enabled else "OFF"
+            lines.append(f'set({flag} {state} CACHE BOOL "" FORCE)')
+        if enabled and enabled not in declared:
+            lines.append(f'set({enabled} ON CACHE BOOL "" FORCE)')
+        lines.extend(["if(EDEN_FINAL_RELEASE_PROFILE)", release_fragment, "endif()"])
+        scenario.write_text("\n".join(lines) + "\n")
+        result = subprocess.run(["cmake", "-P", str(scenario)], capture_output=True, text=True)
+        if enabled:
+            assert result.returncode != 0 and enabled in result.stderr, (
+                enabled, result.returncode, result.stderr
+            )
+        else:
+            assert result.returncode == 0, result.stderr
+    run_release_cache(None)
+    for flag in declared:
+        run_release_cache(flag)
+    run_release_cache("EDEN_NS2_FUTURE_UNREVIEWED_EXPERIMENTAL")
+print("NS2_RELEASE_CMAKE_FAIL_CLOSED_PASS", len(declared), "plus future flag")
+
 print(f"PASS: {len(declared)} native NS2 CMake selectors; opt-in research; release fail-closed")

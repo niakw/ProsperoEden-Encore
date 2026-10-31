@@ -6,7 +6,6 @@ on:
       - research/ns2-ps5-compatibility
     paths:
       - 'vendor'
-      - 'headless/ns2/npdm_layout.h'
       - 'vendor/**'
       - 'headless/CMakeLists.txt'
       - 'tools/ns2/**'
@@ -156,7 +155,7 @@ jobs:
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless \
               -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
-              -Iheadless/ns2 \
+              -Ivendor/encore-active/ns2-helpers/include \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               "${source}"
@@ -582,7 +581,7 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src -Iheadless/ns2 \
+            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src -Ivendor/encore-active/ns2-helpers/include \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
             vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp \

@@ -30,7 +30,7 @@ if(EDEN_NS2_METADATA_EXPERIMENTAL)
          "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_metadata_core_sources}")
     target_include_directories(core BEFORE PUBLIC
-        "${EDEN_NS2_CORE_HELPERS}" "${EDEN_NS2_METADATA_OVERLAY}" "${PORT_ROOT}/headless/ns2")
+        "${EDEN_NS2_CORE_HELPERS}" "${EDEN_NS2_METADATA_OVERLAY}")
 endif()
 
 

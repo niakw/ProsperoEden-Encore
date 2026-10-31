@@ -23,11 +23,13 @@ def main() -> int:
                     f"{flag} OR" in CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
                     "NS2 research flag not release-forbidden: " + flag)
         # Experimental engine code may have only one maintained vendor owner.
+        require((ROOT / "vendor/encore-active/ns2-helpers/include/npdm_layout.h").is_file(),
+                "The NPDM parser must use the maintained vendor ACID helper")
         legacy_engine = ROOT / "headless/ns2"
         remaining = {str(path.relative_to(legacy_engine))
                      for path in legacy_engine.rglob("*") if path.is_file()}
-        require(remaining == {"npdm_layout.h"},
-                "Duplicated NSW2 engine source outside vendor: " + repr(remaining))
+        require(not remaining,
+                "Unexpected NSW2 source outside vendor: " + repr(remaining))
         for group in ("am", "ampere", "cpu6", "gpu_session",
                       "graphics_supervisor", "hle", "nvdrv", "nvdrv_as",
                       "nvdrv_gpu", "self_controller"):

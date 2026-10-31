@@ -10,7 +10,7 @@
   <p><a href="README.md">English</a> · <a href="README.fr.md">Français</a> · <strong>Español</strong></p>
   <p><kbd>Firmware 13.60 · probado en hardware</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>Interfaz para TV</kbd> <kbd>Dynarmic</kbd></p>
   <p>
-    <a href="#por-qué-encore"><strong>Ventajas</strong></a> ·
+    <a href="#por-que-encore"><strong>Ventajas</strong></a> ·
     <a href="#instalación"><strong>Instalación</strong></a> ·
     <a href="#compatibilidad-y-limitaciones"><strong>Compatibilidad</strong></a> ·
     <a href="#faq"><strong>FAQ</strong></a> ·
@@ -37,7 +37,7 @@
 
 ---
 
-<a id="por-qué-encore"></a>
+<a id="por-que-encore"></a>
 ## ✨ ¿Por qué Encore?
 
 La emulación en una consola no consiste únicamente en ejecutar un juego: la navegación desde el mando, los ajustes, el almacenamiento, la recuperación y la estabilidad también importan.

@@ -181,6 +181,31 @@ int main() {
     std::ofstream(mixed_case / "title.xci") << "base";
     std::ofstream(mixed_case / "Updates" / "v2" / "patch.nsp") << "patch";
     assert(Eden::FindGameFolderInput(mixed_case) == "title.xci");
+    // Any wrapper name works; content metadata will establish Update/AOC.
+    const auto arbitrary = root / "Arbitrary Folders";
+    fs::create_directories(arbitrary / "base");
+    fs::create_directories(arbitrary / "custom" / "extensions");
+    std::ofstream(arbitrary / "base" / "game.xci") << "base";
+    std::ofstream(arbitrary / "custom" / "extensions" / "bonus.nsp") << "addon";
+    assert(Eden::FindGameFolderInput(arbitrary) == "base/game.xci");
+    addon_folders = Eden::FindAddOnContentDirectories(arbitrary);
+    assert(addon_folders.size() == 1);
+    assert(addon_folders.front() == arbitrary / "custom" / "extensions");
+    // A single base package must not be mistaken for an add-on.
+    addon_folders = Eden::FindAddOnContentDirectories(standalone);
+    assert(addon_folders.empty());
+    // A symlink to an external add-on must not be followed by discovery.
+    fs::create_symlink(arbitrary / "custom" / "extensions" / "bonus.nsp",
+                       arbitrary / "base" / "bonus.nsp");
+    addon_folders = Eden::FindAddOnContentDirectories(arbitrary);
+    assert(addon_folders.size() == 1);
+    assert(addon_folders.front() == arbitrary / "custom" / "extensions");
+    // Two possible add-ons in a nested directory select that directory
+    // once, rather than registering duplicate or adjacent base inputs.
+    std::ofstream(arbitrary / "custom" / "extensions" / "extra.xcz") << "addon2";
+    addon_folders = Eden::FindAddOnContentDirectories(arbitrary);
+    assert(addon_folders.size() == 1);
+    assert(addon_folders.front() == arbitrary / "custom" / "extensions");
     const auto ambiguous = root / "Ambiguous";
     fs::create_directory(ambiguous);
     std::ofstream(ambiguous / "one.nsp") << "base?";

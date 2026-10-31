@@ -9,7 +9,7 @@ et contrôlé par `tools/check-active-source-inventory.py`.
 
 - **333 fichiers** de code et d'en-têtes enregistrés (hors 103 sources NS2 expérimentales, suivies séparément).
 - **331 fichiers** conservent leur correspondance exacte avec le registre des fonctions.
-- **Deux en-têtes partagés** sont suivis par `tools/install-eden-header-hygiene.py` et contrôlés par comparaison octet par octet avec le snapshot Eden immuable ; ils n'ont pas d'ID fonctionnel historique.
+- **2 fichiers** n'ont pas d'ID de graphe historique : les deux en-têtes partagés suivis par `tools/install-eden-header-hygiene.py` et contrôlés octet par octet avec le snapshot Eden immuable.
 - Cet inventaire ne prouve pas le comportement sur console.
 - Le manifeste des backports verrouille **83 fichiers livrés**, dont
   **83 fichiers C/C++ enregistrés ci-dessous** et **deux fichiers CMake**

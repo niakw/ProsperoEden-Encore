@@ -41,6 +41,19 @@ inline bool IsDirectLoaderFile(std::string_view name) {
 inline bool IsGameFile(std::string_view name) {
     return IsPackageFile(name) || IsCardImageFile(name) || IsDirectLoaderFile(name);
 }
+inline bool IsAddOnContainerName(std::string_view name) {
+    std::string lower{name};
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return lower == "updates" || lower == "update" || lower == "patches" ||
+           lower == "dlc" || lower == "addons" || lower == "add-ons";
+}
+inline bool IsExtractedAssetFolderName(std::string_view name) {
+    std::string lower{name};
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return lower == "romfs" || lower == "exefs";
+}
 
 // A saved extracted title is either <title>/main (legacy), or
 // <title>/[subdirectories]/exefs/main. The first component is always the
@@ -57,7 +70,7 @@ inline bool IsDeconstructedGameSelection(std::string_view name) {
         const auto slash = name.find('/');
         const auto segment = name.substr(0, slash);
         if (segment.empty() || segment == "." || segment == ".." ||
-            segment == "updates" || segment == "dlc" || segment == "romfs")
+            IsAddOnContainerName(segment) || EndsWithNoCase(segment, "romfs"))
             return false;
         for (unsigned char c : segment)
             if (c < 32 || c == 127 || c == '\\') return false;
@@ -104,7 +117,7 @@ inline std::string FindDeconstructedGameMain(const std::filesystem::path& title)
     // Root-level content stores are not games, even when an update happens
     // to carry its own valid ExeFS. Only <title>/base is a launchable title.
     const auto root_name = title.filename().string();
-    if (root_name == "updates" || root_name == "dlc" || root_name == "romfs")
+    if (IsAddOnContainerName(root_name) || EndsWithNoCase(root_name, "romfs"))
         return {};
     if (IsDeconstructedGameDirectory(title)) return "main";
     std::size_t visited = 0;
@@ -120,8 +133,8 @@ inline std::string FindDeconstructedGameMain(const std::filesystem::path& title)
              !error && it != end && subdirs.size() < 128; it.increment(error)) {
             const auto path = it->path();
             const auto name = path.filename().string();
-            if (name.empty() || name.front() == '.' || name == "romfs" ||
-                name == "updates" || name == "dlc")
+            if (name.empty() || name.front() == '.' ||
+                EndsWithNoCase(name, "romfs") || IsAddOnContainerName(name))
                 continue;
             if (IsSafeExtractedDirectory(path)) subdirs.push_back(path);
         }
@@ -175,7 +188,7 @@ inline bool IsNestedGameFileSelection(std::string_view selection) {
         for (const unsigned char c : segment)
             if (c < 32 || c == 127 || c == '\\') return false;
         if (slash == std::string_view::npos) break;
-        if (segment == "updates" || segment == "dlc" || segment == "romfs")
+        if (IsAddOnContainerName(segment) || EndsWithNoCase(segment, "romfs"))
             return false;
         if (++levels > 8) return false;
         selection.remove_prefix(slash + 1);
@@ -190,7 +203,7 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
     namespace fs = std::filesystem;
     if (!IsSafeExtractedDirectory(title)) return {};
     const auto root_name = title.filename().string();
-    if (root_name == "updates" || root_name == "dlc" || root_name == "romfs")
+    if (IsAddOnContainerName(root_name) || EndsWithNoCase(root_name, "romfs"))
         return {};
     std::vector<std::string> candidates;
     std::size_t visited = 0;
@@ -205,8 +218,8 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
              !error && it != end && examined++ < 128; it.increment(error)) {
             const auto path = it->path();
             const auto name = path.filename().string();
-            if (name.empty() || name.front() == '.' || name == "updates" ||
-                name == "dlc" || name == "romfs") continue;
+            if (name.empty() || name.front() == '.' || IsAddOnContainerName(name) ||
+                EndsWithNoCase(name, "romfs")) continue;
             if (IsSafeExtractedDirectory(path)) {
                 subdirs.push_back(path);
                 continue;
@@ -283,14 +296,6 @@ inline bool IsSafeNestedGameFilePath(const std::filesystem::path& roms_root,
 // These roots may contain arbitrary deeper subdirectories: the existing
 // ExternalContentProvider classifies packages by Nintendo title metadata.
 // Keep traversal bounded and do not inspect extracted ExeFS/RomFS payloads.
-inline bool IsAddOnContainerName(std::string_view name) {
-    std::string lower{name};
-    std::transform(lower.begin(), lower.end(), lower.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return lower == "updates" || lower == "update" || lower == "patches" ||
-           lower == "dlc" || lower == "addons" || lower == "add-ons";
-}
-
 inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
     const std::filesystem::path& title_root) {
     namespace fs = std::filesystem;
@@ -308,7 +313,7 @@ inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
             const fs::path path = it->path();
             const auto name = path.filename().string();
             if (name.empty() || name.front() == '.' ||
-                name == "romfs" || name == "exefs") continue;
+                IsExtractedAssetFolderName(name)) continue;
             if (!IsSafeExtractedDirectory(path)) continue;
             if (IsAddOnContainerName(name)) {
                 found.push_back(path);

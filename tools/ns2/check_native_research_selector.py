@@ -49,4 +49,23 @@ verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
 verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "maybe"}, 2)
 verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
         "EDEN_NS2_A64_EXPERIMENTAL": "maybe"}, 2)
+# N76 must compose with the already-optimized G11 PS5 A64 backend.
+# Replacing the G11 translation unit would silently drop NS1 performance work.
+n76 = cmake.split("# N76 -- NS2 guest CNTPCT calibration", 1)[1].split(
+    "option(EDEN_HOST_ASAN", 1
+)[0]
+assert "n76_selected_g11_owner_idx" in n76
+assert 'set(EDEN_N76_G11_PROFILE normal)' in n76
+assert 'set(EDEN_N76_G11_PROFILE dev)' in n76
+assert 'list(REMOVE_ITEM n76_core_sources' not in n76
+assert 'list(APPEND n76_core_sources' not in n76
+assert 'set_property(TARGET core PROPERTY SOURCES "${n76_core_sources}")' not in n76
+g11_root = root / "vendor/encore-active/eden-core/src/core/arm/dynarmic/g11"
+for profile in ("normal", "dev"):
+    owner = (g11_root / f"arm_dynarmic_64_native_{profile}.cpp").read_text()
+    assert owner.count("#ifdef EDEN_NS2_GUEST_COUNTER") == 2, profile
+    assert owner.count('#include "encore/guest_counter_policy.h"') == 1, profile
+    assert owner.count("config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());") == 1
+    assert owner.count("config.cntfrq_el0 = Hardware::CNTFREQ;") == 1
+
 print(f"PASS: {len(declared)} native NS2 CMake selectors; opt-in research; release fail-closed")

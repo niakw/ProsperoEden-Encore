@@ -13,6 +13,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import zlib
+
+from build_fc27_synthetic_nsp import unpack
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "vendor/sources/eden/src/core"
@@ -58,6 +61,7 @@ def extract_maintained() -> tuple[str, str, str]:
 
 HOST_PREFIX = r"""
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -183,8 +187,18 @@ static std::vector<u8> ReadFile(const char* file) {
     Check(bool(f), "cannot open fixture");
     return {std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
 }
+static std::uint32_t Crc32(const std::vector<u8>& bytes) {
+    std::uint32_t crc = 0xFFFFFFFFU;
+    for (const auto octet : bytes) {
+        crc ^= octet;
+        for (unsigned bit = 0; bit < 8; ++bit)
+            crc = (crc >> 1) ^ ((crc & 1U) ? 0xEDB88320U : 0U);
+    }
+    return ~crc;
+}
 static void Validate(const char* nsp_name, const char* nso_name,
-                     const char* npdm_name) {
+                     const char* npdm_name,
+                     const std::array<std::uint32_t, 3>& expected_crc) {
     const auto bytes = ReadFile(nsp_name);
     const auto nso = ReadFile(nso_name);
     const auto npdm = ReadFile(npdm_name);
@@ -207,13 +221,16 @@ static void Validate(const char* nsp_name, const char* nso_name,
     };
     check_member("main", nso);
     check_member("main.npdm", npdm);
-    for (const auto name : {"hud.rgba", "pitch.rgba", "kits.rgba"}) {
-        auto f = pfs->GetFile(name);
+    constexpr std::array texture_names{"hud.rgba", "pitch.rgba", "kits.rgba"};
+    for (std::size_t i = 0; i < texture_names.size(); ++i) {
+        auto f = pfs->GetFile(texture_names[i]);
         Check(bool(f) && f->GetSize() >= 1024 &&
               f->GetSize() <= 32U * 1024U * 1024U, "missing texture stress asset");
-        std::uint8_t lead[32]{};
-        Check(f->Read(lead, sizeof(lead)) == sizeof(lead),
+        std::vector<u8> full(f->GetSize());
+        Check(f->Read(full.data(), full.size()) == full.size(),
               "real PFS0 file produced truncated texture data");
+        Check(Crc32(full) == expected_crc[i],
+              "real PFS0 texture CRC mismatch");
     }
     // Real constructor rejects bad magic and a genuinely truncated file table.
     auto bad = bytes;
@@ -244,14 +261,18 @@ static void Validate(const char* nsp_name, const char* nso_name,
               << "members=6 valid_exefs=1 ns2_public_main_bytes="
               << nso.size() << " npdm_bytes=" << npdm.size()
               << " bad_magic_rejected=1 truncated_table_rejected=1"
-              << " missing_main_rejected=1"
+              << " missing_main_rejected=1 full_texture_crc_verified=3"
               << " source=maintained_PartitionFilesystem_and_IsDirectoryExeFS"
               << " full_NSP_and_KProcess_not_executed=1\n";
 }
 int main(int argc, char** argv) {
     try {
-        Check(argc == 4, "usage: parser nsp main main.npdm");
-        Validate(argv[1], argv[2], argv[3]);
+        Check(argc == 7, "usage: parser nsp main main.npdm hud_crc pitch_crc kits_crc");
+        std::array<std::uint32_t, 3> crc{
+            static_cast<std::uint32_t>(std::stoul(argv[4])),
+            static_cast<std::uint32_t>(std::stoul(argv[5])),
+            static_cast<std::uint32_t>(std::stoul(argv[6]))};
+        Validate(argv[1], argv[2], argv[3], crc);
         return 0;
     } catch (const std::exception& ex) {
         std::cerr << "REAL_ENCORE_EXTRACTED_NSP_PFS0_FAIL: " << ex.what() << '\n';
@@ -269,7 +290,15 @@ def main() -> None:
     args = ap.parse_args()
     magic, constructor, predicate = extract_maintained()
     source = HOST_PREFIX + magic + constructor + HOST_MIDDLE + predicate + HOST_TEST
+    original = args.nsp.read_bytes()
+    members = unpack(original)
+    expected_crc = [str(zlib.crc32(members[n]))
+                    for n in ("hud.rgba", "pitch.rgba", "kits.rgba")]
     with tempfile.TemporaryDirectory(prefix="ns2-real-extracted-nsp-") as tmp:
+        corrupted = Path(tmp) / "corrupt-last-kit-byte.nsp"
+        bad = bytearray(original)
+        bad[-1] ^= 0x80
+        corrupted.write_bytes(bad)
         src = Path(tmp) / "extracted_nsp.cpp"
         src.write_text(source)
         for compiler, opt in (("clang++", "-O1"), ("g++", "-O2")):
@@ -283,12 +312,21 @@ def main() -> None:
             if built.returncode:
                 raise RuntimeError(f"{compiler} compile failed:\n{built.stderr[-6500:]}")
             run = subprocess.run([str(exe), str(args.nsp), str(args.main),
-                                  str(args.npdm)], capture_output=True,
-                                 text=True, timeout=45)
+                                  str(args.npdm), *expected_crc],
+                                 capture_output=True, text=True, timeout=45)
             if run.returncode:
                 raise RuntimeError(f"{compiler} test failed:\n{run.stdout}\n"
                                    f"{run.stderr[-6500:]}")
             print(run.stdout.strip(), compiler, opt, flush=True)
+            injected = subprocess.run(
+                [str(exe), str(corrupted), str(args.main), str(args.npdm),
+                 *expected_crc], capture_output=True, text=True, timeout=45)
+            if (injected.returncode == 0 or
+                "real PFS0 texture CRC mismatch" not in injected.stderr):
+                raise RuntimeError(f"{compiler}: corrupted kit not detected: "
+                                   f"{injected.returncode}: {injected.stderr[-1200:]}")
+            print("REAL_PFS0_TEXTURE_BYTE_CORRUPTION_DETECTED",
+                  compiler, opt, flush=True)
     print("REAL_EXTRACTED_NSP_ROUTE_SOURCE_GUARD_PASS")
 
 

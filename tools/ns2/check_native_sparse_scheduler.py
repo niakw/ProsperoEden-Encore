@@ -31,7 +31,6 @@ using VkImage=void*;
 using VkFence=void*;
 using VkSemaphore=void*;
 using VkResult=int;
-constexpr auto VK_NULL_HANDLE=nullptr;
 constexpr VkResult VK_SUCCESS=0,VK_ERROR_INITIALIZATION_FAILED=-3,VK_ERROR_DEVICE_LOST=-4;
 struct VkSparseImageMemoryBind {int n{};};
 struct VkSparseMemoryBind {int n{};};

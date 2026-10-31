@@ -1,7 +1,7 @@
 # Nintendo Switch 2 (NS2) sur PS5 — étude de faisabilité, branche isolée
 
-**Date : 30 octobre 2026** · **État : RECHERCHE / A64 FRONTEND SYNTAX CHECK VERT / NON TESTÉ SUR PS5**  
-**Branche :** `research/ns2-ps5-compatibility`, initialement issue de l’ancienne branche de développement puis resynchronisée sur `main` le 30 octobre 2026.  
+**Date : 30 octobre 2026** · **État : RECHERCHE / A64 FRONTEND SYNTAX CHECK VERT / NON TESTÉ SUR PS5**
+**Branche :** `research/ns2-ps5-compatibility`, initialement issue de l’ancienne branche de développement puis resynchronisée sur `main` le 30 octobre 2026.
 **Protection :** aucune modification du chemin de compilation/release F07, aucune PR vers la branche de production, aucun build PS5 de jeu NS2 autorisé à ce stade.
 
 ## 0. Début concret du portage expérimental — 30/10/2026

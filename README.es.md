@@ -102,6 +102,8 @@ Para versiones publicadas, utiliza las [Releases de GitHub](https://github.com/n
 
 El almacenamiento externo modifica la **raíz** de los datos, no la estructura de subcarpetas. **No borres tus partidas ni los datos anteriores al actualizar.** Encore no incluye juegos comerciales, firmware, claves propietarias ni DLC.
 
+**Para sustituir la carpeta original de ProsperoEden nativo:** ambos utilizan el ID `PPSA99008` y `/data/homebrew/PPSA99008/`. **Haz una copia de seguridad de la aplicación completa (incluyendo `assets/` antiguo), `/data/prosperoeden/` y cualquier raíz de almacenamiento externa**; sustituye los archivos de la aplicación por la carpeta completa de Encore **sin borrar los datos antiguos**, inicia Encore y comprueba la migración. Es **una sustitución de la misma aplicación**, no una instalación paralela. Consulta la [guía para actualizar desde el ProsperoEden nativo](INSTALL.md#upgrade-from-native). Un ZIP original upstream no es una actualización de Encore.
+
 [Instrucciones completas](INSTALL.md) · [Compilar desde el código fuente](docs/BUILDING.md) · [Soporte](SUPPORT.md).
 
 ---

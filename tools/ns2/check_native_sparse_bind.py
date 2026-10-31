@@ -68,7 +68,7 @@ struct VkBindSparseInfo {
     u32 sType{};
     const void* pNext{};
     u32 waitSemaphoreCount{};
-    const void* pWaitSemaphores{};
+    const VkSemaphore* pWaitSemaphores{};
     u32 bufferBindCount{};
     const void* pBufferBinds{};
     u32 imageOpaqueBindCount{};
@@ -76,7 +76,7 @@ struct VkBindSparseInfo {
     u32 imageBindCount{};
     const VkSparseImageMemoryBindInfo* pImageBinds{};
     u32 signalSemaphoreCount{};
-    const void* pSignalSemaphores{};
+    const VkSemaphore* pSignalSemaphores{};
 };
 template<class T> struct Span {
     const T* ptr{};

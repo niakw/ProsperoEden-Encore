@@ -254,3 +254,19 @@ research fixture files `main` and `main.npdm` as the artifact
 firmware, keys or commercial game, and is **not** evidence of full Switch 2
 boot. It can be supplied to a separately compiled opt-in PS5 build for
 an authorized console test; record real KProcess PID and SVC logs.
+
+## N44 — original kernel KCapabilities decode from real public NPDM
+
+The JIT CI now executes **unaltered, source-extracted** `KCapabilities`
+methods `InitializeForUser`, `SetCapability`, `SetCapabilities`,
+`SetCorePriorityCapability`, and `SetSyscallMaskCapability` from the
+pinned maintained Encore kernel sources. The input is the **actual**
+`main.npdm` built from lawful HOS public assembly; the test does not
+substitute a hand-written KAC parser. Clang and GCC with ASan/UBSan must
+confirm exact core masks, all user priorities 16–63, and **only five**
+authorized SVCs (0x07, 0x0B, 0x1E, 0x26, 0x27). Negative cases include
+duplicate core/SVC capability, illegal kernel-thread priorities, inverted
+CPU-core ranges, missing OutputDebugString permission and no scheduler
+permission. Other kernel capability families and MMIO/memory mapping
+operations are *unreachable host stubs*. No `KProcess`, HLE dispatcher,
+or native PS5 runtime is executed; this is a narrower, real-kernel contract.

@@ -11,6 +11,7 @@ on:
       - 'tools/ns2/build_public_nso_fixture.py'
       - 'tools/ns2/build_public_exefs_fixture.py'
       - 'tools/ns2/test_program_metadata.cpp'
+      - 'tools/ns2/test_real_kcapabilities.py'
       - 'headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h'
       - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
       - 'headless/ns2/overrides/core/loader/ns2_nso_preflight.h'
@@ -96,6 +97,12 @@ jobs:
             build-ns2-jit/public-nso/exefs-pair-test \
               build-ns2-jit/public-exefs/main.npdm \
               build-ns2-jit/public-exefs/main
+      - name: Validate real maintained KCapabilities on signed-free NPDM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/test_real_kcapabilities.py \
+            --npdm build-ns2-jit/public-exefs/main.npdm
       - name: Build actual x64 Dynarmic core
         shell: bash
         run: |

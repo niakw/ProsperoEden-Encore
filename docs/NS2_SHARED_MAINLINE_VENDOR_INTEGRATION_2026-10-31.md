@@ -39,3 +39,7 @@ N3v now compiles in the **real** `vendor/sources/eden/src/core/hle/kernel/svc.cp
 ## N49 consolidated Vulkan dimensionality guard
 
 The Eglantine 2D/3D view-mismatch safety check now runs behind `EDEN_NS2_VIEW_DIMENSION_GUARD` inside the **same maintained native PS5 Vulkan `vk_texture_cache_cost.cpp`** as N57. Its generic helper lives in `vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h`. The obsolete complete translation-unit copy in `headless/ns2/eglantine/` is deleted. Host checks reconstruct and verify the pre-N49 and pre-N57 Git source hashes without accepting unrelated differences.
+
+## ExeFS and NPDM helper ownership
+
+Eight unchanged loader/metadata/NSO admission headers have moved from `headless/ns2/overrides` to `vendor/encore-active/ns2-helpers/include` as the single research source owner. The CMake source selector still uses the **existing** core loader implementation; includes for metadata, ExeFS and host tests now resolve from vendor. These are generic, host-tested admission checks, **not proof of Switch 2 game execution**. Remaining whole-translation-unit loader/process research overlays are still isolated; no release promotion is implied.

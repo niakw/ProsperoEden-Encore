@@ -88,7 +88,7 @@ def main() -> int:
         release_gate = CMAKE.index("# Release gate: Vulkan/RADV")
         require(selection < am_selection < release_gate,
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
-        preflight_header = ROOT / "headless/ns2/overrides/core/loader/ns2_nso_preflight.h"
+        preflight_header = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_nso_preflight.h"
         romdir_source = ROOT / "headless/ns2/overrides/core/loader/deconstructed_rom_directory.cpp"
         require(preflight_header.is_file() and "PreflightNso(" in preflight_header.read_text() and
                 "MaxImageBytes" in preflight_header.read_text() and
@@ -96,21 +96,21 @@ def main() -> int:
                 "if (metadata.IsSwitch2())" in romdir_source.read_text() and
                 "PreflightNso(header, module_file->GetSize())" in romdir_source.read_text(),
                 "NS2 ExeFS must validate actual NSO0 file length before legacy loader allocations")
-        handoff_header = ROOT / "headless/ns2/overrides/core/loader/ns2_process_handoff.h"
+        handoff_header = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_process_handoff.h"
         require(handoff_header.is_file() and
                 "VerifyUncompressedTextHandoff(" in handoff_header.read_text() and
                 '"core/loader/ns2_process_handoff.h"' in romdir_source.read_text() and
                 "process.GetMemory().ReadBlock(" in romdir_source.read_text() and
                 "metadata.IsSwitch2()" in romdir_source.read_text(),
                 "NS2 KProcess text handoff must use bounded process readback")
-        thread_guard = ROOT / "headless/ns2/overrides/core/loader/ns2_main_thread_admission.h"
+        thread_guard = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_main_thread_admission.h"
         require(thread_guard.is_file() and
                 "MainThreadPermitted(" in thread_guard.read_text() and
                 "MainThreadPermitted(allowed_cores, allowed_priorities" in romdir_source.read_text() and
                 "process.GetCoreMask()" in romdir_source.read_text() and
                 "process.GetPriorityMask()" in romdir_source.read_text(),
                 "NS2 guest process must check real kernel scheduling permissions")
-        public_svc = ROOT / "headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h"
+        public_svc = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_public_homebrew_svc.h"
         require(public_svc.is_file() and
                 "MissingPublicHelloSvcs(" in public_svc.read_text() and
                 "IsPublicHelloFixture(metadata.GetTitleID()" in romdir_source.read_text() and

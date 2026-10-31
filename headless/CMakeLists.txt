@@ -14,8 +14,9 @@ option(EDEN_NS2_METADATA_EXPERIMENTAL
     "Experimental Switch 2 NPDM / ACID parsing (not full NS2 emulation)" OFF)
 if(EDEN_NS2_METADATA_EXPERIMENTAL)
     set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/headless/ns2/overrides")
+    set(EDEN_NS2_CORE_HELPERS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp"
-       OR NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.h")
+       OR NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/file_sys/program_metadata.h")
         message(FATAL_ERROR "Missing NS2 experimental NPDM source/header")
     endif()
     get_target_property(eden_ns2_metadata_core_sources core SOURCES)
@@ -29,7 +30,7 @@ if(EDEN_NS2_METADATA_EXPERIMENTAL)
          "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_metadata_core_sources}")
     target_include_directories(core BEFORE PUBLIC
-        "${EDEN_NS2_METADATA_OVERLAY}" "${PORT_ROOT}/headless/ns2")
+        "${EDEN_NS2_CORE_HELPERS}" "${EDEN_NS2_METADATA_OVERLAY}" "${PORT_ROOT}/headless/ns2")
 endif()
 
 
@@ -2009,7 +2010,7 @@ if(EDEN_NS2_EXEFS_EXPERIMENTAL)
         list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_original}")
         list(APPEND eden_ns2_exefs_sources "${eden_ns2_replacement}")
     endforeach()
-    if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/loader/deconstructed_rom_directory.h")
+    if(NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/loader/deconstructed_rom_directory.h")
         message(FATAL_ERROR "Missing NS2 ExeFS maintained loader header")
     endif()
     # Select a complete maintained native PS5 NSO source, preserving sparse

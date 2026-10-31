@@ -6,6 +6,7 @@ on:
       - research/ns2-ps5-compatibility
     paths:
       - 'headless/ns2/**'
+      - 'vendor/**'
       - 'headless/CMakeLists.txt'
       - 'tools/ns2/**'
       - 'tools/check-ns2-*.py'

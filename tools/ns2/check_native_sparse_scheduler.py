@@ -36,6 +36,13 @@ constexpr VkResult VK_SUCCESS=0,VK_ERROR_INITIALIZATION_FAILED=-3,VK_ERROR_DEVIC
 struct VkSparseImageMemoryBind {int n{};};
 struct VkSparseMemoryBind {int n{};};
 #define EDEN_NS2_SPARSE_QUEUE_BRIDGE 1
+struct TestMutex {
+ std::mutex inner;
+ std::atomic<bool> held{false};
+ void lock(){inner.lock(); held.store(true,std::memory_order_release);}
+ void unlock(){held.store(false,std::memory_order_release); inner.unlock();}
+ bool try_lock(){if(!inner.try_lock())return false;held.store(true,std::memory_order_release);return true;}
+};
 namespace Vulkan {
 namespace vk {template<class T>using Span=std::span<const T>;}
 struct Observed {
@@ -44,13 +51,13 @@ struct Observed {
  VkResult result=VK_SUCCESS;
 };
 struct Queue {
- std::mutex* gate{};
+ TestMutex* gate{};
  Observed* state{};
  VkResult BindSparseImage(VkImage,Vulkan::vk::Span<VkSparseImageMemoryBind> tiles,
   Vulkan::vk::Span<VkSparseMemoryBind> tails,VkFence fence,
   VkSemaphore wait,VkSemaphore signal) const {
   assert(fence&&(tiles.size()||tails.size()));
-  if(gate->try_lock()){++state->bad_mutex;gate->unlock();}
+  if(!gate->held.load(std::memory_order_acquire))++state->bad_mutex;
   const auto overlap=++state->entered;
   if(overlap>1)++state->max_overlap;
   ++state->calls;
@@ -62,13 +69,13 @@ struct Queue {
  }
 };
 struct Device{
- std::mutex* gate{};
+ TestMutex* gate{};
  Observed* state{};
  Queue GetGraphicsQueue()const{return {gate,state};}
 };
 struct Scheduler {
  Device device{};
- std::mutex submit_mutex;
+ TestMutex submit_mutex;
  Scheduler(Observed& state):device{&submit_mutex,&state}{}
  VkResult BindSparseImage(VkImage,vk::Span<VkSparseImageMemoryBind>,
   vk::Span<VkSparseMemoryBind>,VkFence,VkSemaphore,VkSemaphore);

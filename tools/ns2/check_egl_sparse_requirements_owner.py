@@ -6,15 +6,10 @@ ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/'vendor/encore-active/eden-vulkan'
 HEADER=SRC/'include/video_core/vulkan_common/vulkan_wrapper.h'
 CPP=SRC/'vulkan_wrapper.cpp'
-CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-assert 'EDEN_NS2_SPARSE_IMAGE_REQUIREMENTS_EXPERIMENTAL OR' in CMAKE
-assert 'NOT EDEN_NS2_SPARSE_IMAGE_FACTORY_EXPERIMENTAL OR' in CMAKE
-with tempfile.TemporaryDirectory(prefix='n65-sparse-req-') as td:
+with tempfile.TemporaryDirectory(prefix='n65-vendor-req-') as td:
     folder=Path(td)
-    subprocess.run([sys.executable,str(ROOT/'tools/ns2/prepare_egl_sparse_requirements_owner.py'),
-        '--header',str(HEADER),'--source',str(CPP),'--output',str(folder)],check=True)
-    src=(folder/'vulkan_wrapper.cpp').read_text()
-    hdr=(folder/'include/video_core/vulkan_common/vulkan_wrapper.h').read_text()
+    src=CPP.read_text()
+    hdr=HEADER.read_text()
     assert 'GetSparseImageMemoryRequirements(VkImage image)' in src
     assert 'PFN_vkGetImageSparseMemoryRequirements' in src
     assert 'dld->vkGetDeviceProcAddr(handle, "vkGetImageSparseMemoryRequirements")' in src

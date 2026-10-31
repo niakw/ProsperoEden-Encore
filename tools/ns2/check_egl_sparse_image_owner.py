@@ -6,20 +6,12 @@ ROOT=Path(__file__).resolve().parents[2]
 NATIVE=ROOT/'vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp'
 HEADER=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_memory_allocator.h'
 WRAPPER=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_wrapper.cpp'
-CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-assert 'EDEN_NS2_SPARSE_IMAGE_FACTORY_EXPERIMENTAL OR' in CMAKE
-assert 'NOT EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL OR' in CMAKE
 assert 'vmaDestroyImage(allocator, handle, allocation);' in WRAPPER.read_text()
-with tempfile.TemporaryDirectory(prefix='n64-native-image-') as td:
+with tempfile.TemporaryDirectory(prefix='n64-vendor-image-') as td:
     t=Path(td)
-    n62=t/'n62';n64=t/'n64'
-    subprocess.run([sys.executable,str(ROOT/'tools/ns2/prepare_egl_sparse_vma_owner.py'),
-          '--header',str(HEADER),'--source',str(NATIVE),'--output',str(n62)],check=True)
-    subprocess.run([sys.executable,str(ROOT/'tools/ns2/prepare_egl_sparse_image_owner.py'),
-          '--header',str(n62/'include/video_core/vulkan_common/vulkan_memory_allocator.h'),
-          '--source',str(n62/'vulkan_memory_allocator.cpp'),'--output',str(n64)],check=True)
-    code=(n64/'vulkan_memory_allocator.cpp').read_text()
-    hdr=(n64/'include/video_core/vulkan_common/vulkan_memory_allocator.h').read_text()
+    code=NATIVE.read_text()
+    hdr=HEADER.read_text()
+    assert code.count('vk::Image MemoryAllocator::CreateSparseImage(')==1
     assert 'MemoryAllocator::AllocateSparseMemory(' in code
     assert 'MemoryAllocator::ReleaseSparseMemory(' in code
     assert 'CreateSparseImage(const VkImageCreateInfo &ci)' in hdr

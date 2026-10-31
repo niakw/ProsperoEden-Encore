@@ -5,21 +5,13 @@ import subprocess,tempfile,sys
 ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/'vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp'
 HDR=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_memory_allocator.h'
-CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-assert 'EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL OR' in CMAKE
-assert 'EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR' in CMAKE
-assert 'NOT EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR' in CMAKE
-assert 'EDEN_FINAL_RELEASE_PROFILE)' in CMAKE
-with tempfile.TemporaryDirectory(prefix='n62-vma-sparse-') as td:
+with tempfile.TemporaryDirectory(prefix='n62-vendor-') as td:
     temp=Path(td)
-    subprocess.run([sys.executable,str(ROOT/'tools/ns2/prepare_egl_sparse_vma_owner.py'),
-      '--header',str(HDR),'--source',str(SRC),'--output',str(temp)],check=True)
-    h=(temp/'include/video_core/vulkan_common/vulkan_memory_allocator.h').read_text()
-    code=(temp/'vulkan_memory_allocator.cpp').read_text()
-    original=SRC.read_text()
-    assert len(code)-len(original) < 2300
-    assert 'MemoryAllocator::CreateImage' in code
-    assert 'MemoryAllocator::Commit(' in code
+    h=HDR.read_text()
+    code=SRC.read_text()
+    assert code.count('bool MemoryAllocator::AllocateSparseMemory(')==1
+    assert code.count('void MemoryAllocator::ReleaseSparseMemory(')==1
+    assert 'MemoryAllocator::CreateImage' in code and 'MemoryAllocator::Commit(' in code
     assert 'VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT' in code
     assert 'VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE' in code
     assert 'void ReleaseSparseMemory(SparseMemoryAllocation &allocation)' in h

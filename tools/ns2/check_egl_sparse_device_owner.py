@@ -5,10 +5,6 @@ import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 ORIGINAL=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_device.h'
-CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-old='''    bool IsSparseBindingSupported() const {
-        return features.features.sparseBinding && graphics_family_sparse_binding;
-    }'''
 new='''    bool IsSparseBindingSupported() const {
         return features.features.sparseBinding && graphics_family_sparse_binding;
     }
@@ -19,16 +15,9 @@ new='''    bool IsSparseBindingSupported() const {
         return IsSparseBindingSupported() && features.features.sparseResidencyImage2D;
     }'''
 source=ORIGINAL.read_text()
-assert source.count(old)==1,'Native Vulkan device owner drift'
-assert 'EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR' in CMAKE
-assert 'NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE' in CMAKE
-with tempfile.TemporaryDirectory(prefix='n58-sparse-gate-') as td:
+assert source.count(new)==1, 'Canonical vendor Device method drift'
+with tempfile.TemporaryDirectory(prefix='n58-vendor-') as td:
     folder=Path(td)
-    generated=folder/'vulkan_device.h'
-    subprocess.run(['cmake','-DINPUT='+str(ORIGINAL),
-                    '-DOUTPUT='+str(generated),
-                    '-P',str(ROOT/'tools/ns2/prepare_egl_sparse_device_owner.cmake')],check=True)
-    assert generated.read_text()==source.replace(old,new)
     method=new[new.index('    bool IsSparseBindingSupported()'):]
     cpp=r'''#include <cassert>
 struct FakeVkFeatures {

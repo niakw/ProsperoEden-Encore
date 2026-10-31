@@ -3,8 +3,8 @@
 from pathlib import Path
 import subprocess,tempfile
 ROOT=Path(__file__).resolve().parents[2]
-N58=(ROOT/"tools/ns2/prepare_egl_sparse_device_owner.cmake").read_text()
-N62=(ROOT/"tools/ns2/prepare_egl_sparse_vma_owner.py").read_text()
+N58=(ROOT/"vendor/sources/eden/src/video_core/vulkan_common/vulkan_device.h").read_text()
+N62=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp").read_text()
 HEADER=ROOT/"headless/ns2/eglantine/video_core/renderer_vulkan/ns2_sparse_layer_budget.h"
 assert "sparseResidencyImage2D" in N58
 assert "VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT" in N62

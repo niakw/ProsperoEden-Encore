@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Migrar desde el proyecto original (Español (Latinoamérica))
 
-[← Español (Latinoamérica)](../../README.es-419.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← Español (Latinoamérica)](../../README.es-419.md) · [Instalación completa en inglés](../../INSTALL.md) · [Todos los idiomas](../../LANGUAGES.md)
 
 ## Primeros pasos
 
@@ -9,7 +9,7 @@
 3. Copia toda la carpeta PPSA99008 en /data/homebrew/PPSA99008/; no basta con copiar eboot.bin.
 4. Abre Encore, revisa Settings → Storage y Language, y utiliza solo tus archivos obtenidos legalmente.
 
-## Paths / PPSA99008
+## Aplicación / PPSA99008
 
 ```text
 /data/homebrew/PPSA99008/         # complete application
@@ -26,7 +26,7 @@
 
 Encore y ProsperoEden nativo comparten el ID PPSA99008: no son dos apps que se puedan instalar por separado. Reemplaza los archivos completos de la aplicación, conservando guardados, configuración, juegos y claves en /data/prosperoeden. Respalda también cualquier carpeta antigua assets/ antes de migrar.
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage as a normal update step. Back up before migration; do not overwrite existing saves or keys.
+**Importante:** Nunca borres `/data/prosperoeden/` ni formatees el almacenamiento externo para actualizar. Haz un respaldo primero y no sobrescribas partidas ni claves.
 
 ## Compatibilidad y problemas conocidos
 
@@ -36,6 +36,6 @@ Encore solo ha sido probado en una consola PS5 con firmware 13.60. Los anteriore
 
 Si el menú sigue en inglés, entra a Settings → Language y comprueba que instalaste toda la carpeta ui/lang/.
 
-If a title stops booting after changing settings, use **Safe Launch** for a temporary reset. For ZIP and FFPFSC/ShadowMountPlus methods see [INSTALL.md](../../INSTALL.md); for error details see [Troubleshooting](../../TROUBLESHOOTING.md) and [Support](../../SUPPORT.md).
+Si un juego deja de arrancar después de cambiar opciones, prueba **Safe Launch** para esa sesión sin borrar guardados. Consulta [instalación ZIP/FFPFSC](../../INSTALL.md), [solución de problemas](../../TROUBLESHOOTING.md) y [soporte](../../SUPPORT.md).
 
 El proyecto no incluye juegos comerciales, claves ni firmware. No compartas información privada en reportes públicos.

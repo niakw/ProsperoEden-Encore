@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Migração do projeto original (Português (Brasil))
 
-[← Português (Brasil)](../../README.pt-BR.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← Português (Brasil)](../../README.pt-BR.md) · [Instalação completa em inglês](../../INSTALL.md) · [Todos os idiomas](../../LANGUAGES.md)
 
 ## Primeiros passos
 
@@ -9,7 +9,7 @@
 3. Copie toda a pasta PPSA99008 para /data/homebrew/PPSA99008/; só eboot.bin não é suficiente.
 4. Abra o Encore, confira Settings → Storage e Language, e use apenas arquivos obtidos legalmente.
 
-## Paths / PPSA99008
+## Aplicativo / PPSA99008
 
 ```text
 /data/homebrew/PPSA99008/         # complete application
@@ -26,7 +26,7 @@
 
 Encore e ProsperoEden nativo usam o mesmo ID PPSA99008; não são dois aplicativos independentes. Substitua os arquivos completos do aplicativo e preserve saves, configurações, jogos e chaves em /data/prosperoeden. Faça backup da pasta antiga assets/ antes de migrar.
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage as a normal update step. Back up before migration; do not overwrite existing saves or keys.
+**Importante:** Nunca apague `/data/prosperoeden/` nem formate o armazenamento externo durante uma atualização. Faça backup primeiro e preserve saves e chaves.
 
 ## Compatibilidade e limitações
 
@@ -36,6 +36,6 @@ O único firmware testado com Encore em um PS5 real é 13.60. Versões anteriore
 
 Se o menu continua em inglês, selecione Settings → Language e confira a pasta ui/lang/ completa.
 
-If a title stops booting after changing settings, use **Safe Launch** for a temporary reset. For ZIP and FFPFSC/ShadowMountPlus methods see [INSTALL.md](../../INSTALL.md); for error details see [Troubleshooting](../../TROUBLESHOOTING.md) and [Support](../../SUPPORT.md).
+Se um jogo parar de iniciar após mudar opções, use **Safe Launch** temporariamente sem apagar saves. Veja a [instalação ZIP/FFPFSC](../../INSTALL.md), a [solução de problemas](../../TROUBLESHOOTING.md) e o [suporte](../../SUPPORT.md).
 
 O projeto não fornece jogos, chaves nem firmware. Não publique dados pessoais em relatórios de erros.

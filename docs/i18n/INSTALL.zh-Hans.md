@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — 从原版迁移或更新 (简体中文)
 
-[← 简体中文](../../README.zh-Hans.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← 简体中文](../../README.zh-Hans.md) · [英语完整安装说明](../../INSTALL.md) · [所有语言](../../LANGUAGES.md)
 
 ## 快速开始
 
@@ -9,7 +9,7 @@
 3. 将整个 PPSA99008 文件夹复制到 /data/homebrew/PPSA99008/，不要只复制 eboot.bin。
 4. 启动 Encore，检查 Settings → Storage 和 Language；使用自行合法获取的密钥、固件与游戏。
 
-## Paths / PPSA99008
+## 应用目录 / PPSA99008
 
 ```text
 /data/homebrew/PPSA99008/         # complete application
@@ -26,7 +26,7 @@
 
 Encore 与原生 ProsperoEden 共用 PPSA99008 标识，不能直接作为两个独立应用安装。只替换完整应用文件，保留 /data/prosperoeden 中的存档、设置、游戏和密钥。若旧版把用户文件放在 assets/ 下，请先备份并保留到迁移结束。
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage as a normal update step. Back up before migration; do not overwrite existing saves or keys.
+**重要：**更新时绝不能删除 `/data/prosperoeden/` 或格式化外部存储。先备份，不要覆盖现有存档和密钥。
 
 ## 兼容性及已知限制
 
@@ -36,6 +36,6 @@ Encore 与原生 ProsperoEden 共用 PPSA99008 标识，不能直接作为两个
 
 如界面仍是英语，请在 Settings → Language 中切换，并确认 ui/lang/ 目录完整安装。
 
-If a title stops booting after changing settings, use **Safe Launch** for a temporary reset. For ZIP and FFPFSC/ShadowMountPlus methods see [INSTALL.md](../../INSTALL.md); for error details see [Troubleshooting](../../TROUBLESHOOTING.md) and [Support](../../SUPPORT.md).
+如游戏在更改设置后无法启动，请尝试单次 **Safe Launch**，不要删除存档。ZIP/FFPFSC 安装步骤见[英语详细说明](../../INSTALL.md)，错误排查见[故障处理](../../TROUBLESHOOTING.md)和[支持](../../SUPPORT.md)。
 
 本项目不提供游戏、主机密钥或固件。提交问题时不要公开个人数据。

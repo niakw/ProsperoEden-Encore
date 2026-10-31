@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess,tempfile,sys
 ROOT=Path(__file__).resolve().parents[2]
 NATIVE=ROOT/'vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp'
-HEADER=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_memory_allocator.h'
+HEADER=ROOT/'vendor/encore-active/ns2-helpers/include/video_core/vulkan_common/vulkan_memory_allocator.h'
 WRAPPER=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_wrapper.cpp'
 assert 'vmaDestroyImage(allocator, handle, allocation);' in WRAPPER.read_text()
 with tempfile.TemporaryDirectory(prefix='n64-vendor-image-') as td:

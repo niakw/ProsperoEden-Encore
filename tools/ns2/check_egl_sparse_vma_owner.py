@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess,tempfile,sys
 ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/'vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp'
-HDR=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_memory_allocator.h'
+HDR=ROOT/'vendor/encore-active/ns2-helpers/include/video_core/vulkan_common/vulkan_memory_allocator.h'
 with tempfile.TemporaryDirectory(prefix='n62-vendor-') as td:
     temp=Path(td)
     h=HDR.read_text()
@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix='n62-vendor-') as td:
     assert 'VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE' in code
     assert 'void ReleaseSparseMemory(SparseMemoryAllocation &allocation)' in h
     start=code.index('bool MemoryAllocator::AllocateSparseMemory(')
-    end=code.index('vk::Buffer MemoryAllocator::CreateBuffer(',start)
+    end=code.index('#endif // EDEN_NS2_SPARSE_CACHE_PROBE',start)
     functions=code[start:end]
     cpp=r'''#include <cassert>
 #include <cstdint>

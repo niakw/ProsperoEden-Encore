@@ -1509,6 +1509,16 @@ if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
     if(eden_n73_cache_idx EQUAL -1)
         message(FATAL_ERROR "N73 requires the existing native PS5 Vulkan cache source")
     endif()
+    # The native VMA and Device declarations belong to the same active,
+    # opt-in vendor research owner as their N58/N62/N64 implementation.
+    # Never consume the unpatched Eden tarball's Vulkan headers in this mode.
+    foreach(eden_ns2_sparse_abi IN ITEMS
+        "video_core/vulkan_common/vulkan_device.h"
+        "video_core/vulkan_common/vulkan_memory_allocator.h")
+        if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/${eden_ns2_sparse_abi}")
+            message(FATAL_ERROR "Missing NS2 sparse native Vulkan ABI: ${eden_ns2_sparse_abi}")
+        endif()
+    endforeach()
     target_include_directories(video_core BEFORE PRIVATE
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_CACHE_PROBE=1)

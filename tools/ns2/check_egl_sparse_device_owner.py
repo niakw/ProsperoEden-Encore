@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
-ORIGINAL=ROOT/'vendor/sources/eden/src/video_core/vulkan_common/vulkan_device.h'
+ORIGINAL=ROOT/'vendor/encore-active/ns2-helpers/include/video_core/vulkan_common/vulkan_device.h'
 new='''    bool IsSparseBindingSupported() const {
         return features.features.sparseBinding && graphics_family_sparse_binding;
     }

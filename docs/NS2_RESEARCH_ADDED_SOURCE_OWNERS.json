@@ -2,7 +2,7 @@
   "schema_version": 1,
   "base_vendor_commit": "2281ef2780179febb927662c3ce4a83b09f252a6",
   "research_vendor_commit": "209052223111a27fc1c93a07f6af96e61221bb2c",
-  "review_state": "NS2 research source additions, not historical F07 optimization proofs and not production game compatibility",
+  "review_state": "NS2 research source additions including two opt-in Vulkan sparse ABI headers; never historical F07 optimization proofs or NS2 gameplay qualification",
   "paths": [
     "eden-core/include/common/cpu_features.h",
     "eden-core/include/encore/guest_counter_policy.h",
@@ -43,6 +43,8 @@
     "ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h",
     "ns2-helpers/include/video_core/texture_cache/ns2_astc_layer_plan.h",
     "ns2-helpers/include/video_core/texture_cache/ns2_astc_staging_bridge.h",
+    "ns2-helpers/include/video_core/vulkan_common/vulkan_device.h",
+    "ns2-helpers/include/video_core/vulkan_common/vulkan_memory_allocator.h",
     "ns2-runtime/am/core/hle/service/am/service/application_functions.cpp",
     "ns2-runtime/am/core/hle/service/am/service/application_functions.h",
     "ns2-runtime/am/core/hle/service/am/service/application_proxy.cpp",

@@ -41,7 +41,7 @@ assert compiler, "C++20 compiler required"
 # Extract the exact production and crash-harness conversions. PS5 uses a
 # pointer pthread_t while the Linux host uses an integer pthread_t.
 thread_store = re.compile(
-    r"(?:Eden::)?Crash::audio_worker_thread\\.store\\(\\s*([^,]+),\\s*std::memory_order_release\\)"
+    r"(?:Eden::)?Crash::audio_worker_thread\.store\(\s*([^,]+),\s*std::memory_order_release\)"
 )
 audio_tokens = thread_store.findall(audio)
 crash_tokens = thread_store.findall((ROOT / "tools/check-crash-report.py").read_text())
@@ -114,14 +114,14 @@ with tempfile.TemporaryDirectory(prefix="eden-audio-thread-token-") as tmp:
     ):
         source = Path(tmp) / (name + ".cpp")
         source.write_text(
-            "#include <cstdint>\\n"
-            f"using pthread_t = {pthread_type};\\n"
-            "int sentinel = 7;\\n"
-            f"pthread_t pthread_self() {{ return {returned}; }}\\n"
-            "int main() {\\n"
-            f"  const std::uintptr_t token = {thread_token};\\n"
-            f"  return token == {expected} ? 0 : 1;\\n"
-            "}\\n"
+            "#include <cstdint>\n"
+            f"using pthread_t = {pthread_type};\n"
+            "int sentinel = 7;\n"
+            f"pthread_t pthread_self() {{ return {returned}; }}\n"
+            "int main() {\n"
+            f"  const std::uintptr_t token = {thread_token};\n"
+            f"  return token == {expected} ? 0 : 1;\n"
+            "}\n"
         )
         for opt in ("0", "2"):
             exe = Path(tmp) / (name + "-O" + opt)

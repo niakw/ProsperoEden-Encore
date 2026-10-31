@@ -26,11 +26,14 @@ void ForEachRegion(std::uint64_t address, std::uint64_t size, Collect&& collect)
     collect(address, amount);
     address += amount;
     size -= amount;
-    while (size != 0) {
-        amount = std::min(size, kRegionBytes - (address & (kRegionBytes - 1)));
-        collect(address, amount);
-        address += amount;
-        size -= amount;
+    // If bytes remain after peeling the first region, address is now
+    // aligned to 2 KiB. Consume complete regions without re-masking the
+    // already aligned address or re-running std::min on each region.
+    while (size >= kRegionBytes) {
+        collect(address, kRegionBytes);
+        address += kRegionBytes;
+        size -= kRegionBytes;
     }
+    if (size != 0) collect(address, size);
 }
 } // namespace Eden::GpuDirty

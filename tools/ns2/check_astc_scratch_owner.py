@@ -5,15 +5,18 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SCRATCH=ROOT/"vendor/sources/eden/src/common/scratch_buffer.h"
-TEXTURE=ROOT/"vendor/sources/eden/src/video_core/texture_cache/texture_cache.h"
+OWNER=ROOT/"vendor/encore-active/ns2-astc/include"
+SCRATCH=OWNER/"common/scratch_buffer.h"
+TEXTURE=OWNER/"video_core/texture_cache/texture_cache.h"
+BASE_SCRATCH=ROOT/"vendor/sources/eden/src/common/scratch_buffer.h"
+BASE_TEXTURE=ROOT/"vendor/encore-active/eden-backports/src/video_core/texture_cache/texture_cache.h"
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 def once(src,old,new):
     assert src.count(old)==1, "maintained source owner drift: "+old[:70]
     return src.replace(old,new)
-s=SCRATCH.read_text()
+s=BASE_SCRATCH.read_text()
 s=once(s,"    void swap(ScratchBuffer& other) noexcept {",
-'''    // N54: discard an oversized transient scratch allocation between frames.
+'''    // Drop oversized transient CPU staging storage without retaining capacity.
     void release() noexcept {
         buffer.reset();
         buffer_capacity = 0;
@@ -25,11 +28,11 @@ s=once(s,"            std::memcpy(new_buffer.get(), buffer.get(), buffer_capacit
 '''            if (buffer_capacity != 0) {
                 std::memcpy(new_buffer.get(), buffer.get(), buffer_capacity * sizeof(T));
             }''')
-t=TEXTURE.read_text()
+t=BASE_TEXTURE.read_text()
 t=once(t,"void TextureCache<P>::TickFrame() {",
 '''void TextureCache<P>::TickFrame() {
-    // N54: transient ASTC/unswizzle scratch must not remain resident after
-    // a huge layered image. CPU scratch is no longer in use at frame start.
+    // Release only oversized transient CPU scratch at the next frame boundary.
+    // The normal <= 64 MiB cached working set and GPU residency are unchanged.
     static constexpr size_t N54ScratchTrimThreshold = size_t{64} << 20;
     for (auto* const scratch : {&swizzle_data_buffer, &unswizzle_data_buffer}) {
         if (scratch->capacity() > N54ScratchTrimThreshold) {
@@ -37,20 +40,21 @@ t=once(t,"void TextureCache<P>::TickFrame() {",
         }
     }''')
 assert 'EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR' in CMAKE
-assert 'target_include_directories(common BEFORE PUBLIC "${eden_ns2_scratch_generated}")' in CMAKE
-assert 'target_include_directories(video_core BEFORE PUBLIC "${eden_ns2_scratch_generated}")' in CMAKE
-with tempfile.TemporaryDirectory(prefix="n54-owner-") as td:
+assert 'target_include_directories(common BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")' in CMAKE
+assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")' in CMAKE
+assert 'prepare_astc_scratch_owner.cmake' not in CMAKE
+assert 'eden_ns2_scratch_generated' not in CMAKE
+assert SCRATCH.read_text()==s, 'N54 scratch differs from pinned base + exact fix'
+assert TEXTURE.read_text()==t, 'N54 texture differs from patched shipping base + exact fix'
+with tempfile.TemporaryDirectory(prefix="n54-vendor-owner-") as td:
     out=Path(td)
-    subprocess.run(["cmake","-DSCRATCH_INPUT="+str(SCRATCH),"-DTEXTURE_INPUT="+str(TEXTURE),
-       "-DOUTPUT_DIR="+str(out),"-P",str(ROOT/"tools/ns2/prepare_astc_scratch_owner.cmake")],check=True)
-    assert (out/"common/scratch_buffer.h").read_text()==s
-    assert (out/"video_core/texture_cache/texture_cache.h").read_text()==t
     marker="void TextureCache<P>::TickFrame() {"
     after=t.split(marker)[1]
     extraction=after[:after.index("    // If we can obtain the memory info")]
     assert extraction.count("scratch->release();")==1
     cpp=('''#include <cassert>
 #include <cstdint>
+#include <initializer_list>
 #include <initializer_list>
 #include "common/scratch_buffer.h"
 using u8=std::uint8_t;
@@ -89,7 +93,7 @@ int main() {
         exe=out/("n54-"+cxx.replace("+","p"))
         subprocess.run([cxx,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
             "-fsanitize=address,undefined","-fno-sanitize-recover=all",
-            "-I",str(out),"-I",str(ROOT/"vendor/sources/eden/src"),
+            "-I",str(OWNER),"-I",str(ROOT/"vendor/sources/eden/src"),
             str(out/"test.cpp"),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)
-print("N54_ASTC_SCRATCH_OWNER_AND_SOURCE_EXTRACTED_LIFECYCLE_PASS")
+print("N54_VENDOR_SOURCE_EXTRACTED_LIFECYCLE_PASS")

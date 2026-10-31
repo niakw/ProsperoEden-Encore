@@ -348,7 +348,7 @@ assert 'if (first == last && !page_backing[first] && !page_access[first]) return
 assert 'chunk_aliased[first / PagesPerGranule] &&' in map_body
 assert map_body.count('if (same_access) return;') == 1
 assert map_body.count('if (live_aliases_match) {') == 1
-assert map_body.count('if (same_backing) {') == 1
+assert map_body.count('if (same_backing) {') == 0
 assert 'if (first < last && last - first < 16) {' in unmap_body
 assert 'short_single_granule' not in unmap_body
 assert 'short_cross_granule' not in unmap_body

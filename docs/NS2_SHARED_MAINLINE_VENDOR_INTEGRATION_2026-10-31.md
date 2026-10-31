@@ -47,3 +47,7 @@ Eight unchanged loader/metadata/NSO admission headers have moved from `headless/
 ## N52 source owner
 
 Experimental `Service::Process::Run` return-code checking is now compiled from the original `vendor/sources/eden/src/core/hle/service/os/process.cpp` under `EDEN_NS2_PROCESS_RUN_GUARD`. Its old cloned C++ translation unit in `headless/ns2/overrides` has been removed; default Switch 1 behavior is unchanged. Host regressions extract the real vendor method with Clang/GCC.
+
+## Versioned NSW2 loader sources
+
+The four research-only translation units (`ProgramMetadata`, `AppLoader`, `DeconstructedRomDirectory`, `NSO`) have now been relocated **without byte changes** from `headless/ns2/overrides` into `vendor/encore-active/ns2-experimental/src/core`. Original PS5 optimized engine source selection is preserved when experimental switches are OFF. These are still **separate opt-in implementations**, not yet additive changes merged into the shipping owners; a full native build and Switch 2 guest runtime must be validated before claiming production-grade support.

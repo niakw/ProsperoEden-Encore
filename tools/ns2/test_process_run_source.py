@@ -74,7 +74,7 @@ with tempfile.TemporaryDirectory(prefix="n52-os-process-") as d:
                         "-Wno-unused-variable","-Werror","-fsanitize=undefined",
                         "-fno-sanitize-recover=all",
                         "-DEDEN_NS2_PROCESS_RUN_GUARD=1",
-                        "-I",str(root/"headless/ns2/overrides"),
+                        "-I",str(root/"vendor/encore-active/ns2-experimental/src"),
                         "-I",str(root/"vendor/encore-active/ns2-helpers/include"),
                         str(src),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)

@@ -13,7 +13,7 @@ set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
 option(EDEN_NS2_METADATA_EXPERIMENTAL
     "Experimental Switch 2 NPDM / ACID parsing (not full NS2 emulation)" OFF)
 if(EDEN_NS2_METADATA_EXPERIMENTAL)
-    set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/headless/ns2/overrides")
+    set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/vendor/encore-active/ns2-experimental/src")
     set(EDEN_NS2_CORE_HELPERS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp"
        OR NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/file_sys/program_metadata.h")

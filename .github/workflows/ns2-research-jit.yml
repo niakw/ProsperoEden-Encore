@@ -15,7 +15,7 @@ on:
       - 'tools/ns2/test_real_kprocess_loadmodule.py'
       - 'tools/ns2/test_real_kprocess_metadata.py'
       - 'vendor/**'
-      - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
+      - 'vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp'
       - 'headless/CMakeLists.txt'
       - 'vendor'
       - '.github/workflows/ns2-research-jit.yml'
@@ -90,10 +90,10 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-jit/prefix/include \
-            -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides -Iheadless/ns2 \
+            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src -Iheadless/ns2 \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
-            headless/ns2/overrides/core/file_sys/program_metadata.cpp \
+            vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp \
             -o build-ns2-jit/public-nso/exefs-pair-test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
             build-ns2-jit/public-nso/exefs-pair-test \

@@ -43,6 +43,14 @@ assert 'Eden::FindGameFolderInput(entry.path())' in main
 assert 'selected_path.filename() == "main"' in main
 assert 'IsSafeDeconstructedGamePath(selected_root, selected_relative)' in main
 assert "symlink_status(folder / name, error)" in header
+# Native PS5 release compilation regression: CreateRomFS is declared only by
+# core/file_sys/romfs.h, not romfs_factory.h. The real maintained loader must
+# include its owning declaration, also with all NS2 flags OFF.
+native_extracted = (root / "vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp").read_text()
+native_romfs = (root / "vendor/sources/eden/src/core/file_sys/romfs.h").read_text()
+assert native_extracted.count('#include "core/file_sys/romfs.h"') == 1
+assert 'romfs = FileSys::CreateRomFS(std::move(extracted_romfs), nullptr);' in native_extracted
+assert 'VirtualFile CreateRomFS(VirtualDir dir, VirtualDir ext = nullptr);' in native_romfs
 # The real launcher must read the owning NPDM for extracted program identity,
 # rather than claiming the 20-40 MiB 'main' executable is a complete game.
 bridge = (root / "headless/metadata_bridge.cpp").read_text()

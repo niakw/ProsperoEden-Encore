@@ -1,5 +1,9 @@
 # Installing Prospero.Eden Encore
 
+**First time here?** [Four-step start](README.md#start-here--install-in-four-steps) · [18 language/region options](LANGUAGES.md) · [Français](docs/i18n/INSTALL.fr-FR.md) · [Español](docs/i18n/INSTALL.es-ES.md) · [Troubleshooting](TROUBLESHOOTING.md).
+
+This is the **full English installation reference** for ZIP/FTP, FFPFSC/ShadowMountPlus and safe migration from the original native ProsperoEden.
+
 Prospero.Eden Encore targets **PS5 firmware 13.60** and keeps one simple storage contract.
 
 The application title is:

@@ -1585,6 +1585,44 @@ if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
     target_include_directories(core BEFORE PRIVATE "${eden_ns2_cache_out}")
 endif()
 
+# N62: opt-in sparse-memory VMA allocator with strict PS5 budget/rollback.
+# This adds an allocation API; it does NOT enable sparse image creation/bind.
+option(EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL
+    "Research only: safe PS5 Vulkan device-local sparse VMA chunks" OFF)
+if(EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR
+       EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N62 sparse VMA requires N58 native Vulkan NS2 research")
+    endif()
+    set(eden_ns2_vma_input "${PORT_BUILD_DIR}/vulkan_memory_allocator.cpp")
+    list(FIND video_sources "${eden_ns2_vma_input}" eden_ns2_vma_index)
+    if(eden_ns2_vma_index EQUAL -1)
+        message(FATAL_ERROR "N62 maintained native Vulkan allocator owner changed")
+    endif()
+    set(eden_ns2_vma_root "${PORT_BUILD_DIR}/ns2-sparse-vma")
+    set(eden_ns2_vma_generator "${PORT_ROOT}/tools/ns2/prepare_egl_sparse_vma_owner.py")
+    set(eden_ns2_vma_header
+        "${PROJECT_SOURCE_DIR}/src/video_core/vulkan_common/vulkan_memory_allocator.h")
+    find_program(EDEN_NS2_VMA_PYTHON_EXECUTABLE NAMES python3 REQUIRED)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${eden_ns2_vma_input}" "${eden_ns2_vma_header}"
+        "${eden_ns2_vma_generator}")
+    execute_process(COMMAND "${EDEN_NS2_VMA_PYTHON_EXECUTABLE}"
+        "${eden_ns2_vma_generator}"
+        "--header" "${eden_ns2_vma_header}"
+        "--source" "${eden_ns2_vma_input}"
+        "--output" "${eden_ns2_vma_root}"
+        RESULT_VARIABLE eden_ns2_vma_result)
+    if(NOT eden_ns2_vma_result EQUAL 0)
+        message(FATAL_ERROR "N62 native Vulkan sparse allocator generation failed")
+    endif()
+    list(REMOVE_ITEM video_sources "${eden_ns2_vma_input}")
+    list(APPEND video_sources "${eden_ns2_vma_root}/vulkan_memory_allocator.cpp")
+    target_include_directories(video_core BEFORE PUBLIC "${eden_ns2_vma_root}/include")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2528,6 +2566,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
        EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR
+       EDEN_NS2_SPARSE_VMA_ALLOCATOR_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

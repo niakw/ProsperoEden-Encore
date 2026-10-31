@@ -1565,6 +1565,10 @@ if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
     endif()
     set(eden_ns2_cache_gen "${PORT_ROOT}/tools/ns2/prepare_egl_astc_texture_cache.py")
     set(eden_ns2_cache_out "${PORT_BUILD_DIR}/ns2-astc-cache/include")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${eden_ns2_cache_src}/image_base.h"
+        "${eden_ns2_cache_src}/texture_cache_base.h"
+        "${eden_ns2_cache_text}" "${eden_ns2_cache_gen}")
     execute_process(COMMAND "${EDEN_NS2_PYTHON_EXECUTABLE}"
         "${eden_ns2_cache_gen}"
         "--image" "${eden_ns2_cache_src}/image_base.h"

@@ -32,6 +32,7 @@
 #include "core/file_sys/content_archive.h"
 #include "core/file_sys/control_metadata.h"
 #include "core/file_sys/nca_metadata.h"
+#include "core/file_sys/program_metadata.h"
 #include "core/file_sys/registered_cache.h"
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/submission_package.h"
@@ -156,10 +157,50 @@ bool WriteTga(const FileSys::VirtualFile& icon, const char* output) {
 }
 }
 
+// Extracted NS1/NS2 programs have no NSP/XCI Control NCA to query. The
+// upstream loader already reads main.npdm as ProgramMetadata at boot;
+// reuse its same validated parser, only for a symlink-free library selection.
+// Never infer a title ID from a directory name or an update-version folder.
+FileSys::VirtualFile ExtractedNpdm(const char* rom_path, FileSys::RealVfsFilesystem& vfs) {
+    namespace fs = std::filesystem;
+    const fs::path selected{rom_path};
+    if (selected.filename() != "main") return {};
+    const fs::path root{Eden::AssetsPath("roms")};
+    const auto relative = selected.lexically_relative(root).generic_string();
+    if (!Eden::IsSafeDeconstructedGamePath(root, relative)) return {};
+    return vfs.OpenFile((selected.parent_path() / "main.npdm").string(),
+                        FileSys::OpenMode::Read);
+}
+
+bool ReadExtractedProgramMetadata(const char* rom_path, FileSys::RealVfsFilesystem& vfs,
+                                  FileSys::ProgramMetadata* metadata) {
+    if (!metadata) return false;
+    const auto npdm = ExtractedNpdm(rom_path, vfs);
+    return npdm && metadata->Load(npdm) == Loader::ResultStatus::Success;
+}
+
+std::string ExtractedProgramName(const FileSys::ProgramMetadata& metadata) {
+    const auto& bytes = metadata.GetName();
+    std::string value;
+    for (const auto c : bytes) {
+        if (c == 0) break;
+        // NPDM application_name is short ASCII, not a localized NACP title.
+        // Refuse raw control characters and synthetic "Application" labels.
+        if (c < 32 || c > 126) return {};
+        value += static_cast<char>(c);
+    }
+    if (value.size() < 4 || value == "Application" || value == "application")
+        return {};
+    return value;
+}
+
 uint64_t eden_game_title_id(const char* rom_path) {
     if (!rom_path) return 0;
     Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, Eden::AssetsPath("keys"));
     FileSys::RealVfsFilesystem vfs;
+    FileSys::ProgramMetadata extracted;
+    if (ReadExtractedProgramMetadata(rom_path, vfs, &extracted))
+        return extracted.GetTitleID();
     const auto file = vfs.OpenFile(rom_path, FileSys::OpenMode::Read);
     if (!file) return 0;
     std::string path = rom_path;
@@ -183,6 +224,15 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
     title[0] = '\0';
     Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
     FileSys::RealVfsFilesystem vfs;
+    FileSys::ProgramMetadata extracted;
+    if (ReadExtractedProgramMetadata(rom_path, vfs, &extracted)) {
+        const std::string name = ExtractedProgramName(extracted);
+        if (!name.empty()) {
+            std::snprintf(title, title_capacity, "%s", name.c_str());
+            return EDEN_METADATA_TITLE;
+        }
+        return 0; // Name missing; preserve filesystem label and allow Nlib via NPDM title ID.
+    }
     const auto file = vfs.OpenFile(rom_path, FileSys::OpenMode::Read);
     if (!file) return 0;
     std::string path = rom_path;

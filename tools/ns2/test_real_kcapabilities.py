@@ -225,6 +225,7 @@ def main() -> None:
             cmd = [compiler, "-std=c++20", optimize, "-g",
                    "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
                    "-fno-omit-frame-pointer", "-Wall", "-Wextra", "-Werror",
+                   "-I", str(ROOT / "build-ns2-jit/prefix/include"),
                    "-I", str(VENDOR), "-I", str(ROOT / "headless/ns2/overrides"),
                    str(src), "-o", str(exe)]
             built = subprocess.run(cmd, capture_output=True, text=True, timeout=90)

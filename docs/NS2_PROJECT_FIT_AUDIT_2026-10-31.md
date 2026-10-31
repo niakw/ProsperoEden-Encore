@@ -52,3 +52,19 @@ This file documents code facts and validation limits. Update evidence after fina
 The host test CMake recipe still referenced the **deleted** `headless/ns2/cpu6` include directory three times after the source migration. CMake did not reject this nonexistent include root, causing Dynarmic's original `exclusive_monitor.h` to be selected instead. That header has `MAX_NUM_CPU_CORES = 4` and a `boost::container::static_vector`, while both NSW2 host fixtures construct `ExclusiveMonitor{6}`. Adding a sixth element exceeds the static capacity and throws `boost::container::bad_alloc`.
 
 The corrected host recipe points to `vendor/encore-active/ns2-runtime/cpu6` and rejects a missing maintained header at configure time. The source selection test now checks that recipe too. The earlier 16 MiB cache-size hypothesis was **not sufficient** (the error survived increasing to 64 MiB); it must not be cited as the established root cause. The 64 MiB host-only extra headroom does not change PS5 JIT settings. Final successful execution still requires new CI confirmation.
+
+## Final research CI evidence (host only)
+
+The final CMake source owner / host harness revision is `0a447ab7762535b5a34a76254b5048b63e8eab90`; the pinned research vendor revision is `b34ec82d9f3bda22f36f66e2b1e0d3517f76d764`. The source-only CMake and fixture-correction commits after `d705d76` did **not** change NSW2 runtime engine behavior.
+
+| Validation | Proven success | Qualification |
+| --- | --- | --- |
+| [Source owners, real A64 frontend and N50/N51 parity](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181510860) | **SUCCESS, both jobs**, revision `0a447ab` | Actual selected host sources, Clang/GCC; not native PS5 |
+| [Dynarmic guest JIT and public HOS NSO0](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181510921) | **SUCCESS**, revision `0a447ab` | Real x64 Dynarmic JIT, six-core overlay, host SVC shim |
+| [Verify pinned vendor submodule](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181123116) | **SUCCESS**, runtime revision `d705d76` | Exact pinned checkout of research vendor |
+| [Public homebrew and Vulkan corpus](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181123044) | **SUCCESS**, runtime revision `d705d76` | Host Linux Mesa/QEMU, not PS5 game rendering |
+| [FC27 synthetic workload](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181123039) | **SUCCESS**, runtime revision `d705d76` | Synthetic stress and historical trace, no gameplay |
+| [Real Maxwell IR](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181123101) | **SUCCESS**, runtime revision `d705d76` | Host translated IR tests only |
+| [Real SPIR-V emitter](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41181123166) | **SUCCESS**, runtime revision `d705d76` | Host Vulkan/SPIR-V shader tests only |
+
+**Final audit outcome:** current project-fit cleanup is complete and the supported host research gates are green. The separate Switch 2 compatibility implementation and native PS5 build/boot tests are still unfinished. Do not merge to `main` or announce Switch 2 game support. The active readiness watch must notify only when a real experimental PS5 artifact exists with an explicit console smoke procedure.

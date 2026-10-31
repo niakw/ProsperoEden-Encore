@@ -9,7 +9,7 @@ The historical F01–F07 optimization findings are not reclassified as closed.
 
 | Source | Reviewed Git blob | New behavior, safety and review outcome |
 | --- | --- | --- |
-| `headless/game_files.h` | `736230b434d58406841e702e5dbd70d4c391f578` | Bound/symlink-free nested source selection, isolated add-on roots, one base candidate; avoid scanning RomFS/ExeFS during discovery |
+| `headless/game_files.h` | `956c9d1255780936e6a67c45ff915cc653f24898` | Bound/symlink-free nested source selection, isolated add-on roots, one base candidate; avoid scanning RomFS/ExeFS during discovery |
 | `headless/main.cpp` | `598d7632a39c4e58ab31acb26c789eae34762520` | Launch-time revalidation and native provider roots for the selected title; no GPU/JIT frame loop changed |
 | `headless/metadata_bridge.cpp` | `0eb7bd4cb4cbf615b4cbd870d6bc87bf30fed9d5` | UI add-on snapshot aggregates global and collocated provider roots; same metadata-aware Update/AOC classification |
 | `headless/metadata_bridge.h` | `a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9` | C ABI scanner receives ROM root for collocated add-ons; both headless call sites updated |

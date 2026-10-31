@@ -170,8 +170,8 @@ int main(int argc, char** argv) {
         const auto& caps = actual.GetKernelCapabilities();
         if (caps != minimal_caps) {
             std::cerr << "KAC mismatch: expected " << minimal_caps.size()
-                      << " descriptors, received " << caps.size() << '\\n';
-            for (const auto value : caps) std::cerr << "  descriptor=" << std::hex << value << '\\n';
+                      << " descriptors, received " << caps.size() << '\n';
+            for (const auto value : caps) std::cerr << "  descriptor=" << std::hex << value << '\n';
             require(false, "ExeFS NPDM KAC offset/permissions mismatch");
         }
         std::array<std::uint8_t, Eden::NS2::ExeFS::NsoHeaderBytes> header{};

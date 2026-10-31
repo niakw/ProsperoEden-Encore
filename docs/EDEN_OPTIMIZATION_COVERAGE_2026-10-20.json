@@ -4455,9 +4455,9 @@
     {
       "path": "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
       "disposition": "new_source_issue_corrected",
-      "reviewed_source_git_blob": "5ee2ca1afcee9eb725e57490227a9f12c6de8cf5",
+      "reviewed_source_git_blob": "cd11cb32429efcceaf6b3e1144d495cce1569383",
       "proof_ref": "tools/check-extracted-aoc-layout-host.py",
-      "evidence": "Native NCA-first AOC Data mount fallback; shared NS1/NS2 engine. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+      "evidence": "Native NCA-first AOC Data mount fallback; shared NS1/NS2 engine. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build. Host storage no longer attempts the unimplemented NCA provider; reviewed."
     },
     {
       "path": "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",

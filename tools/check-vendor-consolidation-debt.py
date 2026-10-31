@@ -1859,7 +1859,10 @@ assert 'python3 -B tools/install-active-core-backports.py "$eden"' in staging
 active_core_installer = (root / "tools/install-active-core-backports.py").read_text()
 assert 'ACTIVE = ROOT / "vendor/encore-active/eden-core"' in active_core_installer
 assert "shutil.copyfile(maintained, tmp)" in active_core_installer
-assert "maintained.read_bytes() != new" in active_core_installer
+assert "maintained_bytes != new:" in active_core_installer
+assert "maintained_bytes.replace(header, b\"\").replace(" in active_core_installer
+assert "guest_counter, original_counter) != new" in active_core_installer
+assert "N76 modified unrelated native A64 source" in active_core_installer
 assert 'python3 -B tools/install-vendored-eden-backports.py --repair-owned-cache "$eden"' in staging
 cache_installer = (root / "tools/install-vendored-eden-backports.py").read_text()
 assert 'def is_owned_cached_source(destination:Path)->bool:' in cache_installer

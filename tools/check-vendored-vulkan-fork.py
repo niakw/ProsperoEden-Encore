@@ -299,6 +299,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     n56_file.parent.mkdir(parents=True, exist_ok=True)
     n56_file.write_text(n56_baseline)
     normalized_expected[n56_name] = n56_file
+    # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
+    # Reverse only exact reviewed additions, then require original F07 SHA
+    # and full generated-source byte parity. No generator files or exemptions.
+    from ns2.native_astc_vendor_parity import normalized as normalize_n57
+    for name, baseline in normalize_n57(root).items():
+        p = temp/'normalized-vendor-n57'/name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(baseline)
+        normalized_expected[name] = p
+
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

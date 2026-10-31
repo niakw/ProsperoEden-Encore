@@ -27,20 +27,15 @@ with tempfile.TemporaryDirectory(prefix="n60-astc-") as folder:
     needle="runtime.AccelerateImageUpload(image, staging, FixSmallVectorADL(uploads), 0, 0);"
     assert original.count(needle)==1 and tex.count(needle)==1
     assert original.count("UploadImageContents(image, staging);")==tex.count("UploadImageContents(image, staging);")
-# Also prove N54's trimmed scratch owner and N60's real cache overlay compose.
-with tempfile.TemporaryDirectory(prefix="n60-n54-composed-") as joined:
+# Prove that N60 composes with the real, vendor-maintained N54 texture owner.
+with tempfile.TemporaryDirectory(prefix="n60-n54-vendor-composed-") as joined:
     root=Path(joined)
-    scratch=root/"scratch"
-    subprocess.run(["cmake",
-      "-DSCRATCH_INPUT="+str(ROOT/"vendor/sources/eden/src/common/scratch_buffer.h"),
-      "-DTEXTURE_INPUT="+str(SOURCE/"texture_cache.h"),
-      "-DOUTPUT_DIR="+str(scratch),
-      "-P",str(ROOT/"tools/ns2/prepare_astc_scratch_owner.cmake")],check=True)
+    vendor_tex=ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+    assert vendor_tex.is_file()
     combo=root/"combined"
     subprocess.run([sys.executable,str(ROOT/"tools/ns2/prepare_egl_astc_texture_cache.py"),
       "--image",str(SOURCE/"image_base.h"),"--base",str(SOURCE/"texture_cache_base.h"),
-      "--texture",str(scratch/"video_core/texture_cache/texture_cache.h"),
-      "--output",str(combo)],check=True)
+      "--texture",str(vendor_tex),"--output",str(combo)],check=True)
     content=(combo/"video_core/texture_cache/texture_cache.h").read_text()
     assert "N54ScratchTrimThreshold" in content
     assert "TextureCache<P>::Ns2UploadDirtyLayers(" in content

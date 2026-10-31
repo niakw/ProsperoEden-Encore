@@ -50,6 +50,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_image_owner.py
+      - name: Verify native research CMake selector forwarding and release isolation
+        run: python3 -B tools/ns2/check_native_research_selector.py
       - name: N76 per-title guest 31.25 MHz counter and NS1 reset (Clang/GCC)
         shell: bash
         run: |

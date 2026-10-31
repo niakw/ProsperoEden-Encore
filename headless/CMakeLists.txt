@@ -1408,36 +1408,26 @@ if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 endif()
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
-# N54: bound memory retained by transient, extremely large CPU texture staging.
-# Header overlays derive from the *prepared* build source at configure time.
+# N54: select the optional single vendor-maintained ASTC scratch owners.
+# Immutable Eden pin, main/release, and normal Switch 1 code remain unchanged.
 option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
     "Research only: trim scratch buffers >64 MiB after large texture workloads" OFF)
 if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
         message(FATAL_ERROR "N54 scratch trimming requires native PS5 NS2 research")
     endif()
-    set(eden_ns2_scratch_source
-        "${PROJECT_SOURCE_DIR}/src/common/scratch_buffer.h")
-    set(eden_ns2_texture_source
-        "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache/texture_cache.h")
-    set(eden_ns2_scratch_generated "${PORT_BUILD_DIR}/ns2-astc-scratch/include")
-    set(eden_ns2_scratch_generator
-        "${PORT_ROOT}/tools/ns2/prepare_astc_scratch_owner.cmake")
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${eden_ns2_scratch_source}" "${eden_ns2_texture_source}"
-        "${eden_ns2_scratch_generator}")
-    execute_process(COMMAND "${CMAKE_COMMAND}"
-        "-DSCRATCH_INPUT=${eden_ns2_scratch_source}"
-        "-DTEXTURE_INPUT=${eden_ns2_texture_source}"
-        "-DOUTPUT_DIR=${eden_ns2_scratch_generated}"
-        -P "${eden_ns2_scratch_generator}"
-        RESULT_VARIABLE eden_ns2_scratch_result)
-    if(NOT eden_ns2_scratch_result EQUAL 0)
-        message(FATAL_ERROR "N54 scratch owner selection failed")
-    endif()
-    # Use one header identity for all consumers; class layout is unchanged.
-    target_include_directories(common BEFORE PUBLIC "${eden_ns2_scratch_generated}")
-    target_include_directories(video_core BEFORE PUBLIC "${eden_ns2_scratch_generated}")
+    set(EDEN_NS2_ASTC_OWNER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+    foreach(eden_ns2_astc_owner IN ITEMS
+            "common/scratch_buffer.h"
+            "video_core/texture_cache/texture_cache.h")
+        if(NOT EXISTS "${EDEN_NS2_ASTC_OWNER_ROOT}/${eden_ns2_astc_owner}")
+            message(FATAL_ERROR "N54 maintained vendor ASTC owner missing: ${eden_ns2_astc_owner}")
+        endif()
+    endforeach()
+    # One header identity for all consumers; no generated copies.
+    target_include_directories(common BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")
 endif()
 
 # N56: ignore truncated Vulkan driver cache before any size_t underflow.
@@ -1534,7 +1524,7 @@ if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
     set(eden_ns2_cache_src "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache")
     set(eden_ns2_cache_text "${eden_ns2_cache_src}/texture_cache.h")
     if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
-        set(eden_ns2_cache_text "${eden_ns2_scratch_generated}/video_core/texture_cache/texture_cache.h")
+        set(eden_ns2_cache_text "${EDEN_NS2_ASTC_OWNER_ROOT}/video_core/texture_cache/texture_cache.h")
     endif()
     set(eden_ns2_cache_gen "${PORT_ROOT}/tools/ns2/prepare_egl_astc_texture_cache.py")
     set(eden_ns2_cache_out "${PORT_BUILD_DIR}/ns2-astc-cache/include")

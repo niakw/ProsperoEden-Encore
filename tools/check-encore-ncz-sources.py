@@ -61,7 +61,7 @@ for rel,sha,marker in pairs:
     assert marker in text,rel
     print("NCZ_SOURCE_OWNER_PASS",rel)
 cmake=(root/"headless/CMakeLists.txt").read_text()
-segment=cmake.split("# NSZ/XCZ: select reviewed full C++ source owners",1)[1].split("# The guest title is the owner",1)[0]
+segment=cmake.split("# NSZ/XCZ: select reviewed full C++ source owners",1)[1].split("# Extracted AOC: use the shared vendor source owners",1)[0]
 assert "write_derived" not in segment
 assert segment.count("list(REMOVE_ITEM core_sources")==1
 assert "ncz.cpp" in segment

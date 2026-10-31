@@ -153,6 +153,15 @@ jobs:
           path: dist/ns2-research/
           if-no-files-found: error
           retention-days: 7
+      - name: Upload matching unstripped ELF and link map for PS5 crash symbolization
+        if: ${{ success() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: encore-ns1-ns2-research-symbols-${{ github.sha }}
+          path: build/ns2-research-symbols/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Explain the qualification boundary
         if: always()
         run: |

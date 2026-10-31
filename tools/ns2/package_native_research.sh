@@ -72,3 +72,29 @@ out=app.parent/"NS2_RESEARCH_BUILD_RECEIPT.json"
 out.write_text(json.dumps(receipt,indent=2)+"\n")
 print("NS2_RESEARCH_STAGING_PASS",app,receipt["source_commit"])
 PY
+
+# Save matching unstripped code separately from PS5 title (never mix with FTP).
+symbols="$root/build/ns2-research-symbols"
+mkdir -p "$symbols"
+test -s "$root/build/headless-native/llvm-pie.elf"
+test -s "$root/build/headless-native/link.map"
+cp "$root/build/headless-native/llvm-pie.elf" "$symbols/llvm-pie.elf"
+cp "$root/build/headless-native/link.map" "$symbols/link.map"
+python3 - "$root" "$symbols" "$EDEN_PACKAGE_DIR" <<'PY_RESEARCH_SYMBOLS'
+from pathlib import Path
+import hashlib, json, subprocess, sys
+root, symbols, app = map(Path, sys.argv[1:])
+commit = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+files = {}
+for name in ("llvm-pie.elf", "link.map"):
+    content = (symbols / name).read_bytes()
+    files[name] = {"bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
+receipt = {"source_commit": commit, "title_id": app.name,
+           "build_profile": "NS1/NS2 all-on research, not release",
+           "native_eboot_sha256": hashlib.sha256((app / "eboot.bin").read_bytes()).hexdigest(),
+           "files": files, "requires_matching_elf_for_pc_offsets": True,
+           "hardware_qualified": False}
+(symbols / "research-crash-symbols.json").write_text(
+    json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+print("NS2_RESEARCH_CRASH_SYMBOLS_PASS", commit, files["llvm-pie.elf"]["bytes"])
+PY_RESEARCH_SYMBOLS

@@ -50,8 +50,12 @@ The game selector does not list extracted update/DLC folders as games.
 Update/DLC package discovery is independent of base selection: it finds
 content-container folders named `updates`, `update`, `patches`, `dlc`,
 `addons`, or `add-ons` (case-insensitive), even with intermediate wrapper
-directories. Loose packaged add-ons directly beside a base package or an
-extracted base are also passed to the native content provider.
+directories. Packages may also be in **arbitrarily named** nested wrappers,
+such as `<title>/custom/extensions/bonus.nsp` or
+`<title>/extras/patch.xcz`; the base picker excludes the selected base
+package from these add-on roots. Loose packages directly beside the base
+are also passed to the native provider. Title IDs/content types must still
+come from the package metadata, never from the folder name.
 
 ## Implemented in the feature PRs
 

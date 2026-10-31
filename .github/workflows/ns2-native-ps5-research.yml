@@ -1,0 +1,103 @@
+name: NS2 PS5 native research compilation (not a release)
+
+on:
+  push:
+    branches:
+      - research/ns2-ps5-compatibility
+    paths:
+      - '.github/workflows/ns2-native-ps5-research.yml'
+      - 'tools/build-headless-native.sh'
+      - 'tools/ns2/check_native_research_selector.py'
+      - 'headless/CMakeLists.txt'
+      - 'vendor'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ns2-native-research-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile-native-ps5:
+    name: Compile existing PS5 Encore native owners with all NS2 research switches
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    env:
+      PROSPEROEDEN_GIT_DEPS_ROOT: .deps/repos
+      PROSPEROEDEN_DEPS_OFFLINE: '1'
+      EDEN_BUILD_JOBS: '4'
+      EDEN_PS5_VULKAN: 'ON'
+      EDEN_VULKAN_DRIVER: 'RADV'
+      EDEN_FINAL_RELEASE_PROFILE: 'OFF'
+      EDEN_NS2_NATIVE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_METADATA_EXPERIMENTAL: 'ON'
+      EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL: 'ON'
+      EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_VIEW_EXPERIMENTAL: 'ON'
+      EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL: 'ON'
+      EDEN_NS2_EXEFS_EXPERIMENTAL: 'ON'
+      EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL: 'ON'
+      EDEN_NS2_A64_EXPERIMENTAL: 'ON'
+      EDEN_NS2_CPU6_EXPERIMENTAL: 'ON'
+      EDEN_NS2_AM_EXPERIMENTAL: 'ON'
+      EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_NVDRV_EXPERIMENTAL: 'ON'
+      EDEN_NS2_GPU_SESSION_EXPERIMENTAL: 'ON'
+      EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL: 'ON'
+      EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL: 'ON'
+      EDEN_NS2_CONTINUITY_EXPERIMENTAL: 'ON'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify research selector isolation before downloading SDK inputs
+        run: |
+          python3 -B tools/ns2/check_native_research_selector.py
+          python3 -B tools/check-ns2-source-selection.py
+          python3 -B tools/check-vendor-consolidation-debt.py
+      - name: Install exact native toolchain dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools llvm-spirv-18 libllvmspirvlib-18-dev \
+            cmake ninja-build ccache make nasm meson rsync git \
+            glslang-tools spirv-tools bison flex autoconf binutils coreutils util-linux \
+            curl wget unzip librsvg2-bin imagemagick \
+            python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
+            libboost-container-dev libssl-dev libzstd-dev nlohmann-json3-dev
+          python3 -m pip install --user --break-system-packages "meson==1.12.1"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Restore exact shared PS5 build dependencies (read-only)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-${{ runner.os }}-${{ hashFiles('tools/deps.json') }}
+          restore-keys: |
+            prospero-eden-encore-040-${{ runner.os }}-
+      - name: Prepare pinned native SDK and Vulkan/RADV input graph
+        run: |
+          bash tools/ci/link-sibling-deps.sh
+          make prepare JOBS=4
+      - name: Build native PS5 ELF with opt-in NS2 research engine
+        run: |
+          bash tools/build-headless-native.sh --graphics
+      - name: Explain the qualification boundary
+        if: always()
+        run: |
+          echo "Native compilation alone cannot demonstrate NS2 game boot, correct graphics, FPS or memory safety."
+          echo "This workflow never publishes a GitHub Release or replaces main's Switch 1 artifacts."

@@ -33,6 +33,10 @@ export EDEN_PACKAGE_DIR="$root/build/ns2-research/PPSA99008"
 export PS5_ELEVATION_SDK="$root/../ps5-native-app-boilerplate/.deps/native/ps5-payload-sdk"
 rm -rf "$EDEN_PACKAGE_DIR"
 bash tools/package-headless-native.sh --integration
+# Exercise the same real PS5 FSELF alignment/imports, installed-file inventory,
+# SDK provenance and bundled guest fixture validation as the NS1 release.
+# This remains research-only; it does not imply console gameplay qualification.
+python3 -B headless/check_package.py --check
 python3 - "$EDEN_PACKAGE_DIR" <<'PY'
 from pathlib import Path
 import json, subprocess, hashlib, sys

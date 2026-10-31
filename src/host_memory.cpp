@@ -291,15 +291,11 @@ public:
         // call. An unchanged, unmapped guest page has nothing to withdraw
         // or republish; retain the observable call counter.
         if (first == last && !page_backing[first] && !page_access[first]) return;
-        // Short redundant Unmap: one bounded pass over both backing and
-        // access records, instead of two separate all_of scans of the same
-        // cache lines. A live page still goes through the original Update.
-        const bool short_single_granule = first < last &&
-            last - first < PagesPerGranule &&
-            first / PagesPerGranule == last / PagesPerGranule;
-        const bool short_cross_granule = first < last && last - first < 16 &&
-            first / PagesPerGranule != last / PagesPerGranule;
-        if (short_single_granule || short_cross_granule) {
+        // Every 2..16-page span is either inside one 4-page granule or
+        // crosses granules. The old two predicates cover exactly the same
+        // range, but divide page indices twice on the common Unmap path.
+        // Keep the scan bounded: long invalidations go directly to Update.
+        if (first < last && last - first < 16) {
             bool all_clear = true;
             for (std::size_t p = first; p <= last; ++p) {
                 if (page_backing[p] != 0 || page_access[p] != 0) {

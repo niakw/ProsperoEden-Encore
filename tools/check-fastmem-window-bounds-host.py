@@ -290,14 +290,23 @@ assert 'chunk_aliased[first / PagesPerGranule]) {' in map_body
 assert map_body.count('if (same_access) return;') == 2
 assert map_body.count('if (live_aliases_match) {') == 1
 assert map_body.count('if (same_backing) {') == 1
-assert 'const bool short_single_granule = first < last &&' in unmap_body
-assert 'const bool short_cross_granule = first < last && last - first < 16' in unmap_body
-assert 'if (short_single_granule || short_cross_granule) {' in unmap_body
+assert 'if (first < last && last - first < 16) {' in unmap_body
+assert 'short_single_granule' not in unmap_body
+assert 'short_cross_granule' not in unmap_body
+# Exhaustively prove the old same-16K / cross-16K predicates are precisely
+# equivalent to the reduced bound for single, short and 17+-page spans,
+# including all 16K start/end boundary permutations.
+for first in range(1024):
+    for count in range(1, min(128, 1024 - first) + 1):
+        last = first + count - 1
+        old_same = first < last and last - first < 4 and first // 4 == last // 4
+        old_cross = first < last and last - first < 16 and first // 4 != last // 4
+        assert (old_same or old_cross) == (first < last and last - first < 16), (first, last)
 assert 'if (page_backing[p] != 0 || page_access[p] != 0)' in unmap_body
 assert 'if (all_clear) return;' in unmap_body
 assert 'std::all_of(page_backing.begin() + first' not in unmap_body
 assert 'first / PagesPerGranule == last / PagesPerGranule' in map_body
-assert 'first / PagesPerGranule == last / PagesPerGranule' in unmap_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' not in unmap_body
 assert 'first < last && last - first < 16' in map_body
 assert 'first < last && last - first < 16' in unmap_body
 assert unmap_body.count('for (std::size_t p = first; p <= last; ++p)') == 2

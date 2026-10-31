@@ -50,6 +50,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_image_owner.py
+      - name: N72 native scheduler sparse queue lock and submit ordering (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_native_sparse_scheduler.py
       - name: N69 native VMA sparse transaction and device-idle retirement (Clang/GCC)
         shell: bash
         run: |

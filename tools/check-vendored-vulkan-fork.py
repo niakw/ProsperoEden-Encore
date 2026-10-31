@@ -340,6 +340,40 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         p.write_text(baseline)
         normalized_expected[name] = p
 
+    # N72: exact vendor-owned serialized sparse submit API. Preserve full
+    # baseline byte-equivalence after removing only these additive guards.
+    n72_additions = {
+        'include/video_core/renderer_vulkan/vk_scheduler.h': (
+            '    // NS2 N72 BEGIN: route sparse page binds through the same submit mutex',
+            '    // NS2 N72 END\n',
+        ),
+        'vulkan_scheduler.cpp': (
+            '// NS2 N72 BEGIN: serialized sparse Vulkan page submission',
+            '// NS2 N72 END\n\n',
+        ),
+    }
+    for name, (begin, end) in n72_additions.items():
+        source = normalized_expected.get(name, expected[name]).read_text()
+        assert source.count(begin) == 1 and source.count(end) == 1, (name, 'N72 owner changed')
+        first, last = source.index(begin), source.index(end)
+        extension = source[first:last + len(end)]
+        assert '#ifdef EDEN_NS2_SPARSE_QUEUE_BRIDGE' in extension
+        assert 'BindSparseImage(' in extension
+        if name.endswith('.cpp'):
+            assert 'std::scoped_lock lock{submit_mutex};' in extension
+            assert 'device.GetGraphicsQueue().BindSparseImage(' in extension
+            assert extension.index('std::scoped_lock lock{submit_mutex};') < extension.index(
+                'device.GetGraphicsQueue().BindSparseImage(')
+        suffix = last + len(end)
+        # Header integration inserted one spacer newline beyond the marker.
+        if name.endswith('vk_scheduler.h') and source[suffix:suffix + 1] == '\n':
+            suffix += 1
+        baseline = source[:first] + source[suffix:]
+        normalized = temp/'normalized-vendor-n72'/name
+        normalized.parent.mkdir(parents=True, exist_ok=True)
+        normalized.write_text(baseline)
+        normalized_expected[name] = normalized
+
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

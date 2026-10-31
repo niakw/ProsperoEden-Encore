@@ -1483,6 +1483,31 @@ if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
 endif()
 
 # Vulkan sparse support is maintained in vendor (same PS5 Vulkan owners).
+# N72: serialize sparse binds on the same native Vulkan submit mutex.
+option(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
+    "Research only: serialize sparse binds on the existing PS5 graphics queue" OFF)
+if(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N72 sparse scheduler requires PS5 Vulkan NSW2 research")
+    endif()
+    set(EDEN_N72_VULKAN_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan")
+    foreach(eden_n72_file IN ITEMS
+        "vulkan_scheduler.cpp"
+        "include/video_core/renderer_vulkan/vk_scheduler.h"
+        "include/video_core/vulkan_common/vulkan_wrapper.h")
+        if(NOT EXISTS "${EDEN_N72_VULKAN_ROOT}/${eden_n72_file}")
+            message(FATAL_ERROR "Missing vendor N72 native Vulkan owner ${eden_n72_file}")
+        endif()
+    endforeach()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vulkan_scheduler.cpp" eden_n72_scheduler_idx)
+    if(eden_n72_scheduler_idx EQUAL -1)
+        message(FATAL_ERROR "N72 must compile the existing native Vulkan scheduler")
+    endif()
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_QUEUE_BRIDGE=1)
+endif()
+
 
 # N60: one vendor-maintained optimized texture header and ImageBase layout;
 # no CMake source rewriting and no replacing newer F07 PS5 backports.

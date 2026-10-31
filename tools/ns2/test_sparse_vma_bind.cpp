@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // N69 executes the exact versioned vendor sparse bind transaction.
 #include <cassert>
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <limits>
@@ -72,6 +73,7 @@ static VkSparseImageMemoryRequirements Sparse(const SparseImageSpec& s){
     r.imageMipTailStride=s.single_mip_tail?0:131072;
     return r;
 }
+static std::vector<VkSparseImageMemoryRequirements> Requirements(const SparseImageSpec& s){return {Sparse(s)};}
 static VkMemoryRequirements Memory(){
     return {268435456,65536,7};
 }
@@ -84,7 +86,7 @@ static void Successful(){
     auto mem=Memory();
     const auto wait=reinterpret_cast<VkSemaphore>(0x4567);
     const auto signal=reinterpret_cast<VkSemaphore>(0x5678);
-    assert(owner.Bind(Image(),mem,Sparse(s),request,q,fence,wait,signal)==VK_SUCCESS);
+    assert(owner.Bind(Image(),mem,Requirements(s),request,q,fence,wait,signal)==VK_SUCCESS);
     assert(owner.ReadyForSampling()&&owner.HasLiveBacking()&&fence.waited==1);
     assert(a.allocations==1&&a.releases==0&&b.BoundBytes()==request.bytes_new);
     assert(q.calls==1 && q.tiles.size()==672 && q.tails.size()==2);
@@ -97,11 +99,11 @@ static void Successful(){
     assert(q.tails[1].resourceOffset==134217728+262144);
     assert(q.tails[1].memoryOffset+q.tails[1].size==
            131072+request.bytes_new);
-    assert(owner.Bind(Image(),mem,Sparse(s),request,q,fence)==
+    assert(owner.Bind(Image(),mem,Requirements(s),request,q,fence)==
            VK_ERROR_INITIALIZATION_FAILED);
     assert(q.calls==1);
     auto next=b.Plan(std::vector<std::uint32_t>{3});
-    assert(owner.Bind(Image(),mem,Sparse(s),next,q,fence)==VK_SUCCESS);
+    assert(owner.Bind(Image(),mem,Requirements(s),next,q,fence)==VK_SUCCESS);
     assert(a.allocations==2 && b.IsBound(3));
     FakeDevice dev;
     bool dropped=false;
@@ -116,11 +118,17 @@ static void Failures(){
     SparseBindOwner<FakeAllocator> owner(a,b,s);
     auto req=b.Plan(std::vector<std::uint32_t>{0});
     auto mem=Memory();
-    auto sparse=Sparse(s);
-    sparse.formatProperties.imageGranularity.width=32;
+    auto sparse=Requirements(s);
+    sparse[0].formatProperties.imageGranularity.width=32;
     assert(owner.Bind(Image(),mem,sparse,req,q,f)==VK_ERROR_INITIALIZATION_FAILED);
     assert(a.allocations==0&&q.calls==0);
-    sparse=Sparse(s);
+    sparse=Requirements(s);
+    // A separate metadata aspect must not be silently ignored.
+    auto multi=sparse;
+    multi.push_back(sparse.front());
+    multi.back().formatProperties.aspectMask=2;
+    assert(owner.Bind(Image(),mem,multi,req,q,f)==VK_ERROR_INITIALIZATION_FAILED);
+    assert(a.allocations==0&&q.calls==0);
     mem.memoryTypeBits=0;
     assert(owner.Bind(Image(),mem,sparse,req,q,f)==VK_ERROR_INITIALIZATION_FAILED);
     mem=Memory();
@@ -148,7 +156,7 @@ static void TimeoutAndSharedTail(){
     SparseBindOwner<FakeAllocator> owner(a,b,s);
     const auto req=b.Plan(std::vector<std::uint32_t>{1,2});
     f.wait_result=VK_TIMEOUT;
-    assert(owner.Bind(Image(),Memory(),Sparse(s),req,q,f)==VK_TIMEOUT);
+    assert(owner.Bind(Image(),Memory(),Requirements(s),req,q,f)==VK_TIMEOUT);
     assert(owner.HasLiveBacking()&&b.Poisoned()&&!b.IsBound(1));
     assert(q.tiles.size()==672 && q.tails.size()==1);
     assert(q.tails[0].resourceOffset==134217728);
@@ -157,7 +165,7 @@ static void TimeoutAndSharedTail(){
     assert(a.releases==1&&!owner.HasLiveBacking());
     f.wait_result=VK_SUCCESS;
     auto fresh=b.Plan(std::vector<std::uint32_t>{1});
-    assert(owner.Bind(Image(),Memory(),Sparse(s),fresh,q,f)==VK_SUCCESS);
+    assert(owner.Bind(Image(),Memory(),Requirements(s),fresh,q,f)==VK_SUCCESS);
     assert(owner.ReadyForSampling());
     assert(owner.RetireAfterDeviceIdle(d,[]{}));
 }

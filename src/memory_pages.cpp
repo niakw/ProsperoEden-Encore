@@ -986,7 +986,7 @@ void* AllocateSparsePages(std::size_t size) noexcept {
             SparseRange* free_range = nullptr;
             // Lowest zero bit is the first reusable owner slot, with no
             // 64-entry atomic scan while claiming a new table under mutex.
-            const auto free_slot = std::countr_one(sparse_live_slots);
+            const std::size_t free_slot = static_cast<std::size_t>(std::countr_one(sparse_live_slots));
             if (free_slot < sparse_ranges.size())
                 free_range = &sparse_ranges[free_slot];
             if (free_range) {

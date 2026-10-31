@@ -65,7 +65,7 @@ allocate = source.split("void* AllocateSparsePages(std::size_t size) noexcept {"
 choose_start = allocate.index("    SparseRange* free_range = nullptr;")
 choose_end = allocate.index("            if (free_range) {", choose_start)
 selection = allocate[choose_start:choose_end]
-assert "std::countr_one(sparse_live_slots)" in selection
+assert "const std::size_t free_slot = static_cast<std::size_t>(std::countr_one(sparse_live_slots));" in selection
 assert "free_slot < sparse_ranges.size()" in selection
 assert "free_range = &sparse_ranges[free_slot];" in selection
 assert "range.begin.load(" not in selection, "avoid atomic lookup on allocation"

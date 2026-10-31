@@ -15,7 +15,7 @@ fausse dette d'optimisation JIT/GPU.
 
 | Source | Git blob exact | Rôle et portée |
 | --- | --- | --- |
-| `headless/game_files.h` | `956c9d1255780936e6a67c45ff915cc653f24898` | Sélection et validation des neuf extensions et de l'ExeFS; sélection de titre, pas du frame GPU |
+| `headless/game_files.h` | `47f2bab4476796c0a54e8e91f7a94faec57b868f` | Sélection et validation des neuf extensions et de l'ExeFS; sélection de titre, pas du frame GPU |
 | `headless/ncz.cpp` | `7deff2ea1a82574b9e756ad9c2f0d869aa94612b` | Adaptateur de lecture NCZ et cache, sélectionné par CMake |
 | `headless/ncz.h` | `85ced3460d83be2a8011f189c0df406b4dd32b8c` | Décompression NCZ, limites et protection du cache |
 | `headless/ncz_check.cpp` | `65c9e5f4eb3625140add52ced2ea82e66bd224ab` | Harnais de vérification hôte; jamais un composant de rendu |

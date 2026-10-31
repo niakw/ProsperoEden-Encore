@@ -314,6 +314,11 @@ jobs:
               -o "build-ns2-a64/egl-ret-${cxx//+/}"
             "build-ns2-a64/egl-ret-${cxx//+/}"
           done
+      - name: N57 native PS5 ASTC image layers and compute source parity (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_egl_astc_layer_decode.py
       - name: N56 PS5 native Vulkan driver-cache short-header source guard (Clang/GCC)
         shell: bash
         run: |

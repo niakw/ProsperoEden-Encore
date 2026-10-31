@@ -1471,6 +1471,55 @@ if(EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL)
     list(APPEND video_sources "${eden_ns2_pipeline_overlay}")
 endif()
 
+# N57: opt-in native PS5 ASTC per-layer Vulkan decode entrypoint.
+# Not yet called from the texture cache; requires N55 per-layer staging integration.
+option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL
+    "Research only: native Vulkan ASTC layer views and compute entrypoint" OFF)
+if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N57 ASTC layer decoding requires native PS5 Vulkan NS2 research")
+    endif()
+    set(eden_ns2_astc_root "${PORT_BUILD_DIR}/ns2-astc-layer")
+    set(eden_ns2_astc_generator "${PORT_ROOT}/tools/ns2/prepare_egl_astc_layer_decode.py")
+    set(eden_ns2_astc_orig_texture "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp")
+    set(eden_ns2_astc_orig_compute "${PORT_BUILD_DIR}/vk_compute_pass_cost.cpp")
+    foreach(eden_ns2_astc_file IN ITEMS "${eden_ns2_astc_orig_texture}"
+            "${eden_ns2_astc_orig_compute}"
+            "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_texture_cache.h"
+            "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_compute_pass.h")
+        if(NOT EXISTS "${eden_ns2_astc_file}")
+            message(FATAL_ERROR "N57 native Vulkan ASTC source owner missing: ${eden_ns2_astc_file}")
+        endif()
+    endforeach()
+    foreach(eden_ns2_astc_src IN ITEMS "${eden_ns2_astc_orig_texture}"
+            "${eden_ns2_astc_orig_compute}")
+        list(FIND video_sources "${eden_ns2_astc_src}" eden_ns2_astc_source_idx)
+        if(eden_ns2_astc_source_idx EQUAL -1)
+            message(FATAL_ERROR "N57 native Vulkan ASTC owner has changed")
+        endif()
+    endforeach()
+    find_program(EDEN_NS2_PYTHON_EXECUTABLE NAMES python3 REQUIRED)
+    execute_process(COMMAND "${EDEN_NS2_PYTHON_EXECUTABLE}"
+        "${eden_ns2_astc_generator}"
+        "--texture-cpp" "${eden_ns2_astc_orig_texture}"
+        "--compute-cpp" "${eden_ns2_astc_orig_compute}"
+        "--texture-h" "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_texture_cache.h"
+        "--compute-h" "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_compute_pass.h"
+        "--output" "${eden_ns2_astc_root}"
+        RESULT_VARIABLE eden_ns2_astc_result)
+    if(NOT eden_ns2_astc_result EQUAL 0)
+        message(FATAL_ERROR "N57 native ASTC decoder overlay generation failed")
+    endif()
+    list(REMOVE_ITEM video_sources "${eden_ns2_astc_orig_texture}"
+        "${eden_ns2_astc_orig_compute}")
+    list(APPEND video_sources
+        "${eden_ns2_astc_root}/vk_texture_cache_cost.cpp"
+        "${eden_ns2_astc_root}/vk_compute_pass_cost.cpp")
+    target_include_directories(video_core BEFORE PUBLIC
+        "${eden_ns2_astc_root}/include" "${PORT_ROOT}/headless/ns2/eglantine")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2411,6 +2460,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL OR
+       EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

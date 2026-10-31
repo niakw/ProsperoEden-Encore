@@ -22,6 +22,14 @@ def main() -> int:
             require(f"option({flag}" in CMAKE and f"if({flag})" in CMAKE and
                     f"{flag} OR" in CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
                     "NS2 research flag not release-forbidden: " + flag)
+        # All Ampere opcode/address-map tests must use the same canonical table.
+        require(not (ROOT / "headless/ns2/gpu").exists(),
+                "Obsolete duplicate Ampere/ISA tree must not return")
+        ampere_smoke = (ROOT / "tools/check-ns2-ampere-host.py").read_text()
+        require('OVERLAY=ROOT/"headless/ns2/ampere"' in ampere_smoke and
+                '"probe.cpp"' in ampere_smoke and
+                'headless/ns2/gpu' not in ampere_smoke,
+                "Host Ampere ISA tests must use the real renderer-selected source owner")
         # Refuse the regression to duplicated/outdated whole engine owners.
         # One versioned vendor submodule owns every experimental native overlay.
         for legacy in ("overrides", "eglantine", "dynarmic"):
@@ -71,7 +79,7 @@ def main() -> int:
             "OR EDEN_NS2_CPU6_EXPERIMENTAL OR" not in cpu6_condition,
             "Six-core research selector must not reject itself"
         )
-        cpu6 = ROOT / "headless/ns2/cpu6"
+        cpu6 = ROOT / "vendor/encore-active/ns2-runtime/cpu6"
         require("NUM_CPU_CORES = 6" in (cpu6 / "core/hardware_properties.h").read_text(),
                 "Six-core hardware map missing")
         require("MAX_NUM_CPU_CORES = 6" in

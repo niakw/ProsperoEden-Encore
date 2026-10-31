@@ -2095,7 +2095,7 @@ if(EDEN_NS2_CPU6_EXPERIMENTAL)
     if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 six-core mode requires A64 and metadata experiments")
     endif()
-    set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/headless/ns2/cpu6")
+    set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/cpu6")
     foreach(eden_ns2_cpu6_header IN ITEMS
             "core/hardware_properties.h"
             "dynarmic/interface/exclusive_monitor.h")
@@ -2291,7 +2291,8 @@ if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
 endif()
 
-# Isolated Ampere SM70+ ISA decode and reviewed native-to-Maxwell lowering.\n# This compiles the real
+# Isolated Ampere SM70+ ISA decode and reviewed native-to-Maxwell lowering.
+# This compiles the real
 # 128-bit decoder into shader_recompiler only for a deliberately selected NS2
 # research build. No shader translation or renderer enablement is implied.
 option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL

@@ -5,7 +5,7 @@ on:
     branches:
       - research/ns2-ps5-compatibility
     paths:
-      - 'headless/ns2/cpu6/**'
+      - 'vendor/**'
       - 'tools/ns2/jit-host/**'
       - 'tools/ns2/build_public_nso_fixture.py'
       - 'tools/ns2/build_public_exefs_fixture.py'

@@ -67,3 +67,9 @@ Eglantine is an **external Eden-derived emulator**, reviewed only as an attribut
 **Console test gate:** host CI is green on the prior branch head, but no NS2-ready PS5 artifact, complete `Core::System::Load`/real kernel boot, nor Vulkan sparse-queue/fence lifetime validation has yet been established. A synthetic NSP or host shader smoke test is not proof of Switch 2 game compatibility. Keep `main` and release selectors unchanged until an isolated native PS5 research build can be produced and documented without claiming working commercial games.
 
 N50/N51 shared C++ helper namespaces were normalized to `Eden::NS2::GpuMemory` in vendor research commit `fec05dadfb59`, without changing helper algorithms, compilation gates or Switch 1 source paths. The original Eglantine patch attribution remains explicitly documented.
+
+## Canonical Ampere owner and experimental CPU6 ownership
+
+Research commit after `da48c0c`: the stale `headless/ns2/gpu` ISA mirror (six files, including an independently generated opcode table) has been removed. Legacy ISA/address-map regression now links the real `headless/ns2/ampere` decoder and runs alongside the current probe under both optimization levels. The source-owner check fails if a second legacy Ampere tree reappears.
+
+The two six-core CPU/monitor headers moved byte-for-byte into the pinned vendor research tree at `vendor/encore-active/ns2-runtime/cpu6`. CMake and static guards select that single owner only with explicit experimental switches; normal Switch 1 and production remain unaffected. This is a source-layout correction, not Switch 2 run proof.

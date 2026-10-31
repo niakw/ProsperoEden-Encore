@@ -8,7 +8,8 @@
 #include <vector>
 #include "shader_recompiler/frontend/ampere/instruction.h"
 #include "shader_recompiler/frontend/ampere/classify.h"
-#include "shader_recompiler/frontend/ampere/isa.h"
+#include "shader_recompiler/frontend/ampere/ampere_isa_table.h"
+#include "shader_recompiler/frontend/ampere/probe.h"
 #include "shader_recompiler/frontend/ampere/program_address_map.h"
 
 using namespace Shader::Ampere;
@@ -18,8 +19,6 @@ static_assert(Classify(0x94d).kind==OpKind::Exit);
 static_assert(Classify(0x950).kind==OpKind::Ret);
 static_assert(Classify(0x918).kind==OpKind::Nop);
 static_assert(Classify(0x210).pure);
-static_assert(BaseOf(0x210)==0x10);
-static_assert(FormOf(0x210)==1);
 
 
 
@@ -29,14 +28,14 @@ int main() {
     assert(RelativeOffset30(Instruction{{0,0,0,0}})==0);
     assert(RelativeOffset48(Instruction{{0,0,0x20000,0}})<0);
     assert(ISA_ROW_COUNT==629);
-    const auto* add=LookupRow(0x210);
+    const auto* add=FindOpcodeRow(0x210);
     assert(add && std::string_view(add->name)=="IAdd3/IAdd3X");
-    assert(LookupRow(0x1210)==add); // Explicit 12-bit opcode mask
-    assert(LookupRow(0xfff)==nullptr);
+    assert(FindOpcodeRow(0x1210)==add); // Explicit 12-bit opcode mask
+    assert(FindOpcodeRow(0xfff)==nullptr);
     Instruction zero{{0,0,0,0}};
-    assert(FirstUnknownBit(zero,*add)==-1);
+    assert(FirstUnreviewedBit(zero,*add)==-1);
     Instruction unknown{{0,0,0,1}};
-    assert(FirstUnknownBit(unknown,*add)==96);
+    assert(FirstUnreviewedBit(unknown,*add)==96);
     assert(zero.Bits(0,12)==0);
     Instruction cross{{0xffffffff,0xffffffff,0,0}};
     assert(cross.Bits(29,8)==0xff);

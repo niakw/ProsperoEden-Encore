@@ -94,6 +94,7 @@ public:
   std::mutex swapchain_mutex,queue_mutex,free_mutex;
   bool present_in_flight{};
   std::size_t present_waiters{}; // guarded by queue_mutex
+  std::size_t free_waiters{}; // guarded by free_mutex
   bool use_present_thread{true};
   std::exception_ptr present_failure;
   std::jthread present_thread;
@@ -197,6 +198,8 @@ source=source.replace("__STRICT_HOST_TIMING__","true" if strict_host_timing else
 assert "void PresentManager::PresentThread(std::stop_token token)" in source
 assert "present_in_flight = false;" in source
 assert "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex" in header
+assert "std::size_t free_waiters{}; // guarded by free_mutex" in header
+assert "std::size_t free_waiters{}; // guarded by free_mutex" in source
 assert "std::size_t present_waiters{}; // guarded by queue_mutex" in source
 assert "notify_drainers = present_waiters != 0 && present_queue.empty();" in source
 assert "std::exchange(lock, std::unique_lock{swapchain_mutex})" in source

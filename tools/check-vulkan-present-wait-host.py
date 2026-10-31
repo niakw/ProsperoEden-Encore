@@ -13,6 +13,10 @@ generator = (root / "tools/prepare-vulkan-port.py").read_text()
 checks = (
     "bool present_in_flight{}; // guarded by queue_mutex",
     "std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex",
+    "std::size_t free_waiters{}; // guarded by free_mutex",
+    "++free_waiters;",
+    "--free_waiters;",
+    "if (wake_free_waiter) free_cv.notify_one();",
     "notify_drainers = present_waiters != 0 && present_queue.empty();",
     "if (notify_drainers) frame_cv.notify_all();",
     "++present_waiters;",
@@ -52,6 +56,8 @@ wait_present = section("void PresentManager::WaitPresent() {",
 present_thread = section("void PresentManager::PresentThread(std::stop_token token) {",
                          "void PresentManager::RecreateSwapchain(Frame* frame)")
 assert "free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });" in render_frame
+assert "++free_waiters;" in render_frame and "--free_waiters;" in render_frame
+assert render_frame.index("++free_waiters;") < render_frame.index("free_cv.wait(") < render_frame.index("--free_waiters;")
 assert "if (present_failure) std::rethrow_exception(present_failure);" in render_frame
 assert "free_queue.pop_front();\n    }" in render_frame
 assert render_frame.index("free_queue.pop_front();") < render_frame.index("frame->present_done.Wait();")
@@ -81,7 +87,9 @@ assert enqueue.index("present_queue.push_back(frame);") < enqueue.index("lock.un
 assert "frame_cv.notify_one();" not in present_thread
 assert "present_ready_cv.wait(lock, token," in present_thread
 assert present_thread.index("free_cv.notify_one();") > present_thread.index(
-    "// Notify only after releasing free_mutex")
+    "// Notify after releasing free_mutex")
+assert "wake_free_waiter = free_waiters != 0;" in present_thread
+assert "if (wake_free_waiter) free_cv.notify_one();" in present_thread
 assert present_thread.index("lock.unlock();") < present_thread.index(
     "present_in_flight = false;")
 assert present_thread.index("free_queue.push_back(frame);") < present_thread.index(
@@ -105,6 +113,7 @@ struct Gate {
     std::exception_ptr present_failure;
     bool present_in_flight{};
     unsigned present_waiters{};
+    unsigned free_waiters{};
     std::atomic<unsigned> drain_wake_calls{0};
     std::atomic<unsigned> wait_entered{0};
     std::atomic<int> completed{0};
@@ -131,11 +140,13 @@ struct Gate {
         std::unique_lock swapchain_lock{swapchain_mutex};
         lock.unlock();
         if (fault) throw std::runtime_error("present worker failure");
+        bool wake_free_waiter{};
         {
             std::scoped_lock fl{free_mutex};
             free_queue.push_back(id);
+            wake_free_waiter = free_waiters != 0;
         }
-        free_cv.notify_one();
+        if (wake_free_waiter) free_cv.notify_one();
         swapchain_lock.unlock();
         bool notify_drainers{};
         {
@@ -176,7 +187,11 @@ struct Gate {
     }
     void WaitFree() {
         std::unique_lock lock{free_mutex};
-        free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });
+        if (free_queue.empty() && !present_failure) {
+            ++free_waiters;
+            free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });
+            --free_waiters;
+        }
         if (present_failure) std::rethrow_exception(present_failure);
     }
 };

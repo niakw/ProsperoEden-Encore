@@ -24,6 +24,8 @@
 
 **31/10 — J01, allocation sparse bitmap 64 bits (prébuild en qualification) :** `AllocateSparsePages` choisit le premier slot libre avec `std::countr_one(sparse_live_slots)` sous `sparse_mutex`, sans relire jusqu’à 64 `begin` atomiques. Les recherches ignorent déjà les slots retirés via le même bitmap ; epoch, trous, ordre et synchronisation conservés. Oracle source-extrait ASan/UBSan O0/O2/O3 étendu aux 64 trous, saturation, réemploi et concurrence. **CI du nouveau SHA à qualifier ; aucun FPS PS5 mesuré ; F07 22/29.**
 
+**31/10 — C04, libre frame Vulkan (prébuild en qualification) :** le producteur (présentation asynchrone ou synchrone) ne déclenche plus `free_cv.notify_one()` quand aucun consommateur n'attend un `GetRenderFrame`. Le compteur `free_waiters` est inscrit et retiré sous `free_mutex`, la publication du frame et le contrôle d'échec conservent l'ordre et `notify_all` sur erreur. Source `vendor` épinglée, générateur strict et témoins hôte source-extraits synchronisés ; CI du SHA à qualifier. **Aucun gain de frametime PS5 revendiqué ; F07 22/29.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

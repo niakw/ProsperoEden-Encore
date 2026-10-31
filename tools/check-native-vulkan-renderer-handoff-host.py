@@ -122,6 +122,7 @@ public:
     std::mutex swapchain_mutex,queue_mutex,free_mutex;
     bool present_in_flight{};
     std::size_t present_waiters{}; // guarded by queue_mutex
+    std::size_t free_waiters{}; // guarded by free_mutex
     bool use_present_thread{true};
     std::exception_ptr present_failure;
     std::jthread present_thread;

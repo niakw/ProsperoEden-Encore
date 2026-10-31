@@ -19,6 +19,14 @@ inline void Register(std::uint64_t pid) noexcept {
     active_pid.store(pid, std::memory_order_release);
 }
 
+
+// Clear only the failing process: never discard a newer registered PID.
+inline void Unregister(std::uint64_t pid) noexcept {
+    if (!pid) return;
+    active_pid.compare_exchange_strong(pid, 0, std::memory_order_acq_rel,
+                                       std::memory_order_relaxed);
+}
+
 [[nodiscard]] inline std::optional<std::uint32_t> Next(std::uint64_t pid) noexcept {
     if (pid == 0 || active_pid.load(std::memory_order_acquire) != pid)
         return std::nullopt;

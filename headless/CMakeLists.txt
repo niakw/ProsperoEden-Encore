@@ -1945,6 +1945,31 @@ if(EDEN_NS2_EXEFS_EXPERIMENTAL)
     endif()
 endif()
 
+# N52: opt-in OS process run admission. Protect the real NS2 KProcess
+# startup result without changing the Switch 1 or pinned vendor owner.
+option(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL
+    "Research only: reject real NS2 KProcess::Run startup errors" OFF)
+if(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_EXEFS_EXPERIMENTAL OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 process-run guard requires native PS5 ExeFS research")
+    endif()
+    get_target_property(eden_ns2_os_sources core SOURCES)
+    list(FIND eden_ns2_os_sources "hle/service/os/process.cpp" eden_ns2_os_owner)
+    if(eden_ns2_os_owner EQUAL -1)
+        message(FATAL_ERROR "NS2 OS process source changed: re-audit N52")
+    endif()
+    set(eden_ns2_os_overlay
+        "${PORT_ROOT}/headless/ns2/overrides/core/hle/service/os/process.cpp")
+    if(NOT EXISTS "${eden_ns2_os_overlay}")
+        message(FATAL_ERROR "Missing research-only N52 OS process source")
+    endif()
+    list(REMOVE_ITEM eden_ns2_os_sources "hle/service/os/process.cpp")
+    list(APPEND eden_ns2_os_sources "${eden_ns2_os_overlay}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_os_sources}")
+    target_include_directories(core BEFORE PRIVATE "${PORT_ROOT}/headless/ns2/overrides")
+endif()
+
 # Experimental ARMv8.1 LDAPR and ARMv8.3 RETAA/RETAB decoding with PAUTH disabled.
 # Copy both the decoder header (it includes ./a64.inc) and the instruction
 # table into the SAME build overlay to avoid accidentally reading the pinned
@@ -2320,6 +2345,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR
+       EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

@@ -1428,6 +1428,7 @@ if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
     # One header identity for all consumers; no generated copies.
     target_include_directories(common BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")
     target_include_directories(video_core BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_SCRATCH_TRIM=1)
 endif()
 
 # N56: optional Vulkan pipeline cache admission is maintained in the native
@@ -1496,7 +1497,8 @@ endif()
 
 # Vulkan sparse support is maintained in vendor (same PS5 Vulkan owners).
 
-# N60: opt-in native ASTC image CPU-write tracking and bounded Vulkan upload.
+# N60: one vendor-maintained optimized texture header and ImageBase layout;
+# no CMake source rewriting and no replacing newer F07 PS5 backports.
 option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL
     "Research only: connect ASTC CPU writes to bounded native Vulkan layer uploads" OFF)
 if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
@@ -1505,36 +1507,30 @@ if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
        NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
         message(FATAL_ERROR "N60 requires native PS5 Vulkan N57 and NS2 research")
     endif()
-    set(eden_ns2_cache_src "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache")
-    set(eden_ns2_cache_text "${eden_ns2_cache_src}/texture_cache.h")
-    if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
-        set(eden_ns2_cache_text "${EDEN_NS2_ASTC_OWNER_ROOT}/video_core/texture_cache/texture_cache.h")
-    endif()
-    set(eden_ns2_cache_gen "${PORT_ROOT}/tools/ns2/prepare_egl_astc_texture_cache.py")
-    set(eden_ns2_cache_out "${PORT_BUILD_DIR}/ns2-astc-cache/include")
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${eden_ns2_cache_src}/image_base.h"
-        "${eden_ns2_cache_src}/texture_cache_base.h"
-        "${eden_ns2_cache_text}" "${eden_ns2_cache_gen}")
-    execute_process(COMMAND "${EDEN_NS2_PYTHON_EXECUTABLE}"
-        "${eden_ns2_cache_gen}"
-        "--image" "${eden_ns2_cache_src}/image_base.h"
-        "--base" "${eden_ns2_cache_src}/texture_cache_base.h"
-        "--texture" "${eden_ns2_cache_text}"
-        "--output" "${eden_ns2_cache_out}"
-        RESULT_VARIABLE eden_ns2_cache_status)
-    if(NOT eden_ns2_cache_status EQUAL 0)
-        message(FATAL_ERROR "N60 ASTC texture-cache owner changed")
-    endif()
-    # Shared image layout: consumers must use exactly one generated header.
-    # Native ASTC uses the maintained generic N55/N59 vendor headers.
-    set(EDEN_NS2_HELPERS_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    set(EDEN_NS2_ASTC_OWNER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+    set(EDEN_NS2_HELPERS_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    foreach(eden_ns2_astc_file IN ITEMS
+            "video_core/texture_cache/image_base.h"
+            "video_core/texture_cache/texture_cache_base.h"
+            "video_core/texture_cache/texture_cache.h"
+            "video_core/texture_cache/ns2_astc_texture_cache_bridge.inc")
+        if(NOT EXISTS "${EDEN_NS2_ASTC_OWNER_ROOT}/${eden_ns2_astc_file}")
+            message(FATAL_ERROR "Missing N60 vendor source: ${eden_ns2_astc_file}")
+        endif()
+    endforeach()
     if(NOT EXISTS "${EDEN_NS2_HELPERS_ROOT}/video_core/texture_cache/ns2_astc_staging_bridge.h")
-        message(FATAL_ERROR "Missing vendor-owned ASTC staging helper")
+        message(FATAL_ERROR "Missing maintained N59 ASTC staging coordinator")
     endif()
+    # C++ ImageBase layout must match across consumers; never shadow the
+    # primary CMake-generated Vulkan TUs with obsolete snapshot copies.
     target_include_directories(video_core BEFORE PUBLIC
-        "${eden_ns2_cache_out}" "${EDEN_NS2_HELPERS_ROOT}" "${PORT_ROOT}/headless/ns2/eglantine")
-    target_include_directories(core BEFORE PRIVATE "${eden_ns2_cache_out}")
+        "${EDEN_NS2_ASTC_OWNER_ROOT}" "${EDEN_NS2_HELPERS_ROOT}")
+    target_include_directories(core BEFORE PUBLIC
+        "${EDEN_NS2_ASTC_OWNER_ROOT}" "${EDEN_NS2_HELPERS_ROOT}")
+    target_compile_definitions(video_core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)
+    target_compile_definitions(core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)
 endif()
 
 # Sparse VMA, VkImage factory and requirements are in the shared vendor fork.

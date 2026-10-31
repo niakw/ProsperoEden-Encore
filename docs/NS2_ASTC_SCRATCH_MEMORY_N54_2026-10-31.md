@@ -8,8 +8,8 @@ N54 is a generic **experimental** CPU scratch optimization. It remains OFF by de
 - The old N54 CMake header generator was removed. The pinned research submodule points to one versioned vendor owner; the original Eden source archive remains immutable.
 
 ## Build and verification
-The optional `EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL=ON` requires PS5-native NSW2 research metadata. Its include override applies to `common` and `video_core` only for opt-in development builds, not the normal Switch 1/release execution. When N60 is enabled, its still-experimental ASTC adapter reads the exact same vendored N54 texture owner.
+The optional `EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL=ON` requires PS5-native NSW2 research metadata. Its include override applies to `common` and `video_core` only for opt-in development builds, not the normal Switch 1/release execution. When N60 is enabled, its still-experimental ASTC cache integration uses the exact same vendored texture-cache owner, guarded independently via `EDEN_NS2_ASTC_CACHE_BRIDGE`. No copy is constructed from that file.
 
-The N54 host gate checks byte-for-byte source parity against the upstream scratch buffer and the audited shipping backport texture header. Clang/GCC ASan/UBSan exercise the **actual vendor header** and extracted `TickFrame` logic; N60 checks that both contracts compose. No real GPU readback, PS5 RAM/FPS measurements, concurrent decode proof, or console tests are claimed.
+The N54 host gate checks byte-for-byte scratch source parity, source-extracts the real maintained frame-trim implementation, and the companion N60 gate pins the complete combined texture-cache owner to its reviewed Git object SHA. Clang/GCC ASan/UBSan exercise the **actual vendor header** and extracted `TickFrame` logic; N60 checks that both contracts compose. No real GPU readback, PS5 RAM/FPS measurements, concurrent decode proof, or console tests are claimed.
 
 Remaining migration: N57 and N60 ASTC Vulkan/cache adapters; older N56 and kernel overlays. Sparse residency is not activated.

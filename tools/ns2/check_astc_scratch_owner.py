@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate N54 from exact maintained owners and reject any unrelated drift."""
+"""N54 exact maintained vendor scratch and source-extracted frame trim."""
 from pathlib import Path
 import subprocess
 import tempfile
@@ -45,16 +45,19 @@ assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_NS2_ASTC_OWN
 assert 'prepare_astc_scratch_owner.cmake' not in CMAKE
 assert 'eden_ns2_scratch_generated' not in CMAKE
 assert SCRATCH.read_text()==s, 'N54 scratch differs from pinned base + exact fix'
-assert TEXTURE.read_text()==t, 'N54 texture differs from patched shipping base + exact fix'
+# N60 extends the same vendor texture header under a strict opt-in macro.
+# N60's companion checker pins the full source bytes and fallback ownership.
+assert 'N54ScratchTrimThreshold' in TEXTURE.read_text()
+assert '#ifdef EDEN_NS2_ASTC_SCRATCH_TRIM' in TEXTURE.read_text()
+assert 'EDEN_NS2_ASTC_SCRATCH_TRIM=1' in CMAKE
 with tempfile.TemporaryDirectory(prefix="n54-vendor-owner-") as td:
     out=Path(td)
     marker="void TextureCache<P>::TickFrame() {"
-    after=t.split(marker)[1]
+    after=TEXTURE.read_text().split(marker)[1]
     extraction=after[:after.index("    // If we can obtain the memory info")]
     assert extraction.count("scratch->release();")==1
     cpp=('''#include <cassert>
 #include <cstdint>
-#include <initializer_list>
 #include <initializer_list>
 #include "common/scratch_buffer.h"
 using u8=std::uint8_t;
@@ -93,6 +96,7 @@ int main() {
         exe=out/("n54-"+cxx.replace("+","p"))
         subprocess.run([cxx,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
             "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+            "-DEDEN_NS2_ASTC_SCRATCH_TRIM=1",
             "-I",str(OWNER),"-I",str(ROOT/"vendor/sources/eden/src"),
             str(out/"test.cpp"),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)

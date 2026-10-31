@@ -206,6 +206,16 @@ int main() {
     addon_folders = Eden::FindAddOnContentDirectories(arbitrary);
     assert(addon_folders.size() == 1);
     assert(addon_folders.front() == arbitrary / "custom" / "extensions");
+    const auto mixed_images = root / "Mixed Packages";
+    fs::create_directory(mixed_images);
+    std::ofstream(mixed_images / "my-game.xci") << "base";
+    std::ofstream(mixed_images / "bonus.nsp") << "dlc";
+    std::ofstream(mixed_images / "latest-patch.nsz") << "patch";
+    assert(Eden::FindGameFolderInput(mixed_images) == "my-game.xci");
+    addon_folders = Eden::FindAddOnContentDirectories(mixed_images);
+    assert(addon_folders.size() == 1 && addon_folders.front() == mixed_images);
+    std::ofstream(mixed_images / "another-game.xcz") << "other";
+    assert(Eden::FindGameFolderInput(mixed_images).empty());
     const auto ambiguous = root / "Ambiguous";
     fs::create_directory(ambiguous);
     std::ofstream(ambiguous / "one.nsp") << "base?";

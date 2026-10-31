@@ -713,9 +713,20 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     static thread_local std::uint64_t last_negative_generation = 0;
     static thread_local unsigned negative_count = 0;
     static thread_local unsigned next_negative_slot = 0;
-    // Under sparse_mutex, an exact miss from this unchanged topology is
-    // definitive. Reject it before probing positive TLS hints: repeated
-    // dense page-table addresses then require zero SparseRange atomics.
+    // The last exact miss is cheap to reject without touching an atomic
+    // sparse-range begin. Any registration/retirement changes the locked
+    // topology epoch and makes this hint ineligible immediately.
+    if (last_negative_generation == sparse_range_generation && negative_count != 0 &&
+        last_negative_addresses[(next_negative_slot + 3u) & 3u] == address)
+        return nullptr;
+    // A live range hit is the common sparse page-table path. Check its
+    // preferred positive hint BEFORE scanning four unrelated negative
+    // addresses; no TLS write or extra cache-line walk on a stable run.
+    if (SparseRange* candidate = last_ranges[preferred_slot]) {
+        const auto begin = candidate->begin.load(std::memory_order_acquire);
+        if (begin != 0 && address >= begin && address < candidate->end)
+            return candidate;
+    }
     // Cache only exact misses: sparse reservations can be unaligned on
     // hosts. Mutations bump the topology generation under this same mutex.
     if (last_negative_generation == sparse_range_generation) {
@@ -728,14 +739,12 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
         negative_count = 0;
         next_negative_slot = 0;
     }
-    for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
-        const unsigned slot = preferred_slot ^ probe;
-        SparseRange* candidate = last_ranges[slot];
-        if (!candidate) continue;
+    // Only cold hits in the second positive slot promote the preference.
+    const unsigned alternate = preferred_slot ^ 1u;
+    if (SparseRange* candidate = last_ranges[alternate]) {
         const auto begin = candidate->begin.load(std::memory_order_acquire);
         if (begin != 0 && address >= begin && address < candidate->end) {
-            // One cold preference change; stable runs then need one load.
-            if (probe != 0) preferred_slot = slot;
+            preferred_slot = alternate;
             return candidate;
         }
     }

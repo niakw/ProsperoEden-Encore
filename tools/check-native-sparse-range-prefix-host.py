@@ -21,7 +21,7 @@ assert "address < range.end" in lookup
 assert "static thread_local std::array<SparseRange*, 2> last_ranges{};" in lookup
 assert "static thread_local unsigned next_slot = 0;" in lookup
 assert "static thread_local unsigned preferred_slot = 0;" in lookup
-assert "if (probe != 0) preferred_slot = slot;" in lookup
+assert "preferred_slot = alternate;" in lookup
 assert "last_ranges = {};" not in lookup
 assert "retired or reused slot cannot return a stale range." in lookup
 assert "next_slot ^= 1u;" in lookup
@@ -36,11 +36,14 @@ assert source.count("++sparse_range_generation;") == 2
 assert "static thread_local std::array<std::uintptr_t, 4> last_negative_addresses{};" in lookup
 assert "last_negative_generation == sparse_range_generation" in lookup
 assert "last_negative_addresses[i] == address" in lookup
-assert "an exact miss from this unchanged topology is" in lookup
+assert "The last exact miss is cheap to reject" in lookup
+assert "if (SparseRange* candidate = last_ranges[preferred_slot])" in lookup
 assert "negative_count = 0;" in lookup and "next_negative_slot = 0;" in lookup
 assert "next_negative_slot = (next_negative_slot + 1u) & 3u;" in lookup
-assert lookup.index("last_negative_addresses[i] == address") < lookup.index("for (unsigned probe")
-assert lookup.index("for (unsigned probe") < lookup.index("i < sparse_used_prefix")
+assert lookup.index("last_negative_addresses[(next_negative_slot + 3u) & 3u] == address") < lookup.index("if (SparseRange* candidate = last_ranges[preferred_slot])")
+assert lookup.index("if (SparseRange* candidate = last_ranges[preferred_slot])") < lookup.index("last_negative_addresses[i] == address")
+assert lookup.index("last_negative_addresses[i] == address") < lookup.index("const unsigned alternate = preferred_slot ^ 1u;")
+assert lookup.index("const unsigned alternate = preferred_slot ^ 1u;") < lookup.index("i < sparse_used_prefix")
 assert lookup.index("last_negative_addresses[next_negative_slot] = address;") > lookup.index("i < sparse_used_prefix")
 assert source.count("sparse_used_prefix = (std::max)(") == 1
 pub_start = source.index("    sparse_used_prefix = (std::max)(")
@@ -192,7 +195,12 @@ int main() {
     scans = 0;
     for (int i = 0; i < 10000; ++i)
         assert(!Lookup(dense_addresses[i & 3]));
-    assert(scans.load() == 0); // all four cached misses bypass positive atomics
+    assert(scans.load() <= 10000); // cold four-way misses probe <=1 preferred positive atomic
+    // A full negative ring must not slow the ordinary positive hot path:
+    // 10k hits on the preferred live range require exactly one begin load.
+    scans = 0;
+    for (int i = 0; i < 10000; ++i) assert(Lookup(0x5001) == &sparse_ranges[63]);
+    assert(scans.load() == 10000); // no four-address scan before positive hit
     // A fifth distinct miss can evict the oldest negative hint safely.
     assert(!Lookup(0xcafe5000));
     assert(!Lookup(dense_addresses[0]));

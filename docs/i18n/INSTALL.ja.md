@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — 元の版からの移行と更新 (日本語)
 
-[← 日本語](../../README.ja.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← 日本語](../../README.ja.md) · [英語の完全なインストールガイド](../../INSTALL.md) · [すべての言語](../../LANGUAGES.md)
 
 ## はじめに
 
@@ -26,7 +26,7 @@
 
 Encore と元の ProsperoEden は同じアプリ ID PPSA99008 を使うため、独立した2つのアプリとしてインストールできません。アプリのファイルをすべて置き換えますが、/data/prosperoeden のセーブデータ、設定、ゲーム、鍵は削除しないでください。旧 assets/ にユーザーデータがあれば移行前にバックアップしてください。
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage during an update. Back up first and preserve all saves, keys and existing media.
+**重要：**更新時に `/data/prosperoeden/` を削除したり外部ストレージを初期化したりしないでください。必ずバックアップし、セーブデータや鍵を上書きしないでください。
 
 ## 互換性と既知の問題
 
@@ -36,6 +36,6 @@ Encore を PS5 実機で確認したファームウェアは 13.60 のみです�
 
 画面が英語のままなら Settings → Language で切り替え、ui/lang/ の言語ファイルがすべてあるか確認してください。
 
-If one title stops booting after settings changes, try **Safe Launch** without deleting its saves. Consult [ZIP/FFPFSC/ShadowMountPlus instructions](../../INSTALL.md), [Troubleshooting](../../TROUBLESHOOTING.md) or [Support](../../SUPPORT.md).
+設定変更後にゲームが起動しなくなったら、セーブデータを消さずに一時的な **Safe Launch** を試してください。[ZIP/FFPFSC インストール](../../INSTALL.md)、[トラブルシューティング](../../TROUBLESHOOTING.md)、[サポート](../../SUPPORT.md)も参照してください。
 
 ゲーム、暗号鍵、ファームウェアは配布しません。公開の不具合報告には個人情報を添付しないでください。

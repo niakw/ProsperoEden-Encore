@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — 기존 버전에서 이전하기 (한국어)
 
-[← 한국어](../../README.ko.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← 한국어](../../README.ko.md) · [영어 전체 설치 안내](../../INSTALL.md) · [모든 언어](../../LANGUAGES.md)
 
 ## 시작하기
 
@@ -26,7 +26,7 @@
 
 Encore와 원래 ProsperoEden은 동일한 앱 ID PPSA99008을 사용하므로 두 개의 별도 앱으로 설치할 수 없습니다. 앱 파일 전체만 교체하고 /data/prosperoeden의 저장 데이터, 설정, 게임, 키는 삭제하지 마세요. 이전 assets/에 사용자 데이터가 있다면 먼저 백업하세요.
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage during an update. Back up first and preserve all saves, keys and existing media.
+**중요:** 업데이트하면서 `/data/prosperoeden/`를 삭제하거나 외장 저장소를 포맷하지 마세요. 먼저 백업하고 저장 데이터와 키를 덮어쓰지 마세요.
 
 ## 호환성과 알려진 문제
 
@@ -36,6 +36,6 @@ Encore를 실제 PS5에서 테스트한 펌웨어는 13.60뿐입니다. 구버�
 
 메뉴가 영어로 나온다면 Settings → Language를 선택하고 ui/lang/ 폴더를 완전히 설치했는지 확인하세요.
 
-If one title stops booting after settings changes, try **Safe Launch** without deleting its saves. Consult [ZIP/FFPFSC/ShadowMountPlus instructions](../../INSTALL.md), [Troubleshooting](../../TROUBLESHOOTING.md) or [Support](../../SUPPORT.md).
+설정을 바꾼 뒤 게임이 실행되지 않으면 저장 데이터를 지우지 말고 해당 세션에서 **Safe Launch**를 사용해 보세요. [ZIP/FFPFSC 설치](../../INSTALL.md), [문제 해결](../../TROUBLESHOOTING.md), [지원](../../SUPPORT.md)을 참고하세요.
 
 이 프로젝트는 게임, 콘솔 키, 펌웨어를 제공하지 않습니다. 공개 오류 보고서에 개인정보를 올리지 마세요.

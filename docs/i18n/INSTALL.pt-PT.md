@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Migração do projecto original (Português (Portugal))
 
-[← Português (Portugal)](../../README.pt-PT.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← Português (Portugal)](../../README.pt-PT.md) · [Instalação completa em inglês](../../INSTALL.md) · [Todos os idiomas](../../LANGUAGES.md)
 
 ## Primeiros passos
 
@@ -9,7 +9,7 @@
 3. Copia a pasta PPSA99008 inteira para /data/homebrew/PPSA99008/; apenas eboot.bin não chega.
 4. Inicia o Encore, verifica Settings → Storage e Language e utiliza apenas ficheiros obtidos legalmente.
 
-## Paths / PPSA99008
+## Aplicação / PPSA99008
 
 ```text
 /data/homebrew/PPSA99008/         # complete application
@@ -26,7 +26,7 @@
 
 O Encore e o ProsperoEden original usam o mesmo ID PPSA99008 e não são instalações independentes. Substitui os ficheiros completos da aplicação, preservando gravações, definições, jogos e chaves em /data/prosperoeden. Guarda a antiga pasta assets/ antes da migração.
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage as a normal update step. Back up before migration; do not overwrite existing saves or keys.
+**Importante:** nunca apagues `/data/prosperoeden/` nem formates o armazenamento externo numa actualização. Faz cópia de segurança e preserva gravações e chaves.
 
 ## Compatibilidade e limites
 
@@ -36,6 +36,6 @@ A única versão de firmware testada com Encore numa PS5 real é a 13.60. As ant
 
 Se o menu continuar em inglês, selecciona Settings → Language e verifica a pasta ui/lang/ completa.
 
-If a title stops booting after changing settings, use **Safe Launch** for a temporary reset. For ZIP and FFPFSC/ShadowMountPlus methods see [INSTALL.md](../../INSTALL.md); for error details see [Troubleshooting](../../TROUBLESHOOTING.md) and [Support](../../SUPPORT.md).
+Se um jogo deixar de arrancar após uma alteração, experimenta **Safe Launch** durante essa sessão, sem apagar gravações. Consulta a [instalação ZIP/FFPFSC](../../INSTALL.md), a [resolução de problemas](../../TROUBLESHOOTING.md) e o [suporte](../../SUPPORT.md).
 
 O projecto não fornece jogos, chaves nem firmware. Não publiques dados pessoais nos relatórios.

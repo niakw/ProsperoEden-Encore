@@ -94,3 +94,24 @@ included in a device-memory run zeroed the uniform data used for dialogue
 glyphs in *Splatoon Raiders*. The test here proves only local run-count
 correctness; **it does not prove real GPU vertex buffers, console output
 or successful Switch 2 game boot**.
+
+## N49b — game-proven Ampere CALL/RET acceptance
+
+Eglantine PR #56 exposed an additional **Encore-specific** rejection:
+our renderer already knew RET (`0x950`) has no destination register,
+but demanded a separate upper return-register initialization on every
+call, even when the calling convention uses the original verified link
+register directly. The host Eglantine fixture initially failed with
+`native return linkage mode` at native byte 0x30; the existing
+`writes_link` exclusion alone was insufficient.
+
+The experimental `LowerToMaxwell` now allows **only** verified direct
+CALL→RET link use with no intervening link writes, or an exact last
+`MOV Rret,Rlink` copy with no branch into the epilogue. It retains the
+original full multiword/earlier-copy proof for all other forms, as well
+as the call target, relative base, valid code, barrier and relocation
+checks. Regression inputs are the original public R0/R55, copy and
+real overwrite fixtures from Eglantine PR #56. This change is entirely
+in the isolated NS2 Ampere translator; neither the Switch 1 renderer
+nor `main` is modified. Only a green CI would establish host translation
+correctness, not Nintendo game rendering on PS5.

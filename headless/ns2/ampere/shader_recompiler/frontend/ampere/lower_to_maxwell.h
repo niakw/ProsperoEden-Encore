@@ -3542,6 +3542,32 @@ inline LoweredProgram LowerToMaxwell(std::span<const Instruction> code,
                     break;
                 }
             }
+            // Eglantine PR #56 / Mario Kart World: a verified CALL already
+            // carries the return PC into the link register. The Maxwell RET
+            // consumes the translated call stack, not an uninitialized
+            // artificial upper GPR. Admit this short form only if the callee
+            // leaves the link untouched and cannot be entered mid-epilogue.
+            const bool verified_short_inplace =
+                inplace_link &&
+                std::none_of(code.begin() + active_entry, code.begin() + index,
+                    [&](const Instruction& body) {
+                        return writes_link(body, return_reg);
+                    }) &&
+                !entered_from_outside(active_entry, index);
+            // Some shader libraries copy Rlink to Rret immediately before
+            // RET. Require the exact MOV encoding and prove that no branch
+            // can skip that final copy. Other copied/multiword return paths
+            // continue through the original stronger validation below.
+            const bool verified_immediate_copy =
+                main_exited && active_link && return_reg != *active_link &&
+                index > active_entry &&
+                code[index - 1].words[0] == (0x00007202U | (return_reg << 16)) &&
+                code[index - 1].words[1] == *active_link &&
+                code[index - 1].words[2] == 0xf00 &&
+                !entered_from_outside(active_entry, index);
+            const bool verified_short_return =
+                verified_short_inplace || verified_immediate_copy;
+
             // The callee may copy the link into the return register earlier than the instruction before
             // the RET, as long as nothing writes it again and nothing can enter after the copy.
             bool moved_link = false;
@@ -3571,9 +3597,10 @@ inline LoweredProgram LowerToMaxwell(std::span<const Instruction> code,
             if (!main_exited || index < 2 || !active_link ||
                 (insn.words[0] & 0x00ffffffU) != 0x00007950 || return_reg >= 249 ||
                 (insn.words[2] & ~0x3ffffU) != 0x03c00000 ||
-                (!inplace_link && !moved_link && (code[index - 2].words[0] != (0x00007202U | (return_reg << 16)) ||
-                 code[index - 2].words[1] != *active_link || code[index - 2].words[2] != 0xf00)) ||
-                !upper_link_ready || !barrier_tokens.empty())
+                (!inplace_link && !moved_link && !verified_immediate_copy &&
+                 (code[index - 2].words[0] != (0x00007202U | (return_reg << 16)) ||
+                  code[index - 2].words[1] != *active_link || code[index - 2].words[2] != 0xf00)) ||
+                (!upper_link_ready && !verified_short_return) || !barrier_tokens.empty())
                 return fail(index, "native return linkage mode");
             const u64 raw = insn.words[1] | (u64{insn.words[2] & 0x3ffff} << 32);
             const s64 relative = static_cast<s64>(raw << 14) >> 14;
@@ -3585,8 +3612,11 @@ inline LoweredProgram LowerToMaxwell(std::span<const Instruction> code,
                     (inplace_link && relocation.target > active_entry && relocation.target < index &&
                      relocation.output_index < result.source_instruction_offsets[active_entry]) ||
                     relocation.target == index ||
-                    (relocation.target == index - 1 && (!inplace_link ||
-                     relocation.output_index < result.source_instruction_offsets[active_entry])))
+                    (relocation.target == index - 1 &&
+                     !(verified_immediate_copy && relocation.call &&
+                       relocation.target == active_entry) &&
+                     (!inplace_link ||
+                      relocation.output_index < result.source_instruction_offsets[active_entry])))
                     return fail(index, "native branch bypasses return linkage");
             }
             emit(0xe32000000007000fULL);

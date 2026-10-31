@@ -59,3 +59,9 @@ The PS5 device-memory continuity guard N50 and changed-page GPU PTE notification
 ## Experimental A64 translation ownership
 
 The five immutable research decoder/translator sources for LDAPR, RETAA/RETAB and exclusive atomics are now versioned under `vendor/encore-active/ns2-a64/dynarmic`, with the exact old Git object IDs retained. Host and native research build selectors use that vendor source; no `headless/ns2/dynarmic` override remains. These remain experimental decoder implementations and are not evidence of complete NSW2 execution or PS5 compatibility.
+
+## Research feature naming and PS5 test gate
+
+Eglantine is an **external Eden-derived emulator**, reviewed only as an attributed upstream source of patches and public fixtures. It is not Encore's application identity. Four research-only native CMake selectors are named `EDEN_NS2_{GPU_RANGE_BATCH,PIPELINE_CACHE,VIEW,CONTINUITY}_EXPERIMENTAL`; the source-owner test rejects upstream branding leaking into the CMake binary configuration. Historical review documents and `check_egl_*` test filenames deliberately preserve attribution.
+
+**Console test gate:** host CI is green on the prior branch head, but no NS2-ready PS5 artifact, complete `Core::System::Load`/real kernel boot, nor Vulkan sparse-queue/fence lifetime validation has yet been established. A synthetic NSP or host shader smoke test is not proof of Switch 2 game compatibility. Keep `main` and release selectors unchanged until an isolated native PS5 research build can be produced and documented without claiming working commercial games.

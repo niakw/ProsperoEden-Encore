@@ -47,7 +47,7 @@ flush = "#ifdef EDEN_NS2_GPU_RANGE_BATCH\n    changed_runs.Flush(notify_changed)
 assert t.count(flush) == 2
 t = t.replace(flush, "")
 assert blob(t) == "f30099dfb5df01d9cd787d199e3e61f28205669a", "N51 changed unrelated PS5 GPU logic"
-assert "EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR" in CMAKE
+assert "EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR" in CMAKE
 assert "EDEN_NS2_GPU_RANGE_BATCH=1" in CMAKE
 assert "EDEN_FINAL_RELEASE_PROFILE" in CMAKE
 assert "headless/ns2/eglantine/video_core/memory_manager.cpp" not in CMAKE

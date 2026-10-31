@@ -316,7 +316,7 @@ jobs:
               -o "build-ns2-a64/ampere-lower-${cxx//+/}"
             "build-ns2-a64/ampere-lower-${cxx//+/}"
           done
-      - name: Eglantine N49 owner parity and 3D image view / R0 shader regressions
+      - name: NS2 N49 upstream-derived owner parity and 3D image view / R0 shader regressions
         shell: bash
         run: |
           set -euo pipefail
@@ -384,7 +384,7 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/sources/eden/src/core/hle/service/os/process.cpp
-      - name: Eglantine N51 native GPU PTE batching source parity and host oracle
+      - name: NS2 N51 native GPU PTE batching source parity and host oracle
         shell: bash
         run: |
           set -euo pipefail
@@ -393,7 +393,7 @@ jobs:
             "${cxx}" -std=c++20 -O2 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all -Ivendor/encore-active/ns2-helpers/include tools/ns2/test_egl_gpu_range_batch.cpp -o "build-ns2-a64/n51-gpu-${cxx//+/}"
             "build-ns2-a64/n51-gpu-${cxx//+/}"
           done
-      - name: Eglantine N50 real PS5 memory owner parity and remap-run regression
+      - name: NS2 N50 real PS5 memory owner parity and remap-run regression
         shell: bash
         run: |
           set -euo pipefail

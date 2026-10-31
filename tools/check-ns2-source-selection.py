@@ -14,6 +14,14 @@ def require(condition: bool, reason: str) -> None:
 
 def main() -> int:
     try:
+        # Imported emulator patches are credited in docs, never build options.
+        require("Eglantine" not in CMAKE and "EGLANTINE_" not in CMAKE,
+                "External emulator name leaked into native build options")
+        for feature in ("GPU_RANGE_BATCH", "PIPELINE_CACHE", "VIEW", "CONTINUITY"):
+            flag = f"EDEN_NS2_{feature}_EXPERIMENTAL"
+            require(f"option({flag}" in CMAKE and f"if({flag})" in CMAKE and
+                    f"{flag} OR" in CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
+                    "NS2 research flag not release-forbidden: " + flag)
         # Refuse the regression to duplicated/outdated whole engine owners.
         # One versioned vendor submodule owns every experimental native overlay.
         for legacy in ("overrides", "eglantine", "dynarmic"):

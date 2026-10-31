@@ -27,7 +27,7 @@ assert "Saved PS5 driver pipeline cache atomically" in current
 reconstructed=current.replace(after,before)
 data=reconstructed.encode()
 assert hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()==("0d4c16e0afab6d18b44e51dc5cb9dda512f0557e"), "N56 native owner differs outside reviewed guard"
-assert 'EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL OR' in CMAKE
+assert 'EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL OR' in CMAKE
 assert "target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)" in CMAKE
 assert 'NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE' in CMAKE
 assert 'prepare_egl_pipeline_cache.cmake' not in CMAKE

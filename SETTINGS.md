@@ -159,6 +159,8 @@ Encore controls the emulated input mapping and its own PlayStation-style UI glyp
 
 ## Language
 
+The launcher currently exposes **18 region/language choices across 13 distinct languages**. A complete app contains **29 translation catalogs**, not all selectable in Settings → Language. See [LANGUAGES.md](LANGUAGES.md) for the exact selector entries and their localized guides.
+
 Settings → Language is shared by Encore and the games.
 
 On first setup, Encore seeds the preference from the PS5 system language. Changing it later rebuilds the launcher immediately with the selected catalog/fonts and also changes the language/region value presented to games. A game can still ignore the choice when that language is not included.

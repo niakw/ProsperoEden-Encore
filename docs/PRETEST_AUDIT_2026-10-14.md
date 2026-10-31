@@ -117,7 +117,7 @@ See `INTEGRATION_AUDIT_CPU_GPU_JIT_2026-10-14.md` and
   `dev/ps5-sparse-jit`, when audited. This is **not** a claim that a local
   Mac checkout has no uncommitted changes or that no retained CI artifact
   exists.
-- Marketing READMEs (`README.md`, `README.fr.md`), `SECURITY.md`,
+- Marketing READMEs (`README.md`, `docs/i18n/README.fr.md`), `SECURITY.md`,
   `MEMORY.md`, `THIRD_PARTY_NOTICES.md` and a populated `LICENSES/`
   are present. Their existence is verified; not every historical statement
   or third-party latest commit is proven current by the presence of the file.

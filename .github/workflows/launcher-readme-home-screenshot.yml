@@ -127,13 +127,15 @@ jobs:
           prior_readme.unlink(missing_ok=True)
           alt = ("Eden Encore Home in English with the original wallpaper "
                  "and fictional sample game artwork")
-          for filename in ("README.md", "README.fr.md"):
+          for filename in ("README.md", "docs/i18n/README.fr.md"):
               path = Path(filename)
               source = path.read_text(encoding="utf-8")
-              pattern = (r'<p align="center"><img src="assets/'
-                         r'(?:encore-background\.jpg|screenshots/(?:encore-home|eden-encore-home-wallpaper-en|eden-encore-home-sample-art)\.png)"'
-                         r' alt="[^"]+" width="860"></p>')
-              new = ('<p align="center"><img src="assets/screenshots/eden-encore-home-sample-art.png"'
+              # The translated README now lives two directories below root.
+              prefix = "assets/" if filename == "README.md" else "../../assets/"
+              pattern = (r'<p align="center"><img src="' + re.escape(prefix)
+                         + r'(?:encore-background\.jpg|screenshots/(?:encore-home|eden-encore-home-wallpaper-en|eden-encore-home-sample-art)\.png)"'
+                         + r' alt="[^"]+" width="860"></p>')
+              new = (f'<p align="center"><img src="{prefix}screenshots/eden-encore-home-sample-art.png"'
                      f' alt="{alt}" width="860"></p>')
               source, count = re.subn(pattern, lambda _: new, source)
               assert count == 1, (filename, "expected exactly one known Encore Home preview", count)
@@ -144,7 +146,7 @@ jobs:
       - name: Persist real Home capture and README links on the same branch
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          git add -A -- assets/screenshots/eden-encore-home-wallpaper-en.png assets/screenshots/eden-encore-home-sample-art.png README.md README.fr.md
+          git add -A -- assets/screenshots/eden-encore-home-wallpaper-en.png assets/screenshots/eden-encore-home-sample-art.png README.md docs/i18n/README.fr.md
           if git diff --cached --quiet; then
             echo "Native screenshot is unchanged."
             exit 0

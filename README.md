@@ -1,26 +1,34 @@
-<div align="center">
-  <img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="154">
+<a id="encore"></a>
+<table width="100%">
+  <tr><td align="center">
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <strong>English</strong> &nbsp; · &nbsp; <strong>English UK</strong> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr.md">Français</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pt-BR.md">Português BR</a><br>
+    <a href="docs/i18n/README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="docs/i18n/README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="docs/i18n/README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="docs/i18n/README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="docs/i18n/README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
+  </td></tr>
+</table>
 
-  <h1>Prospero.Eden Encore</h1>
+<table width="100%">
+  <tr>
+    <td width="21%" align="center" valign="middle"><a href="README.md"><img src="assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>
+    <td width="79%" align="left" valign="middle">
+      <h1>Prospero.Eden Encore</h1>
+      <p><strong>Console-native emulation, made for the living room.</strong></p>
+      <p>A controller-first PS5 emulator fork for firmware 13.60: NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX and KIP loaders, LZ4 + ZBIC/zstd decoding, TV navigation and reproducible builds.</p>
+      <p><kbd>Firmware 13.60 · hardware-tested target</kbd> &nbsp; <kbd>Vulkan + OpenGL</kbd> &nbsp; <kbd>TV-first UI</kbd> &nbsp; <kbd>Dynarmic</kbd></p>
+    </td>
+  </tr>
+</table>
 
-  <h3>Console-native emulation, made for the living room.</h3>
-
-  <p><strong>A controller-first PS5 emulator fork for firmware 13.60: NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX and KIP loaders, LZ4 + ZBIC/zstd decoding, TV navigation and reproducible builds.</strong></p>
-
-  <p><strong>English</strong> · <a href="README.fr.md">Français</a> · <a href="README.es.md">Español</a></p>
-  <p><kbd>Firmware 13.60 · hardware-tested target</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>TV-first UI</kbd> <kbd>Dynarmic</kbd></p>
-  <p>
-    <a href="INSTALL.md"><strong>Install</strong></a> ·
-    <a href="#-why-encore"><strong>Benefits</strong></a> ·
-    <a href="#-compatibility--current-limits"><strong>Compatibility</strong></a> ·
-    <a href="#-builds--validation"><strong>Builds</strong></a> ·
-    <a href="ACCESSIBILITY.md"><strong>Accessibility</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility"><strong>Switch 2</strong></a> ·
-    <a href="#faq"><strong>FAQ</strong></a> ·
-    <a href="#credits"><strong>Credits</strong></a>
-  </p>
-</div>
+<table width="100%">
+  <tr>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/releases"><strong>Download</strong></a></td>
+    <td align="center"><a href="INSTALL.md"><strong>Install</strong></a></td>
+    <td align="center"><a href="#getting-started"><strong>Get started</strong></a></td>
+    <td align="center"><a href="#compatibility"><strong>Compatibility</strong></a></td>
+    <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
+    <td align="center"><a href="TROUBLESHOOTING.md"><strong>Help</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+  </tr>
+</table>
 
 <p align="center">
   <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain"><img alt="Source and host validation" src="https://img.shields.io/badge/quality-source%20%2B%20host%20gates-465d87"></a>
@@ -38,6 +46,18 @@
 > **Recommended/tested firmware: 13.60, the only firmware actually tested with Encore on a console.** Earlier firmware versions **may work** when the homebrew loader, PS5 native APIs, Vulkan and filesystem access are compatible; this remains **unverified**, and no minimum firmware has been established. Newer versions are also untested. Even on 13.60, frame pacing and gameplay freezes remain under investigation. This is **not** advice to update your console.
 >
 > **Before a console test:** [source, logs, upstream and package checklist](docs/PRETEST_AUDIT_2026-10-14.md) — verify that the artifact and symbols match the exact tested SHA.
+
+---
+
+<a id="getting-started"></a>
+## Start here — install in four steps
+
+1. Choose a **complete Encore release package** from [Releases](https://github.com/niakw/ProsperoEden-Encore/releases). A green development CI job does not automatically mean it was tested on PS5.
+2. **Back up** your old `/data/homebrew/PPSA99008/` app, `/data/prosperoeden/` and any external storage root. The original native port uses the **same title ID**.
+3. Follow [the complete installation guide](INSTALL.md) for **ZIP/FTP or FFPFSC/ShadowMountPlus**. Copy the full `PPSA99008/` app tree, including `ui/lang/`, not only `eboot.bin`.
+4. Open Encore and check **Settings → Storage / Language**, game Library and existing saves. If anything fails, use [Troubleshooting](TROUBLESHOOTING.md).
+
+**Firmware 13.60 is the only console-tested target.** No earlier firmware minimum is verified, and this is not advice to update your PS5. [Choose any launcher language](LANGUAGES.md).
 
 ---
 
@@ -154,6 +174,7 @@ See [Architecture](docs/PS5_NATIVE_ARCHITECTURE.md), [Performance roadmap](docs/
 
 ---
 
+<a id="compatibility"></a>
 ## 🧪 Compatibility & current limits
 
 | Target | Evidence | Status |

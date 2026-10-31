@@ -463,7 +463,7 @@ The source regression is tools/check-launcher-shoulder-and-cover.py.
 The workflow .github/workflows/launcher-readme-home-screenshot.yml renders
 the actual C++/OpenGL home UI with Mesa, validates the 1920x1080 PNG,
 then commits it under assets/screenshots/encore-home.png and swaps the
-README.md and README.fr.md links together. On failure neither the
+README.md and docs/i18n/README.fr.md links together. On failure neither the
 README nor the image is changed. This is real application UI rendered
 on a host computer; it is **not** a screenshot captured on PS5.
 

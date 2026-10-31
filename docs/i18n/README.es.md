@@ -1,41 +1,62 @@
-<div align="center">
-  <img src="assets/icon0.png" alt="Logotipo de Prospero.Eden Encore" width="154">
+<table width="100%">
+  <tr><td align="center">
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="../../README.md">English</a> &nbsp; · &nbsp; <a href="../../README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <strong>Español ES</strong> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>
+    <a href="README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="../../LANGUAGES.md"><strong>All languages</strong></a>
+  </td></tr>
+</table>
 
-  <h1>Prospero.Eden Encore</h1>
+<table width="100%">
+  <tr>
+    <td width="21%" align="center" valign="middle"><a href="../../README.md"><img src="../../assets/icon0.png" alt="Prospero.Eden Encore logo" width="148"></a></td>
+    <td width="79%" align="left" valign="middle">
+      <h1>Prospero.Eden Encore</h1>
+      <p><strong>Emulación nativa en consola, pensada para jugar desde el sofá.</strong></p>
+      <p>Un proyecto comunitario de emulación nativa para PS5, centrado en el firmware 13.60: carga de NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX y KIP, descompresión LZ4 y ZBIC/zstd, interfaz para TV y compilaciones reproducibles.</p>
+      <p><kbd>Firmware 13.60 · probado en PS5</kbd> &nbsp; <kbd>Vulkan + OpenGL</kbd> &nbsp; <kbd>Interfaz TV</kbd> &nbsp; <kbd>Dynarmic</kbd></p>
+    </td>
+  </tr>
+</table>
 
-  <h3>Emulación nativa en consola, pensada para jugar desde el sofá.</h3>
-
-  <p><strong>Un proyecto comunitario de emulación nativa para PS5, centrado en el firmware 13.60: carga de NSP, XCI, NSZ, XCZ, NRO, NSO, NCA, NAX y KIP, descompresión LZ4 y ZBIC/zstd, interfaz para TV y compilaciones reproducibles.</strong></p>
-
-  <p><a href="README.md">English</a> · <a href="README.fr.md">Français</a> · <strong>Español</strong></p>
-  <p><kbd>Firmware 13.60 · probado en hardware</kbd> <kbd>Vulkan + OpenGL</kbd> <kbd>Interfaz para TV</kbd> <kbd>Dynarmic</kbd></p>
-  <p>
-    <a href="#por-que-encore"><strong>Ventajas</strong></a> ·
-    <a href="#instalación"><strong>Instalación</strong></a> ·
-    <a href="#compatibilidad-y-limitaciones"><strong>Compatibilidad</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a> ·
-    <a href="https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility"><strong>Switch 2</strong></a> ·
-    <a href="#faq"><strong>FAQ</strong></a> ·
-    <a href="README.md#credits"><strong>Créditos</strong></a>
-  </p>
-</div>
+<table width="100%">
+  <tr>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/releases"><strong>Descargar</strong></a></td>
+    <td align="center"><a href="INSTALL.es-ES.md"><strong>Instalar</strong></a></td>
+    <td align="center"><a href="#getting-started"><strong>Empezar</strong></a></td>
+    <td align="center"><a href="#compatibility"><strong>Compatibilidad</strong></a></td>
+    <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
+    <td align="center"><a href="../../TROUBLESHOOTING.md"><strong>Ayuda</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+  </tr>
+</table>
 
 <p align="center">
   <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain"><img alt="Validaciones de código y pruebas en host" src="https://img.shields.io/badge/calidad-c%C3%B3digo%20%2B%20pruebas-465d87"></a>
   <a href="https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain"><img alt="Compilación nativa" src="https://img.shields.io/badge/build-paquete%20nativo-5e4db2"></a>
-  <a href="LICENSE"><img alt="Licencia GPL-3.0-or-later" src="https://img.shields.io/badge/licencia-GPL--3.0--or--later-31313a"></a>
+  <a href="../../LICENSE"><img alt="Licencia GPL-3.0-or-later" src="https://img.shields.io/badge/licencia-GPL--3.0--or--later-31313a"></a>
 </p>
 
-<p align="center"><img src="assets/screenshots/eden-encore-home-sample-art.png" alt="Captura del menú Encore con títulos ficticios usados como demostración" width="860"></p>
+<p align="center"><img src="../../assets/screenshots/eden-encore-home-sample-art.png" alt="Captura del menú Encore con títulos ficticios usados como demostración" width="860"></p>
 
 <sub>Vista previa: las portadas, los juegos y las descripciones mostrados son **ficticios** y solo ilustran el diseño. La captura procede del lanzador real de Encore y **no** representa una lista de compatibilidad.</sub>
 
 > [!IMPORTANT]
 > **Firmware recomendado/probado para Encore: 13.60, la única versión realmente ensayada en PS5.** Las versiones **anteriores podrían funcionar** con un entorno homebrew compatible, pero **no están verificadas con Encore** y no se ha establecido un firmware mínimo. Los firmwares posteriores tampoco se han certificado. Incluso en 13.60 persisten problemas de fluidez y bloqueos. «Recomendado» **no** es una indicación de actualizar tu consola.
 >
-> **FC27 sigue teniendo problemas conocidos:** tirones, algunas imágenes y textos HUD retrasados, controles personalizados en partido y bloqueos durante la pausa, el descanso o el final. [Seguimiento técnico FC27/F07](docs/FC27_F07_MASTER_TRACKER.md). Los tests del código y una compilación correcta **no equivalen a una prueba de jugabilidad**.
+> **FC27 sigue teniendo problemas conocidos:** tirones, algunas imágenes y textos HUD retrasados, controles personalizados en partido y bloqueos durante la pausa, el descanso o el final. [Seguimiento técnico FC27/F07](../../docs/FC27_F07_MASTER_TRACKER.md). Los tests del código y una compilación correcta **no equivalen a una prueba de jugabilidad**.
 >
-> **Antes de probar un paquete:** verifica el commit SHA exacto, el archivo compilado y los símbolos correspondientes. [Lista de comprobaciones](docs/PRETEST_AUDIT_2026-10-14.md).
+> **Antes de probar un paquete:** verifica el commit SHA exacto, el archivo compilado y los símbolos correspondientes. [Lista de comprobaciones](../../docs/PRETEST_AUDIT_2026-10-14.md).
+
+---
+
+<a id="getting-started"></a>
+## Empezar en cuatro pasos
+
+1. Descarga un paquete **completo** desde [Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases). Una CI correcta no demuestra pruebas en consola.
+2. **Respalda** la aplicación `/data/homebrew/PPSA99008/`, los datos `/data/prosperoeden/` y los medios externos. El port original usa el **mismo ID de PS5**.
+3. Sigue [la guía de instalación en español](INSTALL.es-ES.md) para ZIP/FTP o FFPFSC/ShadowMountPlus. Copia **todo** `PPSA99008/`, incluida `ui/lang/`, no solo `eboot.bin`.
+4. Comprueba **Settings → Storage / Language**, la biblioteca y los guardados. Si algo falla, consulta [solución de problemas (EN)](../../TROUBLESHOOTING.md).
+
+**Solo se ha probado el firmware 13.60 en consola.** No se ha verificado ningún firmware mínimo anterior; no actualices tu PS5 por este motivo. [18 opciones de idioma](../../LANGUAGES.md).
 
 ---
 
@@ -54,12 +75,12 @@ La emulación en una consola no consiste únicamente en ejecutar un juego: la na
 | **Análisis de rendimiento** | Intervalos entre fotogramas, CPU/JIT, sincronización Vulkan, presión de memoria, bloqueos y servicios del juego. |
 | **Compilación reproducible** | Fuentes fijadas, submódulo vendor, pruebas automatizadas y comprobación del paquete nativo. |
 
-El objetivo es **conservar una base nativa funcional, incorporar cambios upstream de forma selectiva y comprobar cada etapa por separado: código → paquete nativo → consola real**. Para empezar: [instalación](INSTALL.md), [limitaciones](#compatibilidad-y-limitaciones) y [preguntas frecuentes](#faq).
+El objetivo es **conservar una base nativa funcional, incorporar cambios upstream de forma selectiva y comprobar cada etapa por separado: código → paquete nativo → consola real**. Para empezar: [instalación](../../INSTALL.md), [limitaciones](#compatibilidad-y-limitaciones) y [preguntas frecuentes](#faq).
 
 <details>
 <summary><strong>¿Es Encore solo un cambio de nombre?</strong></summary>
 
-No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la memoria, GPU/Vulkan, cachés, carga de contenido, interfaz, mandos, seguridad, infraestructura y pruebas. El traslado al repositorio independiente se realizó el **30 de octubre de 2026**. La [primera pregunta de la FAQ](#faq) incluye el inventario técnico ampliado; las [notas del proyecto](MEMORY.md) y el [historial de commits](https://github.com/niakw/ProsperoEden-Encore/commits/main/) conservan el detalle por revisión.
+No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la memoria, GPU/Vulkan, cachés, carga de contenido, interfaz, mandos, seguridad, infraestructura y pruebas. El traslado al repositorio independiente se realizó el **30 de octubre de 2026**. La [primera pregunta de la FAQ](#faq) incluye el inventario técnico ampliado; las [notas del proyecto](../../MEMORY.md) y el [historial de commits](https://github.com/niakw/ProsperoEden-Encore/commits/main/) conservan el detalle por revisión.
 
 </details>
 
@@ -69,8 +90,8 @@ No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la 
 
 - **[Roadmap completa de funcionalidades R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** de la [rama de desarrollo independiente](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements): FSR, generación de frames, AA, temas, biblioteca, red, trofeos y **actualizador de la aplicación R21**. **Una especificación o prototipo no equivale a una función publicada.**
 - **[Rama de investigación Nintendo Switch 2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility)** y su [informe técnico](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md): experimentos con carga, CPU/IR y shaders NSW2; **no incluidos en la release PS5 actual**.
-- **[Seguimiento de estabilidad y optimización PS5/F07](docs/FC27_F07_MASTER_TRACKER.md)**: la rama main es la referencia de desarrollo del motor PS5.
-- **Las actualizaciones del ProsperoEden nativo se revisan individualmente, sin sincronización automática.** Encore parte de **ProsperoEden v1.000.040** ([base técnica](docs/FORK_NOTES.md)) y selecciona correcciones compatibles mediante [auditorías upstream](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). **El actualizador integrado R21 está previsto, no disponible.**
+- **[Seguimiento de estabilidad y optimización PS5/F07](../../docs/FC27_F07_MASTER_TRACKER.md)**: la rama main es la referencia de desarrollo del motor PS5.
+- **Las actualizaciones del ProsperoEden nativo se revisan individualmente, sin sincronización automática.** Encore parte de **ProsperoEden v1.000.040** ([base técnica](../../docs/FORK_NOTES.md)) y selecciona correcciones compatibles mediante [auditorías upstream](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). **El actualizador integrado R21 está previsto, no disponible.**
 
 ---
 
@@ -86,7 +107,7 @@ No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la 
 
 NCZ admite bloques con acceso aleatorio. Un archivo con compresión «solid» puede necesitar descomprimir temporalmente el contenido en <code>/data/prosperoeden/user/cache/nsz/</code>, por lo que se requiere espacio suficiente. Un lector experimental integrado en el código no implica compatibilidad certificada con cada juego.
 
-[Guía de instalación y almacenamiento](INSTALL.md) · [Matriz detallada de formatos](docs/CONTENT_FORMAT_MATRIX_2026-10-23.md).
+[Guía de instalación y almacenamiento](../../INSTALL.md) · [Matriz detallada de formatos](../../docs/CONTENT_FORMAT_MATRIX_2026-10-23.md).
 
 ---
 
@@ -102,9 +123,9 @@ Para versiones publicadas, utiliza las [Releases de GitHub](https://github.com/n
 
 El almacenamiento externo modifica la **raíz** de los datos, no la estructura de subcarpetas. **No borres tus partidas ni los datos anteriores al actualizar.** Encore no incluye juegos comerciales, firmware, claves propietarias ni DLC.
 
-**Para sustituir la carpeta original de ProsperoEden nativo:** ambos utilizan el ID `PPSA99008` y `/data/homebrew/PPSA99008/`. **Haz una copia de seguridad de la aplicación completa (incluyendo `assets/` antiguo), `/data/prosperoeden/` y cualquier raíz de almacenamiento externa**; sustituye los archivos de la aplicación por la carpeta completa de Encore **sin borrar los datos antiguos**, inicia Encore y comprueba la migración. Es **una sustitución de la misma aplicación**, no una instalación paralela. Consulta la [guía para actualizar desde el ProsperoEden nativo](INSTALL.md#upgrade-from-native). Un ZIP original upstream no es una actualización de Encore.
+**Para sustituir la carpeta original de ProsperoEden nativo:** ambos utilizan el ID `PPSA99008` y `/data/homebrew/PPSA99008/`. **Haz una copia de seguridad de la aplicación completa (incluyendo `assets/` antiguo), `/data/prosperoeden/` y cualquier raíz de almacenamiento externa**; sustituye los archivos de la aplicación por la carpeta completa de Encore **sin borrar los datos antiguos**, inicia Encore y comprueba la migración. Es **una sustitución de la misma aplicación**, no una instalación paralela. Consulta la [guía para actualizar desde el ProsperoEden nativo](../../INSTALL.md#upgrade-from-native). Un ZIP original upstream no es una actualización de Encore.
 
-[Instrucciones completas](INSTALL.md) · [Compilar desde el código fuente](docs/BUILDING.md) · [Soporte](SUPPORT.md).
+[Instrucciones completas](../../INSTALL.md) · [Compilar desde el código fuente](../../docs/BUILDING.md) · [Soporte](../../SUPPORT.md).
 
 ---
 
@@ -113,7 +134,7 @@ El almacenamiento externo modifica la **raíz** de los datos, no la estructura d
 | Función | Descripción |
 | --- | --- |
 | **Inicio / Biblioteca / Recientes** | Interfaz pensada para la TV, navegación con mando y metadatos multimedia con alternativa sin conexión. |
-| **Carátulas 3D animadas** | Caras delantera y trasera cuando existen escaneos, con reconstrucción nativa a partir de ilustraciones disponibles si falta alguna. [Detalles](docs/LAUNCH_CASE_ARTWORK.md) |
+| **Carátulas 3D animadas** | Caras delantera y trasera cuando existen escaneos, con reconstrucción nativa a partir de ilustraciones disponibles si falta alguna. [Detalles](../../docs/LAUNCH_CASE_ARTWORK.md) |
 | **Ajustes rápidos** | Preferencias de vídeo y perfiles por título sin salir del flujo del launcher. |
 | **Perfiles gráficos** | **Mínimo → Recomendado → Alto → Ultra → Personalizado**. |
 | **Safe Launch** | Durante **una sola sesión**: OpenGL, escala 1×, 1080p, filtrado bilineal, modo portátil, 60 Hz y mods desactivados. |
@@ -123,7 +144,7 @@ El almacenamiento externo modifica la **raíz** de los datos, no la estructura d
 
 Safe Launch **no borra las partidas guardadas ni sobrescribe permanentemente los ajustes**. Los iconos de botones que dibuja un juego Switch no se convierten automáticamente en iconos de PlayStation.
 
-[Accesibilidad](ACCESSIBILITY.md) · [Investigación sobre iconos PlayStation](docs/PS5_INGAME_GLYPHS.md).
+[Accesibilidad](../../ACCESSIBILITY.md) · [Investigación sobre iconos PlayStation](../../docs/PS5_INGAME_GLYPHS.md).
 
 ---
 
@@ -135,11 +156,12 @@ Safe Launch **no borra las partidas guardadas ni sobrescribe permanentemente los
 - **Cachés y shaders:** más memoria para la caché no asegura aciertos ni elimina el coste de compilación de un shader por primera vez.
 - **Diagnóstico de congelaciones:** un contador de 30 FPS puede indicar que el compositor sigue presentando, incluso si el juego se ha quedado bloqueado. Se investigan la progresión de la CPU invitada, IPC, GPU, buffers y frescura de imagen por separado.
 
-[Arquitectura](docs/PS5_NATIVE_ARCHITECTURE.md) · [Roadmap de rendimiento](docs/PERFORMANCE_ROADMAP.md) · [Auditoría de CPU/GPU/JIT](docs/INTEGRATION_AUDIT_CPU_GPU_JIT_2026-10-14.md).
+[Arquitectura](../../docs/PS5_NATIVE_ARCHITECTURE.md) · [Roadmap de rendimiento](../../docs/PERFORMANCE_ROADMAP.md) · [Auditoría de CPU/GPU/JIT](../../docs/INTEGRATION_AUDIT_CPU_GPU_JIT_2026-10-14.md).
 
 ---
 
 <a id="compatibilidad-y-limitaciones"></a>
+<a id="compatibility"></a>
 ## 🧪 Compatibilidad y limitaciones actuales
 
 | Caso | Situación comprobada |
@@ -156,7 +178,7 @@ Safe Launch **no borra las partidas guardadas ni sobrescribe permanentemente los
 
 En la última captura integral de FC27 documentada (<code>2efd8b3c</code>) se observaron **858 intervalos de fotograma superiores a 50 ms**, diez superiores a 500 ms y una interrupción prolongada de la progresión del juego, aunque continuara la presentación gráfica. Los cambios posteriores sometidos a pruebas de código **todavía no equivalen a una captura más reciente que demuestre una mejora de FPS o la desaparición de ese bloqueo**.
 
-[Análisis de la sesión](docs/FC27_STRESS_REPLAY_2026-10-14.md) · [Prioridades F07](docs/FC27_F07_MASTER_TRACKER.md).
+[Análisis de la sesión](../../docs/FC27_STRESS_REPLAY_2026-10-14.md) · [Prioridades F07](../../docs/FC27_F07_MASTER_TRACKER.md).
 
 ---
 
@@ -184,7 +206,7 @@ Pulsa una pregunta para desplegar la respuesta. El inventario extenso de la prim
 
 El desarrollo de Encore comenzó el **4 de octubre de 2026** sobre el [fork histórico](https://github.com/niakw/Prospero.Eden-Encore) y continuó en este repositorio independiente desde el **30 de octubre de 2026**. **Es mucho más que un rebranding**, aunque se apoya en las tecnologías y autores originales, a quienes se mantiene el crédito.
 
-Esta lista agrupa las áreas de trabajo, los cambios implementados, los experimentos y las comprobaciones. **Revisar código no es lo mismo que optimizarlo; pasar un test host no significa obtener más FPS en PS5; y una función experimental no debe presentarse como publicada.** Hay componentes que ya existían en la base original y que se han conservado o mejorado. Los cambios por archivo/commit y los intentos descartados están documentados en [MEMORY.md](MEMORY.md), [inventario de fuentes](docs/EDEN_ACTIVE_SOURCE_CATALOG.md), [auditoría del motor](docs/EDEN_CORE_AUDIT_DEPENDENCIES.md), [registro de 38 funciones F07](docs/F07_FUNCTION_SCOPE_2026-10-28.md) y [commits](https://github.com/niakw/ProsperoEden-Encore/commits/main/).
+Esta lista agrupa las áreas de trabajo, los cambios implementados, los experimentos y las comprobaciones. **Revisar código no es lo mismo que optimizarlo; pasar un test host no significa obtener más FPS en PS5; y una función experimental no debe presentarse como publicada.** Hay componentes que ya existían en la base original y que se han conservado o mejorado. Los cambios por archivo/commit y los intentos descartados están documentados en [MEMORY.md](../../MEMORY.md), [inventario de fuentes](../../docs/EDEN_ACTIVE_SOURCE_CATALOG.md), [auditoría del motor](../../docs/EDEN_CORE_AUDIT_DEPENDENCIES.md), [registro de 38 funciones F07](../../docs/F07_FUNCTION_SCOPE_2026-10-28.md) y [commits](https://github.com/niakw/ProsperoEden-Encore/commits/main/).
 
 **1. Plataforma PS5, estructura y distribución**
 - Pruebas reales focalizadas en **firmware PS5 13.60**; otras versiones no están certificadas.
@@ -200,7 +222,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Gates de CI rápidos/completos, compilación nativa, CodeQL y pruebas separadas en consola.
 - Pruebas O0/O2, ASan/UBSan, modelos GPU/JIT/HLE, regresiones automáticas y auditorías de código fuente.
 - Guías de compilación, auditoría de seguridad, registros históricos y atribución a autores de proyectos anteriores.
-- Documentación: [compilación](docs/BUILDING.md), [migración](docs/STANDALONE_REPOSITORY_MIGRATION_2026-10-30.md), [vendor](docs/VENDOR_SUBMODULE_MIGRATION.md).
+- Documentación: [compilación](../../docs/BUILDING.md), [migración](../../docs/STANDALONE_REPOSITORY_MIGRATION_2026-10-30.md), [vendor](../../docs/VENDOR_SUBMODULE_MIGRATION.md).
 
 **2. Archivos de juegos y almacenamiento**
 - Añadido/adaptado **ZBIC/zstd para segmentos NSO**, además de LZ4 y controles de validez.
@@ -210,7 +232,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Mejoras en validación de tamaños, descompresión, rutas, cancelación, archivos dañados y espacio temporal.
 - Rutas coherentes para ROM, firmware, claves, actualizaciones, mods, partidas y cachés en discos internos/externos.
 - Migración de ajustes sin sobrescritura silenciosa, reinicios confirmados y Safe Launch de una sesión.
-- Revisión de metadatos, contenido adicional y servicios HLE relacionados. [Matriz de formatos](docs/CONTENT_FORMAT_MATRIX_2026-10-23.md).
+- Revisión de metadatos, contenido adicional y servicios HLE relacionados. [Matriz de formatos](../../docs/CONTENT_FORMAT_MATRIX_2026-10-23.md).
 
 **3. CPU Dynarmic, JIT y memoria**
 - Investigación de traducción **AArch64/AArch32**, exclusiones atómicas, esperas, invalidaciones, hilos invitados y núcleos CPU disponibles.
@@ -223,7 +245,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Disminución de costes comprobados de pilas de hilos/fibras y algunas asignaciones repetidas.
 - Control de memoria JIT, RAM invitada, cachés GPU, presión OOM y configuración de altas resoluciones.
 - JIT compartido entre núcleos, traducción especulativa y otras estrategias arriesgadas **excluidas de RELEASE** por falta de prueba.
-- Documentación: [arquitectura](docs/PS5_NATIVE_ARCHITECTURE.md), [sparse/JIT](docs/DEFERRED_JIT_QUIESCENCE_ARCHITECTURE_2026-10-17.md), [CPU/JIT](docs/EDEN_CPU_JIT_G11_G12_MIGRATION_MAP.md).
+- Documentación: [arquitectura](../../docs/PS5_NATIVE_ARCHITECTURE.md), [sparse/JIT](../../docs/DEFERRED_JIT_QUIESCENCE_ARCHITECTURE_2026-10-17.md), [CPU/JIT](../../docs/EDEN_CPU_JIT_G11_G12_MIGRATION_MAP.md).
 
 **4. GPU Maxwell, DMA, colas y sincronización**
 - Ajustes de Maxwell DMA, Host1x, colas GPU/FIFO, fences, sincronización y vida útil de los recursos.
@@ -233,7 +255,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Optimizaciones para registrar buffers/texturas pequeños y detectar páginas con un coste menor.
 - Menos despertares y asignaciones en algunos caminos de worker/scheduler, con pruebas de concurrencia.
 - Diagnóstico de un GPU que sigue presentando mientras el juego deja de avanzar.
-- Documentación: [DMA](docs/EDEN_MAXWELL_DMA_CONTIGUOUS_BATCH_2026-10-21.md), [auditoría GPU](docs/FC27_GPU_SOURCE_TARGETS_2026-10-21.md).
+- Documentación: [DMA](../../docs/EDEN_MAXWELL_DMA_CONTIGUOUS_BATCH_2026-10-21.md), [auditoría GPU](../../docs/FC27_GPU_SOURCE_TARGETS_2026-10-21.md).
 
 **5. Vulkan/RADV, shaders, pipelines, texturas y presentación**
 - Adaptación y fijación de fuentes **Mesa/RADV** y rutas de presentación nativas.
@@ -248,7 +270,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Coalescencia de notificaciones, reducción de sincronización innecesaria y asignaciones fuera de locks.
 - Evitación de reconstrucciones AA desactivadas, relojes HUD ocultos y diagnósticos innecesarios por fotograma.
 - Auditoría de **38 funciones en ocho archivos**, con correcciones de seguridad de rangos, errores y rendimiento.
-- **Problemas abiertos:** primera compilación de shaders, espera de pipelines, bloqueo de cachés y HUD atrasado/negro. [Detalle F07](docs/F07_FUNCTION_SCOPE_2026-10-28.md) · [Prioridades](docs/FC27_F07_STUTTER_HUD_PRIORITY_2026-10-26.md).
+- **Problemas abiertos:** primera compilación de shaders, espera de pipelines, bloqueo de cachés y HUD atrasado/negro. [Detalle F07](../../docs/F07_FUNCTION_SCOPE_2026-10-28.md) · [Prioridades](../../docs/FC27_F07_STUTTER_HUD_PRIORITY_2026-10-26.md).
 
 **6. HLE, IPC, sonido, red y DualSense**
 - Investigación de threads, scheduler HLE, IPC, despertadores, servicios, sincronización y recursos.
@@ -259,7 +281,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Mapeo físico **DualSense**, curvas de sticks y gatillos precalculadas, tablas de consulta, zona muerta y vibración.
 - Menos copias de muestras, reseteos de buffers cada pocos milisegundos y consultas de mandos desconectados.
 - Diferenciación entre controles físicos del launcher y asignaciones guardadas dentro de cada juego.
-- Documentación: [IPC](docs/PS5_R393_2026-10-12_GUEST_IPC_THREAD_DIAGNOSTICS.md), [red](docs/PS5_R296_2026-10-10_NETWORK_AUDIT_NANODNS.md), [motor](docs/EDEN_CORE_AUDIT_DEPENDENCIES.md).
+- Documentación: [IPC](../../docs/PS5_R393_2026-10-12_GUEST_IPC_THREAD_DIAGNOSTICS.md), [red](../../docs/PS5_R296_2026-10-10_NETWORK_AUDIT_NANODNS.md), [motor](../../docs/EDEN_CORE_AUDIT_DEPENDENCIES.md).
 
 **7. Interfaz, portadas 3D, idiomas y accesibilidad**
 - Mejoras en **Inicio / Biblioteca / Recientes**, navegación con mando y opciones rápidas.
@@ -272,7 +294,7 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Investigación del **avatar PS5** por lectura asíncrona/protegida, sin garantía para todas las consolas.
 - Investigación de **iconos de botones PlayStation dentro de los juegos**: no es una conversión universal publicada.
 - Accesibilidad, alto contraste, menos movimiento, confirmaciones al restablecer y protección de ajustes.
-- Capturas con juegos ficticios para ilustrar el launcher sin afirmar compatibilidad. [Auditoría UI](docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md) · [carátulas](docs/LAUNCH_CASE_ARTWORK.md).
+- Capturas con juegos ficticios para ilustrar el launcher sin afirmar compatibilidad. [Auditoría UI](../../docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md) · [carátulas](../../docs/LAUNCH_CASE_ARTWORK.md).
 
 **8. Rendimiento real, pruebas FC27 y calidad**
 - Diagnóstico de tiempos entre fotogramas, esperas de GPU, shaders, bloqueos, memoria JIT, IPC y progreso del juego.
@@ -282,16 +304,16 @@ Esta lista agrupa las áreas de trabajo, los cambios implementados, los experime
 - Estudios de memoria OOM con antialiasing y escalas elevadas.
 - Prioridades P0: **shaders de primer uso**, **esperas de pipelines Vulkan**, **contención de cachés**, **frescura del HUD**.
 - Pruebas host F01–F06, revisión de 38 funciones F07, validación del paquete y pruebas de consola separadas.
-- Informes de incidentes y regresiones, sin presentar un 30 FPS de compositor como prueba de que el juego progresa. [Seguimiento](docs/FC27_F07_MASTER_TRACKER.md) · [análisis](docs/FC27_STRESS_REPLAY_2026-10-14.md).
+- Informes de incidentes y regresiones, sin presentar un 30 FPS de compositor como prueba de que el juego progresa. [Seguimiento](../../docs/FC27_F07_MASTER_TRACKER.md) · [análisis](../../docs/FC27_STRESS_REPLAY_2026-10-14.md).
 
 **9. Investigaciones, no funciones disponibles en RELEASE**
 - **Generación de frames:** una solución futura más cuidada después de estabilizar el rendimiento base.
 - **FSR temporal, interpolación, 60/120 Hz, AA x2/x4:** ideas y desarrollos pendientes de verificación.
 - **Nintendo Switch 2 (NSW2):** rama separada para explorar formato de carga, NSO homebrew, CPU/IR/Dynarmic y shaders/GPU. **No integrado** en el paquete PS5.
 - **JIT compartido, compilación anticipada y GPU diferida:** experimentos desactivados mientras no exista evidencia suficiente de corrección.
-- **Iconos de botones PS en juegos, avatar, acciones personalizadas persistentes y 60 FPS por juego:** investigaciones no universales. [Roadmap](docs/PERFORMANCE_ROADMAP.md).
+- **Iconos de botones PS en juegos, avatar, acciones personalizadas persistentes y 60 FPS por juego:** investigaciones no universales. [Roadmap](../../docs/PERFORMANCE_ROADMAP.md).
 
-Esta es la relación de **todos los grandes campos de cambios y optimizaciones desde el comienzo de Encore**. Para cada ajuste menor, commit de pruebas, revisión sin cambio y prototipo descartado se conservan los [registros técnicos completos](MEMORY.md) y el [historial de Git](https://github.com/niakw/ProsperoEden-Encore/commits/main/).
+Esta es la relación de **todos los grandes campos de cambios y optimizaciones desde el comienzo de Encore**. Para cada ajuste menor, commit de pruebas, revisión sin cambio y prototipo descartado se conservan los [registros técnicos completos](../../MEMORY.md) y el [historial de Git](https://github.com/niakw/ProsperoEden-Encore/commits/main/).
 
 </details>
 
@@ -300,7 +322,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 - La prioridad es terminar las **optimizaciones técnicas y estabilizar el rendimiento real** antes de ofrecer nuevas imágenes interpoladas.
 - Queremos una **función de generación de frames mejor gestionada que la del proyecto original**, sin ocultar congelamientos del juego.
-- Es uno de los siguientes objetivos, pero **todavía no hay fecha de lanzamiento garantizada**. [Roadmap](docs/PERFORMANCE_ROADMAP.md).
+- Es uno de los siguientes objetivos, pero **todavía no hay fecha de lanzamiento garantizada**. [Roadmap](../../docs/PERFORMANCE_ROADMAP.md).
 
 </details>
 
@@ -319,7 +341,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 - Se ha probado sobre todo en **firmware 13.60**.
 - FC27 llega al partido, pero se siguen investigando tirones, problemas del HUD y bloqueos.
 - Zelda: Breath of the Wild ha funcionado de forma comparativamente fluida en algunas sesiones.
-- No se garantizan **30 FPS constantes, 60 FPS, 120 Hz ni compatibilidad total**. [Pruebas](docs/FC27_F07_MASTER_TRACKER.md).
+- No se garantizan **30 FPS constantes, 60 FPS, 120 Hz ni compatibilidad total**. [Pruebas](../../docs/FC27_F07_MASTER_TRACKER.md).
 
 </details>
 
@@ -337,7 +359,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 - Se ofrecen ajustes de resolución, filtros, escalado y AA, con límites distintos por juego y memoria gráfica.
 - FSR temporal, generación de frames, modos 60/120 Hz y AA superior son objetivos de investigación; **no se garantizan como función final hoy**.
-- Escalados muy altos pueden provocar falta de memoria. [Roadmap](docs/PERFORMANCE_ROADMAP.md).
+- Escalados muy altos pueden provocar falta de memoria. [Roadmap](../../docs/PERFORMANCE_ROADMAP.md).
 
 </details>
 
@@ -346,7 +368,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 - **Recomendado/probado: 13.60** para Encore. **No es una recomendación de actualizar la consola.**
 - Los firmwares **anteriores podrían funcionar** si el exploit/homebrew, las API nativas, el controlador gráfico y el acceso al sistema de archivos son compatibles. **Firmware mínimo: desconocido; no existe prueba completa de Encore en otras versiones.**
-- El proyecto ProsperoEden original documenta ensayos de su **componente Lapy** en **6.02** y **12.70** ([notas upstream](https://github.com/Swordpdf/ProsperoEden/blob/main/README.md)), pero **Encore usa otro procedimiento de acceso a archivos** heredado de la base v1.000.040 ([notas técnicas](docs/FORK_NOTES.md)). Esas pruebas **no certifican Encore** en estos firmwares.
+- El proyecto ProsperoEden original documenta ensayos de su **componente Lapy** en **6.02** y **12.70** ([notas upstream](https://github.com/Swordpdf/ProsperoEden/blob/main/README.md)), pero **Encore usa otro procedimiento de acceso a archivos** heredado de la base v1.000.040 ([notas técnicas](../../docs/FORK_NOTES.md)). Esas pruebas **no certifican Encore** en estos firmwares.
 - Los firmwares posteriores tampoco están validados. Consulta las notas y el SHA de cada release.
 
 </details>
@@ -357,7 +379,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 - **NSP/XCI:** contenedores estándar detectados en la biblioteca.
 - **NSZ/XCZ:** lectura experimental con límites y pruebas de consola pendientes.
 - **NRO/NSO/NCA/NAX/KIP:** selección directa y directorios ExeFS, pero algunos necesitan contenido adicional para ejecutarse.
-- **LZ4 y ZBIC/zstd** son métodos de compresión de los ejecutables NSO, no extensiones de juego. [Matriz](docs/CONTENT_FORMAT_MATRIX_2026-10-23.md).
+- **LZ4 y ZBIC/zstd** son métodos de compresión de los ejecutables NSO, no extensiones de juego. [Matriz](../../docs/CONTENT_FORMAT_MATRIX_2026-10-23.md).
 
 </details>
 
@@ -366,7 +388,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 - El **lanzador** dispone de mapeos físicos DualSense, zonas muertas y vibración.
 - Los controles guardados **por cada juego** y sus propios iconos de Switch son otra cosa.
-- La sustitución universal por símbolos PlayStation **aún no está implementada**. [Detalles](docs/PS5_INGAME_GLYPHS.md).
+- La sustitución universal por símbolos PlayStation **aún no está implementada**. [Detalles](../../docs/PS5_INGAME_GLYPHS.md).
 
 </details>
 
@@ -383,7 +405,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 - Es un proyecto comunitario **no oficial**, basado en ProsperoEden y Eden, con atribución a sus autores.
 - No incluye contenido comercial, claves privadas, firmware ni juegos. Utiliza solo archivos para los que tengas autorización.
-- [Créditos originales](README.md#credits) · [Licencias](THIRD_PARTY_NOTICES.md).
+- [Créditos originales](../../README.md#credits) · [Licencias](../../THIRD_PARTY_NOTICES.md).
 
 </details>
 
@@ -392,8 +414,8 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 - **No existe sincronización automática con el proyecto original.** La base documentada es **ProsperoEden v1.000.040**. Los cambios posteriores del port nativo y de Eden se comparan y se adaptan **selectivamente** tras comprobar dependencias, Vulkan, JIT/memoria y regresiones. Una característica de una versión nueva de ProsperoEden **no está necesariamente presente en Encore**.
 - **Aún no hay actualizador integrado de Encore.** El hito **R21** plantea búsqueda manual, comprobación opcional al iniciar, información de versiones, descarga verificada, instalación confirmada y posibilidad de recuperación. Es **una especificación, no una función ya publicada**. [Roadmap R21](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
-- Por ahora utiliza las **[Releases oficiales de Encore](https://github.com/niakw/ProsperoEden-Encore/releases)** y la [guía de actualización](INSTALL.md). **No sobrescribas Encore con el ZIP original de ProsperoEden** únicamente porque su versión sea más reciente: pueden compartir ID de aplicación **PPSA99008** y rutas de datos, pero no el código ni los procesos de migración.
-- [ProsperoEden original](https://github.com/blackbearreloaded/ProsperoEden) · [diferencias upstream](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md) · [auditoría de versión nativa](docs/UPSTREAM_PROSPEROEDEN_1001000_R428.md).
+- Por ahora utiliza las **[Releases oficiales de Encore](https://github.com/niakw/ProsperoEden-Encore/releases)** y la [guía de actualización](../../INSTALL.md). **No sobrescribas Encore con el ZIP original de ProsperoEden** únicamente porque su versión sea más reciente: pueden compartir ID de aplicación **PPSA99008** y rutas de datos, pero no el código ni los procesos de migración.
+- [ProsperoEden original](https://github.com/blackbearreloaded/ProsperoEden) · [diferencias upstream](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md) · [auditoría de versión nativa](../../docs/UPSTREAM_PROSPEROEDEN_1001000_R428.md).
 
 </details>
 
@@ -414,6 +436,6 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 
 Encore es un fork comunitario **no oficial**, publicado bajo **GPL-3.0-or-later**. No ofrece un entorno de seguridad infalible después de elevar privilegios y no distribuye juegos comerciales, firmware ni claves.
 
-**Créditos completos y atribuciones de cada proyecto:** [README en inglés](README.md#credits) · [componentes de terceros](THIRD_PARTY_NOTICES.md) · [licencia](LICENSE) · [fuentes y licencias](LICENSES/).
+**Créditos completos y atribuciones de cada proyecto:** [README en inglés](../../README.md#credits) · [componentes de terceros](../../THIRD_PARTY_NOTICES.md) · [licencia](../../LICENSE) · [fuentes y licencias](../../LICENSES/).
 
-[Seguridad](SECURITY.md) · [Contribuir](CONTRIBUTING.md) · [Soporte](SUPPORT.md) · [Código de conducta](CODE_OF_CONDUCT.md).
+[Seguridad](../../SECURITY.md) · [Contribuir](../../CONTRIBUTING.md) · [Soporte](../../SUPPORT.md) · [Código de conducta](../../CODE_OF_CONDUCT.md).

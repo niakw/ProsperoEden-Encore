@@ -6,6 +6,8 @@
 
 **31/10 — R04, boucle GPU dirty multi-régions (qualification hôte) :** après le premier fragment jusqu'à la frontière 2 Kio, l'adresse est alignée. `GpuDirty::ForEachRegion` traite désormais les blocs complets de 2 Kio sans recalcul de masque/modulo ni `std::min` à chaque itération, et garde une fin partielle exacte. Ordre des `Collect`, bitmap 32×64 octets, arrêt sur dépassement `u64`, zéro écriture et durée de vie inchangés ; témoin source-sélectionné renforcé. Microbenchmark hôte multi-régions favorable (Clang/GCC), **aucun gain FPS console revendiqué**. Ne ferme aucune autre case F07 : **22/29**.
 
+**31/10 — J01, cache négatif sparse (optimisation hôte à qualifier) :** `src/memory_pages.cpp::SparseRangeOf` vérifie désormais les adresses exactes négatives de la génération courante **avant** les deux indices positifs TLS. Le verrou `sparse_mutex` sérialise topologie et recherche ; création/retrait de plage invalident la génération, aucune réponse négative périmée ne survit. Le témoin source-extrait `tools/check-native-sparse-range-prefix-host.py` exige désormais **zéro lecture atomique `SparseRange::begin`** sur 10 000 répétitions d'une adresse négative et sur 10 000 alternances de quatre adresses, tout en rejouant la republication, les 64 slots et le recyclage concurrent. **CI du HEAD et gains PS5 à qualifier ; F07 22/29, J01 ouvert.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

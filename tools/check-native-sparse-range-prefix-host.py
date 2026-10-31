@@ -36,9 +36,11 @@ assert source.count("++sparse_range_generation;") == 2
 assert "static thread_local std::array<std::uintptr_t, 4> last_negative_addresses{};" in lookup
 assert "last_negative_generation == sparse_range_generation" in lookup
 assert "last_negative_addresses[i] == address" in lookup
+assert "an exact miss from this unchanged topology is" in lookup
 assert "negative_count = 0;" in lookup and "next_negative_slot = 0;" in lookup
 assert "next_negative_slot = (next_negative_slot + 1u) & 3u;" in lookup
-assert lookup.index("last_negative_addresses[i] == address") < lookup.index("i < sparse_used_prefix")
+assert lookup.index("last_negative_addresses[i] == address") < lookup.index("for (unsigned probe")
+assert lookup.index("for (unsigned probe") < lookup.index("i < sparse_used_prefix")
 assert lookup.index("last_negative_addresses[next_negative_slot] = address;") > lookup.index("i < sparse_used_prefix")
 assert source.count("sparse_used_prefix = (std::max)(") == 1
 pub_start = source.index("    sparse_used_prefix = (std::max)(")
@@ -180,7 +182,7 @@ int main() {
     assert(scans.load() >= 3);
     scans = 0;
     for (int i = 0; i < 10000; ++i) assert(!Lookup(0xdead0000));
-    assert(scans.load() <= 20000); // only two positive hints per miss
+    assert(scans.load() == 0); // same-epoch exact misses bypass positive atomics
     // Four alternating exact dense addresses must remain negative-cache
     // hits, without four repeated 64-entry scans each cycle.
     const std::uintptr_t dense_addresses[4]{
@@ -190,7 +192,7 @@ int main() {
     scans = 0;
     for (int i = 0; i < 10000; ++i)
         assert(!Lookup(dense_addresses[i & 3]));
-    assert(scans.load() <= 20000); // only the two retained positive hints
+    assert(scans.load() == 0); // all four cached misses bypass positive atomics
     // A fifth distinct miss can evict the oldest negative hint safely.
     assert(!Lookup(0xcafe5000));
     assert(!Lookup(dense_addresses[0]));

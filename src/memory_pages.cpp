@@ -713,17 +713,9 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
     static thread_local std::uint64_t last_negative_generation = 0;
     static thread_local unsigned negative_count = 0;
     static thread_local unsigned next_negative_slot = 0;
-    for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
-        const unsigned slot = preferred_slot ^ probe;
-        SparseRange* candidate = last_ranges[slot];
-        if (!candidate) continue;
-        const auto begin = candidate->begin.load(std::memory_order_acquire);
-        if (begin != 0 && address >= begin && address < candidate->end) {
-            // One cold preference change; stable runs then need one load.
-            if (probe != 0) preferred_slot = slot;
-            return candidate;
-        }
-    }
+    // Under sparse_mutex, an exact miss from this unchanged topology is
+    // definitive. Reject it before probing positive TLS hints: repeated
+    // dense page-table addresses then require zero SparseRange atomics.
     // Cache only exact misses: sparse reservations can be unaligned on
     // hosts. Mutations bump the topology generation under this same mutex.
     if (last_negative_generation == sparse_range_generation) {
@@ -735,6 +727,17 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
         last_negative_generation = sparse_range_generation;
         negative_count = 0;
         next_negative_slot = 0;
+    }
+    for (unsigned probe = 0; probe < last_ranges.size(); ++probe) {
+        const unsigned slot = preferred_slot ^ probe;
+        SparseRange* candidate = last_ranges[slot];
+        if (!candidate) continue;
+        const auto begin = candidate->begin.load(std::memory_order_acquire);
+        if (begin != 0 && address >= begin && address < candidate->end) {
+            // One cold preference change; stable runs then need one load.
+            if (probe != 0) preferred_slot = slot;
+            return candidate;
+        }
     }
     for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
         auto& range = sparse_ranges[i];

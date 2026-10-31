@@ -13,6 +13,7 @@ on:
       - 'tools/ns2/test_program_metadata.cpp'
       - 'tools/ns2/test_real_kcapabilities.py'
       - 'tools/ns2/test_real_kprocess_loadmodule.py'
+      - 'tools/ns2/test_real_kprocess_metadata.py'
       - 'headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h'
       - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
       - 'headless/ns2/overrides/core/loader/ns2_nso_preflight.h'
@@ -104,6 +105,13 @@ jobs:
           set -euo pipefail
           python3 tools/ns2/test_real_kcapabilities.py \
             --npdm build-ns2-jit/public-exefs/main.npdm
+      - name: Execute actual KProcess LoadFromMetadata parameter path under host fakes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/test_real_kprocess_metadata.py \
+            --npdm build-ns2-jit/public-exefs/main.npdm \
+            --nso build-ns2-jit/public-exefs/main
       - name: Run unchanged KProcess LoadModule on real public NSO under host memory fakes
         shell: bash
         run: |

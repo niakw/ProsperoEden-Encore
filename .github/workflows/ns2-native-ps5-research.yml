@@ -149,7 +149,7 @@ jobs:
           artifacts = [output, dest / "Prospero.Eden-Encore-NS1-NS2-research.ffpfsc"]
           assert all(p.stat().st_size > 1024 for p in artifacts)
           (dest / "SHA256SUMS").write_text("".join(
-              hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\\n"
+              hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n"
               for p in artifacts
           ))
           print("NS2_RESEARCH_INSTALLABLE_OUTPUT_PASS", len(artifacts))

@@ -301,25 +301,53 @@ inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
     namespace fs = std::filesystem;
     std::vector<fs::path> found;
     if (!IsSafeExtractedDirectory(title_root)) return found;
+    // The base may be extracted or packaged in an arbitrary wrapper. Its
+    // package must never be counted as an additional content package.
+    const auto base_relative = FindGameFolderInput(title_root);
+    const fs::path base_package = base_relative.empty() ? fs::path{} :
+                                  title_root / fs::path(base_relative);
     std::size_t visited = 0;
     const auto scan = [&](const auto& self, const fs::path& dir, unsigned depth) -> void {
         if (depth > 5 || ++visited > 128 || found.size() >= 32) return;
         std::error_code error;
         std::vector<fs::path> subdirs;
-        std::size_t enumerated = 0;
+        bool loose_add_on = false;
+        std::size_t examined = 0;
         for (fs::directory_iterator it{dir, fs::directory_options::skip_permission_denied, error},
                                     end;
-             !error && it != end && enumerated++ < 128; it.increment(error)) {
-            const fs::path path = it->path();
+             !error && it != end && examined++ < 128; it.increment(error)) {
+            const auto path = it->path();
             const auto name = path.filename().string();
-            if (name.empty() || name.front() == '.' ||
-                IsExtractedAssetFolderName(name)) continue;
-            if (!IsSafeExtractedDirectory(path)) continue;
-            if (IsAddOnContainerName(name)) {
-                found.push_back(path);
-            } else {
-                subdirs.push_back(path);
+            if (name.empty() || name.front() == '.') continue;
+            if (IsSafeExtractedDirectory(path)) {
+                // Do not descend into extracted payloads or into a detected
+                // add-on container: the native package provider handles the
+                // latter recursively using package CNMT/Title ID metadata.
+                if (IsExtractedAssetFolderName(name)) continue;
+                if (IsAddOnContainerName(name)) {
+                    found.push_back(path);
+                } else {
+                    subdirs.push_back(path);
+                }
+                continue;
             }
+            // A package with any name in any wrapper can be an update/DLC.
+            // Do not rely on a "dlc" filename prefix; the native provider
+            // classifies its actual content records. Ignore symlinks.
+            error.clear();
+            const auto status = fs::symlink_status(path, error);
+            if (error) { error.clear(); continue; }
+            if (fs::is_regular_file(status) && !fs::is_symlink(status) &&
+                (IsPackageFile(name) || IsCardImageFile(name)) &&
+                path != base_package)
+                loose_add_on = true;
+        }
+        if (loose_add_on) {
+            // Provider takes directories, not individual packages. This root
+            // includes all local packages and their nested add-on wrappers.
+            // Avoid registering descendants twice or opening extracted RomFS.
+            found.push_back(dir);
+            return;
         }
         std::sort(subdirs.begin(), subdirs.end());
         for (const auto& child : subdirs) {
@@ -328,27 +356,19 @@ inline std::vector<std::filesystem::path> FindAddOnContentDirectories(
         }
     };
     scan(scan, title_root, 0);
-    // A loose NSP/XCI beside a base can itself be an update or DLC.
-    // Include the title folder when such a package exists, allowing the
-    // native provider to decide from actual CNMT metadata. The provider
-    // explicitly skips expanded romfs/exefs trees. Selecting the whole
-    // folder here avoids inventing a fragile name/version convention.
-    const auto base_input = FindGameFolderInput(title_root);
-    std::error_code loose_error;
-    for (fs::directory_iterator it{
-             title_root, fs::directory_options::skip_permission_denied, loose_error},
-         end; !loose_error && it != end; it.increment(loose_error)) {
-        const auto path = it->path();
-        const auto name = path.filename().string();
-        if ((!IsPackageFile(name) && !IsCardImageFile(name)) ||
-            name == base_input) continue;
-        const auto status = fs::symlink_status(path, loose_error);
-        if (loose_error) break;
-        if (!fs::is_regular_file(status) || fs::is_symlink(status)) continue;
-        return {title_root}; // A single root covers its nested add-on paths.
-    }
     std::sort(found.begin(), found.end());
     found.erase(std::unique(found.begin(), found.end()), found.end());
+    // An already-selected parent covers its descendants for the provider.
+    found.erase(std::remove_if(found.begin(), found.end(), [&](const fs::path& child) {
+        for (const auto& parent : found) {
+            if (child == parent) continue;
+            const auto relative = child.lexically_relative(parent);
+            if (!relative.empty() && *relative.begin() != ".." &&
+                *relative.begin() != ".")
+                return true;
+        }
+        return false;
+    }), found.end());
     return found;
 }
 } // namespace Eden

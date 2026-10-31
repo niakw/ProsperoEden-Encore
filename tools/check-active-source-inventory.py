@@ -17,11 +17,29 @@ begin, end = "<!-- ACTIVE_SOURCE_CATALOG_START -->", "<!-- ACTIVE_SOURCE_CATALOG
 assert document.count(begin) == document.count(end) == 1
 section = document.split(begin, 1)[1].split(end, 1)[0]
 suffixes = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".inc", ".inl", ".s", ".S", ".asm", ".cl"}
-physical = sorted(
+physical_all = sorted(
     p.relative_to(active).as_posix()
     for p in active.rglob("*")
     if p.is_file() and p.suffix in suffixes
 )
+# Preserve the audited production source catalogue. The NS2 research sources
+# are tracked separately and explicitly; they are not F07 shipping proofs.
+research_manifest = json.loads(
+    (root / "docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text()
+)
+research_paths = research_manifest["paths"]
+assert research_manifest["schema_version"] == 1
+assert len(research_paths) == len(set(research_paths)) == 103
+assert research_paths == sorted(research_paths)
+assert set(research_paths) <= set(physical_all), (
+    "Missing pinned NS2 research source owners", sorted(set(research_paths) - set(physical_all))
+)
+assert all(p.startswith(("ns2-", "eden-core/include/", "eden-vulkan/include/"))
+           for p in research_paths), "Unreviewed NS2 source category"
+physical = [p for p in physical_all if p not in set(research_paths)]
+assert len(physical) == 331, ("Historical source catalogue changed", len(physical))
+print("NS2_RESEARCH_SOURCE_LEDGER_PASS",
+      f"unqualified={len(research_paths)}", f"historical={len(physical)}")
 graph = {}
 for line in audit.splitlines():
     if not re.match(r"^\| [A-Z][0-9]{2,3} \|", line):

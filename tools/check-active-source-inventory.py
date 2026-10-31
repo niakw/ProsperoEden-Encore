@@ -38,8 +38,8 @@ assert all(p.startswith(("ns2-", "eden-core/include/", "eden-vulkan/include/"))
            for p in research_paths), "Unreviewed NS2 source category"
 # Four extracted AOC translation/header owners arrived with the mainline
 # installation integration. They are shipping additions, not historical F07
-# owners and not opt-in NS2 research files. Keep the 333-file F07 baseline
-# immutable while requiring an exact, separately named AOC inventory.
+# owners and not opt-in NS2 research files. Keep the historical F07 review
+# immutable for optimization triage while cataloguing AOC in shipping ownership.
 extracted_aoc_owners = {
     "eden-core/src/core/file_sys/extracted_aoc.h",
     "eden-core/src/core/file_sys/extracted_aoc_paths.h",
@@ -59,8 +59,7 @@ assert '"hle/service/aoc/addon_content_manager.cpp"' in aoc_recipe
 assert 'list(REMOVE_ITEM core_sources "${eden_aoc_relative}")' in aoc_recipe
 assert 'list(APPEND core_sources "${eden_aoc_maintained}")' in aoc_recipe
 print("ENCORE_EXTRACTED_AOC_OWNER_PASS", f"new_shipping={len(extracted_aoc_owners)}")
-physical = [p for p in physical_all
-            if p not in set(research_paths) and p not in extracted_aoc_owners]
+physical = [p for p in physical_all if p not in set(research_paths)]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -69,7 +68,7 @@ warning_hygiene = {
 }
 assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_hygiene, (
     "Warning-hygiene active owner drift")
-assert len(physical) == 333, ("Historical source catalogue changed", len(physical))
+assert len(physical) == 337, ("Shipping source catalogue changed", len(physical))
 print("NS2_RESEARCH_SOURCE_LEDGER_PASS",
       f"unqualified={len(research_paths)}", f"historical={len(physical)}")
 graph = {}
@@ -150,7 +149,7 @@ print("ENCORE_NATIVE_MEMORY_OWNER_PASS", f"headers={len(native_mem)}")
 # Maintained core code and headers must never be silently omitted from the
 # function-owner register. Do not confuse an indexed path with a HOST proof.
 maintained_core_paths = [path for path in physical if path.startswith("eden-core/")]
-assert len(maintained_core_paths) == 163, ("maintained core source set changed", len(maintained_core_paths))
+assert len(maintained_core_paths) == 167, ("maintained core source set changed", len(maintained_core_paths))
 assert all(path in graph for path in maintained_core_paths), (
     "uncatalogued maintained core source paths",
     [path for path in maintained_core_paths if path not in graph],

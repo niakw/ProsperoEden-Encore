@@ -110,6 +110,8 @@ Le paquet ZIP contient le dossier natif `PPSA99008/`. Une image FFPFSC peut éga
 
 Avec un disque externe, seule la racine change : les sous-dossiers restent identiques. **Ne supprime pas les anciennes données persistantes avant une migration**. Aucun jeu, clé, firmware propriétaire ou DLC n'est fourni.
 
+**Pour remplacer le dossier natif ProsperoEden :** les deux applications partagent l'identifiant `PPSA99008` et le dossier `/data/homebrew/PPSA99008/`. **Sauvegarde intégralement le dossier de l'application (ancien `assets/` inclus), `/data/prosperoeden/` et toute racine externe** ; copie ensuite le dossier complet de l'application Encore à la place des fichiers natifs **sans supprimer les données historiques**, puis vérifie la migration au lancement. Ce n'est **pas une seconde installation indépendante**. Procédure détaillée : **[passer de ProsperoEden natif à Encore](INSTALL.md#upgrade-from-native)**. Un ZIP du port natif amont n'est pas une mise à jour Encore.
+
 **Guide complet :** [INSTALL.md](INSTALL.md) · [Compiler Encore](docs/BUILDING.md) · [Aide](SUPPORT.md).
 
 ---

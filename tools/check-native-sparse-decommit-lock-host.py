@@ -36,6 +36,7 @@ assert compiler, "C++20 compiler required"
 prefix = r'''
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -54,6 +55,7 @@ struct SparseRange {
 };
 std::array<SparseRange, 64> sparse_ranges{};
 std::size_t sparse_used_prefix = 0;
+std::uint64_t sparse_live_slots = 0;
 std::uint64_t sparse_range_generation = 1; // same mutex-owned topology epoch as source
 std::mutex sparse_mutex;
 std::atomic<std::size_t> sparse_committed{0};
@@ -76,6 +78,7 @@ int main() {
     range.end = reinterpret_cast<std::uintptr_t>(p) + 2 * SparseSlot;
     range.begin.store(reinterpret_cast<std::uintptr_t>(p), std::memory_order_release);
     sparse_used_prefix = 1; // slot zero is now published, matching production
+    sparse_live_slots = 1; // same owner-lock publication as production
     ++sparse_range_generation;
     sparse_committed.store(2 * SparseSlot);
     DecommitSparsePage(reinterpret_cast<std::uintptr_t>(p));
@@ -97,8 +100,10 @@ int main() {
         for (int i = 0; i < 4096; ++i) {
             std::lock_guard lock{sparse_mutex};
             range.begin.store(0, std::memory_order_release);
+            sparse_live_slots = 0;
             range.end = reinterpret_cast<std::uintptr_t>(p) + 2 * SparseSlot;
             range.begin.store(reinterpret_cast<std::uintptr_t>(p), std::memory_order_release);
+            sparse_live_slots = 1;
             ++sparse_range_generation; // retirement and re-registration invalidate misses
         }
     });

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -697,6 +698,9 @@ std::mutex sparse_mutex;
 // the bound must still be searched; retire only a completely free tail.
 // Registering a new range grows the bound again before releasing the mutex.
 std::size_t sparse_used_prefix = 0;
+// Under sparse_mutex, skip free slots in a 64-entry table with holes.
+static_assert(sparse_ranges.size() == 64);
+std::uint64_t sparse_live_slots = 0;
 // Protected by sparse_mutex. Changing the range topology invalidates exact
 // negative lookup hints without touching the positive per-worker range hints.
 std::uint64_t sparse_range_generation = 1;
@@ -761,8 +765,11 @@ SparseRange* SparseRangeOf(std::uintptr_t address) {
             return candidate;
         }
     }
-    for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
-        auto& range = sparse_ranges[i];
+    auto remaining_slots = sparse_live_slots;
+    while (remaining_slots != 0) {
+        const auto index = static_cast<std::size_t>(std::countr_zero(remaining_slots));
+        remaining_slots &= remaining_slots - 1;
+        auto& range = sparse_ranges[index];
         // Already checked under the same lock; avoid a second atomic read.
         if (&range == last_ranges[0] || &range == last_ranges[1]) continue;
         const auto begin = range.begin.load(std::memory_order_acquire);
@@ -875,6 +882,7 @@ void ReleaseSparse(SparseRange& range) {
     sparse_reserved.fetch_sub(span, std::memory_order_relaxed);
     sparse_committed.fetch_sub(owned * SparseSlot, std::memory_order_relaxed);
     range.begin.store(0, std::memory_order_release);
+    sparse_live_slots &= ~(std::uint64_t{1} << static_cast<unsigned>(&range - sparse_ranges.data()));
     ++sparse_range_generation; // retire exact negative hints under sparse_mutex
     // No readers can inspect the non-atomic range metadata without
     // sparse_mutex. A released high slot cannot force later first commits
@@ -992,6 +1000,7 @@ void* AllocateSparsePages(std::size_t size) noexcept {
                 free_range->physical = physical;
                 free_range->end = reinterpret_cast<std::uintptr_t>(address) + span;
                 free_range->begin.store(reinterpret_cast<std::uintptr_t>(address), std::memory_order_release);
+                sparse_live_slots |= std::uint64_t{1} << static_cast<unsigned>(free_range - sparse_ranges.data());
                 // Only initialized metadata is published to readers/commits.
                 sparse_used_prefix = (std::max)(
                     sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);

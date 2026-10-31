@@ -15,7 +15,10 @@ assert source.count(header) == 1
 start = source.index(header)
 stop = source.index("\n}\n", start) + len("\n}")
 lookup = source[start:stop]
-assert "i < sparse_used_prefix" in lookup
+assert "while (remaining_slots != 0)" in lookup
+assert "std::countr_zero(remaining_slots)" in lookup
+assert "remaining_slots &= remaining_slots - 1;" in lookup
+assert "auto remaining_slots = sparse_live_slots;" in lookup
 assert "range.begin.load(std::memory_order_acquire)" in lookup
 assert "address < range.end" in lookup
 assert "static thread_local std::array<SparseRange*, 2> last_ranges{};" in lookup
@@ -31,6 +34,9 @@ assert lookup.index("if (sparse_used_prefix == 0) return nullptr;") < lookup.ind
     "static thread_local std::array<SparseRange*, 2> last_ranges{};")
 assert "if (sparse_used_prefix != 0)" not in lookup
 assert "std::size_t sparse_used_prefix = 0;" in source
+assert "std::uint64_t sparse_live_slots = 0;" in source
+assert source.count("sparse_live_slots |=") == 1
+assert source.count("sparse_live_slots &=") == 1
 assert "std::uint64_t sparse_range_generation = 1;" in source
 assert source.count("++sparse_range_generation;") == 2
 assert "static thread_local std::array<std::uintptr_t, 4> last_negative_addresses{};" in lookup
@@ -43,14 +49,17 @@ assert "next_negative_slot = (next_negative_slot + 1u) & 3u;" in lookup
 assert lookup.index("last_negative_addresses[(next_negative_slot + 3u) & 3u] == address") < lookup.index("if (SparseRange* candidate = last_ranges[preferred_slot])")
 assert lookup.index("if (SparseRange* candidate = last_ranges[preferred_slot])") < lookup.index("last_negative_addresses[i] == address")
 assert lookup.index("last_negative_addresses[i] == address") < lookup.index("const unsigned alternate = preferred_slot ^ 1u;")
-assert lookup.index("const unsigned alternate = preferred_slot ^ 1u;") < lookup.index("i < sparse_used_prefix")
-assert lookup.index("last_negative_addresses[next_negative_slot] = address;") > lookup.index("i < sparse_used_prefix")
+assert lookup.index("const unsigned alternate = preferred_slot ^ 1u;") < lookup.index("auto remaining_slots = sparse_live_slots;")
+assert lookup.index("last_negative_addresses[next_negative_slot] = address;") > lookup.index("auto remaining_slots = sparse_live_slots;")
 assert source.count("sparse_used_prefix = (std::max)(") == 1
 pub_start = source.index("    sparse_used_prefix = (std::max)(")
 pub_end = source.index(";", pub_start) + 1
 publish = source[pub_start:pub_end]
 assert publish.endswith("free_range - sparse_ranges.data()) + 1);")
-assert source.index("free_range->begin.store(") < pub_start
+assert source.index("free_range->begin.store(") < source.index("sparse_live_slots |=") < pub_start
+publish_mask = "                sparse_live_slots |= std::uint64_t{1} << static_cast<unsigned>(free_range - sparse_ranges.data());"
+retire_mask = "    sparse_live_slots &= ~(std::uint64_t{1} << static_cast<unsigned>(&range - sparse_ranges.data()));"
+assert publish_mask in source and retire_mask in source
 assert source.index("free_range->end =") < pub_start
 allocate = source.split("void* AllocateSparsePages(std::size_t size) noexcept {", 1)[1]
 choose_start = allocate.index("    SparseRange* free_range = nullptr;")
@@ -92,6 +101,7 @@ fixture = r"""
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cassert>
 #include <cstdint>
 #include <cstddef>
@@ -122,6 +132,7 @@ struct SparseRange {
 std::array<SparseRange, 64> sparse_ranges{};
 std::mutex sparse_mutex;
 std::size_t sparse_used_prefix = 0;
+std::uint64_t sparse_live_slots = 0;
 std::uint64_t sparse_range_generation = 1;
 constexpr std::size_t SparseSlot = 2u << 20;
 std::atomic<std::size_t> sparse_reserved{0};
@@ -157,12 +168,15 @@ void Register(unsigned slot, std::uintptr_t begin) {
     assert(free_range->begin.load(std::memory_order_relaxed) == 0);
     free_range->end = begin + 4096;
     free_range->begin.store(begin, std::memory_order_release);
+__PUBLISH_MASK__
 __PUBLISH__
     ++sparse_range_generation;
 }
 void Release(unsigned slot) {
     std::lock_guard lock{sparse_mutex};
-    sparse_ranges[slot].begin.store(0, std::memory_order_release);
+    SparseRange& range = sparse_ranges[slot];
+    range.begin.store(0, std::memory_order_release);
+__RETIRE_MASK__
 __SHRINK__
     ++sparse_range_generation;
 }
@@ -183,6 +197,7 @@ void ReleaseAllocation(void* address) {
     range->owned = nullptr;
     range->physical = nullptr;
     range->begin.store(0, std::memory_order_release);
+    sparse_live_slots &= ~(std::uint64_t{1} << static_cast<unsigned>(range - sparse_ranges.data()));
     ++sparse_range_generation;
     while (sparse_used_prefix > 0 &&
            sparse_ranges[sparse_used_prefix - 1].begin.load(std::memory_order_relaxed) == 0)
@@ -225,6 +240,10 @@ int main() {
     scans = 0;
     assert(ChooseFreeRange() == &sparse_ranges[2] && scans.load() == 3);
     assert(sparse_used_prefix == 64);
+    // Slots 0, 1 and 63 are live; skip 61 empty begin atomics.
+    scans = 0;
+    assert(!Lookup(0xdead1000));
+    assert(scans.load() <= 3);
     assert(Lookup(0x5001) == &sparse_ranges[63]);
     scans = 0;
     for (int i = 0; i < 10000; ++i)
@@ -360,7 +379,7 @@ int main() {
     assert(reinterpret_cast<std::uintptr_t>(AllocateSparsePages(2 * SparseSlot)) == DenseSentinel);
     assert(dense_fallbacks == 2 && sparse_used_prefix == 0);
 }
-""".replace("__LOOKUP__", lookup).replace("__SELECT_FREE__", selection).replace("__PUBLISH__", publish).replace("__SHRINK__", shrink).replace("__ALLOCATE__", allocation)
+""".replace("__LOOKUP__", lookup).replace("__SELECT_FREE__", selection).replace("__PUBLISH_MASK__", publish_mask).replace("__PUBLISH__", publish).replace("__RETIRE_MASK__", retire_mask).replace("__SHRINK__", shrink).replace("__ALLOCATE__", allocation)
 with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
     src = Path(tmp) / "sparse.cpp"
     src.write_text(fixture)

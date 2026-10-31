@@ -83,17 +83,29 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
         # The old patches are replayed to a temporary tree as a parity oracle.
         # The source installed into the native build comes only from Encore.
         maintained = ACTIVE / relative
-        if not maintained.is_file() or maintained.read_bytes() != new:
-            raise RuntimeError(
-                f"Maintained active-core source differs from audited patch: {relative}"
-            )
+        if not maintained.is_file():
+            raise RuntimeError(f"Missing maintained active-core source: {relative}")
+        maintained_bytes = maintained.read_bytes()
+        if maintained_bytes != new:
+            # N76 is a guarded, exact additive extension of the canonical
+            # A64 JIT source; reject all other source drift.
+            if relative != "src/core/arm/dynarmic/arm_dynarmic_64.cpp":
+                raise RuntimeError(f"Unreviewed active-core patch drift: {relative}")
+            header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
+            guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
+            original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
+            if (maintained_bytes.count(header) != 1 or
+                    maintained_bytes.count(guest_counter) != 1 or
+                    maintained_bytes.replace(header, b"").replace(
+                        guest_counter, original_counter) != new):
+                raise RuntimeError("N76 modified unrelated native A64 source")
         current = target.read_bytes()
-        if current == new:
+        if current == maintained_bytes:
             continue
-        if check or current != old:
+        if check or current not in (old, new):
             raise RuntimeError(
                 f"Active source missing/unknown revision: {relative} "
-                f"current={sha(current)} base={sha(old)} active={sha(new)}"
+                f"current={sha(current)} base={sha(old)} active={sha(maintained_bytes)}"
             )
         with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as handle:
             tmp = Path(handle.name)

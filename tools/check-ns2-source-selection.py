@@ -41,7 +41,8 @@ def main() -> int:
                 "Obsolete duplicate Ampere/ISA tree must not return")
         ampere_smoke = (ROOT / "tools/check-ns2-ampere-host.py").read_text()
         require('OVERLAY=ROOT/"vendor/encore-active/ns2-runtime/ampere"' in ampere_smoke and
-                '"probe.cpp"' in ampere_smoke and
+                'PROBE = OVERLAY / "shader_recompiler/frontend/ampere/probe.cpp"' in ampere_smoke and
+                'str(PROBE)' in ampere_smoke and
                 'headless/ns2/gpu' not in ampere_smoke,
                 "Host Ampere ISA tests must use the real renderer-selected source owner")
         # Refuse the regression to duplicated/outdated whole engine owners.

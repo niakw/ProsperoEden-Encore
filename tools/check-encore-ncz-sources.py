@@ -69,7 +69,7 @@ library=(root/"headless/prosperoeden/eden_services.cpp").read_text()
 # The TV scanner also accepts validated ExeFS folders, so it must use
 # ValidRomFilename rather than the old extension-only IsGameFile gate.
 assert "if (!Eden::ValidRomFilename(file)) continue;" in library
-assert "Eden::IsDeconstructedGameDirectory(entry.path())" in library
+assert "Eden::FindDeconstructedGameMain(entry.path())" in library
 assert 'format != "NSP" && format != "XCI"' not in library
 assert "game.format = format;" in library
 formats=(".nsp",".xci",".nsz",".xcz",".nro",".nso",".nca",".nax",".kip")

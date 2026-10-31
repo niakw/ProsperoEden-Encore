@@ -1869,6 +1869,7 @@ if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)
         "${EDEN_N76_CLOCK_ROOT}/src/core/arm/dynarmic/arm_dynarmic_64.cpp")
     foreach(n76_file IN ITEMS
         "${EDEN_N76_GUEST_COUNTER_HEADER}"
+        "${EDEN_N76_CLOCK_ROOT}/include/common/cpu_features.h"
         "${EDEN_N76_NATIVE_CPU_SOURCE}"
         "${EDEN_N76_NATIVE_JIT_SOURCE}")
         if(NOT EXISTS "${n76_file}")

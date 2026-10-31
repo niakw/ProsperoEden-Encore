@@ -32,7 +32,7 @@ target_link_libraries(ns2_lse_jit_test PRIVATE dynarmic fmt::fmt Threads::Thread
 add_executable(ns2_public_nso_jit_test
     "${CMAKE_CURRENT_LIST_DIR}/test_public_nso_jit.cpp")
 target_include_directories(ns2_public_nso_jit_test BEFORE PRIVATE
-    "${REPO}/headless/ns2/overrides"
+    "${REPO}/vendor/encore-active/ns2-helpers/include"
     "${REPO}/headless/ns2/cpu6")
 target_include_directories(ns2_public_nso_jit_test PRIVATE "${DYN}" "${DYN}/src")
 target_link_libraries(ns2_public_nso_jit_test PRIVATE

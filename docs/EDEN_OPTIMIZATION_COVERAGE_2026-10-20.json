@@ -31,7 +31,6 @@
       "previous_source_review_document": "docs/EDEN_HEADLESS_RUNTIME_OPTIMIZATION_REVIEW_2026-10-21.md",
       "proof_ref": "tools/check-ps5-audio-output-lock-scope-host.py",
       "evidence": "2026-10-30 main native audio worker: moved only diagnostic nonzero PCM scan outside producer mutex, retaining in-flight and failure accounting under lock and AudioOut device pacing. CI source-extracted O0/O2/O3 ASan/UBSan PASS, console performance unmeasured. Crash-phase instrumentation source reviewed 2026-10-31: fatal-handler-only audio phase snapshot; no performance or gameplay validation. See docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
-      "source_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md",
       "supplemental_review_document": "docs/FC27_AUDIO_CRASH_PHASE_REVIEW_2026-10-31.md"
     },
     {

@@ -2118,9 +2118,9 @@ if(EDEN_NS2_AM_EXPERIMENTAL)
     if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 AM command 320 requires experimental metadata")
     endif()
-    set(EDEN_NS2_AM_ROOT "${PORT_ROOT}/headless/ns2/am")
+    set(EDEN_NS2_AM_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am")
     if(NOT EXISTS "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp"
-       OR NOT EXISTS "${PORT_ROOT}/headless/ns2/am/core/hle/service/am/service/application_functions.h")
+       OR NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.h")
         message(FATAL_ERROR "Missing experimental NS2 AM implementation/header")
     endif()
     get_target_property(eden_ns2_am_sources core SOURCES)
@@ -2142,7 +2142,7 @@ if(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL)
     if(NOT EDEN_NS2_AM_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 graphics scaling requires experimental AM")
     endif()
-    set(EDEN_NS2_SCALE_OWNER "${PORT_ROOT}/headless/ns2/am/core/hle/service/am/service")
+    set(EDEN_NS2_SCALE_OWNER "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service")
     foreach(eden_ns2_scale_file application_proxy.cpp application_proxy.h
                                 graphics_scaling_parameters_functions.cpp
                                 graphics_scaling_parameters_functions.h)
@@ -2172,7 +2172,7 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
     if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 native NVDRV requires experimental metadata")
     endif()
-    set(EDEN_NS2_NVDRV_ROOT "${PORT_ROOT}/headless/ns2/nvdrv")
+    set(EDEN_NS2_NVDRV_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv")
     set(EDEN_NS2_NVDRV_SOURCE
         "${EDEN_NS2_NVDRV_ROOT}/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_SOURCE}" OR
@@ -2190,7 +2190,7 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
         "hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp")
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_SOURCE}")
     # Replace the pinned Maxwell-era nvhost-as-gpu owner only in NS2 research.
-    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/headless/ns2/nvdrv_as")
+    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv_as")
     set(EDEN_NS2_NVDRV_AS_SOURCE
         "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_AS_SOURCE}" OR
@@ -2206,7 +2206,7 @@ if(EDEN_NS2_NVDRV_EXPERIMENTAL)
         "hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")
     # Native GPFIFO/CMDDMA adapter: never replace the shipping source owner.
-    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/headless/ns2/nvdrv_gpu")
+    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv_gpu")
     set(EDEN_NS2_NVDRV_GPU_SOURCE
         "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_GPU_SOURCE}" OR
@@ -2233,7 +2233,7 @@ if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
     if(NOT EDEN_NS2_NVDRV_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 GPU session requires native NVDRV research mode")
     endif()
-    set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/headless/ns2/gpu_session")
+    set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_session")
     set(EDEN_NS2_GPU_SESSION_SOURCE
         "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.cpp")
     set(EDEN_NS2_GPU_WORKER_SOURCE
@@ -2245,7 +2245,7 @@ if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
        NOT EXISTS "${EDEN_NS2_GPU_SHARED_SOURCE}" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.h" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.h" OR
-       NOT EXISTS "${PORT_ROOT}/headless/ns2/hle/core/hle/service/am/service/gpu_session_protocol.h")
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h")
         message(FATAL_ERROR "Missing isolated NS2 GPU session source/protocol")
     endif()
     target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
@@ -2253,7 +2253,7 @@ if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
         "${EDEN_NS2_GPU_SHARED_SOURCE}")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_GPU_SESSION_ROOT}"
-        "${PORT_ROOT}/headless/ns2/hle")
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
 endif()
 
 # Research-only SelfController -> GraphicsSupervisor -> metadata-only GPU IPC.
@@ -2264,8 +2264,8 @@ if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
     if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_AM_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 supervisor requires experimental GPU session and AM")
     endif()
-    set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/headless/ns2/graphics_supervisor")
-    set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/headless/ns2/self_controller")
+    set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/graphics_supervisor")
+    set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/self_controller")
     foreach(eden_ns2_supervisor_file
         "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.h"
         "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp"
@@ -2301,7 +2301,7 @@ if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
     if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 Ampere ISA probe requires research metadata mode")
     endif()
-    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/headless/ns2/ampere")
+    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere")
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
@@ -2377,19 +2377,19 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
             "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, metadata and native PS5 Vulkan")
     endif()
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
-        "${PORT_ROOT}/headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
     if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
         message(FATAL_ERROR "Missing opt-in NS2 renderer-side SPIR-V compiler")
     endif()
     set(EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE
-        "${PORT_ROOT}/headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp")
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp")
     if(NOT EXISTS "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}" OR
-       NOT EXISTS "${PORT_ROOT}/headless/ns2/ampere/video_core/ns2_shader_spirv_compile.h")
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.h")
         message(FATAL_ERROR "Missing verified NS2 GMMU-to-SPIR-V pipeline entrypoint")
     endif()
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
-    target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/headless/ns2/hle")
+    target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
 endif()
 

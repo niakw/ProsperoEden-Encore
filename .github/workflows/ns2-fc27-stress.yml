@@ -3,6 +3,7 @@ on:
   push:
     branches: [research/ns2-ps5-compatibility]
     paths:
+      - 'vendor'
       - 'tools/ns2/fc27_stress_replay.py'
       - 'tools/ns2/build_fc27_synthetic_nsp.py'
       - 'tools/ns2/test_real_extracted_nsp.py'

@@ -11,7 +11,7 @@ start = "# N3m: compile a renderer-callable"
 end = "# Release gate: Vulkan/RADV"
 assert start in source and end in source
 selector = start + source.split(start,1)[1].split(end,1)[0]
-target = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
+target = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
 assert target.is_file() and "target_sources(video_core PRIVATE" in selector
 
 def test(root, title, values, succeed):

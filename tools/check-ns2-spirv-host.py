@@ -52,13 +52,13 @@ def main():
         SIRIT / "src/CMakeLists.txt", "siritobj OBJECT",
         r"(?:instructions/)?[^\s()/]+\.cpp", 18,
         ["sirit.cpp", "instructions/type.cpp"])
-    overlay = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere"
+    overlay = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere"
     sources = [SHADER / name for name in shaders] + [
         overlay / (name + ".cpp") for name in
         ("ir_bridge", "renderer_spirv_bridge", "maxwell_environment", "maxwell_image", "lower_bridge", "probe")
     ] + [overlay / "capture.cpp",
          overlay / "translation_cache.cpp",
-         ROOT / "headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp",
+         ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp",
          SRC / "common/settings_common.cpp",
          ROOT / "tools/ns2/jit-host/common_shim.cpp",
          ROOT / "tools/ns2/test_ampere_real_spirv.cpp"]
@@ -70,8 +70,8 @@ def main():
     flags = [cxx, "-std=c++20", "-O0", "-g0", "-DFMT_HEADER_ONLY",
              "-ffunction-sections", "-fdata-sections", "-Wno-unused-parameter",
              "-pthread", "-I" + str(FMT),
-             "-I" + str(ROOT / "headless/ns2/ampere"),
-             "-I" + str(ROOT / "headless/ns2/hle"), "-I" + str(SRC),
+             "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/ampere"),
+             "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/hle"), "-I" + str(SRC),
              "-I" + str(SRC / "dynarmic/src"),
              "-I" + str(SIRIT / "include"), "-I" + str(SIRIT / "src"),
              "-I" + str(HEADERS / "include")]

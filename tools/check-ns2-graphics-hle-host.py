@@ -8,8 +8,8 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parent.parent
-HEADERS=ROOT/"headless/ns2/hle"
-NVDRV=ROOT/"headless/ns2/nvdrv"
+HEADERS=ROOT/"vendor/encore-active/ns2-runtime/hle"
+NVDRV=ROOT/"vendor/encore-active/ns2-runtime/nvdrv"
 EDEN=ROOT/"vendor/sources/eden/src"
 SOURCE=ROOT/"tools/ns2/test_graphics_hle.cpp"
 EXPECTED=[

@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess,shutil,sys,tempfile
 
 ROOT=Path(__file__).resolve().parent.parent
-NVDRV=ROOT/"headless/ns2/nvdrv"
+NVDRV=ROOT/"vendor/encore-active/ns2-runtime/nvdrv"
 EDEN=ROOT/"vendor/sources/eden/src"
 SOURCE=ROOT/"tools/ns2/test_native_gpu_ioctl.cpp"
 OWNER=NVDRV/"core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"

@@ -73,3 +73,9 @@ N50/N51 shared C++ helper namespaces were normalized to `Eden::NS2::GpuMemory` i
 Research commit after `da48c0c`: the stale `headless/ns2/gpu` ISA mirror (six files, including an independently generated opcode table) has been removed. Legacy ISA/address-map regression now links the real `headless/ns2/ampere` decoder and runs alongside the current probe under both optimization levels. The source-owner check fails if a second legacy Ampere tree reappears.
 
 The two six-core CPU/monitor headers moved byte-for-byte into the pinned vendor research tree at `vendor/encore-active/ns2-runtime/cpu6`. CMake and static guards select that single owner only with explicit experimental switches; normal Switch 1 and production remain unaffected. This is a source-layout correction, not Switch 2 run proof.
+
+## Research runtime source consolidation — 31 October 2026
+
+All 62 experimental NSW2 C++ source owners formerly in `headless/ns2/{am,ampere,gpu_session,graphics_supervisor,hle,nvdrv,nvdrv_as,nvdrv_gpu,self_controller}` were copied byte-for-byte to `vendor/encore-active/ns2-runtime/` before a single application gitlink/source-selection transition. The two CPU6 headers were already moved to `vendor/encore-active/ns2-runtime/cpu6`. `headless/ns2/npdm_layout.h` remains a small isolated metadata fixture only; the old duplicate Ampere `headless/ns2/gpu/` source tree is gone. All current CMake code ownership and runtime-selected research sources must resolve to the pinned vendor commit.
+
+This change is **source ownership only**. Whole-translation-unit experimental service overlays continue to exist inside vendor until converted into audited additive changes in their existing upstream owners, and must never be selected by final release. No PS5 binary or retail Switch 2 game was run by this migration.

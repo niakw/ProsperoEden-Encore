@@ -30,7 +30,7 @@ def main():
     names = re.findall(r"^\s*((?:frontend|ir_opt)/[^\s()]+\.cpp)\s*$",listing,re.M)
     if len(names)<100 or "frontend/maxwell/translate_program.cpp" not in names:
         raise RuntimeError("unexpected pinned CMake shader source list")
-    overlay = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere"
+    overlay = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere"
     sources = [SHADER / name for name in names] + [
         overlay / (name+".cpp") for name in
         ("ir_bridge","maxwell_environment","maxwell_image","lower_bridge","probe")
@@ -42,7 +42,7 @@ def main():
     OUT.mkdir(parents=True,exist_ok=True)
     flags = [cxx,"-std=c++20","-O0","-g0","-DFMT_HEADER_ONLY",
              "-ffunction-sections","-fdata-sections","-Wno-unused-parameter",
-             "-pthread","-I"+str(fmt),"-I"+str(ROOT/"headless/ns2/ampere"),
+             "-pthread","-I"+str(fmt),"-I"+str(ROOT/"vendor/encore-active/ns2-runtime/ampere"),
              "-I"+str(SRC),"-I"+str(SRC/"dynarmic/src")]
     jobs = [(s,OUT/("%03d.o"%i)) for i,s in enumerate(sources)]
     print("Compile true Eden Maxwell/IR sources:",len(jobs),flush=True)

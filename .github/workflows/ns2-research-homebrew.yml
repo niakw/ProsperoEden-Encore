@@ -4,6 +4,7 @@ on:
   push:
     branches: [research/ns2-ps5-compatibility]
     paths:
+      - 'vendor'
       - ".github/workflows/ns2-research-homebrew.yml"
       - "tools/check-ns2-homebrew-corpus.py"
       - "tools/ns2/test_homebrew_vulkan_corpus.cpp"

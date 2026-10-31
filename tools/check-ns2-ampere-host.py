@@ -9,7 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/ns2/test_ampere_isa.cpp"
 PROBE_TEST = ROOT / "tools/ns2/test_ampere_isa_probe.cpp"
-OVERLAY=ROOT/"headless/ns2/ampere"
+OVERLAY=ROOT/"vendor/encore-active/ns2-runtime/ampere"
 PROBE = OVERLAY / "shader_recompiler/frontend/ampere/probe.cpp"
 EDEN=ROOT/"vendor/sources/eden/src"
 

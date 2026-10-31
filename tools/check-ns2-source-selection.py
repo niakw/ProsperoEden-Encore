@@ -22,11 +22,23 @@ def main() -> int:
             require(f"option({flag}" in CMAKE and f"if({flag})" in CMAKE and
                     f"{flag} OR" in CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
                     "NS2 research flag not release-forbidden: " + flag)
+        # Experimental engine code may have only one maintained vendor owner.
+        legacy_engine = ROOT / "headless/ns2"
+        remaining = {str(path.relative_to(legacy_engine))
+                     for path in legacy_engine.rglob("*") if path.is_file()}
+        require(remaining == {"npdm_layout.h"},
+                "Duplicated NSW2 engine source outside vendor: " + repr(remaining))
+        for group in ("am", "ampere", "cpu6", "gpu_session",
+                      "graphics_supervisor", "hle", "nvdrv", "nvdrv_as",
+                      "nvdrv_gpu", "self_controller"):
+            require((ROOT / "vendor/encore-active/ns2-runtime" / group).is_dir() and
+                    ("headless/ns2/" + group) not in CMAKE,
+                    "NS2 research CMake must own engine source in vendor: " + group)
         # All Ampere opcode/address-map tests must use the same canonical table.
         require(not (ROOT / "headless/ns2/gpu").exists(),
                 "Obsolete duplicate Ampere/ISA tree must not return")
         ampere_smoke = (ROOT / "tools/check-ns2-ampere-host.py").read_text()
-        require('OVERLAY=ROOT/"headless/ns2/ampere"' in ampere_smoke and
+        require('OVERLAY=ROOT/"vendor/encore-active/ns2-runtime/ampere"' in ampere_smoke and
                 '"probe.cpp"' in ampere_smoke and
                 'headless/ns2/gpu' not in ampere_smoke,
                 "Host Ampere ISA tests must use the real renderer-selected source owner")
@@ -102,16 +114,16 @@ def main() -> int:
                     in bridge_gate and
                 'ns2_shader_spirv_compile.cpp' in bridge_gate,
                 "Explicit NS2 GMMU shader compile source must only exist in bridge mode")
-        registry_header = ROOT / "headless/ns2/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+        registry_header = ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
         registry_code = registry_header.read_text()
         require("CaptureTicket(" in registry_code and "IsCurrent(" in registry_code and
                 "generation" in registry_code and
                 "std::numeric_limits<std::uint64_t>::max()" in registry_code,
                 "NS2 shader ownership must use nonreusable session tickets")
-        require('target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/headless/ns2/hle")'
+        require('target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")'
                     in bridge_gate,
                 "NS2 video_core must compile with the session registry overlay")
-        pipeline_source = ROOT / "headless/ns2/ampere/video_core/ns2_shader_spirv_compile.cpp"
+        pipeline_source = ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp"
         require(pipeline_source.is_file() and
                 "CaptureNativeGraphicsShader(" in pipeline_source.read_text() and
                 "CompileCapturedNs2VertexSpirvFromReader(" in pipeline_source.read_text() and
@@ -121,7 +133,7 @@ def main() -> int:
                 pipeline_source.read_text().count("registry.IsCurrent(*session)") == 2 and
                 "NativeSpirvStatus::InactiveSession" in pipeline_source.read_text(),
                 "Real GMMU-to-SPIR-V owner is missing")
-        bridge_source = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
+        bridge_source = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
         require(bridge_source.is_file() and
                 "CompileReviewedNativeVertexSpirv(" in bridge_source.read_text() and
                 "Shader::Stage::VertexB" in bridge_source.read_text(),
@@ -196,7 +208,7 @@ def main() -> int:
                 "if(NOT EDEN_NS2_AM_EXPERIMENTAL)" in CMAKE[scale_selection:release_gate] and
                 "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR" in CMAKE,
                 "Graphics scaling option must depend on AM and remain release-forbidden")
-        scale_root = ROOT / "headless/ns2/am/core/hle/service/am/service"
+        scale_root = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
         proxy = (scale_root / "application_proxy.cpp").read_text()
         scale = (scale_root / "graphics_scaling_parameters_functions.cpp").read_text()
         require("{60, D<&IApplicationProxy::GetGraphicsScalingParametersFunctions>" in proxy and
@@ -214,7 +226,7 @@ def main() -> int:
                 CMAKE[session_selection:release_gate] and
                 'target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"' in CMAKE,
                 "NS2 GPU service must require NVDRV and compile real source")
-        session_root = ROOT / "headless/ns2/gpu_session/core/hle/service/am/service"
+        session_root = ROOT / "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service"
         require('std::shared_ptr<Nvidia::Module> m_module;' in
                 (session_root / "gpu_session.h").read_text() and
                 (session_root / "gpu_session.h").read_text().index(
@@ -249,7 +261,7 @@ def main() -> int:
                 "m_shared->address_spaces.HasCapacity()" in service_cpp and
                 "m_shared->address_spaces.Register(id)" in service_cpp,
                 "NS2 GPU service must own real NVDRV descriptors and safely close them")
-        worker_header = ROOT / "headless/ns2/hle/core/hle/service/am/service/gpu_worker_protocol.h"
+        worker_header = ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_worker_protocol.h"
         worker_cpp = worker_header.read_text()
         require("class MappingLedger" in worker_cpp and
                 "LedgerStatus RecordMapped" in worker_cpp and
@@ -326,8 +338,8 @@ def main() -> int:
                 '"hle/service/am/service/self_controller.cpp" eden_ns2_self_idx' in CMAKE and
                 'set_property(TARGET core PROPERTY SOURCES "${eden_ns2_supervisor_sources}")' in CMAKE,
                 "NS2 supervisor must replace only pinned CMIF SelfController owner")
-        sup_cpp = (ROOT / "headless/ns2/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
-        self_cpp = (ROOT / "headless/ns2/self_controller/core/hle/service/am/service/self_controller.cpp").read_text()
+        sup_cpp = (ROOT / "vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
+        self_cpp = (ROOT / "vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp").read_text()
         require("m_bootstrap.CanOpenGpuSession(packet, module != nullptr)" in sup_cpp and
                 'GetService<Nvidia::NVDRV>("nvdrv:s", true)' in sup_cpp and
                 "CreateMetadataSession(system, ctx," in sup_cpp and
@@ -349,7 +361,7 @@ def main() -> int:
                 'list(FIND eden_ns2_nvdrv_sources' in CMAKE and
                 '"hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp" eden_ns2_nvdrv_idx' in CMAKE,
                 "NVDRV opt-in, original source owner or final release protection missing")
-        native_as_root = ROOT / "headless/ns2/nvdrv_as/core/hle/service/nvdrv/devices"
+        native_as_root = ROOT / "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices"
         native_as_cpp = (native_as_root / "nvhost_as_gpu.cpp").read_text()
         native_as_h = (native_as_root / "nvhost_as_gpu.h").read_text()
         require('set(EDEN_NS2_NVDRV_AS_SOURCE' in CMAKE and
@@ -379,14 +391,14 @@ def main() -> int:
                 "Native 4KiB NVDRV address-space owner must be isolated and bounded")
         require("EDEN_NS2_NVDRV_AS_SOURCE" in CMAKE[nvdrv_selection:release_gate],
                 "Native AS owner is not gated under research-only NVDRV switch")
-        channel_root = ROOT / "headless/ns2/nvdrv_gpu/core/hle/service/nvdrv/devices"
+        channel_root = ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices"
         native_channel_cpp = (channel_root / "nvhost_gpu.cpp").read_text()
         native_channel_h = (channel_root / "nvhost_gpu.h").read_text()
         process_registry = (
-            ROOT / "headless/ns2/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+            ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
         ).read_text()
         fence_plan = (
-            ROOT / "headless/ns2/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h"
+            ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h"
         ).read_text()
         require('set(EDEN_NS2_NVDRV_GPU_SOURCE' in CMAKE and
                 '"hle/service/nvdrv/devices/nvhost_gpu.cpp" eden_ns2_gpu_idx' in CMAKE and
@@ -401,7 +413,7 @@ def main() -> int:
                 "class NativeGpuProcessRegistry" in process_registry and
                 "PlanNativeSubmission(" in fence_plan,
                 "Native NS2 GPU channel must be process-scoped and release gated")
-        ampere_root = ROOT / "headless/ns2/ampere/shader_recompiler/frontend/ampere"
+        ampere_root = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere"
         isa_table = (ampere_root / "ampere_isa_table.h").read_text()
         isa_probe = (ampere_root / "probe.cpp").read_text()
         isa_header = (ampere_root / "probe.h").read_text()
@@ -472,9 +484,9 @@ def main() -> int:
                 'MaxCapturedInstructions = 4096' in (ampere_root / "capture.cpp").read_text() and
                 'NativeCaptureStatus::NoTerminator' in (ampere_root / "capture.cpp").read_text() and
                 'memory->IsFullyMappedRange(address, size)' in
-                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                    (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'memory->ReadBlock(address, dest, size)' in
-                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                    (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'EDEN_NS2_NATIVE_TRANSLATION_CACHE' in CMAKE and
                 'EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER' in CMAKE and
                 'maxwell_environment.h' in CMAKE and
@@ -490,14 +502,14 @@ def main() -> int:
                     (ampere_root / "maxwell_environment.cpp").read_text() and
                 (ROOT / "tools/ns2/test_ampere_maxwell_environment.cpp").is_file() and
                 'CreateNs2GraphicsShaderEnvironment(' in
-                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                    (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'CreateOwned(' in (ampere_root / "maxwell_environment.cpp").read_text() and
                 'std::unique_ptr<Shader::Environment> owned;' in
                     (ampere_root / "maxwell_environment.h").read_text() and
                 'NativeMaxwellEnvironment::CreateOwned(' in
-                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text() and
+                    (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text() and
                 'std::unique_ptr<Shader::Environment> original' in
-                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.h").read_text() and
+                    (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.h").read_text() and
                 'destroyed==1' in
                     (ROOT / "tools/ns2/test_ampere_maxwell_environment.cpp").read_text() and
                 'translation_cache.cpp' in CMAKE and
@@ -512,9 +524,9 @@ def main() -> int:
                 'cache->GetOrTranslate(maxwell_header, source, stage)' in
                     (ampere_root / "capture.cpp").read_text() and
                 'NativeTranslationCache* cache' in
-                    (ROOT / "headless/ns2/ampere/video_core/native_shader_capture.cpp").read_text(),
+                    (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text(),
                 "Ampere shader ISA probe must remain bounded, opt-in and release gated")
-        nvdrv_root = ROOT / "headless/ns2/nvdrv/core/hle/service/nvdrv/devices"
+        nvdrv_root = ROOT / "vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices"
         ctrl = (nvdrv_root / "nvhost_ctrl_gpu.cpp").read_text()
         ioctl = (nvdrv_root / "native_characteristics_ioctl.h").read_text()
         require('WriteNativeCharacteristicsIoctlReply(' in ctrl and
@@ -523,7 +535,7 @@ def main() -> int:
                 "Research native response must preserve original ioctl fallback")
         require('raw != 0xc0e04705U && raw != 0xc0e84705U' in ioctl,
                 "Native ioctl handler must match only exact native commands")
-        am_root = ROOT / "headless/ns2/am/core/hle/service/am/service"
+        am_root = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
         am_impl = (am_root / "application_functions.cpp").read_text()
         am_header = (am_root / "application_functions.h").read_text()
         require("GetScreenShotAndContinuousRecordingInitiallyEnabled" in am_impl and

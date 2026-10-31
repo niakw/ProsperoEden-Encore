@@ -13,7 +13,6 @@ on:
       - 'tools/ns2/test_real_kcapabilities.py'
       - 'tools/ns2/test_real_kprocess_loadmodule.py'
       - 'tools/ns2/test_real_kprocess_metadata.py'
-      - 'vendor/**'
       - 'vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp'
       - 'headless/CMakeLists.txt'
       - 'vendor'

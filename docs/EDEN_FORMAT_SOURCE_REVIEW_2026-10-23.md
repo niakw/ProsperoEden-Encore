@@ -15,7 +15,7 @@ fausse dette d'optimisation JIT/GPU.
 
 | Source | Git blob exact | Rôle et portée |
 | --- | --- | --- |
-| `headless/game_files.h` | `95e61b884c245efaa6a4de857d2bf91a4b88d5d5` | Sélection et validation des neuf extensions et de l'ExeFS; sélection de titre, pas du frame GPU |
+| `headless/game_files.h` | `736230b434d58406841e702e5dbd70d4c391f578` | Sélection et validation des neuf extensions et de l'ExeFS; sélection de titre, pas du frame GPU |
 | `headless/ncz.cpp` | `7deff2ea1a82574b9e756ad9c2f0d869aa94612b` | Adaptateur de lecture NCZ et cache, sélectionné par CMake |
 | `headless/ncz.h` | `85ced3460d83be2a8011f189c0df406b4dd32b8c` | Décompression NCZ, limites et protection du cache |
 | `headless/ncz_check.cpp` | `65c9e5f4eb3625140add52ced2ea82e66bd224ab` | Harnais de vérification hôte; jamais un composant de rendu |
@@ -69,3 +69,14 @@ Les correspondances source attendues sont vérifiées dans
 modifiés et leurs risques figure dans
 [`FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md`](FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md).
 Aucune validation console ou clôture d'optimisation F01–F07 n'est déduite.
+
+### 31 October — flexible package add-on folders
+
+The selector now discovers NSP/NSZ/XCI/XCZ add-ons in arbitrarily named
+nested wrapper directories (e.g. `custom/extensions/bonus.nsp`), not only
+under literal `updates/` or `dlc/`. It never regards the selected
+base package as add-on content, rejects symlinks and does not recurse
+into extracted RomFS/ExeFS payloads. The detected paths are passed to
+the metadata-aware native content provider. Host source regression is
+tracked by `tools/check-exefs-directory-host.py`; see
+`docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md`.

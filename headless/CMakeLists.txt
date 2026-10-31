@@ -1158,6 +1158,27 @@ if(PS5_NATIVE)
     list(REMOVE_ITEM video_sources "memory_manager.cpp")
     list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
 endif()
+
+# N51 Eglantine f9fc1e1: batch only adjacent changed GPU pages.
+option(EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL
+    "Research-only GPU page-cache notification batching" OFF)
+if(EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "Eglantine N51 is restricted to PS5 native NS2 research")
+    endif()
+    list(FIND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}" eden_ns2_batch_owner)
+    if(eden_ns2_batch_owner EQUAL -1)
+        message(FATAL_ERROR "Native PS5 GPU memory owner changed: re-audit N51")
+    endif()
+    set(eden_ns2_batch_file "${PORT_ROOT}/headless/ns2/eglantine/video_core/memory_manager.cpp")
+    if(NOT EXISTS "${eden_ns2_batch_file}")
+        message(FATAL_ERROR "Missing experimental Eglantine GPU owner")
+    endif()
+    list(REMOVE_ITEM video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
+    list(APPEND video_sources "${eden_ns2_batch_file}")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/headless/ns2/eglantine")
+endif()
 # R411: Eden #4473/#4477 are already applied once by the audited
 # version-locked shipping backports to PROJECT_SOURCE_DIR before CMake.
 if(PS5_NATIVE)
@@ -2298,6 +2319,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR
        EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL OR
+       EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

@@ -1,36 +1,54 @@
 #!/usr/bin/env python3
-"""N51: exact source-owner parity guard, including PS5 native GPU path."""
+"""N51 vendor-native GPU PTE range batching, exact source baseline parity."""
 from pathlib import Path
-R=Path(__file__).resolve().parents[2]
-ORIG=R/'vendor/encore-active/eden-core/src/video_core/memory_manager.cpp'
-PORT=R/'headless/ns2/eglantine/video_core/memory_manager.cpp'
-cmake=(R/'headless/CMakeLists.txt').read_text()
-def once(s,a,b):
-    assert s.count(a)==1, 'native source owner drift: '+a[:80]
-    return s.replace(a,b)
-def adapt(s):
-    inc='#include "video_core/memory_manager.h"'
-    s=once(s,inc,inc+'\n#include "video_core/ns2_egl_gpu_range_batch.h"')
-    for fn,nxt,pg in (('GPUVAddr MemoryManager::PageTableOp','GPUVAddr MemoryManager::BigPageTableOp','page_size'),
-                      ('GPUVAddr MemoryManager::BigPageTableOp','void MemoryManager::BindRasterizer','big_page_size')):
-        a,z=s.index(fn),s.index(nxt,s.index(fn)+len(fn))
-        q=s[a:z]
-        loop='    for (u64 offset{}; offset < size; offset += '+pg+') {'
-        old='        if (current_entry_type != entry_type) {\n            rasterizer->ModifyGPUMemory(unique_identifier, current_gpu_addr, '+pg+');\n        }'
-        init=('    // Eglantine f9fc1e1: batch only contiguous changed GPU PTE pages.\n'
-              '    Eden::NS2::Eglantine::ChangedPageRuns changed_runs('+pg+');\n'
-              '    const auto notify_changed = [this](GPUVAddr address, u64 length) {\n'
-              '        rasterizer->ModifyGPUMemory(unique_identifier, address, length);\n'
-              '    };\n')
-        q=once(q,loop,init+loop)
-        q=once(q,old,'        changed_runs.Record(current_gpu_addr, current_entry_type != entry_type,\n                            notify_changed);')
-        tail=('    kind_map.Map(gpu_addr, gpu_addr + size, kind);' if pg=='page_size'
-              else '    {\n        std::unique_lock<std::mutex> lock(guard);')
-        q=once(q,tail,'    changed_runs.Flush(notify_changed);\n'+tail)
-        s=s[:a]+q+s[z:]
-    return s
-assert PORT.read_text()==adapt(ORIG.read_text()),'N51 GPU source overlay differs from maintained PS5 owner'
-assert 'EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR' in cmake
-assert 'NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE' in cmake
-assert 'list(REMOVE_ITEM video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")' in cmake
-print('N51_NATIVE_GPU_PTE_OWNER_PARITY_PASS')
+import hashlib
+
+ROOT = Path(__file__).resolve().parents[2]
+OWNER = ROOT / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+HELPER = ROOT / "vendor/encore-active/ns2-helpers/include/video_core/ns2_egl_gpu_range_batch.h"
+CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
+
+def blob(t: str) -> str:
+    b = t.encode()
+    return hashlib.sha1(b"blob "+str(len(b)).encode()+b"\0"+b).hexdigest()
+
+def once(t: str, old: str, new: str) -> str:
+    assert t.count(old) == 1, ("N51 native PS5 source-owner drift", old[:72])
+    return t.replace(old, new)
+
+t = OWNER.read_text()
+assert blob(t) == "f1d32ed9c48f21c0f4890e814a19b70f6de1d29c"
+assert HELPER.is_file() and "class ChangedPageRuns" in HELPER.read_text()
+t = once(t,
+    '#include "video_core/memory_manager.h"\n#ifdef EDEN_NS2_GPU_RANGE_BATCH\n'
+    '#include "video_core/ns2_egl_gpu_range_batch.h"\n#endif',
+    '#include "video_core/memory_manager.h"')
+for page in ("page_size", "big_page_size"):
+    init = (
+        "#ifdef EDEN_NS2_GPU_RANGE_BATCH\n"
+        "    // Coalesce only adjacent changed PTE pages; preserve unchanged holes.\n"
+        f"    Eden::NS2::Eglantine::ChangedPageRuns changed_runs({page});\n"
+        "    const auto notify_changed = [this](GPUVAddr address, u64 length) {\n"
+        "        rasterizer->ModifyGPUMemory(unique_identifier, address, length);\n"
+        "    };\n"
+        "#endif\n")
+    t = once(t, init, "")
+    old = (
+        "        if (current_entry_type != entry_type) {\n"
+        f"            rasterizer->ModifyGPUMemory(unique_identifier, current_gpu_addr, {page});\n"
+        "        }")
+    altered = (
+        "#ifdef EDEN_NS2_GPU_RANGE_BATCH\n"
+        "        changed_runs.Record(current_gpu_addr, current_entry_type != entry_type,\n"
+        "                            notify_changed);\n"
+        "#else\n"+old+"\n#endif")
+    t = once(t, altered, old)
+flush = "#ifdef EDEN_NS2_GPU_RANGE_BATCH\n    changed_runs.Flush(notify_changed);\n#endif\n"
+assert t.count(flush) == 2
+t = t.replace(flush, "")
+assert blob(t) == "f30099dfb5df01d9cd787d199e3e61f28205669a", "N51 changed unrelated PS5 GPU logic"
+assert "EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL OR" in CMAKE
+assert "EDEN_NS2_GPU_RANGE_BATCH=1" in CMAKE
+assert "EDEN_FINAL_RELEASE_PROFILE" in CMAKE
+assert "headless/ns2/eglantine/video_core/memory_manager.cpp" not in CMAKE
+print("N51_NATIVE_GPU_SINGLE_VENDOR_OWNER_AND_F07_BASELINE_PASS")

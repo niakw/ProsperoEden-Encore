@@ -1160,25 +1160,22 @@ if(PS5_NATIVE)
     list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
 endif()
 
-# N51 Eglantine f9fc1e1: batch only adjacent changed GPU pages.
+# N51: the existing PS5 GPU MemoryManager owns the research batching path.
 option(EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL
     "Research-only GPU page-cache notification batching" OFF)
 if(EDEN_NS2_EGLANTINE_GPU_RANGE_BATCH_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
         message(FATAL_ERROR "Eglantine N51 is restricted to PS5 native NS2 research")
     endif()
-    list(FIND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}" eden_ns2_batch_owner)
-    if(eden_ns2_batch_owner EQUAL -1)
-        message(FATAL_ERROR "Native PS5 GPU memory owner changed: re-audit N51")
+    if(NOT EXISTS "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
+        message(FATAL_ERROR "Maintained PS5 GPU memory manager owner missing")
     endif()
-    set(eden_ns2_batch_file "${PORT_ROOT}/headless/ns2/eglantine/video_core/memory_manager.cpp")
-    if(NOT EXISTS "${eden_ns2_batch_file}")
-        message(FATAL_ERROR "Missing experimental Eglantine GPU owner")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/ns2_egl_gpu_range_batch.h")
+        message(FATAL_ERROR "Missing N51 vendor range-batching helper")
     endif()
-    list(REMOVE_ITEM video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
-    list(APPEND video_sources "${eden_ns2_batch_file}")
     target_include_directories(video_core BEFORE PRIVATE
-        "${PORT_ROOT}/headless/ns2/eglantine")
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_GPU_RANGE_BATCH=1)
 endif()
 # R411: Eden #4473/#4477 are already applied once by the audited
 # version-locked shipping backports to PROJECT_SOURCE_DIR before CMake.
@@ -2395,21 +2392,25 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
 endif()
 
-# Eglantine PR #48: protect the actual PS5 device-memory page-run owner
-# only for explicit NSW2 research. Keep prior atomic/reverse-map fixes.
+# N50: versioned device-memory page-run guard in the single PS5 owner.
 option(EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL
     "Research only: stop stale GPU mapping runs at Map/Unmap boundaries" OFF)
 if(EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 Eglantine device-memory fix requires PS5 and NS2 metadata")
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 device-memory continuity requires PS5 research")
     endif()
-    set(eden_ns2_egl_memory_root "${PORT_ROOT}/headless/ns2/eglantine")
-    if(NOT EXISTS "${eden_ns2_egl_memory_root}/core/device_memory_manager.inc"
-       OR NOT EXISTS "${eden_ns2_egl_memory_root}/core/ns2_egl_continuity_guard.h")
-        message(FATAL_ERROR "Missing Eglantine PS5 device-memory continuity overlay")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")
+        message(FATAL_ERROR "N50 maintained PS5 device-memory source missing")
     endif()
-    target_include_directories(core BEFORE PUBLIC "${eden_ns2_egl_memory_root}")
-    target_include_directories(video_core BEFORE PRIVATE "${eden_ns2_egl_memory_root}")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/core/ns2_egl_continuity_guard.h")
+        message(FATAL_ERROR "Missing N50 vendor continuity helper")
+    endif()
+    target_include_directories(core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)
 endif()
 
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays

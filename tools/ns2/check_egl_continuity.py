@@ -1,28 +1,43 @@
 #!/usr/bin/env python3
-"""N50: assert Eglantine continuity patch only extends the pinned PS5 owner."""
+"""N50 exact source baseline: no second PS5 device-memory translation unit."""
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2]
-SRC=ROOT/'vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc'
-PORT=ROOT/'headless/ns2/eglantine/core/device_memory_manager.inc'
-CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-inc='#include "core/device_memory_manager.h"'
-map_anchor='    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages);\n    for (size_t i = 0; i < num_pages; i++) {'
-unmap_anchor='    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n    for (size_t i = 0; i < num_pages; i++) {'
-call='''    // Eglantine PR #48: an old page run must not cross a changed map
-    // range. The pinned PS5 atomic fields and reverse-map policy stay intact.
-    Eden::NS2::Eglantine::CutContinuityAt(start_page_d,
-        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },
-        [&](size_t index, u32 new_count) {
-            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);
-        });
-'''
-original=SRC.read_text()
-assert all(original.count(x)==1 for x in (inc,map_anchor,unmap_anchor))
-expected=original.replace(inc,inc+'\n#include "core/ns2_egl_continuity_guard.h"')
-expected=expected.replace(map_anchor,'    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages);\n'+call+'    for (size_t i = 0; i < num_pages; i++) {')
-expected=expected.replace(unmap_anchor,'    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n'+call+'    for (size_t i = 0; i < num_pages; i++) {')
-assert PORT.read_text()==expected, "PS5 memory owner drift; do not compile"
-assert 'EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL OR' in CMAKE
-assert 'target_include_directories(core BEFORE PUBLIC "${eden_ns2_egl_memory_root}")' in CMAKE
-assert 'target_include_directories(video_core BEFORE PRIVATE "${eden_ns2_egl_memory_root}")' in CMAKE
-print("N50_EGLANTINE_DEVICE_MEMORY_OWNER_PARITY_PASS")
+import hashlib
+
+ROOT = Path(__file__).resolve().parents[2]
+OWNER = ROOT / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
+HELPER = ROOT / "vendor/encore-active/ns2-helpers/include/core/ns2_egl_continuity_guard.h"
+CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
+
+def blob(t):
+    b = t.encode()
+    return hashlib.sha1(b"blob "+str(len(b)).encode()+b"\0"+b).hexdigest()
+
+def once(t, old, new):
+    assert t.count(old) == 1, ("N50 maintained source drift", old[:70])
+    return t.replace(old, new)
+
+t = OWNER.read_text()
+assert blob(t) == "b0786ea0a9f993b5804fe92cfbd5ee4c565320ac"
+assert HELPER.is_file() and "CutContinuityAt(" in HELPER.read_text()
+t = once(t,
+    '#include "core/device_memory_manager.h"\n'
+    '#ifdef EDEN_NS2_DEVICE_CONTINUITY\n'
+    '#include "core/ns2_egl_continuity_guard.h"\n#endif',
+    '#include "core/device_memory_manager.h"')
+call = (
+    "#ifdef EDEN_NS2_DEVICE_CONTINUITY\n"
+    "    // End a previously tracked physical run before mapping state changes.\n"
+    "    Eden::NS2::Eglantine::CutContinuityAt(start_page_d,\n"
+    "        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },\n"
+    "        [&](size_t index, u32 new_count) {\n"
+    "            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);\n"
+    "        });\n"
+    "#endif\n"
+)
+assert t.count(call) == 2
+t = t.replace(call, "")
+assert blob(t) == "5b30e44b9295e75b1e6719d97764d1a88c0bbc55", "N50 changed unrelated PS5 atomic/reverse-map code"
+assert "EDEN_NS2_EGLANTINE_CONTINUITY_EXPERIMENTAL OR" in CMAKE
+assert "EDEN_NS2_DEVICE_CONTINUITY=1" in CMAKE
+assert "headless/ns2/eglantine/core/device_memory_manager.inc" not in CMAKE
+print("N50_NATIVE_DEVICE_MEMORY_SINGLE_VENDOR_OWNER_AND_BASELINE_PASS")

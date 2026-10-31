@@ -51,3 +51,7 @@ Experimental `Service::Process::Run` return-code checking is now compiled from t
 ## Versioned NSW2 loader sources
 
 The four research-only translation units (`ProgramMetadata`, `AppLoader`, `DeconstructedRomDirectory`, `NSO`) have now been relocated **without byte changes** from `headless/ns2/overrides` into `vendor/encore-active/ns2-experimental/src/core`. Original PS5 optimized engine source selection is preserved when experimental switches are OFF. These are still **separate opt-in implementations**, not yet additive changes merged into the shipping owners; a full native build and Switch 2 guest runtime must be validated before claiming production-grade support.
+
+## N50/N51 GPU-memory source consolidation
+
+The PS5 device-memory continuity guard N50 and changed-page GPU PTE notification batcher N51 are now conditionally compiled in their original optimized vendor C++/include owners, not in copies under `headless/ns2/eglantine`. Both feature macros are OFF by default, forbidden for final release, and preserve the pre-research PS5 owners byte-for-byte after exact reversal; helper headers have one vendor location. Clang/GCC host oracle tests remain, but native PS5 GPU validation is outstanding.

@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Overstappen vanaf het oorspronkelijke project (Nederlands)
 
-[← Nederlands](../../README.nl.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← Nederlands](../../README.nl.md) · [Volledige Engelse installatiehandleiding](../../INSTALL.md) · [Alle talen](../../LANGUAGES.md)
 
 ## Snel beginnen
 
@@ -26,7 +26,7 @@
 
 Encore en de originele ProsperoEden gebruiken dezelfde app-ID PPSA99008 en zijn geen onafhankelijke installaties. Vervang de volledige programmabestanden maar behoud opgeslagen spellen, instellingen, games en sleutels onder /data/prosperoeden. Maak ook een back-up van een oude assets/-map als die gebruikersgegevens bevat.
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage during an update. Back up first and preserve all saves, keys and existing media.
+**Belangrijk:** Verwijder `/data/prosperoeden/` nooit en formatteer geen externe opslag tijdens een update. Maak eerst een back-up en overschrijf geen opgeslagen spellen of sleutels.
 
 ## Compatibiliteit en beperkingen
 
@@ -36,6 +36,6 @@ Alleen PS5-firmware 13.60 is met Encore op een echte console getest. Oudere vers
 
 Blijft het menu Engels? Kies Settings → Language en controleer of de volledige map ui/lang/ is geïnstalleerd.
 
-If one title stops booting after settings changes, try **Safe Launch** without deleting its saves. Consult [ZIP/FFPFSC/ShadowMountPlus instructions](../../INSTALL.md), [Troubleshooting](../../TROUBLESHOOTING.md) or [Support](../../SUPPORT.md).
+Start een game na het wijzigen van instellingen niet meer, probeer dan tijdelijk **Safe Launch** zonder opgeslagen data te wissen. Zie [ZIP/FFPFSC-installatie](../../INSTALL.md), [probleemoplossing](../../TROUBLESHOOTING.md) en [ondersteuning](../../SUPPORT.md).
 
 Het project verspreidt geen games, sleutels of firmware. Deel geen privégegevens in openbare bugmeldingen.

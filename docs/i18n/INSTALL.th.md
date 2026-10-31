@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — ย้ายจากโครงการต้นฉบับและอัปเดต (ไทย)
 
-[← ไทย](../../README.th.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← ไทย](../../README.th.md) · [คู่มือติดตั้งเต็มภาษาอังกฤษ](../../INSTALL.md) · [ทุกภาษา](../../LANGUAGES.md)
 
 ## เริ่มต้นใช้งาน
 
@@ -26,7 +26,7 @@
 
 Encore และ ProsperoEden ดั้งเดิมใช้รหัสแอป PPSA99008 เดียวกัน จึงไม่ใช่แอปที่แยกติดตั้งคู่กันได้ ให้เปลี่ยนไฟล์แอปทั้งหมดแต่เก็บเซฟ การตั้งค่า เกม และคีย์ใน /data/prosperoeden ไว้ หากโฟลเดอร์ assets/ เก่ามีข้อมูลผู้ใช้ ให้สำรองก่อนย้าย
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage during an update. Back up first and preserve all saves, keys and existing media.
+**สำคัญ:** อย่าลบ `/data/prosperoeden/` หรือฟอร์แมตไดรฟ์ภายนอกระหว่างอัปเดต ให้สำรองข้อมูลก่อนและอย่าเขียนทับเซฟหรือคีย์
 
 ## ความเข้ากันได้และข้อจำกัด
 
@@ -36,6 +36,6 @@ Encore ทดสอบบน PS5 จริงเฉพาะเฟิร์ม�
 
 หากเมนูยังเป็นอังกฤษ ให้เลือก Settings → Language และตรวจสอบว่าติดตั้งไฟล์ใน ui/lang/ ครบ
 
-If one title stops booting after settings changes, try **Safe Launch** without deleting its saves. Consult [ZIP/FFPFSC/ShadowMountPlus instructions](../../INSTALL.md), [Troubleshooting](../../TROUBLESHOOTING.md) or [Support](../../SUPPORT.md).
+หากเกมเปิดไม่ได้หลังเปลี่ยนการตั้งค่า ให้ลอง **Safe Launch** ชั่วคราวโดยไม่ลบเซฟ ดู[วิธี ZIP/FFPFSC](../../INSTALL.md) [การแก้ปัญหา](../../TROUBLESHOOTING.md) และ[การสนับสนุน](../../SUPPORT.md)
 
 โครงการไม่แจกเกม คีย์ หรือเฟิร์มแวร์ อย่าเผยแพร่ข้อมูลส่วนตัวในรายงานสาธารณะ

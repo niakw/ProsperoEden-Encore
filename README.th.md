@@ -1,8 +1,8 @@
 # Prospero.Eden Encore — ไทย
 
-> อีมูเลเตอร์ PS5 ที่ออกแบบสำหรับเล่นบนทีวี · [English (default)](README.md) · [All launcher languages](LANGUAGES.md)
+> อีมูเลเตอร์ PS5 ที่ออกแบบสำหรับเล่นบนทีวี · [English (default)](README.md) · [ทุกภาษา](LANGUAGES.md)
 
-อีมูเลเตอร์ PS5 ที่ออกแบบสำหรับเล่นบนทีวี. Encore is an independent community emulator fork with a controller-first launcher, library, video settings and diagnostics. It is not an official Sony or Nintendo product.
+Encore เป็นโครงการอิสระของชุมชน มีตัวเปิดเกมที่รองรับจอย คลังเกม การตั้งค่าภาพ และระบบวินิจฉัย ไม่ใช่ผลิตภัณฑ์อย่างเป็นทางการของ Sony หรือ Nintendo
 
 ## เริ่มต้นใช้งาน
 
@@ -17,15 +17,15 @@
 
 Encore และ ProsperoEden ดั้งเดิมใช้รหัสแอป PPSA99008 เดียวกัน จึงไม่ใช่แอปที่แยกติดตั้งคู่กันได้ ให้เปลี่ยนไฟล์แอปทั้งหมดแต่เก็บเซฟ การตั้งค่า เกม และคีย์ใน /data/prosperoeden ไว้ หากโฟลเดอร์ assets/ เก่ามีข้อมูลผู้ใช้ ให้สำรองก่อนย้าย
 
-**Application ID:** `PPSA99008`. **Application:** `/data/homebrew/PPSA99008/`. **Persistent data:** `/data/prosperoeden/`.
+**รหัสแอป :** `PPSA99008`. **แอป :** `/data/homebrew/PPSA99008/`. **ข้อมูลถาวร :** `/data/prosperoeden/`.
 
-[ย้ายจากโครงการต้นฉบับและอัปเดต — step-by-step](docs/i18n/INSTALL.th.md) · [Full installation instructions in English](INSTALL.md)
+[ย้ายจากโครงการต้นฉบับและอัปเดต — ทีละขั้นตอน](docs/i18n/INSTALL.th.md) · [คู่มือติดตั้งเต็มภาษาอังกฤษ](INSTALL.md)
 
 ## ความเข้ากันได้และข้อจำกัด
 
 Encore ทดสอบบน PS5 จริงเฉพาะเฟิร์มแวร์ 13.60 รุ่นเก่าอาจใช้ได้แต่ยังไม่ยืนยันและยังไม่มีเวอร์ชันขั้นต่ำที่รับรอง บางเกมอาจกระตุก HUD ช้า ปุ่มผิด หรือค้างขณะหยุดเกม การคอมไพล์ผ่านไม่ใช่หลักฐานว่าเกมเล่นได้
 
-Game container support in development sources: **NSP/XCI**, experimental **NSZ/XCZ**, and direct **NRO/NSO/NCA/NAX/KIP** loaders. A recognized extension does not guarantee a title will run.
+โค้ดที่กำลังพัฒนารองรับ NSP/XCI และรองรับ NSZ/XCZ แบบทดลอง ตัวโหลด NRO/NSO/NCA/NAX/KIP ต้องมีข้อมูลที่ถูกต้อง การรองรับนามสกุลไฟล์ไม่ได้รับประกันว่าเกมจะเริ่มได้
 
 ## คำถามที่พบบ่อย
 
@@ -33,10 +33,10 @@ Switch 2 กำลังวิจัยในสาขาแยกและไ�
 
 หากเมนูยังเป็นอังกฤษ ให้เลือก Settings → Language และตรวจสอบว่าติดตั้งไฟล์ใน ui/lang/ ครบ
 
-## Links and credits
+## ชุมชนและเครดิต
 
 [Complete English reference](README.md) · [Settings](SETTINGS.md) · [Accessibility](ACCESSIBILITY.md) · [Troubleshooting](TROUBLESHOOTING.md) · [Switch 2 research](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) · [Roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md) · [Original project credits](README.md#credits) · [GPL-3.0-or-later](LICENSE).
 
 โครงการไม่แจกเกม คีย์ หรือเฟิร์มแวร์ อย่าเผยแพร่ข้อมูลส่วนตัวในรายงานสาธารณะ
 
-> This localized README covers essential user information. The English README remains the full technical reference; host tests do not certify PS5 performance.
+> คำแปลนี้สรุปข้อมูลสำคัญสำหรับผู้ใช้ รายละเอียดทางเทคนิคฉบับเต็มอยู่ใน README ภาษาอังกฤษ และการทดสอบบนโฮสต์ไม่ได้พิสูจน์ประสิทธิภาพบน PS5 จริง

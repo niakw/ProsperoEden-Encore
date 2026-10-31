@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Migracja z oryginalnego projektu (Polski)
 
-[← Polski](../../README.pl.md) · [Full English installation guide](../../INSTALL.md) · [Languages](../../LANGUAGES.md)
+[← Polski](../../README.pl.md) · [Pełna instrukcja instalacji po angielsku](../../INSTALL.md) · [Wszystkie języki](../../LANGUAGES.md)
 
 ## Szybki start
 
@@ -26,7 +26,7 @@
 
 Encore i oryginalny ProsperoEden mają ten sam identyfikator aplikacji PPSA99008 i nie są niezależnymi instalacjami. Wymień komplet plików programu, ale zachowaj zapisy, ustawienia, gry i klucze w /data/prosperoeden. Przed migracją zabezpiecz również stary folder assets/, jeśli zawiera dane użytkownika.
 
-**Important:** Never delete `/data/prosperoeden/` or format external storage during an update. Back up first and preserve all saves, keys and existing media.
+**Ważne:** Podczas aktualizacji nie usuwaj `/data/prosperoeden/` ani nie formatuj zewnętrznej pamięci. Zrób kopię zapasową i nie nadpisuj zapisów ani kluczy.
 
 ## Zgodność i ograniczenia
 
@@ -36,6 +36,6 @@ Encore przetestowano na prawdziwej konsoli PS5 wyłącznie z firmware 13.60. Sta
 
 Gdy menu pozostaje angielskie, wybierz Settings → Language i sprawdź kompletną instalację folderu ui/lang/.
 
-If one title stops booting after settings changes, try **Safe Launch** without deleting its saves. Consult [ZIP/FFPFSC/ShadowMountPlus instructions](../../INSTALL.md), [Troubleshooting](../../TROUBLESHOOTING.md) or [Support](../../SUPPORT.md).
+Jeśli gra przestanie się uruchamiać po zmianie ustawień, spróbuj jednorazowego **Safe Launch** bez kasowania zapisów. Zobacz [instalację ZIP/FFPFSC](../../INSTALL.md), [rozwiązywanie problemów](../../TROUBLESHOOTING.md) i [pomoc](../../SUPPORT.md).
 
 Projekt nie zawiera gier, kluczy ani firmware. Nie publikuj danych prywatnych w zgłoszeniach.

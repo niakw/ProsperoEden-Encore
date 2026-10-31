@@ -119,6 +119,41 @@ jobs:
       - name: Stage native NS1/NS2 experimental PS5 app with SHA receipt
         run: |
           bash tools/ns2/package_native_research.sh
+      - name: Assemble installable research FFPFSC and FTP ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p dist/ns2-research
+          bash tools/ci/package-image.sh \
+            build/ns2-research/PPSA99008 \
+            dist/ns2-research/Prospero.Eden-Encore-NS1-NS2-research.ffpfsc
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, zipfile
+          app = Path("build/ns2-research/PPSA99008")
+          dest = Path("dist/ns2-research")
+          output = dest / "Prospero.Eden-Encore-NS1-NS2-research-FTP.zip"
+          assert (app / "eboot.bin").is_file()
+          with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+              for source in sorted(p for p in app.rglob("*") if p.is_file()):
+                  name = "PPSA99008/" + source.relative_to(app).as_posix()
+                  entry = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0))
+                  entry.compress_type = zipfile.ZIP_DEFLATED
+                  entry.external_attr = 0o644 << 16
+                  archive.writestr(entry, source.read_bytes())
+          with zipfile.ZipFile(output) as archive:
+              names = archive.namelist()
+              assert names and all(name.startswith("PPSA99008/") for name in names)
+              assert "PPSA99008/eboot.bin" in names
+              assert "PPSA99008/sce_sys/param.json" in names
+              assert archive.testzip() is None
+          artifacts = [output, dest / "Prospero.Eden-Encore-NS1-NS2-research.ffpfsc"]
+          assert all(p.stat().st_size > 1024 for p in artifacts)
+          (dest / "SHA256SUMS").write_text("".join(
+              hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\\n"
+              for p in artifacts
+          ))
+          print("NS2_RESEARCH_INSTALLABLE_OUTPUT_PASS", len(artifacts))
+          PY
       - name: Upload separately staged unqualified PS5 app
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -126,6 +161,7 @@ jobs:
           path: |
             build/ns2-research/PPSA99008/
             build/ns2-research/NS2_RESEARCH_BUILD_RECEIPT.json
+            dist/ns2-research/
           if-no-files-found: error
           retention-days: 7
       - name: Explain the qualification boundary

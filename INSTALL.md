@@ -136,20 +136,20 @@ The program does not provide games, proprietary keys or firmware.
 
 **This is an in-place application upgrade, not a second installation.** The original native
 [ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden) and Encore use the **same
-PS5 title ID, \`PPSA99008\`**, and therefore normally the same application directory:
+PS5 title ID, `PPSA99008`**, and therefore normally the same application directory:
 
-\`\`\`text
+```text
 /data/homebrew/PPSA99008/
-\`\`\`
+```
 
 The app's **executable files are different from your persistent data**:
 
 | What | Native PS5 path | What to do |
 | --- | --- | --- |
-| **Application executable / UI** | \`/data/homebrew/PPSA99008/\` | Replace with the **complete Encore** \`PPSA99008/\` tree from the chosen release (after backing up). |
-| **Keys, firmware, games, settings, saves, caches** | \`/data/prosperoeden/\` | **Keep; do not delete or overwrite as part of the app update.** Back up before migration. |
+| **Application executable / UI** | `/data/homebrew/PPSA99008/` | Replace with the **complete Encore** `PPSA99008/` tree from the chosen release (after backing up). |
+| **Keys, firmware, games, settings, saves, caches** | `/data/prosperoeden/` | **Keep; do not delete or overwrite as part of the app update.** Back up before migration. |
 | **External storage root** | Your existing selected root | Leave connected and keep its contents; confirm it is selected on first launch. |
-| **Legacy native assets** | \`/data/homebrew/PPSA99008/assets/\` (some older builds) | **Back up first.** Encore may migrate supported user data from this old location *after* startup. |
+| **Legacy native assets** | `/data/homebrew/PPSA99008/assets/` (some older builds) | **Back up first.** Encore may migrate supported user data from this old location *after* startup. |
 | **Optional FFPFSC image** | ShadowMountPlus-selected location | Update the image using the FFPFSC workflow below, **not** by unpacking it into the normal folder. |
 
 **Because the title ID is shared, the native project and Encore are not independent side-by-side
@@ -160,32 +160,32 @@ is not an Encore upgrade and can restore incompatible executable files. For Enco
 ### Recommended migration: native folder → Encore folder
 
 1. **Check your source installation.** This procedure applies when the original app is the
-   normal folder \`/data/homebrew/PPSA99008/\`. If it is mounted as an FFPFSC image, see
+   normal folder `/data/homebrew/PPSA99008/`. If it is mounted as an FFPFSC image, see
    [the FFPFSC section](#method-2--ffpfsc-with-shadowmountplus) instead.
 2. **Close the original emulator completely** and stop using its files. Confirm that its
    application directory is no longer in use.
 3. **Create an offline backup before copying anything.** Save the **whole**
-   \`/data/homebrew/PPSA99008/\` folder **including any old \`assets/\` directory**, the
-   \`/data/prosperoeden/\` data root, and your external storage root (when used). A backup on
+   `/data/homebrew/PPSA99008/` folder **including any old `assets/` directory**, the
+   `/data/prosperoeden/` data root, and your external storage root (when used). A backup on
    your PC or another separate drive is preferable. Keys and saves are private: keep them
    under your own control, never share them with a support request.
 4. Download the intended **Encore** release from
    [our Releases page](https://github.com/niakw/ProsperoEden-Encore/releases) and verify
    its checksum and device-qualification notes. A green CI artifact is **not automatically**
    a console-tested release.
-5. **Inspect the extracted package.** It must contain **one** \`PPSA99008/\` directory
-   holding \`eboot.bin\`, \`sce_sys/param.json\`, the complete \`ui/\` tree and any other
-   files from that release. Do not copy only \`eboot.bin\`; do not create
-   \`PPSA99008/PPSA99008/\`; do not copy the Actions distribution-wrapper directory.
-6. Copy the **complete Encore \`PPSA99008/\` application tree** to
-   \`/data/homebrew/PPSA99008/\`, replacing the original **application files**. **Do not
+5. **Inspect the extracted package.** It must contain **one** `PPSA99008/` directory
+   holding `eboot.bin`, `sce_sys/param.json`, the complete `ui/` tree and any other
+   files from that release. Do not copy only `eboot.bin`; do not create
+   `PPSA99008/PPSA99008/`; do not copy the Actions distribution-wrapper directory.
+6. Copy the **complete Encore `PPSA99008/` application tree** to
+   `/data/homebrew/PPSA99008/`, replacing the original **application files**. **Do not
    remove or wipe the old application directory first** when it may still contain legacy
-   \`assets/\` awaiting migration. An overlay copy can leave obsolete app files: remove
+   `assets/` awaiting migration. An overlay copy can leave obsolete app files: remove
    such leftovers **only after** a successful first launch and after checking the release's
    cleanup notes; never remove persistent data on a guess.
 7. Launch **Encore**. Its one-shot filesystem-access request must succeed before it can use
    the selected storage root or attempt a guarded legacy migration. Old user content in
-   \`/data/prosperoeden/\` is reused; supported older \`assets/\` layouts are considered
+   `/data/prosperoeden/` is reused; supported older `assets/` layouts are considered
    for migration only if they are still present and the preflight checks pass.
 8. Verify the Library, storage-root choice, game files, keys, firmware and any relevant
    saves/settings **before deleting any backup or obsolete file**. Keep a working backup
@@ -193,10 +193,10 @@ is not an Encore upgrade and can restore incompatible executable files. For Enco
 
 ### What happens to existing data?
 
-- **Already in \`/data/prosperoeden/\`:** reused in place. This is a persistent data root,
+- **Already in `/data/prosperoeden/`:** reused in place. This is a persistent data root,
   **not** a disposable cache folder.
-- **Old \`PPSA99008/assets/\` layout:** a guarded migration can move supported legacy
-  data toward \`/data/prosperoeden/\` **only when the old source still exists** and the
+- **Old `PPSA99008/assets/` layout:** a guarded migration can move supported legacy
+  data toward `/data/prosperoeden/` **only when the old source still exists** and the
   application has sufficient filesystem access.
 - **External drive:** Encore preserves a valid existing external root instead of forcing a
   move to the internal drive; folder names remain identical below the chosen root.
@@ -204,13 +204,13 @@ is not an Encore upgrade and can restore incompatible executable files. For Enco
   do not silently overwrite existing files, moves are preflighted, and failed migration
   attempts try to restore already moved directories.
 - **If you deleted the old app folder first:** data stored *only* inside its old
-  \`assets/\` subfolder cannot be reconstructed by Encore. Restore it from your backup,
+  `assets/` subfolder cannot be reconstructed by Encore. Restore it from your backup,
   **do not** overwrite the current persistent root in the process.
 
 ### Updating an existing Encore installation
 
 For an **Encore → newer Encore** upgrade, the procedure is similar: back up your current
-\`PPSA99008/\` app tree and \`/data/prosperoeden/\` data (and any external root), verify
+`PPSA99008/` app tree and `/data/prosperoeden/` data (and any external root), verify
 the new official release, replace the **complete** application tree under the same title
 ID, then check games, saves, language files and settings after launch.
 

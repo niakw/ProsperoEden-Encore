@@ -1,14 +1,14 @@
 # Eden Encore — inventaire exhaustif des sources actives
 
-**Branche :** `dev/ps5-sparse-jit`. **Relevé :** 25 octobre 2026.
+**Branche :** `main` + recherche NS2. **Relevé :** 31 octobre 2026.
 
 Cet inventaire recense chaque fichier C/C++, en-tête, fragment source et
 source OpenCL (`.c`, `.cpp`, `.h`, `.hpp`, `.inc`, `.cl` et variantes voisines)
 présent sous `vendor/encore-active`. Il est généré depuis l'arbre réel
 et contrôlé par `tools/check-active-source-inventory.py`.
 
-- **333 fichiers** de code et d'en-têtes enregistrés (hors 103 sources NS2 expérimentales, suivies séparément).
-- **331 fichiers** possèdent une correspondance exacte avec le registre des fonctions.
+- **337 fichiers** de code et d'en-têtes enregistrés (hors 107 sources NS2 expérimentales, suivies séparément).
+- **335 fichiers** possèdent une correspondance exacte avec le registre des fonctions (dont les propriétaires AOC F46–F49).
 - **2 fichiers** n'ont pas d'ID de graphe historique : les deux en-têtes partagés suivis par `tools/install-eden-header-hygiene.py` et contrôlés octet par octet avec le snapshot Eden immuable.
 - Cet inventaire ne prouve pas le comportement sur console.
 - Le manifeste des backports verrouille **83 fichiers livrés**, dont
@@ -172,10 +172,13 @@ reste dans `docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md`.
 | `eden-core/src/core/core_standard.cpp` | `maintained-override` | F39 |
 | `eden-core/src/core/file_sys/bis_factory.cpp` | `maintained-override` | F14 |
 | `eden-core/src/core/file_sys/card_image.cpp` | `maintained-override` | F42 |
+| `eden-core/src/core/file_sys/extracted_aoc.h` | `maintained-override` | F46 |
+| `eden-core/src/core/file_sys/extracted_aoc_paths.h` | `maintained-override` | F47 |
 | `eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp` | `maintained-override` | F12 |
 | `eden-core/src/core/file_sys/ips_layer.cpp` | `maintained-override` | F37 |
 | `eden-core/src/core/file_sys/patch_manager.cpp` | `maintained-override` | F35 |
 | `eden-core/src/core/file_sys/registered_cache.cpp` | `maintained-override` | F43 |
+| `eden-core/src/core/file_sys/romfs_factory.cpp` | `maintained-override` | F48 |
 | `eden-core/src/core/file_sys/savedata_factory.cpp` | `maintained-override` | F15 |
 | `eden-core/src/core/file_sys/submission_package.cpp` | `maintained-override` | F41 |
 | `eden-core/src/core/hle/kernel/k_page_table_base.cpp` | `maintained-override` | B27 |
@@ -188,6 +191,7 @@ reste dans `docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md`.
 | `eden-core/src/core/hle/kernel/svc/svc_ipc.cpp` | `maintained-override` | H21 |
 | `eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp` | `maintained-override` | U80 |
 | `eden-core/src/core/hle/service/am/service/application_functions.cpp` | `maintained-override` | H32 |
+| `eden-core/src/core/hle/service/aoc/addon_content_manager.cpp` | `maintained-override` | F49 |
 | `eden-core/src/core/hle/service/audio/audio_controller.cpp` | `maintained-override` | A10 |
 | `eden-core/src/core/hle/service/audio/audio_controller.h` | `maintained-override` | A11 |
 | `eden-core/src/core/hle/service/filesystem/filesystem.cpp` | `maintained-override` | F11 |
@@ -382,7 +386,7 @@ Les fichiers source/en-tête/fragment de `headless/` sont suivis
 dans [`EDEN_HEADLESS_SOURCE_CATALOG.md`](EDEN_HEADLESS_SOURCE_CATALOG.md).
 Les chemins du graphe moteur y ont un propriétaire exact ; les autres sont
 triés séparément entre moteur, JIT, tests, ressources et launcher.
-La couverture de 333/333 ci-dessus ne s'applique **pas** à ce dossier.
+La couverture de 337/337 ci-dessus ne s'applique **pas** à ce dossier.
 
 ## Critères de tenue à jour
 

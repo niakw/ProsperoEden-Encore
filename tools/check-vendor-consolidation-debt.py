@@ -35,7 +35,13 @@ assert 'execute_process(COMMAND python3 "${PORT_ROOT}/tools/prepare-vulkan-port.
 # sites and leave room only for removing them, never for adding new ones.
 # For READ/REPLACE the approved pinned exceptions below are subtracted first.
 baseline = {"write_derived(": 1, "file(READ": 4, "string(REPLACE": 2}
-counts = {name: c.count(name) for name in baseline}
+# Count actual top-level CMake commands, not tokens in comments or quoted text.
+# A documentary reference to a retired rewrite must not look like live debt.
+import re
+counts = {
+    name: len(re.findall(rf"^\\s*{re.escape(name)}", c, re.M))
+    for name in baseline
+}
 # All generation targets still permitted in the main CMake recipe.
 # These are a shrinking allowlist: a migrated target needs no new exemption.
 # G23 produces a GLSL resource and is deliberately not treated as C++ debt.

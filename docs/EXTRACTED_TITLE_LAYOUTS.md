@@ -30,7 +30,7 @@ not proof of commercial Switch 2 game boot or PS5 hardware qualification.
       updates/version2/patch.nsp
     ThirdGame/
       archives/original/game.xci        # packaged base in wrapper folders
-      custom/addons/extras.nsp
+      custom/extensions/extras.nsp
     ExtractedNoBaseWrapper/
       exefs/main
       exefs/main.npdm

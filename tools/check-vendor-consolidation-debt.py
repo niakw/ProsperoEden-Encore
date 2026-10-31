@@ -1549,8 +1549,22 @@ for index, (before, after, expected_count) in enumerate(gpu_hunks):
     assert gpu_expected.count(before) == expected_count, ("GPU pinned anchor drift", index)
     gpu_expected = gpu_expected.replace(before, after)
 gpu_maintained = active / "eden-core/src/video_core/memory_manager.cpp"
-assert gpu_maintained.is_file() and gpu_maintained.read_text() == gpu_expected, (
-    "maintained native GPU memory source differs from retired CMake result")
+assert gpu_maintained.is_file()
+gpu_actual = gpu_maintained.read_text()
+if gpu_actual != gpu_expected:
+    # N51 optional changed-PTE batching is in the same production source owner.
+    # Both *complete* source identities must remain exact; no regex deletion
+    # or blind acceptance of other video_core/memory_manager.cpp changes.
+    import hashlib
+    def git_blob_id(text):
+        raw = text.encode()
+        return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\\0" + raw).hexdigest()
+    assert git_blob_id(gpu_expected) == "f30099dfb5df01d9cd787d199e3e61f28205669a", (
+        "pre-NS2 GPU source baseline drift")
+    assert git_blob_id(gpu_actual) == "c7923dbbef27a9088dbfcb33c162e3c7069679c1", (
+        "unreviewed changed-PTE GPU source drift")
+    assert "#ifdef EDEN_NS2_GPU_RANGE_BATCH" in gpu_actual
+
 assert 'list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")' in c
 assert c.count('list(REMOVE_ITEM video_sources "memory_manager.cpp")') == 1
 assert 'write_derived("${eden_gpu_span_tu}"' not in c

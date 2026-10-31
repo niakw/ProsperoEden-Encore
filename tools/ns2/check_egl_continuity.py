@@ -17,7 +17,7 @@ def once(t, old, new):
     return t.replace(old, new)
 
 t = OWNER.read_text()
-assert blob(t) == "b0786ea0a9f993b5804fe92cfbd5ee4c565320ac"
+assert blob(t) == "daf493ce6e863397ec44bfae467c4f7533570477"
 assert HELPER.is_file() and "CutContinuityAt(" in HELPER.read_text()
 t = once(t,
     '#include "core/device_memory_manager.h"\n'

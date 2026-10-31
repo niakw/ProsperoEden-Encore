@@ -89,6 +89,7 @@ int main() {
         exe=out/("n54-"+cxx.replace("+","p"))
         subprocess.run([cxx,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
             "-fsanitize=address,undefined","-fno-sanitize-recover=all",
-            "-I",str(out),str(out/"test.cpp"),"-o",str(exe)],check=True)
+            "-I",str(out),"-I",str(ROOT/"vendor/sources/eden/src"),
+            str(out/"test.cpp"),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)
 print("N54_ASTC_SCRATCH_OWNER_AND_SOURCE_EXTRACTED_LIFECYCLE_PASS")

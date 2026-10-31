@@ -127,8 +127,10 @@ def main() -> int:
                 "NS2 SVC probe must replace only the experimental native dispatcher")
         property_sets = [i for i in range(len(CMAKE)) if
                          CMAKE.startswith("set_property(TARGET core PROPERTY SOURCES", i)]
-        require(sum(i > selection for i in property_sets) == 6,
-                "Unexpected source owner after ExeFS (expected ExeFS, SVC, AM, NVDRV, supervisor)")
+        require(sum(i > selection for i in property_sets) == 7 and
+                'set_property(TARGET core PROPERTY SOURCES "${eden_ns2_os_sources}")' in CMAKE and
+                'EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR' in CMAKE,
+                "Unexpected NS2 core source owner: ExeFS, SVC, process-run, AM, NVDRV and supervisor must stay isolated")
         require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject NS2 application-manager experiment")
         require('option(EDEN_NS2_AM_EXPERIMENTAL' in CMAKE and

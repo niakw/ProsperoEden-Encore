@@ -6,6 +6,10 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 HEADER = ROOT / "vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_sparse_bind_transaction.h"
 s = HEADER.read_text(encoding="utf-8")
+# The real Vulkan::Scheduler::BindSparseImage is mutable; the host stub must not
+# accidentally accept the previous const Queue& signature.
+assert "const SparseLayerBindPlan& logical, Queue& queue," in s
+assert "const SparseLayerBindPlan& logical, const Queue& queue," not in s
 for key in ("AllocateSparseMemory(page_request, token)", "queue.BindSparseImage(",
             "fence.Wait(timeout_ns)", "budget_.Commit(logical)",
             "RetireAfterDeviceIdle", "budget_.Poison()",

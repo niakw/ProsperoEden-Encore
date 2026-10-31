@@ -170,4 +170,24 @@ runners et les tests hôtes permettent effectivement d'établir.
 
 ## 9. N43 — extension de la validation des gels et de la fraîcheur du présentateur
 
-Le workflow FC27 est renforcé avec trois tests de sources de production exécutés avec GPU simulé : récupération TIC → rendu → gestionnaire de présentation F03 ; parcours nvdisp/Host1x → Vulkan → présentation F05 sur **260 soumissions** ; publication de l'événement noyau / réveil d'attente F05. Ces scénarios complètent le test des seules métadonnées de textures. Le run N43 sera distingué des résultats N42 une fois la CI terminée ; **aucune mesure console n'est prévue ni demandée**.
+Le workflow FC27 a été renforcé avec trois tests de sources de production exécutés avec GPU simulé : récupération TIC → rendu → gestionnaire de présentation F03 ; parcours nvdisp/Host1x → Vulkan → présentation F05 sur **260 soumissions** ; publication d'événements noyau / réveil d'attente F05. **Aucune mesure console n'a été effectuée ni demandée.**
+
+**Historique CI conservé :**
+
+- [Premier run N43, 41151265054](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41151265054) : **FAIL** du job rendu uniquement parce que `boost/container/small_vector.hpp` manquait sur le runner Linux. Les premières assertions F03 étaient déjà vertes. Ce run ne révèle pas de régression de rendu ou de concurrence.
+- Commit [`75ed3eb`](https://github.com/niakw/ProsperoEden-Encore/commit/75ed3eb2d61f14893c206ecda8f94e5bdb3a31b3) : installation explicite du paquet de headers `libboost-dev` dans le job hôte.
+- [Relance N43, 41151385884](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41151385884) : **SUCCESS, 2/2 jobs**, aucun échec dans les trois scénarios nouvellement intégrés.
+- [Artefact NSP / ExeFS / rapport, ID 13023795189](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41151385884/artifacts/13023795189), rétention de 7 jours. Identité du PFS0 inchangée : **8 391 065 octets**, SHA-256 `5d090faa03b00be3a30f8a6f43fd479b2543e846b6c5d3d29d376412fa4993cd`.
+
+**Témoins validés d'après les logs de la relance (Clang, `-O0` et `-O2` selon le fixture) :**
+
+| Chaîne source maintenue | Données vérifiées en CI | Limite explicite |
+| --- | --- | --- |
+| F03 TIC/HUD → renderer → present | **241 frames**, **241 révisions de HUD distinctes**, **2 remaps**, **1 disparition temporaire**, **12 ticks de pause**, **241 barrières**, et 243 callbacks présentateur | GPU/WSI et pixels de la console simulés |
+| F05 binder/BufferQueue/nvdisp → Vulkan | **260 transactions**, **260 frames acquises**, **260 composites**, **260 copies**, **260 callbacks**, file async de **7 frames**, ordre conservé, fences immédiates/différées vérifiées | Pas d'ACK de scanout réel sur PS5 |
+| F05 noyau → réveils de threads | **260 cycles**, **2 threads invités simulés**, **520 reprises**, **260 signaux coalescés**, **260 réarmements**, arrêt propre | Ordonnanceur invité et HLE complet non exécutés |
+| F07 texture/cache existants | Fraîcheur TIC, durée de vie/ordre des mutex et récupération de vues confirmés sur variantes hôte natives/non natives | Pas d'échantillonnage de pixels FC27 réel |
+
+Ces vérifications ciblent précisément les régressions de **HUD gelé**, **contenu ancien réaffiché**, **queue de présentation désordonnée** et **attente noyau non réveillée**. Les mutations du replay continuent d'être détectées ; le faux NSP reste un **homebrew de recherche au démarrage non vérifié**, sans aucun contenu EA.
+
+**Clôture de ce cycle sans console :** tous les tests FC27/NSW2 ajoutés sont verts sur le dernier run. On ne conclut **ni** à l'absence de saccades matérielles, **ni** à une compatibilité Switch 2 commerciale, **ni** à une correction prouvée de FC27 ; ces résultats sortent du champ vérifiable avec les outils disponibles.

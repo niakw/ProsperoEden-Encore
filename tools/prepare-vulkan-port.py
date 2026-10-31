@@ -5950,3 +5950,21 @@ apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
     "    }\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
     "    }\n#ifdef PS5_NATIVE\n    // Only successful pipelines enter the bounded owner-local memo.\n    // A null shader still reaches the map's delayed one-shot retry on every\n    // dispatch, without disturbing other valid compute pipeline keys.\n    if (pipeline && !::Eden::DevVulkan::trace_pipelines) {\n        auto& recent = recent_compute_pipelines[next_compute_positive];\n        recent.key = key;\n        recent.pipeline = pipeline.get();\n        preferred_compute_positive = next_compute_positive;\n        next_compute_positive = (next_compute_positive + 1) & 3u;\n    }\n#endif\n    return pipeline.get();\n}\n\nvoid PipelineCache::LoadDiskResources",
     "F07 compute null-safe positive memo publication")
+
+# F07 P0.3: finalize TIC memo without per-draw zero clearing under cache mutex.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "        struct ViewMemo {\n            u32 index{};\n            ImageViewId id{NULL_IMAGE_VIEW_ID};\n        };\n        // A single view or blacklist pass never gets a memo hit. Avoid\n        // zeroing all 16 memo slots while holding the texture-cache lock.\n        std::optional<std::array<ViewMemo, 16>> view_memo;\n        if (!blacklist && views.size() > 1) {\n            view_memo.emplace();\n        }",
+    "        struct ViewMemo {\n            u32 index;\n            ImageViewId id;\n        };\n        // Use a mask instead of clearing sixteen keys under the texture lock.\n        // Unoccupied entries are never read, NULL IDs never memoized.\n        std::array<ViewMemo, 16> view_memo;\n        u32 occupied_view_slots = 0;\n        const bool memo_enabled = !blacklist && views.size() > 1;",
+    "F07 occupancy-mask memo storage and mask")
+
+# F07 P0.3: finalize TIC memo without per-draw zero clearing under cache mutex.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "            ViewMemo* memo_slot = nullptr;\n            bool memo_hit = false;\n            if (view_memo && !has_deleted_images) {\n                auto& memo = *view_memo;\n                const std::size_t start = (view.index ^ (view.index >> 4)) & 15U;\n                for (std::size_t offset = 0; offset < memo.size(); ++offset) {\n                    auto& cached = memo[(start + offset) & 15U];\n                    if (cached.id == NULL_IMAGE_VIEW_ID) {\n                        memo_slot = &cached;\n                        break;\n                    }\n                    if (cached.index != view.index) continue;\n                    memo_slot = &cached;",
+    "            ViewMemo* memo_slot = nullptr;\n            u32 memo_bit = 0;\n            bool memo_hit = false;\n            if (memo_enabled && !has_deleted_images) {\n                const std::size_t start = (view.index ^ (view.index >> 4)) & 15U;\n                for (std::size_t offset = 0; offset < view_memo.size(); ++offset) {\n                    const std::size_t slot = (start + offset) & 15U;\n                    const u32 bit = u32{1} << slot;\n                    auto& cached = view_memo[slot];\n                    if (!(occupied_view_slots & bit)) {\n                        memo_slot = &cached;\n                        memo_bit = bit;\n                        break;\n                    }\n                    if (cached.index != view.index) continue;\n                    memo_slot = &cached;\n                    memo_bit = bit;",
+    "F07 occupancy-mask memo lookup")
+
+# F07 P0.3: finalize TIC memo without per-draw zero clearing under cache mutex.
+apply_reviewed_delta("vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "            if (memo_slot && !has_deleted_images) {\n                memo_slot->index = view.index;\n                memo_slot->id = view.id;\n            }",
+    "            if (memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID) {\n                memo_slot->index = view.index;\n                memo_slot->id = view.id;\n                occupied_view_slots |= memo_bit;\n            }",
+    "F07 occupancy-mask memo positive publication")

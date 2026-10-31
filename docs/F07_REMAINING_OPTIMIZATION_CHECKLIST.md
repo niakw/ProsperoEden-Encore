@@ -28,6 +28,8 @@
 
 **31/10 — C01/T01, invalidations GPU par lot (qualification host) :** `RasterizerVulkan::InnerInvalidation` fusionne les deux pré-parcours de plages (occupation images et buffers) en **une seule traversée**. Chaque domaine cesse ses sondes après son premier recouvrement ; les reprises sous les mutex séparés et l'ordre texture → buffer → query → shader restent inchangés. Variante guest-bridge maintenue en parité, générateur et deux témoins source-extraits mis à jour. **Gains PS5 non mesurés, compteur F07 22/29 ; gates du SHA à qualifier.**
 
+**31/10 — T01/C01, mémo TIC de HUD par masque (qualification host) :** le mémo `FillImageViews` utilise désormais 16 bits d'occupation au lieu d'initialiser 16 identifiants à chaque draw multi-texture sous `texture_cache.mutex`. Aucun résultat nul mémorisé, vues remappées revalidées, rafraîchissement `PrepareImageView`, retries et blacklist conservés. Générateur + tests source-extraits O0/O2/UBSan actualisés. **F07 reste 22/29 tant que gates du SHA non vertes ; gain FPS non mesuré.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

@@ -24,16 +24,19 @@ assert "view_memo" not in baseline
 assert "previous_view_id" in method(backports)
 assert "previous_view_id" not in source
 assert method(backports) != source
-assert source.count("memo[(start + offset) & 15U]")==1
+assert source.count("view_memo[slot]")==1
+assert source.count("occupied_view_slots & bit")==1
+assert "occupied_view_slots |= memo_bit;" in source
 assert "std::size_t start = (view.index ^ (view.index >> 4)) & 15U;" in source
 assert "if (memo_hit) continue;" in source
 assert "if (memo_slot && !has_deleted_images)" in source
-assert source.count("std::optional<std::array<ViewMemo, 16>> view_memo;")==1
-assert source.count("if (!blacklist && views.size() > 1) {")==1
-assert source.index("view_memo.emplace();") < source.index("for (ImageViewInOut& view : views)")
+assert source.count("std::array<ViewMemo, 16> view_memo;")==1
+assert source.count("u32 occupied_view_slots = 0;")==1
+assert source.count("const bool memo_enabled = !blacklist && views.size() > 1;")==1
+assert source.index("occupied_view_slots = 0;") < source.index("for (ImageViewInOut& view : views)")
 assert "F07 bypass draw-local texture memo on empty image descriptor batches" in gen
 assert source.count("if (views.empty()) {")==1
-assert source.index("if (views.empty()) {") < source.index("std::optional<std::array<ViewMemo, 16>> view_memo;")
+assert source.index("if (views.empty()) {") < source.index("std::array<ViewMemo, 16> view_memo;")
 empty_guard=source[source.index("#ifdef PS5_NATIVE"):source.index("    bool has_blacklisted = false;")]
 assert "has_deleted_images = false;" in empty_guard
 assert "return;" in empty_guard
@@ -41,8 +44,10 @@ assert "previous_view_id" not in source
 assert source.count("PrepareImageView(cached.id, false, false);") == 1
 assert "ImageFlagBits::Remapped" in source
 assert source.index("const bool remapped") < source.index("PrepareImageView(cached.id, false, false);")
-assert source.index("if (view_memo && !has_deleted_images)")<source.index("VisitImageView(view.index, compute)")
-assert source.count("cached.id == NULL_IMAGE_VIEW_ID")==1
+assert source.index("if (memo_enabled && !has_deleted_images)")<source.index("VisitImageView(view.index, compute)")
+assert "if (!(occupied_view_slots & bit))" in source
+assert source.count("cached.id == NULL_IMAGE_VIEW_ID")==0
+assert "memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID" in source
 code=r"""
 #include <array>
 #include <cassert>

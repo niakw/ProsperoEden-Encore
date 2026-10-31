@@ -97,6 +97,8 @@ jobs:
           python3 -B tools/check-release-font-wrap-alloc-host.py
           python3 -B tools/check-release-font-sdf-scratch-host.py
           python3 -B tools/check-ps5-avatar-dds-host.py
+          # The fatal audio-thread snapshot is validated with real host signals.
+          python3 -B tools/check-crash-report.py
           python3 -B tools/check-deferred-native-access-coverage.py
           python3 -B tools/ci/check-repo-hygiene.py
           python3 -B tools/ci/check-native-boilerplate-setup.py

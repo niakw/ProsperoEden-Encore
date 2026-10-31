@@ -101,7 +101,8 @@ int main() {
     // 17th handle calls the original GetSamplerId again, never stale data.
     cache.epoch = 43;
     const std::vector<u32> all_collisions{
-        0,16,32,48,64,80,96,112,128,144,160,176,192,208,224,240,256,256,0,16};
+        0,256,512,768,1024,1280,1536,1792,
+        2048,2304,2560,2816,3072,3328,3584,3840,4096,4096,0,256};
     const int before_full = cache.calls;
     const auto full = Run(cache, all_collisions);
     assert(full.size() == all_collisions.size());

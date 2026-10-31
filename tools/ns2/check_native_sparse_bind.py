@@ -19,6 +19,9 @@ assert "dld->vkQueueBindSparse" in methods
 assert "if (!image || !completion" in methods
 assert "VkSparseImageMemoryBindInfo image_info" in methods
 assert "VkSparseImageOpaqueMemoryBindInfo tail_info" in methods
+assert "wait_semaphore ? &wait_semaphore : nullptr" in methods
+assert "signal_semaphore ? &signal_semaphore : nullptr" in methods
+assert "wait_semaphore == signal_semaphore" in methods
 
 cpp = r"""
 #include <cassert>
@@ -29,6 +32,7 @@ using VkQueue=void*;
 using VkImage=void*;
 using VkDeviceMemory=void*;
 using VkFence=void*;
+using VkSemaphore=void*;
 using VkResult=std::int32_t;
 constexpr VkResult VK_SUCCESS=0, VK_ERROR_INITIALIZATION_FAILED=-3;
 constexpr VkResult VK_ERROR_DEVICE_LOST=-4, VK_ERROR_FEATURE_NOT_PRESENT=-8;
@@ -100,11 +104,16 @@ static VkQueue expected_queue=reinterpret_cast<void*>(0x1234);
 static VkImage expected_image=reinterpret_cast<void*>(0x2345);
 static VkFence expected_fence=reinterpret_cast<void*>(0x3456);
 static bool expect_tiles=true, expect_tails=true;
+static VkSemaphore expect_wait=nullptr, expect_signal=nullptr;
 static VkResult Dispatch(VkQueue queue,u32 count,const VkBindSparseInfo* binds,VkFence fence) {
     assert(queue==expected_queue&&count==1&&binds&&fence==expected_fence);
     const auto& s=binds[0];
     assert(s.sType==VK_STRUCTURE_TYPE_BIND_SPARSE_INFO);
-    assert(s.waitSemaphoreCount==0&&s.signalSemaphoreCount==0&&s.bufferBindCount==0);
+    assert(s.bufferBindCount==0);
+    assert(s.waitSemaphoreCount==(expect_wait?1U:0U));
+    assert(s.signalSemaphoreCount==(expect_signal?1U:0U));
+    assert(expect_wait ? (s.pWaitSemaphores && *s.pWaitSemaphores==expect_wait) : !s.pWaitSemaphores);
+    assert(expect_signal ? (s.pSignalSemaphores && *s.pSignalSemaphores==expect_signal) : !s.pSignalSemaphores);
     assert(s.imageBindCount==(expect_tiles?1U:0U));
     assert(s.imageOpaqueBindCount==(expect_tails?1U:0U));
     if(expect_tiles) {
@@ -159,10 +168,22 @@ int main(){
     expect_tiles=true;
     output=VK_ERROR_DEVICE_LOST;
     assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence)==VK_ERROR_DEVICE_LOST&&calls==4);
+    output=VK_SUCCESS;
+    const VkSemaphore wait=reinterpret_cast<void*>(0x4567);
+    const VkSemaphore signal=reinterpret_cast<void*>(0x5678);
+    assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence,wait,wait)==VK_ERROR_INITIALIZATION_FAILED);
+    assert(calls==4);
+    expect_wait=wait; expect_signal=signal;
+    assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence,wait,signal)==VK_SUCCESS && calls==5);
+    expect_wait=nullptr;
+    assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence,nullptr,signal)==VK_SUCCESS && calls==6);
+    expect_signal=nullptr; expect_wait=wait;
+    assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence,wait,nullptr)==VK_SUCCESS && calls==7);
+    expect_wait=nullptr;
     d.vkQueueBindSparse=nullptr;
     assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence)==VK_ERROR_FEATURE_NOT_PRESENT);
     assert(q.BindSparseImage(expected_image,no_tiles,tails,expected_fence)==VK_ERROR_FEATURE_NOT_PRESENT);
-    assert(calls==4);
+    assert(calls==7);
     q.dld=nullptr;
     assert(q.BindSparseImage(expected_image,tiles,tails,expected_fence)==VK_ERROR_FEATURE_NOT_PRESENT);
     q.dld=&d; q.queue=nullptr;
@@ -178,4 +199,4 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-sparse-submit-") as td:
                         "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=all",
                         str(src), "-o", str(exe)], check=True)
         subprocess.run([str(exe)], check=True)
-print("N66_NATIVE_VULKAN_SPARSE_QUEUE_SUBMIT_PASS")
+print("N67_NATIVE_VULKAN_SPARSE_QUEUE_SEMAPHORE_HANDOFF_PASS")

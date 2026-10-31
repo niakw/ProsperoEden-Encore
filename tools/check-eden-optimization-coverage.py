@@ -26,9 +26,18 @@ if "vendor" in tracked:
     tracked.update("vendor/" + p for p in vendor_paths if p)
 
 suffixes={".c",".cpp",".cxx",".cc",".h",".hpp",".inc"}
-owners={p for p in tracked
+all_owners={p for p in tracked
         if p.startswith(("headless/","src/","vendor/encore-active/"))
         and Path(p).suffix in suffixes}
+# NS2 is an explicitly unqualified research layer, not historical F07 review.
+# Do not silently count new research source code as already optimized.
+research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text())
+research_owners={"vendor/encore-active/"+p for p in research["paths"]}
+assert research["schema_version"] == 1 and len(research_owners) == 103
+assert research_owners <= all_owners, sorted(research_owners-all_owners)
+owners=all_owners-research_owners
+assert len(owners)==511, ("F07 historical source owner drift",len(owners))
+print("NS2_F07_TRIAGE_ISOLATION_PASS", "unreviewed_research_sources=103")
 entries=STATE["handled_paths"]
 handled={e["path"] for e in entries}
 assert len(entries)==len(handled),"duplicate optimization owner"

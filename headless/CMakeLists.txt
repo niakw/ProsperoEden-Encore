@@ -1865,8 +1865,16 @@ if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)
         "${EDEN_N76_CLOCK_ROOT}/include/encore/guest_counter_policy.h")
     set(EDEN_N76_NATIVE_CPU_SOURCE
         "${EDEN_N76_CLOCK_ROOT}/src/common/cpu_features.cpp")
+    # G11 has already replaced the upstream A64 translation unit.
+    # Keep its fully optimized native owner and graft the opt-in counter
+    # contract into it; never silently replace it with a legacy source.
+    if(EDEN_DEV_PROFILE)
+        set(EDEN_N76_G11_PROFILE dev)
+    else()
+        set(EDEN_N76_G11_PROFILE normal)
+    endif()
     set(EDEN_N76_NATIVE_JIT_SOURCE
-        "${EDEN_N76_CLOCK_ROOT}/src/core/arm/dynarmic/arm_dynarmic_64.cpp")
+        "${EDEN_N76_CLOCK_ROOT}/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_${EDEN_N76_G11_PROFILE}.cpp")
     foreach(n76_file IN ITEMS
         "${EDEN_N76_GUEST_COUNTER_HEADER}"
         "${EDEN_N76_CLOCK_ROOT}/include/common/cpu_features.h"
@@ -1883,14 +1891,25 @@ if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)
         message(FATAL_ERROR "N76 real native common clock owner is not compiled")
     endif()
     get_target_property(n76_core_sources core SOURCES)
-    list(FIND n76_core_sources "arm/dynarmic/arm_dynarmic_64.cpp"
-         n76_original_arm_idx)
-    if(n76_original_arm_idx EQUAL -1)
-        message(FATAL_ERROR "N76 core A64 JIT owner changed; review before enabling")
+    list(FIND n76_core_sources "${EDEN_N76_NATIVE_JIT_SOURCE}"
+         n76_selected_g11_owner_idx)
+    if(n76_selected_g11_owner_idx EQUAL -1)
+        message(FATAL_ERROR "N76 requires the existing, optimized G11 native A64 owner")
     endif()
-    list(REMOVE_ITEM n76_core_sources "arm/dynarmic/arm_dynarmic_64.cpp")
-    list(APPEND n76_core_sources "${EDEN_N76_NATIVE_JIT_SOURCE}")
-    set_property(TARGET core PROPERTY SOURCES "${n76_core_sources}")
+    list(FIND n76_core_sources "arm/dynarmic/arm_dynarmic_64.cpp"
+         n76_legacy_owner_idx)
+    if(NOT n76_legacy_owner_idx EQUAL -1)
+        message(FATAL_ERROR "N76 must not compile the unqualified legacy A64 owner")
+    endif()
+    file(READ "${EDEN_N76_NATIVE_JIT_SOURCE}" n76_g11_source)
+    string(FIND "${n76_g11_source}" "#ifdef EDEN_NS2_GUEST_COUNTER"
+         n76_g11_counter_guard_idx)
+    string(FIND "${n76_g11_source}"
+         "config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());"
+         n76_g11_counter_rate_idx)
+    if(n76_g11_counter_guard_idx EQUAL -1 OR n76_g11_counter_rate_idx EQUAL -1)
+        message(FATAL_ERROR "N76 counter rate not integrated into audited G11 A64 owner")
+    endif()
     foreach(n76_target IN ITEMS core common)
         target_compile_definitions(${n76_target} PRIVATE EDEN_NS2_GUEST_COUNTER=1)
         target_include_directories(${n76_target} BEFORE PRIVATE

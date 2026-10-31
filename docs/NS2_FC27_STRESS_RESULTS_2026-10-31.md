@@ -23,6 +23,19 @@
 | Pire intervalle | **1 288,129 ms** | Ne donne pas à lui seul la cause |
 | SLA de fluidité sur cette trace | **FAIL (attendu)** | Un test vert doit confirmer cet échec historique, pas le masquer |
 
+### Répartition des trois régimes constatés
+
+Agrégation calculée directement depuis les **415 lignes** de la fixture publique (bornes sur le compteur cumulé de présentation, **pas** scènes de jeu identifiées image par image) :
+
+| Régime / compteur `total` | Fenêtres | Gaps >50 ms | Gaps >500 ms | Pire gap | Médiane JIT par fenêtre | Médiane attente cache par fenêtre |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Démarrage / `total ≤ 6 000` | **42** | **109** | **7** | **1 288,129 ms** | **592,853 ms** | **8,552 ms** |
+| Match / `6 000 < total ≤ 32 000` | **180** | **679** | **3** | **648,845 ms** | **25,952 ms** | **16,529 ms** |
+| Fin à présentation répétitive / `total > 32 000` | **193** | **70** | **0** | **135,3 ms** | **0 ms** | **0,257 ms** |
+| **Total** | **415** | **858** | **10** | **1 288,129 ms** | — | — |
+
+**Contre-exemples importants pour le diagnostic :** parmi les trois fenêtres de match avec un gap dépassant 500 ms, celles terminant aux frames **19 562** et **19 633** n'enregistrent que **39,046 ms** et **29,499 ms** de JIT agrégé, avec **32,393 ms** et **71,371 ms** d'attente cache totale. Les longues images ne relèvent donc **pas toutes** d'une phase de compilation initiale massive. En fin de trace, **154/193 fenêtres** ont un compteur JIT égal à zéro ; ce compteur ne prouve **ni** l'absence de travail CPU non mesuré, **ni** une progression effective du jeu. Les médianes d'une fenêtre de plusieurs threads ne sont pas des durées individuelles par frame.
+
 La trace contient trois régimes distincts : compilation JIT très coûteuse au début, saccades persistantes pendant le jeu, puis période où le compositeur reste actif alors que la progression visuelle du match est suspecte. Une file Vulkan non saturée ou un affichage apparent à 30 FPS **ne constituent pas** une preuve de progression du jeu. Les sommes `jit_ms` et `cache_wait_ms` sont calculées sur des fenêtres et plusieurs threads, **pas** par image individuelle.
 
 ## 2. Stress synthétique inspiré de FC27

@@ -984,17 +984,11 @@ void* AllocateSparsePages(std::size_t size) noexcept {
         {
             const std::lock_guard lock{sparse_mutex};
             SparseRange* free_range = nullptr;
-            // Claim the first reusable slot only AFTER reserving: concurrent
-            // allocators cannot publish the same slot under this mutex.
-            for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
-                auto& range = sparse_ranges[i];
-                if (range.begin.load(std::memory_order_relaxed) == 0) {
-                    free_range = &range;
-                    break;
-                }
-            }
-            if (!free_range && sparse_used_prefix < sparse_ranges.size())
-                free_range = &sparse_ranges[sparse_used_prefix];
+            // Lowest zero bit is the first reusable owner slot, with no
+            // 64-entry atomic scan while claiming a new table under mutex.
+            const auto free_slot = std::countr_one(sparse_live_slots);
+            if (free_slot < sparse_ranges.size())
+                free_range = &sparse_ranges[free_slot];
             if (free_range) {
                 free_range->owned = owned;
                 free_range->physical = physical;

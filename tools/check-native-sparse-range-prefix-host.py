@@ -65,9 +65,10 @@ allocate = source.split("void* AllocateSparsePages(std::size_t size) noexcept {"
 choose_start = allocate.index("    SparseRange* free_range = nullptr;")
 choose_end = allocate.index("            if (free_range) {", choose_start)
 selection = allocate[choose_start:choose_end]
-assert "i < sparse_used_prefix" in selection
-assert "sparse_used_prefix < sparse_ranges.size()" in selection
-assert "free_range = &sparse_ranges[sparse_used_prefix];" in selection
+assert "std::countr_one(sparse_live_slots)" in selection
+assert "free_slot < sparse_ranges.size()" in selection
+assert "free_range = &sparse_ranges[free_slot];" in selection
+assert "range.begin.load(" not in selection, "avoid atomic lookup on allocation"
 # The costly reservation and bitmap initialization must run outside the
 # topology lock; ownership is acquired only for the final publication.
 allocation_body = allocate.split("\n}\n", 1)[0]
@@ -211,7 +212,7 @@ int main() {
     assert(ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
     Register(0, 0x1000);
     scans = 0;
-    assert(ChooseFreeRange() == &sparse_ranges[1] && scans.load() == 1);
+    assert(ChooseFreeRange() == &sparse_ranges[1] && scans.load() == 0);
     scans = 0;
     assert(Lookup(0x1000) == &sparse_ranges[0]);
     assert(scans.load() == 1 && sparse_used_prefix == 1);
@@ -229,7 +230,7 @@ int main() {
     assert(scans.load() == 10000); // one load per adjacent in-range page
     Release(0);
     scans = 0;
-    assert(ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 1);
+    assert(ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
     assert(!Lookup(0x1001));
     assert(Lookup(0x2001) == &sparse_ranges[1]);
     assert(sparse_used_prefix == 2); // holes may not end the scan
@@ -238,7 +239,7 @@ int main() {
     assert(Lookup(0x2001) == &sparse_ranges[1]);
     Register(63, 0x5000);
     scans = 0;
-    assert(ChooseFreeRange() == &sparse_ranges[2] && scans.load() == 3);
+    assert(ChooseFreeRange() == &sparse_ranges[2] && scans.load() == 0);
     assert(sparse_used_prefix == 64);
     // Slots 0, 1 and 63 are live; skip 61 empty begin atomics.
     scans = 0;
@@ -336,10 +337,19 @@ int main() {
         Register(i, 0x100000 + i * 0x2000);
     }
     scans = 0;
-    assert(ChooseFreeRange() == nullptr && scans.load() == 64);
+    assert(ChooseFreeRange() == nullptr && scans.load() == 0);
+    // Sweep every one-hole bitmap including top bit 63, with all other
+    // ranges live. Free-slot selection must touch zero begin atomics.
+    for (unsigned i = 0; i < 64; ++i) {
+        Release(i);
+        scans = 0;
+        assert(ChooseFreeRange() == &sparse_ranges[i] && scans.load() == 0);
+        Register(i, 0x100000 + i * 0x2000);
+    }
+    assert(ChooseFreeRange() == nullptr);
     Release(40);
     scans = 0;
-    assert(ChooseFreeRange() == &sparse_ranges[40] && scans.load() == 41);
+    assert(ChooseFreeRange() == &sparse_ranges[40] && scans.load() == 0);
     Register(40, 0xdead0000);
     assert(Lookup(0xdead0000) == &sparse_ranges[40]); // epoch invalidated miss
     for (int i = 63; i >= 0; --i) Release(i);
@@ -394,4 +404,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 exact_negative_ring4=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 reserve_outside_lock=1 concurrent_lookup=1 saturated_dense_fallback=1 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 bitmap_first_zero_64=1 zero_atomic_selection=1 saturation=1 miss_preserves_hints=1 exact_negative_ring4=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 reserve_outside_lock=1 concurrent_lookup=1 saturated_dense_fallback=1 O0_O2_O3=1")

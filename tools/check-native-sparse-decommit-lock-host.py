@@ -22,7 +22,9 @@ assert source.count(decommit_anchor) == 1
 assert "std::size_t sparse_used_prefix = 0;" in source
 assert "std::uint64_t sparse_range_generation = 1;" in source
 assert "last_negative_generation == sparse_range_generation" in source
-assert "i < sparse_used_prefix" in source
+assert "auto remaining_slots = sparse_live_slots;" in source
+assert "std::countr_zero(remaining_slots)" in source
+assert "std::countr_one(sparse_live_slots)" in source
 lookup = lookup_anchor + source.split(lookup_anchor, 1)[1].split(lookup_end, 1)[0]
 decommit = decommit_anchor + source.split(decommit_anchor, 1)[1].split(decommit_end, 1)[0]
 assert decommit.count("SparseRangeOf(page)") == 1, "avoid the unlocked duplicate 64-slot scan"

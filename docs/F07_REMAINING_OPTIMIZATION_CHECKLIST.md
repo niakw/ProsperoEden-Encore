@@ -22,6 +22,8 @@
 
 **31/10 — V01/C01, même masque sampler sur les draws graphics :** le cache des 16 samplers du shader graphique réutilise désormais le mécanisme d'occupation scalaire validé pour compute, sans effacer 16 octets de présence par draw. Les collisions, les identifiants TSC et les exceptions restent protégés par un bit publié après `GetSamplerId`, sans réutilisation entre draws. Vendor `f8426d4133`, oracle de reconstruction et deux témoins source-extraits graphics/compute synchronisés. **CI hôte seule requise pour prébuild ; F07 22/29.**
 
+**31/10 — J01, allocation sparse bitmap 64 bits (prébuild en qualification) :** `AllocateSparsePages` choisit le premier slot libre avec `std::countr_one(sparse_live_slots)` sous `sparse_mutex`, sans relire jusqu’à 64 `begin` atomiques. Les recherches ignorent déjà les slots retirés via le même bitmap ; epoch, trous, ordre et synchronisation conservés. Oracle source-extrait ASan/UBSan O0/O2/O3 étendu aux 64 trous, saturation, réemploi et concurrence. **CI du nouveau SHA à qualifier ; aucun FPS PS5 mesuré ; F07 22/29.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

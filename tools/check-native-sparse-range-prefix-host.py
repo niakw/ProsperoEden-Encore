@@ -54,11 +54,27 @@ assert source.index("free_range->begin.store(") < pub_start
 assert source.index("free_range->end =") < pub_start
 allocate = source.split("void* AllocateSparsePages(std::size_t size) noexcept {", 1)[1]
 choose_start = allocate.index("    SparseRange* free_range = nullptr;")
-choose_end = allocate.index("    const std::size_t slots =", choose_start)
+choose_end = allocate.index("            if (free_range) {", choose_start)
 selection = allocate[choose_start:choose_end]
 assert "i < sparse_used_prefix" in selection
 assert "sparse_used_prefix < sparse_ranges.size()" in selection
 assert "free_range = &sparse_ranges[sparse_used_prefix];" in selection
+# The costly reservation and bitmap initialization must run outside the
+# topology lock; ownership is acquired only for the final publication.
+allocation_body = allocate.split("\n}\n", 1)[0]
+assert allocation_body.index("const std::size_t slots =") < allocation_body.index(
+    "void* address = physical ? ReserveSparse(span) : nullptr;")
+assert allocation_body.index("void* address = physical ? ReserveSparse(span) : nullptr;") < allocation_body.index(
+    "const std::lock_guard lock{sparse_mutex};")
+assert allocation_body.index("const std::lock_guard lock{sparse_mutex};") < allocation_body.index(
+    "free_range->begin.store(")
+assert allocation_body.index("if (munmap(address, span) != 0)") > allocation_body.index(
+    "const std::lock_guard lock{sparse_mutex};")
+assert allocation_body.rindex("return AllocateMemoryPages(size);") > allocation_body.index(
+    "if (munmap(address, span) != 0)")
+alloc_start = source.index("void* AllocateSparsePages(std::size_t size) noexcept {")
+alloc_stop = source.index("\n}\n", alloc_start) + len("\n}")
+allocation = source[alloc_start:alloc_stop]
 release = source.split("void ReleaseSparse(SparseRange& range) {", 1)[1].split("\n}", 1)[0]
 shrink = """    while (sparse_used_prefix > 0 &&
            sparse_ranges[sparse_used_prefix - 1].begin.load(std::memory_order_relaxed) == 0)
@@ -82,6 +98,9 @@ fixture = r"""
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <cstdio>
+#include <new>
+#include <sys/mman.h>
 
 inline std::atomic<unsigned> scans{0};
 struct CountAtomic {
@@ -97,11 +116,34 @@ struct CountAtomic {
 struct SparseRange {
     CountAtomic begin;
     std::uintptr_t end{};
+    std::atomic<bool>* owned{};
+    std::int64_t* physical{};
 };
 std::array<SparseRange, 64> sparse_ranges{};
 std::mutex sparse_mutex;
 std::size_t sparse_used_prefix = 0;
 std::uint64_t sparse_range_generation = 1;
+constexpr std::size_t SparseSlot = 2u << 20;
+std::atomic<std::size_t> sparse_reserved{0};
+std::atomic<unsigned> dense_fallbacks{0};
+std::atomic<bool> block_reserve{false}, reserve_entered{false}, allow_reserve{false};
+std::atomic<bool> fail_reserve{false};
+constexpr std::uintptr_t DenseSentinel = 0x77770000;
+bool SparseAvailable() { return true; }
+void* AllocateMemoryPages(std::size_t) {
+    dense_fallbacks.fetch_add(1, std::memory_order_relaxed);
+    return reinterpret_cast<void*>(DenseSentinel);
+}
+void Report(const char*) {}
+void* ReserveSparse(std::size_t bytes) {
+    if (block_reserve.load(std::memory_order_acquire)) {
+        reserve_entered.store(true, std::memory_order_release);
+        while (!allow_reserve.load(std::memory_order_acquire)) std::this_thread::yield();
+    }
+    if (fail_reserve.load(std::memory_order_relaxed)) return nullptr;
+    void* p = mmap(nullptr, bytes, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    return p == MAP_FAILED ? nullptr : p;
+}
 __LOOKUP__
 SparseRange* ChooseFreeRange() {
     std::lock_guard lock{sparse_mutex};
@@ -127,6 +169,25 @@ __SHRINK__
 SparseRange* Lookup(std::uintptr_t address) {
     std::lock_guard lock{sparse_mutex};
     return SparseRangeOf(address);
+}
+__ALLOCATE__
+void ReleaseAllocation(void* address) {
+    std::lock_guard lock{sparse_mutex};
+    SparseRange* range = SparseRangeOf(reinterpret_cast<std::uintptr_t>(address));
+    assert(range != nullptr && range->owned && range->physical);
+    const auto begin = reinterpret_cast<std::uintptr_t>(address);
+    const auto span = range->end - begin;
+    assert(munmap(address, span) == 0);
+    delete[] range->owned;
+    delete[] range->physical;
+    range->owned = nullptr;
+    range->physical = nullptr;
+    range->begin.store(0, std::memory_order_release);
+    ++sparse_range_generation;
+    while (sparse_used_prefix > 0 &&
+           sparse_ranges[sparse_used_prefix - 1].begin.load(std::memory_order_relaxed) == 0)
+        --sparse_used_prefix;
+    sparse_reserved.fetch_sub(span, std::memory_order_relaxed);
 }
 int main() {
     scans = 0;
@@ -265,8 +326,41 @@ int main() {
     for (int i = 63; i >= 0; --i) Release(i);
     scans = 0;
     assert(sparse_used_prefix == 0 && ChooseFreeRange() == &sparse_ranges[0] && scans.load() == 0);
+    // Reservation pauses mid-syscall: a concurrent lookup MUST still acquire
+    // sparse_mutex. The former implementation held this lock here.
+    block_reserve.store(true);
+    reserve_entered.store(false);
+    allow_reserve.store(false);
+    void* slow = nullptr;
+    std::thread allocator([&] { slow = AllocateSparsePages(2 * SparseSlot); });
+    while (!reserve_entered.load(std::memory_order_acquire)) std::this_thread::yield();
+    const bool lock_available = sparse_mutex.try_lock();
+    if (lock_available) sparse_mutex.unlock();
+    allow_reserve.store(true, std::memory_order_release);
+    allocator.join();
+    assert(lock_available);
+    assert(slow && reinterpret_cast<std::uintptr_t>(slow) != DenseSentinel);
+    assert(Lookup(reinterpret_cast<std::uintptr_t>(slow) + 1) == &sparse_ranges[0]);
+    ReleaseAllocation(slow);
+    block_reserve.store(false);
+    // Reserving on a full table must not publish over a live owner or leak VA.
+    std::vector<void*> live;
+    for (unsigned i = 0; i < 64; ++i) {
+        void* p = AllocateSparsePages(2 * SparseSlot);
+        assert(p && reinterpret_cast<std::uintptr_t>(p) != DenseSentinel);
+        live.push_back(p);
+    }
+    assert(sparse_used_prefix == 64 && sparse_reserved == 64 * 2 * SparseSlot);
+    assert(reinterpret_cast<std::uintptr_t>(AllocateSparsePages(2 * SparseSlot)) == DenseSentinel);
+    assert(dense_fallbacks == 1);
+    for (auto* p : live) ReleaseAllocation(p);
+    assert(sparse_used_prefix == 0 && sparse_reserved == 0);
+    // A kernel reservation failure also falls back outside the mutex.
+    fail_reserve.store(true);
+    assert(reinterpret_cast<std::uintptr_t>(AllocateSparsePages(2 * SparseSlot)) == DenseSentinel);
+    assert(dense_fallbacks == 2 && sparse_used_prefix == 0);
 }
-""".replace("__LOOKUP__", lookup).replace("__SELECT_FREE__", selection).replace("__PUBLISH__", publish).replace("__SHRINK__", shrink)
+""".replace("__LOOKUP__", lookup).replace("__SELECT_FREE__", selection).replace("__PUBLISH__", publish).replace("__SHRINK__", shrink).replace("__ALLOCATE__", allocation)
 with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
     src = Path(tmp) / "sparse.cpp"
     src.write_text(fixture)
@@ -281,4 +375,4 @@ with tempfile.TemporaryDirectory(prefix="eden-sparse-prefix-") as tmp:
         assert result.returncode == 0, (opt, result.stderr[-4000:])
         result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (opt, result.stderr[-4000:])
-print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 exact_negative_ring4=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 O0_O2_O3=1")
+print("SPARSE_RANGE_PREFIX_HOST_PASS source_extracted=1 empty=1 holes=1 reuse=1 full64=1 tail_reclaim=1 republish=1 tls_dual_positive=1 preferred_hot=1 allocation_prefix=1 saturation=1 miss_preserves_hints=1 exact_negative_ring4=1 publish_release_epoch=1 recycled_slot_safe=1 alternating_10000=1 threads=4 reserve_outside_lock=1 concurrent_lookup=1 saturated_dense_fallback=1 O0_O2_O3=1")

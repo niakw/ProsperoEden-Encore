@@ -947,48 +947,59 @@ bool SparseTablesAvailable() noexcept {
 void* AllocateSparsePages(std::size_t size) noexcept {
     const std::size_t span = (size + SparseSlot - 1) / SparseSlot * SparseSlot;
     if (size < 2 * SparseSlot || span < size || !SparseAvailable()) return AllocateMemoryPages(size);
-    const std::lock_guard lock{sparse_mutex};
-    SparseRange* free_range = nullptr;
-    // The mutex already protects both occupancy and the published prefix.
-    // Scan only live-or-reusable slots, then take the first unoccupied tail.
-    // With one active table this avoids probing the other 63 atomics.
-    for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
-        auto& range = sparse_ranges[i];
-        if (range.begin.load(std::memory_order_relaxed) == 0) {
-            free_range = &range;
-            break;
-        }
-    }
-    if (!free_range && sparse_used_prefix < sparse_ranges.size())
-        free_range = &sparse_ranges[sparse_used_prefix];
+    // Kernel reservation/maps and bitmap allocation are potentially slow
+    // (one shared-zero mapping per 2 MiB slot on PS5). Prepare the unpublished
+    // range WITHOUT blocking commits/decommits and live table lookups.
+    // SparseAvailable() completed the global zero-page probe before entry.
     const std::size_t slots = span / SparseSlot;
-    auto* owned = free_range ? new (std::nothrow) std::atomic<bool>[slots] : nullptr;
+    auto* owned = new (std::nothrow) std::atomic<bool>[slots];
     auto* physical = owned ? new (std::nothrow) std::int64_t[slots] : nullptr;
     void* address = physical ? ReserveSparse(span) : nullptr;
-    if (address == nullptr) {
-        delete[] owned;
-        delete[] physical;
-        // The platform took the check's two slots but not this table: it is dense, as before.
-        char line[96];
-        const int length = std::snprintf(line, sizeof(line), "EDEN_SPARSE_TABLES dense bytes=%zu\n", size);
-        if (length > 0) Report(line);
-        return AllocateMemoryPages(size);
+    if (address != nullptr) {
+        for (std::size_t slot = 0; slot < slots; ++slot) {
+            owned[slot].store(false, std::memory_order_relaxed);
+            physical[slot] = -1;
+        }
+        {
+            const std::lock_guard lock{sparse_mutex};
+            SparseRange* free_range = nullptr;
+            // Claim the first reusable slot only AFTER reserving: concurrent
+            // allocators cannot publish the same slot under this mutex.
+            for (std::size_t i = 0; i < sparse_used_prefix; ++i) {
+                auto& range = sparse_ranges[i];
+                if (range.begin.load(std::memory_order_relaxed) == 0) {
+                    free_range = &range;
+                    break;
+                }
+            }
+            if (!free_range && sparse_used_prefix < sparse_ranges.size())
+                free_range = &sparse_ranges[sparse_used_prefix];
+            if (free_range) {
+                free_range->owned = owned;
+                free_range->physical = physical;
+                free_range->end = reinterpret_cast<std::uintptr_t>(address) + span;
+                free_range->begin.store(reinterpret_cast<std::uintptr_t>(address), std::memory_order_release);
+                // Only initialized metadata is published to readers/commits.
+                sparse_used_prefix = (std::max)(
+                    sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);
+                ++sparse_range_generation; // publish exact negative-hint invalidation
+                sparse_reserved.fetch_add(span, std::memory_order_relaxed);
+                return address;
+            }
+        }
+        // At most 64 live tables. Another allocator may have filled the last
+        // slot while we were reserving. Drop this unclaimed VA before dense
+        // fallback; never free a range after publishing it to readers.
+        if (munmap(address, span) != 0) std::abort();
     }
-    for (std::size_t slot = 0; slot < slots; ++slot) {
-        owned[slot].store(false, std::memory_order_relaxed);
-        physical[slot] = -1;
-    }
-    free_range->owned = owned;
-    free_range->physical = physical;
-    free_range->end = reinterpret_cast<std::uintptr_t>(address) + span;
-    free_range->begin.store(reinterpret_cast<std::uintptr_t>(address), std::memory_order_release);
-    // Publish the finite scan bound only after metadata and begin are ready.
-    // Future lookups see this slot while retaining the original owner lock.
-    sparse_used_prefix = (std::max)(
-        sparse_used_prefix, static_cast<std::size_t>(free_range - sparse_ranges.data()) + 1);
-    ++sparse_range_generation; // publish exact negative-hint invalidation
-    sparse_reserved.fetch_add(span, std::memory_order_relaxed);
-    return address;
+    delete[] owned;
+    delete[] physical;
+    // Failed reserve or all 64 ownership slots occupied: original dense path.
+    // Never allocate dense memory while holding the sparse owner mutex.
+    char line[96];
+    const int length = std::snprintf(line, sizeof(line), "EDEN_SPARSE_TABLES dense bytes=%zu\n", size);
+    if (length > 0) Report(line);
+    return AllocateMemoryPages(size);
 }
 
 void FreeSparsePages(void* base, std::size_t size) noexcept {

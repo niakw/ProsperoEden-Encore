@@ -311,10 +311,10 @@
       "path": "headless/game_files.h",
       "disposition": "format_feature_source_integrated",
       "source_scope": "header_only",
-      "reviewed_source_git_blob": "956c9d1255780936e6a67c45ff915cc653f24898",
+      "reviewed_source_git_blob": "47f2bab4476796c0a54e8e91f7a94faec57b868f",
       "feature_review_document": "docs/EDEN_FORMAT_SOURCE_REVIEW_2026-10-23.md",
       "proof_ref": "tools/check-exefs-directory-host.py",
-      "evidence": "New format-loader code path inspected and pinned: Picker formats and ExeFS path restrictions; no guest draw/JIT hotpath. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Arbitrary nested package add-on discovery re-reviewed, host fixture excludes the selected base and symlinks (31 October 2026). Mixed XCI/NSP folder selection re-reviewed; no native gameplay claim."
+      "evidence": "New format-loader code path inspected and pinned: Picker formats and ExeFS path restrictions; no guest draw/JIT hotpath. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Arbitrary nested package add-on discovery re-reviewed, host fixture excludes the selected base and symlinks (31 October 2026). Mixed XCI/NSP folder selection re-reviewed; no native gameplay claim. Explicit extracted AOC Title ID wrappers recognized with strictly bounded selection; source-review updated 2026-10-31."
     },
     {
       "path": "headless/game_liveness.h",

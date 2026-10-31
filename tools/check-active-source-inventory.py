@@ -37,7 +37,15 @@ assert set(research_paths) <= set(physical_all), (
 assert all(p.startswith(("ns2-", "eden-core/include/", "eden-vulkan/include/"))
            for p in research_paths), "Unreviewed NS2 source category"
 physical = [p for p in physical_all if p not in set(research_paths)]
-assert len(physical) == 331, ("Historical source catalogue changed", len(physical))
+# These two versioned headers preserve the immutable upstream Eden snapshot.
+# They must be present in the real source catalogue, not excluded as NS2 fixtures.
+warning_hygiene = {
+    "eden-header-hygiene/include/common/page_table.h",
+    "eden-header-hygiene/include/video_core/macro.h",
+}
+assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_hygiene, (
+    "Warning-hygiene active owner drift")
+assert len(physical) == 333, ("Historical source catalogue changed", len(physical))
 print("NS2_RESEARCH_SOURCE_LEDGER_PASS",
       f"unqualified={len(research_paths)}", f"historical={len(physical)}")
 graph = {}

@@ -7,11 +7,10 @@ source OpenCL (`.c`, `.cpp`, `.h`, `.hpp`, `.inc`, `.cl` et variantes voisines)
 présent sous `vendor/encore-active`. Il est généré depuis l'arbre réel
 et contrôlé par `tools/check-active-source-inventory.py`.
 
-- **331 fichiers** de code et d'en-têtes enregistrés.
-- **331 fichiers** possèdent une correspondance de chemin *exacte*
-  avec une ou plusieurs lignes du registre de fonctions.
-- **0 fichier** reste sans correspondance de chemin exacte dans le registre.
-  Cette couverture ne prouve pas la sélection native ni le comportement console.
+- **333 fichiers** de code et d'en-têtes enregistrés (hors 103 sources NS2 expérimentales, suivies séparément).
+- **331 fichiers** conservent leur correspondance exacte avec le registre des fonctions.
+- **Deux en-têtes partagés** sont suivis par `tools/install-eden-header-hygiene.py` et contrôlés par comparaison octet par octet avec le snapshot Eden immuable ; ils n'ont pas d'ID fonctionnel historique.
+- Cet inventaire ne prouve pas le comportement sur console.
 - Le manifeste des backports verrouille **83 fichiers livrés**, dont
   **83 fichiers C/C++ enregistrés ci-dessous** et **deux fichiers CMake**
   listés séparément. Les **43 reçus de patches** sont conservés.
@@ -286,6 +285,8 @@ reste dans `docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md`.
 | `eden-gpu/gpu_thread_quiet.cpp` | `maintained-override` | Q06 |
 | `eden-gpu/include/common/bounded_threadsafe_queue.h` | `maintained-override` | Q02,Q07,V72 |
 | `eden-gpu/include/video_core/gpu_thread.h` | `maintained-override` | Q08 |
+| `eden-header-hygiene/include/common/page_table.h` | `maintained-override` | — |
+| `eden-header-hygiene/include/video_core/macro.h` | `maintained-override` | — |
 | `eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/load_store_local_shared.cpp` | `maintained-override` | V24 |
 | `eden-surface-lifecycle/src/core/hle/service/nvnflinger/hardware_composer.cpp` | `maintained-override` | N23 |
 | `eden-surface-lifecycle/src/core/hle/service/nvnflinger/surface_flinger.cpp` | `maintained-override` | N06 |
@@ -381,7 +382,7 @@ Les fichiers source/en-tête/fragment de `headless/` sont suivis
 dans [`EDEN_HEADLESS_SOURCE_CATALOG.md`](EDEN_HEADLESS_SOURCE_CATALOG.md).
 Les chemins du graphe moteur y ont un propriétaire exact ; les autres sont
 triés séparément entre moteur, JIT, tests, ressources et launcher.
-La couverture de 331/331 ci-dessus ne s'applique **pas** à ce dossier.
+La couverture de 333/333 ci-dessus ne s'applique **pas** à ce dossier.
 
 ## Critères de tenue à jour
 
@@ -389,6 +390,6 @@ Chaque nouveau fichier C/C++ ou en-tête introduit dans le fork doit figurer
 dans ce tableau, même s'il n'a pas encore été qualifié. Tout déplacement ou
 retrait doit mettre à jour la liste et les liens du graphe.
 
-Tous les chemins actifs ont une ligne de graphe. La prochaine étape est de
+Tous les chemins actifs sont inventoriés ; seuls les deux en-têtes de correction d'avertissements possèdent un garde dédié sans ID historique dans le graphe. La prochaine étape est de
 prouver la sélection native, la parité des transformations et le comportement
 console des changements pertinents. Ne pas gonfler les résultats HOST.

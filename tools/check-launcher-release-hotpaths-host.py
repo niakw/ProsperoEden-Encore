@@ -11,6 +11,11 @@ begin="Cover Textures::cover(const std::string &path, float size)"
 end="\nvoid Textures::invalidate("
 assert src.count(begin)==1 and end in src.split(begin,1)[1]
 cover=begin+src.split(begin,1)[1].split(end,1)[0]
+avatar_begin="bool IsProfileAvatarImage(std::string_view path)"
+assert src.count(avatar_begin)==1
+avatar=avatar_begin+src.split(avatar_begin,1)[1].split("\\n}\\n",1)[0]+"\\n}"
+assert 'EDEN_PROFILE_AVATAR_TEXTURE status=%s' in src
+assert 'EDEN_PROFILE_AVATAR_TEXTURE status=decode_failed' in src
 assert "double loaded_at_seconds = 0.0;" in hdr
 assert "double uptime_seconds_ = 0.0;" in hdr
 assert "uptime_seconds_ - it->second.loaded_at_seconds" in cover
@@ -33,6 +38,7 @@ cpp=r"""
 #include <deque>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 struct Cover {std::uint32_t texture=0;float age=0;bool missing=false;float aspect=1;};
@@ -48,7 +54,7 @@ class Textures {
  Cover cover(const std::string&,float);
  void tick(float dt){++frame_; uptime_seconds_+=static_cast<double>(dt);}
 };
-""" + cover + r"""
+""" + avatar + "\n" + cover + r"""
 struct Game {std::string file;};
 bool absent(const std::vector<std::string>* known_missing,const Game& game){
 """ + candidate + r"""
@@ -58,6 +64,17 @@ int main(){
  assert(t.cover("",256).missing && t.queue_.empty());
  for(int i=0;i<160;++i)t.cover("box-"+std::to_string(i),300);
  assert(t.covers_.size()==160);
+ // Account-scoped profile images are prioritized above 160 regular covers.
+ const std::string profile="/system_data/priv/cache/profile/0x12345678/avatar.png";
+ t.cover(profile,54);
+ assert(t.queue_.front()==profile+"#64");
+ auto& avatar_entry=t.covers_.at(profile+"#64");
+ avatar_entry.loaded=true;avatar_entry.failed_loads=1;
+ avatar_entry.loaded_at_seconds=t.uptime_seconds_;
+ t.tick(0.5f);t.cover(profile,54);
+ assert(t.queue_.front()==profile+"#64" && !avatar_entry.loaded);
+ t.cover("/data/NiakPS5/assets/niak-profile.png",54);
+ assert(t.queue_.front()=="/data/NiakPS5/assets/niak-profile.png#64");
  auto& e=t.covers_.at("box-0#512");
  t.tick(60);
  assert(t.cover("box-0",300).age==0);

@@ -66,6 +66,7 @@ def normalized(root: Path) -> dict[str, str]:
             n73_include = (
                 "#include \"video_core/renderer_vulkan/vk_texture_cache.h\"\n"
                 "#ifdef EDEN_NS2_SPARSE_CACHE_PROBE\n"
+                "#include <atomic>\n"
                 "#include \"video_core/renderer_vulkan/ns2_sparse_cache_admission.h\"\n"
                 "#include \"video_core/renderer_vulkan/ns2_sparse_bind_transaction.h\"\n"
                 "#endif"
@@ -80,7 +81,9 @@ def normalized(root: Path) -> dict[str, str]:
             code=text[i:j + len(end)]
             for witness in ("memory_allocator.CreateSparseImage(image_ci)",
                             "AdmitSparseCacheImage(", "owner.Bind(",
-                            "owner.RetireAfterDeviceIdle(", "candidate = {};"):
+                            "RetireSparseCacheProbe(", "logical.CreateImageView(view_info)",
+                            "gpu_unsafe.load(std::memory_order_acquire)",
+                            "owner.ReadyForSampling()"):
                 assert witness in code, ("N73 changed native VkImage ownership", witness)
             text = text[:i] + text[j + len(end):]
         assert git_blob(text.encode()) == current_sha, ("N57 maintained source drift", name)

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // N69 executes the exact versioned vendor sparse bind transaction.
+#include <atomic>
+#include <memory>
 #include <cassert>
 #include <array>
 #include <cstdint>
@@ -178,5 +180,43 @@ static void TimeoutAndSharedTail(){
     assert(owner.ReadyForSampling());
     assert(owner.RetireAfterDeviceIdle(d,[]{}));
 }
-int main(){Successful();Failures();TimeoutAndSharedTail();
+
+struct TrackedSparseHandle {
+    std::vector<int>* events{};
+    int value{};
+    TrackedSparseHandle(std::vector<int>& out, int v):events(&out),value(v){}
+    ~TrackedSparseHandle(){events->push_back(value);}
+};
+static void ViewLifetimeRetirement() {
+    auto s=Spec();SparseLayerBudget b(s);FakeAllocator a;
+    SparseBindOwner<FakeAllocator> owner(a,b,s);
+    FakeQueue q;FakeFence fence;
+    const auto request=b.Plan(std::vector<std::uint32_t>{0});
+    assert(owner.Bind(Image(),Memory(),Requirements(s),request,q,fence)==VK_SUCCESS);
+    std::vector<int> events;
+    std::atomic<bool> gpu_unsafe{false};
+    auto view=std::make_unique<TrackedSparseHandle>(events,1);
+    auto image=std::make_unique<TrackedSparseHandle>(events,2);
+    auto completion=std::make_unique<TrackedSparseHandle>(events,3);
+    FakeDevice dev;
+    assert(RetireSparseCacheProbe(dev,owner,view,image,completion,gpu_unsafe));
+    assert(!view && !image && !completion);
+    assert((events == std::vector<int>{1,2,3}));
+    assert(!gpu_unsafe && a.releases==1 && !owner.HasLiveBacking());
+
+    // Simulate a Vulkan device fault after a successful sparse queue submit.
+    auto again=b.Plan(std::vector<std::uint32_t>{1});
+    assert(owner.Bind(Image(),Memory(),Requirements(s),again,q,fence)==VK_SUCCESS);
+    view=std::make_unique<TrackedSparseHandle>(events,4);
+    image=std::make_unique<TrackedSparseHandle>(events,5);
+    completion=std::make_unique<TrackedSparseHandle>(events,6);
+    dev.result=VK_ERROR_DEVICE_LOST;
+    assert(!RetireSparseCacheProbe(dev,owner,view,image,completion,gpu_unsafe));
+    assert(gpu_unsafe && !view && !image && !completion);
+    assert((events == std::vector<int>{1,2,3}));
+    assert(a.allocations==2 && a.releases==1 && owner.HasLiveBacking());
+    assert(b.Poisoned());
+}
+
+int main(){Successful();Failures();TimeoutAndSharedTail();ViewLifetimeRetirement();
     std::puts("N69_NATIVE_VMA_SPARSE_BIND_TRANSACTION_PASS");}

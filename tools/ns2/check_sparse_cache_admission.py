@@ -22,8 +22,12 @@ for item in (
     "SparseBindOwner<MemoryAllocator>",
     "owner.Bind(",
     "scheduler, fence",
-    "owner.RetireAfterDeviceIdle(",
-    "candidate = {};",
+    "RetireSparseCacheProbe(",
+    "logical.CreateImageView(view_info)",
+    "gpu_unsafe.load(std::memory_order_acquire)",
+    "owner.ReadyForSampling()",
+    ".viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY",
+    "sampled_view = std::make_unique<vk::ImageView>",
 ):
     assert item in chunk, (item, "native sparse cache owner drift")
 assert header.count("ProbeSparseImage(const VideoCommon::ImageInfo& info)") == 1

@@ -20,6 +20,8 @@
 
 **31/10 — V01/C01, compute sampler 16 slots (source à qualifier) :** le cache local d'un dispatch Vulkan ne réinitialise plus 16 structures `handle/id/valid` sur chaque `Configure` ; seul un masque d'occupation scalaire est remis à zéro. Remplissage et identité du sampler ont lieu avant publication du bit. Conservation de l'adressage ouvert (collisions) et du repli quand les 16 entrées sont occupées, aucun cache d'une frame à l'autre. Générateur strict, source PS5 épinglée et témoin natif O0/O2 UBSan (collisions, saturation, 17e entrée, changement d'epoch) alignés. **CI hôte à qualifier ; 22/29, sans exiger de test console prébuild.**
 
+**31/10 — V01/C01, même masque sampler sur les draws graphics :** le cache des 16 samplers du shader graphique réutilise désormais le mécanisme d'occupation scalaire validé pour compute, sans effacer 16 octets de présence par draw. Les collisions, les identifiants TSC et les exceptions restent protégés par un bit publié après `GetSamplerId`, sans réutilisation entre draws. Vendor `f8426d4133`, oracle de reconstruction et deux témoins source-extraits graphics/compute synchronisés. **CI hôte seule requise pour prébuild ; F07 22/29.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

@@ -32,7 +32,9 @@ graphics_memo = extract(
 compute_memo = extract(
     compute, "    struct ComputeSamplerMemo {",
     "#endif\n    const auto read_handle{[&](const auto& desc, u32 index) {")
-assert graphics.count("std::array<SamplerMemo, 16> sampler_memo{};") == 1
+assert graphics.count("std::array<SamplerMemo, 16> sampler_memo;") == 1
+assert "occupied_sampler_slots & bit" in graphics_memo
+assert "occupied_sampler_slots |= bit;" in graphics_memo
 assert compute.count("std::array<ComputeSamplerMemo, 16> sampler_memo;") == 1
 assert compute.count("u32 occupied_sampler_slots{};") == 1
 assert "occupied_sampler_slots & bit" in compute_memo

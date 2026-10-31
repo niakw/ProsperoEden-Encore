@@ -47,15 +47,16 @@ struct FakeFence {
     VkResult GetStatus() const {return status;}
     VkResult Wait(std::uint64_t timeout) const {assert(timeout);++waited;return wait_result;}
 };
+// Match the real Vulkan::Scheduler API: sparse binds mutate the queue.
 struct FakeQueue {
-    mutable int calls{};
-    mutable std::vector<VkSparseImageMemoryBind> tiles;
-    mutable std::vector<VkSparseMemoryBind> tails;
-    mutable VkSemaphore last_wait{},last_signal{};
+    int calls{};
+    std::vector<VkSparseImageMemoryBind> tiles;
+    std::vector<VkSparseMemoryBind> tails;
+    VkSemaphore last_wait{},last_signal{};
     VkResult result=VK_SUCCESS;
     template<class T,class U>
     VkResult BindSparseImage(VkImage image,const T& t,const U& u,VkFence fence,
-                             VkSemaphore wait,VkSemaphore signal) const {
+                             VkSemaphore wait,VkSemaphore signal) {
         assert(image && fence);
         ++calls;tiles.assign(t.begin(),t.end());tails.assign(u.begin(),u.end());
         last_wait=wait;last_signal=signal;

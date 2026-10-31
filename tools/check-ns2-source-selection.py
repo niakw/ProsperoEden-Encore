@@ -31,6 +31,14 @@ def main() -> int:
             require(("headless/ns2/" + legacy) not in CMAKE,
                     "Native CMake selected obsolete NSW2 owner: " + legacy)
         vendor = ROOT / "vendor" / "encore-active"
+        # Vendored GPU memory algorithms remain shared Encore source, not an
+        # external emulator namespace (upstream attribution stays in docs).
+        for path in ("core/ns2_egl_continuity_guard.h",
+                     "video_core/ns2_egl_gpu_range_batch.h"):
+            header = (vendor / "ns2-helpers/include" / path).read_text()
+            require("namespace Eden::NS2::GpuMemory" in header and
+                    "namespace Eden::NS2::Eglantine" not in header,
+                    "NS2 shared GPU memory helper namespace drift: " + path)
         maintained = [
             "ns2-a64/dynarmic/frontend/A64/decoder/a64.inc",
             "ns2-a64/dynarmic/frontend/A64/translate/impl/a64_branch.cpp",

@@ -27,7 +27,7 @@ t = once(t,
 call = (
     "#ifdef EDEN_NS2_DEVICE_CONTINUITY\n"
     "    // End a previously tracked physical run before mapping state changes.\n"
-    "    Eden::NS2::Eglantine::CutContinuityAt(start_page_d,\n"
+    "    Eden::NS2::GpuMemory::CutContinuityAt(start_page_d,\n"
     "        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },\n"
     "        [&](size_t index, u32 new_count) {\n"
     "            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);\n"

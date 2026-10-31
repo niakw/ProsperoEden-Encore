@@ -27,7 +27,7 @@ for page in ("page_size", "big_page_size"):
     init = (
         "#ifdef EDEN_NS2_GPU_RANGE_BATCH\n"
         "    // Coalesce only adjacent changed PTE pages; preserve unchanged holes.\n"
-        f"    Eden::NS2::Eglantine::ChangedPageRuns changed_runs({page});\n"
+        f"    Eden::NS2::GpuMemory::ChangedPageRuns changed_runs({page});\n"
         "    const auto notify_changed = [this](GPUVAddr address, u64 length) {\n"
         "        rasterizer->ModifyGPUMemory(unique_identifier, address, length);\n"
         "    };\n"

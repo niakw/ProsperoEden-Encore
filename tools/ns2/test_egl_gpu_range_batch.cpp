@@ -8,7 +8,7 @@
 #include <vector>
 #include "video_core/ns2_egl_gpu_range_batch.h"
 using Run=std::pair<std::uint64_t,std::uint64_t>;
-using Eden::NS2::Eglantine::ChangedPageRuns;
+using Eden::NS2::GpuMemory::ChangedPageRuns;
 static void Check(const std::vector<bool>& dirty, std::uint64_t base, std::uint64_t page) {
     ChangedPageRuns batching(page);
     std::vector<Run> expected,actual;

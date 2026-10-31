@@ -8,7 +8,7 @@
 #include <vector>
 #include "core/ns2_egl_continuity_guard.h"
 static void Test(std::vector<std::uint32_t>& runs,std::size_t cut) {
-    using Eden::NS2::Eglantine::CutContinuityAt;
+    using Eden::NS2::GpuMemory::CutContinuityAt;
     CutContinuityAt(cut,
         [&](std::size_t i) { return runs.at(i); },
         [&](std::size_t i, std::uint32_t n) { runs.at(i)=n; });

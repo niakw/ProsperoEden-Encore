@@ -10,15 +10,15 @@ Eglantine is an Eden-derived PC emulator with public gameplay feedback, not a PS
   [ca524c9](https://github.com/Djihads80/Eglantine/commit/ca524c9aa883abc4d1c5aeb8aa4d2f9eb0b4225c).
   The shader-declared dimensionality may disagree with the underlying
   image dimensionality; requesting a cross-dimensional Vulkan image
-  view is invalid. A faithful, full-source overlay of the pinned
-  Encore `vk_texture_cache.cpp` now uses the pure
+  view is invalid. A faithful, full-source overlay of the **active PS5 Vulkan fork**
+  `vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp` now uses the pure
   `CrossDimensionView` guard before `ImageView::MakeView` selects its
   `texture_type`, keeps the base image view type only in the 3D mismatch
   case, and emits a diagnostic. Other 1D/2D/array view selection is unchanged.
   **OFF by default** via `EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL`;
   native PS5, Vulkan, and experimental NS2 metadata required; forbidden
   under `EDEN_FINAL_RELEASE_PROFILE`. Host tests use both Clang and GCC.
-  A parity tool rejects any unexpected drift from the original pinned TU.
+  A parity tool rejects any unexpected drift from the *actual PS5 renderer* TU.
   No PS5 Vulkan render validated.
 - **Mario Kart World R0/RET**, upstream
   [PR #56](https://github.com/Djihads80/Eglantine/pull/56):
@@ -58,3 +58,12 @@ Eglantine is an Eden-derived PC emulator with public gameplay feedback, not a PS
 do not establish PS5 or complete Switch 2 game support. Full
 `Core::System::Load`, real kernel scheduling, HLE and PS5 RADV
 output still require qualification. No console test is requested.
+
+## PS5 source-owner correction
+
+The native CMake path `headless/vulkan.cmake` replaces upstream
+`renderer_vulkan/vk_texture_cache.cpp` with the checked-in optimized
+`vk_texture_cache_cost.cpp` before later source selection. N49 therefore
+must replace **that** source and preserve its existing PS5 texture/upload
+optimizations. The earlier direct pinned-owner path was not selected in native
+CMake. Corrected before claiming native compilation or validation.

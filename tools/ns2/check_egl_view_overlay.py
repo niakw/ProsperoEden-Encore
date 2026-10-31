@@ -2,7 +2,7 @@
 """N49: exact source-owner parity guard for the Eglantine Vulkan view fix."""
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_texture_cache.cpp"
+SOURCE = ROOT / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
 PORT = ROOT / "headless/ns2/eglantine/video_core/renderer_vulkan/vk_texture_cache.cpp"
 CMAKE = ROOT / "headless/CMakeLists.txt"
 anchor = '    VkImageViewType view_type = ImageViewType(type);\n    VkImageSubresourceRange subresource_range = MakeSubresourceRange(aspect_mask, range);\n    if (texture_type) {'
@@ -27,6 +27,6 @@ expected = original.replace(anchor, replacement).replace(
 assert PORT.read_text() == expected, "the experimental Vulkan TU has diverged from its pinned owner"
 cmake = CMAKE.read_text()
 assert 'EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL' in cmake
-assert cmake.count('list(REMOVE_ITEM video_sources "renderer_vulkan/vk_texture_cache.cpp")') == 1
+assert cmake.count('list(REMOVE_ITEM video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp")') == 1
 assert 'EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL OR' in cmake
-print("N49_VIEW_OWNER_PARITY_PASS full_pinned_owner=1 release_forbidden=1")
+print("N49_VIEW_OWNER_PARITY_PASS full_ps5_fork_owner=1 release_forbidden=1")

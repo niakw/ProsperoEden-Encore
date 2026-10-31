@@ -19,7 +19,7 @@ python3 - "$cache" "$root/headless/CMakeLists.txt" <<'PY'
 import pathlib, re, sys
 cache=pathlib.Path(sys.argv[1]).read_text()
 cmake=pathlib.Path(sys.argv[2]).read_text()
-flags=re.findall(r"option\\((EDEN_NS2_[A-Z0-9_]+)\\s",cmake)
+flags=re.findall(r"option\((EDEN_NS2_[A-Z0-9_]+)\s",cmake)
 assert len(flags)==len(set(flags))==22
 for name in flags:
     assert f"{name}:BOOL=ON" in cache, f"Research ELF lacks {name}=ON"
@@ -61,6 +61,6 @@ receipt={
  "eboot_sha256":hashlib.sha256((app/"eboot.bin").read_bytes()).hexdigest(),
 }
 out=app.parent/"NS2_RESEARCH_BUILD_RECEIPT.json"
-out.write_text(json.dumps(receipt,indent=2)+"\\n")
+out.write_text(json.dumps(receipt,indent=2)+"\n")
 print("NS2_RESEARCH_STAGING_PASS",app,receipt["source_commit"])
 PY

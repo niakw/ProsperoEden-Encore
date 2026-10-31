@@ -1,0 +1,7 @@
+# NSW2 N60 — native PS5 ASTC texture-cache layer bridge
+
+Experimental `EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL=ON`, OFF by default; requires PS5-native Vulkan, NS2 metadata and N57 ASTC layer decoder. Forbidden in final release. Only `research/ns2-ps5-compatibility`.
+
+N60 creates a source-derived alternate `ImageBase`, `TextureCache<P>` and generic texture-cache declarations without editing the pinned vendor. After a successful full ASTC array upload, each image can retain an N55 per-layer planner. Real `TextureCache<P>::WriteMemory` marks guest-written layers, and actual `RefreshContents` calls the N59 staging transaction and N57 Vulkan layer decode under strict eligibility checks. On unmap, alias, sparse, GPU-modified, converted, rescaled, async or other unsupported images the unchanged full upload remains available. With N54 enabled its prepared scratch-trimmed texture cache is the source, so the two research changes compose without wholesale upstream replacement.
+
+**Status**: code-path source integration, not validated native execution. CI checks the source-owner insertions and preserved full fallback; Clang/GCC host tests cover N55/N57/N59 separately. Production PS5 compiler, true Vulkan GPU readback and concurrency validation remain outstanding, so not enabled for users. ImageBase layout changes are research-only and must be compiled consistently across video_core/core. No console testing requested.

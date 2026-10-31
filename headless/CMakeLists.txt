@@ -1549,6 +1549,38 @@ if(EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL)
         "${PORT_BUILD_DIR}/ns2-sparse-vulkan/include")
 endif()
 
+# N60: opt-in native ASTC image CPU-write tracking and bounded Vulkan upload.
+option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL
+    "Research only: connect ASTC CPU writes to bounded native Vulkan layer uploads" OFF)
+if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N60 requires native PS5 Vulkan N57 and NS2 research")
+    endif()
+    set(eden_ns2_cache_src "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache")
+    set(eden_ns2_cache_text "${eden_ns2_cache_src}/texture_cache.h")
+    if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
+        set(eden_ns2_cache_text "${eden_ns2_scratch_generated}/video_core/texture_cache/texture_cache.h")
+    endif()
+    set(eden_ns2_cache_gen "${PORT_ROOT}/tools/ns2/prepare_egl_astc_texture_cache.py")
+    set(eden_ns2_cache_out "${PORT_BUILD_DIR}/ns2-astc-cache/include")
+    execute_process(COMMAND "${EDEN_NS2_PYTHON_EXECUTABLE}"
+        "${eden_ns2_cache_gen}"
+        "--image" "${eden_ns2_cache_src}/image_base.h"
+        "--base" "${eden_ns2_cache_src}/texture_cache_base.h"
+        "--texture" "${eden_ns2_cache_text}"
+        "--output" "${eden_ns2_cache_out}"
+        RESULT_VARIABLE eden_ns2_cache_status)
+    if(NOT eden_ns2_cache_status EQUAL 0)
+        message(FATAL_ERROR "N60 ASTC texture-cache owner changed")
+    endif()
+    # Shared image layout: consumers must use exactly one generated header.
+    target_include_directories(video_core BEFORE PUBLIC
+        "${eden_ns2_cache_out}" "${PORT_ROOT}/headless/ns2/eglantine")
+    target_include_directories(core BEFORE PRIVATE "${eden_ns2_cache_out}")
+endif()
+
 # Eglantine ca524c9: opt-in NS2 Vulkan view-dimension safety. No release
 # or Switch 1 changes; the full pinned original owner is retained otherwise.
 option(EDEN_NS2_EGLANTINE_VIEW_EXPERIMENTAL
@@ -2491,6 +2523,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
        EDEN_NS2_SPARSE_RESIDENCY_GATE_EXPERIMENTAL OR
+       EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

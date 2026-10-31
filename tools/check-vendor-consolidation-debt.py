@@ -840,6 +840,14 @@ cpu_leaf16_new = """    if (caps.invariant_tsc && caps.tsc_frequency < 1'000'000
     if (max_std_fn >= 0x16) {"""
 assert cpu_pinned.count(cpu_fallback) == cpu_pinned.count(cpu_leaf16) == 1
 cpu_expected = cpu_pinned.replace(cpu_fallback, "        }").replace(cpu_leaf16, cpu_leaf16_new)
+# N76/N77 adds only the audited, opt-in guest-rate block to the shared owner.
+# Reverse its exact bytes for the original TSC parity check; reject drift.
+ns2_cpu_header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n"
+ns2_cpu_block = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Shared guest-clock policy: Nintendo's second-generation SDK converts\n    // CNT ticks using 31.25 MHz. Keep the original fast path for Switch 1.\n    if (Eden::GuestCounter::Rate() != Eden::GuestCounter::Switch1Hz) {\n        if (!invariant)\n            return static_cast<s64>(Eden::GuestCounter::NanosecondsToGuest(\n                static_cast<u64>(GetUptime())));\n        const u64 factor = Eden::GuestCounter::NativeFactor();\n        if (factor != 0)\n            return MultiplyHigh(GetUptime(), factor);\n        // A missing host clock calibration must not divide by zero or\n        // silently keep the wrong 19.2 MHz guest rate.\n        if (rdtsc_frequency == 0)\n            return 0;\n        return MultiplyHigh(GetUptime(),\n                            GetFixedPoint64Factor(Eden::GuestCounter::Rate(),\n                                                  rdtsc_frequency));\n    }\n#endif\n"
+if "#ifdef EDEN_NS2_GUEST_COUNTER" in cpu_active:
+    assert cpu_active.count(ns2_cpu_header) == 1, "N76 header modified or duplicated"
+    assert cpu_active.count(ns2_cpu_block) == 1, "N76 timing block modified or duplicated"
+    cpu_active = cpu_active.replace(ns2_cpu_header, "").replace(ns2_cpu_block, "")
 assert cpu_active == cpu_expected, "TSC source differs from previous configure-time transformation"
 assert c.count('list(APPEND common_sources "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")') == 1
 assert 'list(REMOVE_ITEM common_sources cpu_features.cpp)' in c

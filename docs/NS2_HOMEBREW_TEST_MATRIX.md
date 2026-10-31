@@ -214,3 +214,14 @@ encoding is derived from Encore's maintained
 The host test checks that the **real** NPDM parser returns these exact words.
 This corrects a necessary precondition for `KProcess::LoadFromMetadata`,
 not a completed or signed system boot.
+
+### N3x — fix the actual ACI0 KAC header ABI
+
+The first paired-ExeFS CI failed on the process-attribute assertion (the
+metadata parser itself returned success). The KAC offset/size fields are
+located at ACI0 **+0x30/+0x34**, i.e. absolute `0xB0/0xB4` for this
+fixture, **not** at +0x38/+0x3C. The fixture generator now writes the
+actual fields, and the real parser host assertion checks every process
+attribute independently, including exact KAC descriptor contents.
+This resolves the malformed *test input* rather than weakening Encore's
+parser or broadening guest permissions.

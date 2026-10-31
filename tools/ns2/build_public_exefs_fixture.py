@@ -29,7 +29,7 @@ def synthetic_npdm() -> bytes:
     struct.pack_into("<Q", npdm, 0x90, 0x0100000000000420)
     struct.pack_into("<IIII", npdm, 0xA0,
                      0x40, 0x40, 0, 0)  # ACI FAH, SAC
-    struct.pack_into("<II", npdm, 0xB8, 0x80, 12)  # 3 KAC words
+    struct.pack_into("<II", npdm, 0xB0, 0x80, 12)  # ACI0 KAC offset/size at +0x30/+0x34
     # KCapabilities::InitializeForUser requires core/priority permissions.
     # Core 0, thread priorities 16..63, and ONLY the HOS hello SVCs:
     # 0x07 ExitProcess, 0x0B SleepThread, 0x1E GetSystemTick,

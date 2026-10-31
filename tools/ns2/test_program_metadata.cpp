@@ -149,16 +149,31 @@ int main(int argc, char** argv) {
         FileSys::ProgramMetadata actual;
         require(actual.Load(std::make_shared<FixtureFile>(npdm)) ==
                     Loader::ResultStatus::Success, "Real parser rejected ExeFS main.npdm");
-        require(actual.IsSwitch2() && actual.Is64BitProgram() &&
-                    actual.GetAddressSpaceType() == FileSys::ProgramAddressSpaceType::Is39Bit &&
-                    actual.GetPoolPartition() == FileSys::PoolPartition::Application &&
-                    actual.GetMainThreadCore() == 0 &&
-                    actual.GetMainThreadPriority() == 0x2C &&
-                    actual.GetMainThreadStackSize() == 0x100000 &&
-                    actual.GetTitleID() == 0x0100000000000420ULL &&
-                    actual.GetKernelCapabilities() ==
-                        (std::vector<u32>{0x000043F7U, 0x0001100FU, 0x2018080FU}),
-                "Real parser rejected expected AArch64 NS2 process attributes");
+        require(actual.IsSwitch2(), "ExeFS parser did not detect extended ACID");
+        require(actual.Is64BitProgram(), "ExeFS NPDM did not enable AArch64");
+        require(actual.GetAddressSpaceType() == FileSys::ProgramAddressSpaceType::Is39Bit,
+                "ExeFS NPDM address space was not 39-bit");
+        require(actual.GetPoolPartition() == FileSys::PoolPartition::Application,
+                "ExeFS NPDM did not select application memory pool");
+        require(actual.GetMainThreadCore() == 0, "ExeFS NPDM CPU core was not 0");
+        require(actual.GetMainThreadPriority() == 0x2C,
+                "ExeFS NPDM main-thread priority mismatch");
+        require(actual.GetMainThreadStackSize() == 0x100000,
+                "ExeFS NPDM main-thread stack mismatch");
+        require(actual.GetTitleID() == 0x0100000000000420ULL,
+                "ExeFS NPDM program ID mismatch");
+        const std::vector<u32> minimal_caps{
+            0x000043F7U, // core 0, user priorities 16..63
+            0x0001100FU, // HOS SVC 0x07 and 0x0B
+            0x2018080FU, // HOS SVC 0x1E, 0x26, 0x27
+        };
+        const auto& caps = actual.GetKernelCapabilities();
+        if (caps != minimal_caps) {
+            std::cerr << "KAC mismatch: expected " << minimal_caps.size()
+                      << " descriptors, received " << caps.size() << '\\n';
+            for (const auto value : caps) std::cerr << "  descriptor=" << std::hex << value << '\\n';
+            require(false, "ExeFS NPDM KAC offset/permissions mismatch");
+        }
         std::array<std::uint8_t, Eden::NS2::ExeFS::NsoHeaderBytes> header{};
         std::copy_n(main_nso.data(), header.size(), header.data());
         require(Eden::NS2::ExeFS::PreflightNso(header, main_nso.size()).Ready(),

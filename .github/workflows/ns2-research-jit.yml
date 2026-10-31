@@ -5,7 +5,6 @@ on:
     branches:
       - research/ns2-ps5-compatibility
     paths:
-      - 'headless/ns2/dynarmic/**'
       - 'headless/ns2/cpu6/**'
       - 'tools/ns2/jit-host/**'
       - 'tools/ns2/build_public_nso_fixture.py'
@@ -63,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           original=vendor/sources/eden/src/dynarmic/src/dynarmic
-          overlay=headless/ns2/dynarmic/dynarmic
+          overlay=vendor/encore-active/ns2-a64/dynarmic
           cp vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp \
              "$original/frontend/A64/translate/a64_translate.cpp"
           for path in frontend/A64/decoder/a64.h frontend/A64/decoder/a64.inc \

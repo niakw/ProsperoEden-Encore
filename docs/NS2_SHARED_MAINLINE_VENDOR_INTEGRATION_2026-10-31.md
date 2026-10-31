@@ -55,3 +55,7 @@ The four research-only translation units (`ProgramMetadata`, `AppLoader`, `Decon
 ## N50/N51 GPU-memory source consolidation
 
 The PS5 device-memory continuity guard N50 and changed-page GPU PTE notification batcher N51 are now conditionally compiled in their original optimized vendor C++/include owners, not in copies under `headless/ns2/eglantine`. Both feature macros are OFF by default, forbidden for final release, and preserve the pre-research PS5 owners byte-for-byte after exact reversal; helper headers have one vendor location. Clang/GCC host oracle tests remain, but native PS5 GPU validation is outstanding.
+
+## Experimental A64 translation ownership
+
+The five immutable research decoder/translator sources for LDAPR, RETAA/RETAB and exclusive atomics are now versioned under `vendor/encore-active/ns2-a64/dynarmic`, with the exact old Git object IDs retained. Host and native research build selectors use that vendor source; no `headless/ns2/dynarmic` override remains. These remain experimental decoder implementations and are not evidence of complete NSW2 execution or PS5 compatibility.

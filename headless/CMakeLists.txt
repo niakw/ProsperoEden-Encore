@@ -2065,7 +2065,7 @@ if(EDEN_NS2_A64_EXPERIMENTAL)
     if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
         message(FATAL_ERROR "NS2 RETA requires experimental metadata profile")
     endif()
-    set(EDEN_NS2_DYNARMIC_ROOT "${PORT_ROOT}/headless/ns2/dynarmic")
+    set(EDEN_NS2_DYNARMIC_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-a64")
     foreach(eden_ns2_dynarmic_file IN ITEMS
             "frontend/A64/decoder/a64.h"
             "frontend/A64/decoder/a64.inc"

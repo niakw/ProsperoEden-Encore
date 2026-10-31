@@ -65,7 +65,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          overlay=headless/ns2/dynarmic/dynarmic
+          overlay=vendor/encore-active/ns2-a64/dynarmic
           base=build-ns2-a64/include/dynarmic
           mkdir -p "$base/frontend/A64/decoder" "$base/frontend/A64/translate/impl"
           cp "$overlay/frontend/A64/decoder/a64.h" "$base/frontend/A64/decoder/a64.h"

@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parent.parent
-BASE=ROOT/"headless/ns2/dynarmic"
+BASE=ROOT/"vendor/encore-active/ns2-a64"
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 BRANCH=(BASE/"dynarmic/frontend/A64/translate/impl/a64_branch.cpp").read_text()
 DEC=(BASE/"dynarmic/frontend/A64/decoder/a64.inc").read_text()

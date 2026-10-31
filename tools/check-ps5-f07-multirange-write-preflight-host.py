@@ -28,6 +28,9 @@ assert body.count("if (is_written && !ref.sparse)") == 1
 assert "#ifdef PS5_NATIVE" in body and "std::array<VideoCommon::BufferCopy, 8> grouped_copies{};" in body
 assert "if (source.handle != grouped_source || grouped_count == grouped_copies.size())" in body
 assert "flush_group();" in body and "multi_range_buffers.MarkGathered(key);" in body
+assert "last.src_offset + last.size == source.offset" in body
+assert "last.dst_offset + last.size == dst_offset" in body
+assert "F07 fuse adjacent Vulkan multirange guest bytes within source-local copy batch" in generator
 assert "F07 coalesce adjacent native multirange gather slices into bounded FIFO batches" in generator
 cpp = r"""
 #include <array>
@@ -141,6 +144,29 @@ int main() {
 #else
         assert(c.copies==14 && c.group_sizes.size()==14);
 #endif
+    }
+    {
+        // The source+destination must BOTH be contiguous to combine
+        // bytes; a gap retains a distinct Vulkan region in the same group.
+        BufferCacheRuntime c;
+        c.multi_range_sources = {{2,0,8},{2,8,16},{2,24,8},
+                                 {7,0,8},{7,16,8},{7,24,8}};
+        c.multi_range_total=56;
+        assert(c.BindMultiRangeStorageBuffer(12,false));
+        assert(c.before==1 && c.after==1);
+#ifdef PS5_NATIVE
+        assert(c.copies==2 && (c.group_sizes==std::vector<std::size_t>{1,2}));
+        assert(c.recorded.size()==3);
+        assert(c.recorded[0].source==2 && c.recorded[0].src==0 &&
+               c.recorded[0].dst==0 && c.recorded[0].size==32);
+        assert(c.recorded[1].source==7 && c.recorded[1].src==0 &&
+               c.recorded[1].dst==32 && c.recorded[1].size==8);
+        assert(c.recorded[2].source==7 && c.recorded[2].src==16 &&
+               c.recorded[2].dst==40 && c.recorded[2].size==16);
+#else
+        assert(c.copies==6 && c.recorded.size()==6);
+#endif
+        assert(c.multi_range_buffers.marked==1 && c.guest_descriptor_queue.adds==1);
     }
     {
         BufferCacheRuntime c;

@@ -1,94 +1,87 @@
-# Extracted game folders: base, updates and DLC
+# Flexible game storage: base, updates and DLC
 
-Status: **experimental integration**, 31 October 2026. Shared NS1/NS2
-code path. This is a layout contract, **not** a claim of retail NS2 game
-compatibility, cryptographic support, or successful PS5 gameplay.
+Status: **experimental integration**, 31 October 2026. The library discovery
+and base selection are shared between NS1 and NS2. These storage conventions
+are not evidence that a commercial NS2 game boots or that every add-on type
+is registered successfully.
 
-## Preferred layout (one directory per game)
+## No mandatory storage layout
+
+All examples below may coexist. The root remains `/data/prosperoeden/roms/`.
 
 ```text
-/data/prosperoeden/roms/DonkeyKongBananza/
-  base/
-    exefs/
-      main
-      main.npdm
-      rtld
-      sdk
+roms/
+  Zelda.xci                            # existing flat single-file base
+  DonkeyKongBananza/
+    base/
+      exefs/main                       # extracted base executable
+      exefs/main.npdm
+      romfs/                           # extracted base assets
+    updates/458752/exefs/              # optional collocated extracted update
+    updates/458752/romfs/
+    dlc/040074a01bf13001/0/romfs/     # optional extracted add-on layout
+  AnotherGame/
+    base.nsp                           # packaged base in a folder
+    updates/v2/update.nsp              # packaged update (registration pending)
+    dlc/bonus.nsp                      # packaged DLC (registration pending)
+  ThirdGame/
+    archives/original/game.xci         # nested packaged base
+  OneMoreGame/
+    exefs/main                         # extracted without a "base" wrapper
+    exefs/main.npdm
     romfs/
-      <extracted game assets>
-  updates/
-    458752/
-      exefs/
-        <update executables, when present>
-      romfs/
-        <update assets, when present>
-  dlc/
-    040074a01bf13001/
-      0/
-        romfs/
-          <DLC assets>
 ```
 
-All three content categories may be stored **inside `/data/prosperoeden/roms/<title>/`**;
-there is no requirement to place updates or DLC in a separate global
-`/data/prosperoeden/updates/` directory. The base-title scanner deliberately
-does not descend into `<title>/updates/` or `<title>/dlc/`, and excludes
-root-level `/roms/updates` and `/roms/dlc` stores as independent games.
-This **does not** mean the extracted DLC is mounted or functional yet.
+An existing independent `/data/prosperoeden/updates/` store remains valid
+for supported packaged NSP/XCI updates and DLC. Updates/DLC may also be
+physically collocated with the base in `roms/<title>/`; the filesystem
+layout itself does not decide which add-on belongs to which game.
 
-The picker lists only **DonkeyKongBananza**, with the canonical saved
-selection `DonkeyKongBananza/base/exefs/main`. Nested wrappers such
-as `DonkeyKongBananza/base/export/exefs/main` are discovered with a
-bounded, symlink-free search. ExeFS always needs `main` and
-`main.npdm` as regular files; additional modules may be present.
+## What is implemented now
 
-Legacy extracted layout `roms/<game>/main` and normal NSP/XCI/NSZ/XCZ
-and direct executable formats are preserved. No files need to be moved
-or copied from `base/exefs` to the top level.
+- **Flat files:** NSP, XCI, NSZ, XCZ and direct loader inputs at the root
+  retain their prior library/launch behavior.
+- **Extracted bases:** `<title>/main` and bounded nested
+  `<title>/.../exefs/main`, requiring `main.npdm`, are recognized.
+- **Packaged bases in folders:** a single candidate NSP/XCI/NSZ/XCZ
+  under a game folder is recognized; a uniquely named `base.*` or
+  `game.*` can disambiguate. Multiple other plausible packages are
+  deliberately **not guessed** to be a base. Nested package selections
+  are checked against symlink/traversal changes on launch.
+- **No duplicate library cards:** updates/DLC subtrees are excluded
+  from base selection. An ordinary title folder creates at most one card.
+- **Extracted RomFS (vendor experimental):** sibling `romfs/` is exposed
+  through the virtual filesystem rather than copied into process RAM.
+- **Extracted updates (vendor experimental):** only direct
+  `<title>/updates/<decimal-version>/(exefs|romfs)` directories are layered,
+  with the highest numeric version preferred. This is a file overlay,
+  not a full implementation of native update/patch semantics.
 
-## Implemented in the feature branches
+## Still requires engine work
 
-- **Picker / persistence / autoboot:** one game entry; bounded
-  nested `exefs/main` discovery; safe path revalidation on launch.
-  Updates and DLC are excluded from base-title discovery.
-- **Shared vendor loader (experimental):** resolve the sibling
-  `romfs/` directory and expose a virtual packed RomFS. The data
-  remains VFS-backed rather than copied wholesale into process RAM.
-- **Collocated extracted update:** for direct
-  `<game>/updates/<decimal-version>/exefs` and/or `romfs`, choose
-  the highest numeric version and layer its files above the base.
-  This is a **file-level extracted overlay**, not guaranteed to
-  implement Nintendo's actual binary update/patch semantics.
-- **Security:** no symlinks or dot-segment title selections; bounded
-  scan breadth/depth; only explicit `exefs` candidates are games.
+- **Packaged updates/DLC collocated in `roms/`:** the base picker deliberately
+  ignores these as games, but the native content provider does not yet index
+  every collocated package location. They are not guaranteed to be applied.
+- **Extracted DLC:** content identity, AOC registration and separate RomFS
+  mount remain unimplemented; do not overlay extracted DLC onto base RomFS.
+- **Arbitrary update wrappers or loose updates without a Title ID:**
+  directory placement or a version number cannot reliably associate a
+  package with a base title. Use validated package metadata, or show an
+  explicit unresolved add-on instead of silently mounting the wrong content.
+- **Ambiguous packaged base sets:** automatic base selection fails closed
+  rather than selecting an arbitrary package. A structured `base/` folder
+  or uniquely named `base.nsp` resolves this without converting the content.
+- **Verification:** the new layout feature remains in draft PRs; native PS5
+  compilation, launch validation and NS2 commercial runtime proof are pending.
 
-## Still not supported / not claimed
+## Safety and architecture
 
-- **Extracted DLC mount:** `<game>/dlc/<id>/<slot>/romfs` is a
-  reserved organization convention. DLC needs its own content-ID,
-  AOC registration and virtual filesystem mounting. It must **not**
-  be merged into the base game's RomFS as though it were an update.
-- **External extracted updates** under
-  `/data/prosperoeden/updates/458752/exefs` and
-  `.../458752/romfs`: the existing external scanner understands
-  packaged content, not an unindexed extracted folder; the title
-  association cannot be inferred safely from a decimal version alone.
-- Arbitrary nested update/DLC folders need metadata-backed indexing,
-  rather than guessing by directory name; package-format updates/DLC
-  continue to follow existing handling.
-- **Verification pending:** complete PS5 native build and hardware
-  qualification for the new loader path; NS2 commercial runtime
-  remains research-only.
+The discovery scan is bounded (up to six nested wrapper levels; maximum
+128 directories and 128 entries inspected per directory) and avoids symlinks
+for extracted files and nested packages. No game-specific compatibility
+override is introduced. Launcher changes stay in `headless/`; shared
+filesystem/loader changes remain in the separately pinned `vendor` tree.
 
-## Validation
-
-`python3 tools/check-exefs-directory-host.py` exercises real
-launcher selection code under Clang/GCC and UBSan, including nested
-base trees, symlink rejection, update-folder exclusion and legacy
-format preservation. The source check does not emulate a game's
-RomFS reads or apply content patches on a PS5.
-
-Architecture: shared launcher code lives in `headless/` and the
-engine implementation lives in the separate pinned `vendor`
-repository. No title-specific game fix or duplicate engine is
-introduced.
+Run `python3 tools/check-exefs-directory-host.py` to exercise the real
+source-level picker rules under Clang/GCC and UBSan. A host discovery
+regression test is not proof of successful game execution on PS5.

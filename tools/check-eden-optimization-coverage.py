@@ -43,7 +43,19 @@ hygiene_owners = {
 }
 assert hygiene_owners <= all_owners, sorted(hygiene_owners - all_owners)
 assert "tools/install-eden-header-hygiene.py" in tracked
-owners=all_owners-research_owners-hygiene_owners
+# The mainline extracted AOC implementation adds four production source owners
+# after the dated F07 review. Account for them independently; they are neither
+# already optimized F07 entries nor opt-in NS2 experiment files.
+extracted_aoc_owners = {
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+}
+assert extracted_aoc_owners <= all_owners, sorted(extracted_aoc_owners - all_owners)
+assert not extracted_aoc_owners & (research_owners | hygiene_owners)
+owners=all_owners-research_owners-hygiene_owners-extracted_aoc_owners
+print("ENCORE_EXTRACTED_AOC_F07_ISOLATION_PASS", f"new_shipping={len(extracted_aoc_owners)}")
 assert len(owners)==511, ("F07 historical source owner drift",len(owners))
 print("NS2_F07_TRIAGE_ISOLATION_PASS", "unreviewed_research_sources=103",
       "separate_shared_warning_headers=2")

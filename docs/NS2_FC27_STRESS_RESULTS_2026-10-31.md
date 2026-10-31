@@ -121,6 +121,6 @@ Les régressions natives sont déclarées dans [`.github/workflows/ns2-fc27-stre
 
 ### Mise à jour de validation
 
-Au moment de la première rédaction, le run complémentaire [host guards 41149975928](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41149975928) a **1 job vert et 1 job de compilation en cours**, sans échec observé. Il doit être marqué séparément une fois GitHub Actions terminé ; son statut ne change pas le résultat **2/2 vert** du banc stress `41149975993`.
+**Validation finale après compilation :** le run complémentaire [NS2 host guards 41149975928](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41149975928) est désormais **SUCCESS (2/2 jobs)** au même commit de test `7fec9a5c` : contrôles de sources et compilation C++ AArch64 complète verts. Le banc stress [41149975993](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41149975993) est lui aussi **SUCCESS (2/2)**. Les commits ultérieurs `4c1b24b` et `62d9253` ne changent que la documentation et n'introduisent aucun changement de moteur ou de tests.
 
 **Règle de suivi :** conserver systématiquement SHA de source, run CI, données réellement mesurées, données simulées, cas négatifs, niveau de preuve, et validations PS5 encore ouvertes. Ne jamais transformer un succès hôte en affirmation de FPS ou de textures corrigées sur console.

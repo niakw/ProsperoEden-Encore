@@ -23,7 +23,8 @@ assert "if (result >= 0)" in scan
 assert "for (std::size_t frame = 0; frame < kAudioOutGrain; ++frame)" in scan
 assert "nonzero_in_block += block[frame * 2] != 0 ||" in scan
 assert "block[frame * 2 + 1] != 0;" in scan
-tail = audio[end:audio.index("            }\n        });", end)]
+tail = audio[end:audio.index("            Crash::audio_worker_phase.store(5, std::memory_order_relaxed);", end)]
+assert "Crash::audio_worker_phase.store(4, std::memory_order_relaxed);" in tail
 assert tail.index("if (result < 0) {") < tail.index("output_frames += kAudioOutGrain;")
 assert tail.index("output_frames += kAudioOutGrain;") < tail.index("nonzero_frames += nonzero_in_block;")
 assert "nonzero_frames += block[" not in tail

@@ -15,7 +15,7 @@ The historical F01–F07 optimization findings are not reclassified as closed.
 | `headless/metadata_bridge.h` | `a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9` | C ABI scanner receives ROM root for collocated add-ons; both headless call sites updated |
 | `headless/prosperoeden/eden_services.cpp` | `4aa854ec4a00a9515b6015b7e3fad00e70247895` | One UI card per folder, new package base discovery, accurate game count and add-on display; worker IO, not per-frame |
 | `headless/settings_store.h` | `e49667c282633a4ac0bf68976c78e4f4e1c1cd3e` | Persisted nested file selection validation; slash and traversal restrictions retained |
-| `vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp` | `af269102b7e8e41e8ba9dca6c2d68b88fba86e3f` | VFS sibling/ancestor RomFS, bounded versioned extracted update overlay; never mix two update versions |
+| `vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp` | `6b2f529fb09083fab4abd47b2605d16f42d93300` | VFS sibling/ancestor RomFS, bounded versioned extracted update overlay; never mix two update versions |
 | `vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp` | `618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe` | Packaged update/DLC provider skips expanded RomFS/ExeFS to prevent huge content scans; reviewed alongside the existing NCZ source delta |
 
 ## Review and invariants
@@ -52,3 +52,7 @@ for these eight intentionally modified owners, to preserve the strict CI
 source drift guard. Original per-function F01–F07 reviews remain historical.
 Reopen this feature review on any future owner-source drift or a native
 filesystem/title-association failure.
+
+## 31 October 2026 — one-header RomFS declaration re-review
+
+The independent vendor commit [`2efc9291ba10f98369ee716e78d0d83824a9aee4`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/2efc9291ba10f98369ee716e78d0d83824a9aee4) changes this reviewed loader by **one include only**: `#include "core/file_sys/romfs.h"` immediately before `romfs_factory.h`. The previous blob `af269102b7e8e41e8ba9dca6c2d68b88fba86e3f` and new blob `6b2f529fb09083fab4abd47b2605d16f42d93300` are verified against the parent/current vendor commits. The header declares the already-used `FileSys::CreateRomFS` interface for extracted RomFS; no load, VFS overlay, render, JIT or frame-loop statement changed. This review advances the strict exact-blob pins in the coverage inventory and `check-maintained-logging-loader.py`, retaining all behavioral assertions and future drift rejection. Native SDK compilation, extracted DLC mounting, FC27 and FW13.60 execution remain unproved.

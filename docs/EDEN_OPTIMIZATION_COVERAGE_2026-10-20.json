@@ -3259,7 +3259,7 @@
       "path": "vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "F16",
-      "reviewed_source_git_blob": "af269102b7e8e41e8ba9dca6c2d68b88fba86e3f",
+      "reviewed_source_git_blob": "6b2f529fb09083fab4abd47b2605d16f42d93300",
       "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
       "evidence": "Les lectures NSO/NACP, allocations et correctifs sont faits durant le chargement d'un titre, non lors du rendu de chaque frame. Garder les vérifications des modules et rouvrir si un chargement réel échoue. Réexaminer si l'empreinte Git change ou si un profil d'exécution détecte un chemin chaud. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
     },

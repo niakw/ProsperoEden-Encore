@@ -27,7 +27,7 @@ assert "cursor == game_root" in loader_text
 loader_git_blob = hashlib.sha1(
     b"blob " + str(len(loader_data)).encode() + b"\0" + loader_data
 ).hexdigest()
-assert loader_git_blob == "af269102b7e8e41e8ba9dca6c2d68b88fba86e3f", (
+assert loader_git_blob == "6b2f529fb09083fab4abd47b2605d16f42d93300", (
     "maintained loader changed: repeat owner review", loader_git_blob
 )
 

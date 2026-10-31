@@ -29,3 +29,10 @@ pass. It DOES NOT establish actual PS5 GPU pixels, HUD correctness, or a
 performance improvement on FC27. Genuine hardware validation still needs
 guest progress counters + input-to-image + texture content ID/CRC + Vulkan
 present timestamps, with logs and original game files kept private.
+
+
+## Resultats CI verifies (31 octobre 2026)
+
+Le rapport versionne avec SHA de source, chiffres historiques, x1/x4/x8,
+injections de bogues, sorties des tests natifs, lien artefact, et limitations
+se trouve dans [NS2_FC27_STRESS_RESULTS_2026-10-31.md](NS2_FC27_STRESS_RESULTS_2026-10-31.md).

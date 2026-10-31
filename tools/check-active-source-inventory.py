@@ -36,7 +36,31 @@ assert set(research_paths) <= set(physical_all), (
 )
 assert all(p.startswith(("ns2-", "eden-core/include/", "eden-vulkan/include/"))
            for p in research_paths), "Unreviewed NS2 source category"
-physical = [p for p in physical_all if p not in set(research_paths)]
+# Four extracted AOC translation/header owners arrived with the mainline
+# installation integration. They are shipping additions, not historical F07
+# owners and not opt-in NS2 research files. Keep the 333-file F07 baseline
+# immutable while requiring an exact, separately named AOC inventory.
+extracted_aoc_owners = {
+    "eden-core/src/core/file_sys/extracted_aoc.h",
+    "eden-core/src/core/file_sys/extracted_aoc_paths.h",
+    "eden-core/src/core/file_sys/romfs_factory.cpp",
+    "eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+}
+assert extracted_aoc_owners <= set(physical_all), (
+    "Missing maintained extracted AOC owners", sorted(extracted_aoc_owners - set(physical_all))
+)
+assert not extracted_aoc_owners.intersection(research_paths), (
+    "Extracted AOC production owners misclassified as NS2 research"
+)
+aoc_recipe = (root / "headless/CMakeLists.txt").read_text()
+assert "foreach(eden_aoc_relative IN ITEMS" in aoc_recipe
+assert '"file_sys/romfs_factory.cpp"' in aoc_recipe
+assert '"hle/service/aoc/addon_content_manager.cpp"' in aoc_recipe
+assert 'list(REMOVE_ITEM core_sources "${eden_aoc_relative}")' in aoc_recipe
+assert 'list(APPEND core_sources "${eden_aoc_maintained}")' in aoc_recipe
+print("ENCORE_EXTRACTED_AOC_OWNER_PASS", f"new_shipping={len(extracted_aoc_owners)}")
+physical = [p for p in physical_all
+            if p not in set(research_paths) and p not in extracted_aoc_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

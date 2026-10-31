@@ -3,7 +3,7 @@
 from pathlib import Path
 import os,subprocess,tempfile
 root=Path(__file__).resolve().parents[2]
-owner=(root/'vendor/sources/eden/src/core/hle/service/os/process.cpp').read_text()
+owner=(root/'vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp').read_text()
 start=owner.index('bool Process::Run() {')
 end=owner.index('\nvoid Process::Terminate()',start)
 real=owner[start:end]

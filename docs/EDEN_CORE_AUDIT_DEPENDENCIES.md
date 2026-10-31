@@ -245,23 +245,23 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 494 | 471 | 997 |
+| Graphe connu | 498 | 475 | 1008 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 409 | 399 | 831 |
+| SOURCE — lecture effectuée, preuve insuffisante | 413 | 403 | 842 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **424** | **413** | **859** |
+| **Encore à qualifier (SOURCE + OPEN)** | **428** | **417** | **870** |
 | Dont priorité P0 (SOURCE + OPEN) | 103 | 98 | 235 |
 
-Le **noyau restant** compte donc 424 critères répartis sur
-413 fichiers et 859 mentions fonction/contrat :
-15 OPEN et 409 SOURCE.
+Le **noyau restant** compte donc 428 critères répartis sur
+417 fichiers et 870 mentions fonction/contrat :
+15 OPEN et 413 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
 [`EDEN_ACTIVE_SOURCE_CATALOG.md`](EDEN_ACTIVE_SOURCE_CATALOG.md) :
-331 fichiers de code/en-têtes présents et 331 avec un chemin de
-graphe exact, sans aucun chemin source non rattaché dans ce périmètre.
+337 fichiers de code/en-têtes maintenus (hors 107 unités NS2 expérimentales), dont 335 avec un chemin de
+graphe exact et deux en-têtes d'hygiène à preuve dédiée.
 Cette couverture de chemins n'est **pas** une preuve fonctionnelle ni une
 certification de la sélection du code à l'exécution.
 Le contrôle hôte vérifie la complétude des chemins et les références,
@@ -821,8 +821,8 @@ function/contract tokens are checked by CI for existence only; the
 | F43 | P1 | F41,F42 | vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp | ContentProviderEntry::DebugInfo; ProcessNSP | SOURCE | tools/check-encore-ncz-sources.py | NCZ-aware content-provider registration is tracked; installed title indexing and native lifecycle remain unverified | 🟡 Source étudiée |
 | F44 | P1 | F43 | vendor/encore-active/eden-core/src/core/loader/loader.cpp | ResolveIndexedProgram; extension == "xcz" | SOURCE | tools/check-encore-ncz-sources.py | Extension dispatch for NCZ package types is source-selected; real archive detection and fallback behavior remain unverified on console | 🟡 Source étudiée |
 | F45 | P1 | F41,F44 | vendor/encore-active/eden-core/src/core/loader/nsp.cpp | AppLoader_NSP::AppLoader_NSP; ".ncz" | SOURCE | tools/check-encore-ncz-sources.py | NSP/NCA loader supports the NCZ file extension in the maintained source; mixed-content launch and error paths remain unverified on console | 🟡 Source étudiée |
-| F46 | P1 | F41,F45 | vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h | ExtractedAoc::InstalledIds; ExtractedAoc::OpenRomFS | SOURCE | tools/check-active-source-inventory.py | Shared extracted DLC VFS owner honors disabled-DLC settings and requires safe directory; host/source coverage only, guest filesystem and PS5 runtime not proven | 🟡 Source étudiée |
-| F47 | P1 | F46 | vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h | ExtractedAoc::ParseTitleId; ExtractedAoc::Scan; ExtractedAoc::BelongsToBase | SOURCE | tools/check-active-source-inventory.py | Bounded Title-ID-based extracted DLC discovery and symlink rejection; ambiguity, traversal and console behavior still need validation | 🟡 Source étudiée |
+| F46 | P1 | F41,F45 | vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h | namespace FileSys::ExtractedAoc; InstalledIds; OpenRomFS | SOURCE | tools/check-active-source-inventory.py | Shared extracted DLC VFS owner honors disabled-DLC settings and requires safe directory; host/source coverage only, guest filesystem and PS5 runtime not proven | 🟡 Source étudiée |
+| F47 | P1 | F46 | vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h | namespace FileSys::ExtractedAoc; ParseTitleId; Scan; BelongsToBase | SOURCE | tools/check-active-source-inventory.py | Bounded Title-ID-based extracted DLC discovery and symlink rejection; ambiguity, traversal and console behavior still need validation | 🟡 Source étudiée |
 | F48 | P1 | F46,F47 | vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp | RomFSFactory::Open; RomFSFactory::GetEntry | SOURCE | tools/check-active-source-inventory.py | Shared RomFS factory selects extracted AOC only for eligible storage/title IDs and preserves authentic NCA preference; native behavior unproven | 🟡 Source étudiée |
 | F49 | P1 | F46,F47,F48 | vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp | AccumulateAOCTitleIDs; IAddOnContentManager::CountAddOnContent | SOURCE | tools/check-active-source-inventory.py | aoc:u advertises deduplicated extracted DLC IDs while retaining existing provider enumeration; guest IPC and PS5 runtime unproven | 🟡 Source étudiée |
 | L01 | P0 | H47 | vendor/encore-active/eden-backports/src/core/hle/service/am/frontend/applets.cpp | FrontendApplet; child_applets; RequestUpdate | SOURCE | tools/check-active-source-inventory.py | Shipping backport child applet unlink and window update; runtime correctness unproved | 🟡 Source étudiée |

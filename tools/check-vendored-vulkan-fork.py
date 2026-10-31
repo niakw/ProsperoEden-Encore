@@ -366,8 +366,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 'device.GetGraphicsQueue().BindSparseImage(')
         suffix = last + len(end)
         # Header integration inserted one spacer newline beyond the marker.
-        if name.endswith('vk_scheduler.h') and source[suffix:suffix + 1] == '\n':
-            suffix += 1
+        if name.endswith('vk_scheduler.h'):
+            assert source[suffix:suffix + 2] == '\n\n', 'N72 header spacing changed'
+            suffix += 2
         baseline = source[:first] + source[suffix:]
         normalized = temp/'normalized-vendor-n72'/name
         normalized.parent.mkdir(parents=True, exist_ok=True)

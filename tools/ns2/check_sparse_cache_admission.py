@@ -147,6 +147,16 @@ int main() {
  sparse[0].imageMipTailStride=0;
  auto shared=AdmitSparseCacheImage(ci,mem,sparse,6ULL<<30,true);
  assert(shared.Accepted() && shared.complete_layers.size()==4);
+ // Shared direct pool, not a per-game or Switch-generation exception.
+ auto short_pool = AdmitSparseCacheImage(ci,mem,sparse,6ULL<<30,true,
+    (6ULL<<30)-(768ULL<<20)-(2ULL<<20), true);
+ assert(!short_pool.Accepted());
+ auto sufficient = AdmitSparseCacheImage(ci,mem,sparse,6ULL<<30,true,
+    (6ULL<<30)-(768ULL<<20)-(8ULL<<20), true);
+ assert(sufficient.Accepted());
+ auto unknown = AdmitSparseCacheImage(ci,mem,sparse,6ULL<<30,true,
+    6ULL<<30, false);
+ assert(unknown.Accepted());
  assert(shared.resident_bytes==16ULL*65536*4+65536);
  std::puts("N73_REAL_VENDOR_CACHE_ADMISSION_PASS");
 }
@@ -164,6 +174,7 @@ with tempfile.TemporaryDirectory(prefix="ns2-n73-cache-") as temporary:
             "-fsanitize=undefined","-fno-sanitize-recover=all",
             "-I",str(root),
             "-I",str(vendor/"ns2-helpers/include"),
+            "-I",str(vendor/"eden-vulkan/include"),
             str(sourcefile),"-o",str(exe),
         ],check=True)
         subprocess.run([str(exe)],check=True)

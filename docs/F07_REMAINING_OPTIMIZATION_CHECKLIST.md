@@ -16,6 +16,8 @@
 
 **31/10 — A32-U01, fastmem Unmap (source en qualification) :** fusion de deux conditions identiques sur les plages de 2 à 16 pages, sans divisions de granules 16 Kio : une seule borne `first < last && last - first < 16`. Les 122 944 combinaisons de bornes comparées sont équivalentes ; le témoin O0/O2 ASan/UBSan rejoue le vrai `Unmap` (alias vivant, double retrait, mise à jour, non aligné, bord de fenêtre). Compteurs et verrou inchangés, **CI et FPS PS5 à qualifier, F07 22/29**.
 
+**31/10 — A32-U02, fastmem Map (prébuild en qualification) :** les parcours séparés des mappings courts dans un même granule / entre granules sont fusionnés en **un scan borné à 16 pages** : même preuve de backing, d'alias kernel vivant et d'accès, mêmes retours et publication des gardes JIT. La moindre absence d'alias reste obligatoirement dans `Update` (retry). Oracle exhaustif huit scénarios × plages [1..32] sur 64 pages, témoin C++ du vrai `Map` O0/O2 ASan/UBSan. **CI et FPS PS5 non encore qualifiés ; 22/29.**
+
 ## Convention de suivi, impérative
 
 - `[x]` = action décrite **effectuée avec preuve** (SHA, test, CI ou console selon la nature de la case). `[ ]` = **ouverte/non prouvée**. `SANS PATCH JUSTIFIÉ` peut **fermer une revue**, mais **ne ferme pas** l'objectif de performance console.

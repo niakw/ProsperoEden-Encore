@@ -219,44 +219,12 @@ public:
             Refresh(first, first);
             return;
         }
-        // Small same-granule repeat mappings are common during guest page
-        // setup. The active kernel alias proves the original fixed mapping
-        // succeeded; compare at most four existing page records before
-        // skipping Update. Never bypass a missing alias or a cross-granule
-        // request (which may need distinct kernel operations).
-        if (first < last && last - first < PagesPerGranule &&
-            first / PagesPerGranule == last / PagesPerGranule &&
-            chunk_aliased[first / PagesPerGranule]) {
-            // A live fixed alias is independent of guest permissions.
-            // Preserve it for permission-only changes across up to four
-            // neighbouring pages, and refresh only their JIT guard bytes.
-            bool same_backing = true;
-            bool same_access = true;
-            for (std::size_t p = first; p <= last; ++p) {
-                if (page_backing[p] != static_cast<std::uint32_t>(host + (p - first) + 1)) {
-                    same_backing = false;
-                    break;
-                }
-                if (page_access[p] != access) same_access = false;
-            }
-            if (same_backing) {
-                if (same_access) return;
-                for (std::size_t p = first; p <= last; ++p) page_access[p] = access;
-                Refresh(first, last);
-                return;
-            }
-        }
-        // Short repeated mappings may cross up to four native 16 KiB
-        // granules. They are still inert ONLY when every affected chunk
-        // already has a successful fixed alias and all page records match.
-        // Keep a strict 16-page cap: no extra long-range scan on map misses,
-        // and never suppress a retry of an unaliased kernel chunk.
-        if (first < last && last - first < 16 &&
-            first / PagesPerGranule != last / PagesPerGranule) {
-            // All affected kernel chunks already expose the requested
-            // physical pages. A permission-only change cannot require
-            // remapping; refresh only the bounded JIT guard-byte span.
-            // Missing aliases and changed backing still retry Update.
+        // Exact same physical alias and permissions can be reused for any
+        // 2..16-page mapping. Same-16KiB and cross-16KiB requests both
+        // require every affected native chunk to be live; use one bounded
+        // scan instead of duplicating loops and granule-boundary branches.
+        // A missing alias MUST still reach Update to retry kernel mapping.
+        if (first < last && last - first < 16) {
             bool live_aliases_match = true;
             bool same_access = true;
             for (std::size_t p = first; p <= last; ++p) {

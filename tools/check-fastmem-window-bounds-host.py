@@ -275,19 +275,78 @@ with tempfile.TemporaryDirectory(prefix='encore-fastmem-protect-') as temp:
 # published: a previous fixed-map operation could have failed.
 map_body = '    void Map(' + source.split('    void Map(', 1)[1].split('\n    }', 1)[0] + '\n    }'
 unmap_body = '    void Unmap(' + source.split('    void Unmap(', 1)[1].split('\n    }', 1)[0] + '\n    }'
+# Every short Map used to select one of two duplicate fast paths.
+# Compare effective results (skip / refresh / Update) for one-page, same-
+# granule, cross-granule, missing alias, changed backing and permissions,
+# and the >=17-page fallback, without assuming console performance.
+def map_old(first, last, live, backing, access, requested=3, host=17):
+    if first == last:
+        if live[first // 4] and backing[first] == host + 1:
+            return "skip" if access[first] == requested else "refresh"
+        return "update"
+    if last - first < 4 and first // 4 == last // 4 and live[first // 4]:
+        if all(backing[p] == host + (p-first) + 1 for p in range(first,last+1)):
+            return ("skip" if all(access[p] == requested for p in range(first,last+1))
+                    else "refresh")
+    if last - first < 16 and first // 4 != last // 4:
+        if all(live[p//4] and backing[p] == host + (p-first) + 1
+               for p in range(first,last+1)):
+            return ("skip" if all(access[p] == requested for p in range(first,last+1))
+                    else "refresh")
+    return "update"
+
+def map_new(first, last, live, backing, access, requested=3, host=17):
+    if first == last:
+        if live[first//4] and backing[first] == host + 1:
+            return "skip" if access[first] == requested else "refresh"
+        return "update"
+    if last-first < 16 and all(
+        live[p//4] and backing[p] == host + (p-first) + 1
+        for p in range(first,last+1)
+    ):
+        return ("skip" if all(access[p] == requested for p in range(first,last+1))
+                else "refresh")
+    return "update"
+
+map_oracle_cases = 0
+for first in range(64):
+    for count in range(1, min(64-first, 32)+1):
+        last = first + count-1
+        for scenario in range(8):
+            live = [bool(scenario & 1)]*16
+            backing = [17+(p-first)+1 for p in range(64)]
+            access = [3]*64
+            if scenario & 2:
+                live[first//4] = False
+            if scenario & 4:
+                backing[last] = 0
+                access[first] = 1
+            if scenario == 3:
+                access[last] = 1
+                live = [True]*16
+            if scenario == 5:
+                live = [True]*16
+                access[first] = 1
+            if scenario == 7:
+                live = [True]*16
+                backing[last] = 0
+            assert map_old(first,last,live,backing,access) == map_new(
+                first,last,live,backing,access), (first,last,scenario)
+            map_oracle_cases += 1
+print(f"FASTMEM_MAP_UNIFIED_BRANCH_ORACLE_PASS cases={map_oracle_cases} exact_outcome=1")
 assert 'if (first == last && chunk_aliased[first / PagesPerGranule] &&' in map_body
 assert "page_backing[first] == static_cast<std::uint32_t>(host + 1)) {" in map_body
 assert "page_access[first] = access;\n            Refresh(first, first);\n            return;" in map_body
-assert "bool same_backing = true;" in map_body
+assert "bool same_backing = true;" not in map_body
 assert "bool same_access = true;" in map_body
-assert "if (same_backing) {" in map_body
+assert "if (same_backing) {" not in map_body
 assert "for (std::size_t p = first; p <= last; ++p) page_access[p] = access;" in map_body
 assert "Refresh(first, last);\n                return;" in map_body
-assert map_body.index("Refresh(first, last);") < map_body.index("// Short repeated mappings")
+assert map_body.index("Refresh(first, first);") < map_body.index("if (first < last && last - first < 16) {")
 assert map_body.index("std::lock_guard lock{mutex};") < map_body.index("Refresh(first, first);")
 assert 'if (first == last && !page_backing[first] && !page_access[first]) return;' in unmap_body
-assert 'chunk_aliased[first / PagesPerGranule]) {' in map_body
-assert map_body.count('if (same_access) return;') == 2
+assert 'chunk_aliased[first / PagesPerGranule] &&' in map_body
+assert map_body.count('if (same_access) return;') == 1
 assert map_body.count('if (live_aliases_match) {') == 1
 assert map_body.count('if (same_backing) {') == 1
 assert 'if (first < last && last - first < 16) {' in unmap_body
@@ -305,7 +364,7 @@ for first in range(1024):
 assert 'if (page_backing[p] != 0 || page_access[p] != 0)' in unmap_body
 assert 'if (all_clear) return;' in unmap_body
 assert 'std::all_of(page_backing.begin() + first' not in unmap_body
-assert 'first / PagesPerGranule == last / PagesPerGranule' in map_body
+assert 'first / PagesPerGranule == last / PagesPerGranule' not in map_body
 assert 'first / PagesPerGranule == last / PagesPerGranule' not in unmap_body
 assert 'first < last && last - first < 16' in map_body
 assert 'first < last && last - first < 16' in unmap_body
@@ -314,8 +373,8 @@ assert '!chunk_aliased[p / PagesPerGranule]' in map_body
 assert "bool live_aliases_match = true;" in map_body
 assert "if (live_aliases_match) {" in map_body
 assert "if (same_access) return;" in map_body
-assert map_body.count("Refresh(first, last);") == 2
-assert map_body.count("for (std::size_t p = first; p <= last; ++p) page_access[p] = access;") == 2
+assert map_body.count("Refresh(first, last);") == 1
+assert map_body.count("for (std::size_t p = first; p <= last; ++p) page_access[p] = access;") == 1
 for body in (map_body, unmap_body):
     assert body.index('std::lock_guard lock{mutex};') < body.index('if (first == last')
 map_cpp = r'''

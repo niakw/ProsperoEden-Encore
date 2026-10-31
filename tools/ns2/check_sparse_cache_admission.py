@@ -21,7 +21,7 @@ for item in (
     "AdmitSparseCacheImage(",
     "SparseBindOwner<MemoryAllocator>",
     "owner.Bind(",
-    "scheduler, fence",
+    "scheduler, *fence",
     "RetireSparseCacheProbe(",
     "logical.CreateImageView(view_info)",
     "gpu_unsafe.load(std::memory_order_acquire)",

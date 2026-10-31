@@ -158,4 +158,121 @@ inline bool IsSafeDeconstructedGamePath(const std::filesystem::path& roms_root,
     }
     return IsDeconstructedGameDirectory(path);
 }
+
+// Accept packaged base titles inside a title folder, while excluding extracted
+// updates/DLC and unsafe path components. Content type still needs metadata.
+inline bool IsNestedGameFileSelection(std::string_view selection) {
+    if (selection.empty() || selection.size() > 255) return false;
+    if (!IsPackageFile(selection) && !IsCardImageFile(selection)) return false;
+    const auto last_slash = selection.find_last_of('/');
+    if (last_slash == std::string_view::npos || last_slash == 0 ||
+        last_slash == selection.size() - 1) return false;
+    std::size_t levels = 0;
+    while (!selection.empty()) {
+        const auto slash = selection.find('/');
+        const auto segment = selection.substr(0, slash);
+        if (segment.empty() || segment == "." || segment == "..") return false;
+        for (const unsigned char c : segment)
+            if (c < 32 || c == 127 || c == '\\') return false;
+        if (slash == std::string_view::npos) break;
+        if (segment == "updates" || segment == "dlc" || segment == "romfs")
+            return false;
+        if (++levels > 8) return false;
+        selection.remove_prefix(slash + 1);
+    }
+    return levels >= 1;
+}
+
+// Look for a packaged base, allowing one or more ordinary wrapper folders.
+// Prefer a uniquely named "base.*" or "game.*" package. If multiple possible
+// base packages exist, do not guess or accidentally launch an update/DLC.
+inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
+    namespace fs = std::filesystem;
+    if (!IsSafeExtractedDirectory(title)) return {};
+    const auto root_name = title.filename().string();
+    if (root_name == "updates" || root_name == "dlc" || root_name == "romfs")
+        return {};
+    std::vector<std::string> candidates;
+    std::size_t visited = 0;
+    const auto scan = [&](const auto& self, const fs::path& directory,
+                          const std::string& relative, unsigned depth) -> void {
+        if (depth > 6 || ++visited > 128 || candidates.size() > 64) return;
+        std::error_code error;
+        std::vector<fs::path> subdirs;
+        std::size_t examined = 0;
+        for (fs::directory_iterator it{directory, fs::directory_options::skip_permission_denied, error},
+                                    end;
+             !error && it != end && examined++ < 128; it.increment(error)) {
+            const auto path = it->path();
+            const auto name = path.filename().string();
+            if (name.empty() || name.front() == '.' || name == "updates" ||
+                name == "dlc" || name == "romfs") continue;
+            if (IsSafeExtractedDirectory(path)) {
+                subdirs.push_back(path);
+                continue;
+            }
+            error.clear();
+            const auto status = fs::symlink_status(path, error);
+            if (error) { error.clear(); continue; }
+            if (!fs::is_regular_file(status) ||
+                (!IsPackageFile(name) && !IsCardImageFile(name))) continue;
+            std::string stem = path.stem().string();
+            std::transform(stem.begin(), stem.end(), stem.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (stem == "update" || stem == "patch" || stem == "dlc" ||
+                stem == "aoc" || stem.starts_with("update_") ||
+                stem.starts_with("update-") || stem.starts_with("dlc_") ||
+                stem.starts_with("dlc-")) continue;
+            const auto candidate = relative.empty() ? name : relative + "/" + name;
+            if (IsNestedGameFileSelection(candidate)) candidates.push_back(candidate);
+        }
+        std::sort(subdirs.begin(), subdirs.end(), [](const fs::path& a, const fs::path& b) {
+            const auto a_name = a.filename().string();
+            const auto b_name = b.filename().string();
+            if (a_name == "base" && b_name != "base") return true;
+            if (b_name == "base" && a_name != "base") return false;
+            return a_name < b_name;
+        });
+        for (const auto& path : subdirs) {
+            if (visited >= 128 || candidates.size() > 64) break;
+            const auto name = path.filename().string();
+            self(self, path, relative.empty() ? name : relative + "/" + name, depth + 1);
+        }
+    };
+    scan(scan, title, "", 0);
+    if (candidates.empty() || candidates.size() > 64) return {};
+    std::sort(candidates.begin(), candidates.end());
+    std::vector<std::string> named_base;
+    for (const auto& candidate : candidates) {
+        std::string stem = fs::path(candidate).stem().string();
+        std::transform(stem.begin(), stem.end(), stem.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (stem == "base" || stem == "game") named_base.push_back(candidate);
+    }
+    if (named_base.size() == 1) return named_base.front();
+    if (named_base.empty() && candidates.size() == 1) return candidates.front();
+    return {};
+}
+
+inline std::string FindGameFolderInput(const std::filesystem::path& title) {
+    if (const auto extracted = FindDeconstructedGameMain(title); !extracted.empty())
+        return extracted;
+    return FindNestedGamePackage(title);
+}
+
+inline bool IsSafeNestedGameFilePath(const std::filesystem::path& roms_root,
+                                    std::string_view selection) {
+    namespace fs = std::filesystem;
+    if (!IsNestedGameFileSelection(selection) || !IsSafeExtractedDirectory(roms_root))
+        return false;
+    fs::path path = roms_root;
+    const fs::path relative{std::string(selection)};
+    for (const auto& part : relative.parent_path()) {
+        path /= part;
+        if (!IsSafeExtractedDirectory(path)) return false;
+    }
+    std::error_code error;
+    const auto status = fs::symlink_status(path / relative.filename(), error);
+    return !error && fs::is_regular_file(status) && !fs::is_symlink(status);
+}
 } // namespace Eden

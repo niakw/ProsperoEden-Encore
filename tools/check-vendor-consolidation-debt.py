@@ -1558,7 +1558,7 @@ if gpu_actual != gpu_expected:
     import hashlib
     def git_blob_id(text):
         raw = text.encode()
-        return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\\0" + raw).hexdigest()
+        return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
     assert git_blob_id(gpu_expected) == "f30099dfb5df01d9cd787d199e3e61f28205669a", (
         "pre-NS2 GPU source baseline drift")
     assert git_blob_id(gpu_actual) == "c7923dbbef27a9088dbfcb33c162e3c7069679c1", (

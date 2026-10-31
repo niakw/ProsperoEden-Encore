@@ -29,6 +29,13 @@ compatibility, cryptographic support, or successful PS5 gameplay.
           <DLC assets>
 ```
 
+All three content categories may be stored **inside `/data/prosperoeden/roms/<title>/`**;
+there is no requirement to place updates or DLC in a separate global
+`/data/prosperoeden/updates/` directory. The base-title scanner deliberately
+does not descend into `<title>/updates/` or `<title>/dlc/`, and excludes
+root-level `/roms/updates` and `/roms/dlc` stores as independent games.
+This **does not** mean the extracted DLC is mounted or functional yet.
+
 The picker lists only **DonkeyKongBananza**, with the canonical saved
 selection `DonkeyKongBananza/base/exefs/main`. Nested wrappers such
 as `DonkeyKongBananza/base/export/exefs/main` are discovered with a

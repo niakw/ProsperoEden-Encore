@@ -22,7 +22,7 @@ end = settings.index("\n}\n", start) + 2
 actual_validator = settings[start:end]
 assert "IsDeconstructedGameSelection(name)" in actual_validator
 assert "c == '/' && !exefs" in actual_validator
-assert 'IsDeconstructedGameDirectory(entry.path())' in library
+assert 'FindDeconstructedGameMain(entry.path())' in library
 assert 'if (!Eden::ValidRomFilename(file)) continue;' in library
 assert 'game.name = CleanTitle(entry_name);' in library
 assert 'game.format = format;' in library
@@ -30,8 +30,9 @@ assert 'CountExeFsFolders(roms_path)' in library
 directory_counter = library.split("int CountExeFsFolders(", 1)[1].split("unsigned int HashPath(", 1)[0]
 assert "ListEntries(directory, true, ok)" in directory_counter
 assert 'IsDeconstructedGameDirectory(selected_path.parent_path())' in main
-assert 'Eden::IsDeconstructedGameDirectory(entry.path())' in main
+assert 'Eden::FindDeconstructedGameMain(entry.path())' in main
 assert 'selected_path.filename() == "main"' in main
+assert 'IsSafeDeconstructedGamePath(selected_root, selected_relative)' in main
 assert "symlink_status(folder / name, error)" in header
 
 source = r"""
@@ -58,6 +59,8 @@ int main() {
     std::ofstream(rom / "main") << "code";
     std::ofstream(rom / "main.npdm") << "metadata";
     assert(Eden::IsDeconstructedGameDirectory(rom));
+    assert(Eden::FindDeconstructedGameMain(rom) == "main");
+    assert(Eden::IsSafeDeconstructedGamePath(root, "My Game/main"));
     assert(Eden::IsDeconstructedGameSelection("My Game/main"));
     assert(Eden::ValidRomFilename("My Game/main"));
     assert(Eden::ValidRomFilename("game.NSZ"));
@@ -65,6 +68,11 @@ int main() {
     assert(!Eden::ValidRomFilename("../main"));
     assert(!Eden::ValidRomFilename("My Game/../main"));
     assert(!Eden::ValidRomFilename("My Game/sub/main"));
+    assert(Eden::ValidRomFilename("My Game/base/exefs/main"));
+    assert(Eden::ValidRomFilename("My Game/base/extra/sub/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/updates/458752/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/dlc/0/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/../base/exefs/main"));
     assert(!Eden::ValidRomFilename("/main"));
     assert(!Eden::ValidRomFilename("main"));
     assert(!Eden::ValidRomFilename("My Game\\main"));
@@ -85,6 +93,27 @@ int main() {
     const fs::path linked = root / "symlinked-game";
     fs::create_directory_symlink(rom, linked);
     assert(!Eden::IsDeconstructedGameDirectory(linked));
+    const fs::path nested = root / "Nested Game";
+    fs::create_directories(nested / "base" / "exefs");
+    fs::create_directories(nested / "base" / "romfs");
+    fs::create_directories(nested / "updates" / "458752" / "exefs");
+    fs::create_directories(nested / "dlc" / "040074a01bf13001" / "0" / "romfs");
+    std::ofstream(nested / "base" / "exefs" / "main") << "code";
+    std::ofstream(nested / "base" / "exefs" / "main.npdm") << "metadata";
+    std::ofstream(nested / "updates" / "458752" / "exefs" / "main") << "patch";
+    std::ofstream(nested / "updates" / "458752" / "exefs" / "main.npdm") << "patchmeta";
+    assert(Eden::FindDeconstructedGameMain(nested) == "base/exefs/main");
+    assert(Eden::IsSafeDeconstructedGamePath(root, "Nested Game/base/exefs/main"));
+    const fs::path deeper = root / "Deep Game";
+    fs::create_directories(deeper / "base" / "some" / "path" / "exefs");
+    std::ofstream(deeper / "base" / "some" / "path" / "exefs" / "main") << "code";
+    std::ofstream(deeper / "base" / "some" / "path" / "exefs" / "main.npdm") << "meta";
+    assert(Eden::FindDeconstructedGameMain(deeper) == "base/some/path/exefs/main");
+    const fs::path bad = root / "Unsafe Game";
+    fs::create_directory(bad);
+    fs::create_directory_symlink(nested / "base", bad / "base");
+    assert(Eden::FindDeconstructedGameMain(bad).empty());
+    assert(!Eden::IsSafeDeconstructedGamePath(root, "Unsafe Game/base/exefs/main"));
     fs::remove_all(root);
     std::puts("EXEFS_DIRECTORY_AND_SELECTION_PASS");
 }

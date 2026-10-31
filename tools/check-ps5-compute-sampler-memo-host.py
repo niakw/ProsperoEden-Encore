@@ -22,7 +22,13 @@ begin = source.index(begin_mark)
 end = source.index("\n#endif", begin) + len("\n#endif")
 memo = source[begin:end]
 assert memo in generator, "selected native sampler memo diverged from strict generator"
-assert "std::array<ComputeSamplerMemo, 16> sampler_memo{};" in memo
+assert "std::array<ComputeSamplerMemo, 16> sampler_memo;" in memo
+assert "u32 occupied_sampler_slots{};" in memo
+assert "occupied_sampler_slots & bit" in memo
+assert "occupied_sampler_slots |= bit;" in memo
+assert "entry.valid" not in memo
+assert "u32 handle{};" not in memo
+assert "VideoCommon::SamplerId id{};" not in memo
 assert "entry.valid &&" not in memo
 assert "entry.handle == handle" in memo
 assert "texture_cache.GetSamplerId(handle, true)" in memo
@@ -91,7 +97,18 @@ int main() {
     assert(cache.calls == 12);
     for (size_t i = 0; i < colliding.size(); ++i)
         assert(colliding[i].value == 42000 + colliding_handles[i]);
-    // A descriptor-free compute dispatch does not look up a sampler.
+    // Fill all 16 hash-collision slots, then overflow the memo. Repeated
+    // 17th handle calls the original GetSamplerId again, never stale data.
+    cache.epoch = 43;
+    const std::vector<u32> all_collisions{
+        0,16,32,48,64,80,96,112,128,144,160,176,192,208,224,240,256,256,0,16};
+    const int before_full = cache.calls;
+    const auto full = Run(cache, all_collisions);
+    assert(full.size() == all_collisions.size());
+    assert(cache.calls == before_full + 18); // 16 cached + 2 overflow
+    for (size_t i = 0; i < full.size(); ++i)
+        assert(full[i].value == 43000 + all_collisions[i]);
+    // No sampler means neither an occupied slot nor a sampler cache lookup.
     const int before = cache.calls;
     assert(Run(cache, {}).empty());
     assert(cache.calls == before);

@@ -597,7 +597,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          submodules: false
+          submodules: true
+          fetch-depth: 1
       - name: Python syntax
         run: |
           python3 -m py_compile tools/check-ns2-npdm-host.py tools/check-ns2-source-selection.py tools/check-ns2-renderer-selector-host.py tools/ns2_patch_inventory.py

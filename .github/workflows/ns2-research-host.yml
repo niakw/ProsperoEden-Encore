@@ -50,6 +50,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_image_owner.py
+      - name: N69 native VMA sparse transaction and device-idle retirement (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_sparse_vma_bind.py
       - name: N63/N68 sparse layer budget and bounded tile/mip-tail coordinates (Clang/GCC)
         shell: bash
         run: |

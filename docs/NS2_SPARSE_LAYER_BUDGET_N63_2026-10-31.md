@@ -7,3 +7,7 @@ Inputs are validated image dimensions, levels, array layers, VkSparseImageMemory
 `Plan()` calculates only missing layers and shared-tail cost, rejects duplicate/out-of-range layers or over-budget requests as an **entire transaction** without partially committing. `Commit()` requires unchanged generation and identical budget/layer proposal, and is called **only after successful vkQueueBindSparse+fence retirement**. `Poison()` prevents unsafe reuse after failed/in-doubt GPU submission, and `ResetAfterGpuRetire()` is forbidden until all GPU use of the Vulkan image is complete.
 
 Clang/GCC UBSan tests cover per-layer tails, shared tails, bad dimensions/granularity, overflowing tile counts, stale plan reuse, poison/restart and 5000 deterministic randomized binding requests. This is not an actual sparse VkImage, real PS5 driver feature detection, image readback or game FPS benchmark. No console test requested.
+
+## Maintained vendor source
+
+The single maintained N63 source is now `vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_sparse_layer_budget.h`. No sparse Vulkan GPU binding is enabled.

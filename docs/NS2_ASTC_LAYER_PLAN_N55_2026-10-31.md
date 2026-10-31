@@ -12,3 +12,7 @@ The [Eglantine 97ce27a](https://github.com/Djihads80/Eglantine/commit/97ce27ab35
 - Source-owner guard verifies the current PS5 native Vulkan upload owner and pinned generic texture/image metadata. Clang/GCC UBSan tests exercise boundaries, stale snapshots and deterministic randomized dirty ranges.
 
 **Evidence limit:** this is a tested upload *planner*, not an enabled partial ASTC decoder. There is no claim of PS5 GPU residency, sparse allocation, game boot, frame-time gain or visible rendering. Next integration is to adapt native `ASTCDecoderPass`, per-layer views and the texture-cache upload path together, then validate GPU synchronization. No console test requested.
+
+## Maintained vendor source
+
+The single maintained N55 source is now `vendor/encore-active/ns2-helpers/include/video_core/texture_cache/ns2_astc_layer_plan.h`. The planner remains research-only.

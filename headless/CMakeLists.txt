@@ -1527,8 +1527,13 @@ if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
         message(FATAL_ERROR "N60 ASTC texture-cache owner changed")
     endif()
     # Shared image layout: consumers must use exactly one generated header.
+    # Native ASTC uses the maintained generic N55/N59 vendor headers.
+    set(EDEN_NS2_HELPERS_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    if(NOT EXISTS "${EDEN_NS2_HELPERS_ROOT}/video_core/texture_cache/ns2_astc_staging_bridge.h")
+        message(FATAL_ERROR "Missing vendor-owned ASTC staging helper")
+    endif()
     target_include_directories(video_core BEFORE PUBLIC
-        "${eden_ns2_cache_out}" "${PORT_ROOT}/headless/ns2/eglantine")
+        "${eden_ns2_cache_out}" "${EDEN_NS2_HELPERS_ROOT}" "${PORT_ROOT}/headless/ns2/eglantine")
     target_include_directories(core BEFORE PRIVATE "${eden_ns2_cache_out}")
 endif()
 

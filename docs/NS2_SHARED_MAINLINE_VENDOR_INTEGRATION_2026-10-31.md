@@ -16,7 +16,7 @@ The NS2 research branch is a **compatibility extension of the existing Encore em
 | N62 VMA sparse memory chunks and rollback | `vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp` and shared header | All qualifying 2D arrays, not game-specific |
 | N64 sparse VkImage creation | Same native VMA allocator owner | Any supported Vulkan 2D array |
 | N65 Vulkan sparse memory requirement query | `vendor/encore-active/eden-vulkan/vulkan_wrapper.cpp` and companion header | Generic Vulkan requirements |
-| N63 sparse budget planner | Research-only pure helper with host tests | Generic dimension/layer/mip-tail arithmetic |
+| N63 sparse budget planner | `vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_sparse_layer_budget.h` | Generic dimension/layer/mip-tail arithmetic |
 
 The four historical `prepare_egl_sparse_*` build-time source rewrite generators and N54's `prepare_astc_scratch_owner.cmake` have been removed. Existing Clang/GCC host tests validate the **real vendor methods** instead of generating copies of maintained engine files. Mainline PS5 native Vulkan source preparation and performance backports are preserved.
 
@@ -24,7 +24,7 @@ The four historical `prepare_egl_sparse_*` build-time source rewrite generators 
 
 Names such as FC27 in tests, traces and synthetic workloads indicate **stress profiles**, not runtime compatibility branches. Do not introduce Title IDs/game names into core optimization predicates. Regressions should be fixed by GPU command, texture format, memory, CPU instruction or service semantics and reused across Switch 1 and Switch 2.
 
-N54 scratch and its frame trim are now maintained in the single vendor root `encore-active/ns2-astc/include` (upstream scratch + shipping patched texture cache parity). N54 no longer generates source headers. N56's native driver pipeline cache guard now also lives directly in the versioned vendor Vulkan source (opt-in compile macro; no generated TU). N57 decoder, N60 texture cache and other older NS2 overlays are **not yet fully migrated** into shared vendor owners. Their default is OFF. These still require a separate exact native API/compile audit before promotion; synthetic host oracle success is not PS5 execution proof. Vulkan queue sparse binding, fence lifetime and complete NS2 user titles remain unimplemented. No console testing requested.
+N54 scratch and its frame trim are now maintained in the single vendor root `encore-active/ns2-astc/include` (upstream scratch + shipping patched texture cache parity). N54 no longer generates source headers. N56's native driver pipeline cache guard now also lives directly in the versioned vendor Vulkan source (opt-in compile macro; no generated TU). N55/N59 ASTC staging and N63 sparse budget helpers have moved unchanged to `vendor/encore-active/ns2-helpers/include`; their old `headless/ns2` copies are deleted and the host test include roots point at vendor. N57 decoder, N60 texture cache and other older NS2 overlays are **not yet fully migrated** into shared vendor owners. Their default is OFF. These still require a separate exact native API/compile audit before promotion; synthetic host oracle success is not PS5 execution proof. Vulkan queue sparse binding, fence lifetime and complete NS2 user titles remain unimplemented. No console testing requested.
 
 ## Verification
 

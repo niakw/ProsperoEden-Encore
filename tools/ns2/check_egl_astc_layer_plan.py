@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
-HEADER=ROOT/'headless/ns2/eglantine/video_core/texture_cache/ns2_astc_layer_plan.h'
+HEADER=ROOT/'vendor/encore-active/ns2-helpers/include/video_core/texture_cache/ns2_astc_layer_plan.h'
 TEST=ROOT/'tools/ns2/test_egl_astc_layer_plan.cpp'
 SOURCE=(ROOT/'vendor/sources/eden/src/video_core/texture_cache/texture_cache.h').read_text()
 IMAGE=(ROOT/'vendor/sources/eden/src/video_core/texture_cache/image_base.h').read_text()
@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory(prefix='n55-astc-layer-') as tmp:
         exe=Path(tmp)/('n55-'+cxx.replace('+','p'))
         subprocess.run([cxx,'-std=c++20','-O2','-Wall','-Wextra','-Werror',
                         '-fsanitize=undefined','-fno-sanitize-recover=all',
-                        '-I',str(ROOT/'headless/ns2/eglantine'),
+                        '-I',str(ROOT/'vendor/encore-active/ns2-helpers/include'),
                         str(TEST),'-o',str(exe)],check=True)
         subprocess.run([str(exe)],check=True)
 print('N55_ASTC_LAYER_PLAN_OWNER_AND_HOST_PASS')

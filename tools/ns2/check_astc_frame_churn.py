@@ -8,7 +8,7 @@ with tempfile.TemporaryDirectory(prefix='n61-astc-stress-') as folder:
         binary=Path(folder)/('astc-'+cxx.replace('+','p'))
         subprocess.run([cxx,'-std=c++20','-O2','-Wall','-Wextra','-Werror',
            '-fsanitize=undefined','-fno-sanitize-recover=all',
-           '-I',str(ROOT/'headless/ns2/eglantine'),
+           '-I',str(ROOT/'vendor/encore-active/ns2-helpers/include'),
            str(ROOT/'tools/ns2/test_astc_frame_churn.cpp'),
            '-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)

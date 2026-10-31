@@ -9,3 +9,7 @@ On allocation, guest read or Vulkan submission failure, N59 invalidates the part
 Host test: real N55 planner with a synthetic 68×21 MiB virtual ASTC terrain array and seven dirty layers, which reduces the simulated guest bytes read to 147 MiB in three ≤63 MiB staging batches. Allocation/read/dispatch failures, race, overflow, no-op and full fallback verified under Clang/GCC UBSan. These are **not FPS or real Vulkan GPU performance measurements**.
 
 Remaining: introduce N60 image lifetime tracking and connect the N59 coordinator to the pinned native PS5 `TextureCache<P>::WriteMemory/RefreshContents`, with a true Vulkan backend `ASTCDecoderPass::AssembleLayers` and correct mip/layer staging, then validate images and GPU synchronization. No console test requested.
+
+## Maintained vendor source
+
+The single maintained N59 source is now `vendor/encore-active/ns2-helpers/include/video_core/texture_cache/ns2_astc_staging_bridge.h`, sharing N55 through the same include root.

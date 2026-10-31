@@ -14,3 +14,7 @@ Tests: source-conservative generator / exact owner checks and Clang/GCC UBSan co
 
 ## N57b pinned image metadata correction
 N57 initially referenced `Image::host_level_offset`, present upstream but absent from the pinned native PS5 vendor. N57b removes the nonexistent member and rejects skipped-mip staging where the first level or first buffer offset is nonzero. It also explicitly includes `<stdexcept>` in the generated Vulkan compute source and tests these guards. Full native PS5 Vulkan compilation remains unverified.
+
+## Vendor ownership update
+
+N57's fail-closed layer/mip preflight now lives once in `vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_astc_decode_preflight.h`. The original `headless/ns2` copy is removed. The experimental Vulkan source adapter remains research-only until audited native compilation and GPU readback.

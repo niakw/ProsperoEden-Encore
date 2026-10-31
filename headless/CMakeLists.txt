@@ -1491,7 +1491,7 @@ if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
         "${eden_ns2_astc_root}/vk_texture_cache_cost.cpp"
         "${eden_ns2_astc_root}/vk_compute_pass_cost.cpp")
     target_include_directories(video_core BEFORE PUBLIC
-        "${eden_ns2_astc_root}/include" "${PORT_ROOT}/headless/ns2/eglantine")
+        "${eden_ns2_astc_root}/include" "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
 endif()
 
 # Vulkan sparse support is maintained in vendor (same PS5 Vulkan owners).

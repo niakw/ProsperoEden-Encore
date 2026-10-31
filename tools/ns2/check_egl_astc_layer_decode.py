@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[2]
 NATIVE=ROOT/'vendor/encore-active/eden-vulkan'
 PIN=ROOT/'vendor/sources/eden/src/video_core/renderer_vulkan'
 GEN=ROOT/'tools/ns2/prepare_egl_astc_layer_decode.py'
-HEADER=ROOT/'headless/ns2/eglantine/video_core/renderer_vulkan/ns2_astc_decode_preflight.h'
+HEADER=ROOT/'vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_astc_decode_preflight.h'
 ARGS=[
  '--texture-cpp',str(NATIVE/'vk_texture_cache_cost.cpp'),
  '--compute-cpp',str(NATIVE/'vk_compute_pass_cost.cpp'),
@@ -43,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='n57-astc-vulkan-') as t:
         exe=out/('n57-'+cxx.replace('+','p'))
         subprocess.run([cxx,'-std=c++20','-O2','-Wall','-Wextra','-Werror',
                         '-fsanitize=undefined','-fno-sanitize-recover=all',
-                        '-I',str(ROOT/'headless/ns2/eglantine'),
+                        '-I',str(ROOT/'vendor/encore-active/ns2-helpers/include'),
                         str(ROOT/'tools/ns2/test_egl_astc_decode_contract.cpp'),
                         '-o',str(exe)],check=True)
         subprocess.run([str(exe)],check=True)

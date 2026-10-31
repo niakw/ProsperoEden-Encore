@@ -29,9 +29,10 @@ uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_di
 // itself when the game's languages are unknown.
 int eden_game_language(const char* rom_path, const char* keys_dir, uint64_t title_id, int chosen);
 
-// Update and DLC files (NSP or XCI, any depth) in updates_dir, read with the provider that also
-// applies them to a running game. Replaces the previous scan; eden_game_addons queries it.
-void eden_scan_addons(const char* updates_dir, const char* keys_dir);
+// Index packaged update/DLC files from both the separate updates/ directory and
+// collocated add-on roots under roms/<title>/; the native runtime uses the same
+// provider. Metadata, not the folder name, decides update/AOC ownership.
+void eden_scan_addons(const char* updates_dir, const char* keys_dir, const char* roms_dir);
 // For a base game: the newest update's display version (empty without one) and its DLC count.
 // Returns nonzero when either exists.
 int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count);

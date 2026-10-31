@@ -19,13 +19,17 @@ void ForEachRegion(std::uint64_t address, std::uint64_t size, Collect&& collect)
         std::terminate();
     }
     if (size == 0) return;
-    // Most guest dirty writes fit in one 2 KiB mask. Peel the first
-    // collection so they avoid the generic loop back-edge and second size
-    // check, without changing the exact 64-byte mask boundaries.
-    auto amount = std::min(size, kRegionBytes - (address & (kRegionBytes - 1)));
-    collect(address, amount);
-    address += amount;
-    size -= amount;
+    // A one-region guest write needs only the first boundary comparison,
+    // not a std::min plus two subsequent loop/tail condition checks.
+    const auto first_span = kRegionBytes - (address & (kRegionBytes - 1));
+    if (size <= first_span) {
+        collect(address, size);
+        return;
+    }
+    // At least one byte remains after this first partial/full region.
+    collect(address, first_span);
+    address += first_span;
+    size -= first_span;
     // If bytes remain after peeling the first region, address is now
     // aligned to 2 KiB. Consume complete regions without re-masking the
     // already aligned address or re-running std::min on each region.

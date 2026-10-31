@@ -16,7 +16,11 @@ dirty = (root / "vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_
 port = (root / "headless/CMakeLists.txt").read_text()
 header = (root / "headless/gpu_dirty_region_split.h").read_text()
 assert "if (size == 0) return;" in header
-assert "auto amount = std::min(size, kRegionBytes - (address & (kRegionBytes - 1)));" in header
+assert "const auto first_span = kRegionBytes - (address & (kRegionBytes - 1));" in header
+assert "if (size <= first_span)" in header
+assert "collect(address, size);" in header
+assert "collect(address, first_span);" in header
+assert "auto amount = std::min" not in header
 assert "while (size >= kRegionBytes)" in header
 assert "collect(address, kRegionBytes);" in header
 assert "if (size != 0) collect(address, size);" in header

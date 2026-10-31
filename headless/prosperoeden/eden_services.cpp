@@ -1589,9 +1589,17 @@ std::string EdenServices::profile_avatar() {
         (void)sceUserServiceInitialize(nullptr);
     });
     std::int32_t user_id = -1;
-    if (sceUserServiceGetForegroundUser(&user_id) != 0 ||
-        user_id == -1 || user_id == 0)
+    const int foreground_status = sceUserServiceGetForegroundUser(&user_id);
+    // Zero is a possible foreground user ID: NiakPS5's broker accepts
+    // >= 0. Rejecting zero here silently hid that user's own real avatar.
+    if (foreground_status != 0 || user_id < 0) {
+        static std::atomic_flag reported = ATOMIC_FLAG_INIT;
+        if (!reported.test_and_set())
+            std::fprintf(stderr,
+                         "EDEN_PROFILE_AVATAR status=foreground_unavailable rc=%d\n",
+                         foreground_status);
         return {};
+    }
 
 // Only consume NiakPS5's optional, local, explicitly owner-bound stage.
 // A title is not entitled to read another account's portrait. This remains
@@ -1637,7 +1645,17 @@ std::string EdenServices::profile_avatar() {
             }
         }
     }
-    std::fprintf(stderr, "EDEN_PROFILE_AVATAR status=missing_for_active_user\n");
+    // Make the next console log actionable without exposing user identity or
+    // ever searching another account's private profile cache.
+    static std::atomic_flag reported_missing = ATOMIC_FLAG_INIT;
+    if (!reported_missing.test_and_set()) {
+        const bool marker = IsFile(staged_marker);
+        const bool png = IsFile(std::string(staged_root) + "niak-profile.png");
+        const bool dds = IsFile(std::string(staged_root) + "niak-profile.dds");
+        std::fprintf(stderr,
+                     "EDEN_PROFILE_AVATAR status=missing_for_active_user staged_marker=%d staged_png=%d staged_dds=%d\n",
+                     marker, png, dds);
+    }
 #endif
     return {};
 }

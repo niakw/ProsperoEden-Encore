@@ -6,21 +6,33 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 ORIG=ROOT/'vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
+import hashlib
 before="        u32 cache_version;\n        file.read(magic_number.data(), magic_number.size())"
-after="        u32 cache_version;\n        // N56: reject truncated (including failed tellg) Vulkan driver caches\n        // before reading their header or subtracting a size_t header length.\n        if (end < std::streampos{static_cast<std::streamoff>(\n                      magic_number.size() + sizeof(cache_version))}) {\n            file.close();\n            LOG_WARNING(Common_Filesystem, \"Short Vulkan driver cache; rebuilding fresh\");\n            Common::FS::RemoveFile(filename);\n            return create_pipeline_cache(0, nullptr);\n        }\n        file.read(magic_number.data(), magic_number.size())"
-original=ORIG.read_text()
-assert original.count(before)==1,'PS5 cache owner drift'
-assert 'Saved PS5 driver pipeline cache atomically' in original
-expected=original.replace(before,after)
+after="""        u32 cache_version;
+#ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
+        // Reject truncated (including failed tellg) Vulkan driver cache headers
+        // before reading or subtracting an unsigned header size.
+        if (end < std::streampos{static_cast<std::streamoff>(
+                      magic_number.size() + sizeof(cache_version))}) {
+            file.close();
+            LOG_WARNING(Common_Filesystem, "Short Vulkan driver cache; rebuilding fresh");
+            Common::FS::RemoveFile(filename);
+            return create_pipeline_cache(0, nullptr);
+        }
+#endif
+        file.read(magic_number.data(), magic_number.size())"""
+current=ORIG.read_text()
+assert current.count(after)==1, "N56 exact vendor source guard drift"
+assert "Saved PS5 driver pipeline cache atomically" in current
+reconstructed=current.replace(after,before)
+data=reconstructed.encode()
+assert hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()==("0d4c16e0afab6d18b44e51dc5cb9dda512f0557e"), "N56 native owner differs outside reviewed guard"
 assert 'EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL OR' in CMAKE
-assert 'list(REMOVE_ITEM video_sources "${eden_ns2_pipeline_owner}")' in CMAKE
+assert "target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)" in CMAKE
 assert 'NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE' in CMAKE
+assert 'prepare_egl_pipeline_cache.cmake' not in CMAKE
 with tempfile.TemporaryDirectory(prefix='n56-native-cache-') as td:
     out=Path(td)
-    generated=out/'vk_pipeline_cache.cpp'
-    subprocess.run(['cmake','-DINPUT='+str(ORIG),'-DOUTPUT='+str(generated),
-          '-P',str(ROOT/'tools/ns2/prepare_egl_pipeline_cache.cmake')],check=True)
-    assert generated.read_text()==expected,'PS5 native cache owner parity failed'
     snippet=after.split('        file.read(magic_number.data()')[0].split('        u32 cache_version;')[1]
     src=r'''#include <array>
 #include <cassert>
@@ -72,6 +84,7 @@ int main(int argc,char** argv) {
         exe=out/('n56-'+cxx.replace('+','p'))
         subprocess.run([cxx,'-std=c++20','-O2','-Wall','-Wextra','-Werror',
                        '-fsanitize=undefined','-fno-sanitize-recover=all',
+                       '-DEDEN_NS2_PIPELINE_CACHE_GUARD=1',
                        str(source),'-o',str(exe)],check=True)
         subprocess.run([str(exe),str(out)],check=True)
-print('N56_PS5_VULKAN_ATOMIC_OWNER_TRUNCATION_GUARD_PASS')
+print('N56_VENDOR_NATIVE_ATOMIC_OWNER_TRUNCATION_GUARD_PASS')

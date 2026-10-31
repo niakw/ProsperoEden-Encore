@@ -1,9 +1,10 @@
-# NSW2 N56 — safe PS5 Vulkan driver cache load (Eglantine)
+# NSW2 N56 — maintained native Vulkan driver cache admission (2026-10-31)
 
-Branch: `research/ns2-ps5-compatibility`. No default, release, vendor or main changes.
+The PS5 renderer already has a qualified atomic driver pipeline cache writer. Eglantine's read-side guard is integrated into that **same maintained source**:
+`vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp`.
 
-Upstream [Eglantine ea33ad1](https://github.com/Djihads80/Eglantine/commit/ea33ad1865970ee731e5f74dbcc26ca472798afe) adds atomic save and short-header detection. The **maintained PS5 native owner already has an atomic .new/rename/save-lock writer**: never copy that change over it. A remaining read-side risk is `static_cast<size_t>(end) - header_size` when the file is shorter than the 12-byte magic+version header, which can underflow and produce a very large allocation request.
+The optional macro `EDEN_NS2_PIPELINE_CACHE_GUARD` rejects files shorter than the 12-byte magic/version header **before any read or unsigned subtraction**. It closes and removes invalid cache files and creates a new empty Vulkan cache; the normal Vulkan pipeline writer, valid cache loading, and all default Switch 1 code remain unchanged.
 
-N56 adds only the missing **header-size admission before any read or subtraction**, closes and removes corrupt cache, and lets the existing Vulkan path create a fresh empty cache. The full generated translation unit comes from native `vk_pipeline_cache_cost.cpp` and is checked for exact owner parity and retained atomic save. This is available only under `EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL=ON`, with PS5 native Vulkan + NS2 metadata; OFF by default, forbidden under final release.
+The research CMake option `EDEN_NS2_EGLANTINE_PIPELINE_CACHE_EXPERIMENTAL=ON` defines the guard only with native PS5 Vulkan, NS2 metadata, and a non-final profile. It is OFF by default. The previous generator and temporary copy of the complete Vulkan translation unit are deleted.
 
-The host harness extracts the actual added guard and tests every file length 0..24 bytes with Clang/GCC UBSan; only lengths below 12 are discarded. This proves local header admission, not driver-specific behavior, improved FPS, or successful NSW2 game boot. No console test requested.
+Host checks reconstruct the exact pre-N56 Git blob and compare its fixed SHA-1, preserving strict native source parity, while a Clang/GCC UBSan source-extracted fixture verifies all cache lengths 0–24 bytes. No PS5 execution, FPS claim, or full game boot is inferred.

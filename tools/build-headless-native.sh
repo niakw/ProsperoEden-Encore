@@ -109,6 +109,57 @@ tmp.replace(manifest_path)
 print(f'Encore incremental source stamps: {restored}/{len(files)} restored')
 PY_STAMPS
 
+
+# The shipping PS5 package must never silently acquire a research NS2 engine.
+# Each opt-in switch is passed verbatim to the existing CMake owners; no copied
+# renderer, JIT or loader is created by this build runner.
+ns2_research_profile=${EDEN_NS2_NATIVE_EXPERIMENTAL:-OFF}
+case "$ns2_research_profile" in
+    ON|OFF) ;;
+    *) echo "Invalid EDEN_NS2_NATIVE_EXPERIMENTAL=$ns2_research_profile" >&2; exit 2 ;;
+esac
+if [[ "$ns2_research_profile" == ON && "${EDEN_FINAL_RELEASE_PROFILE:-OFF}" == ON ]]; then
+    echo "NS2 native research cannot use EDEN_FINAL_RELEASE_PROFILE=ON" >&2
+    exit 2
+fi
+ns2_cmake_args=()
+ns2_options=(
+    EDEN_NS2_METADATA_EXPERIMENTAL
+    EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL
+    EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
+    EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL
+    EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL
+    EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
+    EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
+    EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL
+    EDEN_NS2_VIEW_EXPERIMENTAL
+    EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL
+    EDEN_NS2_EXEFS_EXPERIMENTAL
+    EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL
+    EDEN_NS2_A64_EXPERIMENTAL
+    EDEN_NS2_CPU6_EXPERIMENTAL
+    EDEN_NS2_AM_EXPERIMENTAL
+    EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL
+    EDEN_NS2_NVDRV_EXPERIMENTAL
+    EDEN_NS2_GPU_SESSION_EXPERIMENTAL
+    EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL
+    EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
+    EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
+    EDEN_NS2_CONTINUITY_EXPERIMENTAL
+)
+for ns2_option in "${ns2_options[@]}"; do
+    ns2_value=${!ns2_option:-OFF}
+    case "$ns2_value" in
+        ON|OFF) ;;
+        *) echo "Invalid $ns2_option=$ns2_value (expected ON or OFF)" >&2; exit 2 ;;
+    esac
+    if [[ "$ns2_value" == ON && "$ns2_research_profile" != ON ]]; then
+        echo "$ns2_option=ON requires EDEN_NS2_NATIVE_EXPERIMENTAL=ON" >&2
+        exit 2
+    fi
+    ns2_cmake_args+=("-D$ns2_option=$ns2_value")
+done
+
 cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE="$root/headless/ps5.cmake" -DPS5_NATIVE=ON -DEDEN_DEVICE_FRONTEND="$devices" \
     -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -139,7 +190,8 @@ cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
     -DZLIB_INCLUDE_DIR="$cdeps/include" -DZLIB_LIBRARY="$cdeps/lib/libz.a" \
     -DENABLE_WERROR=OFF -Dzstd_FORCE_BUNDLED=ON -DBoost_FORCE_BUNDLED=ON -Dfmt_FORCE_BUNDLED=ON \
     -DDYNARMIC_ENABLE_NO_EXECUTE_SUPPORT=ON -DDYNARMIC_IGNORE_ASSERTS=OFF \
-    -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF -DSDL_RENDER=OFF -DSDL_GPU=OFF
+    -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF -DSDL_RENDER=OFF -DSDL_GPU=OFF \
+    "${ns2_cmake_args[@]}"
 python3 -B "$root/headless/check_slab_lifetime.py" \
     "$scratch/native-local/headless/include/core/hle/kernel/slab_helpers.h" \
     "$scratch/source/src/core/hle/kernel/slab_helpers.h"

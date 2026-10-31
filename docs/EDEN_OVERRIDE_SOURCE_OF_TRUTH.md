@@ -16,9 +16,7 @@ nouveaux corps C++ destinés à la console.
 
 ## État concret au 27 octobre 2026
 
-- `vendor/encore-active` : **335 sources et en-têtes suivis**, tous avec
-  un propriétaire de chemin dans le graphe. Couverture documentaire,
-  **pas** validation console.
+- `vendor/encore-active` : **337 sources et en-têtes suivis** (hors 107 unités NS2 expérimentales), dont 335 avec IDs de graphe et 2 en-têtes d'hygiène partagés possédant un garde de provenance et un installateur dédié. Le snapshot Eden original reste immuable. Couverture documentaire, **pas** validation console.
 - `headless/CMakeLists.txt` : **1 générateur** `write_derived`.
 - Le module CMake expérimental de pont différé contient **0 générateurs**
   `write_derived`, soit **1 site** au total.

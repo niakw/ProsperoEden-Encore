@@ -19,6 +19,15 @@ for workflow in sorted((root / ".github/workflows").glob("*.yml")):
         if not match:
             continue
         count += 1
+        # NS2-only research CI deliberately names the guest generation and
+        # target hardware so build artifacts cannot be confused with releases.
+        # Shipping/production workflows keep the original strict neutral rule.
+        research_workflow = workflow.name.startswith("ns2-research-") or (
+            workflow.name == "ns2-native-ps5-research.yml"
+        )
+        if research_workflow:
+            assert "research" in workflow.name
+            continue
         if blocked.search(match.group(1)):
             offenders.append(f"{workflow.relative_to(root)}:{number}: {match.group(1)}")
 # Core host harness diagnostics are user-visible inside the source-preflight

@@ -144,6 +144,33 @@ for module, changes in edits.items():
     current = (active / (module + '_cost.cpp')).read_text()
     previous = current
     if module == 'vk_texture_cache':
+        # The NS2 research vendor adds 8 reviewed, opt-in texture/view/
+        # sparse-admission changes to this unit. Pin BOTH exact Git blobs;
+        # reconstruct the pre-NS2 source from the original vendor commit,
+        # never redefine the historical F07 fingerprint or accept a drift.
+        research_blob = hashlib.sha1(
+            b'blob ' + str(len(current.encode())).encode() + b'\0' + current.encode()
+        ).hexdigest()
+        assert research_blob == '4be6eb714acf899a4370ffce7f62434011b30249', (
+            'Unreviewed NS2 Vulkan texture owner', research_blob
+        )
+        # The NS2 vendor is checked out shallow in CI; earlier vendor
+        # commits (including the mainline F07 parent) are not guaranteed
+        # to exist in its local Git object database. Reconstruct the exact
+        # pre-NS2 maintained TU by reversing N73/N49/N57's individually
+        # audited additions, with immutable Git blob witnesses at each
+        # boundary. This is the same strict parity oracle used by the
+        # native Vulkan vendor check; never fetch history or waive the SHA.
+        from ns2.native_astc_vendor_parity import normalized
+        original_bytes = normalized(ROOT)['vk_texture_cache_cost.cpp'].encode('utf-8')
+        original_blob = hashlib.sha1(
+            b'blob ' + str(len(original_bytes)).encode() + b'\0' + original_bytes
+        ).hexdigest()
+        assert original_blob == '3e8c9b250fc97d2d8366cacee3d1b089d3945149', (
+            'Unqualified native Vulkan baseline changed', original_blob
+        )
+        previous = original_bytes.decode('utf-8')
+    if module == 'vk_texture_cache':
         # The newest image-initialization delta includes the moved copy
         # capture installed by deferred_copy_edits. Undo this newest delta
         # FIRST, while its exact moved-capture anchor still exists.

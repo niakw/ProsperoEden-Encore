@@ -1,0 +1,37 @@
+name: NS2 actual Maxwell IR (research)
+
+on:
+  push:
+    branches:
+      - research/ns2-ps5-compatibility
+    paths:
+      - 'vendor'
+      - 'vendor/encore-active/ns2-runtime/ampere/**'
+      - 'tools/ns2/test_ampere_real_ir.cpp'
+      - 'tools/check-ns2-real-ir-host.py'
+      - '.github/workflows/ns2-research-ir.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  maxwell-real-ir:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: true
+          fetch-depth: 1
+      - name: Prepare pinned host dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libboost-dev
+          git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-a64/fmt
+          test "$(git -C build-ns2-a64/fmt rev-parse HEAD)" = "407c905e45ad75fc29bf0f9bb7c5c2fd3475976f"
+      - name: Link and execute REAL Maxwell TranslateProgram with IR optimizers
+        run: python3 tools/check-ns2-real-ir-host.py

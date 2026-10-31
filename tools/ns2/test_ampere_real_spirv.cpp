@@ -1,0 +1,170 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Host-only Ampere -> real Maxwell CFG -> optimized IR -> SPIR-V emission.
+// Synthetic shader only; not a Vulkan pipeline or a PS5 execution test.
+#include <array>
+#include <algorithm>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <vector>
+#define CANNOT_EXPLICITLY_INSTANTIATE
+#include "common/settings.h"
+#include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
+#include "video_core/ns2_shader_spirv_compile.h"
+#include "core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+#include "shader_recompiler/frontend/ampere/ir_bridge.h"
+#include "shader_recompiler/host_translate_info.h"
+#include "shader_recompiler/profile.h"
+#include "shader_recompiler/runtime_info.h"
+
+namespace Settings { Values values{}; }
+using namespace Shader::Ampere;
+static void Require(bool ok, const char* why) {
+    if (!ok) { std::fprintf(stderr, "NS2 SPIR-V: %s\n", why); std::exit(1); }
+}
+struct SyntheticSource final : Shader::Environment {
+    explicit SyntheticSource(Shader::Stage stage_=Shader::Stage::VertexB) { stage=stage_; start_address=0; }
+    u64 ReadInstruction(u32) override { std::abort(); }
+    u32 ReadCbufValue(u32,u32) override { return 0; }
+    Shader::TextureType ReadTextureType(u32) override { return {}; }
+    Shader::TexturePixelFormat ReadTexturePixelFormat(u32) override { return {}; }
+    bool IsTexturePixelFormatInteger(u32) override { return false; }
+    u32 ReadViewportTransformState() override { return 0; }
+    u32 TextureBoundBuffer() const override { return 0; }
+    u32 LocalMemorySize() const override { return 0; }
+    u32 SharedMemorySize() const override { return 0; }
+    std::array<u32,3> WorkgroupSize() const override { return {}; }
+    bool HasHLEMacroState() const override { return false; }
+    std::optional<Shader::ReplaceConstant> GetReplaceConstBuffer(u32,u32) override { return {}; }
+    void Dump(u64,u64) override { std::abort(); }
+};
+static void Emit(std::vector<u8>& out,u32 a,u32 b=0,u32 c=0,u32 d=0) {
+    for (u32 w:{a,b,c,d})
+        for (u32 shift=0;shift<32;shift+=8) out.push_back(static_cast<u8>(w>>shift));
+}
+namespace Kernel { class KProcess {}; }
+namespace VideoCommon {
+// Host-only link stand-in for the real GMMU reader. The actual compiled
+// integration test below directly supplies a bounded fake guest reader.
+bool ReadNs2GpuShader(void*, u64, void*, std::size_t) { return false; }
+}
+struct GuestFixture {
+    std::vector<u8> bytes;
+    u64 address{0x100000};
+    std::size_t reads{};
+    Kernel::KProcess* unregister_on_read{};
+};
+static bool ReadGuest(void* ptr,u64 address,void* output,std::size_t count) {
+    auto& fixture=*static_cast<GuestFixture*>(ptr);
+    ++fixture.reads;
+    if (address<fixture.address) return false;
+    const u64 offset=address-fixture.address;
+    if (offset>fixture.bytes.size() || count>fixture.bytes.size()-offset)
+        return false;
+    std::memcpy(output,fixture.bytes.data()+offset,count);
+    if (fixture.unregister_on_read) {
+        auto* process=fixture.unregister_on_read;
+        fixture.unregister_on_read=nullptr;
+        Service::Nvidia::Devices::NativeGpuProcessRegistry::Instance().Unregister(process);
+    }
+    return true;
+}
+int main(int argc,char** argv) {
+    Require(argc==2,"missing output prefix");
+    std::array<u8,0x50> header{};
+    constexpr u32 pred=7U<<12,exit_true=7U<<23;
+    std::vector<u8> code;
+    Emit(code,pred|0x918);
+    Emit(code,pred|0x202|(1U<<16),2,15U<<8);
+    Emit(code,pred|0x918);
+    Emit(code,pred|0x918);
+    Emit(code,pred|0x94d,0,exit_true);
+    auto image=BuildMaxwellShaderImage(header,code,static_cast<u32>(Shader::Stage::VertexB));
+    Require(image.ValidForCompiler(),"verified native shader image absent");
+    auto env=NativeMaxwellEnvironment::CreateOwned(std::make_unique<SyntheticSource>(),std::move(image));
+    Require(bool(env),"owned environment creation failed");
+    Shader::HostTranslateInfo host{};
+    host.min_ssbo_alignment=64;
+    host.support_float64=true;
+    host.support_float16=true;
+    host.support_int64=true;
+    host.support_conditional_barrier=true;
+    Shader::Profile profile{};
+    profile.supported_spirv=0x00010500; // SPIR-V 1.5
+    std::vector<u32> baseline_direct;
+    for (bool dispatcher:{false,true}) {
+        const auto compiled=CompileReviewedNativeVertexSpirv(
+            *env,host,profile,Shader::RuntimeInfo{},dispatcher);
+        Require(compiled.Ready(),"real PS5 renderer bridge must produce owned SPIR-V");
+        const auto& words=compiled.words;
+        if (!dispatcher) baseline_direct=words;
+        Require(words.size()>5&&words[0]==0x07230203U,"missing SPIR-V magic");
+        Require(words[1]==profile.supported_spirv&&words[3]>0,"bad version or ID bound");
+        const auto output=std::string(argv[1])+(dispatcher?"-dispatcher.spv":"-direct.spv");
+        std::ofstream file{output,std::ios::binary|std::ios::trunc};
+        Require(bool(file),"cannot create validation file");
+        file.write(reinterpret_cast<const char*>(words.data()),
+                   static_cast<std::streamsize>(words.size()*sizeof(u32)));
+        file.close();
+        Require(bool(file),"cannot flush complete SPIR-V");
+        std::printf("SPIR-V emitted: %s (%zu words)\n",output.c_str(),words.size());
+    }
+    auto vertex_a_image=BuildMaxwellShaderImage(
+        header,code,static_cast<u32>(Shader::Stage::VertexA));
+    Require(vertex_a_image.ValidForCompiler(),"VertexA negative fixture failed");
+    auto vertex_a_env=NativeMaxwellEnvironment::CreateOwned(
+        std::make_unique<SyntheticSource>(Shader::Stage::VertexA),
+        std::move(vertex_a_image));
+    Require(bool(vertex_a_env),"VertexA environment must exist before stage gate");
+    const auto rejected=CompileReviewedNativeVertexSpirv(
+        *vertex_a_env,host,profile,Shader::RuntimeInfo{});
+    Require(rejected.status==NativeSpirvStatus::UnsupportedStage &&
+            rejected.words.empty(),"unmerged VertexA must fail closed");
+    auto& registry=Service::Nvidia::Devices::NativeGpuProcessRegistry::Instance();
+    Kernel::KProcess process{};
+    GuestFixture guest{};
+    guest.bytes.resize(0x80+code.size());
+    std::copy(header.begin(),header.end(),guest.bytes.begin());
+    std::copy(code.begin(),code.end(),guest.bytes.begin()+0x80);
+    auto compile=[&](Shader::Stage stage,bool dispatcher=false) {
+        return VideoCommon::CompileCapturedNs2VertexSpirvFromReader(
+            &process,std::make_unique<SyntheticSource>(stage),
+            guest.address,ReadGuest,&guest,host,profile,Shader::RuntimeInfo{},
+            nullptr,dispatcher);
+    };
+    const auto missing=compile(Shader::Stage::VertexB);
+    Require(missing.status==NativeSpirvStatus::InactiveSession &&
+            missing.words.empty() && guest.reads==0,
+            "unregistered process must not access guest GPU memory");
+    Require(registry.Register(&process),"failed creating NS2 session fixture");
+    const auto token=registry.CaptureTicket(&process);
+    Require(token.has_value(),"no live NS2 GPU ticket");
+    const auto no_vertex_a=compile(Shader::Stage::VertexA);
+    Require(no_vertex_a.status==NativeSpirvStatus::UnsupportedStage &&
+            no_vertex_a.words.empty() && guest.reads==0,
+            "unmerged VertexA must reject without GMMU reads");
+    const auto complete=compile(Shader::Stage::VertexB);
+    Require(complete.Ready() && complete.words==baseline_direct && guest.reads>0,
+            "registered guest shader capture must match real Maxwell SPIR-V");
+    guest.reads=0;
+    guest.unregister_on_read=&process;
+    const auto torn_down=compile(Shader::Stage::VertexB);
+    Require(torn_down.status==NativeSpirvStatus::InactiveSession &&
+            torn_down.words.empty() && guest.reads>0,
+            "session teardown during shader capture must not publish SPIR-V");
+    Require(!registry.IsCurrent(*token),"closed session ticket still authorized");
+    Require(registry.Register(&process),"failed reopening NS2 session");
+    const auto reopened=registry.CaptureTicket(&process);
+    Require(reopened && reopened->generation!=token->generation &&
+            !registry.IsCurrent(*token),"reopened session reused old ticket");
+    const auto after_reopen=compile(Shader::Stage::VertexB,true);
+    Require(after_reopen.Ready(),"reopened authenticated session must compile");
+    registry.Unregister(&process);
+    Require(registry.Count()==0,"test session leaked");
+    std::puts("NS2 verified GMMU reader -> Maxwell IR -> SPIR-V: PASS "
+              "(no-session/VertexA reject, mid-capture teardown, reopen)");
+    std::puts("NS2 real SPIR-V emitter PASS (host-only; Vulkan and PS5 not executed)");
+}

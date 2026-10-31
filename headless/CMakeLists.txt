@@ -6,6 +6,34 @@ if(NOT EDEN_VULKAN_DRIVER MATCHES "^(CUSTOM|RADV)$")
 endif()
 set(PORT_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
+
+# Isolated NS2 experiment: carry upstream NPDM/ACID handling without touching
+# the immutable Eden vendor snapshot or the default Switch 1 execution path.
+# This option must stay OFF for production until a complete console qualification.
+option(EDEN_NS2_METADATA_EXPERIMENTAL
+    "Experimental Switch 2 NPDM / ACID parsing (not full NS2 emulation)" OFF)
+if(EDEN_NS2_METADATA_EXPERIMENTAL)
+    set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/vendor/encore-active/ns2-experimental/src")
+    set(EDEN_NS2_CORE_HELPERS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp"
+       OR NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/file_sys/program_metadata.h")
+        message(FATAL_ERROR "Missing NS2 experimental NPDM source/header")
+    endif()
+    get_target_property(eden_ns2_metadata_core_sources core SOURCES)
+    list(FIND eden_ns2_metadata_core_sources
+         "file_sys/program_metadata.cpp" eden_ns2_metadata_idx)
+    if(eden_ns2_metadata_idx EQUAL -1)
+        message(FATAL_ERROR "Eden NPDM owner changed: re-audit NS2 overlay selection")
+    endif()
+    list(REMOVE_ITEM eden_ns2_metadata_core_sources "file_sys/program_metadata.cpp")
+    list(APPEND eden_ns2_metadata_core_sources
+         "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_metadata_core_sources}")
+    target_include_directories(core BEFORE PUBLIC
+        "${EDEN_NS2_CORE_HELPERS}" "${EDEN_NS2_METADATA_OVERLAY}")
+endif()
+
+
 # Scalar-memory source fragments still consumed by modules trigger configure.
 set(EDEN_SCALAR_INPUT_DIR
     "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/scalar")
@@ -1149,6 +1177,24 @@ if(PS5_NATIVE)
     list(REMOVE_ITEM video_sources "memory_manager.cpp")
     list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
 endif()
+
+# N51: the existing PS5 GPU MemoryManager owns the research batching path.
+option(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL
+    "Research-only GPU page-cache notification batching" OFF)
+if(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 GPU range batching is restricted to PS5 native research")
+    endif()
+    if(NOT EXISTS "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
+        message(FATAL_ERROR "Maintained PS5 GPU memory manager owner missing")
+    endif()
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/ns2_egl_gpu_range_batch.h")
+        message(FATAL_ERROR "Missing N51 vendor range-batching helper")
+    endif()
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_GPU_RANGE_BATCH=1)
+endif()
 # R411: Eden #4473/#4477 are already applied once by the audited
 # version-locked shipping backports to PROJECT_SOURCE_DIR before CMake.
 if(PS5_NATIVE)
@@ -1378,6 +1424,210 @@ if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 endif()
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
+# N54: select the optional single vendor-maintained ASTC scratch owners.
+# Immutable Eden pin, main/release, and normal Switch 1 code remain unchanged.
+option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
+    "Research only: trim scratch buffers >64 MiB after large texture workloads" OFF)
+if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N54 scratch trimming requires native PS5 NS2 research")
+    endif()
+    set(EDEN_NS2_ASTC_OWNER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+    foreach(eden_ns2_astc_owner IN ITEMS
+            "common/scratch_buffer.h"
+            "video_core/texture_cache/texture_cache.h")
+        if(NOT EXISTS "${EDEN_NS2_ASTC_OWNER_ROOT}/${eden_ns2_astc_owner}")
+            message(FATAL_ERROR "N54 maintained vendor ASTC owner missing: ${eden_ns2_astc_owner}")
+        endif()
+    endforeach()
+    # One header identity for all consumers; no generated copies.
+    target_include_directories(common BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_SCRATCH_TRIM=1)
+endif()
+
+# N56: optional Vulkan pipeline cache admission is maintained in the native
+# vendor owner, not generated as an alternate translation unit at configure.
+option(EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL
+    "Research only: validate PS5 Vulkan driver cache header length" OFF)
+if(EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N56 requires native PS5 Vulkan NS2 research")
+    endif()
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
+        message(FATAL_ERROR "N56 native Vulkan vendor owner missing")
+    endif()
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)
+endif()
+
+# N57: opt-in Vulkan layer decode directly from maintained native PS5 sources.
+# No source rewriting, no duplicate full Vulkan translation unit at configure.
+option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL
+    "Research only: native Vulkan ASTC layer views and compute entrypoint" OFF)
+if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N57 ASTC layer decoding requires native PS5 Vulkan NS2 research")
+    endif()
+    set(EDEN_NS2_ASTC_OWNER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+    set(EDEN_NS2_HELPERS_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    foreach(eden_ns2_astc_file IN ITEMS
+            "video_core/renderer_vulkan/vk_texture_cache.h"
+            "video_core/renderer_vulkan/vk_compute_pass.h"
+            "video_core/renderer_vulkan/ns2_astc_assemble_layers.inc")
+        if(NOT EXISTS "${EDEN_NS2_ASTC_OWNER_ROOT}/${eden_ns2_astc_file}")
+            message(FATAL_ERROR "Missing N57 vendor ASTC owner: ${eden_ns2_astc_file}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${EDEN_NS2_HELPERS_ROOT}/video_core/renderer_vulkan/ns2_astc_decode_preflight.h")
+        message(FATAL_ERROR "N57 ASTC mip/layer preflight vendor owner missing")
+    endif()
+    foreach(eden_ns2_native IN ITEMS vk_texture_cache_cost.cpp vk_compute_pass_cost.cpp)
+        if(NOT EXISTS "${PORT_BUILD_DIR}/${eden_ns2_native}")
+            message(FATAL_ERROR "N57 native Vulkan source owner missing: ${eden_ns2_native}")
+        endif()
+        list(FIND video_sources "${PORT_BUILD_DIR}/${eden_ns2_native}" eden_ns2_astc_native_idx)
+        if(eden_ns2_astc_native_idx EQUAL -1)
+            message(FATAL_ERROR "N57 PS5 Vulkan source selection changed")
+        endif()
+    endforeach()
+    target_include_directories(video_core BEFORE PUBLIC
+        "${EDEN_NS2_ASTC_OWNER_ROOT}" "${EDEN_NS2_HELPERS_ROOT}")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_LAYER_DECODE=1)
+endif()
+
+# Vulkan sparse support is maintained in vendor (same PS5 Vulkan owners).
+# N73: isolated native texture-cache probe. All layers must be resident before
+# the test image is used. Standard game textures remain on the dense path.
+option(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
+    "Research only: native VkImage sparse cache admission/bind/retire probe" OFF)
+if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE OR
+       NOT EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL OR
+       NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
+        message(FATAL_ERROR "N73 requires native research Vulkan, N72 queue and N57 cache header")
+    endif()
+    foreach(eden_n73_file IN ITEMS
+        "video_core/renderer_vulkan/ns2_sparse_cache_admission.h"
+        "video_core/renderer_vulkan/ns2_sparse_bind_transaction.h"
+        "video_core/renderer_vulkan/ns2_sparse_layer_budget.h")
+        if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/${eden_n73_file}")
+            message(FATAL_ERROR "N73 missing vendor native cache helper: ${eden_n73_file}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h")
+        message(FATAL_ERROR "N73 requires the maintained vendor ASTC texture cache header")
+    endif()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp" eden_n73_cache_idx)
+    if(eden_n73_cache_idx EQUAL -1)
+        message(FATAL_ERROR "N73 requires the existing native PS5 Vulkan cache source")
+    endif()
+    # The native VMA and Device declarations belong to the same active,
+    # opt-in vendor research owner as their N58/N62/N64 implementation.
+    # Never consume the unpatched Eden tarball's Vulkan headers in this mode.
+    foreach(eden_ns2_sparse_abi IN ITEMS
+        "video_core/vulkan_common/vulkan_device.h"
+        "video_core/vulkan_common/vulkan_memory_allocator.h")
+        if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/${eden_ns2_sparse_abi}")
+            message(FATAL_ERROR "Missing NS2 sparse native Vulkan ABI: ${eden_ns2_sparse_abi}")
+        endif()
+    endforeach()
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_CACHE_PROBE=1)
+endif()
+
+
+# N72: serialize sparse binds on the same native Vulkan submit mutex.
+option(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
+    "Research only: serialize sparse binds on the existing PS5 graphics queue" OFF)
+if(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N72 sparse scheduler requires PS5 Vulkan NSW2 research")
+    endif()
+    set(EDEN_N72_VULKAN_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan")
+    foreach(eden_n72_file IN ITEMS
+        "vulkan_scheduler.cpp"
+        "include/video_core/renderer_vulkan/vk_scheduler.h"
+        "include/video_core/vulkan_common/vulkan_wrapper.h")
+        if(NOT EXISTS "${EDEN_N72_VULKAN_ROOT}/${eden_n72_file}")
+            message(FATAL_ERROR "Missing vendor N72 native Vulkan owner ${eden_n72_file}")
+        endif()
+    endforeach()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vulkan_scheduler.cpp" eden_n72_scheduler_idx)
+    if(eden_n72_scheduler_idx EQUAL -1)
+        message(FATAL_ERROR "N72 must compile the existing native Vulkan scheduler")
+    endif()
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_QUEUE_BRIDGE=1)
+endif()
+
+
+# N60: one vendor-maintained optimized texture header and ImageBase layout;
+# no CMake source rewriting and no replacing newer F07 PS5 backports.
+option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL
+    "Research only: connect ASTC CPU writes to bounded native Vulkan layer uploads" OFF)
+if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N60 requires native PS5 Vulkan N57 and NS2 research")
+    endif()
+    set(EDEN_NS2_ASTC_OWNER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+    set(EDEN_NS2_HELPERS_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    foreach(eden_ns2_astc_file IN ITEMS
+            "video_core/texture_cache/image_base.h"
+            "video_core/texture_cache/texture_cache_base.h"
+            "video_core/texture_cache/texture_cache.h"
+            "video_core/texture_cache/ns2_astc_texture_cache_bridge.inc")
+        if(NOT EXISTS "${EDEN_NS2_ASTC_OWNER_ROOT}/${eden_ns2_astc_file}")
+            message(FATAL_ERROR "Missing N60 vendor source: ${eden_ns2_astc_file}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${EDEN_NS2_HELPERS_ROOT}/video_core/texture_cache/ns2_astc_staging_bridge.h")
+        message(FATAL_ERROR "Missing maintained N59 ASTC staging coordinator")
+    endif()
+    # C++ ImageBase layout must match across consumers; never shadow the
+    # primary CMake-generated Vulkan TUs with obsolete snapshot copies.
+    target_include_directories(video_core BEFORE PUBLIC
+        "${EDEN_NS2_ASTC_OWNER_ROOT}" "${EDEN_NS2_HELPERS_ROOT}")
+    target_include_directories(core BEFORE PUBLIC
+        "${EDEN_NS2_ASTC_OWNER_ROOT}" "${EDEN_NS2_HELPERS_ROOT}")
+    target_compile_definitions(video_core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)
+    target_compile_definitions(core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)
+endif()
+
+# Sparse VMA, VkImage factory and requirements are in the shared vendor fork.
+
+# N49: opt-in image-view safety in one maintained PS5 Vulkan source owner.
+option(EDEN_NS2_VIEW_EXPERIMENTAL
+    "Research only: reject cross-dimension 3D shader/image views" OFF)
+if(EDEN_NS2_VIEW_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 image view guard requires PS5 Vulkan research")
+    endif()
+    set(EDEN_NS2_N49_HELPER
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h")
+    if(NOT EXISTS "${EDEN_NS2_N49_HELPER}")
+        message(FATAL_ERROR "N49 maintained view-dimension guard missing")
+    endif()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp" eden_ns2_view_owner)
+    if(eden_ns2_view_owner EQUAL -1)
+        message(FATAL_ERROR "N49 native Vulkan source selection changed")
+    endif()
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
+endif()
 set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")
 
 if(PS5_NATIVE)
@@ -1628,6 +1878,65 @@ if(PS5_NATIVE)
 endif()
 add_dependencies(eden-headless eden-metadata)
 
+# N76 -- NS2 guest CNTPCT calibration through Encore's shared CPU/JIT.
+# Upstream-compatible guest tick semantics. Opt-in, default NS1 unchanged.
+option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL
+    "Research only: per-program NSW2 31.25 MHz CPU system counter" OFF)
+if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_A64_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N76 requires PS5 NS2 research metadata+A64 (non-release)")
+    endif()
+    set(EDEN_N76_CLOCK_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_N76_GUEST_COUNTER_HEADER
+        "${EDEN_N76_CLOCK_ROOT}/include/encore/guest_counter_policy.h")
+    set(EDEN_N76_NATIVE_CPU_SOURCE
+        "${EDEN_N76_CLOCK_ROOT}/src/common/cpu_features.cpp")
+    # G11 has already replaced the upstream A64 translation unit.
+    # Keep its fully optimized native owner and graft the opt-in counter
+    # contract into it; never silently replace it with a legacy source.
+    if(EDEN_DEV_PROFILE)
+        set(EDEN_N76_G11_PROFILE dev)
+    else()
+        set(EDEN_N76_G11_PROFILE normal)
+    endif()
+    set(EDEN_N76_NATIVE_JIT_SOURCE
+        "${EDEN_N76_CLOCK_ROOT}/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_${EDEN_N76_G11_PROFILE}.cpp")
+    foreach(n76_file IN ITEMS
+        "${EDEN_N76_GUEST_COUNTER_HEADER}"
+        "${EDEN_N76_CLOCK_ROOT}/include/common/cpu_features.h"
+        "${EDEN_N76_NATIVE_CPU_SOURCE}"
+        "${EDEN_N76_NATIVE_JIT_SOURCE}")
+        if(NOT EXISTS "${n76_file}")
+            message(FATAL_ERROR "N76 missing maintained vendor clock owner: ${n76_file}")
+        endif()
+    endforeach()
+    get_target_property(n76_common_sources common SOURCES)
+    list(FIND n76_common_sources
+        "${EDEN_N76_NATIVE_CPU_SOURCE}" n76_clock_owner_idx)
+    if(n76_clock_owner_idx EQUAL -1)
+        message(FATAL_ERROR "N76 real native common clock owner is not compiled")
+    endif()
+    get_target_property(n76_core_sources core SOURCES)
+    list(FIND n76_core_sources "${EDEN_N76_NATIVE_JIT_SOURCE}"
+         n76_selected_g11_owner_idx)
+    if(n76_selected_g11_owner_idx EQUAL -1)
+        message(FATAL_ERROR "N76 requires the existing, optimized G11 native A64 owner")
+    endif()
+    list(FIND n76_core_sources "arm/dynarmic/arm_dynarmic_64.cpp"
+         n76_legacy_owner_idx)
+    if(NOT n76_legacy_owner_idx EQUAL -1)
+        message(FATAL_ERROR "N76 must not compile the unqualified legacy A64 owner")
+    endif()
+    # The dedicated host selector guard verifies the opt-in G11 source bytes.
+    foreach(n76_target IN ITEMS core common)
+        target_compile_definitions(${n76_target} PRIVATE EDEN_NS2_GUEST_COUNTER=1)
+        target_include_directories(${n76_target} BEFORE PRIVATE
+            "${EDEN_N76_CLOCK_ROOT}/include")
+    endforeach()
+endif()
+
 option(EDEN_HOST_ASAN "Instrument host emulator code for memory diagnostics" OFF)
 if(EDEN_HOST_ASAN)
     if(PS5_NATIVE)
@@ -1807,9 +2116,486 @@ include("${CMAKE_CURRENT_LIST_DIR}/gpu_native_observability.cmake")
 # Disabled native GPU coherency bridge, explicit developer compilation only.
 include("${CMAKE_CURRENT_LIST_DIR}/guest_write_deferred_bridge.cmake")
 
+# Experimental ExeFS bridge must be selected AFTER all Encore-owned source
+# substitutions (NCZ/XCZ and the PS5 16-KiB aligned NSO loader).
+option(EDEN_NS2_EXEFS_EXPERIMENTAL
+    "Experimental Switch 2 extracted ExeFS boot (requires metadata overlay)" OFF)
+if(EDEN_NS2_EXEFS_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 ExeFS requires EDEN_NS2_METADATA_EXPERIMENTAL=ON")
+    endif()
+    set(eden_ns2_loader_origin
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/loader.cpp")
+    if(PS5_NATIVE)
+        set(eden_ns2_romdir_origin
+            "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp")
+    else()
+        set(eden_ns2_romdir_origin "loader/deconstructed_rom_directory.cpp")
+    endif()
+    get_target_property(eden_ns2_exefs_sources core SOURCES)
+    foreach(eden_ns2_pair IN ITEMS
+            "loader.cpp|${eden_ns2_loader_origin}"
+            "deconstructed_rom_directory.cpp|${eden_ns2_romdir_origin}")
+        string(REPLACE "|" ";" eden_ns2_parts "${eden_ns2_pair}")
+        list(GET eden_ns2_parts 0 eden_ns2_basename)
+        list(GET eden_ns2_parts 1 eden_ns2_original)
+        list(FIND eden_ns2_exefs_sources "${eden_ns2_original}" eden_ns2_original_idx)
+        if(eden_ns2_original_idx EQUAL -1)
+            message(FATAL_ERROR "NS2 ExeFS owner changed: ${eden_ns2_original}")
+        endif()
+        set(eden_ns2_replacement
+            "${EDEN_NS2_METADATA_OVERLAY}/core/loader/${eden_ns2_basename}")
+        if(NOT EXISTS "${eden_ns2_replacement}")
+            message(FATAL_ERROR "Missing NS2 ExeFS source: ${eden_ns2_replacement}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_original}")
+        list(APPEND eden_ns2_exefs_sources "${eden_ns2_replacement}")
+    endforeach()
+    if(NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/loader/deconstructed_rom_directory.h")
+        message(FATAL_ERROR "Missing NS2 ExeFS maintained loader header")
+    endif()
+    # Select a complete maintained native PS5 NSO source, preserving sparse
+    # BSS and ZBIC support. Do not accidentally fall back to pinned NSO.
+    if(PS5_NATIVE)
+        list(FIND eden_ns2_exefs_sources
+             "${PORT_BUILD_DIR}/nso.cpp" eden_ns2_native_nso_idx)
+        if(eden_ns2_native_nso_idx EQUAL -1)
+            message(FATAL_ERROR "NS2 native NSO owner changed: re-audit source selection")
+        endif()
+        set(eden_ns2_native_nso
+            "${EDEN_NS2_METADATA_OVERLAY}/core/loader/nso.cpp")
+        if(NOT EXISTS "${eden_ns2_native_nso}")
+            message(FATAL_ERROR "Missing NS2 native NSO owner: ${eden_ns2_native_nso}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_exefs_sources "${PORT_BUILD_DIR}/nso.cpp")
+        list(APPEND eden_ns2_exefs_sources "${eden_ns2_native_nso}")
+    endif()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_exefs_sources}")
+    if(PS5_NATIVE)
+        # One real vendor kernel dispatcher; research-only trace compiles in
+        # place. No source rewrite and no alternate generated SVC owner.
+        if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h")
+            message(FATAL_ERROR "N3v vendor-owned SVC trace header missing")
+        endif()
+        set(EDEN_NS2_NATIVE_SVC_SOURCE
+            "${PORT_ROOT}/vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc.cpp")
+        if(NOT EXISTS "${EDEN_NS2_NATIVE_SVC_SOURCE}")
+            message(FATAL_ERROR "N3v maintained native kernel SVC owner missing")
+        endif()
+        get_target_property(eden_ns2_svc_sources core SOURCES)
+        list(FIND eden_ns2_svc_sources "hle/kernel/svc.cpp" eden_ns2_svc_source_idx)
+        if(eden_ns2_svc_source_idx EQUAL -1)
+            message(FATAL_ERROR "N3v original kernel SVC owner is not selected")
+        endif()
+        list(REMOVE_ITEM eden_ns2_svc_sources "hle/kernel/svc.cpp")
+        list(APPEND eden_ns2_svc_sources "${EDEN_NS2_NATIVE_SVC_SOURCE}")
+        set_property(TARGET core PROPERTY SOURCES "${eden_ns2_svc_sources}")
+        target_include_directories(core BEFORE PRIVATE
+            "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)
+    endif()
+endif()
+
+# N52: process-run admission in the single maintained vendor source.
+option(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL
+    "Research only: reject real NS2 KProcess::Run startup errors" OFF)
+if(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_EXEFS_EXPERIMENTAL OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 process-run guard requires native PS5 ExeFS research")
+    endif()
+    set(EDEN_NS2_NATIVE_PROCESS_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")
+        message(FATAL_ERROR "N52 maintained native Process::Run owner missing")
+    endif()
+    get_target_property(eden_ns2_process_sources core SOURCES)
+    list(FIND eden_ns2_process_sources "hle/service/os/process.cpp" eden_ns2_process_source_idx)
+    if(eden_ns2_process_source_idx EQUAL -1)
+        message(FATAL_ERROR "N52 original Process::Run owner is not selected")
+    endif()
+    list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")
+    list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_process_sources}")
+    target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)
+    target_include_directories(core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+endif()
+
+# Experimental ARMv8.1 LDAPR and ARMv8.3 RETAA/RETAB decoding with PAUTH disabled.
+# Copy both the decoder header (it includes ./a64.inc) and the instruction
+# table into the SAME build overlay to avoid accidentally reading the pinned
+# table. a64_translate.cpp in Encore includes a64_branch.cpp as source text.
+option(EDEN_NS2_A64_EXPERIMENTAL
+    "Research only: LDAPR acquire + RETAA/RETAB no-PAC-authentication model" OFF)
+if(EDEN_NS2_A64_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 RETA requires experimental metadata profile")
+    endif()
+    set(EDEN_NS2_DYNARMIC_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-a64")
+    foreach(eden_ns2_dynarmic_file IN ITEMS
+            "frontend/A64/decoder/a64.h"
+            "frontend/A64/decoder/a64.inc"
+            "frontend/A64/translate/impl/a64_branch.cpp"
+            "frontend/A64/translate/impl/impl.h"
+            "frontend/A64/translate/impl/load_store_exclusive.cpp")
+        set(eden_ns2_origin
+            "${EDEN_NS2_DYNARMIC_ROOT}/dynarmic/${eden_ns2_dynarmic_file}")
+        if(NOT EXISTS "${eden_ns2_origin}")
+            message(FATAL_ERROR "Missing NS2 Dynarmic source ${eden_ns2_origin}")
+        endif()
+        set(eden_ns2_output
+            "${PORT_BUILD_DIR}/include/dynarmic/${eden_ns2_dynarmic_file}")
+        get_filename_component(eden_ns2_output_dir "${eden_ns2_output}" DIRECTORY)
+        file(MAKE_DIRECTORY "${eden_ns2_output_dir}")
+        configure_file("${eden_ns2_origin}" "${eden_ns2_output}" COPYONLY)
+    endforeach()
+    target_include_directories(dynarmic BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1)
+endif()
+
+# Six Switch 2 application cores (old 4-core mode remains the default).
+# Kernel threading and scheduler still require full PS5 qualification.
+option(EDEN_NS2_CPU6_EXPERIMENTAL
+    "Research only: six guest cores and six-slot exclusive monitor" OFF)
+if(EDEN_NS2_CPU6_EXPERIMENTAL)
+    if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 six-core mode requires A64 and metadata experiments")
+    endif()
+    set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/cpu6")
+    foreach(eden_ns2_cpu6_header IN ITEMS
+            "core/hardware_properties.h"
+            "dynarmic/interface/exclusive_monitor.h")
+        if(NOT EXISTS "${EDEN_NS2_CPU6_ROOT}/${eden_ns2_cpu6_header}")
+            message(FATAL_ERROR "Missing experimental NS2 6-core header ${eden_ns2_cpu6_header}")
+        endif()
+    endforeach()
+    target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
+    target_include_directories(dynarmic BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
+    target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    target_compile_definitions(core PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
+endif()
+
+# Research-only Switch 2 AM command 320. Keep the Encore-maintained application
+# metadata service as the source ancestor: title-version diagnostics must survive.
+option(EDEN_NS2_AM_EXPERIMENTAL
+    "Research only: Switch 2 application-manager command 320" OFF)
+if(EDEN_NS2_AM_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 AM command 320 requires experimental metadata")
+    endif()
+    set(EDEN_NS2_AM_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am")
+    if(NOT EXISTS "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp"
+       OR NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.h")
+        message(FATAL_ERROR "Missing experimental NS2 AM implementation/header")
+    endif()
+    get_target_property(eden_ns2_am_sources core SOURCES)
+    list(FIND eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}" eden_ns2_am_idx)
+    if(eden_ns2_am_idx EQUAL -1)
+        message(FATAL_ERROR "Encore maintained AM owner changed: re-audit NS2 port")
+    endif()
+    list(REMOVE_ITEM eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}")
+    list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_am_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_ROOT}")
+endif()
+
+# Research-only AM proxy command 60 and graphics scaling service.
+# Do not advertise notification success: pinned Encore lacks the applet event.
+option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL
+    "Research only: NS2 graphics scaling parameter query, no notifications" OFF)
+if(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL)
+    if(NOT EDEN_NS2_AM_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 graphics scaling requires experimental AM")
+    endif()
+    set(EDEN_NS2_SCALE_OWNER "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service")
+    foreach(eden_ns2_scale_file application_proxy.cpp application_proxy.h
+                                graphics_scaling_parameters_functions.cpp
+                                graphics_scaling_parameters_functions.h)
+        if(NOT EXISTS "${EDEN_NS2_SCALE_OWNER}/${eden_ns2_scale_file}")
+            message(FATAL_ERROR "Missing NS2 graphics scaling service: ${eden_ns2_scale_file}")
+        endif()
+    endforeach()
+    get_target_property(eden_ns2_scale_sources core SOURCES)
+    list(FIND eden_ns2_scale_sources
+        "hle/service/am/service/application_proxy.cpp" eden_ns2_scale_idx)
+    if(eden_ns2_scale_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned IApplicationProxy owner changed; audit needed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_scale_sources
+        "hle/service/am/service/application_proxy.cpp")
+    list(APPEND eden_ns2_scale_sources
+        "${EDEN_NS2_SCALE_OWNER}/application_proxy.cpp"
+        "${EDEN_NS2_SCALE_OWNER}/graphics_scaling_parameters_functions.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_scale_sources}")
+endif()
+
+# Native Switch 2 GPU capabilities IOCTLs, experimental only; original
+# Maxwell IOCTL path remains active for all other request IDs.
+option(EDEN_NS2_NVDRV_EXPERIMENTAL
+    "Research only: NS2 native NVDRV GPU characteristics ioctl packets" OFF)
+if(EDEN_NS2_NVDRV_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 native NVDRV requires experimental metadata")
+    endif()
+    set(EDEN_NS2_NVDRV_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv")
+    set(EDEN_NS2_NVDRV_SOURCE
+        "${EDEN_NS2_NVDRV_ROOT}/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NVDRV_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_ROOT}/core/hle/service/nvdrv/devices/native_gpu_characteristics.h" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_ROOT}/core/hle/service/nvdrv/devices/native_characteristics_ioctl.h")
+        message(FATAL_ERROR "Missing NS2 native NVDRV research sources")
+    endif()
+    get_target_property(eden_ns2_nvdrv_sources core SOURCES)
+    list(FIND eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp" eden_ns2_nvdrv_idx)
+    if(eden_ns2_nvdrv_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV source owner changed: re-audit NS2 overlay")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp")
+    list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_SOURCE}")
+    # Replace the pinned Maxwell-era nvhost-as-gpu owner only in NS2 research.
+    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv_as")
+    set(EDEN_NS2_NVDRV_AS_SOURCE
+        "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NVDRV_AS_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.h")
+        message(FATAL_ERROR "Missing NS2 native 4K GPU address-space overlay")
+    endif()
+    list(FIND eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_as_gpu.cpp" eden_ns2_as_idx)
+    if(eden_ns2_as_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV AS owner changed: re-audit NS2 overlay")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
+    list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")
+    # Native GPFIFO/CMDDMA adapter: never replace the shipping source owner.
+    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv_gpu")
+    set(EDEN_NS2_NVDRV_GPU_SOURCE
+        "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NVDRV_GPU_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.h")
+        message(FATAL_ERROR "Missing NS2 native GPU channel adapter")
+    endif()
+    list(FIND eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_gpu.cpp" eden_ns2_gpu_idx)
+    if(eden_ns2_gpu_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV GPU channel source changed: re-audit overlay")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_sources
+        "hle/service/nvdrv/devices/nvhost_gpu.cpp")
+    list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_GPU_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_GPU_ROOT}" "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")
+endif()
+
+# Switch 2 GPU TIPC service and bounded worker transport. No native GPU
+# submission or 4-KiB memory mapping is advertised.
+option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL
+    "Research only: compile bounded NS2 GPU session HLE service" OFF)
+if(EDEN_NS2_GPU_SESSION_EXPERIMENTAL)
+    if(NOT EDEN_NS2_NVDRV_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 GPU session requires native NVDRV research mode")
+    endif()
+    set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_session")
+    set(EDEN_NS2_GPU_SESSION_SOURCE
+        "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.cpp")
+    set(EDEN_NS2_GPU_WORKER_SOURCE
+        "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.cpp")
+    set(EDEN_NS2_GPU_SHARED_SOURCE
+        "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker_shared.cpp")
+    if(NOT EXISTS "${EDEN_NS2_GPU_SESSION_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_WORKER_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_SHARED_SOURCE}" OR
+       NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.h" OR
+       NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.h" OR
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h")
+        message(FATAL_ERROR "Missing isolated NS2 GPU session source/protocol")
+    endif()
+    target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
+        "${EDEN_NS2_GPU_WORKER_SOURCE}"
+        "${EDEN_NS2_GPU_SHARED_SOURCE}")
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_NS2_GPU_SESSION_ROOT}"
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+endif()
+
+# Research-only SelfController -> GraphicsSupervisor -> metadata-only GPU IPC.
+# Preserve the Switch 1 source owner unless explicitly selected for research.
+option(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL
+    "Research only: bounded NS2 graphics-supervisor / GPU metadata IPC" OFF)
+if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
+    if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_AM_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 supervisor requires experimental GPU session and AM")
+    endif()
+    set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/graphics_supervisor")
+    set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/self_controller")
+    foreach(eden_ns2_supervisor_file
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.h"
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp"
+        "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.h"
+        "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.cpp")
+        if(NOT EXISTS "${eden_ns2_supervisor_file}")
+            message(FATAL_ERROR "Missing NS2 supervisor owner: ${eden_ns2_supervisor_file}")
+        endif()
+    endforeach()
+    get_target_property(eden_ns2_supervisor_sources core SOURCES)
+    list(FIND eden_ns2_supervisor_sources
+        "hle/service/am/service/self_controller.cpp" eden_ns2_self_idx)
+    if(eden_ns2_self_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned SelfController owner changed: re-audit NS2 bridge")
+    endif()
+    list(REMOVE_ITEM eden_ns2_supervisor_sources
+        "hle/service/am/service/self_controller.cpp")
+    list(APPEND eden_ns2_supervisor_sources
+        "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.cpp"
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_supervisor_sources}")
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
+endif()
+
+# Isolated Ampere SM70+ ISA decode and reviewed native-to-Maxwell lowering.
+# This compiles the real
+# 128-bit decoder into shader_recompiler only for a deliberately selected NS2
+# research build. No shader translation or renderer enablement is implied.
+option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
+    "Research only: bounded Ampere 128-bit ISA probe and reviewed Maxwell lowering" OFF)
+if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
+    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        message(FATAL_ERROR "NS2 Ampere ISA probe requires research metadata mode")
+    endif()
+    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere")
+    set(EDEN_NS2_AMPERE_PROBE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
+    foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
+            lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
+            program_address_map.h capture.h program_capture.h translation_cache.h
+            maxwell_environment.h ir_bridge.h)
+        if(NOT EXISTS
+           "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/${eden_ampere_header}")
+            message(FATAL_ERROR "Missing NS2 Ampere ISA header: ${eden_ampere_header}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${EDEN_NS2_AMPERE_PROBE}")
+        message(FATAL_ERROR "Missing NS2 Ampere shader instruction decoder")
+    endif()
+    set(EDEN_NS2_AMPERE_LOWER_BRIDGE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/lower_bridge.cpp")
+    if(NOT EXISTS "${EDEN_NS2_AMPERE_LOWER_BRIDGE}")
+        message(FATAL_ERROR "Missing NS2 bounded native-to-Maxwell translation bridge")
+    endif()
+    set(EDEN_NS2_MAXWELL_IMAGE_BRIDGE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/maxwell_image.cpp")
+    if(NOT EXISTS "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}")
+        message(FATAL_ERROR "Missing NS2 native-to-Maxwell shader-environment image adapter")
+    endif()
+    set(EDEN_NS2_NATIVE_SHADER_CAPTURE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/capture.cpp")
+    set(EDEN_NS2_NATIVE_GMMU_CAPTURE
+        "${EDEN_NS2_AMPERE_ROOT}/video_core/native_shader_capture.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_SHADER_CAPTURE}" OR
+       NOT EXISTS "${EDEN_NS2_NATIVE_GMMU_CAPTURE}" OR
+       NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/video_core/native_shader_capture.h")
+        message(FATAL_ERROR "Missing NS2 real GMMU-backed native shader capture owner")
+    endif()
+    set(EDEN_NS2_NATIVE_TRANSLATION_CACHE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/translation_cache.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_TRANSLATION_CACHE}")
+        message(FATAL_ERROR "Missing bounded, process-owned NS2 translation cache")
+    endif()
+    set(EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/maxwell_environment.cpp")
+    if(NOT EXISTS "${EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER}")
+        message(FATAL_ERROR "Missing NS2 Shader::Environment Maxwell frontend adapter")
+    endif()
+    set(EDEN_NS2_MAXWELL_IR_BRIDGE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/ir_bridge.cpp")
+    if(NOT EXISTS "${EDEN_NS2_MAXWELL_IR_BRIDGE}")
+        message(FATAL_ERROR "Missing NS2 Maxwell CFG/IR research handoff")
+    endif()
+    target_sources(shader_recompiler PRIVATE
+        "${EDEN_NS2_MAXWELL_IR_BRIDGE}"
+        "${EDEN_NS2_AMPERE_PROBE}"
+        "${EDEN_NS2_AMPERE_LOWER_BRIDGE}"
+        "${EDEN_NS2_MAXWELL_IMAGE_BRIDGE}"
+        "${EDEN_NS2_NATIVE_SHADER_CAPTURE}"
+        "${EDEN_NS2_NATIVE_TRANSLATION_CACHE}"
+        "${EDEN_NS2_MAXWELL_ENVIRONMENT_ADAPTER}")
+    target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
+    target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GMMU_CAPTURE}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_AMPERE_ROOT}")
+endif()
+
+# N3m: compile a renderer-callable, explicitly scoped NS2 VertexB IR -> SPIR-V
+# adapter. The active PS5 Vulkan pipeline owner is NOT replaced or modified:
+# only a session-verified NS2 caller may invoke this isolated API.
+option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
+    "Research only: explicit NS2 VertexB to Vulkan SPIR-V compiler API" OFF)
+if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
+    if(NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
+       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_NVDRV_EXPERIMENTAL OR
+       NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR
+            "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, metadata and native PS5 Vulkan")
+    endif()
+    set(EDEN_NS2_VULKAN_SHADER_BRIDGE
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
+    if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
+        message(FATAL_ERROR "Missing opt-in NS2 renderer-side SPIR-V compiler")
+    endif()
+    set(EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}" OR
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.h")
+        message(FATAL_ERROR "Missing verified NS2 GMMU-to-SPIR-V pipeline entrypoint")
+    endif()
+    target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
+    target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
+    target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
+endif()
+
+# N50: versioned device-memory page-run guard in the single PS5 owner.
+option(EDEN_NS2_CONTINUITY_EXPERIMENTAL
+    "Research only: stop stale GPU mapping runs at Map/Unmap boundaries" OFF)
+if(EDEN_NS2_CONTINUITY_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 device-memory continuity requires PS5 research")
+    endif()
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")
+        message(FATAL_ERROR "N50 maintained PS5 device-memory source missing")
+    endif()
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/core/ns2_egl_continuity_guard.h")
+        message(FATAL_ERROR "Missing N50 vendor continuity helper")
+    endif()
+    target_include_directories(core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    target_compile_definitions(core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)
+endif()
+
 # Release gate: Vulkan/RADV is the normal game renderer. The OpenGL SDK stays
 # for the launcher and Safe Launch recovery, not a second experimental build.
 if(EDEN_FINAL_RELEASE_PROFILE)
+    # Fail closed for *all* opt-in NS2 engines, including future flags.
+    # Otherwise an option absent from the older explicit release list below
+    # could silently ship in the NS1 package after a direct CMake invocation.
+    get_cmake_property(eden_release_cache_vars CACHE_VARIABLES)
+    foreach(eden_release_flag IN LISTS eden_release_cache_vars)
+        if(eden_release_flag MATCHES "^EDEN_NS2_.*_EXPERIMENTAL$")
+            if(${eden_release_flag})
+                message(FATAL_ERROR
+                    "Final Encore cannot ship unqualified NS2 research: ${eden_release_flag}=ON")
+            endif()
+        endif()
+    endforeach()
     target_compile_definitions(eden-headless PRIVATE EDEN_FINAL_RELEASE_PROFILE=1)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR NOT EDEN_PS5_OPENGL OR
        NOT EDEN_VULKAN_DRIVER STREQUAL "RADV")
@@ -1818,6 +2604,21 @@ if(EDEN_FINAL_RELEASE_PROFILE)
     if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH OR
        EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
+       EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
+       EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR
+       EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR EDEN_NS2_CPU6_EXPERIMENTAL OR
+       EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
+       EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
+       EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
+        EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
+       EDEN_NS2_VIEW_EXPERIMENTAL OR
+       EDEN_NS2_CONTINUITY_EXPERIMENTAL OR
+       EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
+       EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
+       EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
+       EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL OR
+       EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
+       EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

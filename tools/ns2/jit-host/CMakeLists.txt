@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 3.20)
+project(encore_ns2_jit_probe LANGUAGES C CXX ASM)
+set(CMAKE_CXX_STANDARD 20)
+get_filename_component(REPO "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+set(EDEN "${REPO}/vendor/sources/eden/src")
+set(DYN "${EDEN}/dynarmic")
+list(APPEND CMAKE_MODULE_PATH "${DYN}/CMakeModules")
+set(dynarmic_VERSION "7.0.0")
+set(dynarmic_VERSION_MAJOR 7)
+set(ARCHITECTURE "x86_64")
+set(ARCHITECTURE_x86_64 TRUE)
+add_compile_definitions(ARCHITECTURE_x86_64=1)
+set(CXX_CLANG TRUE)
+set(DYNARMIC_CXX_FLAGS -Wall -Wextra -Wno-unused-parameter)
+find_package(fmt 12.1 CONFIG REQUIRED)
+find_package(xbyak 7 CONFIG REQUIRED)
+find_package(Boost 1.57 REQUIRED)
+include_directories("${EDEN}")
+add_library(common STATIC "${CMAKE_CURRENT_LIST_DIR}/common_shim.cpp")
+target_include_directories(common PUBLIC "${EDEN}")
+target_link_libraries(common PUBLIC fmt::fmt)
+add_subdirectory("${DYN}/src/dynarmic" "${CMAKE_CURRENT_BINARY_DIR}/dynarmic")
+if(NOT EXISTS "${REPO}/vendor/encore-active/ns2-runtime/cpu6/dynarmic/interface/exclusive_monitor.h")
+    message(FATAL_ERROR "Required vendor CPU6 Dynarmic exclusive monitor is missing")
+endif()
+target_include_directories(dynarmic BEFORE PUBLIC "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
+target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1 DYNARMIC_ENABLE_CPU_FEATURE_DETECTION=1)
+add_executable(ns2_lse_jit_test "${CMAKE_CURRENT_LIST_DIR}/test_lse_jit.cpp")
+target_include_directories(ns2_lse_jit_test PRIVATE "${DYN}" "${DYN}/src")
+find_package(Threads REQUIRED)
+target_include_directories(ns2_lse_jit_test BEFORE PRIVATE "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
+target_link_libraries(ns2_lse_jit_test PRIVATE dynarmic fmt::fmt Threads::Threads)
+# Link the same maintained Dynarmic JIT to the cross-built *real* HOS
+# NSO0 text rather than testing only instruction-level synthetic snippets.
+add_executable(ns2_public_nso_jit_test
+    "${CMAKE_CURRENT_LIST_DIR}/test_public_nso_jit.cpp")
+target_include_directories(ns2_public_nso_jit_test BEFORE PRIVATE
+    "${REPO}/vendor/encore-active/ns2-helpers/include"
+    "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
+target_include_directories(ns2_public_nso_jit_test PRIVATE "${DYN}" "${DYN}/src")
+target_link_libraries(ns2_public_nso_jit_test PRIVATE
+    dynarmic fmt::fmt Threads::Threads)
+enable_testing()
+add_test(NAME ns2_lse_jit_test COMMAND ns2_lse_jit_test)
+set_tests_properties(ns2_lse_jit_test PROPERTIES TIMEOUT 20)
+
+add_test(NAME ns2_public_nso_jit_test
+    COMMAND ns2_public_nso_jit_test
+    "${REPO}/build-ns2-jit/public-nso/hello.nso")
+set_tests_properties(ns2_public_nso_jit_test PROPERTIES TIMEOUT 20)

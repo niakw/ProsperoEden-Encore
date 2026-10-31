@@ -252,11 +252,19 @@ print("F07_BCN3D_PASS_UNSUPPORTED_IMAGE_FORMAT_LIST_PASS native=1 desktop=1 exte
 # BCn 3D: never mark an unavailable GPU compute upload as complete.
 # Compile the production runtime function, including PS5 and desktop branches.
 accel_start="void TextureCacheRuntime::AccelerateImageUpload("
-accel_end="\n}\n\nvoid TextureCacheRuntime::TransitionImageLayout("
 assert runtime_src.count(accel_start)==1
-assert accel_end in runtime_src[runtime_src.index(accel_start):]
-accel=runtime_src[runtime_src.index(accel_start):
-                  runtime_src.index(accel_end,runtime_src.index(accel_start))+2]
+accel_offset=runtime_src.index(accel_start)
+# NS2 adds a separate opt-in ASTC-layer overload *between* this existing
+# function and TransitionImageLayout. Scope the historical F07 witness to
+# the exact original function body, not whichever method follows it.
+accel_end=runtime_src.index("\n}\n",accel_offset)+2
+accel=runtime_src[accel_offset:accel_end]
+after_accel=runtime_src[accel_end:]
+assert after_accel.startswith("\n\n")
+assert (after_accel.startswith("\n\nvoid TextureCacheRuntime::TransitionImageLayout(")
+        or after_accel.startswith("\n\n#ifdef EDEN_NS2_ASTC_LAYER_DECODE\n"
+             "void TextureCacheRuntime::AccelerateImageUploadLayers("))
+assert "void TextureCacheRuntime::TransitionImageLayout(" in after_accel
 assert "F07 native BCn 3D unavailable pass retry signal" in (
     root/"tools/prepare-vulkan-port.py").read_text()
 assert "throw std::runtime_error" in accel

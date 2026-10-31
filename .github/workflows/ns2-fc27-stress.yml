@@ -1,0 +1,85 @@
+name: NSW2 FC27 workload stress
+on:
+  push:
+    branches: [research/ns2-ps5-compatibility]
+    paths:
+      - 'vendor'
+      - 'tools/ns2/fc27_stress_replay.py'
+      - 'tools/ns2/build_fc27_synthetic_nsp.py'
+      - 'tools/ns2/test_real_extracted_nsp.py'
+      - 'tools/fixtures/fc27-2efd8b3c-stutter-windows.json'
+      - '.github/workflows/ns2-fc27-stress.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ns2-fc27-stress-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  replay-and-pfs0:
+    name: Real FC27 telemetry envelope and synthetic 1x/4x/8x NSP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Source-backed historical stutter classifier
+        run: python3 tools/check-fc27-stutter-regimes.py --self-test
+      - name: Stress texture/HUD, queue and guest-progress oracles
+        run: python3 tools/ns2/fc27_stress_replay.py --out build-ns2-fc27/stress-report.json
+      - name: Public HOS fixture toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+      - name: Cross-build lawful HOS NSO and unsigned extracted-ExeFS NSP
+        run: |
+          python3 tools/ns2/build_public_nso_fixture.py --output build-ns2-fc27/hello.nso
+          python3 tools/ns2/build_public_exefs_fixture.py --nso build-ns2-fc27/hello.nso --output-dir build-ns2-fc27/exefs
+          python3 tools/ns2/build_fc27_synthetic_nsp.py --exefs build-ns2-fc27/exefs --out build-ns2-fc27/fc27-synthetic.nsp --texture-mib 8
+      - name: Execute maintained Eden PFS0 constructor and extracted ExeFS route
+        run: |
+          python3 tools/ns2/test_real_extracted_nsp.py \
+            --nsp build-ns2-fc27/fc27-synthetic.nsp \
+            --main build-ns2-fc27/exefs/main \
+            --npdm build-ns2-fc27/exefs/main.npdm
+      - name: Publish unsigned extracted-ExeFS NSP research input
+        uses: actions/upload-artifact@v4
+        with:
+          name: ns2-fc27-synthetic-stress
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            build-ns2-fc27/stress-report.json
+            build-ns2-fc27/fc27-synthetic.nsp
+            build-ns2-fc27/exefs/main
+            build-ns2-fc27/exefs/main.npdm
+  native-owners:
+    name: Source-extracted FC27 texture and Vulkan renderer guards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Install maintained nvdisp fixture's Boost header dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libboost-dev
+      - name: Compile real texture/DMA/HUD/native pipeline fragments
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-fc27-f03-native-texture-feedback-chain-host.py
+          python3 -B tools/check-fc27-f03-native-present-freshness-host.py
+          python3 -B tools/check-fc27-f04-native-remap-dma-upload-chain-host.py
+          python3 -B tools/check-fc27-f07-blit-pipeline-state-host.py
+          python3 -B tools/check-fc27-f05-native-nvdisp-vulkan-present-chain-host.py
+          python3 -B tools/check-ps5-f07-hud-tic-freshness-host.py
+      - name: Frame-cache lock and contention contracts
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-ps5-f07-frame-cache-ownership-host.py
+          python3 -B tools/check-fc27-f05-native-kernel-wait-publication-host.py
+          python3 -B tools/check-fc27-cache-contention-classifier.py

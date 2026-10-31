@@ -53,10 +53,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # All generated Vulkan translation units still remain byte-identical.
     helper='include/video_core/renderer_vulkan/striped_wait.h'
     allocator='vulkan_memory_allocator.cpp'
-    subprocess.run([sys.executable, '-B', str(root/'tools/check-ps5-vulkan-oom-source.py')],
-                   check=True, timeout=15, capture_output=True, text=True)
+    # Shared native GPU budget admission owner, usable by both NS1 and NS2.
+    # It is additive, never regenerated from the original upstream Vulkan.
+    pool_policy='include/video_core/renderer_vulkan/vk_shared_gpu_budget.h'
+    assert pool_policy not in actual, 'native GPU budget leaked into generator'
+    assert subprocess.check_output(
+        ['git','hash-object',str(expected[pool_policy])],text=True
+    ).strip() == '8f39056a5eb9d219685b2319c504375559db21d3', 'shared GPU policy drift'
+    oom_check = subprocess.run(
+        [sys.executable, '-B', str(root/'tools/check-ps5-vulkan-oom-source.py')],
+        timeout=15, capture_output=True, text=True)
+    if oom_check.returncode != 0:
+        raise RuntimeError('F07 allocator source parity failed (code %d):\n%s\n%s' % (
+            oom_check.returncode, oom_check.stdout, oom_check.stderr))
     assert allocator not in actual, 'generated Vulkan port unexpectedly owns the allocator'
-    assert set(actual)==set(expected)-{helper, allocator}, (
+    assert set(actual)==set(expected)-{helper, allocator, pool_policy}, (
         f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')
     helper_file=expected[helper]
     assert subprocess.check_output(['git','hash-object',str(helper_file)],text=True).strip()==(
@@ -234,7 +245,144 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert contents.count('::Eden::FrameMetrics::') == (5 if file_name == 'vulkan_renderer.cpp' else 1), ("telemetry count drift", file_name)
         path.write_text(contents)
 
-    mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],expected[name],shallow=False)]
+    # N65: vendor's generic sparse requirements query is a reviewed
+    # additive API. Reconstruct the exact generator baseline from the
+    # maintained vendor header/implementation, not by skipping those files.
+    # The independent N65 compiled host oracle checks behavior and failures.
+    normalized_expected = {}
+    hname = 'include/video_core/vulkan_common/vulkan_wrapper.h'
+    cname = 'vulkan_wrapper.cpp'
+    # N66: keep the production generator deterministic. The one additive
+    # research native sparse queue API is maintained in vendor, and its actual
+    # implementation is executed by check_native_sparse_bind.py (UBSan).
+    # For byte parity remove only that exact method, never waive the header.
+    n66_header = expected[hname].read_text()
+    n66_start = '    VkResult BindSparse(Span<VkBindSparseInfo> bind_infos,'
+    n66_end = '    VkResult Present(const VkPresentInfoKHR& present_info)'
+    assert n66_header.count(n66_start) == 1 and n66_header.count(n66_end) == 1
+    n66_begin = n66_header.index(n66_start)
+    n66_finish = n66_header.index(n66_end, n66_begin)
+    n66_extension = n66_header[n66_begin:n66_finish]
+    assert n66_extension.count('BindSparseImage(VkImage image') == 1
+    assert 'if (!queue || !dld || !dld->vkQueueBindSparse)' in n66_extension
+    assert 'return BindSparse(submit, completion);' in n66_extension
+    assert 'VkSparseImageMemoryBindInfo image_info' in n66_extension
+    assert 'VkSparseImageOpaqueMemoryBindInfo tail_info' in n66_extension
+    assert 'wait_semaphore ? &wait_semaphore : nullptr' in n66_extension
+    assert 'signal_semaphore ? &signal_semaphore : nullptr' in n66_extension
+    assert 'wait_semaphore == signal_semaphore' in n66_extension
+    baseline_queue = '''    VkResult BindSparse(Span<VkBindSparseInfo> bind_infos,
+                        VkFence fence = VK_NULL_HANDLE) const noexcept {
+        return dld->vkQueueBindSparse(queue, bind_infos.size(), bind_infos.data(), fence);
+    }
+
+'''
+    stripped_n66 = n66_header[:n66_begin] + baseline_queue + n66_header[n66_finish:]
+    n66_path = temp / 'normalized-vendor-n66' / hname
+    n66_path.parent.mkdir(parents=True, exist_ok=True)
+    n66_path.write_text(stripped_n66)
+    normalized_expected[hname] = n66_path
+
+    header = normalized_expected[hname].read_text()
+    anchor = '    VkMemoryRequirements GetImageMemoryRequirements(VkImage image) const noexcept;'
+    extension = '''
+
+    // N65: query the actual sparse 2D tile/mip-tail requirements.
+    // No DeviceDispatch layout change: resolve entrypoint on demand.
+    [[nodiscard]] std::vector<VkSparseImageMemoryRequirements>
+        GetSparseImageMemoryRequirements(VkImage image) const;'''
+    assert header.count(anchor + extension) == 1, 'N65 vendor sparse header changed'
+    normalized_h = header.replace(anchor + extension, anchor)
+    source = expected[cname].read_text()
+    begin = 'std::vector<VkSparseImageMemoryRequirements>\nDevice::GetSparseImageMemoryRequirements(VkImage image) const {'
+    end = 'std::vector<VkPipelineExecutablePropertiesKHR> Device::GetPipelineExecutablePropertiesKHR('
+    assert source.count(begin) == 1 and source.count(end) == 1, 'N65 wrapper owner moved'
+    start = source.index(begin)
+    finish = source.index(end, start)
+    ext = source[start:finish]
+    assert ext.count('GetSparseImageMemoryRequirements(VkImage image)') == 1
+    assert 'vkGetImageSparseMemoryRequirements' in ext
+    assert 'if (!fn) return {};' in ext
+    assert 'if (!count || count > 64) return {};' in ext
+    assert 'if (!count || count > requirements.size()) return {};' in ext
+    normalized_c = source[:start] + source[finish:]
+    for name, value in ((hname, normalized_h), (cname, normalized_c)):
+        p = temp/'normalized-vendor-n65'/name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(value)
+        normalized_expected[name] = p
+
+    # N56: compare the source generator to the exact pre-experiment owner.
+    # The driver-cache guard is compiled only by opt-in NS2 research builds.
+    n56_name = 'vk_pipeline_cache_cost.cpp'
+    n56_before = '        u32 cache_version;\n        file.read(magic_number.data(), magic_number.size())'
+    n56_after = '''        u32 cache_version;
+#ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
+        // Reject truncated (including failed tellg) Vulkan driver cache headers
+        // before reading or subtracting an unsigned header size.
+        if (end < std::streampos{static_cast<std::streamoff>(
+                      magic_number.size() + sizeof(cache_version))}) {
+            file.close();
+            LOG_WARNING(Common_Filesystem, "Short Vulkan driver cache; rebuilding fresh");
+            Common::FS::RemoveFile(filename);
+            return create_pipeline_cache(0, nullptr);
+        }
+#endif
+        file.read(magic_number.data(), magic_number.size())'''
+    n56_current = expected[n56_name].read_text()
+    assert n56_current.count(n56_after) == 1, 'N56 vendor guard differs from exact owner'
+    assert n56_current.count('Saved PS5 driver pipeline cache atomically') == 1
+    n56_baseline = n56_current.replace(n56_after, n56_before)
+    n56_file = temp/'normalized-vendor-n56'/n56_name
+    n56_file.parent.mkdir(parents=True, exist_ok=True)
+    n56_file.write_text(n56_baseline)
+    normalized_expected[n56_name] = n56_file
+    # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
+    # Reverse only exact reviewed additions, then require original F07 SHA
+    # and full generated-source byte parity. No generator files or exemptions.
+    from ns2.native_astc_vendor_parity import normalized as normalize_n57
+    for name, baseline in normalize_n57(root).items():
+        p = temp/'normalized-vendor-n57'/name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(baseline)
+        normalized_expected[name] = p
+
+    # N72: exact vendor-owned serialized sparse submit API. Preserve full
+    # baseline byte-equivalence after removing only these additive guards.
+    n72_additions = {
+        'include/video_core/renderer_vulkan/vk_scheduler.h': (
+            '    // NS2 N72 BEGIN: route sparse page binds through the same submit mutex',
+            '    // NS2 N72 END\n',
+        ),
+        'vulkan_scheduler.cpp': (
+            '// NS2 N72 BEGIN: serialized sparse Vulkan page submission',
+            '// NS2 N72 END\n\n',
+        ),
+    }
+    for name, (begin, end) in n72_additions.items():
+        source = normalized_expected.get(name, expected[name]).read_text()
+        assert source.count(begin) == 1 and source.count(end) == 1, (name, 'N72 owner changed')
+        first, last = source.index(begin), source.index(end)
+        extension = source[first:last + len(end)]
+        assert '#ifdef EDEN_NS2_SPARSE_QUEUE_BRIDGE' in extension
+        assert 'BindSparseImage(' in extension
+        if name.endswith('.cpp'):
+            assert 'std::scoped_lock lock{submit_mutex};' in extension
+            assert 'device.GetGraphicsQueue().BindSparseImage(' in extension
+            assert extension.index('std::scoped_lock lock{submit_mutex};') < extension.index(
+                'device.GetGraphicsQueue().BindSparseImage(')
+        suffix = last + len(end)
+        # Header integration inserted one spacer newline beyond the marker.
+        if name.endswith('vk_scheduler.h'):
+            assert source[suffix:suffix + 2] == '\n\n', 'N72 header spacing changed'
+            suffix += 2
+        baseline = source[:first] + source[suffix:]
+        normalized = temp/'normalized-vendor-n72'/name
+        normalized.parent.mkdir(parents=True, exist_ok=True)
+        normalized.write_text(baseline)
+        normalized_expected[name] = normalized
+
+    mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and
         # active files previously looked equivalent in high-level assertions,
@@ -242,7 +390,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         from difflib import unified_diff
         from itertools import islice
         for name in mismatches[:5]:
-            generated, versioned = actual[name], expected[name]
+            generated, versioned = actual[name], normalized_expected.get(name, expected[name])
             if not name.endswith(('.cpp', '.h', '.py', '.cmake')):
                 print(f'VULKAN_ORACLE_BINARY_DIFF {name} SHA256={hashlib.sha256(generated.read_bytes()).hexdigest()} '
                       f'active_SHA256={hashlib.sha256(versioned.read_bytes()).hexdigest()}', flush=True)

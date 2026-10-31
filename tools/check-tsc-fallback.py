@@ -11,7 +11,35 @@ derived = (root / 'vendor/encore-active/eden-core/src' / 'common/cpu_features.cp
 expected = original.replace('        } else {\n            caps.tsc_frequency = X64::EstimateRDTSCFrequency();\n        }', '        }').replace(
     '    if (max_std_fn >= 0x16) {',
     "    if (caps.invariant_tsc && caps.tsc_frequency < 1'000'000'000ULL) {\n        caps.tsc_frequency = X64::EstimateRDTSCFrequency();\n    }\n\n    if (max_std_fn >= 0x16) {")
-assert derived == expected and derived.count('X64::EstimateRDTSCFrequency()') == 1
+# N76 extends the shared CPU clock with a metadata-selected guest rate.
+# Reconstruct the original native TSC owner by removing ONLY this exact
+# guarded include and one guarded CNTPCT block. NS1 selector parity remains
+# byte-for-byte, and unqualified changes still fail the audit.
+ns2_header = '#ifdef EDEN_NS2_GUEST_COUNTER\n#include "encore/guest_counter_policy.h"\n#endif\n'
+ns2_block = '''#ifdef EDEN_NS2_GUEST_COUNTER
+    // Shared guest-clock policy: Nintendo's second-generation SDK converts
+    // CNT ticks using 31.25 MHz. Keep the original fast path for Switch 1.
+    if (Eden::GuestCounter::Rate() != Eden::GuestCounter::Switch1Hz) {
+        if (!invariant)
+            return static_cast<s64>(Eden::GuestCounter::NanosecondsToGuest(
+                static_cast<u64>(GetUptime())));
+        const u64 factor = Eden::GuestCounter::NativeFactor();
+        if (factor != 0)
+            return MultiplyHigh(GetUptime(), factor);
+        // A missing host clock calibration must not divide by zero or
+        // silently keep the wrong 19.2 MHz guest rate.
+        if (rdtsc_frequency == 0)
+            return 0;
+        return MultiplyHigh(GetUptime(),
+                            GetFixedPoint64Factor(Eden::GuestCounter::Rate(),
+                                                  rdtsc_frequency));
+    }
+#endif
+'''
+assert derived.count(ns2_header) == 1, "N76 header changed"
+assert derived.count(ns2_block) == 1, "N76 rate body changed"
+ns1_derived = derived.replace(ns2_header, "", 1).replace(ns2_block, "", 1)
+assert ns1_derived == expected and ns1_derived.count('X64::EstimateRDTSCFrequency()') == 1
 selection = derived[derived.index('    if (max_std_fn >= 0x15) {'):derived.index('    if (max_std_fn >= 0x16) {')]
 code = '''
 #include <cassert>

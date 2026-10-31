@@ -1,6 +1,6 @@
 # Eden Encore — active native dependency audit register
 
-**Branch:** main. **Updated:** 2026-10-31. **Baseline reviewed:** 436a102 (sources précédant cet enregistrement).
+**Branch:** main + NS2 research. **Updated:** 2026-10-31. **Baseline reviewed:** 436a102 (sources précédant cet enregistrement).
 **Technical scope:** guest CPU/HLE, JIT, GPU worker, Vulkan, memory coherency,
 native build/CI. Launcher and theme work belongs to its separate conversation.
 
@@ -260,8 +260,8 @@ Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
 [`EDEN_ACTIVE_SOURCE_CATALOG.md`](EDEN_ACTIVE_SOURCE_CATALOG.md) :
-331 fichiers de code/en-têtes présents et 331 avec un chemin de
-graphe exact, sans aucun chemin source non rattaché dans ce périmètre.
+337 fichiers de code/en-têtes maintenus (hors 107 unités NS2 expérimentales), dont 335 avec un chemin de
+graphe exact et deux en-têtes d'hygiène à preuve dédiée.
 Cette couverture de chemins n'est **pas** une preuve fonctionnelle ni une
 certification de la sélection du code à l'exécution.
 Le contrôle hôte vérifie la complétude des chemins et les références,

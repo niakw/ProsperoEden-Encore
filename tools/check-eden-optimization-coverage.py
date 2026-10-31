@@ -26,12 +26,43 @@ if "vendor" in tracked:
     tracked.update("vendor/" + p for p in vendor_paths if p)
 
 suffixes={".c",".cpp",".cxx",".cc",".h",".hpp",".inc"}
-owners={p for p in tracked
+all_owners={p for p in tracked
         if p.startswith(("headless/","src/","vendor/encore-active/"))
         and Path(p).suffix in suffixes}
+# NS2 is an explicitly unqualified research layer, not historical F07 review.
+# Do not silently count new research source code as already optimized.
+research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text())
+research_owners={"vendor/encore-active/"+p for p in research["paths"]}
+assert research["schema_version"] == 1 and len(research_owners) == 107
+assert research_owners <= all_owners, sorted(research_owners-all_owners)
+# The two new shared warning-hygiene headers have a separate exact-source
+# verifier and installer. They are not retroactive F07 optimization reviews.
+hygiene_owners = {
+    "vendor/encore-active/eden-header-hygiene/include/common/page_table.h",
+    "vendor/encore-active/eden-header-hygiene/include/video_core/macro.h",
+}
+assert hygiene_owners <= all_owners, sorted(hygiene_owners - all_owners)
+assert "tools/install-eden-header-hygiene.py" in tracked
+# The four mainline extracted AOC owners are explicitly reviewed in the
+# post-snapshot F07 source ledger. Do not silently drop their proof entries
+# or misclassify them as opt-in NS2 experiments.
+extracted_aoc_owners = {
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+}
+assert extracted_aoc_owners <= all_owners, sorted(extracted_aoc_owners - all_owners)
+assert not extracted_aoc_owners & (research_owners | hygiene_owners)
+owners=all_owners-research_owners-hygiene_owners
+print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
+assert len(owners)==515, ("F07 reviewed shipping source owner drift",len(owners))
+print("NS2_F07_TRIAGE_ISOLATION_PASS", f"unreviewed_research_sources={len(research_owners)}",
+      "separate_shared_warning_headers=2")
 entries=STATE["handled_paths"]
 handled={e["path"] for e in entries}
 assert len(entries)==len(handled),"duplicate optimization owner"
+assert extracted_aoc_owners<=handled, ("AOC source review missing", sorted(extracted_aoc_owners-handled))
 assert handled<=owners,sorted(handled-owners)
 allowed={"code_changed_in_batch","reviewed_without_new_code_edit",
          "historical_host_contract_reviewed","previously_integrated_source_change",

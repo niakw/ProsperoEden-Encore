@@ -43,6 +43,34 @@ for bits in (32,64):
     assert "ConstructWithCapacityFallback" not in existing
     assert "if (!CheckMemoryAccess(vaddr" not in existing
 
+# N76 is a native-only opt-in layered on the shared A64 owner. The pinned
+# preparatory A64 source carries N76, while host G11 owners deliberately
+# retain the exact NS1 counter path. Compare the complete G11 translation
+# units after reversing ONLY this exact, guarded guest-clock overlay.
+# Native variants must contain the guarded guest rate; host variants must not.
+N76_HEADER = '#ifdef EDEN_NS2_GUEST_COUNTER\n#include "encore/guest_counter_policy.h"\n#endif\n'
+N76_RATE = re.compile(
+    r'^#ifdef EDEN_NS2_GUEST_COUNTER\n'
+    r'(?:[ \t]*//[^\n]*\n)*'
+    r'[ \t]*config\.cntfrq_el0 = static_cast<u32>\(Eden::GuestCounter::Rate\(\)\);\n'
+    r'#else\n'
+    r'(?P<legacy>[ \t]*config\.cntfrq_el0 = Hardware::CNTFREQ;)\n'
+    r'#endif\n',
+    re.M,
+)
+
+def reverse_exact_n76_clock(source: str, *, required: bool) -> str:
+    if not required:
+        assert "EDEN_NS2_GUEST_COUNTER" not in source, "host A64 gained NS2 guest clock"
+        return source
+    assert source.count(N76_HEADER) == 1, "N76 guest counter include guard drift"
+    matches = list(N76_RATE.finditer(source))
+    assert len(matches) == 1, "N76 guarded A64 counter/fallback drift"
+    assert source.count("EDEN_NS2_GUEST_COUNTER") == 2, "Unexpected N76 macro sites"
+    block = matches[0]
+    return source.replace(N76_HEADER, "", 1).replace(
+        block.group(0), block.group("legacy") + "\n", 1)
+
 outputs = {}
 with tempfile.TemporaryDirectory(prefix="encore-g11-matrix-") as tempdir:
     temp = Path(tempdir)
@@ -149,6 +177,15 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g11_sources}")
                     assert match is not None, (label,bits,"inline guard missing")
                     chosen = (match.group(1)+"config.fastmem_exclusive_access = true;"
                               if inline else match.group("fallback"))
+                    if bits == 64:
+                        # The native-only N76 guest clock remains positively
+                        # required above the legacy byte-for-byte parity gate.
+                        # No unrelated G11 instruction, include or JIT fast path
+                        # is excluded from the comparison.
+                        expected = reverse_exact_n76_clock(expected, required=True)
+                        candidate = reverse_exact_n76_clock(candidate, required=native)
+                    else:
+                        assert "EDEN_NS2_GUEST_COUNTER" not in expected + candidate
                     assert candidate.replace(match.group(0),chosen) == expected, (
                         label,bits,"G11 maintained source parity drift")
                     outputs[(native,dev,inline,bits)] = src

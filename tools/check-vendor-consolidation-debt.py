@@ -35,7 +35,13 @@ assert 'execute_process(COMMAND python3 "${PORT_ROOT}/tools/prepare-vulkan-port.
 # sites and leave room only for removing them, never for adding new ones.
 # For READ/REPLACE the approved pinned exceptions below are subtracted first.
 baseline = {"write_derived(": 1, "file(READ": 4, "string(REPLACE": 2}
-counts = {name: c.count(name) for name in baseline}
+# Count actual top-level CMake commands, not tokens in comments or quoted text.
+# A documentary reference to a retired rewrite must not look like live debt.
+import re
+counts = {
+    name: len(re.findall(rf"^\s*{re.escape(name)}", c, re.M))
+    for name in baseline
+}
 # All generation targets still permitted in the main CMake recipe.
 # These are a shrinking allowlist: a migrated target needs no new exemption.
 # G23 produces a GLSL resource and is deliberately not treated as C++ debt.
@@ -834,6 +840,14 @@ cpu_leaf16_new = """    if (caps.invariant_tsc && caps.tsc_frequency < 1'000'000
     if (max_std_fn >= 0x16) {"""
 assert cpu_pinned.count(cpu_fallback) == cpu_pinned.count(cpu_leaf16) == 1
 cpu_expected = cpu_pinned.replace(cpu_fallback, "        }").replace(cpu_leaf16, cpu_leaf16_new)
+# N76/N77 adds only the audited, opt-in guest-rate block to the shared owner.
+# Reverse its exact bytes for the original TSC parity check; reject drift.
+ns2_cpu_header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n"
+ns2_cpu_block = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Shared guest-clock policy: Nintendo's second-generation SDK converts\n    // CNT ticks using 31.25 MHz. Keep the original fast path for Switch 1.\n    if (Eden::GuestCounter::Rate() != Eden::GuestCounter::Switch1Hz) {\n        if (!invariant)\n            return static_cast<s64>(Eden::GuestCounter::NanosecondsToGuest(\n                static_cast<u64>(GetUptime())));\n        const u64 factor = Eden::GuestCounter::NativeFactor();\n        if (factor != 0)\n            return MultiplyHigh(GetUptime(), factor);\n        // A missing host clock calibration must not divide by zero or\n        // silently keep the wrong 19.2 MHz guest rate.\n        if (rdtsc_frequency == 0)\n            return 0;\n        return MultiplyHigh(GetUptime(),\n                            GetFixedPoint64Factor(Eden::GuestCounter::Rate(),\n                                                  rdtsc_frequency));\n    }\n#endif\n"
+if "#ifdef EDEN_NS2_GUEST_COUNTER" in cpu_active:
+    assert cpu_active.count(ns2_cpu_header) == 1, "N76 header modified or duplicated"
+    assert cpu_active.count(ns2_cpu_block) == 1, "N76 timing block modified or duplicated"
+    cpu_active = cpu_active.replace(ns2_cpu_header, "").replace(ns2_cpu_block, "")
 assert cpu_active == cpu_expected, "TSC source differs from previous configure-time transformation"
 assert c.count('list(APPEND common_sources "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")') == 1
 assert 'list(REMOVE_ITEM common_sources cpu_features.cpp)' in c
@@ -1535,8 +1549,22 @@ for index, (before, after, expected_count) in enumerate(gpu_hunks):
     assert gpu_expected.count(before) == expected_count, ("GPU pinned anchor drift", index)
     gpu_expected = gpu_expected.replace(before, after)
 gpu_maintained = active / "eden-core/src/video_core/memory_manager.cpp"
-assert gpu_maintained.is_file() and gpu_maintained.read_text() == gpu_expected, (
-    "maintained native GPU memory source differs from retired CMake result")
+assert gpu_maintained.is_file()
+gpu_actual = gpu_maintained.read_text()
+if gpu_actual != gpu_expected:
+    # N51 optional changed-PTE batching is in the same production source owner.
+    # Both *complete* source identities must remain exact; no regex deletion
+    # or blind acceptance of other video_core/memory_manager.cpp changes.
+    import hashlib
+    def git_blob_id(text):
+        raw = text.encode()
+        return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+    assert git_blob_id(gpu_expected) == "f30099dfb5df01d9cd787d199e3e61f28205669a", (
+        "pre-NS2 GPU source baseline drift")
+    assert git_blob_id(gpu_actual) == "c7923dbbef27a9088dbfcb33c162e3c7069679c1", (
+        "unreviewed changed-PTE GPU source drift")
+    assert "#ifdef EDEN_NS2_GPU_RANGE_BATCH" in gpu_actual
+
 assert 'list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")' in c
 assert c.count('list(REMOVE_ITEM video_sources "memory_manager.cpp")') == 1
 assert 'write_derived("${eden_gpu_span_tu}"' not in c
@@ -1831,7 +1859,10 @@ assert 'python3 -B tools/install-active-core-backports.py "$eden"' in staging
 active_core_installer = (root / "tools/install-active-core-backports.py").read_text()
 assert 'ACTIVE = ROOT / "vendor/encore-active/eden-core"' in active_core_installer
 assert "shutil.copyfile(maintained, tmp)" in active_core_installer
-assert "maintained.read_bytes() != new" in active_core_installer
+assert "maintained_bytes != new:" in active_core_installer
+assert "maintained_bytes.replace(header, b\"\").replace(" in active_core_installer
+assert "guest_counter, original_counter) != new" in active_core_installer
+assert "N76 modified unrelated native A64 source" in active_core_installer
 assert 'python3 -B tools/install-vendored-eden-backports.py --repair-owned-cache "$eden"' in staging
 cache_installer = (root / "tools/install-vendored-eden-backports.py").read_text()
 assert 'def is_owned_cached_source(destination:Path)->bool:' in cache_installer

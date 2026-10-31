@@ -17,11 +17,60 @@ begin, end = "<!-- ACTIVE_SOURCE_CATALOG_START -->", "<!-- ACTIVE_SOURCE_CATALOG
 assert document.count(begin) == document.count(end) == 1
 section = document.split(begin, 1)[1].split(end, 1)[0]
 suffixes = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".inc", ".inl", ".s", ".S", ".asm", ".cl"}
-physical = sorted(
+physical_all = sorted(
     p.relative_to(active).as_posix()
     for p in active.rglob("*")
     if p.is_file() and p.suffix in suffixes
 )
+# Preserve the audited production source catalogue. The NS2 research sources
+# are tracked separately and explicitly; they are not F07 shipping proofs.
+research_manifest = json.loads(
+    (root / "docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text()
+)
+research_paths = research_manifest["paths"]
+assert research_manifest["schema_version"] == 1
+assert len(research_paths) == len(set(research_paths)) == 107
+assert research_paths == sorted(research_paths)
+assert set(research_paths) <= set(physical_all), (
+    "Missing pinned NS2 research source owners", sorted(set(research_paths) - set(physical_all))
+)
+assert all(p.startswith(("ns2-", "eden-core/include/", "eden-vulkan/include/"))
+           for p in research_paths), "Unreviewed NS2 source category"
+# Four extracted AOC translation/header owners arrived with the mainline
+# installation integration. They are shipping additions, not historical F07
+# owners and not opt-in NS2 research files. Keep the historical F07 review
+# immutable for optimization triage while cataloguing AOC in shipping ownership.
+extracted_aoc_owners = {
+    "eden-core/src/core/file_sys/extracted_aoc.h",
+    "eden-core/src/core/file_sys/extracted_aoc_paths.h",
+    "eden-core/src/core/file_sys/romfs_factory.cpp",
+    "eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+}
+assert extracted_aoc_owners <= set(physical_all), (
+    "Missing maintained extracted AOC owners", sorted(extracted_aoc_owners - set(physical_all))
+)
+assert not extracted_aoc_owners.intersection(research_paths), (
+    "Extracted AOC production owners misclassified as NS2 research"
+)
+aoc_recipe = (root / "headless/CMakeLists.txt").read_text()
+assert "foreach(eden_aoc_relative IN ITEMS" in aoc_recipe
+assert '"file_sys/romfs_factory.cpp"' in aoc_recipe
+assert '"hle/service/aoc/addon_content_manager.cpp"' in aoc_recipe
+assert 'list(REMOVE_ITEM core_sources "${eden_aoc_relative}")' in aoc_recipe
+assert 'list(APPEND core_sources "${eden_aoc_maintained}")' in aoc_recipe
+print("ENCORE_EXTRACTED_AOC_OWNER_PASS", f"new_shipping={len(extracted_aoc_owners)}")
+physical = [p for p in physical_all if p not in set(research_paths)]
+# These two versioned headers preserve the immutable upstream Eden snapshot.
+# They must be present in the real source catalogue, not excluded as NS2 fixtures.
+warning_hygiene = {
+    "eden-header-hygiene/include/common/page_table.h",
+    "eden-header-hygiene/include/video_core/macro.h",
+}
+assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_hygiene, (
+    "Warning-hygiene active owner drift")
+assert len(physical) == 337, ("Shipping source catalogue changed", len(physical))
+print("NS2_RESEARCH_SOURCE_LEDGER_PASS",
+      f"unqualified={len(research_paths)}", f"historical={len(physical)}")
 graph = {}
 for line in audit.splitlines():
     if not re.match(r"^\| [A-Z][0-9]{2,3} \|", line):
@@ -204,8 +253,11 @@ else:
 override_inventory = (root / "docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md").read_text()
 root_call = "appel générateur" if root_generator_count == 1 else "appels générateurs"
 assert f"**{root_generator_count} {root_call}**" in override_inventory
-assert f"**{root_cmake.count('file(READ')} lectures `file(READ`**" in override_inventory
-assert f"**{root_cmake.count('string(REPLACE')} remplacements" in override_inventory
+# Source comments describing retired rewrites must not be counted as CMake calls.
+active_reads = len(re.findall(r'^\s*file\(READ', root_cmake, re.M))
+active_replacements = len(re.findall(r'^\s*string\(REPLACE', root_cmake, re.M))
+assert f"**{active_reads} lectures `file(READ`**" in override_inventory
+assert f"**{active_replacements} remplacements" in override_inventory
 
 # Separate headless C/C++ footprint: active Encore sources are not the only
 # potential implementation units. Track ALL paths without inventing

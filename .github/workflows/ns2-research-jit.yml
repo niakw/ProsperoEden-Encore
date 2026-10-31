@@ -1,0 +1,146 @@
+name: NS2 research JIT runtime
+
+on:
+  push:
+    branches:
+      - research/ns2-ps5-compatibility
+    paths:
+      - 'vendor/**'
+      - 'tools/ns2/jit-host/**'
+      - 'tools/ns2/build_public_nso_fixture.py'
+      - 'tools/ns2/build_public_exefs_fixture.py'
+      - 'tools/ns2/test_program_metadata.cpp'
+      - 'tools/ns2/test_real_kcapabilities.py'
+      - 'tools/ns2/test_real_kprocess_loadmodule.py'
+      - 'tools/ns2/test_real_kprocess_metadata.py'
+      - 'vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp'
+      - 'headless/CMakeLists.txt'
+      - 'vendor'
+      - '.github/workflows/ns2-research-jit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ns2-research-jit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dynarmic-jit-execution:
+    name: Execute actual Dynarmic x86-64 JIT atomic regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: true
+          fetch-depth: 1
+      - name: Install host tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cmake ninja-build gdb libboost-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+      - name: Install Eden-pinned fmt/xbyak
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-ns2-jit
+          git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-jit/fmt
+          git clone --depth 1 --branch v7.40.1 https://github.com/herumi/xbyak.git build-ns2-jit/xbyak
+          test "$(git -C build-ns2-jit/fmt rev-parse HEAD)" = 407c905e45ad75fc29bf0f9bb7c5c2fd3475976f
+          for pkg in fmt xbyak; do
+            cmake -S "build-ns2-jit/$pkg" -B "build-ns2-jit/$pkg-build" -G Ninja \
+              -DCMAKE_BUILD_TYPE=Release -DFMT_TEST=OFF \
+              -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/build-ns2-jit/prefix"
+            cmake --build "build-ns2-jit/$pkg-build" --parallel 2
+            cmake --install "build-ns2-jit/$pkg-build"
+          done
+      - name: Copy research overlay into disposable vendor checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          original=vendor/sources/eden/src/dynarmic/src/dynarmic
+          overlay=vendor/encore-active/ns2-a64/dynarmic
+          cp vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp \
+             "$original/frontend/A64/translate/a64_translate.cpp"
+          for path in frontend/A64/decoder/a64.h frontend/A64/decoder/a64.inc \
+              frontend/A64/translate/impl/a64_branch.cpp \
+              frontend/A64/translate/impl/impl.h \
+              frontend/A64/translate/impl/load_store_exclusive.cpp; do
+            cp "$overlay/$path" "$original/$path"
+          done
+      - name: Cross-assemble and package immutable public HOS AArch64 NSO0
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/build_public_nso_fixture.py \
+            --output build-ns2-jit/public-nso/hello.nso
+          file build-ns2-jit/public-nso/hello.elf build-ns2-jit/public-nso/hello.nso
+      - name: Validate paired public ExeFS with Encore's actual NPDM parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/build_public_exefs_fixture.py \
+            --nso build-ns2-jit/public-nso/hello.nso \
+            --output-dir build-ns2-jit/public-exefs
+          clang++ -std=c++20 -O1 -fno-omit-frame-pointer \
+            -fsanitize=address,undefined -fno-sanitize-recover=all \
+            -ffunction-sections -fdata-sections -Wl,--gc-sections \
+            -Ibuild-ns2-jit/prefix/include \
+            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src -Iheadless/ns2 \
+            -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
+            tools/ns2/test_program_metadata.cpp \
+            vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp \
+            -o build-ns2-jit/public-nso/exefs-pair-test
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
+            build-ns2-jit/public-nso/exefs-pair-test \
+              build-ns2-jit/public-exefs/main.npdm \
+              build-ns2-jit/public-exefs/main
+      - name: Validate real maintained KCapabilities on signed-free NPDM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/test_real_kcapabilities.py \
+            --npdm build-ns2-jit/public-exefs/main.npdm
+      - name: Execute actual KProcess LoadFromMetadata parameter path under host fakes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/test_real_kprocess_metadata.py \
+            --npdm build-ns2-jit/public-exefs/main.npdm \
+            --nso build-ns2-jit/public-exefs/main
+      - name: Run unchanged KProcess LoadModule on real public NSO under host memory fakes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/test_real_kprocess_loadmodule.py \
+            --nso build-ns2-jit/public-exefs/main
+      - name: Build actual x64 Dynarmic core
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S tools/ns2/jit-host -B build-ns2-jit/runtime -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/build-ns2-jit/prefix"
+          cmake --build build-ns2-jit/runtime --target ns2_lse_jit_test ns2_public_nso_jit_test --parallel 2
+      - name: Execute RETA/LDAPR/LSE and genuine NSO0 AArch64 SVC guest tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ctest --test-dir build-ns2-jit/runtime --output-on-failure; then
+            if command -v gdb; then
+              gdb -batch -q -ex 'set pagination off' -ex run -ex 'bt 40' --args build-ns2-jit/runtime/ns2_lse_jit_test || true
+              gdb -batch -q -ex 'set pagination off' -ex run -ex 'bt 40' --args build-ns2-jit/runtime/ns2_public_nso_jit_test build-ns2-jit/public-exefs/main || true
+            fi
+            exit 1
+          fi
+      - name: Publish unsigned public HOS homebrew ExeFS for opt-in PS5 testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: ns2-public-hos-hello-exefs
+          path: |
+            build-ns2-jit/public-exefs/main
+            build-ns2-jit/public-exefs/main.npdm
+          if-no-files-found: error
+          retention-days: 7

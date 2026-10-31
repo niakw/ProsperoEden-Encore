@@ -27,6 +27,10 @@ assert 'FindNestedGamePackage(entry.path())' in library
 assert 'FindGameFolderInput(entry.path())' in library
 assert 'IsNestedGameFileSelection(name)' in settings
 assert 'IsSafeNestedGameFilePath(selected_root, relative)' in main
+assert 'FindAddOnContentDirectories(title_root)' in main
+assert 'Eden::IsAddOnContainerName' in main
+assert 'FindAddOnContentDirectories(path)' in (root / "headless/metadata_bridge.cpp").read_text()
+assert 'eden_scan_addons(const char* updates_dir, const char* keys_dir, const char* roms_dir)' in (root / "headless/metadata_bridge.cpp").read_text()
 assert 'FindGameFolderInput(entry.path())' in main
 assert 'if (!Eden::ValidRomFilename(file)) continue;' in library
 assert 'game.name = CleanTitle(entry_name);' in library
@@ -147,6 +151,18 @@ int main() {
     std::ofstream(packaged / "dlc" / "addon" / "dlc.nsp") << "addon";
     assert(Eden::FindGameFolderInput(packaged) == "base/container/base.nsp");
     assert(Eden::IsSafeNestedGameFilePath(root, "Packaged Game/base/container/base.nsp"));
+    fs::create_directories(packaged / "archives" / "nested" / "Updates" / "v9");
+    fs::create_directories(packaged / "base" / "romfs" / "updates");
+    fs::create_directory_symlink(packaged / "updates", packaged / "symlinked-addons");
+    auto addon_folders = Eden::FindAddOnContentDirectories(packaged);
+    assert(addon_folders.size() == 3);
+    assert(std::find(addon_folders.begin(), addon_folders.end(), packaged / "updates") != addon_folders.end());
+    assert(std::find(addon_folders.begin(), addon_folders.end(), packaged / "dlc") != addon_folders.end());
+    assert(std::find(addon_folders.begin(), addon_folders.end(),
+                     packaged / "archives" / "nested" / "Updates") != addon_folders.end());
+    assert(Eden::IsAddOnContainerName("DLC"));
+    assert(Eden::IsAddOnContainerName("add-ons"));
+    assert(!Eden::IsAddOnContainerName("romfs"));
     const auto standalone = root / "Single Package";
     fs::create_directory(standalone);
     std::ofstream(standalone / "some-title.xci") << "game";

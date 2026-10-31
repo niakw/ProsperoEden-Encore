@@ -113,6 +113,8 @@ f07_copy_labels = (
     'F07 reject malformed native transform-feedback binding arrays',
     'F07 reset native null index fallback byte offset',
     'F07 reject unsupported native writable multirange before fallback allocation',
+    'F07 coalesce adjacent native multirange gather slices into bounded FIFO batches',
+    'F07 fuse adjacent Vulkan multirange guest bytes within source-local copy batch',
 )
 f07_buffer_deltas = []
 for statement in tree.body:

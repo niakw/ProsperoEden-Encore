@@ -123,7 +123,7 @@ if [[ "$ns2_research_profile" == ON && "${EDEN_FINAL_RELEASE_PROFILE:-OFF}" == O
     exit 2
 fi
 ns2_cmake_args=()
-for ns2_option in
+ns2_options=(
     EDEN_NS2_METADATA_EXPERIMENTAL
     EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL
     EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
@@ -146,7 +146,8 @@ for ns2_option in
     EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
     EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
     EDEN_NS2_CONTINUITY_EXPERIMENTAL
-do
+)
+for ns2_option in "${ns2_options[@]}"; do
     ns2_value=${!ns2_option:-OFF}
     case "$ns2_value" in
         ON|OFF) ;;

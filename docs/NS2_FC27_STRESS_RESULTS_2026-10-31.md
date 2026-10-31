@@ -111,13 +111,17 @@ python3 tools/ns2/build_fc27_synthetic_nsp.py --exefs /tmp/fc27-exefs --out /tmp
 
 Les régressions natives sont déclarées dans [`.github/workflows/ns2-fc27-stress.yml`](../.github/workflows/ns2-fc27-stress.yml), et le protocole de test dans [`NS2_FC27_SYNTHETIC_STRESS.md`](NS2_FC27_SYNTHETIC_STRESS.md). Le JSON détaillé `stress-report.json` est disponible dans l’artefact tant que sa rétention n’a pas expiré.
 
-## 6. Bloquants avant une véritable conclusion PS5
+## 6. Périmètre de qualification **sans console** — décision du propriétaire
 
-1. **Démarrer un ExeFS autorisé dans le vrai `KProcess` PS5** et relever les PID, autorisations et appels HLE du homebrew. La réussite séparée du JIT et du parseur NPDM ne prouve pas cette étape.
-2. **Instrumenter le contenu**, pas seulement le rythme : identifiant de génération, compteur de textures/HUD, CRC ou hachage de la surface rendue, identifiant de buffer présenté. Détecter les images réémises sans progression.
-3. **Relier le chemin CPU → GPU** : écriture invité, DMA/remap, invalidation TIC/TSC, enregistrement et lecture de vue, pipeline, présentation, fence, et temps d’attente, avec marqueurs de scène pause/mi-temps.
-4. **Tester sur console** une build expérimentale explicite, sans confondre ses timings avec les chiffres historiques : rafales shader/JIT, HUD noir, saccades en match, écran pause et gel de fin de période.
-5. **Vérifier les régressions réelles Switch 1** avant toute généralisation vers NSW2 ; la compatibilité Switch 2 complète et la prise en charge de jeux commerciaux **ne sont pas démontrées**.
+**Aucun test PS5 ne sera demandé à l'utilisateur.** Le projet clôt ce cycle au niveau de preuve maximal réellement accessible dans les outils et la CI GitHub. Les limites suivantes sont documentées, **pas présentées comme des tâches que l'utilisateur doit effectuer** :
+
+1. **`KProcess` complet non exécuté sur PS5.** Le vrai NSO, le NPDM, l'ExeFS et les SVC ont des validations hôtes indépendantes ; l'enchaînement dans un processus natif complet n'est pas démontré.
+2. **Pas de mesure de pixels GPU sur PS5.** Les modèles détectent les révisions de texture périmées et les contenus répétés ; les tests C++ valident les chemins de production sélectionnés avec objets GPU simulés.
+3. **Pas de corrélation causale image par image FC27.** Les fenêtres historiques sont réelles et anonymisées mais ne fournissent ni CRC GPU, ni identité de surface présentée, ni progression guest au moment exact d'une saccade.
+4. **Pas de nouveau benchmark FC27.** Aucune nouvelle session console n'étant possible, ne pas annoncer un gain de FPS, la disparition du HUD noir, ou la résolution du gel pause/mi-temps.
+5. **Pas de compatibilité NSW2 commerciale prouvée.** Un NSP/ExeFS homebrew de recherche peut être reconnu par les couches de chargement, sans valider le HLE complet, les shaders, les services du jeu, ou le rendu matériel.
+
+**Critère de clôture applicable :** CI hôte verte, exécution des parseurs/chemins source disponibles, cas négatifs de corruption et de fraîcheur détectés, résultats et limites consignés dans ce rapport. Tout résultat matériel impossible à obtenir est déclaré **« non vérifié »**, jamais « réussi » ni « corrigé ».
 
 ### Mise à jour de validation
 

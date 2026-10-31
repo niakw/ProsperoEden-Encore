@@ -39,7 +39,7 @@ baseline = {"write_derived(": 1, "file(READ": 4, "string(REPLACE": 2}
 # A documentary reference to a retired rewrite must not look like live debt.
 import re
 counts = {
-    name: len(re.findall(rf"^\\s*{re.escape(name)}", c, re.M))
+    name: len(re.findall(rf"^\s*{re.escape(name)}", c, re.M))
     for name in baseline
 }
 # All generation targets still permitted in the main CMake recipe.

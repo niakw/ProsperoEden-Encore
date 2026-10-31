@@ -17,7 +17,15 @@ int main() {
         const auto result=LowerToMaxwell(code);
         if (!result || result.source_size != sizeof(code) ||
             result.instructions.empty() ||
-            result.instructions.back() != 0xe32000000007000fULL) std::abort();
+            result.instructions.back() != 0xe32000000007000fULL) {
+            std::fprintf(stderr,
+                "EGL_RET_N49_FAIL link=%u error=%.*s offset=%u consumed=%u expected=%zu last=0x%llx size=%zu\\n",
+                link, static_cast<int>(result.error.size()), result.error.data(),
+                result.error_offset, result.source_size, sizeof(code),
+                static_cast<unsigned long long>(result.instructions.empty()
+                    ? 0ULL : result.instructions.back()), result.instructions.size());
+            return 1;
+        }
     }
     const std::array<Instruction,5> copied{{
         {{0x00007802,0x20,0x00000f00,0}},
@@ -26,7 +34,13 @@ int main() {
         {{0x00017202,0,0x00000f00,0}},
         {{0x01007950,0xffffffb0,0x03c3ffff,0}},
     }};
-    if (!LowerToMaxwell(copied)) std::abort();
+    const auto copy_result=LowerToMaxwell(copied);
+    if (!copy_result) {
+        std::fprintf(stderr, "EGL_RET_N49_COPY_FAIL error=%.*s at=%u\\n",
+                     static_cast<int>(copy_result.error.size()), copy_result.error.data(),
+                     copy_result.error_offset);
+        return 2;
+    }
     const std::array<Instruction,5> overwrite{{
         {{0x00007802,0x20,0x00000f00,0}},
         {{0x00007944,0x10,0x03c00000,0}},
@@ -36,6 +50,11 @@ int main() {
     }};
     const auto bad=LowerToMaxwell(overwrite);
     if (bad || bad.error != "native callee overwrites link register" ||
-        bad.error_offset != 0x30) std::abort();
+        bad.error_offset != 0x30) {
+        std::fprintf(stderr, "EGL_RET_N49_OVERWRITE_FAIL status=%d error=%.*s at=%u\\n",
+                     static_cast<bool>(bad), static_cast<int>(bad.error.size()),
+                     bad.error.data(), bad.error_offset);
+        return 3;
+    }
     std::puts("N49_EGLANTINE_RET_R0_REGRESSION_PASS host_lowerer=1");
 }

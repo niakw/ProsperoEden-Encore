@@ -154,11 +154,15 @@ for module, changes in edits.items():
         assert research_blob == '4be6eb714acf899a4370ffce7f62434011b30249', (
             'Unreviewed NS2 Vulkan texture owner', research_blob
         )
-        original_bytes = subprocess.check_output([
-            'git', '-C', str(ROOT / 'vendor'), 'show',
-            '2281ef2780179febb927662c3ce4a83b09f252a6:'
-            'encore-active/eden-vulkan/vk_texture_cache_cost.cpp'
-        ])
+        # The NS2 vendor is checked out shallow in CI; earlier vendor
+        # commits (including the mainline F07 parent) are not guaranteed
+        # to exist in its local Git object database. Reconstruct the exact
+        # pre-NS2 maintained TU by reversing N73/N49/N57's individually
+        # audited additions, with immutable Git blob witnesses at each
+        # boundary. This is the same strict parity oracle used by the
+        # native Vulkan vendor check; never fetch history or waive the SHA.
+        from ns2.native_astc_vendor_parity import normalized
+        original_bytes = normalized(ROOT)['vk_texture_cache_cost.cpp'].encode('utf-8')
         original_blob = hashlib.sha1(
             b'blob ' + str(len(original_bytes)).encode() + b'\0' + original_bytes
         ).hexdigest()

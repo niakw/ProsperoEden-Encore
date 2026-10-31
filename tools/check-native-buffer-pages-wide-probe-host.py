@@ -13,6 +13,8 @@ assert "const auto first_word=first/64,last_word=last/64;" in head
 assert "registered[first_word].load(std::memory_order_acquire)&first_mask" in head
 assert "registered[last_word].load(std::memory_order_acquire)&Bits(0,last%64)" in head
 assert "coverage_unknown.load(std::memory_order_acquire)" in head
+assert "if(first_word==last_word){" in head.split("inline void Mark(",1)[1].split("inline bool NeverRegistered(",1)[0]
+assert "registered[first_word].fetch_or(mask,std::memory_order_release)" in head
 probe = head.split("inline bool NeverRegistered(", 1)[1]
 assert probe.count("coverage_unknown.load(std::memory_order_acquire)") == 2
 assert "if(coverage_unknown.load(std::memory_order_acquire))" not in probe
@@ -52,6 +54,20 @@ int main() {
     // registered page. Only the NEXT entirely different page is unowned.
     constexpr std::uint64_t next_full_page = ((shifted + span + page - 1) / page) * page;
     assert(NeverRegistered(next_full_page, page));
+    // A seven-page buffer in one bitmap word must mark its full mask.
+    // The next word remains empty and eligible for skipping the cache lock.
+    constexpr std::uint64_t within = 2048 * page + 9;
+    Mark(within, 7 * page);
+    assert(!NeverRegistered(within, 7 * page));
+    assert(!NeverRegistered(within + 6 * page, 1));
+    assert(NeverRegistered(within + 8 * page, 1));
+    // An unaligned mark straddling the word edge remains fully registered.
+    constexpr std::uint64_t edge = 3071 * page + 19;
+    Mark(edge, 2 * page);
+    assert(!NeverRegistered(3071 * page, 1));
+    assert(!NeverRegistered(3072 * page, 1));
+    assert(!NeverRegistered(3073 * page, 1));
+    assert(NeverRegistered(3074 * page, 1));
     // Larger requests preserve the old conservative locking behavior.
     assert(!NeverRegistered(empty + 20 * span, span + 1));
     assert(!NeverRegistered(empty + 20 * span, 0));

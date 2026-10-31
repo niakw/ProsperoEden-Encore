@@ -37,6 +37,9 @@ assert "memory_order_acquire" in header and "memory_order_release" in header
 assert 'const auto word = page / 64;' in header
 assert 'const auto bit = std::uint64_t{1} << (page % 64);' in header
 assert 'held[word].fetch_or(bit, std::memory_order_release);' in header
+mark_body = header.split('inline void Mark(',1)[1].split('inline bool NeverHeld(',1)[0]
+assert 'if (first_word == last_word) {' in mark_body
+assert 'held[first_word].fetch_or(bits, std::memory_order_release);' in mark_body
 assert 'const auto last = ((std::min)(size, kSpace - address) + address - 1) >> kPageBits;' in header
 assert "size > 256 * 1024" in header
 assert 'if (size <= (std::uint64_t{1} << kPageBits) - (address & page_mask)) {' in header
@@ -77,6 +80,14 @@ int main() {
   assert(!NeverHeld(14000*p,1) && NeverHeld(14001*p,1));
   Mark(14079*p+4095,2);
   assert(!NeverHeld(14079*p,1) && !NeverHeld(14080*p,1));
+  // A seven-page unaligned image registration fits in one bitmap word,
+  // whereas a similar one at the boundary takes the existing two-word path.
+  Mark(18000*p+4000,6*p);
+  assert(!NeverHeld(18000*p,1) && !NeverHeld(18006*p,1));
+  assert(NeverHeld(18007*p,1));
+  Mark(18047*p+4095,2*p);
+  assert(!NeverHeld(18047*p,1) && !NeverHeld(18048*p,1));
+  assert(!NeverHeld(18049*p,1) && NeverHeld(18050*p,1));
   // Simultaneous insertions of distinct bits in one word cannot be lost
   // by the load-before-fetch_or optimization.
   std::vector<std::thread> overlapped;

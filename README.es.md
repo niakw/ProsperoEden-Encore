@@ -391,4 +391,3 @@ Encore es un fork comunitario **no oficial**, publicado bajo **GPL-3.0-or-later*
 **Créditos completos y atribuciones de cada proyecto:** [README en inglés](README.md#credits) · [componentes de terceros](THIRD_PARTY_NOTICES.md) · [licencia](LICENSE) · [fuentes y licencias](LICENSES/).
 
 [Seguridad](SECURITY.md) · [Contribuir](CONTRIBUTING.md) · [Soporte](SUPPORT.md) · [Código de conducta](CODE_OF_CONDUCT.md).
-

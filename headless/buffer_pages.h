@@ -38,9 +38,18 @@ inline void Mark(std::uint64_t address,std::uint64_t size) noexcept {
     return;
   }
   const auto first=address>>kPageBits,last=(address+size-1)>>kPageBits;
-  for(auto word=first/64;word<=last/64;++word){
-    const auto mask=Bits(word==first/64?first%64:0,
-                         word==last/64?last%64:63);
+  const auto first_word=first/64,last_word=last/64;
+  // Small buffers often cross a 4 KiB page but remain inside one 256 KiB
+  // bitmap word. Publish their complete mask with one atomic probe/RMW.
+  if(first_word==last_word){
+    const auto mask=Bits(first%64,last%64);
+    if((registered[first_word].load(std::memory_order_acquire)&mask)!=mask)
+      registered[first_word].fetch_or(mask,std::memory_order_release);
+    return;
+  }
+  for(auto word=first_word;word<=last_word;++word){
+    const auto mask=Bits(word==first_word?first%64:0,
+                         word==last_word?last%64:63);
     // Most image/buffer reuses touch pages that were already published.
     // A read-only witness avoids another contended atomic RMW in that case.
     // A partial/previously unseen word still uses fetch_or so concurrent

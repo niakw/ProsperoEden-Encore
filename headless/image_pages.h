@@ -33,9 +33,19 @@ inline void Mark(std::uint64_t address, std::uint64_t size) noexcept {
     }
     const auto first = address >> kPageBits;
     const auto last = ((std::min)(size, kSpace - address) + address - 1) >> kPageBits;
-    for (auto word = first / 64; word <= last / 64; ++word) {
-        const auto bits = Bits(word == first / 64 ? first % 64 : 0,
-                               word == last / 64 ? last % 64 : 63);
+    const auto first_word = first / 64;
+    const auto last_word = last / 64;
+    // Multi-page image views commonly fit in a single 256 KiB bitmap word.
+    // Avoid the generic range walk and its endpoint branches for that case.
+    if (first_word == last_word) {
+        const auto bits = Bits(first % 64, last % 64);
+        if ((held[first_word].load(std::memory_order_relaxed) & bits) != bits)
+            held[first_word].fetch_or(bits, std::memory_order_release);
+        return;
+    }
+    for (auto word = first_word; word <= last_word; ++word) {
+        const auto bits = Bits(word == first_word ? first % 64 : 0,
+                               word == last_word ? last % 64 : 63);
         if ((held[word].load(std::memory_order_relaxed) & bits) != bits)
             held[word].fetch_or(bits, std::memory_order_release);
     }

@@ -43,6 +43,8 @@
 
 **30/10 — T05/C04, suppression d'un double décodage pixel CPU du repli brut :** `Layer::UpdateRawImage` utilise directement `bytes_per_pixel` déjà calculé pour la longueur linéaire de staging native, évitant le second `GetSizeInBytes` → `GetBytesPerPixel` sur toutes les images brutes. Multiplication en `size_t` identique au code upstream, formats 2/4 bytes, dimensions nulles/étendues, source-extrait PS5/desktop O0/O2 ASan/UBSan. Desktop inchangé. `vendor@513964d2a3`. **CI/console non qualifiés ; F07 22/29 inchangé.**
 
+**31/10 — bitmaps PS5 buffer/texture (correctif pré-build en qualification) :** `BufferPages::Mark` et `ImagePages::Mark` utilisent une seule publication de masque si plusieurs pages restent dans le même mot de 256 KiB ; les chemins monopage et traversant plusieurs mots ne changent pas. R437/R433 étendent leurs témoins aux plages non alignées, pages adjacentes et frontières de mots ; registres des sources actualisés. Le témoin `SparseRangeOf` et son empreinte M01 sont remis en cohérence avec les trois correctifs déjà intégrés. Ce lot ne ferme aucun des 7 chantiers restants, n'autorise aucun paquet PS5 et ne revendique aucun gain de FPS. **22/29 inchangé ; CI du SHA final à qualifier.**
+
 ## Tableau de bord — à lire en premier
 
 **Ce que « terminé » veut dire ici : trois niveaux distincts.** Un correctif peut être *intégré au code* sans que son chantier global soit *accepté*, ni son gain *confirmé sur PS5*. Les nombres ci-dessous mesurent ces niveaux séparément. Les cases de la fin B01–B11 sont des portes de sortie, **pas onze optimisations nouvelles**.

@@ -13,7 +13,7 @@ assert src.count(begin)==1 and end in src.split(begin,1)[1]
 cover=begin+src.split(begin,1)[1].split(end,1)[0]
 avatar_begin="bool IsProfileAvatarImage(std::string_view path)"
 assert src.count(avatar_begin)==1
-avatar=avatar_begin+src.split(avatar_begin,1)[1].split("\\n}\\n",1)[0]+"\\n}"
+avatar=avatar_begin+src.split(avatar_begin,1)[1].split("\n}\n",1)[0]+"\n}"
 assert 'EDEN_PROFILE_AVATAR_TEXTURE status=%s' in src
 assert 'EDEN_PROFILE_AVATAR_TEXTURE status=decode_failed' in src
 assert "double loaded_at_seconds = 0.0;" in hdr

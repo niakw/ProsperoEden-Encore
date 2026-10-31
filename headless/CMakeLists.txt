@@ -1850,6 +1850,53 @@ if(PS5_NATIVE)
 endif()
 add_dependencies(eden-headless eden-metadata)
 
+# N76 -- NS2 guest CNTPCT calibration through Encore's shared CPU/JIT.
+# Based on Eglantine nx2 0218eac. Opt-in, default NS1 unchanged.
+option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL
+    "Research only: per-program NSW2 31.25 MHz CPU system counter" OFF)
+if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL)
+    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_NS2_A64_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N76 requires PS5 NS2 research metadata+A64 (non-release)")
+    endif()
+    set(EDEN_N76_CLOCK_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_N76_GUEST_COUNTER_HEADER
+        "${EDEN_N76_CLOCK_ROOT}/include/encore/guest_counter_policy.h")
+    set(EDEN_N76_NATIVE_CPU_SOURCE
+        "${EDEN_N76_CLOCK_ROOT}/src/common/cpu_features.cpp")
+    set(EDEN_N76_NATIVE_JIT_SOURCE
+        "${EDEN_N76_CLOCK_ROOT}/src/core/arm/dynarmic/arm_dynarmic_64.cpp")
+    foreach(n76_file IN ITEMS
+        "${EDEN_N76_GUEST_COUNTER_HEADER}"
+        "${EDEN_N76_NATIVE_CPU_SOURCE}"
+        "${EDEN_N76_NATIVE_JIT_SOURCE}")
+        if(NOT EXISTS "${n76_file}")
+            message(FATAL_ERROR "N76 missing maintained vendor clock owner: ${n76_file}")
+        endif()
+    endforeach()
+    get_target_property(n76_common_sources common SOURCES)
+    list(FIND n76_common_sources
+        "${EDEN_N76_NATIVE_CPU_SOURCE}" n76_clock_owner_idx)
+    if(n76_clock_owner_idx EQUAL -1)
+        message(FATAL_ERROR "N76 real native common clock owner is not compiled")
+    endif()
+    get_target_property(n76_core_sources core SOURCES)
+    list(FIND n76_core_sources "arm/dynarmic/arm_dynarmic_64.cpp"
+         n76_original_arm_idx)
+    if(n76_original_arm_idx EQUAL -1)
+        message(FATAL_ERROR "N76 core A64 JIT owner changed; review before enabling")
+    endif()
+    list(REMOVE_ITEM n76_core_sources "arm/dynarmic/arm_dynarmic_64.cpp")
+    list(APPEND n76_core_sources "${EDEN_N76_NATIVE_JIT_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${n76_core_sources}")
+    foreach(n76_target IN ITEMS core common)
+        target_compile_definitions(${n76_target} PRIVATE EDEN_NS2_GUEST_COUNTER=1)
+        target_include_directories(${n76_target} BEFORE PRIVATE
+            "${EDEN_N76_CLOCK_ROOT}/include")
+    endforeach()
+endif()
+
 option(EDEN_HOST_ASAN "Instrument host emulator code for memory diagnostics" OFF)
 if(EDEN_HOST_ASAN)
     if(PS5_NATIVE)

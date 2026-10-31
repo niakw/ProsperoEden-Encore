@@ -50,6 +50,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_image_owner.py
+      - name: N76 per-title guest 31.25 MHz counter and NS1 reset (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_guest_counter_policy.py
       - name: N75 generation-independent shared GPU/CPU pool budget (Clang/GCC)
         shell: bash
         run: |

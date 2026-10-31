@@ -25,7 +25,7 @@ assert loader_text.count("FileSys::LayeredVfsDirectory::MakeLayeredDirectory(") 
 assert "UpdateCandidate" in loader_text and "candidate.depth >= 5" in loader_text
 assert "cursor == game_root" in loader_text
 loader_git_blob = hashlib.sha1(
-    b"blob " + str(len(loader_data)).encode() + b"\\0" + loader_data
+    b"blob " + str(len(loader_data)).encode() + b"\0" + loader_data
 ).hexdigest()
 assert loader_git_blob == "af269102b7e8e41e8ba9dca6c2d68b88fba86e3f", (
     "maintained loader changed: repeat owner review", loader_git_blob

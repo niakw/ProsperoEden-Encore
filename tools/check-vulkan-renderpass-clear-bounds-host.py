@@ -23,6 +23,7 @@ assert "(std::min)(clear_value_count, static_cast<u32>(values.size()))" in body
 assert "i < bounded_clear_value_count" in body
 assert "values[i] = clear_values[i];" in body
 assert "record_pass(std::array<VkClearValue, 0>{}, 0);" in source
+assert "if (!clear_values || clear_value_count == 0) {" in source
 assert source.index("record_pass(std::array<VkClearValue, 0>{}, 0);") < source.index(start)
 command = source[source.index("const auto record_pass ="):source.index("    if (!clear_values || clear_value_count == 0) {", source.index("const auto record_pass ="))]
 assert ".clearValueCount = bounded_clear_value_count," in command
@@ -41,6 +42,12 @@ using u32 = std::uint32_t;
 struct VkClearValue { std::uint64_t marker{}; };
 static_assert(sizeof(std::array<VkClearValue, 0>) < sizeof(std::array<VkClearValue, 9>));
 static void Probe(const VkClearValue* clear_values, u32 clear_value_count, u32 expected) {
+    // Mirror the shipping zero-clear branch: a null pointer or zero count
+    // does not enter the bounded 9-element copy path.
+    if (!clear_values || clear_value_count == 0) {
+        assert(expected == 0);
+        return;
+    }
 INJECT
     assert(bounded_clear_value_count == expected);
     for (u32 i = 0; i < expected; ++i)

@@ -11,7 +11,7 @@ The historical F01–F07 optimization findings are not reclassified as closed.
 | --- | --- | --- |
 | `headless/game_files.h` | `47f2bab4476796c0a54e8e91f7a94faec57b868f` | Bound/symlink-free nested source selection, isolated add-on roots, one base candidate; avoid scanning RomFS/ExeFS during discovery |
 | `headless/main.cpp` | `598d7632a39c4e58ab31acb26c789eae34762520` | Launch-time revalidation and native provider roots for the selected title; no GPU/JIT frame loop changed |
-| `headless/metadata_bridge.cpp` | `0eb7bd4cb4cbf615b4cbd870d6bc87bf30fed9d5` | UI add-on snapshot aggregates global and collocated provider roots; same metadata-aware Update/AOC classification |
+| `headless/metadata_bridge.cpp` | `de4a9dea7f03c8edf929be72227fd1b90923d2f1` | UI add-on snapshot aggregates global and collocated provider roots; same metadata-aware Update/AOC classification |
 | `headless/metadata_bridge.h` | `a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9` | C ABI scanner receives ROM root for collocated add-ons; both headless call sites updated |
 | `headless/prosperoeden/eden_services.cpp` | `4aa854ec4a00a9515b6015b7e3fad00e70247895` | One UI card per folder, new package base discovery, accurate game count and add-on display; worker IO, not per-frame |
 | `headless/settings_store.h` | `e49667c282633a4ac0bf68976c78e4f4e1c1cd3e` | Persisted nested file selection validation; slash and traversal restrictions retained |

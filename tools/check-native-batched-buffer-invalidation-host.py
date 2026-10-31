@@ -27,7 +27,8 @@ assert reg.index("::Eden::BufferPages::Mark(buffer.CpuAddr(), size);") < reg.ind
 word_owner = (root / "vendor/sources/eden/src/video_core/buffer_cache/word_manager.h").read_text()
 assert "std::fill_n(heap.data() + size_t(Type::CPU) * num_words, num_words, ~u64{0});" in word_owner
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
-assert "A never-registered buffer page has no GPU-owned content to invalidate." in generator
+assert "The shared preflight above still fails closed for" in generator
+assert "One owner-witness traversal for the whole batch." in generator
 host = r'''
 #include <array>
 #include <cassert>
@@ -41,7 +42,8 @@ host = r'''
 using DAddr = std::uint64_t;
 namespace Eden::ImagePages {
 inline bool any_held = false;
-bool NeverHeld(DAddr, std::size_t) noexcept { return !any_held; }
+inline unsigned probes = 0;
+bool NeverHeld(DAddr, std::size_t) noexcept { ++probes; return !any_held; }
 }
 struct CountMutex {
   std::mutex impl;
@@ -114,6 +116,40 @@ int main() {
   assert(texture.texture_cache.written.size() == 1);
   assert(texture.buffer_cache.written.empty());
   assert(texture.pipeline_cache.calls == 1);
+
+  // Many disjoint HUD/descriptor CPU-write ranges: exact selective cache
+  // invalidation must survive a fused preflight and preserve original order.
+  Eden::ImagePages::any_held = false;
+  std::array<Pair, 256> batch{};
+  std::vector<DAddr> expected;
+  for (unsigned i = 0; i < batch.size(); ++i) {
+    batch[i] = Pair{0x500000 + static_cast<DAddr>(i) * 4096, 4096};
+    if (i % 17 == 0) {
+      Eden::BufferPages::Mark(batch[i].first, batch[i].second);
+      expected.push_back(batch[i].first);
+    }
+  }
+  Eden::ImagePages::probes = 0;
+  RasterizerVulkan many;
+  many.InnerInvalidation(batch);
+  assert(many.texture_cache.mutex.locks == 0);
+  assert(many.buffer_cache.mutex.locks == 1);
+  assert(many.query_cache.calls == batch.size() && many.pipeline_cache.calls == batch.size());
+  assert(many.buffer_cache.written.size() == expected.size());
+  for (unsigned i = 0; i < expected.size(); ++i)
+    assert(many.buffer_cache.written[i] == Pair(expected[i], 4096));
+  // Every unowned-image address is examined exactly once in the preflight.
+  assert(Eden::ImagePages::probes == batch.size());
+  // Both domains have positive hits: preflight stops once both were found,
+  // while the original cache-locked rechecks still walk every guest range.
+  Eden::ImagePages::any_held = true;
+  Eden::ImagePages::probes = 0;
+  RasterizerVulkan both;
+  both.InnerInvalidation(batch);
+  assert(both.texture_cache.mutex.locks == 1 && both.buffer_cache.mutex.locks == 1);
+  assert(both.texture_cache.written.size() == batch.size());
+  assert(both.buffer_cache.written.size() == expected.size());
+  assert(both.query_cache.calls == batch.size() && both.pipeline_cache.calls == batch.size());
 
   // Outside address coverage, the witness must permanently fail open.
   Eden::BufferPages::Mark(Eden::BufferPages::kSpace, 4096);

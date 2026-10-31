@@ -14,9 +14,9 @@ on:
       - 'tools/ns2/test_real_kcapabilities.py'
       - 'tools/ns2/test_real_kprocess_loadmodule.py'
       - 'tools/ns2/test_real_kprocess_metadata.py'
-      - 'headless/ns2/overrides/core/loader/ns2_public_homebrew_svc.h'
+      - 'vendor/**'
       - 'headless/ns2/overrides/core/file_sys/program_metadata.cpp'
-      - 'headless/ns2/overrides/core/loader/ns2_nso_preflight.h'
+      - 'headless/CMakeLists.txt'
       - 'vendor'
       - '.github/workflows/ns2-research-jit.yml'
   workflow_dispatch:
@@ -90,7 +90,7 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-jit/prefix/include \
-            -Iheadless/ns2/overrides -Iheadless/ns2 \
+            -Ivendor/encore-active/ns2-helpers/include -Iheadless/ns2/overrides -Iheadless/ns2 \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
             headless/ns2/overrides/core/file_sys/program_metadata.cpp \

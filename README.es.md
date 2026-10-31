@@ -13,6 +13,8 @@
     <a href="#por-que-encore"><strong>Ventajas</strong></a> ·
     <a href="#instalación"><strong>Instalación</strong></a> ·
     <a href="#compatibilidad-y-limitaciones"><strong>Compatibilidad</strong></a> ·
+    <a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a> ·
+    <a href="https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility"><strong>Switch 2</strong></a> ·
     <a href="#faq"><strong>FAQ</strong></a> ·
     <a href="README.md#credits"><strong>Créditos</strong></a>
   </p>
@@ -29,7 +31,7 @@
 <sub>Vista previa: las portadas, los juegos y las descripciones mostrados son **ficticios** y solo ilustran el diseño. La captura procede del lanzador real de Encore y **no** representa una lista de compatibilidad.</sub>
 
 > [!IMPORTANT]
-> **La versión 13.60 del firmware PS5 es nuestro objetivo principal probado en una consola real**, no una garantía para todas las PS5 ni para todos los juegos. Las versiones de firmware diferentes no están certificadas.
+> **Firmware recomendado/probado para Encore: 13.60, la única versión realmente ensayada en PS5.** Las versiones **anteriores podrían funcionar** con un entorno homebrew compatible, pero **no están verificadas con Encore** y no se ha establecido un firmware mínimo. Los firmwares posteriores tampoco se han certificado. Incluso en 13.60 persisten problemas de fluidez y bloqueos. «Recomendado» **no** es una indicación de actualizar tu consola.
 >
 > **FC27 sigue teniendo problemas conocidos:** tirones, algunas imágenes y textos HUD retrasados, controles personalizados en partido y bloqueos durante la pausa, el descanso o el final. [Seguimiento técnico FC27/F07](docs/FC27_F07_MASTER_TRACKER.md). Los tests del código y una compilación correcta **no equivalen a una prueba de jugabilidad**.
 >
@@ -60,6 +62,15 @@ El objetivo es **conservar una base nativa funcional, incorporar cambios upstrea
 No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la memoria, GPU/Vulkan, cachés, carga de contenido, interfaz, mandos, seguridad, infraestructura y pruebas. El traslado al repositorio independiente se realizó el **30 de octubre de 2026**. La [primera pregunta de la FAQ](#faq) incluye el inventario técnico ampliado; las [notas del proyecto](MEMORY.md) y el [historial de commits](https://github.com/niakw/ProsperoEden-Encore/commits/main/) conservan el detalle por revisión.
 
 </details>
+
+---
+
+## 🗺️ Roadmaps, ramas de investigación y actualizaciones
+
+- **[Roadmap completa de funcionalidades R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** de la [rama de desarrollo independiente](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements): FSR, generación de frames, AA, temas, biblioteca, red, trofeos y **actualizador de la aplicación R21**. **Una especificación o prototipo no equivale a una función publicada.**
+- **[Rama de investigación Nintendo Switch 2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility)** y su [informe técnico](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md): experimentos con carga, CPU/IR y shaders NSW2; **no incluidos en la release PS5 actual**.
+- **[Seguimiento de estabilidad y optimización PS5/F07](docs/FC27_F07_MASTER_TRACKER.md)**: la rama main es la referencia de desarrollo del motor PS5.
+- **Las actualizaciones del ProsperoEden nativo se revisan individualmente, sin sincronización automática.** Encore parte de **ProsperoEden v1.000.040** ([base técnica](docs/FORK_NOTES.md)) y selecciona correcciones compatibles mediante [auditorías upstream](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). **El actualizador integrado R21 está previsto, no disponible.**
 
 ---
 
@@ -132,7 +143,8 @@ Safe Launch **no borra las partidas guardadas ni sobrescribe permanentemente los
 | Caso | Situación comprobada |
 | --- | --- |
 | **Firmware 13.60** | Principal objetivo probado en hardware; algunos juegos y el launcher han sido ejecutados. |
-| Otros firmwares PS5 | **No certificados.** |
+| Firmwares **anteriores** (mínimo desconocido) | **Posiblemente compatibles** con loader y entorno homebrew adecuados; no probados con Encore. |
+| Firmwares **posteriores** | **No certificados.** |
 | NSO ZBIC/zstd y LZ4 | Código integrado; ejecución dependiente del contenido. |
 | **FC27** | Accede a partidos, pero hay tirones y bloqueos sin resolver. |
 | **The Legend of Zelda: Breath of the Wild** | Sesiones relativamente fluidas observadas; no garantía para todos los juegos. |
@@ -293,7 +305,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 <details>
 <summary><strong>• « ¿Permite jugar a la Switch 2? »</strong></summary>
 
-- **No en la release PS5 actual.** Hay investigación independiente en una rama para NSW2.
+- **No en la release PS5 actual.** La [rama de investigación NSW2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) y su [informe de viabilidad](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) documentan el trabajo separado.
 - Trabajar con NSO homebrew, CPU Dynarmic y shaders nuevos **no equivale a ejecutar juegos comerciales de Switch 2**.
 - No prometemos Mario Kart World a 30 FPS ni una matriz de juegos Switch 2 estable. La prioridad sigue siendo optimizar Switch 1 en PS5.
 
@@ -330,8 +342,10 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 <details>
 <summary><strong>• ¿Qué versión del firmware PS5 es compatible?</strong></summary>
 
-- **13.60 es la versión principal probada en hardware.**
-- Otras versiones no están certificadas; consulta las notas concretas de cada release.
+- **Recomendado/probado: 13.60** para Encore. **No es una recomendación de actualizar la consola.**
+- Los firmwares **anteriores podrían funcionar** si el exploit/homebrew, las API nativas, el controlador gráfico y el acceso al sistema de archivos son compatibles. **Firmware mínimo: desconocido; no existe prueba completa de Encore en otras versiones.**
+- El proyecto ProsperoEden original documenta ensayos de su **componente Lapy** en **6.02** y **12.70** ([notas upstream](https://github.com/Swordpdf/ProsperoEden/blob/main/README.md)), pero **Encore usa otro procedimiento de acceso a archivos** heredado de la base v1.000.040 ([notas técnicas](docs/FORK_NOTES.md)). Esas pruebas **no certifican Encore** en estos firmwares.
+- Los firmwares posteriores tampoco están validados. Consulta las notas y el SHA de cada release.
 
 </details>
 
@@ -368,6 +382,16 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 - Es un proyecto comunitario **no oficial**, basado en ProsperoEden y Eden, con atribución a sus autores.
 - No incluye contenido comercial, claves privadas, firmware ni juegos. Utiliza solo archivos para los que tengas autorización.
 - [Créditos originales](README.md#credits) · [Licencias](THIRD_PARTY_NOTICES.md).
+
+</details>
+
+<details>
+<summary><strong>• ¿Encore recibe las actualizaciones del ProsperoEden nativo? ¿Se puede actualizar Encore desde la PS5?</strong></summary>
+
+- **No existe sincronización automática con el proyecto original.** La base documentada es **ProsperoEden v1.000.040**. Los cambios posteriores del port nativo y de Eden se comparan y se adaptan **selectivamente** tras comprobar dependencias, Vulkan, JIT/memoria y regresiones. Una característica de una versión nueva de ProsperoEden **no está necesariamente presente en Encore**.
+- **Aún no hay actualizador integrado de Encore.** El hito **R21** plantea búsqueda manual, comprobación opcional al iniciar, información de versiones, descarga verificada, instalación confirmada y posibilidad de recuperación. Es **una especificación, no una función ya publicada**. [Roadmap R21](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
+- Por ahora utiliza las **[Releases oficiales de Encore](https://github.com/niakw/ProsperoEden-Encore/releases)** y la [guía de actualización](INSTALL.md). **No sobrescribas Encore con el ZIP original de ProsperoEden** únicamente porque su versión sea más reciente: pueden compartir ID de aplicación **PPSA99008** y rutas de datos, pero no el código ni los procesos de migración.
+- [ProsperoEden original](https://github.com/blackbearreloaded/ProsperoEden) · [diferencias upstream](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md) · [auditoría de versión nativa](docs/UPSTREAM_PROSPEROEDEN_1001000_R428.md).
 
 </details>
 

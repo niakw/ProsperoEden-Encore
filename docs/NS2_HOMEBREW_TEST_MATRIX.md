@@ -270,3 +270,13 @@ CPU-core ranges, missing OutputDebugString permission and no scheduler
 permission. Other kernel capability families and MMIO/memory mapping
 operations are *unreachable host stubs*. No `KProcess`, HLE dispatcher,
 or native PS5 runtime is executed; this is a narrower, real-kernel contract.
+
+### N44 CI evidence — original kernel permissions (31 October 2026)
+
+- Source checkpoint: [`345730b`](https://github.com/niakw/ProsperoEden-Encore/commit/345730b444c0e0c460e736146cd6e5c716f837cf), exclusively on `research/ns2-ps5-compatibility`.
+- [CI JIT run `41152810758`](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41152810758): the **`Validate real maintained KCapabilities on signed-free NPDM` step is SUCCESS** after Clang and GCC ASan/UBSan. The remaining Dynarmic runtime checks are recorded separately.
+- **Accepted:** actual unsigned public research `main.npdm` KAC has CPU core 0, user priority range 16–63, permits selected main thread core 0/priority 44, and authorizes **exactly** SVC `0x07`, `0x0B`, `0x1E`, `0x26`, `0x27`; no additional SVC bit out to 127.
+- **Rejected:** duplicate core descriptor, repeated SVC mask index, illegal user access to kernel thread priorities, inverted core range. Dropping OutputDebugString permission produces the expected one-bit missing-SVC signal. Empty KAC has no schedulable main thread, even though this narrow kernel initialization method itself accepts the empty sequence.
+- **Source HLE audit:** pinned `core/hle/kernel/svc.cpp` maps the five numbers to existing 64-bit SVC wrappers; `svc_exception.cpp` honors `BreakReason::NotificationOnlyFlag` and therefore does not request a debugger stop for the test's notification-only break. These are **source inspection findings**, not a real guest-to-HLE dispatch trace.
+- **Reproducibility:** first CI attempt [`41152344539`](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41152344539) failed on missing pinned fmt include path in the test harness; second [`41152533883`](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41152533883) failed on two unused-parameter warnings in the upstream `result.h` with strict `-Werror`. Both were fixed in the **harness compiler flags only**, with the real kernel functions, capability assertions and sanitizers unchanged.
+- **Boundary:** actual kernel capability decoding is now proven on Linux host **with stubs only for unrelated memory/IO and capability families**. Real `KProcess::LoadFromMetadata`, process start, native HLE dispatch, PS5 Vulkan and NS2 game boot are **not** proven. No console test is required or requested from the owner.

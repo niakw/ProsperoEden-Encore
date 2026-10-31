@@ -245,7 +245,35 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     normalized_expected = {}
     hname = 'include/video_core/vulkan_common/vulkan_wrapper.h'
     cname = 'vulkan_wrapper.cpp'
-    header = expected[hname].read_text()
+    # N66: keep the production generator deterministic. The one additive
+    # research native sparse queue API is maintained in vendor, and its actual
+    # implementation is executed by check_native_sparse_bind.py (UBSan).
+    # For byte parity remove only that exact method, never waive the header.
+    n66_header = expected[hname].read_text()
+    n66_start = '    VkResult BindSparse(Span<VkBindSparseInfo> bind_infos,'
+    n66_end = '    VkResult Present(const VkPresentInfoKHR& present_info)'
+    assert n66_header.count(n66_start) == 1 and n66_header.count(n66_end) == 1
+    n66_begin = n66_header.index(n66_start)
+    n66_finish = n66_header.index(n66_end, n66_begin)
+    n66_extension = n66_header[n66_begin:n66_finish]
+    assert n66_extension.count('BindSparseImage(VkImage image') == 1
+    assert 'if (!queue || !dld || !dld->vkQueueBindSparse)' in n66_extension
+    assert 'return BindSparse(submit, completion);' in n66_extension
+    assert 'VkSparseImageMemoryBindInfo image_info' in n66_extension
+    assert 'VkSparseImageOpaqueMemoryBindInfo tail_info' in n66_extension
+    baseline_queue = '''    VkResult BindSparse(Span<VkBindSparseInfo> bind_infos,
+                        VkFence fence = VK_NULL_HANDLE) const noexcept {
+        return dld->vkQueueBindSparse(queue, bind_infos.size(), bind_infos.data(), fence);
+    }
+
+'''
+    stripped_n66 = n66_header[:n66_begin] + baseline_queue + n66_header[n66_finish:]
+    n66_path = temp / 'normalized-vendor-n66' / hname
+    n66_path.parent.mkdir(parents=True, exist_ok=True)
+    n66_path.write_text(stripped_n66)
+    normalized_expected[hname] = n66_path
+
+    header = normalized_expected[hname].read_text()
     anchor = '    VkMemoryRequirements GetImageMemoryRequirements(VkImage image) const noexcept;'
     extension = '''
 

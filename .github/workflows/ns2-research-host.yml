@@ -40,6 +40,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_requirements_owner.py
+      - name: N66 execute real native Vulkan sparse queue submission with fake driver (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_native_sparse_bind.py
       - name: N64 native PS5 VkImage sparse 2D array factory source and Vulkan driver mock
         shell: bash
         run: |

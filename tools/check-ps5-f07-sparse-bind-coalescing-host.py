@@ -69,7 +69,7 @@ std::vector<Page> Expanded(const Binds& binds) {
     }
     return out;
 }
-void Check(const Src& src, std::size_t native_count) {
+void Check(const Src& src, [[maybe_unused]] std::size_t native_count) {
     const auto binds=Actual(src);
     assert(Reference(src)==Expanded(binds));
 #ifdef PS5_NATIVE

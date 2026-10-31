@@ -86,6 +86,9 @@ int main() {
     assert(!Eden::ValidRomFilename("My Game\\game.nsp"));
     assert(Eden::ValidRomFilename("My Game/base/extra/sub/exefs/main"));
     assert(!Eden::ValidRomFilename("My Game/updates/458752/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/Updates/458752/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/DLC/bonus.nsp"));
+    assert(Eden::ValidRomFilename("My Game/assets-romfs/exefs/main"));
     assert(!Eden::ValidRomFilename("updates/458752/exefs/main"));
     assert(!Eden::ValidRomFilename("dlc/exefs/main"));
     assert(!Eden::ValidRomFilename("My Game/dlc/0/exefs/main"));
@@ -173,6 +176,11 @@ int main() {
     fs::create_directory(standalone);
     std::ofstream(standalone / "some-title.xci") << "game";
     assert(Eden::FindGameFolderInput(standalone) == "some-title.xci");
+    const auto mixed_case = root / "Mixed Case";
+    fs::create_directories(mixed_case / "Updates" / "v2");
+    std::ofstream(mixed_case / "title.xci") << "base";
+    std::ofstream(mixed_case / "Updates" / "v2" / "patch.nsp") << "patch";
+    assert(Eden::FindGameFolderInput(mixed_case) == "title.xci");
     const auto ambiguous = root / "Ambiguous";
     fs::create_directory(ambiguous);
     std::ofstream(ambiguous / "one.nsp") << "base?";

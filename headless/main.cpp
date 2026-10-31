@@ -851,9 +851,10 @@ int main(int argc, char** argv) {
             std::error_code rom_error;
             for (const auto& entry : Eden::ReadNativeDirectory(folder, rom_error)) {
                 const auto filename = entry.path().filename().string();
-                const bool exefs = Eden::IsDeconstructedGameDirectory(entry.path());
-                if (!Eden::IsGameFile(filename) && !exefs) continue;
-                const auto path = folder + "/" + filename + (exefs ? "/main" : "");
+                const auto extracted = Eden::FindDeconstructedGameMain(entry.path());
+                if (!Eden::IsGameFile(filename) && extracted.empty()) continue;
+                const auto path = folder + "/" + filename +
+                    (extracted.empty() ? "" : "/" + extracted);
                 if (filename.find(development_id) != std::string::npos ||
                     eden_game_title_id(path.c_str()) == development_title) {
                     selected_game = path;
@@ -1105,9 +1106,18 @@ int main(int argc, char** argv) {
         // main/NPDM files might have changed since the library worker scan.
         // Never follow a symlink introduced after enumeration.
         const auto selected_path = std::filesystem::path(selected_game);
-        if (selected_path.filename() == "main" &&
-            !Eden::IsDeconstructedGameDirectory(selected_path.parent_path()))
-            throw std::runtime_error("Extracted ExeFS title is incomplete or unsafe");
+        if (selected_path.filename() == "main") {
+            // Validate every nested component against its actual ROM root,
+            // rejecting symlink swaps, traversal and update/DLC roots.
+            std::filesystem::path selected_root = Eden::AssetsPath("roms");
+            auto selected_relative = selected_path.lexically_relative(selected_root).generic_string();
+            if (!Eden::IsDeconstructedGameSelection(selected_relative)) {
+                selected_root = "/data/assets/roms"; // legacy developer autoboot fallback
+                selected_relative = selected_path.lexically_relative(selected_root).generic_string();
+            }
+            if (!Eden::IsSafeDeconstructedGamePath(selected_root, selected_relative))
+                throw std::runtime_error("Extracted ExeFS title is incomplete or unsafe");
+        }
         const bool game = std::filesystem::is_regular_file(selected_game);
         if (!game) throw std::runtime_error("Selected ROM is no longer available");
         const char* guest = selected_game.c_str();

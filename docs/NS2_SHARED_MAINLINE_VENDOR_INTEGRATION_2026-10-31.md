@@ -91,3 +91,5 @@ At app commit `465019ff`, the independent x86-64 Dynarmic host tests both threw 
 ## No per-title runtime admission
 
 Removed the `IsPublicHelloFixture(metadata.GetTitleID(), ...)` special-case from the experimental `AppLoader_DeconstructedRomDirectory` in vendor commit `b34ec82d9f3b`. Guest KCapabilities and per-SVC enforcement remain generic and unchanged. The five-SVC homebrew contract is verified only by independent host test fixtures. A static source-owner guard now rejects any return of that title-ID runtime branch. No compatibility claim for a real Switch 2 title is implied.
+
+**Host six-core selector correction:** The separate `tools/ns2/jit-host/CMakeLists.txt` also required migration; its obsolete `headless/ns2/cpu6` include path selected the four-core original Dynarmic exclusive monitor and raised `boost::container::bad_alloc` when the six-core host fixture constructed `ExclusiveMonitor{6}`. It now selects the vendor six-core header and explicitly fails CMake configuration if missing, with static source-owner guard coverage. No PS5 production code was modified.

@@ -46,3 +46,9 @@ Only signal the user to test when a real native PS5 build produced from the NSW2
 - Host CI: [NS2 research host guards](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/ns2-research-host.yml), [JIT runtime](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/ns2-research-jit.yml), [SPIR-V](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/ns2-research-spirv.yml).
 
 This file documents code facts and validation limits. Update evidence after final run conclusions; never treat running/cancelled jobs as passes.
+
+### Confirmed origin of host JIT bad_alloc (supersedes earlier hypothesis)
+
+The host test CMake recipe still referenced the **deleted** `headless/ns2/cpu6` include directory three times after the source migration. CMake did not reject this nonexistent include root, causing Dynarmic's original `exclusive_monitor.h` to be selected instead. That header has `MAX_NUM_CPU_CORES = 4` and a `boost::container::static_vector`, while both NSW2 host fixtures construct `ExclusiveMonitor{6}`. Adding a sixth element exceeds the static capacity and throws `boost::container::bad_alloc`.
+
+The corrected host recipe points to `vendor/encore-active/ns2-runtime/cpu6` and rejects a missing maintained header at configure time. The source selection test now checks that recipe too. The earlier 16 MiB cache-size hypothesis was **not sufficient** (the error survived increasing to 64 MiB); it must not be cited as the established root cause. The 64 MiB host-only extra headroom does not change PS5 JIT settings. Final successful execution still requires new CI confirmation.

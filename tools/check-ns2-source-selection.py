@@ -36,6 +36,12 @@ def main() -> int:
             require((ROOT / "vendor/encore-active/ns2-runtime" / group).is_dir() and
                     ("headless/ns2/" + group) not in CMAKE,
                     "NS2 research CMake must own engine source in vendor: " + group)
+        # Host JIT CMake is also an engine source selector, not just native CMake.
+        jit_recipe = (ROOT / "tools/ns2/jit-host/CMakeLists.txt").read_text()
+        require("headless/ns2/cpu6" not in jit_recipe and
+                jit_recipe.count('vendor/encore-active/ns2-runtime/cpu6') >= 3 and
+                "Required vendor CPU6 Dynarmic exclusive monitor is missing" in jit_recipe,
+                "Host JIT must use the six-core vendor exclusive monitor, not four-core fallback")
         # All Ampere opcode/address-map tests must use the same canonical table.
         require(not (ROOT / "headless/ns2/gpu").exists(),
                 "Obsolete duplicate Ampere/ISA tree must not return")

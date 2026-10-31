@@ -20,12 +20,15 @@ add_library(common STATIC "${CMAKE_CURRENT_LIST_DIR}/common_shim.cpp")
 target_include_directories(common PUBLIC "${EDEN}")
 target_link_libraries(common PUBLIC fmt::fmt)
 add_subdirectory("${DYN}/src/dynarmic" "${CMAKE_CURRENT_BINARY_DIR}/dynarmic")
-target_include_directories(dynarmic BEFORE PUBLIC "${REPO}/headless/ns2/cpu6")
+if(NOT EXISTS "${REPO}/vendor/encore-active/ns2-runtime/cpu6/dynarmic/interface/exclusive_monitor.h")
+    message(FATAL_ERROR "Required vendor CPU6 Dynarmic exclusive monitor is missing")
+endif()
+target_include_directories(dynarmic BEFORE PUBLIC "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
 target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1 DYNARMIC_ENABLE_CPU_FEATURE_DETECTION=1)
 add_executable(ns2_lse_jit_test "${CMAKE_CURRENT_LIST_DIR}/test_lse_jit.cpp")
 target_include_directories(ns2_lse_jit_test PRIVATE "${DYN}" "${DYN}/src")
 find_package(Threads REQUIRED)
-target_include_directories(ns2_lse_jit_test BEFORE PRIVATE "${REPO}/headless/ns2/cpu6")
+target_include_directories(ns2_lse_jit_test BEFORE PRIVATE "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
 target_link_libraries(ns2_lse_jit_test PRIVATE dynarmic fmt::fmt Threads::Threads)
 # Link the same maintained Dynarmic JIT to the cross-built *real* HOS
 # NSO0 text rather than testing only instruction-level synthetic snippets.
@@ -33,7 +36,7 @@ add_executable(ns2_public_nso_jit_test
     "${CMAKE_CURRENT_LIST_DIR}/test_public_nso_jit.cpp")
 target_include_directories(ns2_public_nso_jit_test BEFORE PRIVATE
     "${REPO}/vendor/encore-active/ns2-helpers/include"
-    "${REPO}/headless/ns2/cpu6")
+    "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
 target_include_directories(ns2_public_nso_jit_test PRIVATE "${DYN}" "${DYN}/src")
 target_link_libraries(ns2_public_nso_jit_test PRIVATE
     dynarmic fmt::fmt Threads::Threads)

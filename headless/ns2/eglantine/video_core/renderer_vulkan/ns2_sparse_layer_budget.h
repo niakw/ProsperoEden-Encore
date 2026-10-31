@@ -32,10 +32,14 @@ struct SparseLayerBindPlan {
 class SparseLayerBudget final {
     static constexpr auto Max = (std::numeric_limits<std::uint64_t>::max)();
     static bool Add(std::uint64_t a,std::uint64_t b,std::uint64_t& out) noexcept {
-        if(a>Max-b)return false;out=a+b;return true;
+        if (a > Max - b) return false;
+        out = a + b;
+        return true;
     }
     static bool Mul(std::uint64_t a,std::uint64_t b,std::uint64_t& out) noexcept {
-        if(b&&a>Max/b)return false;out=a*b;return true;
+        if (b && a > Max / b) return false;
+        out = a * b;
+        return true;
     }
     static bool Aligned(std::uint64_t a,std::uint64_t alignment,std::uint64_t& out) noexcept {
         if(alignment==0 || (alignment & (alignment-1))!=0 ||

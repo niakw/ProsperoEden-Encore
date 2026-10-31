@@ -34,6 +34,11 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends libboost-dev
+      - name: N65 query actual sparse image tile/miptail memory requirements (Clang/GCC)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ns2/check_egl_sparse_requirements_owner.py
       - name: N64 native PS5 VkImage sparse 2D array factory source and Vulkan driver mock
         shell: bash
         run: |

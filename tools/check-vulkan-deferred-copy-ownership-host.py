@@ -144,6 +144,29 @@ for module, changes in edits.items():
     current = (active / (module + '_cost.cpp')).read_text()
     previous = current
     if module == 'vk_texture_cache':
+        # The NS2 research vendor adds 8 reviewed, opt-in texture/view/
+        # sparse-admission changes to this unit. Pin BOTH exact Git blobs;
+        # reconstruct the pre-NS2 source from the original vendor commit,
+        # never redefine the historical F07 fingerprint or accept a drift.
+        research_blob = hashlib.sha1(
+            b'blob ' + str(len(current.encode())).encode() + b'\0' + current.encode()
+        ).hexdigest()
+        assert research_blob == '4be6eb714acf899a4370ffce7f62434011b30249', (
+            'Unreviewed NS2 Vulkan texture owner', research_blob
+        )
+        original_bytes = subprocess.check_output([
+            'git', '-C', str(ROOT / 'vendor'), 'show',
+            '2281ef2780179febb927662c3ce4a83b09f252a6:'
+            'encore-active/eden-vulkan/vk_texture_cache_cost.cpp'
+        ])
+        original_blob = hashlib.sha1(
+            b'blob ' + str(len(original_bytes)).encode() + b'\0' + original_bytes
+        ).hexdigest()
+        assert original_blob == '3e8c9b250fc97d2d8366cacee3d1b089d3945149', (
+            'Unqualified native Vulkan baseline changed', original_blob
+        )
+        previous = original_bytes.decode('utf-8')
+    if module == 'vk_texture_cache':
         # The newest image-initialization delta includes the moved copy
         # capture installed by deferred_copy_edits. Undo this newest delta
         # FIRST, while its exact moved-capture anchor still exists.

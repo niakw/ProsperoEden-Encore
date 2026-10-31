@@ -35,9 +35,18 @@ research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_t
 research_owners={"vendor/encore-active/"+p for p in research["paths"]}
 assert research["schema_version"] == 1 and len(research_owners) == 103
 assert research_owners <= all_owners, sorted(research_owners-all_owners)
-owners=all_owners-research_owners
+# The two new shared warning-hygiene headers have a separate exact-source
+# verifier and installer. They are not retroactive F07 optimization reviews.
+hygiene_owners = {
+    "vendor/encore-active/eden-header-hygiene/include/common/page_table.h",
+    "vendor/encore-active/eden-header-hygiene/include/video_core/macro.h",
+}
+assert hygiene_owners <= all_owners, sorted(hygiene_owners - all_owners)
+assert "tools/install-eden-header-hygiene.py" in tracked
+owners=all_owners-research_owners-hygiene_owners
 assert len(owners)==511, ("F07 historical source owner drift",len(owners))
-print("NS2_F07_TRIAGE_ISOLATION_PASS", "unreviewed_research_sources=103")
+print("NS2_F07_TRIAGE_ISOLATION_PASS", "unreviewed_research_sources=103",
+      "separate_shared_warning_headers=2")
 entries=STATE["handled_paths"]
 handled={e["path"] for e in entries}
 assert len(entries)==len(handled),"duplicate optimization owner"

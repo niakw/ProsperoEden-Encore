@@ -63,9 +63,10 @@ extracted base are also passed to the native content provider.
   update/DLC locations are sent to the native `ExternalContentProvider`
   at boot and indexed for Home/Library summaries. The provider determines
   **Update** versus **AOC** from package metadata, not a folder label.
-- The vendor loader exposes extracted sibling `romfs/` using the VFS and
-  experimentally overlays the highest numeric **direct**
-  `<title>/updates/<decimal-version>/exefs|romfs` directories.
+- The vendor loader exposes sibling/ancestor extracted `romfs/` through the
+  VFS and experimentally overlays the highest numeric update, accepting
+  intermediate wrappers under `<title>/updates/`. Each selected candidate
+  contains its own matching `exefs/` and/or `romfs/`.
 - Legacy flat package and direct loader formats remain available.
 
 ## Known limits — not to be presented as functional
@@ -73,8 +74,9 @@ extracted base are also passed to the native content provider.
 - **Extracted DLC** (`dlc/<id>/<slot>/romfs`) still needs native AOC
   registration and an independent RomFS mount. A folder alone is not DLC.
 - **Extracted update overlays** are file-level experiments, not Nintendo
-  NCA patch/BKTR semantics. Only the direct numeric update layout is
-  currently recognized by the extracted loader.
+  NCA patch/BKTR semantics. The lookup is bounded to five levels and
+  128 visited directories, requires a numeric version component, and
+  cannot infer ownership from a global version-only folder.
 - **Unknown update/DLC contents** lacking valid Title ID and other package
   metadata cannot be associated reliably. Multiple plausible base packages
   in one folder are not arbitrarily selected.

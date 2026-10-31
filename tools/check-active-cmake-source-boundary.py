@@ -15,7 +15,7 @@ generator_sites = re.findall(
 assert generator_sites == ["${PORT_BUILD_DIR}/include/loading_scene_glsl.h"], generator_sites
 assert root_cmake.count("function(write_derived path content)") == 1
 assert root_cmake.count('file(WRITE "${path}.in" "${content}")') == 1
-assert len(re.findall(r"^\\s*string\\(REPLACE", root_cmake, re.M)) == 2
+assert len(re.findall(r"^\s*string\(REPLACE", root_cmake, re.M)) == 2
 assert 'write_derived("${derived}"' not in root_cmake
 assert 'write_derived("${PORT_BUILD_DIR}/kernel.cpp"' not in root_cmake
 assert 'write_derived("${PORT_BUILD_DIR}/gpu.cpp"' not in root_cmake

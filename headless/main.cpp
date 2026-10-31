@@ -1921,9 +1921,34 @@ int main(int argc, char** argv) {
                 };
                 // Like Eden's Qt/Android frontends, reset shutdown state for each load.
                 system.SetShuttingDown(false);
-                // Update and DLC files (NSP or XCI) in the game files' updates folder apply to their
-                // base game: Eden's ExternalContentProvider, which the patch manager checks first.
-                Settings::values.external_content_dirs = {Eden::AssetsPath("updates")};
+                // Native ExternalContentProvider handles packaged update/DLC metadata.
+                // Include both the separate updates directory and add-on folders
+                // collocated with the selected game (including nested wrappers).
+                // Never scan the whole ROM root or extracted RomFS payload at boot.
+                std::vector<std::string> external_dirs{Eden::AssetsPath("updates")};
+                const std::filesystem::path library_root = Eden::AssetsPath("roms");
+                for (const char* global : {"updates", "dlc", "addons", "patches"}) {
+                    const auto root = library_root / global;
+                    if (Eden::IsSafeExtractedDirectory(root))
+                        external_dirs.push_back(root.string());
+                }
+                if (game && guest != nullptr) {
+                    const auto candidate = std::filesystem::path(guest).lexically_relative(library_root);
+                    if (!candidate.empty()) {
+                        const auto segment = *candidate.begin();
+                        const std::string name = segment.string();
+                        if (name != "." && name != ".." &&
+                            !Eden::IsAddOnContainerName(name)) {
+                            const auto title_root = library_root / segment;
+                            for (const auto& dir : Eden::FindAddOnContentDirectories(title_root))
+                                external_dirs.push_back(dir.string());
+                        }
+                    }
+                }
+                std::sort(external_dirs.begin(), external_dirs.end());
+                external_dirs.erase(std::unique(external_dirs.begin(), external_dirs.end()),
+                                    external_dirs.end());
+                Settings::values.external_content_dirs = std::move(external_dirs);
                 system.GetFileSystemController().CreateFactories(*system.GetFilesystem());
                 // Title content registration may already read the far end of
                 // an NSZ update. Enable the solid cache before registration,

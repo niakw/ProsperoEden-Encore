@@ -131,7 +131,7 @@ jobs:
           if ! ctest --test-dir build-ns2-jit/runtime --output-on-failure; then
             if command -v gdb; then
               gdb -batch -q -ex 'set pagination off' -ex run -ex 'bt 40' --args build-ns2-jit/runtime/ns2_lse_jit_test || true
-              gdb -batch -q -ex 'set pagination off' -ex run -ex 'bt 40' --args build-ns2-jit/runtime/ns2_public_nso_jit_test build-ns2-jit/public-exefs/hello.nso || true
+              gdb -batch -q -ex 'set pagination off' -ex run -ex 'bt 40' --args build-ns2-jit/runtime/ns2_public_nso_jit_test build-ns2-jit/public-exefs/main || true
             fi
             exit 1
           fi

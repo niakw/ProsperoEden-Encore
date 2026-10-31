@@ -9,6 +9,7 @@
 #include <limits>
 #include <vector>
 #include "core/loader/ns2_process_handoff.h"
+#include "core/loader/ns2_main_thread_admission.h"
 
 using namespace Eden::NS2::ExeFS;
 using Header = std::array<std::uint8_t, NsoHeaderBytes>;
@@ -16,6 +17,16 @@ static void Put(Header& h, std::size_t p, std::uint32_t n) {
     for (int i = 0; i < 4; ++i) h[p + i] = static_cast<std::uint8_t>(n >> (8 * i));
 }
 int main() {
+    constexpr auto main_priority = std::uint64_t{1} << 44;
+    static_assert(MainThreadPermitted(1, main_priority, 0, 44));
+    static_assert(!MainThreadPermitted(0, main_priority, 0, 44));
+    static_assert(!MainThreadPermitted(1, 0, 0, 44));
+    static_assert(!MainThreadPermitted(2, main_priority, 0, 44));
+    static_assert(!MainThreadPermitted(1, main_priority, 0, 43));
+    static_assert(!MainThreadPermitted(~std::uint64_t{0},
+                                       ~std::uint64_t{0}, 64, 44));
+    static_assert(!MainThreadPermitted(~std::uint64_t{0},
+                                       ~std::uint64_t{0}, 0, 64));
     Header h{};
     Put(h, 0x00, 0x304f534e);
     Put(h, 0x10, 0x100); Put(h, 0x14, 0); Put(h, 0x18, 16); Put(h, 0x60, 16);

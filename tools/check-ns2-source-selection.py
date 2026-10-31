@@ -103,6 +103,13 @@ def main() -> int:
                 "process.GetMemory().ReadBlock(" in romdir_source.read_text() and
                 "metadata.IsSwitch2()" in romdir_source.read_text(),
                 "NS2 KProcess text handoff must use bounded process readback")
+        thread_guard = ROOT / "headless/ns2/overrides/core/loader/ns2_main_thread_admission.h"
+        require(thread_guard.is_file() and
+                "MainThreadPermitted(" in thread_guard.read_text() and
+                "MainThreadPermitted(allowed_cores, allowed_priorities" in romdir_source.read_text() and
+                "process.GetCoreMask()" in romdir_source.read_text() and
+                "process.GetPriorityMask()" in romdir_source.read_text(),
+                "NS2 guest process must check real kernel scheduling permissions")
         svc_trace = ROOT / "headless/ns2/overrides/core/loader/ns2_svc_trace.h"
         svc_generator = ROOT / "tools/ns2/prepare_svc_trace_owner.cmake"
         require(svc_trace.is_file() and svc_generator.is_file() and

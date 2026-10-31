@@ -28,7 +28,7 @@ string(REPLACE "${include_anchor}"
     "${include_anchor}\n#include \"core/loader/ns2_svc_trace.h\""
     svc_source "${svc_source}")
 string(REPLACE "${call_anchor}"
-    "    auto& process = GetCurrentProcess(kernel);\n    if (const auto sample = Eden::NS2::SvcTrace::Next(process.GetProcessId())) {\n        LOG_INFO(Kernel_SVC, \"NS2 real HLE SVC[{}] pid={} imm={:#x}\",\n                 *sample, process.GetProcessId(), imm);\n    }\n    std::array<uint64_t, 8> args;"
+    "    auto& process = GetCurrentProcess(kernel);\n    if (const auto sample = Eden::NS2::SvcTrace::Next(process.GetProcessId())) {\n        LOG_INFO(Kernel_SVC, \"NS2 real HLE SVC[{}] pid={} imm={:#x} permitted={}\",\n                 *sample, process.GetProcessId(), imm, process.IsPermittedSvc(imm));\n    }\n    std::array<uint64_t, 8> args;"
     svc_source "${svc_source}")
 get_filename_component(output_dir "${OUTPUT}" DIRECTORY)
 file(MAKE_DIRECTORY "${output_dir}")

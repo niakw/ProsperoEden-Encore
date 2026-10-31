@@ -225,3 +225,15 @@ actual fields, and the real parser host assertion checks every process
 attribute independently, including exact KAC descriptor contents.
 This resolves the malformed *test input* rather than weakening Encore's
 parser or broadening guest permissions.
+
+## N3y — real KProcess CPU/priority permissions (experimental only)
+
+The experimental ExeFS owner validates the main-thread core and priority
+against the *actual* `process.GetCoreMask()` and
+`process.GetPriorityMask()` immediately after `LoadFromMetadata`. The
+bounded constexpr helper rejects missing permissions and invalid bit shifts;
+its admit/deny cases are covered by the Clang/GCC host readback test.
+The genuine kernel SVC dispatcher trace now records
+`process.IsPermittedSvc(imm)` alongside the SVC ID, without replacing any
+handler or modifying service return values. These source-level checks do
+not constitute full-core, native PS5 or Switch 2 game boot evidence.

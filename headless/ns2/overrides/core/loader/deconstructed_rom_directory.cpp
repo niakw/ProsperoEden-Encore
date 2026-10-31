@@ -21,6 +21,7 @@
 #include "core/loader/nso.h"
 #include "core/loader/ns2_nso_preflight.h"
 #include "core/loader/ns2_process_handoff.h"
+#include "core/loader/ns2_main_thread_admission.h"
 #include "core/loader/ns2_svc_trace.h"
 #include "core/memory.h"
 
@@ -265,6 +266,25 @@ AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirect
     // Setup the process code layout
     if (process.LoadFromMetadata(system.Kernel(), metadata, code_size, fastmem_base, aslr_offset).IsError()) {
         return {ResultStatus::ErrorUnableToParseKernelMetadata, {}};
+    }
+    if (metadata.IsSwitch2()) {
+        // The real kernel has installed the user's capabilities at this point.
+        // Fail closed before loading guest code if the NPDM main thread is
+        // outside the *actual* KProcess core/priority permission masks.
+        const auto core_id = metadata.GetMainThreadCore();
+        const auto priority = metadata.GetMainThreadPriority();
+        const auto allowed_cores = process.GetCoreMask();
+        const auto allowed_priorities = process.GetPriorityMask();
+        if (!Eden::NS2::ExeFS::MainThreadPermitted(allowed_cores, allowed_priorities,
+                                                   core_id, priority)) {
+            LOG_ERROR(Loader,
+                      "NS2 KProcess denied main thread core={} priority={} (core_mask={:#x}, priority_mask={:#x})",
+                      core_id, priority, allowed_cores, allowed_priorities);
+            return {ResultStatus::ErrorUnableToParseKernelMetadata, {}};
+        }
+        LOG_INFO(Loader,
+                 "NS2 KProcess admitted main thread core={} priority={} (core_mask={:#x}, priority_mask={:#x})",
+                 core_id, priority, allowed_cores, allowed_priorities);
     }
 
     // Load NSO modules

@@ -18,7 +18,10 @@ assert 'vk::Check(vmaCreateImage(' in original  # upstream pinned unchanged
 
 def valid(source: str) -> bool:
     begin = source.index("vk::Image MemoryAllocator::CreateImage(")
-    end = source.index("vk::Buffer MemoryAllocator::CreateBuffer(", begin)
+    # The generic sparse allocator is a separate, independently tested API.
+    marker = "vk::Image MemoryAllocator::CreateSparseImage("
+    end = source.index(marker, begin) if marker in source else (
+        source.index("vk::Buffer MemoryAllocator::CreateBuffer(", begin))
     f = source[begin:end]
     contract = (
         "VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT" in f
@@ -41,9 +44,20 @@ def valid(source: str) -> bool:
             < f.index("vmaGetHeapBudgets(") < f.index("std::fflush(stderr)")
             < f.index("vk::Check(result);"))
 
-# The active fork must differ from upstream ONLY by the reviewed OOM hook.
+# Sparse APIs are separately checked against their maintained vendor owners.
+# Reverse these additive methods exactly before the pinned OOM-source oracle.
 # This is a stronger oracle than generic source/token assertions.
 reconstructed = fork.replace("#include <array>\n#include <cstdio>\n", "")
+start_sparse = reconstructed.index("vk::Image MemoryAllocator::CreateSparseImage(")
+end_sparse = reconstructed.index("vk::Buffer MemoryAllocator::CreateBuffer(", start_sparse)
+added_sparse = reconstructed[start_sparse:end_sparse]
+assert added_sparse.count("vk::Image MemoryAllocator::CreateSparseImage(") == 1
+assert added_sparse.count("bool MemoryAllocator::AllocateSparseMemory(") == 1
+assert added_sparse.count("void MemoryAllocator::ReleaseSparseMemory(") == 1
+assert "VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT" in added_sparse
+assert "if (!device.IsSparseResidencyImage2DSupported()" in added_sparse
+assert "vmaFreeMemory(allocator, allocation)" in added_sparse
+reconstructed = reconstructed[:start_sparse] + reconstructed[end_sparse:]
 start = reconstructed.index("    const VkResult result = vmaCreateImage(")
 end = reconstructed.index("    vk::Check(result);", start) + len("    vk::Check(result);")
 upstream_call = "    vk::Check(vmaCreateImage(allocator, &ci, &alloc_ci, &handle, &allocation, &alloc_info));"

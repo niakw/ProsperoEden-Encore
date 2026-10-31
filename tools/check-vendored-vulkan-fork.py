@@ -234,7 +234,42 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert contents.count('::Eden::FrameMetrics::') == (5 if file_name == 'vulkan_renderer.cpp' else 1), ("telemetry count drift", file_name)
         path.write_text(contents)
 
-    mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],expected[name],shallow=False)]
+    # N65: vendor's generic sparse requirements query is a reviewed
+    # additive API. Reconstruct the exact generator baseline from the
+    # maintained vendor header/implementation, not by skipping those files.
+    # The independent N65 compiled host oracle checks behavior and failures.
+    normalized_expected = {}
+    hname = 'include/video_core/vulkan_common/vulkan_wrapper.h'
+    cname = 'vulkan_wrapper.cpp'
+    header = expected[hname].read_text()
+    anchor = '    VkMemoryRequirements GetImageMemoryRequirements(VkImage image) const noexcept;'
+    extension = '''
+    // N65: query the actual sparse 2D tile/mip-tail requirements.
+    // No DeviceDispatch layout change: resolve entrypoint on demand.
+    [[nodiscard]] std::vector<VkSparseImageMemoryRequirements>
+        GetSparseImageMemoryRequirements(VkImage image) const;'''
+    assert header.count(anchor + extension) == 1, 'N65 vendor sparse header changed'
+    normalized_h = header.replace(anchor + extension, anchor)
+    source = expected[cname].read_text()
+    begin = 'std::vector<VkSparseImageMemoryRequirements>\nDevice::GetSparseImageMemoryRequirements(VkImage image) const {'
+    end = 'std::vector<VkPipelineExecutablePropertiesKHR> Device::GetPipelineExecutablePropertiesKHR('
+    assert source.count(begin) == 1 and source.count(end) == 1, 'N65 wrapper owner moved'
+    start = source.index(begin)
+    finish = source.index(end, start)
+    ext = source[start:finish]
+    assert ext.count('GetSparseImageMemoryRequirements(VkImage image)') == 1
+    assert 'vkGetImageSparseMemoryRequirements' in ext
+    assert 'if (!fn) return {};' in ext
+    assert 'if (!count || count > 64) return {};' in ext
+    assert 'if (!count || count > requirements.size()) return {};' in ext
+    normalized_c = source[:start] + source[finish:]
+    for name, value in ((hname, normalized_h), (cname, normalized_c)):
+        p = temp/'normalized-vendor-n65'/name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(value)
+        normalized_expected[name] = p
+
+    mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and
         # active files previously looked equivalent in high-level assertions,
@@ -242,7 +277,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         from difflib import unified_diff
         from itertools import islice
         for name in mismatches[:5]:
-            generated, versioned = actual[name], expected[name]
+            generated, versioned = actual[name], normalized_expected.get(name, expected[name])
             if not name.endswith(('.cpp', '.h', '.py', '.cmake')):
                 print(f'VULKAN_ORACLE_BINARY_DIFF {name} SHA256={hashlib.sha256(generated.read_bytes()).hexdigest()} '
                       f'active_SHA256={hashlib.sha256(versioned.read_bytes()).hexdigest()}', flush=True)

@@ -853,3 +853,10 @@ Fast gate `41145533639` sur `74fec6c` : échec de l’assertion source `sample.b
 - `headless/image_pages.h::Mark` : enregistrement des images dans une seule page 4 KiB avec un unique test atomique et `fetch_or` conditionnel, sans la boucle de masques génériques ; cas multi-pages et publications release/acquire inchangés. `NeverHeld` conserve son test bit-à-bit précédent.
 - `tools/check-ps5-image-pages-r433.py` : nouveau test de frontière mot 64 bits, région à cheval sur 4 KiB et huit éditeurs concurrents de pages qui partagent le même mot ; maintien de l'oracle indépendant 12 000 sondes et du sanitizer.
 - C01/T01 toujours ouverts, **F07 22/29**, tests CI à qualifier, aucun FPS console revendiqué.
+
+## F07 — correction de l'assertion TIC non adjacente (31 octobre 2026)
+
+- **HEAD source audité :** `3bba34d2126e3a50cd605c825af7be3414def8ca` ; lot HUD/TIC `3bba34d2126e3a50cd605c825af7be3414def8ca`, vendor gitlink `6aa61904b6e41cd5244708199cc4d86a0d88da88` (`160000`).
+- **Défaut prouvé dans le témoin hôte** `tools/check-ps5-f07-nonadjacent-tic-memo-host.py` : l'ancienne assertion exigeait littéralement `if (memo_slot && !has_deleted_images)` alors que le code natif sélectionné exige le garde renforcé `if (memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID)`. L'assertion était donc toujours fausse sur la source du lot TIC, avant même l'exécution du témoin C++.
+- **Réparation de ce commit :** exiger exactement le garde natif renforcé ; les tests source-extraits PS5/desktop `-O0/-O2`, UBSan, collisions, NULL, remap, suppression, blacklist et reconstruction du générateur restent obligatoires. Preuve statique : ancien garde absent, nouveau garde présent dans le vendor épinglé ; verdict des CI du commit réparateur **à qualifier**, aucune revendication de gain console.
+- **Intégrité :** aucun changement moteur, vendor, `.gitmodules`, branche historique, déclencheur PS5 ou release. **F07 22/29 pré-build, 0/12 post-build** inchangé.

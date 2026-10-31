@@ -29,7 +29,7 @@ assert source.count("occupied_view_slots & bit")==1
 assert "occupied_view_slots |= memo_bit;" in source
 assert "std::size_t start = (view.index ^ (view.index >> 4)) & 15U;" in source
 assert "if (memo_hit) continue;" in source
-assert "if (memo_slot && !has_deleted_images)" in source
+assert "if (memo_slot && !has_deleted_images && view.id != NULL_IMAGE_VIEW_ID)" in source
 assert source.count("std::array<ViewMemo, 16> view_memo;")==1
 assert source.count("u32 occupied_view_slots = 0;")==1
 assert source.count("const bool memo_enabled = !blacklist && views.size() > 1;")==1

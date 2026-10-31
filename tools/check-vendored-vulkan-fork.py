@@ -261,6 +261,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert 'return BindSparse(submit, completion);' in n66_extension
     assert 'VkSparseImageMemoryBindInfo image_info' in n66_extension
     assert 'VkSparseImageOpaqueMemoryBindInfo tail_info' in n66_extension
+    assert 'wait_semaphore ? &wait_semaphore : nullptr' in n66_extension
+    assert 'signal_semaphore ? &signal_semaphore : nullptr' in n66_extension
+    assert 'wait_semaphore == signal_semaphore' in n66_extension
     baseline_queue = '''    VkResult BindSparse(Span<VkBindSparseInfo> bind_infos,
                         VkFence fence = VK_NULL_HANDLE) const noexcept {
         return dld->vkQueueBindSparse(queue, bind_infos.size(), bind_infos.data(), fence);

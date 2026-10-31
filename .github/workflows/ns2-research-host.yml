@@ -40,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_egl_sparse_requirements_owner.py
-      - name: N66 execute real native Vulkan sparse queue submission with fake driver (Clang/GCC)
+      - name: N66/N67 execute native sparse queue submission and semaphore handoff (Clang/GCC)
         shell: bash
         run: |
           set -euo pipefail

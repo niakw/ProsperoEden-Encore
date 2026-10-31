@@ -206,6 +206,15 @@ int main() {
     addon_folders = Eden::FindAddOnContentDirectories(arbitrary);
     assert(addon_folders.size() == 1);
     assert(addon_folders.front() == arbitrary / "custom" / "extensions");
+    assert(Eden::LooksLikeExtractedAocTitleId("010074a01bf13001"));
+    assert(!Eden::LooksLikeExtractedAocTitleId("010074a01bf12001"));
+    const auto custom_extracted = root / "Extracted Custom DLC";
+    fs::create_directories(custom_extracted / "custom" / "extra" /
+                           "010074a01bf13001" / "0" / "romfs");
+    addon_folders = Eden::FindAddOnContentDirectories(custom_extracted);
+    assert(addon_folders.size() == 1);
+    assert(addon_folders.front() ==
+           custom_extracted / "custom" / "extra" / "010074a01bf13001");
     const auto mixed_images = root / "Mixed Packages";
     fs::create_directory(mixed_images);
     std::ofstream(mixed_images / "my-game.xci") << "base";

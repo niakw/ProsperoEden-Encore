@@ -165,7 +165,9 @@ with tempfile.TemporaryDirectory(prefix="encore-batched-inv-") as tmp:
     for opt in ("-O0", "-O2"):
         binary = Path(tmp) / ("binary" + opt)
         subprocess.run(["c++", "-std=c++20", opt, "-pthread",
-                        "-Wall", "-Wextra", "-Werror", "-I", str(root / "headless"),
+                        "-Wall", "-Wextra", "-Werror",
+                        "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+                        "-I", str(root / "headless"),
                         str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
-        print(f"EDEN_NATIVE_BATCHED_INVALIDATION_HOST_PASS profile={opt}")
+        print(f"EDEN_NATIVE_BATCHED_INVALIDATION_HOST_PASS profile={opt} asan_ubsan=1 fused_256=1")

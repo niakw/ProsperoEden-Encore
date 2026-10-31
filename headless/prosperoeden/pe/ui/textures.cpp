@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <chrono>
 #include <future>
+#include <string_view>
 #include <utility>
 
 namespace pe::ui
@@ -24,6 +25,14 @@ constexpr std::size_t kMaxTextureReclaimsPerFrame = 2;
 // stale decode requests in the FIFO. Never drain an unbounded number of
 // invalid keys in one held-D-pad UI frame; finish the backlog next frame.
 constexpr std::size_t kMaxCoverQueueLookupsPerFrame = 24;
+// Profile avatars are UI-critical and often arrive after NiakPS5's broker
+// creates its staged image. Give their small decode priority over a library
+// full of 16:9 screenshots. The decoder still runs off the GL/UI thread.
+bool IsProfileAvatarImage(std::string_view path)
+{
+    return path.find("/system_data/priv/cache/profile/") != std::string_view::npos ||
+           path.find("/NiakPS5/assets/niak-profile.") != std::string_view::npos;
+}
 
 } // namespace
 
@@ -218,7 +227,8 @@ Cover Textures::cover(const std::string &path, float size)
         entry.target_pixels = target_pixels;
         entry.generation = ++next_generation_;
         it = covers_.emplace(key, std::move(entry)).first;
-        queue_.push_back(key);
+        if (IsProfileAvatarImage(path)) queue_.push_front(key);
+        else queue_.push_back(key);
     }
     it->second.used = frame_;
     // Calculate age only for visible/queried covers, not every cached entry.
@@ -235,7 +245,8 @@ Cover Textures::cover(const std::string &path, float size)
         it->second.loaded = false;
         it->second.loaded_at_seconds = uptime_seconds_;
         age = 0.0f;
-        queue_.push_back(key);
+        if (IsProfileAvatarImage(path)) queue_.push_front(key);
+        else queue_.push_back(key);
     }
     // Preserve a previously confirmed missing state while its next decode
     // is queued. Otherwise a failed official scan briefly hides its composed
@@ -292,6 +303,7 @@ void Textures::pump(float dt, int budget)
                 Entry &entry = it->second;
                 entry.loaded = true;
                 entry.loaded_at_seconds = uptime_seconds_;
+                const bool profile_avatar = IsProfileAvatarImage(entry.path);
                 const bool retail_case =
                     entry.path.find("/box-front-") != std::string::npos ||
                     entry.path.find("/box-back-") != std::string::npos ||
@@ -301,6 +313,9 @@ void Textures::pump(float dt, int budget)
                     if (retail_case)
                         sys::log("EDEN_CASE_TEXTURE status=decode-failed path=%s attempt=%u",
                                  entry.path.c_str(), entry.failed_loads);
+                    if (profile_avatar)
+                        sys::log("EDEN_PROFILE_AVATAR_TEXTURE status=decode_failed attempt=%u",
+                                 entry.failed_loads);
                 } else {
                     entry.failed_loads = 0;
                     entry.aspect = static_cast<float>(result.image.width) /
@@ -313,6 +328,10 @@ void Textures::pump(float dt, int budget)
                                  entry.texture ? "ready" : "upload-failed",
                                  entry.path.c_str(), result.image.width,
                                  result.image.height, entry.texture);
+                    if (profile_avatar)
+                        sys::log("EDEN_PROFILE_AVATAR_TEXTURE status=%s width=%d height=%d",
+                                 entry.texture ? "ready" : "upload_failed",
+                                 result.image.width, result.image.height);
                 }
             }
         } catch (const std::exception& error) {

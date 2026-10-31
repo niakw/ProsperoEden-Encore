@@ -1,5 +1,6 @@
 #include "metadata_bridge.h"
 #include "game_files.h"
+#include "../vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h"
 #include "assets_dir.h"
 #include "diagnostics.h"
 #include "glyph_version.h"
@@ -279,12 +280,15 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir, const char*
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
         FileSys::RealVfsFilesystem vfs;
         std::vector<FileSys::VirtualDir> add_on_roots;
+        std::vector<std::string> scan_paths;
         // Preserve the legacy global content directory, but do not let an
         // absent directory prevent add-ons collocated with installed titles.
         const auto append_root = [&](const std::filesystem::path& path) {
             if (!Eden::IsSafeExtractedDirectory(path)) return;
-            if (auto dir = vfs.OpenDirectory(path.string(), FileSys::OpenMode::Read))
+            if (auto dir = vfs.OpenDirectory(path.string(), FileSys::OpenMode::Read)) {
                 add_on_roots.push_back(std::move(dir));
+                scan_paths.push_back(path.string());
+            }
         };
         append_root(updates_dir);
         if (roms_dir && Eden::IsSafeExtractedDirectory(roms_dir)) {
@@ -334,7 +338,14 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir, const char*
         }
         std::set<uint64_t> dlc;
         for (const auto& entry : provider.ListEntriesFilter(FileSys::TitleType::AOC, std::nullopt, std::nullopt))
-            if (dlc.insert(entry.title_id).second) ++scanned[FileSys::GetBaseTitleID(entry.title_id)].dlc;
+            if (dlc.insert(entry.title_id).second)
+                ++scanned[FileSys::GetBaseTitleID(entry.title_id)].dlc;
+        // Match guest aoc:u: extracted, ID-addressed read-only DLC counts
+        // alongside genuine packaged AOC without duplicating either ID.
+        // Never infer ownership from a directory name like "bonus".
+        for (const auto& entry : FileSys::ExtractedAoc::Scan(scan_paths))
+            if (dlc.insert(entry.title_id).second)
+                ++scanned[FileSys::GetBaseTitleID(entry.title_id)].dlc;
         publish(true);
     } catch (const std::exception& error) {
         std::fprintf(stderr, "[ProsperoEden] updates: %s\n", error.what());

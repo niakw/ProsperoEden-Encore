@@ -13,6 +13,10 @@ assert "const auto first_word=first/64,last_word=last/64;" in head
 assert "registered[first_word].load(std::memory_order_acquire)&first_mask" in head
 assert "registered[last_word].load(std::memory_order_acquire)&Bits(0,last%64)" in head
 assert "coverage_unknown.load(std::memory_order_acquire)" in head
+probe = head.split("inline bool NeverRegistered(", 1)[1]
+assert probe.count("coverage_unknown.load(std::memory_order_acquire)") == 2
+assert "if(coverage_unknown.load(std::memory_order_acquire))" not in probe
+assert probe.count("return !coverage_unknown.load(std::memory_order_acquire);") == 2
 
 code = r"""
 #include "buffer_pages.h"
@@ -54,6 +58,12 @@ int main() {
     assert(!NeverRegistered(kSpace - 4096, 8192));
     assert(!NeverRegistered(kSpace, 1));
     assert(!coverage_unknown.load(std::memory_order_acquire));
+    // Unknown global coverage is still a strict fail-closed fence. Both
+    // one-page and 65-page unowned probes must now take the cache lock.
+    Mark(kSpace + 1, 1);
+    assert(coverage_unknown.load(std::memory_order_acquire));
+    assert(!NeverRegistered(empty + 20 * span, 1));
+    assert(!NeverRegistered(empty + 20 * span, span));
 }
 """
 compiler=shutil.which("c++") or shutil.which("clang++") or shutil.which("g++")

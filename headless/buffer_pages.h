@@ -50,7 +50,9 @@ inline void Mark(std::uint64_t address,std::uint64_t size) noexcept {
   }
 }
 inline bool NeverRegistered(std::uint64_t address,std::uint64_t size) noexcept {
-  if(coverage_unknown.load(std::memory_order_acquire))return false;
+  // Read global unknown coverage only on a path that would actually
+  // elide the cache lock. Owned/invalid ranges already fail closed.
+  // Its final acquire load still pairs with Mark's release publication.
   if(!size || size>256*1024 || address>=kSpace || size>kSpace-address)return false;
   // A CPU write contained in one 4 KiB page needs only one bit test,
   // then the final unknown-coverage guard. Cross-page queries retain the

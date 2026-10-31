@@ -14,11 +14,14 @@ The active Encore parent Git history was rewritten on 2026-10-30 after `vendor/`
 - Read-only history-rewrite audit: https://github.com/niakw/Prospero.Eden-Encore/actions/runs/40993767409 (1.16 GiB mirror before; 99.43 MiB filtered mirror).
 - Actual full branches-and-tags clone verification: https://github.com/niakw/Prospero.Eden-Encore/actions/runs/40995353680 (`105296 KiB` of Git metadata; `git fsck` and the original `vendor` gitlink passed).
 
-All then-current heads and six tags were rewritten atomically, with the four active development branches preserved. Exact vendor trees for Avatar, feature lab, and NS2 research are archived in the vendor repository branches:
+All then-current heads and six tags were rewritten atomically, with the four active development branches preserved. Exact vendor trees for Avatar, feature lab, and the historical NS2 snapshot were originally kept in vendor archive branches. On 2026-10-31 these **three archive branches were deleted only after their exact commits were preserved under matching Git tags** in the vendor repository:
 
-- `archive/encore-avatar-20261030` — `0abe15411a914c62905535567645ec04c2d5384b`
-- `archive/encore-feature-20261030` — `c62ecbb58555fd71b13f98266e745fe22789111d`
-- `archive/encore-ns2-20261030` — `be590fba64eca04cf134f5aa322f747bf5eba536`
+- Git tag [`archive/encore-avatar-20261030`](https://github.com/niakw/Prospero.Eden-Encore-vendor/tree/archive/encore-avatar-20261030) — `0abe15411a914c62905535567645ec04c2d5384b`
+- Git tag [`archive/encore-feature-20261030`](https://github.com/niakw/Prospero.Eden-Encore-vendor/tree/archive/encore-feature-20261030) — `c62ecbb58555fd71b13f98266e745fe22789111d`
+- Git tag [`archive/encore-ns2-20261030`](https://github.com/niakw/Prospero.Eden-Encore-vendor/tree/archive/encore-ns2-20261030) — `be590fba64eca04cf134f5aa322f747bf5eba536`
+
+
+The active vendor `research/ns2-shared-core` **branch was intentionally retained**: it still has unmerged NS2 research commits and corresponds to the active Encore NS2 research track; archival tags are read-only history anchors, not replacements for active development.
 
 The original open Avatar PR #19 was closed by GitHub when its history became incompatible with the rewritten base. The same six source blobs were rebased without changing `vendor` in replacement PR #21: https://github.com/niakw/Prospero.Eden-Encore/pull/21 . Review and console verification remain separate; PR #21 was not automatically merged.
 

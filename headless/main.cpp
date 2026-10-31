@@ -851,9 +851,10 @@ int main(int argc, char** argv) {
             std::error_code rom_error;
             for (const auto& entry : Eden::ReadNativeDirectory(folder, rom_error)) {
                 const auto filename = entry.path().filename().string();
-                const bool exefs = Eden::IsDeconstructedGameDirectory(entry.path());
-                if (!Eden::IsGameFile(filename) && !exefs) continue;
-                const auto path = folder + "/" + filename + (exefs ? "/main" : "");
+                const auto discovered = Eden::FindGameFolderInput(entry.path());
+                if (!Eden::IsGameFile(filename) && discovered.empty()) continue;
+                const auto path = folder + "/" + filename +
+                    (discovered.empty() ? "" : "/" + discovered);
                 if (filename.find(development_id) != std::string::npos ||
                     eden_game_title_id(path.c_str()) == development_title) {
                     selected_game = path;
@@ -1105,9 +1106,29 @@ int main(int argc, char** argv) {
         // main/NPDM files might have changed since the library worker scan.
         // Never follow a symlink introduced after enumeration.
         const auto selected_path = std::filesystem::path(selected_game);
-        if (selected_path.filename() == "main" &&
-            !Eden::IsDeconstructedGameDirectory(selected_path.parent_path()))
-            throw std::runtime_error("Extracted ExeFS title is incomplete or unsafe");
+        if (selected_path.filename() == "main") {
+            // Validate every nested component against its actual ROM root,
+            // rejecting symlink swaps, traversal and update/DLC roots.
+            std::filesystem::path selected_root = Eden::AssetsPath("roms");
+            auto selected_relative = selected_path.lexically_relative(selected_root).generic_string();
+            if (!Eden::IsDeconstructedGameSelection(selected_relative)) {
+                selected_root = "/data/assets/roms"; // legacy developer autoboot fallback
+                selected_relative = selected_path.lexically_relative(selected_root).generic_string();
+            }
+            if (!Eden::IsSafeDeconstructedGamePath(selected_root, selected_relative))
+                throw std::runtime_error("Extracted ExeFS title is incomplete or unsafe");
+        }
+        if (selected_path.filename() != "main") {
+            std::filesystem::path selected_root = Eden::AssetsPath("roms");
+            auto relative = selected_path.lexically_relative(selected_root).generic_string();
+            if (!Eden::IsNestedGameFileSelection(relative)) {
+                selected_root = "/data/assets/roms";
+                relative = selected_path.lexically_relative(selected_root).generic_string();
+            }
+            if (Eden::IsNestedGameFileSelection(relative) &&
+                !Eden::IsSafeNestedGameFilePath(selected_root, relative))
+                throw std::runtime_error("Nested game package is missing or unsafe");
+        }
         const bool game = std::filesystem::is_regular_file(selected_game);
         if (!game) throw std::runtime_error("Selected ROM is no longer available");
         const char* guest = selected_game.c_str();
@@ -1900,9 +1921,34 @@ int main(int argc, char** argv) {
                 };
                 // Like Eden's Qt/Android frontends, reset shutdown state for each load.
                 system.SetShuttingDown(false);
-                // Update and DLC files (NSP or XCI) in the game files' updates folder apply to their
-                // base game: Eden's ExternalContentProvider, which the patch manager checks first.
-                Settings::values.external_content_dirs = {Eden::AssetsPath("updates")};
+                // Native ExternalContentProvider handles packaged update/DLC metadata.
+                // Include both the separate updates directory and add-on folders
+                // collocated with the selected game (including nested wrappers).
+                // Never scan the whole ROM root or extracted RomFS payload at boot.
+                std::vector<std::string> external_dirs{Eden::AssetsPath("updates")};
+                const std::filesystem::path library_root = Eden::AssetsPath("roms");
+                for (const char* global : {"updates", "dlc", "addons", "patches"}) {
+                    const auto root = library_root / global;
+                    if (Eden::IsSafeExtractedDirectory(root))
+                        external_dirs.push_back(root.string());
+                }
+                if (game && guest != nullptr) {
+                    const auto candidate = std::filesystem::path(guest).lexically_relative(library_root);
+                    if (!candidate.empty()) {
+                        const auto segment = *candidate.begin();
+                        const std::string name = segment.string();
+                        if (name != "." && name != ".." &&
+                            !Eden::IsAddOnContainerName(name)) {
+                            const auto title_root = library_root / segment;
+                            for (const auto& dir : Eden::FindAddOnContentDirectories(title_root))
+                                external_dirs.push_back(dir.string());
+                        }
+                    }
+                }
+                std::sort(external_dirs.begin(), external_dirs.end());
+                external_dirs.erase(std::unique(external_dirs.begin(), external_dirs.end()),
+                                    external_dirs.end());
+                Settings::values.external_content_dirs = std::move(external_dirs);
                 system.GetFileSystemController().CreateFactories(*system.GetFilesystem());
                 // Title content registration may already read the far end of
                 // an NSZ update. Enable the solid cache before registration,

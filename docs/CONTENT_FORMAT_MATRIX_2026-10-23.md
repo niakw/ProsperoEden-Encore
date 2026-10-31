@@ -172,3 +172,17 @@ not evidence that the FC27 rendering/performance exits F01–F06 are closed.
 - **Outstanding**: full GitHub host prevalidation, actual PS5 native build
   and final hardware qualification; do not classify the path as released
   or declare engine gate F01–F06 complete.
+
+
+## October 31 — nested extracted-title layouts (feature PR)
+
+The October 23 notes above describe the **previous shipped selector**,
+restricted to `roms/<title>/main`. The experimental implementation in
+`feature/unified-extracted-layout` also recognizes
+`roms/<title>/base/exefs/main` and bounded nested `exefs/main` paths,
+while retaining the existing format routes. Read the current specification
+in [EXTRACTED_TITLE_LAYOUTS.md](EXTRACTED_TITLE_LAYOUTS.md).
+
+Do not equate library discovery with DLC availability or NS2 gameplay:
+extracted DLC AOC registration and external extracted-update indexing remain
+open. Native preflight and PS5 qualification are required before release.

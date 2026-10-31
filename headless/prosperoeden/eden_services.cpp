@@ -1180,13 +1180,14 @@ int CountFiles(const std::string& directory, std::initializer_list<const char*> 
     return ok ? count : -1;
 }
 
-// Unlike the nine regular file extensions, an extracted ExeFS game is a
-// symlink-free directory containing "main" and "main.npdm".
+// Preserve the original count entry point while including BOTH extracted
+// ExeFS and packaged base inputs inside a title folder. The Home setup
+// counter must agree with the actual Library and CountInstalledGames.
 int CountExeFsFolders(const std::string& directory) {
     bool ok = false;
     int count = 0;
     for (const auto& name : ListEntries(directory, true, ok)) {
-        if (Eden::IsDeconstructedGameDirectory(std::filesystem::path(directory) / name))
+        if (!Eden::FindGameFolderInput(std::filesystem::path(directory) / name).empty())
             ++count;
     }
     return ok ? count : -1;
@@ -1202,8 +1203,9 @@ unsigned int HashPath(const std::string& path) {
 // ("Name [0100...][v0]", "Name (USA)").
 std::string CleanTitle(const std::string& filename) {
     const auto selected_path = std::filesystem::path(filename);
-    const std::string base = Eden::IsDeconstructedGameSelection(filename)
-                                 ? selected_path.parent_path().filename().string()
+    const std::string base = Eden::IsDeconstructedGameSelection(filename) ||
+                             Eden::IsNestedGameFileSelection(filename)
+                                 ? (*selected_path.begin()).string()
                                  : selected_path.stem().string();
     std::string title = base;
     if (title.rfind("[Game] ", 0) == 0) title.erase(0, 7);
@@ -1280,8 +1282,8 @@ int CountInstalledGames() {
     int count = 0;
     for (const auto& entry : entries) {
         const std::string filename = entry.path().filename().string();
-        const bool exefs = Eden::IsDeconstructedGameDirectory(entry.path());
-        const std::string selection = exefs ? filename + "/main" : filename;
+        const auto discovered = Eden::FindGameFolderInput(entry.path());
+        const std::string selection = discovered.empty() ? filename : filename + "/" + discovered;
         if (Eden::ValidRomFilename(selection) &&
             IsFile(Eden::AssetsPath("roms/" + selection))) ++count;
     }
@@ -1446,7 +1448,8 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
     if (cancelled()) return {};
     const int selected_language = Eden::LoadPreferences().language;
     if (home.setup_ready)
-        eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
+        eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
+                         Eden::AssetsPath("roms").c_str());
     if (cancelled()) return {};
     if (home.setup_ready && home.last_exists) {
         const uint64_t title_id = ResolveTitleId(last_path, home.last_file);
@@ -1610,7 +1613,8 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
         throw std::system_error(directory_error, "ROM directory scan failed");
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return games;
-    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
+    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
+                         Eden::AssetsPath("roms").c_str());
     if (cancel && cancel->load(std::memory_order_acquire)) return {};
     const int language_choice = Eden::LoadPreferences().language;
     // A failed stat or unexpected file type previously hid a title with no
@@ -1625,14 +1629,18 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
         if (cancel && cancel->load(std::memory_order_acquire))
             return {}; // discard partial results and stop per-title disk work
         const std::string entry_name = entry.path().filename().string();
-        const bool deconstructed = Eden::IsDeconstructedGameDirectory(entry.path());
-        // For ExeFS, select the actual native loader input "main" while
-        // displaying the containing folder as the game title.
-        const std::string file = deconstructed ? entry_name + "/main" : entry_name;
+        const std::string extracted = Eden::FindDeconstructedGameMain(entry.path());
+        const std::string nested_package = extracted.empty() ?
+            Eden::FindNestedGamePackage(entry.path()) : std::string{};
+        const bool deconstructed = !extracted.empty();
+        // Persist a validated relative base input as one library entry,
+        // without listing the update and DLC subtrees as independent games.
+        const std::string discovered = deconstructed ? extracted : nested_package;
+        const std::string file = discovered.empty() ? entry_name : entry_name + "/" + discovered;
         if (!Eden::ValidRomFilename(file)) continue;
-        const std::size_t dot = entry_name.find_last_of('.');
+        const std::size_t dot = file.find_last_of('.');
         std::string format = deconstructed ? "EXEFS" :
-            (dot == std::string::npos ? std::string{} : entry_name.substr(dot + 1));
+            (dot == std::string::npos ? std::string{} : file.substr(dot + 1));
         std::transform(format.begin(), format.end(), format.begin(),
                        [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
         ++rom_candidates;

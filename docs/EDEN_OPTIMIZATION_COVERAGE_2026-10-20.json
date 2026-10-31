@@ -311,10 +311,10 @@
       "path": "headless/game_files.h",
       "disposition": "format_feature_source_integrated",
       "source_scope": "header_only",
-      "reviewed_source_git_blob": "68fc45657fc87639d109592398003fb0e2859fb6",
+      "reviewed_source_git_blob": "47f2bab4476796c0a54e8e91f7a94faec57b868f",
       "feature_review_document": "docs/EDEN_FORMAT_SOURCE_REVIEW_2026-10-23.md",
       "proof_ref": "tools/check-exefs-directory-host.py",
-      "evidence": "New format-loader code path inspected and pinned: Picker formats and ExeFS path restrictions; no guest draw/JIT hotpath. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof."
+      "evidence": "New format-loader code path inspected and pinned: Picker formats and ExeFS path restrictions; no guest draw/JIT hotpath. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Arbitrary nested package add-on discovery re-reviewed, host fixture excludes the selected base and symlinks (31 October 2026). Mixed XCI/NSP folder selection re-reviewed; no native gameplay claim. Explicit extracted AOC Title ID wrappers recognized with strictly bounded selection; source-review updated 2026-10-31."
     },
     {
       "path": "headless/game_liveness.h",
@@ -533,17 +533,17 @@
       "path": "headless/metadata_bridge.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U13",
-      "reviewed_source_git_blob": "43ed86fa7dec1da214051c291fc60c818b3d3eeb",
-      "source_review_document": "docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md",
-      "evidence": "Re-reviewed 2026-10-23 against prior blob c15a5f3: game_files.h format guards switch package/card metadata and glyph-version entry points to Eden::IsPackageFile/IsCardImageFile, rejecting direct executable inputs that have no Control RomFS. No GPU/JIT hotpath modified. Review documented in docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md; every further source mutation reopens the review."
+      "reviewed_source_git_blob": "de4a9dea7f03c8edf929be72227fd1b90923d2f1",
+      "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
+      "evidence": "Re-reviewed 2026-10-23 against prior blob c15a5f3: game_files.h format guards switch package/card metadata and glyph-version entry points to Eden::IsPackageFile/IsCardImageFile, rejecting direct executable inputs that have no Control RomFS. No GPU/JIT hotpath modified. Review documented in docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md; every further source mutation reopens the review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Extracted AOC library counts share the title-ID path scanner with native guest services; reviewed 2026-10-31."
     },
     {
       "path": "headless/metadata_bridge.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U14",
-      "reviewed_source_git_blob": "56c19ed56e14a70139463eb01f3f92ce40d5ed4a",
-      "source_review_document": "docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md",
-      "evidence": "Source inspected: Déclarations C de chargement métadonnées et contrôles d’erreur ; l’extraction concrète est dans metadata_bridge.cpp, pas dans cet ABI header. Reopen if: Mismatch ABI entre l’extracteur natif et ses consommateurs."
+      "reviewed_source_git_blob": "a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9",
+      "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
+      "evidence": "Source inspected: Déclarations C de chargement métadonnées et contrôles d’erreur ; l’extraction concrète est dans metadata_bridge.cpp, pas dans cet ABI header. Reopen if: Mismatch ABI entre l’extracteur natif et ses consommateurs. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
     },
     {
       "path": "headless/mock_devices.cpp",
@@ -723,10 +723,11 @@
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "disposition": "new_source_issue_corrected",
-      "reviewed_source_git_blob": "14db2ee513fe68b203ee3fd94e4c7231b43a794e",
+      "reviewed_source_git_blob": "4aa854ec4a00a9515b6015b7e3fad00e70247895",
       "proof_ref": "tools/check-release-case-index-dedup-host.py",
-      "evidence": "LocaleCaseCandidates: linear-time stable regional dedup now replaces repeated vector search; actual release test. Exact selected source/O0/O2 host code parity; no PS5 FPS claim. PR #1: PS5-only owner-bound staged avatar, foreground-user lookup and readable-file check. LocaleCaseCandidates and its linear-time dedup remain byte-for-byte unchanged; no FPS claim.",
-      "review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md"
+      "evidence": "LocaleCaseCandidates: linear-time stable regional dedup now replaces repeated vector search; actual release test. Exact selected source/O0/O2 host code parity; no PS5 FPS claim. PR #1: PS5-only owner-bound staged avatar, foreground-user lookup and readable-file check. LocaleCaseCandidates and its linear-time dedup remain byte-for-byte unchanged; no FPS claim. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed.",
+      "review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
+      "supplemental_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md"
     },
     {
       "path": "headless/prosperoeden/eden_services.h",
@@ -1306,9 +1307,9 @@
       "path": "headless/settings_store.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U75",
-      "reviewed_source_git_blob": "ebcfe022c94cb74bbf20c74664ae28e04912289e",
-      "source_review_document": "docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md",
-      "evidence": "Re-reviewed 2026-10-23 against ec168add: saved game-selection validation now uses IsGameFile or a single-segment ExeFS <folder>/main, not merely NSP/XCI. No JIT, GPU, or in-game input path modified; docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md documents the exact source diff. Any later mutation reopens review."
+      "reviewed_source_git_blob": "e49667c282633a4ac0bf68976c78e4f4e1c1cd3e",
+      "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
+      "evidence": "Re-reviewed 2026-10-23 against ec168add: saved game-selection validation now uses IsGameFile or a single-segment ExeFS <folder>/main, not merely NSP/XCI. No JIT, GPU, or in-game input path modified; docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md documents the exact source diff. Any later mutation reopens review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
     },
     {
       "path": "headless/shader_cache_check.cpp",
@@ -2959,10 +2960,10 @@
       "path": "vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp",
       "disposition": "format_feature_source_integrated",
       "source_scope": "native_maintained",
-      "reviewed_source_git_blob": "6826d02a68a33b8733b5d3a50d804dedf3179955",
+      "reviewed_source_git_blob": "618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe",
       "feature_review_document": "docs/EDEN_FORMAT_SOURCE_REVIEW_2026-10-23.md",
       "proof_ref": "tools/check-encore-ncz-sources.py",
-      "evidence": "New format-loader code path inspected and pinned: Pinned source with exact reviewed NSZ/XCZ cache routing; CMake selection verified. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof."
+      "evidence": "New format-loader code path inspected and pinned: Pinned source with exact reviewed NSZ/XCZ cache routing; CMake selection verified. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
     },
     {
       "path": "vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp",
@@ -3252,9 +3253,9 @@
       "path": "vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "F16",
-      "reviewed_source_git_blob": "b59aff296828492c5e9022ab1eab19244f001c4d",
-      "source_review_document": "docs/EDEN_JIT_ALIAS_LOOKUP_OPTIMIZATION_2026-10-21.md",
-      "evidence": "Les lectures NSO/NACP, allocations et correctifs sont faits durant le chargement d'un titre, non lors du rendu de chaque frame. Garder les vérifications des modules et rouvrir si un chargement réel échoue. Réexaminer si l'empreinte Git change ou si un profil d'exécution détecte un chemin chaud."
+      "reviewed_source_git_blob": "af269102b7e8e41e8ba9dca6c2d68b88fba86e3f",
+      "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
+      "evidence": "Les lectures NSO/NACP, allocations et correctifs sont faits durant le chargement d'un titre, non lors du rendu de chaque frame. Garder les vérifications des modules et rouvrir si un chargement réel échoue. Réexaminer si l'empreinte Git change ou si un profil d'exécution détecte un chemin chaud. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
     },
     {
       "path": "vendor/encore-active/eden-core/src/core/loader/loader.cpp",
@@ -4436,6 +4437,34 @@
       "path": "vendor/encore-active/ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c",
       "disposition": "reviewed_without_new_code_edit",
       "evidence": "Source-level P0 optimization triage; docs/EDEN_OPTIMIZATION_REVIEW_MESA_VULKAN_2026-10-20.md"
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "b08428c7e79be3f86f235f0450bca0bd61c042ef",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Bounded read-only extracted DLC discovery and explicit 16-digit Title ID policy. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "31805b346029990e22040fc7e957f91ca2b0ef0f",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Shared runtime AOC index and virtual RomFS mount. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build. Disabled-DLC guard enforced even on direct raw data storage requests."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "cd11cb32429efcceaf6b3e1144d495cce1569383",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Native NCA-first AOC Data mount fallback; shared NS1/NS2 engine. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build. Host storage no longer attempts the unimplemented NCA provider; reviewed."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+      "disposition": "new_source_issue_corrected",
+      "reviewed_source_git_blob": "c329c6ba2c60c2641046f282c412567ada8c4aac",
+      "proof_ref": "tools/check-extracted-aoc-layout-host.py",
+      "evidence": "Native aoc:u guest enumeration of packaged and extracted DLC IDs. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
     }
   ],
   "inventoried_including_pinned": 538,
@@ -4468,6 +4497,10 @@
     "vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h",
-    "headless/prosperoeden/ps5_profile_avatar_staging.hpp"
+    "headless/prosperoeden/ps5_profile_avatar_staging.hpp",
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc.h",
+    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp"
   ]
 }

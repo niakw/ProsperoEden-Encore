@@ -109,7 +109,12 @@ assert "if-no-files-found: error" in workflow, "release artifact upload must fai
 assert "[release]" in workflow, "release trigger contract missing"
 
 install = (root / "INSTALL.md").read_text()
-assert "Upgrading from ProsperoEden" in install, "legacy migration instructions missing"
+assert "## Upgrading from the original native ProsperoEden to Encore" in install, \
+    "legacy native-to-Encore migration section missing"
+assert "/data/homebrew/PPSA99008/" in install and "/data/prosperoeden/" in install, \
+    "legacy application/data separation missing"
+assert "Create an offline backup before copying anything." in install and \
+    "do not delete or overwrite" in install, "legacy data backup and preservation instructions missing"
 assert "FFPFSC" in install and "ZIP" in install, "both installation paths must be documented"
 
 preset = (root / "headless/prosperoeden/pe/ui/video_presets.hpp").read_text()

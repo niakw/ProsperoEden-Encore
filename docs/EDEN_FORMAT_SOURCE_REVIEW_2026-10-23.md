@@ -15,13 +15,13 @@ fausse dette d'optimisation JIT/GPU.
 
 | Source | Git blob exact | Rôle et portée |
 | --- | --- | --- |
-| `headless/game_files.h` | `68fc45657fc87639d109592398003fb0e2859fb6` | Sélection et validation des neuf extensions et de l'ExeFS; sélection de titre, pas du frame GPU |
+| `headless/game_files.h` | `47f2bab4476796c0a54e8e91f7a94faec57b868f` | Sélection et validation des neuf extensions et de l'ExeFS; sélection de titre, pas du frame GPU |
 | `headless/ncz.cpp` | `7deff2ea1a82574b9e756ad9c2f0d869aa94612b` | Adaptateur de lecture NCZ et cache, sélectionné par CMake |
 | `headless/ncz.h` | `85ced3460d83be2a8011f189c0df406b4dd32b8c` | Décompression NCZ, limites et protection du cache |
 | `headless/ncz_check.cpp` | `65c9e5f4eb3625140add52ced2ea82e66bd224ab` | Harnais de vérification hôte; jamais un composant de rendu |
 | `headless/ncz_vfs.h` | `176d89e5d385fe140211350ab4c20a38f1f496bd` | Pont VirtualFile utilisé par les sources NCZ maintenues |
 | `vendor/encore-active/eden-core/src/core/file_sys/card_image.cpp` | `f843e7f9c977b509368e71eb6356066c1a5e0c50` | Lecteur de partition cartouche NCZ, source maintenue sélectionnée |
-| `vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp` | `6826d02a68a33b8733b5d3a50d804dedf3179955` | Détection NSZ/XCZ des contenus enregistrés |
+| `vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp` | `618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe` | Détection NSZ/XCZ des contenus enregistrés |
 | `vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp` | `29a46a6024cad1e867ac450a0bd651bebc1f0b29` | Ouverture NCZ comme archive de contenu d'un package |
 | `vendor/encore-active/eden-core/src/core/loader/loader.cpp` | `e2e87827700a0a670f0d418262e80860e79a683a` | Routage des extensions au chargeur natif et NAX |
 | `vendor/encore-active/eden-core/src/core/loader/nsp.cpp` | `b56195d24778a849bb768d463fdf4ceef3d5c33f` | Détection des membres NCZ d'un NSP/NSZ |
@@ -56,3 +56,31 @@ fausse dette d'optimisation JIT/GPU.
 
 Références : `docs/CONTENT_FORMAT_MATRIX_2026-10-23.md` et
 `docs/FC27_EXIT_GATES_2026-10-22.md`.
+
+## Revue complémentaire du 31 octobre 2026
+
+Les deux sources ci-dessus ont été revues et leurs blobs repinnés suite à
+l'intégration des layouts extraits/paquetés. `game_files.h` conserve le rôle
+de sélection à froid ; `registered_cache.cpp` conserve le support NCZ
+avec un second écart strictement audité : ne pas traverser les arbres
+`romfs`/`exefs` extraits lors du scan NSP/XCI d'updates/DLC.
+Les correspondances source attendues sont vérifiées dans
+`tools/check-encore-ncz-sources.py`. Le détail des huit propriétaires
+modifiés et leurs risques figure dans
+[`FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md`](FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md).
+Aucune validation console ou clôture d'optimisation F01–F07 n'est déduite.
+
+### 31 October — flexible package add-on folders
+
+The selector now discovers NSP/NSZ/XCI/XCZ add-ons in arbitrarily named
+nested wrapper directories (e.g. `custom/extensions/bonus.nsp`), not only
+under literal `updates/` or `dlc/`. It never regards the selected
+base package as add-on content, rejects symlinks and does not recurse
+into extracted RomFS/ExeFS payloads. The detected paths are passed to
+the metadata-aware native content provider. Host source regression is
+tracked by `tools/check-exefs-directory-host.py`; see
+`docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md`.
+
+A mixed title folder with exactly one XCI/XCZ and other NSP/NSZ content
+selects the unique card image as its base. Multiple candidate card images
+or anonymous NSP-only mixtures still fail closed rather than guessing.

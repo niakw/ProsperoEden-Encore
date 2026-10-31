@@ -42,7 +42,8 @@ not proof of commercial Switch 2 game boot or PS5 hardware qualification.
 ```
 
 A top-level `roms/<title>` is **one game card**. A base can be a standalone
-NSP/XCI/NSZ/XCZ file, a unique nested package, a uniquely named
+NSP/XCI/NSZ/XCZ file, a unique nested package, the sole XCI/XCZ in a mixed
+XCI-plus-NSP add-on folder, a uniquely named
 `base.*`/`game.*`, or a nested extracted ExeFS. Existing direct-loader
 files at the `roms/` root remain supported.
 

@@ -163,6 +163,12 @@ int main() {
     assert(Eden::IsAddOnContainerName("DLC"));
     assert(Eden::IsAddOnContainerName("add-ons"));
     assert(!Eden::IsAddOnContainerName("romfs"));
+    // A loose packaged DLC/update next to the base also selects the title
+    // folder for the native metadata-aware content provider.
+    std::ofstream(packaged / "DLC_1.nsp") << "addon";
+    assert(Eden::FindGameFolderInput(packaged) == "base/container/base.nsp");
+    addon_folders = Eden::FindAddOnContentDirectories(packaged);
+    assert(addon_folders.size() == 1 && addon_folders.front() == packaged);
     const auto standalone = root / "Single Package";
     fs::create_directory(standalone);
     std::ofstream(standalone / "some-title.xci") << "game";

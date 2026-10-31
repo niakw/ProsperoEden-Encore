@@ -499,8 +499,8 @@ def main() -> int:
                 "No version-aware source ownership check")
         loader = (NS2 / "loader/loader.cpp").read_text(encoding="utf-8")
         romdir = (NS2 / "loader/deconstructed_rom_directory.cpp").read_text(encoding="utf-8")
-        header = (NS2 / "loader/deconstructed_rom_directory.h").read_text(encoding="utf-8")
-        format_header = (NS2 / "loader/ns2_content_formats.h").read_text(
+        header = (ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/deconstructed_rom_directory.h").read_text(encoding="utf-8")
+        format_header = (ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_content_formats.h").read_text(
             encoding="utf-8")
         format_tests = (ROOT / "tools/ns2/test_content_formats.cpp").read_text(
             encoding="utf-8")

@@ -32,6 +32,13 @@ draw = owner("void Launcher::draw_library(Canvas &c)", "\nvoid Launcher::",) if 
 assert "if (!games_loaded_ && !scan_.valid()) start_scan();" in enter
 assert "if (!games_loaded_) {" in source
 assert 'tr("Loading game library...")' in source
+switch_theme = (ROOT / "headless/prosperoeden/pe/ui/switch_theme.cpp").read_text()
+switch_draw = switch_theme.split("void Launcher::draw_switch_library(Canvas& c) {", 1)[1].split(
+    "void Launcher::draw_switch_game(", 1
+)[0]
+assert switch_draw.index("if(!games_loaded_) {") < switch_draw.index(
+    'tr("No ROM files found.")'
+), "alternate theme rendered an incomplete ROM scan as an empty library"
 assert 'tr("No ROM files found.")' in source
 assert source.index('if (!games_loaded_) {\n        // First-ever discovery is pending.') < source.index('tr("No ROM files found.")')
 assert "games_ = std::move(games);" in apply

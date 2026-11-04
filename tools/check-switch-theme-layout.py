@@ -29,6 +29,15 @@ assert "std::clamp(current+delta,kHomeShortcutFirst," in src
 assert "switch_home_last_tile_=current;" in src
 assert "switch_home_focus_=last==kHomeAllSoftware||last>=count?" in src
 assert "press_library(key);" in src, "Switch game launch must respect core validation"
+# P3: the alternate theme must not display an empty-ROM error while the
+# initial asynchronous scan is still pending (same rule as standard shell).
+switch_library = src.split("void Launcher::draw_switch_library(Canvas& c) {", 1)[1].split(
+    "void Launcher::draw_switch_game(", 1
+)[0]
+assert switch_library.index("if(!games_loaded_) {") < switch_library.index("if(count==0) {")
+assert switch_library.index('tr("Loading game library...")') < switch_library.index(
+    'tr("No ROM files found.")'
+)
 assert "void Launcher::draw_switch_confirmation" in src
 assert "switch_value(services_.resolution_labels(),prefs_.resolution)" in src
 assert "switch_value(services_.filter_labels(),prefs_.filter)" in src

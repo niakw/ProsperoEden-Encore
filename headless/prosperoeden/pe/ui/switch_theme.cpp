@@ -388,6 +388,14 @@ void Launcher::draw_switch_library(Canvas& c) {
     draw_switch_header(c,tr("All Software"));
     auto& list=c.list;
     const int count=static_cast<int>(games_.size());
+    if(!games_loaded_) {
+        // Exactly like the standard Library: an in-flight first scan is
+        // not evidence of an empty ROM collection. Switching shell themes
+        // must not flash a false missing-ROM notice before discovery ends.
+        text_shrink(c,tr("Loading game library..."),960.0f,baseline(440,80,30),
+                    30,kInk,1300,Align::center);
+        draw_switch_footer(c,tr("Back to HOME"));return;
+    }
     if(count==0) {
         text_shrink(c,tr("No ROM files found."),960.0f,baseline(440,80,30),
                     30,kInk,1300,Align::center);

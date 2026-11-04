@@ -115,7 +115,9 @@ assert bridge.index("runtime.AccelerateImageUploadLayers(") < bridge.index(
 assert "EDEN_NS2_ASTC_CACHE_BRIDGE=1" in CMAKE
 assert "target_compile_definitions(core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)" in CMAKE
 assert "target_compile_definitions(video_core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)" in CMAKE
-assert "NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE" in CMAKE
+assert "option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL" not in CMAKE
+assert "# N60: one shared PS5 Vulkan texture-cache/ImageBase ABI" in CMAKE
+assert "if(PS5_NATIVE AND EDEN_PS5_VULKAN)" in CMAKE
 assert "prepare_egl_astc_texture_cache.py" not in CMAKE
 assert "ns2-astc-cache/include" not in CMAKE
 assert "EDEN_NS2_ASTC_SCRATCH_TRIM=1" in CMAKE

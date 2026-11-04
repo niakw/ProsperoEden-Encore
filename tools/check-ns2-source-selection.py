@@ -39,6 +39,22 @@ def main() -> int:
                 "target_compile_definitions(video_core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)" in continuity_guard and
                 "option(EDEN_NS2_CONTINUITY_EXPERIMENTAL" not in CMAKE,
                 "N50 must protect the shared PS5 memory-owner Map/Unmap")
+        astc_layers = CMAKE.split("# N57: shared PS5 Vulkan ASTC layer decode", 1)[1].split(
+            "# Vulkan sparse support", 1)[0]
+        astc_cache = CMAKE.split("# N60: one shared PS5 Vulkan texture-cache/ImageBase ABI", 1)[1].split(
+            "# Sparse VMA, VkImage factory", 1)[0]
+        require("if(PS5_NATIVE AND EDEN_PS5_VULKAN)" in astc_layers and
+                "target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_LAYER_DECODE=1)" in astc_layers and
+                "target_include_directories(video_core BEFORE PUBLIC" in astc_layers and
+                "option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL" not in CMAKE,
+                "N57 ASTC layer decoder must be shared by PS5 Vulkan")
+        require("if(PS5_NATIVE AND EDEN_PS5_VULKAN)" in astc_cache and
+                "target_compile_definitions(video_core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)" in astc_cache and
+                "target_compile_definitions(core PUBLIC EDEN_NS2_ASTC_CACHE_BRIDGE=1)" in astc_cache and
+                "target_include_directories(video_core BEFORE PUBLIC" in astc_cache and
+                "target_include_directories(core BEFORE PUBLIC" in astc_cache and
+                "option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL" not in CMAKE,
+                "N60 ASTC cache ABI must be the same between video_core and core")
         # QMD3's virtual RasterizerInterface must be the SAME reviewed
         # header in every research native consumer; a private override in
         # RasterizerVulkan alone does not compile or preserve the vtable ABI.

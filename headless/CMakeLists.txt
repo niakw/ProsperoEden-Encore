@@ -1473,15 +1473,10 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)
 endif()
 
-# N57: opt-in Vulkan layer decode directly from maintained native PS5 sources.
-# No source rewriting, no duplicate full Vulkan translation unit at configure.
-option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL
-    "Research only: native Vulkan ASTC layer views and compute entrypoint" OFF)
-if(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "N57 ASTC layer decoding requires native PS5 Vulkan NS2 research")
-    endif()
+# N57: shared PS5 Vulkan ASTC layer decode; same maintained cache/compute
+# translation units as NS1. Additive views/entrypoint and fail-closed layer
+# preflight; no alternate renderer, title exception or research dependency.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_ASTC_OWNER_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
     set(EDEN_NS2_HELPERS_ROOT
@@ -1519,8 +1514,7 @@ option(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
 if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
        NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE OR
-       NOT EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL OR
-       NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL)
+       NOT EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
         message(FATAL_ERROR "N73 requires native research Vulkan, N72 queue and N57 cache header")
     endif()
     foreach(eden_n73_file IN ITEMS
@@ -1580,16 +1574,11 @@ if(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
 endif()
 
 
-# N60: one vendor-maintained optimized texture header and ImageBase layout;
-# no CMake source rewriting and no replacing newer F07 PS5 backports.
-option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL
-    "Research only: connect ASTC CPU writes to bounded native Vulkan layer uploads" OFF)
-if(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
-       NOT EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "N60 requires native PS5 Vulkan N57 and NS2 research")
-    endif()
+# N60: one shared PS5 Vulkan texture-cache/ImageBase ABI for both guests.
+# Partial ASTC layer upload is admitted by generic image properties only;
+# unqualified images retain the original whole-image upload. N57 is selected
+# by the same PS5/Vulkan condition and completes before this block.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_ASTC_OWNER_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
     set(EDEN_NS2_HELPERS_ROOT
@@ -2870,8 +2859,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
        EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
-       EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
-       EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

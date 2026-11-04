@@ -6,7 +6,8 @@ ROOT=Path(__file__).resolve().parents[2]
 N55=(ROOT/'vendor/encore-active/ns2-helpers/include/video_core/texture_cache/ns2_astc_layer_plan.h').read_text()
 N59=(ROOT/'vendor/encore-active/ns2-helpers/include/video_core/texture_cache/ns2_astc_staging_bridge.h').read_text()
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-assert 'EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR' in CMAKE
+assert 'option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL' not in CMAKE
+assert '# N57: shared PS5 Vulkan ASTC layer decode' in CMAKE
 assert 'class AstcDirtyLayerPlanner' in N55
 for check in ('planner.Commit(plan)', 'planner.Invalidate()', 'read_guest(', 'decode_batch(', 'guest_gpu_base + copy.guest_offset'):
     assert check in N59,check

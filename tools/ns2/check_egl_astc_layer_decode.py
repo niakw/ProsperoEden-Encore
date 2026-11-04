@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 BASE = ROOT / "vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan"
 SHARED = ROOT / "vendor/encore-active/ns2-helpers/include"
-assert 'EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR' in CMAKE
+assert 'option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL' not in CMAKE
+assert '# N57: shared PS5 Vulkan ASTC layer decode' in CMAKE
+assert 'if(PS5_NATIVE AND EDEN_PS5_VULKAN)' in CMAKE
 assert 'EDEN_NS2_ASTC_LAYER_DECODE=1' in CMAKE
 assert 'prepare_egl_astc_layer_decode.py' not in CMAKE
 assert 'ns2-astc-layer' not in CMAKE

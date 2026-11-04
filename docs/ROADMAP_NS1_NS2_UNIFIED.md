@@ -119,6 +119,19 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P2.5 / P0.2 — N57 + N60 intégrés au Vulkan PS5 commun (source/hôte) :**
+Le décodage ASTC par layer et ses vues Vulkan (N57), puis la gestion
+incrémentielle des layers sales avec staging/fences (N60), ne nécessitent
+plus de flags de recherche : `video_core` et `core` sélectionnent les
+mêmes headers ABI `ImageBase` depuis le fournisseur maintenu. Le chemin
+original d'upload image complète reste la voie de secours si l'image n'a
+pas toutes les propriétés admissibles (taille/layers/état/format). Aucune
+variante spécifique à un jeu, aucun faux décodage et aucune fusion du fork
+amont. N57/N59/N60 : contrats sources C++ Clang/GCC + UBSan passés ; N61 :
+2 400 images simulées avec écritures/races/fallback. L'ASTC réel de
+Bananza/MKW, le GPU RADV et les frames PS5 restent P5. Les modes sparse
+expérimentaux et les ressources Compute non couvertes restent sous P2.
+
 **P1.2 — correction du remap GMMU sans changement de statut :**
 Le propriétaire partagé `MemoryManager` invalidait les caches texture/buffer
 seulement quand la catégorie du PTE passait de `Mapped` à un autre état.

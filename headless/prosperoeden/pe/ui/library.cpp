@@ -189,12 +189,11 @@ void flat_front_fallback(Canvas& c, const Game& game, const Rect& r)
         const float logo_w = r.w * 0.222f;
         const Rect logo{r.x, r.y, logo_w, logo_w * (190.0f / 193.0f)};
         if (c.textures.switch_logo() != 0) {
-            // This fixed top-left raster insert shares the footer's TGA upload
-            // orientation, not the dynamically generated paper texture.
-            // Flip the insert ONCE here; the 3D case's final FBO UV flip is
-            // separate and must remain unchanged.
+            // Like the NS2 banner, this TGA is normalized top-first by
+            // load_tga(): a positive V mapping makes the NS1 mark upright.
+            // The separately composed 3D paper FBO keeps its own Y flip.
             c.list.image(c.textures.switch_logo(), logo,
-                         {0.0f, 1.0f, 1.0f, -1.0f}, Color::rgb(0xffffff));
+                         {0.0f, 0.0f, 1.0f, 1.0f}, Color::rgb(0xffffff));
         } else {
             c.list.rounded_rect(logo, 0.0f, Color::rgb(0xe31930));
             const float mark = logo.w * 0.43f;
@@ -286,11 +285,11 @@ void flat_back_fallback(Canvas& c, const Game& game, const Rect& r)
         // The exact immutable source-image rectangle is drawn in full.
         // This is a static template, never cropped or tinted, and keeps the
         // reference's game-specific printing independent of dynamic scenes.
-        // The supplied footer is upside-down with the GL/TGA default UV
-        // orientation. Correct ONLY this static paper insert. The 3D
-        // composed case performs its own final offscreen texture Y-flip.
+        // Static TGA rows are normalized top-first; unflipped image UVs
+        // keep this NS1 rear footer upright in both host and PS5 builds.
+        // The 3D composed case has its own final offscreen texture Y-flip.
         c.list.image(c.textures.switch_rear_footer(), footer,
-                     {0.0f, 1.0f, 1.0f, -1.0f}, Color::rgb(0xffffff));
+                     {0.0f, 0.0f, 1.0f, 1.0f}, Color::rgb(0xffffff));
     } else {
         // Works without a bundled template, but does NOT invent a publisher,
         // barcode, age rating, technical compatibility or certification.

@@ -49,12 +49,12 @@ for attr in ("game.hero","case_media::BackScenes(",
              "game.description", "text_block(c, desc,", "const Rect footer"):
     assert attr in back, attr
 assert '"SWITCH"' in front
-# Native fixed paper rasters use vertically reversed sampling. The layered
-# 3D paper has its own independent FBO flip and MUST NOT be changed.
+# Static TGA assets are already top-first after load_tga(): use positive V.
+# The 3D composed paper's final FBO flip is a separate rendering stage.
 assert re.search(r'c\.list\.image\(c\.textures\.switch_logo\(\), logo,\s*'
-                 r'\{0\.0f, 1\.0f, 1\.0f, -1\.0f\}', front)
+                 r'\{0\.0f, 0\.0f, 1\.0f, 1\.0f\}', front)
 assert not re.search(r'c\.list\.image\(c\.textures\.switch_logo\(\), logo,\s*'
-                     r'\{0\.0f, 0\.0f, 1\.0f, 1\.0f\}', front)
+                     r'\{0\.0f, 1\.0f, 1\.0f, -1\.0f\}', front)
 # Front uses a full-width cover UV crop, never stretched independently in X/Y.
 front_cover = method(library, "void reconstructed_cover(", "// Reconstructed paper inserts")
 for token in ("uv.w = target / source;", "uv.h = source / target;",
@@ -69,8 +69,8 @@ assert 'reconstructed_paper(c, paper);' in library
 assert "constexpr float kFixedFooter = 0.41f;" in back
 # The user's fixed retail-style footer must be upright in flat Library
 # previews AND the loader's offscreen ink renderer (both share this code).
-assert 'c.list.image(c.textures.switch_rear_footer(), footer,\n                     {0.0f, 1.0f, 1.0f, -1.0f}' in back
-assert 'c.list.image(c.textures.switch_rear_footer(), footer,\n                     {0.0f, 0.0f, 1.0f, 1.0f}' not in back
+assert 'c.list.image(c.textures.switch_rear_footer(), footer,\n                     {0.0f, 0.0f, 1.0f, 1.0f}' in back
+assert 'c.list.image(c.textures.switch_rear_footer(), footer,\n                     {0.0f, 1.0f, 1.0f, -1.0f}' not in back
 # Main tabs are navigated by L1/R1 before Library page/Settings list handlers.
 # Confirmation/modal/game input remains untouched by this global shortcut.
 press = method(launcher, "void Launcher::press(Key key)", "void Launcher::update(float dt)")

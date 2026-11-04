@@ -35,6 +35,15 @@ assert """c.list.image(c.textures.switch2_header(), header,
 assert """c.list.image(c.textures.switch2_header(), header,
                          {0.0f, 1.0f, 1.0f, -1.0f}""" not in front
 assert "c.textures.switch_logo()" in front
+assert """c.list.image(c.textures.switch_logo(), logo,
+                         {0.0f, 0.0f, 1.0f, 1.0f}""" in front
+assert """c.list.image(c.textures.switch_logo(), logo,
+                         {0.0f, 1.0f, 1.0f, -1.0f}""" not in front
+back = library.split("void flat_back_fallback(", 1)[1].split("void flat_composed_ink(", 1)[0]
+assert """c.list.image(c.textures.switch_rear_footer(), footer,
+                     {0.0f, 0.0f, 1.0f, 1.0f}""" in back
+assert """c.list.image(c.textures.switch_rear_footer(), footer,
+                     {0.0f, 1.0f, 1.0f, -1.0f}""" not in back
 assert "kHeaderAspect = 246.0f / 1164.0f" in front
 # Original retail scans retain precedence: no NS2 strip is painted over them.
 sleeve = library.split("void flat_retail_sleeve(", 1)[1].split("std::string controller_profile_name(", 1)[0]

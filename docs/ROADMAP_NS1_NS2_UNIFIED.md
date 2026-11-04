@@ -119,6 +119,22 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P1.2 — correction du remap GMMU sans changement de statut :**
+Le propriétaire partagé `MemoryManager` invalidait les caches texture/buffer
+seulement quand la catégorie du PTE passait de `Mapped` à un autre état.
+Un remap `Mapped → Mapped` vers un autre backing physique conservait donc
+un cache potentiellement périmé. Les tables 4 KiB et big-page comparent
+maintenant **l'ancienne page physique à la nouvelle avant remplacement**,
+et appellent la même notification existante si le backing a changé, sans
+notification supplémentaire pour une remap identique. Le chemin N51 de
+coalescence optionnelle reçoit le même prédicat; aucune nouvelle file GPU.
+Le test `check_native_gpu_pte_remap_host.py` extrait les vraies méthodes
+C++ de production et valide NS1, NS2, N51 ON/OFF en Clang/GCC O0/O2,
+ainsi que les transitions Mapped/Reserved/Free.
+Le contrôle de parité retire *exactement* ces ajouts avant de vérifier
+l'empreinte antérieure, et non en élargissant aveuglément la liste des hashes.
+L'exécution GPU PS5 réelle est réservée à P5.
+
 **P4.2b — témoins négatifs source/hôte revérifiés le 04/11 :**
 [preuves détaillées et commandes testées](NS1_NS2_P4_HOST_NEGATIVE_EVIDENCE_2026-11-04.md).
 GMMU/VRAM, NVMap, files VI2, fencing, descriptions Vulkan, mémoire dirty,

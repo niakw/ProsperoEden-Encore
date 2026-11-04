@@ -2,6 +2,7 @@
 """N51 vendor-native GPU PTE range batching, exact source baseline parity."""
 from pathlib import Path
 import hashlib
+import runpy
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = ROOT / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
@@ -17,6 +18,18 @@ def once(t: str, old: str, new: str) -> str:
     return t.replace(old, new)
 
 t = OWNER.read_text()
+if '#include "native_gpu_page_remap.h"' in t:
+    # Reverse the *entire exact* P1.2 PTE remap patch, then reapply the
+    # historical N51/P1.2 oracle. Neither arbitrary C++ changes nor extra
+    # guards can pass this replay without independent source review.
+    recover = runpy.run_path(
+        str(ROOT / "tools/ns2/native_gpu_pte_remap_review.py")
+    )["recover_prior_memory_manager"]
+    t = recover(t)
+    assert blob(t) == "836c0653652957a996db89ba7a7d5c48db1350a8", (
+        "GPU remap fix must recover the exact previous 49-bit GMMU owner")
+    assert (ROOT / "tools/ns2/check_native_gpu_pte_remap_host.py").is_file()
+    assert (ROOT / "vendor/encore-active/eden-core/src/video_core/native_gpu_page_remap.h").is_file()
 # N51 shares the canonical GPU memory owner with P1.2 (cross-page scalar
 # accesses and physical-backing continuity). Keep an *exact* allowlist of
 # independently reviewed owner blobs: the original N51 integration and its

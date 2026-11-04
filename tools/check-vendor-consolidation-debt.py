@@ -1566,6 +1566,20 @@ if gpu_actual != gpu_expected:
     # fallback. Match the *entire* canonical blob; do not accept a general
     # source variant or declare the historical five-hunk oracle identical.
     owner_sha = git_blob_id(gpu_actual)
+    if '#include "native_gpu_page_remap.h"' in gpu_actual:
+        # The reviewed change is confined to remapping a still-Mapped GPU
+        # VA to a different physical page. Reconstruct the exact previous
+        # P1.2/N51 owner, then run every historical parity assertion on it.
+        import runpy
+        recover_remap = runpy.run_path(
+            str(root / "tools/ns2/native_gpu_pte_remap_review.py")
+        )["recover_prior_memory_manager"]
+        gpu_actual = recover_remap(gpu_actual)
+        owner_sha = git_blob_id(gpu_actual)
+        assert owner_sha == "836c0653652957a996db89ba7a7d5c48db1350a8", (
+            "P1.2 physical remap diff exceeds reviewed small/big PTE changes")
+        assert (root / "tools/ns2/check_native_gpu_pte_remap_host.py").is_file()
+        assert (active / "eden-core/src/video_core/native_gpu_page_remap.h").is_file()
     n51_sha = "c7923dbbef27a9088dbfcb33c162e3c7069679c1"
     p12_sha = "7dba34b3e300515cd5b0a8579fe893072cb70b24"
     # Complete P1.2 successor reviewed against the historical generated TU:

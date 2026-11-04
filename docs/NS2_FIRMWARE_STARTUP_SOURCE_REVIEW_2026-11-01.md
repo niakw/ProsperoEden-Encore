@@ -49,3 +49,32 @@ Témoins hôte ajoutés : `tools/check-extracted-aoc-layout-host.py` compile la 
 `headless/metadata_bridge.cpp` blob `dfc4255361847c0f80f738002ff1f7d9bd1bfc25` (commit `556b7ac`). La collecte d'updates/DLC conserve le comportement **facultatif** d'une racine `roms/` réellement absente. En revanche, une racine présente mais inaccessible, de type différent de dossier ou symboliquement liée est maintenant refusée avant toute publication. Dans la boucle de titres, le `symlink_status(error)` du propriétaire de l'entrée rejette les erreurs IO ; seuls les fichiers ordinaires et symlinks non parcourus peuvent être ignorés. Un dossier de titre réel qui échoue à `IsSafeExtractedDirectory` annule le scan, empêchant un catalogue incomplet de passer pour exhaustif. Pas de parcours récursif de RomFS ni de changement des chemins de base NS1.
 
 Source guard ajouté à `tools/check-extracted-aoc-layout-host.py` (`9917c4f`). La suite hôte complète du nouveau couple SHA n'est pas encore qualifiée, et aucun test PS5/P5 n'a été autorisé.
+
+
+## Revue P1.1 du 4 novembre — entrées fermement bornées, sélection stable
+
+**Bloc maintenu :** `headless/metadata_bridge.cpp`, blob
+`8c6f59e7810bad7964d82dd6416f77617afe9ffa`.
+Le correctif conserve exactement les 19 emplacements NS1/NS2, les
+contrôles de symlink, la séparation de famille et l'atomicité de
+`FirmwareZip::Import`. Il change seulement l'ordonnancement des archives :
+l'ancien code retenait les 128 premiers noms de `readdir` sur hôte
+avant de les trier, puis importait les 8 premiers ZIP. Cela dépendait
+de l'ordre filesystem lorsqu'un dossier avait plus de 128 entrées.
+
+La nouvelle boucle lit les noms sur tout le niveau direct en ne conservant
+que les **huit ZIP réguliers au nom lexicalement le plus petit**.
+La sélection respecte la même limite de huit tentatives par racine et
+ne conserve jamais plus de huit candidats en mémoire sur hôte. Le
+résolveur `headless/assets_dir.h` (blob
+`8485d72542a5b0b612ab33692facb1a145f3b6d4`)
+sélectionne de son côté l'import **valide** de plus petit nom lexical,
+même si les premiers éléments rencontrés sont invalides : aucune
+tentative pour deviner la version du firmware à partir du nom.
+
+Le test réel `check-firmware-auto-import-host.py` injecte 160 fichiers
+non-ZIP, douze ZIP NS2 et contrôle l'import de seulement huit ZIP depuis
+la racine, le premier import valide déterministe, les archives d'origine
+préservées et une seconde exécution idempotente. Matrice NS1/NS2,
+ZIP borné et formats extraits revérifiés. Cette revue n'a pas compilé
+l'application PS5 et ne qualifie pas le boot invité.

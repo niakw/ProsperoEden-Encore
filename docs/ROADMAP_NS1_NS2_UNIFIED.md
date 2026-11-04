@@ -417,6 +417,34 @@ avec des invités distants, l'ABI intégrale PS5 et la compatibilité des titres
 restent non prouvés. Correctif générique repris conceptuellement de
 \`Lichii nx2 #64\`, sans fusion massive ni prise en compte d'un jeu particulier.
 
+**P1.1 — déterminisme des firmwares en dossier encombré (04/11) :**
+la limite d'import reste à huit ZIP par racine, mais est appliquée aux
+**huit noms ZIP réguliers les plus petits sur tout le niveau direct**,
+et non aux ZIP trouvés parmi les 128 premiers noms renvoyés par le
+filesystem. Le résolveur prend le premier import réellement valide
+dans l'ordre lexical, sans limite de 128 entrées ni déduction de version.
+Test d'intégration de l'importeur C++ avec 160 fichiers distracteurs,
+12 archives NS2 dont huit admises, NS1/NS2 isolées, symlinks rejetés
+et relance idempotente. Les chemins NS1 historiques ne changent pas.
+Revue de source F07 remise à jour sur le blob exact.
+
+**P1.4/P4.2 — deux lots source/hôte relancés localement (04/11) :**
+26 témoins NS2/GPU/VI2/HLE et 22 témoins NS1/JIT/presentation/Vulkan
+ont été exécutés en groupes de trois pour éviter les grands builds :
+les 48 cas passent après correction de quatre problèmes **dans les
+harnais hôte**, pas dans les jeux. Le témoin du mutex de pipeline
+n'invoque plus récursivement son propre callback de publication sur
+`std::function` déplacée; les témoins F03/F05 compilent la véritable
+API `std::jthread` avec les headers libc++ CLT adaptés sur Mac; le
+témoin de mapping JIT remplace `memfd_create` (Linux uniquement)
+par un fichier POSIX privé immédiatement supprimé sur Mac, en
+conservant les deux vraies vues mémoire RX/RW et les tests ASan/UBSan.
+La bibliothèque Boost maintenue est utilisée pour le témoin F05,
+sans substitution de `small_vector`. Ces adaptations concernent
+**uniquement les contrôles hôte** ; aucun FPS, HOS NS2, WSI réel,
+rendu GPU PS5, ni CI du couple SHA final n'est revendiqué.
+P1.4/P4.1/P4.2 restent ouverts pour les suites et preuves restantes.
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

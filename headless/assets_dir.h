@@ -178,34 +178,40 @@ inline std::string ResolveFirmwarePath(SwitchFamily family) {
         for (std::string_view wrapper : {"firmware", "ns1-extracted", "ns2-extracted"}) {
             if (auto found = inspect_leaf(p / wrapper); !found.empty()) return found;
         }
-        // Every ZIP is staged into an isolated deterministic imported-* child.
-        // Only inspect one bounded level; never follow symlink directories.
+        // Every ZIP is staged into an isolated imported-* child. Inspect all
+        // direct children, but retain ONLY the lexically first valid import:
+        // taking the first 128 directory entries before sorting is not
+        // deterministic when a family contains more than 128 entries.
+        // Never follow links or infer a firmware version from a directory name.
+        std::string best_name, best_import;
+        const auto consider = [&](const fs::directory_entry& child) {
+            const fs::path sub = child.path();
+            const std::string name = sub.filename().string();
+            if (name.rfind("encore-imported-", 0) != 0 ||
+                !StorageDirectory(sub)) return;
+            if (!best_import.empty() && name >= best_name) return;
+            std::string found = inspect_leaf(sub);
+            if (found.empty()) {
+                for (const auto& wrapper : {"firmware", "ns2-extracted", "ns1-extracted"}) {
+                    found = inspect_leaf(sub / wrapper);
+                    if (!found.empty()) break;
+                }
+            }
+            if (!found.empty()) {
+                best_name = name;
+                best_import = std::move(found);
+            }
+        };
         std::error_code ec;
 #if defined(__PROSPERO__)
-        auto children = ReadNativeDirectory(p, ec);
+        const auto children = ReadNativeDirectory(p, ec);
+        if (!ec) for (const auto& child : children) consider(child);
 #else
-        std::vector<fs::directory_entry> children;
         for (fs::directory_iterator it{p, fs::directory_options::skip_permission_denied, ec}, end;
-             !ec && it != end && children.size() < 128; it.increment(ec))
-            children.push_back(*it);
+             !ec && it != end; it.increment(ec))
+            consider(*it);
 #endif
-        // A firmware family can contain several imported system versions.
-        // Directory enumeration has no stable order on PS5 or macOS: order
-        // the bounded candidates consistently, without pretending
-        // to know which archive contains the newest firmware version.
-        if (!ec) std::sort(children.begin(), children.end(),
-            [](const auto& a, const auto& b) {
-                return a.path().filename().native() < b.path().filename().native();
-            });
-        if (!ec) for (const auto& child : children) {
-            const auto sub = child.path();
-            const auto n = sub.filename().string();
-            if (!StorageDirectory(sub) || n.rfind("encore-imported-", 0) != 0) continue;
-            if (auto found = inspect_leaf(sub); !found.empty()) return found;
-            for (const auto& wrapper : {"firmware", "ns2-extracted", "ns1-extracted"}) {
-                if (auto found = inspect_leaf(sub / wrapper); !found.empty()) return found;
-            }
-        }
+        if (!ec && !best_import.empty()) return best_import;
         return valid(p) && DetectFirmwareFormat(p) == FirmwareFormat::Zip
             ? p.string() : std::string{};
     };

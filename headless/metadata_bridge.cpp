@@ -779,27 +779,36 @@ static void AutoImportFirmwareArchives() {
             if (!Eden::StorageDirectory(walk)) { safe=false;break; }
         }
         if (!safe) continue;
+        // Keep the eight lexically first regular ZIPs, even when a folder
+        // contains more than 128 unrelated files. Sorting only the first 128
+        // entries from readdir/getdents made the selection non-reproducible.
+        // Scanning all names does not change the eight-archive import budget.
         std::error_code ec;
+        std::vector<fs::path> archives;
+        archives.reserve(8);
+        const auto consider = [&](const fs::directory_entry& entry) {
+            const auto archive = entry.path();
+            if (archive.extension() != ".zip" || !Eden::StorageRegular(archive))
+                return;
+            const auto less = [](const fs::path& a, const fs::path& b) {
+                return a.filename().native() < b.filename().native();
+            };
+            const auto at = std::lower_bound(archives.begin(), archives.end(),
+                                             archive, less);
+            if (archives.size() == 8 && at == archives.end()) return;
+            archives.insert(at, archive);
+            if (archives.size() > 8) archives.pop_back();
+        };
 #if defined(__PROSPERO__)
         const auto entries=Eden::ReadNativeDirectory(folder,ec);
+        if (!ec) for (const auto& entry : entries) consider(entry);
 #else
-        std::vector<fs::directory_entry> entries;
         for (fs::directory_iterator it{folder,fs::directory_options::skip_permission_denied,ec},end;
-             !ec && it!=end && entries.size()<128;it.increment(ec))
-            entries.push_back(*it);
+             !ec && it!=end;it.increment(ec))
+            consider(*it);
 #endif
         if (ec) continue;
-        // Imported directory selection is sorted too. Use deterministic
-        // archive admission so the 8-file bound does not arbitrarily vary
-        // with filesystem iteration order when users keep multiple dumps.
-        std::sort(entries.begin(),entries.end(),[](const auto& a,const auto& b) {
-            return a.path().filename().native()<b.path().filename().native();
-        });
-        unsigned attempts=0;
-        for (const auto& entry : entries) {
-            const auto archive=entry.path();
-            if (!Eden::StorageRegular(archive) || archive.extension()!=".zip" ||
-                ++attempts>8) continue;
+        for (const auto& archive : archives) {
             int family=location.family;
             if (!family) {
                 // Prefer an explicit archive label. For old firmware.zip dumps

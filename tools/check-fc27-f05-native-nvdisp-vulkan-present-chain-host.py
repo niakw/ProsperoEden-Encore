@@ -12,6 +12,8 @@ completion boundary in the same order, without a stale/duplicate frame.
 No actual HID/IPC, guest scheduling, Vulkan GPU/WSI, game or console proof.
 """
 from pathlib import Path
+import os
+import sys
 import ast
 import importlib.util
 import shutil
@@ -603,18 +605,32 @@ host=once(host,
 
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler,"C++20 host compiler required"
+compiler_env=os.environ.copy()
+fixture_include=[]
+if sys.platform == "darwin":
+    sdk=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+    headers=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/usr/include/c++/v1")
+    if sdk.is_dir() and headers.is_dir():
+        compiler_env["SDKROOT"]=str(sdk)
+        fixture_include=["-nostdinc++","-isystem",str(headers)]
+    # Use the real pinned Boost small_vector when host system headers lack
+    # boost-container; never swap the implementation for std::vector.
+    boost=ROOT/"vendor/sources/eden-cpm/boost/boost-1.90.0/libs"
+    if (boost/"container/include/boost/container/small_vector.hpp").is_file():
+        for include in sorted(boost.glob("*/include")):
+            fixture_include.extend(["-I",str(include)])
 with tempfile.TemporaryDirectory(prefix="encore-f05-guest-to-present-") as d:
     p=Path(d)
     a=p/"guest.cpp";b=p/"present.cpp";c=p/"surface.cpp";d=p/"binder.cpp";e=p/"guest_wait.cpp"
     a.write_text(host);b.write_text(vulkan);c.write_text(compositor);d.write_text(binder_cpp);e.write_text(guest_cpp)
     for opt in ("-O0","-O2"):
         exe=p/("chain"+opt)
-        build=subprocess.run([compiler,"-std=c++20",opt,"-I",str(ROOT/"headless"),"-pthread","-Wall",
+        build=subprocess.run([compiler,*fixture_include,"-std=c++20",opt,"-I",str(ROOT/"headless"),"-pthread","-Wall",
                  "-Wextra","-Werror","-Wno-unused-parameter","-fsanitize=undefined",
                  "-fno-sanitize-recover=all",str(a),str(b),str(c),str(d),str(e),"-o",str(exe)],
-                 text=True,capture_output=True,timeout=90)
+                 text=True,capture_output=True,timeout=90,env=compiler_env)
         assert build.returncode==0,(opt,build.stderr[-9000:])
-        run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=45)
+        run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=45,env=compiler_env)
         assert run.returncode==0,(opt,run.stderr[-6000:],run.stdout[-6000:])
         assert "F05_NATIVE_RELEASE_KTHREAD_TO_PRESENT_BOUNDARY_PASS releases=260 resumes=520 binder_frames_gated=1" in run.stdout
         assert "F05_NATIVE_IPC_BINDER_DISPATCH_PASS auto_transactions=260" in run.stdout

@@ -40,6 +40,14 @@ with tempfile.TemporaryDirectory(prefix="encore-auto-fw-") as tmp:
         with zipfile.ZipFile(extra/(name+".zip"),"w",zipfile.ZIP_DEFLATED) as z:
             z.writestr("firmware/0400000000000019/main.npdm",
                        b"META"+name.encode()+b"X"*256)
+    # Deterministic even with >128 unrelated entries (previous iterator
+    # limit before sorting could hide a newly added, valid firmware ZIP).
+    for index in range(160):
+        (extra/f"noise-{index:03}.txt").write_text("not a firmware archive")
+    for name in ("a-0-priority", *(f"zz{index:02}" for index in range(9))):
+        with zipfile.ZipFile(extra/(name+".zip"),"w",zipfile.ZIP_DEFLATED) as z:
+            z.writestr("firmware/0400000000000019/main.npdm",
+                       b"META"+name.encode()+b"X"*256)
     src=r"""
 #include <cctype>
 #include <cstdio>
@@ -67,12 +75,21 @@ int main(int argc,char**argv) {
     assert(fs::is_regular_file(root/"firmware/ns1/encore-imported-input/firmware/0100000000000809/main.npdm"));
     assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-bundle/firmware/system.nca"));
     assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-ns2-code/firmware/0400000000000019/main.npdm"));
+    assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-a-0-priority/firmware/0400000000000019/main.npdm"));
     assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-a-first/firmware/0400000000000019/main.npdm"));
     assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-z-later/firmware/0400000000000019/main.npdm"));
+    // The eight-file admission budget chooses the lexically first eight
+    // regular archives; sorting only the first 128 directory entries is unsafe.
+    for (unsigned i=0; i<5; ++i) {
+        const auto name="zz"+(i<10 ? std::string{"0"} : std::string{})+std::to_string(i);
+        assert(fs::is_regular_file(root/"firmware/ns2"/("encore-imported-"+name)/
+                                   "firmware/0400000000000019/main.npdm"));
+    }
+    assert(!fs::exists(root/"firmware/ns2/encore-imported-zz05"));
     assert(fs::is_regular_file(root/"firmware/switch1/input.zip"));
     assert(fs::is_regular_file(root/"switch2/firmware/bundle.zip"));
     assert(Eden::ResolveFirmwarePath(Eden::SwitchFamily::Switch1).find("encore-imported-input")!=std::string::npos);
-    assert(Eden::ResolveFirmwarePath(Eden::SwitchFamily::Switch2).find("encore-imported-a-first")!=std::string::npos);
+    assert(Eden::ResolveFirmwarePath(Eden::SwitchFamily::Switch2).find("encore-imported-a-0-priority")!=std::string::npos);
     AutoImportFirmwareArchives(); // never replaces completed outputs
 }
 """
@@ -83,4 +100,4 @@ int main(int argc,char**argv) {
                     "-I",str(ROOT/"headless"),str(input_file),"-lz","-o",str(exe)],
                    check=True,timeout=45)
     subprocess.run([str(exe),str(storage)],check=True,timeout=35)
-print("ENCORE_FIRMWARE_AUTO_IMPORT_HOST_PASS ns1_zip=1 ns2_nca_zip=1 ns2_dump_zip=1 idempotent=1 multi_ns2=2 selected=lexical_first")
+print("ENCORE_FIRMWARE_AUTO_IMPORT_HOST_PASS ns1_zip=1 ns2_nca_zip=1 ns2_dump_zip=1 idempotent=1 multi_ns2=2 selected=lexical_first entries_gt_128=1 zip_budget_8=1")

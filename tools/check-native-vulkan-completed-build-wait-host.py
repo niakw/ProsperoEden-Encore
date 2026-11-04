@@ -75,7 +75,13 @@ struct CountingMutex {
     std::function<void()> before_lock;
     void lock() {
         count.fetch_add(1, std::memory_order_relaxed);
-        auto hook = std::move(before_lock);
+        // A moved-from std::function is valid but is not required to be
+        // empty. The publication hook locks this same mutex recursively on
+        // another thread: swap with an empty hook BEFORE invoking it.
+        // Otherwise the fixture can recursively create hundreds of threads
+        // instead of testing the single publication race it intended.
+        std::function<void()> hook;
+        hook.swap(before_lock);
         if (hook) hook();
         internal.lock();
     }

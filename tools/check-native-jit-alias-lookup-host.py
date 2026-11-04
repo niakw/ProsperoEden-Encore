@@ -54,6 +54,25 @@ fixture=r"""
 #include <cstring>
 #include <thread>
 #include <new>
+#if defined(__APPLE__)
+#include <fcntl.h>
+#include <unistd.h>
+// macOS has no memfd_create. For the HOST witness only, use a private,
+// immediately unlinked backing file so the unmodified JIT allocator still
+// maps real shared RX and RW aliases. This is not the PS5 sparse allocator.
+#ifndef MFD_CLOEXEC
+#define MFD_CLOEXEC 0x0001U
+#endif
+static int memfd_create(const char*, unsigned flags) {
+    if (flags != MFD_CLOEXEC) return -1;
+    char name[]="/tmp/encore-jit-alias-XXXXXX";
+    const int fd=mkstemp(name);
+    if (fd < 0) return -1;
+    unlink(name);
+    if (fcntl(fd,F_SETFD,FD_CLOEXEC)<0) {close(fd);return -1;}
+    return fd;
+}
+#endif
 #include "jit-allocator.h"
 namespace Common {
 void* AllocateMemoryPages(std::size_t n) noexcept {return std::malloc(n);}

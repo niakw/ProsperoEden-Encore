@@ -10,6 +10,8 @@ The test proves no lost revision across source-backed CPU orchestration,
 including 12 paused game ticks and a midstream texture remap. It is NOT
 Vulkan device submission, WSI scanout, guest FC27 fidelity, or FPS evidence.
 """
+import os
+import sys
 import ast
 from pathlib import Path
 import runpy
@@ -166,17 +168,27 @@ assert cpp.count(tag)==1
 cpp=cpp.replace(tag,inject+"\n"+tag)
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler,"C++20 compiler required"
+compiler_env=os.environ.copy()
+fixture_include=[]
+if sys.platform == "darwin":
+    # The installed CLT 15.4 SDK does not expose jthread/stop_token,
+    # but 26.5's headers do. Keep a supported linker SDK.
+    sdk=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+    headers=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/usr/include/c++/v1")
+    if sdk.is_dir() and headers.is_dir():
+        compiler_env["SDKROOT"]=str(sdk)
+        fixture_include=["-nostdinc++","-isystem",str(headers)]
 with tempfile.TemporaryDirectory(prefix="encore-f03-present-") as directory:
     source=Path(directory)/"hud_present.cpp"
     source.write_text(cpp)
     for opt in ("-O0","-O2"):
         exe=Path(directory)/("hud"+opt)
-        cmd=[compiler,"-std=c++20",opt,"-I",str(ROOT/"headless"),"-DPS5_NATIVE=1","-g","-pthread","-Wall","-Wextra",
+        cmd=[compiler,*fixture_include,"-std=c++20",opt,"-I",str(ROOT/"headless"),"-DPS5_NATIVE=1","-g","-pthread","-Wall","-Wextra",
              "-Werror","-fsanitize=undefined","-fno-sanitize-recover=all",
              str(source),"-o",str(exe)]
-        built=subprocess.run(cmd,capture_output=True,text=True,timeout=70)
+        built=subprocess.run(cmd,capture_output=True,text=True,timeout=70,env=compiler_env)
         assert built.returncode==0,(opt,built.stderr[-6500:])
-        executed=subprocess.run([str(exe)],capture_output=True,text=True,timeout=40)
+        executed=subprocess.run([str(exe)],capture_output=True,text=True,timeout=40,env=compiler_env)
         assert executed.returncode==0,(opt,executed.stdout,executed.stderr[-5000:])
         assert executed.stdout.count("F03_NATIVE_TIC_TO_PRESENT_FRESHNESS_PASS")==1
         print(executed.stdout.strip(),opt,flush=True)

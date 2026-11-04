@@ -347,6 +347,7 @@ print("NS2_CACHE_CHANNEL_RACE_PREVENTION_PASS owner_check_and_both_acquisitions_
 import subprocess
 import tempfile
 import shutil
+import os
 
 channel_header = (vendor / "sources/eden/src/video_core/control/channel_state_cache.h").read_text()
 channel_impl = (vendor / "sources/eden/src/video_core/control/channel_state_cache.inc").read_text()
@@ -404,15 +405,22 @@ fixture = (
 )
 compilers = [x for x in ("clang++", "g++") if shutil.which(x)]
 assert compilers, "native config-lease compilers absent"
+# Do not accidentally link this macOS host fixture against a newer CLT SDK
+# whose TAPI stubs our pinned host Clang cannot decode (e.g. SDK 27).
+host_env = dict(os.environ)
+pinned_sdk = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+if pinned_sdk.is_dir():
+    host_env["SDKROOT"] = str(pinned_sdk)
 with tempfile.TemporaryDirectory(prefix="ns2-channel-lease-") as tmp:
     source = Path(tmp) / "lease.cpp"
     source.write_text(fixture)
     for cc in compilers:
         output = Path(tmp) / cc
-        subprocess.run([cc, "-std=c++20", "-O0", "-pthread",
-                        str(source), "-o", str(output)],
-                       capture_output=True, text=True, check=True, timeout=20)
-        subprocess.run([str(output)], check=True, timeout=5)
+        built = subprocess.run([cc, "-std=c++20", "-O0", "-pthread",
+                                str(source), "-o", str(output)],
+                               env=host_env, capture_output=True, text=True, timeout=20)
+        assert built.returncode == 0, (cc, built.stderr[-4000:])
+        subprocess.run([str(output)], env=host_env, check=True, timeout=5)
 print("NS2_CACHE_CHANNEL_LEASE_PASS upstream=pristine native=thread_local")
 
 # The generic guest fence callback can execute synchronously when delay is

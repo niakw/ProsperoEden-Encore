@@ -11,7 +11,26 @@ assert '#include "ns2_title_catalog.h"' in services
 assert 'Eden::Ns2Catalog::Find(game.title_id)' in services
 assert 'return FetchKnownNs2Front(title_id, cancel)' not in services
 assert 'return 0u;' in services
-assert 'https://gamesdb-images.launchbox.gg' in services
+# The URL must be an exact trusted CDN origin in the C++ assignment.
+# A substring test accepts attacker.example/https://trusted-host and
+# subdomains such as trusted-host.evil.test; CodeQL #17 flagged this.
+from urllib.parse import urlsplit
+import re
+hosts = re.search(
+    r'const char\\* image_host\\s*=\\s*r2\\s*\\?\\s*"([^"\\n]+)"\\s*:\\s*"([^"\\n]+)"\\s*;',
+    services,
+)
+assert hosts is not None, "CDN host selector missing"
+actual = hosts.groups()
+expected = ("https://gamesdb-images.launchbox.gg", "https://images.launchbox-app.com")
+assert actual == expected, (actual, expected)
+for candidate in actual:
+    parsed = urlsplit(candidate)
+    assert parsed.scheme == "https" and parsed.netloc in (
+        "gamesdb-images.launchbox.gg", "images.launchbox-app.com"
+    )
+    assert not (parsed.path or parsed.query or parsed.fragment or parsed.username or parsed.password)
+
 assert 'EDEN_NS2_TITLE_RESOLVED' in services
 assert 'if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;' in services
 assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services

@@ -119,6 +119,15 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P2.7c — source/hôte du fetch GPFIFO validée le 04/11 :** les deux
+`DmaPusher` authentifient le canal NS2 et imposent `SafeRead` avant de lire
+les mots invités, y compris sur pages physiques disjointes. Le cache Vulkan
+rapatrie les buffers GPU modifiés et `scheduler.Finish()` assure l'ordre de
+lecture CPU. Les fences GPFIFO restent obligatoires pour NS2, sans changer
+leur politique NS1. Témoins hôte de 16 combinaisons, O0/O2 et Clang/GCC
+passés. La première image, les vraies écritures GPU et les éventuels hazards
+matériels restent des critères **P5**, jamais une preuve de boot réussie.
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

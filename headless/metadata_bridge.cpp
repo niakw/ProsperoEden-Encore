@@ -789,6 +789,12 @@ static void AutoImportFirmwareArchives() {
             entries.push_back(*it);
 #endif
         if (ec) continue;
+        // Imported directory selection is sorted too. Use deterministic
+        // archive admission so the 8-file bound does not arbitrarily vary
+        // with filesystem iteration order when users keep multiple dumps.
+        std::sort(entries.begin(),entries.end(),[](const auto& a,const auto& b) {
+            return a.path().filename().native()<b.path().filename().native();
+        });
         unsigned attempts=0;
         for (const auto& entry : entries) {
             const auto archive=entry.path();

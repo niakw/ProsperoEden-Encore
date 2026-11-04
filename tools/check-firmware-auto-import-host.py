@@ -32,6 +32,14 @@ with tempfile.TemporaryDirectory(prefix="encore-auto-fw-") as tmp:
         z.writestr("firmware/.ns2jb-firmware-dump.json",b'{"kind":"ns2jb-system-code-dump"}')
         z.writestr("firmware/firmware-dump-named.json",b'{"entries":[]}')
         z.writestr("firmware/0400000000000019/main.npdm",b"META"+b"2"*2048)
+    # Create in reverse lexical order: the source code must not let
+    # filesystem enumeration order choose the active imported NS2 firmware.
+    extra = storage/"firmware/ns2"
+    extra.mkdir(parents=True, exist_ok=True)
+    for name in ("z-later", "a-first"):
+        with zipfile.ZipFile(extra/(name+".zip"),"w",zipfile.ZIP_DEFLATED) as z:
+            z.writestr("firmware/0400000000000019/main.npdm",
+                       b"META"+name.encode()+b"X"*256)
     src=r"""
 #include <cctype>
 #include <cstdio>
@@ -59,10 +67,12 @@ int main(int argc,char**argv) {
     assert(fs::is_regular_file(root/"firmware/ns1/encore-imported-input/firmware/0100000000000809/main.npdm"));
     assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-bundle/firmware/system.nca"));
     assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-ns2-code/firmware/0400000000000019/main.npdm"));
+    assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-a-first/firmware/0400000000000019/main.npdm"));
+    assert(fs::is_regular_file(root/"firmware/ns2/encore-imported-z-later/firmware/0400000000000019/main.npdm"));
     assert(fs::is_regular_file(root/"firmware/switch1/input.zip"));
     assert(fs::is_regular_file(root/"switch2/firmware/bundle.zip"));
     assert(Eden::ResolveFirmwarePath(Eden::SwitchFamily::Switch1).find("encore-imported-input")!=std::string::npos);
-    assert(Eden::ResolveFirmwarePath(Eden::SwitchFamily::Switch2).find("encore-imported-")!=std::string::npos);
+    assert(Eden::ResolveFirmwarePath(Eden::SwitchFamily::Switch2).find("encore-imported-a-first")!=std::string::npos);
     AutoImportFirmwareArchives(); // never replaces completed outputs
 }
 """
@@ -73,4 +83,4 @@ int main(int argc,char**argv) {
                     "-I",str(ROOT/"headless"),str(input_file),"-lz","-o",str(exe)],
                    check=True,timeout=45)
     subprocess.run([str(exe),str(storage)],check=True,timeout=35)
-print("ENCORE_FIRMWARE_AUTO_IMPORT_HOST_PASS ns1_zip=1 ns2_nca_zip=1 ns2_dump_zip=1 idempotent=1")
+print("ENCORE_FIRMWARE_AUTO_IMPORT_HOST_PASS ns1_zip=1 ns2_nca_zip=1 ns2_dump_zip=1 idempotent=1 multi_ns2=2 selected=lexical_first")

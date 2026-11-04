@@ -356,6 +356,18 @@ silencieusement incorrects. Cas positifs/négatifs sur le véritable
 216 et 248 ; aucune modification du chemin NS1. Cela ne règle pas les
 instructions Ampere non encore traduites et ne prouve aucun rendu PS5.
 
+**P1.1 — archives de firmware multiples, choix reproductible (04/11) :**
+les archives NS1/NS2 reconnues sont importées dans un ordre lexical stable,
+indépendant de l'ordre non garanti de `getdents` PS5 / des répertoires
+macOS. Quand plusieurs imports sont valides dans une même famille,
+`ResolveFirmwarePath` choisit également le même dossier importé au
+redémarrage. Une première archive invalide n'implique jamais un faux boot ;
+il n'y a **aucune inférence d'une version firmware la plus récente** à partir
+du seul nom. Le vrai `AutoImportFirmwareArchives` et le résolveur passent
+une fixture à deux firmwares NS2 créés dans l'ordre inverse, plus les matrices
+NS1/NS2 NCA/extraits, les ZIP bornés et le contrôle du manifeste NS2JB.
+Les parcours restent bornés ; preuve de sélection/installation console P5.
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

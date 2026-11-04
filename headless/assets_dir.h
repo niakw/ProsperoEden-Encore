@@ -3,6 +3,7 @@
 // default; an external selection changes only this root, never the required subfolder layout.
 // Resolved once per process; a new root applies after Encore is reopened.
 #pragma once
+#include <algorithm>
 #include <array>
 #include <filesystem>
 #include <string>
@@ -181,13 +182,21 @@ inline std::string ResolveFirmwarePath(SwitchFamily family) {
         // Only inspect one bounded level; never follow symlink directories.
         std::error_code ec;
 #if defined(__PROSPERO__)
-        const auto children = ReadNativeDirectory(p, ec);
+        auto children = ReadNativeDirectory(p, ec);
 #else
         std::vector<fs::directory_entry> children;
         for (fs::directory_iterator it{p, fs::directory_options::skip_permission_denied, ec}, end;
              !ec && it != end && children.size() < 128; it.increment(ec))
             children.push_back(*it);
 #endif
+        // A firmware family can contain several imported system versions.
+        // Directory enumeration has no stable order on PS5 or macOS: order
+        // the bounded candidates consistently, without pretending
+        // to know which archive contains the newest firmware version.
+        if (!ec) std::sort(children.begin(), children.end(),
+            [](const auto& a, const auto& b) {
+                return a.path().filename().native() < b.path().filename().native();
+            });
         if (!ec) for (const auto& child : children) {
             const auto sub = child.path();
             const auto n = sub.filename().string();

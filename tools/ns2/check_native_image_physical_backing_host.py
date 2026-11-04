@@ -16,7 +16,7 @@ RENDERERS = (
     VENDOR / "eden-core/guest-bridge/vulkan_rasterizer.cpp",
 )
 START = "            if (current_after_staging && pinned_lifetime) {\n"
-END = "            }\n        }\n        if (!current_after_staging ||"
+END = "            }\n        }\n        // SPIR-V compilation"
 extracted = []
 for file in RENDERERS:
     text = file.read_text()

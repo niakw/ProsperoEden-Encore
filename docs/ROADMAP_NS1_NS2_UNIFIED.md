@@ -167,6 +167,21 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — accès complets SSBO globaux (source/hôte, 04/11) :**
+Le backend SPIR-V partagé NVN vérifiait seulement
+`base <= addr < base + size` avant chaque `OpAccessChain`. Un chargement,
+stockage ou atomique global de 8/16 octets pouvait donc franchir la
+frontière de la mémoire authentifiée ; une adresse non alignée était
+tronquée vers le précédent élément. Le propriétaire d'émission **NS2
+uniquement**, pendant `NativeSpirvCbufBoundsScope`, impose désormais
+`size >= largeur`, `addr >= base`,
+`addr - base <= size - largeur`, et l'alignement de l'offset.
+Ces tests ont lieu avant la création du pointeur SPIR-V ; le chemin
+Maxwell/NS1 conserve sa condition historique inchangée.
+Tests de limites 49 bits et 4/8/16 octets exécutés avec le vrai IR QMD3,
+contrôle structurel de l'émetteur et compilation syntaxique réelle de
+`spirv_emit_context.cpp` Clang/GCC. Aucun shader GPU PS5 revendiqué.
+
 **P1.2 / P1.3 — remaps NVDRV bornés et sans fuite de pin :**
 Deux recherches de réservations GPU dans `nvhost_as_gpu` décrémentaient
 `upper_bound()` même à `begin()` : une table vide ou une adresse avant

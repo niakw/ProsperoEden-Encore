@@ -41,6 +41,33 @@ static void Check(Opcode op, u32 bank, u32 offset, u32 reflected,
     }
 }
 int main() {
+    // P2.3: actual native global memory OpAccessChain must never start
+    // inside a valid SSBO if the last byte falls outside it. The old
+    // SPIR-V check accepted such 8/16-byte accesses and silently floored
+    // misaligned addresses to the preceding word.
+    using Shader::Ampere::NativeQmdGlobalAccessWithinStorage;
+    for (const u32 width : {4U,8U,16U}) {
+        for (const u32 bytes : {1U,3U,4U,7U,8U,15U,16U,17U,31U,32U,33U,64U}) {
+            for (u32 offset = 0; offset < 80; ++offset) {
+                const bool expected = bytes >= width &&
+                    offset % width == 0 &&
+                    offset <= bytes - (std::min)(bytes, width);
+                assert(NativeQmdGlobalAccessWithinStorage(
+                    0x100000, bytes, 0x100000 + offset, width) == expected);
+            }
+        }
+    }
+    assert(!NativeQmdGlobalAccessWithinStorage(0, 4096, 4, 4));
+    assert(!NativeQmdGlobalAccessWithinStorage(0x1000, 8, 0xfff, 4));
+    assert(!NativeQmdGlobalAccessWithinStorage(0x1000, 8, ~u64{0}, 4));
+    assert(!NativeQmdGlobalAccessWithinStorage(0x1000, 8, 0x1000, 1));
+    assert(!NativeQmdGlobalAccessWithinStorage(0x1000, 8, 0x1000, 32));
+    assert(!NativeQmdGlobalAccessWithinStorage((u64{1} << 49) - 4, 8,
+                                                (u64{1} << 49) - 4, 4));
+    assert(!NativeQmdGlobalAccessWithinStorage(u64{1} << 49, 4,
+                                                u64{1} << 49, 4));
+    assert(NativeQmdGlobalAccessWithinStorage((u64{1} << 49) - 16, 16,
+                                               (u64{1} << 49) - 16, 16));
     // P2.3: write-only Ampere NVN global memory must reach the SAME CBUF0
     // descriptor bridge as read+write programs, never a detached SSBO.
     {

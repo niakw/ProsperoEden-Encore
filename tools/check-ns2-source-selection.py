@@ -624,7 +624,36 @@ def main() -> int:
         # P2.3 bounded global memory reuses the real shared SPIR-V
         # U64 address -> NVN SSBO dispatch. The QMD3 adapter authenticates
         # the descriptor count and all referenced backing before Vulkan.
+        native_indirect_owner = (
+            ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+        ).read_text()
         global_emit = (ROOT / "vendor/sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+        native_global_emit = (
+            ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
+        ).read_text()
+        native_global = native_global_emit.split(
+            "void EmitContext::DefineGlobalMemoryFunctions(const Info& info) {", 1
+        )[1].split("void EmitContext::DefineRescalingInput(const Info& info)", 1)[0]
+        # The native-only access must cover the WHOLE 4/8/16-byte scalar
+        # before OpAccessChain. Keep legacy Maxwell byte-for-byte in the
+        # explicitly inactive branch.
+        require("if (!Shader::Ampere::NativeSpirvCbufBoundsActive())" in native_global and
+                "const Id ssbo_end{OpIAdd(U64, ssbo_addr, ssbo_size)};" in native_global and
+                "OpULessThan(U1, addr, ssbo_end)" in native_global and
+                "const u64 width = u64{1} << shift" in native_global and
+                "OpUGreaterThanEqual(U1, ssbo_size, span)" in native_global and
+                "OpULessThanEqual(" in native_global and
+                "OpISub(U64, ssbo_size, span)" in native_global and
+                "OpBitwiseAnd(U64, byte_offset, Constant(U64, width - 1))" in native_global and
+                "OpLogicalAnd(U1, fully_covered, aligned)" in native_global and
+                native_global.index("const Id cond{") < native_global.index(
+                    "const Id ssbo_pointer{OpAccessChain(") and
+                "NativeQmdGlobalAccessWithinStorage" in native_indirect_owner and
+                "offset <= storage_bytes - access_bytes" in native_indirect_owner and
+                "NativeQmdGlobalAccessWithinStorage(" in (
+                    ROOT / "tools/ns2/test_native_qmd_direct_cbuf.cpp").read_text(),
+                "P2.3 native SPIR-V global accesses must have entire aligned"
+                " SSBO spans without rewriting NS1")
         require("void EmitContext::DefineGlobalMemoryFunctions(const Info& info)" in global_emit and
                 "if (!info.uses_global_memory || !profile.support_int64)" in global_emit and
                 "if (!info.nvn_buffer_used[index])" in global_emit and
@@ -639,9 +668,6 @@ def main() -> int:
             "NativeSpirvResult CompileReviewedNativeVertexSpirv(", 1)[0]
         # P2.3: stores-only globals need the native QMD3 CBUF0 descriptor
         # bridge before the shared SPIR-V emitter, not an NS1 rewrite.
-        native_indirect_owner = (
-            ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
-        ).read_text()
         assert "NormalizeNativeQmdGlobalStoreOnlyInfo(" in native_indirect_owner
         assert "info.nvn_buffer_used.test(i)" in native_indirect_owner
         assert "0x310U + i * 16U" in native_indirect_owner

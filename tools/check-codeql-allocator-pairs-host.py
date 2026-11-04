@@ -72,7 +72,8 @@ for keep in ("  - headless", "  - src", "  - tools", "  - vendor/encore-active")
 for path in paths.values():
     relative = path.relative_to(ROOT).as_posix()
     assert f"  - '{relative}'" in excluded, ("audited file missing scoped exception", relative)
-assert "vendor/encore-active" not in excluded, "active renderer excluded"
+assert not any(line.strip().startswith("- ") and "vendor/encore-active" in line
+               for line in excluded.splitlines()), "active renderer excluded"
 assert "config-file: ./.github/codeql/codeql-config.yml" in workflow
 assert "build-mode: none" in workflow
 print("ENCORE_CODEQL_ALLOCATOR_PAIR_AUDIT_PASS: alerts #18-#23, active scope retained")

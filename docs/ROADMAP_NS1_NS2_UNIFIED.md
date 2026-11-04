@@ -133,6 +133,19 @@ testées ; les instructions Ampere non prises en charge restent bloquées.
 validation d'un véritable patch tessellé et des capacités RADV en P5.
 Task/mesh et LEPC dynamique restent des manques de code P2.4.
 
+**P1.2 / P1.3 — remaps NVDRV bornés et sans fuite de pin :**
+Deux recherches de réservations GPU dans `nvhost_as_gpu` décrémentaient
+`upper_bound()` même à `begin()` : une table vide ou une adresse avant
+la première allocation déclenchait un comportement indéfini.
+Le propriétaire NS2 utilise désormais une recherche commune bornée à
+49 bits, avec vérification du sous-intervalle et des tailles sans overflow.
+Dans MapBufferEx, les contrôles de destination sont exécutés avant
+PinHandle ; un échec d'allocation après pin effectue aussi UnpinHandle.
+Les remaps partiels hors du mapping et les longueurs nulles sont refusés.
+Le test hôte Clang/GCC O0/O2 sous ASan/UBSan valide les recherches
+contre un oracle linéaire et les chemins exacts de l'ioctl.
+Qualification de mémoire GPU physique PS5 conservée en P5.
+
 **P1.2 / N51 — invalidation GPU avant remapping physique :**
 Dans le chemin N51, les notifications précédentes étaient émises après la
 mutation du backing physique. Les caches GPU-dirty pouvaient alors évacuer

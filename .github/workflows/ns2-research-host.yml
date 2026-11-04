@@ -533,6 +533,8 @@ jobs:
             vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp
       - name: Compile/run native GPU characteristics IOCTL host fixtures
         run: python3 tools/check-ns2-native-gpu-ioctl-host.py
+      - name: P1.2 validate real NS2 NVDRV remap allocation bounds without console
+        run: python3 -B tools/ns2/check_native_nvdrv_allocation_range_host.py
       - name: Compile and run upstream Ampere ISA/address-map host probes
         run: |
           python3 tools/check-ns2-ampere-host.py

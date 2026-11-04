@@ -6765,3 +6765,25 @@ apply_reviewed_delta(
     '    if (True(which & VideoCommon::CacheType::TextureCache) &&\n        !::Eden::ImagePages::NeverHeld(addr, size)) {\n        std::scoped_lock lock{texture_cache.mutex};\n        texture_cache.DownloadMemory(addr, size);\n    }',
     '    if (True(which & VideoCommon::CacheType::TextureCache) &&\n        !::Eden::ImagePages::NeverHeld(addr, size)) {\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n        if (native_texture_read_lock_owner == this) {\n            // Our caller already holds texture_cache.mutex. Preserve the\n            // exact GPU-dirty readback, but never recursively lock a\n            // non-recursive shared cache mutex on a native TIC/TSC read.\n            texture_cache.DownloadMemory(addr, size);\n        } else\n#endif\n        {\n            std::scoped_lock lock{texture_cache.mutex};\n            texture_cache.DownloadMemory(addr, size);\n        }\n    }',
     'native P2.2b non-recursive flush lock ordering')
+
+# P2.2b: preserve TIC/TSC original bytes through Vulkan Compute staging.
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    '        std::vector<NativeComputeImageBinding> native_images;\n        // Authenticate the full table records as well as QMD CBUF handles.\n',
+    '        std::vector<NativeComputeImageBinding> native_images;\n        // Keep the original guest TIC/TSC bytes across descriptor staging.\n        // A channel epoch alone does not protect writable descriptor tables\n        // while ConfigureNative records Vulkan bind operations.\n        std::optional<Shader::Ampere::NativeQmdTextureTables> staged_image_tables;\n        std::optional<std::vector<Shader::Ampere::NativeQmdImageTableRecord>>\n            staged_image_records;\n        // Authenticate the full table records as well as QMD CBUF handles.\n',
+    "P2.2b final TIC/TSC snapshot at dispatch hunk 1")
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    '            const auto descriptors = tables.CaptureAdmissible(',
+    '            auto descriptors = tables.CaptureAdmissible(',
+    "P2.2b final TIC/TSC snapshot at dispatch hunk 2")
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    '            if (native_images.size() != typed_descriptors->size())\n                return false;\n        }\n        if (!(native_images.empty() ? resources->HasResolvedBufferBindings()',
+    '            if (native_images.size() != typed_descriptors->size())\n                return false;\n            // Move, do not re-read or approximate the original table: these\n            // exact records must still match just before vkCmdDispatch.\n            staged_image_tables = tables;\n            staged_image_records = std::move(*descriptors);\n        }\n        if (!(native_images.empty() ? resources->HasResolvedBufferBindings()',
+    "P2.2b final TIC/TSC snapshot at dispatch hunk 3")
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    '        if (!current_after_staging ||\n            !registry.IsComputeCurrent(kepler_compute, *ticket)) {',
+    '        // A guest can rewrite TIC/TSC after the shared TextureCache pinned\n        // the original view and while BufferCache stages its descriptors.\n        // The CBUF reread above cannot detect that race. Re-authenticate\n        // complete raw TIC/TSC records and channel identity once more AFTER\n        // staging, before any compute Dispatch is recorded. The outer\n        // texture mutex also preserves the scoped reentrant readback lease.\n        if (current_after_staging && staged_image_tables && staged_image_records) {\n            std::scoped_lock lock{texture_cache.mutex};\n            NativeTextureReadLockScope native_texture_read_scope{this};\n            const auto& live_regs = kepler_compute.regs;\n            current_after_staging = texture_cache.NativeChannelMatches(\n                    kepler_compute, *gpu_memory) &&\n                staged_image_tables->SameRegisters(\n                    live_regs.tic.Address(), live_regs.tic.limit,\n                    live_regs.tsc.Address(), live_regs.tsc.limit,\n                    launch.linked_tsc) &&\n                staged_image_tables->MatchesSnapshot(\n                    *resources, *staged_image_records,\n                    [this](u64 address, void* bytes, std::size_t size) {\n                        return VideoCommon::ReadNs2GpuShader(\n                            gpu_memory, address, bytes, size);\n                    });\n        }\n        if (!current_after_staging ||\n            !registry.IsComputeCurrent(kepler_compute, *ticket)) {',
+    "P2.2b final TIC/TSC snapshot at dispatch hunk 4")

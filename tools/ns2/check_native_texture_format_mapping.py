@@ -270,6 +270,32 @@ for path in (
 print("NS2_TIC_TSC_LOCKED_SNAPSHOT_PASS same_channel=required snapshot=second_read"
       " before_publication=1")
 
+# A captured TIC/TSC snapshot can become stale WHILE Vulkan descriptor
+# staging records pending commands, even though both the engine ticket and
+# CBUF plan remain valid. The FINAL check must happen after ConfigureNative
+# releases BufferCache.mutex and before a GPU dispatch is queued. Both
+# maintained renderers require the exact same graphics/image guest policy.
+for path in (
+    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
+    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+):
+    bridge = (vendor / path).read_text()
+    configure = bridge.index('if (!pipeline->ConfigureNative(')
+    cbuf_final = bridge.index('bool current_after_staging = false;', configure)
+    texture_final = bridge.index('staged_image_tables->MatchesSnapshot(', cbuf_final)
+    dispatch = bridge.index('cmdbuf.Dispatch(dim[0], dim[1], dim[2]);', configure)
+    assert configure < cbuf_final < texture_final < dispatch, path
+    assert bridge.index('staged_image_records = std::move(*descriptors);') < configure
+    assert 'staged_image_tables->SameRegisters(' in bridge[cbuf_final:dispatch]
+    assert 'texture_cache.NativeChannelMatches(' in bridge[cbuf_final:dispatch]
+    assert 'NativeTextureReadLockScope native_texture_read_scope{this};' in bridge[cbuf_final:dispatch]
+    assert 'std::scoped_lock lock{texture_cache.mutex};' in bridge[cbuf_final:dispatch]
+    assert bridge.count('NativeTextureReadLockScope native_texture_read_scope{this};') == 2
+    assert bridge.count('thread_local const RasterizerVulkan* native_texture_read_lock_owner{};') == 1
+    assert bridge.index('if (!current_after_staging ||', texture_final) < dispatch
+print('NS2_TIC_TSC_POST_STAGE_REVALIDATION_PASS owners=2'
+      ' raw_records=stable lock=held gpu_dispatch=after_recheck')
+
 # A real TICEntry/TSCEntry decode boundary follows guest admission; it
 # produces no Vulkan objects. The existing fail-closed dispatch remains.
 assert "struct NativeQmdTypedTextureRecord" in native_env

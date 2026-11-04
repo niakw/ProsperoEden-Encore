@@ -5,14 +5,19 @@ No GPU or console. The fixture uses the real reviewed RAII scope and
 FlushRegion texture arm, not a duplicate implementation of the decision.
 """
 from pathlib import Path
+import sys
 import os
 import shutil
 import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[2]
-source=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
-assert source.count('NativeTextureReadLockScope native_texture_read_scope{this};')==1
+variant='deferred' if '--deferred' in sys.argv[1:] else 'vulkan'
+assert len(sys.argv)==1 or sys.argv[1:]==['--deferred']
+owner=('vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp'
+       if variant=='deferred' else 'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp')
+source=(root/owner).read_text()
+assert source.count('NativeTextureReadLockScope native_texture_read_scope{this};')==2
 assert 'VideoCommon::ReadNs2GpuShader(' in source
 scope='thread_local const RasterizerVulkan* native_texture_read_lock_owner{};'
 assert source.count(scope)==1
@@ -97,6 +102,6 @@ with tempfile.TemporaryDirectory(prefix='encore-texture-lock-') as temp:
                 assert built.returncode==0,(compiler,built.stderr[-2800:])
                 run=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=6)
                 assert run.returncode==0,(compiler,run.stderr[-1200:])
-                print('P2_2B_NATIVE_TEXTURE_REENTRANT_FLUSH_PASS',
+                print('P2_2B_NATIVE_TEXTURE_REENTRANT_FLUSH_PASS',variant,
                       Path(compiler).name,'O'+str(opt),
                       'NS2-lock' if native else 'NS1-normal',flush=True)

@@ -18,6 +18,15 @@ def once(t: str, old: str, new: str) -> str:
     return t.replace(old, new)
 
 t = OWNER.read_text()
+if "All old mappings have been evicted" in t:
+    # Exact reverse of the new two-pass retire-before-PTE transaction.
+    # Every byte must recover the previously reviewed GMMU owner before N51
+    # and P1.2 legacy source witnesses run.
+    recover = runpy.run_path(
+        str(ROOT / "tools/ns2/native_gpu_preinvalidate_review.py")
+    )["recover_prior_memory_manager"]
+    t = recover(t)
+    assert blob(t) == "b43eae6863527b47b98892f5bfa68b7f685c0b28"
 if '#include "native_gpu_page_remap.h"' in t:
     # Reverse the *entire exact* P1.2 PTE remap patch, then reapply the
     # historical N51/P1.2 oracle. Neither arbitrary C++ changes nor extra

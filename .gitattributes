@@ -2,5 +2,7 @@
 
 # Unified diff files require single-space context lines; do not flag those as trailing whitespace.
 headless/backports/*.patch -whitespace
+# Reviewed P1.2/N51 exact reverse diff likewise needs context-prefix spaces.
+tools/ns2/p1_2_gpu_preinvalidate.patch -whitespace
 # Pinned third-party CPM sources: preserve byte-for-byte original line endings.
 vendor/sources/eden-cpm/** -text

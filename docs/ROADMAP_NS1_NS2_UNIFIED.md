@@ -133,6 +133,17 @@ testées ; les instructions Ampere non prises en charge restent bloquées.
 validation d'un véritable patch tessellé et des capacités RADV en P5.
 Task/mesh et LEPC dynamique restent des manques de code P2.4.
 
+**P1.2 / N51 — invalidation GPU avant remapping physique :**
+Dans le chemin N51, les notifications précédentes étaient émises après la
+mutation du backing physique. Les caches GPU-dirty pouvaient alors évacuer
+des données vers la nouvelle page plutôt que vers l'ancienne.
+Le propriétaire GMMU commun notifie maintenant les pages modifiées avant
+de remplacer toute PTE (4 Kio et big pages), avec ou sans coalescence.
+Le test C++ extrait les deux méthodes réelles, observe les vieilles PTE
+pendant les callbacks et couvre Clang/GCC O0/O2, N51 activé/désactivé,
+Mapped→Mapped et les transitions d'état. Le replay inverse exact retrouve
+le blob vendor précédent ; preuve GPU sur PS5 conservée en P5.
+
 **P0.2 / P1.2 — N51 notifications des pages GPU regroupées :**
 La source partagée P1.2 identifie les vraies pages modifiées, y compris
 un nouveau backing physique sur un PTE encore mappé. La protection N51

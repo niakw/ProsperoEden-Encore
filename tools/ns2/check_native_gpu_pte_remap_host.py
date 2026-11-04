@@ -19,7 +19,9 @@ assert guard.is_file()
 assert '#include "native_gpu_page_remap.h"' in source
 assert source.count("Eden::GpuMemory::NeedsRasterizerUnmap(") == 2
 assert source.count("changed_runs.Record(current_gpu_addr, mapping_changed, notify_changed);") == 2
-assert source.count("if (mapping_changed) {") == 2
+assert source.count("if (mapping_changed) notify_changed(current_gpu_addr,") == 2
+assert source.count("All old mappings have been evicted") == 1
+assert source.count("Commit big-page backing only after the old cache owner") == 1
 
 def extract(begin: str, end: str) -> str:
     assert source.count(begin) == 1 and source.count(end) == 1
@@ -35,6 +37,7 @@ fixture = r"""
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <functional>
 #include <mutex>
 #include <tuple>
 #include <vector>
@@ -59,7 +62,11 @@ struct BigTable {
 };
 struct Rasterizer {
     std::vector<std::pair<u64,u64>> events;
-    void ModifyGPUMemory(size_t,u64 address,u64 bytes) { events.emplace_back(address,bytes); }
+    std::function<void(u64,u64)> before_unmap;
+    void ModifyGPUMemory(size_t,u64 address,u64 bytes) {
+        if (before_unmap) before_unmap(address,bytes);
+        events.emplace_back(address,bytes);
+    }
 };
 struct Backing {
     std::array<u8,1<<20> data{};
@@ -126,13 +133,31 @@ int main() {
     small.recorder.events.clear();
     map_small(base,0x200000,3*4096);
     Same(small.recorder.events,{});
+    small.recorder.before_unmap=[&](u64,u64) {
+        assert(small.GetEntry(base+4096,false)==Entry::Mapped);
+        assert(small.page_table[(base+4096)/4096]==0x200000/4096+1);
+    };
     map_small(base+4096,0x300000,4096);
+    small.recorder.before_unmap={};
     Same(small.recorder.events,{{base+4096,4096}});
     assert(small.page_table[(base+4096)/4096]==0x300000/4096);
     small.recorder.events.clear();
     map_small(base+4096,0x300000,4096);
     Same(small.recorder.events,{});
+    small.recorder.before_unmap=[&](u64,u64) {
+        assert(small.page_table[base/4096]==0x200000/4096);
+        assert(small.page_table[(base+4096)/4096]==0x300000/4096);
+        assert(small.page_table[(base+8192)/4096]==0x200000/4096+2);
+    };
+    map_small(base,0x600000,3*4096);
+    small.recorder.before_unmap={};
+    small.recorder.events.clear();
+    small.recorder.before_unmap=[&](u64,u64) {
+        assert(small.GetEntry(base+4096,false)==Entry::Mapped);
+        assert(small.page_table[(base+4096)/4096]==0x600000/4096+1);
+    };
     small.PageTableOp(base+4096,0,4096,PTEKind::INVALID,Entry::Reserved);
+    small.recorder.before_unmap={};
     Same(small.recorder.events,{{base+4096,4096}});
     small.recorder.events.clear();
     small.PageTableOp(base+4096,0,4096,PTEKind::INVALID,Entry::Reserved);
@@ -158,7 +183,19 @@ int main() {
     big.recorder.events.clear();
     map_big(big_base+16384,0x500000,16384);
     Same(big.recorder.events,{});
+    big.recorder.before_unmap=[&](u64,u64) {
+        assert(big.big_page_table_dev[big_base/16384]==0x400000/4096);
+        assert(big.big_page_table_dev[(big_base+16384)/16384]==0x500000/4096);
+    };
+    map_big(big_base,0x700000,2*16384);
+    big.recorder.before_unmap={};
+    big.recorder.events.clear();
+    big.recorder.before_unmap=[&](u64,u64) {
+        assert(big.GetEntry(big_base,true)==Entry::Mapped);
+        assert(big.GetEntry(big_base+16384,true)==Entry::Mapped);
+    };
     big.BigPageTableOp(big_base,0,2*16384,PTEKind::INVALID,Entry::Free);
+    big.recorder.before_unmap={};
 #ifdef EDEN_NS2_GPU_RANGE_BATCH
     Same(big.recorder.events,{{big_base,2*16384}});
 #else
@@ -190,4 +227,4 @@ with tempfile.TemporaryDirectory(prefix="eden-guest-gpu-remap-") as temp:
                 assert result.returncode==0,(compiler,opt,batching,result.stderr[-4000:])
                 result=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
                 assert result.returncode==0,(compiler,opt,batching,result.stderr[-3000:])
-                print(f"P1_2_GPU_PTE_REMAP_PASS compiler={compiler} opt={opt} batch={int(batching)} small=1 big=1 NS1=preserved")
+                print(f"P1_2_GPU_PTE_REMAP_PASS compiler={compiler} opt={opt} batch={int(batching)} small=1 big=1 old_backing_verified=1 NS1=preserved")

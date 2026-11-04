@@ -46,6 +46,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends libboost-dev libvulkan-dev
       - name: P2.3 validate real native SSBO write tracking only after final QMD/TIC admission
         run: python3 -B tools/ns2/check_native_compute_write_commit_host.py
+      - name: P2.2b reject same-TIC GPU remaps before pinned Vulkan image dispatch
+        run: python3 -B tools/ns2/check_native_image_physical_backing_host.py
       - name: P1.2/P2.7 C++20 syntax of real GPU worker with native kernel and NVDRV-AS overlays
         run: python3 -B tools/ns2/check_gpu_worker_source_syntax_host.py
       - name: N65 query actual sparse image tile/miptail memory requirements (Clang/GCC)

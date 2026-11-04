@@ -124,6 +124,46 @@ for profile, filename in owners.items():
             '#include "' + str(root / "headless" / header) + '"',
             '#include "' + header + '"')
     maintained = (root/"vendor/encore-active/eden-core/src/video_core"/filename).read_text()
+    if profile == "vulkan_native":
+        # G21 is a frozen *historical* source oracle. The newer, reviewed
+        # N76/P2.7 native Ampere GPU timestamp has one additive owner-only
+        # change in this same Vulkan TU. Remove EXACTLY that known addition
+        # before comparing G21's other original behavior byte-for-byte.
+        # The live added code is compiled/executed by the independent
+        # check_native_gpu_timestamp_host.py source-extraction witness.
+        marker = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_GUEST_COUNTER)
+#include "encore/guest_counter_policy.h"
+#endif
+
+"""
+        assert maintained.count(marker) == 1
+        maintained = maintained.replace(marker, "", 1)
+        amended = """    [[nodiscard]] u64 GetTicks() const {
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_GUEST_COUNTER)
+        // The reviewed ExeFS loader selects the guest counter from NPDM
+        // before the first guest JIT instruction. Native Ampere reports
+        // and CPU/GPU calibration are in nanoseconds, not the Maxwell
+        // 614.4-MHz GPU-tick domain. This switch is shared across titles:
+        // when an NS1 program is selected again, SelectProgram(false)
+        // restores the original tick units without a title-specific hack.
+        if (Eden::GuestCounter::Rate() == Eden::GuestCounter::Switch2Hz) {
+            const auto elapsed_ns = system.CoreTiming().GetGlobalTimeNs().count();
+            return elapsed_ns > 0 ? static_cast<u64>(elapsed_ns) : 0ULL;
+        }
+#endif
+        const u64 gpu_tick = system.CoreTiming().GetGPUTicks();
+        return gpu_tick / GpuClockMultiplier(Settings::values.gpu_clock.GetValue());
+    }
+"""
+        historical = """    [[nodiscard]] u64 GetTicks() const {
+        const u64 gpu_tick = system.CoreTiming().GetGPUTicks();
+        return gpu_tick / GpuClockMultiplier(Settings::values.gpu_clock.GetValue());
+    }
+"""
+        assert maintained.count(amended) == 1
+        maintained = maintained.replace(amended, historical, 1)
+        assert "python3 tools/ns2/check_native_gpu_timestamp_host.py" in (
+            root/".github/workflows/ns2-research-host.yml").read_text()
     assert maintained == expected, "G21 maintained source parity drift: " + profile
     assert maintained.count("VideoCommon::GPUThread::ThreadManager gpu_thread;") == 1
 assert results["vulkan_native_dev"] == results["vulkan_native"] if "vulkan_native_dev" in results else True

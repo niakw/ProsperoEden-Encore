@@ -72,6 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/ns2/check_guest_counter_policy.py
+          python3 tools/ns2/check_native_gpu_timestamp_host.py
       - name: N75 generation-independent shared GPU/CPU pool budget (Clang/GCC)
         shell: bash
         run: |

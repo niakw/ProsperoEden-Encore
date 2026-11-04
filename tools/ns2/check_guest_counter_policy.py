@@ -29,7 +29,7 @@ assert "option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL" not in cmake
 assert "if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)" in cmake
 assert "EDEN_SHARED_NS2_GUEST_COUNTER" in cmake
 assert "if(EDEN_SHARED_NS2_GUEST_COUNTER)" in cmake
-assert "foreach(n76_target IN ITEMS core common eden-headless)" in cmake
+assert "foreach(n76_target IN ITEMS core common eden-headless video_core)" in cmake
 main=(root/"headless/main.cpp").read_text()
 assert "Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);" in main
 assert main.index("Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);") < main.index("loaded = system.Load(window, guest, params);")

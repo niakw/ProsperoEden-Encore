@@ -359,6 +359,25 @@ Le test C++20 utilise uniquement pour cet hôte macOS la combinaison
 libc++ headers CLT 26.5 / SDK de liaison 15.4, sans modifier le moteur.
 **Pas de preuve d'absence de flash sur l'écran PS5 : P5.**
 
+**P2.7 — horloge des rapports GPU native Ampere (04/11, source/hôte) :**
+le propriétaire Vulkan GPU gpu_vulkan.cpp, partagé entre les titres
+NS1 et NS2, produit désormais des timestamps en nanosecondes non
+mis à l'échelle seulement si le vrai loader ExeFS a sélectionné
+la génération NS2 depuis le NPDM (compteur invité 31,25 MHz).
+La voie Maxwell NS1 préexistante conserve exactement les ticks GPU
+divisés par 1/256/512 selon le profil, y compris après retour NS2→NS1.
+CMake transmet à video_core la même définition de génération N76
+que le JIT et le loader. Source adaptée de Lichii
+[#84](https://github.com/zortos293/Lichii/commit/2940d9fab0)
+sans règles par jeu ni changement du GPU non natif.
+Témoin compilant et exécutant le vrai membre C++ GetTicks en UBSan,
+O0/O2, modes natif et sans flag, profils normal/boost/overclock,
+calibration à 5 ms et délai VI de 200 µs. L'oracle G21 vérifie
+toujours la parité octet par octet des cinq variantes hormis cette
+unique addition connue et contrôlée.
+**Pas de GPU PS5 prouvé :** P2.7 garde les GPU-writes→lectures CPU
+des commandes comme blocage et les essais matériels sont P5.
+
 **P2.7c — source/hôte du fetch GPFIFO validée le 04/11 :** les deux
 `DmaPusher` authentifient le canal NS2 et imposent `SafeRead` avant de lire
 les mots invités, y compris sur pages physiques disjointes. Le cache Vulkan

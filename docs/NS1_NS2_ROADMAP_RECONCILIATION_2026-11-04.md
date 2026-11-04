@@ -39,6 +39,17 @@ Contrôle des cases de l'issue #15 sur le code local à main 90f3ff0 / vendor 1a
 - ENVIRONNEMENT : plusieurs témoins hôte Mac utilisent par défaut un SDK CLT 27 dont les stubs arm64e.x1 ne sont pas supportés par le linker local ; le test sélecteur de boîtier choisit désormais le SDK compatible 15.4 uniquement pour le test. Le témoin std::jthread ne compile pas avec cette libc++ Mac.
 - Aucune CI ni compilation native PS5 lancée dans cette revue.
 
+## Complément P2.7 — timestamps GPU Ampere, 4 novembre
+
+Le propriétaire réel Vulkan PS5 GPU::GetTicks utilise désormais
+les nanosecondes pour les titres ExeFS NS2 reconnus par le compteur
+invité NPDM N76 ; Switch 1 conserve ses ticks Maxwell et ses trois
+profils de fréquence, y compris après retour NS2→NS1.
+Régression source-exécutée UBSan O0/O2 ; video_core relié à N76,
+oracle G21 source préservé après la seule addition explicitement
+isolée. Ce changement ne règle pas la cohérence GPU-write→CPU-command,
+ni le premier frame P5 : P2.7 reste ouvert. Aucune CI ni build PS5.
+
 ## Règle de fermeture
 
 Cocher la partie source quand les propriétaires réels et les témoins pertinents sont démontrés ; transférer au P5 uniquement les conditions nécessitant la console. Ne jamais cocher les implémentations manquantes ni une CI non exécutée sur le dernier SHA.

@@ -11,13 +11,13 @@ assert '#include "ns2_title_catalog.h"' in services
 assert 'Eden::Ns2Catalog::Find(game.title_id)' in services
 assert 'return FetchKnownNs2Front(title_id, cancel)' not in services
 assert 'return 0u;' in services
-# The URL must be an exact trusted CDN origin in the C++ assignment.
-# A substring test accepts attacker.example/https://trusted-host and
-# subdomains such as trusted-host.evil.test; CodeQL #17 flagged this.
+# CodeQL #17: the old substring assertion searched *C++ source text*,
+# not a runtime URL. Extract the precise C++ assignment and compare entire
+# trusted origins instead, including all URL components.
 from urllib.parse import urlsplit
 import re
 hosts = re.search(
-    r'const char\\* image_host\\s*=\\s*r2\\s*\\?\\s*"([^"\\n]+)"\\s*:\\s*"([^"\\n]+)"\\s*;',
+    r'const char\* image_host\s*=\s*r2\s*\?\s*"([^"\n]+)"\s*:\s*"([^"\n]+)"\s*;',
     services,
 )
 assert hosts is not None, "CDN host selector missing"

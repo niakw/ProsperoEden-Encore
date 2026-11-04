@@ -100,7 +100,7 @@ int main() {
             ok.image.consumed_native_bytes==32 &&
             ok.image.TranslateNativeAddress(0).has_value(),
             "read mapped native program, detect EXIT and lower to Maxwell image");
-    Require(mem.reads==3,"exact one 128-byte header and two native instruction reads");
+    Require(mem.reads==5,"graphics header and code are reauthenticated before publication");
     // Compute starts at the real QMD program code, not at a fabricated
     // graphics header. Only the actual mapped 16-byte instructions are read.
     const auto compute=CaptureNativeComputeShader(mem.base+0x80,Read,&mem);
@@ -109,8 +109,8 @@ int main() {
             compute.image.diagnostic_cache_key!=ok.image.diagnostic_cache_key &&
             compute.image.ReadMaxwellInstruction(0x50).has_value(),
             "compute capture must use a separate headerless stage domain");
-    Require(mem.reads==5,
-            "compute capture must read only the two actual instructions");
+    Require(mem.reads==8,
+            "compute capture rechecks its real QMD code without a graphics header");
     // Native QMD3 shader code can live above the 32-bit-PCAS or legacy
     // 40-bit GPU address window. The capture reader must not alias the
     // low guest address when a valid 49-bit GPU VA is supplied.
@@ -122,7 +122,7 @@ int main() {
         high_shader.base+0x80,Read,&high_shader);
     Require(upper_compute.Ready() &&
             upper_compute.captured_native_bytes==32 &&
-            high_shader.reads==2 &&
+            high_shader.reads==3 &&
             upper_compute.image.diagnostic_cache_key==
                 compute.image.diagnostic_cache_key,
             "49-bit native Compute GPU address retains exact program bytes");
@@ -174,6 +174,35 @@ int main() {
             header_fault.image.code.empty(),
             "native header must be fully mapped");
     mem.mapped_bytes=mem.data.size();
+
+    // Linear (non-BRX) native programs must also reject a shader/header
+    // rewrite between the initial capture and eventual Vulkan publication.
+    // A one-instruction EXIT makes both reads exact rather than page batches.
+    MappedMemory linear_shader{};
+    linear_shader.data.resize(0x80);
+    Push(linear_shader.data,pred_true|0x94d,0,exit_true);
+    linear_shader.mapped_bytes=linear_shader.data.size();
+    MutatingGpuRead linear_code{&linear_shader,linear_shader.base+0x80U,16U};
+    const auto stale_code=CaptureNativeGraphicsShader(
+        linear_shader.base,4,ReadMutatingGpu,&linear_code);
+    Require(stale_code.status==NativeCaptureStatus::TranslationFailed &&
+            stale_code.first_error_offset==0x80U &&
+            stale_code.image.code.empty() && linear_code.watch_hits==2,
+            "non-BRX shader mutation rejected before GPU pipeline publication");
+    MutatingGpuRead linear_header{&linear_shader,linear_shader.base,0x80U};
+    const auto stale_header=CaptureNativeGraphicsShader(
+        linear_shader.base,4,ReadMutatingGpu,&linear_header);
+    Require(stale_header.status==NativeCaptureStatus::TranslationFailed &&
+            stale_header.first_error_offset==0 &&
+            stale_header.image.code.empty() && linear_header.watch_hits==2,
+            "non-BRX graphics header rewrite rejected after code compilation");
+    MutatingGpuRead compute_code{&linear_shader,linear_shader.base+0x80U,16U};
+    const auto stale_compute=CaptureNativeComputeShader(
+        linear_shader.base+0x80U,ReadMutatingGpu,&compute_code);
+    Require(stale_compute.status==NativeCaptureStatus::TranslationFailed &&
+            stale_compute.first_error_offset==0 &&
+            stale_compute.image.code.empty() && compute_code.watch_hits==2,
+            "non-BRX QMD code rewrite refused with code-relative offset");
 
     mem.data.resize(0x80);
     Push(mem.data,pred_true|0x947,0xffffffe0u,0); // BRA invalid target

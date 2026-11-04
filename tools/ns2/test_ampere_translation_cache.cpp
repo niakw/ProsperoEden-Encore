@@ -101,8 +101,8 @@ int main() {
     auto from_guest_again=CaptureNativeGraphicsShader(r.base,4,Read,&r,&live);
     Check(from_guest.Ready() && from_guest_again.Ready() &&
           live.Stats().hits==1 && live.Stats().translations==1 &&
-          r.reads==initial_reads+3,
-          "cache reuse still validates and reads live GMMU guest bytes");
+          r.reads==initial_reads+5,
+          "cache reuse still validates full GMMU source/header before publication");
 
     // Rewrite the mapped instruction at the SAME GPU address: the cache
     // must see different bytes, not address-based false freshness.

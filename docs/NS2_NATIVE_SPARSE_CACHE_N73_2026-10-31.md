@@ -24,7 +24,7 @@ texture-cache translation unit and the existing scheduler/allocator.
 ## Gating and verification
 
 EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL=OFF by default. If enabled, requires
-PS5 native research + Vulkan + N57 ASTC cache header + N72 queue bridge; final
+PS5 native research + Vulkan + N57 ASTC cache header; the N72 queue bridge is enabled by this same option automatically. Final
 release and non-native builds fail closed. The probe is explicitly callable by a
 future research diagnostics owner but is never called from an automatic
 per-frame texture upload.

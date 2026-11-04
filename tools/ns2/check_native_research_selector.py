@@ -52,6 +52,12 @@ research = verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
                    "EDEN_NS2_EXEFS_EXPERIMENTAL": "ON"}, 0)
 assert "-DEDEN_NS2_EXEFS_EXPERIMENTAL=ON" in research.stdout.splitlines()
 verify({"EDEN_NS2_EXEFS_EXPERIMENTAL": "ON"}, 2)
+# Deleted AM stub and now-redundant standalone N72 queue switch must not
+# silently appear to work. N73 is the sole research owner of sparse queue.
+for removed in ("EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL",
+                "EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL"):
+    verify({removed: "ON"}, 2)
+    verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON", removed: "ON"}, 2)
 verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
         "EDEN_FINAL_RELEASE_PROFILE": "ON"}, 2)
 verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "maybe"}, 2)

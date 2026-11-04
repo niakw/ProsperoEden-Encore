@@ -809,7 +809,7 @@ def main() -> int:
             "eden_ns2_exefs_sources", "eden_ns2_svc_sources",
             "eden_ns2_gpu_access_sources", "eden_ns2_process_sources",
             "eden_ns2_kernel_sources", "eden_ns2_audio_sources",
-            "eden_ns2_am_sources", "eden_ns2_scale_sources",
+            "eden_ns2_am_sources",
             "eden_ns2_nvdrv_sources", "eden_ns2_nvdrv_sources",
             "eden_ns2_research_kernel_sources", "eden_ns2_supervisor_sources",
         ]
@@ -828,22 +828,18 @@ def main() -> int:
                 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in CMAKE[am_selection:release_gate] and
                 'list(FIND eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}"' in CMAKE,
                 "NS2 application manager must require metadata and maintained source owner")
-        scale_selection = CMAKE.index("# Research-only AM proxy command 60 and graphics scaling service.")
-        require(am_selection < scale_selection < release_gate,
-                "Graphics scaling source owner must precede final release gate")
-        require("option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" in CMAKE and
-                "if(NOT PS5_NATIVE OR NOT EDEN_SHARED_NS2_AM)" in CMAKE[scale_selection:release_gate] and
-                "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR" in CMAKE,
-                "Graphics scaling option must depend on AM and remain release-forbidden")
-        scale_root = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
-        proxy = (scale_root / "application_proxy.cpp").read_text()
-        scale = (scale_root / "graphics_scaling_parameters_functions.cpp").read_text()
-        require("{60, D<&IApplicationProxy::GetGraphicsScalingParametersFunctions>" in proxy and
-                "GetGraphicsScalingParametersFunctions(" in proxy,
-                "NS2 proxy command 60 must instantiate real graphics scaling service")
-        require("{1050, nullptr, \"SetGraphicsScaleChangedNotificationEnabled\"}" in scale and
-                "*out_parameters = {10, 1, 1}" in scale,
-                "Research graphics scale must not pretend to implement notifications")
+        # Removed misleading prototype that fabricated SDK graphics scale
+        # 10 and ratio 1:1 without an actual display/event source.
+        require("option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in CMAKE and
+                "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR" not in CMAKE and
+                "graphics_scaling_parameters_functions.cpp" not in CMAKE,
+                "Unverified graphics scaling stub must not enter NS1/NS2 AM")
+        retired_am = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
+        require(all(not (retired_am / file).exists() for file in (
+                "application_proxy.cpp", "application_proxy.h",
+                "graphics_scaling_parameters_functions.cpp",
+                "graphics_scaling_parameters_functions.h")),
+                "Retired AM research fork must not shadow pinned applet proxy")
         session_selection = CMAKE.index("# Switch 2 GPU TIPC service and bounded worker transport.")
         require(session_selection < release_gate and
                 'option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL' in CMAKE and

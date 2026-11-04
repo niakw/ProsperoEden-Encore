@@ -122,14 +122,20 @@ if [[ "$ns2_research_profile" == ON && "${EDEN_FINAL_RELEASE_PROFILE:-OFF}" == O
     echo "NS2 native research cannot use EDEN_FINAL_RELEASE_PROFILE=ON" >&2
     exit 2
 fi
+# Never silently ignore an obsolete knob. N72 is now coupled to N73;
+# the synthetic AM graphics-scale service was intentionally removed.
+for retired_ns2_option in EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL; do
+    if [[ "${!retired_ns2_option:-OFF}" != OFF ]]; then
+        echo "Retired NS2 selector: $retired_ns2_option (no standalone implementation)" >&2
+        exit 2
+    fi
+done
 ns2_cmake_args=()
 ns2_options=(
     EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
-    EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
     EDEN_NS2_EXEFS_EXPERIMENTAL
     EDEN_NS2_A64_EXPERIMENTAL
     EDEN_NS2_CPU6_EXPERIMENTAL
-    EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL
     EDEN_NS2_NVDRV_EXPERIMENTAL
     EDEN_NS2_GPU_SESSION_EXPERIMENTAL
     EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL

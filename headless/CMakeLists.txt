@@ -1497,13 +1497,14 @@ endif()
 # Vulkan sparse support is maintained in vendor (same PS5 Vulkan owners).
 # N73: isolated native texture-cache probe. All layers must be resident before
 # the test image is used. Standard game textures remain on the dense path.
+# This is the ONLY sparse opt-in: N72's scheduler bridge has no independent
+# runtime consumer and must always be compiled as part of the N73 probe.
 option(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
     "Research only: native VkImage sparse cache admission/bind/retire probe" OFF)
 if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE OR
-       NOT EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
-        message(FATAL_ERROR "N73 requires native research Vulkan, N72 queue and N57 cache header")
+       NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N73 requires native research Vulkan and N57 cache header")
     endif()
     foreach(eden_n73_file IN ITEMS
         "video_core/renderer_vulkan/ns2_sparse_cache_admission.h"
@@ -1537,9 +1538,9 @@ endif()
 
 
 # N72: serialize sparse binds on the same native Vulkan submit mutex.
-option(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
-    "Research only: serialize sparse binds on the existing PS5 graphics queue" OFF)
-if(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
+# N72 is not a separate mode: without N73 no real texture-cache owner
+# consumes the sparse queue. One switch prevents the invalid half-build.
+if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
        NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
         message(FATAL_ERROR "N72 sparse scheduler requires PS5 Vulkan NSW2 research")
@@ -2393,35 +2394,9 @@ if(EDEN_SHARED_NS2_AM)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_ROOT}")
 endif()
 
-# Research-only AM proxy command 60 and graphics scaling service.
-# Do not advertise notification success: pinned Encore lacks the applet event.
-option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL
-    "Research only: NS2 graphics scaling parameter query, no notifications" OFF)
-if(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_SHARED_NS2_AM)
-        message(FATAL_ERROR "NS2 graphics scaling research requires native shared AM")
-    endif()
-    set(EDEN_NS2_SCALE_OWNER "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service")
-    foreach(eden_ns2_scale_file application_proxy.cpp application_proxy.h
-                                graphics_scaling_parameters_functions.cpp
-                                graphics_scaling_parameters_functions.h)
-        if(NOT EXISTS "${EDEN_NS2_SCALE_OWNER}/${eden_ns2_scale_file}")
-            message(FATAL_ERROR "Missing NS2 graphics scaling service: ${eden_ns2_scale_file}")
-        endif()
-    endforeach()
-    get_target_property(eden_ns2_scale_sources core SOURCES)
-    list(FIND eden_ns2_scale_sources
-        "hle/service/am/service/application_proxy.cpp" eden_ns2_scale_idx)
-    if(eden_ns2_scale_idx EQUAL -1)
-        message(FATAL_ERROR "Pinned IApplicationProxy owner changed; audit needed")
-    endif()
-    list(REMOVE_ITEM eden_ns2_scale_sources
-        "hle/service/am/service/application_proxy.cpp")
-    list(APPEND eden_ns2_scale_sources
-        "${EDEN_NS2_SCALE_OWNER}/application_proxy.cpp"
-        "${EDEN_NS2_SCALE_OWNER}/graphics_scaling_parameters_functions.cpp")
-    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_scale_sources}")
-endif()
+# Retired prototype AM graphics scaling: command 60 used an unverified
+# constant response with no event contract. Do not compile/advertise it.
+# A future real NS2 implementation must derive values from GPU/display state.
 
 # Native Switch 2 GPU capabilities IOCTLs, experimental only; original
 # Maxwell IOCTL path remains active for all other request IDs.
@@ -2840,7 +2815,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
        EDEN_NS2_EXEFS_EXPERIMENTAL OR
        EDEN_NS2_A64_EXPERIMENTAL OR
-       EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR EDEN_NS2_CPU6_EXPERIMENTAL OR
+       EDEN_NS2_CPU6_EXPERIMENTAL OR
        EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR

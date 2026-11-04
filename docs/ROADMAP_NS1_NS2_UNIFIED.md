@@ -176,6 +176,21 @@ La compilation du vrai `TickFrame()` extrait et les tests Clang/GCC avec
 ASan/UBSan passent. Les performances et le comportement matériel PS5
 restent P5 ; aucun mode expérimental ne commande cette politique.
 
+**P0.2 — décision sur les modes de recherche (04/11) :**
+L'ancien Graphics Scale AM command 60 renvoyait une valeur de résolution
+prototype sans source d'état écran et sans événement 1050. Il était
+inutilisé par le programme distribué : option, override du proxy,
+quatre sources vendor et faux test de réussite supprimés. La commande
+AM 320 commune et le proxy original restent inchangés.
+De même, N72 sparse-queue n'avait aucun consommateur indépendant
+de N73 sparse-cache. N72 est donc désormais activé automatiquement
+avec l'unique option de recherche N73 : impossible de construire
+un demi-chemin sparse. **9 options restent, toutes OFF par défaut**.
+Chacune conserve un vrai propriétaire de code sélectionnable ; cela
+ne valide ni leur activation automatique ni le rendu NS2 PS5.
+Les contrôles hôte vérifient la liste exacte, les dépendances,
+les options obsolètes refusées et le verrou final release/P5.
+
 **P0.2 / P1.1 — NPDM source commun N1 sélectionné automatiquement :**
 Le parser maintenu reconnaît ACID 2048 bits (NS1) et 3072 bits (NS2)
 à partir des octets réels, pour tous les profils natifs PS5.
@@ -185,7 +200,7 @@ Le vrai `ProgramMetadata::Load` a été compilé et exécuté sur Mac avec
 Clang ASan/UBSan, en plus des témoins du helper O0/O2 ; fichiers valides,
 ambigus et tronqués sont traités selon la politique NS1-conservatrice.
 Tests des sélecteurs CMake recherche/release et du chemin renderer négatif
-réussis ; aucun build PS5. Les 11 autres flags restent OFF par défaut.
+réussis ; aucun build PS5. Les 9 flags de recherche conservés restent OFF par défaut ; le prototype Graphics Scale sans source réelle a été supprimé et la queue sparse N72 est maintenant toujours couplée au cache N73.
 
 **P2.5 / P0.2 — N57 + N60 intégrés au Vulkan PS5 commun (source/hôte) :**
 Le décodage ASTC par layer et ses vues Vulkan (N57), puis la gestion

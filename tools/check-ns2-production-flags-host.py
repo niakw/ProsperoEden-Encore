@@ -19,9 +19,40 @@ declared = OPT.findall(CMAKE)
 flags = dict(declared)
 all_source_flags = set(re.findall(r'\bEDEN_NS2_[A-Z0-9_]*EXPERIMENTAL\b', CMAKE))
 assert len(declared) == len(flags), "Duplicate CMake option owner"
-assert len(flags) == 11, ("Unreviewed number of NS2 research gates", len(flags))
+assert len(flags) == 9, ("Unreviewed number of NS2 research gates", len(flags))
 assert all_source_flags == set(flags), sorted(all_source_flags - set(flags))
 assert set(flags.values()) == {"OFF"}, "Research flags must not be enabled by default"
+
+# Retain an opt-in only when it still owns a concrete, selected
+# implementation. Simply listing an old option in the release denylist is
+# not evidence of a useful research path.
+implementation_proofs = {
+    "EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL": "EDEN_NS2_SPARSE_CACHE_PROBE=1",
+    "EDEN_NS2_EXEFS_EXPERIMENTAL": "EDEN_NS2_NATIVE_SVC_SOURCE",
+    "EDEN_NS2_A64_EXPERIMENTAL": "target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1)",
+    "EDEN_NS2_CPU6_EXPERIMENTAL": "target_compile_definitions(core PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)",
+    "EDEN_NS2_NVDRV_EXPERIMENTAL": "EDEN_NS2_NVDRV_AS_SOURCE",
+    "EDEN_NS2_GPU_SESSION_EXPERIMENTAL": "EDEN_NS2_GPU_SESSION_SOURCE",
+    "EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL": "EDEN_NS2_SUPERVISOR_ROOT",
+    "EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL": "EDEN_NS2_NATIVE_GMMU_CAPTURE",
+    "EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL": "EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE",
+}
+assert set(implementation_proofs) == set(flags), "Unproved/dead NS2 option was retained"
+native_runner = (ROOT / "tools/build-headless-native.sh").read_text()
+research_workflow = (ROOT / ".github/workflows/ns2-native-ps5-research.yml").read_text()
+for flag, marker in implementation_proofs.items():
+    assert marker in CMAKE, ("No compiled source owner for retained research option", flag)
+    assert CMAKE.count(flag) >= 2, ("Unused NS2 option", flag)
+    assert "    " + flag + "\n" in native_runner, ("Native research build misses option", flag)
+    assert flag + ": 'ON'" in research_workflow, ("Research workflow misses option", flag)
+assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in CMAKE
+assert "graphics_scaling_parameters_functions.cpp" not in CMAKE
+assert "EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL" not in CMAKE
+sparse_queue_owner = CMAKE.split("# N72: serialize sparse binds", 1)[1].split(
+    "# N60: one shared PS5 Vulkan texture-cache", 1)[0]
+assert "if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)" in sparse_queue_owner
+assert "target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_QUEUE_BRIDGE=1)" in sparse_queue_owner
+assert "target_compile_definitions(video_core PRIVATE EDEN_NS2_SPARSE_CACHE_PROBE=1)" in CMAKE
 
 documented = re.findall(r'`(EDEN_NS2_[A-Z0-9_]*EXPERIMENTAL)`', DOC)
 assert len(documented) == len(set(documented)) == len(flags), (

@@ -35,6 +35,7 @@ for path in (".github/workflows/encore-core-fast-gate.yml",
 
 cpp=r"""
 #include <cassert>
+#include <initializer_list>
 #include <new>
 #include <stdexcept>
 #include <type_traits>

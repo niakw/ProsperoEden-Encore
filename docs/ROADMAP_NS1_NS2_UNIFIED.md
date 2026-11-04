@@ -119,6 +119,15 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P4.2b — témoins négatifs source/hôte revérifiés le 04/11 :**
+[preuves détaillées et commandes testées](NS1_NS2_P4_HOST_NEGATIVE_EVIDENCE_2026-11-04.md).
+GMMU/VRAM, NVMap, files VI2, fencing, descriptions Vulkan, mémoire dirty,
+record de commandes et DMA ont passé les cas OOM/rollback ciblés sous
+Clang/GCC O0/O2 lorsque le test le propose. Le témoin scheduler a retrouvé
+sa compilation hôte grâce à l'inclusion C++ standard `initializer_list`.
+La régression NS1 globale sur le SHA définitif et les vraies files GPU
+restent respectivement P4.2 et P5 ; aucune CI PS5 n'est déclenchée.
+
 **P3.3 — transition jaquette OpenGL → Vulkan qualifiée source/hôte le 04/11 :**
 `check-ps5-vulkan-loading-stages-host.py` confirme la boîte aux lettres de
 jaquette unique et bornée et l'absence d'effacement lors du passage Vulkan;

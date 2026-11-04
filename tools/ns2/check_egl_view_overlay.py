@@ -14,7 +14,8 @@ assert src.count("VkImageViewType view_type = ImageViewType(type);") == 1
 assert HEADER.exists()
 assert "CrossDimensionView(" in HEADER.read_text()
 assert "EDEN_NS2_VIEW_DIMENSION_GUARD=1" in CMAKE
-assert "EDEN_NS2_VIEW_EXPERIMENTAL OR" in CMAKE
+assert "option(EDEN_NS2_VIEW_EXPERIMENTAL" not in CMAKE
+assert "if(PS5_NATIVE AND EDEN_PS5_VULKAN)" in CMAKE
 assert "eden_ns2_egl_view_file" not in CMAKE
 assert "headless/ns2/eglantine/video_core/renderer_vulkan/vk_texture_cache.cpp" not in CMAKE
 

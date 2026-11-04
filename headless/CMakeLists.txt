@@ -1618,14 +1618,10 @@ endif()
 
 # Sparse VMA, VkImage factory and requirements are in the shared vendor fork.
 
-# N49: opt-in image-view safety in one maintained PS5 Vulkan source owner.
-option(EDEN_NS2_VIEW_EXPERIMENTAL
-    "Research only: reject cross-dimension 3D shader/image views" OFF)
-if(EDEN_NS2_VIEW_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "NS2 image view guard requires PS5 Vulkan research")
-    endif()
+# N49: shared production PS5 Vulkan image-view dimensionality guard.
+# A 3D shader must not force an incompatible 2D image into an invalid VkImageView.
+# The same maintained texture cache owner serves NS1 and NS2.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_N49_HELPER
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h")
     if(NOT EXISTS "${EDEN_NS2_N49_HELPER}")
@@ -2886,7 +2882,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
-       EDEN_NS2_VIEW_EXPERIMENTAL OR
        EDEN_NS2_CONTINUITY_EXPERIMENTAL OR
        EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR

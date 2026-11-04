@@ -159,8 +159,8 @@ class FakeServices final : public ui::Services
 
   private:
     std::vector<ui::Game> games_;
-    bool preview_botw_ = false;
-    bool preview_ns2_ = false; // host-only real scan example, never packaged
+    bool preview_botw_ = false; // host-only original NS1 case specimen
+    bool preview_ns2_ = false;  // host-only 0400... case specimen
     bool enable_sample_case_ = true; // exercise generic no-scan fallback
     std::uint64_t sample_case_title_id_ = 0;
     std::string sample_case_front_;

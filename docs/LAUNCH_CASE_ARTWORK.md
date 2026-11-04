@@ -635,3 +635,29 @@ present and checks the shelf, reconstructed rear, and zoomed paper. No
 separate image generator, thumbnail template, second cover engine or console
 test is used. The host OpenGL build and source gates must both pass before
 calling this visually verified.
+
+## NS2 front header, red cases and host evidence (2026-11-04)
+
+- A Switch 2-only `0400...` title uses its platform-specific red molded
+  case (3D launch model and 2D Library sleeve). Switch 1 `0100...`
+  remains on its existing material; shared-release platform detection is
+  deliberately not guessed from a title string.
+- A missing NS2 retail **front** is reconstructed from locally cached media
+  and receives the user-supplied full-width `ns2-head` print at the **top
+  of the front face**. Its compact, deterministic PNG asset lives at
+  `headless/prosperoeden/ui/art/ns2-head.png.b64`. Both host rendering and
+  PS5 packaging decode it into an ordinary TGA loaded once by the launcher.
+- Authentic retail front and back scans always supersede the composition and
+  are never overprinted with another logo.
+- A genuine cached Nintendo Switch 1 (or 2) **Box - Spine** scan is already
+  selected as its own third face, independent of front/back availability.
+  When absent, an unlettered red vector spine remains the fallback. No
+  additional title-specific fallback or runtime media request was added.
+- The native Mesa OpenGL preview job now archives NS2 retail and
+  reconstructed front/spine/back renders, plus an NS2 reconstructed Library
+  front/back/zoom set, in addition to the existing NS1 captures. The
+  fixture uses a `0400...` title identity and generated sample game art.
+  This demonstrates the launcher presentation, **not** NS2 guest gameplay
+  or a successful PS5 build.
+- Source regression gate:
+  `python3 -B tools/check-launcher-ns2-case-preview.py`.

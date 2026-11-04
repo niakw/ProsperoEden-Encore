@@ -169,6 +169,13 @@ int main() {
     auto invalid_offset = SurfaceReduction;
     invalid_offset.words[1] |= (0x2000U << 8);
     assert(!Lower(invalid_offset));
+    auto scratch_data = SurfaceReduction;
+    scratch_data.words[1] = (scratch_data.words[1] & ~0xffU) | 250U;
+    assert(!Lower(scratch_data));
+    auto scratch_coordinate = SurfaceReduction;
+    scratch_coordinate.words[0] = (scratch_coordinate.words[0] & 0x00ffffffU) |
+                                  (248U << 24);
+    assert(!Lower(scratch_coordinate));
 
     // IMNMX signed 20-bit immediate must not consume a scratch register.
     for (u32 value : {0U, 0x7ffffU, 0xfff80000U, 0xffffffffU}) {

@@ -15,7 +15,7 @@ du 04/11/2026 13:53 UTC. Sélection par opcode/mécanisme partagé, jamais par t
 Les régressions hôte utilisent les mots d'instruction capturés dans les commits
 en amont, via le **vrai** `LowerToMaxwell` et `ProbeProgram` d'Encore,
 pas via un modèle indépendant de compilateur. Tests positifs, négatifs (bits,
-dimensions, registres, canaux), prédication, sortie Maxwell et sémantique wrap
+dimensions, registres, canaux et chevauchements des registres scratch), prédication, sortie Maxwell et sémantique wrap
 sous Clang/GCC et UBSan. Vérification du bridge existant en parallèle.
 
 **Limites :** aucun shader complet, pipeline RADV ou framebuffer invité prouvé ;

@@ -40,6 +40,51 @@ static void Check(Opcode op, u32 bank, u32 offset, u32 reflected,
         std::abort();
     }
 }
+static void CheckNativeAtomic(
+    Opcode opcode, bool expected,
+    bool writable = true, bool declared = true, bool used = true,
+    bool aliases = true, bool int64_atomics = true,
+    bool dynamic_binding = false, u32 cbuf_offset = 0x310,
+    u32 atomic_offset = 0, bool int64 = true) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{16};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage = Shader::Stage::Compute;
+    program.blocks.push_back(&block);
+    if (declared) {
+        program.info.constant_buffer_mask = 1;
+        program.info.constant_buffer_descriptors.push_back({0, 1});
+    }
+    program.info.storage_buffers_descriptors.push_back(
+        {.cbuf_index = 0, .cbuf_offset = cbuf_offset,
+         .count = 1, .is_written = writable});
+    if (used) program.info.nvn_buffer_used.set(0);
+    Shader::Profile profile{};
+    profile.support_descriptor_aliasing = aliases;
+    profile.support_int64 = int64;
+    profile.support_int64_atomics = int64_atomics;
+    Value binding{u32{0}};
+    if (dynamic_binding) {
+        block.AppendNewInst(Opcode::IAdd32, {Value{u32{0}}, Value{u32{1}}});
+        binding = Value{&block.back()};
+    }
+    // Storage atomics use flattened SSBO slot; unresolved GlobalAtomic
+    // instead carries a raw 64-bit guest address (unprovable here).
+    if (opcode >= Opcode::GlobalAtomicIAdd32 &&
+        opcode <= Opcode::GlobalAtomicMaxF32x2)
+        block.AppendNewInst(opcode, {Value{u64{0x100000}}, Value{u32{1}}});
+    else
+        block.AppendNewInst(opcode,
+                            {binding, Value{atomic_offset}, Value{u32{1}}});
+    const bool actual=Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
+        program,profile);
+    if (actual!=expected) {
+        std::fprintf(stderr,
+            "Native QMD3 atomic opcode=%u expected=%u got=%u\n",
+            static_cast<unsigned>(opcode), expected, actual);
+        std::abort();
+    }
+}
 int main() {
     // P2.3: actual native global memory OpAccessChain must never start
     // inside a valid SSBO if the last byte falls outside it. The old
@@ -165,5 +210,47 @@ int main() {
     Check(Opcode::GetCbufU32,1,0,1,3,false,false,false,0);
     Check(Opcode::GetCbufU32,0,0,1,1,true,false,false,0);
     Check(Opcode::GetCbufU32,0,0,1,0,false,false,false,0);
-    std::puts("P2_3_NATIVE_QMD_REAL_DIRECT_CBUF_PASS masks=reflected widths=bounded dynamic=64KiB");
+    // P2.3: execute the REAL post-translation QMD3 atomic admission.
+    // The shared SPIR-V emitter fails on unresolved GlobalAtomic, and
+    // silently substitutes non-atomic loads/stores for U32x2 or unsupported
+    // U64 atomics. Only reflected, writable native storage slots are safe.
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,true);
+    CheckNativeAtomic(Opcode::StorageAtomicExchange32,true);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64,true);
+    CheckNativeAtomic(Opcode::StorageAtomicExchange64,true);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64,false,true,true,true,true,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64,false,true,true,true,false,true);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64,false,true,true,true,true,true,
+                      false,0x310,0,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,true,
+                      false,0x310,2);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64,false,true,true,true,true,true,
+                      false,0x310,4);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,true,true,true,true,true,true,
+                      false,0x310,4);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64,true,true,true,true,true,true,
+                      false,0x310,8);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32x2,false);
+    CheckNativeAtomic(Opcode::StorageAtomicExchange32x2,false);
+    CheckNativeAtomic(Opcode::GlobalAtomicIAdd32,false);
+    CheckNativeAtomic(Opcode::GlobalAtomicExchange64,false);
+    CheckNativeAtomic(Opcode::GlobalAtomicMaxF32x2,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,true,true);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,true,false,0x314);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,true,false,0xfff8);
+    // No atomic instructions is valid even when there are no SSBOs.
+    {
+        Shader::ObjectPool<Shader::IR::Inst> pool{4};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage=Shader::Stage::Compute;
+        program.blocks.push_back(&block);
+        block.AppendNewInst(Opcode::IAdd32,{Value{u32{0}},Value{u32{1}}});
+        assert(Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
+            program,Shader::Profile{}));
+    }
+    std::puts("P2_3_NATIVE_QMD_REAL_DIRECT_CBUF_PASS masks=reflected widths=bounded dynamic=64KiB atomics=authenticated no_nonatomic_fallback=1");
 }

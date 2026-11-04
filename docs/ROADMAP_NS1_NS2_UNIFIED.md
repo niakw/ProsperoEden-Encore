@@ -244,6 +244,38 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — admission des atomiques Compute sous véritable SSBO
+(04/11, source/hôte) :** le compilateur NS2 Compute passe désormais
+le vrai IR post-traduction par une vérification *avant* l'émission
+SPIR-V. Un GlobalAtomic dont le pointeur invité n'a pas pu être
+relié à une liaison SSBO ne peut plus atteindre le backend comme
+une opération exécutable : refus explicite de compilation.
+Les StorageAtomic conservés doivent référencer un emplacement
+immédiat présent parmi les descripteurs QMD3 reflétés, activé dans
+NVN, inscriptible, soutenu par une véritable banque CBUF et un
+enregistrement de descripteur aligné. Les décalages statiques ne
+peuvent pas être arrondis à un mot voisin : alignement 4 octets
+pour les opérations 32 bits, 8 pour les opérations 64 bits.
+
+La voie commune SPIR-V substitue parfois des lectures/écritures
+**non atomiques** aux StorageAtomic 64 bits si Vulkan n'expose pas
+les atomiques 64 bits, et le repli U32x2 est toujours non atomique.
+NS2 refuse désormais ces formes plutôt que de prétendre les avoir
+exécutées atomiquement. Les vrais atomiques 64 bits exigent
+support_int64, support_int64_atomics et support_descriptor_aliasing.
+Le code Maxwell NS1 reste inchangé.
+
+**Preuve :** tests IR C++ créant de vraies instructions GlobalAtomic
+et StorageAtomic, avec positifs/négatifs sur registres de liaison,
+propriétaires CBUF, drapeaux d'écriture, décalages, capacités 64 bits
+et repli U32x2 ; Clang/GCC UBSan hôte ; compilation syntaxique du
+propriétaire renderer_spirv_bridge.cpp O0/O2 sur headers épinglés.
+Cette admission valide les métadonnées et les instructions, **pas**
+la résidence de chaque pointeur atomique dynamique à l'exécution.
+Le contrôle effectif de l'adresse/du buffer dans un dispatch Vulkan,
+les indexations dynamiques et les opérations non prouvées demeurent
+ouverts en P2.3/P5. Aucun GPU PS5 testé.
+
 **P2.3 — U32x2 CBUF entre vecteurs SPIR-V voisins (04/11,
 source/hôte) :** les accès de 64 bits Ampere en CBUF ne peuvent
 pas être correctement représentés en arrondissant simplement

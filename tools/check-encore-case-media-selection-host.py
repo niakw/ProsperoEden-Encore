@@ -5,8 +5,10 @@ All scenes come from existing locally cached game media. We never fetch,
 invent or duplicate screenshot sources to fill a case page.
 """
 from pathlib import Path
+import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
@@ -230,7 +232,10 @@ int main() {
         hero, icon, shots, [&](const std::string& path) { return path == icon; }) == &icon);
     assert(FrontPaperAvailable(
         hero, icon, shots, [](const std::string&) { return false; }) == nullptr);
-    const auto excluded_cover = BackScenes(hero, icon, {"icon.tga", "scene.tga"});
+    // BackScenes returns pointers into the caller-owned vector. A temporary
+    // vector would be destroyed before the assertions and cause undefined behavior.
+    const std::vector<std::string> cover_sources{"icon.tga", "scene.tga"};
+    const auto excluded_cover = BackScenes(hero, icon, cover_sources);
     assert(excluded_cover[0] && *excluded_cover[0] == "scene.tga");
     assert(!excluded_cover[1]);
 
@@ -242,6 +247,14 @@ int main() {
 compilers = list(dict.fromkeys(filter(None,
     (shutil.which("clang++"), shutil.which("g++"), shutil.which("c++")))))
 assert compilers, "Host C++ compiler required"
+# Apple CLT 27.0 has an arm64e.x1 SDK stub rejected by the installed
+# linker. Prefer a compatible SDK for this *host witness* when available.
+# Respect an explicitly selected SDKROOT and never change the PS5 build.
+compiler_env = os.environ.copy()
+if sys.platform == "darwin" and not compiler_env.get("SDKROOT"):
+    supported_sdk = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+    if supported_sdk.is_dir():
+        compiler_env["SDKROOT"] = str(supported_sdk)
 with tempfile.TemporaryDirectory(prefix="encore-case-media-") as temp:
     cpp = Path(temp) / "case-media.cpp"
     cpp.write_text(source)
@@ -252,7 +265,7 @@ with tempfile.TemporaryDirectory(prefix="encore-case-media-") as temp:
                 [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
                  "-fsanitize=undefined", "-fno-sanitize-recover=all",
                  "-I", str(root / "headless/prosperoeden"), str(cpp), "-o", str(exe)],
-                capture_output=True, text=True, timeout=50
+                capture_output=True, text=True, timeout=50, env=compiler_env
             )
             assert built.returncode == 0, (compiler, opt, built.stderr[-4000:])
             result = subprocess.run(

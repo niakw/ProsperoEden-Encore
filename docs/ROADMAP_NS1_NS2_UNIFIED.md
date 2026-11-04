@@ -4,6 +4,7 @@
 
 > **Suivi vivant à cases cochables : [GitHub Issue #15 — ROADMAP](https://github.com/niakw/ProsperoEden-Encore/issues/15)**
 > **Audit technique et preuves de boot : [GitHub Issue #14](https://github.com/niakw/ProsperoEden-Encore/issues/14)**
+> **Réconciliation des cases ouvertes (04/11) : [audit source/hôte](NS1_NS2_ROADMAP_RECONCILIATION_2026-11-04.md)**
 > Le document présent explique les dépendances et critères de sortie; c'est l'issue #15 qu'il faut mettre à jour après chaque lot.
 
 ## Objectif et règles
@@ -53,7 +54,7 @@ Ces jalons ne sont **pas** des estimations de délais; chacun se ferme uniquemen
 - [Tests hôte NS2 #41433008853](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41433008853) et [preview #41433008821](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41433008821) : réussis pour cette révision; [core fast gate #41433008785](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41433008785) : échec d'inventaire F07, **pas** un PASS moteur.
 - Correctif de classement du composant loader hors inventaire historique : [`2963bea`](https://github.com/niakw/ProsperoEden-Encore/commit/2963bea8ad537cb56d92b9a876f9054684055d9f), [nouveau core gate #41434852822](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41434852822) en cours lors de la création de ce document.
 
-**Priorité immédiate :** fermer P0.1, établir la cartographie des responsabilités communes (P0.2/P0.3), puis terminer TIC/TSC + mémoire/VI2 pour atteindre une frame GPU NS2 réellement présentable.
+**Historique du 02/11 (non priorités courantes) :** P0.1, cartographie P0.3, TIC/TSC, mémoire et VI2 figuraient dans le plan initial. L'audit du 04/11 distingue désormais les parties source prouvées, les véritables manques d'implémentation et les validations console transférées à P5.
 
 ## P2.6a — Réutilisation native Compute revue (2026-11-02)
 

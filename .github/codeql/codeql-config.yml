@@ -21,6 +21,14 @@ paths-ignore:
   # Immutable upstream source snapshots used as regression fixtures only.
   # The active graphics runtime remains under vendor/encore-active.
   - 'tools/fixtures/**'
+  # Explicitly exclude four READ-ONLY Boost 1.90 allocator templates
+  # audited in docs/CODEQL_ALERTS_17_23_AUDIT_2026-11-04.md.
+  # These are upstream snapshots, not Encore-owned implementation.
+  # Keep vendor/encore-active, headless and other first-party paths scanned.
+  - 'vendor/sources/eden-cpm/boost/boost-1.90.0/libs/container/include/boost/container/vector.hpp'
+  - 'vendor/sources/eden-cpm/boost/boost-1.90.0/libs/unordered/include/boost/unordered/detail/fca.hpp'
+  - 'vendor/sources/eden-cpm/boost/boost-1.90.0/libs/unordered/include/boost/unordered/detail/implementation.hpp'
+  - 'vendor/sources/eden-cpm/boost/boost-1.90.0/libs/unordered/include/boost/unordered/detail/foa/core.hpp'
   - 'vendor/sources/**/libs/mpl/preprocessed/pp.py'   # Boost MPL formatter
   - 'vendor/sources/**/tools/litre/cplusplus.py'      # Boost Litre harness
   - 'vendor/sources/**/bin/nir-test-runner.py'        # Mesa offline test runner

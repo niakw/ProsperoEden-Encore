@@ -66,6 +66,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
+      - name: Verify audited Boost allocator pairings and CodeQL scope
+        run: python3 -B tools/check-codeql-allocator-pairs-host.py
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:

@@ -112,6 +112,11 @@ avec ses CBUF de stage 3 et la liaison inter-stage créée par le même
 GraphicsPipeline commun. Seuls les opcodes déjà revus par le lowerer sont
 acceptés; LEPC dynamique, tessellation et task/mesh restent refusés.
 Cette prise en charge n'est **pas** une preuve de géométrie correcte sur PS5.
+**P2.4 — relecture après compilation :** la création du pipeline graphique
+réauthentifie désormais la configuration des stages, leurs offsets et les
+instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
+Un changement invité sans changement d'époque GPU refuse le pipeline avant
+publication. La preuve de stabilité en conditions réelles reste en P5.
 
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications

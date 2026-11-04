@@ -244,7 +244,7 @@ percent of the 454px front width. The same treatment applies to every title.
   the opposite physical RED hinge appears only as a narrow seam on the RIGHT.
 - The flat front/back scans use aspect-preserving containment and cannot
   stretch a region's back-cover descriptions. Genuine scans remain priority.
-- An original unreadably tiny physical spine (under 64x600 px) is rejected;
+- An original unreadably tiny physical spine (under 16x250 px) is rejected;
   the universal fallback is a clean red neutral sleeve with pale, title-free
   molding marks, never a pixel-stretched title.
 - Eden logo and title are moved into the right column with clear case margins.
@@ -266,7 +266,7 @@ The image worker considers multiple region-ranked originals separately for
 front/back/spine. For BOTW, the user-identified 4b815... French back-cover
 source resolved as an actual 1167x1878 scan in the host visual run, replacing
 the tiny 174x281 thumbnail. The rendering preserves the original aspect ratio
-rather than stretching the lettering. A source spine narrower than 64px or
+rather than stretching the lettering. A source spine narrower than 16px or
 shorter than 600px is not passed off as readable: the preview and native
 resolver use the neutral empty red sleeve without an invented game title.
 
@@ -661,3 +661,10 @@ calling this visually verified.
   or a successful PS5 build.
 - Source regression gate:
   `python3 -B tools/check-launcher-ns2-case-preview.py`.
+
+**Switch 1 original spine priority:** the earlier minimum 64×600 pixels blocked
+some genuine cached Box - Spine thumbnails (including 18×281). Original
+scans now qualify from 16×250 when their complete image is valid, both in
+the network cache and for local user scans. If a source is small, its print
+may remain soft: Encore does not invent detail or replace it with a fabricated
+game title. Original front and back priorities are unaffected.

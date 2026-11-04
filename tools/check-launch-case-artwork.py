@@ -513,8 +513,11 @@ assert "float scan_inside = v_params.z > 0.5 ?" in shader
 assert "paper_uv.h = source_aspect / target_aspect;" in draw
 assert "paper_uv.w = target_aspect / source_aspect;" in draw
 assert "paper_uv.y = (1.0f - paper_uv.h) * 0.5f;" in draw
-assert "w < (narrow_spine ? 64 : 128)" in native
-assert "h < (narrow_spine ? 600 : 200)" in native
+assert "w < (narrow_spine ? 16 : 128)" in native
+assert "(side == 2 && width >= 16 && height >= 250)" in native
+assert "h < (narrow_spine ? 250 : 200)" in native
+assert 'width < (std::strcmp(side, "spine") == 0 ? 16 : 128)' in native
+assert 'height < (std::strcmp(side, "spine") == 0 ? 250 : 128)' in native
 assert "c.list.case_spine(side_strip, angle, 3.2f," not in draw
 assert "c.list.case_spine_blank(side_strip, angle, case_depth," in draw
 # Single paper wrap with one localized projected rim; no second full-face

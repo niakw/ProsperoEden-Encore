@@ -913,8 +913,8 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
         if (!stbi_info_from_memory(
                 reinterpret_cast<const unsigned char*>(body.data()),
                 static_cast<int>(body.size()), &w, &h, &channels) ||
-            w < (narrow_spine ? 64 : 128) ||
-            h < (narrow_spine ? 600 : 200) || w > 4096 || h > 4096 ||
+            w < (narrow_spine ? 16 : 128) ||
+            h < (narrow_spine ? 250 : 200) || w > 4096 || h > 4096 ||
             static_cast<std::uint64_t>(w) * h > 3840u * 2160u) {
             ++invalid_responses;
             std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-image file=%s bytes=%zu width=%d height=%d\n",
@@ -1007,7 +1007,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     }
     bool all_ready = true;
     unsigned changed_faces = 0;
-    // NS2 games may have a real front and spine but NO uploaded back.
+    // Even compact genuine spine scans are preferable to a fabricated title.\n    // NS2 games may have a real front and spine but NO uploaded back.
     // Their spine must not depend on the existence of a back scan.
     for (int side = 0; side < 6; ++side) {
         if (cancel && cancel->load(std::memory_order_acquire)) {
@@ -1051,7 +1051,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
                                       (static_cast<int>(header[13]) << 8);
                     const int height = static_cast<int>(header[14]) |
                                        (static_cast<int>(header[15]) << 8);
-                    if ((side == 2 && width >= 64 && height >= 600) ||
+                    if ((side == 2 && width >= 16 && height >= 250) ||
                         (side != 2 && width >= 128 && height >= 200)) {
                         std::fclose(input);
                         continue;
@@ -2171,8 +2171,8 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
                 valid = stbi_info(path.c_str(), &width, &height, &channels) != 0;
             }
             if (!valid ||
-                width < (std::strcmp(side, "spine") == 0 ? 64 : 128) ||
-                height < (std::strcmp(side, "spine") == 0 ? 600 : 128) ||
+                width < (std::strcmp(side, "spine") == 0 ? 16 : 128) ||
+                height < (std::strcmp(side, "spine") == 0 ? 250 : 128) ||
                 width > 4096 || height > 4096 ||
                 static_cast<std::uint64_t>(width) * height > 3840u * 2160u) {
                 std::fprintf(stderr,

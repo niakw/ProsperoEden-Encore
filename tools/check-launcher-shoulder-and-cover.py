@@ -5,6 +5,7 @@ These are source ownership checks; host OpenGL screenshots validate the
 actual pixels separately. No generated image is shipped as retail art.
 """
 from pathlib import Path
+import re
 ROOT = Path(__file__).resolve().parents[1]
 def source(path):
     return (ROOT / path).read_text()
@@ -50,8 +51,10 @@ for attr in ("game.hero","case_media::BackScenes(",
 assert '"SWITCH"' in front
 # Native fixed paper rasters use vertically reversed sampling. The layered
 # 3D paper has its own independent FBO flip and MUST NOT be changed.
-assert 'c.list.image(c.textures.switch_logo(), logo,\n                     {0.0f, 1.0f, 1.0f, -1.0f}' in front
-assert 'c.list.image(c.textures.switch_logo(), logo,\n                     {0.0f, 0.0f, 1.0f, 1.0f}' not in front
+assert re.search(r'c\.list\.image\(c\.textures\.switch_logo\(\), logo,\s*'
+                 r'\{0\.0f, 1\.0f, 1\.0f, -1\.0f\}', front)
+assert not re.search(r'c\.list\.image\(c\.textures\.switch_logo\(\), logo,\s*'
+                     r'\{0\.0f, 0\.0f, 1\.0f, 1\.0f\}', front)
 # Front uses a full-width cover UV crop, never stretched independently in X/Y.
 front_cover = method(library, "void reconstructed_cover(", "// Reconstructed paper inserts")
 for token in ("uv.w = target / source;", "uv.h = source / target;",

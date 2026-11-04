@@ -14,6 +14,26 @@ du 04/11/2026 13:53 UTC. Sélection par opcode/mécanisme partagé, jamais par t
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### Revue complémentaire P2.4 — UISETP/USEL (04/11)
+
+Le bas niveau Ampere de Lichii `nx2` a mis en évidence deux différences
+**génériques** du propriétaire Encore :
+- `UISETP` utilisait un masque global `0x7f` pour P2R/R2P alors qu'il
+  n'agit que sur le prédicat de sortie et éventuellement celui
+  d'accumulation ; seuls ces bits sont désormais sauvegardés/restaurés,
+  y compris dans la variante immédiate et en cas de `UPT`.
+- La fusion de `UISETP` suivi de `USEL` en clamp entier doit être
+  limitée aux champs canoniques et à `condition == 0`. Les conditions
+  non nulles sont désormais traduites par `USEL` ordinaire, sans
+  transformation incorrecte en min/max.
+
+Ces deux changements sont adaptés au lowerer **actuel** d'Encore,
+pas un cherry-pick du fichier entier : tests réels O0/O2 + UBSan
+des masques émis, comparaison des deux chemins `USEL`, refus de
+champs illégaux, `test_lichii_nx2_generic_shader_regressions` et
+`test_ampere_gpu_capture` conservés verts. Rien n'a été modifié
+dans le frontend Maxwell Switch 1. Aucun rendu PS5/NS2 démontré.
+
 Les régressions hôte utilisent les mots d'instruction capturés dans les commits
 en amont, via le **vrai** `LowerToMaxwell` et `ProbeProgram` d'Encore,
 pas via un modèle indépendant de compilateur. Tests positifs, négatifs (bits,

@@ -90,6 +90,76 @@ int main() {
           !no_exit.reason.empty(),
           "recognizable NOP is not a full executable without an EXIT");
 
+    // P2.4: UISETP may combine its output with a distinct uniform
+    // predicate, but must not spill/restore the six unrelated UP lanes.
+    // The test executes the real native lowerer and inspects the emitted
+    // Maxwell P2R/R2P mask bits, not a copied host-only policy function.
+    const auto check_uniform_compare = [&](bool immediate, u32 condition,
+                                           u32 output, u32 expected_mask) {
+        const u32 word2 = (output << 17) | (7U << 20) |
+                          (condition << 23) | (1U << 10);
+        const std::array<Instruction,2> native{{
+            Instruction{{PredTrue | (immediate ? 0x88cU : 0x28cU) | (2U << 24),
+                         immediate ? 123U : 5U, word2, 0}},
+            Instruction{{PredTrue | 0x94dU, 0U, ExitCondTrue, 0U}},
+        }};
+        const auto lowered = LowerToMaxwell(native);
+        check(bool(lowered) && lowered.source_size == 32,
+              "valid immediate UISETP reaches actual Ampere lowerer");
+        std::vector<u32> saved, restored;
+        for (const u64 word : lowered.instructions) {
+            if ((word & 0xfff8000000000000ULL) == 0x38e8000000000000ULL)
+                saved.push_back(static_cast<u32>((word >> 20) & 0x7f));
+            if ((word & 0xfff8000000000000ULL) == 0x38f0000000000000ULL)
+                restored.push_back(static_cast<u32>((word >> 20) & 0x7f));
+        }
+        check(saved.size() == 2 && saved[0] == expected_mask &&
+              saved[1] == (1U << (6U - output)),
+              "UISETP saves only the output and live combine predicate");
+        check(restored.size() == (condition == 7 ? 1U : 2U) &&
+              restored.back() == expected_mask &&
+              (condition == 7 || restored.front() == (1U << (6U - condition))),
+              "UISETP restores only affected UP lanes, preserving untouched predicates");
+    };
+    check_uniform_compare(true, 3U, 2U, (1U << 4) | (1U << 3));
+    check_uniform_compare(true, 7U, 2U, 1U << 4);
+    check_uniform_compare(false, 3U, 2U, (1U << 4) | (1U << 3));
+    check_uniform_compare(false, 7U, 2U, 1U << 4);
+    // Invalid predicate controls cannot use this reduced-save lowering.
+    const std::array<Instruction,2> bad_uniform{{
+        Instruction{{PredTrue | 0x88cU | (2U << 24), 123U,
+                     (7U << 17) | (7U << 20) | (3U << 23) | (1U << 10), 0}},
+        Instruction{{PredTrue | 0x94dU, 0U, ExitCondTrue, 0U}},
+    }};
+    check(!LowerToMaxwell(bad_uniform),
+          "UISETP with forbidden output predicate must refuse lowering");
+
+    // The unsigned UISETP/USEL clamp is only canonical for USEL condition
+    // zero. For other conditions, the actual lowerer must emit its generic
+    // uniform select rather than an unconditionally equivalent-looking IMNMX.
+    for (const u32 select_condition : {0U, 1U, 4U}) {
+        const std::array<Instruction,3> pair{{
+            Instruction{{PredTrue | 0x88cU | (5U << 24), 127U,
+                         0x0bf01070U | (select_condition << 17), 0U}},
+            Instruction{{PredTrue | 0x887U | (2U << 16) | (5U << 24),
+                         127U, 0x08000000U | (select_condition << 23), 0U}},
+            Instruction{{PredTrue | 0x94dU, 0U, ExitCondTrue, 0U}},
+        }};
+        const auto lowered = LowerToMaxwell(pair);
+        check(bool(lowered) && lowered.source_size == 48,
+              "canonical and noncanonical uniform select lower successfully");
+        bool fast_clamp = false, generic_select = false;
+        for (const u64 word : lowered.instructions) {
+            fast_clamp |= (word & 0xfff8000000000000ULL) ==
+                          0x3820000000000000ULL;
+            generic_select |= (word & 0xfff8000000000000ULL) ==
+                              0x5ca0000000000000ULL;
+        }
+        check(fast_clamp == (select_condition == 0) &&
+              generic_select == (select_condition != 0),
+              "nonzero USEL condition must not accidentally execute clamp shortcut");
+    }
+
     // A recognized native BRX table must lower to real, relocated Maxwell
     // conditional branches, not a Maxwell BRX with unconverted guest PCs.
     // The direct lowerer test does not authenticate CBUF residency; that is

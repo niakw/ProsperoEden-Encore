@@ -180,6 +180,29 @@ les optimisations de GpuSplit, les fences amont annulées et les services
 HLE sans propriétaire correspondant ne sont pas fusionnés aveuglément.
 Le GPU matériel et les shader pipelines complets ne sont qualifiés qu'en P5.
 
+**P2.4 — prédicats uniformes Ampere protégés (04/11, source/hôte) :**
+le lowerer natif `UISETP` (formes registre et immédiat `0x28c/0x88c`)
+sauvegardait et restaurait auparavant **les sept lanes UP0–UP6**,
+y compris celles qu'il ne lisait ni n'écrivait. Cela pouvait écraser
+l'état des prédicats uniformes d'instructions voisines. La traduction
+Maxwell utilise désormais uniquement le masque du prédicat de résultat
+et, lorsque présent, du prédicat d'accumulation ; le cas `UPT` ne crée
+plus de masque fantôme. Le raccourci `USEL` vers un clamp entier
+(`0x887`) exige maintenant **la condition canonique zéro**, plutôt que
+de transformer une sélection d'une autre condition en simple min/max.
+Aucune forme de shader ou de titre spécifique ajoutée.
+
+Régression exécutée directement sur `LowerToMaxwell` réel :
+UISETP immédiat/registre × accumulation réelle/PT, contrôle des masques
+P2R/R2P, refus d'un prédicat de sortie interdit, puis `USEL`
+canonique et conditions non nulles (renvoyées au chemin général).
+Compilation/exécution Mac Apple Clang O0/O2 avec UBSan, plus tests
+d'ISA/BRX, capture du shader et lot des correctifs génériques nx2
+réussis. Le compilateur Maxwell NS1, la file Vulkan et les sélecteurs
+de recherche ne sont pas modifiés. L'exécution des shaders sur GPU
+PS5 et la prise en charge complète de task/mesh et LEPC dynamique
+restent **non prouvées**.
+
 **P2.3 — écritures globales Compute NS2 sans lecture globale (source/hôte) :**
 Le collecteur NVN commun ne construit ses descripteurs globaux que lorsque
 `uses_global_memory` est vrai. Un shader qui écrit seulement dans la

@@ -337,6 +337,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     launch_case_game_.hero = launch_hero_;
     launch_case_game_.screenshots = launch_screenshots_;
     launch_case_game_.description = launch_description_;
+    launch_case_game_.title_id = title_id;
     // Front case ink is visible immediately on launch. Put its exact 704px
     // compositor bucket FIRST in the asynchronous decode queue, instead of
     // waiting behind the cover, every screenshot and the 1920px hero. This
@@ -927,6 +928,7 @@ void Launcher::draw_launch(Canvas &c)
     const bool back = facing < 0.0f;
     constexpr float case_depth = 44.0f;
     constexpr float case_radius = 22.0f;
+    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_);
     // Use the actual reusable case outline for projected shadow/geometry.
     // The reference template is taller than the previous 422x655 poster.
     const Rect physical{374.0f, 126.0f, 454.0f, 730.0f};
@@ -1106,17 +1108,18 @@ void Launcher::draw_launch(Canvas &c)
     c.list.case_cap({physical.x + case_radius, physical.y,
                      physical.w - 2.0f * case_radius, physical.h},
                     angle, false, case_depth,
-                    Color::rgb(0xe9f3ff, 0.79f),
-                    Color::rgb(0x71859d, 0.62f));
+                    ns2_case ? Color::rgb(0xff3b50, 0.95f) : Color::rgb(0xe9f3ff, 0.79f),
+                    ns2_case ? Color::rgb(0x9c0c22, 0.90f) : Color::rgb(0x71859d, 0.62f));
     c.list.case_cap({physical.x + case_radius, physical.y,
                      physical.w - 2.0f * case_radius, physical.h},
                     angle, true, case_depth,
-                    Color::rgb(0xddeaf8, 0.78f),
-                    Color::rgb(0x60748a, 0.65f));
+                    ns2_case ? Color::rgb(0xfc2c44, 0.94f) : Color::rgb(0xddeaf8, 0.78f),
+                    ns2_case ? Color::rgb(0x8b071a, 0.90f) : Color::rgb(0x60748a, 0.65f));
     // One 12px latch plus 13px TOP/BOTTOM mold lines, NEVER a translucent
     // second face over the print: the shader clips strictly to these strips.
     // On the rear view the same physical right opening projects to the left.
-    c.list.case_plastic(physical, angle, back, Color::rgb(0xd9e8f7, 0.93f));
+    c.list.case_plastic(physical, angle, back,
+                        ns2_case ? Color::rgb(0xf1273e, 0.96f) : Color::rgb(0xd9e8f7, 0.93f));
 
     // A real case has TWO different sides. The left is the printed red
     // retail spine, the right is the mostly clear hinged latch edge.
@@ -1149,8 +1152,8 @@ void Launcher::draw_launch(Canvas &c)
         // One actual left opening wall: no extra hinge bars pasted across
         // the back scan and no second white lip at the paper/spine seam.
         c.list.case_spine(side_strip, angle, case_depth,
-                          Color::rgb(0xc9d7e7, 0.57f),
-                          Color::rgb(0x75879b, 0.48f));
+                          ns2_case ? Color::rgb(0xe72a3b, 0.94f) : Color::rgb(0xc9d7e7, 0.57f),
+                          ns2_case ? Color::rgb(0x900a1c, 0.90f) : Color::rgb(0x75879b, 0.48f));
     }
     // Deliberately NO right-side red stripe on the rear view.
     // Only genuinely visible projected shell edges are rendered.
@@ -1165,8 +1168,9 @@ void Launcher::draw_launch(Canvas &c)
         if (left != show_left) continue;
         for (int part = 0; part < 8; ++part)
             c.list.case_corner(physical, angle, case_radius, case_depth,
-                               quadrant, part, Color::rgb(0xdbe5f0, 0.59f),
-                               Color::rgb(0x677588, 0.49f));
+                               quadrant, part,
+                               ns2_case ? Color::rgb(0xff4759, 0.90f) : Color::rgb(0xdbe5f0, 0.59f),
+                               ns2_case ? Color::rgb(0x97091f, 0.84f) : Color::rgb(0x677588, 0.49f));
     }
 
     // The brand/title column begins well after the 3D case's cast shadow.

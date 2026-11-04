@@ -153,6 +153,24 @@ void flat_front_fallback(Canvas& c, const Game& game, const Rect& r)
     if (painting)
         c.list.gradient_rect(r, 0.0f, Color::rgb(0x09101c, 0.04f),
                             Color::rgb(0x09101c, 0.36f));
+    // The supplied red NS2 banner belongs only to reconstructed fronts:
+    // genuine retail scans already include their own printed platform header.
+    const bool ns2_cover = case_media::IsSwitch2TitleId(game.title_id);
+    if (ns2_cover) {
+        constexpr float kHeaderAspect = 246.0f / 1164.0f;
+        const Rect header{r.x, r.y, r.w, r.w * kHeaderAspect};
+        if (c.textures.switch2_header() != 0) {
+            c.list.image(c.textures.switch2_header(), header,
+                         {0.0f, 1.0f, 1.0f, -1.0f}, Color::rgb(0xffffff));
+        } else {
+            // Optional image missing: use a red NS2 header, never NS1 art.
+            c.list.rounded_rect(header, 0.0f, Color::rgb(0xe60012));
+            text_shrink(c, "NINTENDO SWITCH 2", header.x + header.w * 0.5f,
+                        baseline(header.y, header.h, header.h * 0.20f),
+                        header.h * 0.20f, Color::rgb(0xffffff),
+                        header.w * 0.95f, Align::center);
+        }
+    }
     const float title_h = r.h * 0.145f;
     const float font = std::clamp(r.w * 0.083f, 12.0f, 34.0f);
     text_shrink(c, game.name, r.x + r.w * 0.5f,
@@ -163,30 +181,32 @@ void flat_front_fallback(Canvas& c, const Game& game, const Rect& r)
     // simplified badge. It is loaded ONCE with the other launcher art.
     // These dimensions follow logo_front.jpg (193 x 190), not an arbitrary
     // height tied to the cover aspect ratio. No crop and no rounded edges.
-    const float logo_w = r.w * 0.222f;
-    const Rect logo{r.x, r.y, logo_w, logo_w * (190.0f / 193.0f)};
-    if (c.textures.switch_logo() != 0) {
-        // This fixed top-left raster insert shares the footer's TGA upload
-        // orientation, not the dynamically generated paper texture.
-        // Flip the insert ONCE here; the 3D case's final FBO UV flip is
-        // separate and must remain unchanged.
-        c.list.image(c.textures.switch_logo(), logo,
-                     {0.0f, 1.0f, 1.0f, -1.0f}, Color::rgb(0xffffff));
-    } else {
-        c.list.rounded_rect(logo, 0.0f, Color::rgb(0xe31930));
-        const float mark = logo.w * 0.43f;
-        const Rect glyph{logo.x + (logo.w - mark) * 0.5f,
-                         logo.y + logo.h * 0.17f, mark, logo.h * 0.42f};
-        c.list.rounded_rect({glyph.x, glyph.y, mark * 0.47f, glyph.h},
-                            mark * 0.09f, Color::rgb(0xffffff));
-        c.list.rounded_rect({glyph.x + mark * 0.56f, glyph.y,
-                             mark * 0.44f, glyph.h},
-                            mark * 0.09f, Color::rgb(0xffffff));
-        text_shrink(c, "SWITCH", logo.x + logo.w * 0.5f,
-                    baseline(logo.y + logo.h * 0.68f, logo.h * 0.22f,
-                             std::max(7.0f, logo.w * 0.145f)),
-                    std::max(7.0f, logo.w * 0.145f),
-                    Color::rgb(0xffffff), logo.w * 0.95f, Align::center);
+    if (!ns2_cover) { // The legacy corner insert is Switch 1 only.
+        const float logo_w = r.w * 0.222f;
+        const Rect logo{r.x, r.y, logo_w, logo_w * (190.0f / 193.0f)};
+        if (c.textures.switch_logo() != 0) {
+            // This fixed top-left raster insert shares the footer's TGA upload
+            // orientation, not the dynamically generated paper texture.
+            // Flip the insert ONCE here; the 3D case's final FBO UV flip is
+            // separate and must remain unchanged.
+            c.list.image(c.textures.switch_logo(), logo,
+                         {0.0f, 1.0f, 1.0f, -1.0f}, Color::rgb(0xffffff));
+        } else {
+            c.list.rounded_rect(logo, 0.0f, Color::rgb(0xe31930));
+            const float mark = logo.w * 0.43f;
+            const Rect glyph{logo.x + (logo.w - mark) * 0.5f,
+                             logo.y + logo.h * 0.17f, mark, logo.h * 0.42f};
+            c.list.rounded_rect({glyph.x, glyph.y, mark * 0.47f, glyph.h},
+                                mark * 0.09f, Color::rgb(0xffffff));
+            c.list.rounded_rect({glyph.x + mark * 0.56f, glyph.y,
+                                 mark * 0.44f, glyph.h},
+                                mark * 0.09f, Color::rgb(0xffffff));
+            text_shrink(c, "SWITCH", logo.x + logo.w * 0.5f,
+                        baseline(logo.y + logo.h * 0.68f, logo.h * 0.22f,
+                                 std::max(7.0f, logo.w * 0.145f)),
+                        std::max(7.0f, logo.w * 0.145f),
+                        Color::rgb(0xffffff), logo.w * 0.95f, Align::center);
+        }
     }
 }
 
@@ -338,6 +358,7 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     const float side = shell.w * (7.0f / 454.0f);
     const float top = shell.h * (13.0f / 730.0f);
     const float radius = std::max(5.0f, shell.w * 0.028f);
+    const bool ns2_case = case_media::IsSwitch2TitleId(game.title_id);
     // One continuous square-corner paper wrap, folded directly onto the
     // printed red spine: front touches its LEFT hinge, back its RIGHT hinge.
     // The ONLY exposed clear-plastic vertical opening is the opposite edge.
@@ -354,7 +375,10 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     // The pale molded case substrate is BEHIND the printed sleeve. The
     // opening side remains readable against dark UI backgrounds without
     // coating the entire front/back scan in a translucent second layer.
-    if (rear)
+    if (ns2_case)
+        c.list.gradient_rect(shell, radius, Color::rgb(0xf01428, 0.98f),
+                             Color::rgb(0xa8071b, 0.98f));
+    else if (rear)
         c.list.gradient_rect(shell, radius, Color::rgb(0xb6c4d5, 0.78f),
                              Color::rgb(0x66778c, 0.79f));
     else
@@ -413,12 +437,12 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     // opening edge. On the front it is RIGHT; on the rear it is LEFT.
     // Never add a clear vertical border at the rear's RIGHT printed fold.
     c.list.gradient_rect({shell.x, shell.y, shell.w, top}, 0.0f,
-                         Color::rgb(0xf7fcff, 0.76f),
-                         Color::rgb(0x71859d, 0.54f));
+                         ns2_case ? Color::rgb(0xff5a67, 0.90f) : Color::rgb(0xf7fcff, 0.76f),
+                         ns2_case ? Color::rgb(0xb50b1c, 0.94f) : Color::rgb(0x71859d, 0.54f));
     c.list.gradient_rect({shell.x, shell.y + shell.h - top,
                           shell.w, top}, 0.0f,
-                         Color::rgb(0x74869d, 0.55f),
-                         Color::rgb(0xf3f9ff, 0.78f));
+                         ns2_case ? Color::rgb(0x990a19, 0.95f) : Color::rgb(0x74869d, 0.55f),
+                         ns2_case ? Color::rgb(0xfa4053, 0.95f) : Color::rgb(0xf3f9ff, 0.78f));
     const float cap_ridge = std::max(1.0f, top * 0.17f);
     c.list.gradient_rect({shell.x, shell.y + top - cap_ridge,
                           shell.w, cap_ridge}, 0.0f,
@@ -437,8 +461,10 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     // Diffused body plus separate refractive outside highlight and darker
     // inner seal. Gradients reverse with the side, not with the scan UV.
     c.list.hgradient_rect({opening_x, opening_y, side, opening_h}, 0.0f,
+                          ns2_case ? Color::rgb(0xff3448, 0.95f) :
                           rear ? Color::rgb(0xf7fbff, 0.91f)
                                : Color::rgb(0x788fa9, 0.68f),
+                          ns2_case ? Color::rgb(0x9f0c22, 0.96f) :
                           rear ? Color::rgb(0x7489a2, 0.70f)
                                : Color::rgb(0xf5faff, 0.92f));
     const float glint_x = rear ? opening_x : opening_x + side - highlight_w;

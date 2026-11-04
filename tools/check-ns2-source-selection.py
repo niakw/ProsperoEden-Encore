@@ -124,8 +124,9 @@ def main() -> int:
         ]
         require(all((vendor / path).is_file() for path in maintained),
                 "NSW2 vendor source ownership or checkout is incomplete")
-        require('option(EDEN_NS2_METADATA_EXPERIMENTAL' in CMAKE,
-                "No metadata opt-in")
+        require('option(EDEN_NS2_METADATA_EXPERIMENTAL' not in CMAKE and
+                'if(PS5_NATIVE)\n    set(EDEN_REVIEWED_DUAL_NPDM ON)' in CMAKE,
+                "Reviewed dual NPDM must be automatic on native PS5")
         require('option(EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,
                 "No ExeFS opt-in")
         require('option(EDEN_NS2_CPU6_EXPERIMENTAL' in CMAKE,
@@ -137,7 +138,7 @@ def main() -> int:
             "set(EDEN_NS2_CPU6_ROOT", 1
         )[0]
         require(
-            "if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)"
+            "if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_REVIEWED_DUAL_NPDM)"
             in cpu6_condition and
             "OR EDEN_NS2_CPU6_EXPERIMENTAL OR" not in cpu6_condition,
             "Six-core research selector must not reject itself"
@@ -152,7 +153,7 @@ def main() -> int:
                            CMAKE.index("# Release gate: Vulkan/RADV")]
         require('option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' in bridge_gate and
                 'NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL' in bridge_gate and
-                'NOT EDEN_NS2_METADATA_EXPERIMENTAL' in bridge_gate and
+                'NOT EDEN_REVIEWED_DUAL_NPDM' in bridge_gate and
                 'NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL' in bridge_gate and
                 'NOT EDEN_NS2_NVDRV_EXPERIMENTAL' in bridge_gate and
                 'NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN' in bridge_gate and
@@ -726,7 +727,7 @@ def main() -> int:
             'if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)'
                 in CMAKE,
             "ExeFS must require reviewed dual NPDM for research or shared release")
-        require('EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,
+        require('EDEN_NS2_EXEFS_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject experimental selectors")
         selection = CMAKE.index("# Experimental ExeFS bridge must be selected AFTER")
         am_selection = CMAKE.index("# N3b: shared native PS5 applet compatibility")

@@ -22,8 +22,9 @@ def main() -> int:
     if 'FindAcidBody(' not in SOURCE.read_text(encoding="utf-8"):
         print("Production metadata reader not wired to the tested helper", file=sys.stderr)
         return 2
-    if 'option(EDEN_NS2_METADATA_EXPERIMENTAL' not in CMAKE.read_text(encoding="utf-8"):
-        print("Explicit experimental CMake gate missing", file=sys.stderr)
+    if ('if(PS5_NATIVE)\n    set(EDEN_REVIEWED_DUAL_NPDM ON)' not in
+            CMAKE.read_text(encoding="utf-8")):
+        print("Shared NPDM native PS5 source selector missing", file=sys.stderr)
         return 2
     with tempfile.TemporaryDirectory(prefix="encore-ns2-npdm-") as tmp:
         for opt in ("-O0", "-O2"):
@@ -35,7 +36,7 @@ def main() -> int:
             subprocess.run(command, check=True)
             subprocess.run([str(executable)], check=True,
                            env={**os.environ, "UBSAN_OPTIONS": "halt_on_error=1"})
-            print(f"NS2 NPDM experimental helper {opt}: PASS")
+            print(f"NS1_NS2_SHARED_NPDM_ACID_HELPER {opt}: PASS")
     print("NOTE: parser helper tested; complete Eden core / native PS5 build NOT tested")
     return 0
 

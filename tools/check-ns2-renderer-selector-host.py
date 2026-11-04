@@ -26,7 +26,9 @@ assert "VideoCommon::ReadNs2GpuShader(" in rasterizer
 assert "NativeQmdTextureTables" in native
 assert "kepler_compute.regs" in native
 assert "launch.linked_tsc" in native
-assert "if (native_images.size() != typed_descriptors->size())" in native
+assert "if (native_images.size() + native_texels.size() !=" in native
+assert "typed_descriptors->size())" in native
+assert "native_texels.reserve(typed_descriptors->size());" in native
 assert "resources->HasResolvedBufferBindings()" in native
 print("NS2_NATIVE_TIC_METADATA_SOURCE_PASS real_tables=1 no_false_vk_images=1")
 
@@ -65,7 +67,7 @@ def main():
         for name in ("NATIVE","VULKAN","AMPERE","METADATA","GPU_SESSION","NVDRV"):
             key = {"NATIVE":"PS5_NATIVE","VULKAN":"EDEN_PS5_VULKAN",
                    "AMPERE":"EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL",
-                   "METADATA":"EDEN_NS2_METADATA_EXPERIMENTAL",
+                   "METADATA":"EDEN_REVIEWED_DUAL_NPDM",
                    "GPU_SESSION":"EDEN_NS2_GPU_SESSION_EXPERIMENTAL",
                    "NVDRV":"EDEN_NS2_NVDRV_EXPERIMENTAL"}[name]
             cmake += f"set({key} {dollar}{{NS2_TEST_{name}}})\n"

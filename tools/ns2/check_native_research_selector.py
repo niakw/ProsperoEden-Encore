@@ -49,9 +49,9 @@ normal = verify({}, 0)
 assert len(normal.stdout.splitlines()) == len(declared)
 assert set(normal.stdout.splitlines()) == {f"-D{name}=OFF" for name in declared}
 research = verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
-                   "EDEN_NS2_METADATA_EXPERIMENTAL": "ON"}, 0)
-assert "-DEDEN_NS2_METADATA_EXPERIMENTAL=ON" in research.stdout.splitlines()
-verify({"EDEN_NS2_METADATA_EXPERIMENTAL": "ON"}, 2)
+                   "EDEN_NS2_EXEFS_EXPERIMENTAL": "ON"}, 0)
+assert "-DEDEN_NS2_EXEFS_EXPERIMENTAL=ON" in research.stdout.splitlines()
+verify({"EDEN_NS2_EXEFS_EXPERIMENTAL": "ON"}, 2)
 verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
         "EDEN_FINAL_RELEASE_PROFILE": "ON"}, 2)
 verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "maybe"}, 2)

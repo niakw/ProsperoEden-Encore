@@ -72,7 +72,7 @@ def self_test() -> None:
             raise AssertionError(f"unnoticed compiler flag mismatch: {key}")
     for injected in (
         "EDEN_NS2_FUTURE_UNREVIEWED_EXPERIMENTAL:BOOL=ON",
-        "EDEN_NS2_METADATA_EXPERIMENTAL:BOOL=ON",
+        "EDEN_NS2_EXEFS_EXPERIMENTAL:BOOL=ON",
     ):
         try:
             verify(valid + "\n" + injected, eboot)

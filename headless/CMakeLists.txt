@@ -7,17 +7,12 @@ endif()
 set(PORT_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
 
-# One shared NPDM owner for NS1 and NS2: keep the independently tested
-# 2048-bit and 3072-bit ACID readers in the shipping PS5 application.
-# The runtime stays a SINGLE release; this does not activate NS2 GPUs/HOS
-# services. A separate opt-in research flag is preserved for nonrelease tests.
-option(EDEN_NS2_METADATA_EXPERIMENTAL
-    "Research use of the reviewed NS1/NS2 NPDM parser (not full NS2 emulation)" OFF)
+# N1: one reviewed NPDM owner is shared by ALL native PS5 configurations.
+# 2048-bit (NS1) and 3072-bit (NS2) ACID detection is based on guest input,
+# not a user-visible emulator mode; never activate GPU/HOS research branches
+# merely because the dual parser is selected.
 set(EDEN_REVIEWED_DUAL_NPDM OFF)
-if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE)
-    set(EDEN_REVIEWED_DUAL_NPDM ON)
-endif()
-if(EDEN_NS2_METADATA_EXPERIMENTAL)
+if(PS5_NATIVE)
     set(EDEN_REVIEWED_DUAL_NPDM ON)
 endif()
 if(EDEN_REVIEWED_DUAL_NPDM)
@@ -1198,8 +1193,8 @@ endif()
 option(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL
     "Research-only GPU page-cache notification batching" OFF)
 if(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "NS2 GPU range batching is restricted to PS5 native research")
+    if(NOT PS5_NATIVE OR NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "NS2 GPU range batching is restricted to native PS5 research")
     endif()
     if(NOT EXISTS "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
         message(FATAL_ERROR "Maintained PS5 GPU memory manager owner missing")
@@ -1445,8 +1440,8 @@ list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
     "Research only: trim scratch buffers >64 MiB after large texture workloads" OFF)
 if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "N54 scratch trimming requires native PS5 NS2 research")
+    if(NOT PS5_NATIVE OR NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
+        message(FATAL_ERROR "N54 scratch trimming requires native PS5 research")
     endif()
     set(EDEN_NS2_ASTC_OWNER_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
@@ -1513,7 +1508,7 @@ option(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
     "Research only: native VkImage sparse cache admission/bind/retire probe" OFF)
 if(EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE OR
+       NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE OR
        NOT EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
         message(FATAL_ERROR "N73 requires native research Vulkan, N72 queue and N57 cache header")
     endif()
@@ -1553,7 +1548,7 @@ option(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL
     "Research only: serialize sparse binds on the existing PS5 graphics queue" OFF)
 if(EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
+       NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
         message(FATAL_ERROR "N72 sparse scheduler requires PS5 Vulkan NSW2 research")
     endif()
     set(EDEN_N72_VULKAN_ROOT
@@ -2274,8 +2269,8 @@ endif()
 option(EDEN_NS2_A64_EXPERIMENTAL
     "Research only: LDAPR acquire + RETAA/RETAB no-PAC-authentication model" OFF)
 if(EDEN_NS2_A64_EXPERIMENTAL)
-    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 RETA requires experimental metadata profile")
+    if(NOT EDEN_REVIEWED_DUAL_NPDM)
+        message(FATAL_ERROR "NS2 RETA requires the reviewed native dual-NPDM loader")
     endif()
     set(EDEN_NS2_DYNARMIC_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-a64")
     foreach(eden_ns2_dynarmic_file IN ITEMS
@@ -2304,8 +2299,8 @@ endif()
 option(EDEN_NS2_CPU6_EXPERIMENTAL
     "Research only: six guest cores and six-slot exclusive monitor" OFF)
 if(EDEN_NS2_CPU6_EXPERIMENTAL)
-    if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 six-core mode requires A64 and metadata experiments")
+    if(NOT EDEN_NS2_A64_EXPERIMENTAL OR NOT EDEN_REVIEWED_DUAL_NPDM)
+        message(FATAL_ERROR "NS2 six-core mode requires the reviewed NPDM loader and A64 research")
     endif()
     set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/cpu6")
     foreach(eden_ns2_cpu6_header IN ITEMS
@@ -2449,7 +2444,7 @@ if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)
 endif()
 if(EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_SHARED_NS2_NVDRV_CAPS)
     if(EDEN_NS2_NVDRV_EXPERIMENTAL)
-        if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
+        if(NOT EDEN_REVIEWED_DUAL_NPDM)
             message(FATAL_ERROR "NS2 native NVDRV research requires experimental metadata")
         endif()
     endif()
@@ -2652,8 +2647,8 @@ endif()
 option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
     "Research only: bounded Ampere 128-bit ISA probe and reviewed Maxwell lowering" OFF)
 if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
-    if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 Ampere ISA probe requires research metadata mode")
+    if(NOT EDEN_REVIEWED_DUAL_NPDM)
+        message(FATAL_ERROR "NS2 Ampere ISA probe requires reviewed native NPDM")
     endif()
     # Never modify or intercept Eden's pinned upstream source tree.
     # NS2 shader varyings and storage slots are research-only header owners.
@@ -2734,11 +2729,11 @@ option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
     "Research only: explicit NS2 VertexB to Vulkan SPIR-V compiler API" OFF)
 if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     if(NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR
+       NOT EDEN_REVIEWED_DUAL_NPDM OR
        NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_NVDRV_EXPERIMENTAL OR
        NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
         message(FATAL_ERROR
-            "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, metadata and native PS5 Vulkan")
+            "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, dual NPDM and native PS5 Vulkan")
     endif()
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
@@ -2850,7 +2845,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
     if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH OR
        EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
-       EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
+       EDEN_NS2_EXEFS_EXPERIMENTAL OR
        EDEN_NS2_A64_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR EDEN_NS2_CPU6_EXPERIMENTAL OR
        EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR

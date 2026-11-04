@@ -119,6 +119,17 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P0.2 / P1.1 — NPDM source commun N1 sélectionné automatiquement :**
+Le parser maintenu reconnaît ACID 2048 bits (NS1) et 3072 bits (NS2)
+à partir des octets réels, pour tous les profils natifs PS5.
+`EDEN_NS2_METADATA_EXPERIMENTAL` est supprimé, mais aucun des chemins
+ExeFS/A64/CPU6/HLE/GPU restant en recherche n'est activé pour autant.
+Le vrai `ProgramMetadata::Load` a été compilé et exécuté sur Mac avec
+Clang ASan/UBSan, en plus des témoins du helper O0/O2 ; fichiers valides,
+ambigus et tronqués sont traités selon la politique NS1-conservatrice.
+Tests des sélecteurs CMake recherche/release et du chemin renderer négatif
+réussis ; aucun build PS5. Les 13 autres flags restent OFF par défaut.
+
 **P2.5 / P0.2 — N57 + N60 intégrés au Vulkan PS5 commun (source/hôte) :**
 Le décodage ASTC par layer et ses vues Vulkan (N57), puis la gestion
 incrémentielle des layers sales avec staging/fences (N60), ne nécessitent

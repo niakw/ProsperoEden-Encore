@@ -1,6 +1,6 @@
 # Eden Encore — roadmap suivable pour un moteur PS5 commun NS1 / NS2
 
-**Mise à jour : 2026-11-03 · branche unique : `main`**
+**Mise à jour : 2026-11-04 · branche unique : `main`**
 
 > **Suivi vivant à cases cochables : [GitHub Issue #15 — ROADMAP](https://github.com/niakw/ProsperoEden-Encore/issues/15)**
 > **Audit technique et preuves de boot : [GitHub Issue #14](https://github.com/niakw/ProsperoEden-Encore/issues/14)**
@@ -32,9 +32,9 @@ Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache
 | --- | --- | --- | --- |
 | **P0** | CI, propriété des sources et dé-expérimentalisation | Tous tests obligatoires verts au même SHA, inventaire des `EDEN_NS2_*_EXPERIMENTAL` + plan de promotion/suppression | Précondition à tout nouveau port moteur |
 | **P1** | Boot / mémoire / HLE communs | Progression du PC invité traçable, 49-bit GMMU, NVMap/rollback, IPC exact, addons/keys/firmwares flexibles | Entrée GPU authentifiée et stable |
-| **P2** | GPU Vulkan complet partagé | TIC/TSC, images/UBO/SSBO, caches, graphics/compute Ampere, ASTC/sparse/VRAM, synchronisations, premier framebuffer invité | Première image réelle de MKW/Bananza |
-| **P3** | UI / rendu / NS1 sans régression | Jaquettes NS1/NS2 correctes, aucun rescan visible, chargement unique continu, FC27/BOTW non dégradés | Candidat d'installation |
-| **P4** | Préqualification strictement hôte | Tests Clang/GCC, CI complets, mémoire/fences simulées, source parity et négatifs, chemin de release sans faux succès | Dossier de décision d'entrée en P5; pas de build exécuté |
+| **P2** | GPU Vulkan source/hôte partagé | TIC/TSC, texel-buffers et images, UBO/SSBO, caches, graphics/compute Ampere, ASTC/sparse/VRAM et synchronisations **dans le code** | Le premier framebuffer et les capacités du pilote réel sont qualifiés en P5; les instructions/stages non codés restent de vrais manques P2 |
+| **P3** | UI / rendu partagé sans régression de source | Jaquettes, navigation sans rescan, chargement unique et transitions vérifiables sans PS5 | Récupération des jaquettes et FC27/BOTW réels réservés à P5 |
+| **P4** | Préqualification strictement hôte | Contrats ciblés C++ Clang/GCC, mémoire/fences simulées, parité des sources et recette de release sans faux succès | Qualification de toutes les CI au dernier SHA faite à la frontière P5, sans bloquer le traitement du code |
 | **P5** | Build PS5 contrôlé, qualification console et stabilisation | Autorisation explicite du build, puis MKW + Bananza première image invitée, FC27 match sans crash, BOTW, ressources et performances | Release seulement si critères console remplis |
 
 Ces jalons ne sont **pas** des estimations de délais; chacun se ferme uniquement sur preuve. Un test de traduction shader, une preview OpenGL ou une compilation native réussie ne remplace pas une image issue du GPU invité.
@@ -74,3 +74,39 @@ Le fournisseur Vulkan conserve désormais au plus **12 pipelines Compute Ampere*
 - **P2.2c (qualification avant P5)** : finir les cas positifs/négatifs Clang/GCC, les vérifications de provenance et d'ABI C++ avec ASTC/Vulkan, et obtenir les CI hôte pertinentes vertes au même couple SHA main/vendor. Une CI en file d'attente n'est pas une preuve.
 - **P5 (qualification console uniquement après P0–P4)** : compilation native PS5 autorisée explicitement, installation, tests FC27/BOTW/MKW/Bananza, métriques GPU/CPU, première vraie image invitée et régressions console. Ces éléments ne sont **pas** des conditions de fermeture de P2.2c avant P5.
 - **État de source à ce jalon** : l'interface native ASTC/Vulkan a été alignée au [vendor `d213ec7`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/d213ec7630d7fb4f3e4795f711da4c8359ec544c), épinglé depuis [main `b7a7ebe`](https://github.com/niakw/ProsperoEden-Encore/commit/b7a7ebe88ed144081587a9336db6cf01d080a5a5), et les contrôles Clang/GCC ASTC-prioritaires sont ajoutés au [`34007d5`](https://github.com/niakw/ProsperoEden-Encore/commit/34007d5a8e92b92d349f34a338e613d08b4577cf). La [CI #41579773499](https://github.com/niakw/ProsperoEden-Encore/actions/runs/41579773499) était en attente lors du dernier contrôle; **P2.2b/P2.2c non encore fermés**.
+
+
+## Répartition effective source ↔ console — décision du 4 novembre 2026
+
+**Ne plus bloquer P0–P4 parce qu'un témoin exige une PS5.** Pour chaque jalon, cocher séparément « code présent », « vérifié sur hôte » et « qualifié sur console ». Un résultat PS5 absent ne réouvre pas une étape de source déjà réalisée; inversement, transférer un essai en P5 ne permet pas de qualifier une fonctionnalité **non implémentée**.
+
+| Transféré en P5 (pas un blocage P0–P4) | Preuve attendue en P5 |
+| --- | --- |
+| Boot réel MKW/Bananza, progression PC invité, première commande écran | Journal console, progression CPU/GPU, vrai guest_frame_handoff non nul et image du jeu |
+| Vulkan PS5 : capacité des formats, shaders/pipelines, texel views, timeline fences, ASTC/sparse et pression VRAM | Build instrumenté PS5 et capture du premier framebuffer, sans surface factice |
+| NS1 FC27 (match, HUD, pauses/crashs), BOTW, régression entre jeux | Exécutions contrôlées sur PS5 et diagnostics de crash sans dégrader NS1 |
+| UI réelle : jaquettes Switch 2, écrans de chargement, transitions sans flash, « Aucune ROM » | Tests console des assets, de la détection et de la transition GL/Vulkan |
+| CI complète au même couple SHA et recette de packaging finale | Vérification de la provenance, des workflows et du paquet avant toute diffusion |
+
+**Restes P0–P4 qui exigent du CODE (non requalifiables par un simple essai PS5)** :
+la promotion des commutateurs de recherche vers la sélection automatique de production,
+les instructions/stages graphiques Ampere encore explicitement refusés
+(géométrie, tessellation, task/mesh non pris en charge), les liaisons HLE ou
+synchronisations non implémentées, et tout descripteur GPU dont l'ABI ne peut
+être authentifiée. Ces manques se ferment seulement par une implémentation
+générique contrôlée; aucun patch par TitleID et aucun faux « PASS ».
+
+**P2.2 — extension source de ce lot :** les TIC 1D de texture-buffer et
+image-buffer utilisent désormais les vues VkBufferView du **BufferCache
+Vulkan commun** (y compris les descripteurs stockages lecture seule), avec
+ordre de réflexion CBUF/SSBO/texel/images, GMMU 49 bits, revalidation
+des snapshots TIC/TSC/physiques, usage de buffer suivi et marquage des
+écritures reporté après l'admission finale. Les rendus NS1 et les sources
+Maxwell restent sélectionnés séparément. Les limitations du pilote et la
+rétention effective en conditions de charge sont à qualifier en **P5**.
+Ce paragraphe est une preuve d'intégration source, pas un premier rendu PS5.
+
+**Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
+micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
+exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5
+sur un SHA figé. Les tests console ne sont pas lancés ici.

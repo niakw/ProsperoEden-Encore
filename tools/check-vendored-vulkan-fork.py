@@ -130,10 +130,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # Verify all three paths independently, not a combined obsolete count.
     assert raster.count("if (!buffer)") == 1, "draw indirect pointer guard drift"
     native_vk_guard = "if (!buffer || buffer->Handle() == VK_NULL_HANDLE)"
-    assert raster.count(native_vk_guard) == 3, "compute/DMA/native QMD Vulkan handle guard drift"
+    assert raster.count(native_vk_guard) == 4, "compute/DMA/native QMD/texel Vulkan handle guard drift"
     native_commit = raster.split('Deferred GPU write tracking is a commit',1)[1].split(
         'const auto dim = launch.grid;',1)[0]
-    assert native_commit.count(native_vk_guard)==1, "native SSBO post-admission VkBuffer guard missing"
+    assert native_commit.count(native_vk_guard)==2, "native SSBO/texel post-admission VkBuffer guard missing"
     assert raster.count("if (!draw_buffer)") == 1, "counted draw buffer guard drift"
     dispatch = raster.split("void RasterizerVulkan::DispatchCompute() {", 1)[1].split(
         "void RasterizerVulkan::ResetCounter(", 1)[0]

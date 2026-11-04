@@ -57,7 +57,7 @@ for filename in (
         ), (filename, name)
     assert "throw std::runtime_error{\"unsupported native Compute shader pixel format\"};" in native
     assert "return VideoCore::Surface::IsPixelFormatInteger(ReadNativePixelFormat(handle));" in native
-    assert "if (native_images.size() != typed_descriptors->size())" in source
+    assert "if (native_images.size() + native_texels.size() !=" in source
 
 print("NS2_NATIVE_TIC_PIXEL_FORMAT_MAP_PASS shared=95 rejected=10 explicit_depth=7"
       " ns1_vulkan_unchanged=1 no_native_image_binding_claim=1")
@@ -130,7 +130,7 @@ for filename in (
     admission = source.split("[this](const Tegra::Texture::TICEntry& tic) {", 1)[1]
     assert admission.index("PixelFormat::Invalid)") < admission.index(
         "const VideoCommon::ImageInfo info{tic};"), filename
-    assert "if (native_images.size() != typed_descriptors->size())" in source
+    assert "if (native_images.size() + native_texels.size() !=" in source
 
 # Legacy NS1 still uses its own 40-bit verification. It is not silently
 # widened without a corresponding Maxwell regression suite.
@@ -159,7 +159,7 @@ assert "PrepareImageView(pair->second, is_written, false)" in impl
 assert "return FindSampler(descriptor, true);" in impl
 assert "SamplerId TextureCache<P>::FindSampler(" in impl
 assert "ImageViewId TextureCache<P>::VisitImageView(" in impl
-assert "if (native_images.size() != typed_descriptors->size())" in (
+assert "if (native_images.size() + native_texels.size() !=" in (
     vendor / "encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 print("NS1_NS2_NATIVE_TEXTURE_CACHE_TYPED_OVERLAY_PASS owner=one"
       " upstream=immutable backports=immutable dispatch_images=closed")
@@ -252,7 +252,7 @@ for source_path in (
     caller = (vendor / source_path).read_text()
     assert "texture_cache.NativeChannelMatches(" in caller
     assert "std::scoped_lock lock{texture_cache.mutex};" in caller
-    before_close = caller.split("if (native_images.size() != typed_descriptors->size())", 1)[0]
+    before_close = caller.split("if (native_images.size() + native_texels.size() !=", 1)[0]
     assert "registry.IsComputeCurrent(kepler_compute, *ticket)" in before_close
 print("NS2_TEXTURE_CACHE_CHANNEL_GMMU_OWNER_PASS engine=exact gmmu=exact"
       " both_native_cache_apis=guarded images_only_fence_owned=1")
@@ -266,7 +266,7 @@ for path in (
     assert locked.index("texture_cache.NativeChannelMatches(") < locked.index(
         "tables.MatchesSnapshot("), path
     assert locked.index("tables.MatchesSnapshot(") < locked.index(
-        "if (native_images.size() != typed_descriptors->size())"), path
+        "if (native_images.size() + native_texels.size() !="), path
 print("NS2_TIC_TSC_LOCKED_SNAPSHOT_PASS same_channel=required snapshot=second_read"
       " before_publication=1")
 
@@ -315,7 +315,7 @@ for path in (
     bridge = (vendor / path).read_text()
     assert bridge.index("tables.CaptureAdmissible(") < bridge.index(
         "tables.DecodeAdmitted(") < bridge.index("tables.MatchesSnapshot("), path
-    assert "if (native_images.size() != typed_descriptors->size())" in bridge
+    assert "if (native_images.size() + native_texels.size() !=" in bridge
 print("NS2_TYPED_TIC_TSC_DECODE_PASS real_cache_ABI=1"
       " retained_vk_objects=1 image_dispatch=pin_guarded")
 
@@ -447,7 +447,7 @@ for path in (
     # unsupported scattered backing before reading TIC/TSC table entries.
     assert bridge.index("ValidateGpuBufferMappings(") < bridge.index(
         "tables.CaptureAdmissible("), path
-    assert "if (native_images.size() != typed_descriptors->size())" in bridge, path
+    assert "if (native_images.size() + native_texels.size() !=" in bridge, path
 assert native_env.count(
     "if (!cbuf.gpu_address || !cbuf.bytes || cbuf.bytes > 0x10000U ||"
 ) == 2 and native_env.count("cbuf.qmd_index >= 8 ||") >= 2, (
@@ -558,7 +558,7 @@ for site in ("void TextureCache<P>::InvalidateScale(", "void TextureCache<P>::De
     block = impl.split(site, 1)[1].split("\ntemplate <class P>", 1)[0]
     assert "runtime.RetireGpuImageView(" in block, site
 assert "runtime.RetireGpuImage(std::move(slot_images[image_id]));" in impl
-assert "if (native_images.size() != typed_descriptors->size())" in (
+assert "if (native_images.size() + native_texels.size() !=" in (
     vendor / "encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 print("NS1_NS2_VULKAN_IMAGE_TIMELINE_RETIREMENT_SOURCE_PASS"
       " views_before_images=1 OOM_fallback=wait_gpu image_dispatch=pin_guarded")
@@ -585,7 +585,11 @@ assert "std::span<const NativeComputeImageBinding> images" in native_compute_hea
 # staging buffers: the total reflection count includes sampled/storage images.
 assert "resources.uniform_buffers.size() + resources.storage_buffers.size() +" in compute
 assert "if (!ready || staged.size() != num_descriptor_entries)" not in compute
-assert "staged.size() != num_descriptor_entries - images.size()" in compute
+assert "num_descriptor_entries - images.size() - texels.size()" in compute
+assert "buffer_cache.runtime.BindTextureBuffer(" in compute
+assert "struct NativeComputeTexelBinding" in native_compute_header
+assert "texel.is_written" in (
+    vendor / "encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 assert "guest_descriptor_queue.AddSampledImage(item.view, item.sampler);" in compute
 assert "guest_descriptor_queue.AddImage(item.view);" in compute
 assert "resources.StageVulkanBufferBindings(" in compute and "with_images);" in compute

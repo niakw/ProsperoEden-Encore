@@ -1,11 +1,10 @@
 name: Encore launcher render preview (host only)
 
 on:
-  # Run automatically for the ONLY active development branch when the UI,
-  # cached artwork pipeline, its fixtures or this preview workflow changes.
-  # Unrelated GPU/JIT changes do not spend a full render CI run.
+  # Run only for main or isolated UI branches when launcher content changes.
+  # GPU/JIT pushes never trigger the expensive full render walkthrough.
   push:
-    branches: [main]
+    branches: [main, 'ui/**']
     paths:
       - 'vendor'
       - '.gitmodules'

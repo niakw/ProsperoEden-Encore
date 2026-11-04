@@ -144,6 +144,7 @@ bool Textures::load_art(const std::string &directory)
     // clean metadata-only fallback when they are absent.
     (void)load("art/switch-logo.tga", &switch_logo_);
     (void)load("art/switch-rear-footer.tga", &switch_rear_footer_);
+    (void)load("art/ns2-head.tga", &switch2_header_);
     // Licensed DualSense artwork is a compact 144x100 mask embedded in the
     // launcher. Decode it ONCE before any frame; no SVG parser, PNG I/O or
     // texture upload inside navigation/gameplay. Fall back to the old local
@@ -190,7 +191,7 @@ void Textures::release()
         try { (void)decode_.get(); } catch (...) {}
     }
     for (std::uint32_t *texture : {&backdrop_, &backdrop_blur_, &brand_, &controller_,
-                                   &switch_logo_, &switch_rear_footer_})
+                                   &switch_logo_, &switch_rear_footer_, &switch2_header_})
     {
         batch_.delete_texture(*texture);
         *texture = 0;

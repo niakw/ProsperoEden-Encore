@@ -100,7 +100,7 @@ PY
 # flat front/back is absent. Decode the user-supplied compact PNG templates
 # without network access and convert them to native 32-bit uncompressed TGA.
 # Keep the source blobs out of the installed application.
-for stem in switch-logo switch-rear-footer; do
+for stem in switch-logo switch-rear-footer ns2-head; do
     encoded="$app/ui/art/${stem}.png.b64"
     unpacked="$app/ui/art/${stem}.png"
     target="$app/ui/art/${stem}.tga"

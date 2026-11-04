@@ -33,7 +33,7 @@ ui_expected = {
 ui_expected.discard("ui/art/backdrop-blur.tga")
 # Fixed user-supplied insert sources are decoded into native TGA only at
 # packaging time; encoded PNG text sources are deliberately not installed.
-for stem in ("switch-logo", "switch-rear-footer"):
+for stem in ("switch-logo", "switch-rear-footer", "ns2-head"):
     ui_expected.discard(f"ui/art/{stem}.png.b64")
     ui_expected.add(f"ui/art/{stem}.tga")
 ui_expected.add("ui/art/backdrop.tga")

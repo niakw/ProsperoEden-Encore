@@ -119,6 +119,15 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P0.2 / P2.5 — N54 scratch CPU commun :**
+Les allocations temporaires de swizzle/décode dépassant 64 MiB sont
+libérées à la prochaine frontière `TickFrame()` pour les deux générations,
+sans affecter les surfaces GPU ni le cache ordinaire de taille inférieure.
+Le header unique `ScratchBuffer` conserve ses copies/redimensionnements.
+La compilation du vrai `TickFrame()` extrait et les tests Clang/GCC avec
+ASan/UBSan passent. Les performances et le comportement matériel PS5
+restent P5 ; aucun mode expérimental ne commande cette politique.
+
 **P0.2 / P1.1 — NPDM source commun N1 sélectionné automatiquement :**
 Le parser maintenu reconnaît ACID 2048 bits (NS1) et 3072 bits (NS2)
 à partir des octets réels, pour tous les profils natifs PS5.
@@ -128,7 +137,7 @@ Le vrai `ProgramMetadata::Load` a été compilé et exécuté sur Mac avec
 Clang ASan/UBSan, en plus des témoins du helper O0/O2 ; fichiers valides,
 ambigus et tronqués sont traités selon la politique NS1-conservatrice.
 Tests des sélecteurs CMake recherche/release et du chemin renderer négatif
-réussis ; aucun build PS5. Les 13 autres flags restent OFF par défaut.
+réussis ; aucun build PS5. Les 12 autres flags restent OFF par défaut.
 
 **P2.5 / P0.2 — N57 + N60 intégrés au Vulkan PS5 commun (source/hôte) :**
 Le décodage ASTC par layer et ses vues Vulkan (N57), puis la gestion

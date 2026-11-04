@@ -55,6 +55,14 @@ def main() -> int:
                 "target_include_directories(core BEFORE PUBLIC" in astc_cache and
                 "option(EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL" not in CMAKE,
                 "N60 ASTC cache ABI must be the same between video_core and core")
+        scratch_guard = CMAKE.split("# N54: shared PS5 texture-cache scratch ownership", 1)[1].split(
+            "# N56: shared production PS5 Vulkan cache admission", 1)[0]
+        require("if(PS5_NATIVE)" in scratch_guard and
+                "target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_SCRATCH_TRIM=1)" in scratch_guard and
+                "target_include_directories(common BEFORE PUBLIC" in scratch_guard and
+                "target_include_directories(video_core BEFORE PUBLIC" in scratch_guard and
+                "option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL" not in CMAKE,
+                "N54 must use shared PS5 CPU scratch ownership")
         # QMD3's virtual RasterizerInterface must be the SAME reviewed
         # header in every research native consumer; a private override in
         # RasterizerVulkan alone does not compile or preserve the vtable ABI.

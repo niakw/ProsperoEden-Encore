@@ -1435,14 +1435,10 @@ if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 endif()
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
-# N54: select the optional single vendor-maintained ASTC scratch owners.
-# Immutable Eden pin, main/release, and normal Switch 1 code remain unchanged.
-option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL
-    "Research only: trim scratch buffers >64 MiB after large texture workloads" OFF)
-if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "N54 scratch trimming requires native PS5 research")
-    endif()
+# N54: shared PS5 texture-cache scratch ownership, both guests. Only
+# transient CPU buffers over 64 MiB are retired on a completed TickFrame;
+# smaller NS1 scratch and resident GPU images retain their previous lifetime.
+if(PS5_NATIVE)
     set(EDEN_NS2_ASTC_OWNER_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
     foreach(eden_ns2_astc_owner IN ITEMS
@@ -2853,7 +2849,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
        EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
-       EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

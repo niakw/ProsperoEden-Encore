@@ -39,7 +39,9 @@ t=once(t,"void TextureCache<P>::TickFrame() {",
             scratch->release();
         }
     }''')
-assert 'EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR' in CMAKE
+assert 'option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL' not in CMAKE
+assert '# N54: shared PS5 texture-cache scratch ownership' in CMAKE
+assert 'if(PS5_NATIVE)' in CMAKE
 assert 'target_include_directories(common BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")' in CMAKE
 assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_NS2_ASTC_OWNER_ROOT}")' in CMAKE
 assert 'prepare_astc_scratch_owner.cmake' not in CMAKE

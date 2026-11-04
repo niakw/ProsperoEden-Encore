@@ -135,6 +135,22 @@ testées ; les instructions Ampere non prises en charge restent bloquées.
 validation d'un véritable patch tessellé et des capacités RADV en P5.
 Task/mesh et LEPC dynamique restent des manques de code P2.4.
 
+**P2.4 — registres hauts Ampere, fusion sélective Lichii #65 :**
+Les instructions déjà traduites pouvaient être refusées ou écraser les
+registres temporaires Maxwell quand des GPRs élevés apparaissaient dans
+LDG/STG, FFMA, FMUL, FADD/FSEL, I2FP, IMNMX, S2R et FSETP.
+Le propriétaire Ampere `PrepareRegisterPressure` répertorie désormais
+15 familles réellement traduites et leurs champs d'opérande exacts,
+y compris la paire adresse 64 bits en mémoire globale, les tailles
+vectorielles et le troisième opérande FFMA. Le détecteur du lowerer
+reconnaît les vrais champs à bit 32 même hors mode générique.
+Il copie les quartets de GPR vers une zone temporaire, exécute
+l'instruction et restaure les registres d'origine. Les formes que
+le lowerer ou le budget de registres ne peuvent représenter restent
+refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
+le rejet des vecteurs débordants et la traduction d'un LDG capturé.
+**Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
+
 **P2.4 — audit Lichii/nx2 du 04/11, correctifs ISA génériques :**
 l'authentification ISA puis la traduction vers Maxwell admettent désormais
 USHF 0x499 (mot immédiat et shift uniforme), BRA.U 0x947 (bits de mode distincts de l'offset signé), SULD/SUST 0x998/0x99c

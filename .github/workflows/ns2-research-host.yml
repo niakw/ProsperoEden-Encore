@@ -568,6 +568,19 @@ jobs:
               -o "build-ns2-a64/ampere-lower-${cxx//+/}"
             "build-ns2-a64/ampere-lower-${cxx//+/}"
           done
+      - name: P2.4 native Ampere high-register spill and real load/store regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-ns2-a64
+          for cxx in clang++ g++; do
+            "${cxx}" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
+              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_ampere_native_register_shadow.cpp \
+              -o "build-ns2-a64/ampere-register-shadow-${cxx//+/}"
+            UBSAN_OPTIONS=halt_on_error=1 "build-ns2-a64/ampere-register-shadow-${cxx//+/}"
+          done
       - name: P2.4 cross-repo verified Ampere uniform shift, surface reduction and signed minmax
         shell: bash
         run: |

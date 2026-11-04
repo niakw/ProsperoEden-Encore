@@ -455,6 +455,23 @@ def main() -> int:
                 "IsGraphicsCurrent(" in engine_registry and
                 "channel_generation" in engine_registry,
                 "Native 3D rendering requires per-channel authenticated class identity")
+        # P2.4: real Ampere upper GPRs must be spilled for every
+        # supported instruction family before shared Maxwell lowering.
+        native_ampere_files = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere"
+        pressure_src = (native_ampere_files / "register_pressure.h").read_text()
+        native_lower_src = (native_ampere_files / "lower_to_maxwell.h").read_text()
+        shadow_fixture = ROOT / "tools/ns2/test_ampere_native_register_shadow.cpp"
+        host_workflow = (ROOT / ".github/workflows/ns2-research-host.yml").read_text()
+        require("case 0x381: case 0x386: case 0x981: case 0x986:" in pressure_src and
+                "case 0x223:" in pressure_src and
+                "case 0x919:" in pressure_src and
+                "input.Bits(90, 1) ? 2 : 1" in pressure_src and
+                "opcode != 0x386 && opcode != 0x986" in native_lower_src and
+                shadow_fixture.is_file() and
+                "P2_4_AMPERE_REGISTER_PRESSURE_PASS" in shadow_fixture.read_text() and
+                "test_ampere_native_register_shadow.cpp" in host_workflow,
+                "P2.4 Ampere high-GPR spill must cover register load/store,"
+                " ALU, S2R and exact host regressions")
         native_capture = (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text()
         native_capture_core = (ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/capture.cpp").read_text()
         native_capture_fixture = (ROOT / "tools/ns2/test_ampere_gpu_capture.cpp").read_text()

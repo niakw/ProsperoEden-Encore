@@ -1,0 +1,84 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Host proof over the production Ampere high-GPR spill/rewrite owner.
+// Only register descriptors differ; no per-title exception or GPU mock.
+#include <array>
+#include <cassert>
+#include <cstdio>
+#include <vector>
+#include "shader_recompiler/frontend/ampere/register_pressure.h"
+#include "shader_recompiler/frontend/ampere/lower_to_maxwell.h"
+
+using namespace Shader::Ampere;
+struct Fixture {
+    u32 opcode;
+    std::vector<u32> operands;
+};
+int main() {
+    const std::vector<Fixture> fixtures{
+        {0x919,{16}},             // S2R high destination
+        {0x80b,{24}},            // predicate compare source
+        {0x20b,{24,32}},         // register predicate compare
+        {0x820,{16,24}},         // FMUL high destination/source
+        {0x421,{16,24}},         // FADD with constant operand
+        {0x208,{16,24,32}},      // bitwise/floating SEL
+        {0x221,{16,24,32}},      // FADD register
+        {0x817,{16,24}},         // IMNMX immediate, not word1 as GPR
+        {0x223,{16,24,32,64}},   // FFMA has a third source
+        {0x245,{16,32}},         // I2FP register input
+        {0x823,{16,24,64}},      // FFMA other source mode
+        {0x381,{16,24}},         // LDG.E register address pair
+        {0x386,{24,32}},         // STG.E register data and address pair
+        {0x981,{16,24}},         // uniform-address LDG
+        {0x986,{24,32}},         // uniform-address STG
+    };
+    for (const auto& fixture : fixtures) {
+        Instruction original{{fixture.opcode | (252U<<16) | (248U<<24),
+                              252U, 248U, 0U}};
+        const auto translated = PrepareRegisterPressure(original, 216);
+        assert(translated.valid);
+        assert(!translated.prefix.empty());
+        assert(translated.prefix.size() == translated.suffix.size());
+        assert(translated.prefix.size() % 8U == 0);
+        std::array<u32,4> masks{};
+        for (const u32 field : fixture.operands) {
+            masks[field / 32] |= 255U << (field % 32);
+            const u32 before = original.Bits(field,8);
+            const u32 after = translated.instruction.Bits(field,8);
+            assert(before >= 216 && before < 255);
+            assert(after < 216);
+            assert((after & 3U) == (before & 3U));
+        }
+        for (u32 i=0;i<4;++i)
+            assert((translated.instruction.words[i] & ~masks[i]) ==
+                   (original.words[i] & ~masks[i]));
+        // A non-high GPR instruction must not create any scratch traffic.
+        Instruction low=original;
+        for (const u32 field:fixture.operands)
+            low.words[field/32] = (low.words[field/32] &
+                   ~(255U << (field%32))) | (u32{32} << (field%32));
+        const auto untouched=PrepareRegisterPressure(low,216);
+        assert(untouched.valid && untouched.prefix.empty() &&
+               untouched.suffix.empty());
+    }
+    // Test an actual captured Ampere load with high GPRs under the
+    // native Maxwell scratch limit (the default no-uniform limit is 250).
+    constexpr Instruction UniformMarker{{0x00007918,0,0,0x000fea00}};
+    constexpr Instruction Exit{{0x0000794d,0,0x03800000,0x000fea00}};
+    const std::array captured{
+        UniformMarker,
+        Instruction{{0x46fa7381,0x00003000,0x001e8900,0x00013400}},
+        Exit
+    };
+    const auto lowered=LowerToMaxwell(captured,{},true);
+    if (!lowered) std::fprintf(stderr,"Captured LDG lowerer refused: %.*s\n",
+                                static_cast<int>(lowered.error.size()), lowered.error.data());
+    assert(lowered && !lowered.instructions.empty() &&
+           lowered.source_instruction_offsets.size()==captured.size());
+    assert(lowered.source_instruction_offsets[2] >= 17); // prefix + LDG + suffix
+    // Vector loads must reject an overflowing high-register quartet.
+    Instruction overflowing{{0x381U | (252U<<16) | (248U<<24),
+                             0U,6U<<9,0U}};
+    assert(!PrepareRegisterPressure(overflowing,216).valid);
+    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=15 opcode_families "
+              "load_store=preserved reserved=216");
+}

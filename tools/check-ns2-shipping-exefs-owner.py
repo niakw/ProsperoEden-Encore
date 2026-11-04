@@ -37,7 +37,8 @@ assert 'IdentifyFileLoader<AppLoader_DeconstructedRomDirectory>(file)' in loader
 assert "Eden::NS2::Content::IdentifyName" in loader
 assert "AppLoader_NSP" in loader and "AppLoader_XCI" in loader
 assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
-assert 'if(EDEN_NS2_AM_EXPERIMENTAL OR EDEN_SHARED_NS2_AM)' in cmake
+assert 'if(EDEN_SHARED_NS2_AM)' in cmake
+assert 'option(EDEN_NS2_AM_EXPERIMENTAL' not in cmake
 am_file = (ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp").read_text()
 assert '{320, D<&IApplicationFunctions::GetScreenShotAndContinuousRecordingInitiallyEnabled>' in am_file
 assert "m_applet->screenshot_permission" in am_file
@@ -57,7 +58,7 @@ assert 'Settings::SetNceEnabled(is_39bit && !metadata.UsesExtendedAcid())' in ro
 # The shipping kernel must accept an NS2 12 GiB guest heap without changing
 # the Switch 1 layout-specific cap or replacing the complete SVC dispatcher.
 heap = cmake.split('# Shared kernel heap admission for Switch 2:', 1)[1].split(
-    '# Research-only Switch 2 AM command 320.', 1)[0]
+    '# N3b: shared native PS5 applet compatibility', 1)[0]
 assert 'set(EDEN_SHARED_NS2_KERNEL_HEAP ON)' in heap
 assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in heap
 assert 'set_property(TARGET core PROPERTY SOURCES' in heap
@@ -111,7 +112,7 @@ audio_root = ROOT / 'vendor/encore-active/ns2-runtime/audio/core/hle/service/aud
 audio = (audio_root / 'audio.cpp').read_text()
 client = (audio_root / 'nx2_audio_user_client.h').read_text()
 audio_select = cmake.split('# Shared Switch 2 audio user service:', 1)[1].split(
-    '# Research-only Switch 2 AM command 320.', 1)[0]
+    '# N3b: shared native PS5 applet compatibility', 1)[0]
 assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in audio_select
 assert 'set(EDEN_SHARED_NS2_AUDIO ON)' in audio_select
 assert 'list(REMOVE_ITEM eden_ns2_audio_sources "hle/service/audio/audio.cpp")' in audio_select

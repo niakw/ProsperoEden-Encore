@@ -2387,24 +2387,16 @@ if(EDEN_SHARED_NS2_AUDIO)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AUDIO_ROOT}")
 endif()
 
-# Research-only Switch 2 AM command 320. Keep the Encore-maintained application
-# metadata service as the source ancestor: title-version diagnostics must survive.
-option(EDEN_NS2_AM_EXPERIMENTAL
-    "Research opt-in for Switch 2 application-manager command 320" OFF)
-# A safe, shared NS2 applet compatibility command: the versioned native AM
-# owner adds command 320 while retaining all existing Encore handlers.
-# Keep the older command behavior for NS1 and leave advanced proxy/scale
-# services as separately qualified research paths.
+# N3b: shared native PS5 applet compatibility, selected by reviewed NPDM.
+# Command 320 reads the existing locked screenshot and recording state; it
+# does not advertise synthetic success or change the legacy NS1 command IDs.
+# Keep the original Encore AM owner as ancestor and the advanced GPU proxy/
+# graphics scaling path separate until real IPC/event semantics are proven.
 set(EDEN_SHARED_NS2_AM OFF)
-if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)
+if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_AM ON)
 endif()
-if(EDEN_NS2_AM_EXPERIMENTAL OR EDEN_SHARED_NS2_AM)
-    if(EDEN_NS2_AM_EXPERIMENTAL)
-        if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)
-            message(FATAL_ERROR "NS2 AM research command 320 requires experimental metadata")
-        endif()
-    endif()
+if(EDEN_SHARED_NS2_AM)
     if(NOT EDEN_REVIEWED_DUAL_NPDM)
         message(FATAL_ERROR "NS2 AM shared command 320 requires reviewed metadata")
     endif()
@@ -2429,8 +2421,8 @@ endif()
 option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL
     "Research only: NS2 graphics scaling parameter query, no notifications" OFF)
 if(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL)
-    if(NOT EDEN_NS2_AM_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 graphics scaling requires experimental AM")
+    if(NOT PS5_NATIVE OR NOT EDEN_SHARED_NS2_AM)
+        message(FATAL_ERROR "NS2 graphics scaling research requires native shared AM")
     endif()
     set(EDEN_NS2_SCALE_OWNER "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service")
     foreach(eden_ns2_scale_file application_proxy.cpp application_proxy.h
@@ -2634,8 +2626,8 @@ endif()
 option(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL
     "Research only: bounded NS2 graphics-supervisor / GPU metadata IPC" OFF)
 if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
-    if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_AM_EXPERIMENTAL)
-        message(FATAL_ERROR "NS2 supervisor requires experimental GPU session and AM")
+    if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_SHARED_NS2_AM)
+        message(FATAL_ERROR "NS2 supervisor requires GPU session research and native shared AM")
     endif()
     set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/graphics_supervisor")
     set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/self_controller")
@@ -2870,7 +2862,7 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR
        EDEN_DEV_WAIT_CALLERS OR EDEN_GPU_PROBE OR EDEN_HEAP_GUARD OR
        EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL OR
-       EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR
+       EDEN_NS2_A64_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR EDEN_NS2_CPU6_EXPERIMENTAL OR
        EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR

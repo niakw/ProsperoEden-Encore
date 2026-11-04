@@ -713,7 +713,7 @@ def main() -> int:
         require('EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_NS2_EXEFS_EXPERIMENTAL' in CMAKE,
                 "Final release must reject experimental selectors")
         selection = CMAKE.index("# Experimental ExeFS bridge must be selected AFTER")
-        am_selection = CMAKE.index("# Research-only Switch 2 AM command 320.")
+        am_selection = CMAKE.index("# N3b: shared native PS5 applet compatibility")
         release_gate = CMAKE.index("# Release gate: Vulkan/RADV")
         require(selection < am_selection < release_gate,
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
@@ -789,17 +789,18 @@ def main() -> int:
                 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND' in CMAKE and
                 '(EDEN_NS2_EXEFS_EXPERIMENTAL OR EDEN_SHARED_NS2_EXEFS)' in CMAKE,
                 "Unexpected NS2 core source owner: ExeFS, SVC, process-run, AM, NVDRV and supervisor must stay isolated")
-        require('EDEN_NS2_A64_EXPERIMENTAL OR EDEN_NS2_AM_EXPERIMENTAL OR' in CMAKE,
+        require('EDEN_NS2_A64_EXPERIMENTAL OR' in CMAKE,
                 "Final release must reject NS2 application-manager experiment")
-        require('option(EDEN_NS2_AM_EXPERIMENTAL' in CMAKE and
-                'if(NOT EDEN_NS2_METADATA_EXPERIMENTAL)' in CMAKE[am_selection:release_gate] and
+        require('option(EDEN_NS2_AM_EXPERIMENTAL' not in CMAKE and
+                'if(EDEN_SHARED_NS2_AM)' in CMAKE[am_selection:release_gate] and
+                'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in CMAKE[am_selection:release_gate] and
                 'list(FIND eden_ns2_am_sources "${EDEN_APP_FUNCTION_SOURCE}"' in CMAKE,
                 "NS2 application manager must require metadata and maintained source owner")
         scale_selection = CMAKE.index("# Research-only AM proxy command 60 and graphics scaling service.")
         require(am_selection < scale_selection < release_gate,
                 "Graphics scaling source owner must precede final release gate")
         require("option(EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" in CMAKE and
-                "if(NOT EDEN_NS2_AM_EXPERIMENTAL)" in CMAKE[scale_selection:release_gate] and
+                "if(NOT PS5_NATIVE OR NOT EDEN_SHARED_NS2_AM)" in CMAKE[scale_selection:release_gate] and
                 "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL OR" in CMAKE,
                 "Graphics scaling option must depend on AM and remain release-forbidden")
         scale_root = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
@@ -956,7 +957,7 @@ def main() -> int:
         supervisor_selection = CMAKE.index("# Research-only SelfController -> GraphicsSupervisor")
         require(session_selection < supervisor_selection < release_gate and
                 "EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR" in CMAKE and
-                "if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_AM_EXPERIMENTAL)" in CMAKE,
+                "if(NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_SHARED_NS2_AM)" in CMAKE,
                 "NS2 supervisor must require AM/GPU and be release-forbidden")
         require('list(FIND eden_ns2_supervisor_sources' in CMAKE and
                 '"hle/service/am/service/self_controller.cpp" eden_ns2_self_idx' in CMAKE and

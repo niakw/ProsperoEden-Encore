@@ -27,14 +27,26 @@ def main():
         'const std::scoped_lock lock{mutex, gpu_channel_device->channel_mutex};',
         'if (!session || session->process != m_native_process)',
         'if (channel.memory_manager && channel.memory_manager != gmmu.get())',
+        'NativePinnedPhysicalSpan(pinned, source, size)',
+        'NativePinnedPhysicalSpan(pinned, range.source_offset, range.size)',
     )
     if not all(x in owner for x in markers):
         print("NS2 real GMMU layout owner not wired to validated helper", file=sys.stderr)
+        return 2
+    if owner.count('NativePinnedPhysicalSpan(pinned, source, size)') != 2:
+        print("Native 4K/image pin paths are not both checked", file=sys.stderr)
+        return 2
+    if owner.index('if (!NativePinnedPhysicalSpan(pinned, range.source_offset, range.size))') > owner.index('gmmu->MapSparse(range.address, range.size, false);'):
+        print("Native sparse pin check runs after GPU publication", file=sys.stderr)
         return 2
     if '(vm.va_range_end - vm.va_range_split) >> vm.big_page_size_bits' in owner:
         print("Relative GPU VA allocator bound reintroduced", file=sys.stderr)
         return 2
     compiler = shutil.which("g++") or shutil.which("clang++")
+    host_env = dict(os.environ)
+    pinned_sdk = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+    if pinned_sdk.is_dir():
+        host_env["SDKROOT"] = str(pinned_sdk)
     if not compiler:
         print("C++20 compiler missing", file=sys.stderr)
         return 2
@@ -44,9 +56,9 @@ def main():
             command = [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
                        "-pedantic", "-fsanitize=undefined", "-fno-sanitize-recover=all",
                        "-I", str(AS), str(TEST), "-o", str(exe)]
-            subprocess.run(command, check=True)
+            subprocess.run(command, check=True, env=host_env)
             subprocess.run([str(exe)], check=True,
-                           env={**os.environ, "UBSAN_OPTIONS": "halt_on_error=1"})
+                           env={**host_env, "UBSAN_OPTIONS": "halt_on_error=1"})
     print("Native GMMU bounds and absolute VA limit: PASS (O0/O2 UBSan)")
     print("No native GPU worker, Ampere shaders or PS5 first frame inferred.")
     return 0

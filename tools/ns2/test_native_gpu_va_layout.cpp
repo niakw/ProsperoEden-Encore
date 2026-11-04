@@ -6,6 +6,7 @@
 #include "core/hle/service/nvdrv/devices/native_gpu_va_layout.h"
 
 using Service::Nvidia::Devices::PlanNativeGpuVaLayout;
+using Service::Nvidia::Devices::NativePinnedPhysicalSpan;
 using Service::Nvidia::Devices::NativeNs2GpuVaStart;
 using Service::Nvidia::Devices::NativeNs2GpuVaSmallSplit;
 using Service::Nvidia::Devices::NativeNs2GpuVaEnd;
@@ -38,5 +39,17 @@ int main() {
     assert(!PlanNativeGpuVaLayout(0x8000000, 1ULL << 34, (1ULL << 37) + 0x1000, 0x20000));
     assert(!PlanNativeGpuVaLayout(0x8000000, 1ULL << 45, 1ULL << 46, 0x20000));
     assert(!PlanNativeGpuVaLayout(0x8000000, 1ULL << 34, 1ULL << 37, 0x40000));
+    // Physical NVMap bases and suballocation offsets must never wrap.
+    // Exercise both exact half-open endpoints and overflow by one byte.
+    constexpr auto max = std::uint64_t{~std::uint64_t{0}};
+    static_assert(NativePinnedPhysicalSpan(1, 0, max - 1));
+    static_assert(NativePinnedPhysicalSpan(0x1000, 0x2000, 0x4000));
+    static_assert(!NativePinnedPhysicalSpan(0, 0, 0x1000));
+    static_assert(!NativePinnedPhysicalSpan(1, 0, 0));
+    static_assert(!NativePinnedPhysicalSpan(max - 2, 3, 1));
+    static_assert(!NativePinnedPhysicalSpan(max - 2, 1, 2));
+    assert(NativePinnedPhysicalSpan(max - 2, 1, 1));
+    assert(!NativePinnedPhysicalSpan(0x1000, max - 0x1000, 1));
+    std::puts("NS2 pinned physical spans: PASS (exact-end/overflows)");
     std::puts("NS2 real 4K GMMU page partitions: PASS");
 }

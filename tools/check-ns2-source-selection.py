@@ -638,6 +638,18 @@ def main() -> int:
                 "CompileCapturedNs2ComputeSpirv(" in pipeline_source.read_text() and
                 (ROOT / "tools/ns2/test_native_qmd_compute_environment.cpp").is_file(),
                 "QMD3 49-bit Compute metadata must reach authenticated SPIR-V compilation")
+        # P2.2/P2.3: native QMD image array admission uses a dynamic
+        # PRIMARY TIC table but a single STATIC secondary sampler word.
+        # Do not advance a static CBUF word by the primary element stride.
+        native_qmd_images = qmd_environment.read_text()
+        require("const u64 second = desc.secondary_cbuf_offset;" in native_qmd_images and
+                "u64{desc.secondary_cbuf_offset} + stride" not in native_qmd_images and
+                "record.secondary_word = ReadCbufValue(" in native_qmd_images and
+                "dynamic_with_static_sampler = env.BuildResourcePlan(textured)" in (
+                    ROOT / "tools/ns2/test_native_qmd_compute_environment.cpp").read_text() and
+                "image_handles[1].secondary_word == 0x40U" in (
+                    ROOT / "tools/ns2/test_native_qmd_compute_environment.cpp").read_text(),
+                "P2.2 native TIC dynamic arrays must retain static separate samplers")
         # P2.3 bounded global memory reuses the real shared SPIR-V
         # U64 address -> NVN SSBO dispatch. The QMD3 adapter authenticates
         # the descriptor count and all referenced backing before Vulkan.

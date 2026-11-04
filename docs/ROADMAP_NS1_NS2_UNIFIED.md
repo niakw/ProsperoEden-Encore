@@ -135,6 +135,21 @@ testées ; les instructions Ampere non prises en charge restent bloquées.
 validation d'un véritable patch tessellé et des capacités RADV en P5.
 Task/mesh et LEPC dynamique restent des manques de code P2.4.
 
+**P2.2/P2.3 — handles de textures dynamiques avec sampler statique :**
+Dans le planificateur natif QMD3, une texture échantillonnée à
+`count > 1` pouvait fournir sa table TIC à un index dynamique mais
+la seconde source CBUF (sampler constant) avançait également de
+`index << size_shift`. Le propriétaire commun `TexturePass` encode
+pourtant la source secondaire comme un **seul** mot statique dans
+les formes `has_secondary` reconnues. Le planificateur NS2 conserve
+désormais la banque et le mot de sampler identiques sur tous les éléments,
+sans réinterpréter le handle comme un registre TIC NS1.
+Test du vrai lecteur QMD3 : deux TIC distinctes, sampler partagé,
+rejet des banques/offsets illégaux, détection de mutation d'une
+entrée secondaire, Clang/GCC UBSan. Cela répare l'ABI d'admission
+native, **pas encore toutes les détections IR de tableaux dynamiques**
+(la prise en charge complète reste ouverte). Aucun code NS1 modifié.
+
 **P2.4 — registres hauts Ampere, fusion sélective Lichii #65 :**
 Les instructions déjà traduites pouvaient être refusées ou écraser les
 registres temporaires Maxwell quand des GPRs élevés apparaissaient dans

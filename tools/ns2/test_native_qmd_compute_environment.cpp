@@ -833,6 +833,26 @@ int main() {
                paired->image_handles[0].secondary_word == 0x40U &&
                paired->image_handles[0].primary_shift == 3 &&
                paired->image_handles[0].secondary_shift == 4);
+        // Lichii #65: the texture table has a DYNAMIC primary index,
+        // while the separate sampler word is STATIC. This is not two
+        // simultaneously indexed descriptor arrays. The QMD native CBUF
+        // must preserve the single secondary word for all array elements.
+        tex.count = 2;
+        textured.texture_descriptors.clear();
+        textured.texture_descriptors.push_back(tex);
+        const auto dynamic_with_static_sampler = env.BuildResourcePlan(textured);
+        assert(dynamic_with_static_sampler &&
+               dynamic_with_static_sampler->image_handles.size() == 2 &&
+               dynamic_with_static_sampler->image_handles[0].primary_word == 0x12345000U &&
+               dynamic_with_static_sampler->image_handles[1].primary_word == 0x10000U &&
+               dynamic_with_static_sampler->image_handles[0].secondary_word == 0x40U &&
+               dynamic_with_static_sampler->image_handles[1].secondary_word == 0x40U &&
+               dynamic_with_static_sampler->image_handles[0].secondary_shift == 4 &&
+               dynamic_with_static_sampler->image_handles[1].secondary_shift == 4);
+        auto changed_sampler = *dynamic_with_static_sampler;
+        changed_sampler.image_handles[1].secondary_word = 0x44U;
+        assert(!dynamic_with_static_sampler->SameBufferBindings(changed_sampler));
+        tex.count = 1;
         tex.secondary_cbuf_offset = 16; // four-byte word past QMD CBUF
         textured.texture_descriptors.clear();
         textured.texture_descriptors.push_back(tex);

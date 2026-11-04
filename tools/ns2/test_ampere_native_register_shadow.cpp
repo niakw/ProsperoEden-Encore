@@ -31,6 +31,8 @@ int main() {
         {0x386,{24,32}},         // STG.E register data and address pair
         {0x981,{16,24}},         // uniform-address LDG
         {0x986,{24,32}},         // uniform-address STG
+        {0x3a8,{16,24,32}},     // GPR-address ATOMG old value, address pair
+        {0x9a8,{16,32}},        // uniform-pointer ATOMG high data/output
     };
     for (const auto& fixture : fixtures) {
         Instruction original{{fixture.opcode | (252U<<16) | (248U<<24),
@@ -106,6 +108,85 @@ int main() {
     Instruction overflowing{{0x381U | (252U<<16) | (248U<<24),
                              0U,6U<<9,0U}};
     assert(!PrepareRegisterPressure(overflowing,216).valid);
-    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=16 opcode_families "
-              "load_store=preserved reserved=216");
+    // A native global atomic must never read the synthetic Maxwell
+    // uniform-bank scratch register as its GPR source. An atomically
+    // shadowed 32-bit data value and destination are borrowed to low
+    // aligned quartets, with the original registers restored afterward.
+    // Covers both the true register address pair and uniform pointer
+    // forms. No per-game or per-shader exception is used.
+    constexpr Instruction AtomGpr{{
+        0x3a8U | (7U << 12) | (244U << 16) | (250U << 24),
+        252U,
+        0x001ee100U,
+        0U
+    }};
+    constexpr Instruction AtomUniform{{
+        0x9a8U | (7U << 12) | (244U << 16) | (255U << 24),
+        240U,
+        0x081ee140U | 2U,
+        0U
+    }};
+    for (const auto atom : {AtomGpr, AtomUniform}) {
+        const bool uniform_pointer = atom.Bits(0,12) == 0x9a8;
+        const u32 boundary = uniform_pointer ? 216U : 248U;
+        const auto pressure = PrepareRegisterPressure(atom, boundary);
+        assert(pressure.valid && !pressure.prefix.empty() &&
+               pressure.prefix.size() == pressure.suffix.size());
+        assert(pressure.instruction.Bits(16,8) < boundary);
+        assert(pressure.instruction.Bits(32,8) < boundary);
+        if (uniform_pointer) {
+            assert(pressure.instruction.Bits(64,6) == 2);
+        } else {
+            assert(pressure.instruction.Bits(24,8) < boundary);
+            assert((pressure.instruction.Bits(24,8) & 1U) == 0);
+            assert(!NativeVectorCrossesScratch(pressure.instruction,boundary));
+        }
+        const std::array program{UniformMarker,atom,Exit};
+        const auto lowered=LowerToMaxwell(program,{},true);
+        if (!lowered)
+            std::fprintf(stderr,"Atomic lowering refused: %.*s at %#x\n",
+                static_cast<int>(lowered.error.size()),lowered.error.data(),
+                lowered.error_offset);
+        assert(lowered && lowered.source_size == sizeof(program));
+        const auto begin=lowered.source_instruction_offsets[1];
+        const auto end=lowered.source_instruction_offsets[2];
+        assert(end > begin+pressure.prefix.size() &&
+               end >= begin+pressure.prefix.size()+pressure.suffix.size()+1);
+        assert(std::equal(pressure.prefix.begin(), pressure.prefix.end(),
+                          lowered.instructions.begin()+begin));
+        const u64 actual_atom=lowered.instructions[begin+pressure.prefix.size()];
+        assert((actual_atom & 0xff00000000000000ULL)==0xed00000000000000ULL);
+        assert((actual_atom & 0xffU)==pressure.instruction.Bits(16,8));
+        assert(((actual_atom>>20)&0xffU)==pressure.instruction.Bits(32,8));
+        assert(std::equal(pressure.suffix.begin(), pressure.suffix.end(),
+                          lowered.instructions.begin()+end-pressure.suffix.size()));
+        const auto refusal=LowerToMaxwell(program,{},false);
+        assert(!refusal && refusal.error=="native program uses lowering scratch registers");
+    }
+    // GPR-address atomic pointer must be genuinely even/aligned, not
+    // misrepresented as a register pair crossing an unsupported operand.
+    auto odd_address=AtomGpr;
+    odd_address.words[0] = (odd_address.words[0] & 0x00ffffffU) | (249U << 24);
+    const auto odd=LowerToMaxwell(std::array{UniformMarker,odd_address,Exit},{},true);
+    assert(!odd);
+    assert(odd.error == "native global register atomic mode" ||
+           odd.error == "native register shadowing mode");
+    // U62 is the final real uniform word; U63 represents zero, not its
+    // adjacent high pointer half. Never use U47's physical GPR as U63.
+    auto last_uniform=AtomUniform;
+    last_uniform.words[2] = (last_uniform.words[2] & ~0x3fU) | 62U;
+    const auto rejected_last=LowerToMaxwell(std::array{UniformMarker,last_uniform,Exit},{},true);
+    assert(!rejected_last && rejected_last.error=="native global atomic mode");
+    // An odd uniform pointer is equally unrepresentable as an aligned
+    // 64-bit guest pointer for a native Maxwell atom.
+    last_uniform.words[2] = (last_uniform.words[2] & ~0x3fU) | 61U;
+    const auto rejected_odd=LowerToMaxwell(std::array{UniformMarker,last_uniform,Exit},{},true);
+    assert(!rejected_odd && rejected_odd.error=="native global atomic mode");
+    // The two words of a low register address may straddle an aligned
+    // scratch limit in a synthetic case. Detect before rewriting the
+    // base register without guaranteeing contiguous physical operands.
+    Instruction straddles_atomic{{0x3a8U | (4U<<16) | (248U<<24),240U,0x001ee100U,0U}};
+    assert(NativeVectorCrossesScratch(straddles_atomic,249));
+    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=18 opcode_families "
+              "atomic_global_gpr=1 atomic_uniform_pointer=1 uniform_u62_refused=1 ns1_unchanged=1");
 }

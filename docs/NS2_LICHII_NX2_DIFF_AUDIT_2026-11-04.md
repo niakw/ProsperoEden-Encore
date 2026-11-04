@@ -66,6 +66,26 @@ P2.4 reste ouvert pour les autres instructions, la LEPC dynamique et task/mesh.
 Le correctif ne garantit pas que le cache textures puisse satisfaire tous les
 handles natifs ou que tous les kernels Compute aient une traduction complète.
 
+## P2.4 — atomiques globaux à registres élevés, 04/11
+
+La relecture des deux variantes de ATOMG.E.ADD.STRONG.GPU.U32 sur
+le lowerer natif Encore a montré une divergence générique :
+la forme GPR 0x3a8 nécessitait un enregistrement des **deux** mots
+d'adresse et du registre source, mais n'était pas reconnue par le
+spilleur de GPR ; la forme uniforme 0x9a8 contenait un registre
+données à bit 32 qui échappait à la détection du scratch. Les deux
+sont maintenant inscrites dans la copie/restauration des GPR, sans
+toucher aux instructions Maxwell classiques. L'alias physique du
+registre uniforme U63 a également été refusé lorsqu'un pointeur
+virtuel U62 demanderait son mot haut. Détecteur des vecteurs
+implicites 64 bits mis en cohérence.
+
+Les tests source-exécutés des vraies unités C++ valident les deux
+ATOMG, leurs emprunts et leur restauration à O0/O2, les mots Maxwell
+émis et les conditions négatives. Ils n'impliquent **ni** que le
+backend SSBO connaît toute provenance de pointeur atomique,
+**ni** qu'un Vulkan Compute ou un jeu NS2 rend un framebuffer.
+
 ## Correctifs évalués mais non copiés aveuglément
 
 | Lichii | Décision raisonnée |

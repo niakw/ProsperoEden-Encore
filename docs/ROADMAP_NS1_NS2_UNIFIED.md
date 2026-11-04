@@ -166,6 +166,29 @@ refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
 le rejet des vecteurs débordants et la traduction d'un LDG capturé.
 **Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
 
+**P2.4 — atomiques globaux Ampere et préservation des GPR hauts (04/11,
+source/hôte) :** deux opérations natives ATOMG U32 déjà reconnues
+pouvaient malgré tout corrompre les résultats. Pour l'adresse GPR
+0x3a8, le spill ne déclarait ni la destination/valeur ni la paire
+d'adresse 64 bits ; pour le pointeur uniforme 0x9a8, le lowerer ne
+reconnaissait pas le véritable registre de valeur au bit 32 et le
+traitait comme le scratch Maxwell. PrepareRegisterPressure protège
+désormais les vraies sources et destinations, préserve la contiguïté
+de la paire GPR et restaure tous les quartets empruntés, même à la
+limite de l'espace scratch. Le pointeur uniforme U62 est refusé :
+son mot supérieur U63 est le registre zéro, **pas** un voisin GPR
+valide à lire comme la seconde moitié d'une adresse 64 bits.
+
+Témoins C++ exécutant les vrais PrepareRegisterPressure et
+LowerToMaxwell des deux formes (18 familles de registres hauts au
+total) : mot atomique Maxwell, copie/restauration exacte, séparation
+des registres de données et d'adresse, refus sans spill autorisé,
+pointeurs pairs/impairs et U62/U63, UBSan Clang/GCC. Pas de
+contournement par titre, ni modification du compilateur Maxwell NS1.
+L'accès global atomique via un SSBO dont la provenance n'est pas
+authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
+et les shaders complets restent à qualifier en P5.
+
 **P2.4 — audit Lichii/nx2 du 04/11, correctifs ISA génériques :**
 l'authentification ISA puis la traduction vers Maxwell admettent désormais
 USHF 0x499 (mot immédiat et shift uniforme), BRA.U 0x947 (bits de mode distincts de l'offset signé), SULD/SUST 0x998/0x99c

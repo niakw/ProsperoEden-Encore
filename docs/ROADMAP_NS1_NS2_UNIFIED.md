@@ -137,7 +137,7 @@ Task/mesh et LEPC dynamique restent des manques de code P2.4.
 
 **P2.4 — audit Lichii/nx2 du 04/11, correctifs ISA génériques :**
 l'authentification ISA puis la traduction vers Maxwell admettent désormais
-USHF 0x499 (mot immédiat et shift uniforme), SULD/SUST 0x998/0x99c
+USHF 0x499 (mot immédiat et shift uniforme), BRA.U 0x947 (bits de mode distincts de l'offset signé), SULD/SUST 0x998/0x99c
 (handles en registre, images 2D/array/3D), SURED 0x59f (réduction 1D buffer
 ou 2D) et IMNMX 0x817 (immédiats signés et 32 bits). Aucun chemin n'est
 sélectionné par titre ou ROM. Les champs non prouvés et les ressources non

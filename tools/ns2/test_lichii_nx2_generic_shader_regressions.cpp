@@ -203,5 +203,64 @@ int main() {
         assert(bridge.consumed_native_bytes == 32);
         assert(!bridge.maxwell_instructions.empty());
     }
-    std::puts("P2_4_LICHII_NX2_GENERIC_AMPERE_LOWERING_PASS 0x499 0x59f 0x817 0x998 0x99c renderer_bridge=ready");
+    // BRA.U's low address bits are convergence flags. Verify the real
+    // branch relocation and a signed backward jump, never merely masking
+    // the bits in a separate non-production model.
+    constexpr Instruction Nop{{0x00007918, 0, 0, 0x000fea00}};
+    {
+        std::array<Instruction, 133> program{};
+        program.fill(Nop);
+        program[91] = Instruction{{0x00008947, 0x00000281, 0x03800000, 0x000fea00}};
+        program.back() = Exit;
+        const auto linked = LowerToMaxwell(program);
+        assert(linked && linked.source_size == sizeof(program));
+        assert(linked.source_instruction_offsets.size() == program.size());
+        assert(linked.instructions[linked.source_instruction_offsets[91]] ==
+               0xe24000001b08000fULL);
+        // A lowerer-only PASS is not useful if the actual source-checked
+        // renderer bridge rejects the captured BRA.U opcode or mode.
+        std::vector<u8> encoded;
+        encoded.reserve(sizeof(program));
+        for (const auto& instruction : program)
+            for (u32 word : instruction.words)
+                for (unsigned shift = 0; shift != 32; shift += 8)
+                    encoded.push_back(static_cast<u8>(word >> shift));
+        const auto bridge = LowerReviewedToMaxwell(encoded);
+        assert(bridge.Ready() && bridge.consumed_native_bytes == encoded.size());
+    }
+    {
+        const std::array program{
+            Nop,
+            Instruction{{0x00008947, 0xffffffe1, 0x0383ffff, 0x000fea00}},
+            Exit,
+        };
+        const auto backward = LowerToMaxwell(program);
+        assert(backward && backward.source_size == sizeof(program));
+        assert(backward.instructions[backward.source_instruction_offsets[1]] ==
+               0xe2400fffff08000fULL);
+    }
+    {
+        const std::array program{
+            Instruction{{0x00008947, 0x11, 0x04800000, 0x000fea00}},
+            Nop,
+            Exit,
+        };
+        const auto guarded = LowerToMaxwell(program);
+        assert(guarded && guarded.source_size == sizeof(program));
+        assert(guarded.instructions.size() >= 4);
+    }
+    for (const u32 bit : {82U,83U,84U,85U,86U,91U,92U,93U,94U,
+                          95U,96U,97U,98U,99U,100U,101U,102U,103U,104U}) {
+        auto branch = Instruction{{0x00008947, 1, 0x03800000, 0x000fea00}};
+        branch.words[bit / 32] |= 1U << (bit % 32);
+        const auto rejected = LowerToMaxwell(std::array{branch, Exit});
+        assert(!rejected && rejected.instructions.empty());
+    }
+    for (const u32 offset : {5U,0x11U,0xffffffe1U}) {
+        auto branch = Instruction{{0x00008947, offset, 0x03800000, 0x000fea00}};
+        if (offset == 0xffffffe1U) branch.words[2] |= 0x3ffffU;
+        const auto rejected = LowerToMaxwell(std::array{branch, Exit});
+        assert(!rejected && rejected.instructions.empty());
+    }
+    std::puts("P2_4_LICHII_NX2_GENERIC_AMPERE_LOWERING_PASS 0x499 0x59f 0x817 0x998 0x99c BRA.U renderer_bridge=ready");
 }

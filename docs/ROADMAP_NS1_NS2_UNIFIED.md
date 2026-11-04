@@ -149,6 +149,24 @@ les optimisations de GpuSplit, les fences amont annulées et les services
 HLE sans propriétaire correspondant ne sont pas fusionnés aveuglément.
 Le GPU matériel et les shader pipelines complets ne sont qualifiés qu'en P5.
 
+**P2.3 — écritures globales Compute NS2 sans lecture globale (source/hôte) :**
+Le collecteur NVN commun ne construit ses descripteurs globaux que lorsque
+`uses_global_memory` est vrai. Un shader qui écrit seulement dans la
+mémoire globale (`stores_global_memory`) pouvait donc être accepté comme
+plan QMD mais rester sans aucun SSBO dans le compilateur SPIR-V.
+Le bridge Compute Ampere normalise désormais ce cas **avant** la compilation,
+uniquement lorsque la banque CBUF0 existe réellement et est activée en QMD,
+et que les bits de buffers NVN forment un préfixe contigu sans autre
+descripteur ambigu. Les enregistrements restent à l'ABI NVN réelle
+CBUF0 + 0x310 + index × 16 ; leur taille et leur mapping sont toujours
+lus puis authentifiés par le propriétaire QMD3. Aucun accès à une adresse
+non mappée, aucune taille SSBO supposée, aucune modification Maxwell/NS1.
+Tests Clang/GCC UBSan du vrai IR CBUF et de l'environnement QMD3,
+y compris refus des masques incomplets, trous, banques absentes et collisions.
+Le témoin réel de validation avant marquage GPU-dirty couvre désormais
+les **SSBO et texel buffers** sans régression de transaction.
+**Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
+
 **P1.2 / P1.3 — remaps NVDRV bornés et sans fuite de pin :**
 Deux recherches de réservations GPU dans `nvhost_as_gpu` décrémentaient
 `upper_bound()` même à `begin()` : une table vide ou une adresse avant

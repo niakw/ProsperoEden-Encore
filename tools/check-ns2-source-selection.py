@@ -637,6 +637,22 @@ def main() -> int:
         native_compute_spirv = native_spirv_bridge.split(
             "NativeSpirvResult CompileReviewedNativeComputeSpirv(", 1)[1].split(
             "NativeSpirvResult CompileReviewedNativeVertexSpirv(", 1)[0]
+        # P2.3: stores-only globals need the native QMD3 CBUF0 descriptor
+        # bridge before the shared SPIR-V emitter, not an NS1 rewrite.
+        native_indirect_owner = (
+            ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+        ).read_text()
+        assert "NormalizeNativeQmdGlobalStoreOnlyInfo(" in native_indirect_owner
+        assert "info.nvn_buffer_used.test(i)" in native_indirect_owner
+        assert "0x310U + i * 16U" in native_indirect_owner
+        assert "!info.storage_buffers_descriptors.empty()" in native_indirect_owner
+        assert "NormalizeNativeQmdGlobalStoreOnlyInfo(ir.info, qmd_enabled_cbuf_mask)" in native_compute_spirv
+        assert native_compute_spirv.index("NormalizeNativeQmdGlobalStoreOnlyInfo(") < (
+            native_compute_spirv.index("Shader::Maxwell::ConvertLegacyToGeneric("))
+        assert "store_memory.words[0x310/sizeof(u32) + i]" in (
+            ROOT / "tools/ns2/test_native_qmd_compute_environment.cpp").read_text()
+        assert "MockTexel{0x40000,4096,true}" in (
+            ROOT / "tools/ns2/check_native_compute_write_commit_host.py").read_text()
         require("if (ir.info.uses_global_memory)" in native_compute_spirv and
                 "!profile.support_int64 || !profile.support_descriptor_aliasing" in native_compute_spirv and
                 "storage.cbuf_index - cbuf.index < cbuf.count" in native_compute_spirv and

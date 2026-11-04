@@ -75,12 +75,19 @@ struct MockBufferCache {
         return std::make_pair(address==reject_address ? &invalid : &buffer,u32{0});
     }
 };
+struct MockTexel {
+    u64 guest_gpu_address;
+    u32 guest_bytes;
+    bool is_written;
+};
 struct MockRasterizer {
     std::unique_ptr<MockGpuMemory> gpu_memory=std::make_unique<MockGpuMemory>();
     MockBufferCache buffer_cache;
+    std::vector<MockTexel> texels;
     std::unique_ptr<Shader::Ampere::NativeQmdResourcePlan> resources=
         std::make_unique<Shader::Ampere::NativeQmdResourcePlan>();
     bool Commit() {
+        const auto& native_texels=texels;
 __COMMIT__
         return true;
     }
@@ -125,6 +132,21 @@ int main() {
     assert(renderer.buffer_cache.writes.size()==2);
     assert(renderer.buffer_cache.writes[0].first==0x20000);
     assert(renderer.buffer_cache.writes[1].first==0x30000);
+    // The newer P2.2 texel path must share the SAME preflight-before-dirty
+    // transaction, not be omitted by an obsolete storage-only fixture.
+    renderer.buffer_cache.writes.clear();
+    renderer.texels.push_back(MockTexel{0x40000,4096,true});
+    renderer.buffer_cache.reject_address=0x40000;
+    assert(!renderer.Commit());
+    assert(renderer.buffer_cache.writes.empty());
+    renderer.buffer_cache.reject_address=0;
+    assert(renderer.Commit());
+    assert(renderer.buffer_cache.writes.size()==3);
+    assert(renderer.buffer_cache.writes[2].first==0x40000);
+    renderer.buffer_cache.writes.clear();
+    renderer.texels[0].is_written=false;
+    assert(renderer.Commit());
+    assert(renderer.buffer_cache.writes.size()==2);
 }
 '''.replace('__COMMIT__',blocks[0])
 boost_caches=sorted((Path.home()/'.cache').glob(

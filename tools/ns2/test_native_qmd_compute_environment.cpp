@@ -86,7 +86,7 @@ struct NativeRetirementMockFences {
 };
 struct MockMappedGpu {
     u64 address{};
-    std::array<u32,8> words{0xabcdef01,0x11223344,0x55667788,0x99aabbcc};
+    std::array<u32,1024> words{0xabcdef01,0x11223344,0x55667788,0x99aabbcc};
     unsigned reads{};
     std::size_t last_read_bytes{};
     std::size_t accessible_bytes{32};
@@ -627,10 +627,34 @@ int main() {
         memory.words[3] = 0;
         auto stores_only = global;
         stores_only.uses_global_memory = false;
+        // Before native normalization, the pinned shared Maxwell translator
+        // has NOT created NVN SSBO bindings for a shader with only stores.
+        // Exercise that actual missing-descriptor shape, not a premade
+        // descriptor copied from the read/write fixture above.
+        stores_only.storage_buffers_descriptors.clear();
+        assert(Shader::Ampere::NormalizeNativeQmdGlobalStoreOnlyInfo(
+            stores_only, 1));
+        assert(stores_only.uses_global_memory &&
+               stores_only.storage_buffers_descriptors.size() == 1 &&
+               stores_only.storage_buffers_descriptors[0].cbuf_index == 0 &&
+               stores_only.storage_buffers_descriptors[0].cbuf_offset == 0x310 &&
+               stores_only.storage_buffers_descriptors[0].is_written);
         // A shader that only STORES through global memory is a genuine
         // NVN SPIR-V writer, not an absent read-side dependency. Its real
         // QMD descriptor must still be writable and sized.
-        const auto write_plan = env.BuildResourcePlan(stores_only);
+        // The real native NVN descriptor is at CBUF0 + 0x310, not the
+        // synthetic fixture's previous offset zero. Provide separately
+        // mapped QMD3 memory with exactly those guest descriptor bytes.
+        auto store_launch = *decoded;
+        store_launch.constant_buffers[0].size = 0x1000;
+        MockMappedGpu store_memory{};
+        store_memory.address = memory.address;
+        store_memory.accessible_bytes = 0x1000;
+        for (u32 i = 0; i < 4; ++i)
+            store_memory.words[0x310/sizeof(u32) + i] = memory.words[i];
+        NativeQmdComputeEnvironment store_env{
+            store_launch, Read, &store_memory, std::make_unique<TextureMetadata>()};
+        const auto write_plan = store_env.BuildResourcePlan(stores_only);
         assert(write_plan && write_plan->global_layout_resolved &&
                write_plan->HasResolvedGpuBufferBindings());
         assert(Shader::Ampere::NativeQmdGlobalMemoryLayoutMatches(
@@ -641,6 +665,7 @@ int main() {
             stores_only, not_writable, 64));
         auto not_enabled = stores_only;
         not_enabled.stores_global_memory = false;
+        not_enabled.uses_global_memory = false;
         assert(!Shader::Ampere::NativeQmdGlobalMemoryLayoutMatches(
             not_enabled, *write_plan, 64));
         auto array = global;

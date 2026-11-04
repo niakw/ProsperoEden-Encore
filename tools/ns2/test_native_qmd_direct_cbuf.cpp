@@ -41,6 +41,80 @@ static void Check(Opcode op, u32 bank, u32 offset, u32 reflected,
     }
 }
 int main() {
+    // P2.3: write-only Ampere NVN global memory must reach the SAME CBUF0
+    // descriptor bridge as read+write programs, never a detached SSBO.
+    {
+        using Shader::Ampere::NormalizeNativeQmdGlobalStoreOnlyInfo;
+        Shader::Info stores{};
+        stores.stores_global_memory = true;
+        stores.constant_buffer_mask = 1;
+        stores.constant_buffer_descriptors.push_back({0, 1});
+        stores.nvn_buffer_used.set(0);
+        assert(NormalizeNativeQmdGlobalStoreOnlyInfo(stores, 1));
+        assert(stores.uses_global_memory && stores.stores_global_memory);
+        assert(stores.storage_buffers_descriptors.size() == 1);
+        const auto& storage = stores.storage_buffers_descriptors[0];
+        assert(storage.cbuf_index == 0 && storage.cbuf_offset == 0x310U &&
+               storage.count == 1 && storage.is_written);
+        assert(stores.constant_buffer_used_sizes[0] == 0x320U);
+        // Already normalized: no duplicate descriptors or changed ordering.
+        assert(NormalizeNativeQmdGlobalStoreOnlyInfo(stores, 1));
+        assert(stores.storage_buffers_descriptors.size() == 1);
+
+        Shader::Info many{};
+        many.stores_global_memory = true;
+        many.constant_buffer_mask = 1;
+        many.constant_buffer_descriptors.push_back({0, 1});
+        for (u32 i = 0; i < 16; ++i) many.nvn_buffer_used.set(i);
+        assert(NormalizeNativeQmdGlobalStoreOnlyInfo(many, 1));
+        assert(many.storage_buffers_descriptors.size() == 16);
+        assert(many.constant_buffer_used_sizes[0] == 0x410U);
+        for (u32 i = 0; i < 16; ++i) {
+            const auto& desc = many.storage_buffers_descriptors[i];
+            assert(desc.cbuf_index == 0 && desc.cbuf_offset == 0x310U + i * 16U &&
+                   desc.count == 1 && desc.is_written);
+        }
+
+        // Rejection must NOT partially mutate an IR or invent missing banks.
+        auto missing_cbuf = stores;
+        missing_cbuf.uses_global_memory = false;
+        missing_cbuf.storage_buffers_descriptors.clear();
+        missing_cbuf.constant_buffer_mask = 0;
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(missing_cbuf, 1));
+        assert(!missing_cbuf.uses_global_memory &&
+               missing_cbuf.storage_buffers_descriptors.empty());
+        missing_cbuf = stores;
+        missing_cbuf.uses_global_memory = false;
+        missing_cbuf.storage_buffers_descriptors.clear();
+        missing_cbuf.constant_buffer_descriptors.clear();
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(missing_cbuf, 1));
+        assert(missing_cbuf.storage_buffers_descriptors.empty());
+        auto missing_pin = stores;
+        missing_pin.uses_global_memory = false;
+        missing_pin.storage_buffers_descriptors.clear();
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(missing_pin, 0));
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(missing_pin, 0x101U));
+        assert(missing_pin.storage_buffers_descriptors.empty());
+        auto gaps = missing_pin;
+        gaps.nvn_buffer_used.reset();
+        gaps.nvn_buffer_used.set(1);
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(gaps, 1));
+        assert(gaps.storage_buffers_descriptors.empty());
+        gaps.nvn_buffer_used.set(0);
+        gaps.nvn_buffer_used.set(3); // Deliberate hole at slot 2.
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(gaps, 1));
+        assert(gaps.storage_buffers_descriptors.empty());
+        gaps.nvn_buffer_used.reset();
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(gaps, 1));
+        auto collision = missing_pin;
+        collision.storage_buffers_descriptors.push_back({0, 0x310, 1, true});
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(collision, 1));
+        assert(collision.storage_buffers_descriptors.size() == 1);
+        auto no_global = missing_pin;
+        no_global.stores_global_memory = false;
+        assert(NormalizeNativeQmdGlobalStoreOnlyInfo(no_global, 0));
+        assert(no_global.storage_buffers_descriptors.empty());
+    }
     Check(Opcode::GetCbufU32,0,0,1,1,false,false,true,16);
     Check(Opcode::GetCbufU32,0,0xfffc,1,1,false,false,true,0x10000);
     Check(Opcode::GetCbufU32,0,0xffff,1,1,false,false,false,0);

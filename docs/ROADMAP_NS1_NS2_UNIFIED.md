@@ -221,6 +221,30 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — accès dynamiques CBUF : largeur d'origine et traversée des lignes SPIR-V
+(04/11, source/hôte) :** le backend CBUF Ampere vérifie désormais la
+**plage d'octets invités entière**, avant de convertir le décalage en
+index SPIR-V arrondi. Auparavant une lecture U32x2 (8 octets) depuis
+0xfffc pouvait être relue à tort comme le dernier vecteur valide
+0xfff8–0xffff ; les lectures de 1/2/4 octets ont maintenant également
+leur vrai seuil, même si le compilateur émet une lecture U32x4 alignée.
+Les décalages invalides sont envoyés vers le sélecteur d'index invalide
+des CBUF dynamiques QMD3, ou le pointeur sûr suivi du zéro côté banque
+immédiate. Il n'y a ni alias vers une autre banque ni adresse modulo 64 Kio.
+
+Lorsque Vulkan ne permet pas l'aliasing de descripteurs, une lecture
+**U32x2** traversant la limite interne d'une ligne U32x4 de 16 octets
+sélectionne maintenant la ligne suivante pour son second mot et
+ramène l'index de composant dans [0,3] : une extraction du composant 4
+ne pouvait pas représenter correctement ce cas. Les voies NS1 sont
+byte-for-byte inchangées quand la portée Ampere n'est pas activée.
+Validation : parsing C++20 des sources réelles du backend SPIR-V sous
+O0/O2 avec headers épinglés, oracle sémantique compilé et exécuté UBSan
+O0/O2 (4 largeurs, limites 0xfff8/0xfffc/0xffff, franchissements de
+lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
+Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
+hors formes connues et pointeurs atomiques restent ouverts.
+
 **P2.3 — accès complets SSBO globaux (source/hôte, 04/11) :**
 Le backend SPIR-V partagé NVN vérifiait seulement
 `base <= addr < base + size` avant chaque `OpAccessChain`. Un chargement,

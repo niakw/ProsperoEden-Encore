@@ -466,6 +466,8 @@ jobs:
           done
       - name: P2.3 prove real QMD3 direct CBUF IR bank/extent admission
         run: python3 -B tools/ns2/check_native_qmd_direct_cbuf_host.py
+      - name: P2.3 native SPIR-V original-byte CBUF bounds and two-row U32x2
+        run: python3 -B tools/ns2/check_native_spirv_cbuf_span_host.py
       - name: Validate QMD3 native Compute shader environment (Clang/GCC UBSan)
         shell: bash
         run: |

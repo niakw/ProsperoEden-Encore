@@ -16,6 +16,25 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.3 — seuils de lecture CBUF sur les octets invités, 04/11
+
+Revue du backend commun Ampere→SPIR-V : l'ancienne vérification d'un
+CBUF à décalage dynamique utilisait l'index **après** division par la
+largeur du vecteur. Une lecture U32x2 à 0xfffc (8 octets requis)
+pouvait donc charger la ligne 0xfff8, pourtant invalide comme
+plage invitée. Le backend conservé est corrigé sur les vrais
+appelants U8/U16/U32/F32/U32x2, y compris repli U32x4 en l'absence
+d'aliasing. Ce dernier repli restaure également la lecture du second
+mot dans la ligne suivante quand le premier se trouve en composant 3.
+Détection native seule, sans modifier l'émetteur Maxwell NS1.
+
+Preuve locale : compilation syntaxique du vrai TU
+emit_spirv_context_get_set.cpp en O0/O2 ; oracle C++/UBSan des bornes
+de 64 Kio et de traversée 16 octets, assertions de liaison aux appels
+de largeur d'origine. Le shader SPIR-V et le GPU Vulkan physiques ne
+sont pas exécutés par cet oracle ; ne pas étendre la coche P2.3 à
+toutes les formes d'atomiques CBUF.
+
 ### Revue complémentaire P2.4 — UISETP/USEL (04/11)
 
 Le bas niveau Ampere de Lichii `nx2` a mis en évidence deux différences

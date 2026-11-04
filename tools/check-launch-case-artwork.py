@@ -211,7 +211,7 @@ render_fixed = (root / "tools/launcher/render-art.py").read_text()
 assert 'ink[x, y] = (175, 136, 76, alpha)' in render_fixed
 assert "brand fixed" in (root / "tools/launcher/preview.sh").read_text()
 package = (root / "tools/package-headless-native.sh").read_text()
-for fragment in ("for stem in switch-logo switch-rear-footer; do",
+for fragment in ("for stem in switch-logo switch-rear-footer ns2-head; do",
                  "base64.b64decode", "tga:bits-per-pixel=32",
                  "-region '82x80+182+195'", "-fill '#af884c'"):
     assert fragment in package

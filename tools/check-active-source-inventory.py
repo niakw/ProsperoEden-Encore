@@ -29,8 +29,16 @@ research_manifest = json.loads(
 )
 research_paths = research_manifest["paths"]
 assert research_manifest["schema_version"] == 1
-assert len(research_paths) == len(set(research_paths)) == 121
+assert len(research_paths) == len(set(research_paths)) == 120
 assert research_paths == sorted(research_paths)
+retired_am = {
+    "ns2-runtime/am/core/hle/service/am/service/application_proxy.cpp",
+    "ns2-runtime/am/core/hle/service/am/service/application_proxy.h",
+    "ns2-runtime/am/core/hle/service/am/service/graphics_scaling_parameters_functions.cpp",
+    "ns2-runtime/am/core/hle/service/am/service/graphics_scaling_parameters_functions.h",
+}
+assert not retired_am & set(physical_all), "Retired false-success AM sources were restored"
+assert not retired_am & set(research_paths), "Retired AM sources remain in research inventory"
 assert set(research_paths) <= set(physical_all), (
     "Missing pinned NS2 research source owners", sorted(set(research_paths) - set(physical_all))
 )
@@ -185,11 +193,27 @@ assert "python3 -B tools/ns2/check_paged_gpu_scalar_host.py" in (
     root / ".github/workflows/encore-core-preflight.yml").read_text()
 print("ENCORE_POST_F07_SHARED_GPU_SCALAR_OWNER_PASS",
       f"owners={len(shared_gpu_scalar_owners)}")
+# P1.2 post-F07 common source: a Mapped->Mapped physical rebind must
+# invalidate the old rasterizer backing on both NS1 and NS2. This is
+# neither an opt-in NS2 owner nor part of the frozen 337-source graph.
+shared_gpu_remap_owners = {"eden-core/src/video_core/native_gpu_page_remap.h"}
+assert shared_gpu_remap_owners <= set(physical_all)
+assert not shared_gpu_remap_owners.intersection(
+    set(research_paths) | shared_gpu_scalar_owners |
+    shared_ns2_kernel_owners | shared_ns2_audio_owners | shared_ns2_gpu_access_owners)
+remap_source = (active / "eden-core/src/video_core/memory_manager.cpp").read_text()
+assert '#include "native_gpu_page_remap.h"' in remap_source
+assert remap_source.count("Eden::GpuMemory::NeedsRasterizerUnmap(") == 2
+assert "tools/ns2/check_native_gpu_pte_remap_host.py" in (
+    root / ".github/workflows/ns2-research-host.yml").read_text()
+print("ENCORE_POST_F07_SHARED_GPU_REMAP_OWNER_PASS",
+      f"owners={len(shared_gpu_remap_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
-            shared_gpu_scalar_owners]
+            shared_gpu_scalar_owners | shared_gpu_remap_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

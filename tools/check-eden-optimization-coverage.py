@@ -33,7 +33,15 @@ all_owners={p for p in tracked
 # Do not silently count new research source code as already optimized.
 research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text())
 research_owners={"vendor/encore-active/"+p for p in research["paths"]}
-assert research["schema_version"] == 1 and len(research_owners) == 121
+assert research["schema_version"] == 1 and len(research_owners) == 120
+retired_am = {
+    "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_proxy.cpp",
+    "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_proxy.h",
+    "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/graphics_scaling_parameters_functions.cpp",
+    "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/graphics_scaling_parameters_functions.h",
+}
+assert not retired_am & all_owners, "Retired AM false-success owners were reintroduced"
+assert not retired_am & research_owners, "Research inventory retained removed AM stubs"
 assert research_owners <= all_owners, sorted(research_owners-all_owners)
 # The two new shared warning-hygiene headers have a separate exact-source
 # verifier and installer. They are not retroactive F07 optimization reviews.
@@ -191,6 +199,23 @@ assert "python3 -B tools/ns2/check_paged_gpu_scalar_host.py" in (
     ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 print("NS1_NS2_SHARED_GPU_SCALAR_F07_ISOLATION_PASS",
       f"post_snapshot_reviewed={len(post_f07_shared_gpu_scalar_owners)}")
+# P1.2 physical remapping of the common NS1/NS2 GMMU is a genuinely
+# new header outside the historical F07 owner count, not NS2-only code.
+post_f07_shared_gpu_remap_owners = {
+    "vendor/encore-active/eden-core/src/video_core/native_gpu_page_remap.h",
+}
+assert post_f07_shared_gpu_remap_owners <= all_owners
+assert not post_f07_shared_gpu_remap_owners & (
+    research_owners | hygiene_owners | ns2_shared_release_owners |
+    ns2_shared_audio_owners | ns2_shared_gpu_access_owners |
+    post_f07_shared_gpu_scalar_owners)
+assert '#include "native_gpu_page_remap.h"' in native_scalar_owner
+assert native_scalar_owner.count("Eden::GpuMemory::NeedsRasterizerUnmap(") == 2
+assert "python3 tools/ns2/check_native_gpu_pte_remap_host.py" in (
+    ROOT / ".github/workflows/ns2-research-host.yml").read_text()
+print("NS1_NS2_SHARED_GPU_REMAP_F07_ISOLATION_PASS",
+      f"post_snapshot_reviewed={len(post_f07_shared_gpu_remap_owners)}")
+
 # NUP v1 parser/adapter/loader/router additions came after the frozen
 # 518-path F07 optimization audit. Their native CMake gate is OFF by default,
 # forbidden in the final profile, and has no PS5 runtime proof. Keep this
@@ -271,7 +296,7 @@ print("NUP_V1_POST_F07_OWNER_ISOLATION_PASS",
       f"not_retroactive_F07={len(post_f07_nup_vfs_owners)}",
       "shipping_selection=absent")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_nup_vfs_owners
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

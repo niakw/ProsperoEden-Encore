@@ -56,3 +56,19 @@ filesystem/title-association failure.
 ## 31 October 2026 — one-header RomFS declaration re-review
 
 The independent vendor commit [`2efc9291ba10f98369ee716e78d0d83824a9aee4`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/2efc9291ba10f98369ee716e78d0d83824a9aee4) changes this reviewed loader by **one include only**: `#include "core/file_sys/romfs.h"` immediately before `romfs_factory.h`. The previous blob `af269102b7e8e41e8ba9dca6c2d68b88fba86e3f` and new blob `6b2f529fb09083fab4abd47b2605d16f42d93300` are verified against the parent/current vendor commits. The header declares the already-used `FileSys::CreateRomFS` interface for extracted RomFS; no load, VFS overlay, render, JIT or frame-loop statement changed. This review advances the strict exact-blob pins in the coverage inventory and `check-maintained-logging-loader.py`, retaining all behavioral assertions and future drift rejection. Native SDK compilation, extracted DLC mounting, FC27 and FW13.60 execution remain unproved.
+
+
+## Revue source du 4 novembre 2026 — sélection persistée des packages
+
+| Source | Blob actuel vérifié | Relecture ciblée |
+| --- | --- | --- |
+| `headless/settings_store.h` | `e8760e571f5a13d1e73d36ba57476c7a3f593899` | `ValidRomFilename` rejette les paquets racine nommés `Update_001.nsp`, `DLC-season.xci` ou `AOC_04.nsz` en plus des chemins imbriqués exclus, sans interdire les entrées directes NRO/NSO, les noms normaux ou les titres NS1 reconnus |
+
+L'ancienne disposition d'optimisation F07 reste historique et ne
+constitue pas un benchmark. Le seul changement est un refus au moment
+de la sélection et de la relecture du cache de bibliothèque ; aucune
+règle de shader/JIT/renderer et aucun TitleID particulier ne sont
+touchés. Le harnais `tools/check-exefs-directory-host.py` valide le
+propriétaire C++ réel sur macOS O0/O2/UBSan ; PS5 et CI complète au SHA
+figé restent non qualifiées. Les hash de couverture sont avancés
+uniquement après cette relecture.

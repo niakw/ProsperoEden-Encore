@@ -316,10 +316,10 @@
       "path": "headless/game_files.h",
       "disposition": "format_feature_source_integrated",
       "source_scope": "header_only",
-      "reviewed_source_git_blob": "9729ca93a48713c39aadd80e41398cb977ec261b",
+      "reviewed_source_git_blob": "9fd32a34218d66a2fd8f55d29b2f8640f2c07394",
       "feature_review_document": "docs/EDEN_FORMAT_SOURCE_REVIEW_2026-10-23.md",
       "proof_ref": "tools/check-exefs-directory-host.py",
-      "evidence": "New format-loader code path inspected and pinned: Picker formats and ExeFS path restrictions; no guest draw/JIT hotpath. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Arbitrary nested package add-on discovery re-reviewed, host fixture excludes the selected base and symlinks (31 October 2026). Mixed XCI/NSP folder selection re-reviewed; no native gameplay claim. Explicit extracted AOC Title ID wrappers recognized with strictly bounded selection; source-review updated 2026-10-31. Re-reviewed 2026-11-03: only three mixed-case ExeFS/Base directory-owner checks change (strict 5-character ExeFS leaf and path segment, stable priority for Base/ExeFS); update and DLC segments remain rejected and every directory still passes symlink_status. No new file extensions, decryption, guest code, renderer or hot-loop behavior. tools/check-exefs-directory-host.py now tests Mixed Case/Base/ExeFS discovery, nested decoy priority, valid persisted selection, prefixExeFS rejection and uppercase Updates exclusion, with host CI pending; no PS5 validation claimed."
+      "evidence": "New format-loader code path inspected and pinned: Picker formats and ExeFS path restrictions; no guest draw/JIT hotpath. This is source integration, NOT a claimed F01-F06 optimization or console runtime proof. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Arbitrary nested package add-on discovery re-reviewed, host fixture excludes the selected base and symlinks (31 October 2026). Mixed XCI/NSP folder selection re-reviewed; no native gameplay claim. Explicit extracted AOC Title ID wrappers recognized with strictly bounded selection; source-review updated 2026-10-31. Re-reviewed 2026-11-03: only three mixed-case ExeFS/Base directory-owner checks change (strict 5-character ExeFS leaf and path segment, stable priority for Base/ExeFS); update and DLC segments remain rejected and every directory still passes symlink_status. No new file extensions, decryption, guest code, renderer or hot-loop behavior. tools/check-exefs-directory-host.py now tests Mixed Case/Base/ExeFS discovery, nested decoy priority, valid persisted selection, prefixExeFS rejection and uppercase Updates exclusion, with host CI pending; no PS5 validation claimed. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; ROM scanner: reject prefixed update/DLC folders as base, preserve legitimate names and add-on provider ownership. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification."
     },
     {
       "path": "headless/game_liveness.h",
@@ -383,9 +383,9 @@
       "path": "headless/gpu_deferred_write_queue.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U21",
-      "reviewed_source_git_blob": "5abb7fa8c75264a50b6f3db87bd353293b309645",
+      "reviewed_source_git_blob": "bf831798b1fea449ec1e784faa4d6bfd155d66ea",
       "source_review_document": "docs/EDEN_NATIVE_NON_HOT_OPTIMIZATION_REVIEW_2026-10-21.md",
-      "evidence": "Exact Git blob source inspected; File FIFO GPU différée utilisée par les essais du pont DEV ; EDEN_GUEST_WRITE_BRIDGE_DEV reste OFF dans le profil normal. Rouvrir uniquement sur changement de blob, problème reproductible ou usage hotpath constaté."
+      "evidence": "Exact Git blob source inspected; File FIFO GPU différée utilisée par les essais du pont DEV ; EDEN_GUEST_WRITE_BRIDGE_DEV reste OFF dans le profil normal. Rouvrir uniquement sur changement de blob, problème reproductible ou usage hotpath constaté. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; deferred queue: safe FIFO backing reuse only after a complete drain with no newer tail; queue stress host proof. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification."
     },
     {
       "path": "headless/gpu_dirty_region_split.h",
@@ -538,9 +538,9 @@
       "path": "headless/metadata_bridge.cpp",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U13",
-      "reviewed_source_git_blob": "dfc4255361847c0f80f738002ff1f7d9bd1bfc25",
+      "reviewed_source_git_blob": "539ff998d0e05275ff2f57e22b7711f98a26e64c",
       "source_review_document": "docs/NS2_FIRMWARE_STARTUP_SOURCE_REVIEW_2026-11-01.md",
-      "evidence": "Re-reviewed 2026-10-23 against prior blob c15a5f3: game_files.h format guards switch package/card metadata and glyph-version entry points to Eden::IsPackageFile/IsCardImageFile, rejecting direct executable inputs that have no Control RomFS. No GPU/JIT hotpath modified. Review documented in docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md; every further source mutation reopens the review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Extracted AOC library counts share the title-ID path scanner with native guest services; reviewed 2026-10-31. Re-reviewed 2026-10-31 after extracted-game UI identity/size/cover and foreground avatar fixes. New review: docs/NS2_BLACK_SCREEN_FC27_AUDIO_REVIEW_2026-10-31.md. This revalidation is source-only: no NS2 gameplay or PS5 crash fix claim. 2026-11-01 firmware import/startup rereview: 19 bounded NS1/NS2 firmware roots, no source ZIP deletion or overwrite, keyed NCA validation retained, extracted NS2 NCM discovered read-only. Source-linked host witnesses: check-firmware-auto-import-host.py, check-firmware-zip-native-host.py, check-firmware-matrix-host.py. Review docs/NS2_FIRMWARE_STARTUP_SOURCE_REVIEW_2026-11-01.md; no gameplay or FPS claim.",
+      "evidence": "Re-reviewed 2026-10-23 against prior blob c15a5f3: game_files.h format guards switch package/card metadata and glyph-version entry points to Eden::IsPackageFile/IsCardImageFile, rejecting direct executable inputs that have no Control RomFS. No GPU/JIT hotpath modified. Review documented in docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md; every further source mutation reopens the review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. Extracted AOC library counts share the title-ID path scanner with native guest services; reviewed 2026-10-31. Re-reviewed 2026-10-31 after extracted-game UI identity/size/cover and foreground avatar fixes. New review: docs/NS2_BLACK_SCREEN_FC27_AUDIO_REVIEW_2026-10-31.md. This revalidation is source-only: no NS2 gameplay or PS5 crash fix claim. 2026-11-01 firmware import/startup rereview: 19 bounded NS1/NS2 firmware roots, no source ZIP deletion or overwrite, keyed NCA validation retained, extracted NS2 NCM discovered read-only. Source-linked host witnesses: check-firmware-auto-import-host.py, check-firmware-zip-native-host.py, check-firmware-matrix-host.py. Review docs/NS2_FIRMWARE_STARTUP_SOURCE_REVIEW_2026-11-01.md; no gameplay or FPS claim. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; firmware ZIP importer: stable lexical enumeration before the bounded eight-archive admission; real startup ZIP host proof. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification.",
       "supplemental_review_document": "docs/NS2_BLACK_SCREEN_FC27_AUDIO_REVIEW_2026-10-31.md"
     },
     {
@@ -1071,10 +1071,10 @@
     {
       "path": "headless/prosperoeden/pe/ui/case_media_selection.hpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "59f1f95c6eb497c94ddc9640145f98f25c808190",
+      "reviewed_source_git_blob": "1e97d6e91aa2bc3a63633ca7b41038aea296282b",
       "review_scope": "launcher-release-hotpath",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Re-reviewed 2026-11-03 against reviewed blob 34fd91455575949f539eeb0dd884c13add5992e4 (exact C++ source diff): the only behavioral change is BackScenes accepting a read-only confirmed-usable predicate, excluding the actual usable FrontPaper after a confirmed hero decode failure (including a fallback screenshot when Hero is missing), and retaining the original 3-argument noexcept overload. Fixed three slots, borrowed string pointers and no new allocation, I/O, network fetch, blocking or GPU resource ownership; category priority and pending-decoder policy preserved. tools/check-encore-case-media-selection-host.py covers missing Hero, failed decoded Hero, indexed role stability, distinct rear scenes and pending front readiness using Clang/GCC O0/O2; current-head CI not yet proven and PS5 coverage remains P5."
+      "evidence": "Re-reviewed 2026-11-03 against reviewed blob 34fd91455575949f539eeb0dd884c13add5992e4 (exact C++ source diff): the only behavioral change is BackScenes accepting a read-only confirmed-usable predicate, excluding the actual usable FrontPaper after a confirmed hero decode failure (including a fallback screenshot when Hero is missing), and retaining the original 3-argument noexcept overload. Fixed three slots, borrowed string pointers and no new allocation, I/O, network fetch, blocking or GPU resource ownership; category priority and pending-decoder policy preserved. tools/check-encore-case-media-selection-host.py covers missing Hero, failed decoded Hero, indexed role stability, distinct rear scenes and pending front readiness using Clang/GCC O0/O2; current-head CI not yet proven and PS5 coverage remains P5. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; media selection: one pass preserving indexed fanart/title/gameplay roles and distinct fallback scene; real media host proof. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification."
     },
     {
       "path": "headless/prosperoeden/pe/ui/dualsense_mask_asset.hpp",
@@ -1149,10 +1149,10 @@
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",
       "disposition": "reviewed_without_new_code_edit",
-      "reviewed_source_git_blob": "f852926a48bc5d02d641a190c6c94ad5010f3e49",
+      "reviewed_source_git_blob": "996adb5c2d93dc2ef8c223658744486ba5f446ac",
       "review_scope": "launcher-release-hotpath",
       "source_review_document": "docs/EDEN_RELEASE_LAUNCHER_SOURCE_OPTIMIZATION_AUDIT_2026-10-26.md",
-      "evidence": "Switch-theme tile/advanced panel drawing via reused DrawList painter. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence."
+      "evidence": "Switch-theme tile/advanced panel drawing via reused DrawList painter. Reviewed for shipping-path optimization relevance; no additional source edit justified by presently verified evidence. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; Switch theme loading state: do not display a false empty library while first scan is pending; launcher scan owner proof. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification."
     },
     {
       "path": "headless/prosperoeden/pe/ui/textures.cpp",
@@ -1313,9 +1313,9 @@
       "path": "headless/settings_store.h",
       "disposition": "reviewed_without_new_code_edit",
       "contract_id": "U75",
-      "reviewed_source_git_blob": "e49667c282633a4ac0bf68976c78e4f4e1c1cd3e",
+      "reviewed_source_git_blob": "e8760e571f5a13d1e73d36ba57476c7a3f593899",
       "source_review_document": "docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md",
-      "evidence": "Re-reviewed 2026-10-23 against ec168add: saved game-selection validation now uses IsGameFile or a single-segment ExeFS <folder>/main, not merely NSP/XCI. No JIT, GPU, or in-game input path modified; docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md documents the exact source diff. Any later mutation reopens review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed."
+      "evidence": "Re-reviewed 2026-10-23 against ec168add: saved game-selection validation now uses IsGameFile or a single-segment ExeFS <folder>/main, not merely NSP/XCI. No JIT, GPU, or in-game input path modified; docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md documents the exact source diff. Any later mutation reopens review. Source drift re-reviewed for flexible layout on 2026-10-31; see docs/FLEXIBLE_LAYOUT_INTEGRATION_SOURCE_REVIEW_2026-10-31.md. Historical optimization disposition is unchanged; hardware and FPS not claimed. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; saved base selections: refuse prefixed top-level NSP/XCI/NSZ/XCZ, retain direct homebrew loaders. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification."
     },
     {
       "path": "headless/shader_cache_check.cpp",
@@ -4468,9 +4468,9 @@
     {
       "path": "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
       "disposition": "new_source_issue_corrected",
-      "reviewed_source_git_blob": "c329c6ba2c60c2641046f282c412567ada8c4aac",
+      "reviewed_source_git_blob": "874172cc88bb3c4980df16aef42e3268e368d966",
       "proof_ref": "tools/check-extracted-aoc-layout-host.py",
-      "evidence": "Native aoc:u guest enumeration of packaged and extracted DLC IDs. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build."
+      "evidence": "Native aoc:u guest enumeration of packaged and extracted DLC IDs. Documented in docs/EXTRACTED_AOC_INSTALLATION_REVIEW_2026-10-31.md. Host-only proof, no claimed console performance or native build. 2026-11-04: reviewed exact old/current blobs and the real source/host owners after changes; AOC: missing NCA guard, guest output span bounds, and installed-ID admission for PrepareAddOnContent; AOC real owner proof. Specific old/current diffs and limits in docs/NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md. No PS5 gameplay, final-sha CI or native build certification."
     },
     {
       "path": "headless/extracted_npdm_identity.h",

@@ -162,6 +162,16 @@ inline bool ValidRomFilename(std::string_view name) {
     if (name.size() < 5 || name.size() > 255) return false;
     const bool exefs = Eden::IsDeconstructedGameSelection(name);
     const bool nested_package = Eden::IsNestedGameFileSelection(name);
+    // A top-level update_/DLC- package must not be returned as the base
+    // when the library scanner has no CNMT/TitleID proof of its role.
+    // Apply the same reserved-name policy as nested package discovery.
+    const std::size_t slash = name.find('/');
+    const std::size_t extension = name.find_last_of('.');
+    if (slash == std::string_view::npos && extension != std::string_view::npos &&
+        (Eden::IsPackageFile(name) || Eden::IsCardImageFile(name) ||
+         Eden::IsNupFile(name)) &&
+        Eden::IsReservedAddOnPackageStem(name.substr(0, extension)))
+        return false;
     for (unsigned char c : name)
         if (c < 32 || c == 127 || (c == '/' && !exefs && !nested_package) || c == '\\') return false;
     return Eden::IsGameFile(name) || exefs || nested_package;

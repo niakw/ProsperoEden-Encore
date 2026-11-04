@@ -120,3 +120,26 @@ Blob actuel `headless/game_files.h` : `f65c78ff3f666ce920763dcd9e8676058184e07d`
 ### Re-revue P3.4 du 3 novembre — retrait d'une entrée pendant le scan
 
 Source `headless/game_files.h` blob `9729ca93a48713c39aadd80e41398cb977ec261b` (commit `5457de8`). Le parcours de conteneurs updates/DLC ne traite plus `ENOENT` ou `ENOTDIR` sur une entrée déjà fournie par `directory_iterator` comme un retrait sûr : ce cas indique que la bibliothèque change pendant l'inventaire. Tout échec de `symlink_status` marque maintenant le scan `incomplete` et interdit au caller de publier une liste tronquée. Les fichiers/symlinks correctement catégorisés restent ignorés comme avant ; aucune nouvelle extension ni activation NUP de production. `tools/check-nup-v1-game-discovery.py` enregistre cette exigence en plus des scénarios C++ NUP OFF/ON. Tests hôte complets toujours à qualifier au couple SHA courant.
+
+
+### Revue P1.1/P3.4 du 4 novembre 2026 — dossiers préfixés et titres de base
+
+| Source | Blob actuel vérifié | Portée de la relecture |
+| --- | --- | --- |
+| `headless/game_files.h` | `9fd32a34218d66a2fd8f55d29b2f8640f2c07394` | Exclusion cohérente des chemins `update_*`, `patch-*`, `DLC_*`, `aoc-*` dans le scanner ExeFS, la découverte des packages imbriqués et les sélections persistées ; les titres légitimes `updateable` restent admis |
+
+Les variantes de dossiers portant un préfixe d'add-on n'étaient
+auparavant exclues que lorsqu'elles correspondaient exactement à
+`updates`, `dlc` ou `aoc`. Un seul paquet placé sous
+`DLC_v2/game.xci`, ou un ExeFS sous `update_450/exefs/main`,
+pouvait donc apparaître comme base lorsque ses métadonnées étaient
+insuffisantes. La correction réutilise le prédicat de nom réservé
+déjà testé pour les *fichiers* de packages, sans changer le nombre de
+niveaux, les contrôles des liens symboliques, les formats reconnus,
+ni l'extraction/montage des DLC par leur propriétaire natif.
+
+Le harnais `tools/check-exefs-directory-host.py` compile le vrai
+`game_files.h` et le validateur `ValidRomFilename`, en O0/O2 avec
+UBSan, et exerce les chemins conservés et refusés. Contrôle sur macOS
+avec les pilotes `clang++` et `g++` du CLT (deux alias Apple Clang,
+pas une preuve GCC indépendante). Aucun build ni gameplay PS5.

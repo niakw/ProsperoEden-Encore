@@ -368,6 +368,41 @@ une fixture à deux firmwares NS2 créés dans l'ordre inverse, plus les matrice
 NS1/NS2 NCA/extraits, les ZIP bornés et le contrôle du manifeste NS2JB.
 Les parcours restent bornés ; preuve de sélection/installation console P5.
 
+**P1.1/P3.4 — isolation des bases et add-ons aux frontières ROMS (04/11) :**
+les sélections extraites, les chemins de paquets imbriqués et le scanner
+du répertoire titre rejettent maintenant les *dossiers* d'updates/DLC/AOC
+dont le nom commence par `update_`, `patch-`, `dlc_`, `aoc-`, etc.,
+et pas seulement les noms exacts `updates` ou `dlc`. Les paquets
+autonomes manifestement réservés (ex. `Update_001.nsp`) ne sont plus
+enregistrés en faux jeux de base par le launcher. Le lecteur des
+add-ons reste responsable de leur identification par métadonnées ;
+aucun changement de lancement du jeu réel ni de l'émulateur NS1.
+Le vrai propriétaire `game_files.h` et le validateur de noms
+`settings_store.h` passent les fixtures positives/négatives du scanner,
+les chemins sauvegardés et l'extraction des vignettes en O0/O2/UBSan.
+Le contenu cryptographique, le boot réel, les jaquettes et l'UX PS5
+demeurent à prouver en P5.
+
+**P0.2/P1.2/P4.1 — registres de source réconciliés (04/11) :**
+la suppression précédente du prototype AM Graphics Scale avait laissé
+quatre chemins inexistants dans le manifeste de recherche, et trois
+nouveaux propriétaires NS2 (BRX, CBUF, NVDRV) n'y figuraient pas. La source partagée
+du remapping physique GMMU restait aussi hors du registre F07.
+Ces propriétaires ont été classés individuellement, sans inventer
+d'implémentations ni rouvrir des prototypes supprimés : **120 sources de
+recherche présentes**, **337 sources catalogue historiquement figées**,
+**518 propriétaires de revue F07** toujours distincts. Les cinq autres
+empreintes source périmées (FIFO GPU, sélection de média, thème Switch,
+import de firmware et AOC) ont été comparées aux blobs historiques
+récupérés sur GitHub et revues sur les vraies unités du dépôt. Le
+contrôle d'inventaire et celui de couverture F07 sont désormais
+**verts localement**, avec tests hôte ciblés sur les chemins corrigés.
+Voir [preuves et limites](NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md).
+
+**Ce résultat ferme la divergence du registre, pas P4.1 global** :
+compilation complète des interfaces et CI du couple SHA final, profils
+indépendants des compilers, P2 manquant et P5 console restent ouverts.
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

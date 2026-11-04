@@ -112,6 +112,14 @@ int main() {
     assert(Eden::ValidRomFilename("My Game/main"));
     assert(Eden::ValidRomFilename("game.NSZ"));
     assert(Eden::ValidRomFilename("game.NAX"));
+    assert(!Eden::ValidRomFilename("Update_001.nsp"));
+    assert(!Eden::ValidRomFilename("DLC-season.xci"));
+    assert(!Eden::ValidRomFilename("AOC_04.nsz"));
+    assert(Eden::ValidRomFilename("Updateable.nsp"));
+    // Direct homebrew/system inputs have separate loaders and must not be
+    // hidden by package-only update naming heuristics.
+    assert(Eden::ValidRomFilename("Update_001.nro"));
+    assert(Eden::ValidRomFilename("DLC-season.nso"));
     assert(!Eden::ValidRomFilename("../main"));
     assert(!Eden::ValidRomFilename("My Game/../main"));
     assert(!Eden::ValidRomFilename("My Game/sub/main"));
@@ -119,6 +127,13 @@ int main() {
     assert(Eden::ValidRomFilename("My Game/Base/ExeFS/main"));
     assert(!Eden::ValidRomFilename("My Game/base/prefixExeFS/main"));
     assert(!Eden::ValidRomFilename("My Game/Updates/458752/ExeFS/main"));
+    // Prefix-named add-on directories are also reserved. An extracted
+    // update containing a genuine main/NPDM is still not a base game.
+    assert(!Eden::ValidRomFilename("My Game/update_450/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/DLC-season/exefs/main"));
+    assert(!Eden::ValidRomFilename("My Game/patch_2/base/game.xci"));
+    assert(!Eden::ValidRomFilename("My Game/AOC-42/base/game.nsp"));
+    assert(Eden::ValidRomFilename("My Game/updateable/exefs/main"));
     assert(Eden::ValidRomFilename("My Game/base/game.XCI"));
     assert(Eden::ValidRomFilename("My Game/wrapper/second/title.nsp"));
     assert(!Eden::ValidRomFilename("My Game/updates/001/update.nsp"));
@@ -195,6 +210,14 @@ int main() {
     std::ofstream(external_dlc / "main") << "addon";
     std::ofstream(external_dlc / "main.npdm") << "meta";
     assert(Eden::FindDeconstructedGameMain(root / "dlc").empty());
+    const auto prefixed_extracted = root / "Only Prefixed ExeFS";
+    fs::create_directories(prefixed_extracted / "update_450" / "exefs");
+    std::ofstream(prefixed_extracted / "update_450/exefs/main") << "patch";
+    std::ofstream(prefixed_extracted / "update_450/exefs/main.npdm") << "meta";
+    assert(Eden::FindDeconstructedGameMain(prefixed_extracted).empty());
+    assert(!Eden::IsSafeDeconstructedGamePath(root,
+               "Only Prefixed ExeFS/update_450/exefs/main"));
+    assert(Eden::FindDeconstructedGameMain(root / "update_450").empty());
     const fs::path deeper = root / "Deep Game";
     fs::create_directories(deeper / "base" / "some" / "path" / "exefs");
     std::ofstream(deeper / "base" / "some" / "path" / "exefs" / "main") << "code";
@@ -301,6 +324,21 @@ int main() {
     std::ofstream(only_addons / "UPDATE.nsp") << "patch";
     std::ofstream(only_addons / "AOC_extra.xci") << "addon";
     assert(Eden::FindGameFolderInput(only_addons).empty());
+    const auto prefixed_packages = root / "Only Prefixed Packages";
+    fs::create_directories(prefixed_packages / "DLC_v2");
+    std::ofstream(prefixed_packages / "DLC_v2/game.xci") << "addon";
+    assert(Eden::FindNestedGamePackage(prefixed_packages).empty());
+    assert(!Eden::IsSafeNestedGameFilePath(root,
+               "Only Prefixed Packages/DLC_v2/game.xci"));
+    const auto prefixed_title = root / "update_450";
+    fs::create_directories(prefixed_title);
+    std::ofstream(prefixed_title / "game.nsp") << "patch";
+    assert(Eden::FindGameFolderInput(prefixed_title).empty());
+    const auto similarly_named_legitimate = root / "Updateable Game";
+    fs::create_directories(similarly_named_legitimate / "updateable");
+    std::ofstream(similarly_named_legitimate / "updateable/game.xci") << "base";
+    assert(Eden::FindNestedGamePackage(similarly_named_legitimate) ==
+           "updateable/game.xci");
     const auto only_aoc_root = root / "AOC";
     fs::create_directory(only_aoc_root);
     std::ofstream(only_aoc_root / "game.xci") << "addon";

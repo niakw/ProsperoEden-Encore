@@ -2255,14 +2255,11 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_GPU_ACCESS_ROOT}")
 endif()
 
-# N52: process-run admission in the single maintained vendor source.
-option(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL
-    "Research only: reject real NS2 KProcess::Run startup errors" OFF)
-if(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_NS2_EXEFS_EXPERIMENTAL OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "NS2 process-run guard requires native PS5 ExeFS research")
-    endif()
+# N52: the shared PS5 ExeFS loader registers the actual NS2 KProcess PID.
+# Admit a guest only if its native kernel Run succeeds; preserve the original
+# NS1 Process::Run path when no NS2 PID is registered, without title hacks.
+if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
+   (EDEN_NS2_EXEFS_EXPERIMENTAL OR EDEN_SHARED_NS2_EXEFS))
     set(EDEN_NS2_NATIVE_PROCESS_SOURCE
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp")
     if(NOT EXISTS "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")
@@ -2880,7 +2877,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
        EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
-       EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR

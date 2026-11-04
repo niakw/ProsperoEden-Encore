@@ -28,9 +28,10 @@ i=expected.index(start);j=expected.index(end,i)
 expected=expected[:i]+"    // Start."+expected[j+len(end):]
 assert blob(expected)=="5e46de245d9086a8b86ff95d8638585ee0229468", "N52 modified unrelated Switch 1 process logic"
 assert 'inline void Unregister(std::uint64_t pid)' in TRACE.read_text()
-assert 'EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR' in CMAKE
+assert 'option(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL' not in CMAKE
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND' in CMAKE
 assert 'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE
-assert 'NOT PS5_NATIVE OR NOT EDEN_NS2_EXEFS_EXPERIMENTAL OR' in CMAKE
+assert '(EDEN_NS2_EXEFS_EXPERIMENTAL OR EDEN_SHARED_NS2_EXEFS)' in CMAKE
 assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE
 assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE
 assert 'headless/ns2/overrides/core/hle/service/os/process.cpp' not in CMAKE

@@ -1007,7 +1007,8 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     }
     bool all_ready = true;
     unsigned changed_faces = 0;
-    // Even compact genuine spine scans are preferable to a fabricated title.\n    // NS2 games may have a real front and spine but NO uploaded back.
+    // Even compact genuine spine scans are preferable to a fabricated title.
+    // NS2 games may have a real front and spine but NO uploaded back.
     // Their spine must not depend on the existence of a back scan.
     for (int side = 0; side < 6; ++side) {
         if (cancel && cancel->load(std::memory_order_acquire)) {

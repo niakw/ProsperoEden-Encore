@@ -345,6 +345,17 @@ leur politique NS1. Témoins hôte de 16 combinaisons, O0/O2 et Clang/GCC
 passés. La première image, les vraies écritures GPU et les éventuels hazards
 matériels restent des critères **P5**, jamais une preuve de boot réussie.
 
+**P2.4 — cohérence des vecteurs GPR Ampere (04/11) :** la réécriture
+des registres hauts vérifie désormais que tous les composants implicites
+d'une paire ou d'un quartet restent contigus après emprunt de registres
+Maxwell. Le détecteur natif voit aussi les vecteurs dont le registre de
+départ est sous la limite scratch mais dont une composante la franchit.
+Une forme impossible est rejetée, jamais compilée avec des registres
+silencieusement incorrects. Cas positifs/négatifs sur le véritable
+`LowerToMaxwell` et `PrepareRegisterPressure`, dont les limites
+216 et 248 ; aucune modification du chemin NS1. Cela ne règle pas les
+instructions Ampere non encore traduites et ne prouve aucun rendu PS5.
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

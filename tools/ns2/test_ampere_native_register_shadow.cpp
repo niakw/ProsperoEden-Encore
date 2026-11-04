@@ -76,6 +76,32 @@ int main() {
     assert(lowered && !lowered.instructions.empty() &&
            lowered.source_instruction_offsets.size()==captured.size());
     assert(lowered.source_instruction_offsets[2] >= 17); // prefix + LDG + suffix
+    // An aligned high-register quartet can be borrowed safely.
+    Instruction aligned{{0x381U | (220U<<16) | (32U<<24),
+                         0U,6U<<9,0U}};
+    const auto aligned_result = PrepareRegisterPressure(aligned,216);
+    assert(aligned_result.valid && !aligned_result.prefix.empty());
+    assert(aligned_result.instruction.Bits(16,8) < 216);
+    // A vector encoded by one base register must not span from a low
+    // register into a borrowed high quartet. Nor can two non-contiguous
+    // high scratch quartets masquerade as one contiguous register vector.
+    Instruction straddles_reserved{{0x381U | (215U<<16) | (32U<<24),
+                                   0U,5U<<9,0U}};
+    Instruction straddles_borrowed{{0x381U | (219U<<16) | (32U<<24),
+                                   0U,5U<<9,0U}};
+    assert(NativeVectorCrossesScratch(straddles_reserved,216));
+    assert(!PrepareRegisterPressure(straddles_reserved,216).valid);
+    assert(!PrepareRegisterPressure(straddles_borrowed,216).valid);
+    // Exercise the real lowerer, whose default no-uniform scratch boundary
+    // is 248, not the synthetic 216 used by the standalone spill fixture.
+    // A low vector base must never escape the scalar pre-check.
+    Instruction straddles_runtime{{0x381U | (247U<<16) | (32U<<24),
+                                   0U,5U<<9,0U}};
+    assert(NativeVectorCrossesScratch(straddles_runtime,248));
+    const std::array crossing_program{UniformMarker,straddles_runtime,Exit};
+    const auto crossing_lowered=LowerToMaxwell(crossing_program,{},true);
+    assert(!crossing_lowered &&
+           crossing_lowered.error == "native register shadowing mode");
     // Vector loads must reject an overflowing high-register quartet.
     Instruction overflowing{{0x381U | (252U<<16) | (248U<<24),
                              0U,6U<<9,0U}};

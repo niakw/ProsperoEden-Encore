@@ -471,7 +471,10 @@ def main() -> int:
                 "opcode != 0x386 && opcode != 0x986" in native_lower_src and
                 shadow_fixture.is_file() and
                 "P2_4_AMPERE_REGISTER_PRESSURE_PASS" in shadow_fixture.read_text() and
-                "test_ampere_native_register_shadow.cpp" in host_workflow,
+                "test_ampere_native_register_shadow.cpp" in host_workflow and
+                "NativeVectorCrossesScratch(insn, reserved_register)" in native_lower_src and
+                "physical(reg + part) != base + part" in pressure_src and
+                "crossing_lowered.error ==" in shadow_fixture.read_text(),
                 "P2.4 Ampere high-GPR spill must cover register load/store,"
                 " ALU, S2R and exact host regressions")
         native_capture = (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text()

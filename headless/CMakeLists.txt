@@ -1463,15 +1463,10 @@ if(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_SCRATCH_TRIM=1)
 endif()
 
-# N56: optional Vulkan pipeline cache admission is maintained in the native
-# vendor owner, not generated as an alternate translation unit at configure.
-option(EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL
-    "Research only: validate PS5 Vulkan driver cache header length" OFF)
-if(EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN OR
-       NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "N56 requires native PS5 Vulkan NS2 research")
-    endif()
+# N56: shared production PS5 Vulkan cache admission, NS1 and NS2 alike.
+# The maintained vendor owner rejects truncated driver cache files without
+# modifying the successful cache read/write path or requiring a research flag.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
         message(FATAL_ERROR "N56 native Vulkan vendor owner missing")
     endif()
@@ -2898,7 +2893,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR
-       EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL OR
        EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR

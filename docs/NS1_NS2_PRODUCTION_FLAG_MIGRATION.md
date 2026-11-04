@@ -1,6 +1,6 @@
-# Eden Encore — migration des 22 sélecteurs de recherche NS2 vers un moteur commun
+# Eden Encore — migration des sélecteurs de recherche NS2 vers un moteur commun
 
-**Inventaire effectif du 02/11/2026**, dérivé de `headless/CMakeLists.txt`. Voir la [roadmap vivante #15](https://github.com/niakw/ProsperoEden-Encore/issues/15) (P0.2). **Tous les 22 commutateurs ci-dessous ont actuellement `OFF` comme valeur par défaut**. Leur existence ne prouve pas que les fonctionnalités NS2 soient intégrées au produit distribué.
+**Inventaire effectif du 02/11/2026**, dérivé de `headless/CMakeLists.txt`. Voir la [roadmap vivante #15](https://github.com/niakw/ProsperoEden-Encore/issues/15) (P0.2). **Les 21 commutateurs restant ci-dessous ont `OFF` par défaut ; N56 est désormais promu dans la configuration PS5/Vulkan.** Leur existence ne prouve pas que les fonctionnalités NS2 soient intégrées au produit distribué.
 
 | Domaine et destination de production | Flags `EDEN_NS2_…_EXPERIMENTAL` à résorber | Critère de promotion/suppression |
 | --- | --- | --- |
@@ -9,9 +9,9 @@
 | Adressage / résidence / scheduler | `EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL`, `EDEN_NS2_CONTINUITY_EXPERIMENTAL`, `EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL`, `EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL` | Adresses natives contrôlées, réservation physique et remise à zéro atomique, un scheduler Vulkan, rollback fiable, budgets et limites de périphérique |
 | Shader / GPU | `EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL`, `EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL` | Une API shader/pipeline canonique, Maxwell/Ampere décodés par leur frontend matériel, vertex/fragment/compute validés, pas de pipeline de « probe » dans le produit |
 | Cache texture, ASTC, images | `EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL`, `EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL`, `EDEN_NS2_ASTC_TEXTURE_CACHE_BRIDGE_EXPERIMENTAL`, `EDEN_NS2_VIEW_EXPERIMENTAL` | Texture/cache unique, formats ASTC, vues 3D/layers, GOB, synchronisation et contrôles de bornes testés sur NS1 et NS2 |
-| Cache Vulkan | `EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL` | Une implémentation cache driver robuste et versionnée, pas de changement de schéma pendant le jeu, invalidations et durées de vie contrôlées |
+| Cache Vulkan | **N56 promu : garde commune PS5/Vulkan** | Une implémentation cache driver robuste et versionnée, pas de changement de schéma pendant le jeu, invalidations et durées de vie contrôlées |
 
-**État des jalons :** 22 flags recensés, 22 désactivés par défaut, **0 flag de cette liste déclaré promu**. Certains comportements ont déjà des propriétaires partagés `EDEN_SHARED_NS2_*` — cela ne suffit pas à certifier les chemins verrouillés ici.
+**État du 04/11 :** 22 commutateurs initiaux recensés ; **21 restent OFF par défaut** ; **N56 est promu en protection de production PS5/Vulkan sans flag de recherche**. Aucun des 21 autres n'est promu. Certains comportements ont déjà des propriétaires partagés `EDEN_SHARED_NS2_*` — cela ne suffit pas à certifier les chemins verrouillés ici.
 
 ## Règles de migration
 
@@ -21,4 +21,4 @@
 4. L'inventaire est contrôlé par `tools/check-ns2-production-flags-host.py`. L'ajout, le renommage ou le retrait d'un flag doit mettre ce document et les tests à jour dans le même commit.
 5. Les workflows de build PS5 restent verrouillés **pendant tout P4**. Leur premier déverrouillage et la validation console appartiennent à **P5 uniquement**, après clôture des prérequis hôte et autorisation explicite.
 
-Ce document est un **inventaire des travaux restants**, pas un engagement selon lequel les 22 chemins sont déjà fonctionnels.
+Ce document est un **inventaire des travaux restants**, pas une garantie de fonctionnement des 21 chemins de recherche encore désactivés.

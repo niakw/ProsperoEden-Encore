@@ -18,11 +18,16 @@ def main() -> int:
         # Imported emulator patches are credited in docs, never build options.
         require("Eglantine" not in CMAKE and "EGLANTINE_" not in CMAKE,
                 "External emulator name leaked into native build options")
-        for feature in ("GPU_RANGE_BATCH", "PIPELINE_CACHE", "VIEW", "CONTINUITY"):
+        for feature in ("GPU_RANGE_BATCH", "VIEW", "CONTINUITY"):
             flag = f"EDEN_NS2_{feature}_EXPERIMENTAL"
             require(f"option({flag}" in CMAKE and f"if({flag})" in CMAKE and
                     f"{flag} OR" in CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
                     "NS2 research flag not release-forbidden: " + flag)
+        cache_guard = CMAKE.split("# N56: shared production PS5 Vulkan cache admission", 1)[1].split("# N57:", 1)[0]
+        require("if(PS5_NATIVE AND EDEN_PS5_VULKAN)" in cache_guard and
+                "target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)" in cache_guard and
+                "option(EDEN_NS2_PIPELINE_CACHE_EXPERIMENTAL" not in CMAKE,
+                "N56 must be a shared native Vulkan production guard, not an experimental flag")
         # QMD3's virtual RasterizerInterface must be the SAME reviewed
         # header in every research native consumer; a private override in
         # RasterizerVulkan alone does not compile or preserve the vtable ABI.

@@ -297,7 +297,9 @@ assert 'preview_library_ready(11)' in fallback
 assert 'first_rom_selected' not in fallback
 assert 'const auto await_ready = [&](auto ready)' in fallback
 assert 'for (int attempt = 0; attempt < 160; ++attempt)' in fallback
-assert 's.press({Key::right, Key::right, Key::right, Key::right, Key::right,' in fallback
+assert 'for (std::size_t i = 0; i < target_index; ++i) s.press({Key::right});' in fallback
+assert 'target_index = 10;' in fallback  # unchanged NS1 specimen
+assert '0x0400C3F00006E000ull' in fallback  # NS2 specimen selected by ID
 assert 's.press({Key::r1, Key::r1});' not in fallback
 assert 's.press({Key::cross, Key::r2});' in fallback
 assert 's.shoot("03-library-back-zoom-pan");' in (
@@ -312,7 +314,8 @@ assert "PE_PREVIEW_LIBRARY_ONLY" in (
     root / "headless/prosperoeden/host/preview_main.cpp").read_text()
 assert "case_face(artwork.texture, face, angle, back, kWhite, paper_uv);" in draw
 assert "c.list.case_cap(" in draw and draw.index("c.list.case_cap(") > draw.index("c.list.case_face(artwork.texture")
-assert "c.list.case_plastic(physical, angle, back, Color::rgb(0xd9e8f7, 0.93f));" in draw
+assert "c.list.case_plastic(physical, angle, back," in draw
+assert "ns2_case ? Color::rgb(0xf1273e, 0.96f) : Color::rgb(0xd9e8f7, 0.93f)" in draw
 assert draw.count("c.list.case_plastic(physical, angle, back") == 1
 assert "for (int hinge" not in draw
 assert "const float return_start = back_start + theme::kCaseBackHold;" in draw

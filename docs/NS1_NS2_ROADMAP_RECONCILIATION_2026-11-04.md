@@ -19,7 +19,7 @@ Contrôle des cases de l'issue #15 sur le code local à main 90f3ff0 / vendor 1a
 
 | Case | État |
 | --- | --- |
-| P0.2 | VRAI BLOCAGE : 19 commutateurs EDEN_NS2_*_EXPERIMENTAL restent présents et OFF par défaut après les promotions de N49 (vues Vulkan 2D/3D), N56 (cache Vulkan) et N76 (compteur invité NPDM) ; aucune preuve de sélection automatique d'un NS2 de production. |
+| P0.2 | VRAI BLOCAGE : 18 commutateurs EDEN_NS2_*_EXPERIMENTAL restent présents et OFF par défaut après les promotions de N49 (vues Vulkan 2D/3D), N50 (continuité GMMU), N56 (cache Vulkan) et N76 (compteur invité NPDM) ; aucune preuve de sélection automatique d'un NS2 de production. |
 | P1.1 | Portage formats/ExeFS/NPDM/NUP/firmwares/keys partiel ; les tests de métadonnées existent mais un boot réel / PC invité est P5. Ne pas déclarer tout le boot automatique intégré sans inspection source complète. |
 | P1.2 | Source NVMap/GMMU 49 bits, 4 Kio, rollback/sparse et garde d'overflow en place ; résidence GPU réelle, VRAM et pilote en P5, autres cas source encore à inventorier. |
 | P1.3 | HLE/IPC/AM/VI2/audio/NCM : services partiellement adaptés ; les appels incomplets ne sont pas une preuve de complétude. |

@@ -2831,13 +2831,10 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     target_compile_definitions(core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
 endif()
 
-# N50: versioned device-memory page-run guard in the single PS5 owner.
-option(EDEN_NS2_CONTINUITY_EXPERIMENTAL
-    "Research only: stop stale GPU mapping runs at Map/Unmap boundaries" OFF)
-if(EDEN_NS2_CONTINUITY_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_NS2_METADATA_EXPERIMENTAL OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "NS2 device-memory continuity requires PS5 research")
-    endif()
+# N50: shared native PS5 device-memory contiguous page-run safety.
+# End stale physical continuity before a GPU Map/Unmap, for both generations.
+# Reuse the one reviewed PS5 device-memory owner; no extra translation unit.
+if(PS5_NATIVE)
     if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")
         message(FATAL_ERROR "N50 maintained PS5 device-memory source missing")
     endif()
@@ -2882,7 +2879,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
-       EDEN_NS2_CONTINUITY_EXPERIMENTAL OR
        EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL OR
        EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL OR

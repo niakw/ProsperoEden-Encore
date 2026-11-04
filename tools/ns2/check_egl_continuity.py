@@ -37,7 +37,9 @@ call = (
 assert t.count(call) == 2
 t = t.replace(call, "")
 assert blob(t) == "5b30e44b9295e75b1e6719d97764d1a88c0bbc55", "N50 changed unrelated PS5 atomic/reverse-map code"
-assert "EDEN_NS2_CONTINUITY_EXPERIMENTAL OR" in CMAKE
+assert "option(EDEN_NS2_CONTINUITY_EXPERIMENTAL" not in CMAKE
+assert "# N50: shared native PS5 device-memory contiguous page-run safety." in CMAKE
+assert "if(PS5_NATIVE)" in CMAKE
 assert "EDEN_NS2_DEVICE_CONTINUITY=1" in CMAKE
 assert "headless/ns2/eglantine/core/device_memory_manager.inc" not in CMAKE
 print("N50_NATIVE_DEVICE_MEMORY_SINGLE_VENDOR_OWNER_AND_BASELINE_PASS")

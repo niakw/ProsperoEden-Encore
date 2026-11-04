@@ -19,7 +19,7 @@ declared = OPT.findall(CMAKE)
 flags = dict(declared)
 all_source_flags = set(re.findall(r'\bEDEN_NS2_[A-Z0-9_]*EXPERIMENTAL\b', CMAKE))
 assert len(declared) == len(flags), "Duplicate CMake option owner"
-assert len(flags) == 19, ("Unreviewed number of NS2 research gates", len(flags))
+assert len(flags) == 18, ("Unreviewed number of NS2 research gates", len(flags))
 assert all_source_flags == set(flags), sorted(all_source_flags - set(flags))
 assert set(flags.values()) == {"OFF"}, "Research flags must not be enabled by default"
 

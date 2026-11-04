@@ -336,6 +336,67 @@ jobs:
           print("LIBRARY_RECONSTRUCTED_PAPER_OPENGL: PASS")
           PY
 
+      - name: Capture NS2 red retail shell and composed front/spine/back
+        env:
+          PE_LANG: fr-FR
+          PE_PREVIEW_NS2: "1"
+          PE_PREVIEW_LAUNCH_ONLY: "1"
+          PE_PREVIEW_JOBS: "2"
+          PROSPEROEDEN_LAUNCHER_BUILD: ${{ runner.temp }}/encore-launcher-only
+        run: |
+          set -euo pipefail
+          bash tools/launcher/preview.sh build/launch-case-ns2-retail 1920 1080 \
+            2>&1 | tee build-launch-case-ns2-retail.log
+          PE_PREVIEW_NO_BOX_SCANS=1 bash tools/launcher/preview.sh \
+            build/launch-case-ns2-fallback 1920 1080 \
+            2>&1 | tee build-launch-case-ns2-fallback.log
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageChops, ImageStat
+          names = ["00-launch-case-front.png", "01-launch-case-spine.png",
+                   "02-launch-case-back.png"]
+          for suffix, mode in (("retail", "retail"), ("fallback", "composed")):
+              folder = Path(f"build/launch-case-ns2-{suffix}")
+              assert sorted(p.name for p in folder.glob("*.png")) == names
+              log = Path(f"build-launch-case-ns2-{suffix}.log").read_text(errors="replace")
+              assert "title=0400C3F00006E000" in log, "NS2 identity never reached launcher"
+              assert f"side=front status=ready source={mode}" in log, (suffix, "wrong front source")
+              with Image.open(folder / names[0]) as front, Image.open(folder / names[2]) as rear:
+                  a, b = front.convert("RGB"), rear.convert("RGB")
+                  assert a.size == b.size == (1920, 1080)
+                  delta = ImageStat.Stat(ImageChops.difference(a,b)).mean
+                  assert max(delta) > 8, (suffix, "both faces identical", delta)
+              for name in names:
+                  assert (folder / name).stat().st_size > 12000, (suffix,name)
+              print(f"NS2_CASE_{suffix.upper()}_OPENGL: PASS")
+          PY
+
+      - name: Capture reconstructed NS2 Library front with fixed red header
+        env:
+          PE_LANG: fr-FR
+          PE_PREVIEW_NS2: "1"
+          PE_PREVIEW_LIBRARY_FALLBACK: "1"
+          PE_PREVIEW_NO_BOX_SCANS: "1"
+          PE_PREVIEW_JOBS: "2"
+          PROSPEROEDEN_LAUNCHER_BUILD: ${{ runner.temp }}/encore-launcher-only
+        run: |
+          set -euo pipefail
+          bash tools/launcher/preview.sh build/launch-case-ns2-library 1920 1080 \
+            2>&1 | tee build-launch-case-ns2-library.log
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageStat
+          folder = Path("build/launch-case-ns2-library")
+          files = ["00-library-fallback-front.png", "01-library-fallback-back.png",
+                   "02-library-fallback-zoom.png"]
+          assert sorted(p.name for p in folder.glob("*.png")) == files
+          for file in files:
+              with Image.open(folder / file) as frame:
+                  assert frame.size == (1920, 1080)
+                  assert sum(ImageStat.Stat(frame.convert("RGB")).stddev) > 15
+          print("NS2_LIBRARY_HEADER_CPP_OPENGL: PASS")
+          PY
+
       - name: Capture alternate layout theme (host only)
         if: ${{ github.ref == 'refs/heads/ui/encore-switch-theme-20261016' }}
         env:
@@ -417,6 +478,12 @@ jobs:
           path: |
             build/launch-case-render/*.png
             build/launch-case-generic/*.png
+            build/launch-case-ns2-retail/*.png
+            build/launch-case-ns2-fallback/*.png
+            build/launch-case-ns2-library/*.png
+            build-launch-case-ns2-retail.log
+            build-launch-case-ns2-fallback.log
+            build-launch-case-ns2-library.log
             build/launch-case-front-only/*.png
             build/launch-case-back-only/*.png
             build-launch-case-front-only.log

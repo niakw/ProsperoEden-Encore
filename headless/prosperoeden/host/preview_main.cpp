@@ -253,14 +253,24 @@ void pictures(Stage &s)
             s.ok = false;
             return;
         }
-        // The Library is now definitely open and has published its ROM
-        // list. Ten right movements reach the exact eleventh fixture.
-        // No cue substitution or alternate simulated renderer is involved.
-        s.press({Key::right, Key::right, Key::right, Key::right, Key::right,
-                 Key::right, Key::right, Key::right, Key::right, Key::right});
-        s.wait(0.4f);
+        // NS2 is selected by its actual 0400 title ID; old NS1 preview
+        // retains the eleventh fixture, preserving previous evidence.
         const auto sample = s.services.games();
-        const auto case_scan = s.services.box_art(sample.at(10).title_id);
+        std::size_t target_index = 10;
+        if (const char* ns2 = std::getenv("PE_PREVIEW_NS2");
+            ns2 != nullptr && std::strcmp(ns2, "1") == 0) {
+            const auto it = std::find_if(sample.begin(), sample.end(),
+                [](const auto& game) { return game.title_id == 0x0400C3F00006E000ull; });
+            if (it == sample.end()) {
+                std::fprintf(stderr, "library-fallback-preview: NS2 fixture missing\n");
+                s.ok = false;
+                return;
+            }
+            target_index = static_cast<std::size_t>(it - sample.begin());
+        }
+        for (std::size_t i = 0; i < target_index; ++i) s.press({Key::right});
+        s.wait(0.4f);
+        const auto case_scan = s.services.box_art(sample.at(target_index).title_id);
         if (!case_scan.front.empty() || !case_scan.back.empty()) {
             std::fprintf(stderr,
                          "library-fallback-preview: original scan unexpectedly enabled\\n");

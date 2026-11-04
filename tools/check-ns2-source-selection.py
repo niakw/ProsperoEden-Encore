@@ -468,7 +468,8 @@ def main() -> int:
         native_pipeline_source = (ROOT / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
         require(native_pipeline_source.count(
                     "const VideoCommon::Ns2GraphicsCbufContext cbuf_context{") == 2 and
-                "i == 5 ? 4U : 0U" in native_pipeline_source and
+                "i == 5 ? 4U : (i == 4 ? 3U : 0U)" in native_pipeline_source and
+                "stage == static_cast<u32>(Shader::Stage::Geometry) ? 3U : 0U" in native_capture and
                 "native_translation_cache.get(), &cbuf_context" in native_pipeline_source and
                 "native_translation_cache.get(),\n                &cbuf_context" in native_pipeline_source and
                 "const auto& buffers = owner->engine->state" in native_capture and

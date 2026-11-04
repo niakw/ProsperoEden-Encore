@@ -6924,3 +6924,26 @@ apply_reviewed_delta(
     '            for (const auto& storage : resources->storage_buffers) {\n                if (!storage.is_written) continue;\n                static_cast<void>(buffer_cache.ObtainBuffer(\n                    storage.gpu_address, storage.bytes,\n                    VideoCommon::ObtainBufferSynchronize::NoSynchronize,\n                    VideoCommon::ObtainBufferOperation::MarkAsWritten));\n            }\n        }\n\n        const auto dim = launch.grid;',
     '            // Validate all writable texel views as well, before any\n            // CBUF/SSBO/image-buffer page is marked GPU-dirty.\n            for (const auto& texel : native_texels) {\n                if (!texel.is_written) continue;\n                const auto [buffer, offset] = buffer_cache.ObtainBuffer(\n                    texel.guest_gpu_address, texel.guest_bytes,\n                    VideoCommon::ObtainBufferSynchronize::NoSynchronize,\n                    VideoCommon::ObtainBufferOperation::DoNothing);\n                if (!buffer || buffer->Handle() == VK_NULL_HANDLE)\n                    return false;\n                static_cast<void>(offset);\n            }\n            for (const auto& storage : resources->storage_buffers) {\n                if (!storage.is_written) continue;\n                static_cast<void>(buffer_cache.ObtainBuffer(\n                    storage.gpu_address, storage.bytes,\n                    VideoCommon::ObtainBufferSynchronize::NoSynchronize,\n                    VideoCommon::ObtainBufferOperation::MarkAsWritten));\n            }\n            for (const auto& texel : native_texels) {\n                if (!texel.is_written) continue;\n                static_cast<void>(buffer_cache.ObtainBuffer(\n                    texel.guest_gpu_address, texel.guest_bytes,\n                    VideoCommon::ObtainBufferSynchronize::NoSynchronize,\n                    VideoCommon::ObtainBufferOperation::MarkAsWritten));\n            }\n        }\n\n        const auto dim = launch.grid;',
     "P2.2 shared native QMD texel-buffer descriptor ownership")
+
+# P2.4: reviewed Ampere Geometry through the REAL linked Vulkan graphics builder.
+apply_reviewed_delta(
+    'vk_pipeline_cache_cost.cpp',
+    '            // Tessellation and geometry need complete Ampere stage ABI and\n            // driver metadata. Never silently reinterpret them as Maxwell.\n            if (i != 0 && i != 1 && i != 5) {',
+    "            // Tessellation and task/mesh still need their own Ampere ABI.\n            // Geometry uses the reviewed native lowerer and the real\n            // upstream Vulkan graphics pipeline's interstage RuntimeInfo.\n            if (i != 0 && i != 1 && i != 4 && i != 5) {",
+    "P2.4 Geometry native stage admission")
+# Both native graphics key capture and pipeline creation own their own
+# CBUF context. An ordinary one-anchor replacement cannot silently
+# leave either Geometry stage bound to Vertex's bank.
+geometry_cache_path = output / 'vk_pipeline_cache_cost.cpp'
+geometry_cache_code = geometry_cache_path.read_text()
+geometry_cbuf_old = '            const VideoCommon::Ns2GraphicsCbufContext cbuf_context{\n                gpu_memory, maxwell3d, i == 5 ? 4U : 0U};'
+geometry_cbuf_new = '            const VideoCommon::Ns2GraphicsCbufContext cbuf_context{\n                gpu_memory, maxwell3d, i == 5 ? 4U : (i == 4 ? 3U : 0U)};'
+if geometry_cache_code.count(geometry_cbuf_old) != 2:
+    raise RuntimeError("P2.4 Geometry CBUF stage owner drift")
+geometry_cache_path.write_text(
+    geometry_cache_code.replace(geometry_cbuf_old, geometry_cbuf_new))
+apply_reviewed_delta(
+    'vk_pipeline_cache_cost.cpp',
+    '            if (i != 0 && i != 1 && i != 5) return nullptr;',
+    '            if (i != 0 && i != 1 && i != 4 && i != 5) return nullptr;',
+    "P2.4 Geometry native stage admission")

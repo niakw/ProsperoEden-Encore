@@ -91,7 +91,7 @@ Le fournisseur Vulkan conserve désormais au plus **12 pipelines Compute Ampere*
 **Restes P0–P4 qui exigent du CODE (non requalifiables par un simple essai PS5)** :
 la promotion des commutateurs de recherche vers la sélection automatique de production,
 les instructions/stages graphiques Ampere encore explicitement refusés
-(géométrie, tessellation, task/mesh non pris en charge), les liaisons HLE ou
+(tessellation, task/mesh non pris en charge; géométrie liée au pipeline désormais intégrée en source avec opcodes inconnus refusés), les liaisons HLE ou
 synchronisations non implémentées, et tout descripteur GPU dont l'ABI ne peut
 être authentifiée. Ces manques se ferment seulement par une implémentation
 générique contrôlée; aucun patch par TitleID et aucun faux « PASS ».
@@ -105,6 +105,13 @@ des snapshots TIC/TSC/physiques, usage de buffer suivi et marquage des
 Maxwell restent sélectionnés séparément. Les limitations du pilote et la
 rétention effective en conditions de charge sont à qualifier en **P5**.
 Ce paragraphe est une preuve d'intégration source, pas un premier rendu PS5.
+
+**P2.4 — Geometry (intégration source) :** un stage Ampere Geometry peut
+maintenant être capturé et traduit dans la **pipeline Vulkan graphique complète**,
+avec ses CBUF de stage 3 et la liaison inter-stage créée par le même
+GraphicsPipeline commun. Seuls les opcodes déjà revus par le lowerer sont
+acceptés; LEPC dynamique, tessellation et task/mesh restent refusés.
+Cette prise en charge n'est **pas** une preuve de géométrie correcte sur PS5.
 
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications

@@ -446,8 +446,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     )
     marker_hashes = (
         '1b1b58fefba74616',
-        '54ed1159ce55e1f0',
-        '76dda4bc269244f6',
+        'e2812baf8b8217e2',
+        '3daa86c1b2924cdc',
     )
     pinned = []
     for start, digest in zip(marker_positions, marker_hashes):

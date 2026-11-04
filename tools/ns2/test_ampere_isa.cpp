@@ -63,8 +63,10 @@ int main() {
     code.back()=0;
     assert(!NativeProgramAddress(code,0));
     // P2.4: authentic native 3D pipeline builder needs VertexB; standalone
-    // VertexA and unsupported tessellation/geometry must never enter its CFG.
-    for (u32 mask : {0x02U, 0x03U, 0x22U, 0x23U})
+    // VertexA and unsupported tessellation must never enter its CFG.
+    // Geometry is linked through the full pipeline, never standalone.
+    for (u32 mask : {0x02U, 0x03U, 0x22U, 0x23U,
+                     0x12U, 0x13U, 0x32U, 0x33U})
         assert(NativeGraphicsStageMaskSupported(mask));
     for (u32 mask : {0x00U, 0x01U, 0x04U, 0x06U, 0x08U, 0x10U,
                      0x20U, 0x21U, 0x24U, 0x26U, 0x40U, 0xffU})

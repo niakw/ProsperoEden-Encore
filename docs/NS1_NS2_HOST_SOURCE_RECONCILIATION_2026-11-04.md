@@ -23,3 +23,39 @@ Contrôles : check-active-source-inventory.py, check-eden-optimization-coverage.
 Les deux derniers chemins sont vérifiés sur les propriétaires réels par check-exefs-directory-host.py : parcours des dossiers et sélections sauvegardées, source C++ sous O0/O2 et UBSan. Les pilotes « g++ » de ce Mac correspondent à Apple Clang : **ce n'est pas une validation GCC indépendante**.
 
 L'ancien audit F07 qualifiait les changements de performance et de sources à sa date ; les anciennes empreintes ne sont remplacées dans le registre qu'après la comparaison ci-dessus. Les preuves de compilation intégrale PS5, de scènes invitées et de GPU/VRAM restent en P5. Les jalons P0-P4 ne sont pas automatiquement fermés par ce lot.
+
+
+## Revue des six sources Launcher modifiées en parallèle — 04/11
+
+Le commit source du Launcher 51efe76 a changé exactement six
+propriétaires précédemment épinglés dans la revue d'optimisation F07.
+Le présent audit compare les six blobs Git avant/après et ne les
+reclasse pas comme un gain de performances GPU :
+
+- eden_services.cpp : limite d'acceptation du scan spine réel abaissée
+  à 16x250 ; gardes sur taille, pixels et décodage conservés.
+  Chemin d'import de média, sans changement du tri régional O(N).
+- host/fake_services.cpp et host/fake_services.hpp : fixture locale
+  PE_PREVIEW_NS2 et un titre 0400 synthétique, exclusivement en preview.
+- host/preview_main.cpp : navigation automatique vers l'ID réel
+  déclaré dans la fixture NS2, sans altérer le parcours NS1 existant.
+- pe/ui/case_media_selection.hpp : reconnaissance constante de
+  l'espace TitleID 0400 pour la présentation NS2, pas une heuristique
+  sur le nom du jeu.
+- pe/ui/launcher.cpp : propagation du TitleID existant à la jaquette
+  d'accueil, et variation de couleur rouge des arêtes du boîtier NS2.
+  Ni nouvelle IO, ni changement de texture-cache, ni altération du
+  boîtier NS1.
+
+Preuves locales sur les sources postérieures à 51efe76 :
+check-release-case-index-dedup-host.py O0/O2,
+check-launch-case-artwork.py (sélection source, BGRA/TGA,
+seuils, formats et géométrie),
+check-launcher-ns2-case-preview.py,
+check-launcher-shoulder-and-cover.py et
+check-encore-case-media-selection-host.py O0/O2, tous réussis.
+La revue actualise seulement les six empreintes Git et leurs notes
+de provenance, sans créditer une optimisation qui n'a pas été mesurée
+sur PS5. Les changements Launcher parallèles sont conservés à
+l'identique. Les previews OpenGL ne certifient pas leur affichage
+sur la console.

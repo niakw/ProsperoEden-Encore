@@ -527,6 +527,21 @@ périphérique reste absente plutôt que d'inventer un événement
 jamais déclenché. Aucun fichier ni service NS1 remplacé, aucun
 code jeu/TITLEID. **La qualification audio sur console reste P5.**
 
+**P1.3 — fermeture des courses de sessions Sysmix (04/11, source/hôte) :**
+la limite de 32 flux est désormais un contrat atomique d'attribution
+sous le verrou du registre, au lieu d'une vérification suivie d'une
+création non protégée. Le dernier ID utilisé n'est pas réattribué après
+débordement ni consommé si le constructeur échoue. Les commandes
+de groupe valident en bloc les IDs, leurs propriétés d'appartenance
+et l'état avant tout effet sur les sinks ; doublons et liste hors limite
+sont refusés, avec tentative de restauration de l'état précédent si
+un stream échoue pendant la transition. Ce correctif **ne simule
+aucun succès audio** et ne remplace pas les propriétaires NS1.
+Le témoin hôte extrait les trois méthodes réelles du service, exécute
+96 créations parallèles (exactement 32 admises) et les cas de
+rollback/propriétaire/erreur sous Clang/GCC UBSan O0/O2.
+La validité de la transition audio réelle sur PS5 reste P5.
+
 **P1.3 — Sysmix PCM natif NS2 branché sur le sink partagé (04/11) :**
 le service `audsmx:u` ouvre des sessions basées sur un véritable
 `KProcess` invité ; `auddmg:u` utilise le même registre pour

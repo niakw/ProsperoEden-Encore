@@ -144,6 +144,12 @@ assert 'AudioCore::Sink::StreamType::Out' in sysmix_owner
 assert 'TryAppendOutputBlock(' not in sysmix_owner
 assert 'python3 -B tools/ns2/check_native_sysmix_pcm_ring_host.py' in (
     ROOT / '.github/workflows/encore-core-preflight.yml').read_text()
+assert 'python3 -B tools/ns2/check_native_sysmix_registry_host.py' in (
+    ROOT / '.github/workflows/encore-core-preflight.yml').read_text()
+assert 'Result CreateBounded(Factory&& factory' in (
+    audio_root / 'nx2_sysmix_user_service.h').read_text()
+assert 'Result SetEngagedBatch(std::span<const u32> ids' in (
+    audio_root / 'nx2_sysmix_user_service.h').read_text()
 for name in ('audout:u', 'audren:u', 'audin:u', 'audctl', 'hwopus'):
     assert audio.count('RegisterNamedService("' + name + '"') == 1, name
 for command, method, manager in (

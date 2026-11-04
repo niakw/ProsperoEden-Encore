@@ -76,3 +76,35 @@ autorisations. CI preflight câblée, **aucune CI lancée, aucun build PS5**.
 Ces tests ne constituent ni preuve d'une session audio HOS native
 complète, ni de son audible en jeu, ni de compatibilité matérielle
 PS5. Ces derniers points sont transférés à P5.
+
+## P1.3 — isolation des sessions audio concurrentes (04/11)
+
+Après intégration du Sysmix, le protocole possédait deux fenêtres de
+course indépendantes. La création vérifiait la limite de **32 sessions**
+sous verrou, mais relâchait celui-ci pour construire le stream avant
+l'insertion : plusieurs appels concurrents pouvaient dépasser la
+capacité admise. Désormais **création, vérification de capacité, attribution
+monotone de l'ID et insertion** sont sous le même propriétaire de registre.
+Une allocation échouée ne publie pas de flux et ne consomme pas d'ID.
+Le retour après débordement des IDs reste refusé. La pompe du timer
+emploie son verrou existant, sans voir de session partiellement publiée.
+
+Les commandes de groupe EngageStreams/DisengageStreams vérifient
+**tous** les IDs et leurs propriétaires avant de modifier les sinks.
+La commande refuse les listes dépassant 32 IDs et les doublons,
+empêche les effets partiels causés par un ID inconnu ou appartenant à
+un autre processus, puis tente un rollback des flux précédemment
+modifiés si le sink rejette une transition en cours de batch. Le
+rollback en cas de véritable panne du sink n'est pas une garantie
+atomique côté audio matériel : un test PS5 reste requis. Le service
+d'un seul ID (auddmg:u) réutilise ce même contrôle.
+
+**Preuve hôte :** extraction et exécution des **méthodes C++ réelles**
+Nx2SysmixStreams::CreateBounded, SetEngagedBatch et SetEngaged.
+96 créations concurrentes → exactement 32 flux distincts, puis
+tests d'ID épuisé, d'échec d'allocation, d'ID dupliqué, de processus
+étranger, de liste contenant un ID invalide en dernière position, de
+retour arrière sur échec de démarrage et de bornes de session.
+Clang/GCC O0/O2, UBSan, en plus de la syntaxe des véritables unités
+de traduction et des témoins PCM/IPCs antérieurs.
+**Aucune CI exécutée manuellement ni compilation/validation PS5.**

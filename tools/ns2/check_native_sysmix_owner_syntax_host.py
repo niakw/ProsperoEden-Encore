@@ -28,6 +28,16 @@ assert 'AudioCore::Sink::StreamType::Out' in files[0].read_text()
 assert 'p.host->SetRingSize(NativeQueueHighWatermark * 2);' in files[0].read_text()
 assert 'p.host->AppendBuffer(block, p.output);' in files[0].read_text()
 assert 'p.host->GetQueueSize() >= NativeQueueHighWatermark' in files[0].read_text()
+registry=(AUDIO / "core/hle/service/audio/nx2_sysmix_user_service.h").read_text()
+assert "Result SetEngagedBatch(std::span<const u32> ids, bool engaged," in registry
+assert "Result CreateBounded(Factory&& factory, u32& out_id," in registry
+assert "std::scoped_lock lock{mutex};" in registry
+assert "R_UNLESS(streams.size() < 32 && next_id != 0, ResultOutOfSessions);" in registry
+assert "result = streams->SetEngagedBatch(" in registry
+assert "streams->CreateBounded(" in registry
+assert "catch (const std::bad_alloc&)" in registry
+assert "python3 -B tools/ns2/check_native_sysmix_registry_host.py" in (
+    ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "TryAppendOutputBlock(" not in files[0].read_text()
 assert "MarkFaulted(" not in files[0].read_text()
 

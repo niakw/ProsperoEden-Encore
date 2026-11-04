@@ -641,3 +641,20 @@ assert "Ns2UploadDirtyLayers(Image&)" in astc_base
 assert "#include \"video_core/texture_cache/ns2_astc_texture_cache_bridge.inc\"" in astc_impl
 print("NS2_ASTC_VULKAN_TEXTURE_CACHE_NATIVE_PARITY_PASS shared_api=1"
       " channel=locked image_view=pin sampler=pin astc_layer_bridge=preserved")
+
+# P2.4: successful native QMD compilation cannot authenticate shader source
+# only at capture time. Verify both dispatch owners replay its original bytes
+# after Vulkan descriptor staging, before ANY guest GPU-dirty side effects.
+for render_owner in (
+    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
+    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+):
+    source = (vendor / render_owner).read_text()
+    final_cbuf = source.index("bool current_after_staging = false;")
+    replay = source.index("captured.ComputeSourceMatches(", final_cbuf)
+    dirty = source.index("ObtainBufferOperation::MarkAsWritten", final_cbuf)
+    queued = source.index("cmdbuf.Dispatch(dim[0], dim[1], dim[2]);", final_cbuf)
+    assert final_cbuf < replay < dirty < queued, render_owner
+    assert "launch.program_address, VideoCommon::ReadNs2GpuShader" in source[replay:dirty]
+print("P2_4_NATIVE_COMPUTE_SHADER_FINAL_SOURCE_PASS owners=2"
+      " order=post-staging-before-GPU-write")

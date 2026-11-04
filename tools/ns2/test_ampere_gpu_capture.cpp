@@ -126,6 +126,40 @@ int main() {
             upper_compute.image.diagnostic_cache_key==
                 compute.image.diagnostic_cache_key,
             "49-bit native Compute GPU address retains exact program bytes");
+    // The renderer moves the translated Maxwell image to SPIR-V, but must
+    // retain its original Ampere program words across descriptor staging.
+    Require(compute.captured_compute_bytes.size()==32 &&
+            compute.ComputeSourceMatches(mem.base+0x80,Read,&mem) &&
+            !ok.ComputeSourceMatches(mem.base+0x80,Read,&mem) &&
+            upper_compute.ComputeSourceMatches(
+                high_shader.base+0x80,Read,&high_shader),
+            "only captured QMD code keeps a verified 49-bit live source");
+    mem.data[0x80]^=1U;
+    Require(!compute.ComputeSourceMatches(mem.base+0x80,Read,&mem),
+            "same GPU VA and changed native opcode must fail final replay");
+    mem.data[0x80]^=1U;
+    mem.reject_batch=true;
+    Require(compute.ComputeSourceMatches(mem.base+0x80,Read,&mem),
+            "dispatch recheck permits exact 16-byte readers");
+    mem.reject_batch=false;
+    mem.throw_on_batch=true;
+    Require(compute.ComputeSourceMatches(mem.base+0x80,Read,&mem),
+            "throwing speculative batch falls back to exact word reads");
+    mem.throw_on_batch=false;
+    mem.throw_at_address=mem.base+0x80;
+    Require(!compute.ComputeSourceMatches(mem.base+0x80,Read,&mem),
+            "throwing live GMMU callback refuses stale Compute publication");
+    mem.throw_at_address=0;
+    auto moved_compute=CaptureNativeComputeShader(mem.base+0x80,Read,&mem);
+    auto moved_image=std::move(moved_compute.image);
+    Require(moved_image.Ready() &&
+            moved_compute.ComputeSourceMatches(mem.base+0x80,Read,&mem),
+            "source admission survives moving original image into SPIR-V");
+    mem.mapped_bytes=0x80+16;
+    Require(!compute.ComputeSourceMatches(mem.base+0x80,Read,&mem),
+            "final partially unmapped QMD program is refused");
+    mem.mapped_bytes=mem.data.size();
+
     mem.mapped_bytes=0x80+16;
     const auto compute_fault=CaptureNativeComputeShader(mem.base+0x80,Read,&mem);
     Require(compute_fault.status==NativeCaptureStatus::Unmapped &&

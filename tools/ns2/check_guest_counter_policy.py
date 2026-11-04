@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """N76: compile exact vendor guest-clock policy + inspect native owners."""
 from pathlib import Path
+import os
+import sys
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[2]
@@ -23,9 +25,10 @@ assert "Eden::GuestCounter::SelectProgram(" not in npdm
 assert "Eden::GuestCounter::SelectProgram(metadata.IsSwitch2(), Common::g_cpu_caps.tsc_frequency)" in loader
 assert loader.index("Eden::GuestCounter::SelectProgram(") > loader.index("metadata.Reload(npdm)")
 assert loader.index("Eden::GuestCounter::SelectProgram(") < loader.index("is_loaded = true")
-assert "option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL" in cmake
+assert "option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL" not in cmake
+assert "if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)" in cmake
 assert "EDEN_SHARED_NS2_GUEST_COUNTER" in cmake
-assert "if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL OR EDEN_SHARED_NS2_GUEST_COUNTER)" in cmake
+assert "if(EDEN_SHARED_NS2_GUEST_COUNTER)" in cmake
 assert "foreach(n76_target IN ITEMS core common eden-headless)" in cmake
 main=(root/"headless/main.cpp").read_text()
 assert "Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);" in main
@@ -73,6 +76,12 @@ int main() {
  std::puts("N76_GUEST_COUNTER_RESET_AND_RATIO_PASS");
 }
 """
+# macOS CLT 27.0 TAPI stubs are newer than the local host linker;
+# use a compatible SDK for the host fixture only, never for PS5 builds.
+compiler_env=os.environ.copy()
+if sys.platform=='darwin' and not compiler_env.get('SDKROOT'):
+ sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
+ if sdk.is_dir(): compiler_env['SDKROOT']=str(sdk)
 with tempfile.TemporaryDirectory(prefix="n76-clock-") as tmp:
  d=Path(tmp)
  src=d/"test.cpp";src.write_text(program)
@@ -82,8 +91,8 @@ with tempfile.TemporaryDirectory(prefix="n76-clock-") as tmp:
     "-fsanitize=undefined","-fno-sanitize-recover=all",
     "-DEDEN_NS2_GUEST_COUNTER=1",
     "-I",str(vendor/"include"),"-I",str(root/"vendor/sources/eden/src"),
-    str(src),"-o",str(exe)],check=True)
-  subprocess.run([str(exe)],check=True)
+    str(src),"-o",str(exe)],check=True,env=compiler_env)
+  subprocess.run([str(exe)],check=True,env=compiler_env)
 print("N76_ENCORE_CLOCK_CLANG_GCC_UBSAN_PASS")
 
 # A release / NS1-only compilation must not acquire the experimental rate.
@@ -104,6 +113,6 @@ with tempfile.TemporaryDirectory(prefix="n77-legacy-") as tmp:
   subprocess.run([compiler,"-std=c++20","-O2","-Wall","-Wextra","-Werror",
     "-fsanitize=undefined","-fno-sanitize-recover=all",
     "-I",str(vendor/"include"),"-I",str(root/"vendor/sources/eden/src"),
-    str(src),"-o",str(exe)],check=True)
-  subprocess.run([str(exe)],check=True)
+    str(src),"-o",str(exe)],check=True,env=compiler_env)
+  subprocess.run([str(exe)],check=True,env=compiler_env)
 print("N77_REAL_WALLCLOCK_SERVICE_AND_NONMULTICORE_TICKS_PASS")

@@ -1890,21 +1890,19 @@ endif()
 add_dependencies(eden-headless eden-metadata)
 
 # N76 -- NS2 guest CNTPCT calibration through Encore's shared CPU/JIT.
-# Upstream-compatible guest tick semantics. Opt-in, default NS1 unchanged.
-option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL
-    "Research opt-in: per-program NSW2 31.25 MHz CPU system counter" OFF)
+# Upstream-compatible guest tick semantics selected by the reviewed NPDM; NS1 unchanged.
+# N76 now follows the reviewed dual-NPDM loader automatically on PS5.
 # A single PS5 release can select the real NS2 31.25 MHz timer per program
 # while preserving 19.2 MHz for every first-generation title. The shared
 # optimized G11 JIT and common clock are already maintained and host-tested.
 # This is NOT the six-core scheduler or experimental A64 decoder.
 set(EDEN_SHARED_NS2_GUEST_COUNTER OFF)
-if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)
+if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_GUEST_COUNTER ON)
 endif()
-if(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL OR EDEN_SHARED_NS2_GUEST_COUNTER)
-    if(NOT PS5_NATIVE OR NOT EDEN_REVIEWED_DUAL_NPDM OR
-       (NOT EDEN_NS2_A64_EXPERIMENTAL AND NOT EDEN_SHARED_NS2_GUEST_COUNTER))
-        message(FATAL_ERROR "N76 requires native PS5 with shared NPDM and NS2 loader or A64 research")
+if(EDEN_SHARED_NS2_GUEST_COUNTER)
+    if(NOT PS5_NATIVE OR NOT EDEN_REVIEWED_DUAL_NPDM)
+        message(FATAL_ERROR "N76 requires native PS5 with the reviewed dual-NPDM loader")
     endif()
     set(EDEN_N76_CLOCK_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden-core")

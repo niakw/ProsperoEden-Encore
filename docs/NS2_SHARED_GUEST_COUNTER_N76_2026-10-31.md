@@ -29,11 +29,12 @@ factor is computed once, not on every guest timer read.
 
 ## Qualification and limitations
 
-EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL=OFF by default, and PS5 native,
-NS2 metadata, NS2 A64 and non-release are mandatory. The option
-selects the SAME native common CPU owner and the maintained A64
-frontend; it never copies the NS1 CPU implementation into another
-directory.
+**Historical opt-in superseded on 04/11/2026:** N76 no longer uses
+EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL. On native PS5, the reviewed dual-NPDM
+loader selects the shared G11 JIT and common CPU-clock policy automatically.
+At guest load, metadata.IsSwitch2() chooses 31.25 MHz for NS2 and 19.2 MHz
+for NS1, resetting on every game switch. There is no second CPU engine or
+per-title exception. Real console timing is still a P5 qualification.
 
 tools/ns2/check_guest_counter_policy.py executes the actual vendor
 policy under Clang/GCC UBSan (19.2 MHz, 31.25 MHz, one-second and

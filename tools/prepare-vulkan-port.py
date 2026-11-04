@@ -6964,3 +6964,25 @@ apply_reviewed_delta(
     '        if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n                 .IsGraphicsCurrent(maxwell3d, *ticket))\n            return nullptr;\n        // NS2 translated shader keys/layouts are deliberately never\n        // serialized into the NS1 disk shader cache.\n        return pipeline;',
     '        auto& registry = Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();\n        if (!pipeline || !registry.IsGraphicsCurrent(maxwell3d, *ticket) ||\n            maxwell3d->regs.program_region.Address() != base)\n            return nullptr;\n        // The compiler may have spent substantial time on CFG/IR/SPIR-V.\n        // Guest code, stage enables, or per-stage base offsets can change\n        // without advancing the channel epoch. Refuse a pipeline assembled\n        // from old source even when its diagnostic hash matched at entry.\n        u32 live_stages{};\n        for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {\n            if (maxwell3d->regs.IsShaderConfigEnabled(i) &&\n                (i != 5 || maxwell3d->regs.rasterize_enable))\n                live_stages |= u32{1} << i;\n        }\n        if (live_stages != keyed_stages) return nullptr;\n        for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {\n            if (!graphics_key.unique_hashes[i]) continue;\n            if (maxwell3d->regs.pipelines[i].offset != captured_offsets[i])\n                return nullptr;\n            const auto stage = i == 0 ? Shader::Stage::VertexA :\n                Shader::StageFromIndex(i - 1);\n            const VideoCommon::Ns2GraphicsCbufContext cbuf_context{\n                gpu_memory, maxwell3d, i == 5 ? 4U : (i == 4 ? 3U : 0U)};\n            // Capture reauthenticates all native 128-bit instructions and\n            // indirect BRX CBUF targets on every cache hit. No title hacks.\n            const auto verified = VideoCommon::CaptureNs2GraphicsShaderFromGpu(\n                *gpu_memory, base + captured_offsets[i],\n                static_cast<u32>(stage), native_translation_cache.get(),\n                &cbuf_context);\n            if (!verified.Ready() ||\n                verified.image.diagnostic_cache_key !=\n                    graphics_key.unique_hashes[i] ||\n                !registry.IsGraphicsCurrent(maxwell3d, *ticket))\n                return nullptr;\n        }\n        // NS2 translated shader keys/layouts are deliberately never\n        // serialized into the NS1 disk shader cache.\n        return pipeline;',
     "P2.4 native graphics final source reauthentication")
+
+# P2.4: linked native TessControl/TessEval stage pair and CBUF banks 1/2.
+# Every affected Vulkan owner must be mirrored exactly; the independent
+# vendor parity oracle fails if a third CBUF capture path was overlooked.
+apply_reviewed_delta(
+    'vk_pipeline_cache_cost.cpp',
+    '            // Tessellation and task/mesh still need their own Ampere ABI.\n            // Geometry uses the reviewed native lowerer and the real\n            // upstream Vulkan graphics pipeline\'s interstage RuntimeInfo.\n            if (i != 0 && i != 1 && i != 4 && i != 5) {',
+    '            // TessControl/TessEval must be paired by stage policy above;\n            // Vulkan owns their linked RuntimeInfo and tessellation state.\n            // Task/mesh are not represented by these graphics stage slots.\n            if (i >= 6) {',
+    "P2.4 native linked tessellation stage admission")
+apply_reviewed_delta(
+    'vk_pipeline_cache_cost.cpp',
+    '            if (i != 0 && i != 1 && i != 4 && i != 5) return nullptr;',
+    '            if (i >= 6) return nullptr;',
+    "P2.4 native linked tessellation stage admission")
+tess_pipeline_path = output / 'vk_pipeline_cache_cost.cpp'
+tess_pipeline_code = tess_pipeline_path.read_text()
+tess_cbuf_old = 'gpu_memory, maxwell3d, i == 5 ? 4U : (i == 4 ? 3U : 0U)'
+tess_cbuf_new = 'gpu_memory, maxwell3d, Shader::Ampere::NativeGraphicsCbufBank(stage)'
+if tess_pipeline_code.count(tess_cbuf_old) != 3:
+    raise RuntimeError("P2.4 tessellation CBUF stage replay drift")
+tess_pipeline_path.write_text(
+    tess_pipeline_code.replace(tess_cbuf_old, tess_cbuf_new))

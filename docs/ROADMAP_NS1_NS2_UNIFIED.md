@@ -111,13 +111,27 @@ Ce paragraphe est une preuve d'intégration source, pas un premier rendu PS5.
 maintenant être capturé et traduit dans la **pipeline Vulkan graphique complète**,
 avec ses CBUF de stage 3 et la liaison inter-stage créée par le même
 GraphicsPipeline commun. Seuls les opcodes déjà revus par le lowerer sont
-acceptés; LEPC dynamique, tessellation et task/mesh restent refusés.
+acceptés; LEPC dynamique et task/mesh restent refusés.
 Cette prise en charge n'est **pas** une preuve de géométrie correcte sur PS5.
 **P2.4 — relecture après compilation :** la création du pipeline graphique
 réauthentifie désormais la configuration des stages, leurs offsets et les
 instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
+
+**P2.4 — tessellation native liée (source/hôte, sans test console) :**
+La paire **TessellationControl + TessellationEval** est maintenant admise
+par le vrai pipeline graphique Vulkan commun, jamais par les compilateurs
+SPIR-V autonomes. Un seul stage tessellation, ou un pipeline sans VertexB,
+reste refusé avant la première lecture GPU. Les banques CBUF sont vérifiées
+avec une même fonction : VertexA/B=0, TessControl=1, TessEval=2, Geometry=3,
+Fragment=4. Les trois chemins (capture, construction, replay après compilation)
+se réfèrent au même propriétaire; aucune fausse donnée CBUF. Source C++
+hôte (Clang, politique de stages et ISA) et parité intégrale du fork Vulkan
+testées ; les instructions Ampere non prises en charge restent bloquées.
+**Cela n'établit pas le bon fonctionnement de la tessellation sur PS5** :
+validation d'un véritable patch tessellé et des capacités RADV en P5.
+Task/mesh et LEPC dynamique restent des manques de code P2.4.
 
 **P0.2 / P1.2 — N51 notifications des pages GPU regroupées :**
 La source partagée P1.2 identifie les vraies pages modifiées, y compris

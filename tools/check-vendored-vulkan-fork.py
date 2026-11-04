@@ -446,8 +446,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     )
     marker_hashes = (
         '1b1b58fefba74616',
-        'e2812baf8b8217e2',
-        '6e2a0c87185726ce',
+        '93820966911b03b4',
+        '9355d24c8a5d4508',
     )
     pinned = []
     for start, digest in zip(marker_positions, marker_hashes):
@@ -461,6 +461,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'CaptureNs2GraphicsShaderFromGpu(' in pinned[1]), 'NS2 dispatch must use GMMU'
     assert 'CreateNs2GraphicsShaderEnvironment(' in pinned[2] and (
         'IsGraphicsCurrent(maxwell3d, *ticket)' in pinned[2]), 'NS2 pipeline owner drift'
+    # P2.4 TessControl/TessEval must be paired before reading source, with
+    # distinct live CBUF stage banks rechecked after compilation. Do not
+    # merely whitelist a changed hash without checking the new contract.
+    native_stage_policy = (root / 'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h').read_text()
+    native_shader_reader = (root / 'vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp').read_text()
+    assert 'active_tessellation == 0 || active_tessellation == tessellation' in native_stage_policy
+    assert 'NativeGraphicsCbufBank(Shader::Stage stage)' in native_stage_policy
+    assert 'NativeGraphicsCbufBank(' in native_shader_reader
+    assert 'required_bank == ~u32{0}' in native_shader_reader
+    assert n3m.count('NativeGraphicsCbufBank(stage)') == 3
+    assert 'NativeGraphicsStageMaskSupported(configured_stages)' in pinned[1]
+    assert 'NativeGraphicsStageMaskSupported(keyed_stages)' in pinned[2]
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
     generated_n3m = actual[n56_name].read_text()

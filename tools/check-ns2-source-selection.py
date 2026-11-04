@@ -510,8 +510,10 @@ def main() -> int:
         native_pipeline_source = (ROOT / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
         require(native_pipeline_source.count(
                     "const VideoCommon::Ns2GraphicsCbufContext cbuf_context{") == 3 and
-                "i == 5 ? 4U : (i == 4 ? 3U : 0U)" in native_pipeline_source and
-                "stage == static_cast<u32>(Shader::Stage::Geometry) ? 3U : 0U" in native_capture and
+                native_pipeline_source.count(
+                    "Shader::Ampere::NativeGraphicsCbufBank(stage)") == 3 and
+                "Shader::Ampere::NativeGraphicsCbufBank(" in native_capture and
+                "required_bank == ~u32{0}" in native_capture and
                 "native_translation_cache.get(), &cbuf_context" in native_pipeline_source and
                 "captured_offsets[i] = offset;" in native_pipeline_source and
                 "if (live_stages != keyed_stages) return nullptr;" in native_pipeline_source and
@@ -702,6 +704,10 @@ def main() -> int:
                 'static_assert(!IsStandaloneNativeGraphicsStage(Shader::Stage::VertexA))' in stage_policy.read_text() and
                 'static_assert(!IsStandaloneNativeGraphicsStage(Shader::Stage::Compute))' in stage_policy.read_text() and
                 'NativeGraphicsStageMaskSupported(u32 mask)' in stage_policy.read_text() and
+                'active_tessellation == 0 || active_tessellation == tessellation' in stage_policy.read_text() and
+                'NativeGraphicsCbufBank(Shader::Stage stage)' in stage_policy.read_text() and
+                'static_assert(NativeGraphicsCbufBank(Shader::Stage::TessellationControl) == 1U)' in stage_policy.read_text() and
+                'static_assert(NativeGraphicsCbufBank(Shader::Stage::TessellationEval) == 2U)' in stage_policy.read_text() and
                 'static_assert(!NativeGraphicsStageMaskSupported(0x01))' in stage_policy.read_text() and
                 'static_assert(NativeGraphicsStageMaskSupported(0x23))' in stage_policy.read_text() and
                 'assert(NativeGraphicsStageMaskSupported(mask))' in

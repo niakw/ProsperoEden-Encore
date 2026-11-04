@@ -28,24 +28,51 @@ This one `[full-build]` candidate tests consolidated source buildability. Do not
 The validated initial native HLE/memory bootstrap build was run #41273218088 at revision 32433db9. This follow-up full-build marker requests a single newer native build including the fixed GPU attribute persistence and NS1 restoration, not a PS5 gameplay pass.
 
 
-## P1.3 du 4 novembre — auddmg:u discovery, pas de faux Sysmix
+## P1.3 du 4 novembre — vrai Sysmix PCM partagé et IPC NS2
 
-Sur `EDEN_SHARED_NS2_AUDIO`, le propriétaire audio NS2 déjà retenu pour
-`aud:u` enregistre aussi `auddmg:u` sans modifier les managers NS1.
-L'IPC retourne une interface `INx2AudioVirtualDeviceManager`; elle
-admet la découverte 0/100 et les propriétés de 0x228 octets sur 401,
-avec la désignation `AudioVirtualOutput0` et la représentation PCM
-stéréo/48k utilisée par l'audio existant. Une entrée de nom non connue
-ou un buffer insuffisant retourne une erreur. La latence mesurée est
-**inconnue** et reste à zéro, jamais fabriquée.
+Le propriétaire NS2 sélectionné via `EDEN_SHARED_NS2_AUDIO` raccorde
+maintenant les services `auddmg:u` **et** `audsmx:u` au même registre de
+flux `Nx2SysmixStreams` ; `aud:u` et tous les managers audio historiques
+NS1 conservent leurs propriétaires Eden. Le service virtuel expose les
+commandes de découverte 0/100, les propriétés 401 (nom,
+stéréo 48 kHz, latence **inconnue**, conservée à zéro), vérifie la prise en
+charge des formats PCM16 et PCM float sur 300, et attache/détache les
+flux **existants et appartenant au même processus** sur 700/800. Les
+noms, fonctions et identifiants incorrects renvoient des erreurs, sans
+flux fantôme ni événement de changement d'appareil imaginé.
 
-La création de flux Sysmix PCM S16, le transfert des buffers audio
-et la gestion de son ring mémoire ne sont PAS réalisés : 300
-(compatibilité de format), 700 (attache) et 800 (détache) renvoient
-`ResultNotSupported`, sans ID de flux, sans hôte factice. La commande
-500 ne crée pas d'événement de changement d'état factice. Le portage
-complet de `audsmx:u` reste une dette P1.3 ; aucune prétention de
-son audible ni de compatibilité ABI PS5. Le témoin C++ de production
-`tools/ns2/check_native_audio_virtual_device_host.py` compile et
-exerce les chemins positifs/négatifs O0/O2 et une garde de sélection
-vérifie l'enregistrement unique de ce service. Pas de build PS5.
+La session `audsmx:u` exige le véritable KProcess fourni par un copy
+handle IPC, compare son propriétaire au thread appelant et valide la
+région utilisateur avant toute création. Chaque flux possède des
+événements réels, un identifiant stable, une entrée dans le registre
+partagé et un `SinkStream` ouvert sur le sink Eden déjà existant.
+L'anneau invité aux offsets lus de l'implémentation amont (index de lecture
+`+0x44`, écriture `+0x1004`, échantillons `+0x1040`) est converti
+vers le PCM16 stéréo du sink, avec lecture/validation de l'adresse
+du processus, gestion de deux segments en cas de bouclage, NaN/Inf,
+gain et saturation. L'horloge de flux utilise un propriétaire
+`CoreTiming` périodique de 5 ms. Le sink reçoit au plus 240 frames
+par pompe ; la pression de sa file (capacité paramétrée à 8, admission
+maximum 4) empêche l'appel bloquant quand l'hôte est saturé. Le pointeur
+de lecture invité n'est avancé qu'après l'admission, par
+`WriteExclusive32` et vérification de lecture. Les échecs IO/CAS
+marquent le flux en faute et stoppent le sink. Le registre refuse une
+33e session active et l'épuisement des IDs, au lieu de les recycler.
+
+**Pas de succès IPC artificiel :** les fonctions non implémentées
+(clock/prime/purge et renommage) retournent `ResultNotSupported`. Une
+incompatibilité audio réelle doit être diagnostiquée à P5 et ne peut
+être masquée par une réponse zéro. Le changement est borné au
+propriétaire audio NS2 ; aucun source de lecture NS1 n'est remplacé.
+
+**Preuves exécutées sur hôte :** compilation syntaxique C++20 des
+deux vraies unités de service et mixeur (O0/O2) avec leurs headers
+Eden épinglés ; extraction/exécution des vrais membres `Pump`,
+`ValidateRegion` et `IsFormatSupported` sous Clang/GCC UBSan O0/O2
+(240 frames PCM16, deux frames float, boucle, saturation, NaN,
+backpressure, mémoire invalide, échec d'écriture exclusive) ; harnais
+IPC du véritable manager `auddmg:u` vérifiant les retours et les
+autorisations. CI preflight câblée, **aucune CI lancée, aucun build PS5**.
+Ces tests ne constituent ni preuve d'une session audio HOS native
+complète, ni de son audible en jeu, ni de compatibilité matérielle
+PS5. Ces derniers points sont transférés à P5.

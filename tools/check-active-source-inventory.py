@@ -91,6 +91,9 @@ print("ENCORE_SHARED_NS2_KERNEL_SOURCE_PASS", f"new_shipping={len(shared_ns2_ker
 shared_ns2_audio_owners = {
     "ns2-runtime/audio/core/hle/service/audio/audio.cpp",
     "ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h",
+    "ns2-runtime/audio/core/hle/service/audio/nx2_sysmix.cpp",
+    "ns2-runtime/audio/core/hle/service/audio/nx2_sysmix.h",
+    "ns2-runtime/audio/core/hle/service/audio/nx2_sysmix_user_service.h",
     "ns2-runtime/audio/core/hle/service/nx2_streamplay.h",
 }
 assert shared_ns2_audio_owners <= set(physical_all), (
@@ -98,6 +101,10 @@ assert shared_ns2_audio_owners <= set(physical_all), (
 )
 assert not shared_ns2_audio_owners.intersection(set(research_paths) | shared_ns2_kernel_owners)
 assert 'set(EDEN_SHARED_NS2_AUDIO ON)' in kernel_select
+assert 'list(APPEND eden_ns2_audio_sources' in kernel_select
+assert 'core/hle/service/audio/nx2_sysmix.cpp' in kernel_select
+assert "python3 -B tools/ns2/check_native_sysmix_pcm_ring_host.py" in (
+    root / ".github/workflows/encore-core-preflight.yml").read_text()
 print("ENCORE_SHARED_NS2_AUDIO_SOURCE_PASS", f"owners={len(shared_ns2_audio_owners)}")
 shared_ns2_gpu_access_owners = {
     "ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp",

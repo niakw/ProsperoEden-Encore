@@ -476,15 +476,33 @@ les commandes 0/100 de cet objet listent une sortie virtuelle
 bloc de propriétés de 0x228 octets strictement borné (stéréo, 48 kHz,
 index périphérique, nom physique ; **aucune latence inventée**).
 Noms inconnus et petits buffers sont refusés sans publication.
-**Les commandes 300/700/800 refusent explicitement la prise en charge** :
-tant que le vrai propriétaire de flux `audsmx:u`/Sysmix PCM et son ring
-partagé ne sont pas intégrés, aucun `AttachStream` et aucun « support
-audio » ne peuvent prétendre réussir. La commande 500 d'événement
-de changement d'état reste absente plutôt que de rendre un événement
-jamais déclenché. Tests hôte C++ du **header HLE réel** avec IPC simulé
-O0/O2, comptes, propriétés et chemins d'erreur. Aucun fichier ni
-service NS1 remplacé, aucun code jeu/TITLEID.
-**P1.3 reste ouvert pour le vrai Sysmix et la validation de l'ABI console.**
+**Historique de ce premier sous-jalon :** les commandes 300/700/800
+étaient initialement refusées faute de propriétaire `audsmx:u`. Le lot
+suivant ci-dessous ajoute désormais le vrai ring, les contrôles IPC
+et le sink. La commande 500 d'événement de changement d'état
+périphérique reste absente plutôt que d'inventer un événement
+jamais déclenché. Aucun fichier ni service NS1 remplacé, aucun
+code jeu/TITLEID. **La qualification audio sur console reste P5.**
+
+**P1.3 — Sysmix PCM natif NS2 branché sur le sink partagé (04/11) :**
+le service `audsmx:u` ouvre des sessions basées sur un véritable
+`KProcess` invité ; `auddmg:u` utilise le même registre pour
+valider le format PCM16/float stéréo 48 kHz et attacher/détacher les
+flux identifiés et appartenant au processus. Le propriétaire
+`nx2_sysmix.cpp` lit le ring invité, convertit des blocs PCM,
+gère le bouclage, le gain, la pression de la file hôte, les événements
+et les erreurs mémoire, puis valide l'avancée du curseur via
+`WriteExclusive32`. Le sink et les services NS1 restent les
+implémentations maintenues ; aucun moteur audio parallèle ni succès
+factice sur les commandes non prises en charge. Les trois nouveaux
+propriétaires Sysmix sont répertoriés séparément des 337 unités
+historiques et des 120 sources de recherche (518 revues F07 inchangées).
+Témoins C++ source/hôte : deux unités d'implémentation compilées en
+syntaxe C++20, anneau PCM réel exécuté Clang/GCC UBSan O0/O2,
+validation IPC des formats/IDs/processus O0/O2. Pas de validation du
+sink sonore PS5, d'horloge HOS en jeu ni de compilation native complète :
+ces preuves restent P5 et P4.1. L'ancien sous-jalon « discovery sans
+Sysmix » est remplacé, sans clore automatiquement tous les services P1.3.
 
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications

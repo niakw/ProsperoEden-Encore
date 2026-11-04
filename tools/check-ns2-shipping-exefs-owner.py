@@ -111,7 +111,7 @@ assert 'bool extended_memory_layout' not in shared_core
 audio_root = ROOT / 'vendor/encore-active/ns2-runtime/audio/core/hle/service/audio'
 audio = (audio_root / 'audio.cpp').read_text()
 client = (audio_root / 'nx2_audio_user_client.h').read_text()
-audio_select = cmake.split('# Shared Switch 2 audio user service:', 1)[1].split(
+audio_select = cmake.split('# Shared Switch 2 audio user + virtual device + real Sysmix stream service.', 1)[1].split(
     '# N3b: shared native PS5 applet compatibility', 1)[0]
 assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in audio_select
 assert 'set(EDEN_SHARED_NS2_AUDIO ON)' in audio_select
@@ -123,10 +123,27 @@ assert audio.count('RegisterNamedService("auddmg:u"') == 1
 assert 'INx2AudioDeviceManagerService' in client
 assert 'INx2AudioVirtualDeviceManager' in client
 assert '{401, &INx2AudioVirtualDeviceManager::GetVirtualOutputDeviceProperties' in client
-assert '{300, &INx2AudioVirtualDeviceManager::UnsupportedStream' in client
-assert '{700, &INx2AudioVirtualDeviceManager::UnsupportedStream' in client
-assert '{800, &INx2AudioVirtualDeviceManager::UnsupportedStream' in client
-assert 'rb.Push(ResultNotSupported);' in client
+assert '{300, &INx2AudioVirtualDeviceManager::IsStreamFormatSupported' in client
+assert '{700, &INx2AudioVirtualDeviceManager::AttachStream' in client
+assert '{800, &INx2AudioVirtualDeviceManager::DetachStream' in client
+assert 'streams->SetEngaged(id, true, ctx.GetThread().GetOwnerProcess())' in client
+assert 'streams->SetEngaged(id, false, ctx.GetThread().GetOwnerProcess())' in client
+assert 'SysmixOutput::IsFormatSupported(format, channels, sample_rate)' in client
+assert 'INx2AudioSoundMixerService' in (
+    audio_root / 'nx2_sysmix_user_service.h').read_text()
+assert audio.count('RegisterNamedService("audsmx:u"') == 1
+assert 'auto sysmix = std::make_shared<Nx2SysmixStreams>(system);' in audio
+assert 'core/hle/service/audio/nx2_sysmix.cpp' in audio_select
+sysmix_owner = (audio_root / 'nx2_sysmix.cpp').read_text()
+assert 'ReadWordAcquire(memory,' in sysmix_owner
+assert 'std::atomic_thread_fence(std::memory_order_acquire)' in sysmix_owner
+assert 'WriteExclusive32(p.buffer + ReadOffset, next, read)' in sysmix_owner
+assert 'if (p.host->GetQueueSize() >= NativeQueueHighWatermark)' in sysmix_owner
+assert 'p.host->AppendBuffer(block, p.output);' in sysmix_owner
+assert 'AudioCore::Sink::StreamType::Out' in sysmix_owner
+assert 'TryAppendOutputBlock(' not in sysmix_owner
+assert 'python3 -B tools/ns2/check_native_sysmix_pcm_ring_host.py' in (
+    ROOT / '.github/workflows/encore-core-preflight.yml').read_text()
 for name in ('audout:u', 'audren:u', 'audin:u', 'audctl', 'hwopus'):
     assert audio.count('RegisterNamedService("' + name + '"') == 1, name
 for command, method, manager in (

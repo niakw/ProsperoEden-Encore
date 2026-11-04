@@ -2341,8 +2341,8 @@ if(EDEN_SHARED_NS2_KERNEL_HEAP)
     message(STATUS "Encore shared NS1/NS2 kernel: extended virtual heap and per-layout heap admission")
 endif()
 
-# Shared Switch 2 audio user service: additive aud:u only, keeping all
-# existing Switch 1 audio managers untouched.
+# Shared Switch 2 audio user + virtual device + real Sysmix stream service.
+# Select the maintained NS1/NS2 audio sink, retaining all Switch 1 managers.
 set(EDEN_SHARED_NS2_AUDIO OFF)
 if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_AUDIO ON)
@@ -2360,7 +2360,13 @@ if(EDEN_SHARED_NS2_AUDIO)
         message(FATAL_ERROR "Pinned audio HLE owner changed: review NS2 aud:u selection")
     endif()
     list(REMOVE_ITEM eden_ns2_audio_sources "hle/service/audio/audio.cpp")
-    list(APPEND eden_ns2_audio_sources "${EDEN_NS2_AUDIO_SOURCE}")
+    if(NOT EXISTS "${EDEN_NS2_AUDIO_ROOT}/core/hle/service/audio/nx2_sysmix.cpp"
+       OR NOT EXISTS "${EDEN_NS2_AUDIO_ROOT}/core/hle/service/audio/nx2_sysmix_user_service.h")
+        message(FATAL_ERROR "Missing maintained NS2 Sysmix ring/IPC owners")
+    endif()
+    list(APPEND eden_ns2_audio_sources
+        "${EDEN_NS2_AUDIO_SOURCE}"
+        "${EDEN_NS2_AUDIO_ROOT}/core/hle/service/audio/nx2_sysmix.cpp")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_audio_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AUDIO_ROOT}")
 endif()

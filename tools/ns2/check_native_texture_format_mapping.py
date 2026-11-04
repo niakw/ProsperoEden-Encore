@@ -658,3 +658,20 @@ for render_owner in (
     assert "launch.program_address, VideoCommon::ReadNs2GpuShader" in source[replay:dirty]
 print("P2_4_NATIVE_COMPUTE_SHADER_FINAL_SOURCE_PASS owners=2"
       " order=post-staging-before-GPU-write")
+
+# P2.3: GMMU CPU backing must be authenticated both before and AFTER
+# ConfigureNative. A stable QMD CBUF descriptor is not a stable VkBuffer.
+for render_owner in (
+    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
+    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+):
+    source = (vendor / render_owner).read_text()
+    before = source.index("staged_buffer_mappings.Capture(")
+    stage = source.index("if (!pipeline->ConfigureNative(", before)
+    after = source.index("staged_buffer_mappings.Matches(", stage)
+    dirty = source.index("ObtainBufferOperation::MarkAsWritten", after)
+    assert before < stage < after < dirty, render_owner
+    assert "GpuToCpuAddress(address)" in source[before:stage]
+    assert "GpuToCpuAddress(address)" in source[after:dirty]
+print("P2_3_NATIVE_QMD_BUFFER_PHYSICAL_REMAP_SOURCE_PASS owners=2"
+      " P2_4_shader_precommit=preserved")

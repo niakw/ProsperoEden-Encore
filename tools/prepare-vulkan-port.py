@@ -6840,3 +6840,15 @@ apply_reviewed_delta(
     '        if (!current_after_staging ||\n            !registry.IsComputeCurrent(kepler_compute, *ticket)) {\n            // Scope retirement also handles this rejection; do not release',
     '        // SPIR-V compilation and descriptor staging can outlast a guest\n        // code rewrite without changing TIC, TSC or QMD CBUF metadata.\n        // Recheck the exact original Ampere words after image admission.\n        if (!current_after_staging ||\n            !captured.ComputeSourceMatches(\n                launch.program_address, VideoCommon::ReadNs2GpuShader,\n                gpu_memory) ||\n            !registry.IsComputeCurrent(kepler_compute, *ticket)) {\n            // Scope retirement also handles this rejection; do not release',
     "P2.4 dispatch-time native QMD shader byte replay")
+
+# P2.3: physical GMMU CBUF/SSBO snapshot across Vulkan descriptor staging.
+apply_reviewed_delta(
+    'vulkan_rasterizer.cpp',
+    '        scheduler.RequestOutsideRenderPassOperationContext();\n        native_recording_started = true;',
+    '        // Match every actual BufferCache allocation to its physical GMMU\n        // backing before descriptor staging. QMD bytes and GPU addresses\n        // alone cannot detect same-address guest remapping.\n        Shader::Ampere::NativeQmdPhysicalBufferSnapshot staged_buffer_mappings{};\n        if (!staged_buffer_mappings.Capture(\n                *resources, [this](u64 address) {\n                    return gpu_memory->GpuToCpuAddress(address);\n                }))\n            return false;\n        scheduler.RequestOutsideRenderPassOperationContext();\n        native_recording_started = true;',
+    'P2.3 buffer physical snapshot before staging')
+apply_reviewed_delta(
+    'vulkan_rasterizer.cpp',
+    '        // A guest can rewrite TIC/TSC after the shared TextureCache pinned\n        // the original view and while BufferCache stages its descriptors.',
+    '        // A guest can remap CBUF/SSBO physical backing without altering\n        // the QMD descriptor bytes. Refuse the old Vulkan buffers BEFORE\n        // any native GPU-dirty write publication or vkCmdDispatch enqueue.\n        if (current_after_staging) {\n            current_after_staging = staged_buffer_mappings.Matches(\n                *resources, [this](u64 address) {\n                    return gpu_memory->GpuToCpuAddress(address);\n                });\n        }\n        // A guest can rewrite TIC/TSC after the shared TextureCache pinned\n        // the original view and while BufferCache stages its descriptors.',
+    'P2.3 buffer physical replay after staging')

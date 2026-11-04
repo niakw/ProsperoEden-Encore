@@ -1361,6 +1361,58 @@ int main() {
                 if (addr >= texture_va + 4096) return *mapper(addr) + 4096;
                 return mapper(addr);
             }));
+        // P2.3: a descriptor-stable QMD can be remapped to different CPU
+        // physical buffers while Vulkan stages its UBO/SSBO descriptors.
+        // Both first-page aliases and interior pages must match the original
+        // full-span snapshot, without publishing any GPU writes on failure.
+        {
+            using Shader::Ampere::NativeQmdPhysicalBufferSnapshot;
+            NativeQmdResourcePlan buffers{};
+            buffers.uniform_buffers.push_back({0, texture_va, 8192});
+            buffers.storage_buffers.push_back({texture_va+0x4000, 4096, true, true});
+            bool move_uniform{}, move_storage{}, missing_second{};
+            const auto physical = [&](u64 address) -> std::optional<u64> {
+                if (address >= texture_va && address < texture_va+8192) {
+                    if (missing_second && address >= texture_va+4096)
+                        return std::nullopt;
+                    return physical_va + (address-texture_va) +
+                           (move_uniform ? 0x20000 : 0);
+                }
+                if (address >= texture_va+0x4000 && address < texture_va+0x5000)
+                    return physical_va+0x100000+(address-texture_va-0x4000)+
+                           (move_storage ? 0x20000 : 0);
+                return std::nullopt;
+            };
+            NativeQmdPhysicalBufferSnapshot physical_snapshot{};
+            assert(buffers.HasResolvedGpuBufferBindings());
+            assert(!physical_snapshot.Matches(buffers, physical));
+            assert(physical_snapshot.Capture(buffers, physical));
+            assert(physical_snapshot.Matches(buffers, physical));
+            move_uniform = true;
+            assert(!physical_snapshot.Matches(buffers, physical));
+            move_uniform = false;
+            move_storage = true;
+            assert(!physical_snapshot.Matches(buffers, physical));
+            move_storage = false;
+            missing_second = true;
+            assert(!physical_snapshot.Matches(buffers, physical));
+            missing_second = false;
+            assert(physical_snapshot.Matches(buffers, physical));
+            auto changed = buffers;
+            changed.uniform_buffers[0].bytes = 4096;
+            assert(!physical_snapshot.Matches(changed, physical));
+            changed = buffers;
+            changed.storage_buffers[0].gpu_address += 4096;
+            assert(!physical_snapshot.Matches(changed, physical));
+            // Failed recapture cannot leave the previous accepted snapshot
+            // available to a subsequent unrelated dispatch.
+            changed = buffers;
+            changed.storage_buffers[0].known_size = false;
+            assert(!physical_snapshot.Capture(changed, physical));
+            assert(!physical_snapshot.Matches(buffers, physical));
+            assert(physical_snapshot.Capture(buffers, physical));
+            assert(physical_snapshot.Matches(buffers, physical));
+        }
         NativeQmdTextureTables guest_tables{
             .tic_base = 0x1000001000000ULL, .tsc_base = 0x1000002000000ULL,
             .tic_limit = 0, .tsc_limit = 0

@@ -403,6 +403,20 @@ Voir [preuves et limites](NS1_NS2_HOST_SOURCE_RECONCILIATION_2026-11-04.md).
 compilation complète des interfaces et CI du couple SHA final, profils
 indépendants des compilers, P2 manquant et P5 console restent ouverts.
 
+**P1.3 — vrai résultat IPC pour \`stpl:u\` 300 (04/11) :**
+le propriétaire NS2 déjà sélectionné \`nx2_streamplay.h\` ne fabrique plus
+un événement noyau pour une commande qui doit renvoyer une mémoire partagée
+HID invitée. Elle fournit désormais une allocation \`KSharedMemory\` de
+0x9b000 octets, permissions ReadWrite côté propriétaire / Read invité,
+structure IPC (taille, décalage zéro) et copy handle réel ; refus explicite
+si création ou initialisation échouent et fermeture équilibrée de l'objet.
+Test hôte compilant **le vrai header** avec un noyau/IPC simulé, O0/O2,
+création unique, relecture, deux pannes et libération, raccordé au preflight.
+Portée uniquement NS2 et hors code NS1 ; le protocole de communication
+avec des invités distants, l'ABI intégrale PS5 et la compatibilité des titres
+restent non prouvés. Correctif générique repris conceptuellement de
+\`Lichii nx2 #64\`, sans fusion massive ni prise en compte d'un jeu particulier.
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

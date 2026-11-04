@@ -4,7 +4,7 @@
 
 - **Process + kernel:** detect NS2 from parsed ExeFS main.npdm before kernel initialization. Select 12 GiB guest layout per NS2 title, bound SetHeapSize by intended guest RAM and extend only the 12 GiB profile's *virtual* heap range to 16 GiB. These changes do not eagerly allocate 16 GiB of PS5 RAM.
 - **Audio:** additive aud:u commands 1 and 2 return actual maintained IAudioOutManager and IAudioRendererManager interfaces. Existing audout:u, audren:u, audin:u, audctl and hwopus registrations are retained for NS1.
-- **Stream play:** additive stpl:u command 0 returns an object; its command 300 returns a real kernel event, with balanced event creation and closure. Other GameShare/streaming functionality remains unsupported.
+- **Stream play:** le service NS2 \`stpl:u\` renvoie un objet par la commande 0 ; sa commande 300 fournit désormais une **mémoire partagée HID invitée de 0x9b000 octets (lecture côté invité)**, accompagnée de sa structure taille/décalage et d'un copy handle. L'ancien événement supposé, faux succès sans données HID, a été retiré. L'instance garde un propriétaire unique jusqu'à sa fermeture ; échecs d'allocation et d'initialisation refusent l'appel sans fournir de handle. Le partage distant et les autres commandes GameShare restent non implémentés.
 - **GPU characteristics:** exact native NVDRV IOCTL adapters are additive. Full GPU session, worker, GMMU/GPFIFO, Ampere shader, VI2 presentation and GPU budget adaptations remain research only.
 - **Loader diagnostics:** bounded 10s/30s Vulkan loading notices are distinct from an actual game frame.
 

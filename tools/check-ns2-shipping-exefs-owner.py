@@ -130,11 +130,20 @@ assert 'auto stub fallback' not in client.lower()
 streamplay = (audio_root.parent / 'nx2_streamplay.h').read_text()
 assert audio.count('RegisterNamedService("stpl:u"') == 1
 assert '{0, &INx2StreamPlayService::GetUserService' in streamplay
-assert '{300, &INx2StreamPlayUserService::GetEvent' in streamplay
-assert 'service_context.CreateEvent(' in streamplay
-assert 'service_context.CloseEvent(event)' in streamplay
-assert 'rb.PushCopyObjects(ctx, event->GetReadableEvent())' in streamplay
+assert '{300, &INx2StreamPlayUserService::GetGuestHidSharedMemory' in streamplay
+assert 'GuestHidMemorySize = 0x9b000' in streamplay
+assert 'memory->Initialize(owner_kernel, system.DeviceMemory(), nullptr,' in streamplay
+assert 'Kernel::Svc::MemoryPermission::ReadWrite' in streamplay
+assert 'Kernel::Svc::MemoryPermission::Read' in streamplay
+assert 'KSharedMemory::Register(owner_kernel, memory)' in streamplay
+assert 'guest_hid_memory->Close(kernel)' in streamplay
+assert 'rb.PushRaw(Nx2GuestHidMemoryConfig{GuestHidMemorySize, 0})' in streamplay
+assert 'rb.PushCopyObjects(ctx, guest_hid_memory)' in streamplay
 assert 'rb.PushIpcInterface<INx2StreamPlayUserService>(ctx, system)' in streamplay
+assert 'service_context.CreateEvent(' not in streamplay
+assert 'GetEvent (guessed)' not in streamplay
+assert 'python3 -B tools/ns2/check_native_streamplay_guest_hid_host.py' in (
+    ROOT / '.github/workflows/encore-core-preflight.yml').read_text()
 
 # Shared NS2 GPU-access SVC 0x80 is restricted to an actual NS2
 # ExeFS process and the 12 GiB profile; no blanket success of unknown calls.

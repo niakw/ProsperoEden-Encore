@@ -64,6 +64,7 @@ class Textures
     // Loaded with launcher art, never fetched in a frame.
     std::uint32_t switch_logo() const { return switch_logo_; }
     std::uint32_t switch_rear_footer() const { return switch_rear_footer_; }
+    std::uint32_t switch2_header() const { return switch2_header_; }
 
     // The cover drawn `size` virtual pixels wide. Queues it on first use.
     Cover cover(const std::string &path, float size);
@@ -124,6 +125,7 @@ class Textures
     std::uint32_t controller_ = 0;
     std::uint32_t switch_logo_ = 0;
     std::uint32_t switch_rear_footer_ = 0;
+    std::uint32_t switch2_header_ = 0;
     std::unordered_map<std::string, Entry> covers_;
     std::deque<std::string> queue_; // O(1) pop_front during frame updates
     std::deque<std::uint32_t> pending_deletes_; // invalidated GPU IDs, amortized in pump()

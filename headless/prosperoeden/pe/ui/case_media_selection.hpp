@@ -5,11 +5,19 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace pe::ui::case_media {
+
+// NS2-only programs use 0400... application IDs. Do not infer the
+// platform of an 0100... dual-release title from its display name.
+inline constexpr bool IsSwitch2TitleId(std::uint64_t id) noexcept {
+    return (id & 0xFF00000000000000ULL) == 0x0400000000000000ULL;
+}
+
 
 // The front uses an edge-to-edge source: hero, first usable screenshot,
 // finally the icon. All cases preserve the source's aspect via cover UVs.

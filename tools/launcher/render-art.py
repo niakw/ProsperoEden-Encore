@@ -79,7 +79,7 @@ def fixed():
     No image generation, web request or redraw: these are byte-for-byte
     encoded source templates and a deterministic PNG -> native TGA conversion.
     """
-    for stem in ("switch-logo", "switch-rear-footer"):
+    for stem in ("switch-logo", "switch-rear-footer", "ns2-head"):
         source = ART / f"{stem}.png.b64"
         raw = base64.b64decode(source.read_text().strip(), validate=True)
         with Image.open(BytesIO(raw)) as packed:

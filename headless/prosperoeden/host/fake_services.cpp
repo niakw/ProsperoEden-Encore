@@ -245,6 +245,8 @@ FakeServices::FakeServices(const std::string &covers_directory)
     // No game art is checked into git or published in native packages.
     preview_botw_ = std::getenv("PE_PREVIEW_BOTW") != nullptr &&
                     std::string_view(std::getenv("PE_PREVIEW_BOTW")) == "1";
+    preview_ns2_ = !preview_botw_ && std::getenv("PE_PREVIEW_NS2") != nullptr &&
+                   std::string_view(std::getenv("PE_PREVIEW_NS2")) == "1";
     enable_sample_case_ = std::getenv("PE_PREVIEW_NO_BOX_SCANS") == nullptr;
     int index = 0;
     for (const Sample &sample : kSamples)
@@ -322,14 +324,24 @@ FakeServices::FakeServices(const std::string &covers_directory)
             game.description = "Discover Hyrule, explore its landscapes and embark on an open-air adventure.";
             game.max_players = 1;
         }
+        if (preview_ns2_ && std::string_view(sample.name) == "Echoes of the Valley") {
+            // Host fixture uses the real NS2 0400 namespace but its OWN
+            // generated images, never Nintendo's commercial screenshots.
+            game.name = "Mario Kart World";
+            game.file = "Mario Kart World [0400C3F00006E000].xci";
+            game.title_id = 0x0400C3F00006E000ull;
+            game.description = "Switch 2 launcher visual test: case ink and physical shell.";
+            game.intro = game.description;
+            game.screenshots = {game.hero};
+        }
         games_.push_back(game);
         ++index;
     }
     std::sort(games_.begin(), games_.end(),
               [](const ui::Game &a, const ui::Game &b) { return a.name < b.name; });
     for (ui::Game& game : games_) {
-        if (game.name == (preview_botw_ ?
-                         "The Legend of Zelda: Breath of the Wild" :
+        if (game.name == (preview_ns2_ ? "Mario Kart World" :
+                         preview_botw_ ? "The Legend of Zelda: Breath of the Wild" :
                          "Echoes of the Valley")) {
             sample_case_title_id_ = game.title_id;
             if (preview_botw_) {
@@ -386,8 +398,8 @@ ui::Home FakeServices::home()
                     return game;
             return games_.front();
         };
-        const ui::Game &last = find(preview_botw_ ?
-            "The Legend of Zelda: Breath of the Wild" : "Echoes of the Valley");
+        const ui::Game &last = find(preview_ns2_ ? "Mario Kart World" :
+            preview_botw_ ? "The Legend of Zelda: Breath of the Wild" : "Echoes of the Valley");
         home.last_file = last.file;
         home.last_exists = true;
         home.last_title = last.name;
@@ -403,8 +415,8 @@ ui::Home FakeServices::home()
         home.last_title_id = last.title_id;
         home.last_addons = last.addons;
         home.last_language = last.language;
-        for (const char *name : {preview_botw_ ?
-                                 "The Legend of Zelda: Breath of the Wild" :
+        for (const char *name : {preview_ns2_ ? "Mario Kart World" :
+                                 preview_botw_ ? "The Legend of Zelda: Breath of the Wild" :
                                  "Echoes of the Valley", "Kart Carnival Deluxe", "Starfall Odyssey",
                                  "Caf\xC3\xA9 Nocturne", "Moss & Lantern", "Tiny Harbor", "Cloudline"})
         {

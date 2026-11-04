@@ -244,7 +244,7 @@ percent of the 454px front width. The same treatment applies to every title.
   the opposite physical RED hinge appears only as a narrow seam on the RIGHT.
 - The flat front/back scans use aspect-preserving containment and cannot
   stretch a region's back-cover descriptions. Genuine scans remain priority.
-- An original unreadably tiny physical spine (under 64x600 px) is rejected;
+- An original unreadably tiny physical spine (under 16x250 px) is rejected;
   the universal fallback is a clean red neutral sleeve with pale, title-free
   molding marks, never a pixel-stretched title.
 - Eden logo and title are moved into the right column with clear case margins.
@@ -266,7 +266,7 @@ The image worker considers multiple region-ranked originals separately for
 front/back/spine. For BOTW, the user-identified 4b815... French back-cover
 source resolved as an actual 1167x1878 scan in the host visual run, replacing
 the tiny 174x281 thumbnail. The rendering preserves the original aspect ratio
-rather than stretching the lettering. A source spine narrower than 64px or
+rather than stretching the lettering. A source spine narrower than 16px or
 shorter than 600px is not passed off as readable: the preview and native
 resolver use the neutral empty red sleeve without an invented game title.
 
@@ -635,3 +635,36 @@ present and checks the shelf, reconstructed rear, and zoomed paper. No
 separate image generator, thumbnail template, second cover engine or console
 test is used. The host OpenGL build and source gates must both pass before
 calling this visually verified.
+
+## NS2 front header, red cases and host evidence (2026-11-04)
+
+- A Switch 2-only `0400...` title uses its platform-specific red molded
+  case (3D launch model and 2D Library sleeve). Switch 1 `0100...`
+  remains on its existing material; shared-release platform detection is
+  deliberately not guessed from a title string.
+- A missing NS2 retail **front** is reconstructed from locally cached media
+  and receives the user-supplied full-width `ns2-head` print at the **top
+  of the front face**. Its compact, deterministic PNG asset lives at
+  `headless/prosperoeden/ui/art/ns2-head.png.b64`. Both host rendering and
+  PS5 packaging decode it into an ordinary TGA loaded once by the launcher.
+- Authentic retail front and back scans always supersede the composition and
+  are never overprinted with another logo.
+- A genuine cached Nintendo Switch 1 (or 2) **Box - Spine** scan is already
+  selected as its own third face, independent of front/back availability.
+  When absent, an unlettered red vector spine remains the fallback. No
+  additional title-specific fallback or runtime media request was added.
+- The native Mesa OpenGL preview job now archives NS2 retail and
+  reconstructed front/spine/back renders, plus an NS2 reconstructed Library
+  front/back/zoom set, in addition to the existing NS1 captures. The
+  fixture uses a `0400...` title identity and generated sample game art.
+  This demonstrates the launcher presentation, **not** NS2 guest gameplay
+  or a successful PS5 build.
+- Source regression gate:
+  `python3 -B tools/check-launcher-ns2-case-preview.py`.
+
+**Switch 1 original spine priority:** the earlier minimum 64×600 pixels blocked
+some genuine cached Box - Spine thumbnails (including 18×281). Original
+scans now qualify from 16×250 when their complete image is valid, both in
+the network cache and for local user scans. If a source is small, its print
+may remain soft: Encore does not invent detail or replace it with a fabricated
+game title. Original front and back priorities are unaffected.

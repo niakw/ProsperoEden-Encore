@@ -19,6 +19,7 @@ int main() {
         {0x80b,{24}},            // predicate compare source
         {0x20b,{24,32}},         // register predicate compare
         {0x820,{16,24}},         // FMUL high destination/source
+        {0x220,{16,24,32}},      // FMUL register multiplier (Lichii #56)
         {0x421,{16,24}},         // FADD with constant operand
         {0x208,{16,24,32}},      // bitwise/floating SEL
         {0x221,{16,24,32}},      // FADD register
@@ -79,6 +80,6 @@ int main() {
     Instruction overflowing{{0x381U | (252U<<16) | (248U<<24),
                              0U,6U<<9,0U}};
     assert(!PrepareRegisterPressure(overflowing,216).valid);
-    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=15 opcode_families "
+    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=16 opcode_families "
               "load_store=preserved reserved=216");
 }

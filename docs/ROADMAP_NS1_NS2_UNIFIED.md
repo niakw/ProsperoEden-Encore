@@ -155,7 +155,7 @@ Les instructions déjà traduites pouvaient être refusées ou écraser les
 registres temporaires Maxwell quand des GPRs élevés apparaissaient dans
 LDG/STG, FFMA, FMUL, FADD/FSEL, I2FP, IMNMX, S2R et FSETP.
 Le propriétaire Ampere `PrepareRegisterPressure` répertorie désormais
-15 familles réellement traduites et leurs champs d'opérande exacts,
+16 familles réellement traduites, dont FMUL registre 0x220 et leurs champs d'opérande exacts,
 y compris la paire adresse 64 bits en mémoire globale, les tailles
 vectorielles et le troisième opérande FFMA. Le détecteur du lowerer
 reconnaît les vrais champs à bit 32 même hors mode générique.

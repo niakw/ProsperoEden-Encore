@@ -463,6 +463,8 @@ def main() -> int:
         shadow_fixture = ROOT / "tools/ns2/test_ampere_native_register_shadow.cpp"
         host_workflow = (ROOT / ".github/workflows/ns2-research-host.yml").read_text()
         require("case 0x381: case 0x386: case 0x981: case 0x986:" in pressure_src and
+                "case 0x233: case 0x208: case 0x220: case 0x221:" in pressure_src and
+                "opcode != 0x220 && opcode != 0x221" in native_lower_src and
                 "case 0x223:" in pressure_src and
                 "case 0x919:" in pressure_src and
                 "input.Bits(90, 1) ? 2 : 1" in pressure_src and

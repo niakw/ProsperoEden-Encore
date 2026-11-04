@@ -398,6 +398,9 @@ jobs:
           print("NS2_LIBRARY_HEADER_CPP_OPENGL: PASS")
           PY
 
+      - name: Reject upside-down fixed NS1 and NS2 jacket artwork in actual OpenGL pixels
+        run: python3 -B tools/launcher/check-fixed-jacket-orientation.py
+
       - name: Capture alternate layout theme (host only)
         if: ${{ github.ref == 'refs/heads/ui/encore-switch-theme-20261016' }}
         env:

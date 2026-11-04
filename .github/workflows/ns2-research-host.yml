@@ -568,6 +568,21 @@ jobs:
               -o "build-ns2-a64/ampere-lower-${cxx//+/}"
             "build-ns2-a64/ampere-lower-${cxx//+/}"
           done
+      - name: P2.4 cross-repo verified Ampere uniform shift, surface reduction and signed minmax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in clang++ g++; do
+            "${cxx}" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
+              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_lichii_nx2_generic_shader_regressions.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              -o "build-ns2-a64/ampere-crossrepo-${cxx//+/}"
+            "build-ns2-a64/ampere-crossrepo-${cxx//+/}"
+          done
       - name: NS2 N49 upstream-derived owner parity and 3D image view / R0 shader regressions
         shell: bash
         run: |

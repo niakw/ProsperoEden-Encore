@@ -92,7 +92,9 @@ Le fournisseur Vulkan conserve désormais au plus **12 pipelines Compute Ampere*
 **Restes P0–P4 qui exigent du CODE (non requalifiables par un simple essai PS5)** :
 la promotion des commutateurs de recherche vers la sélection automatique de production,
 les instructions/stages graphiques Ampere encore explicitement refusés
-(tessellation, task/mesh non pris en charge; géométrie liée au pipeline désormais intégrée en source avec opcodes inconnus refusés), les liaisons HLE ou
+(task/mesh, LEPC dynamique et autres opcodes non traduits ; Geometry et la
+paire TessControl/TessEval sont liées en source, sans preuve GPU PS5),
+les liaisons HLE ou
 synchronisations non implémentées, et tout descripteur GPU dont l'ABI ne peut
 être authentifiée. Ces manques se ferment seulement par une implémentation
 générique contrôlée; aucun patch par TitleID et aucun faux « PASS ».
@@ -132,6 +134,20 @@ testées ; les instructions Ampere non prises en charge restent bloquées.
 **Cela n'établit pas le bon fonctionnement de la tessellation sur PS5** :
 validation d'un véritable patch tessellé et des capacités RADV en P5.
 Task/mesh et LEPC dynamique restent des manques de code P2.4.
+
+**P2.4 — audit Lichii/nx2 du 04/11, correctifs ISA génériques :**
+l'authentification ISA puis la traduction vers Maxwell admettent désormais
+USHF 0x499 (mot immédiat et shift uniforme), SULD/SUST 0x998/0x99c
+(handles en registre, images 2D/array/3D), SURED 0x59f (réduction 1D buffer
+ou 2D) et IMNMX 0x817 (immédiats signés et 32 bits). Aucun chemin n'est
+sélectionné par titre ou ROM. Les champs non prouvés et les ressources non
+admissibles restent refusés avant l'envoi à Vulkan.
+Tests du vrai décodeur et du vrai lowerer Clang/GCC UBSan verts, négatifs
+inclus ; l'ancienne suite du bridge passe et le fork Vulkan reste inchangé.
+[Revue différenciée des commits nx2](NS2_LICHII_NX2_DIFF_AUDIT_2026-11-04.md) :
+les optimisations de GpuSplit, les fences amont annulées et les services
+HLE sans propriétaire correspondant ne sont pas fusionnés aveuglément.
+Le GPU matériel et les shader pipelines complets ne sont qualifiés qu'en P5.
 
 **P1.2 / P1.3 — remaps NVDRV bornés et sans fuite de pin :**
 Deux recherches de réservations GPU dans `nvhost_as_gpu` décrémentaient

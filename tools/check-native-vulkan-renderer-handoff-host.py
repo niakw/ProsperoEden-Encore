@@ -9,8 +9,10 @@ This distinguishes OnFrameDisplayed callbacks from completed host copies.
 No real Vulkan WSI, GPU work, HLE guest frame pacing, or PS5 gameplay proof.
 """
 from pathlib import Path
+import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -284,14 +286,26 @@ cpp=cpp.replace("__PRESENT_METHODS__",methods).replace("__RENDER_METHOD__",compo
 assert "__PRESENT_METHODS__" not in cpp and "__RENDER_METHOD__" not in cpp
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
+compiler_env = os.environ.copy()
+fixture_include = []
+if sys.platform == "darwin":
+    # Apple CLT 15.4 SDK links correctly here, but its libc++ disables
+    # std::stop_token/jthread. The CLT 26.5 C++ headers support them and
+    # link to the installed libc++ with the 15.4 SDK. This is a HOST
+    # witness compiler environment, never an alteration to PS5 sources.
+    sdk = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+    headers = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/usr/include/c++/v1")
+    if sdk.is_dir() and headers.is_dir():
+        compiler_env.setdefault("SDKROOT", str(sdk))
+        fixture_include = ["-nostdinc++", "-isystem", str(headers)]
 with tempfile.TemporaryDirectory(prefix="encore-f05-vulkan-present-") as tmp:
     src=Path(tmp)/"replay.cpp"
     src.write_text(cpp)
     for opt in ("-O0","-O2"):
         exe=Path(tmp)/("present"+opt)
-        built=subprocess.run([compiler,"-std=c++20",opt,"-I",str(ROOT/"headless"),"-pthread","-Wall","-Wextra",
+        built=subprocess.run([compiler,*fixture_include,"-std=c++20",opt,"-I",str(ROOT/"headless"),"-pthread","-Wall","-Wextra",
                               "-Werror","-fsanitize=undefined","-fno-sanitize-recover=all",
-                              str(src),"-o",str(exe)],capture_output=True,text=True,timeout=75)
+                              str(src),"-o",str(exe)],capture_output=True,text=True,timeout=75,env=compiler_env)
         assert built.returncode==0,(opt,built.stderr[-5000:])
         run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=30)
         assert run.returncode==0,(opt,run.stderr[-3500:])

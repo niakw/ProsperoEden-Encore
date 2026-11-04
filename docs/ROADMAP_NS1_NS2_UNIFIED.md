@@ -119,6 +119,22 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P3.3 — transition jaquette OpenGL → Vulkan qualifiée source/hôte le 04/11 :**
+`check-ps5-vulkan-loading-stages-host.py` confirme la boîte aux lettres de
+jaquette unique et bornée et l'absence d'effacement lors du passage Vulkan;
+`check-native-vulkan-renderer-handoff-host.py` exécute les véritables
+méthodes de rendu et de présentation sous Clang C++20 O0/O2 (241 frames),
+avec l'ordre des notifications, la durée de vie des images et la queue de
+présentation. `check-ps5-vulkan-present-frame-lifetime.py`,
+`check-ps5-present-framebuffer-freshness-host.py`,
+`check-vulkan-present-wait-host.py`,
+`check-ps5-vulkan-swapchain-snapshot.py`,
+`check-vulkan-present-missing-guest-host.py` et
+`check-ps5-f07-present-layer-growth-host.py` passent également sur hôte.
+Le test C++20 utilise uniquement pour cet hôte macOS la combinaison
+libc++ headers CLT 26.5 / SDK de liaison 15.4, sans modifier le moteur.
+**Pas de preuve d'absence de flash sur l'écran PS5 : P5.**
+
 **P2.7c — source/hôte du fetch GPFIFO validée le 04/11 :** les deux
 `DmaPusher` authentifient le canal NS2 et imposent `SafeRead` avant de lire
 les mots invités, y compris sur pages physiques disjointes. Le cache Vulkan

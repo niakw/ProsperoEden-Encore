@@ -28,6 +28,12 @@ front = library.split("void flat_front_fallback(", 1)[1].split("void flat_back_f
 assert "if (ns2_cover)" in front
 assert "if (!ns2_cover)" in front
 assert "c.textures.switch2_header()" in front
+# Both PS5 and host share the OpenGL source-row convention. A negative V
+# rendered the supplied NS2 header upside down in the actual 3D paper.
+assert """c.list.image(c.textures.switch2_header(), header,
+                         {0.0f, 0.0f, 1.0f, 1.0f}""" in front
+assert """c.list.image(c.textures.switch2_header(), header,
+                         {0.0f, 1.0f, 1.0f, -1.0f}""" not in front
 assert "c.textures.switch_logo()" in front
 assert "kHeaderAspect = 246.0f / 1164.0f" in front
 # Original retail scans retain precedence: no NS2 strip is painted over them.

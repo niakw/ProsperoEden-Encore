@@ -160,8 +160,12 @@ void flat_front_fallback(Canvas& c, const Game& game, const Rect& r)
         constexpr float kHeaderAspect = 246.0f / 1164.0f;
         const Rect header{r.x, r.y, r.w, r.w * kHeaderAspect};
         if (c.textures.switch2_header() != 0) {
+            // load_tga() normalizes source rows to top-first memory and
+            // GlBatch uploads them unchanged. The UI's top has UV v=0;
+            // flipping here made NS2 lettering upside down in BOTH the
+            // native launcher and the Mesa host preview.
             c.list.image(c.textures.switch2_header(), header,
-                         {0.0f, 1.0f, 1.0f, -1.0f}, Color::rgb(0xffffff));
+                         {0.0f, 0.0f, 1.0f, 1.0f}, Color::rgb(0xffffff));
         } else {
             // Optional image missing: use a red NS2 header, never NS1 art.
             c.list.rounded_rect(header, 0.0f, Color::rgb(0xe60012));

@@ -18,11 +18,6 @@ def main() -> int:
         # Imported emulator patches are credited in docs, never build options.
         require("Eglantine" not in CMAKE and "EGLANTINE_" not in CMAKE,
                 "External emulator name leaked into native build options")
-        for feature in ("GPU_RANGE_BATCH",):
-            flag = f"EDEN_NS2_{feature}_EXPERIMENTAL"
-            require(f"option({flag}" in CMAKE and f"if({flag})" in CMAKE and
-                    f"{flag} OR" in CMAKE.split("# Release gate: Vulkan/RADV", 1)[1],
-                    "NS2 research flag not release-forbidden: " + flag)
         cache_guard = CMAKE.split("# N56: shared production PS5 Vulkan cache admission", 1)[1].split("# N57:", 1)[0]
         require("if(PS5_NATIVE AND EDEN_PS5_VULKAN)" in cache_guard and
                 "target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)" in cache_guard and
@@ -63,6 +58,12 @@ def main() -> int:
                 "target_include_directories(video_core BEFORE PUBLIC" in scratch_guard and
                 "option(EDEN_NS2_ASTC_SCRATCH_RELEASE_EXPERIMENTAL" not in CMAKE,
                 "N54 must use shared PS5 CPU scratch ownership")
+        gpu_batch = CMAKE.split("# N51: the same PS5 GPU MemoryManager", 1)[1].split(
+            "# R411: Eden", 1)[0]
+        require("if(PS5_NATIVE)" in gpu_batch and
+                "target_compile_definitions(video_core PRIVATE EDEN_NS2_GPU_RANGE_BATCH=1)" in gpu_batch and
+                "option(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL" not in CMAKE,
+                "N51 page-notification batching must use the shared GPU memory owner")
         # QMD3's virtual RasterizerInterface must be the SAME reviewed
         # header in every research native consumer; a private override in
         # RasterizerVulkan alone does not compile or preserve the vtable ABI.

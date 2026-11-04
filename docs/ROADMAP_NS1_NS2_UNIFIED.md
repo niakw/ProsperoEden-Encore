@@ -119,6 +119,16 @@ instructions Ampere/branches CBUF d'origine **après** traduction CFG/IR/SPIR-V.
 Un changement invité sans changement d'époque GPU refuse le pipeline avant
 publication. La preuve de stabilité en conditions réelles reste en P5.
 
+**P0.2 / P1.2 — N51 notifications des pages GPU regroupées :**
+La source partagée P1.2 identifie les vraies pages modifiées, y compris
+un nouveau backing physique sur un PTE encore mappé. La protection N51
+regroupe uniquement leurs notifications adjacentes, préserve les trous
+et bloque les débordements. Le témoin du `MemoryManager` vérifie les
+méthodes `PageTableOp`/`BigPageTableOp` sous Clang/GCC, O0/O2, avec
+et sans N51 ; l'oracle indépendant exécute 2 000 patrons aléatoires
+par granularité et un run de 380 108 pages. Aucun changement des
+caches ou du dispatch rasterizer NS1, qualification PS5 conservée en P5.
+
 **P0.2 / P2.5 — N54 scratch CPU commun :**
 Les allocations temporaires de swizzle/décode dépassant 64 MiB sont
 libérées à la prochaine frontière `TickFrame()` pour les deux générations,
@@ -137,7 +147,7 @@ Le vrai `ProgramMetadata::Load` a été compilé et exécuté sur Mac avec
 Clang ASan/UBSan, en plus des témoins du helper O0/O2 ; fichiers valides,
 ambigus et tronqués sont traités selon la politique NS1-conservatrice.
 Tests des sélecteurs CMake recherche/release et du chemin renderer négatif
-réussis ; aucun build PS5. Les 12 autres flags restent OFF par défaut.
+réussis ; aucun build PS5. Les 11 autres flags restent OFF par défaut.
 
 **P2.5 / P0.2 — N57 + N60 intégrés au Vulkan PS5 commun (source/hôte) :**
 Le décodage ASTC par layer et ses vues Vulkan (N57), puis la gestion

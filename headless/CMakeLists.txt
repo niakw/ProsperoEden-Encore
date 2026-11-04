@@ -1189,13 +1189,10 @@ if(PS5_NATIVE)
     list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
 endif()
 
-# N51: the existing PS5 GPU MemoryManager owns the research batching path.
-option(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL
-    "Research-only GPU page-cache notification batching" OFF)
-if(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL)
-    if(NOT PS5_NATIVE OR NOT EDEN_REVIEWED_DUAL_NPDM OR EDEN_FINAL_RELEASE_PROFILE)
-        message(FATAL_ERROR "NS2 GPU range batching is restricted to native PS5 research")
-    endif()
+# N51: the same PS5 GPU MemoryManager accumulates adjacent changed PTE
+# cache invalidations for both guests. A physically remapped but still-Mapped
+# PTE triggers the same notification (P1.2); unchanged pages never do.
+if(PS5_NATIVE)
     if(NOT EXISTS "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
         message(FATAL_ERROR "Maintained PS5 GPU memory manager owner missing")
     endif()
@@ -2848,7 +2845,6 @@ if(EDEN_FINAL_RELEASE_PROFILE)
        EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL OR
        EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
         EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR
-       EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL OR
        EDEN_DEVICE_FRONTEND OR EDEN_GUEST_WRITE_BRIDGE_DEV OR
        EDEN_UNQUALIFIED_FERMI2D_COPY OR NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OR
        NOT EDEN_A32_FASTMEM OR NOT EDEN_DEV_ROM_ID STREQUAL "")

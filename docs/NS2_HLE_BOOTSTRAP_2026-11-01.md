@@ -26,3 +26,26 @@ This one `[full-build]` candidate tests consolidated source buildability. Do not
 - This candidate intentionally **does not** enable the experimental 4 KiB NVDRV GMMU path or native Ampere GPU worker, so a black-screen NS2 game remains possible.
 
 The validated initial native HLE/memory bootstrap build was run #41273218088 at revision 32433db9. This follow-up full-build marker requests a single newer native build including the fixed GPU attribute persistence and NS1 restoration, not a PS5 gameplay pass.
+
+
+## P1.3 du 4 novembre — auddmg:u discovery, pas de faux Sysmix
+
+Sur `EDEN_SHARED_NS2_AUDIO`, le propriétaire audio NS2 déjà retenu pour
+`aud:u` enregistre aussi `auddmg:u` sans modifier les managers NS1.
+L'IPC retourne une interface `INx2AudioVirtualDeviceManager`; elle
+admet la découverte 0/100 et les propriétés de 0x228 octets sur 401,
+avec la désignation `AudioVirtualOutput0` et la représentation PCM
+stéréo/48k utilisée par l'audio existant. Une entrée de nom non connue
+ou un buffer insuffisant retourne une erreur. La latence mesurée est
+**inconnue** et reste à zéro, jamais fabriquée.
+
+La création de flux Sysmix PCM S16, le transfert des buffers audio
+et la gestion de son ring mémoire ne sont PAS réalisés : 300
+(compatibilité de format), 700 (attache) et 800 (détache) renvoient
+`ResultNotSupported`, sans ID de flux, sans hôte factice. La commande
+500 ne crée pas d'événement de changement d'état factice. Le portage
+complet de `audsmx:u` reste une dette P1.3 ; aucune prétention de
+son audible ni de compatibilité ABI PS5. Le témoin C++ de production
+`tools/ns2/check_native_audio_virtual_device_host.py` compile et
+exerce les chemins positifs/négatifs O0/O2 et une garde de sélection
+vérifie l'enregistrement unique de ce service. Pas de build PS5.

@@ -95,6 +95,7 @@ jobs:
           python3 -B tools/check-ns2-extracted-inputs-host.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py
           python3 -B tools/ns2/check_native_streamplay_guest_hid_host.py
+          python3 -B tools/ns2/check_native_audio_virtual_device_host.py
           python3 -B tools/check-ns2-gpu-access-svc-host.py
           python3 -B tools/check-ns2-gmmu-va-layout-host.py
           python3 -B tools/check-ns2-native-gpfifo-fd-scope.py

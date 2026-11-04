@@ -445,6 +445,24 @@ sans substitution de `small_vector`. Ces adaptations concernent
 rendu GPU PS5, ni CI du couple SHA final n'est revendiqué.
 P1.4/P4.1/P4.2 restent ouverts pour les suites et preuves restantes.
 
+**P1.3 — service `auddmg:u` : découverte native des sorties virtuelles (04/11) :**
+le service NS2 additif est maintenant enregistré par le propriétaire audio
+de production déjà sélectionné. La commande 0 ouvre un objet IPC,
+les commandes 0/100 de cet objet listent une sortie virtuelle
+`AudioVirtualOutput0` et son nom par défaut, et la commande 401 rend un
+bloc de propriétés de 0x228 octets strictement borné (stéréo, 48 kHz,
+index périphérique, nom physique ; **aucune latence inventée**).
+Noms inconnus et petits buffers sont refusés sans publication.
+**Les commandes 300/700/800 refusent explicitement la prise en charge** :
+tant que le vrai propriétaire de flux `audsmx:u`/Sysmix PCM et son ring
+partagé ne sont pas intégrés, aucun `AttachStream` et aucun « support
+audio » ne peuvent prétendre réussir. La commande 500 d'événement
+de changement d'état reste absente plutôt que de rendre un événement
+jamais déclenché. Tests hôte C++ du **header HLE réel** avec IPC simulé
+O0/O2, comptes, propriétés et chemins d'erreur. Aucun fichier ni
+service NS1 remplacé, aucun code jeu/TITLEID.
+**P1.3 reste ouvert pour le vrai Sysmix et la validation de l'ABI console.**
+
 **Règle d'avancement :** ne pas relancer les mêmes batteries hôte à chaque
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5

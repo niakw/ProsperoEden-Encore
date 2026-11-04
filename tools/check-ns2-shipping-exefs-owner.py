@@ -119,6 +119,14 @@ assert 'list(REMOVE_ITEM eden_ns2_audio_sources "hle/service/audio/audio.cpp")' 
 assert 'set_property(TARGET core PROPERTY SOURCES' in audio_select
 assert 'target_include_directories(core BEFORE PRIVATE' in audio_select
 assert audio.count('RegisterNamedService("aud:u"') == 1
+assert audio.count('RegisterNamedService("auddmg:u"') == 1
+assert 'INx2AudioDeviceManagerService' in client
+assert 'INx2AudioVirtualDeviceManager' in client
+assert '{401, &INx2AudioVirtualDeviceManager::GetVirtualOutputDeviceProperties' in client
+assert '{300, &INx2AudioVirtualDeviceManager::UnsupportedStream' in client
+assert '{700, &INx2AudioVirtualDeviceManager::UnsupportedStream' in client
+assert '{800, &INx2AudioVirtualDeviceManager::UnsupportedStream' in client
+assert 'rb.Push(ResultNotSupported);' in client
 for name in ('audout:u', 'audren:u', 'audin:u', 'audctl', 'hwopus'):
     assert audio.count('RegisterNamedService("' + name + '"') == 1, name
 for command, method, manager in (

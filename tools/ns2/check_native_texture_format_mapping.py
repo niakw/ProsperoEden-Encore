@@ -293,6 +293,9 @@ for path in (
     assert bridge.count('NativeTextureReadLockScope native_texture_read_scope{this};') == 2
     assert bridge.count('thread_local const RasterizerVulkan* native_texture_read_lock_owner{};') == 1
     assert bridge.index('if (!current_after_staging ||', texture_final) < dispatch
+    assert bridge.index('ObtainBufferOperation::MarkAsWritten', texture_final) < dispatch
+    assert bridge.index('if (!current_after_staging ||', texture_final) < bridge.index(
+        'ObtainBufferOperation::MarkAsWritten', texture_final)
 print('NS2_TIC_TSC_POST_STAGE_REVALIDATION_PASS owners=2'
       ' raw_records=stable lock=held gpu_dispatch=after_recheck')
 
@@ -423,7 +426,7 @@ for path in (
     "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
 ):
     bridge = (vendor / path).read_text()
-    assert bridge.count("if (!resources->ValidateGpuBufferMappings(") == 1, path
+    assert bridge.count("if (!resources->ValidateGpuBufferMappings(") == 2, path
     assert "Shader::Ampere::NativeQmdContiguousGpuSpan(" in bridge, path
     assert "gpu_memory->GpuToCpuAddress(page)" in bridge, path
     assert "gpu_memory->IsFullyMappedRange(address, bytes)" not in bridge, path

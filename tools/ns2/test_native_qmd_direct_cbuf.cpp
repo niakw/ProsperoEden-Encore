@@ -147,8 +147,20 @@ int main() {
     Check(Opcode::GetCbufU32,0,0xffff,1,1,false,false,false,0);
     Check(Opcode::GetCbufU8,0,0xffff,1,1,false,false,true,0x10000);
     Check(Opcode::GetCbufS16,0,0xffff,1,1,false,false,false,0);
+    Check(Opcode::GetCbufU32x2,0,0,1,1,false,false,true,16);
+    Check(Opcode::GetCbufU32x2,0,8,1,1,false,false,true,16);
+    Check(Opcode::GetCbufU32x2,0,4,1,1,false,false,true,16);
+    Check(Opcode::GetCbufU32x2,0,12,1,1,false,false,true,32);
+    Check(Opcode::GetCbufU32x2,0,6,1,1,false,false,false,0);
+    Check(Opcode::GetCbufU32x2,0,0xfff0,1,1,false,false,true,0x10000);
+    Check(Opcode::GetCbufU32x2,0,0xfff4,1,1,false,false,true,0x10000);
+    Check(Opcode::GetCbufU32x2,0,0xfff6,1,1,false,false,false,0);
     Check(Opcode::GetCbufU32x2,0,0xfff8,1,1,false,false,true,0x10000);
     Check(Opcode::GetCbufU32x2,0,0xfffc,1,1,false,false,false,0);
+    // Real dynamic QMD offsets still require 64-KiB residency. SPIR-V
+    // assembles the two guest words across 8-/16-byte uniform vectors;
+    // non-word-aligned and out-of-window offsets are zeroed safely.
+    Check(Opcode::GetCbufU32x2,0,0,1,1,false,true,true,0x10000);
     Check(Opcode::GetCbufU32,0,0,1,1,false,true,true,0x10000);
     Check(Opcode::GetCbufU32,1,0,1,3,false,false,false,0);
     Check(Opcode::GetCbufU32,0,0,1,1,true,false,false,0);

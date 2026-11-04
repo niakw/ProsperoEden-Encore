@@ -244,6 +244,40 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — U32x2 CBUF entre vecteurs SPIR-V voisins (04/11,
+source/hôte) :** les accès de 64 bits Ampere en CBUF ne peuvent
+pas être correctement représentés en arrondissant simplement
+le décalage invité au multiple de huit. Un U32x2 à 4, 12 ou
+0xfff4 doit lire deux mots voisins, alors que la voie Vulkan à
+aliasing de descripteurs chargeait jusqu'ici une seule paire U32x2
+arrondie. Le backend natif assemble maintenant les mots à partir
+de **deux vecteurs U32x2 voisins** (8 octets chacun) quand
+l'aliasing est disponible, et de deux vecteurs U32x4 voisins
+(16 octets) lorsqu'il ne l'est pas. Les indices d'éléments sont
+ramenés à leur vecteur réel, sans extraction du composant 2/4
+hors plage. La réflexion statique compte jusqu'au dernier mot de
+l'accès, puis arrondit à l'alignement de 16 octets : à offset 12,
+la présence de 32 octets est requise plutôt que 16.
+
+Le contrôle natif conserve la plage totale de **8 octets invités**
+et un alignement minimal **4 octets**. Les offsets non alignés
+au mot et les lectures traversant la fin des 64 Kio ne sont pas
+émulés : ils sont refusés à l'admission QMD3 (statique) ou
+ramenés à zéro par le garde SPIR-V (dynamique). Les chargements
+U8/U16/U32 et le chemin Maxwell/NS1 ne changent pas.
+
+Tests : compilation syntaxique du vrai TU SPIR-V O0/O2 avec ses
+headers épinglés ; oracle C++/UBSan Clang/GCC O0/O2 comparant
+**tous les mots alignés sur 4 octets** des deux chemins de
+vecteurs à la paire de mots attendue, y compris offsets
+4, 8, 12, 0xfff4, 0xfff8 et refus 0xfffc ;
+admission IR QMD3 réelle et fenêtre complète de 64 Kio
+pour les offsets dynamiques ; fixture QMD3 entière
+compilée et exécutée sur hôte.
+**Ce n'est pas une preuve d'exécution GPU Vulkan/PS5** :
+les pointeurs atomiques SSBO non authentifiés et les autres
+formes CBUF indirectes restent ouverts en P2.3.
+
 **P2.3 — accès dynamiques CBUF : largeur d'origine et traversée des lignes SPIR-V
 (04/11, source/hôte) :** le backend CBUF Ampere vérifie désormais la
 **plage d'octets invités entière**, avant de convertir le décalage en

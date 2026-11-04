@@ -16,6 +16,32 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.3 — assemblage natif des deux mots U32x2, 04/11
+
+Le seuil de 64 Kio vérifié dans le lot initial ne garantissait pas
+la **même paire de mots** sous SPIR-V avec aliasing de
+descripteurs : une lecture à 12 octets indexée via offset / 8
+chargeait les mots 8 et 12 au lieu de 12 et 16.
+
+Le chemin natif extrait désormais chaque composant de **deux
+vecteurs U32x2 successifs**, avec indice de seconde ligne
+calculé depuis le déplacement dans un vecteur de 8 octets.
+Le chemin de repli sans aliasing utilise déjà deux U32x4 et
+une frontière de 16 octets. Les deux représentations produisent
+les deux mots authentiques à offsets 4, 12 ou 0xfff4 sans modifier
+l'émetteur Maxwell/NS1. La réflexion QMD3 statique compte le
+dernier mot et arrondit la taille réelle au rang uniform de
+16 octets. Les sous-décalages non alignés sur 4 octets sont
+refusés faute de sémantique native démontrée. Les gardes du
+backend empêchent la lecture au-delà de la fin 64 Kio,
+pour les banques directes comme indirectes.
+
+Preuves exécutées : les deux vrais propriétaires QMD3 et
+SPIR-V compilent sur hôte ; tests source-opérationnels des
+charges U32x2 le long des 64 Kio, avec/sans aliasing,
+O0/O2 UBSan Clang/GCC et accès négatifs. Aucune preuve
+d'une image NS2 sur la console.
+
 ### P2.3 — seuils de lecture CBUF sur les octets invités, 04/11
 
 Revue du backend commun Ampere→SPIR-V : l'ancienne vérification d'un

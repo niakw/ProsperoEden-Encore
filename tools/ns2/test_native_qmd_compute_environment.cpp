@@ -292,6 +292,33 @@ int main() {
     static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(0x1c) == 32);
     static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(0xffff) == 0x10000);
     static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(0x10000) == 0);
+    // The true U32x2 source spans two neighboring 32-bit words.
+    // Native SPIR-V reads two adjacent 8-byte uniform vectors (or
+    // U32x4 fallback) when the source crosses a vector boundary.
+    // The reflected static extent must include BOTH guest words and
+    // round to the full bound 16-byte storage row.
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 0) == 16);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 8) == 16);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 4) == 16);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 12) == 32);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 0xfff4) == 0x10000);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 0xfff8) == 0x10000);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32x2, 0xfff6) == 0);
+    // Narrow historical loads still report their original rounded source
+    // row; only a wide U32x2 pair needs its second neighbor reflected.
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU8, 15) == 16);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU16, 15) == 16);
+    static_assert(Shader::Ampere::NativeQmdStaticCbufReadExtent(
+        Shader::IR::Opcode::GetCbufU32, 14) == 16);
     {
         // P2.3: native QMD3 may expose only eight real banks, even though
         // Maxwell's generic indirect LDC collector lists fourteen.

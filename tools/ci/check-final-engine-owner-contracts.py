@@ -78,11 +78,24 @@ proof = (root/"tools/check-native-jit-invalidation-snapshot-host.py").read_text(
 assert "PerformRequestedCacheInvalidation" in proof
 assert "invalid_cache_ranges" in proof and "p.InvalidateCacheRange(" in proof
 cmake=(root/"headless/CMakeLists.txt").read_text()
-for invariant in ("a64_interface_standard.cpp", "a64_interface_shared.cpp",
-                  'NOT EDEN_BLOCKING_GUEST_CONTEXT_LOCKS',
-                  'EDEN_JIT_A64_BATCH=1', 'EDEN_JIT_A64_DEV_PROFILE=1',
-                  'NOT EDEN_A32_FASTMEM'):
+# The production CMake selects one maintained standard A64 JIT TU.
+# Historical shared/batch/DEV variants remain source-level witnesses above;
+# none may be introduced as another executable profile. The normal JIT
+# retains the reviewed full-clear/invalidation fixes and host proof.
+for invariant in (
+    'set(EDEN_A64_INTERFACE_UNIT "${EDEN_A64_INTERFACE_ROOT}/a64_interface_standard.cpp")',
+    'configure_file("${EDEN_A64_INTERFACE_UNIT}" "${PORT_BUILD_DIR}/a64_interface.cpp" COPYONLY)',
+    'set(EDEN_G11_PROFILE normal)',
+    'EDEN_JIT_COMPILE_BATCH_AVAILABLE=0',
+    'EDEN_SHARED_JIT_AVAILABLE=0',
+    'if(EDEN_A32_FASTMEM)',
+):
     assert invariant in cmake,invariant
+for obsolete in ('a64_interface_shared.cpp', 'EDEN_JIT_A64_BATCH=1',
+                 'EDEN_JIT_A64_DEV_PROFILE=1', 'EDEN_DEV_PROFILE',
+                 'EDEN_FINAL_RELEASE_PROFILE'):
+    assert obsolete not in cmake, obsolete
+assert 'option(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS' in cmake
 preflight=(root/".github/workflows/encore-core-preflight.yml").read_text()
 for path in ("tools/check-maintained-a64-interface.py",
              "tools/check-native-a64-cache-invalidation-host.py",
@@ -92,4 +105,4 @@ for path in ("tools/check-maintained-a64-interface.py",
              "tools/install-active-core-backports.py"):
     assert "python3 -B "+path in preflight,path
 assert "python3 -B tools/ci/check-final-engine-owner-contracts.py" in preflight
-print("ENCORE_FINAL_ENGINE_OWNERS_PASS standard_JIT=1 host_SM_lock_safe=1 context_permit=1 source_hashes=3 jit_fix_witness=1")
+print("ENCORE_FINAL_ENGINE_OWNERS_PASS standard_JIT_only=1 host_SM_lock_safe=1 context_permit=1 source_hashes=3 jit_fix_witness=1")

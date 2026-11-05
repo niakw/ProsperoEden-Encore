@@ -151,8 +151,13 @@ for module, changes in edits.items():
         # P2.2 adds only the byte-exact GPU timeline retirement owner.
         # Remove it using the same strict normalizer used by N57/N73 before
         # checking this immutable historical F07 texture-source fingerprint.
-        from ns2.native_astc_vendor_parity import strip_p22_runtime_cpp
-        historical_current = strip_p22_runtime_cpp(current)
+        from ns2.native_astc_vendor_parity import (
+            strip_p22_runtime_cpp, strip_p25_reinterpret,
+        )
+        # Preserve P2.5 depth/stencil and disjoint copy-buffer protections
+        # in both generator and production. Undo only the individually
+        # hash-pinned additions for this *historical* texture SHA witness.
+        historical_current = strip_p25_reinterpret(strip_p22_runtime_cpp(current))
         research_blob = hashlib.sha1(
             b'blob ' + str(len(historical_current.encode())).encode() + b'\0' +
             historical_current.encode()

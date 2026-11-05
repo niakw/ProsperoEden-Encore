@@ -17,6 +17,12 @@ assert config.startswith("name: Eden Encore CodeQL")
 patterns = re.findall(r"^\s+- '([^']+)'", config, flags=re.M)
 expected = {
     "tools/fixtures/**",  # Immutable regression snapshots are not shipped runtime sources.
+    # These exact read-only upstream Boost headers are independently checked
+    # by check-codeql-allocator-pairs-host.py (#18–#23); active forks stay scanned.
+    "vendor/sources/eden-cpm/boost/boost-1.90.0/libs/container/include/boost/container/vector.hpp",
+    "vendor/sources/eden-cpm/boost/boost-1.90.0/libs/unordered/include/boost/unordered/detail/fca.hpp",
+    "vendor/sources/eden-cpm/boost/boost-1.90.0/libs/unordered/include/boost/unordered/detail/implementation.hpp",
+    "vendor/sources/eden-cpm/boost/boost-1.90.0/libs/unordered/include/boost/unordered/detail/foa/core.hpp",
     "vendor/sources/**/libs/mpl/preprocessed/pp.py",
     "vendor/sources/**/tools/litre/cplusplus.py",
     "vendor/sources/**/bin/nir-test-runner.py",

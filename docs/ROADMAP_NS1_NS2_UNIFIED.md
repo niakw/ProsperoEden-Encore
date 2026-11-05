@@ -1413,3 +1413,18 @@ ni ne lie l’ensemble ni ne définit `PS5_NATIVE` ; aucun GPU/VI2 n’est
 activé et aucune commande n’est soumise au matériel PS5. Le profil
 final garde les neuf chemins de recherche désactivés tant que les
 contrats runtime/process GPU et P5 ne sont pas établis.
+
+
+**P2.7 — état QMD3 sous pression mémoire (05/11, source/hôte) :**
+le scheduler `NativeQmdScheduler` est alimenté par des adresses PCAS
+invitées ; une nouvelle adresse peut provoquer une allocation
+`std::unordered_map::try_emplace`. Le propriétaire native traite
+désormais `std::bad_alloc` **à ce point précis avant tout dispatch ou
+publication de semaphore**, renvoie une erreur de transaction reconnue
+(`QMD state allocation failed`) et laisse l’état précédent inchangé.
+Un nouvel essai peut créer le QMD sans dispatch fictif. Le test
+`test_native_qmd_allocation.cpp` force réellement l’échec d’une
+allocation hôte et vérifie refus, absence de mutation GPU et reprise,
+tandis que `test_native_qmd_scheduler.cpp` revalide dépendances,
+semáphores et absence de dispatch dupliqué ; **4/4 compilations/exécutions
+Clang/UBSan O0/O2 PASS**. P2.7 et la validation console restent ouverts.

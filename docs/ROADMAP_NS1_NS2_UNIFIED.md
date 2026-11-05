@@ -208,6 +208,32 @@ des sept patches Vulkan épinglés.
 **Aucune compilation GPU/PS5 ni préservation stencil
 sur console encore validée** (P5).
 
+**P2.2c — vraie compilation syntaxique du propriétaire Vulkan
+(05/11, hôte, sans build PS5) :** contrairement aux oracles
+extraits des anciennes sections F07, le nouveau contrôle
+compile **le vrai fichier vk_texture_cache_cost.cpp**
+avec les overlays actifs, en-têtes C++20 et dépendances
+Vulkan/Boost/fmt/Sirit épinglées. Trois profils sont
+vérifiés : desktop/NS1, PS5_NATIVE commun et interface
+de recherche NS2 (ASTC/sparse/view, avec N72+N73
+couplés conformément à la configuration). La variante
+de recherche est **compilée seulement**, jamais activée
+dans le profil release.
+
+Sur Mac arm64, la compilation syntaxique utilise le
+libc++ du SDK CLT 26.5 et un shim purement hôte pour
+l'instruction pause x86 du fichier performance.h.
+Aucune production n'est modifiée par ce shim, et aucun
+objet/binaire ELF n'est produit. Les trois passes
+Clang syntax-only réussissent, sans erreur, avec
+l'avertissement historique nodiscard sur une fonction
+void du dépôt amont. Les workflows host core source
+et fast-gate référencent désormais cette vérification.
+**Ce contrôle ferme le sous-objectif de compilation
+du vrai owner**, pas l'ensemble P2.2c : parité
+CI du même SHA, rendu Vulkan matériel et P5
+restent à qualifier.
+
 **P2.4 — LEPC dynamique en Geometry avec provenance GMMU (05/11,
 source/hôte) :** l'adresse d'une instruction LEPC hors du prologue
 statique ne pouvait pas être reconstruite depuis les adresses

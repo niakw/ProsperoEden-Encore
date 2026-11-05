@@ -52,10 +52,12 @@ assert "BeginGuestIpc(ipc_tid, ipc_start)" in dev
 assert "BeginGuestIpc(ipc_tid, ipc_start)" not in normal
 assert "Eden::Performance" not in normal
 assert "python3 -B tools/verify/hle/check-native-hle-ipc-timeout-host.py" in workflow
-assert 'if(NOT EDEN_DEV_PROFILE)\n    set(EDEN_MAINTAINED_SVC_IPC_STANDARD' in cmake
-assert 'set(EDEN_MAINTAINED_PROFILE_SVC_IPC' in cmake
+assert 'set(EDEN_MAINTAINED_SVC_IPC_STANDARD' in cmake
+assert 'list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")' in cmake
+assert 'EDEN_MAINTAINED_PROFILE_SVC_IPC' not in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
 assert cmake.count('list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")')==1
-assert 'list(REMOVE_ITEM core_sources "hle/service/service.cpp" "hle/kernel/svc/svc_ipc.cpp")' in cmake
+assert 'list(REMOVE_ITEM core_sources "hle/service/service.cpp" "hle/kernel/svc/svc_ipc.cpp")' not in cmake
 for source in (normal,dev):
     for marker in ("Result ReplyAndReceiveImpl(",
                    "KSynchronizationObject::Wait(kernel, std::addressof(index)",

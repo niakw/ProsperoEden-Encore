@@ -30,7 +30,18 @@ for raw in table.splitlines():
     else:
         assert "img.shields.io/badge/" not in visual, ident
     assert acceptance not in {"", "-", "TODO", "TBD"}, ident
-    source_path = root / source
+    # U23 is a preserved historical audit identifier. The implementation
+    # moved to the unified bounded JIT policy header; record the provenance
+    # translation explicitly rather than reviving the old duplicate source.
+    effective_source = (
+        "headless/jit_memory_policy.h"
+        if ident == "U23" and source == "headless/experimental_performance.h"
+        else source
+    )
+    if ident == "U23":
+        assert effective_source == "headless/jit_memory_policy.h"
+        assert (root/"tools/ns2/check_unified_jit_cpu6_baseline_host.py").is_file()
+    source_path = root / effective_source
     evidence_path = root / evidence
     assert source_path.is_file(), (ident, "missing source", source)
     assert evidence_path.is_file(), (ident, "missing evidence", evidence)

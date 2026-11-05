@@ -118,8 +118,10 @@ dma_dev = read("vendor/encore-active/eden-core/src/video_core/dma_pusher_dev.cpp
 puller_normal = read("vendor/encore-active/eden-core/src/video_core/engines/puller.cpp")
 puller_dev = read("vendor/encore-active/eden-core/src/video_core/engines/puller_dev.cpp")
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_GPU_DMA}" "${EDEN_MAINTAINED_GPU_PULLER}")' in cmake
-assert 'if(EDEN_DEV_PROFILE)' in cmake
-assert 'dma_pusher_dev.cpp' in cmake and 'engines/puller_dev.cpp' in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
+assert 'dma_pusher_dev.cpp' not in cmake and 'engines/puller_dev.cpp' not in cmake
+assert 'set(EDEN_MAINTAINED_GPU_DMA "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp")' in cmake
+assert 'set(EDEN_MAINTAINED_GPU_PULLER "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/engines/puller.cpp")' in cmake
 assert '::Eden::Performance::DiagnosticActiveTimer dma_fence_timer(' in dma_dev
 assert '::Eden::Performance::DiagnosticActiveTimer semaphore_timer(' in puller_dev
 for quiet in (dma_normal, puller_normal):
@@ -159,7 +161,11 @@ assert "std::array<unsigned long long, 24>" in header
 # Check the actual dispatch sites: quiet HLE calls must not sample clocks or
 # update HleCounters, but normal and TIPC dispatch must each execute once.
 service = read("vendor/encore-active/eden-core/src/core/hle/service/service.cpp")
-assert 'set(EDEN_MAINTAINED_PROFILE_HLE_SERVICE' in cmake
+# The historical HLE profiler remains a source-level witness only.
+# Unified native CMake does not select its separate DEV implementation.
+assert 'set(EDEN_MAINTAINED_PROFILE_HLE_SERVICE' not in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
+assert 'write_derived("${PORT_BUILD_DIR}/hle_service.cpp"' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/hle_service.cpp"' not in cmake
 handle = service.split("Result ServiceFrameworkBase::HandleSyncRequest(", 1)[1]
 assert handle.count("        InvokeRequest(ctx);") == 1

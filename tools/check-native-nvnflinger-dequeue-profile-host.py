@@ -13,7 +13,9 @@ report = (ROOT / "headless/performance.cpp").read_text()
 profile = "EDEN_NVNF_DEQUEUE_PROFILE"
 assert src.startswith('#ifdef ' + profile + '\n#include "performance.h"\n#endif\n')
 assert cmake.count('list(APPEND core_sources "$' + '{EDEN_MAINTAINED_PROFILE_DEQUEUE}")') == 1
-assert cmake.count("target_compile_definitions(core PRIVATE " + profile + "=1)") == 1
+# Production uses a quiet dequeue owner; the diagnostic macro is tested
+# below under both C++ profiles without selecting an alternate build target.
+assert cmake.count("target_compile_definitions(core PRIVATE " + profile + "=1)") == 0
 assert "buffer_queue_producer_standard.cpp" not in cmake
 assert "::Eden::Performance::GuestDequeueBlockedScope blocking_scope;" in src
 assert src.count("::Eden::Performance::GuestDequeueBlockedScope blocking_scope;") == 1

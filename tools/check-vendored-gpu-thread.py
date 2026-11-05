@@ -68,7 +68,7 @@ def main() -> None:
     cmake = CMAKE_SOURCE.read_text()
     assert 'vendor/encore-active/eden-gpu' in cmake
     assert cmake.count('configure_file("${EDEN_ACTIVE_GPU}/') == 3
-    assert 'EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp"' in cmake
+    assert 'EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp"' not in cmake
     assert 'EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp"' in cmake
     assert 'write_derived("${PORT_BUILD_DIR}/gpu_thread.cpp"' not in cmake
     assert 'write_derived("${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h"' not in cmake
@@ -81,7 +81,7 @@ def main() -> None:
     native=cmake[cmake.index(marker):cmake.index(after,cmake.index(marker))]+'    endif()\n'
     with tempfile.TemporaryDirectory(prefix='eden-gpu-cmake-contract-') as d:
         work=Path(d)
-        for profile in ('dev','quiet'):
+        for profile in ('quiet',):
             build=work/profile
             build.mkdir()
             script=work/f'{profile}.cmake'
@@ -93,10 +93,10 @@ def main() -> None:
                               f'set(video_sources "gpu_thread.cpp")\n'
                               f'set(gpu_source "original")\n'+native)
             subprocess.run(['cmake','-P',str(script)],cwd=ROOT,check=True,timeout=30)
-            assert (build/'gpu_thread.cpp').read_bytes()==generated[f'gpu_thread_{profile}.cpp']
+            assert (build/'gpu_thread.cpp').read_bytes()==generated['gpu_thread_quiet.cpp']
             for name in ('include/video_core/gpu_thread.h', 'include/common/bounded_threadsafe_queue.h'):
                 assert (build/name).read_bytes()==generated[name], (profile,name)
-    print('VENDORED_GPU_CMAKE_NATIVE_BRANCH_OK direct source copies for dev/quiet')
+    print('VENDORED_GPU_CMAKE_NATIVE_BRANCH_OK native_quiet=selected dev=unselected; historical variant bytes verified')
     print('VENDORED_GPU_THREAD_EQUIVALENT_OK', len(generated),
           'bounded 256-slot FIFO, stop-aware worker, dev/quiet source variants')
 

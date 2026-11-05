@@ -22,9 +22,12 @@ assert CMD in FAST and CMD in FULL
 assert "a64_interface_standard.cpp" in HEADLESS
 assert "a32_interface_native.cpp" in HEADLESS
 assert "EDEN_A64_INTERFACE_UNIT" in HEADLESS
-assert 'EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH' in HEADLESS
-# F02's default native profile uses direct per-core code, not opt-in batch.
-assert 'option(EDEN_JIT_COMPILE_BATCH "Compile bounded A64 successor chains on a cache miss" OFF)' in HEADLESS
+# No experimental parallel JIT profile exists in the native CMake graph.
+# Preserve the same actual A32/A64 emitter and invalidation C++ witnesses.
+assert 'option(EDEN_JIT_COMPILE_BATCH ' not in HEADLESS
+assert 'if(EDEN_JIT_COMPILE_BATCH)' not in HEADLESS
+assert 'EDEN_JIT_COMPILE_BATCH_AVAILABLE=0' in HEADLESS
+assert 'set(EDEN_G11_PROFILE normal)' in HEADLESS
 ARCHES={
  "A32":(
     "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
@@ -235,8 +238,11 @@ print("F02_PS5_JIT_COMPILATION_TIMING_NOT_PROVEN source_extracted_invalidation_o
 # J01: execute the native A32 source-extracted RAII cold timer in the
 # F02 host gate. No PS5 SDK, game JIT work, or release-mode profiling.
 a32=(ROOT/ARCHES["A32"][1]).read_text()
-assert 'EDEN_JIT_A32_DEV_PROFILE=1' in HEADLESS
-assert 'if(EDEN_DEV_PROFILE)\n        set_property(SOURCE' in HEADLESS
+# A32 diagnostic timer remains tested in source, but the unified binary
+# cannot select a separate JIT DEV implementation.
+assert 'EDEN_JIT_A32_DEV_PROFILE=1' not in HEADLESS
+assert 'EDEN_DEV_PROFILE' not in HEADLESS
+assert 'a32_interface_native.cpp' in HEADLESS
 assert a32.index('if (auto block = emitter.GetBasicBlock(descriptor))') < a32.index('struct EdenCompileTimer {')
 assert 'if (eden_jit_evacuation) eden_jit_evacuation(unsigned(conf.processor_id));' in a32
 assert 'eden_jit_cache_event(unsigned(conf.processor_id),' in a32

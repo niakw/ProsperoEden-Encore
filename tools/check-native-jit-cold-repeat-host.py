@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
@@ -20,7 +21,10 @@ CMD="python3 -B tools/check-native-jit-cold-repeat-host.py"
 assert CMD in FAST and CMD in FULL
 assert "a32_interface_native.cpp" in CMAKE
 assert "a64_interface_standard.cpp" in CMAKE
-assert 'option(EDEN_JIT_COMPILE_BATCH "Compile bounded A64 successor chains on a cache miss" OFF)' in CMAKE
+assert 'option(EDEN_JIT_COMPILE_BATCH ' not in CMAKE
+assert 'if(EDEN_JIT_COMPILE_BATCH)' not in CMAKE
+assert 'EDEN_JIT_COMPILE_BATCH_AVAILABLE=0' in CMAKE
+assert 'set(EDEN_G11_PROFILE normal)' in CMAKE
 
 ARCH={
  "A32":("vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
@@ -60,10 +64,17 @@ using u32=std::uint32_t;
 using u64=std::uint64_t;
 using CodePtr=void*;
 using Clock=std::chrono::steady_clock;
+// ELF resolves an undefined weak symbol to null. Mach-O needs weak_import
+// for the same absent optional hook contract; never fabricate the callback.
+#if defined(__APPLE__)
+#define ENCORE_HOST_WEAK __attribute__((weak_import))
+#else
+#define ENCORE_HOST_WEAK __attribute__((weak))
+#endif
 extern "C" void eden_jit_block(unsigned,unsigned long long,const void*,unsigned long long)
-    __attribute__((weak));
-extern "C" bool eden_native_detailed_logging() noexcept __attribute__((weak));
-extern "C" void eden_jit_evacuation(unsigned) __attribute__((weak));
+    ENCORE_HOST_WEAK;
+extern "C" bool eden_native_detailed_logging() noexcept ENCORE_HOST_WEAK;
+extern "C" void eden_jit_evacuation(unsigned) ENCORE_HOST_WEAK;
 enum class HaltReason {None,CacheInvalidation};
 bool Has(HaltReason a,HaltReason b){return a==b;}
 namespace boost::icl {
@@ -287,6 +298,11 @@ with tempfile.TemporaryDirectory(prefix="encore-f02-cold-") as folder:
                 exe=Path(folder)/(f"{arch}_{kind}_{opt[1:]}")
                 cmd=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                      "-pthread","-fsanitize=undefined","-fno-sanitize-recover=all"]
+                if sys.platform=="darwin":
+                    # The old Apple linker does not emit unresolved weak imports
+                    # without explicit dynamic lookup. Keep absent optional
+                    # callback symbols NULL, just as ELF weak references do.
+                    cmd+=["-Wl,-undefined,dynamic_lookup"]
                 if arch=="A32":cmd+=["-DSCENARIO_A32=1"]
                 if kind=="maintained":cmd+=["-DPS5_NATIVE=1"]
                 cmd +=[str(file),"-o",str(exe)]

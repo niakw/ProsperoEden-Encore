@@ -18,6 +18,28 @@ assert "bytes > gpu_limit - address" in header.read_text()
 assert "bytes > it->second.size - offset" in header.read_text()
 assert "it == allocations.begin()" in header.read_text()
 assert "ContainsSubrange(" in header.read_text()
+
+# The research 4-KiB GPU owner can outlive its GMMU (session teardown /
+# invalidated address space). A VM initialised bit is NOT evidence of a
+# still-bound GMMU. The lifetime gate must precede all side effects.
+for entrypoint in (
+    "MapNative4K", "MapNativeImage", "ReserveNativeSparse4K",
+    "RemapNativeSparse", "ReleaseNativeSparse4K",
+    "UnmapNative4K", "ModifyNativeKind",
+):
+    marker = "NvResult nvhost_as_gpu::" + entrypoint + "("
+    assert source.count(marker) == 1, ("Missing native GPU owner", entrypoint)
+    body = source.split(marker, 1)[1].split("\nNvResult nvhost_as_gpu::", 1)[0]
+    gate = body.find("!vm.initialised || !gmmu")
+    assert gate >= 0, ("Native GMMU can be dereferenced without an owner", entrypoint)
+    lock = body.find("const std::scoped_lock lock{mutex};")
+    assert lock >= 0 and lock < gate, ("Native GMMU check must hold AS mutex", entrypoint)
+    for mutation in ("gmmu->", "vm.small_page_allocator->AllocateFixed(",
+                     "nvmap.PinHandle(", "FreeMappingLocked("):
+        first = body.find(mutation)
+        assert first == -1 or gate < first, (
+            "Native GMMU lifetime gate must precede side effects",
+            entrypoint, mutation)
 remap = source.split("NvResult nvhost_as_gpu::MapBufferEx(", 1)[1].split(
     "NvResult nvhost_as_gpu::UnmapBuffer(", 1)[0]
 assert remap.index("NativeGpuAllocation::ContainsSubrange(handle->orig_size") < remap.index(

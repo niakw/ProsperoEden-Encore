@@ -713,6 +713,27 @@ Tests de limites 49 bits et 4/8/16 octets exécutés avec le vrai IR QMD3,
 contrôle structurel de l'émetteur et compilation syntaxique réelle de
 `spirv_emit_context.cpp` Clang/GCC. Aucun shader GPU PS5 revendiqué.
 
+**P1.2 — garde de durée de vie GMMU native 4 KiB
+(05/11, source/hôte) :** le chemin NVDRV natif
+de recherche possédait des opérations de map,
+unmap, réserve sparse et modification PTE
+qui vérifiaient vm.initialised mais pas
+l'existence du propriétaire gmmu.
+Cinq méthodes exigent maintenant les deux
+sous le mutex d'address space AVANT tout
+pin NvMap, allocation VA, mise à jour
+d'adresse ou dé-référencement du GMMU ;
+MapNativeImage et RemapNativeSparse avaient
+déjà le garde complet. Le test hôte vérifie
+les sept propriétaires et l'ordre admission
+puis effets, puis la suite de plages GPU
+49 bits compilée et exécutée sous Clang/GCC
+ASan+UBSan O0/O2. La source NVDRV 4 KiB
+reste isolée aux sessions de recherche NS2,
+sans bascule du pilote NS1 en production.
+Ce lot ne rend pas GPFIFO/Compute disponible
+sur console : validation du vrai runtime P5.
+
 **P1.2 / P1.3 — remaps NVDRV bornés et sans fuite de pin :**
 Deux recherches de réservations GPU dans `nvhost_as_gpu` décrémentaient
 `upper_bound()` même à `begin()` : une table vide ou une adresse avant

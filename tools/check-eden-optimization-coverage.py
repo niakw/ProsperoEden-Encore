@@ -633,7 +633,12 @@ for e in entries:
     # Keep their explicit review and unchanged Git blob rather than invent an ID.
     ident=e.get("contract_id")
     if ident is not None:
-        assert ident in by_id and by_id[ident]["path"]==e["path"]
+        # U23 is a preserved historical F07 blob identified by its former
+        # filename; the live audit graph now uses the byte-reviewed renamed
+        # JIT policy. Do not rewrite the old F07 fingerprint or invent proof.
+        alias = (ident == 'U23' and e['path'] == U23_LEGACY and
+                 ident in by_id and by_id[ident]['path'] == U23_CURRENT)
+        assert ident in by_id and (by_id[ident]["path"] == e["path"] or alias)
     else:
         assert e.get("review_scope") in {
             "host-only-test","startup-shim","shutdown-only",

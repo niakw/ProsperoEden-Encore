@@ -483,6 +483,14 @@ def main() -> int:
                 "crossing_lowered.error ==" in shadow_fixture.read_text(),
                 "P2.4 Ampere high-GPR spill must cover register load/store,"
                 " ALU, S2R and exact host regressions")
+        redux_fixture = ROOT / "tools/ns2/test_ampere_warp_redux.cpp"
+        require(redux_fixture.is_file() and
+                "P2_4_REDux_REAL_AMPERE_LOWER_PASS" in redux_fixture.read_text() and
+                "case 0x3c4: // REDUX consumes" in pressure_src and
+                "const bool signed_order = insn.Bits(73, 1);" in native_lower_src and
+                "const u32 logical = insn.words[2] == 0x4000U" in native_lower_src and
+                "test_ampere_warp_redux.cpp" in host_workflow,
+                "P2.4 REDUX signed min/max and XOR require real lowerer tests")
         native_capture = (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text()
         native_capture_core = (ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/capture.cpp").read_text()
         native_capture_fixture = (ROOT / "tools/ns2/test_ampere_gpu_capture.cpp").read_text()

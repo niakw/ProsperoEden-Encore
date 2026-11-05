@@ -166,6 +166,27 @@ refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
 le rejet des vecteurs débordants et la traduction d'un LDG capturé.
 **Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
 
+**P2.4 — REDUX warp signé et XOR (05/11, source/hôte) :**
+le lowerer Ampere reconnaît désormais les modes de réduction
+REDUX.MIN.S32, REDUX.MAX.S32 et REDUX.XOR.U32
+en plus des modes de somme, OR, minimum et maximum non signés.
+Pour le tri signé, chaque valeur active est transformée par
+XOR du bit de signe, le minimum/maximum est effectué sur les
+entiers ainsi ordonnés, puis le bit de signe est restauré
+au résultat. Les masques de lanes inactives restent appliqués
+avant la réduction ; les modes signés d'addition/OR/XOR
+et les champs inconnus continuent à être refusés.
+La source GPR du REDUX est désormais enregistrée dans
+PrepareRegisterPressure, pour éviter de lire les registres
+temporaires de l'émulation U.
+
+Tests du **vrai LowerToMaxwell** et de son spilleur :
+7 modes valides, 2 modes d'ordre signé (32 bascules de
+lane + restauration), XOR distinct du OR, source GPR
+haute avec copie/restauration, huit modes invalides,
+Clang/GCC UBSan O0/O2. Maxwell NS1 n'est pas modifié.
+La preuve d'exécution de shaders sur GPU PS5 reste P5.
+
 **P2.4 — RED global natif, réduction 32 bits et adresse sûre
 (05/11, source/hôte) :** le lowerer Ampere ne repérait pas la
 vraie source GPR à bit 32 de RED 0x98e et ne protégeait pas

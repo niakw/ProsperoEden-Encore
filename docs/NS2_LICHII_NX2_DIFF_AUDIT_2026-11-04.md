@@ -16,6 +16,18 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.4 — REDUX warp signed MIN/MAX et XOR, 05/11
+
+Adaptation sélective du chemin de réduction déjà intégré
+depuis Lichii : les formes REDUX.MIN/MAX signées nécessitent
+une inversion du bit de signe sur la valeur de chaque lane,
+puis sur le résultat final. Le REDUX.XOR possède un
+opérateur logique propre, distinct du OR. Les autres
+encodages non validés restent refusés. Source GPR élevée
+protégée via les vrais transferts de quartets Maxwell.
+Preuves directes sur le vrai lowerer O0/O2 UBSan Clang/GCC
+et tests négatifs ; aucune preuve Vulkan/PS5.
+
 ### P2.4 — RED Ampere générique et registres hauts, 05/11
 
 Relecture de la famille 0x98e dans les correctifs shader

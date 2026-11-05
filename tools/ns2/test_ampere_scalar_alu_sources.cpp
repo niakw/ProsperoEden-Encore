@@ -201,5 +201,43 @@ int main() {
     auto reserved_popc=uniform_popc(5,4);
     reserved_popc.words[1]|=1U<<30;
     Require(!Bridge(reserved_popc).Ready(), "unreviewed UPOPC source mode rejected");
+    // UIMAD 0x4a4 has an immediate addend in word[1]. The two
+    // multiplicands and destination live in the UR bank; a 32-bit literal
+    // must never be interpreted as an uninitialised Maxwell register.
+    const auto uniform_imad=[](u32 dst,u32 a,u32 b,u32 literal,u32 pred=7) {
+        return Instruction{{(pred << 12) | 0x4a4 | (dst << 16) | (a << 24),
+                            literal, 0x078e0000U | b, 0x000fe200U}};
+    };
+    for (const auto [dst,a,b,expected_dst,expected_a,expected_b] :
+         std::array<std::array<u32,6>,3>{{{{5,4,8,221,220,224}},
+                                           {{18,17,62,202,201,182}},
+                                           {{6,63,16,222,255,200}}}}) {
+        const auto op=uniform_imad(dst,a,b,0x12345678U);
+        Require(Reviewed(op), "uniform IMAD immediate accepted by reviewed ISA");
+        const auto result=Bridge(op);
+        Require(result.Ready(),result.reason.data());
+        const auto& words=result.maxwell_instructions;
+        bool found_product=false, found_destination=false;
+        for (const u64 word:words) {
+            if ((word>>56)==0x5b && ((word>>8)&255)==expected_a &&
+                ((word>>20)&255)==expected_b) found_product=true;
+            if ((word>>56)==0x5c && (word&255)==expected_dst)
+                found_destination=true;
+        }
+        Require(found_product && found_destination,
+                "UIMAD immediate keeps both uniform multiplicands and output");
+        const auto distinct=Bridge(uniform_imad(dst,a,b,0x87654321U));
+        Require(distinct.Ready() && distinct.maxwell_instructions!=words,
+                "native IMAD 32-bit immediate changes actual Maxwell program");
+    }
+    Require(!Bridge(uniform_imad(5,4,64,0x12345678U)).Ready(),
+            "out-of-range uniform multiplier rejected");
+    Require(!Bridge(uniform_imad(5,64,8,0x12345678U)).Ready(),
+            "out-of-range uniform multiplicand rejected");
+    Require(!Bridge(uniform_imad(5,4,8,0x12345678U,1)).Ready(),
+            "unverified UIMAD uniform predication refused");
+    auto bad_uimad=uniform_imad(5,4,8,0x12345678U);
+    bad_uimad.words[2]^=1U<<24;
+    Require(!Bridge(bad_uimad).Ready(),"non-reviewed UIMAD mode rejected");
     std::puts("P2_4_REAL_AMPERE_SCALAR_ALU_SOURCE_PASS");
 }

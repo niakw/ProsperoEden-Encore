@@ -1344,3 +1344,18 @@ contreparties immuables **518/518** (code optimisé audité) et
 **337** (catalogue physique historique). Les deux contrôles réels
 `check-eden-optimization-coverage.py` et
 `check-active-source-inventory.py` passent à nouveau.
+
+
+**P2.4 — UIMAD 32 bits avec addend immédiat (opcode Ampere `0x4a4`, 05/11/2026) :**
+le décodeur ISA connaissait l’opcode uniforme mais pas le chemin de
+traduction du moteur GPU PS5. Le lowerer partagé prend désormais ses
+**deux multiplicandes UR** et la destination UR dans le banc réservé
+Maxwell, tout en préservant l’**immédiat 32 bits** indépendant de ces
+registres (abaissement canonique via IMAD `0x424`). L’occupation des UR
+étendus est détectée avant la conversion. La forme à prédicat non
+authentifiée reste volontairement refusée. Test exécutant le réel
+`LowerReviewedToMaxwell` : UR bas/hauts, UR63=source zéro, changement
+de l’immédiat, refus de registres hors domaine et de modes inconnus ;
+**4/4 Clang/GCC UBSan, O0/O2 PASS**, avec régression FRND/SEL/FSET/
+MUFU/UPOPC dans les mêmes binaires. Ce lot améliore la couverture ISA
+générique et ne ferme **ni P2.4 ni le rendu GPU NS2 sur PS5**.

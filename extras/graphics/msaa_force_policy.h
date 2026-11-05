@@ -15,6 +15,8 @@ enum class Requested : std::uint8_t { Auto=0, X2=2, X4=4, X8=8, X16=16 };
 
 enum class Decision : std::uint8_t {
     NativeAuto,
+    NativeGuestSamplesAlreadySatisfy,
+    GuestMultisampleTopologyConflict,
     UnsupportedRequest,
     RequiresVulkan,
     UnsupportedFrameFormat,
@@ -76,6 +78,18 @@ struct Result {
     if (request==Requested::Auto) return {Decision::NativeAuto,0};
     const auto bit=Bit(request);
     if (!bit) return {Decision::UnsupportedRequest,0};
+    if (guest.guest_samples!=1 && guest.guest_samples!=2 &&
+        guest.guest_samples!=4 && guest.guest_samples!=8 &&
+        guest.guest_samples!=16)
+        return {Decision::GuestMultisampleTopologyConflict,0};
+    // The guest already requested at least as many *real* samples.
+    // Do not replace or downsample its rasterization state.
+    if (guest.guest_samples >= static_cast<unsigned>(request))
+        return {Decision::NativeGuestSamplesAlreadySatisfy,0};
+    // Raising a multisampled guest render target further requires a
+    // special multisample-to-multisample resolve path not yet available.
+    if (guest.guest_samples!=1)
+        return {Decision::GuestMultisampleTopologyConflict,0};
     if (!hw.vulkan) return {Decision::RequiresVulkan,0};
     if (!guest.width || !guest.height || guest.width>hw.max_framebuffer_width ||
         guest.height>hw.max_framebuffer_height ||

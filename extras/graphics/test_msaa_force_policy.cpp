@@ -33,6 +33,18 @@ int main() {
     limits.depth_format_sample_bits|=0x10;
     assert(Evaluate(Requested::X16,guest,limits).decision==
            Decision::ShadowRendererNotImplemented);
+    auto guest4=guest;
+    guest4.guest_samples=4;
+    assert(Evaluate(Requested::X2,guest4,limits).decision==
+           Decision::NativeGuestSamplesAlreadySatisfy);
+    assert(Evaluate(Requested::X4,guest4,limits).decision==
+           Decision::NativeGuestSamplesAlreadySatisfy);
+    assert(Evaluate(Requested::X8,guest4,limits).decision==
+           Decision::GuestMultisampleTopologyConflict);
+    auto guest16=guest;
+    guest16.guest_samples=16;
+    assert(Evaluate(Requested::X16,guest16,ps5like).decision==
+           Decision::NativeGuestSamplesAlreadySatisfy);
     auto noVulkan=limits;
     noVulkan.vulkan=false;
     assert(Evaluate(Requested::X4,guest,noVulkan).decision==

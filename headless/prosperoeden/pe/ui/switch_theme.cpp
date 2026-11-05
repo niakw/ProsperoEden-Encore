@@ -5,6 +5,7 @@
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/video_presets.hpp"
 #include "pe/ui/texture_quality.hpp"
+#include "pe/ui/video_guidance.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -191,6 +192,25 @@ void advanced_status(Canvas& c,const std::string& message,bool warn,
     text(c,"B",1202.0f,883.0f,18.0f,kInk,Align::center);
     text_shrink(c,tr("Back"),1230.0f,884.0f,20.0f,kInk,138.0f);
 }
+// High contrast explanatory area for Switch-style settings. Previously
+// only the PS5-default skin exposed the context-sensitive help card, while
+// Switch showed a single "Change" label regardless of the selected filter.
+void switch_video_help(Canvas& c, const char* title, const char* explanation,
+                       bool inactive, float y) {
+    const Rect panel{535.0f,y,845.0f,124.0f};
+    const auto fill=inactive?gfx::Color::rgb(0xfff4e6):
+                             gfx::Color::rgb(0xe8f5ff);
+    const auto ink=gfx::Color::rgb(0x1c3548);
+    const auto accent=inactive?gfx::Color::rgb(0x975600):kFocus;
+    c.list.rounded_rect(panel,7.0f,fill);
+    c.list.rounded_rect({panel.x,panel.y+7.0f,5.0f,panel.h-14.0f},
+                        2.5f,accent);
+    text_shrink(c,title,panel.x+17.0f,panel.y+27.0f,18.0f,accent,
+                panel.w-35.0f);
+    text_block(c,explanation,panel.x+17.0f,panel.y+49.0f,
+               16.5f,19.0f,ink,panel.w-37.0f,3,0.83f);
+}
+
 std::string switch_default(const std::string& value) {
     return fill(tr("Default ({0})"),{value});
 }
@@ -710,6 +730,34 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
                      game_rows_.row_alpha(i,92));
     }
     d.pop_clip();
+    if (confirmation_==Confirmation::none && message_.empty() &&
+        option_>=5 && option_<=9) {
+        const int filter=EffectiveGameUpscalingFilter(game_settings_,prefs_,id);
+        const int aa=game_settings_.anti_aliasing>=0?
+            game_settings_.anti_aliasing:baseAa;
+        const int renderer=EffectiveGameRenderer(game_settings_,prefs_,id);
+        const char* guide=nullptr;
+        bool inactive=false;
+        if (option_==5) {
+            inactive=!UpscalingFilterSelectable(filter,renderer);
+            guide=inactive?UpscalingUnsupportedGuide():UpscalingGuide(filter);
+        } else if (option_==6) {
+            inactive=!UpscalingSupportsSharpness(filter) ||
+                !UpscalingFilterSelectable(filter,renderer);
+            guide=SharpnessGuide(filter,!inactive);
+        } else if (option_==7) {
+            inactive=aa==3 && renderer!=1;
+            guide=inactive?FxaaUnsupportedGuide():AntiAliasingGuide(aa);
+        } else if (option_==8) {
+            guide=TextureGuide();
+        } else if (option_==9) {
+            inactive=!FrameGenerationSelectable(renderer);
+            guide=inactive?FramegenUnsupportedGuide():
+                tr(TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."));
+        }
+        if (guide)
+            switch_video_help(c,tr(names[option_]),guide,inactive,730.0f);
+    }
     if(confirmation_==Confirmation::none)
         advanced_status(c,message_,message_warning_,option_==13?TR("Import"):
                         option_==12?TR("Open"):TR("Change"));
@@ -843,7 +891,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
     list.rounded_rect({493,245,932,2},0,kGrey);
     const int total=dialog_rows(modal);
     const int first=(modal==Modal::video || modal==Modal::appearance)?std::clamp(option_-2,0,std::max(0,total-5)):0;
-    const int last=std::min(total,first+5);
+    const int last=std::min(total,first+(modal==Modal::video?4:5));
     for(int i=first;i<last;++i) {
         const float y=278.0f+float(i-first)*112.0f;
         const Rect row{495.0f,y,930.0f,101.0f};
@@ -954,6 +1002,35 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         text_shrink(c,label,row.x+22,baseline(y,101,26),26,kInk,590);
         text_shrink(c,value,row.x+row.w-25,baseline(y,101,24),24,
                     i==option_?kInk:kSubtle,294,Align::right);
+    }
+    if (modal==Modal::video && message_.empty() &&
+        option_>=4 && option_<=8) {
+        const char* guides=nullptr;
+        bool inactive=false;
+        if (option_==4) {
+            inactive=!UpscalingFilterSelectable(prefs_.filter,prefs_.renderer);
+            guides=inactive?UpscalingUnsupportedGuide():UpscalingGuide(prefs_.filter);
+        } else if (option_==5) {
+            inactive=!UpscalingSupportsSharpness(prefs_.filter) ||
+                !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer);
+            guides=SharpnessGuide(prefs_.filter,!inactive);
+        } else if (option_==6) {
+            inactive=prefs_.anti_aliasing==3 && prefs_.renderer!=1;
+            guides=inactive?FxaaUnsupportedGuide():
+                AntiAliasingGuide(prefs_.anti_aliasing);
+        } else if (option_==7) {
+            guides=TextureGuide();
+        } else if (option_==8) {
+            inactive=!FrameGenerationSelectable(prefs_.renderer);
+            guides=inactive?FramegenUnsupportedGuide():
+                tr(TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."));
+        }
+        static constexpr const char* labels[] = {
+            TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
+            TR("Texture filtering"),TR("Enhanced smoothness")
+        };
+        if (guides)
+            switch_video_help(c,tr(labels[option_-4]),guides,inactive,744.0f);
     }
     list.rounded_rect({493,888,932,2},0,kGrey);
     text_shrink(c,tr("Change"),1252.0f,baseline(901,51,19),

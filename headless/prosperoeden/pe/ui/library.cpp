@@ -1172,7 +1172,7 @@ bool Launcher::open_game_settings_at_file(const std::string &file)
         mods_ = services_.mods(game.title_id);
         count_mods(game, mods_);
         open_modal(Modal::game);
-        game_rows_.visible = kDialogRowsShown;
+        game_rows_.visible = prefs_.ui_theme == 1 ? 4 : kDialogRowsShown;
         game_rows_.pitch = kDialogRowPitch;
         game_rows_.reset(dialog_rows(Modal::game), 0);
         return true;
@@ -1325,7 +1325,7 @@ void Launcher::press_library(Key key)
         mods_ = services_.mods(game->title_id);
         count_mods(games_[static_cast<std::size_t>(library_.selected)], mods_);
         open_modal(Modal::game);
-        game_rows_.visible = kDialogRowsShown;
+        game_rows_.visible = prefs_.ui_theme == 1 ? 4 : kDialogRowsShown;
         game_rows_.pitch = kDialogRowPitch;
         game_rows_.reset(dialog_rows(Modal::game), 0);
         return;

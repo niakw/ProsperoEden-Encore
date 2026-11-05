@@ -57,6 +57,8 @@ TESTS = {
     "native_package_contract": "tools/check-ps5-all-on-contract.py",
     "physical_core_atomic": "tools/check-native-physical-core-atomic-host.py",
     "vulkan_deferred_copy": "tools/check-vulkan-deferred-copy-ownership-host.py",
+    "single_native_package_profile": "tools/ci/check-final-one-profile-source.py",
+    "gpu_active_wait": "tools/check-ps5-gpu-active-wait-host.py",
     "native_renderer_selector": "tools/check-ns2-renderer-selector-host.py",
     "native_astc_cache_parity": "tools/ns2/check_egl_astc_texture_cache.py",
     "native_texture_format": "tools/ns2/check_native_texture_format_mapping.py",

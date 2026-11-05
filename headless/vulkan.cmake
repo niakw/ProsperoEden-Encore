@@ -33,6 +33,7 @@ endif()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 find_program(EDEN_R07_FSR31_GLSLANG NAMES glslangValidator REQUIRED)
 find_program(EDEN_R07_FSR31_SPIRV_VAL NAMES spirv-val REQUIRED)
+find_program(EDEN_R07_FSR31_SPIRV_DIS NAMES spirv-dis REQUIRED)
 set(EDEN_FSR31_SHADER_DIR "${PORT_BUILD_DIR}/include/video_core/host_shaders")
 set(EDEN_FSR31_NAMES
     prepare_inputs luma_pyramid luma_pyramid_nowave
@@ -40,21 +41,34 @@ set(EDEN_FSR31_NAMES
     shading_change prepare_reactivity luma_instability
     accumulate accumulate_sharpen rcas)
 set(EDEN_FSR31_HEADERS "")
+set(EDEN_FSR31_BINARIES "")
 foreach(shader IN LISTS EDEN_FSR31_NAMES)
     list(APPEND EDEN_FSR31_HEADERS
         "${EDEN_FSR31_SHADER_DIR}/fsr3_upscaler_${shader}_comp_spv.h")
+    list(APPEND EDEN_FSR31_BINARIES
+        "${EDEN_FSR31_SHADER_DIR}/fsr3_upscaler_${shader}.spv")
 endforeach()
 file(GLOB_RECURSE EDEN_FSR31_SDK_FILES CONFIGURE_DEPENDS
     "${EDEN_AMD_FSR31_SOURCE_DIR}/include/*"
     "${EDEN_AMD_FSR31_SOURCE_DIR}/shaders/*")
 add_custom_command(
     OUTPUT ${EDEN_FSR31_HEADERS}
+    BYPRODUCTS ${EDEN_FSR31_BINARIES}
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/build-fsr31-amd-shaders.py"
         --vendor "${EDEN_AMD_FSR31_SOURCE_DIR}"
-        --output "${EDEN_FSR31_SHADER_DIR}"
+        --output "${EDEN_FSR31_SHADER_DIR}" --keep-spv
+    # Fail the native build if AMD's actual SPIR-V descriptor or UBO ABI
+    # differs from the C++ Vulkan host layouts (no runtime bind mismatch).
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/check-fsr31-spirv-abi.py"
+        --shader-dir "${EDEN_FSR31_SHADER_DIR}"
+        --backend-source "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
+        --spirv-dis "${EDEN_R07_FSR31_SPIRV_DIS}"
     DEPENDS
         "${PORT_ROOT}/tools/graphics/build-fsr31-amd-shaders.py"
+        "${PORT_ROOT}/tools/graphics/check-fsr31-spirv-abi.py"
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
         ${EDEN_FSR31_SDK_FILES}
     VERBATIM)
 add_custom_target(eden-r07-fsr31-shaders DEPENDS ${EDEN_FSR31_HEADERS})

@@ -131,11 +131,20 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
              ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp']
     def compile_owner(path:Path):
-        # The existing development-only performance profiler contains x86
-        # pause intrinsics and is not a qualified ARM64 PS5 source. Compile
-        # that separate profile on its supported x86 target; the normal
-        # shipping DmaPusher is verified with the ARM64 native ABI macros.
+        # Ubuntu Clang 18 can crash in nested template instantiations of the
+        # fully unified native NVDRV and shader source files (frontend exit
+        # 139 with a compiler stack dump, not an emulator diagnostic).
+        # Check these real heavy translation units with GCC on Linux, retaining
+        # the shipping PS5_NATIVE ABI macros and complete include graph.
+        # The shipping DMA sources still undergo the Clang source check.
         active_flags=flags.copy()
+        is_heavy=path.name in {
+            'nvhost_as_gpu.cpp','nvhost_gpu.cpp','puller.cpp',
+            'native_shader_capture.cpp','ns2_shader_spirv_compile.cpp'}
+        if sys.platform=='linux' and is_heavy:
+            gcc=shutil.which('g++')
+            assert gcc, 'GCC C++20 required for native NVDRV/graphics owner'
+            active_flags[0]=gcc
         if path.name=='dma_pusher_dev.cpp' and '-target' in active_flags:
             active_flags[active_flags.index('-target')+1]='x86_64-apple-macos15'
         result=subprocess.run([*active_flags,str(path)],capture_output=True,

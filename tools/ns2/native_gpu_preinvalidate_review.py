@@ -6,6 +6,7 @@ The reviewed 4K/big-page source diff restores the exact predecessor blob;
 changing both the code and this witness still requires predecessor parity.
 """
 import hashlib
+import runpy
 from pathlib import Path
 import subprocess
 import tempfile
@@ -21,6 +22,14 @@ def blob(content: str) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 def recover_prior_memory_manager(actual: str) -> str:
+    if "gpu_page_table_revision" in actual:
+        # Peel back only the pinned, independently reviewed performance
+        # extension; the original 4K/big-page predecessor hash still MUST
+        # match byte-for-byte under the existing reverse-patch chain.
+        recover = runpy.run_path(
+            str(ROOT / "tools/ns2/native_gpu_range_cache_review.py")
+        )["recover_before_contiguous_cache"]
+        actual = recover(actual)
     assert blob(PATCH.read_text()) == PATCH_SHA, "unreviewed GPU pre-invalidation patch"
     assert actual.count("All old mappings have been evicted") == 1
     assert actual.count("Commit big-page backing only after the old cache owner") == 1

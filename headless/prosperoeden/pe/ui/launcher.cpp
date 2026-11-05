@@ -204,7 +204,9 @@ void Launcher::close_modal()
 
 void Launcher::apply_look()
 {
-    look() = {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion};
+    look() = {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion,
+              std::clamp(prefs_.color_palette, 0, 2), std::clamp(prefs_.background_style, 0, 3)};
+    theme::apply_palette(look().palette, std::clamp(prefs_.accent_color, 0, 4));
 }
 
 bool Launcher::save_preferences(bool quiet)

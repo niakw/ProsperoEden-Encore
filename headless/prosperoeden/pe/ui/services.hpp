@@ -152,6 +152,12 @@ struct AppUpdateInfo {
     std::string latest_version;
     std::string summary;
     std::string notes; // bounded official release notes, never executable content
+    // Only populated by strict official release metadata validation. These
+    // fields are display/data, not permission to replace app files.
+    std::string package_name;
+    std::string package_path;
+    std::string package_sha256;
+    std::uint64_t package_bytes = 0;
 };
 
 struct Preferences
@@ -193,7 +199,7 @@ struct Preferences
     int background_fit = 0; // 0 cover, 1 contain
     bool show_game_background = true; // preserve current hero background default
     std::string wallpaper_file; // validated basename, never arbitrary path
-    bool check_updates_on_start = false; // opt-in only
+    bool check_updates_on_start = true; // metadata-only; persisted opt-out honored
 };
 
 // One game's overrides; -1 uses Settings > Video.

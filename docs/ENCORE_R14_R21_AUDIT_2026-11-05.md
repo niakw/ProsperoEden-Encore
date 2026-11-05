@@ -6,6 +6,12 @@ sous-module vendor sont inchangés.
 
 ## R21 — mise à jour de l'application native
 
+La recherche des releases stables est **automatique au lancement par
+défaut** pour les nouvelles installations, sur un worker non bloquant.
+L'utilisateur peut la désactiver dans les réglages. Les préférences
+déjà enregistrées, y compris un ancien refus, restent respectées.
+Ce contrôle ne télécharge ni n'installe rien automatiquement.
+
 Le lanceur dispose d'un bouton de vérification manuel à côté des
 paramètres, avec état visuel : vert (version stable connue à jour),
 orange (nouvelle version), gris (état inconnu/hors ligne), bleu
@@ -17,6 +23,14 @@ l'ancienne URL de niakw/Prospero.Eden-Encore n'est plus utilisée pour les
 métadonnées ni comme origine de téléchargement admise. Le validateur
 impose la forme exacte d'une archive FTP PPSA99008, une taille bornée et
 le digest SHA256 annoncé, sans faire confiance aux notes de release.
+
+Le candidat de release comprend maintenant taille, SHA256, nom,
+chemin reconstruit depuis le dépôt officiel (jamais depuis les notes)
+et version cible. Le vérificateur portable VerifiedArchive refuse
+taille incorrecte, octets en trop, SHA256 divergent ou flux finalisé
+réutilisé. Tests hôtes ASan/UBSan. Ce précontrôle n'autorise pas seul
+le remplacement des fichiers : le helper doit encore vérifier
+l'archive ZIP et la cible d'installation.
 
 Le statut State::available n'est jamais émis par les services natifs.
 Le helper self_update_helper dispose d'un protocole sécurisé, d'extraction

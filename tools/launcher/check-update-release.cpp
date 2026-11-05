@@ -52,6 +52,9 @@ int main() {
         assert(r.package_name == "Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip");
         assert(r.sha256.size() == 64);
         assert(r.package_bytes == 50000000u);
+        assert(r.package_path ==
+               "/niakw/ProsperoEden-Encore/releases/download/"
+               "encore-R2-abcdef12/Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip");
         assert(r.notes.find("Stable UI") != std::string::npos);
     }
     // Shape of the actual public R1 FTP release: trustworthy metadata,

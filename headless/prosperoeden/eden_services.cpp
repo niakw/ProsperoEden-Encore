@@ -2066,6 +2066,10 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     const auto result = Eden::EncoreUpdate::AssessStableRelease(*response, current);
     report.latest_version = result.latest_version;
     report.notes = result.notes;
+    report.package_name = result.package_name;
+    report.package_path = result.package_path;
+    report.package_sha256 = result.sha256;
+    report.package_bytes = result.package_bytes;
     switch (result.status) {
     case Eden::EncoreUpdate::ReleaseAssessment::Status::malformed:
         report.state = Report::State::incompatible;

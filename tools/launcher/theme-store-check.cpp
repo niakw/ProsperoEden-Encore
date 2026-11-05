@@ -57,7 +57,9 @@ int main() {
     const std::string unexpected = std::string(temp) + "/invalid.json";
     std::ofstream(unexpected) << R"({"appearance":{"theme":"surprise"}})";
     assert(Eden::LoadPreferences(unexpected).ui_theme == 0);
-    assert(!Eden::LoadPreferences(unexpected).check_updates_on_start);
+    // New installs get a nonblocking stable-release check; old opted-out
+    // profiles still keep /app_updates/check_on_start=false.
+    assert(Eden::LoadPreferences(unexpected).check_updates_on_start);
     std::ofstream(unexpected) << R"({"appearance":{"palette":999,"background":999,"wallpaper":"../../other.png"}})";
     const auto invalid = Eden::LoadPreferences(unexpected);
     assert(invalid.color_palette == 0 && invalid.background_style == 0);

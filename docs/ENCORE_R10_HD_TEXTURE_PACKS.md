@@ -1,108 +1,73 @@
-# Eden Encore — R10 : bibliothèque indépendante de textures HD
+# R10 — Textures HD par IA : périmètre réel et distinction des mods
 
-**5 novembre 2026 — PR #24 et branche vendor dédiée.**
-**État : fonctionnalité RomFS HD intégrée en source, vérifiée sur hôte ; non validée sur PS5.**
+**Roadmap R10 — étude et spécification, non implémenté.**
+Revue du 5 novembre 2026. La PR graphique #24 ne fournit pas de
+moteur de génération des fichiers de textures par IA.
 
-## Une distinction technique réelle par rapport aux mods
+## Les quatre familles graphiques
 
-Les textures HD possèdent désormais une racine séparée sous le dossier des
-fichiers de jeu sélectionné. Elles ne doivent **plus** être installées dans
-mods/, ni activées depuis le menu Mods.
+- **R07 — Upscaling :** agrandir chaque image rendue avec FSR 1,
+  SGSR, Lanczos, etc. Ne modifie pas les fichiers de textures du jeu.
+  FSR 3.1 temporel reste non intégré.
+- **R08 — Génération de frames :** MihawkGen, FSR3 FG optical flow,
+  LSFG. Créer des images supplémentaires pour la présentation,
+  sans générer de nouveaux fichiers de texture.
+- **R09 — Neural Rendering AMD/Vulkan :** améliorer l'aspect visuel
+  des visages, des matériaux ou de la lumière dans l'image rendue,
+  **sans remplacer les fichiers de textures invités**. Recherche,
+  aucun moteur runtime PS5 qualifié.
+- **R10 — Textures HD IA :** créer de nouvelles versions haute résolution
+  des **ressources de texture** du jeu avec un modèle autorisé
+  (Real-ESRGAN ou équivalent), potentiellement hors console,
+  puis les remettre dans le format réellement lu par le jeu.
 
-    <racine-des-jeux>/
-      roms/
-      mods/
-        0100ABCD00001000/
-          Patch 60 FPS/
-            exefs/...
-      textures/
-        0100ABCD00001000/
-          Terrain HD/
-            encore-hd-textures.json
-            romfs/
-              Model/
-                grass.bntx
+## Pourquoi ne PAS inventer un autre dossier ou menu
 
-Le chargeur PS5 maintenu dans vendor/encore-active/eden-core lit directement
-textures/<TitleID>/<pack>/romfs, pour les fichiers de données des jeux.
-**Aucune copie, aucun lien symbolique et aucune insertion physique dans
-mods/.** Le backend de remplacement reste un overlay RomFS, ce qui
-évite d'ajouter un second moteur inutile pour les fichiers natifs.
-Les mods ordinaires peuvent toujours appliquer des patches ExeFS,
-des cheats et des remplacements RomFS ; les textures HD, elles,
-**n'injectent jamais de code ExeFS ni de cheats**.
+**Les mods RomFS existants gèrent déjà le remplacement des textures
+lorsqu'elles ont été converties au format attendu par le jeu.**
 
-Chaque pack HD doit avoir un manifeste v1 correspondant au vrai Title ID.
-Le chargeur ne le traite que pour les enregistrements RomFS Program/Data.
-Les mods ordinaires ont priorité en cas de conflit de fichiers.
-Les dossiers absents/malformés sont ignorés ; le jeu original demeure
-la source de secours.
+Exemple, dans les fichiers de jeux utilisés par Encore :
 
-## Activation par jeu, séparée de Mods
+    mods/
+      <TitleID>/
+        Pack textures HD/
+          romfs/
+            <chemin identique au jeu>/
+              <texture native au format du jeu>
 
-Dans le launcher : **Fiche du jeu → HD textures → pack → Activer**.
-Le menu affiche le nombre de fichiers, la taille et l'état individuel.
-Les nouveaux packs sont **désactivés par défaut**. Leur activation
-est mémorisée par Title ID dans le réglage indépendant
-hd_textures_on ; mods_off et l'interrupteur Mods n'y changent rien.
-Le mode Safe Launch désactive aussi les textures HD uniquement
-pour la session, sans effacer les choix.
+L'activation se fait dans la fiche du jeu, **Mods**.
+Aucune raison technique de réimplémenter un deuxième chargeur
+de fichiers RomFS, un dossier textures/ ou une deuxième liste
+d'activation juste pour des packs déjà compatibles.
+Le code redondant précédemment ajouté a été **retiré de la branche
+PR #24** et le sous-module vendor ré-épinglé à son état précédent.
+Aucun mod installé n'a été supprimé ni modifié. La branche vendor
+expérimentale n'est plus référencée dans cette PR.
 
-Lorsque le dossier n'existe pas, dans le menu HD textures, Carré
-peut créer le dossier textures/<TitleID>/. Il est également possible
-de copier manuellement un pack déjà préparé dans ce dossier.
-Les changements prennent effet au **prochain lancement du jeu**.
+## Ce qu'exige réellement la réalisation R10
 
-## Préparer un pack sur Mac ou PC
+1. **Sources autorisées** : l'utilisateur fournit ses textures
+   légalement ; aucune redistribution de textures de jeux protégés.
+2. **Upscaling de ressources par IA** : modèle ouvert à licence
+   vérifiée, traitement de textures sur ordinateur si la PS5
+   manque de marge compute/mémoire. Ce n'est ni du frame generation,
+   ni un filtre de netteté de l'image finale.
+3. **Conversion vers le format du jeu** : BNTX/BFRES lorsque
+   appropriés, ASTC/BCn, dimensions, mipmaps, normales, alpha,
+   sRGB, chemins exacts, version du jeu. Un PNG produit par l'IA
+   n'est généralement pas utilisable directement comme texture.
+4. **Packaging compatible RomFS** : l'export crée un
+   **mod RomFS ordinaire**, découvert par le gestionnaire
+   déjà intégré ; vérification des tailles, hachages et fallback.
+5. **Validation** : coût mémoire, performances et qualité dans
+   FC 27 et BOTW, sans régression NS1/NS2 ni artefact HUD.
+   Ne pas activer un modèle de textures IA tant que ces points
+   ne sont pas prouvés.
 
-Préparer légalement un ensemble de fichiers **déjà reconvertis au format
-attendu par les chemins RomFS du jeu**. Un PNG généré par Real-ESRGAN
-n'est pas automatiquement un BNTX/BFRES compatible : la conversion
-et l'édition des ressources spécifiques au jeu doivent se faire
-hors PS5.
+Un remplacement dynamique de textures dans le cache GPU
+peut être une piste ultérieure, mais n'est pas nécessaire à
+l'installation des packs RomFS et ne saurait se substituer à
+la conversion sûre des ressources.
 
-Exemple (Title ID fictif, à remplacer) :
-
-    python3 tools/graphics/package-hd-textures.py
-      --title-id 0100ABCD00001000
-      --source-romfs /chemin/romfs-compatible
-      --textures-root /chemin/fichiers-jeux/textures
-      --name "Terrain HD"
-
-L'outil n'accepte **que** une racine nommée textures. Il refusera
-expressément mods/. Il écrit le manifeste (SHA-256 et tailles),
-copie par blocs dans un dossier temporaire, puis publie le pack
-atomiquement. Un pack préexistant ne sera jamais écrasé.
-Budgets par défaut : 2 Gio par pack et 512 Mio par fichier.
-Les limites portent sur le disque, pas sur la VRAM.
-
-Les PNG/JPEG/WebP intermédiaires sont refusés. L'option
---allow-native-images est réservée aux rares jeux qui lisent
-réellement ces formats depuis leur RomFS. Elle ne convertit rien.
-
-## Contrôles et limites
-
-- Six tests du préparateur, dont refus de fichiers malformés,
-  liens symboliques et écrasement.
-- Compilation du lecteur C++ de textures HD + test par Title ID
-  et de la liste indépendante hd_textures_on ; le scanner de Mods
-  n'énumère pas ces packs.
-- Audit statique du point d'insertion du patch manager maintenu
-  dans le vendor, avec priorité des mods, protection contre les
-  manifestes invalides et filtrage des répertoires.
-- Pas de build PS5 qualifié ni de mesure de VRAM ou FPS sur console.
-
-### Ce que R10 ne fait PAS encore
-
-Aucun upscale IA automatique sur PS5, aucune génération ni conversion
-des formats natifs de jeu, aucune interception de signatures de
-textures dans le cache Vulkan, aucun téléchargement de packs tiers.
-Le mécanisme traite **uniquement des remplacements RomFS déjà valides**.
-Le moteur de substitution directe des textures GPU, s'il devient
-nécessaire, devra être conçu avec garde-fous NS1/NS2, budgets de
-cache et preuves console distinctes. Cela ne se résume pas au
-changement de dossier.
-
-**Anciens packs déjà rangés dans mods/ :** ils restent des mods
-ordinaires. Aucune migration automatique destructrice. Reconditionner
-avec l'outil ci-dessus pour profiter de la gestion HD indépendante.
+**État :** installation de packs RomFS déjà disponible via Mods ;
+**pipeline IA + conversion/validation des ressources R10 à faire.**

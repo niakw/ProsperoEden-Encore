@@ -91,8 +91,7 @@ class Launcher
         application,
         diagnostics,
         game,
-        mods, // code/game-file mods, separate from HD texture packs
-        textures, // per-title HD RomFS packs, own root and enabled state
+        mods, // a game's mods, opened from its settings
         mapping, // global or per-game DualSense button mapping
     };
     enum class Confirmation : std::uint8_t
@@ -407,10 +406,8 @@ class Launcher
     SaveSource import_source_ = SaveSource::none; // what Save data could import for the game
     bool import_armed_ = false;                   // Cross was pressed once: the next one imports
     ListView game_rows_;                          // the game dialog's rows (more than it shows)
-    std::vector<Mod> mods_;                       // ordinary code/cheat mods
+    std::vector<Mod> mods_;                       // the game's mods, read when its dialog opens
     ListView mod_rows_;
-    std::vector<Mod> hd_packs_;                   // separate textures/<TitleID> packs
-    ListView hd_rows_;
     bool mapping_for_game_ = false;
     ListView mapping_rows_;
 

@@ -2115,24 +2115,3 @@ msgstr "KESKİNLİK"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Doku filtreleme, belirli bir açıdan bakıldığında yolları, zeminleri ve duvarları keskinleştirir. 4x'ten başlayın; 8x/16x daha fazla GPU bant genişliği kullanır. Görüntü keskinliğinden farklı olarak resmin tamamını keskinleştirmez."
-
-
-#: R10 dedicated HD textures
-msgid "Created {0}. Copy a prepared HD texture pack into it."
-msgstr "{0} oluşturuldu. Hazırlanmış bir HD doku paketini içine kopyalayın."
-
-#: R10 dedicated HD textures
-msgid "HD textures"
-msgstr "HD dokular"
-
-#: R10 dedicated HD textures
-msgid "No HD texture packs"
-msgstr "HD doku paketi yok"
-
-#: R10 dedicated HD textures
-msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
-msgstr "Henüz HD doku yok. Uyumlu paketleri mods/'dan ayrı olarak {0}'a koyun."
-
-#: R10 dedicated HD textures
-msgid "game files"
-msgstr "oyun dosyaları"

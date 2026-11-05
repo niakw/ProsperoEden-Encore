@@ -2115,24 +2115,3 @@ msgstr "SKARPE"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Teksturfiltrering skærper veje, gulve og vægge set i en vinkel. Start ved 4x; 8x/16x bruger mere GPU-båndbredde. I modsætning til billedskarphed gør den ikke hele billedet skarpere."
-
-
-#: R10 dedicated HD textures
-msgid "Created {0}. Copy a prepared HD texture pack into it."
-msgstr "Oprettet {0}. Kopier en forberedt HD-teksturpakke ind i den."
-
-#: R10 dedicated HD textures
-msgid "HD textures"
-msgstr "HD-teksturer"
-
-#: R10 dedicated HD textures
-msgid "No HD texture packs"
-msgstr "Ingen HD-teksturpakker"
-
-#: R10 dedicated HD textures
-msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
-msgstr "Ingen HD-teksturer endnu. Læg kompatible pakker i {0}, adskilt fra mods/."
-
-#: R10 dedicated HD textures
-msgid "game files"
-msgstr "spilfiler"

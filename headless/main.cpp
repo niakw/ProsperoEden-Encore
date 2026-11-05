@@ -49,7 +49,6 @@
 #include "network_domain_rules.h"
 #include "network_audit.h"
 #include "mods.h"
-#include "hd_texture_packs.h"
 #include "glyph_overrides_runtime.h"
 #include "controller_applet.h"
 #include "error_applet.h"
@@ -1226,12 +1225,7 @@ int main(int argc, char** argv) {
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, Eden::AssetsPath("keys"));
         // Mods come from the game files folder's mods/ (mods.h). Without that folder Eden's own
         // load folder stays, where nothing is expected.
-        // LoadDir identifies the game files storage root for both
-        // mods/ and the separate textures/ native RomFS overlay. Point it
-        // at mods/ even if that folder is absent but textures/ exists.
-        if (const std::string mods = Eden::AssetsPath("mods");
-            Eden::DirectoryExists(mods) ||
-            Eden::DirectoryExists(Eden::AssetsPath("textures")))
+        if (const std::string mods = Eden::AssetsPath("mods"); Eden::DirectoryExists(mods))
             Common::FS::SetEdenPath(Common::FS::EdenPath::LoadDir, mods);
 #endif
 #ifdef PS5_NATIVE
@@ -1765,25 +1759,6 @@ int main(int argc, char** argv) {
             Eden::Report("glyphs", (std::string("In-game button art: ") +
                 (glyph_applied ? "PlayStation RomFS pack" : "Nintendo original") +
                 " (rule=" + Eden::GlyphOverrides::StateName(glyph_state) + ")").c_str());
-            // HD texture packs have a different storage root and whitelist.
-            // The vendor patch manager reads textures/<title>/<pack>/romfs
-            // directly. Never copy into mods/ or treat packs as cheats/Exefs.
-            const auto hd_packs = Eden::HdTextures::List(
-                Eden::AssetsPath("textures"), title);
-            const auto enabled_hd = Eden::LoadEnabledHdTexturePacks(title);
-            unsigned applied_hd = 0;
-            for (const auto& hd : hd_packs) {
-                const bool enabled = !safe_launch &&
-                    std::find(enabled_hd.begin(),enabled_hd.end(),hd.name)
-                    != enabled_hd.end();
-                if (!enabled) mods_off.push_back(
-                    std::string(Eden::HdTextures::kDisabledPrefix)+hd.name);
-                else ++applied_hd;
-            }
-            Eden::Report("textures", (
-                "HD texture packs: "+std::to_string(applied_hd)+"/"+
-                std::to_string(hd_packs.size())+
-                " selected (separate textures/ root, RomFS data only)").c_str());
             const std::string mods = Eden::Mods::Summary(all_mods, mods_off);
             Settings::values.disabled_addons[title] = mods_off;
             Eden::Report("launch", ("Mods: " + mods).c_str());

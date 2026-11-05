@@ -481,18 +481,6 @@ bool FakeServices::set_mod_enabled(std::uint64_t, const std::string &name, bool 
     return true;
 }
 
-std::vector<ui::Mod> FakeServices::hd_textures(std::uint64_t title_id) {
-    if (std::find(modded_.begin(),modded_.end(),title_id)==modded_.end())
-        return {};
-    return {{"Terrain HD",tr("game files"),sample_hd_enabled_}};
-}
-bool FakeServices::set_hd_texture_enabled(
-    std::uint64_t, const std::string& name, bool enabled) {
-    if (name != "Terrain HD") return false;
-    sample_hd_enabled_ = enabled;
-    return true;
-}
-
 ui::FolderInfo FakeServices::folder_info(const std::string &directory)
 {
     ui::FolderInfo info;

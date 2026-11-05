@@ -152,13 +152,6 @@ class FakeServices final : public ui::Services
     {
         return true;
     }
-    std::vector<ui::Mod> hd_textures(std::uint64_t title_id) override;
-    bool set_hd_texture_enabled(std::uint64_t, const std::string& name,
-                                bool enabled) override;
-    std::string hd_textures_folder(std::uint64_t) override {
-        return "textures/0100A00B00003000/";
-    }
-    bool make_hd_textures_folder(std::uint64_t) override { return true; }
     bool load_image(const std::string &path, gfx::Image *image) override
     {
         return gfx::load_tga(path, image);
@@ -166,7 +159,6 @@ class FakeServices final : public ui::Services
 
   private:
     std::vector<ui::Game> games_;
-    bool sample_hd_enabled_ = false;
     bool preview_botw_ = false; // host-only real scan example, never packaged
     bool enable_sample_case_ = true; // exercise generic no-scan fallback
     std::uint64_t sample_case_title_id_ = 0;

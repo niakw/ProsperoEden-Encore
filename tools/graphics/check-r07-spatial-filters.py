@@ -25,9 +25,9 @@ assert 'vulkan_sgsr_r07.cpp' in cmake
 assert 'renderer_vulkan/present/sgsr.cpp' in cmake
 assert 'CycleQualityRanked(' in ui and 'UpscalingFilterSelectable(value,prefs_.renderer)' in ui
 assert 'CycleQualityRanked(' in game and 'UpscalingFilterSelectable(' in game
-assert 'return services_.save_transfer_available() ? 15 : 14;' in count
-assert 'const std::array<std::string,15> values' in switch
-assert 'if(i<0||i>=15)continue;' in switch
+assert 'return services_.save_transfer_available() ? 14 : 13;' in count
+assert 'const std::array<std::string,14> values' in switch
+assert 'if(i<0||i>=14)continue;' in switch
 assert 'case 7:value=TextureAnisotropyName' in switch
 assert 'case 8:value=prefs_.frame_generation' in switch
 assert 'case 9:value=prefs_.refresh' in switch
@@ -53,5 +53,5 @@ with tempfile.TemporaryDirectory() as tmp:
         subprocess.run([validator,"--target-env","spv1.3",str(output)],check=True)
         hashes.append(hashlib.sha256(output.read_bytes()).hexdigest())
 assert hashes[0]!=hashes[1],"SGSR and SGSR Edge compiled identically"
-print("PASS R07: Lanczos + 2 different SGSR shader paths, Vulkan-only guards, user settings and 15 game rows")
+print("PASS R07: Lanczos + 2 different SGSR shader paths, Vulkan-only guards, user settings and 14 game rows")
 for name,digest in zip(names,hashes):print(" ",name,digest[:16])

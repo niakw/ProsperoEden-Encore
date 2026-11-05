@@ -9,6 +9,27 @@ et échelle interne peuvent inverser plusieurs positions. Dans l'interface,
 le parcours suit cet ordre du meilleur présumé au plus simple, **sans
 changer les IDs sauvegardés**. Les options non compatibles sont sautées.
 
+## Un seul ordre effectif par réglage — pas deux modes de tri
+
+Le menu PS5 présente une **ligne Upscaling** et une
+**ligne Anti-aliasing**, chacune avec un choix à la fois et des
+flèches gauche/droite. Il existe bien **deux familles de méthodes**,
+mais **pas deux modes de tri** dans l'interface.
+
+- Upscaling : les flèches parcourent les **7 filtres** selon l'ordre
+  indicatif de qualité spatiale ci-dessous.
+- Anti-aliasing : les flèches parcourent séparément les **4 choix**
+  selon leur ordre de lissage des contours.
+- La colonne **coût GPU estimé** renseigne un deuxième **critère
+  de comparaison**, pas un deuxième ordre de sélection. Aucune option
+  de tri par FPS/performance n'est livrée.
+- Sur OpenGL, la navigation saute les options non prises en charge
+  (SGSR / SGSR Edge ; FXAA+ pour l'anticrénelage). Pour un jeu,
+  le choix « Hériter du global » s'ajoute avant les méthodes.
+- Les indices persistés des préférences **ne sont pas renumérotés**,
+  même si l'ordre de navigation ne correspond pas à l'ordre historique
+  de l'énumération.
+
 ## Upscaling spatial — classement pour jeux 3D
 
 | Rang | Filtre | Qualité présumée | Coût relatif non mesuré |

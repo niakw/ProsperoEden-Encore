@@ -2115,24 +2115,3 @@ msgstr "РІЗКОСТЬ"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Фільтрація текстур робить дороги, підлогу та стіни різкішими під кутом. Почніть із 4х; 8x/16x використовує більшу пропускну здатність GPU. На відміну від різкості зображення, це не збільшує різкість всього зображення."
-
-
-#: R10 dedicated HD textures
-msgid "Created {0}. Copy a prepared HD texture pack into it."
-msgstr "Створено {0}. Скопіюйте в нього підготовлений пакет текстур HD."
-
-#: R10 dedicated HD textures
-msgid "HD textures"
-msgstr "HD текстури"
-
-#: R10 dedicated HD textures
-msgid "No HD texture packs"
-msgstr "Немає пакетів текстур HD"
-
-#: R10 dedicated HD textures
-msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
-msgstr "HD-текстур ще немає. Розмістіть сумісні пакети в {0} окремо від mods/."
-
-#: R10 dedicated HD textures
-msgid "game files"
-msgstr "файли гри"

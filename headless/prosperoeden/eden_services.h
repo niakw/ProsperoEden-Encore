@@ -76,11 +76,6 @@ public:
     bool set_mods_enabled(std::uint64_t title_id, bool enabled) override;
     std::string mods_folder(std::uint64_t title_id) override;
     bool make_mods_folder(std::uint64_t title_id) override;
-    std::vector<pe::ui::Mod> hd_textures(std::uint64_t title_id) override;
-    bool set_hd_texture_enabled(std::uint64_t title_id, const std::string& name,
-                                bool enabled) override;
-    std::string hd_textures_folder(std::uint64_t title_id) override;
-    bool make_hd_textures_folder(std::uint64_t title_id) override;
 
     bool load_image(const std::string& path, pe::gfx::Image* image) override;
 

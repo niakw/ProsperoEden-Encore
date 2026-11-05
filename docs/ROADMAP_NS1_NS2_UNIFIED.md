@@ -1282,3 +1282,20 @@ de la constante, les mutations rejetées, et les chemins historiques
 `FRND-CBUF`/`SEL-UR`/`FSET-UR`. Clang/GCC UBSan O0/O2 : **4/4 PASS**.
 Le runtime Vulkan/PS5 et les autres instructions/stages non traduits
 restent une limite réelle P2.4 et nécessitent P5 pour la console.
+
+
+**P2.4 — `UPOPC` Ampere, comptage de bits dans les registres uniformes (05/11, source/hôte) :**
+le décodeur ISA 128 bits connaissait déjà l’opcode `0x2bf`, mais
+le lowerer n’offrait pas de traduction. `UPOPC` passe désormais par
+le même propriétaire `LowerToMaxwell` et émet un vrai POPC Maxwell
+vers le banc de GPR réservé aux uniformes, avec source et destination
+UR explicitement vérifiées. La réservation du banc intervient avant
+l’abaissement de l’instruction et inclut les UR étendus ; UR63 peut
+servir de source zéro, jamais de destination. Les formes prédicatées
+non représentables, registres UR hors domaine et champs de mode non
+prouvés sont refusés, sans fallback silencieux. Le témoin C++ hôte
+`test_ampere_scalar_alu_sources.cpp` teste les mots Maxwell réellement
+émis (UR bas, UR étendus, UR63, bit d'inversion) et les échecs par le
+pont réel `LowerReviewedToMaxwell`, aux côtés des régressions FRND/SEL/
+FSET/MUFU ; **Clang/GCC, UBSan O0/O2 : 4/4 PASS**. P2.4 demeure
+ouvert pour les autres opcodes/stages et le rendu physique PS5 reste P5.

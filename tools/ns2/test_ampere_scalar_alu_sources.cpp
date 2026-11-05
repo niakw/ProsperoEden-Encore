@@ -168,5 +168,38 @@ int main() {
     Require(!Bridge(bad_mufu).Ready(), "MUFU immediate modifier rejected");
     bad_mufu=immediate_mufu(0x3f800000U,7); // unsupported hardware function mode
     Require(!Bridge(bad_mufu).Ready(), "MUFU unsupported operation rejected");
+    // UPOPC: read a uniform GPR and write the uniform destination, using
+    // the real front end, actual ISA masks and Maxwell opcode bits.
+    const auto uniform_popc=[](u32 dest, u32 src, bool invert=false) {
+        return Instruction{{(7U << 12) | 0x2bf | (dest << 16),
+                            src | (invert ? 0x80000000U : 0U),
+                            0x08000000U, 0x000fe200U}};
+    };
+    for (const auto [rd,ra,dst_gpr,src_gpr] :
+         std::array<std::array<u32,4>,4>{{{{5,4,221,220}},{{17,18,201,202}},
+                                           {{62,63,182,255}},{{8,16,224,200}}}}) {
+        const auto insn=uniform_popc(rd,ra);
+        Require(Reviewed(insn), "uniform POPC must pass reviewed ISA masks");
+        const auto bridge=Bridge(insn);
+        Require(bridge.Ready(), bridge.reason.data());
+        const u64 word=bridge.maxwell_instructions[bridge.source_instruction_offsets[0]];
+        Require((word & 0xff000000000f0000ULL) ==
+                (0x5c08000000070000ULL & 0xff000000000f0000ULL),
+                "uniform POPC maps to genuine Maxwell population count");
+        Require((word & 255)==dst_gpr && ((word>>20)&255)==src_gpr,
+                "uniform POPC source and destination use the reserved UR bank");
+    }
+    const auto inverted=Bridge(uniform_popc(5,4,true));
+    Require(inverted.Ready() &&
+            ((inverted.maxwell_instructions[inverted.source_instruction_offsets[0]]>>40)&1U)==1,
+            "uniform POPC inversion bit preserved");
+    Require(!Bridge(uniform_popc(63,4)).Ready(), "UR63 cannot be written");
+    Require(!Bridge(uniform_popc(5,64)).Ready(), "out-of-table uniform source rejected");
+    auto predicated_popc=uniform_popc(5,4);
+    predicated_popc.words[0]=(predicated_popc.words[0]&~0xf000U)|(1U<<12);
+    Require(!Bridge(predicated_popc).Ready(), "unrepresentable UPOPC predication rejected");
+    auto reserved_popc=uniform_popc(5,4);
+    reserved_popc.words[1]|=1U<<30;
+    Require(!Bridge(reserved_popc).Ready(), "unreviewed UPOPC source mode rejected");
     std::puts("P2_4_REAL_AMPERE_SCALAR_ALU_SOURCE_PASS");
 }

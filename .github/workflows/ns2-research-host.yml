@@ -276,21 +276,24 @@ jobs:
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc.cpp
-      - name: Syntax-check actual experimental NPDM and ExeFS loader owners
+      - name: Syntax-check actual unified NPDM and ExeFS loader owners
         shell: bash
         run: |
           set -euo pipefail
+          # Exactly the source owners selected by the single PS5 CMake graph:
+          # shared NS1/NS2 metadata + ExeFS and the reviewed native NSO loader.
           for source in \
-            vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp \
-            vendor/encore-active/ns2-experimental/src/core/loader/loader.cpp \
-            vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp \
-            vendor/encore-active/ns2-experimental/src/core/loader/nso.cpp; do
-            echo "Checking: ${source}"
+            vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
+            vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp \
+            vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp \
+            vendor/encore-active/eden-core/src/core/loader/nso.cpp; do
+            echo "Checking unified owner: ${source}"
+            test -f "${source}"
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless \
-              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
               -Ivendor/encore-active/ns2-helpers/include \
+              -Ivendor/encore-active/ns2-runtime/metadata \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               "${source}"

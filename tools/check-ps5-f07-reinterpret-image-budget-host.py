@@ -296,7 +296,9 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-vulkan-reinterpret-") as folde
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
                  *(['-DPS5_NATIVE=1'] if native else []),str(path),"-o",str(binary)]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=45)
-            assert built.returncode==0,(native,opt,built.stderr[-6000:])
+            assert built.returncode==0,(native,opt,
+                "FIRST_COMPILER_ERRORS:\n"+built.stderr[:5000],
+                "LAST_COMPILER_ERRORS:\n"+built.stderr[-2500:])
             ran=subprocess.run([str(binary)],capture_output=True,text=True,timeout=15)
             assert ran.returncode==0,(native,opt,ran.stderr[-6000:])
 # Execute the maintained native image upload no-op before any resolve,
@@ -614,7 +616,9 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-msaa-snapshot-") as folder:
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
                  *(['-DPS5_NATIVE=1'] if native else []),str(unit),"-o",str(binary)]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=45)
-            assert built.returncode==0,(native,opt,built.stderr[-6000:])
+            assert built.returncode==0,(native,opt,
+                "FIRST_COMPILER_ERRORS:\n"+built.stderr[:5000],
+                "LAST_COMPILER_ERRORS:\n"+built.stderr[-2500:])
             ran=subprocess.run([str(binary)],capture_output=True,text=True,timeout=15)
             assert ran.returncode==0,(native,opt,ran.stderr[-6000:])
 print("F07_MSAA_GC_SOURCE_EXTRACTED_PASS native_one_tick_per_scan=1 empty_scan_no_poll=1 checked_out_no_poll=1 wrong_key_no_poll=1 resolve_only=1 desktop_original=1 delayed_reuse_safe=1 native_gpu_pin_release_guard=1 O0=1 O2=1")

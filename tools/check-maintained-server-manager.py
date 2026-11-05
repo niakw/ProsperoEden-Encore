@@ -27,11 +27,11 @@ assert "EDEN_SHUTDOWN_DTOR" not in server
 assert cmake.count('configure_file("${EDEN_MAINTAINED_SERVER_HEADER}"') == 1
 assert cmake.count('list(APPEND core_sources "${EDEN_MAINTAINED_SERVER_SOURCE}")') == 1
 assert cmake.count('list(REMOVE_ITEM core_sources hle/service/server_manager.cpp)') == 1
-assert 'set(EDEN_MAINTAINED_SERVER_HEADER "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager_dev.h")' in cmake
-assert 'set(EDEN_MAINTAINED_SERVER_SOURCE "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager_dev.cpp")' in cmake
+assert 'set(EDEN_MAINTAINED_SERVER_HEADER "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager_dev.h")' not in cmake
+assert 'set(EDEN_MAINTAINED_SERVER_SOURCE "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager_dev.cpp")' not in cmake
 assert 'set(EDEN_MAINTAINED_SERVER_HEADER "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager.h")' in cmake
 assert 'set(EDEN_MAINTAINED_SERVER_SOURCE "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager.cpp")' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/include/${server_header}"' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/server_manager.cpp"' not in cmake
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/server_manager.cpp"' not in cmake
-print("ENCORE_SERVER_MANAGER_PARITY_PASS G17=retired G18=retired variants=2")
+print("ENCORE_SERVER_MANAGER_PARITY_PASS G17=retired G18=retired native_selected=standard dev_source=reviewed")

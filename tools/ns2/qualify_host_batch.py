@@ -90,6 +90,14 @@ def main() -> int:
           f"scope={args.scope} jobs={args.jobs} count={len(names)}",flush=True)
     env=os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"]="1"
+    # A newer CLT SDK can contain .tbd formats that the installed Apple
+    # linker cannot parse. Pin only the HOST test subprocesses to a
+    # compatible SDK; individual syntax-only witnesses may explicitly
+    # select newer libc++ headers when they need C++20 jthread/stop_token.
+    if sys.platform=="darwin":
+        host_sdk=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
+        if host_sdk.is_dir():
+            env["SDKROOT"]=str(host_sdk)
     started=datetime.now(timezone.utc)
     results=[]
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:

@@ -357,7 +357,35 @@ print("NUP_V1_POST_F07_OWNER_ISOLATION_PASS",
       f"not_retroactive_F07={len(post_f07_nup_vfs_owners)}",
       "shipping_selection=absent")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners
+# P1.3: the five shared WaitIfEqual64 kernel source/ABI owners were
+# introduced after the frozen F07 inventory. Qualify them with the real
+# kernel/SVC/selector host witness; never inflate the historical 518 count.
+post_f07_shared_wait64_owners = {
+    "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_address_arbiter.cpp",
+    "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_address_arbiter.h",
+    "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_process.h",
+    "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/svc.h",
+    "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/svc/svc_address_arbiter.cpp",
+}
+assert post_f07_shared_wait64_owners <= all_owners, sorted(
+    post_f07_shared_wait64_owners - all_owners)
+assert not post_f07_shared_wait64_owners & (
+    research_owners | hygiene_owners | ns2_shared_release_owners |
+    ns2_shared_audio_owners | ns2_shared_gpu_access_owners |
+    post_f07_native_vulkan_owners | post_f07_shared_compute_owners |
+    post_f07_launcher_handoff_owners | post_f07_ns2_typed_cache_owners |
+    post_f07_shared_gpu_scalar_owners | post_f07_shared_gpu_remap_owners |
+    post_f07_native_atomic_span_owners | post_f07_nup_vfs_owners)
+assert 'set(EDEN_SHARED_NS2_WAIT64 ON)' in release_cmake
+assert 'if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)' in release_cmake
+assert 'set_property(TARGET core PROPERTY SOURCES "${eden_wait64_sources}")' in release_cmake
+assert (ROOT / 'tools/ns2/check_shared_kernel_wait64_host.py').is_file()
+assert 'python3 -B tools/ns2/check_shared_kernel_wait64_host.py' in (
+    ROOT / '.github/workflows/encore-core-preflight.yml').read_text()
+print('NS1_NS2_SHARED_WAIT64_F07_ISOLATION_PASS',
+      f'post_snapshot_source_owners={len(post_f07_shared_wait64_owners)}')
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_shared_wait64_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

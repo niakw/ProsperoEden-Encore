@@ -64,6 +64,47 @@ assert 'WaitIfEqual64' in valid_type
 alignment='const size_t alignment = arb_type == ArbitrationType::WaitIfEqual64 ? sizeof(s64) : sizeof(s32);'
 assert alignment in svc_source
 
+# Exercise the actual CMake selector, rather than inferring target changes
+# from the words inside its conditional source-selection block.
+selector = 'set(EDEN_SHARED_NS2_WAIT64 OFF)' + CMAKE.split(
+    'set(EDEN_SHARED_NS2_WAIT64 OFF)', 1)[1].split('# N52:', 1)[0]
+with tempfile.TemporaryDirectory(prefix='encore-wait64-cmake-') as cmake_tmp:
+    cmake_root=Path(cmake_tmp)
+    for selected in (False,True):
+        project = cmake_root/('on' if selected else 'off')
+        project.mkdir()
+        for rel in ('hle/kernel/k_address_arbiter.cpp',
+                    'hle/kernel/svc/svc_address_arbiter.cpp', 'dummy.cpp'):
+            actual_source=project/rel
+            actual_source.parent.mkdir(parents=True,exist_ok=True)
+            actual_source.write_text('int probe_%s = 0;\n' % len(rel))
+        probe = f'''cmake_minimum_required(VERSION 3.20)
+project(wait64_select LANGUAGES CXX)
+set(PORT_ROOT "{ROOT.as_posix()}")
+set(EDEN_SHARED_NS2_GPU_ACCESS_SVC {"ON" if selected else "OFF"})
+add_library(core STATIC hle/kernel/k_address_arbiter.cpp
+                        hle/kernel/svc/svc_address_arbiter.cpp)
+add_library(video_core STATIC dummy.cpp)
+'''
+        probe += selector
+        probe += '''
+get_target_property(actual core SOURCES)
+get_target_property(exposed core INTERFACE_INCLUDE_DIRECTORIES)
+message(STATUS "WAIT64_SELECTED=${EDEN_SHARED_NS2_WAIT64}")
+message(STATUS "WAIT64_SOURCES=${actual}")
+message(STATUS "WAIT64_INCLUDES=${exposed}")
+'''
+        (project/'CMakeLists.txt').write_text(probe)
+        result = subprocess.run(['cmake','-S',str(project),'-B',str(project/'build'),
+                                 '-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk'],
+                                capture_output=True,text=True,timeout=40)
+        assert result.returncode==0,result.stderr[-4000:]
+        assert ('WAIT64_SELECTED=ON' if selected else 'WAIT64_SELECTED=OFF') in result.stdout
+        chosen = str(KERNEL/'k_address_arbiter.cpp')
+        assert (chosen in result.stdout) == selected, result.stdout[-1600:]
+        print('P1_3_KERNEL_WAIT64_CMAKE_OWNER_PASS',
+              'enabled' if selected else 'disabled',flush=True)
+
 unit=r'''
 #include <array>
 #include <cassert>

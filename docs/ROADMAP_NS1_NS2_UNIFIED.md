@@ -1324,3 +1324,14 @@ mémoire invalide) ; trois unités C++ entières du noyau et du SVC réel
 passent aussi `clang++ -fsyntax-only` avec libc++ macOS compatible.
 Ce test **ne valide pas** l'ordonnanceur entier, les SVC sur PS5, les
 CPU invités ou le lancement des jeux : qualification en P5 seulement.
+
+
+**P1.3 — audit propriétaire source et sélection CMake (05/11) :**
+la sélection a été testée en vrais projets `cmake -S/-B` avec et sans
+GPU-access dual-NPDM : le couple `k_address_arbiter.cpp` /
+`svc_address_arbiter.cpp` bascule ensemble, jamais partiellement. Les
+cinq sources/header ajoutés **après F07** sont consignés séparément et
+conservent l’inventaire historique F07 immuable de **518/518**.
+Le `check_shared_kernel_wait64_host.py` contrôle cette bascule et
+l'alignement, les deux variantes 32/64 bits et les unités C++ réelles.
+P1.3 reste soumis à la validation du scheduler complet et de la console.

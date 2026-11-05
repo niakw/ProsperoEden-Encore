@@ -26,7 +26,7 @@ Contrôle des cases de l'issue #15 sur le code local à main 90f3ff0 / vendor 1a
 | P1.4 | Régression complète source/hôte NS1 au SHA figé encore non attestée. |
 | P2.2c | Interfaces Vulkan/ASTC natives réelles compilées sous gates PS5 non prouvées par les seuls contrôles de texte. Précondition source/qualification à préserver. |
 | P2.3 | Global memory et CBUF indirect ont des chemins sécurisés, mais formes inconnues refusées ; l'exécution de tous les cas sur buffers GPU hôtes ne suit pas de ces gardes. |
-| P2.4 | VertexA/B/Fragment/Geometry et paire TessControl+TessEval raccordés en source ; LEPC Geometry à adresse de code GMMU attestée ajouté le 05/11, avec identité cache par base de code ; task/mesh, LEPC sans provenance PC et autres opcodes Ampere non traduits restent manquants. Exécution graphique PS5 réservée à P5. |
+| P2.4 | VertexA/B/Fragment/Geometry et paire TessControl+TessEval raccordés en source ; LEPC à adresse de code GMMU attestée étendu aux six stages graphiques le 05/11, avec identité cache par base de code ; task/mesh, LEPC non reconnu ou sans provenance PC et autres opcodes Ampere non traduits restent manquants. Exécution graphique PS5 réservée à P5. |
 | P2.7 | GPFIFO, QMD, VI2, clôture temporelle et politiques de fence ont des témoins hôte ; GPU-write → lecture CPU des commandes invités n'est toujours pas prouvé. |
 | P3.3 | Snapshot swapchain source validé ; handoff de présentation multithread non qualifié sur cet hôte (libc++ Mac sans std::jthread/stop_token), pas une preuve d'échec du port PS5. |
 | P4.2/P4.3 | Qualification finale des régressions et décision d'entrée P5 incomplètes. L'exécution console n'en fait pas partie. |

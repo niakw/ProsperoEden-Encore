@@ -92,7 +92,7 @@ Le fournisseur Vulkan conserve désormais au plus **12 pipelines Compute Ampere*
 **Restes P0–P4 qui exigent du CODE (non requalifiables par un simple essai PS5)** :
 la promotion des commutateurs de recherche vers la sélection automatique de production,
 les instructions/stages graphiques Ampere encore explicitement refusés
-(task/mesh, LEPC hors Geometry sans provenance PC et autres opcodes non traduits ; Geometry et la
+(task/mesh, LEPC en mode inconnu ou sans PC attesté et autres opcodes non traduits ; Geometry et la
 paire TessControl/TessEval sont liées en source, sans preuve GPU PS5),
 les liaisons HLE ou
 synchronisations non implémentées, et tout descripteur GPU dont l'ABI ne peut
@@ -113,7 +113,7 @@ Ce paragraphe est une preuve d'intégration source, pas un premier rendu PS5.
 maintenant être capturé et traduit dans la **pipeline Vulkan graphique complète**,
 avec ses CBUF de stage 3 et la liaison inter-stage créée par le même
 GraphicsPipeline commun. Seuls les opcodes déjà revus par le lowerer sont
-acceptés ; LEPC hors Geometry sans adresse GMMU vérifiée et task/mesh restent refusés.
+acceptés ; LEPC sans provenance PC native vérifiée et task/mesh restent refusés.
 Cette prise en charge n'est **pas** une preuve de géométrie correcte sur PS5.
 **P2.4 — relecture après compilation :** la création du pipeline graphique
 réauthentifie désormais la configuration des stages, leurs offsets et les
@@ -133,7 +133,7 @@ hôte (Clang, politique de stages et ISA) et parité intégrale du fork Vulkan
 testées ; les instructions Ampere non prises en charge restent bloquées.
 **Cela n'établit pas le bon fonctionnement de la tessellation sur PS5** :
 validation d'un véritable patch tessellé et des capacités RADV en P5.
-Task/mesh et les usages de LEPC non couverts par l'origine PC Geometry vérifiée restent des manques de code P2.4.
+Task/mesh et les usages LEPC non reconnus ou sans PC GMMU authentifié restent des manques de code P2.4.
 
 **P2.2/P2.3 — handles de textures dynamiques avec sampler statique :**
 Dans le planificateur natif QMD3, une texture échantillonnée à
@@ -233,6 +233,39 @@ et fast-gate référencent désormais cette vérification.
 du vrai owner**, pas l'ensemble P2.2c : parité
 CI du même SHA, rendu Vulkan matériel et P5
 restent à qualifier.
+
+**P2.4 — LEPC avec PC GMMU dans les six stages graphiques
+(05/11, source/hôte) :** le premier garde LEPC ne
+transmettait l'adresse de code 64 bits qu'en Geometry.
+Le même chemin de capture authentifie pourtant
+chaque mot GPU invité pour VertexA, VertexB,
+TessControl, TessEval, Geometry et Fragment.
+Le constructeur d'image Maxwell vérifie maintenant
+l'appartenance à ces six stages et reçoit leur PC
+**seulement si le programme natif contient un vrai
+opcode LEPC**. Compute, les IDs de stages inconnus,
+les prédicats/champs LEPC non prouvés et l'adresse
+GMMU absente continuent à être refusés.
+
+Le cache de traduction conserve une identité
+distincte pour deux programmes LEPC byte-identiques
+à des adresses GPU différentes, et pour leurs
+stages différents. En revanche, deux programmes
+**sans** LEPC peuvent réutiliser la même traduction,
+quelle que soit leur base GPU : pas de multiplication
+injustifiée des shaders Vertex/Fragment. La capture
+recontrôle toujours ses octets et son header après
+la traduction et avant publication.
+
+Tests source-exécutés du vrai CaptureNativeGraphicsShader,
+BuildMaxwellShaderImage, LowerToMaxwell et du cache LRU :
+six stages, deux VAs 64 bits, identités de stages,
+refus Compute/inconnu, codes avec/sans LEPC,
+capture source remappée, Clang/GCC UBSan O0/O2.
+**Ce travail élargit l'admission LEPC source/hôte**,
+mais ne valide ni la liaison inter-stage GPU,
+ni les formes LEPC non reconnues, ni task/mesh
+ou le premier rendu NS2 PS5 (P2.4/P5 ouverts).
 
 **P2.4 — LEPC dynamique en Geometry avec provenance GMMU (05/11,
 source/hôte) :** l'adresse d'une instruction LEPC hors du prologue
@@ -369,7 +402,7 @@ Compilation/exécution Mac Apple Clang O0/O2 avec UBSan, plus tests
 d'ISA/BRX, capture du shader et lot des correctifs génériques nx2
 réussis. Le compilateur Maxwell NS1, la file Vulkan et les sélecteurs
 de recherche ne sont pas modifiés. L'exécution des shaders sur GPU
-PS5, task/mesh et LEPC hors Geometry sans PC attesté restent
+PS5, task/mesh et LEPC non reconnu ou sans PC attesté restent
 **non prouvés**.
 
 **P2.3 — écritures globales Compute NS2 sans lecture globale (source/hôte) :**

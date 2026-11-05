@@ -87,6 +87,27 @@ coordonnées et layout verts.
 **Aucune validation de résultats PS5/NS1/NS2** ;
 la compatibilité GPU matérielle reste P5.
 
+### P2.4 — LEPC natif étendu aux six stages graphiques, 05/11
+
+Le PC invité authentifié via le lecteur GMMU
+est désormais utilisé pour VertexA/B,
+TessControl/Eval, Geometry et Fragment,
+sans conversion en adresses Maxwell de 8 octets.
+L'image Maxwell n'accepte ce PC que pour les six
+IDs graphiques connus ; la capture ne le transmet
+que lorsque les instructions contiennent un vrai
+LEPC 0x34e. Les shaders sans LEPC continuent
+à mutualiser leur image de cache entre VAs,
+alors que ceux avec LEPC restent distingués
+par adresse et stage. Compute/ID inconnu refusés.
+
+Témoin source-exécuté du vrai capture/image/cache,
+vérifications des six stages, deux adresses GPU,
+refus des champs non reconnus et démap,
+Clang/GCC UBSan O0/O2. Ce n'est ni une preuve
+d'exécution GPU PS5 ni une implémentation
+task/mesh ou branchement indirect arbitraire.
+
 ### P2.4 — LEPC Geometry à PC GPU invité connu, 05/11
 
 Comparaison ciblée avec le chemin source Lichii : le LEPC
@@ -250,7 +271,7 @@ dimensions, registres, canaux et chevauchements des registres scratch), prédica
 sous Clang/GCC et UBSan. Vérification du bridge existant en parallèle.
 
 **Limites :** aucun shader complet, pipeline RADV ou framebuffer invité prouvé ;
-P2.4 reste ouvert pour les autres instructions, LEPC hors Geometry non attesté et task/mesh.
+P2.4 reste ouvert pour les autres instructions, LEPC non reconnu ou PC non attesté et task/mesh.
 Le correctif ne garantit pas que le cache textures puisse satisfaire tous les
 handles natifs ou que tous les kernels Compute aient une traduction complète.
 

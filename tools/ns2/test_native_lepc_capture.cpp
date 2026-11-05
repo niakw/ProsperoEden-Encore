@@ -99,12 +99,24 @@ int main() {
     for (const auto instruction:shader) Append(native,instruction);
     const u32 geom=static_cast<u32>(Shader::Stage::Geometry);
     const u32 vert=static_cast<u32>(Shader::Stage::VertexB);
+    const u32 compute=static_cast<u32>(Shader::Stage::Compute);
+    const std::array stages{
+        static_cast<u32>(Shader::Stage::VertexA),
+        vert,static_cast<u32>(Shader::Stage::TessellationControl),
+        static_cast<u32>(Shader::Stage::TessellationEval),geom,
+        static_cast<u32>(Shader::Stage::Fragment)};
     const auto without_pc=BuildMaxwellShaderImage(header,native,geom);
     const auto direct_image_A=BuildMaxwellShaderImage(header,native,geom,{},codeA);
     const auto direct_image_B=BuildMaxwellShaderImage(header,native,geom,{},codeB);
-    const auto foreign_image=BuildMaxwellShaderImage(header,native,vert,{},codeA);
-    Require(!foreign_image.Ready(),
-            "a raw caller cannot opt VertexB into Geometry LEPC");
+    for (u32 stage : stages) {
+        const auto stage_image=BuildMaxwellShaderImage(header,native,stage,{},codeA);
+        Require(stage_image.ValidForCompiler(),
+                "every known graphics stage uses its own real guest PC");
+    }
+    Require(!BuildMaxwellShaderImage(header,native,compute,{},codeA).Ready(),
+            "Compute must not fabricate a graphics shader header/LEPC PC");
+    Require(!BuildMaxwellShaderImage(header,native,7U,{},codeA).Ready(),
+            "unknown stage cannot opt into untrusted graphics source PC");
     Require(!without_pc.Ready() &&
             direct_image_A.ValidForCompiler() &&
             direct_image_B.ValidForCompiler() &&
@@ -147,11 +159,47 @@ int main() {
             capture_cache.Stats().hits==1 &&
             first.reads>0 && second.reads>0,
             "real GMMU capture pipes code PC into cache with revalidation");
-    const auto vertex=CaptureNativeGraphicsShader(
-        baseA,vert,Read,&first,&capture_cache);
-    Require(!vertex.Ready() &&
-            vertex.status==NativeCaptureStatus::TranslationFailed,
-            "non-Geometry cannot opt into unauthenticated LEPC lowering");
+    NativeTranslationCache stage_cache{1024*1024,16};
+    std::vector<u64> distinct_stage_keys;
+    for (const u32 stage : stages) {
+        const auto staged=CaptureNativeGraphicsShader(
+            baseA,stage,Read,&first,&stage_cache);
+        const auto different_va=CaptureNativeGraphicsShader(
+            baseB,stage,Read,&second,&stage_cache);
+        Require(staged.Ready() && different_va.Ready(),
+                "every graphics stage captures authenticated GMMU LEPC");
+        Require(staged.image.diagnostic_cache_key !=
+                    different_va.image.diagnostic_cache_key,
+                "LEPC shader at two guest VAs has distinct compiled identity");
+        for (u64 key : distinct_stage_keys)
+            Require(key != staged.image.diagnostic_cache_key,
+                    "LEPC image identity must encode graphics stage");
+        distinct_stage_keys.push_back(staged.image.diagnostic_cache_key);
+    }
+    Require(distinct_stage_keys.size()==6 &&
+            stage_cache.Stats().translations==12 &&
+            !CaptureNativeGraphicsShader(baseA,compute,Read,&first).Ready(),
+            "only six recognized graphics stages can use their GMMU PC");
+
+    // Without any LEPC opcode the same byte-identical graphics shader
+    // at different VAs is NOT address-dependent and can share its image.
+    Reader no_pc_first{baseA,std::vector<u8>(0x80)};
+    Reader no_pc_second{baseB,std::vector<u8>(0x80)};
+    for (const auto inst : std::array{Nop,Exit}) {
+        Append(no_pc_first.memory,inst);
+        Append(no_pc_second.memory,inst);
+    }
+    NativeTranslationCache no_pc_cache{1024*1024,8};
+    const auto without_lepc_a=CaptureNativeGraphicsShader(
+        baseA,vert,Read,&no_pc_first,&no_pc_cache);
+    const auto without_lepc_b=CaptureNativeGraphicsShader(
+        baseB,vert,Read,&no_pc_second,&no_pc_cache);
+    Require(without_lepc_a.Ready() && without_lepc_b.Ready() &&
+            without_lepc_a.image.diagnostic_cache_key ==
+                without_lepc_b.image.diagnostic_cache_key &&
+            no_pc_cache.Stats().translations==1 &&
+            no_pc_cache.Stats().hits==1,
+            "LEPC-free shaders preserve shared cache reuse across guest VAs");
     // Capture has a true guest VA only while GMMU memory exists.
     first.memory.resize(0x80+16);
     const auto invalidated=CaptureNativeGraphicsShader(
@@ -159,6 +207,7 @@ int main() {
     Require(!invalidated.Ready(),
             "unmapped LEPC instruction never served from a stale LRU");
     std::puts("P2_4_NATIVE_LEPC_GMMU_CAPTURE_PASS guest_pc_64=1"
-              " geometry_only=1 verified_cache_key=1 source_replay=1"
-              " out_of_range_refused=1 ns1_unchanged=1");
+              " graphics_stages=6 compute_rejected=1"
+              " pc_sensitive_only_when_LEPC=1 verified_cache_key=1"
+              " source_replay=1 out_of_range_refused=1 ns1_unchanged=1");
 }

@@ -490,11 +490,17 @@ def main() -> int:
         require(lepc_fixture.is_file() and
                 "P2_4_NATIVE_LEPC_GMMU_CAPTURE_PASS" in lepc_fixture.read_text() and
                 "native_code_address = std::nullopt" in native_lower_src and
-                "native_code_address" in ampere_capture and
+                "const auto code_address_for =" in ampere_capture and
                 "e.native_code_address == native_code_address" in ampere_cache and
-                "shader_stage != static_cast<u32>(Shader::Stage::Geometry)" in ampere_image and
+                "shader_stage != static_cast<u32>(Shader::Stage::VertexA)" in ampere_image and
+                "shader_stage > static_cast<u32>(Shader::Stage::Fragment)" in ampere_image and
+                "code_address_for(native)" in ampere_capture and
+                "return insn.Bits(0, 12) == 0x34e;" in ampere_capture and
+                "graphics_stages=6 compute_rejected=1" in lepc_fixture.read_text() and
+                "pc_sensitive_only_when_LEPC=1" in lepc_fixture.read_text() and
                 "test_native_lepc_capture.cpp" in host_workflow,
-                "P2.4 LEPC requires original Geometry GMMU PC and address-separated LRU")
+                "P2.4 LEPC requires GMMU-authenticated PCs for six graphics stages"
+                " and preserves address-independent shaders in the LRU")
         redux_fixture = ROOT / "tools/ns2/test_ampere_warp_redux.cpp"
         require(redux_fixture.is_file() and
                 "P2_4_REDux_REAL_AMPERE_LOWER_PASS" in redux_fixture.read_text() and
@@ -1294,7 +1300,9 @@ def main() -> int:
                 'lru.splice(lru.begin(), lru, it)' in
                     (ampere_root / "translation_cache.cpp").read_text() and
                 '!image.Ready()' in (ampere_root / "translation_cache.cpp").read_text() and
-                'cache->GetOrTranslate(maxwell_header, source, stage, native_code_address)' in
+                'cache->GetOrTranslate(' in
+                    (ampere_root / "capture.cpp").read_text() and
+                'maxwell_header, source, stage, code_address_for(native))' in
                     (ampere_root / "capture.cpp").read_text() and
                 'NativeTranslationCache* cache' in
                     (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text(),

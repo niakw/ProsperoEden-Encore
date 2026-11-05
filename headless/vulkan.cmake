@@ -123,7 +123,8 @@ if(EDEN_BUILD_MIHAWKGEN_CORE)
         "${EDEN_MIHAWKGEN_SRC}/fg_vulkan.cpp"
         "${EDEN_MIHAWKGEN_SRC}/fg_neural.cpp"
         "${EDEN_MIHAWKGEN_SRC}/fg_splat.cpp"
-        "${EDEN_PORT_DIR}/mihawk_vulkan_stage.cpp")
+        "${EDEN_PORT_DIR}/mihawk_vulkan_stage.cpp"
+        "${EDEN_PORT_DIR}/mihawk_vulkan_resources.cpp")
     target_include_directories(eden-mihawkgen-core PRIVATE
         "${PORT_ROOT}/extras/graphics")
     target_compile_features(eden-mihawkgen-core PRIVATE cxx_std_20)

@@ -85,3 +85,26 @@ snapshots, fences jusqu'à la fin des lectures GPU, frames/timestamps réels,
 séparation HUD, réinitialisation après pause/jeu/changement de sortie,
 branchement sur le renderer actif, qualification modèle et RADV/PS5, benchmark
 sur console. Ne jamais coder les booléens de preuve à true artificiellement.
+
+### C2.1 — allocations GPU privées (source fonctionnelle, tests hôtes)
+
+L'implémentation isolée mihawk_vulkan_resources.cpp ajoute :
+
+- Deux textures d'historique au **format de la source compositée**, avec
+  VK_IMAGE_USAGE_SAMPLED_BIT et TRANSFER_DST, séparées des Frame* recyclés.
+- Une troisième texture de sortie **RGBA8 storage + TRANSFER_SRC**, propriété
+  du module, avant la conversion éventuelle vers une frame BGRA8.
+- Vérification préalable des capacités Vulkan (sample/transfer/blit/storage),
+  choix d'un type mémoire DEVICE_LOCAL, allocation/bind/views distincts.
+- Plafond configurable par défaut à 128 Mio; validation du coût **réel**
+  renvoyé par vkGetImageMemoryRequirements, limite initiale 3840 x 2160.
+- Repli intégral si format, mémoire, allocation, bind ou vue échoue :
+  aucun état « prêt » sur une allocation partielle.
+- Destruction avec vkDeviceWaitIdle **uniquement à l'arrêt ou au reset de
+  ressources**, et jamais au fil des frames. L'objet doit mourir avant VkDevice.
+
+Le test sans GPU simule les appels Vulkan de création, destruction et erreurs
+de mémoire/images/views; exécution ASan/UBSan positive. Il ne mesure pas la
+VRAM ni la vitesse d'un pilote PS5. Il reste à brancher l'allocation à un
+RendererVulkan réel, à surveiller les fences/descripteurs et à isoler le HUD.
+L'allocation ne rend donc pas MihawkGen utilisable dans l'application.

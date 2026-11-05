@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""G20 pinned-source parity, normal/DEV; not evidence of hardware correctness."""
+"""G20/P2.7 maintained GPU source parity (single shipping owner + retained DEV reference)."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,15 +79,51 @@ def expected(kind, dev):
         source = '#include "performance.h"\n' + source
     return "#include <chrono>\n" + source
 
+# G20 pinned full-source parity is retained after P2.7's reviewed native
+# GPFIFO fetch, explicit fence policy and null-subchannel protections.
+# These three literals are an exact snapshot of the pinned maintained
+# PS5 owner, not dynamically copied from the file under test.
+P27_NATIVE_FETCH = "#ifdef PS5_NATIVE\n        // Command headers are validated by NVDRV at submission, but the\n        // address space can change before the GPU worker consumes the live\n        // command words. Revalidate after the inter-list fence wait and\n        // before dirty-memory probes, SafeRead, or ProcessCommands. Never\n        // acknowledge a revoked native GPFIFO as an all-zero pushbuffer.\n        if (Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().IsNative(\n                &channel_state) &&\n            !Service::Nvidia::Devices::NativeGpfifoFetchMapped(\n                dma_state.dma_get, static_cast<u64>(header.size),\n                [this](u64 addr, u64 bytes) {\n                    return memory_manager.IsFullyMappedRange(addr, bytes);\n                })) {\n            LOG_ERROR(HW_GPU, \"Native GPFIFO command unmapped at fetch: address={:#x} words={}\",\n                      dma_state.dma_get, static_cast<u64>(header.size));\n#ifdef PS5_NATIVE\n            // Returning false silently finishes DispatchCalls; its caller\n            // would then publish a completed GPU queue fence and process\n            // later syncpoint increments for work that was never executed.\n            // The maintained PS5 GPU pthread entry catches this exception,\n            // records its fatal cause and requests worker stop before any\n            // queue fence is signaled. No exception leaves the OS thread.\n            throw std::runtime_error(\"Native GPFIFO command unmapped at GPU fetch\");\n#else\n            return false;\n#endif\n        }\n#endif\n"
+P27_NATIVE_FENCE = "        const bool explicit_sync = command_list.command_lists[dma_pushbuffer_subindex].sync;\n        const bool user_sync = Settings::values.sync_memory_operations.GetValue();\n#ifdef PS5_NATIVE\n        // A native NS2 GPFIFO fence is part of the guest-visible ordering\n        // contract, not an optional host quality preset. Its previous\n        // Compute/3D writes must retire BEFORE the next live command list\n        // is read, even if the user's NS1 sync optimization is disabled.\n        signal_sync = explicit_sync &&\n            (user_sync || Service::Nvidia::Devices::NativeGpuChannelRegistry::\n                              Instance().IsNative(&channel_state));\n#else\n        signal_sync = explicit_sync && user_sync;\n#endif"
+P27_UNBOUND = "        if (!subchannel) {\n            // A guest may submit methods before binding an engine. Never\n            // dereference a missing subchannel or replay it as a valid method.\n            LOG_ERROR(HW_GPU, \"GPFIFO method {:#x} on unbound subchannel {}\",\n                      dma_state.method, dma_state.subchannel);\n            return;\n        }\n"
+
+def expected_dma_unified(source):
+    old_macro = '#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH'
+    assert source.count(old_macro) == 2
+    source = source.replace(old_macro, '#ifdef PS5_NATIVE')
+    source = once(source,
+        '#ifdef PS5_NATIVE\n#include "gpu_failure.h"\n#endif\n#include "common/settings.h"',
+        '#ifdef PS5_NATIVE\n#include "gpu_failure.h"\n#include <stdexcept>\n#endif\n#include "common/logging.h"\n#include "common/settings.h"')
+    source = once(source,
+        '#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"\n',
+        '#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"\n'
+        '#include "core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h"\n')
+    source = once(source,
+        '    if (header.size > 0) {\n'
+        '        if (subchannels[dma_state.subchannel] && dma_state.method_count) {',
+        '    if (header.size > 0) {\n' + P27_NATIVE_FETCH +
+        '        if (subchannels[dma_state.subchannel] && dma_state.method_count) {')
+    source = once(source,
+        '        signal_sync = command_list.command_lists[dma_pushbuffer_subindex].sync && Settings::values.sync_memory_operations.GetValue();',
+        P27_NATIVE_FENCE)
+    subchannel = '        auto subchannel = subchannels[dma_state.subchannel];\n'
+    assert source.count(subchannel) == 2
+    source = source.replace(subchannel, subchannel + P27_UNBOUND)
+    return source
+
 for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
     for dev in (False, True):
         path = name + ("_dev" if dev else "") + ".cpp"
-        assert (ACTIVE / path).read_text() == expected(kind, dev), path
+        base = expected(kind, dev)
+        expected_owner = expected_dma_unified(base) if kind == "dma" else base
+        assert (ACTIVE / path).read_text() == expected_owner, path
 assert "foreach(unit dma_pusher engines/puller)" not in CMAKE
 assert 'write_derived("${PORT_BUILD_DIR}/${unit_name}.cpp" "${command_source}")' not in CMAKE
 for marker in ('list(REMOVE_ITEM video_sources dma_pusher.cpp engines/puller.cpp)',
                'list(APPEND video_sources "${EDEN_MAINTAINED_GPU_DMA}" "${EDEN_MAINTAINED_GPU_PULLER}")',
                'target_include_directories(video_core PRIVATE "${EDEN_PORT_DIR}")',
-               'dma_pusher_dev.cpp', 'engines/puller_dev.cpp'):
+               ):
     assert marker in CMAKE, marker
+assert 'dma_pusher_dev.cpp' not in CMAKE
+assert 'engines/puller_dev.cpp' not in CMAKE
 print("ENCORE_G20_GUEST_GPU_PARITY_PASS normal=2 dev=2")

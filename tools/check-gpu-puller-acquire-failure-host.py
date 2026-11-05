@@ -19,7 +19,11 @@ PARITY = (ROOT / "tools/check-maintained-guest-gpu-sync.py").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 WORKFLOW = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-gpu-puller-acquire-failure-host.py" in WORKFLOW
-assert 'engines/puller_dev.cpp' in CMAKE and 'engines/puller.cpp' in CMAKE
+assert 'engines/puller_dev.cpp' not in CMAKE
+assert 'dma_pusher_dev.cpp' not in CMAKE
+assert 'engines/puller.cpp' in CMAKE
+assert 'set(EDEN_MAINTAINED_GPU_PULLER ' in CMAKE
+assert 'list(APPEND video_sources "${EDEN_MAINTAINED_GPU_DMA}" "${EDEN_MAINTAINED_GPU_PULLER}")' in CMAKE
 assert "GPU_FAULT_LOOP" in PARITY and "GPU_FAULT_INIT" in PARITY
 
 def method(source):

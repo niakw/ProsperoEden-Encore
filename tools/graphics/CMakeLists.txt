@@ -52,6 +52,7 @@ eden_r08_test(test_mihawk_native_surface_contract)
 eden_r08_test(test_mihawk_submission_timeline)
 eden_r08_test(test_mihawk_capture_fences)
 eden_r08_test(test_mihawk_vulkan_history_barriers)
+eden_r08_test(test_mihawk_post_hud_barriers)
 eden_r08_test(test_mihawk_vulkan_record
     "${EDEN_H}/mihawk_vulkan_stage.cpp"
     "${EDEN_H}/mihawk_vulkan_encoder.cpp")

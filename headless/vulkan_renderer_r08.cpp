@@ -230,10 +230,18 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     }
     Frame* frame = present_manager.GetRenderFrame();
 
+    // Keep Encore's native HUD *out* of MihawkGen inputs. It will be drawn
+    // only AFTER interpolation, on both synthetic and real frames.
+    // HUD baked into guest framebuffer remains inseparable.
+    const bool mihawk_selected =
+        Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 1 &&
+        !framebuffers.empty();
+    const Eden::HudSnapshot postprocess_hud =
+        mihawk_selected ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
     scheduler.RequestOutsideRenderPassOperationContext();
     blit_swapchain.DrawToFrame(device, rasterizer, frame, framebuffers,
                                render_window.GetFramebufferLayout(), present_manager.SwapchainImageCount(),
-                               present_manager.SwapchainImageViewFormat(), true);
+                               present_manager.SwapchainImageViewFormat(), !mihawk_selected);
 
 #ifdef HAS_LSFG
     // User-selected LSFG only. Do not mix a legacy generator with MihawkGen
@@ -261,8 +269,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     Eden::FeatureLab::MihawkCapturePermit r08_capture{};
     Frame* r08_synthetic = nullptr;
     bool r08_generated = false;
-    if (Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 1 &&
-        !framebuffers.empty()) {
+    if (mihawk_selected) {
         // Zero steady-clock reads or interpolation allocations for the
         // default OFF path. Source IDs count actual compositor callbacks,
         // not generated frames or the game's requested VI cadence.
@@ -315,7 +322,6 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
                         Eden::Display::output_millihertz.load(std::memory_order_relaxed);
                     const unsigned actual_hz = actual_output_mhz > 0
                         ? static_cast<unsigned>((actual_output_mhz + 500) / 1000) : 0U;
-                    const bool native_hud_visible = Eden::GetVulkanHud().width != 0;
                     // Observed compositor interval, NEVER the guest's requested VI
                     // clock or the synthetic display-frame counter.
                     const unsigned observed_fps = r08_delta_ns >= 8'000'000 &&
@@ -335,7 +341,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
                         .output_hz = actual_hz,
                         .display_mode_verified =
                             actual_output_mhz > 0 && (actual_hz == 60 || actual_hz == 120),
-                        .overlay_changed = native_hud_visible
+                        .overlay_changed = false // Native overlay is applied after FG
                     };
                     const auto decision = mihawk_present_gate.OnRealFrame(
                         Eden::FeatureLab::FrameGeneration::MihawkGen, graphics, input);
@@ -380,7 +386,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
                                     .present_image_transfer_dst = true, // RecreateFrame usage
                                     .history_descriptor_slots_fenced = prior_snapshot_fenced,
                                     .present_queue_ordered = true, // same scheduler/queue
-                                    .native_hud_absent = !native_hud_visible,
+                                    .native_hud_absent = true, // absent from input snapshot
                                     .available_present_frames =
                                         static_cast<std::uint8_t>(
                                             std::min<std::size_t>(
@@ -432,6 +438,9 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     // If generated, submit and queue the midpoint FIRST. The original real
     // frame is flushed and queued next. Both use existing PresentManager FIFO.
     if (r08_generated) {
+        // Preserve interpolated pixels with a LOAD render pass, then add
+        // Encore's native HUD. Framebuffer remains valid, no image copy.
+        blit_swapchain.DrawHudOverlay(device, r08_synthetic, postprocess_hud);
         present_manager.ConfirmReservedRenderFrame(r08_synthetic);
         const u64 generated_tick = scheduler.Flush(*r08_synthetic->render_ready);
         if (r08_capture.valid) {
@@ -450,6 +459,10 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         ::Eden::FrameMetrics::OnGeneratedQueued();
     }
 
+    // HUD is always restored on the true frame, including when no midpoint
+    // could be generated; do not deprive the user of diagnostic overlay.
+    if (mihawk_selected)
+        blit_swapchain.DrawHudOverlay(device, frame, postprocess_hud);
     const u64 real_tick = scheduler.Flush(*frame->render_ready);
     if (r08_capture.valid && !r08_generated &&
         mihawk_capture_fences.Commit(

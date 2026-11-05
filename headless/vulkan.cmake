@@ -15,6 +15,10 @@ configure_file("${EDEN_PORT_DIR}/renderer_vulkan_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/renderer_vulkan.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vk_present_manager_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_present_manager.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/window_adapt_pass_r08.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/window_adapt_pass.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_blit_screen.h" COPYONLY)
 file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${EDEN_VULKAN_FORK_FILES})
 # These shaders are build inputs; the five older .inc injections only
@@ -31,8 +35,8 @@ list(REMOVE_ITEM video_sources vulkan_common/vulkan_instance.cpp vulkan_common/v
     renderer_vulkan/vk_present_manager.cpp renderer_vulkan/vk_swapchain.cpp
     renderer_vulkan/vk_query_cache.cpp)
 list(APPEND video_sources "${PORT_BUILD_DIR}/vulkan_instance.cpp" "${PORT_BUILD_DIR}/vulkan_wrapper.cpp"
-    "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${PORT_BUILD_DIR}/vulkan_blit_screen.cpp"
-    "${PORT_BUILD_DIR}/vulkan_window_adapt_pass.cpp" "${PORT_BUILD_DIR}/vulkan_present_layer.cpp"
+    "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${EDEN_PORT_DIR}/vulkan_blit_screen_r08.cpp"
+    "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp" "${PORT_BUILD_DIR}/vulkan_present_layer.cpp"
     "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"
     "${PORT_BUILD_DIR}/vulkan_library.cpp" "${EDEN_PORT_DIR}/vulkan_surface.cpp" "${EDEN_PORT_DIR}/vulkan_allocator.cpp"
     "${PORT_BUILD_DIR}/vulkan_present_manager.cpp" "${PORT_BUILD_DIR}/vulkan_swapchain.cpp"
@@ -61,8 +65,8 @@ set_property(SOURCE
     "${PROJECT_SOURCE_DIR}/src/video_core/video_core.cpp"
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_turbo_mode.cpp"
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/present/frame_gen.cpp"
-    "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp" "${PORT_BUILD_DIR}/vulkan_blit_screen.cpp"
-    "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${PORT_BUILD_DIR}/vulkan_window_adapt_pass.cpp"
+    "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp" "${EDEN_PORT_DIR}/vulkan_blit_screen_r08.cpp"
+    "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_present_manager.h")
 # Existing depfiles name the original header; rebuild all filter consumers once

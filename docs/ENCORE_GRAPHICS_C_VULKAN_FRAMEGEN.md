@@ -309,3 +309,31 @@ avec les shaders de MihawkGen et observé sur écran. Le HUD de l'application
 est bloquant lorsqu'il est visible ; les scores, menus et glyphes *du jeu*
 restent inclus dans la source et peuvent subir du ghosting. Le moteur
 n'est donc pas certifié « 30→60 » ni validé pour une release.
+
+
+### C2.8 — HUD natif séparé du contenu neural
+
+Pour un titre utilisant MihawkGen, le composite du jeu est enregistré
+sans le HUD natif d'Encore. Les copies d'historique et les passes
+neuronales lisent donc l'image *sans* l'overlay natif. Une passe graphique
+distincte DrawHudOverlay dessine ensuite le HUD sur l'image synthétique
+puis sur l'image réelle, avant leur présentation.
+
+La passe supplémentaire a son propre renderpass compatible avec le
+framebuffer original, avec initialLayout GENERAL, finalLayout GENERAL
+et loadOp LOAD, pour ne pas effacer le rendu du jeu ou la frame générée.
+Les barrières après copie d'historique et conversion RGBA vers swapchain
+préparent explicitement les accès COLOR_ATTACHMENT_READ/WRITE.
+Un mode sans génération garde lui aussi le HUD natif visible ; aucun
+masquage permanent du compteur de FPS n'est demandé.
+
+C'est une séparation du HUD **de l'application**. L'interface dessinée
+dans les pixels du jeu invité (score de football, menus, éléments 2D)
+reste dans la texture source, sans moyen générique de l'isoler sans
+métadonnées ou vecteurs de mouvement fournis par le jeu.
+
+Les sources versionnées dans le dépôt sont :
+vulkan_window_adapt_r08.cpp, vulkan_blit_screen_r08.cpp et leurs en-têtes.
+La validation hôte passe à 10/10 tests CTest, avec un test des
+transitions/bandes de synchronisation nécessaires au post-HUD.
+La compilation complète et le rendu effectif sur PS5 restent à vérifier.

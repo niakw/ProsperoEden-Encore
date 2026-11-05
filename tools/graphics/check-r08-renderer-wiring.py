@@ -39,8 +39,32 @@ assert "mihawk_native->MarkOutputBlitted();" in fork
 assert "mihawk_present_gate.Reset();" in fork
 assert "Eden::Display::output_millihertz.load" in fork
 assert "std::chrono::steady_clock::now()" in fork
-assert "Eden::GetVulkanHud().width != 0" in fork
-assert ".native_hud_absent = !native_hud_visible" in fork
+assert "mihawk_selected ? Eden::GetVulkanHud()" in fork
+assert "blit_swapchain.DrawHudOverlay(device, r08_synthetic, postprocess_hud);" in fork
+assert "blit_swapchain.DrawHudOverlay(device, frame, postprocess_hud);" in fork
+assert ".native_hud_absent = true" in fork
+overlay_src = read("headless/vulkan_window_adapt_r08.cpp")
+overlay_hdr = read("headless/window_adapt_pass_r08.h")
+blit_src = read("headless/vulkan_blit_screen_r08.cpp")
+assert "CreateWrappedRenderPass(device, frame_format, VK_IMAGE_LAYOUT_GENERAL)" in overlay_src
+assert "hud_overlay_render_pass" in overlay_src and "hud_overlay_pipeline" in overlay_hdr
+assert "DrawHudOverlay" in blit_src
+assert "vulkan_window_adapt_r08.cpp" in cmake
+assert "vulkan_blit_screen_r08.cpp" in cmake
+assert "window_adapt_pass_r08.h" in cmake
+assert "vk_blit_screen_r08.h" in cmake
+assert "const bool mihawk_selected" in fork
+assert "present_manager.Present(r08_synthetic);" in fork
+assert "present_manager.Present(frame);" in fork
+assert "DrawToFrame(device, rasterizer, frame, framebuffers," in fork
+assert "present_manager.SwapchainImageViewFormat(), !mihawk_selected" in fork
+assert "VK_IMAGE_LAYOUT_GENERAL);" in overlay_src
+assert "BeginRenderPass(cmdbuf, rp, fb, size);" in overlay_src
+assert "cmdbuf.EndRenderPass();" in overlay_src
+assert "cmdbuf.ClearAttachments" not in overlay_src[overlay_src.index("void WindowAdaptPass::DrawHudOverlay("):overlay_src.index("VkDescriptorSetLayout WindowAdaptPass::GetDescriptorSetLayout()")]
+
+
+assert ".native_hud_absent = true" in fork
 assert "Eden::Display::game_millihertz.load" not in fork
 assert "scheduler.Finish();" in fork and "mihawk_native.reset();" in fork
 assert "std::unique_ptr<Eden::FeatureLab::MihawkNativeSession>" in header

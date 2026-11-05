@@ -123,7 +123,8 @@ MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& r) noexcep
 
     const VkImageMemoryBarrier synthetic_ready = AfterGeneratedBlit(r.synthetic_present);
     vkCmdPipelineBarrier(r.cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT |
+                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
                          0, nullptr, 0, nullptr, 1, &synthetic_ready);
     return MihawkRecordResult::Recorded;
 }

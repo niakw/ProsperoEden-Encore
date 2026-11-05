@@ -62,7 +62,9 @@ constexpr HistoryBarriers AfterHistoryCopy(
     return {
         MakeImageBarrier(real_image,
                          VK_ACCESS_TRANSFER_READ_BIT,
-                         0U,
+                         VK_ACCESS_TRANSFER_READ_BIT |
+                             VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                          VK_IMAGE_LAYOUT_GENERAL),
         MakeImageBarrier(history_image,
@@ -71,7 +73,8 @@ constexpr HistoryBarriers AfterHistoryCopy(
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT |
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     };
 }
 
@@ -113,7 +116,9 @@ constexpr HistoryBarriers BeforeGeneratedBlit(
 constexpr VkImageMemoryBarrier AfterGeneratedBlit(VkImage synthetic_present_image) noexcept {
     return MakeImageBarrier(synthetic_present_image,
                             VK_ACCESS_TRANSFER_WRITE_BIT,
-                            VK_ACCESS_TRANSFER_READ_BIT,
+                            VK_ACCESS_TRANSFER_READ_BIT |
+                                VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_GENERAL);
 }

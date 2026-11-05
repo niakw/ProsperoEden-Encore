@@ -598,11 +598,11 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_frame_generation)
         {
-            // MihawkGen / FSR 3 / LSFG are not active in the shipping native
-            // renderer. Never let a menu setting masquerade as generated FPS.
-            say(tr(kFramegenUnavailable), true);
-            cue(Cue::error);
-            return;
+            // Save the selected method. The Vulkan renderer uses actual
+            // runtime capabilities; choosing a method never fabricates FPS.
+            prefs_.frame_generation = (prefs_.frame_generation + step + 4) % 4;
+            if (prefs_.frame_generation)
+                say(tr(kFramegenUnavailable), true);
         }
         else if (option_ == video_refresh)
         {
@@ -903,7 +903,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             pick(services_.filter_labels(), prefs_.filter),
             percent(prefs_.fsr_sharpness),
             pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing),
-            tr("Off"),
+            prefs_.frame_generation == 0 ? tr("Off") :
+                prefs_.frame_generation == 1 ? "MihawkGen" :
+                prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
             hertz(prefs_.refresh),
         };
         static constexpr const char *kNames[kVideoRows] = {

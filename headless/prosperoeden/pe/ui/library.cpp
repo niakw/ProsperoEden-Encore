@@ -1655,10 +1655,15 @@ void Launcher::press_game(Key key)
     }
     if (option_ == row_frame_generation)
     {
-        // Presentation source and guest-HUD safety must be demonstrated on
-        // console before the title is allowed to enable synthetic frames.
-        say(tr(kFramegenUnavailable), true);
-        cue(Cue::error);
+        GameSettings next = game_settings_;
+        // Default, Off, MihawkGen, FSR 3, LSFG. Runtime handles
+        // actual backend availability independently of the chosen mode.
+        const int step = key == Key::left ? -1 : 1;
+        next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
+        const bool saved = services_.set_game_settings(game.title_id, next);
+        if (saved) { game_settings_ = next; home_settings_cache_.erase(game.title_id); }
+        say(saved ? tr(kFramegenUnavailable) : tr("Could not save. Please try again."), !saved);
+        cue(saved ? Cue::toggle : Cue::error);
         return;
     }
     if (option_ == row_controls)
@@ -1903,7 +1908,13 @@ void Launcher::draw_game(Canvas &c, float open)
             fill(tr("Default ({0})"), {percentage(base_fsr)}),
         game_settings_.anti_aliasing >= 0 ? pick(anti_aliasing, game_settings_.anti_aliasing) :
             fill(tr("Default ({0})"), {pick(anti_aliasing, base_aa)}),
-        tr("Off"),
+        game_settings_.frame_generation < 0 ?
+            fill(tr("Default ({0})"), {prefs_.frame_generation == 0 ? tr("Off") :
+                prefs_.frame_generation == 1 ? "MihawkGen" :
+                prefs_.frame_generation == 2 ? "FSR 3" : "LSFG"}) :
+            game_settings_.frame_generation == 0 ? tr("Off") :
+            game_settings_.frame_generation == 1 ? "MihawkGen" :
+            game_settings_.frame_generation == 2 ? "FSR 3" : "LSFG",
         game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
             fill(tr("Default ({0})"), {hertz(base_refresh)}),
         game_settings_.own_mapping ?
@@ -1955,7 +1966,7 @@ void Launcher::draw_game(Canvas &c, float open)
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const float taken =
-            (row >= row_mods || row == row_frame_generation) ?
+            row >= row_mods ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
                             theme::kSmall, there ? theme::kLimePale : theme::kMeta, 320.0f,
                             Align::right) :

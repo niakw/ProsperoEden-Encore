@@ -217,3 +217,19 @@ La ligne désactivée ne dessine pas de flèches de sélection. Elle partage
 une chaîne traduite avec les 29 catalogues et les textes embarqués FR.
 Le contrôle check-r08-not-enabled.py protège la présence de cette garde
 ainsi que l'absence de linkage production video_core/Mihawk.
+
+### C4.1 — sélection persistante globale et par titre
+
+Les préférences JSON incluent désormais le choix ordonné
+off / mihawkgen / fsr3 / lsfg, avec une surcharge par jeu (-1 hérite du
+global). Le launcher ne confond plus réglage demandé et cadence générée.
+Avant chaque session, main.cpp résout ce choix et le renderer natif peut
+le consulter via Display::frame_generation_method ; la valeur vaut
+toujours Off en mode OpenGL ou lancement de sécurité. La sérialisation
+reste rétrocompatible : les anciennes configurations héritent de Off.
+
+Les sélecteurs de Paramètres > Vidéo et de Bibliothèque > Paramètres du
+jeu conservent les méthodes dans le profil, mais avertissent qu'elles
+ne sont pas encore effectivement disponibles dans le pipeline PS5.
+Les préférences FSR sharpness et anti-aliasing restent désormais intactes
+lors des modifications du menu.

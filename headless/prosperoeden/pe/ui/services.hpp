@@ -166,6 +166,7 @@ struct Preferences
     int fsr_sharpness = 50;
     int anti_aliasing = 1; // 0 none, 1 FXAA, 2 SMAA
     int refresh = 0; // the output while a game runs: 0 60 Hz, 1 120 Hz
+    int frame_generation = 0; // 0 Off, 1 MihawkGen, 2 FSR3, 3 LSFG
     int output = 1;  // Recommended: 1440p
     int performance_profile = 1; // 0 Minimum, 1 Recommended, 2 High, 3 Ultra, 4 Custom
     int controller_layout = 0; // 0 PlayStation, 1 Switch; custom status derives from mapping
@@ -207,6 +208,7 @@ struct GameSettings
     int fsr_sharpness = -1;
     int anti_aliasing = -1;
     int refresh = -1;
+    int frame_generation = -1;
     int performance_profile = -1;
     int controller_layout = -1; // -1 follows global, 0 PlayStation, 1 Switch
     bool own_mapping = false;

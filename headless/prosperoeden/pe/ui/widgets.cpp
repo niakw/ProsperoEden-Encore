@@ -80,14 +80,16 @@ void Backdrop::draw(gfx::DrawList &list, const Textures &textures, float dim) co
     // A single Eden art direction across the PS5 shell, launcher and game-loading transition.
     // The oversized crop drifts by only a few pixels, giving the shell depth without making
     // navigation feel busy.
-    if (textures.backdrop() != 0 && !look().high_contrast)
+    if (textures.backdrop() != 0 && !look().high_contrast &&
+        (look().background == 1 || (look().background == 0 && look().palette == 0)))
     {
         const Rect a = art();
         list.image(textures.backdrop(), a, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite.with_alpha(0.72f));
         list.gradient_rect(screen, 0.0f, Color::rgb(0x07070d, 0.20f), Color::rgb(0x05040b, 0.78f));
     }
 
-    if (!look().high_contrast)
+    if (!look().high_contrast && look().background != 3 &&
+        (look().background != 0 || look().palette != 2))
     {
         const float drift = motion();
         const float violet_x = 330.0f + 42.0f * std::sin(time_ * 0.08f) * drift;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-linked A64 RETAA/RETAB experimental decoder + owner test."""
+"""Archived A64 RETAA/RETAB decoder oracle; production promotes LDAPR only."""
 from __future__ import annotations
 from pathlib import Path
 import os
@@ -16,9 +16,10 @@ DEC=(BASE/"dynarmic/frontend/A64/decoder/a64.inc").read_text()
 HEADER=(BASE/"dynarmic/frontend/A64/decoder/a64.h").read_text()
 
 def main() -> int:
-    if ('option(EDEN_NS2_A64_EXPERIMENTAL' not in CMAKE
-        or 'EDEN_NS2_A64_EXPERIMENTAL OR' not in CMAKE
-        or 'target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1)' not in CMAKE
+    if ('EDEN_NS2_A64_EXPERIMENTAL' in CMAKE
+        or 'set(EDEN_SHARED_NS2_A64_LDAPR ON)' not in CMAKE
+        or 'target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")' not in CMAKE
+        or not (ROOT/"tools/ns2/check_shared_a64_ldapr_host.py").is_file()
         or '#include "./a64.inc"' not in HEADER
         or 'INST(RETA, "RETA", "110101100101111100001M1111111111")' not in DEC
         or 'INST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")' not in DEC
@@ -28,7 +29,7 @@ def main() -> int:
         or 'bool TranslatorVisitor::RETA(' not in BRANCH
         or 'return RET(Reg::R30);' not in BRANCH
         or '#if defined(EDEN_NS2_A64_EXPERIMENTAL)' not in BRANCH):
-        print("RETA decoder/translation or experimental CMake ownership missing",file=sys.stderr)
+        print("Archived RETAA decoder or production LDAPR-only source ownership missing",file=sys.stderr)
         return 2
     compiler=shutil.which("clang++") or shutil.which("g++")
     if not compiler:
@@ -44,7 +45,7 @@ def main() -> int:
             subprocess.run(cmd,check=True)
             subprocess.run([target],check=True,env={**os.environ,"UBSAN_OPTIONS":"halt_on_error=1"})
             print(f"NS2 A64 RETA/LDAPR/LSE opcode decoder table {opt}: PASS")
-    print("Not full Dynarmic JIT/PS5 compilation or PAUTH verification")
+    print("Archived RETAA/LDAPR/LSE decoder only; production selects LDAPR, not PAC/LSE. No PS5 execution proof.")
     return 0
 
 if __name__=="__main__":

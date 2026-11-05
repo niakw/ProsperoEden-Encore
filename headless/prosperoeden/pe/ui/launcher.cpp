@@ -24,6 +24,25 @@ std::string Launcher::process_notified_version_{};
 namespace
 {
 
+// GitHub/transport stays outside the UI and returns status codes. Format
+// user-facing strings on the launcher thread in the selected language.
+std::string LocalizedReleaseStatus(const AppUpdateInfo& info)
+{
+    switch (info.state) {
+    case AppUpdateInfo::State::up_to_date:
+        return pe::fill(tr("Already up to date: {0}"), {info.latest_version});
+    case AppUpdateInfo::State::newer_uninstallable:
+        return pe::fill(tr("New Eden Encore release {0}; installation is not available yet."),
+                        {info.latest_version});
+    case AppUpdateInfo::State::offline:
+        return tr("GitHub Releases unavailable. You can keep using the launcher.");
+    case AppUpdateInfo::State::incompatible:
+        return tr("No eligible official stable release could be verified.");
+    default:
+        return info.summary;
+    }
+}
+
 constexpr Rect kScreen{0.0f, 0.0f, 1920.0f, 1080.0f};
 const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -581,6 +600,8 @@ void Launcher::update(float dt)
         update_check_.reset();
         if (update_info_.installed_version.empty())
             update_info_.installed_version = version_;
+        // The background worker never calls the catalog or formats a locale.
+        update_info_.summary = LocalizedReleaseStatus(update_info_);
         if (recheck_manual) {
             // The previous response must not masquerade as the forced query.
             // The new task also survives game-entry/recreation of the launcher.

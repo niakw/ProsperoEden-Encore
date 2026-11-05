@@ -59,9 +59,17 @@ msgstr "Se recomandă 8%. Măriți-l pentru stick drift; reduceți-l pentru o ț
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Un fișier NCA din firmware nu poate fi citit. Reinstalează dump-ul de firmware."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "Despre"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "Despre Eden Encore"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "Accent"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "ACCES"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "Accesibilitate"
 
@@ -82,9 +90,17 @@ msgstr "ACCESIBILITATE"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Suplimente: {0}  /  Limbă: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Tot meritul pentru emulatorul Eden le revine dezvoltatorilor și contribuitorilor săi."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "Toate aplicațiile"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "Ultima Versiune: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "Altă limbă"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "Antialiasing"
 
@@ -106,7 +122,27 @@ msgstr "ANTIALIASING"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "Anti-aliasing netezește marginile zimțate. Nici unul nu este cel mai rapid; FXAA este ușor; SMAA acordă prioritate calității imaginii."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "Aspect"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "ASPECT"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "Aplicație"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "APLICAȚIE"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "Aplicație · Actualizări"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "Sunet"
 
@@ -114,14 +150,42 @@ msgstr "Sunet"
 msgid "AUDIO"
 msgstr "SUNET"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "Australia"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "AUTOMAT VERIFICĂ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "Automat Verifică"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "Automat Verifică · Activat"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Înapoi"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "Înapoi · Acasă"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "FUNDAL"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "Fundal"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "Fundal · Animație"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -146,6 +210,10 @@ msgstr "Biliniar este cel mai ușor implicit. AMD FSR este util când se redă s
 msgid "Browse"
 msgstr "Răsfoire"
 
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "Răsfoiește dosare · D-pad / A"
+
 #: pe/ui/library.cpp
 msgid "Browse games"
 msgstr "Răsfoire jocuri"
@@ -154,7 +222,7 @@ msgstr "Răsfoire jocuri"
 msgid "Browse settings"
 msgstr "Răsfoire setări"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "Maparea butoanelor"
 
@@ -178,7 +246,7 @@ msgstr "Maparea butoanelor a fost salvată."
 msgid "BUTTON PROFILE"
 msgstr "PROFIL BUTON"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "Profil de buton"
 
@@ -186,11 +254,15 @@ msgstr "Profil de buton"
 msgid "CACHE"
 msgstr "CACHE"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "Cache"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "Cache: {0} |  Jurnale: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "Anulează"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "Nu se poate citi firmware/ din {0}. Instalează fișierele NCA extrase din firmware."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "Modificare"
 
@@ -212,7 +284,23 @@ msgstr "Schimbați modul consolă pentru acest joc?"
 msgid "Cheats"
 msgstr "Coduri"
 
-#: eden_services.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "Verifică Acum"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "Automat Verifică (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "Verifică GitHub Releases..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (oficial) · Instalare Dezactivat"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "China"
 
@@ -233,23 +321,35 @@ msgstr "Alegere"
 msgid "Choose a game from your library."
 msgstr "Alege un joc din biblioteca ta."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "Temă · Logo · Fundal · Strălucire (Joc: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Alegeți o singură rădăcină pentru chei, firmware, jocuri, actualizări și modificări"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "Alege limba folosită de jocuri"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "Alege · interfață. aplicații / Comenzi — neschimbate."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "Alege · limbă"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "Cerc"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "Clar"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "Șterge memoria cache"
 
@@ -261,7 +361,47 @@ msgstr "Ștergeți memoria cache?"
 msgid "Cleared {0} of cache."
 msgstr "S-a golit {0} din cache."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "Închide"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "Culoare 1 · Albastru"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "Culoare 1 · Verde"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "Culoare 1 · Presetare"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "Culoare 1 · Roșu"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "Culoare 2 · Albastru"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "Culoare 2 · Verde"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "Culoare 2 · Presetare"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "Culoare 2 · Roșu"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "Configurare"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "Confirmă"
 
@@ -269,9 +409,13 @@ msgstr "Confirmă"
 msgid "Confirm this action?"
 msgstr "Confirmați această acțiune?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "Mod consolă"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "Potrivire"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +425,10 @@ msgstr "CONTINUĂ SĂ JOCI"
 msgid "Controller mapping"
 msgstr "Maparea controlerului"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "Profil de controler"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "Profil de controler: {0}"
@@ -289,11 +437,11 @@ msgstr "Profil de controler: {0}"
 msgid "CONTROLLERS"
 msgstr "CONTROLERE"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "Controlere"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "Comenzi"
 
@@ -325,12 +473,12 @@ msgstr "Nu s-a putut salva rădăcina de stocare. Vă rugăm să încercați din
 msgid "Could not save. Please try again."
 msgstr "Nu s-a putut salva. Încearcă din nou."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "Crea"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "Creează folderul"
 
@@ -339,11 +487,11 @@ msgstr "Creează folderul"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "{0} a fost creat. Copiază în el folderul fiecărui mod."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "Credite și configurare"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "Cruce"
 
@@ -351,15 +499,15 @@ msgstr "Cruce"
 msgid "Custom"
 msgstr "Personalizat"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "PS5 personalizat"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "Comutator personalizat"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "Personalizați"
 
@@ -376,7 +524,7 @@ msgid "Data: {0}"
 msgstr "Date: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "Implicit ({0})"
 
@@ -384,7 +532,7 @@ msgstr "Implicit ({0})"
 msgid "DETAILED LOGGING"
 msgstr "ÎNREGISTRARE DETALIATĂ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "Jurnalizare detaliată"
 
@@ -392,7 +540,7 @@ msgstr "Jurnalizare detaliată"
 msgid "Detailed logs on"
 msgstr "Jurnale detaliate activate"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "Diagnosticare"
 
@@ -401,7 +549,7 @@ msgid "DIAGNOSTICS"
 msgstr "DIAGNOSTICARE"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "Andocat"
 
@@ -424,6 +572,10 @@ msgstr "Cartografiere DualSense, calibrare, vibrații și comenzi rapide."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Olandeză"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +606,15 @@ msgstr "Engleză (Regatul Unit)"
 msgid "English (US)"
 msgstr "Engleză (SUA)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "Mărește coperta"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Europa"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "Ieșiți din Eden Encore"
 
@@ -489,6 +645,14 @@ msgstr "Fișiere"
 msgid "FILESYSTEM"
 msgstr "SISTEMUL DE FIȘIERE"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "Umplere"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "Filtru"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "Dimensiunea finală a ieșirii aplicației. Alegeți 1080p pentru o utilizare mai mică a memoriei, 1440p pentru echilibru sau 2160p pentru detalii maxime de ieșire."
@@ -505,7 +669,7 @@ msgstr "FIRMWARE"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "Validarea unui NCA din firmware a eșuat (cod {0}). Verifică dacă firmware-ul și prod.keys sunt compatibile."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "Firmware gata"
 
@@ -517,6 +681,10 @@ msgstr "Datele SystemVersion din firmware lipsesc sau nu pot fi citite. Instalea
 msgid "Fixed Encore folder structure"
 msgstr "S-a rezolvat structura folderului Encore"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "Focalizare · Strălucire"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "FOLDERE"
@@ -526,7 +694,7 @@ msgstr "FOLDERE"
 msgid "FPS OVERLAY"
 msgstr "CONTOR FPS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "Contor FPS"
 
@@ -538,7 +706,7 @@ msgstr "Franceză"
 msgid "French (Canada)"
 msgstr "Franceză (Canada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "Claritate FSR"
 
@@ -563,10 +731,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "Sunetul jocurilor; muzica din meniul PS5 nu se schimbă."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "JOC FUNDAL"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "Joc · Fundal"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "Jocul nu a putut porni: {0} Detalii: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "Răsfoiește dosare · aplicații"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +764,11 @@ msgstr "Scala de randare a jocului urmează profilul selectat. Coborâți-l pent
 msgid "GAME RESOLUTION"
 msgstr "REZOLUȚIA JOCULUI"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "Rezoluția jocului"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "Setări joc"
 
@@ -596,7 +776,7 @@ msgstr "Setări joc"
 msgid "GAME VOLUME"
 msgstr "VOLUM JOC"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "Volum joc"
 
@@ -612,6 +792,10 @@ msgstr "JOCURI"
 msgid "Games and cache"
 msgstr "Jocuri și cache"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "Jocuri găsite"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "Jocurile folosesc această limbă atunci când o oferă; altfel, limba lor implicită. Se aplică la pornirea unui joc."
@@ -619,6 +803,10 @@ msgstr "Jocurile folosesc această limbă atunci când o oferă; altfel, limba l
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "Jocurile pornite vor apărea aici."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +816,21 @@ msgstr "Germană"
 msgid "GETTING STARTED"
 msgstr "PRIMII PAȘI"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · Stare: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "Global ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "Profil global de controler: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "Strălucire (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +841,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "Inițializarea motorului de randare a eșuat. Încearcă alt motor de randare în Setări; vezi stderr.log și eden_log.txt pentru detalii despre driver."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "Portabil"
 
@@ -662,7 +858,7 @@ msgid "HIGH CONTRAST"
 msgstr "CONTRAST RIDICAT"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "Contrast ridicat"
 
@@ -670,8 +866,16 @@ msgstr "Contrast ridicat"
 msgid "Home"
 msgstr "Acasă"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "Imagine · Întunecare"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "Imagine · Scalare"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "Importare"
 
@@ -692,6 +896,14 @@ msgstr "Importat. S-a făcut o copie de rezervă a salvării înlocuite."
 msgid "IN USE"
 msgstr "ÎN UZ"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "INSTALATĂ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "Instalată"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "Stocare internă"
@@ -704,7 +916,7 @@ msgstr "Stocarea internă a fost salvată. Redeschideți Encore pentru a-l folos
 msgid "Italian"
 msgstr "Italiană"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "Japonia"
 
@@ -721,7 +933,15 @@ msgstr "CHEI"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "Chei și firmware: verificările inițiale au reușit. Compatibilitatea fiecărui joc se verifică la pornirea lui."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "Chei găsite"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "Chei lipsă"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "Coreea"
 
@@ -729,7 +949,7 @@ msgstr "Coreea"
 msgid "Korean"
 msgstr "Coreeană"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "Limbă"
 
@@ -746,7 +966,7 @@ msgid "LARGER TEXT"
 msgstr "TEXT MAI MARE"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "Text mai mare"
 
@@ -754,6 +974,18 @@ msgstr "Text mai mare"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "Ultimul joc deschis"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "Mai târziu"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "ULTIMA VERSIUNE"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "Ultima Versiune"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +995,7 @@ msgstr "Pornire joc"
 msgid "LAYOUT"
 msgstr "DISPOSARE"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "Apăsați stick-ul din stânga"
 
@@ -783,6 +1015,18 @@ msgstr "Se încarcă opera de artă"
 msgid "Loading game library..."
 msgstr "Se încarcă biblioteca de jocuri..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "Local Imagine"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "LOGO"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "Logo"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "JURNI"
@@ -790,6 +1034,18 @@ msgstr "JURNI"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "Fă meniul mai ușor de văzut și de urmărit."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "Gestionează"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "Manual"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "Manual Verifică"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1055,7 @@ msgstr "Max. jucători: {0}"
 msgid "MENU SOUNDS"
 msgstr "SUNETE MENIU"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "Sunete meniu"
 
@@ -825,15 +1081,23 @@ msgid "MODS"
 msgstr "MODURI"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "Moduri"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "Mută coperta"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "Multiplayer"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "FĂRĂ SUNET"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "Fără sunet"
 
@@ -855,10 +1119,26 @@ msgstr "Cel mai apropiat"
 msgid "Needs attention"
 msgstr "Necesită atenție"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · Ultima Versiune"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · Instalare: Dezactivat"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "Manual Verifică: Mai târziu."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "După repornire: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · Verifică Acum · Dezactivat"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1152,21 @@ msgstr "Nu s-au găsit fișiere NCA de firmware în {0}."
 msgid "No folders here."
 msgstr "Niciun folder aici."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "Niciun joc găsit"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "Niciun mod"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Acest joc nu are încă moduri. Copiază folderul fiecărui mod în {0}, lângă roms/."
 
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Nu s-au găsit fișiere ROM."
 
@@ -894,23 +1178,35 @@ msgstr "Fără folder roms"
 msgid "No screenshots available"
 msgstr "Nu sunt disponibile capturi de ecran"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "Fundal: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Niciunul"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "Verifică Acum · Dezactivat"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "Nimic de importat"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "Dezactivat"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "Logo (oficial)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "Activat"
 
@@ -924,9 +1220,13 @@ msgid "OPEN"
 msgstr "DESCHIDERE"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "Deschidere"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "Deschide dosare"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1248,7 @@ msgstr "Deschideți spațiul de stocare"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "Deschideți maparea DualSense per joc. Utilizări globale Setări > Comenzi; Personalizat îl înlocuiește numai pentru acest joc."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "Opțiuni"
 
@@ -970,7 +1270,7 @@ msgstr "Patch"
 msgid "Play"
 msgstr "Joacă"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
 
@@ -991,7 +1291,7 @@ msgid "Portuguese (Brazil)"
 msgstr "Portugheză (Brazilia)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Bazat pe Eden"
 
@@ -1071,12 +1371,12 @@ msgid "REDUCE MOTION"
 msgstr "REDUCERE MIȘCARE"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Reducere mișcare"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "Rată de reîmprospătare"
 
@@ -1089,7 +1389,7 @@ msgstr "RATĂ DE REÎMPROSPĂTARE"
 msgid "REGION"
 msgstr "REGIUNE"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "Randare"
 
@@ -1100,6 +1400,10 @@ msgstr "RANDARE"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "Resetează"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "Resetează Temă"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1417,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "Resetați setările personalizate ale acestui joc?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "Rezoluție"
 
@@ -1129,7 +1433,11 @@ msgstr "Restabiliți setările implicite?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "Resetează Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Apăsați stick-ul drept"
 
@@ -1154,7 +1462,7 @@ msgid "Russian"
 msgstr "Rusă"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Salvare Ryujinx găsită"
 
@@ -1176,12 +1484,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "Limitat (cod {0}): doar folderul aplicației"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "Date salvate"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "Folder de salvare găsit"
 
@@ -1198,8 +1506,16 @@ msgstr "Salvat. Un ecran care nu poate afișa 120 Hz rămâne la 60 Hz."
 msgid "Saved. Applies when a game starts."
 msgstr "Salvat. Se aplică la pornirea unui joc."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "Caută Local Fundal..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "Caută GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "Selectare"
 
@@ -1210,6 +1526,10 @@ msgstr "Selectează un joc"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "Selectează un joc pentru a începe"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "Alege · categorii"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1554,7 @@ msgstr "Setări"
 msgid "SETUP"
 msgstr "CONFIGURARE"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "Configurare necesară"
 
@@ -1258,6 +1578,10 @@ msgstr "Afișează FPS live în timpul jocului. Off este mai curat pentru utiliz
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "aplicații · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "Panouri opace, text mai luminos și evidențiere cu contur."
@@ -1274,7 +1598,7 @@ msgstr "Spaniolă"
 msgid "Spanish (Latin America)"
 msgstr "Spaniolă (America Latină)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "Pătrat"
 
@@ -1289,10 +1613,18 @@ msgid "STARTING"
 msgstr "SE PORNEȘTE"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "STARE"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "Stare"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "ZONA MOARTĂ A MANETEI"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "Zona moartă a manetei"
 
@@ -1300,7 +1632,7 @@ msgstr "Zona moartă a manetei"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "Oprește mișcarea fundalului și glisarea ecranelor, aici și pe ecranul de încărcare."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "Stocare"
 
@@ -1324,7 +1656,7 @@ msgstr "Rădăcina de stocare a fost salvată. Redeschideți Encore pentru a-l f
 msgid "Supply your own files"
 msgstr "Folosește propriile fișiere"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "Comutator"
 
@@ -1336,7 +1668,11 @@ msgstr "Comutați cardul"
 msgid "System"
 msgstr "Sistem"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "Setări de sistem"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "Taiwan"
 
@@ -1349,7 +1685,7 @@ msgstr "Thailandeză"
 msgid "THANKS"
 msgstr "MULȚUMIRI"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "Mulțumim întregii comunități de homebrew PS5 și fiecărui dezvoltator ale cărui drivere, instrumente și biblioteci fac Eden Encore posibil."
 
@@ -1365,6 +1701,14 @@ msgstr "Jocul a rămas fără memorie grafică. Micșorează rezoluția în Set�
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Limba folosită de jocuri, atunci când o oferă."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "TEMĂ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "Temă"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1731,16 @@ msgstr "ACEASTA RADINA"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Pentru import, copiază un folder Ryujinx în ryujinx/ sau o salvare în save-import/{0}/, lângă roms/."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "Touchpad"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "Triunghi"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "Activează sau dezactivează"
 
@@ -1404,7 +1748,7 @@ msgstr "Activează sau dezactivează"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "Activează sau dezactivează vibrația DualSense pentru jocuri."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "Ieșire TV"
 
@@ -1430,11 +1774,15 @@ msgstr "SUS"
 msgid "Update {0}"
 msgstr "Actualizare {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · Actualizări (Joc/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "ACTUALIZĂRI, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "Filtru de scalare"
 
@@ -1442,7 +1790,7 @@ msgstr "Filtru de scalare"
 msgid "UPSCALING FILTER"
 msgstr "FILTRU DE SCALARE"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "SUA"
 
@@ -1458,7 +1806,7 @@ msgstr "Folosește această rădăcină"
 msgid "VIBRATION"
 msgstr "VIBRAȚIE"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "Vibrație"
 
@@ -1466,11 +1814,11 @@ msgstr "Vibrație"
 msgid "VIBRATION STRENGTH"
 msgstr "INTENSITATEA VIBRAȚIILOR"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "Intensitatea vibrațiilor"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "Video"
 
@@ -1478,7 +1826,7 @@ msgstr "Video"
 msgid "VIDEO"
 msgstr "VIDEO"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "Presetare video"
 
@@ -1486,8 +1834,12 @@ msgstr "Presetare video"
 msgid "VIDEO PRESET"
 msgstr "PRESETARE VIDEO"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "Volum"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (recomandat)"
 
@@ -1507,6 +1859,14 @@ msgstr "Jocurile tale"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "Următoarea ta aventură"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "Mărește"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "Micșorează"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1934,7 @@ msgid "{0} of {1} mods on"
 msgstr "Moduri activate: {0} din {1}"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "{0} din {1} activate"
 
@@ -1592,171 +1952,3 @@ msgstr "{0}/ (NSP sau XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (un dosar pentru fiecare ID de titlu)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "Mărește coperta"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "Închide"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "Micșorează"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "Mărește"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "Mută coperta"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "Aspect"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "ASPECT"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "TEMĂ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "Temă"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "IMPLICIT"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "PREVIZUALIZARE"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "Setări de sistem"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "Toate aplicațiile"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "Activ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "Configurare"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "Chei găsite"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "Chei lipsă"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "Jocuri găsite"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "Niciun joc găsit"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "Răsfoiește dosare · aplicații"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "Înapoi · Acasă"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "Alege · limbă"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "Alege · categorii"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "aplicații · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "Răsfoiește dosare · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "Acasă · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "Acasă · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "interfață · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "interfață · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "Alege · Encore / Switch. aplicații / Comenzi — neschimbate."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "Alege · interfață. aplicații / Comenzi — neschimbate."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "Despre"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "Multiplayer"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "Volum"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "Profil de controler"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "Cache"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "Gestionează"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "Deschide dosare"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "Filtru"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

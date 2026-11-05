@@ -59,9 +59,17 @@ msgstr "8%가 권장됩니다. 스틱 드리프트를 위해 늘리십시오. �
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "펌웨어 NCA를 읽을 수 없습니다. 펌웨어를 다시 설치하세요."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "정보"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "에덴앙코르 소개"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "강조"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "접근 권한"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "접근성"
 
@@ -82,9 +90,17 @@ msgstr "접근성"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "추가 콘텐츠: {0}  /  언어: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Eden 에뮬레이터의 모든 공로는 개발자와 기여자에게 있습니다."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "모든 소프트웨어"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "최신 버전: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "다른 언어"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "계단 현상 제거"
 
@@ -106,7 +122,27 @@ msgstr "계단 현상 제거"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "앤티앨리어싱은 들쭉날쭉한 가장자리를 부드럽게 만듭니다. 가장 빠른 것은 없습니다. FXAA는 가볍습니다. SMAA는 이미지 품질을 우선시합니다."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "모양"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "모양"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "앱"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "앱"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "앱 · 업데이트"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "오디오"
 
@@ -114,14 +150,42 @@ msgstr "오디오"
 msgid "AUDIO"
 msgstr "오디오"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "호주"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "자동 확인"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "자동 확인"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "자동 확인 · 켜짐"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "뒤로"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "뒤로 · 홈"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "배경"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "배경"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "배경 · 애니메이션"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -146,6 +210,10 @@ msgstr "Bilinear는 가장 가벼운 기본값입니다. AMD FSR은 TV 출력 �
 msgid "Browse"
 msgstr "이동"
 
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "폴더 탐색 · D-pad / A"
+
 #: pe/ui/library.cpp
 msgid "Browse games"
 msgstr "게임 둘러보기"
@@ -154,7 +222,7 @@ msgstr "게임 둘러보기"
 msgid "Browse settings"
 msgstr "설정 둘러보기"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "버튼 매핑"
 
@@ -178,7 +246,7 @@ msgstr "버튼 매핑이 저장되었습니다."
 msgid "BUTTON PROFILE"
 msgstr "버튼 프로필"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "버튼 프로필"
 
@@ -186,11 +254,15 @@ msgstr "버튼 프로필"
 msgid "CACHE"
 msgstr "은닉처"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "캐시"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "캐시: {0} |  로그: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "취소"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "{0}의 firmware/를 읽을 수 없습니다. 추출한 펌웨어 NCA를 설치하세요."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "변경"
 
@@ -212,7 +284,23 @@ msgstr "이 게임의 콘솔 모드를 변경하시겠습니까?"
 msgid "Cheats"
 msgstr "치트"
 
-#: eden_services.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "확인 지금"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "자동 확인 (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "확인 GitHub Releases..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (공식) · 설치 꺼짐"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "중국"
 
@@ -233,23 +321,35 @@ msgstr "선택"
 msgid "Choose a game from your library."
 msgstr "라이브러리에서 게임을 선택하세요."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "테마 · 로고 · 배경 · 빛 효과 (게임: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "키, 펌웨어, 게임, 업데이트 및 모드에 대해 하나의 루트를 선택하세요."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "게임에서 사용할 언어를 선택하세요"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "선택 · 인터페이스. 소프트웨어 / 조작 — 변경 없음."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "선택 · 언어"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "원"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "분명한"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "캐시 지우기"
 
@@ -261,7 +361,47 @@ msgstr "캐시를 삭제하시겠습니까?"
 msgid "Cleared {0} of cache."
 msgstr "캐시 {0}개를 지웠습니다."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "닫기"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "색상 1 · 파랑"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "색상 1 · 초록"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "색상 1 · 사전 설정"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "색상 1 · 빨강"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "색상 2 · 파랑"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "색상 2 · 초록"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "색상 2 · 사전 설정"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "색상 2 · 빨강"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "설정"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "확인"
 
@@ -269,9 +409,13 @@ msgstr "확인"
 msgid "Confirm this action?"
 msgstr "이 작업을 확인하시겠습니까?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "본체 모드"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "맞춤"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +425,10 @@ msgstr "이어서 플레이"
 msgid "Controller mapping"
 msgstr "컨트롤러 매핑"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "컨트롤러 프로필"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "컨트롤러 프로필: {0}"
@@ -289,11 +437,11 @@ msgstr "컨트롤러 프로필: {0}"
 msgid "CONTROLLERS"
 msgstr "컨트롤러"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "컨트롤러"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "조작"
 
@@ -325,12 +473,12 @@ msgstr "저장소 루트를 저장할 수 없습니다. 다시 시도해 주세�
 msgid "Could not save. Please try again."
 msgstr "저장하지 못했습니다. 다시 시도해 주세요."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "만들다"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "폴더 만들기"
 
@@ -339,11 +487,11 @@ msgstr "폴더 만들기"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "{0}을(를) 만들었습니다. 각 모드의 폴더를 그 안에 복사하세요."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "크레딧 및 설정 안내"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "십자가"
 
@@ -351,15 +499,15 @@ msgstr "십자가"
 msgid "Custom"
 msgstr "사용자 지정"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "맞춤형 PS5"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "맞춤형 스위치"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "사용자 정의"
 
@@ -376,7 +524,7 @@ msgid "Data: {0}"
 msgstr "데이터: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "기본값({0})"
 
@@ -384,7 +532,7 @@ msgstr "기본값({0})"
 msgid "DETAILED LOGGING"
 msgstr "자세한 로깅"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "상세 로그"
 
@@ -392,7 +540,7 @@ msgstr "상세 로그"
 msgid "Detailed logs on"
 msgstr "상세 로그 켜짐"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "진단"
 
@@ -401,7 +549,7 @@ msgid "DIAGNOSTICS"
 msgstr "진단"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "TV 모드"
 
@@ -424,6 +572,10 @@ msgstr "DualSense 매핑, 교정, 진동 및 단축키."
 #: settings_store.h
 msgid "Dutch"
 msgstr "네덜란드어"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +606,15 @@ msgstr "영어(영국)"
 msgid "English (US)"
 msgstr "영어(미국)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "표지 확대"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "유럽"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "에덴앙코르 나가기"
 
@@ -489,6 +645,14 @@ msgstr "파일"
 msgid "FILESYSTEM"
 msgstr "파일 시스템"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "채우기"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "필터"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "최종 앱 출력 크기. 메모리 사용량을 줄이려면 1080p를 선택하고, 밸런스를 맞추려면 1440p를, 출력 세부정보를 최대화하려면 2160p를 선택하세요."
@@ -505,7 +669,7 @@ msgstr "펌웨어"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "펌웨어 NCA 검증에 실패했습니다(코드 {0}). 펌웨어와 prod.keys가 서로 맞는지 확인하세요."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "펌웨어 준비됨"
 
@@ -517,6 +681,10 @@ msgstr "펌웨어의 SystemVersion 데이터가 없거나 읽을 수 없습니�
 msgid "Fixed Encore folder structure"
 msgstr "Encore 폴더 구조 수정"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "포커스 · 빛 효과"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "폴더"
@@ -526,7 +694,7 @@ msgstr "폴더"
 msgid "FPS OVERLAY"
 msgstr "FPS 표시"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "FPS 표시"
 
@@ -538,7 +706,7 @@ msgstr "프랑스어"
 msgid "French (Canada)"
 msgstr "프랑스어(캐나다)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "FSR 선명도"
 
@@ -563,10 +731,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "게임 소리입니다. PS5 시스템 메뉴 음악은 바뀌지 않습니다."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "게임 배경"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "게임 · 배경"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "게임을 시작할 수 없습니다: {0} 자세한 내용: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "폴더 탐색 · 소프트웨어"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +764,11 @@ msgstr "게임 렌더링 규모는 선택한 프로필을 따릅니다. 성능�
 msgid "GAME RESOLUTION"
 msgstr "게임 해상도"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "게임 해상도"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "게임 설정"
 
@@ -596,7 +776,7 @@ msgstr "게임 설정"
 msgid "GAME VOLUME"
 msgstr "게임 음량"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "게임 음량"
 
@@ -612,6 +792,10 @@ msgstr "게임"
 msgid "Games and cache"
 msgstr "게임과 캐시"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "게임을 찾음"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "게임이 이 언어를 지원하면 이 언어를, 그렇지 않으면 게임의 기본 언어를 사용합니다. 게임을 시작할 때 적용됩니다."
@@ -619,6 +803,10 @@ msgstr "게임이 이 언어를 지원하면 이 언어를, 그렇지 않으면 
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "실행한 게임이 여기에 표시됩니다."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +816,21 @@ msgstr "독일어"
 msgid "GETTING STARTED"
 msgstr "시작하기"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · 상태: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "글로벌({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "전역 컨트롤러 프로필: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "빛 효과 (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +841,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "그래픽 백엔드를 초기화하지 못했습니다. 설정에서 다른 백엔드를 사용해 보세요. 드라이버 정보는 stderr.log와 eden_log.txt를 참고하세요."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "휴대 모드"
 
@@ -662,7 +858,7 @@ msgid "HIGH CONTRAST"
 msgstr "고대비"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "고대비"
 
@@ -670,8 +866,16 @@ msgstr "고대비"
 msgid "Home"
 msgstr "홈"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "이미지 · 어둡게"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "이미지 · 크기 조절"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "가져오기"
 
@@ -692,6 +896,14 @@ msgstr "가져왔습니다. 대체된 세이브 데이터는 백업했습니다.
 msgid "IN USE"
 msgstr "사용 중"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "설치됨"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "설치됨"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "내부 저장소"
@@ -704,7 +916,7 @@ msgstr "내부 저장소가 저장되었습니다. Encore를 다시 열어 사�
 msgid "Italian"
 msgstr "이탈리아어"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "일본"
 
@@ -721,7 +933,15 @@ msgstr "키"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "키와 펌웨어: 시작 검사를 통과했습니다. 게임별 호환성은 실행할 때 확인합니다."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "키를 찾음"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "키가 없음"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "한국"
 
@@ -729,7 +949,7 @@ msgstr "한국"
 msgid "Korean"
 msgstr "한국어"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "언어"
 
@@ -746,7 +966,7 @@ msgid "LARGER TEXT"
 msgstr "큰 글자"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "큰 글자"
 
@@ -754,6 +974,18 @@ msgstr "큰 글자"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "마지막으로 연 게임"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "나중에"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "최신 버전"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "최신 버전"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +995,7 @@ msgstr "게임 실행"
 msgid "LAYOUT"
 msgstr "공들여 나열한 것"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "왼쪽 스틱 누르기"
 
@@ -783,6 +1015,18 @@ msgstr "작품 로드 중"
 msgid "Loading game library..."
 msgstr "게임 라이브러리 로드 중..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "로컬 이미지"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "로고"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "로고"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "로그"
@@ -790,6 +1034,18 @@ msgstr "로그"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "메뉴를 더 보기 쉽고 따라가기 쉽게 만듭니다."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "관리"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "수동"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "수동 확인"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1055,7 @@ msgstr "최대. 플레이어: {0}"
 msgid "MENU SOUNDS"
 msgstr "메뉴 효과음"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "메뉴 효과음"
 
@@ -825,15 +1081,23 @@ msgid "MODS"
 msgstr "모드"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "모드"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "표지 이동"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "멀티플레이"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "음소거"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "음소거"
 
@@ -855,10 +1119,26 @@ msgstr "니어리스트"
 msgid "Needs attention"
 msgstr "확인 필요"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · 최신 버전"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · 설치: 꺼짐"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "수동 확인: 나중에."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "다음 실행: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · 확인 지금 · 꺼짐"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1152,21 @@ msgstr "{0}에서 펌웨어 NCA를 찾을 수 없습니다."
 msgid "No folders here."
 msgstr "여기에는 폴더가 없습니다."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "게임이 없음"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "모드 없음"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "이 게임에는 아직 모드가 없습니다. 각 모드의 폴더를 roms/ 옆의 {0}에 복사하세요."
 
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "ROM 파일을 찾을 수 없습니다."
 
@@ -894,23 +1178,35 @@ msgstr "roms 폴더 없음"
 msgid "No screenshots available"
 msgstr "사용 가능한 스크린샷이 없습니다."
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "배경: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "없음"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "확인 지금 · 꺼짐"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "가져올 항목 없음"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "끔"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "로고 (공식)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "켬"
 
@@ -924,9 +1220,13 @@ msgid "OPEN"
 msgstr "열기"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "열기"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "폴더 열기"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1248,7 @@ msgstr "오픈 스토리지"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "게임별 DualSense 매핑을 엽니다. 전역에서는 설정 > 컨트롤을 사용합니다. 사용자 정의는 이 게임에서만 이를 재정의합니다."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "옵션"
 
@@ -970,7 +1270,7 @@ msgstr "패치"
 msgid "Play"
 msgstr "플레이"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "플레이스테이션"
 
@@ -991,7 +1291,7 @@ msgid "Portuguese (Brazil)"
 msgstr "포르투갈어(브라질)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Powered by Eden"
 
@@ -1071,12 +1371,12 @@ msgid "REDUCE MOTION"
 msgstr "움직임 줄이기"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "움직임 줄이기"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "주사율"
 
@@ -1089,7 +1389,7 @@ msgstr "주사율"
 msgid "REGION"
 msgstr "지역"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "렌더러"
 
@@ -1100,6 +1400,10 @@ msgstr "렌더러"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "초기화"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "초기화 테마"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1417,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "이 게임의 사용자 정의 설정을 재설정하시겠습니까?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "해상도"
 
@@ -1129,7 +1433,11 @@ msgstr "기본 설정을 복원하시겠습니까?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "초기화 Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "오른쪽 스틱 누르기"
 
@@ -1154,7 +1462,7 @@ msgid "Russian"
 msgstr "러시아어"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Ryujinx 세이브 있음"
 
@@ -1176,12 +1484,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "샌드박스(코드 {0}): 앱 폴더만"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "세이브 데이터"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "세이브 폴더 있음"
 
@@ -1198,8 +1506,16 @@ msgstr "저장했습니다. 120Hz를 지원하지 않는 디스플레이는 60Hz
 msgid "Saved. Applies when a game starts."
 msgstr "저장했습니다. 게임을 시작할 때 적용됩니다."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "검색 로컬 배경..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "검색 GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "선택"
 
@@ -1210,6 +1526,10 @@ msgstr "게임 선택"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "게임을 선택해 시작하세요"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "선택 · 범주"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1554,7 @@ msgstr "설정"
 msgid "SETUP"
 msgstr "설정 상태"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "설정 필요"
 
@@ -1258,6 +1578,10 @@ msgstr "재생하는 동안 실시간 FPS를 표시합니다. Off는 정상적�
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "소프트웨어 · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "불투명한 패널, 더 밝은 글자, 테두리가 있는 강조 표시."
@@ -1274,7 +1598,7 @@ msgstr "스페인어"
 msgid "Spanish (Latin America)"
 msgstr "스페인어(중남미)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "정사각형"
 
@@ -1289,10 +1613,18 @@ msgid "STARTING"
 msgstr "시작 중"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "상태"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "상태"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "스틱 데드존"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "스틱 데드존"
 
@@ -1300,7 +1632,7 @@ msgstr "스틱 데드존"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "배경의 움직임과 화면 슬라이드를 멈춥니다. 로딩 화면에도 적용됩니다."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "저장 공간"
 
@@ -1324,7 +1656,7 @@ msgstr "저장소 루트가 저장되었습니다. Encore를 다시 열어 사�
 msgid "Supply your own files"
 msgstr "파일은 직접 준비하세요"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "스위치"
 
@@ -1336,7 +1668,11 @@ msgstr "카드 전환"
 msgid "System"
 msgstr "체계"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "본체 설정"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "대만"
 
@@ -1349,7 +1685,7 @@ msgstr "태국어"
 msgid "THANKS"
 msgstr "감사의 말"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "전체 PS5 홈브루 커뮤니티와 Eden Encore를 가능하게 해주는 드라이버, 도구 및 라이브러리를 보유한 모든 개발자에게 감사드립니다."
 
@@ -1365,6 +1701,14 @@ msgstr "게임의 그래픽 메모리가 부족합니다. 설정의 비디오(�
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "게임이 지원할 때 사용할 언어."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "테마"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "테마"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1731,16 @@ msgstr "이 루트"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "가져오려면 Ryujinx 폴더를 ryujinx/에, 또는 세이브 데이터를 save-import/{0}/에 복사하세요(roms/ 옆)."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "터치패드"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "삼각형"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "켜기/끄기"
 
@@ -1404,7 +1748,7 @@ msgstr "켜기/끄기"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "게임에 대한 DualSense 진동을 켜거나 끕니다."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "TV 출력"
 
@@ -1430,11 +1774,15 @@ msgstr "위로"
 msgid "Update {0}"
 msgstr "업데이트 {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · 업데이트 (게임/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "업데이트, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "확대 필터"
 
@@ -1442,7 +1790,7 @@ msgstr "확대 필터"
 msgid "UPSCALING FILTER"
 msgstr "확대 필터"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "미국"
 
@@ -1458,7 +1806,7 @@ msgstr "이 루트를 사용하세요"
 msgid "VIBRATION"
 msgstr "진동"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "진동"
 
@@ -1466,11 +1814,11 @@ msgstr "진동"
 msgid "VIBRATION STRENGTH"
 msgstr "진동 강도"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "진동 강도"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "비디오"
 
@@ -1478,7 +1826,7 @@ msgstr "비디오"
 msgid "VIDEO"
 msgstr "비디오"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "비디오 프리셋"
 
@@ -1486,8 +1834,12 @@ msgstr "비디오 프리셋"
 msgid "VIDEO PRESET"
 msgstr "비디오 프리셋"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "음량"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan(권장)"
 
@@ -1507,6 +1859,14 @@ msgstr "내 게임"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "다음 모험"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "확대"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "축소"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1934,7 @@ msgid "{0} of {1} mods on"
 msgstr "모드 {1}개 중 {0}개 켜짐"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "{1}개 중 {0}개 켜짐"
 
@@ -1592,171 +1952,3 @@ msgstr "{0}/(NSP 또는 XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/(타이틀 ID마다 폴더 하나)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "표지 확대"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "닫기"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "축소"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "확대"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "표지 이동"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "모양"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "모양"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "테마"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "테마"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "기본값"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "미리 보기"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "본체 설정"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "모든 소프트웨어"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "사용 중"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "설정"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "키를 찾음"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "키가 없음"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "게임을 찾음"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "게임이 없음"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "폴더 탐색 · 소프트웨어"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "뒤로 · 홈"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "선택 · 언어"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "선택 · 범주"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "소프트웨어 · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "폴더 탐색 · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "홈 · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "홈 · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "인터페이스 · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "인터페이스 · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "선택 · Encore / Switch. 소프트웨어 / 조작 — 변경 없음."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "선택 · 인터페이스. 소프트웨어 / 조작 — 변경 없음."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "정보"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "멀티플레이"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "음량"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "컨트롤러 프로필"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "캐시"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "관리"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "폴더 열기"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "필터"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

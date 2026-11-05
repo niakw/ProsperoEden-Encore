@@ -59,9 +59,17 @@ msgstr "8% が推奨されます。スティックドリフトの場合は値を
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "ファームウェアのNCAを読み込めません。ファームウェアを入れ直してください。"
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "このアプリについて"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "エデンアンコールについて"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "アクセント"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "アクセス"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "アクセシビリティ"
 
@@ -82,9 +90,17 @@ msgstr "アクセシビリティ"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "アドオン：{0}  /  言語：{1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Edenエミュレーターの功績は、すべてその開発者と貢献者のものです。"
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "すべてのソフト"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "最新の状態です: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "別の言語"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "アンチエイリアス"
 
@@ -106,7 +122,27 @@ msgstr "アンチエイリアス"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "アンチエイリアシングにより、ギザギザのエッジが滑らかになります。どれも最速ではありません。 FXAA は軽いです。 SMAAは画質を優先します。"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "外観"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "外観"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "アプリ"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "アプリ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "アプリ · 更新"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "オーディオ"
 
@@ -114,14 +150,42 @@ msgstr "オーディオ"
 msgid "AUDIO"
 msgstr "オーディオ"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "オーストラリア"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "自動 確認"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "自動 確認"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "自動 確認 · オン"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "戻る"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "戻る · ホーム"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "背景"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "背景"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "背景 · アニメーション"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -146,6 +210,10 @@ msgstr "バイリニアは最も軽いデフォルトです。 AMD FSR は、TV 
 msgid "Browse"
 msgstr "移動"
 
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "フォルダーを参照 · D-pad / A"
+
 #: pe/ui/library.cpp
 msgid "Browse games"
 msgstr "ゲームを選ぶ"
@@ -154,7 +222,7 @@ msgstr "ゲームを選ぶ"
 msgid "Browse settings"
 msgstr "設定を選ぶ"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "ボタン割り当て"
 
@@ -178,7 +246,7 @@ msgstr "ボタンのマッピングが保存されました。"
 msgid "BUTTON PROFILE"
 msgstr "ボタンのプロファイル"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "ボタンプロファイル"
 
@@ -186,11 +254,15 @@ msgstr "ボタンプロファイル"
 msgid "CACHE"
 msgstr "キャッシュ"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "キャッシュ"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "キャッシュ: {0} |  ログ: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "{0} の firmware/ を読み込めません。展開したファームウェアのNCAを入れてください。"
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "変更"
 
@@ -212,7 +284,23 @@ msgstr "このゲームのコンソール モードを変更しますか?"
 msgid "Cheats"
 msgstr "チート"
 
-#: eden_services.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "確認 今すぐ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "自動 確認 (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "確認 GitHub Releases..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (公式) · インストール オフ"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "中国"
 
@@ -233,23 +321,35 @@ msgstr "選択"
 msgid "Choose a game from your library."
 msgstr "ライブラリからゲームを選んでください。"
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "テーマ · ロゴ · 背景 · 発光 (ゲーム: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "キー、ファームウェア、ゲーム、アップデート、MOD 用に 1 つのルートを選択します"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "ゲームで使う言語を選んでください"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "選択 · 画面. ソフト / 操作 — 変更なし."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "選択 · 言語"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "丸"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "クリア"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "キャッシュを削除"
 
@@ -261,7 +361,47 @@ msgstr "キャッシュをクリアしますか?"
 msgid "Cleared {0} of cache."
 msgstr "{0} のキャッシュをクリアしました。"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "閉じる"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "色 1 · 青"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "色 1 · 緑"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "色 1 · プリセット"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "色 1 · 赤"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "色 2 · 青"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "色 2 · 緑"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "色 2 · プリセット"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "色 2 · 赤"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "設定"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "決定"
 
@@ -269,9 +409,13 @@ msgstr "決定"
 msgid "Confirm this action?"
 msgstr "このアクションを確認しますか?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "本体モード"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "全体表示"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +425,10 @@ msgstr "続きからプレイ"
 msgid "Controller mapping"
 msgstr "コントローラーのマッピング"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "コントローラープロファイル"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "コントローラ プロファイル: {0}"
@@ -289,11 +437,11 @@ msgstr "コントローラ プロファイル: {0}"
 msgid "CONTROLLERS"
 msgstr "コントローラー"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "コントローラー"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "操作"
 
@@ -325,12 +473,12 @@ msgstr "ストレージルートを保存できませんでした。もう一度
 msgid "Could not save. Please try again."
 msgstr "保存できませんでした。もう一度お試しください。"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "作成する"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "フォルダーを作成"
 
@@ -339,11 +487,11 @@ msgstr "フォルダーを作成"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "{0} を作成しました。各MODのフォルダーをその中にコピーしてください。"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "クレジットとセットアップ"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "クロス"
 
@@ -351,15 +499,15 @@ msgstr "クロス"
 msgid "Custom"
 msgstr "カスタム"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "カスタムPS5"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "カスタムスイッチ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "カスタマイズ"
 
@@ -376,7 +524,7 @@ msgid "Data: {0}"
 msgstr "データ: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "標準（{0}）"
 
@@ -384,7 +532,7 @@ msgstr "標準（{0}）"
 msgid "DETAILED LOGGING"
 msgstr "詳細なロギング"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "詳細ログ"
 
@@ -392,7 +540,7 @@ msgstr "詳細ログ"
 msgid "Detailed logs on"
 msgstr "詳細ログ オン"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "診断"
 
@@ -401,7 +549,7 @@ msgid "DIAGNOSTICS"
 msgstr "診断"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "TVモード"
 
@@ -424,6 +572,10 @@ msgstr "DualSense マッピング、キャリブレーション、振動、シ�
 #: settings_store.h
 msgid "Dutch"
 msgstr "オランダ語"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +606,15 @@ msgstr "英語（イギリス）"
 msgid "English (US)"
 msgstr "英語（アメリカ）"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "パッケージを拡大"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "ヨーロッパ"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "エグジットエデンアンコール"
 
@@ -489,6 +645,14 @@ msgstr "ファイル"
 msgid "FILESYSTEM"
 msgstr "ファイルシステム"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "画面全体"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "フィルター"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "最終的なアプリの出力サイズ。メモリ使用量を減らすには 1080p、バランスには 1440p、最大の出力詳細には 2160p を選択します。"
@@ -505,7 +669,7 @@ msgstr "ファームウェア"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "ファームウェアのNCAを検証できませんでした（コード {0}）。ファームウェアとprod.keysが対応しているか確認してください。"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "ファームウェア準備完了"
 
@@ -517,6 +681,10 @@ msgstr "ファームウェアのSystemVersionデータがないか、読み込�
 msgid "Fixed Encore folder structure"
 msgstr "Encore のフォルダー構造を修正"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "フォーカス · 発光"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "フォルダー"
@@ -526,7 +694,7 @@ msgstr "フォルダー"
 msgid "FPS OVERLAY"
 msgstr "FPS表示"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "FPS表示"
 
@@ -538,7 +706,7 @@ msgstr "フランス語"
 msgid "French (Canada)"
 msgstr "フランス語（カナダ）"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "FSRのシャープネス"
 
@@ -563,10 +731,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "ゲームの音量です。PS5のシステムメニューの音楽は変わりません。"
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "ゲーム 背景"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "ゲーム · 背景"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "ゲームを起動できませんでした：{0} 詳細：{1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "フォルダーを参照 · ソフト"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +764,11 @@ msgstr "ゲームのレンダリング スケールは、選択したプロフ�
 msgid "GAME RESOLUTION"
 msgstr "ゲーム解像度"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "ゲーム解像度"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "ゲーム設定"
 
@@ -596,7 +776,7 @@ msgstr "ゲーム設定"
 msgid "GAME VOLUME"
 msgstr "ゲーム音量"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "ゲーム音量"
 
@@ -612,6 +792,10 @@ msgstr "ゲーム"
 msgid "Games and cache"
 msgstr "ゲームとキャッシュ"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "ゲームを検出"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "対応しているゲームはこの言語を使い、そうでないゲームはそのゲームの標準の言語を使います。ゲームの起動時に適用されます。"
@@ -619,6 +803,10 @@ msgstr "対応しているゲームはこの言語を使い、そうでないゲ
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "起動したゲームがここに表示されます。"
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +816,21 @@ msgstr "ドイツ語"
 msgid "GETTING STARTED"
 msgstr "はじめに"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases に接続できません。ランチャーは引き続き使用できます。"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "グローバル ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "グローバル コントローラー プロファイル: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "発光 (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +841,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "グラフィックスの初期化に失敗しました。設定で別の方式を試してください。ドライバーの詳細は stderr.log と eden_log.txt にあります。"
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "携帯モード"
 
@@ -662,7 +858,7 @@ msgid "HIGH CONTRAST"
 msgstr "ハイコントラスト"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "ハイコントラスト"
 
@@ -670,8 +866,16 @@ msgstr "ハイコントラスト"
 msgid "Home"
 msgstr "ホーム"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "画像 · 暗さ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "画像 · 拡大縮小"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "インポート"
 
@@ -692,6 +896,14 @@ msgstr "インポートしました。置き換えたセーブデータはバッ
 msgid "IN USE"
 msgstr "使用中"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "インストール済み"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "インストール済み"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "内部ストレージ"
@@ -704,7 +916,7 @@ msgstr "内部ストレージが保存されました。 Encore を再度開い�
 msgid "Italian"
 msgstr "イタリア語"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "日本"
 
@@ -721,7 +933,15 @@ msgstr "キー"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "キーとファームウェア：起動時の確認に合格しました。ゲームごとの対応は起動時に確認されます。"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "キーを確認"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "キーがありません"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "韓国"
 
@@ -729,7 +949,7 @@ msgstr "韓国"
 msgid "Korean"
 msgstr "韓国語"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "言語"
 
@@ -746,7 +966,7 @@ msgid "LARGER TEXT"
 msgstr "文字を大きく"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "文字を大きく"
 
@@ -754,6 +974,18 @@ msgstr "文字を大きく"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "最後に開いたゲーム"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "後で"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "最新 バージョン"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "最新 バージョン"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +995,7 @@ msgstr "ゲームを起動"
 msgid "LAYOUT"
 msgstr "レイアウト"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "左スティック押し込み"
 
@@ -783,6 +1015,18 @@ msgstr "アートワークをロードしています"
 msgid "Loading game library..."
 msgstr "ゲームライブラリを読み込み中..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "ローカル 画像"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "ロゴ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "ロゴ"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "ログ"
@@ -790,6 +1034,18 @@ msgstr "ログ"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "メニューを見やすく、わかりやすくします。"
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "管理"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "手動"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "手動 確認"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1055,7 @@ msgstr "最大。プレイヤー: {0}"
 msgid "MENU SOUNDS"
 msgstr "メニュー音"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "メニュー音"
 
@@ -825,15 +1081,23 @@ msgid "MODS"
 msgstr "MOD"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "MOD"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "カバーを移動"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "マルチプレイ"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "ミュート"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "ミュート"
 
@@ -855,10 +1119,26 @@ msgstr "ニアレスト"
 msgid "Needs attention"
 msgstr "要確認"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · 最新 バージョン"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} の新しいバージョンがあります。インストールはまだ利用できません。"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "手動 確認: 後で."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "次回の起動：{0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "有効な公式安定版を確認できませんでした。"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1152,21 @@ msgstr "{0} にファームウェアのNCAが見つかりません。"
 msgid "No folders here."
 msgstr "ここにフォルダーはありません。"
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "ゲームがありません"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "MODなし"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "このゲームのMODはまだありません。各MODのフォルダーを roms/ の隣の {0} にコピーしてください。"
 
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "ROMファイルが見つかりません。"
 
@@ -894,23 +1178,35 @@ msgstr "roms フォルダーなし"
 msgid "No screenshots available"
 msgstr "利用可能なスクリーンショットはありません"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "背景: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "なし"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "確認 今すぐ · オフ"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "インポートするものがありません"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "オフ"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "ロゴ (公式)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "オン"
 
@@ -924,9 +1220,13 @@ msgid "OPEN"
 msgstr "開く"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "開く"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "フォルダーを開く"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1248,7 @@ msgstr "オープンストレージ"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "ゲームごとの DualSense マッピングを開きます。グローバルでは、[設定] > [コントロール] を使用します。カスタムはこのゲームに対してのみオーバーライドします。"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "オプション"
 
@@ -970,7 +1270,7 @@ msgstr "パッチ"
 msgid "Play"
 msgstr "プレイ"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "プレイステーション"
 
@@ -991,7 +1291,7 @@ msgid "Portuguese (Brazil)"
 msgstr "ポルトガル語（ブラジル）"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Powered by Eden"
 
@@ -1071,12 +1371,12 @@ msgid "REDUCE MOTION"
 msgstr "動きを減らす"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "動きを減らす"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "リフレッシュレート"
 
@@ -1089,7 +1389,7 @@ msgstr "リフレッシュレート"
 msgid "REGION"
 msgstr "地域"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "レンダラー"
 
@@ -1100,6 +1400,10 @@ msgstr "レンダラー"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "リセット"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "リセット テーマ"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1417,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "このゲームのカスタム設定をリセットしますか?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "解像度"
 
@@ -1129,7 +1433,11 @@ msgstr "デフォルト設定を復元しますか?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "リセット Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "右スティック押し込み"
 
@@ -1154,7 +1462,7 @@ msgid "Russian"
 msgstr "ロシア語"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Ryujinxのセーブデータあり"
 
@@ -1176,12 +1484,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "サンドボックス（コード {0}）：アプリのフォルダーのみ"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "セーブデータ"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "セーブフォルダーあり"
 
@@ -1198,8 +1506,16 @@ msgstr "保存しました。120 Hzに対応していないディスプレイで
 msgid "Saved. Applies when a game starts."
 msgstr "保存しました。ゲームの起動時に適用されます。"
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "検索 ローカル 背景..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "検索 GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "決定"
 
@@ -1210,6 +1526,10 @@ msgstr "ゲームを選ぶ"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "ゲームを選んで始めましょう"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "選択 · カテゴリー"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1554,7 @@ msgstr "設定"
 msgid "SETUP"
 msgstr "セットアップ"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "セットアップが必要です"
 
@@ -1258,6 +1578,10 @@ msgstr "プレイ中にライブ FPS を表示します。通常の使用では�
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "ソフト · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "不透明なパネル、明るい文字、枠付きのハイライト。"
@@ -1274,7 +1598,7 @@ msgstr "スペイン語"
 msgid "Spanish (Latin America)"
 msgstr "スペイン語（ラテンアメリカ）"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "四角"
 
@@ -1289,10 +1613,18 @@ msgid "STARTING"
 msgstr "起動中"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "状態"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "状態"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "スティックのデッドゾーン"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "スティックのデッドゾーン"
 
@@ -1300,7 +1632,7 @@ msgstr "スティックのデッドゾーン"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "背景の動きと画面のスライドを止めます。ロード画面にも適用されます。"
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "ストレージ"
 
@@ -1324,7 +1656,7 @@ msgstr "ストレージルートが保存されました。 Encore を再度開�
 msgid "Supply your own files"
 msgstr "ファイルはご自身で用意してください"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "スイッチ"
 
@@ -1336,7 +1668,11 @@ msgstr "スイッチカード"
 msgid "System"
 msgstr "システム"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "本体設定"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "台湾"
 
@@ -1349,7 +1685,7 @@ msgstr "タイ語"
 msgid "THANKS"
 msgstr "謝辞"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "PS5 自作コミュニティ全体と、Eden Encore を可能にするドライバー、ツール、ライブラリを開発したすべての開発者の皆様に感謝します。"
 
@@ -1365,6 +1701,14 @@ msgstr "ゲームのグラフィックスメモリが不足しました。設定
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "対応しているゲームで使う言語。"
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "テーマ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "テーマ"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1731,16 @@ msgstr "この根"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "インポートするには、Ryujinxのフォルダーを ryujinx/ に、またはセーブデータを save-import/{0}/ にコピーしてください（roms/ と同じ場所）。"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "タッチパッド"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "三角形"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "オン/オフ"
 
@@ -1404,7 +1748,7 @@ msgstr "オン/オフ"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "ゲームの DualSense 振動をオンまたはオフにします。"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "テレビ出力"
 
@@ -1430,11 +1774,15 @@ msgstr "上へ"
 msgid "Update {0}"
 msgstr "アップデート {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · 更新 (ゲーム/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "アップデート、DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "拡大フィルター"
 
@@ -1442,7 +1790,7 @@ msgstr "拡大フィルター"
 msgid "UPSCALING FILTER"
 msgstr "拡大フィルター"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "アメリカ"
 
@@ -1458,7 +1806,7 @@ msgstr "このルートを使用します"
 msgid "VIBRATION"
 msgstr "振動"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "振動"
 
@@ -1466,11 +1814,11 @@ msgstr "振動"
 msgid "VIBRATION STRENGTH"
 msgstr "振動の強さ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "振動の強さ"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "ビデオ"
 
@@ -1478,7 +1826,7 @@ msgstr "ビデオ"
 msgid "VIDEO"
 msgstr "ビデオ"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "映像プリセット"
 
@@ -1486,8 +1834,12 @@ msgstr "映像プリセット"
 msgid "VIDEO PRESET"
 msgstr "映像プリセット"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "音量"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan（推奨）"
 
@@ -1507,6 +1859,14 @@ msgstr "あなたのゲーム"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "次の冒険へ"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "拡大"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "縮小"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1934,7 @@ msgid "{0} of {1} mods on"
 msgstr "MOD {1}個中{0}個オン"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "{1}個中{0}個オン"
 
@@ -1592,171 +1952,3 @@ msgstr "{0}/（NSPまたはXCI）"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/（タイトルIDごとに1フォルダー）"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "パッケージを拡大"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "閉じる"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "縮小"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "拡大"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "カバーを移動"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "外観"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "外観"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "テーマ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "テーマ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "既定"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "プレビュー"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "本体設定"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "すべてのソフト"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "使用中"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "設定"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "キーを確認"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "キーがありません"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "ゲームを検出"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "ゲームがありません"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "フォルダーを参照 · ソフト"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "戻る · ホーム"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "選択 · 言語"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "選択 · カテゴリー"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "ソフト · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "フォルダーを参照 · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "ホーム · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "ホーム · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "画面 · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "画面 · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "選択 · Encore / Switch. ソフト / 操作 — 変更なし."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "選択 · 画面. ソフト / 操作 — 変更なし."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "このアプリについて"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "マルチプレイ"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "音量"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "コントローラープロファイル"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "キャッシュ"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "管理"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "フォルダーを開く"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "フィルター"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

@@ -59,9 +59,17 @@ msgstr "Συνιστάται 8%. Αυξήστε το για μετατόπιση
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Δεν είναι δυνατή η ανάγνωση ενός NCA του firmware. Εγκαταστήστε ξανά το firmware."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "Σχετικά"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "Σχετικά με το Eden Encore"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "Έμφαση"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "ΠΡΟΣΒΑΣΗ"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "Προσβασιμότητα"
 
@@ -82,9 +90,17 @@ msgstr "ΠΡΟΣΒΑΣΙΜΟΤΗΤΑ"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Πρόσθετα: {0}  /  Γλώσσα: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Όλα τα εύσημα για τον εξομοιωτή Eden ανήκουν στους προγραμματιστές και τους συνεισφέροντές του."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "Όλο το λογισμικό"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "Τελευταία Έκδοση: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "Άλλη γλώσσα"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "Εξομάλυνση ακμών"
 
@@ -106,7 +122,27 @@ msgstr "ΕΞΟΜΑΛΥΝΣΗ ΑΚΜΩΝ"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "Anti-aliasing λειαίνει τις οδοντωτές άκρες. Κανένα δεν είναι πιο γρήγορο. Το FXAA είναι ελαφρύ. Το SMAA δίνει προτεραιότητα στην ποιότητα της εικόνας."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "Εμφάνιση"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "ΕΜΦΆΝΙΣΗ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "Εφαρμογή"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "ΕΦΑΡΜΟΓΉ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "Εφαρμογή · Ενημερώσεις"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "Ήχος"
 
@@ -114,14 +150,42 @@ msgstr "Ήχος"
 msgid "AUDIO"
 msgstr "ΗΧΟΣ"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "Αυστραλία"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "ΑΥΤΌΜΑΤΟ ΈΛΕΓΧΟΣ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "Αυτόματο Έλεγχος"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "Αυτόματο Έλεγχος · Ενεργό"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Πίσω"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "Πίσω · Αρχική"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "ΦΌΝΤΟ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "Φόντο"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "Φόντο · Κίνηση"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -146,6 +210,10 @@ msgstr "Το Bilinear είναι η πιο ελαφριά προεπιλογή. 
 msgid "Browse"
 msgstr "Περιήγηση"
 
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "Περιήγηση φακέλων · D-pad / A"
+
 #: pe/ui/library.cpp
 msgid "Browse games"
 msgstr "Περιήγηση στα παιχνίδια"
@@ -154,7 +222,7 @@ msgstr "Περιήγηση στα παιχνίδια"
 msgid "Browse settings"
 msgstr "Περιήγηση στις ρυθμίσεις"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "Αντιστοίχιση πλήκτρων"
 
@@ -178,7 +246,7 @@ msgstr "Η αντιστοίχιση κουμπιών αποθηκεύτηκε."
 msgid "BUTTON PROFILE"
 msgstr "ΠΡΟΦΙΛ ΚΟΥΜΠΙΟΥ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "Προφίλ κουμπιού"
 
@@ -186,11 +254,15 @@ msgstr "Προφίλ κουμπιού"
 msgid "CACHE"
 msgstr "ΚΡΥΠΤΗ"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "Προσωρινή μνήμη"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "Προσωρινή μνήμη: {0} |  Αρχεία καταγραφής: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "Ακύρωση"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "Δεν είναι δυνατή η ανάγνωση του firmware/ στο {0}. Εγκαταστήστε τα εξαγμένα NCA του firmware."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "Αλλαγή"
 
@@ -212,7 +284,23 @@ msgstr "Αλλαγή λειτουργίας κονσόλας για αυτό τ�
 msgid "Cheats"
 msgstr "Cheats"
 
-#: eden_services.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "Έλεγχος Τώρα"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "Αυτόματο Έλεγχος (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "Έλεγχος GitHub Releases..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (επίσημο) · Εγκατάσταση Ανενεργό"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "Κίνα"
 
@@ -233,23 +321,35 @@ msgstr "Επιλογή"
 msgid "Choose a game from your library."
 msgstr "Επιλέξτε ένα παιχνίδι από τη βιβλιοθήκη σας."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "Θέμα · Λογότυπο · Φόντο · Λάμψη (Παιχνίδι: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Επιλέξτε μία ρίζα για κλειδιά, υλικολογισμικό, παιχνίδια, ενημερώσεις και mods"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "Επιλέξτε τη γλώσσα που χρησιμοποιούν τα παιχνίδια"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "Επιλέξτε · περιβάλλον. λογισμικό / Χειρισμός — χωρίς αλλαγές."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "Επιλέξτε · γλώσσα"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "Κύκλος"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "Σαφής"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "Εκκαθάριση μνήμης cache"
 
@@ -261,7 +361,47 @@ msgstr "Εκκαθάριση προσωρινής μνήμης;"
 msgid "Cleared {0} of cache."
 msgstr "Εκκαθάριση {0} από την προσωρινή μνήμη."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "Κλείσιμο"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "Χρώμα 1 · Μπλε"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "Χρώμα 1 · Πράσινο"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "Χρώμα 1 · Προεπιλογή"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "Χρώμα 1 · Κόκκινο"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "Χρώμα 2 · Μπλε"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "Χρώμα 2 · Πράσινο"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "Χρώμα 2 · Προεπιλογή"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "Χρώμα 2 · Κόκκινο"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "Ρύθμιση"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "Επιβεβαίωση"
 
@@ -269,9 +409,13 @@ msgstr "Επιβεβαίωση"
 msgid "Confirm this action?"
 msgstr "Επιβεβαίωση αυτής της ενέργειας;"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "Λειτουργία κονσόλας"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "Προσαρμογή"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +425,10 @@ msgstr "ΣΥΝΕΧΕΙΑ ΠΑΙΧΝΙΔΙΟΥ"
 msgid "Controller mapping"
 msgstr "Χαρτογράφηση ελεγκτή"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "Προφίλ χειριστηρίου"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "Προφίλ ελεγκτή: {0}"
@@ -289,11 +437,11 @@ msgstr "Προφίλ ελεγκτή: {0}"
 msgid "CONTROLLERS"
 msgstr "ΧΕΙΡΙΣΤΗΡΙΑ"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "Χειριστήρια"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "Χειρισμός"
 
@@ -325,12 +473,12 @@ msgstr "Δεν ήταν δυνατή η αποθήκευση της ρίζας �
 msgid "Could not save. Please try again."
 msgstr "Η αποθήκευση απέτυχε. Δοκιμάστε ξανά."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "Δημιουργώ"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "Δημιουργία φακέλου"
 
@@ -339,11 +487,11 @@ msgstr "Δημιουργία φακέλου"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "Δημιουργήθηκε το {0}. Αντιγράψτε εκεί τον φάκελο κάθε mod."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "Συντελεστές και ρύθμιση"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "Σταυρός"
 
@@ -351,15 +499,15 @@ msgstr "Σταυρός"
 msgid "Custom"
 msgstr "Προσαρμοσμένο"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "Προσαρμοσμένο PS5"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "Προσαρμοσμένος διακόπτης"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "Προσαρμογή"
 
@@ -376,7 +524,7 @@ msgid "Data: {0}"
 msgstr "Δεδομένα: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "Προεπιλογή ({0})"
 
@@ -384,7 +532,7 @@ msgstr "Προεπιλογή ({0})"
 msgid "DETAILED LOGGING"
 msgstr "ΛΕΠΤΟΜΕΡΗΣ ΚΑΤΑΧΩΡΗΣΗ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "Αναλυτική καταγραφή"
 
@@ -392,7 +540,7 @@ msgstr "Αναλυτική καταγραφή"
 msgid "Detailed logs on"
 msgstr "Αναλυτική καταγραφή ενεργή"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "Διαγνωστικά"
 
@@ -401,7 +549,7 @@ msgid "DIAGNOSTICS"
 msgstr "ΔΙΑΓΝΩΣΤΙΚΑ"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "Σε βάση"
 
@@ -424,6 +572,10 @@ msgstr "Αντιστοίχιση, βαθμονόμηση, δόνηση και σ
 #: settings_store.h
 msgid "Dutch"
 msgstr "Ολλανδικά"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +606,15 @@ msgstr "Αγγλικά (ΗΒ)"
 msgid "English (US)"
 msgstr "Αγγλικά (ΗΠΑ)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "Μεγέθυνση εξωφύλλου"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Ευρώπη"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "Βγείτε από το Eden Encore"
 
@@ -489,6 +645,14 @@ msgstr "Αρχεία"
 msgid "FILESYSTEM"
 msgstr "ΣΥΣΤΗΜΑ ΑΡΧΕΙΩΝ"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "Γέμισμα"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "Φίλτρο"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "Τελικό μέγεθος εξόδου εφαρμογής. Επιλέξτε 1080p για χρήση χαμηλότερης μνήμης, 1440p για ισορροπία ή 2160p για μέγιστη λεπτομέρεια εξόδου."
@@ -505,7 +669,7 @@ msgstr "FIRMWARE"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "Η επαλήθευση NCA του firmware απέτυχε (κωδικός {0}). Ελέγξτε ότι το firmware και το prod.keys είναι συμβατά."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "Το firmware είναι έτοιμο"
 
@@ -517,6 +681,10 @@ msgstr "Τα δεδομένα SystemVersion του firmware λείπουν ή δ
 msgid "Fixed Encore folder structure"
 msgstr "Διορθώθηκε η δομή φακέλου Encore"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "Εστίαση · Λάμψη"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "ΦΑΚΕΛΟΙ"
@@ -526,7 +694,7 @@ msgstr "ΦΑΚΕΛΟΙ"
 msgid "FPS OVERLAY"
 msgstr "ΕΝΔΕΙΞΗ FPS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "Ένδειξη FPS"
 
@@ -538,7 +706,7 @@ msgstr "Γαλλικά"
 msgid "French (Canada)"
 msgstr "Γαλλικά (Καναδάς)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "Ευκρίνεια FSR"
 
@@ -563,10 +731,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "Ήχος παιχνιδιού. Η μουσική του μενού συστήματος του PS5 δεν αλλάζει."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "ΠΑΙΧΝΊΔΙ ΦΌΝΤΟ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "Παιχνίδι · Φόντο"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "Το παιχνίδι δεν ξεκίνησε: {0} Λεπτομέρειες: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "Περιήγηση φακέλων · λογισμικό"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +764,11 @@ msgstr "Η κλίμακα απόδοσης παιχνιδιού ακολουθε
 msgid "GAME RESOLUTION"
 msgstr "ΑΝΑΛΥΣΗ ΠΑΙΧΝΙΔΙΟΥ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "Ανάλυση παιχνιδιού"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "Ρυθμίσεις παιχνιδιού"
 
@@ -596,7 +776,7 @@ msgstr "Ρυθμίσεις παιχνιδιού"
 msgid "GAME VOLUME"
 msgstr "ΕΝΤΑΣΗ ΠΑΙΧΝΙΔΙΟΥ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "Ένταση παιχνιδιού"
 
@@ -612,6 +792,10 @@ msgstr "ΠΑΙΧΝΙΔΙΑ"
 msgid "Games and cache"
 msgstr "Παιχνίδια και κρυφή μνήμη"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "Βρέθηκαν παιχνίδια"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "Τα παιχνίδια χρησιμοποιούν αυτή τη γλώσσα όταν τη διαθέτουν, αλλιώς τη δική τους προεπιλογή. Ισχύει όταν ξεκινά ένα παιχνίδι."
@@ -619,6 +803,10 @@ msgstr "Τα παιχνίδια χρησιμοποιούν αυτή τη γλώ�
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "Τα παιχνίδια που ξεκινάτε θα εμφανίζονται εδώ."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +816,21 @@ msgstr "Γερμανικά"
 msgid "GETTING STARTED"
 msgstr "ΠΡΩΤΑ ΒΗΜΑΤΑ"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · Κατάσταση: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "Παγκόσμια ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "Παγκόσμιο προφίλ ελεγκτή: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "Λάμψη (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +841,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "Η αρχικοποίηση του συστήματος γραφικών απέτυχε. Δοκιμάστε άλλο σύστημα στις Ρυθμίσεις. Δείτε τα stderr.log και eden_log.txt για λεπτομέρειες του προγράμματος οδήγησης."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "Φορητή"
 
@@ -662,7 +858,7 @@ msgid "HIGH CONTRAST"
 msgstr "ΥΨΗΛΗ ΑΝΤΙΘΕΣΗ"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "Υψηλή αντίθεση"
 
@@ -670,8 +866,16 @@ msgstr "Υψηλή αντίθεση"
 msgid "Home"
 msgstr "Αρχική"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "Εικόνα · Σκοτείνιασμα"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "Εικόνα · Κλίμακα"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "Εισαγωγή"
 
@@ -692,6 +896,14 @@ msgstr "Έγινε εισαγωγή. Η αποθήκευση που αντικα
 msgid "IN USE"
 msgstr "ΣΕ ΧΡΗΣΗ"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "ΕΓΚΑΤΕΣΤΗΜΈΝΟ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "Εγκατεστημένο"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "Εσωτερική αποθήκευση"
@@ -704,7 +916,7 @@ msgstr "Ο εσωτερικός χώρος αποθήκευσης αποθηκε
 msgid "Italian"
 msgstr "Ιταλικά"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "Ιαπωνία"
 
@@ -721,7 +933,15 @@ msgstr "ΚΛΕΙΔΙΑ"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "Κλειδιά και firmware: οι έλεγχοι εκκίνησης πέτυχαν. Η συμβατότητα κάθε παιχνιδιού ελέγχεται στην εκκίνησή του."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "Βρέθηκαν κλειδιά"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "Λείπουν κλειδιά"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "Κορέα"
 
@@ -729,7 +949,7 @@ msgstr "Κορέα"
 msgid "Korean"
 msgstr "Κορεατικά"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "Γλώσσα"
 
@@ -746,7 +966,7 @@ msgid "LARGER TEXT"
 msgstr "ΜΕΓΑΛΥΤΕΡΟ ΚΕΙΜΕΝΟ"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "Μεγαλύτερο κείμενο"
 
@@ -754,6 +974,18 @@ msgstr "Μεγαλύτερο κείμενο"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "Τελευταίο παιχνίδι"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "Αργότερα"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "ΤΕΛΕΥΤΑΊΑ ΈΚΔΟΣΗ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "Τελευταία Έκδοση"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +995,7 @@ msgstr "Έναρξη παιχνιδιού"
 msgid "LAYOUT"
 msgstr "ΣΧΕΔΙΟ"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "Αριστερό πάτημα ραβδιού"
 
@@ -783,6 +1015,18 @@ msgstr "Φόρτωση έργου τέχνης"
 msgid "Loading game library..."
 msgstr "Φόρτωση βιβλιοθήκης παιχνιδιών..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "Τοπικό Εικόνα"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "ΛΟΓΌΤΥΠΟ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "Λογότυπο"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "ΚΟΜΜΑΤΑ"
@@ -790,6 +1034,18 @@ msgstr "ΚΟΜΜΑΤΑ"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "Κάντε το μενού πιο ευανάγνωστο και πιο εύκολο στην παρακολούθηση."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "Διαχείριση"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "Χειροκίνητο"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "Χειροκίνητο Έλεγχος"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1055,7 @@ msgstr "Μέγ. παίκτες: {0}"
 msgid "MENU SOUNDS"
 msgstr "ΗΧΟΙ ΜΕΝΟΥ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "Ήχοι μενού"
 
@@ -825,15 +1081,23 @@ msgid "MODS"
 msgstr "MODS"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "Mods"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "Μετακίνηση εξωφύλλου"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "Πολλοί παίκτες"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "ΣΙΓΑΣΗ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "Σίγαση"
 
@@ -855,10 +1119,26 @@ msgstr "Πλησιέστερο"
 msgid "Needs attention"
 msgstr "Χρειάζεται προσοχή"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · Τελευταία Έκδοση"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · Εγκατάσταση: Ανενεργό"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "Χειροκίνητο Έλεγχος: Αργότερα."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "Επόμενη εκκίνηση: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · Έλεγχος Τώρα · Ανενεργό"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1152,21 @@ msgstr "Δεν βρέθηκαν NCA του firmware στο {0}."
 msgid "No folders here."
 msgstr "Δεν υπάρχουν φάκελοι εδώ."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "Δεν βρέθηκαν παιχνίδια"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "Κανένα mod"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Δεν υπάρχουν ακόμη mods για αυτό το παιχνίδι. Αντιγράψτε τον φάκελο κάθε mod στο {0}, δίπλα στο roms/."
 
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Δεν βρέθηκαν αρχεία ROM."
 
@@ -894,23 +1178,35 @@ msgstr "Δεν υπάρχει φάκελος roms"
 msgid "No screenshots available"
 msgstr "Δεν υπάρχουν διαθέσιμα στιγμιότυπα οθόνης"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "Φόντο: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Κανένα"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "Έλεγχος Τώρα · Ανενεργό"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "Τίποτα για εισαγωγή"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "Όχι"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "Λογότυπο (επίσημο)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "Ναι"
 
@@ -924,9 +1220,13 @@ msgid "OPEN"
 msgstr "ΑΝΟΙΓΜΑ"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "Άνοιγμα"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "Άνοιγμα φακέλων"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1248,7 @@ msgstr "Ανοιχτή αποθήκευση"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "Ανοίξτε τη χαρτογράφηση DualSense ανά παιχνίδι. Καθολικές χρήσεις Ρυθμίσεις > Στοιχεία ελέγχου. Το Custom το παρακάμπτει μόνο για αυτό το παιχνίδι."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "Επιλογές"
 
@@ -970,7 +1270,7 @@ msgstr "Patch"
 msgid "Play"
 msgstr "Παίξε"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
 
@@ -991,7 +1291,7 @@ msgid "Portuguese (Brazil)"
 msgstr "Πορτογαλικά (Βραζιλία)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Με την ισχύ του Eden"
 
@@ -1071,12 +1371,12 @@ msgid "REDUCE MOTION"
 msgstr "ΜΕΙΩΣΗ ΚΙΝΗΣΗΣ"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Μείωση κίνησης"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "Ρυθμός ανανέωσης"
 
@@ -1089,7 +1389,7 @@ msgstr "ΡΥΘΜΟΣ ΑΝΑΝΕΩΣΗΣ"
 msgid "REGION"
 msgstr "ΠΕΡΙΟΧΗ"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "Απόδοση γραφικών"
 
@@ -1100,6 +1400,10 @@ msgstr "ΑΠΟΔΟΣΗ ΓΡΑΦΙΚΩΝ"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "Επαναφορά"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "Επαναφορά Θέμα"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1417,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "Επαναφορά των προσαρμοσμένων ρυθμίσεων αυτού του παιχνιδιού;"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "Ανάλυση"
 
@@ -1129,7 +1433,11 @@ msgstr "Επαναφορά προεπιλεγμένων ρυθμίσεων;"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "Επαναφορά Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Δεξιά πρέσα ραβδιού"
 
@@ -1154,7 +1462,7 @@ msgid "Russian"
 msgstr "Ρωσικά"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Βρέθηκε αποθήκευση Ryujinx"
 
@@ -1176,12 +1484,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "Περιορισμένη (κωδικός {0}): μόνο ο φάκελος της εφαρμογής"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "Δεδομένα αποθήκευσης"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "Βρέθηκε φάκελος αποθήκευσης"
 
@@ -1198,8 +1506,16 @@ msgstr "Αποθηκεύτηκε. Μια οθόνη χωρίς 120 Hz παραμ
 msgid "Saved. Applies when a game starts."
 msgstr "Αποθηκεύτηκε. Ισχύει όταν ξεκινά ένα παιχνίδι."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "Αναζήτηση Τοπικό Φόντο..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "Αναζήτηση GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "Επιλογή"
 
@@ -1210,6 +1526,10 @@ msgstr "Επιλέξτε παιχνίδι"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "Επιλέξτε ένα παιχνίδι για να ξεκινήσετε"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "Επιλέξτε · κατηγορίες"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1554,7 @@ msgstr "Ρυθμίσεις"
 msgid "SETUP"
 msgstr "ΡΥΘΜΙΣΗ"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "Απαιτείται ρύθμιση"
 
@@ -1258,6 +1578,10 @@ msgstr "Εμφανίζει ζωντανά FPS κατά την αναπαραγω
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "λογισμικό · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "Συμπαγή πλαίσια, φωτεινότερο κείμενο και επισήμανση με περίγραμμα."
@@ -1274,7 +1598,7 @@ msgstr "Ισπανικά"
 msgid "Spanish (Latin America)"
 msgstr "Ισπανικά (Λατινική Αμερική)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "Πλατεία"
 
@@ -1289,10 +1613,18 @@ msgid "STARTING"
 msgstr "ΕΚΚΙΝΗΣΗ"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "ΚΑΤΆΣΤΑΣΗ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "Κατάσταση"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "ΝΕΚΡΗ ΖΩΝΗ ΜΟΧΛΟΥ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "Νεκρή ζώνη μοχλού"
 
@@ -1300,7 +1632,7 @@ msgstr "Νεκρή ζώνη μοχλού"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "Σταματά τη μετατόπιση του φόντου και την ολίσθηση των οθονών, εδώ και στην οθόνη φόρτωσης."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "Αποθήκευση"
 
@@ -1324,7 +1656,7 @@ msgstr "Η ρίζα αποθήκευσης αποθηκεύτηκε. Ανοίξ�
 msgid "Supply your own files"
 msgstr "Χρησιμοποιήστε τα δικά σας αρχεία"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "Διακόπτης"
 
@@ -1336,7 +1668,11 @@ msgstr "Κάρτα διακόπτη"
 msgid "System"
 msgstr "Σύστημα"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "Ρυθμίσεις συστήματος"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "Ταϊβάν"
 
@@ -1349,7 +1685,7 @@ msgstr "Ταϊλανδικά"
 msgid "THANKS"
 msgstr "ΕΥΧΑΡΙΣΤΙΕΣ"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "Χάρη σε ολόκληρη την κοινότητα του PS5 homebrew και σε κάθε προγραμματιστή του οποίου τα προγράμματα οδήγησης, τα εργαλεία και οι βιβλιοθήκες καθιστούν δυνατό το Eden Encore."
 
@@ -1365,6 +1701,14 @@ msgstr "Το παιχνίδι εξάντλησε τη μνήμη γραφικώ�
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Η γλώσσα που χρησιμοποιούν τα παιχνίδια όταν τη διαθέτουν."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "ΘΈΜΑ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "Θέμα"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1731,16 @@ msgstr "ΑΥΤΗ ΤΗ ΡΙΖΑ"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Για εισαγωγή, αντιγράψτε έναν φάκελο Ryujinx στο ryujinx/ ή μια αποθήκευση στο save-import/{0}/, δίπλα στο roms/."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "Touchpad"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "Τρίγωνο"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "Εναλλαγή"
 
@@ -1404,7 +1748,7 @@ msgstr "Εναλλαγή"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "Ενεργοποιεί ή απενεργοποιεί τη δόνηση DualSense για παιχνίδια."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "Έξοδος TV"
 
@@ -1430,11 +1774,15 @@ msgstr "ΠΑΝΩ"
 msgid "Update {0}"
 msgstr "Ενημέρωση {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · Ενημερώσεις (Παιχνίδι/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "ΕΝΗΜΕΡΩΣΕΙΣ, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "Φίλτρο κλιμάκωσης"
 
@@ -1442,7 +1790,7 @@ msgstr "Φίλτρο κλιμάκωσης"
 msgid "UPSCALING FILTER"
 msgstr "ΦΙΛΤΡΟ ΚΛΙΜΑΚΩΣΗΣ"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "ΗΠΑ"
 
@@ -1458,7 +1806,7 @@ msgstr "Χρησιμοποιήστε αυτή τη ρίζα"
 msgid "VIBRATION"
 msgstr "ΔΟΝΗΣΗ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "Δόνηση"
 
@@ -1466,11 +1814,11 @@ msgstr "Δόνηση"
 msgid "VIBRATION STRENGTH"
 msgstr "ΕΝΤΑΣΗ ΔΟΝΗΣΗΣ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "Ένταση δόνησης"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "Βίντεο"
 
@@ -1478,7 +1826,7 @@ msgstr "Βίντεο"
 msgid "VIDEO"
 msgstr "ΒΙΝΤΕΟ"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "Προφίλ βίντεο"
 
@@ -1486,8 +1834,12 @@ msgstr "Προφίλ βίντεο"
 msgid "VIDEO PRESET"
 msgstr "ΠΡΟΦΙΛ ΒΙΝΤΕΟ"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "Ένταση"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (συνιστάται)"
 
@@ -1507,6 +1859,14 @@ msgstr "Τα παιχνίδια σας"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "Η επόμενη περιπέτειά σας"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "Μεγέθυνση"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "Σμίκρυνση"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1934,7 @@ msgid "{0} of {1} mods on"
 msgstr "Ενεργά mods: {0} από {1}"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "{0} από {1} ενεργά"
 
@@ -1592,171 +1952,3 @@ msgstr "{0}/ (NSP ή XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (ένας φάκελος ανά αναγνωριστικό τίτλου)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "Μεγέθυνση εξωφύλλου"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "Κλείσιμο"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "Σμίκρυνση"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "Μεγέθυνση"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "Μετακίνηση εξωφύλλου"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "Εμφάνιση"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "ΕΜΦΆΝΙΣΗ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "ΘΈΜΑ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "Θέμα"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "ΠΡΟΕΠΙΛΟΓΉ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "ΠΡΟΕΠΙΣΚΌΠΗΣΗ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "Ρυθμίσεις συστήματος"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "Όλο το λογισμικό"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "Ενεργό"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "Ρύθμιση"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "Βρέθηκαν κλειδιά"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "Λείπουν κλειδιά"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "Βρέθηκαν παιχνίδια"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "Δεν βρέθηκαν παιχνίδια"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "Περιήγηση φακέλων · λογισμικό"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "Πίσω · Αρχική"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "Επιλέξτε · γλώσσα"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "Επιλέξτε · κατηγορίες"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "λογισμικό · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "Περιήγηση φακέλων · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "Αρχική · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "Αρχική · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "περιβάλλον · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "περιβάλλον · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "Επιλέξτε · Encore / Switch. λογισμικό / Χειρισμός — χωρίς αλλαγές."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "Επιλέξτε · περιβάλλον. λογισμικό / Χειρισμός — χωρίς αλλαγές."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "Σχετικά"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "Πολλοί παίκτες"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "Ένταση"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "Προφίλ χειριστηρίου"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "Προσωρινή μνήμη"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "Διαχείριση"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "Άνοιγμα φακέλων"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "Φίλτρο"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

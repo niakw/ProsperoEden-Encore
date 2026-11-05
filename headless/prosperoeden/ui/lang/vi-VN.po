@@ -59,9 +59,17 @@ msgstr "8% được khuyến nghị. Tăng nó để trôi dạt; giảm nó đ�
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Không đọc được một tệp NCA của firmware. Hãy cài đặt lại bản dump firmware."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "Giới thiệu"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "Giới thiệu về Eden Encore"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "Điểm nhấn"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "TRUY CẬP"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "Trợ năng"
 
@@ -82,9 +90,17 @@ msgstr "TRỢ NĂNG"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Bổ sung: {0}  /  Ngôn ngữ: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Mọi công lao về trình giả lập Eden thuộc về các nhà phát triển và người đóng góp của dự án."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "Tất cả phần mềm"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "Mới nhất Phiên bản: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "Ngôn ngữ khác"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "Khử răng cưa"
 
@@ -106,7 +122,27 @@ msgstr "KHỬ RĂNG CƯA"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "Khử răng cưa làm mịn các cạnh lởm chởm. Không có gì là nhanh nhất; FXAA nhẹ; SMAA ưu tiên chất lượng hình ảnh."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "Giao diện"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "GIAO DIỆN"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "Ứng dụng"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "ỨNG DỤNG"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "Ứng dụng · Cập nhật"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "Âm thanh"
 
@@ -114,14 +150,42 @@ msgstr "Âm thanh"
 msgid "AUDIO"
 msgstr "ÂM THANH"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "Úc"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "TỰ ĐỘNG KIỂM TRA"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "Tự động Kiểm tra"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "Tự động Kiểm tra · Bật"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Quay lại"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "Quay lại · Trang chủ"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "NỀN"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "Nền"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "Nền · Hoạt ảnh"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -146,6 +210,10 @@ msgstr "Song tuyến tính là mặc định nhẹ nhất. AMD FSR rất hữu �
 msgid "Browse"
 msgstr "Duyệt"
 
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "Duyệt thư mục · D-pad / A"
+
 #: pe/ui/library.cpp
 msgid "Browse games"
 msgstr "Duyệt trò chơi"
@@ -154,7 +222,7 @@ msgstr "Duyệt trò chơi"
 msgid "Browse settings"
 msgstr "Duyệt cài đặt"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "Gán nút điều khiển"
 
@@ -178,7 +246,7 @@ msgstr "Đã lưu ánh xạ nút."
 msgid "BUTTON PROFILE"
 msgstr "HỒ SƠ NÚT"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "Cấu hình nút"
 
@@ -186,11 +254,15 @@ msgstr "Cấu hình nút"
 msgid "CACHE"
 msgstr "BỘ NHỚ"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "Bộ nhớ đệm"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "Bộ nhớ đệm: {0} |  Nhật ký: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "Hủy"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "Không đọc được firmware/ trong {0}. Hãy cài đặt các tệp NCA firmware đã trích xuất."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "Thay đổi"
 
@@ -212,7 +284,23 @@ msgstr "Thay đổi chế độ bảng điều khiển cho trò chơi này?"
 msgid "Cheats"
 msgstr "Mã gian lận"
 
-#: eden_services.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "Kiểm tra Bây giờ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "Tự động Kiểm tra (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "Kiểm tra GitHub Releases..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (chính thức) · Cài đặt Tắt"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "Trung Quốc"
 
@@ -233,23 +321,35 @@ msgstr "Chọn"
 msgid "Choose a game from your library."
 msgstr "Chọn một trò chơi từ thư viện của bạn."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "Chủ đề · Logo · Nền · Ánh sáng (Trò chơi: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Chọn một gốc cho khóa, chương trình cơ sở, trò chơi, bản cập nhật và mod"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "Chọn ngôn ngữ dùng trong trò chơi"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "Chọn · giao diện. phần mềm / Điều khiển — không đổi."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "Chọn · ngôn ngữ"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "vòng tròn"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "Xóa"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "Xóa bộ nhớ đệm"
 
@@ -261,7 +361,47 @@ msgstr "Xóa bộ nhớ đệm?"
 msgid "Cleared {0} of cache."
 msgstr "Đã xóa {0} bộ nhớ đệm."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "Đóng"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "Màu 1 · Xanh dương"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "Màu 1 · Xanh lá"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "Màu 1 · Cài sẵn"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "Màu 1 · Đỏ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "Màu 2 · Xanh dương"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "Màu 2 · Xanh lá"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "Màu 2 · Cài sẵn"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "Màu 2 · Đỏ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "Thiết lập"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "Xác nhận"
 
@@ -269,9 +409,13 @@ msgstr "Xác nhận"
 msgid "Confirm this action?"
 msgstr "Xác nhận hành động này?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "Chế độ máy"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "Vừa khung"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +425,10 @@ msgstr "TIẾP TỤC CHƠI"
 msgid "Controller mapping"
 msgstr "Ánh xạ bộ điều khiển"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "Hồ sơ tay cầm"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "Hồ sơ người điều khiển: {0}"
@@ -289,11 +437,11 @@ msgstr "Hồ sơ người điều khiển: {0}"
 msgid "CONTROLLERS"
 msgstr "BỘ ĐIỀU KHIỂN"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "Tay cầm"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "Điều khiển"
 
@@ -325,12 +473,12 @@ msgstr "Không thể lưu root lưu trữ. Vui lòng thử lại."
 msgid "Could not save. Please try again."
 msgstr "Không thể lưu. Vui lòng thử lại."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "Tạo"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "Tạo thư mục"
 
@@ -339,11 +487,11 @@ msgstr "Tạo thư mục"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "Đã tạo {0}. Hãy chép thư mục của từng mod vào đó."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "Ghi công và thiết lập"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "chéo"
 
@@ -351,15 +499,15 @@ msgstr "chéo"
 msgid "Custom"
 msgstr "Tùy chỉnh"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "PS5 tùy chỉnh"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "Công tắc tùy chỉnh"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "Tùy chỉnh"
 
@@ -376,7 +524,7 @@ msgid "Data: {0}"
 msgstr "Dữ liệu: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "Mặc định ({0})"
 
@@ -384,7 +532,7 @@ msgstr "Mặc định ({0})"
 msgid "DETAILED LOGGING"
 msgstr "GHI CHI TIẾT"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "Ghi nhật ký chi tiết"
 
@@ -392,7 +540,7 @@ msgstr "Ghi nhật ký chi tiết"
 msgid "Detailed logs on"
 msgstr "Nhật ký chi tiết: Bật"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "Chẩn đoán"
 
@@ -401,7 +549,7 @@ msgid "DIAGNOSTICS"
 msgstr "CHẨN ĐOÁN"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "TV"
 
@@ -424,6 +572,10 @@ msgstr "Ánh xạ, hiệu chỉnh, rung và phím tắt DualSense."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Tiếng Hà Lan"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +606,15 @@ msgstr "Tiếng Anh (Anh)"
 msgid "English (US)"
 msgstr "Tiếng Anh (Mỹ)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "Phóng to bìa"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Châu Âu"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "Thoát khỏi Eden Encore"
 
@@ -489,6 +645,14 @@ msgstr "Tệp"
 msgid "FILESYSTEM"
 msgstr "HỆ THỐNG TẬP TIN"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "Lấp đầy"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "Bộ lọc"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "Kích thước đầu ra ứng dụng cuối cùng. Chọn 1080p để sử dụng ít bộ nhớ hơn, 1440p để cân bằng hoặc 2160p để có chi tiết đầu ra tối đa."
@@ -505,7 +669,7 @@ msgstr "FIRMWARE"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "Xác thực NCA firmware thất bại (mã {0}). Hãy kiểm tra xem firmware và prod.keys có tương thích không."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "Firmware sẵn sàng"
 
@@ -517,6 +681,10 @@ msgstr "Dữ liệu SystemVersion của firmware bị thiếu hoặc không đ�
 msgid "Fixed Encore folder structure"
 msgstr "Đã sửa cấu trúc thư mục Encore"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "Tập trung · Ánh sáng"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "THƯ MỤC"
@@ -526,7 +694,7 @@ msgstr "THƯ MỤC"
 msgid "FPS OVERLAY"
 msgstr "BỘ ĐẾM FPS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "Bộ đếm FPS"
 
@@ -538,7 +706,7 @@ msgstr "Tiếng Pháp"
 msgid "French (Canada)"
 msgstr "Tiếng Pháp (Canada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "Độ sắc nét FSR"
 
@@ -563,10 +731,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "Âm thanh trò chơi; nhạc menu hệ thống PS5 không thay đổi."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "TRÒ CHƠI NỀN"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "Trò chơi · Nền"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "Không thể mở trò chơi: {0} Chi tiết: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "Duyệt thư mục · phần mềm"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +764,11 @@ msgstr "Tỷ lệ kết xuất trò chơi tuân theo cấu hình đã chọn. H�
 msgid "GAME RESOLUTION"
 msgstr "ĐỘ PHÂN GIẢI TRÒ CHƠI"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "Độ phân giải trò chơi"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "Cài đặt trò chơi"
 
@@ -596,7 +776,7 @@ msgstr "Cài đặt trò chơi"
 msgid "GAME VOLUME"
 msgstr "ÂM LƯỢNG TRÒ CHƠI"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "Âm lượng trò chơi"
 
@@ -612,6 +792,10 @@ msgstr "TRÒ CHƠI"
 msgid "Games and cache"
 msgstr "Trò chơi và bộ nhớ đệm"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "Đã tìm thấy trò chơi"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "Trò chơi dùng ngôn ngữ này nếu có hỗ trợ, nếu không sẽ dùng ngôn ngữ mặc định của trò chơi. Áp dụng khi mở trò chơi."
@@ -619,6 +803,10 @@ msgstr "Trò chơi dùng ngôn ngữ này nếu có hỗ trợ, nếu không s�
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "Trò chơi bạn mở sẽ xuất hiện ở đây."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +816,21 @@ msgstr "Tiếng Đức"
 msgid "GETTING STARTED"
 msgstr "BẮT ĐẦU"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · Trạng thái: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "Toàn cầu ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "Hồ sơ bộ điều khiển toàn cầu: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "Ánh sáng (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +841,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "Khởi tạo trình kết xuất đồ họa thất bại. Hãy thử trình kết xuất khác trong Cài đặt; xem stderr.log và eden_log.txt để biết chi tiết về driver."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "Cầm tay"
 
@@ -662,7 +858,7 @@ msgid "HIGH CONTRAST"
 msgstr "ĐỘ TƯƠNG PHẢN CAO"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "Độ tương phản cao"
 
@@ -670,8 +866,16 @@ msgstr "Độ tương phản cao"
 msgid "Home"
 msgstr "Trang chủ"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "ảnh · Độ tối"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "ảnh · Tỷ lệ"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "Nhập bản lưu"
 
@@ -692,6 +896,14 @@ msgstr "Đã nhập. Bản lưu bị thay thế đã được sao lưu."
 msgid "IN USE"
 msgstr "ĐANG DÙNG"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "ĐÃ CÀI"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "Đã cài"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "Bộ nhớ trong"
@@ -704,7 +916,7 @@ msgstr "Đã lưu bộ nhớ trong. Mở lại Encore để sử dụng."
 msgid "Italian"
 msgstr "Tiếng Ý"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "Nhật Bản"
 
@@ -721,7 +933,15 @@ msgstr "KHÓA"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "Khóa và firmware: đã qua kiểm tra khi khởi động. Tính tương thích của từng trò chơi được kiểm tra khi mở trò chơi."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "Đã tìm thấy khóa"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "Thiếu khóa"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "Hàn Quốc"
 
@@ -729,7 +949,7 @@ msgstr "Hàn Quốc"
 msgid "Korean"
 msgstr "Tiếng Hàn"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "Ngôn ngữ"
 
@@ -746,7 +966,7 @@ msgid "LARGER TEXT"
 msgstr "CHỮ LỚN HƠN"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "Chữ lớn hơn"
 
@@ -754,6 +974,18 @@ msgstr "Chữ lớn hơn"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "Trò chơi mở gần nhất"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "Để sau"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "MỚI NHẤT PHIÊN BẢN"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "Mới nhất Phiên bản"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +995,7 @@ msgstr "Mở trò chơi"
 msgid "LAYOUT"
 msgstr "BỐ CỤC"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "Bấm phím trái"
 
@@ -783,6 +1015,18 @@ msgstr "Đang tải tác phẩm nghệ thuật"
 msgid "Loading game library..."
 msgstr "Đang tải thư viện trò chơi..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "Cục bộ Hình ảnh"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "LOGO"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "Logo"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "NHẬT KÝ"
@@ -790,6 +1034,18 @@ msgstr "NHẬT KÝ"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "Giúp menu dễ nhìn và dễ theo dõi hơn."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "Quản lý"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "Thủ công"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "Thủ công Kiểm tra"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1055,7 @@ msgstr "Tối đa. người chơi: {0}"
 msgid "MENU SOUNDS"
 msgstr "ÂM THANH MENU"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "Âm thanh menu"
 
@@ -825,15 +1081,23 @@ msgid "MODS"
 msgstr "MOD"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "Mod"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "Di chuyển bìa"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "Nhiều người chơi"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "TẮT TIẾNG"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "Tắt tiếng"
 
@@ -855,10 +1119,26 @@ msgstr "Gần nhất"
 msgid "Needs attention"
 msgstr "Cần chú ý"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · Mới nhất Phiên bản"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · Cài đặt: Tắt"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "Thủ công Kiểm tra: Để sau."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "Lần mở tới: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · Kiểm tra Bây giờ · Tắt"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1152,21 @@ msgstr "Không tìm thấy NCA firmware trong {0}."
 msgid "No folders here."
 msgstr "Không có thư mục nào."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "Không tìm thấy trò chơi"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "Không có mod"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Trò chơi này chưa có mod. Hãy chép thư mục của từng mod vào {0}, cạnh roms/."
 
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Không tìm thấy tệp ROM."
 
@@ -894,23 +1178,35 @@ msgstr "Không có thư mục roms"
 msgid "No screenshots available"
 msgstr "Không có ảnh chụp màn hình"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "Nền: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Không có"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "Kiểm tra Bây giờ · Tắt"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "Không có gì để nhập"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "Tắt"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "Logo (chính thức)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "Bật"
 
@@ -924,9 +1220,13 @@ msgid "OPEN"
 msgstr "MỞ"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "Mở"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "Mở thư mục"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1248,7 @@ msgstr "Mở kho lưu trữ"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "Mở bản đồ DualSense cho mỗi trò chơi. Toàn cầu sử dụng Cài đặt > Điều khiển; Tùy chỉnh ghi đè nó chỉ dành cho trò chơi này."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "Tùy chọn"
 
@@ -970,7 +1270,7 @@ msgstr "Bản vá"
 msgid "Play"
 msgstr "Chơi"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
 
@@ -991,7 +1291,7 @@ msgid "Portuguese (Brazil)"
 msgstr "Tiếng Bồ Đào Nha (Brazil)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Chạy trên nền Eden"
 
@@ -1071,12 +1371,12 @@ msgid "REDUCE MOTION"
 msgstr "GIẢM CHUYỂN ĐỘNG"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Giảm chuyển động"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "Tần số quét"
 
@@ -1089,7 +1389,7 @@ msgstr "TẦN SỐ QUÉT"
 msgid "REGION"
 msgstr "KHU VỰC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "Trình kết xuất"
 
@@ -1100,6 +1400,10 @@ msgstr "TRÌNH KẾT XUẤT"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "Đặt lại"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "Đặt lại Chủ đề"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1417,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "Đặt lại cài đặt tùy chỉnh của trò chơi này?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "Độ phân giải"
 
@@ -1129,7 +1433,11 @@ msgstr "Khôi phục cài đặt mặc định?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "Đặt lại Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Bấm phím phải"
 
@@ -1154,7 +1462,7 @@ msgid "Russian"
 msgstr "Tiếng Nga"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Đã tìm thấy bản lưu Ryujinx"
 
@@ -1176,12 +1484,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "Bị giới hạn (mã {0}): chỉ thư mục ứng dụng"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "Dữ liệu đã lưu"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "Đã tìm thấy thư mục lưu"
 
@@ -1198,8 +1506,16 @@ msgstr "Đã lưu. Màn hình không hỗ trợ 120 Hz sẽ giữ ở 60 Hz."
 msgid "Saved. Applies when a game starts."
 msgstr "Đã lưu. Áp dụng khi mở trò chơi."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "Tìm Cục bộ Nền..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "Tìm GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "Chọn"
 
@@ -1210,6 +1526,10 @@ msgstr "Chọn một trò chơi"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "Chọn một trò chơi để bắt đầu"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "Chọn · danh mục"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1554,7 @@ msgstr "Cài đặt"
 msgid "SETUP"
 msgstr "THIẾT LẬP"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "Cần thiết lập"
 
@@ -1258,6 +1578,10 @@ msgstr "Hiển thị FPS trực tiếp trong khi chơi. Tắt sẽ sạch hơn k
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "phần mềm · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "Bảng nền đặc, chữ sáng hơn và vùng chọn có viền."
@@ -1274,7 +1598,7 @@ msgstr "Tiếng Tây Ban Nha"
 msgid "Spanish (Latin America)"
 msgstr "Tiếng Tây Ban Nha (Mỹ Latinh)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "hình vuông"
 
@@ -1289,10 +1613,18 @@ msgid "STARTING"
 msgstr "ĐANG MỞ"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "TRẠNG THÁI"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "Trạng thái"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "VÙNG CHẾT CẦN ĐIỀU KHIỂN"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "Vùng chết cần điều khiển"
 
@@ -1300,7 +1632,7 @@ msgstr "Vùng chết cần điều khiển"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "Dừng hiệu ứng nền trôi và màn hình trượt, tại đây và trên màn hình tải."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "Lưu trữ"
 
@@ -1324,7 +1656,7 @@ msgstr "Đã lưu root lưu trữ. Mở lại Encore để sử dụng."
 msgid "Supply your own files"
 msgstr "Tự chuẩn bị tệp của bạn"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "Chuyển đổi"
 
@@ -1336,7 +1668,11 @@ msgstr "Chuyển đổi thẻ"
 msgid "System"
 msgstr "Hệ thống"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "Cài đặt hệ thống"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "Đài Loan"
 
@@ -1349,7 +1685,7 @@ msgstr "Tiếng Thái"
 msgid "THANKS"
 msgstr "LỜI CẢM ƠN"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "Cảm ơn toàn bộ cộng đồng homebrew PS5 và mọi nhà phát triển có trình điều khiển, công cụ và thư viện giúp Eden Encore trở nên khả thi."
 
@@ -1365,6 +1701,14 @@ msgstr "Trò chơi đã hết bộ nhớ đồ họa. Hãy giảm độ phân gi
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Ngôn ngữ trò chơi sẽ dùng nếu có hỗ trợ."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "CHỦ ĐỀ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "Chủ đề"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1731,16 @@ msgstr "GỐC NÀY"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Để nhập, hãy sao chép thư mục Ryujinx vào ryujinx/ hoặc bản lưu vào save-import/{0}/, cạnh roms/."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "Bàn di chuột"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "Tam giác"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "Bật hoặc tắt"
 
@@ -1404,7 +1748,7 @@ msgstr "Bật hoặc tắt"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "Bật hoặc tắt rung DualSense khi chơi game."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "Xuất hình ra TV"
 
@@ -1430,11 +1774,15 @@ msgstr "LÊN"
 msgid "Update {0}"
 msgstr "Cập nhật {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · Cập nhật (Trò chơi/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "CẬP NHẬT, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "Bộ lọc phóng to"
 
@@ -1442,7 +1790,7 @@ msgstr "Bộ lọc phóng to"
 msgid "UPSCALING FILTER"
 msgstr "BỘ LỌC PHÓNG TO"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "Mỹ"
 
@@ -1458,7 +1806,7 @@ msgstr "Dùng gốc này"
 msgid "VIBRATION"
 msgstr "RUNG"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "Rung"
 
@@ -1466,11 +1814,11 @@ msgstr "Rung"
 msgid "VIBRATION STRENGTH"
 msgstr "CƯỜNG ĐỘ RUNG"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "Cường độ rung"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "Video"
 
@@ -1478,7 +1826,7 @@ msgstr "Video"
 msgid "VIDEO"
 msgstr "VIDEO"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "Cấu hình video"
 
@@ -1486,8 +1834,12 @@ msgstr "Cấu hình video"
 msgid "VIDEO PRESET"
 msgstr "CẤU HÌNH VIDEO"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "Âm lượng"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (khuyên dùng)"
 
@@ -1507,6 +1859,14 @@ msgstr "Trò chơi của bạn"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "Cuộc phiêu lưu tiếp theo"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "Phóng to"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "Thu nhỏ"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1934,7 @@ msgid "{0} of {1} mods on"
 msgstr "Bật {0}/{1} mod"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "Bật {0}/{1}"
 
@@ -1592,171 +1952,3 @@ msgstr "{0}/ (NSP hoặc XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (mỗi ID trò chơi một thư mục)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "Phóng to bìa"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "Đóng"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "Thu nhỏ"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "Phóng to"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "Di chuyển bìa"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "Giao diện"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "GIAO DIỆN"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "CHỦ ĐỀ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "Chủ đề"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "MẶC ĐỊNH"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "XEM TRƯỚC"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "Cài đặt hệ thống"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "Tất cả phần mềm"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "Đang dùng"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "Thiết lập"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "Đã tìm thấy khóa"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "Thiếu khóa"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "Đã tìm thấy trò chơi"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "Không tìm thấy trò chơi"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "Duyệt thư mục · phần mềm"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "Quay lại · Trang chủ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "Chọn · ngôn ngữ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "Chọn · danh mục"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "phần mềm · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "Duyệt thư mục · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "Trang chủ · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "Trang chủ · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "giao diện · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "giao diện · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "Chọn · Encore / Switch. phần mềm / Điều khiển — không đổi."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "Chọn · giao diện. phần mềm / Điều khiển — không đổi."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "Giới thiệu"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "Nhiều người chơi"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "Âm lượng"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "Hồ sơ tay cầm"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "Bộ nhớ đệm"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "Quản lý"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "Mở thư mục"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "Bộ lọc"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

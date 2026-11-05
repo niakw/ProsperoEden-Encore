@@ -59,9 +59,17 @@ msgstr "8% ajánlott. Növelje a botsodródás érdekében; csökkentse az érz�
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "A firmware egyik NCA-fájlja nem olvasható. Telepítsd újra a firmware-dumpot."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "Névjegy"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "Az Eden Encore-ról"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "Kiemelés"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "HOZZÁFÉRÉS"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "Kisegítő lehetőségek"
 
@@ -82,9 +90,17 @@ msgstr "KISEGÍTŐ LEHETŐSÉGEK"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Bővítmények: {0}  /  Nyelv: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Az Eden emulátorért minden elismerés a fejlesztőit és közreműködőit illeti."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "Összes szoftver"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "Legújabb Verzió: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "Másik nyelv"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "Élsimítás"
 
@@ -106,7 +122,27 @@ msgstr "ÉLSIMÍTÁS"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "Az élsimítás kisimítja a szaggatott éleket. Egyik sem a leggyorsabb; Az FXAA könnyű; Az SMAA a képminőséget részesíti előnyben."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "Megjelenés"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "MEGJELENÉS"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "Alkalmazás"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "ALKALMAZÁS"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "Alkalmazás · Frissítések"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "Hang"
 
@@ -114,14 +150,42 @@ msgstr "Hang"
 msgid "AUDIO"
 msgstr "HANG"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "Ausztrália"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "AUTOMATIKUS ELLENŐRZÉS"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "Automatikus Ellenőrzés"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "Automatikus Ellenőrzés · Be"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Vissza"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "Vissza · Kezdőlap"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "HÁTTÉR"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "Háttér"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "Háttér · Animáció"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -146,6 +210,10 @@ msgstr "A bilineáris a legkönnyebb alapértelmezett. Az AMD FSR akkor hasznos,
 msgid "Browse"
 msgstr "Böngészés"
 
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "Mappák böngészése · D-pad / A"
+
 #: pe/ui/library.cpp
 msgid "Browse games"
 msgstr "Játékok böngészése"
@@ -154,7 +222,7 @@ msgstr "Játékok böngészése"
 msgid "Browse settings"
 msgstr "Beállítások böngészése"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "Gombkiosztás"
 
@@ -178,7 +246,7 @@ msgstr "Gombleképezés mentve."
 msgid "BUTTON PROFILE"
 msgstr "GOMBPROFIL"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "Gomb profil"
 
@@ -186,11 +254,15 @@ msgstr "Gomb profil"
 msgid "CACHE"
 msgstr "CACHE"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "Gyorsítótár"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "Gyorsítótár: {0} |  Naplók: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "A firmware/ nem olvasható itt: {0}. Telepítsd a firmware kicsomagolt NCA-fájljait."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "Módosítás"
 
@@ -212,7 +284,23 @@ msgstr "Módosítja a konzol módot ehhez a játékhoz?"
 msgid "Cheats"
 msgstr "Csalások"
 
-#: eden_services.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "Ellenőrzés Most"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "Automatikus Ellenőrzés (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "Ellenőrzés GitHub Releases..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (hivatalos) · Telepítés Ki"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "Kína"
 
@@ -233,23 +321,35 @@ msgstr "Kiválasztás"
 msgid "Choose a game from your library."
 msgstr "Válassz egy játékot a játéktárból."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "Téma · Logó · Háttér · Ragyogás (Játék: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Válasszon egy gyökeret a kulcsokhoz, firmware-hez, játékokhoz, frissítésekhez és modokhoz"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "Válaszd ki a játékok nyelvét"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "Válassz · felület. szoftverek / Irányítás — változatlan."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "Válassz · nyelv"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "Kör"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "Világos"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "Gyorsítótár törlése"
 
@@ -261,7 +361,47 @@ msgstr "Törli a gyorsítótárat?"
 msgid "Cleared {0} of cache."
 msgstr "{0} gyorsítótár törölve."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "Bezárás"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "Szín 1 · Kék"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "Szín 1 · Zöld"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "Szín 1 · Előbeállítás"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "Szín 1 · Piros"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "Szín 2 · Kék"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "Szín 2 · Zöld"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "Szín 2 · Előbeállítás"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "Szín 2 · Piros"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "Beállítás"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "Megerősítés"
 
@@ -269,9 +409,13 @@ msgstr "Megerősítés"
 msgid "Confirm this action?"
 msgstr "Megerősíti ezt a műveletet?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "Konzolmód"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "Illesztés"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +425,10 @@ msgstr "JÁTÉK FOLYTATÁSA"
 msgid "Controller mapping"
 msgstr "Vezérlő leképezés"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "Vezérlőprofil"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "Vezérlőprofil: {0}"
@@ -289,11 +437,11 @@ msgstr "Vezérlőprofil: {0}"
 msgid "CONTROLLERS"
 msgstr "VEZÉRLŐK"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "Vezérlők"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "Irányítás"
 
@@ -325,12 +473,12 @@ msgstr "Nem sikerült menteni a tárhely gyökerét. Kérjük, próbálja újra.
 msgid "Could not save. Please try again."
 msgstr "Nem sikerült menteni. Próbáld újra."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "Teremt"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "Mappa létrehozása"
 
@@ -339,11 +487,11 @@ msgstr "Mappa létrehozása"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "{0} létrehozva. Másold bele az egyes modok mappáját."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "Készítők és előkészítés"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "Kereszt"
 
@@ -351,15 +499,15 @@ msgstr "Kereszt"
 msgid "Custom"
 msgstr "Egyéni"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "Egyedi PS5"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "Egyedi kapcsoló"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "Testreszabás"
 
@@ -376,7 +524,7 @@ msgid "Data: {0}"
 msgstr "Adatok: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "Alapértelmezett ({0})"
 
@@ -384,7 +532,7 @@ msgstr "Alapértelmezett ({0})"
 msgid "DETAILED LOGGING"
 msgstr "RÉSZLETES NAPLÓZÁS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "Részletes naplózás"
 
@@ -392,7 +540,7 @@ msgstr "Részletes naplózás"
 msgid "Detailed logs on"
 msgstr "Részletes naplók bekapcsolva"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "Diagnosztika"
 
@@ -401,7 +549,7 @@ msgid "DIAGNOSTICS"
 msgstr "DIAGNOSZTIKA"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "Dokkolt"
 
@@ -424,6 +572,10 @@ msgstr "DualSense leképezés, kalibrálás, rezgés és parancsikonok."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Holland"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +606,15 @@ msgstr "Angol (UK)"
 msgid "English (US)"
 msgstr "Angol (USA)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "Borító nagyítása"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Európa"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "Lépjen ki az Eden Encore-ból"
 
@@ -489,6 +645,14 @@ msgstr "Fájlok"
 msgid "FILESYSTEM"
 msgstr "FÁJLRENDSZER"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "Kitöltés"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "Szűrő"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "Az alkalmazás végső kimeneti mérete. Válasszon 1080p-t az alacsonyabb memóriahasználathoz, 1440p-t az egyensúlyhoz, vagy 2160p-t a maximális kimeneti részletezéshez."
@@ -505,7 +669,7 @@ msgstr "FIRMWARE"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "A firmware NCA-fájljainak ellenőrzése sikertelen (kód: {0}). Ellenőrizd, hogy a firmware és a prod.keys kompatibilis-e."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "Firmware rendben"
 
@@ -517,6 +681,10 @@ msgstr "A firmware SystemVersion adatai hiányoznak vagy olvashatatlanok. Telep�
 msgid "Fixed Encore folder structure"
 msgstr "Javítva az Encore mappaszerkezet"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "Fókusz · Ragyogás"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "MAPPÁK"
@@ -526,7 +694,7 @@ msgstr "MAPPÁK"
 msgid "FPS OVERLAY"
 msgstr "FPS-KIJELZŐ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "FPS-kijelző"
 
@@ -538,7 +706,7 @@ msgstr "Francia"
 msgid "French (Canada)"
 msgstr "Francia (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "FSR-élesség"
 
@@ -563,10 +731,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "A játékok hangja; a PS5 rendszermenüjének zenéje nem változik."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "JÁTÉK HÁTTÉR"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "Játék · Háttér"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "A játék nem indult el: {0} Részletek: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "Mappák böngészése · szoftverek"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +764,11 @@ msgstr "A játék renderelési skálája követi a kiválasztott profilt. Csökk
 msgid "GAME RESOLUTION"
 msgstr "JÁTÉKFELBONTÁS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "Játékfelbontás"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "Játék beállításai"
 
@@ -596,7 +776,7 @@ msgstr "Játék beállításai"
 msgid "GAME VOLUME"
 msgstr "JÁTÉK HANGEREJE"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "Játék hangereje"
 
@@ -612,6 +792,10 @@ msgstr "JÁTÉKOK"
 msgid "Games and cache"
 msgstr "Játékok és gyorsítótár"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "Játékok megtalálva"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "A játékok ezt a nyelvet használják, ha elérhető bennük, egyébként a saját alapértelmezett nyelvüket. A játék indításakor lép érvénybe."
@@ -619,6 +803,10 @@ msgstr "A játékok ezt a nyelvet használják, ha elérhető bennük, egyébké
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "Az elindított játékok itt jelennek meg."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +816,21 @@ msgstr "Német"
 msgid "GETTING STARTED"
 msgstr "ELSŐ LÉPÉSEK"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · Állapot: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "Globális ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "Globális vezérlőprofil: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "Ragyogás (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +841,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "A renderelő inicializálása sikertelen. Próbálj ki egy másik renderelőt a Beállításokban; az illesztőprogram részleteit lásd az stderr.log és az eden_log.txt fájlban."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "Kézi"
 
@@ -662,7 +858,7 @@ msgid "HIGH CONTRAST"
 msgstr "MAGAS KONTRASZT"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "Magas kontraszt"
 
@@ -670,8 +866,16 @@ msgstr "Magas kontraszt"
 msgid "Home"
 msgstr "Kezdőlap"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "Kép · Sötétítés"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "Kép · Méretezés"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "Importálás"
 
@@ -692,6 +896,14 @@ msgstr "Importálva. A lecserélt mentésről biztonsági másolat készült."
 msgid "IN USE"
 msgstr "HASZNÁLATBAN"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "TELEPÍTETT"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "Telepített"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "Belső tárhely"
@@ -704,7 +916,7 @@ msgstr "A belső tárhely mentve. A használatához nyissa meg újra az Encore-t
 msgid "Italian"
 msgstr "Olasz"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "Japán"
 
@@ -721,7 +933,15 @@ msgstr "KULCSOK"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "Kulcsok és firmware: a kezdeti ellenőrzések sikeresek. Az egyes játékok kompatibilitása indításkor derül ki."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "Kulcsok megtalálva"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "Hiányzó kulcsok"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "Korea"
 
@@ -729,7 +949,7 @@ msgstr "Korea"
 msgid "Korean"
 msgstr "Koreai"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "Nyelv"
 
@@ -746,7 +966,7 @@ msgid "LARGER TEXT"
 msgstr "NAGYOBB SZÖVEG"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "Nagyobb szöveg"
 
@@ -754,6 +974,18 @@ msgstr "Nagyobb szöveg"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "Legutóbb megnyitott játék"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "Később"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "LEGÚJABB VERZIÓ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "Legújabb Verzió"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +995,7 @@ msgstr "Játék indítása"
 msgid "LAYOUT"
 msgstr "ELRENDEZÉS"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "Bal oldali pálcát nyomni"
 
@@ -783,6 +1015,18 @@ msgstr "Műalkotások betöltése"
 msgid "Loading game library..."
 msgstr "Játékkönyvtár betöltése..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "Helyi Kép"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "LOGÓ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "Logó"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "NAPLÓK"
@@ -790,6 +1034,18 @@ msgstr "NAPLÓK"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "Legyen a menü könnyebben látható és követhető."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "Kezelés"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "Kézi"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "Kézi Ellenőrzés"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1055,7 @@ msgstr "Max. játékosok: {0}"
 msgid "MENU SOUNDS"
 msgstr "MENÜHANGOK"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "Menühangok"
 
@@ -825,15 +1081,23 @@ msgid "MODS"
 msgstr "MODOK"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "Modok"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "Borító mozgatása"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "Többjátékos"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "NÉMÍTÁS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "Némítás"
 
@@ -855,10 +1119,26 @@ msgstr "Legközelebbi"
 msgid "Needs attention"
 msgstr "Figyelmet igényel"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · Legújabb Verzió"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · Telepítés: Ki"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "Kézi Ellenőrzés: Később."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "Következő indítás: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · Ellenőrzés Most · Ki"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1152,21 @@ msgstr "Nem található firmware NCA-fájl itt: {0}."
 msgid "No folders here."
 msgstr "Itt nincsenek mappák."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "Nincsenek játékok"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "Nincs mod"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Ehhez a játékhoz még nincs mod. Másold az egyes modok mappáját ide: {0}, a roms/ mellé."
 
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Nem található ROM-fájl."
 
@@ -894,23 +1178,35 @@ msgstr "Nincs roms mappa"
 msgid "No screenshots available"
 msgstr "Nem állnak rendelkezésre képernyőképek"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "Háttér: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Nincs"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "Ellenőrzés Most · Ki"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "Nincs mit importálni"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "Ki"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "Logó (hivatalos)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "Be"
 
@@ -924,9 +1220,13 @@ msgid "OPEN"
 msgstr "MEGNYITÁS"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "Megnyitás"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "Mappák megnyitása"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1248,7 @@ msgstr "Nyitott tárhely"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "Nyissa meg a játékonkénti DualSense leképezést. Globális a Beállítások > Vezérlők menüpontot használja; Az egyéni csak ennél a játéknál írja felül."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "Opciók"
 
@@ -970,7 +1270,7 @@ msgstr "Patch"
 msgid "Play"
 msgstr "Játék"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
 
@@ -991,7 +1291,7 @@ msgid "Portuguese (Brazil)"
 msgstr "Portugál (Brazília)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Az Eden hajtja"
 
@@ -1071,12 +1371,12 @@ msgid "REDUCE MOTION"
 msgstr "MOZGÁS CSÖKKENTÉSE"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Mozgás csökkentése"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "Képfrissítés"
 
@@ -1089,7 +1389,7 @@ msgstr "KÉPFRISSÍTÉS"
 msgid "REGION"
 msgstr "RÉGIÓ"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "Renderelő"
 
@@ -1100,6 +1400,10 @@ msgstr "RENDERELŐ"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "Visszaállítás"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "Visszaállítás Téma"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1417,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "Visszaállítja a játék egyéni beállításait?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "Felbontás"
 
@@ -1129,7 +1433,11 @@ msgstr "Visszaállítja az alapértelmezett beállításokat?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "Visszaállítás Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Jobb gombnyomás"
 
@@ -1154,7 +1462,7 @@ msgid "Russian"
 msgstr "Orosz"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Ryujinx-mentés megvan"
 
@@ -1176,12 +1484,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "Korlátozott (kód: {0}): csak a saját mappa"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "Mentett adatok"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "Mentési mappa megvan"
 
@@ -1198,8 +1506,16 @@ msgstr "Mentve. A 120 Hz-re nem képes kijelző 60 Hz-en marad."
 msgid "Saved. Applies when a game starts."
 msgstr "Mentve. A következő játékindítástól érvényes."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "Keresés Helyi Háttér..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "Keresés GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "Kiválasztás"
 
@@ -1210,6 +1526,10 @@ msgstr "Válassz játékot"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "A kezdéshez válassz egy játékot"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "Válassz · kategóriák"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1554,7 @@ msgstr "Beállítások"
 msgid "SETUP"
 msgstr "ELŐKÉSZÍTÉS"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "Előkészítés szükséges"
 
@@ -1258,6 +1578,10 @@ msgstr "Élő FPS-t mutat játék közben. Az Off tisztább normál használatra
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "szoftverek · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "Átlátszatlan panelek, világosabb szöveg és körvonalas kiemelés."
@@ -1274,7 +1598,7 @@ msgstr "Spanyol"
 msgid "Spanish (Latin America)"
 msgstr "Spanyol (Latin-Amerika)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "Négyzet"
 
@@ -1289,10 +1613,18 @@ msgid "STARTING"
 msgstr "INDÍTÁS"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "ÁLLAPOT"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "Állapot"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "KAR HOLTZÓNÁJA"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "Kar holtzónája"
 
@@ -1300,7 +1632,7 @@ msgstr "Kar holtzónája"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "Leállítja a háttér sodródását és a képernyők csúszását, itt és a betöltőképernyőn is."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "Tárhely"
 
@@ -1324,7 +1656,7 @@ msgstr "Tárhelygyökér mentve. A használatához nyissa meg újra az Encore-t.
 msgid "Supply your own files"
 msgstr "Hozd a saját fájljaidat"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "Kapcsoló"
 
@@ -1336,7 +1668,11 @@ msgstr "Válts kártyát"
 msgid "System"
 msgstr "Rendszer"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "Rendszerbeállítások"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "Tajvan"
 
@@ -1349,7 +1685,7 @@ msgstr "Thai"
 msgid "THANKS"
 msgstr "KÖSZÖNET"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "Köszönet az egész PS5 homebrew közösségnek és minden fejlesztőnek, akinek illesztőprogramjai, eszközei és könyvtárai lehetővé teszik az Eden Encore-t."
 
@@ -1365,6 +1701,14 @@ msgstr "A játék kifogyott a grafikus memóriából. Csökkentsd a felbontást 
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "A játékok nyelve, ha elérhető bennük."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "TÉMA"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "Téma"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1731,16 @@ msgstr "EZ A GYÖKÉR"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Az importáláshoz másolj egy Ryujinx-mappát a ryujinx/ vagy egy mentést a save-import/{0}/ mappába, a roms/ mellé."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "Érintőpad"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "Háromszög"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "Be- vagy kikapcsolás"
 
@@ -1404,7 +1748,7 @@ msgstr "Be- vagy kikapcsolás"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "Be- vagy kikapcsolja a DualSense rezgést a játékokhoz."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "TV-kimenet"
 
@@ -1430,11 +1774,15 @@ msgstr "FEL"
 msgid "Update {0}"
 msgstr "Frissítés {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · Frissítések (Játék/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "FRISSÍTÉSEK, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "Felskálázó szűrő"
 
@@ -1442,7 +1790,7 @@ msgstr "Felskálázó szűrő"
 msgid "UPSCALING FILTER"
 msgstr "FELSKÁLÁZÓ SZŰRŐ"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
 
@@ -1458,7 +1806,7 @@ msgstr "Használja ezt a gyökeret"
 msgid "VIBRATION"
 msgstr "REZGÉS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "Rezgés"
 
@@ -1466,11 +1814,11 @@ msgstr "Rezgés"
 msgid "VIBRATION STRENGTH"
 msgstr "REZGÉS ERŐSSÉGE"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "Rezgés erőssége"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "Videó"
 
@@ -1478,7 +1826,7 @@ msgstr "Videó"
 msgid "VIDEO"
 msgstr "VIDEÓ"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "Videóbeállítási profil"
 
@@ -1486,8 +1834,12 @@ msgstr "Videóbeállítási profil"
 msgid "VIDEO PRESET"
 msgstr "VIDEÓBEÁLLÍTÁSI PROFIL"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "Hangerő"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (ajánlott)"
 
@@ -1507,6 +1859,14 @@ msgstr "Játékaid"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "A következő kalandod"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "Nagyítás"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "Kicsinyítés"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1934,7 @@ msgid "{0} of {1} mods on"
 msgstr "{0} / {1} mod bekapcsolva"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "{0} / {1} bekapcsolva"
 
@@ -1592,171 +1952,3 @@ msgstr "{0}/ (NSP vagy XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (játékazonosítónként egy mappa)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "Borító nagyítása"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "Bezárás"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "Kicsinyítés"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "Nagyítás"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "Borító mozgatása"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "Megjelenés"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "MEGJELENÉS"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "TÉMA"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "Téma"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "ALAPÉRTELMEZETT"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "ELŐNÉZET"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "Rendszerbeállítások"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "Összes szoftver"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "Aktív"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "Beállítás"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "Kulcsok megtalálva"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "Hiányzó kulcsok"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "Játékok megtalálva"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "Nincsenek játékok"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "Mappák böngészése · szoftverek"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "Vissza · Kezdőlap"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "Válassz · nyelv"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "Válassz · kategóriák"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "szoftverek · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "Mappák böngészése · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "Kezdőlap · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "Kezdőlap · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "felület · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "felület · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "Válassz · Encore / Switch. szoftverek / Irányítás — változatlan."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "Válassz · felület. szoftverek / Irányítás — változatlan."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "Névjegy"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "Többjátékos"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "Hangerő"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "Vezérlőprofil"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "Gyorsítótár"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "Kezelés"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "Mappák megnyitása"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "Szűrő"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

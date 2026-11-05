@@ -334,7 +334,45 @@ int main() {
             [&](std::uint64_t,std::size_t) {
                 ++mapped_queries; return true;
             }));
-        assert(mapped_queries==1);
+        assert(mapped_queries==0);
+        // A forged null shader PC is never a valid guest program and must
+        // reject before any GMMU page-table or Vulkan owner work.
+        invalid_launch=*launch;
+        invalid_launch.program_address=0;
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(invalid_launch,
+            [&](std::uint64_t,std::size_t) {
+                ++mapped_queries; return true;
+            }));
+        assert(mapped_queries==0);
+        // Enabled zero-length CBANK is mandatory metadata, not an absent
+        // optional binding. Reject even when the mapper blindly says yes.
+        invalid_launch=*launch;
+        invalid_launch.constant_buffers[0].size=0;
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(invalid_launch,
+            [&](std::uint64_t,std::size_t) {
+                ++mapped_queries; return true;
+            }));
+        assert(mapped_queries==0);
+        // A null GPU backing for an enabled CBUF must never alias mapped
+        // guest address zero or leak into the Vulkan uniform descriptor.
+        invalid_launch=*launch;
+        invalid_launch.constant_buffers[0].gpu_address=0;
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(invalid_launch,
+            [&](std::uint64_t,std::size_t) {
+                ++mapped_queries; return true;
+            }));
+        assert(mapped_queries==0);
+        // Disabled banks are deliberately ignored, irrespective of stale
+        // metadata, while real enabled banks retain exact-span admission.
+        invalid_launch=*launch;
+        invalid_launch.constant_buffers[1].gpu_address=0;
+        invalid_launch.constant_buffers[1].size=0;
+        mapped_queries=0;
+        assert(Tegra::NativeComputeLaunchMapped(invalid_launch,all_mapped));
+        assert(mapped_queries==2);
         // Exceptions from a sparse GMMU reader happen before GPU submission.
         // Reject the launch as unmapped, without propagating into QMD
         // transaction poisoning or publishing any guest completion.

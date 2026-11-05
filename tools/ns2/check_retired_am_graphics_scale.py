@@ -19,7 +19,9 @@ for name in ("application_proxy.cpp", "application_proxy.h",
     assert not (retired / name).exists(), "Obsolete graphics scaling source still active: " + name
 
 assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in cmake
-assert "for retired_ns2_option in EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL; do" in script
+# The single shipping product no longer offers any retired research selector.
+assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in script
+assert "EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL" not in script
 assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in research
 assert "graphics_scaling_parameters_functions" not in host
 assert "EDEN_SHARED_NS2_AM" in cmake

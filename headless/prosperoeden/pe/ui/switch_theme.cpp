@@ -23,6 +23,8 @@ constexpr int kHomeGameSlots = 6;
 constexpr int kHomeAllSoftware = 6;
 constexpr int kHomeShortcutFirst = 7;
 constexpr int kHomeShortcuts = 6;
+constexpr int kHomeUpdate = kHomeShortcutFirst + kHomeShortcuts;
+constexpr int kHomeSettingsHeader = kHomeUpdate + 1;
 constexpr int kLibraryColumns = 6;
 constexpr int kLibraryPageSize = 18;
 constexpr float kSwitchHomeTileSize = 384.0f;
@@ -238,6 +240,14 @@ void Launcher::draw_switch_header(Canvas& c, const char *heading) {
         list.rounded_rect({px-21,py+12,42,17},9,kWhite);
     }
     }
+    // Header actions are reachable by the R1 shoulder button on HOME
+    // and via the existing controller navigation. Never imply "up-to-date" without a checked result.
+    const bool home = heading != nullptr && heading[0] == '\0';
+    draw_update_button(c, 1540.0f, 98.0f,
+                       home && switch_home_focus_ == kHomeUpdate, true);
+    settings_gear(c, 1640.0f, 98.0f, 23.0f, kInk);
+    if (home && switch_home_focus_ == kHomeSettingsHeader)
+        list.ring(1640.0f, 98.0f, 35.0f, 4.0f, kFocus);
     text(c,clock_,1814.0f,baseline(80.0f,50.0f,30.0f),30.0f,kInk,Align::right);
 }
 
@@ -319,14 +329,19 @@ void Launcher::draw_switch_home(Canvas& c) {
 void Launcher::press_switch_home(Key key) {
     const int count=switch_recent_count(home_);
     const int current=count==0 && switch_home_focus_<kHomeShortcutFirst ?
-        kHomeAllSoftware : std::clamp(switch_home_focus_,0,kHomeShortcutFirst+kHomeShortcuts-1);
+        kHomeAllSoftware : std::clamp(switch_home_focus_,0,kHomeSettingsHeader);
     switch(key) {
+    case Key::r1:
+        // Reach the update status from HOME in one action.
+        switch_home_focus_=kHomeUpdate;
+        cue(Cue::focus);
+        return;
     case Key::left:
     case Key::right: {
         const int delta=key==Key::right?1:-1;
         const int next=current>=kHomeShortcutFirst ?
             std::clamp(current+delta,kHomeShortcutFirst,
-                       kHomeShortcutFirst+kHomeShortcuts-1) :
+                       kHomeSettingsHeader) :
             std::clamp((current==kHomeAllSoftware?count:current)+delta,0,count);
         const int candidate=current>=kHomeShortcutFirst?next:
             next==count?kHomeAllSoftware:next;
@@ -378,6 +393,12 @@ void Launcher::press_switch_home(Key key) {
             open(Screen::settings,true);prefs_=services_.preferences();section_.snap(1.0f);
         } else if(current==kHomeShortcutFirst+5) {
             (void)confirm_action(Confirmation::exit_app);
+        } else if (current==kHomeUpdate) {
+            open_update_confirmation();
+        } else if (current==kHomeSettingsHeader) {
+            open(Screen::settings,true);
+            prefs_=services_.preferences();
+            section_.snap(1.0f);
         }
         return;
     default:return;
@@ -765,6 +786,8 @@ void Launcher::draw_switch_confirmation(Canvas& c) {
                 9,32,kBlack.with_alpha(0.18f));
     list.rounded_rect(panel,5,kWhite);
     const char* title=tr("Confirm");
+    if (confirmation_==Confirmation::app_update)
+        title=tr("Application updates");
     if(confirmation_==Confirmation::exit_app)
         title=tr("Exit Eden Encore");
     else if(confirmation_==Confirmation::console_mode)

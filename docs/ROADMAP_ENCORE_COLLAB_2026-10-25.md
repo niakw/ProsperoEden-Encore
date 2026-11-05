@@ -16,7 +16,7 @@ Le suivi distingue maintenant **code intégré**, **tests hôtes**, **PR en brou
 | **R11, R12** | Boîtiers/jaquettes 3D, menu, avatar, navigation et profil en code dans le launcher | Contrôle visuel NS1/NS2, navigation réelle DualSense, langues |
 | **R13** | Prise en charge partielle des formats NSP/XCI/NSZ/XCZ, gestion de contenus additionnels | Qualification selon forme de fichier, erreurs et essais PS5 |
 | **R25** | **[PR #20](https://github.com/niakw/ProsperoEden-Encore/pull/20) brouillon** : cinq thèmes, logos, réglages persistants, images personnelles/quotidiennes, tests hôtes | Ne pas marquer fusionné ; UI sur console, lisibilité et droits médias |
-| **R21** | **PR #20 brouillon** : vérification officielle manuelle/auto, notification, validation de métadonnées et précontrôle ZIP | Installer natif, sauvegarde/reprise, preuve PS5 13.60 |
+| **R21** | **PR #20 brouillon** : vérification manuelle/auto, bouton coloré près des paramètres, confirmation de recherche, moteur de remplacement dossier testé sur hôte, publication FTP ZIP seulement | Téléchargement, assistant PS5 et restauration de bout en bout, preuve PS5 13.60 |
 | **R07, R24** | FSR spatial et réglages AA existants ; contrats partiels | FSR temporel, AA perceptible, métriques et essais matériels |
 | **R14, R16, R19, R20** | Audits, prototypes ou spécifications suivant les sous-systèmes | Implémentation/qualification finale non démontrée |
 
@@ -285,7 +285,7 @@ Garder le protocole LDN indépendant du GPU, des mises à jour de l'application 
 
 | ID | Livrable / périmètre | Assistant — travail et preuves | Utilisateur — intervention | État au suivi |
 |---|---|---|---|---|
-| **R14** | Multijoueur privé LDN `eden-room` compatible mode local wireless des jeux Switch | Adapter Swordpdf multiplayer et pont HLE LDN, chiffrement/auth réseau privé, mot de passe session (pas plaintext disque), UDP borné, DNS/IPv4, reconnection, nettoyage | Fournir si possible seconde instance/console, test partie complète | Audit ; non intégré |
+| **R14** | Multijoueur privé LDN eden-room compatible mode local wireless des jeux Switch | Adapter Swordpdf multiplayer et pont HLE LDN, chiffrement/auth réseau privé, mot de passe session (pas plaintext disque), UDP borné, DNS/IPv4, reconnection, nettoyage | Fournir si possible seconde instance/console, test partie complète | Audit amont et parseur des salons publics avec tests hôtes sur branche PR ; transport LDN et interface non intégrés |
 
 ## F — Trophées communautaires et progression
 

@@ -138,7 +138,7 @@ msgstr "Program"
 msgid "APPLICATION"
 msgstr "PROGRAM"
 
-#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Application updates"
 msgstr "Program · Opdateringer"
 
@@ -283,6 +283,10 @@ msgstr "Vil du ændre konsoltilstand for dette spil?"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Cheats"
 msgstr "Snydekoder"
+
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "Eden Encore · Kontroller Nu?"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Check now"

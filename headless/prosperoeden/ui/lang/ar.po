@@ -138,7 +138,7 @@ msgstr "التطبيق"
 msgid "APPLICATION"
 msgstr "التطبيق"
 
-#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Application updates"
 msgstr "التطبيق · تحديثات"
 
@@ -283,6 +283,10 @@ msgstr "هل تريد تغيير وضع وحدة التحكم لهذه اللع�
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Cheats"
 msgstr "شفرات غش"
+
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "هل تريد التحقق من تحديثات Eden Encore الآن؟"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Check now"

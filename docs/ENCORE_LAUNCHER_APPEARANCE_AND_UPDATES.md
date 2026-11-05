@@ -178,6 +178,34 @@ messages are localized on the launcher owner thread; the background
 GitHub worker returns structured status and never accesses a translation
 catalog while performing the network request.
 
+## Header update control and folder-only release policy (05 November 2026)
+
+The Home header places an update/check icon immediately to the left of the
+Settings gear in both Encore and Switch themes. The icon is green only
+after a verified current stable release, amber when a newer official
+release exists (including when it cannot yet be installed), blue while
+checking and gray for unknown/offline/incompatible. Controller focus
+opens a confirmation; Cross starts a fresh manual check and Circle
+cancels. Confirming a check does NOT trigger an installation or write to
+the console. App settings still support optional startup checks.
+
+R21 now accepts only a SHA-256-bound FTP ZIP candidate for the single
+folder installation target /data/homebrew/PPSA99008. The historic R1 FTP
+ZIP retains its original filename; future ZIP names use the compiled R
+revision and source SHA. Image-mounted FFPFSC/retail PKG files are not
+considered installable, and images are no longer built in the default
+release path. The developer --image-only command remains opt-in.
+
+The reviewed upstream updater's helper engine is imported for isolated
+development. It rejects a destination other than the literal
+/data/homebrew/PPSA99008, inspects ZIP contents, and refuses overwriting
+an assets directory with user-managed keys, firmware, ROMs, updates,
+DLC, mods or saves. Host tests exercise destination refusal, conflict
+preservation and backup creation. The engine is NOT invoked by the
+launcher: there is no PS5-qualified download-to-helper, restart handoff,
+rollback/recovery or real 13.60 console test. Do not enable installation
+before those gates pass or call these host tests a complete R21.
+
 ## Tests and remaining qualification
 
 - Seven launcher C++ sources compile in host syntax checks.

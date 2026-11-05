@@ -6,10 +6,9 @@
 
 dist/Prospero.Eden-Encore-RN.zip (the folder plus README, INSTALL, SECURITY, LICENSE,
 THIRD_PARTY_NOTICES and LICENSES/; fixed timestamps, so equal inputs give equal bytes),
-dist/Prospero.Eden-Encore-RN-FTP.zip (minimal PPSA99008 folder for manual FTP installs:
+dist/Eden-Encore-RN-<source-sha8>-FTP-PPSA99008.zip (minimal PPSA99008 folder for manual FTP installs:
 runtime files only, without installed legal texts or ShadowMount-only .txt language companions),
-dist/Prospero.Eden-Encore-RN.ffpfsc
-(the same title as a package image, tools/ci/package-image.sh), SHA256SUMS and release-notes.md.
+SHA256SUMS and release-notes.md (no FFPFSC by default).
 """
 import hashlib
 import json
@@ -71,9 +70,9 @@ digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 
 # Manual PS5 FTP servers commonly support binary STOR only. FileZilla may switch .txt files to
 # ASCII automatically, so publish a separate runtime-only folder archive for manual FTP installs.
-# The full ZIP and FFPFSC above remain the canonical distribution artifacts and keep every legal
-# notice plus the ShadowMount .txt catalog companions.
-ftp_archive = dist / f'Prospero.Eden-Encore-{release}-FTP.zip'
+# The full ZIP retains legal notices; the FTP ZIP is the update install target.
+# FFPFSC is an explicit --image-only developer command, never a release asset.
+ftp_archive = dist / release_info['zip']
 ftp_files = []
 for path in sorted(app.rglob('*')):
     if not path.is_file():
@@ -93,26 +92,11 @@ with zipfile.ZipFile(ftp_archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as
         zip_file.writestr(info, path.read_bytes())
 ftp_digest = hashlib.sha256(ftp_archive.read_bytes()).hexdigest()
 
-subprocess.run(['bash', str(root / 'tools/ci/package-image.sh'), str(app), str(image)], check=True)
-image_digest = hashlib.sha256(image.read_bytes()).hexdigest()
-# Prove the package-image path is deterministic before publishing its checksum. This catches a
-# third-party timestamp/randomness regression instead of silently changing release bytes.
-repro = dist / f'.{image.name}.repro'
-try:
-    subprocess.run(['bash', str(root / 'tools/ci/package-image.sh'), str(app), str(repro)], check=True)
-    repro_digest = hashlib.sha256(repro.read_bytes()).hexdigest()
-    if repro_digest != image_digest:
-        # Report byte offsets, not just hashes. This check still fails closed;
-        # do not publish potentially nondeterministic release image bytes.
-        subprocess.run([sys.executable, str(root / 'tools/ci/diagnose-image-repro.py'),
-                        str(image), str(repro)], check=False)
-        raise SystemExit(f'FFPFSC reproducibility check failed: {image_digest} != {repro_digest}')
-finally:
-    repro.unlink(missing_ok=True)
+# The standard distribution is folder-based. Do not generate or advertise
+# .ffpfsc image files, since an image cannot be replaced by the updater.
 (dist / 'SHA256SUMS').write_text(
     f'{digest}  {archive.name}\n'
     f'{ftp_digest}  {ftp_archive.name}\n'
-    f'{image_digest}  {image.name}\n'
 )
 # The unstripped executable of this release, to name the functions in a crash report later
 # (tools/symbolize-crash.py). Kept out of dist/: it is not a release file.
@@ -137,4 +121,3 @@ else:
     )
 print(f'{archive} {digest}')
 print(f'{ftp_archive} {ftp_digest}')
-print(f'{image} {image_digest}')

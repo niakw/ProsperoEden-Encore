@@ -138,7 +138,7 @@ msgstr "Приложение"
 msgid "APPLICATION"
 msgstr "ПРИЛОЖЕНИЕ"
 
-#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Application updates"
 msgstr "Приложение · Обновления"
 
@@ -283,6 +283,10 @@ msgstr "Изменить режим консоли для этой игры?"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Cheats"
 msgstr "Читы"
+
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "Проверить обновления Eden Encore сейчас?"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Check now"

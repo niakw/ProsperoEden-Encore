@@ -22,12 +22,12 @@ static nlohmann::json fixture(std::string tag = "encore-R2-abcdef12") {
         {"body", "# Features\n\nStable UI updates.\n"},
         {"assets", nlohmann::json::array({
             {
-                {"name", "PPSA99008-R2.ffpfsc"},
+                {"name", "Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip"},
                 {"size", 50000000u},
                 {"digest", digest()},
                 {"browser_download_url",
                  "https://github.com/niakw/Prospero.Eden-Encore/releases/download/" +
-                 tag + "/PPSA99008-R2.ffpfsc"}
+                 tag + "/Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip"}
             }
         })}
     };
@@ -49,7 +49,7 @@ int main() {
     {
         const auto r = expect(j, Status::newer_package_candidate);
         assert(r.latest_version == "R2");
-        assert(r.package_name == "PPSA99008-R2.ffpfsc");
+        assert(r.package_name == "Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip");
         assert(r.sha256.size() == 64);
         assert(r.package_bytes == 50000000u);
         assert(r.notes.find("Stable UI") != std::string::npos);
@@ -59,8 +59,11 @@ int main() {
     {
         auto copy = fixture("encore-R1-56293953");
         copy["assets"][0]["name"] = "Eden-Encore-56293953-FTP-PPSA99008.zip";
-        expect(copy, Status::newer_without_package, "R0");
+        copy["assets"][0]["browser_download_url"] =
+            "https://github.com/niakw/Prospero.Eden-Encore/releases/download/"
+            "encore-R1-56293953/Eden-Encore-56293953-FTP-PPSA99008.zip";
         expect(copy, Status::current, "R1");
+        expect(copy, Status::newer_package_candidate, "R0");
     }
     expect(j, Status::current, "R2");
     expect(j, Status::current, "R3");
@@ -92,17 +95,17 @@ int main() {
     }
     {
         auto copy = j;
-        copy["assets"][0]["name"] = "PPSA99008-R2.zip";
+        copy["assets"][0]["name"] = "Eden-Encore-R2-abcdef12-FTP-PPSA99008.ffpfsc";
         expect(copy, Status::newer_without_package);
     }
     {
         auto copy = j;
-        copy["assets"][0]["name"] = "PPSA99008-R2.pkg";
+        copy["assets"][0]["name"] = "Eden-Encore-R2-abcdef12-FTP-PPSA99008.pkg";
         expect(copy, Status::newer_without_package);
     }
     {
         auto copy = j;
-        copy["assets"][0]["name"] = "notPPSA99008-R2.ffpfsc";
+        copy["assets"][0]["name"] = "notPPSA99008-R2-abcdef12-FTP-PPSA99008.zip";
         expect(copy, Status::newer_without_package);
     }
     {
@@ -172,7 +175,7 @@ int main() {
     {
         auto copy = fixture("encore-R10-abcdef12");
         expect(copy, Status::current, "R11");
-        expect(copy, Status::newer_package_candidate, "R9"); // Numeric R9 < R10; filename only proves package identity
+        expect(copy, Status::newer_without_package, "R9"); // R10 tag with R2 filename is invalid
     }
     std::cout << "R21 release metadata: hermetic scenario matrix passed\n";
 }

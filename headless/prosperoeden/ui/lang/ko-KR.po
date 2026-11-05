@@ -138,7 +138,7 @@ msgstr "앱"
 msgid "APPLICATION"
 msgstr "앱"
 
-#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Application updates"
 msgstr "앱 · 업데이트"
 
@@ -283,6 +283,10 @@ msgstr "이 게임의 콘솔 모드를 변경하시겠습니까?"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Cheats"
 msgstr "치트"
+
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "지금 Eden Encore 업데이트를 확인할까요?"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Check now"

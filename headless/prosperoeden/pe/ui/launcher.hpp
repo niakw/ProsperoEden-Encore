@@ -101,6 +101,7 @@ class Launcher
         mapping_reset,
         shader_caches,
         console_mode,
+        app_update,
         exit_app,
     };
 
@@ -130,6 +131,8 @@ class Launcher
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
     void start_app_update_check(bool manual);
+    void open_update_confirmation();
+    void draw_update_button(Canvas &c, float x, float y, bool focused, bool paper) const;
     void draw_update_notice(Canvas &c);
 
 
@@ -268,7 +271,7 @@ class Launcher
     Confirmation confirmation_ = Confirmation::none;
     Key confirmation_key_ = Key::cross;
     Key pressed_key_ = Key::cross;
-    int top_nav_focus_ = -1; // -1 = content; 0..3 = Home/Library/Recents/Settings
+    int top_nav_focus_ = -1; // -1 = content; 0..4 = Home/Library/Recents/Updates/Settings
 
     // launching a game
     std::string selected_game_;
@@ -326,7 +329,7 @@ class Launcher
     std::array<float, 4> controller_pop_{}; // 1 when a controller appears, then decays
     int home_focus_ = 0;
     int home_quick_edit_ = -1; // -1 browsing; 0-6 editing one quick-setting row
-    std::array<tween::Spring, 23> home_springs_{};
+    std::array<tween::Spring, 24> home_springs_{};
     float intro_ = 0.0f;
     bool first_start_ = true;
 

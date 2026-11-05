@@ -570,7 +570,6 @@ jobs:
           set -euo pipefail
           test -f release-bundle/dist/SHA256SUMS
           ls release-bundle/dist/*.zip >/dev/null
-          ls release-bundle/dist/*.ffpfsc >/dev/null
           (cd release-bundle/dist && sha256sum -c SHA256SUMS)
 
       - name: Publish immutable GitHub Release
@@ -606,7 +605,6 @@ jobs:
           test -f "$notes"
           gh release create "$tag" \
             release-bundle/dist/*.zip \
-            release-bundle/dist/*.ffpfsc \
             release-bundle/dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \

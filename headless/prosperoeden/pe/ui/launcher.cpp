@@ -171,6 +171,7 @@ bool Launcher::confirm_action(Confirmation action)
         case Confirmation::shader_caches: question = TR("Clear cache?"); break;
         case Confirmation::console_mode: question = TR("Change console mode for this game?"); break;
         case Confirmation::exit_app: question = TR("Exit Eden Encore?"); break;
+        case Confirmation::app_update: question = TR("Check for an Eden Encore update now?"); break;
         default: break;
         }
         say(tr(question), true);
@@ -241,6 +242,47 @@ void Launcher::close_modal()
             refresh_home_hero();
     }
     cue(Cue::modal_close);
+}
+
+void Launcher::open_update_confirmation()
+{
+    // A forced check never runs on the input/render thread. Confirmation
+    // is separate from accepting any future native installation.
+    if (confirmation_ != Confirmation::none || modal_ != Modal::none)
+        return;
+    confirmation_ = Confirmation::app_update;
+    message_ = tr("Check for an Eden Encore update now?");
+    message_warning_ = false;
+    message_age_ = 0.0f;
+    cue(Cue::notify);
+}
+
+void Launcher::draw_update_button(Canvas &c, float x, float y,
+                                  bool focused, bool paper) const
+{
+    auto& l = c.list;
+    const bool checking = update_check_ &&
+        !update_check_->completed.load(std::memory_order_acquire);
+    const bool current = !checking &&
+        update_info_.state == AppUpdateInfo::State::up_to_date;
+    const bool newer = !checking &&
+        (update_info_.state == AppUpdateInfo::State::newer_uninstallable ||
+         update_info_.state == AppUpdateInfo::State::available);
+    // Unknown/unreachable is gray, not falsely green. Checking is blue.
+    const Color fill = current ? Color::rgb(0x269c59) :
+                       newer ? Color::rgb(0xdf9229) :
+                       checking ? Color::rgb(0x398fc9) :
+                       Color::rgb(paper ? 0x858b96 : 0x57516c);
+    const Color ink = Color::rgb(0xffffff);
+    l.rounded_rect({x - 29.0f, y - 29.0f, 58.0f, 58.0f}, 19.0f, fill);
+    if (focused)
+        l.ring(x, y, 34.0f, 3.7f,
+               paper ? Color::rgb(0x0a84a5) : theme::kLimePale);
+    // Original vector download/check symbol; no platform asset.
+    l.line(x, y - 13.0f, x, y + 7.0f, 3.0f, ink);
+    l.line(x - 9.0f, y, x, y + 9.0f, 3.0f, ink);
+    l.line(x, y + 9.0f, x + 9.0f, y, 3.0f, ink);
+    l.line(x - 11.0f, y + 15.0f, x + 11.0f, y + 15.0f, 2.6f, ink);
 }
 
 void Launcher::start_app_update_check(bool manual)
@@ -475,6 +517,19 @@ void Launcher::press(Key key)
     // through to the underlying screen while the dialog is visible.
     if (confirmation_ != Confirmation::none)
     {
+        if (confirmation_ == Confirmation::app_update) {
+            if (key == Key::cross) {
+                clear_confirmation();
+                message_.clear();
+                start_app_update_check(true);
+                cue(Cue::saved);
+            } else if (key == Key::circle) {
+                clear_confirmation();
+                message_.clear();
+                cue(Cue::back);
+            } else cue(Cue::error);
+            return;
+        }
         // Exit is unlike setting resets: confirming it must not be replayed
         // as another Circle event, which would immediately reopen the dialog.
         if (confirmation_ == Confirmation::exit_app && key == Key::cross) {
@@ -758,7 +813,7 @@ bool Launcher::press_top_nav(Key key)
     case Key::right:
     {
         const int step = key == Key::right ? 1 : -1;
-        top_nav_focus_ = (top_nav_focus_ + step + 4) % 4;
+        top_nav_focus_ = (top_nav_focus_ + step + 5) % 5;
         cue(Cue::focus);
         return true;
     }
@@ -803,6 +858,10 @@ bool Launcher::press_top_nav(Key key)
                 home_focus_ = 2; // Home's Recently Played header item
             }
         }
+        else if (target == 3)
+        {
+            open_update_confirmation();
+        }
         else
         {
             if (screen_ == Screen::settings)
@@ -843,14 +902,13 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
     text(c, "ENCORE", 176.0f, baseline(76.0f, 21.0f, 17.0f), 17.0f,
          theme::kLimePale, Align::left, 4.0f);
 
-    // Three principal tabs; Settings is the separate top-right gear.
-    // Four stable focus positions preserve controller navigation and actions.
+    // Three primary tabs + Updates next to the Settings gear.
     static constexpr const char* labels[] = {TR("Home"), TR("Library"), TR("Recent")};
-    static constexpr float xs[] = {355.0f, 558.0f, 790.0f, 1480.0f};
-    static constexpr float widths[] = {190.0f, 218.0f, 220.0f, 68.0f};
-    for (int i = 0; i < 4; ++i)
+    static constexpr float xs[] = {355.0f, 558.0f, 790.0f, 1398.0f, 1490.0f};
+    static constexpr float widths[] = {190.0f, 218.0f, 220.0f, 68.0f, 68.0f};
+    for (int i = 0; i < 5; ++i)
     {
-        const Rect r{xs[i], i == 3 ? 40.0f : 44.0f, widths[i], i == 3 ? 60.0f : 54.0f};
+        const Rect r{xs[i], i >= 3 ? 40.0f : 44.0f, widths[i], i >= 3 ? 60.0f : 54.0f};
         const bool active = i == active_tab;
         const float focused = i == focus_tab ? tween::clamp01(focus_amount) : 0.0f;
         if (active)
@@ -882,6 +940,8 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
             list.ring(gx, gy, 13.0f, 2.6f, ink);
             list.line(gx, gy, gx, gy - 8.0f, 2.6f, ink);
             list.line(gx, gy, gx + 7.0f, gy + 5.0f, 2.6f, ink);
+        } else if (i == 3) {
+            draw_update_button(c, gx, gy, focused > 0.01f, false);
         } else {
             settings_gear(c, gx, gy, 19.0f, ink);
         }
@@ -931,7 +991,7 @@ void Launcher::draw_frame(Canvas &c, const char *title, const char *copy)
 {
     // Storage, Language and About are Settings subpages; keep the global TV shell visible so
     // entering a utility never feels like falling back to the old launcher.
-    draw_top_nav(c, 3);
+    draw_top_nav(c, 4);
     text_shrink(c, title, 72.0f, baseline(142.0f, 38.0f, theme::kHeading), theme::kHeading,
                 theme::kTitle, 1280.0f);
     text_shrink(c, copy, 72.0f, baseline(176.0f, 24.0f, 18.0f), 18.0f, theme::kMeta,
@@ -950,6 +1010,8 @@ void Launcher::draw_confirmation(Canvas &c)
         return;
 
     const char *title = tr("Settings");
+    if (confirmation_ == Confirmation::app_update)
+        title = tr("Application updates");
     if (confirmation_ == Confirmation::console_mode)
         title = tr("Console mode");
     else if (confirmation_ == Confirmation::mapping_reset)

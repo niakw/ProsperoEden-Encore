@@ -66,25 +66,19 @@ inline std::string BoundedNotes(const nlohmann::json& data) {
     return notes;
 }
 
-inline bool SafeAssetName(std::string_view name) {
-    const auto id = name.find("PPSA99008");
-    if (name.size() < 12 || name.size() > 128 ||
-        id == std::string_view::npos)
+inline bool SafeAssetName(std::string_view name, std::string_view tag) {
+    // Never offer FFPFSC or retail PKG for the directory installation. The
+    // only install target is /data/homebrew/PPSA99008, so FTP ZIP is required.
+    if (!tag.starts_with("encore-R") || ParseRevision(tag, true) <= 0)
         return false;
-    // Identity must be a distinct filename token, not part of another ID.
-    if (id > 0 && name[id - 1] != '-' && name[id - 1] != '_')
-        return false;
-    const auto after = id + sizeof("PPSA99008") - 1;
-    if (after < name.size() && name[after] != '-' &&
-        name[after] != '_' && name[after] != '.')
-        return false;
-    for (unsigned char c : name)
-        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-              (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.'))
-            return false;
-    // Only known homebrew image format is a metadata candidate here.
-    // Neither a retail .pkg nor an FTP .zip is a validated image installer.
-    return name.ends_with(".ffpfsc");
+    // Legacy R1 was already published before the compiled-label ZIP schema.
+    if (tag == "encore-R1-56293953")
+        return name == "Eden-Encore-56293953-FTP-PPSA99008.zip";
+    const auto revision = ParseRevision(tag, true);
+    if (revision <= 0) return false;
+    return name == "Eden-Encore-R" + std::to_string(revision) +
+        "-" + std::string(tag.substr(tag.size() - 8)) +
+        "-FTP-PPSA99008.zip";
 }
 
 inline bool SafeSha256(std::string_view digest) {
@@ -133,7 +127,7 @@ inline ReleaseAssessment AssessStableRelease(std::string_view response,
             continue;
         const std::string name = asset["name"].get<std::string>();
         const std::string digest = asset["digest"].get<std::string>();
-        if (!SafeAssetName(name) || !SafeSha256(digest)) continue;
+        if (!SafeAssetName(name, tag) || !SafeSha256(digest)) continue;
         const auto bytes = asset["size"].get<std::uint64_t>();
         if (bytes < (1u << 20) || bytes > (1ull << 30)) continue;
         const std::string expected =

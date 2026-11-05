@@ -25,6 +25,7 @@ constexpr int kHomeHero = 0;
 constexpr int kHomeNavLibrary = 1;
 constexpr int kHomeNavRecent = 2;
 constexpr int kHomeNavSettings = 3;
+constexpr int kHomeNavUpdate = 23; // appended without renumbering quick/game focus
 constexpr int kHomeDetails = 4;
 constexpr int kHomeRecentFirst = 5;
 constexpr int kHomeRecentMax = 7;
@@ -302,7 +303,8 @@ void Launcher::press_home(Key key)
             focus = recent_count > 0 ? kHomeRecentFirst : (hero_ready ? kHomeHero : kHomeNavRecent);
         break;
     case Key::down:
-        if (focus >= kHomeNavLibrary && focus <= kHomeNavSettings)
+        if ((focus >= kHomeNavLibrary && focus <= kHomeNavSettings) ||
+            focus == kHomeNavUpdate)
         {
             if (hero_ready)
                 focus = kHomeHero;
@@ -325,9 +327,17 @@ void Launcher::press_home(Key key)
     case Key::right:
     {
         const int delta = key == Key::right ? 1 : -1;
-        if (focus >= kHomeNavLibrary && focus <= kHomeNavSettings)
+        if ((focus >= kHomeNavLibrary && focus <= kHomeNavSettings) ||
+            focus == kHomeNavUpdate)
         {
-            focus = kHomeNavLibrary + (focus - kHomeNavLibrary + delta + 3) % 3;
+            // Header order: Library, Recent, Update, Settings. Keep all
+            // previously allocated Home IDs and animation springs stable.
+            constexpr std::array items{kHomeNavLibrary, kHomeNavRecent,
+                                       kHomeNavUpdate, kHomeNavSettings};
+            const auto found = std::find(items.begin(), items.end(), focus);
+            const int current = found == items.end() ? 0 :
+                static_cast<int>(found - items.begin());
+            focus = items[static_cast<std::size_t>((current + delta + 4) % 4)];
             if (focus == kHomeNavLibrary && !ready)
                 focus = delta > 0 ? kHomeNavRecent : kHomeNavSettings;
         }
@@ -462,6 +472,11 @@ void Launcher::press_home(Key key)
                 refresh_home_hero();
             }
             cue(Cue::focus);
+        }
+        else if (focus == kHomeNavUpdate)
+        {
+            open_update_confirmation();
+            return;
         }
         else if (focus == kHomeNavSettings)
         {
@@ -1067,9 +1082,12 @@ void Launcher::draw_home(Canvas &c)
     // the artwork paints over the navigation, brand and focus ring.
     begin_band(0, -16.0f);
     const int header_focus =
-        home_focus_ >= kHomeNavLibrary && home_focus_ <= kHomeNavSettings ? home_focus_ : -1;
+        home_focus_ == kHomeNavUpdate ? 3 :
+        home_focus_ == kHomeNavSettings ? 4 :
+        (home_focus_ >= kHomeNavLibrary && home_focus_ <= kHomeNavRecent ?
+            home_focus_ : -1);
     draw_top_nav(c, 0, header_focus,
-                 header_focus >= 0 ? focus(header_focus) : 0.0f);
+                 header_focus >= 0 ? focus(home_focus_) : 0.0f);
     end_band();
 }
 

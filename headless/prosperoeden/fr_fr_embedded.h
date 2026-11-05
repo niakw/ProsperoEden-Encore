@@ -154,7 +154,7 @@ msgstr "Application"
 msgid "APPLICATION"
 msgstr "APPLICATION"
 
-#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Application updates"
 msgstr "Mises à jour de l'application"
 
@@ -315,6 +315,10 @@ msgstr "Changer le mode console de ce jeu ?"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Cheats"
 msgstr "Codes de triche"
+
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "Vérifier maintenant les mises à jour d'Eden Encore ?"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Check now"

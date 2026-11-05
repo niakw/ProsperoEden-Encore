@@ -145,3 +145,31 @@ d'appeler cette modification une « séparation HUD » complète. Prévoir
 un masque/historique du jeu ou un repli lorsque les overlays invités
 rendent la génération visuellement inacceptable. Validation FC27/BOTW
 nécessaire avant activation générale.
+
+### C2.3 — suivi des soumissions et fences GPU (hôte)
+
+Le nouveau `MihawkSubmissionTimeline` décrit un protocole
+`Prepare / Commit / Abort`. Il consomme des **numéros de soumission et
+d'achèvement GPU réels**, pas des indices de frame côté CPU :
+
+- Le slot de capture 0/1 est bloqué tant que son dernier accès n'est pas
+  confirmé achevé par un vrai fence/timeline Vulkan.
+- Lorsqu'une interpolation utilise les deux historiques, **les deux**
+  slots et la sortie RGBA8 deviennent indisponibles jusqu'à la fin
+  de la soumission correspondante.
+- Un décrochage, une pause, un overlay ou une discontinuité annule
+  l'historique logique, **mais pas les réservations GPU encore en vol**.
+- Si le GPU est en retard, seule la génération synthétique est perdue :
+  la présentation de la vraie frame reste prioritaire.
+- Les soumissions GPU non liées à Mihawk peuvent faire progresser la timeline
+  globale. Un compteur CPU de frames ne doit pas simuler une complétion.
+- `Commit` n'est autorisé que lorsque l'appelant a réellement soumis
+  la commande associée ; en cas d'`Abort`, le command buffer enregistré
+  doit être abandonné, jamais soumis ultérieurement.
+
+Test hôte : refus des slots in-flight, réamorçage, overlays, resets,
+numéros invalides, sortie GPU occupée, sérialisation du cycle Prepare/Commit.
+
+**Limite :** Encore doit encore exposer son vrai fence/timeline de scheduler
+et appeler le protocole depuis le chemin `Composite`. Aucun système de
+fence PS5 n'est artificiellement déclaré fonctionnel ici.

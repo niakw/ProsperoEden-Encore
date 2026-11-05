@@ -23,6 +23,7 @@ TESTS = {
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",
     "atomic_qmd3": "tools/ns2/check_native_qmd_atomic_span_host.py",
     "cbuf_qmd3": "tools/ns2/check_native_qmd_direct_cbuf_host.py",
+    "qmd32_real_staging": "tools/ns2/check_native_qmd_32_slots_host.py",
     "spirv_cbuf": "tools/ns2/check_native_spirv_cbuf_span_host.py",
     "sysmix_registry": "tools/ns2/check_native_sysmix_registry_host.py",
     "sysmix_pcm": "tools/ns2/check_native_sysmix_pcm_ring_host.py",

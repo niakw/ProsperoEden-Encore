@@ -774,6 +774,37 @@ Ce dispositif réduit les reprises redondantes ;
 il ne constitue **pas** la matrice P0–P4
 exhaustive ni une preuve d'une frame PS5.
 
+**P0.2/P2.3 — 32 SSBO Compute NS2 sans modifier
+l'ABI du cache NS1 (05/11, vrai propriétaire source/hôte) :**
+le chemin Compute natif possède déjà un plan
+QMD3 vectorisé allant jusqu'à 32 SSBO, puis
+ComputePipeline::ConfigureNative les achemine
+en ordre de réflexion par StageVulkanBufferBindings
+vers le propriétaire BufferCache::ObtainBuffer
+et les descripteurs Vulkan réels. Il n'appelle
+pas BindComputeStorageBuffer de Kepler/NS1,
+dont le tableau dans BufferCacheChannelInfo
+reste volontairement limité à 16.
+Modifier cet en-tête pour élargir l'ABI commune
+serait une régression inutile à ce stade.
+Le test du vrai NativeQmdComputeEnvironment
+construit et lit 32 enregistrements CBUF
+QMD3 de 16 octets, authentifie les 32 plages
+GMMU puis vérifie l'ordre des 32 liaisons
+du vrai StageVulkanBufferBindings : index 16
+et 31 inclus. Il refuse la 33e entrée,
+la corruption d'un plan détaché, le
+démapping du seul dernier SSBO avant
+tout staging et le refus de la dernière
+liaison avec rollback exactement une fois.
+Tests Clang/GCC O0/O2 UBSan sur Mac, guard
+source démontrant le vrai appel ObtainBuffer
+et l'absence du chemin Kepler.
+**P2.3/P0.2 globaux ouverts** : ce test
+ne démontre ni les shaders graphiques à
+32 SSBO ni le dispatch GPU PS5, et
+n'active aucun runtime expérimental.
+
 **P0.2 — coeur Ampere intégré à la compilation du produit
 commun (05/11, source/hôte) :** sélection automatique du
 frontend natif lors d'un profil PS5 final avec NPDM

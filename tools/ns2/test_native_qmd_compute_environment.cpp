@@ -1162,6 +1162,89 @@ int main() {
             ++array_binds; return true;
         },[]{}));
     assert(array_binds == 2);
+    // Native QMD3 stages the COMPLETE flattened list directly into the
+    // maintained Vulkan buffer owner through ObtainBuffer. It does NOT
+    // index the legacy NS1 BufferCacheChannelInfo 16-slot SSBO array.
+    // Prove the actual BuildResourcePlan + StageVulkanBufferBindings
+    // handling of slot 16 and the last valid slot 31, with strict rejection
+    // of 33 descriptors and one-shot rollback on a late bind failure.
+    {
+        auto wide_launch = array_launch;
+        wide_launch.constant_buffers[0].size = 32 * 16;
+        auto wide_info = array_info;
+        wide_info.constant_buffer_used_sizes[0] = 32 * 16;
+        wide_info.storage_buffers_descriptors.clear();
+        wide_info.storage_buffers_descriptors.push_back({0,0,32,true});
+        auto wide_memory = memory;
+        wide_memory.words.fill(0);
+        wide_memory.accessible_bytes = 32 * 16;
+        constexpr u64 guest_prefix = u64{0x10000} << 32;
+        for (u32 index = 0; index < 32; ++index) {
+            wide_memory.words[index * 4 + 0] = 0x12345000U + index * 0x1000;
+            wide_memory.words[index * 4 + 1] = 0x10000U;
+            wide_memory.words[index * 4 + 2] = 0x40;
+            wide_memory.words[index * 4 + 3] = 0;
+        }
+        NativeQmdComputeEnvironment wide_env{
+            wide_launch, Read, &wide_memory, std::make_unique<TextureMetadata>()};
+        const auto wide = wide_env.BuildResourcePlan(wide_info);
+        assert(wide && wide->HasResolvedBufferBindings() &&
+               wide->storage_buffers.size() == 32);
+        const auto all_mapped = [](u64, u32) { return true; };
+        unsigned mapped_count{};
+        assert(wide->ValidateGpuBufferMappings([&](u64 address,u32 bytes) {
+            ++mapped_count;
+            return bytes == (mapped_count == 1 ? 32U*16U : 0x40U) &&
+                   address == (mapped_count == 1
+                       ? wide_memory.address
+                       : guest_prefix + 0x12345000U +
+                         u64{mapped_count - 2} * 0x1000);
+        }));
+        assert(mapped_count == 33);
+        unsigned wide_bindings{}, rollback_count{};
+        const auto uniform_ok = [](u32 index,u32 bank,u64 addr,u32 bytes) {
+            return index == 0 && bank == 0 && addr != 0 && bytes == 32*16;
+        };
+        const auto storage_ok = [&](u32 index,u64 addr,u32 bytes,bool written) {
+            assert(index == wide_bindings && index < 32 &&
+                   addr == guest_prefix + 0x12345000U +
+                           u64{index} * 0x1000 &&
+                   bytes == 0x40 && written);
+            ++wide_bindings;
+            return true;
+        };
+        const auto rollback = [&] { ++rollback_count; };
+        assert(wide->StageVulkanBufferBindings(
+            all_mapped, uniform_ok, storage_ok, rollback));
+        assert(wide_bindings == 32 && rollback_count == 0);
+        wide_bindings = 0;
+        assert(!wide->StageVulkanBufferBindings(
+            all_mapped, uniform_ok,
+            [&](u32 index,u64 addr,u32 bytes,bool written) {
+                if (index == 31) return false;
+                return storage_ok(index,addr,bytes,written);
+            }, rollback));
+        assert(wide_bindings == 31 && rollback_count == 1);
+        // A detached plan cannot bypass the hard 32-slot admission.
+        auto forged = *wide;
+        forged.storage_buffers.push_back(forged.storage_buffers.back());
+        assert(!forged.HasResolvedBufferBindings() &&
+               !forged.StageVulkanBufferBindings(
+                   all_mapped, uniform_ok, storage_ok, rollback));
+        assert(rollback_count == 1);
+        // The last reflected SSBO is a REAL GMMU span. Unmapping only
+        // that slot must refuse the whole plan BEFORE Vulkan staging.
+        wide_bindings = 0;
+        assert(!wide->StageVulkanBufferBindings(
+            [&](u64 address,u32) {
+                return address != guest_prefix + 0x12345000U +
+                                  u64{31} * 0x1000;
+            }, uniform_ok, storage_ok, rollback));
+        assert(wide_bindings == 0 && rollback_count == 1);
+        // A 33rd reflected record is beyond QMD3's 32-slot budget.
+        wide_info.storage_buffers_descriptors[0].count = 33;
+        assert(!wide_env.BuildResourcePlan(wide_info));
+    }
     auto short_launch = array_launch;
     short_launch.constant_buffers[0].size = 24;
     NativeQmdComputeEnvironment short_env{

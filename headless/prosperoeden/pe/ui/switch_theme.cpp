@@ -458,8 +458,8 @@ void Launcher::draw_switch_settings(Canvas& c) {
     auto& list=c.list;
     static constexpr const char *categories[]={
         TR("Video"),TR("Audio"),TR("Controls"),TR("Accessibility"),
-        TR("Appearance"),TR("Diagnostics"),TR("Storage"),TR("Language")};
-    constexpr int n=8;
+        TR("Appearance"),TR("Diagnostics"),TR("Storage"),TR("Language"),TR("Application")};
+    constexpr int n=9;
     const int selected=std::clamp(settings_.selected,0,n-1);
     list.rounded_rect({92,173,1736,1},0,kGrey);
     list.rounded_rect({608,175,2,755},0,kGrey);
@@ -497,10 +497,14 @@ void Launcher::draw_switch_settings(Canvas& c) {
               Line{TR("Reduce motion"),prefs_.reduce_motion?tr("On"):tr("Off")},Line{"",""}};
         size=3;break;
     case 4:
-        rows={Line{TR("Theme"),prefs_.ui_theme?"Switch":"Encore"},
-              Line{TR("Original Encore interface"),prefs_.ui_theme?"":tr("Active")},
-              Line{TR("Switch-style interface"),prefs_.ui_theme?tr("Active"):""},Line{"",""}};
-        size=3;break;
+        rows={Line{TR("Theme"),prefs_.ui_theme?"Switch":
+                         prefs_.color_palette==1?"Encore Non-Neon":
+                         prefs_.color_palette==2?"Encore Dark":
+                         prefs_.color_palette==3?"Encore Light":"Encore Neon"},
+              Line{TR("Logo"),std::to_string(prefs_.logo_choice)},
+              Line{TR("Background"),std::to_string(prefs_.background_style)},
+              Line{TR("Game background"),prefs_.show_game_background?tr("On"):tr("Off")}};
+        size=4;break;
     case 5:
         rows={Line{TR("Detailed logging"),prefs_.detailed_logging?tr("On"):tr("Off")},
               Line{TR("Cache"),tr("Manage")},Line{"",""},Line{"",""}};size=2;break;
@@ -508,6 +512,10 @@ void Launcher::draw_switch_settings(Canvas& c) {
         rows={Line{TR("Game files"),tr("Open folders")},Line{"",""},Line{"",""},Line{"",""}};size=1;break;
     case 7:
         rows={Line{TR("Language"),tr("Change")},Line{"",""},Line{"",""},Line{"",""}};size=1;break;
+    case 8:
+        rows={Line{TR("Installed"),version_},Line{TR("Latest release"),update_info_.latest_version},
+              Line{TR("Auto check"),prefs_.check_updates_on_start?tr("On"):tr("Off")},
+              Line{TR("Status"),update_info_.summary}};size=4;break;
     }
     for(int i=0;i<size;++i){
         const float y=310.0f+float(i)*110.0f;
@@ -792,6 +800,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
     case Modal::controls:heading=tr("Controls");break;
     case Modal::accessibility:heading=tr("Accessibility");break;
     case Modal::appearance:heading=tr("Appearance");break;
+    case Modal::application:heading=tr("Application updates");break;
     case Modal::diagnostics:heading=tr("Diagnostics");break;
     default:break;
     }
@@ -799,7 +808,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                 36.0f,kInk,910.0f);
     list.rounded_rect({493,245,932,2},0,kGrey);
     const int total=dialog_rows(modal);
-    const int first=modal==Modal::video?std::clamp(option_-2,0,std::max(0,total-5)):0;
+    const int first=(modal==Modal::video || modal==Modal::appearance)?std::clamp(option_-2,0,std::max(0,total-5)):0;
     const int last=std::min(total,first+5);
     for(int i=first;i<last;++i) {
         const float y=278.0f+float(i-first)*112.0f;
@@ -811,9 +820,45 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         const char *label="";
         std::string value;
         switch(modal) {
-        case Modal::appearance:
-            label=i==0?"Encore":"Switch";
-            value=(prefs_.ui_theme==i)?tr("Active"):tr("Select");
+        case Modal::appearance: {
+            const char* labels[] = {
+                TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
+                TR("Local image"), TR("Color 1"), TR("Color 2"),
+                TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
+                TR("Background motion"), TR("Image scaling"), TR("Game background"),
+                TR("Reset appearance")};
+            const char* theme_names[] = {
+                "Encore Neon", "Switch", "Encore Non-Neon", "Encore Dark", "Encore Light"};
+            const char* logos[] = {"Automatic", "Neon", "Non-Neon", "White", "Dark"};
+            const char* backgrounds[] = {
+                "Theme default", "Encore artwork", "Solid color", "Gradient",
+                "Local image", "Daily Switch"};
+            const char* accents[] = {"Original", "Ocean", "Emerald", "Amber", "Rose"};
+            const int theme = prefs_.ui_theme ? 1 :
+                (prefs_.color_palette == 0 ? 0 : std::clamp(prefs_.color_palette+1, 2, 4));
+            label = tr(labels[i]);
+            switch(i) {
+            case 0: value = theme_names[theme]; break;
+            case 1: value = logos[std::clamp(prefs_.logo_choice,0,4)]; break;
+            case 2: value = accents[std::clamp(prefs_.accent_color,0,4)]; break;
+            case 3: value = backgrounds[std::clamp(prefs_.background_style,0,5)]; break;
+            case 4: value = prefs_.wallpaper_file.empty()?tr("None"):prefs_.wallpaper_file; break;
+            case 5: value = std::to_string(prefs_.background_color); break;
+            case 6: value = std::to_string(prefs_.background_color2); break;
+            case 7: value = prefs_.glow_enabled?tr("On"):tr("Off"); break;
+            case 8: value = std::to_string(prefs_.glow_strength)+"%"; break;
+            case 9: value = std::to_string(prefs_.background_overlay)+"%"; break;
+            case 10: value = prefs_.background_animate?tr("On"):tr("Off"); break;
+            case 11: value = prefs_.background_fit?tr("Contain"):tr("Fill"); break;
+            case 12: value = prefs_.show_game_background?tr("On"):tr("Off"); break;
+            default: value = tr("Restore Neon"); break;
+            }
+            break;
+        }
+        case Modal::application:
+            label = i==0 ? tr("Check now") : tr("Check on launcher start");
+            value = i==0 ? tr("Search GitHub Releases") :
+                             (prefs_.check_updates_on_start ? tr("On") : tr("Off"));
             break;
         case Modal::accessibility:
             label=i==0?tr("Larger text"):i==1?tr("High contrast"):tr("Reduce motion");

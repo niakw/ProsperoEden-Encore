@@ -614,7 +614,7 @@ void Launcher::draw_home(Canvas &c)
     // the actual Eden wallpaper already drawn underneath, NOT a solid
     // placeholder covering the entire TV. The normal texture cache retries
     // asynchronously when Nlib finishes its atomic file write.
-    if (!hero_artwork.empty()) {
+    if (prefs_.show_game_background && !hero_artwork.empty()) {
         const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f);
         if (hero_picture.texture != 0) {
             const float source = std::max(0.01f, hero_picture.aspect);

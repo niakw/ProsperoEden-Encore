@@ -55,6 +55,13 @@ class Textures
     {
         return brand_;
     }
+    // 0 original Neon; 1 Non-Neon; 2 White; 3 Dark. Absent asset -> Neon.
+    std::uint32_t logo(int selection) const {
+        if (selection < 1 || selection > 3) return brand_;
+        const auto texture = logos_[static_cast<std::size_t>(selection - 1)];
+        return texture ? texture : brand_;
+    }
+
     // A controller in white on transparent (0 when the picture is missing).
     std::uint32_t controller() const
     {
@@ -120,6 +127,7 @@ class Textures
     std::uint32_t backdrop_ = 0;
     std::uint32_t backdrop_blur_ = 0;
     std::uint32_t brand_ = 0;
+    std::array<std::uint32_t, 3> logos_{};
     std::uint32_t controller_ = 0;
     std::uint32_t switch_logo_ = 0;
     std::uint32_t switch_rear_footer_ = 0;

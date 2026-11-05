@@ -109,6 +109,10 @@ def main():
         icon = Image.open(source).convert("RGBA")
         icon = icon.resize((384, 384), Image.Resampling.LANCZOS)
         save_tga(icon, "brand.tga")
+    if "brand" in wanted:
+        for label in ("noneon", "white", "dark"):
+            icon = Image.open(ROOT / "assets/branding" / f"encore-{label}.png").convert("RGBA")
+            save_tga(icon.resize((256, 256), Image.Resampling.LANCZOS), f"brand-{label}.tga")
     if "controller" in wanted:
         save_tga(controller(), "controller.tga")
     if "fixed" in wanted:

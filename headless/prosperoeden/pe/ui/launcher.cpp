@@ -55,6 +55,8 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
         return services_.profile_avatar();
     });
     apply_look();
+    if (prefs_.check_updates_on_start) start_app_update_check(false);
+
     // Show the existing Home shell immediately; native recent-ROM metadata
     // comes from one background snapshot. This is NOT a failed setup state.
     home_.setup_ready = true;
@@ -65,7 +67,7 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     read_home();
     settings_.visible = 7;
     settings_.pitch = 88.0f;
-    settings_.reset(8, 0);
+    settings_.reset(9, 0);
     section_.snap(1.0f);
     detail_.snap(1.0f);
     // Defer the welcome/recovery cue and ROM enumeration until Home
@@ -94,6 +96,9 @@ Launcher::~Launcher()
         diagnostics_scan_.wait();
     if (profile_avatar_scan_.valid())
         profile_avatar_scan_.wait();
+    if (update_check_.valid())
+        update_check_.wait();
+
 }
 
 std::vector<Cue> Launcher::take_cues()
@@ -202,10 +207,37 @@ void Launcher::close_modal()
     cue(Cue::modal_close);
 }
 
+void Launcher::start_app_update_check(bool manual)
+{
+    if (update_check_.valid()) return; // no concurrent requests
+    update_check_manual_ = manual;
+    update_checked_this_launch_ = true;
+    update_info_ = {};
+    update_info_.summary = tr("Checking official releases...");
+    const std::string current = version_;
+    update_check_ = std::async(std::launch::async, [this, current] {
+        return services_.check_app_update(current);
+    });
+}
+
 void Launcher::apply_look()
 {
-    look() = {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion,
-              std::clamp(prefs_.color_palette, 0, 2), std::clamp(prefs_.background_style, 0, 3)};
+    Look value;
+    value.large_text = prefs_.large_text;
+    value.high_contrast = prefs_.high_contrast;
+    value.reduce_motion = prefs_.reduce_motion;
+    value.palette = prefs_.ui_theme == 1 ? 0 : std::clamp(prefs_.color_palette, 0, 3);
+    value.background = prefs_.ui_theme == 1 ? 0 : std::clamp(prefs_.background_style, 0, 5);
+    value.glow = prefs_.glow_enabled;
+    value.glow_strength = std::clamp(prefs_.glow_strength, 0, 100) / 100.0f;
+    value.background_color = prefs_.background_color;
+    value.background_color2 = prefs_.background_color2;
+    value.background_overlay = prefs_.background_overlay;
+    value.background_animate = prefs_.background_animate;
+    value.background_fit = prefs_.background_fit;
+    if (value.background == 4) value.wallpaper_path = services_.wallpaper_path(prefs_.wallpaper_file);
+    if (value.background == 5) value.wallpaper_path = services_.daily_wallpaper();
+    look() = std::move(value);
     theme::apply_palette(look().palette, std::clamp(prefs_.accent_color, 0, 4));
 }
 
@@ -430,7 +462,35 @@ void Launcher::update(float dt)
                      phase, static_cast<long long>(elapsed.count()));
         }
     };
+    // Daily curated release artwork changes with the local calendar, without
+    // reloading metadata from the network or recalculating during every draw.
+    if (prefs_.ui_theme == 0 && prefs_.background_style == 5 &&
+        selected_game_.empty()) {
+        daily_refresh_wait_ += dt;
+        if (daily_refresh_wait_ >= 600.0f) {
+            daily_refresh_wait_ = 0.0f;
+            look().wallpaper_path = services_.daily_wallpaper();
+        }
+    }
     textures_.pump(dt);
+    if (update_check_.valid() &&
+        update_check_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try {
+            update_info_ = update_check_.get();
+        } catch (...) {
+            update_info_ = {AppUpdateInfo::State::offline, version_, {},
+                            tr("Could not reach GitHub Releases.")};
+        }
+        if (update_check_manual_) {
+            say(update_info_.summary,
+                update_info_.state == AppUpdateInfo::State::offline ||
+                update_info_.state == AppUpdateInfo::State::incompatible);
+        }
+        update_check_manual_ = false;
+        // Deliberately no installation/popup unless a verified native installer exists.
+        // FTP ZIPs and unvalidated packages never become a confirmation candidate.
+    }
+
     if (profile_avatar_scan_.valid() &&
         profile_avatar_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         try {
@@ -631,8 +691,13 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
     // The packaged brand.tga comes from assets/icon0.png: the real
     // neon palm Eden Encore logo, not a synthetic cyan flower.
     // Draw the brand texture unmodified; never recolor its authored pixels.
-    if (c.textures.brand() != 0)
-        list.image(c.textures.brand(), {56.0f, 17.0f, 110.0f, 110.0f},
+    const int auto_logo = prefs_.color_palette == 1 ? 1 :
+                          prefs_.color_palette == 2 ? 2 :
+                          prefs_.color_palette == 3 ? 3 : 0;
+    const int logo = prefs_.logo_choice == 0 ? auto_logo :
+                     std::clamp(prefs_.logo_choice - 1, 0, 3);
+    if (const auto texture = c.textures.logo(logo); texture != 0)
+        list.image(texture, {56.0f, 17.0f, 110.0f, 110.0f},
                    {0.0f, 0.0f, 1.0f, 1.0f}, kWhite);
     text(c, "EDEN", 175.0f, baseline(31.0f, 39.0f, 30.0f), 30.0f,
          theme::kTitle, Align::left, 2.3f);

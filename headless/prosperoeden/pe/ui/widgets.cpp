@@ -55,7 +55,7 @@ const Color kBlack{0.0f, 0.0f, 0.0f, 1.0f};
 void Backdrop::update(float dt)
 {
     // With reduced motion the art stands still.
-    time_ += dt * motion();
+    time_ += dt * motion() * (look().background_animate ? 1.0f : 0.0f);
 }
 
 Rect Backdrop::art() const
@@ -72,24 +72,60 @@ Rect Backdrop::uv(const Rect &r) const
     return {(r.x - a.x) / a.w, (r.y - a.y) / a.h, r.w / a.w, r.h / a.h};
 }
 
-void Backdrop::draw(gfx::DrawList &list, const Textures &textures, float dim) const
+void Backdrop::draw(gfx::DrawList &list, Textures &textures, float dim) const
 {
     const Rect screen{0.0f, 0.0f, 1920.0f, 1080.0f};
     list.rounded_rect(screen, 0.0f, theme::kBase);
+    if (look().background == 2)
+        list.rounded_rect(screen, 0.0f, Color::rgb(look().background_color));
+    if (look().background == 3)
+        list.gradient_rect(screen, 0.0f, Color::rgb(look().background_color),
+                           Color::rgb(look().background_color2));
+    if ((look().background == 4 || look().background == 5) &&
+        !look().wallpaper_path.empty() && !look().high_contrast)
+    {
+        const Cover picture = textures.cover(look().wallpaper_path, 1920.0f);
+        if (picture.texture) {
+            const float source = std::max(0.01f, picture.aspect);
+            Rect uv{0.0f, 0.0f, 1.0f, 1.0f};
+            Rect target = screen;
+            const float aspect = 1920.0f / 1080.0f;
+            if (look().background_fit == 0) {
+                if (source > aspect) {
+                    uv.w = aspect / source; uv.x = (1.0f - uv.w) * 0.5f;
+                } else {
+                    uv.h = source / aspect; uv.y = (1.0f - uv.h) * 0.5f;
+                }
+            } else {
+                if (source > aspect) {
+                    target.h = 1920.0f / source;
+                    target.y = (1080.0f - target.h) * 0.5f;
+                } else {
+                    target.w = 1080.0f * source;
+                    target.x = (1920.0f - target.w) * 0.5f;
+                }
+            }
+            list.image(picture.texture, target, uv, kWhite);
+            if (look().background_overlay > 0)
+                list.rounded_rect(screen, 0.0f,
+                    Color::rgb(0x000000, look().background_overlay / 100.0f));
+        }
+    }
 
     // A single Eden art direction across the PS5 shell, launcher and game-loading transition.
     // The oversized crop drifts by only a few pixels, giving the shell depth without making
     // navigation feel busy.
     if (textures.backdrop() != 0 && !look().high_contrast &&
-        (look().background == 1 || (look().background == 0 && look().palette == 0)))
+        (look().background == 1 || (look().background == 5 && look().wallpaper_path.empty()) ||
+         (look().background == 0 && look().palette == 0)))
     {
         const Rect a = art();
         list.image(textures.backdrop(), a, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite.with_alpha(0.72f));
         list.gradient_rect(screen, 0.0f, Color::rgb(0x07070d, 0.20f), Color::rgb(0x05040b, 0.78f));
     }
 
-    if (!look().high_contrast && look().background != 3 &&
-        (look().background != 0 || look().palette != 2))
+    if (!look().high_contrast && look().background <= 1 &&
+        (look().background == 1 || (look().background == 0 && look().palette == 0)))
     {
         const float drift = motion();
         const float violet_x = 330.0f + 42.0f * std::sin(time_ * 0.08f) * drift;
@@ -376,13 +412,13 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)
     // Shadows fill the interior of rounded shapes in this shader. For cover
     // tiles the glow is instead emitted BEFORE the image (Home/Library draw
     // order), otherwise a focused red/green cover becomes an opaque pink card.
-    if (!artwork_plate) {
+    if (!artwork_plate && look().glow && look().glow_strength > 0.0f) {
         c.list.shadow({r.x - 13.0f, r.y - 10.0f, r.w + 26.0f, r.h + 24.0f},
                       style.radius + 13.0f, 43.0f,
-                      theme::kLime.with_alpha(0.30f * amount * breathe));
+                      theme::kLime.with_alpha(0.30f * amount * breathe * look().glow_strength));
         c.list.shadow({r.x - 5.0f, r.y - 5.0f, r.w + 10.0f, r.h + 10.0f},
                       style.radius + 6.0f, 19.0f,
-                      theme::kSun.with_alpha(0.29f * amount * breathe));
+                      theme::kSun.with_alpha(0.29f * amount * breathe * look().glow_strength));
     }
     if (style.focus_base.a > 0.0f)
         c.list.rounded_rect(r, style.radius,

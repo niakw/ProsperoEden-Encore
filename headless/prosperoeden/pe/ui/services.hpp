@@ -142,6 +142,15 @@ struct Home
     std::string system_status;
 };
 
+// R21 is metadata-only until a verified PS5-native installer is available.
+struct AppUpdateInfo {
+    enum class State { not_checked, up_to_date, incompatible, available, offline };
+    State state = State::not_checked;
+    std::string installed_version;
+    std::string latest_version;
+    std::string summary;
+};
+
 struct Preferences
 {
     bool hud = false;
@@ -168,9 +177,19 @@ struct Preferences
     bool high_contrast = false;
     bool reduce_motion = false;
     int ui_theme = 0; // 0 Encore (default), 1 Switch
-    int color_palette = 0; // Neon, Dark, Light
+    int color_palette = 0; // 0 Neon, 1 Non-Neon, 2 Dark, 3 Light
     int accent_color = 0; // Default, Ocean, Emerald, Amber, Rose
-    int background_style = 0; // Auto, Artwork, Glow, Solid
+    int background_style = 0; // 0 Auto, 1 Artwork, 2 Solid, 3 Gradient, 4 Image, 5 Daily
+    int logo_choice = 0; // 0 auto, 1 Neon, 2 Non-Neon, 3 White, 4 Dark
+    bool glow_enabled = true;
+    int glow_strength = 100; // 0..100
+    std::uint32_t background_color = 0x121824u;
+    std::uint32_t background_color2 = 0x263d59u;
+    int background_overlay = 20; // 0..80, applies to images
+    bool background_animate = true;
+    int background_fit = 0; // 0 cover, 1 contain
+    bool show_game_background = true; // preserve current hero background default
+    std::string wallpaper_file; // validated basename, never arbitrary path
     bool check_updates_on_start = false; // opt-in only
 };
 
@@ -298,6 +317,18 @@ class Services
     // ---- settings ----
     virtual Preferences preferences() = 0;
     virtual bool set_preferences(const Preferences &preferences) = 0;
+    // Called only by the launcher background worker. Native implementation
+    // consults official stable GitHub Releases (never games/firmware updates).
+    virtual AppUpdateInfo check_app_update(const std::string& current) {
+        return {AppUpdateInfo::State::incompatible, current, {}, "Updates unavailable on this host."};
+    }
+
+    // Names only; imported images are stored under the app-owned wallpaper folder.
+    virtual std::vector<std::string> wallpapers() { return {}; }
+    virtual std::string wallpaper_path(const std::string&) { return {}; }
+    // Offline/cache-backed daily release wallpaper; no requests from draw().
+    virtual std::string daily_wallpaper() { return {}; }
+
     virtual const std::vector<std::string> &resolution_labels() = 0; // "1x (native)"
     virtual const std::vector<std::string> &resolution_keys() = 0;   // "1x"
     virtual const std::vector<std::string> &filter_labels() = 0;

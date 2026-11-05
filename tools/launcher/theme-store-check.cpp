@@ -18,10 +18,27 @@ int main() {
     prefs.volume = 37;
     prefs.controller_layout = 0;
     prefs.ui_theme = 1;
+    prefs.color_palette = 3; // independently persisted, even with Switch layout
+    prefs.logo_choice = 4;
+    prefs.accent_color = 2;
+    prefs.background_style = 5;
+    prefs.glow_enabled = false;
+    prefs.glow_strength = 30;
+    prefs.background_color = 0x145678;
+    prefs.background_color2 = 0x987654;
+    prefs.show_game_background = false;
+    prefs.wallpaper_file = "user-screenshot.png";
+    prefs.check_updates_on_start = true;
     assert(Eden::SavePreferences(prefs, file));
     auto result = Eden::LoadPreferences(file);
     assert(result.ui_theme == 1);
     assert(result.volume == 37 && result.controller_layout == 0);
+    assert(result.color_palette == 3 && result.logo_choice == 4 && result.accent_color == 2);
+    assert(result.background_style == 5 && !result.glow_enabled &&
+           result.glow_strength == 30);
+    assert(result.background_color == 0x145678 && result.background_color2 == 0x987654);
+    assert(!result.show_game_background && result.wallpaper_file == "user-screenshot.png");
+    assert(result.check_updates_on_start);
 
     std::ifstream stream(file);
     const std::string json((std::istreambuf_iterator<char>(stream)),
@@ -40,6 +57,11 @@ int main() {
     const std::string unexpected = std::string(temp) + "/invalid.json";
     std::ofstream(unexpected) << R"({"appearance":{"theme":"surprise"}})";
     assert(Eden::LoadPreferences(unexpected).ui_theme == 0);
+    assert(!Eden::LoadPreferences(unexpected).check_updates_on_start);
+    std::ofstream(unexpected) << R"({"appearance":{"palette":999,"background":999,"wallpaper":"../../other.png"}})";
+    const auto invalid = Eden::LoadPreferences(unexpected);
+    assert(invalid.color_palette == 0 && invalid.background_style == 0);
+    assert(invalid.wallpaper_file.empty());
     assert(Eden::LoadPreferences(file).volume == 37);
 
     (void)std::remove(file.c_str());

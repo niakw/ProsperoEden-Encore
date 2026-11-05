@@ -86,6 +86,7 @@ class Launcher
         controls,
         accessibility,
         appearance,
+        application,
         diagnostics,
         game,
         mods, // a game's mods, opened from its settings
@@ -127,6 +128,8 @@ class Launcher
     std::array<bool, 3> switch_states(Modal modal) const;
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
+    void start_app_update_check(bool manual);
+
 
     // ---- home (home.cpp) ----
     void press_home(Key key);
@@ -222,6 +225,12 @@ class Launcher
     std::chrono::steady_clock::time_point last_ui_hotspot_report_{};
     std::string clock_;
     std::string version_;
+    std::future<AppUpdateInfo> update_check_;
+    AppUpdateInfo update_info_{};
+    bool update_check_manual_ = false;
+    bool update_checked_this_launch_ = false;
+    float daily_refresh_wait_ = 0.0f;
+
     // Profile cache discovery is I/O and runs once outside the render thread.
     std::future<std::string> profile_avatar_scan_;
     std::string profile_avatar_path_;
@@ -347,6 +356,7 @@ class Launcher
     tween::Spring option_cursor_; // highlight position in pixels
     std::array<tween::Spring, 4> switches_{};
     ListView video_rows_; // the Video dialog's rows (more than it shows)
+    std::vector<std::string> wallpaper_options_;
     GameSettings game_settings_;
     bool game_docked_ = true;
     SaveSource import_source_ = SaveSource::none; // what Save data could import for the game

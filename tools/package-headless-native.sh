@@ -87,6 +87,10 @@ PY2
 # Flip only the generated launcher texture; the canonical PNG/PS5 tile remains untouched.
 "${image_convert[@]}" "$app/sce_sys/icon0.png" -resize 256x256 -flip -alpha on \
     -define tga:bits-per-pixel=32 -compress None "$app/ui/art/brand.tga"
+# Three user-supplied optional Encore variants (legacy Neon/Switch never touched).
+for logo in noneon white dark; do
+    "${image_convert[@]}" "$root/assets/branding/encore-${logo}.png" -resize 256x256 -flip -alpha on         -define tga:bits-per-pixel=32 -compress None "$app/ui/art/brand-${logo}.tga"
+done
 python3 - "$app/ui/art/brand.tga" <<'PY'
 import pathlib, sys
 data = pathlib.Path(sys.argv[1]).read_bytes()

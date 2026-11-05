@@ -8,6 +8,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <string>
 
 namespace pe::ui
 {
@@ -95,7 +97,7 @@ inline void apply_palette(int palette, int accent)
     }();
     for (std::size_t i = 0; i < slots.size(); ++i) *slots[i] = neon[i];
     kRule = Color::rgb(0x3f3b51);
-    if (palette == 1) { // Minimal Dark
+    if (palette == 1 || palette == 2) { // subdued Non-Neon and Dark
         kBase = Color::rgb(0x0d1014); kScrim = Color::rgb(0x080c10);
         kGlass = Color::rgb(0x171b22); kPanel = Color::rgb(0x171b22);
         kPanelEdge = Color::rgb(0x66717d); kPanelEdgeSoft = Color::rgb(0x3d4753);
@@ -105,7 +107,16 @@ inline void apply_palette(int palette, int accent)
         kLimePale = Color::rgb(0xa9cee9); kFocusCore = Color::rgb(0x8ab8ec);
         kFocusBlue = Color::rgb(0x749fc6); kSun = Color::rgb(0x8997aa);
         kAccentTeal = Color::rgb(0xb7d2e6);
-    } else if (palette == 2) { // Neutral Light
+    }
+    if (palette == 2) { // monochrome Dark
+        kBase = Color::rgb(0x0b0c0f); kGlass = Color::rgb(0x141519);
+        kPanel = Color::rgb(0x16171b); kRow = Color::rgb(0x1f2025);
+        kRowFocus = Color::rgb(0x34363c); kPanelEdge = Color::rgb(0x74777e);
+        kLime = Color::rgb(0x9297a1); kLimePale = Color::rgb(0xf2f4f6);
+        kLimeDeep = Color::rgb(0x50535a); kSun = Color::rgb(0x91949c);
+        kFocusCore = Color::rgb(0xffffff); kFocusBlue = Color::rgb(0x9297a1);
+        kBlue = Color::rgb(0x8e97a5);
+    } else if (palette == 3) { // Neutral Light
         kBase = Color::rgb(0xf1f3f5); kScrim = Color::rgb(0x1a2938);
         kGlass = Color::rgb(0xf8fafc); kPanel = Color::rgb(0xffffff);
         kPanelEdge = Color::rgb(0x8b98a7); kPanelEdgeSoft = Color::rgb(0xc2cbd4);
@@ -128,7 +139,7 @@ inline void apply_palette(int palette, int accent)
         static constexpr std::uint32_t bright[] = {
             0x000000u, 0x9ccbf7u, 0x8bd9b5u, 0xf7cc87u, 0xf5a6c4u};
         kLime = Color::rgb(swatches[accent]);
-        kLimePale = Color::rgb(palette == 2 ? swatches[accent] : bright[accent]);
+        kLimePale = Color::rgb(palette == 3 ? swatches[accent] : bright[accent]);
         kFocusCore = kLimePale;
         kFocusBlue = kFocusCore;
         kAccentTeal = kLimePale;
@@ -143,8 +154,15 @@ struct Look
     bool large_text = false;    // small text is drawn larger
     bool high_contrast = false; // solid panels, brighter text, an outlined highlight
     bool reduce_motion = false; // nothing drifts, slides or zooms: screens fade
-    int palette = 0; // Neon, Dark, Light
-    int background = 0; // Auto, Artwork, Glow, Solid
+    int palette = 0; // Neon, Non-Neon, Dark, Light
+    int background = 0; // Auto, Artwork, Solid, Gradient, Image, Daily
+    bool glow = true;
+    float glow_strength = 1.0f;
+    std::uint32_t background_color = 0x121824u, background_color2 = 0x263d59u;
+    int background_overlay = 20;
+    bool background_animate = true;
+    int background_fit = 0;
+    std::string wallpaper_path;
 };
 inline Look &look()
 {

@@ -38,6 +38,10 @@ public:
 
     pe::ui::Preferences preferences() override;
     bool set_preferences(const pe::ui::Preferences& preferences) override;
+    pe::ui::AppUpdateInfo check_app_update(const std::string& current) override;
+    std::vector<std::string> wallpapers() override;
+    std::string wallpaper_path(const std::string& file) override;
+    std::string daily_wallpaper() override;
     const std::vector<std::string>& resolution_labels() override;
     const std::vector<std::string>& resolution_keys() override;
     const std::vector<std::string>& filter_labels() override;

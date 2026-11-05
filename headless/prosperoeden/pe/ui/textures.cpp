@@ -131,6 +131,9 @@ bool Textures::load_art(const std::string &directory)
     // released before a game starts, so it does not consume gameplay VRAM.
     (void)load("art/backdrop.tga", &backdrop_);
     const bool brand = load("art/brand.tga", &brand_);
+    (void)load("art/brand-noneon.tga", &logos_[0]);
+    (void)load("art/brand-white.tga", &logos_[1]);
+    (void)load("art/brand-dark.tga", &logos_[2]);
     // Exact fixed components are optional assets; the painter retains a
     // clean metadata-only fallback when they are absent.
     (void)load("art/switch-logo.tga", &switch_logo_);
@@ -185,6 +188,10 @@ void Textures::release()
     {
         batch_.delete_texture(*texture);
         *texture = 0;
+    }
+    for (auto &texture : logos_) {
+        batch_.delete_texture(texture);
+        texture = 0;
     }
     for (auto &[key, entry] : covers_)
         batch_.delete_texture(entry.texture);

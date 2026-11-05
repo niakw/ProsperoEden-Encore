@@ -50,6 +50,13 @@ generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 assert "P2.5 Vulkan reinterpret single-aspect depth-stencil VkBufferImageCopy" in generator
 assert "P2.5 Vulkan reinterpret destination copy aspect" in generator
 assert "P2.5 Vulkan reinterpret actual transfer destination layout" in generator
+assert "P2.5 Vulkan reinterpret plane-resident buffer regions" in generator
+assert "from_stencil.imageSubresource.aspectMask = VK_IMAGE_ASPECT_STENCIL_BIT" in method
+assert "to_stencil.imageSubresource.aspectMask = VK_IMAGE_ASPECT_STENCIL_BIT" in method
+assert "from_stencil.bufferOffset = scratch_used + plane_bytes" in method
+assert "to_stencil.bufferOffset = scratch_used + plane_bytes" in method
+assert "source_width * bpp_in != dest_width * bpp_out" in method
+assert "scratch_used += plane_bytes * (dual_planes ? 2U : 1U)" in method
 # Execute the retained patches against the active owner in reverse and
 # forward order. This proves exact recipe parity without regenerating a
 # whole Vulkan port or mutating the pinned source tree.
@@ -64,7 +71,7 @@ for node in ast.walk(ast.parse(generator)):
     if args[0]=="vk_texture_cache_cost.cpp" and isinstance(args[3],str) and (
         args[3].startswith("P2.5 Vulkan reinterpret ")):
         patches.append((args[1],args[2],args[3]))
-assert len(patches)==5,[step[2] for step in patches]
+assert len(patches)==7,[step[2] for step in patches]
 original=code
 for old,new,label in reversed(patches):
     assert original.count(new)==1,label
@@ -73,6 +80,20 @@ for old,new,label in patches:
     assert original.count(old)==1,label
     original=original.replace(old,new)
 assert original==code,"active image reinterpret owner differs from generator recipe"
+assert "P2.5 Vulkan reinterpret exact source byte-scale ratio" in generator
+ratio_patches=[]
+for node in ast.walk(ast.parse(generator)):
+    if not isinstance(node,ast.Call) or not isinstance(node.func,ast.Name) or (
+        node.func.id!="apply_reviewed_delta" or len(node.args)<4):
+        continue
+    args=[ast.literal_eval(n) if isinstance(n,ast.Constant) else None
+          for n in node.args[:4]]
+    if args[3]=="P2.5 Vulkan reinterpret exact source byte-scale ratio":
+        ratio_patches.append((args[1],args[2]))
+assert len(ratio_patches)==1
+a,b=ratio_patches[0]
+assert code.count(b)==1 and code.replace(b,a).count(a)==1
+assert "(static_cast<u64>(bpp_out) * copy.extent.width) % bpp_in" in method
 for workflow in ("encore-core-fast-gate.yml","encore-core-preflight.yml"):
     body=(ROOT/".github/workflows"/workflow).read_text()
     assert "python3 -B tools/check-ps5-f07-reinterpret-vulkan-layout-host.py" in body

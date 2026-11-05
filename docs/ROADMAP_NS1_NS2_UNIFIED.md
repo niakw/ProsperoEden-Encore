@@ -166,31 +166,47 @@ refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
 le rejet des vecteurs débordants et la traduction d'un LDG capturé.
 **Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
 
-**P2.2/P2.5 — copies Vulkan d'images Depth/Stencil et layout
-de réinterprétation (05/11, source/hôte) :** le propriétaire
-Vulkan actif et son générateur de portage ont été alignés sur
-deux règles Vulkan préalablement violées. Une région
-VkBufferImageCopy ne peut pas porter simultanément les
-aspects DEPTH et STENCIL (VUID-09103) : la copie de
-réinterprétation sélectionne désormais la profondeur pour
-les images combinées, tout en conservant **les masques
-complets** sur les barrières d'images. Cette correction
-n'implémente **pas** la préservation indépendante du
-plan stencil ; les cas nécessitant ses valeurs sont à
-qualifier/corriger distinctement, sans succès fictif.
-De plus, la barrière de destination passe à
-TRANSFER_DST_OPTIMAL : le CopyBufferToImage doit
-nommer **ce layout exact**, pas GENERAL (VUID-00180).
+**P2.2/P2.5 — copie Vulkan multirégion avec préservation du
+stencil (05/11, source/hôte) :** le premier correctif avait
+supprimé deux usages Vulkan incorrects : une région
+VkBufferImageCopy ne peut porter DEPTH|STENCIL
+simultanément (VUID-09103), et CopyBufferToImage doit
+nommer le layout réellement établi par sa barrière,
+ici TRANSFER_DST_OPTIMAL (VUID-00180).
 
-Les précédentes protections de budget, copie vide, MSAA
-et calcul de coordonnées restent inchangées. Preuve hôte
-sur la vraie lambda d'aspects exécutée Clang/GCC O0/O2
-avec UBSan, vérification des régions source/destination
-et des layouts/barrières en code, et aller-retour exact
-des cinq transformations du générateur vers son owner
-actif ; anciens tests F07 source-exécutés verts.
-Aucun rendu ou support Depth/Stencil complet PS5
-n'est revendiqué (P5).
+Le contrôle suivant a identifié un défaut plus large :
+MakeBufferImageCopy initialisait **tous** les bufferOffset
+à zéro ; des copies multiples dans un même batch
+écrasaient le même tampon temporaire. Le propriétaire
+Vulkan PS5 répartit désormais chaque région dans un
+**intervalle scratch distinct et aligné**, avec budget
+calculé par couche, volume et format, vérification
+des multiplications, de la limite d'allocation native
+et de l'égalité exacte des octets des lignes source
+et destination. Il refuse tout ratio qui aurait été
+arrondi par troncature.
+
+Pour les images Depth/Stencil combinées de **même
+format**, il enregistre maintenant deux régions
+Vulkan indépendantes par zone : un plan Depth et
+un plan Stencil, séparés dans le tampon et couverts
+par les barrières complètes. Cela évite la perte
+systématique du stencil du correctif initial.
+**Les réinterprétations entre formats Depth/Stencil
+différents ou entre D/S et Color restent refusées**,
+car leurs octets stencil n'ont pas de correspondance
+prouvée. Le chemin desktop non PS5 n'est pas modifié.
+
+Le vrai planificateur scratch du propriétaire est
+extrait et exécuté sous Clang/GCC UBSan O0/O2 :
+deux régions, D24S8/D32S8, deux plans séparés,
+multicouches, offsets, ratio non entier, absence
+de dépassement et cas négatifs. Les preuves F07
+historiques coordonnées, tailles, layout et
+générateur de portage restent vertes, avec aller-retour
+des sept patches Vulkan épinglés.
+**Aucune compilation GPU/PS5 ni préservation stencil
+sur console encore validée** (P5).
 
 **P2.4 — LEPC dynamique en Geometry avec provenance GMMU (05/11,
 source/hôte) :** l'adresse d'une instruction LEPC hors du prologue

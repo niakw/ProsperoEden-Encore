@@ -16,27 +16,40 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
-### Vulkan — copie d'images combinées et layout, 05/11
+### Vulkan — copies multi-régions, profondeur, stencil et layouts (05/11)
 
 Audit du [correctif Lichii #89](https://github.com/zortos293/Lichii/commit/724aede4e)
 sur le propriétaire PS5 vk_texture_cache_cost.cpp :
-les copies tampon ↔ image de réinterprétation utilisaient
-un aspect combiné Depth|Stencil non autorisé par
-VUID-09103. Le code commun choisit désormais le seul
-aspect Depth pour ses régions tampon, mais conserve
-Depth|Stencil dans les barrières. La valeur stencil
-n'est **pas** conservée par cette seule transformation
-et reste une limitation explicite.
+une région VkBufferImageCopy ne peut pas représenter
+DEPTH|STENCIL simultanément, ni déclarer GENERAL
+quand la barrière a établi TRANSFER_DST_OPTIMAL.
 
-La destination est transitionnée vers TRANSFER_DST_OPTIMAL
-avant CopyBufferToImage ; le layout indiqué par cette
-commande correspond maintenant à la barrière (VUID-00180).
-Les cinq transformations font partie du vrai générateur
-de l'overlay pour survivre aux régénérations. Témoin
-hôte exécute la lambda d'aspect réelle sur les 4 masques
-et vérifie le couple barrière/commande, ainsi que
-l'aller-retour du générateur, Clang/GCC UBSan O0/O2.
-Aucune preuve de rendu GPU PS5/NS2.
+Le premier lot normalisait l'aspect vers Depth,
+mais ne conservait pas Stencil. L'audit suivant a
+révélé que MakeBufferImageCopy utilisait également
+bufferOffset=0 pour **toutes** les régions d'une
+opération, provoquant des collisions scratch.
+Les copies natives sont maintenant attribuées
+dans des intervalles distincts, avec alignement,
+budget mémoire par couche et ratio de bytes exact.
+Pour un couple Depth/Stencil **de même format**
+(D24S8 ou D32S8), une deuxième région d'aspect
+STENCIL préserve séparément ce plan. Les barrières
+restent Depth|Stencil sur l'image combinée.
+Les cas mixtes de formats sans équivalence de
+stencil vérifiée sont refusés, plutôt que
+d'affirmer une copie réussie.
+
+Le code de portage génère les sept transformations
+Vulkan après les correctifs F07, sans divergences
+entre le générateur et le vrai propriétaire. Test
+du planificateur C++ source-exécuté Clang/GCC
+UBSan O0/O2 : deux régions, D24S8/D32S8,
+multicouches, formats incompatibles, débordements,
+ratios non exacts. Tests antérieurs de budget,
+coordonnées et layout verts.
+**Aucune validation de résultats PS5/NS1/NS2** ;
+la compatibilité GPU matérielle reste P5.
 
 ### P2.4 — LEPC Geometry à PC GPU invité connu, 05/11
 

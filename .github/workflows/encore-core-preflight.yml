@@ -600,6 +600,8 @@ jobs:
           python3 -B tools/ns2/check_cpu6_scheduler_tick_host.py
           python3 -B tools/ns2/check_native_gpu_boot_source_tus_host.py
           python3 -B tools/ns2/check_native_qmd_allocation_host.py
+          python3 -B tools/ns2/check_native_gpu_registration_alloc_host.py
+          python3 -B tools/ns2/check_native_gpu_cache_allocation_host.py
           python3 -B tools/ns2/check_ampere_scalar_alu_sources_host.py
           python3 -B tools/check-gpu-physical-copy-bounds-host.py
           python3 -B tools/check-gpu-physical-copy-cpp-host.py

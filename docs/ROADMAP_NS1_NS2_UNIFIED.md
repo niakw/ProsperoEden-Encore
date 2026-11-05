@@ -1446,3 +1446,18 @@ exécutée UBSan O0/O2. La variante G11 dev ne passe qu’en x86 hôte ;
 aucun support PS5 de cette variante n’est revendiqué. **CPU6 reste
 désactivé en production**, pas de preuve de 6 cores sur console ;
 NS1 ne change pas hors sélection explicite research. P0.2/P5 ouverts.
+
+
+**P0.2 — admission atomique des propriétaires GPU (05/11, source/hôte) :**
+`NativeGpuProcessRegistry::Register`, les Bind du canal, du moteur
+3D et du moteur Compute, la session native `NativeQmdSession` ainsi que
+les deux caches Ampere retournent un refus/une absence de ressource
+contrôlés si l’allocateur hôte échoue. Cela évite les exceptions
+`std::bad_alloc` lors de l’authentification GPU invitée. Le compteur de
+génération du canal n’est **plus consommé** si la création du nœud map
+échoue. Deux témoins hôte exécutent les vrais registres C++ et les
+méthodes originales de session/cache extraites des propriétaires ;
+injection déterministe d’allocations impossibles, conservation des
+tickets, reprise et invalidation après `Unbind`, ainsi que séparation
+3D/Compute prouvées sous Clang/UBSan O0/O2. Le profil de production
+reste inchangé : aucun rendu Ampere/NS2 n’est déduit de ces succès.

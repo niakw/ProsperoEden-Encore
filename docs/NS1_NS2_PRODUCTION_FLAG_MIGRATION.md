@@ -177,6 +177,25 @@ avec comparaison de la cadence NS1 avant/après. **La promotion CPU6 en
 production, son ABI complet et la validation sur PS5 restent ouverts :**
 le commutateur CPU6 de recherche est toujours OFF et interdit en release.
 
+**P0.2 — admission mémoire cohérente des identités GPU natives (05/11/2026).**
+Les quatre registres d’identité du processus, du canal, du moteur 3D
+Ampere et du moteur Compute peuvent créer un nœud `std::map` sur une
+requête invitée. Chaque insertion gère désormais `std::bad_alloc`
+comme un refus ordinaire, **sans exporter de faux ticket**. L’époque du
+canal n’avance qu’**après** une insertion réussie. La même protection
+s’applique à la construction de session QMD partagée par les canaux d’un
+processus et aux deux caches de traduction shaders (3D/Compute).
+
+Les tests hôte extraient et exécutent les méthodes réelles des deux
+propriétaires C++ de session/cache, avec des types mémoire opaques :
+les échecs de `make_shared`, d’insertion map et d’allocation shader
+sont injectés exactement au point d’allocation. Les véritables classes
+de tickets process/channel contrôlent la reprise, l’invalidation après
+`Unbind`, le renouvellement d’époque et la séparation 3D/Compute.
+**Clang UBSan O0/O2 PASS sur chaque témoin.** Le profiling CPU/GPU
+réel, le lancement Vulkan et l’autorisation de production restent P5 ;
+les modes de recherche ne sont pas activés.
+
 ## Règles de migration
 
 1. **Conserver une seule responsabilité maintenue** pour JIT, buffers, cache texture, shaders, renderer, services et UI; n'admettre des adaptations qu'aux frontières matérielles (ISA/QMD, formats/ABI/services). Pas de fork parallèle du moteur.

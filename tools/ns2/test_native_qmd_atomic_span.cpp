@@ -62,7 +62,9 @@ static void Test(Opcode op, u32 slot, u32 offset, bool expected,
 // arithmetic is accepted without a runtime SPIR-V conditional.
 static std::optional<std::vector<NativeAtomicSpan>>
 MakeMaskedIrSpans(Opcode op, u32 slot, u32 mask, bool swap_constant = false,
-                  bool wrap_identity = false, bool add_after_mask = false) {
+                  bool wrap_identity = false, bool add_after_mask = false,
+                  u32 addend = 4, bool swap_addition = false,
+                  bool unbounded_second_addition = false) {
     Shader::ObjectPool<Shader::IR::Inst> pool{14};
     Shader::IR::Block block{pool};
     Shader::IR::Program ir{};
@@ -83,7 +85,13 @@ MakeMaskedIrSpans(Opcode op, u32 slot, u32 mask, bool swap_constant = false,
         index=Value{&block.back()};
     }
     if (add_after_mask) {
-        block.AppendNewInst(Opcode::IAdd32,{index,Value{u32{4}}});
+        block.AppendNewInst(Opcode::IAdd32,
+            swap_addition ? std::initializer_list<Value>{Value{addend},index}
+                          : std::initializer_list<Value>{index,Value{addend}});
+        index=Value{&block.back()};
+    }
+    if (unbounded_second_addition) {
+        block.AppendNewInst(Opcode::IAdd32,{index,register_value});
         index=Value{&block.back()};
     }
     block.AppendNewInst(op,{Value{slot},index,Value{u32{1}}});
@@ -93,18 +101,24 @@ MakeMaskedIrSpans(Opcode op, u32 slot, u32 mask, bool swap_constant = false,
 static void CheckMaskedAtomic(Opcode op, u32 slot, u32 mask, bool expected,
                               bool swap_constant = false,
                               bool wrap_identity = false,
-                              bool add_after_mask = false) {
+                              bool add_after_mask = false,
+                              u32 addend = 4, bool swap_addition = false,
+                              bool unbounded_second_addition = false) {
     const auto spans=MakeMaskedIrSpans(
-        op,slot,mask,swap_constant,wrap_identity,add_after_mask);
+        op,slot,mask,swap_constant,wrap_identity,add_after_mask,
+        addend,swap_addition,unbounded_second_addition);
     if (bool(spans)!=expected)
         std::fprintf(stderr,"masked atomic op=%u slot=%u mask=%#x "
-                             "swap=%u identity=%u plus=%u expected=%u got=%u\n",
-            static_cast<u32>(op),slot,mask,swap_constant,
-            wrap_identity,add_after_mask,expected,bool(spans));
+                             "swap=%u identity=%u plus=%u delta=%#x "
+                             "swap_plus=%u dynamic_second=%u expected=%u got=%u\n",
+            static_cast<u32>(op),slot,mask,swap_constant,wrap_identity,
+            add_after_mask,addend,swap_addition,unbounded_second_addition,
+            expected,bool(spans));
     assert(bool(spans)==expected);
     if (expected) {
         assert(spans->size()==1 && spans->front().binding==slot &&
-               spans->front().offset==mask);
+               spans->front().offset==
+                  (add_after_mask ? mask + addend : mask));
     }
 }
 
@@ -146,13 +160,34 @@ int main() {
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x38,true);
     CheckMaskedAtomic(Opcode::StorageAtomicExchange64,1,0x0,true);
     CheckMaskedAtomic(Opcode::StorageAtomicAddF32,0,0x3c,true);
-    // Any low alignment bit, oversized mask, arithmetic after the mask,
-    // unsupported 32x2 fallback or unknown binding fails closed.
+    // Exactly one aligned constant base after AND is also bounded,
+    // independent of runtime R12, even through IR identity wrappers.
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,true,
+                      false,false,true,4);
+    CheckMaskedAtomic(Opcode::StorageAtomicExchange32,0,0x3c,true,
+                      false,true,true,0x20,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicSMin32,0,0x3c,true,
+                      true,true,true,0x40);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x38,true,
+                      false,false,true,8);
+    CheckMaskedAtomic(Opcode::StorageAtomicExchange64,0,0x0,true,
+                      true,false,true,8,true);
+    // Low alignment bits, oversized mask, non-integral constant base,
+    // overflow, a second dynamic addition, and non-atomic 32x2 fail closed.
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3e,false);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x3c,false);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0xfffffffcU,false);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0xfffffff8U,false);
-    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,false,false,false,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,false,
+                      false,false,true,2);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x38,false,
+                      false,false,true,4);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,false,
+                      false,false,true,0xffffffc0U);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x38,false,
+                      false,false,true,0xffffffc0U);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,false,
+                      false,false,true,4,false,true);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32x2,0,0x38,false);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,2,0x3c,false);
 
@@ -174,6 +209,20 @@ int main() {
     assert(masked32 && masked64);
     assert(NativeQmdAtomicSpansFitBindings(*masked32,real_bindings));
     assert(NativeQmdAtomicSpansFitBindings(*masked64,real_bindings));
+    const auto base_shifted32=MakeMaskedIrSpans(
+        Opcode::StorageAtomicIAdd32,0,0x3c,false,false,true,4);
+    const auto base_shifted64=MakeMaskedIrSpans(
+        Opcode::StorageAtomicIAdd64,0,0x38,true,true,true,8,true);
+    assert(base_shifted32 && base_shifted64);
+    assert(base_shifted32->front().offset == 64 &&
+           base_shifted64->front().offset == 64);
+    auto region68=real_bindings;
+    region68[0].bytes=68;
+    assert(NativeQmdAtomicSpansFitBindings(*base_shifted32,region68));
+    assert(!NativeQmdAtomicSpansFitBindings(*base_shifted64,region68));
+    region68[0].bytes=72;
+    assert(NativeQmdAtomicSpansFitBindings(*base_shifted32,region68));
+    assert(NativeQmdAtomicSpansFitBindings(*base_shifted64,region68));
     auto short_resource=real_bindings;
     short_resource[0].bytes=63;
     assert(!NativeQmdAtomicSpansFitBindings(*masked32,short_resource));
@@ -188,6 +237,23 @@ int main() {
     prove({{0,0,16}},false);
     prove({{0,0xfffffffcU,4}},false);
     prove({{0,0xfffffff8U,8}},false);
+    // Validate the physical GMMU range as well as the byte offset.
+    // A perfectly aligned masked offset cannot repair a misaligned base.
+    auto misaligned_base=real_bindings;
+    misaligned_base[0].gpu_address=0x100002U;
+    assert(!NativeQmdAtomicSpansFitBindings(*masked32,misaligned_base));
+    assert(!NativeQmdAtomicSpansFitBindings(*base_shifted32,misaligned_base));
+    misaligned_base[0].gpu_address=0x100004U;
+    assert(NativeQmdAtomicSpansFitBindings(*masked32,misaligned_base));
+    assert(!NativeQmdAtomicSpansFitBindings(*masked64,misaligned_base));
+    const auto beyond_gpu_limit=real_bindings;
+    auto invalid_gpu=beyond_gpu_limit;
+    invalid_gpu[0].gpu_address=u64{1} << 49;
+    assert(!NativeQmdAtomicSpansFitBindings(*masked32,invalid_gpu));
+    invalid_gpu[0].gpu_address=(u64{1} << 49) - 32U;
+    assert(!NativeQmdAtomicSpansFitBindings(*masked32,invalid_gpu));
+    invalid_gpu[0].gpu_address=(u64{1} << 49) - 64U;
+    assert(NativeQmdAtomicSpansFitBindings(*masked32,invalid_gpu));
     const std::array bad_bindings{
         NativeQmdStorageBinding{0,64,true,true},
         NativeQmdStorageBinding{0x200000,8,false,true}};
@@ -211,5 +277,7 @@ int main() {
         std::array{NativeAtomicSpan{0,60,4}},mutated));
     std::puts("P2_3_NATIVE_ATOMIC_SPAN_REAL_IR_PASS static=1 "
               "dynamic_unbounded_rejected=1 aligned_and_max_admitted=1 "
+              "aligned_base_plus_and=1 checked_u32_no_wrap=1 "
+              "atomic_gmmu_base_alignment=1 guest_va_49=1 "
               "dynamic_live_size_proved=1 stale_size_refused=1");
 }

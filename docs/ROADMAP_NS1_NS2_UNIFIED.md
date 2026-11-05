@@ -390,6 +390,43 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — accès atomiques base + (index AND masque) et base
+GMMU alignée (05/11, source/hôte) :** nouvelle forme
+décodable depuis l'IR Compute réel :
+IAdd32(BitwiseAnd32(registre, masque_constant),
+base_constante), avec permutation des opérandes des
+deux opérations et identités SSA. Le masque doit
+conserver les bits bas à zéro selon les 4/8 octets
+de l'atomique, et la base doit être alignée.
+Le compilateur démontre en 32 bits **sans
+débordement** que l'offset final appartient à
+[base, base + masque] ; il authentifie sa valeur
+maximum plus la largeur contre le SSBO QMD3
+capturé avant de publier le shader. Le shader
+SPIR-V conserve l'expression dynamique réelle,
+sans transformer le maximum en index d'écriture.
+
+La même validation vérifie désormais que l'adresse
+GMMU **de base** du SSBO est alignée pour la
+largeur atomique et que le span complet tient dans
+la plage GPU native de 49 bits. Les offsets seuls
+alignés sur une base incorrecte ne sont plus
+qualifiés à tort. Refus conservés sur additions
+dynamiques supplémentaires, bases/masques
+sous-alignés, sommes 32 bits débordantes, index
+SSBO dynamiques, formes U32x2 non atomiques
+et absence de résidence/mapping prouvé.
+
+Tests du vrai IR GetRegister/BitwiseAnd32/IAdd32,
+plusieurs masques et bases, deux ordres de
+constantes, négatifs et mutations de tailles,
+validation de la base GPU, Clang/GCC UBSan O0/O2,
+compilation syntaxique des propriétaires
+Compute et garde-fous NS1/NS2. Le modèle
+de preuve est conservateur, pas un émulateur
+d'atomiques illimités. **P2.3 global et P5
+restent ouverts ; pas de validation PS5.**
+
 **P2.3 — offsets atomiques dynamiques bornés par masque AND
 (05/11, source/hôte) :** l'absence de garde SPIR-V
 dans le backend commun imposait jusque-là le refus de
@@ -408,8 +445,8 @@ publication du shader. La preuve fonctionne pour les
 deux ordres du AND et les identités IR, sans rajouter
 de voie au compilateur Maxwell NS1.
 
-Les additions, PHI, masques mal alignés, masques
-débordants, index de liaison SSBO dynamiques et
+Les additions non bornées, PHI, masques mal alignés,
+masques débordants, index de liaison SSBO dynamiques et
 fallbacks atomiques U32x2 restent **refusés**.
 L'émetteur de stockage conserve le **même offset
 réel** : il n'utilise pas la borne pour calculer

@@ -795,6 +795,36 @@ Ce dispositif réduit les reprises redondantes ;
 il ne constitue **pas** la matrice P0–P4
 exhaustive ni une preuve d'une frame PS5.
 
+**P2.7/P1.2 — lot natif GPFIFO et mémoire sparse (05/11, source/hôte) :**
+le vrai owner NVDRV natif vérifie dorénavant les drapeaux et
+la quantité des fences QMD AVANT toute initialisation GPU
+ou liaison au registre de processus, puis rejette un FD
+étranger sans initialiser le canal. La réservation des
+syncpoints natifs se base exactement sur
+NativeSubmissionPlan::increment_total et non sur
+une seconde recomposition indépendante. Le chemin
+NVDRV Maxwell/NS1 conserve son admission et son
+calcul historiques. Le témoin extrait le préfixe
+C++ réellement compilé de SubmitGPFIFOImpl et prouve
+les refus de flags invalides, de 65 incréments,
+de FD étranger ou expiré, sans effet sur canal,
+et accepte 64 incréments (66 avec la fence normale).
+Clang/GCC O0/O2 UBSan : PASS.
+
+En parallèle, le propriétaire commun
+SparseLargeVector::DecommitPage utilise
+maintenant un nombre de pages std::size_t
+plutôt que de comparer une expression u64
+avec un std::size_t incompatible sur macOS
+ARM64. Les gardes de parité historique et
+les tests de remise à zéro/sparse passent,
+et le fichier réel nvhost_gpu.cpp a passé
+la compilation syntaxique Clang C++20 avec
+ses vrais en-têtes maintenus. Cette correction
+est commune NS1/NS2 et n'active aucun GPU.
+**Qualification PS5 matérielle et GPU/GPFIFO
+dans la release restent ouvertes** en P0.2/P5.
+
 **P0.2b — compilation partagée du shader SPIR-V NS2
 (05/11, source/hôte) :** les propriétaires du
 compilateur GPU Ampere déjà existants sont

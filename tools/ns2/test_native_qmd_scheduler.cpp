@@ -277,6 +277,59 @@ int main() {
         };
         assert(Tegra::NativeComputeLaunchMapped(*launch,all_mapped));
         assert(mapped_queries==2);
+        // A guest-provided QMD may put the first Ampere instruction on
+        // the final 49-bit page boundary. A 16-byte fetch spanning the end
+        // must reject without touching the live GPU page-table walker.
+        auto invalid_launch=*launch;
+        constexpr std::uint64_t limit = std::uint64_t{1} << 49;
+        invalid_launch.program_address=limit-15;
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(invalid_launch,
+            [&](std::uint64_t,std::size_t) {
+                ++mapped_queries; return true;
+            }));
+        assert(mapped_queries==0);
+        // The exact final 16 bytes are a valid half-open mapped range.
+        invalid_launch.program_address=limit-16;
+        mapped_queries=0;
+        assert(Tegra::NativeComputeLaunchMapped(invalid_launch,
+            [&](std::uint64_t addr,std::size_t bytes) {
+                ++mapped_queries;
+                return addr==limit-16 ||
+                    (addr==launch->constant_buffers[0].gpu_address &&
+                     bytes==launch->constant_buffers[0].size);
+            }));
+        assert(mapped_queries==2);
+        // Reject a forged CBUF range at the boundary before any lookup
+        // of that CBUF, even if the memory callback would accept it.
+        invalid_launch=*launch;
+        invalid_launch.constant_buffers[0].gpu_address=limit-32;
+        invalid_launch.constant_buffers[0].size=64;
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(invalid_launch,
+            [&](std::uint64_t,std::size_t) {
+                ++mapped_queries; return true;
+            }));
+        assert(mapped_queries==1);
+        // Exceptions from a sparse GMMU reader happen before GPU submission.
+        // Reject the launch as unmapped, without propagating into QMD
+        // transaction poisoning or publishing any guest completion.
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(*launch,
+            [&](std::uint64_t,std::size_t) -> bool {
+                ++mapped_queries;
+                throw std::runtime_error("GMMU mapping snapshot invalidated");
+            }));
+        assert(mapped_queries==1);
+        mapped_queries=0;
+        assert(!Tegra::NativeComputeLaunchMapped(*launch,
+            [&](std::uint64_t addr,std::size_t) -> bool {
+                ++mapped_queries;
+                if (addr==launch->constant_buffers[0].gpu_address)
+                    throw std::runtime_error("CBUF sparse remap");
+                return true;
+            }));
+        assert(mapped_queries==2);
         mapped_queries=0;
         assert(!Tegra::NativeComputeLaunchMapped(
             *launch,[&](std::uint64_t address,std::size_t) {

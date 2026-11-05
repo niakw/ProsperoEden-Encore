@@ -40,8 +40,8 @@ required_cpp = (
     "if (it == sessions.end()) return false;",
     "const auto* session = core.GetSession(it->second);",
     "NativeGpuProcessRegistry::Instance().Contains(session->process);",
-    "NativeGpuChannelRegistry::Instance().Bind(channel_state.get(), owner->process)",
-    "if (!opened || opened->process != owner->process)",
+    "NativeGpuChannelRegistry::Instance().Bind(",
+    "if (!opened || opened->process != native_owner)",
     "NativeGpuChannelRegistry::Instance().Unbind(channel_state.get());",
     "NvResult nvhost_gpu::AllocateObjectContext(IoctlAllocObjCtx& params, DeviceFD fd)",
     "NvResult nvhost_gpu::SubmitGPFIFOImpl(IoctlSubmitGpfifo& params, Tegra::CommandList&& entries, DeviceFD fd)",
@@ -51,6 +51,25 @@ required_cpp = (
     "return SubmitGPFIFOImpl(params, std::move(entries), fd);",
     "return sessions.size() == 1 && UsesNativeAbi(sessions.begin()->first)",
 )
+# The native submission envelope and every FD must be validated before
+# even lazy InitChannel, binding a GPU owner or incrementing a syncpoint.
+# The normal NS1 path still takes its historical legacy flags and counters.
+submit=source.split("NvResult nvhost_gpu::SubmitGPFIFOImpl(",1)[1].split(
+    "Core::Memory::Memory& nvhost_gpu::GetSessionMemory(",1)[0]
+assert "const bool native = UsesNativeAbi(fd);" in submit
+assert submit.index("const auto native_plan = native") < submit.index(
+    "system.GPU().InitChannel(")
+assert submit.index("if (native && !native_plan) return NvResult::BadParameter;") < submit.index(
+    "system.GPU().InitChannel(")
+assert submit.index("if (!opened || opened->process != native_owner)") < submit.index(
+    "system.GPU().InitChannel(")
+assert submit.index("system.GPU().InitChannel(") < submit.index(
+    "NativeGpuChannelRegistry::Instance().Bind(")
+assert submit.index("NativeGpuChannelRegistry::Instance().Bind(") < submit.index(
+    "IncrementSyncpointMaxExt(")
+assert "const u32 increment = native\n        ? native_plan->increment_total" in submit
+assert "const u32 native_completion = native_plan ? native_plan->completion_count : 0;" in submit
+assert "u32{params.fence.value}" in submit
 required_header = (
     "NvResult AllocateObjectContext(IoctlAllocObjCtx& params, DeviceFD fd);",
     "NvResult SubmitGPFIFOImpl(IoctlSubmitGpfifo& params, Tegra::CommandList&& entries, DeviceFD fd);",

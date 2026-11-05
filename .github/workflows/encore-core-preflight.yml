@@ -102,6 +102,7 @@ jobs:
           python3 -B tools/check-ns2-gpu-access-svc-host.py
           python3 -B tools/check-ns2-gmmu-va-layout-host.py
           python3 -B tools/check-ns2-native-gpfifo-fd-scope.py
+          python3 -B tools/ns2/check_native_gpfifo_preinit_host.py
           python3 -B tools/check-ns2-graphics-hle-host.py
           python3 -B tools/check-firmware-matrix-host.py
           python3 -B tools/check-firmware-zip-native-host.py

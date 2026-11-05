@@ -1461,3 +1461,26 @@ injection déterministe d’allocations impossibles, conservation des
 tickets, reprise et invalidation après `Unbind`, ainsi que séparation
 3D/Compute prouvées sous Clang/UBSan O0/O2. Le profil de production
 reste inchangé : aucun rendu Ampere/NS2 n’est déduit de ces succès.
+
+
+**P2.7 — double validation des commandes GPFIFO natives lors du fetch
+(05/11/2026, source/hôte) :** le contrôle d'adresse GMMU à l'instant
+`nvhost_gpu::SubmitGPFIFOImpl` ne suffit pas : un processus peut démapper
+sa plage entre le ioctl et `DmaPusher::Step`. Les deux vrais propriétaires
+G20 (normal/DEV) appellent `NativeGpfifoFetchMapped` après l'attente
+du fence précédent, avant la lecture des mots invités et le cache GPU.
+Un paquet non mappé est rejeté **avant ProcessCommands**, sans valider
+le paquet ni sa séquence de sémaphore ; le profil PS5 notifie l'erreur
+GPU persistante sans lancer d'exception sur le thread GPU. Le code reste
+isolé derrière `EDEN_NS2_NATIVE_GPU_DISPATCH`, conservant le chemin NS1.
+Test `test_native_gpu_fetch_admission.cpp` : plages vides, 49 bits,
+limites de pages 4 KiB, mappings révoqués ou recréés, contrôle des
+dépassements **Clang UBSan O0/O2 PASS**. Sept vraies TUs propriétaires
+passent la compilation source sous macros `PS5_NATIVE`,
+`EDEN_NS2_NATIVE_GPU_DISPATCH`, et bridge shader NS2 sur Mac : GMMU,
+NVDRV/GPU, puller, capture shader, capture SPIR-V, DMA normal ; le DMA
+DEV reste syntaxiquement vérifié **x86 uniquement** car son profiler
+emploie des intrinsics x86 hors du périmètre release. Cela atteste
+la cohérence source des chemins natifs, pas une liaison ou une exécution
+matérielle PS5. P2.7/P5 restent ouverts pour le cycle de vie GPU
+réel, les fences et le premier framebuffer.

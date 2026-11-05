@@ -287,7 +287,7 @@ int main() {
         assert(bridge.Ready() && bridge.source_instruction_offsets.size() == 2);
         assert(bridge.maxwell_instructions[bridge.source_instruction_offsets[0]] == word);
     }
-    for (const u32 invalid_width : {1U,3U,6U,7U}) {
+    for (const u32 invalid_width : {6U,7U}) {
         auto invalid = Instruction{{0x06077abb,0x01002080,0x08000000,0x000fe400}};
         invalid.words[2] |= invalid_width << 9;
         assert(!Lower(invalid));
@@ -310,6 +310,33 @@ int main() {
         assert(bridge.Ready());
         assert(bridge.maxwell_instructions[bridge.source_instruction_offsets[0]] == word);
     }
+    // Signed native subword reads use Maxwell's signed 8/16-bit widths,
+    // both with a direct displacement and a dynamic uniform index.
+    for (const bool indexed : {false, true}) {
+        for (const u32 width : {1U, 3U}) {
+            auto instruction = indexed
+                ? Instruction{{0x06077abb,0x01002080,0x08000000,0x000fe400}}
+                : Instruction{{0x06077ab9,0x01002080,0x00000000,0x000fe400}};
+            instruction.words[2] |= width << 9;
+            assert(Probe(instruction).status == ProbeStatus::Recognized);
+            const auto lowered = Lower(instruction);
+            assert(lowered && lowered.source_instruction_offsets.size() == 2);
+            const u64 word = lowered.instructions[lowered.source_instruction_offsets[0]];
+            assert((word & 0xff00000000000000ULL) == 0xef00000000000000ULL);
+            assert(((word >> 8) & 255U) == (indexed ? 222U : 255U));
+            assert(((word >> 20) & 0xffffU) == 0x82U);
+            assert(((word >> 48) & 7U) == width);
+            const auto bridge = LowerReviewedToMaxwell(Bytes(instruction));
+            assert(bridge.Ready());
+            assert(bridge.maxwell_instructions[bridge.source_instruction_offsets[0]] == word);
+        }
+    }
+    auto direct_signed_byte_odd = Instruction{{0x06077ab9,0x010000c0,0x00000200,0x000fe400}};
+    assert(Lower(direct_signed_byte_odd));
+    auto direct_signed_half_odd = Instruction{{0x06077ab9,0x010000c0,0x00000600,0x000fe400}};
+    assert(!Lower(direct_signed_half_odd));
+    auto direct_signed_half_range = Instruction{{0x06077ab9,0x01200000,0x00000600,0x000fe400}};
+    assert(!Lower(direct_signed_half_range));
     auto direct_bad_alignment = Instruction{{0x06077ab9,0x010000c0,0x00000400,0x000fe400}};
     assert(!Lower(direct_bad_alignment)); // U16 at odd byte address
     auto direct_bad_range = Instruction{{0x06077ab9,0x01200000,0x00000000,0x000fe400}};

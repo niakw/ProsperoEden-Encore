@@ -42,6 +42,7 @@
 #include "experimental_performance.h"
 #include "diagnostics.h"
 #include "display_refresh.h"
+#include "lossless_user_file.h"
 #include "frame_metrics.h"
 #include "log_pipe.h"
 #include "network_domain_rules.h"
@@ -1600,11 +1601,18 @@ int main(int argc, char** argv) {
                 ? game_video.frame_generation : launch_preferences.frame_generation;
             const int effective_framegen = session_renderer == 1 && !safe_launch
                 ? std::clamp(requested_framegen, 0, 3) : 0;
-            Eden::Display::frame_generation_method.store(effective_framegen);
-            // The upstream LSFG pacer depends on frame_gen for its GPU
-            // generation budget. Resolve once per title; no runtime menu
-            // setting alone is proof of compatible user-supplied shaders.
-            Settings::values.frame_gen.SetValue(effective_framegen == 3);
+            // A persisted LSFG choice can become stale if its user-supplied
+            // file disappears. Never initialize shaders from absent data.
+            const bool lossless_available = effective_framegen == 3 &&
+                Eden::Graphics::LosslessUserFileLooksValid(Eden::UserDir());
+            if (effective_framegen == 3 && !lossless_available)
+                Eden::Report("graphics", "Lossless.dll missing or invalid: native LSFG unavailable");
+            const int active_framegen = effective_framegen == 3 && !lossless_available
+                ? 0 : effective_framegen;
+            Eden::Display::frame_generation_method.store(active_framegen);
+            // The upstream LSFG pacer also reads frame_gen. Disable its
+            // generation budget on other methods, including Mihawk and FSR3.
+            Settings::values.frame_gen.SetValue(lossless_available);
             Eden::Display::output_millihertz.store(0);
             setenv(Eden::Display::kVulkanSwitch, refresh ? "1" : "0", 1);
             Eden::Display::game_millihertz.store(60000);

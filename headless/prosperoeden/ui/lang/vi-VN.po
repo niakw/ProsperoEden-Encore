@@ -1989,8 +1989,12 @@ msgstr "{0}/ (NSP hoặc XCI)"
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (mỗi ID trò chơi một thư mục)"
 
-msgid "Frame generation"
-msgstr "Tạo khung hình"
+msgid "Enhanced smoothness"
+msgstr "Hình ảnh mượt hơn"
 
 msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
 msgstr "Ưu tiên MihawkGen cho PS5. FSR 3 đang được lên kế hoạch; LSFG cần kiểm tra giấy phép và hỗ trợ gốc. Tính năng tạo khung hình chưa được cài đặt."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

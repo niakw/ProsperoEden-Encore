@@ -1660,11 +1660,16 @@ void Launcher::press_game(Key key)
         // actual backend availability independently of the chosen mode.
         const int step = key == Key::left ? -1 : 1;
         next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
+        if (next.frame_generation == 3 && !services_.has_lossless_dll()) {
+            say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
+            cue(Cue::error);
+            return;
+        }
         const bool saved = services_.set_game_settings(game.title_id, next);
         if (saved) { game_settings_ = next; home_settings_cache_.erase(game.title_id); }
         if (!saved)
             say(tr("Could not save. Please try again."), true);
-        else if (next.frame_generation >= 2)
+        else if (next.frame_generation == 2)
             say(tr(kFramegenUnavailable), true);
         cue(saved ? Cue::toggle : Cue::error);
         return;
@@ -1942,7 +1947,7 @@ void Launcher::draw_game(Canvas &c, float open)
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
         TR("Resolution"), TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-        TR("Frame generation"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
         TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,

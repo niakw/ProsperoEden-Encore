@@ -21,6 +21,7 @@
 #include "radio_input.h"
 #include "settings_store.h"
 #include "version.h"
+#include "lossless_user_file.h"
 #include "launcher_update_version.hpp"
 #include "launcher_update_release.hpp"
 #include <string_view>
@@ -2110,6 +2111,10 @@ EdenServices::detached_room_directory_task()
         // connected to the pinned emulator network version.
         return Eden::Multiplayer::ParseRoomDirectory(*response, 0);
     };
+}
+
+bool EdenServices::has_lossless_dll() const {
+    return Eden::Graphics::LosslessUserFileLooksValid(Eden::UserDir());
 }
 
 pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {

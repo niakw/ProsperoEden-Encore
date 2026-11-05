@@ -600,10 +600,14 @@ void Launcher::press_dialog(Key key)
         {
             // Save the selected method. The Vulkan renderer uses actual
             // runtime capabilities; choosing a method never fabricates FPS.
-            prefs_.frame_generation = (prefs_.frame_generation + step + 4) % 4;
-            // Only FSR 3 / LSFG lack a native PS5 dispatch path. MihawkGen
-            // now has an actual runtime pipeline (console qualification pending).
-            if (prefs_.frame_generation >= 2)
+            const int next = (prefs_.frame_generation + step + 4) % 4;
+            if (next == 3 && !services_.has_lossless_dll()) {
+                say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
+                cue(Cue::error);
+                break;
+            }
+            prefs_.frame_generation = next;
+            if (next == 2)
                 say(tr(kFramegenUnavailable), true);
         }
         else if (option_ == video_refresh)
@@ -913,7 +917,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
             TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-            TR("Frame generation"), TR("Refresh rate"), TR("FPS overlay")};
+            TR("Enhanced smoothness"), TR("Refresh rate"), TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
         {
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));

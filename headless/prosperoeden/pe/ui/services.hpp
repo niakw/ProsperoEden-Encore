@@ -322,6 +322,9 @@ class Services
     // ---- settings ----
     virtual Preferences preferences() = 0;
     virtual bool set_preferences(const Preferences &preferences) = 0;
+    // Nonblocking metadata-only check for a user-owned LSFG shader source.
+    // The actual Vulkan loader performs full PE and shader validation.
+    virtual bool has_lossless_dll() const { return false; }
     // Called only by the launcher background worker. Native implementation
     // consults official stable GitHub Releases (never games/firmware updates).
     virtual AppUpdateInfo check_app_update(const std::string& current) {

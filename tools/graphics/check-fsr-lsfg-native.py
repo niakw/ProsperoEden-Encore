@@ -33,10 +33,10 @@ for source in lsfg_sources:
     assert source in native, f"Missing LSFG source {source}"
 assert "target_compile_definitions(video_core PUBLIC HAS_LSFG)" in native
 assert 'lossless_dll_r08.cpp' in native
-assert "Settings::values.frame_gen.SetValue(effective_framegen == 3)" in main
+assert "Settings::values.frame_gen.SetValue(lossless_available)" in main
 assert "Eden::Display::frame_generation_method.load" in render
 assert "frame_gen.Process(" in render and "frame_gen.GenerateInto(" in render
-assert "Settings::values.frame_gen.SetValue(effective_framegen == 3)" in main
+assert "Settings::values.frame_gen.SetValue(lossless_available)" in main
 assert "(native_fg_method == 1 || native_fg_method == 3)" in render
 assert "blit_swapchain.DrawHudOverlay(device, generated, postprocess_hud);" in render
 assert "if (postprocess_hud_required)" in render
@@ -55,3 +55,19 @@ pack=read("tools/package-headless-native.sh")
 assert 'Lossless.dll' not in pack and 'lossless_dll_r08.cpp' not in pack
 assert "model.fgw" not in reader
 print("GRAPHICS SOURCES OK: Vulkan FSR spatial active, LSFG native sources attached, user DLL-only, FSR3 not misrepresented")
+
+status = read("headless/lossless_user_file.h")
+menu = read("headless/prosperoeden/pe/ui/settings.cpp")
+game_ui = read("headless/prosperoeden/pe/ui/library.cpp")
+service = read("headless/prosperoeden/eden_services.cpp")
+assert "LosslessUserFileLooksValid" in status
+assert "symlink_status" in status
+assert "file_size" in status
+assert 'kLosslessRelative = "lossless/Lossless.dll"' in status
+assert 'kLosslessConsolePath' in status
+assert 'services_.has_lossless_dll()' in menu
+assert 'services_.has_lossless_dll()' in game_ui
+assert 'Graphics::LosslessUserFileLooksValid(Eden::UserDir())' in service
+assert 'frame_generation_method.store(active_framegen)' in main
+assert "Enhanced smoothness" in menu and "Enhanced smoothness" in game_ui
+print("LSFG UI PASS: missing file alerted, option not saved, game runtime falls back to real frames")

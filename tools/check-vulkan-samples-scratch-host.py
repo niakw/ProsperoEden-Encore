@@ -6,13 +6,14 @@ import hashlib
 import shutil
 import subprocess
 import tempfile
+from ns2.native_vulkan_occlusion_review import strip_reviewed_close
 
 ROOT=Path(__file__).resolve().parents[1]
 source=(ROOT/'vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp').read_text()
 tree=ast.parse((ROOT/'tools/prepare-vulkan-port.py').read_text())
 edits=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
            and any(isinstance(t,ast.Name) and t.id=='samples_recycle_edits' for t in n.targets))
-previous=source
+previous=strip_reviewed_close(source)
 for old,new in reversed(edits):
     assert previous.count(new)==1,new
     previous=previous.replace(new,old)

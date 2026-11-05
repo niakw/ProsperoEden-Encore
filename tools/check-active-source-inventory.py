@@ -240,6 +240,34 @@ assert "python3 -B tools/ns2/check_native_qmd_atomic_span_host.py" in (
 print("ENCORE_POST_F07_NATIVE_ATOMIC_SPAN_OWNER_PASS",
       f"owners={len(post_f07_native_atomic_owners)}")
 
+# P2.7 native command-fetch recheck was introduced after the 337-source
+# historical F07 graph. It is a conditional research header, NOT a new
+# shipping optimization proof. Require a real normal/DEV owner and a host
+# execution test rather than silently increasing the frozen catalogue.
+post_f07_native_gpfifo_fetch_owners = {
+    "ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h",
+}
+assert post_f07_native_gpfifo_fetch_owners <= set(physical_all), (
+    "Missing native GPFIFO live fetch helper",
+    sorted(post_f07_native_gpfifo_fetch_owners - set(physical_all)))
+assert not post_f07_native_gpfifo_fetch_owners.intersection(
+    set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+    shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
+    shared_compute_owners | native_typed_texture_owners |
+    shared_gpu_scalar_owners | shared_gpu_remap_owners |
+    post_f07_native_atomic_owners)
+fetch_header=(active/next(iter(post_f07_native_gpfifo_fetch_owners))).read_text()
+assert 'NativeGpfifoFetchMapped(' in fetch_header
+assert 'words > (native_limit - address) / bytes_per_word' in fetch_header
+for dma in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
+    owner=(active/'eden-core/src/video_core'/dma).read_text()
+    assert '#include "core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h"' in owner
+    assert 'NativeGpfifoFetchMapped(' in owner
+assert 'python3 -B tools/ns2/check_native_gpu_fetch_admission_host.py' in (
+    root/'.github/workflows/encore-core-preflight.yml').read_text()
+print('ENCORE_POST_F07_NATIVE_GPFIFO_FETCH_OWNER_PASS',
+      f'owners={len(post_f07_native_gpfifo_fetch_owners)}')
+
 # P1.3: five new shared kernel arbiter owners are release-selected only
 # with the reviewed dual-NPDM GPU-access SVC. Keep the frozen 337-file
 # source catalogue intact, with a separate verified post-F07 owner list.
@@ -269,7 +297,8 @@ physical = [p for p in physical_all
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
-            post_f07_native_atomic_owners | shared_ns2_wait64_owners]
+            post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
+            shared_ns2_wait64_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

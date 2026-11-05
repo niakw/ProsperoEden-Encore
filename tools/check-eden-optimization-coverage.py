@@ -277,6 +277,35 @@ print("NS2_POST_F07_ATOMIC_SPAN_ISOLATION_PASS",
       f"new_native_headers={len(post_f07_native_atomic_span_owners)}",
       "historical_F07_unchanged=1")
 
+# P2.7: the native GPFIFO live-read guard is post-F07 and gated behind
+# the exact NVDRV/Ampere GPU dispatch research profile. It is not a new
+# historical shipping optimization. Its source and executed test must be
+# visible separately from the original 518 reviewed owners.
+post_f07_native_gpfifo_fetch_owners = {
+    "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h",
+}
+assert post_f07_native_gpfifo_fetch_owners <= all_owners, sorted(
+    post_f07_native_gpfifo_fetch_owners - all_owners)
+assert not post_f07_native_gpfifo_fetch_owners & (
+    research_owners | hygiene_owners | ns2_shared_release_owners |
+    ns2_shared_audio_owners | ns2_shared_gpu_access_owners |
+    post_f07_native_vulkan_owners | post_f07_shared_compute_owners |
+    post_f07_launcher_handoff_owners | post_f07_ns2_typed_cache_owners |
+    post_f07_shared_gpu_scalar_owners | post_f07_shared_gpu_remap_owners |
+    post_f07_native_atomic_span_owners)
+fetch_header=(ROOT/next(iter(post_f07_native_gpfifo_fetch_owners))).read_text()
+assert 'NativeGpfifoFetchMapped(' in fetch_header
+assert 'words > (native_limit - address) / bytes_per_word' in fetch_header
+for dma in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
+    owner=(ROOT/'vendor/encore-active/eden-core/src/video_core'/dma).read_text()
+    assert '#include "core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h"' in owner
+    assert 'NativeGpfifoFetchMapped(' in owner
+assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' in release_cmake
+assert 'python3 -B tools/ns2/check_native_gpu_fetch_admission_host.py' in (
+    ROOT/'.github/workflows/encore-core-preflight.yml').read_text()
+print('NS2_POST_F07_NATIVE_GPFIFO_FETCH_ISOLATION_PASS',
+      f'new_native_headers={len(post_f07_native_gpfifo_fetch_owners)}')
+
 # NUP v1 parser/adapter/loader/router additions came after the frozen
 # 518-path F07 optimization audit. Their native CMake gate is OFF by default,
 # forbidden in the final profile, and has no PS5 runtime proof. Keep this
@@ -385,7 +414,7 @@ assert 'python3 -B tools/ns2/check_shared_kernel_wait64_host.py' in (
 print('NS1_NS2_SHARED_WAIT64_F07_ISOLATION_PASS',
       f'post_snapshot_source_owners={len(post_f07_shared_wait64_owners)}')
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_shared_wait64_owners
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

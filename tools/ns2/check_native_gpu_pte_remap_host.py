@@ -22,6 +22,8 @@ assert source.count("changed_runs.Record(current_gpu_addr, mapping_changed, noti
 assert source.count("if (mapping_changed) notify_changed(current_gpu_addr,") == 2
 assert source.count("All old mappings have been evicted") == 1
 assert source.count("Commit big-page backing only after the old cache owner") == 1
+assert source.count("gpu_page_table_revision.fetch_add(1, std::memory_order_release)") == 4
+assert source.count("std::atomic<u64> gpu_page_table_revision{1};") == 1
 
 def extract(begin: str, end: str) -> str:
     assert source.count(begin) == 1 and source.count(end) == 1
@@ -33,6 +35,7 @@ big = extract("GPUVAddr MemoryManager::BigPageTableOp(", "\nvoid MemoryManager::
 
 fixture = r"""
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -48,6 +51,9 @@ using u32=std::uint32_t;
 using u64=std::uint64_t;
 using GPUVAddr=u64;
 using DAddr=u64;
+// Use the SAME revision declaration as the real shared memory manager.
+// This fixture extracts real PageTableOp/BigPageTableOp bodies unchanged.
+std::atomic<u64> gpu_page_table_revision{1};
 enum class PTEKind{INVALID,Color};
 struct SmallTable {
     std::array<u32, 256> entries{};
@@ -124,7 +130,9 @@ int main() {
     auto map_small=[&](u64 at,u64 physical,size_t bytes) {
         small.PageTableOp(at,physical,bytes,PTEKind::Color,Entry::Mapped);
     };
+    const auto small_revision_before = gpu_page_table_revision.load();
     map_small(base,0x200000,3*4096);
+    assert(gpu_page_table_revision.load() == small_revision_before + 2);
 #ifdef EDEN_NS2_GPU_RANGE_BATCH
     Same(small.recorder.events,{{base,3*4096}});
 #else
@@ -168,7 +176,9 @@ int main() {
     auto map_big=[&](u64 at,u64 physical,size_t bytes) {
         big.BigPageTableOp(at,physical,bytes,PTEKind::Color,Entry::Mapped);
     };
+    const auto big_revision_before = gpu_page_table_revision.load();
     map_big(big_base,0x400000,2*16384);
+    assert(gpu_page_table_revision.load() == big_revision_before + 2);
 #ifdef EDEN_NS2_GPU_RANGE_BATCH
     Same(big.recorder.events,{{big_base,2*16384}});
 #else

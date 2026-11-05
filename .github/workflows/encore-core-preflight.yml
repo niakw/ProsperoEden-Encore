@@ -109,6 +109,7 @@ jobs:
           python3 -B tools/check-encore-ncz-sources.py
           python3 -B tools/check-exefs-directory-host.py
           python3 -B tools/check-ns2-extracted-inputs-host.py
+          python3 -B tools/ns2/check_ns2_package_pre_kernel_npdm_host.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py
           python3 -B tools/ns2/check_native_streamplay_guest_hid_host.py
           python3 -B tools/ns2/check_native_audio_virtual_device_host.py

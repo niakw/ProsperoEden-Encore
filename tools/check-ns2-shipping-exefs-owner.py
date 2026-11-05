@@ -75,12 +75,18 @@ selector = cmake.split('# The Core::System overlay is a fully maintained', 1)[1]
 assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in selector
 assert 'ns2-runtime/process/core/core.cpp' in selector
 assert '#include "diagnostics.h"' in native_core and shared_core.startswith('#include "diagnostics.h"')
-assert 'IsSwitch2ExtractedProgram(' in shared_core
+assert 'IsSwitch2LaunchProgram(' in shared_core
 assert 'metadata.Load(npdm) == Loader::ResultStatus::Success' in shared_core
 assert 'metadata.IsSwitch2()' in shared_core
+for kind in ('NSP', 'XCI', 'NCA'):
+    assert f'Loader::FileType::{kind}' in shared_core
+assert 'xci.GetSecurePartitionNSP()' in shared_core
+assert 'FileSys::ContentRecordType::Program' in shared_core
+assert 'program->GetExeFS()' in shared_core
 load = shared_core.split('SystemResultStatus Load(', 1)[1].split(
     'if (params.applet_type == Service::AM::AppletType::Application)', 1)[0]
-assert load.index('IsSwitch2ExtractedProgram(') < load.index('InitializeKernel(system);')
+assert load.index('IsSwitch2LaunchProgram(') < load.index('InitializeKernel(system);')
+assert 'params.program_id, params.program_index' in load
 assert 'Settings::MemoryLayout::Memory_12Gb' in load
 assert 'SetGlobal(false)' in load and 'SetValue(Settings::MemoryLayout::Memory_12Gb)' in load
 assert 'initialized_memory_layout != Settings::values.memory_layout_mode.GetValue()' in shared_core

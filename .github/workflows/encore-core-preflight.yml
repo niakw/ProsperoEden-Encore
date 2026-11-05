@@ -83,6 +83,9 @@ jobs:
           python3 -B tools/check-codeql-security-scope.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py
           python3 -B tools/check-ns2-production-flags-host.py
+          python3 -B tools/check-eden-optimization-coverage.py
+          python3 -B tools/check-eden-audit-verification-matrix.py
+          python3 -B tools/audit-cloud-worklist.py
 
       - name: Install host-only JSON, Boost.Container and clang sanitizer fixtures
         run: |

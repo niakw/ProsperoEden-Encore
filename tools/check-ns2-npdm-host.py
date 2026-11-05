@@ -11,7 +11,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 HEADER_DIR = ROOT / "vendor/encore-active/ns2-helpers/include"
 TEST = ROOT / "tools" / "ns2" / "test_npdm_layout.cpp"
-SOURCE = ROOT / "vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp"
+SOURCE = ROOT / "vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp"
 CMAKE = ROOT / "headless" / "CMakeLists.txt"
 
 def main() -> int:

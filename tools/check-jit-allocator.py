@@ -17,7 +17,7 @@ assert ', EdenJitAllocator())' in code
 # The reduced host-allocation footprint must never be confused with a
 # production cache-size change. Those remain independently constrained by
 # the runtime's A64/A32 admission policy.
-policy = (root / 'headless/experimental_performance.h').read_text()
+policy = (root / 'headless/jit_memory_policy.h').read_text()
 assert '256u*kMiB, 192u*kMiB, 192u*kMiB, 16u*kMiB' in policy
 assert '512u*kMiB, 64u*kMiB, 64u*kMiB, 16u*kMiB' in policy
 assert 'kSingleArenaAddressingLimit = 1536u * kMiB' in policy

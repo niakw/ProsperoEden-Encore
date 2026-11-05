@@ -34,7 +34,7 @@ MOCK = r"""
 #include <unistd.h>
 #include "jit-allocator.h"
 #include "jit-sparse-commit.h"
-#include "experimental_performance.h"
+#include "jit_memory_policy.h"
 
 namespace Common {
 bool ProbeSparseJitAlias() noexcept;

@@ -4,26 +4,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
-release = cmake.split("# Experimental ExeFS bridge", 1)[1].split(
-    "# N52: process-run admission", 1
-)[0]
-assert 'option(EDEN_NS2_EXEFS_EXPERIMENTAL' in release
-assert 'set(EDEN_SHARED_NS2_EXEFS OFF)' in release
-assert 'if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)' in release
+release = cmake.split('# The same maintained loader owns ordinary NS1 ExeFS', 1)[1].split(
+    '# The Switch 2 GPU-access memory SVC', 1)[0]
 assert 'set(EDEN_SHARED_NS2_EXEFS ON)' in release
-assert 'if(EDEN_NS2_EXEFS_EXPERIMENTAL OR EDEN_SHARED_NS2_EXEFS)' in release
+assert 'if(EDEN_SHARED_NS2_EXEFS)' in release
 assert 'if(NOT EDEN_REVIEWED_DUAL_NPDM)' in release
 assert 'set_property(TARGET core PROPERTY SOURCES' in release
-for name in ("loader.cpp", "deconstructed_rom_directory.cpp"):
-    assert (ROOT / "vendor/encore-active/ns2-experimental/src/core/loader" / name).is_file()
-positions = [i for i in range(len(release))
-             if release.startswith('if(PS5_NATIVE AND EDEN_NS2_EXEFS_EXPERIMENTAL)', i)]
-assert len(positions) == 2
-assert 'eden_ns2_native_nso_idx' in release[positions[0]:positions[1]]
-assert 'EDEN_NS2_NATIVE_SVC_SOURCE' in release[positions[1]:]
-assert 'EDEN_SHARED_NS2_EXEFS' in release
-rom = (ROOT / "vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp").read_text()
-loader = (ROOT / "vendor/encore-active/ns2-experimental/src/core/loader/loader.cpp").read_text()
+assert 'EDEN_NS2_EXEFS_EXPERIMENTAL' not in release
+for name in ('loader.cpp', 'deconstructed_rom_directory.cpp'):
+    assert (ROOT / 'vendor/encore-active/ns2-runtime/metadata/core/loader' / name).is_file()
+rom = (ROOT / "vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp").read_text()
+loader = (ROOT / "vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp").read_text()
 for required in (
     "metadata.IsSwitch2()", "metadata.UsesExtendedAcid()",
     "Eden::NS2::ExeFS::PreflightNso",
@@ -43,24 +34,24 @@ am_file = (ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/servi
 assert '{320, D<&IApplicationFunctions::GetScreenShotAndContinuousRecordingInitiallyEnabled>' in am_file
 assert "m_applet->screenshot_permission" in am_file
 assert "m_applet->game_play_recording_supported" in am_file
-assert 'if(EDEN_NS2_NVDRV_EXPERIMENTAL OR EDEN_SHARED_NS2_NVDRV_CAPS)' in cmake
+assert 'if(EDEN_SHARED_NS2_NVDRV_CAPS)' in cmake
 assert 'set(EDEN_SHARED_NS2_NVDRV_CAPS ON)' in cmake
 nv = (ROOT / "vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp").read_text()
 assert "command.raw == 0xc0e04705U || command.raw == 0xc0e84705U" in nv
 assert "WriteNativeCharacteristicsIoctlReply(" in nv
-assert 'if(EDEN_NS2_NVDRV_EXPERIMENTAL)' in cmake
-# Shared shipping branch must not select the AS/GPU research replacements.
-nv_selector = cmake.split('option(EDEN_NS2_NVDRV_EXPERIMENTAL', 1)[1].split(
-    '# Switch 2 GPU TIPC service', 1)[0]
-assert 'if(EDEN_NS2_NVDRV_EXPERIMENTAL)' in nv_selector
+nv_selector = cmake.split('# The native GPU-characteristics IOCTL owner is additive:', 1)[1].split(
+    '# Native GPU session HLE and bounded worker transport:', 1)[0]
+assert 'if(EDEN_SHARED_NS2_NVDRV_CAPS)' in nv_selector
 assert 'eden_ns2_as_idx' in nv_selector and 'eden_ns2_gpu_idx' in nv_selector
+assert 'EDEN_NS2_NATIVE_GPU_PULLER' in nv_selector
+assert 'EDEN_NS2_NVDRV_EXPERIMENTAL' not in nv_selector
 assert 'Settings::SetNceEnabled(is_39bit && !metadata.UsesExtendedAcid())' in rom
 # The shipping kernel must accept an NS2 12 GiB guest heap without changing
 # the Switch 1 layout-specific cap or replacing the complete SVC dispatcher.
 heap = cmake.split('# Shared kernel heap admission for Switch 2:', 1)[1].split(
     '# N3b: shared native PS5 applet compatibility', 1)[0]
 assert 'set(EDEN_SHARED_NS2_KERNEL_HEAP ON)' in heap
-assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in heap
+assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in heap
 assert 'set_property(TARGET core PROPERTY SOURCES' in heap
 kernel_root = ROOT / 'vendor/encore-active/ns2-runtime/kernel/core/hle/kernel'
 addr = (kernel_root / 'k_address_space_info.cpp').read_text()
@@ -81,7 +72,7 @@ native_core = (ROOT / 'vendor/encore-active/eden-core/src/core/core_native.cpp')
 shared_core = (ROOT / 'vendor/encore-active/ns2-runtime/process/core/core.cpp').read_text()
 selector = cmake.split('# The Core::System overlay is a fully maintained', 1)[1].split(
     '# RomFS builder parents', 1)[0]
-assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in selector
+assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in selector
 assert 'ns2-runtime/process/core/core.cpp' in selector
 assert '#include "diagnostics.h"' in native_core and shared_core.startswith('#include "diagnostics.h"')
 assert 'IsSwitch2ExtractedProgram(' in shared_core
@@ -113,7 +104,7 @@ audio = (audio_root / 'audio.cpp').read_text()
 client = (audio_root / 'nx2_audio_user_client.h').read_text()
 audio_select = cmake.split('# Shared Switch 2 audio user + virtual device + real Sysmix stream service.', 1)[1].split(
     '# N3b: shared native PS5 applet compatibility', 1)[0]
-assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in audio_select
+assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in audio_select
 assert 'set(EDEN_SHARED_NS2_AUDIO ON)' in audio_select
 assert 'list(REMOVE_ITEM eden_ns2_audio_sources "hle/service/audio/audio.cpp")' in audio_select
 assert 'set_property(TARGET core PROPERTY SOURCES' in audio_select

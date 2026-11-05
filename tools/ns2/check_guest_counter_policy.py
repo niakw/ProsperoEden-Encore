@@ -15,8 +15,8 @@ assert "return Eden::GuestCounter::CpuTicksToGuest(cpu_tick);" in clock_header
 assert "Common::WallClock::CPUTickToCNTPCT(cpu_ticks)" in timing_owner
 assert "Common::WallClock::NSToCNTPCT" in (root/"vendor/sources/eden/src/common/cpu_features.h").read_text() or "NSToCNTPCT" in clock_header
 jit=(vendor/"src/core/arm/dynarmic/arm_dynarmic_64.cpp").read_text()
-npdm=(root/"vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp").read_text()
-loader=(root/"vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp").read_text()
+npdm=(root/"vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp").read_text()
+loader=(root/"vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 for witness in ("Eden::GuestCounter::NativeFactor()", "Eden::GuestCounter::NanosecondsToGuest(", "rdtsc_frequency == 0"):
     assert witness in clock,witness

@@ -26,7 +26,7 @@
 #include "display_refresh.h"
 #include "graphics.h"
 #include "launch_handoff.hpp"
-#include "experimental_performance.h"
+#include "jit_memory_policy.h"
 #include "common/scope_exit.h"
 #include "core/core.h"
 #include "core/frontend/graphics_context.h"

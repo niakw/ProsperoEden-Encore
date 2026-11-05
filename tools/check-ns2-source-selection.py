@@ -7,7 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text(encoding="utf-8")
-NS2 = ROOT / "vendor/encore-active/ns2-experimental/src/core"
+NS2 = ROOT / "vendor/encore-active/ns2-runtime/metadata/core"
 
 def require(condition: bool, reason: str) -> None:
     if not condition:
@@ -919,7 +919,7 @@ def main() -> int:
         require(selection < am_selection < release_gate,
                 "NS2 AM and ExeFS owners must be selected after maintained Encore owners")
         preflight_header = ROOT / "vendor/encore-active/ns2-helpers/include/core/loader/ns2_nso_preflight.h"
-        romdir_source = ROOT / "vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp"
+        romdir_source = ROOT / "vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp"
         require(preflight_header.is_file() and "PreflightNso(" in preflight_header.read_text() and
                 "MaxImageBytes" in preflight_header.read_text() and
                 '"core/loader/ns2_nso_preflight.h"' in romdir_source.read_text() and

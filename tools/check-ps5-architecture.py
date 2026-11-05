@@ -33,7 +33,7 @@ def main() -> None:
     a64_unit = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp")
     a32_native = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/a32_interface_native.cpp")
     worker_script = read("tools/prepare-vulkan-port.py")
-    jit_policy = read("headless/experimental_performance.h")
+    jit_policy = read("headless/jit_memory_policy.h")
     native_alloc = read("headless/jit-allocator.h")
 
     # Distinguish kernel direct-memory enumeration from the newer JIT-owned

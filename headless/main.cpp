@@ -44,7 +44,7 @@
 #include "encore_overrides_generated.h"
 #include "encore_overrides_runtime.h"
 #include "encore_performance_policy.h"
-#include "experimental_performance.h"
+#include "jit_memory_policy.h"
 #include "diagnostics.h"
 #include "display_refresh.h"
 #include "frame_metrics.h"
@@ -915,7 +915,7 @@ int main(int argc, char** argv) {
 #ifdef PS5_NATIVE
         jit_memory_known = Eden::Performance::QueryLargestDirectMemoryBlock(&jit_largest_free);
 #endif
-        auto jit_plan = Eden::Experimental::ChooseJitMemoryPlan(
+        auto jit_plan = Eden::JitMemory::ChooseJitMemoryPlan(
             safe_launch, jit_memory_known, jit_largest_free);
         bool experimental_sparse_jit = false;
         bool experimental_logical_cpu = false;
@@ -926,12 +926,6 @@ int main(int argc, char** argv) {
         experimental_sparse_jit = true;
         if (!Common::ProbeSparseJitAlias())
             throw std::runtime_error("PS5 sparse JIT alias preflight failed");
-        if (!safe_launch) {
-#ifndef EDEN_FINAL_RELEASE_PROFILE
-            experimental_logical_cpu = true;
-            experimental_frame_probe = true;
-#endif
-        }
 #endif
 #ifdef PS5_NATIVE
         // Native evidence: four consecutive starts went from 11,824 MiB to
@@ -944,18 +938,18 @@ int main(int argc, char** argv) {
         static std::size_t verified_sparse_peak_extent = 0;
         if (experimental_sparse_jit && jit_memory_known && !safe_launch) {
             verified_sparse_peak_extent = std::max(verified_sparse_peak_extent, jit_largest_free);
-            jit_plan = Eden::Experimental::ChooseSparseVirtualJitPlan(
+            jit_plan = Eden::JitMemory::ChooseSparseVirtualJitPlan(
                 safe_launch, jit_memory_known, jit_largest_free, verified_sparse_peak_extent);
             std::printf("EDEN_JIT_SPARSE_VA_PLAN current_largest_mib=%zu peak_seen_mib=%zu "
                         "a64_virtual_mib=%zu physical_policy=demand_pages\n",
-                        jit_largest_free / Eden::Experimental::kMiB,
-                        verified_sparse_peak_extent / Eden::Experimental::kMiB,
+                        jit_largest_free / Eden::JitMemory::kMiB,
+                        verified_sparse_peak_extent / Eden::JitMemory::kMiB,
                         (std::size_t{jit_plan.a64[0]} + jit_plan.a64[1] +
-                         jit_plan.a64[2] + jit_plan.a64[3]) / Eden::Experimental::kMiB);
+                         jit_plan.a64[2] + jit_plan.a64[3]) / Eden::JitMemory::kMiB);
         }
 #endif
-        Eden::Experimental::ApplyJitMemoryPlan(jit_plan);
-        Eden::Experimental::vulkan_frame_probe.store(experimental_frame_probe, std::memory_order_relaxed);
+        Eden::JitMemory::ApplyJitMemoryPlan(jit_plan);
+        Eden::JitMemory::vulkan_frame_probe.store(experimental_frame_probe, std::memory_order_relaxed);
 #ifdef PS5_NATIVE
         std::printf("EDEN_EXPERIMENT_DEFAULTS sparse=%u logical_cpu=%u frame_probe=%u safe=%u\n",
                     unsigned(experimental_sparse_jit), unsigned(experimental_logical_cpu),
@@ -964,12 +958,12 @@ int main(int argc, char** argv) {
 #ifdef PS5_NATIVE
         std::printf("EDEN_PS5_JIT_POLICY scope=all_titles memory_known=%u free_mib=%zu "
                     "admission_budget_mib=%zu a64=%u,%u,%u a32=%u,%u,%u safe=%u sparse=%u\n",
-                    unsigned(jit_memory_known), jit_largest_free / Eden::Experimental::kMiB,
-                    jit_plan.admission_budget_bytes / Eden::Experimental::kMiB,
-                    jit_plan.a64[0] / Eden::Experimental::kMiB, jit_plan.a64[1] / Eden::Experimental::kMiB,
-                    jit_plan.a64[2] / Eden::Experimental::kMiB,
-                    jit_plan.a32[0] / Eden::Experimental::kMiB, jit_plan.a32[1] / Eden::Experimental::kMiB,
-                    jit_plan.a32[2] / Eden::Experimental::kMiB,
+                    unsigned(jit_memory_known), jit_largest_free / Eden::JitMemory::kMiB,
+                    jit_plan.admission_budget_bytes / Eden::JitMemory::kMiB,
+                    jit_plan.a64[0] / Eden::JitMemory::kMiB, jit_plan.a64[1] / Eden::JitMemory::kMiB,
+                    jit_plan.a64[2] / Eden::JitMemory::kMiB,
+                    jit_plan.a32[0] / Eden::JitMemory::kMiB, jit_plan.a32[1] / Eden::JitMemory::kMiB,
+                    jit_plan.a32[2] / Eden::JitMemory::kMiB,
                     unsigned(safe_launch), unsigned(experimental_sparse_jit));
 #endif
         const int global_authored_tier =
@@ -2623,7 +2617,7 @@ int main(int argc, char** argv) {
             std::size_t oom_largest_free = 0;
             const bool oom_query_ok = Eden::Performance::QueryLargestDirectMemoryBlock(&oom_largest_free);
             std::printf("EDEN_PS5_OOM largest_query_ok=%u largest_free_mib=%zu\n",
-                        unsigned(oom_query_ok), oom_largest_free / Eden::Experimental::kMiB);
+                        unsigned(oom_query_ok), oom_largest_free / Eden::JitMemory::kMiB);
             launch_error = "The game could not allocate PS5 memory. Close Eden Encore completely before retrying to release memory retained between games.";
             Eden::Report("session failed", "std::bad_alloc: native memory allocation");
             std::fflush(stderr);

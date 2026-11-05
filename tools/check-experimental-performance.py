@@ -11,7 +11,7 @@ import sys
 
 root = Path(__file__).resolve().parents[1]
 read = lambda name: (root / name).read_text()
-header = read("headless/experimental_performance.h")
+header = read("headless/jit_memory_policy.h")
 main = read("headless/main.cpp")
 cmake = read("headless/CMakeLists.txt")
 native_boc = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp")
@@ -45,7 +45,7 @@ release=package.split("release|release-stage)\n",1)[1].split("\n    ;;",1)[0]
 assert 'export EDEN_SHARED_JIT=OFF EDEN_JIT_COMPILE_BATCH=OFF' in release
 assert 'export EDEN_GUEST_WRITE_BRIDGE_DEV=OFF EDEN_UNQUALIFIED_FERMI2D_COPY=OFF' in release
 assert 'EDEN_EXPERIMENT_DEFAULTS sparse=%u logical_cpu=%u frame_probe=%u safe=%u' in main
-experimental_section = main[main.index('bool experimental_sparse_jit = false;'):main.index('Eden::Experimental::ApplyJitMemoryPlan(jit_plan);')]
+experimental_section = main[main.index('bool experimental_sparse_jit = false;'):main.index('Eden::JitMemory::ApplyJitMemoryPlan(jit_plan);')]
 assert '#ifdef PS5_NATIVE' in experimental_section
 assert '#if defined(PS5_NATIVE) && defined(EDEN_DEV_PROFILE)' not in experimental_section
 assert 'EDEN_SPARSE_JIT_DEV' not in experimental_section
@@ -101,7 +101,7 @@ for bits in (32,64):
     cache_policy = f"A{bits}CacheBytes(m_core_index"
     assert cache_policy in native and cache_policy in native_dev
     assert cache_policy not in host_src
-    assert '#include "experimental_performance.h"' in native
+    assert '#include "jit_memory_policy.h"' in native
     assert '#include "jit-startup-retry.h"' in native
     assert "ConstructWithCapacityFallback(" in native and "ConstructWithCapacityFallback(" in native_dev
     assert '#include "performance.h"' in native_dev

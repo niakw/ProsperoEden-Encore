@@ -49,13 +49,17 @@ TESTS = {
     "vulkan_real_tu": "tools/check-ps5-vulkan-texture-tu-syntax-host.py",
     "vulkan_regions": "tools/check-ps5-f07-reinterpret-stencil-regions-host.py",
     "vulkan_layout": "tools/check-ps5-f07-reinterpret-vulkan-layout-host.py",
+    "vulkan_generator_fork": "tools/check-vendored-vulkan-fork.py",
+    "native_renderer_selector": "tools/check-ns2-renderer-selector-host.py",
+    "native_astc_cache_parity": "tools/ns2/check_egl_astc_texture_cache.py",
+    "native_texture_format": "tools/ns2/check_native_texture_format_mapping.py",
     "active_sources": "tools/check-active-source-inventory.py",
     "f07_review": "tools/check-eden-optimization-coverage.py",
     "repo_hygiene": "tools/ci/check-repo-hygiene.py",
     "python_syntax": "tools/check-python-source-syntax.py",
 }
 SMOKE = ("source_owner", "release_profile", "shared_ampere",
-         "repo_hygiene", "active_sources", "python_syntax")
+         "vulkan_generator_fork", "repo_hygiene", "active_sources", "python_syntax")
 
 def git(*args: str, cwd: Path = ROOT) -> str:
     proc = subprocess.run(["git", *args], cwd=cwd, text=True,

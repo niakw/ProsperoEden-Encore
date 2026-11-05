@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Exercise the actual research CMake switch without building PS5."""
+"""Verify real native GPU source selection without a second research profile."""
 from pathlib import Path
 import shutil
 import subprocess
-import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 source = (ROOT / "headless/CMakeLists.txt").read_text()
 start = "# N3m: compile a renderer-callable"
-end = "# Release gate: Vulkan/RADV"
+end = "# N50: shared native PS5 device-memory"
 assert start in source and end in source
 selector = start + source.split(start,1)[1].split(end,1)[0]
 target = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
@@ -32,68 +31,26 @@ assert "native_texels.reserve(typed_descriptors->size());" in native
 assert "resources->HasResolvedBufferBindings()" in native
 print("NS2_NATIVE_TIC_METADATA_SOURCE_PASS real_tables=1 no_false_vk_images=1")
 
-def test(root, title, values, succeed):
-    args = ["cmake","-S",str(root),"-B",str(root/title)]
-    args += [f"-D{k}={'ON' if v else 'OFF'}" for k,v in values.items()]
-    p = subprocess.run(args,capture_output=True,text=True)
-    assert (p.returncode==0)==succeed,(title,p.stderr[-3000:])
-    return (root/title/"owner.txt").read_text() if succeed else ""
-
 def main():
-    if not shutil.which("cmake"): raise RuntimeError("cmake required")
-    dollar = chr(36)
-    with tempfile.TemporaryDirectory(prefix="ns2-cmake-") as tmp:
-        path = Path(tmp)
-        # The extracted selector starts after the production shader target is
-        # declared. Mirror its original emitter sources for OFF as well as
-        # the ON source replacement, without compiling the PS5 application.
-        original_emitters = path / "backend/spirv"
-        original_emitters.mkdir(parents=True)
-        for name in ("spirv_emit_context.cpp", "emit_spirv_context_get_set.cpp"):
-            (original_emitters / name).write_text("// selector fixture\n")
-        cmake = (
-            "cmake_minimum_required(VERSION 3.22)\n"
-            "project(NS2ShaderSelector LANGUAGES CXX)\n"
-            f'file(WRITE "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/stub.cpp" "int n() {{return 1;}}\\n")\n'
-            f'add_library(video_core STATIC "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/stub.cpp")\n'
-            f'add_library(core STATIC "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/stub.cpp")\n'
-            f'add_library(shader_recompiler STATIC "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/stub.cpp")\n'
-            'target_sources(shader_recompiler PRIVATE backend/spirv/spirv_emit_context.cpp '\
-            'backend/spirv/emit_spirv_context_get_set.cpp)\n'
-            f'set(PORT_BUILD_DIR "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}")\n'
-            f'set(PORT_ROOT "{ROOT.as_posix()}")\n'
-            f'set(EDEN_NS2_AMPERE_ROOT "{ROOT.as_posix()}/vendor/encore-active/ns2-runtime/ampere")\n'
-        )
-        for name in ("NATIVE","VULKAN","AMPERE","METADATA","GPU_SESSION","NVDRV"):
-            key = {"NATIVE":"PS5_NATIVE","VULKAN":"EDEN_PS5_VULKAN",
-                   "AMPERE":"EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL",
-                   "METADATA":"EDEN_REVIEWED_DUAL_NPDM",
-                   "GPU_SESSION":"EDEN_NS2_GPU_SESSION_EXPERIMENTAL",
-                   "NVDRV":"EDEN_NS2_NVDRV_EXPERIMENTAL"}[name]
-            cmake += f"set({key} {dollar}{{NS2_TEST_{name}}})\n"
-        cmake += selector
-        cmake += f'get_target_property(owner video_core SOURCES)\nfile(WRITE "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/owner.txt" "{dollar}{{owner}}")\n'
-        cmake += f'get_target_property(compiler_owner shader_recompiler SOURCES)\nfile(WRITE "{dollar}{{CMAKE_CURRENT_BINARY_DIR}}/compiler-owner.txt" "{dollar}{{compiler_owner}}")\n'
-        (path/"CMakeLists.txt").write_text(cmake)
-        baseline = {f"NS2_TEST_{n}":True for n in ("NATIVE","VULKAN","AMPERE","METADATA","GPU_SESSION","NVDRV")}
-        off = test(path,"off",baseline,True)
-        assert "renderer_spirv_bridge" not in off,off
-        original = {"backend/spirv/spirv_emit_context.cpp",
-                    "backend/spirv/emit_spirv_context_get_set.cpp"}
-        off_compiler = set((path/"off"/"compiler-owner.txt").read_text().split(";"))
-        assert original <= off_compiler,off_compiler
-        enabled = {**baseline,"EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL":True}
-        on = test(path,"on",enabled,True)
-        assert str(target) in on,on
-        assert "ns2_shader_spirv_compile.cpp" in on,on
-        on_compiler = set((path/"on"/"compiler-owner.txt").read_text().split(";"))
-        ampere = ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv"
-        reviewed = {str(ampere/name) for name in
-                    ("spirv_emit_context.cpp", "emit_spirv_context_get_set.cpp")}
-        assert reviewed <= on_compiler and not (original & on_compiler),on_compiler
-        for name in baseline:
-            test(path,"missing-"+name,{**enabled,name:False},False)
-    print("NS2 renderer selector: PASS (OFF, ON, six missing prerequisite cases)")
+    assert shutil.which("cmake"), "CMake needed for a real source-graph check"
+    for forbidden in ("EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL",
+                      "EDEN_NS2_GPU_SESSION_EXPERIMENTAL",
+                      "EDEN_NS2_NVDRV_EXPERIMENTAL",
+                      "EDEN_DEV_PROFILE","EDEN_FINAL_RELEASE_PROFILE"):
+        assert forbidden not in source, forbidden
+    assert "if(EDEN_SHARED_NS2_SPIRV_COMPILER)" in selector
+    assert 'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in selector
+    assert 'target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")' in selector
+    assert 'target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")' in selector
+    # This configures the complete real GPU/renderer owner selector with
+    # the PS5 platform gate, not a synthetic flag-enabled shadow program.
+    graph = ROOT / "tools/ns2/check_unified_native_gpu_graph_host.py"
+    assert graph.is_file()
+    proc = subprocess.run(["python3","-B",str(graph)],cwd=ROOT,
+                          capture_output=True,text=True,timeout=80)
+    assert proc.returncode == 0 and "UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS" in proc.stdout, (
+        proc.stdout[-2500:],proc.stderr[-2500:])
+    print("NS2_RENDERER_UNIFIED_SOURCE_SELECTOR_PASS native_ps5=1 ns1_maxwell=preserved gpu_session=shared")
 
 if __name__=="__main__":
     main()

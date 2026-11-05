@@ -39,6 +39,15 @@ pas passé la qualification de source et l’absence de régression.
   compilation de shaders et un test Vulkan hôte ne prouvent ni image ni
   synchronisation GPU réelle. Aucune fonctionnalité inconnue n’est remplacée
   par un succès fictif.
+- **Reçu hôte vérifiable avant ce correctif :** 36/36 tests P4 à
+  `main 8383d64a4b78b067f4b2e847ee8b3d212bbe643c` / vendor
+  `a7790471c0544613cf59df8f5926f866d6a46560`, et 32/32 témoins P1
+  sur le même couple de sources. Le générateur Vulkan a été remis en
+  conformité avec les gardes PS5 uniques : 45 fichiers régénérés égaux aux
+  propriétaires versionnés ; les additions P2.5 sont normalisées avec
+  empreintes exactes pour conserver la preuve historique N57. Les quatre
+  témoins CI Vulkan/ASTC/texture/selector font désormais partie de la
+  qualification SHA-épinglée P4 ; celle du nouveau commit reste à effectuer.
 - **P4 — requalification en cours :** l’ancien lot de tests cherchait les
   flags supprimés. Les tests conservent leurs témoins C++/UBSan, mais
   vérifient désormais le véritable CMake commun. **La fermeture exige un

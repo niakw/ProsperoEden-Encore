@@ -425,29 +425,36 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     n56_file.parent.mkdir(parents=True, exist_ok=True)
     n56_file.write_text(n56_baseline)
     normalized_expected[n56_name] = n56_file
-    # N3m: the opt-in NS2 GPU pipeline is now reproduced exactly by the
+    # N3m: the unified PS5-native GPU pipeline is now reproduced exactly by the
     # maintained Vulkan generator, including four additional exact graphics
     # epoch/CBUF guards. Pin the three principal blocks separately, then
     # compare the COMPLETE generated C++ byte-for-byte
     # against the vendor (after the separate N56 driver-cache normalization).
     # Never strip these source blocks from parity: doing so would mask drift.
     n3m = normalized_expected[n56_name].read_text()
-    n3m_flag = '#ifdef EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL\n'
-    assert n3m.count(n3m_flag) == 7, 'NS2 pipeline compile gates drifted'
+    # Only the platform guard remains. Never accidentally resurrect the
+    # removed experimental build profile, or silently change any native C++
+    # block in the generated source. The exact hashes below pin three
+    # independently reviewed native shader/graphics owner blocks.
+    n3m_flag = '#ifdef PS5_NATIVE\n'
+    assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in n3m, (
+        'Removed NS2 research compile profile returned in vendor')
+    assert n3m.count(n3m_flag) >= 10, 'Native PS5 pipeline guards missing'
     def n3m_hash(data):
         value = 0xcbf29ce484222325
         for byte in data.encode('ascii'):
             value = ((value ^ byte) * 0x100000001b3) & 0xffffffffffffffff
         return f'{value:016x}'
     marker_positions = (
-        n3m.index(n3m_flag),
+        n3m.index(n3m_flag, n3m.index('#include "video_core/vulkan_common/vulkan_wrapper.h"')),
         n3m.index(n3m_flag, n3m.index('GraphicsPipeline* PipelineCache::CurrentGraphicsPipeline()')),
-        n3m.index(n3m_flag, n3m.index('std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline()')),
+        n3m.rfind(n3m_flag, 0, n3m.index('// Research-only real GPU bridge')),
     )
+    assert len(set(marker_positions)) == 3 and min(marker_positions) >= 0
     marker_hashes = (
-        '1b1b58fefba74616',
-        '93820966911b03b4',
-        '9355d24c8a5d4508',
+        'ca47d210fd98b7cb',
+        '43d2b6c4a8aa4c55',
+        '5caba22fce220533',
     )
     pinned = []
     for start, digest in zip(marker_positions, marker_hashes):
@@ -476,8 +483,11 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
     generated_n3m = actual[n56_name].read_text()
-    assert generated_n3m.count(n3m_flag) == 7, 'NS2 generator gates missing'
-    native_compute_guard = "ComputePipeline* PipelineCache::CurrentComputePipeline() {\n#if defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    // An authenticated Ampere compute engine must never enter the legacy\n    // Maxwell ShaderCache::ComputeShader() path: those 128-bit instructions\n    // need the new QMD-scoped native SPIR-V pipeline and resource binding.\n    // Until the renderer owns that real pipeline and submits the dispatch,\n    // reject instead of compiling native bytes as Switch 1 Maxwell.\n    if (Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n            .CaptureComputeTicket(kepler_compute))\n        return nullptr;\n#endif\n\n"
+    assert generated_n3m.count(n3m_flag) == n3m.count(n3m_flag), (
+        'Native PS5 GPU generator lost source guard parity')
+    assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in generated_n3m, (
+        'Removed NS2 research compile profile returned in generator')
+    native_compute_guard = "ComputePipeline* PipelineCache::CurrentComputePipeline() {\n#ifdef PS5_NATIVE\n    // An authenticated Ampere compute engine must never enter the legacy\n    // Maxwell ShaderCache::ComputeShader() path: those 128-bit instructions\n    // need the new QMD-scoped native SPIR-V pipeline and resource binding.\n    // Until the renderer owns that real pipeline and submits the dispatch,\n    // reject instead of compiling native bytes as Switch 1 Maxwell.\n    if (Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n            .CaptureComputeTicket(kepler_compute))\n        return nullptr;\n#endif\n\n"
     assert n3m.count(native_compute_guard) == 1, (
         'Native Compute cache admission gate missing from pinned vendor')
     assert generated_n3m.count(native_compute_guard) == 1, (
@@ -487,7 +497,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA
     # and full generated-source byte parity. No generator files or exemptions.
-    from ns2.native_astc_vendor_parity import normalized as normalize_n57
+    from ns2.native_astc_vendor_parity import (
+        normalized as normalize_n57, strip_p25_reinterpret,
+    )
+    # N57's historical F07 audit deliberately excludes the independently
+    # reviewed later P2.5 aspect/scratch additions. Normalize the *generated*
+    # owner by those exact, hash-pinned P2.5 deltas as well: the shipped vendor
+    # and generator must both retain those corrections before normalization.
+    normalized_generated = dict(actual)
+    generated_p25 = strip_p25_reinterpret(actual['vk_texture_cache_cost.cpp'].read_text())
+    p25_generated = temp/'normalized-generated-p25'/'vk_texture_cache_cost.cpp'
+    p25_generated.parent.mkdir(parents=True,exist_ok=True)
+    p25_generated.write_text(generated_p25)
+    normalized_generated['vk_texture_cache_cost.cpp'] = p25_generated
     for name, baseline in normalize_n57(root).items():
         p = temp/'normalized-vendor-n57'/name
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -573,7 +595,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         blit_path.write_text(baseline_blit)
         normalized_expected[blit_name] = blit_path
 
-    mismatches=[name for name in sorted(actual) if not filecmp.cmp(actual[name],normalized_expected.get(name, expected[name]),shallow=False)]
+    mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and
         # active files previously looked equivalent in high-level assertions,
@@ -581,7 +603,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         from difflib import unified_diff
         from itertools import islice
         for name in mismatches[:5]:
-            generated, versioned = actual[name], normalized_expected.get(name, expected[name])
+            generated, versioned = normalized_generated[name], normalized_expected.get(name, expected[name])
             if not name.endswith(('.cpp', '.h', '.py', '.cmake')):
                 print(f'VULKAN_ORACLE_BINARY_DIFF {name} SHA256={hashlib.sha256(generated.read_bytes()).hexdigest()} '
                       f'active_SHA256={hashlib.sha256(versioned.read_bytes()).hexdigest()}', flush=True)

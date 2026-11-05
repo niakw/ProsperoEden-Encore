@@ -6,6 +6,7 @@ ASTC assemble include. No executable code generator or replacement TU is used.
 """
 from pathlib import Path
 import subprocess
+import hashlib
 
 OWNER = Path("vendor/encore-active/eden-vulkan")
 ASTC = Path("vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan")
@@ -36,17 +37,17 @@ def once(text: str, old: str, new: str) -> str:
 # P2.2b: reverse ONLY exact native cache-pin additions for N57's frozen
 # historical SHA. The PS5 runtime still uses the pinned Vulkan owners.
 def strip_p22_native_gpu_pins(text: str) -> str:
-    text = once(text, "\n    Image(Image&&) = default;\n    Image& operator=(Image&&) = default;\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    // A reference is held by the REAL GPU descriptor owner until its fence.\n    // The runtime's retirement queue cannot destroy this Vulkan resource\n    // while a native QMD dispatch still pins it.\n    [[nodiscard]] std::shared_ptr<u8> PinNativeGpu() {\n        if (!native_gpu_pin) native_gpu_pin = std::make_shared<u8>(0);\n        return native_gpu_pin;\n    }\n    [[nodiscard]] bool CanRetireNativeGpu() const noexcept {\n        return !native_gpu_pin || native_gpu_pin.use_count() == 1;\n    }\n#endif\n\n\n    void UploadMemory(VkBuffer buffer, VkDeviceSize offset,\n                      std::span<const VideoCommon::BufferImageCopy> copies);\n",
+    text = once(text, "\n    Image(Image&&) = default;\n    Image& operator=(Image&&) = default;\n#ifdef PS5_NATIVE\n    // A reference is held by the REAL GPU descriptor owner until its fence.\n    // The runtime's retirement queue cannot destroy this Vulkan resource\n    // while a native QMD dispatch still pins it.\n    [[nodiscard]] std::shared_ptr<u8> PinNativeGpu() {\n        if (!native_gpu_pin) native_gpu_pin = std::make_shared<u8>(0);\n        return native_gpu_pin;\n    }\n    [[nodiscard]] bool CanRetireNativeGpu() const noexcept {\n        return !native_gpu_pin || native_gpu_pin.use_count() == 1;\n    }\n#endif\n\n\n    void UploadMemory(VkBuffer buffer, VkDeviceSize offset,\n                      std::span<const VideoCommon::BufferImageCopy> copies);\n",
                 "\n    Image(Image&&) = default;\n    Image& operator=(Image&&) = default;\n\n    void UploadMemory(VkBuffer buffer, VkDeviceSize offset,\n                      std::span<const VideoCommon::BufferImageCopy> copies);\n")
-    text = once(text, "\n    bool NeedsScaleHelper() const;\n\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    std::shared_ptr<u8> native_gpu_pin;\n#endif\n    Scheduler* scheduler{};\n    TextureCacheRuntime* runtime{};\n\n",
+    text = once(text, "\n    bool NeedsScaleHelper() const;\n\n#ifdef PS5_NATIVE\n    std::shared_ptr<u8> native_gpu_pin;\n#endif\n    Scheduler* scheduler{};\n    TextureCacheRuntime* runtime{};\n\n",
                 "\n    bool NeedsScaleHelper() const;\n\n    Scheduler* scheduler{};\n    TextureCacheRuntime* runtime{};\n\n")
-    text = once(text, "\n    ImageView(ImageView&&) = default;\n    ImageView& operator=(ImageView&&) = default;\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    // A reference is held by the REAL GPU descriptor owner until its fence.\n    // The runtime's retirement queue cannot destroy this Vulkan resource\n    // while a native QMD dispatch still pins it.\n    [[nodiscard]] std::shared_ptr<u8> PinNativeGpu() {\n        if (!native_gpu_pin) native_gpu_pin = std::make_shared<u8>(0);\n        return native_gpu_pin;\n    }\n    [[nodiscard]] bool CanRetireNativeGpu() const noexcept {\n        return !native_gpu_pin || native_gpu_pin.use_count() == 1;\n    }\n#endif\n\n\n    [[nodiscard]] VkImageView DepthView();\n\n",
+    text = once(text, "\n    ImageView(ImageView&&) = default;\n    ImageView& operator=(ImageView&&) = default;\n#ifdef PS5_NATIVE\n    // A reference is held by the REAL GPU descriptor owner until its fence.\n    // The runtime's retirement queue cannot destroy this Vulkan resource\n    // while a native QMD dispatch still pins it.\n    [[nodiscard]] std::shared_ptr<u8> PinNativeGpu() {\n        if (!native_gpu_pin) native_gpu_pin = std::make_shared<u8>(0);\n        return native_gpu_pin;\n    }\n    [[nodiscard]] bool CanRetireNativeGpu() const noexcept {\n        return !native_gpu_pin || native_gpu_pin.use_count() == 1;\n    }\n#endif\n\n\n    [[nodiscard]] VkImageView DepthView();\n\n",
                 "\n    ImageView(ImageView&&) = default;\n    ImageView& operator=(ImageView&&) = default;\n\n    [[nodiscard]] VkImageView DepthView();\n\n")
-    text = once(text, "    [[nodiscard]] vk::ImageView MakeView(VkFormat vk_format, VkImageAspectFlags aspect_mask,\n                                         std::optional<Shader::TextureType> texture_type = std::nullopt);\n\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    std::shared_ptr<u8> native_gpu_pin;\n#endif\n    const Device* device = nullptr;\n    const SlotVector<Image>* slot_images = nullptr;\n\n",
+    text = once(text, "    [[nodiscard]] vk::ImageView MakeView(VkFormat vk_format, VkImageAspectFlags aspect_mask,\n                                         std::optional<Shader::TextureType> texture_type = std::nullopt);\n\n#ifdef PS5_NATIVE\n    std::shared_ptr<u8> native_gpu_pin;\n#endif\n    const Device* device = nullptr;\n    const SlotVector<Image>* slot_images = nullptr;\n\n",
                 "    [[nodiscard]] vk::ImageView MakeView(VkFormat vk_format, VkImageAspectFlags aspect_mask,\n                                         std::optional<Shader::TextureType> texture_type = std::nullopt);\n\n    const Device* device = nullptr;\n    const SlotVector<Image>* slot_images = nullptr;\n\n")
-    text = once(text, "public:\n    explicit Sampler(TextureCacheRuntime&, const Tegra::Texture::TSCEntry&);\n\n\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    // A reference is held by the REAL GPU descriptor owner until its fence.\n    // The runtime's retirement queue cannot destroy this Vulkan resource\n    // while a native QMD dispatch still pins it.\n    [[nodiscard]] std::shared_ptr<u8> PinNativeGpu() {\n        if (!native_gpu_pin) native_gpu_pin = std::make_shared<u8>(0);\n        return native_gpu_pin;\n    }\n    [[nodiscard]] bool CanRetireNativeGpu() const noexcept {\n        return !native_gpu_pin || native_gpu_pin.use_count() == 1;\n    }\n#endif\n\n    [[nodiscard]] VkSampler Handle() const noexcept {\n        return *variants.front().sampler;\n    }\n",
+    text = once(text, "public:\n    explicit Sampler(TextureCacheRuntime&, const Tegra::Texture::TSCEntry&);\n\n\n#ifdef PS5_NATIVE\n    // A reference is held by the REAL GPU descriptor owner until its fence.\n    // The runtime's retirement queue cannot destroy this Vulkan resource\n    // while a native QMD dispatch still pins it.\n    [[nodiscard]] std::shared_ptr<u8> PinNativeGpu() {\n        if (!native_gpu_pin) native_gpu_pin = std::make_shared<u8>(0);\n        return native_gpu_pin;\n    }\n    [[nodiscard]] bool CanRetireNativeGpu() const noexcept {\n        return !native_gpu_pin || native_gpu_pin.use_count() == 1;\n    }\n#endif\n\n    [[nodiscard]] VkSampler Handle() const noexcept {\n        return *variants.front().sampler;\n    }\n",
                 "public:\n    explicit Sampler(TextureCacheRuntime&, const Tegra::Texture::TSCEntry&);\n\n    [[nodiscard]] VkSampler Handle() const noexcept {\n        return *variants.front().sampler;\n    }\n")
-    text = once(text, "    [[nodiscard]] VkSampler Find(const VariantKey& key) const noexcept;\n    VkSampler Emplace(VariantKey key);\n\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    std::shared_ptr<u8> native_gpu_pin;\n#endif\n    CustomBorderColorBudget custom_border_color_budget;\n    std::vector<Variant> variants;\n\n",
+    text = once(text, "    [[nodiscard]] VkSampler Find(const VariantKey& key) const noexcept;\n    VkSampler Emplace(VariantKey key);\n\n#ifdef PS5_NATIVE\n    std::shared_ptr<u8> native_gpu_pin;\n#endif\n    CustomBorderColorBudget custom_border_color_budget;\n    std::vector<Variant> variants;\n\n",
                 "    [[nodiscard]] VkSampler Find(const VariantKey& key) const noexcept;\n    VkSampler Emplace(VariantKey key);\n\n    CustomBorderColorBudget custom_border_color_budget;\n    std::vector<Variant> variants;\n\n")
     return text
 
@@ -60,13 +61,66 @@ def strip_p22_runtime_cpp(text: str) -> str:
     # N57's historical source predates both P2.2's timeline retirement and
     # P2.2b's additional native descriptor pin. Revert the small pin guard
     # first, then strip the already-audited P2.2 retirement block below.
-    text = once(text, "    const auto ready = [this, is_free](const auto& pending) {\n        const bool gpu_completed = is_free(pending.tick) &&\n            gpu_retire_frame - pending.frame >= MIN_TEXTURE_RETIRE_FRAMES;\n#if defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n        // A guest remap/eviction can race a freshly acquired native image\n        // before that dispatch flushes its timeline. Do not destroy the REAL\n        // VkImage or VkImageView until its final fence-held pin is released.\n        return gpu_completed && pending.resource->CanRetireNativeGpu();\n#else\n        return gpu_completed;\n#endif\n    };",
+    text = once(text, "    const auto ready = [this, is_free](const auto& pending) {\n        const bool gpu_completed = is_free(pending.tick) &&\n            gpu_retire_frame - pending.frame >= MIN_TEXTURE_RETIRE_FRAMES;\n#ifdef PS5_NATIVE\n        // A guest remap/eviction can race a freshly acquired native image\n        // before that dispatch flushes its timeline. Do not destroy the REAL\n        // VkImage or VkImageView until its final fence-held pin is released.\n        return gpu_completed && pending.resource->CanRetireNativeGpu();\n#else\n        return gpu_completed;\n#endif\n    };",
                 "    const auto ready = [this, is_free](const auto& pending) {\n        return is_free(pending.tick) &&\n               gpu_retire_frame - pending.frame >= MIN_TEXTURE_RETIRE_FRAMES;\n    };")
     text = once(text, "\n#ifdef PS5_NATIVE\nTextureCacheRuntime::~TextureCacheRuntime() {\n    // Never destroy Vulkan image/view owners with outstanding GPU commands.\n    // Teardown is the only blocking case; frame reclamation remains async.\n    if (!pending_retired_views.empty() || !pending_retired_images.empty()) {\n        scheduler.Finish();\n        pending_retired_views.clear();\n        pending_retired_images.clear();\n    }\n}\n\nvoid TextureCacheRuntime::RetireGpuImage(Image&& image) {\n    const u64 tick = scheduler.CurrentTick();\n    try {\n        // Reserve BEFORE moving the Vulkan owner: a failed vector growth\n        // must never destroy the temporary image before the GPU drain below.\n        // Geometric growth avoids O(n^2) reallocations under texture churn.\n        if (pending_retired_images.size() == pending_retired_images.capacity()) {\n            const auto capacity = pending_retired_images.capacity();\n            const auto max_size = pending_retired_images.max_size();\n            if (capacity == max_size) throw std::bad_alloc{};\n            pending_retired_images.reserve(\n                capacity + std::min(std::max<std::size_t>(capacity, 8), max_size - capacity));\n        }\n        pending_retired_images.push_back({tick, gpu_retire_frame, std::make_unique<Image>(std::move(image))});\n    } catch (...) {\n        // If queue allocation fails, wait before any moved owner can die.\n        scheduler.Finish();\n        throw;\n    }\n}\n\nvoid TextureCacheRuntime::RetireGpuImageView(ImageView&& view) {\n    const u64 tick = scheduler.CurrentTick();\n    try {\n        // Retain the original view until all throwing container allocation\n        // has completed, then move it into a preallocated retirement slot.\n        // Geometric growth avoids O(n^2) reallocations under texture churn.\n        if (pending_retired_views.size() == pending_retired_views.capacity()) {\n            const auto capacity = pending_retired_views.capacity();\n            const auto max_size = pending_retired_views.max_size();\n            if (capacity == max_size) throw std::bad_alloc{};\n            pending_retired_views.reserve(\n                capacity + std::min(std::max<std::size_t>(capacity, 8), max_size - capacity));\n        }\n        pending_retired_views.push_back({tick, gpu_retire_frame, std::make_unique<ImageView>(std::move(view))});\n    } catch (...) {\n        scheduler.Finish();\n        throw;\n    }\n}\n#endif\n\n", "\n")
     text = once(text, "void TextureCacheRuntime::TickFrame() {\n    static constexpr u32 MAX_UNUSED_SCRATCH_FRAMES = 60;\n#ifdef PS5_NATIVE\n    ++gpu_retire_frame;\n#endif", "void TextureCacheRuntime::TickFrame() {\n    static constexpr u32 MAX_UNUSED_SCRATCH_FRAMES = 60;")
     text = once(text, "if (msaa_scratch_images.empty() && pending_resolve_shadows.empty() &&\n        pending_retired_views.empty() && pending_retired_images.empty()) {", "if (msaa_scratch_images.empty() && pending_resolve_shadows.empty()) {")
     text = once(text, "if (pending_resolve_shadows.empty() && pending_retired_views.empty() &&\n        pending_retired_images.empty() &&\n        std::all_of(msaa_scratch_images.begin(), msaa_scratch_images.end(),", "if (pending_resolve_shadows.empty() &&\n        std::all_of(msaa_scratch_images.begin(), msaa_scratch_images.end(),")
     text = once(text, "\n#ifdef PS5_NATIVE\n    // Erase image views before images: both own real Vulkan resources.\n    // Frame age alone never proves completion of an outstanding GPU tick.\n    // Keep the prior eight-frame framebuffer retirement ordering: the\n    // sentenced framebuffer ring is ticked immediately before this runtime.\n    static constexpr u64 MIN_TEXTURE_RETIRE_FRAMES = 8;\n    const auto ready = [this, is_free](const auto& pending) {\n        return is_free(pending.tick) &&\n               gpu_retire_frame - pending.frame >= MIN_TEXTURE_RETIRE_FRAMES;\n    };\n    std::erase_if(pending_retired_views, ready);\n    std::erase_if(pending_retired_images, ready);\n#endif", "")
+    return text
+
+
+def strip_p25_reinterpret(text: str) -> str:
+    """Undo exactly the post-N57 P2.5 Vulkan reinterpret patches for SHA audit.
+
+    These are *normalization only*. The PS5 generator and shipped Vulkan
+    source still retain aspect, exact byte width, scratch and layout safety.
+    Every removed block is pinned before normalization; no source is changed.
+    """
+    def remove_hashed(begin: str, end: str, digest: str) -> None:
+        nonlocal text
+        assert text.count(begin)==1, ('P2.5 Vulkan anchor drift',begin)
+        start=text.index(begin)
+        stop=text.index(end,start)
+        assert stop>start, ('P2.5 Vulkan closing anchor missing',begin)
+        block=text[start:stop]
+        assert hashlib.sha256(block.encode()).hexdigest()==digest, (
+            'P2.5 checked Vulkan source bytes differ',begin)
+        text=text[:start]+text[stop:]
+
+    remove_hashed(
+        '    // VkBufferImageCopy names a SINGLE depth/stencil aspect.',
+        '\n#ifdef PS5_NATIVE\n',
+        '728654987e7ccf00cc50cf2c7fd565104534c8a4b4fcc3d3727521a3bdc922dc'
+    )
+    text=once(text,
+        '        if ((static_cast<u64>(bpp_out) * static_cast<u64>(copy.src_offset.x)) % bpp_in ||\n'
+        '            (static_cast<u64>(bpp_out) * copy.extent.width) % bpp_in ||\n'
+        '            scaled_offset > static_cast<u64>(\n',
+        '        if (scaled_offset > static_cast<u64>(\n')
+    text=once(text,
+        '[src_copy_aspect, bpp_in, bpp_out](const auto& copy) {',
+        '[src_aspect_mask, bpp_in, bpp_out](const auto& copy) {')
+    text=once(text,'MakeBufferImageCopy(copy2, true, src_copy_aspect);',
+                  'MakeBufferImageCopy(copy2, true, src_aspect_mask);')
+    text=once(text,
+        'std::ranges::transform(copies, vk_out_copies.begin(), [dst_copy_aspect](const auto& copy) {',
+        'std::ranges::transform(copies, vk_out_copies.begin(), [dst_aspect_mask](const auto& copy) {')
+    text=once(text,'MakeBufferImageCopy(copy, false, dst_copy_aspect);',
+                  'MakeBufferImageCopy(copy, false, dst_aspect_mask);')
+    remove_hashed(
+        '#ifdef PS5_NATIVE\n    // Every VkBufferImageCopy must occupy a disjoint aligned scratch',
+        '    const VkBuffer copy_buffer = GetTemporaryBuffer(total_size);',
+        'e3c5ace8b00c6b92103a72ee2c400f4b47f897354919b635090c6068202035b0'
+    )
+    text=once(text,
+        '        // The preceding middle_out_barrier transitions dst to\n'
+        '        // TRANSFER_DST_OPTIMAL. The Vulkan command MUST name that actual\n'
+        '        // layout (VUID-vkCmdCopyBufferToImage-dstImageLayout-00180).\n'
+        '        cmdbuf.CopyBufferToImage(copy_buffer, dst_image,\n'
+        '                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vk_out_copies);',
+        '        cmdbuf.CopyBufferToImage(copy_buffer, dst_image, VK_IMAGE_LAYOUT_GENERAL, vk_out_copies);')
     return text
 
 def normalized(root: Path) -> dict[str, str]:
@@ -103,7 +157,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
         if name == "vk_texture_cache_cost.cpp":
-            text = strip_p22_runtime_cpp(text)
+            text = strip_p25_reinterpret(strip_p22_runtime_cpp(text))
         if name == "vk_texture_cache_cost.cpp":
             # N73 is an additive native runtime probe. Strip its exact source
             # changes before applying N57's original hardcoded SHA oracle.

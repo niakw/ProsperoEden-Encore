@@ -41,13 +41,20 @@ base = once((ACTIVE / "texture_cache_base.h").read_text(),
 # arbitrary ASTC rewrites or update the historical N60 baseline hash: strip
 # only those reviewed additions and compare the legacy owner byte-for-byte.
 VULKAN = ROOT / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache"
-gate = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)"
+gate = "#ifdef PS5_NATIVE"
 
 def native_block(text: str, following: str) -> str:
-    assert text.count(gate) == 1, "N60 native ABI gate drift"
-    tail = text.split(gate, 1)[1]
+    # The shared PS5 compilation guard also surrounds unrelated code; only
+    # the exact QMD image-view/sampler declaration or implementation block
+    # may be stripped for legacy NS1 ASTC source parity.
+    signature = ("    // An already authenticated native TIC/TSC record" if
+                 "Fill image_view_ids" in following else
+                 "// NS2 and NS1 use one TextureCache channel map")
+    start = gate + "\n" + signature
+    assert text.count(start) == 1, "N60 native ABI gate drift"
+    tail = text.split(start, 1)[1]
     assert tail.count(following) == 1, "N60 native ABI footer drift"
-    result = gate + tail.split(following, 1)[0]
+    result = start + tail.split(following, 1)[0]
     assert result.endswith("#endif\n"), "N60 native ABI block not closed"
     return result
 

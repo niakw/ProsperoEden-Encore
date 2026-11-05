@@ -50,7 +50,7 @@ static void Require(bool pass, const char* why) {
     }
 }
 int main() {
-    for (const auto [bank, offset] : std::array<std::pair<u32,u32>, 3>{
+    for (const auto& [bank, offset] : std::array<std::pair<u32,u32>, 3>{
             {{0,4},{7,508},{17,65532}}}) {
         const auto inst=Frnd(0xb07,5,offset,bank);
         Require(Reviewed(inst), "CBUF source must be admitted by actual ISA field table");
@@ -91,7 +91,7 @@ int main() {
     Require(!Bridge(bad_round).Ready(), "real bridge rejects invalid FRND mode");
     // P2.4: SEL's uniform-B form (0xc07) is decoded by the same scalar
     // ALU owner as register SEL (0x207), not a shader-wide replacement.
-    for (const auto [ureg, expected_gpr] :
+    for (const auto& [ureg, expected_gpr] :
          std::array<std::pair<u32,u32>, 3>{{{4,220},{17,201},{63,255}}}) {
         const auto select=UniformSel(0xc07,5,6,ureg);
         Require(Reviewed(select), "uniform SEL must pass the original ISA table");
@@ -112,7 +112,7 @@ int main() {
     Require(Bridge(reg_sel).Ready(), "normal scalar SEL remains functional");
     // Uniform FSET (0xc0a) uses the same actual bank owner as uniform SEL,
     // but must keep its own float-comparison opcode, operation and predicate.
-    for (const auto [ureg, expected_gpr] :
+    for (const auto& [ureg, expected_gpr] :
          std::array<std::pair<u32,u32>,3>{{{4,220},{17,201},{63,255}}}) {
         const auto compare=UniformSel(0xc0a,5,6,ureg);
         Require(Reviewed(compare), "uniform FSET fields admitted by reviewed ISA");
@@ -175,7 +175,7 @@ int main() {
                             src | (invert ? 0x80000000U : 0U),
                             0x08000000U, 0x000fe200U}};
     };
-    for (const auto [rd,ra,dst_gpr,src_gpr] :
+    for (const auto& [rd,ra,dst_gpr,src_gpr] :
          std::array<std::array<u32,4>,4>{{{{5,4,221,220}},{{17,18,201,202}},
                                            {{62,63,182,255}},{{8,16,224,200}}}}) {
         const auto insn=uniform_popc(rd,ra);
@@ -208,7 +208,7 @@ int main() {
         return Instruction{{(pred << 12) | 0x4a4 | (dst << 16) | (a << 24),
                             literal, 0x078e0000U | b, 0x000fe200U}};
     };
-    for (const auto [dst,a,b,expected_dst,expected_a,expected_b] :
+    for (const auto& [dst,a,b,expected_dst,expected_a,expected_b] :
          std::array<std::array<u32,6>,3>{{{{5,4,8,221,220,224}},
                                            {{18,17,62,202,201,182}},
                                            {{6,63,16,222,255,200}}}}) {

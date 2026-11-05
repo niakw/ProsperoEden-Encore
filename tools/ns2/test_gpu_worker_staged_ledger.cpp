@@ -11,10 +11,18 @@ void* operator new(std::size_t n) {
     if (void* p = std::malloc(n)) return p;
     throw std::bad_alloc{};
 }
-// CI fixture only: prevent GCC 13 from inlining our matching malloc/free
-// replacement delete into an allocation site and misdiagnosing new/delete.
-[[gnu::noinline]] [[gnu::noinline]] void operator delete(void* ptr) noexcept { std::free(ptr); }
-void operator delete(void* ptr,std::size_t) noexcept { std::free(ptr); }
+// The test deliberately replaces global new/delete to inject allocator
+// failures. Keep BOTH deletion operators as opaque ABI boundaries. GCC 13
+// otherwise performs interprocedural malloc/free analysis and reports the
+// intended pairing as -Wmismatched-new-delete under the CI -Werror policy.
+#if defined(__GNUC__) && !defined(__clang__)
+#define EDEN_TEST_ALLOCATOR_ABI __attribute__((noipa))
+#else
+#define EDEN_TEST_ALLOCATOR_ABI [[gnu::noinline]]
+#endif
+EDEN_TEST_ALLOCATOR_ABI void operator delete(void* ptr) noexcept { std::free(ptr); }
+EDEN_TEST_ALLOCATOR_ABI void operator delete(void* ptr,std::size_t) noexcept { std::free(ptr); }
+#undef EDEN_TEST_ALLOCATOR_ABI
 
 namespace GW = Service::AM::GpuWorkerProtocol;
 int main() {

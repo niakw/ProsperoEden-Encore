@@ -14,6 +14,8 @@ assert '"unknown"' in current
 assert "GetDisplayVersion" in current
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert 'list(APPEND core_sources "__DOLLAR__{EDEN_APP_FUNCTION_SOURCE}")'.replace("__DOLLAR__","$") in cmake
-assert 'target_compile_definitions(core PRIVATE EDEN_GUEST_TITLE_VERSION_DIAG=1)' in cmake
+# Diagnostic implementation stays in the maintained source for review, but
+# the single shipping PS5 runtime does not enable noisy title-version logging.
+assert 'EDEN_GUEST_TITLE_VERSION_DIAG' not in cmake
 assert 'write_derived("__DOLLAR__{PORT_BUILD_DIR}/application_functions.cpp"'.replace("__DOLLAR__","$") not in cmake
-print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded dev-only=1")
+print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")

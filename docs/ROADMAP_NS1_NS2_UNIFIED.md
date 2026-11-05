@@ -1184,3 +1184,19 @@ Sysmix » est remplacé, sans clore automatiquement tous les services P1.3.
 micro-correctif. Un contrôle ciblé vérifie la modification; les vérifications
 exhaustives et les scénarios de jeux s'exécutent une seule fois au jalon P5
 sur un SHA figé. Les tests console ne sont pas lancés ici.
+
+
+**P2.7 — correction d’attente sémaphore dans le puller NS2 (05/11, source/hôte) :**
+le puller Ampere de recherche conservait une boucle `SemaphoreAcquire`
+sans les deux garde-fous déjà actifs dans le puller NS1 maintenu :
+sortie sur `System::IsShuttingDown` et propagation de la défaillance du
+worker GPU PS5 (sondage borné à un appel tous les 64 tours).
+Le propriétaire NS2 reprend **le même corps de méthode** que le puller NS1 ;
+le code NS1 n'est pas modifié. L'égalité de sémaphore reste obligatoire
+lors d'une exécution normale, sans accusé de réussite synthétique.
+Le témoin hôte exécute la vraie méthode des deux variantes, sous
+Clang/GCC, UBSan O0/O2 et profils PS5/desktop : succès différé, arrêt
+initial/en cours et erreur GPU immédiate/différée, **8 configurations PASS**.
+Il est ajouté au preflight et à la batterie P4, sans build PS5.
+Cette correction garantit une issue aux attentes arrêtées/échouées en
+source ; l'exécution et la cohérence des vraies fences GPU restent P5.

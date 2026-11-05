@@ -149,6 +149,11 @@ int main(){
 """.replace("__BLOCK__",block)
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler,"C++20 compiler required"
+# The production vendor pins Boost 1.90 modular headers. Use these
+# when present so local Mac and Linux host tests see the same definitions;
+# otherwise the system Boost headers remain the fallback.
+boost_libs=root/"vendor/sources/eden-cpm/boost/boost-1.90.0/libs"
+boost_flags=[f"-I{p}" for p in sorted(boost_libs.glob("*/include")) if p.is_dir()]
 with tempfile.TemporaryDirectory(prefix="eden-f07-pop-async-") as folder:
     src=Path(folder)/"pop.cpp"
     src.write_text(cpp)
@@ -157,7 +162,8 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-pop-async-") as folder:
             exe=Path(folder)/(("native" if native else "desktop")+opt[1:])
             cmd=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
-                 *(['-DPS5_NATIVE=1'] if native else []),str(src),"-o",str(exe)]
+                 *(['-DPS5_NATIVE=1'] if native else []),*boost_flags,
+                 str(src),"-o",str(exe)]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=45)
             assert built.returncode==0,(native,opt,built.stderr[-4000:])
             ran=subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)

@@ -15,8 +15,13 @@ for invariant in ("purge_pages.push_back(owner_page);",
                   "std::sort(purge_pages.begin(), purge_pages.end());",
                   "erase_locations.find(entry.location)", "pages.erase(it);"):
     assert invariant in body
-compiler=shutil.which("c++") or shutil.which("clang++") or shutil.which("g++")
+compiler=shutil.which("clang++") or shutil.which("g++") or shutil.which("c++")
 assert compiler
+# The production vendor pins Boost 1.90 modular headers. Use these
+# when present so local Mac and Linux host tests see the same definitions;
+# otherwise the system Boost headers remain the fallback.
+boost_libs=root/"vendor/sources/eden-cpm/boost/boost-1.90.0/libs"
+boost_flags=[f"-I{p}" for p in sorted(boost_libs.glob("*/include")) if p.is_dir()]
 program=r"""
 #include <algorithm>
 #include <cassert>
@@ -105,7 +110,7 @@ with tempfile.TemporaryDirectory(prefix="encore-jit-range-rebase-") as tmp:
     for opt in ("-O0","-O2"):
         exe=Path(tmp)/("range"+opt)
         subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
-                        "-fsanitize=undefined",str(cpp),"-o",str(exe)],
+                        "-fsanitize=undefined",*boost_flags,str(cpp),"-o",str(exe)],
                        check=True,timeout=45)
         subprocess.run([str(exe)],check=True,timeout=20)
         print("JIT_BLOCK_RANGE_REBASE_HOST_PASS",opt)

@@ -29,6 +29,11 @@ compiler = next((exe for exe in ("clang++-18", "clang++", "g++")
                  if shutil.which(exe)), None)
 if compiler is None:
     raise SystemExit("No C++20 compiler; refusing an unexecuted regression PASS")
+# The production vendor pins Boost 1.90 modular headers. Use these
+# when present so local Mac and Linux host tests see the same definitions;
+# otherwise the system Boost headers remain the fallback.
+boost_libs=root/"vendor/sources/eden-cpm/boost/boost-1.90.0/libs"
+boost_flags=[f"-I{p}" for p in sorted(boost_libs.glob("*/include")) if p.is_dir()]
 
 source = r"""
 #include <boost/container/small_vector.hpp>
@@ -67,7 +72,8 @@ with tempfile.TemporaryDirectory(prefix="eden-vulkan-readback-") as folder:
     cpp.write_text(source, encoding="utf-8")
     subprocess.run([compiler, "-std=c++20", "-O1", "-g", "-Wall", "-Wextra",
                     "-Werror", "-fsanitize=address,undefined",
-                    "-fno-sanitize-recover=all", str(cpp), "-o", str(exe)],
+                    "-fno-sanitize-recover=all", *boost_flags,
+                    str(cpp), "-o", str(exe)],
                    check=True, timeout=90)
     subprocess.run([str(exe)], check=True, timeout=90)
 print("PASS Vulkan host texture readback small_vector: 1000 batches x40 nonowning refs under ASan/UBSan")

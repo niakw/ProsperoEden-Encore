@@ -17,6 +17,8 @@ configure_file("${EDEN_PORT_DIR}/vk_present_manager_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_present_manager.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/window_adapt_pass_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/window_adapt_pass.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vulkan_present_layer_r24.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/layer.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_blit_screen.h" COPYONLY)
 file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
@@ -36,7 +38,7 @@ list(REMOVE_ITEM video_sources vulkan_common/vulkan_instance.cpp vulkan_common/v
     renderer_vulkan/vk_query_cache.cpp)
 list(APPEND video_sources "${PORT_BUILD_DIR}/vulkan_instance.cpp" "${PORT_BUILD_DIR}/vulkan_wrapper.cpp"
     "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${EDEN_PORT_DIR}/vulkan_blit_screen_r08.cpp"
-    "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp" "${PORT_BUILD_DIR}/vulkan_present_layer.cpp"
+    "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp" "${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"
     "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"
     "${PORT_BUILD_DIR}/vulkan_library.cpp" "${EDEN_PORT_DIR}/vulkan_surface.cpp" "${EDEN_PORT_DIR}/vulkan_allocator.cpp"
     "${PORT_BUILD_DIR}/vulkan_present_manager.cpp" "${PORT_BUILD_DIR}/vulkan_swapchain.cpp"
@@ -75,9 +77,17 @@ set_property(SOURCE
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_opengl/present/layer.cpp"
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_opengl/renderer_opengl.cpp"
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_opengl/gl_blit_screen.cpp"
-    "${PORT_BUILD_DIR}/vulkan_present_layer.cpp"
+    "${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${PORT_BUILD_DIR}/include/video_core/present.h")
+# Layer grows an AA extent field; rebuild all clients against the single
+# maintained header (including cached objects from previous PS5 builds).
+set_property(SOURCE
+    "${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"
+    "${EDEN_PORT_DIR}/vulkan_blit_screen_r08.cpp"
+    "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/layer.h")
 # BlitScreen stores WindowAdaptPass by value through unique_ptr; all consumers
 # must see the extended resource layout, including cached objects predating it.
 set_property(SOURCE

@@ -15,9 +15,10 @@ assert body.count("#ifdef EDEN_HEAP_GROWTH_TRACE")==4
 assert body.count("#endif")==5  # four trace blocks and the PS5_NATIVE split
 assert "std::memset(address, 0, size);" in body
 assert "if (physical_out) *physical_out = physical;" in body
-assert 'target_compile_definitions(common PRIVATE EDEN_HEAP_GROWTH_TRACE=1)' in cmake
-assert 'if(EDEN_DEV_PROFILE)' in cmake
-assert "EDEN_HEAP_GROWTH_TRACE" not in cmake.split('if(EDEN_DEV_PROFILE)',1)[0]
+# The real production build never defines the historical DEV trace. Test
+# both feature states below against the same committed C++ implementation.
+assert 'EDEN_HEAP_GROWTH_TRACE' not in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler, "clang++ required"
 fixture=r"""

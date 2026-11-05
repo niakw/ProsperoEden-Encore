@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace Eden::Experimental {
+namespace Eden::JitMemory {
 inline std::atomic<bool> vulkan_frame_probe{false};
 
 inline constexpr std::uint32_t kMiB = 1024u * 1024u;
@@ -28,6 +28,22 @@ inline constexpr std::array<std::uint32_t, 4> kA64Baseline{
 inline constexpr std::array<std::uint32_t, 4> kA32Baseline{
     512u*kMiB, 64u*kMiB, 64u*kMiB, 16u*kMiB
 };
+
+// The application can expose six physical cores on NS2. The first four
+// retain their exact NS1 baselines; cores 4/5 use a bounded default instead
+// of indexing a four-entry array in the retry path. No guest/title switch.
+inline constexpr std::uint32_t A64BaselineBytes(std::size_t core) noexcept {
+    return core < kA64Baseline.size() ? kA64Baseline[core] : 16u*kMiB;
+}
+inline constexpr std::uint32_t A32BaselineBytes(std::size_t core) noexcept {
+    return core < kA32Baseline.size() ? kA32Baseline[core] : 16u*kMiB;
+}
+static_assert(A64BaselineBytes(0) == 256u*kMiB && A64BaselineBytes(1) == 192u*kMiB &&
+              A64BaselineBytes(2) == 192u*kMiB && A64BaselineBytes(3) == 16u*kMiB &&
+              A64BaselineBytes(4) == 16u*kMiB && A64BaselineBytes(5) == 16u*kMiB);
+static_assert(A32BaselineBytes(0) == 512u*kMiB && A32BaselineBytes(1) == 64u*kMiB &&
+              A32BaselineBytes(2) == 64u*kMiB && A32BaselineBytes(3) == 16u*kMiB &&
+              A32BaselineBytes(4) == 16u*kMiB && A32BaselineBytes(5) == 16u*kMiB);
 
 struct JitMemoryPlan {
     std::array<std::uint32_t, 4> a64 = kA64Baseline;
@@ -188,4 +204,4 @@ static_assert(ChooseJitMemoryPlan(false, true, 8ull * 1024 * kMiB).a32[1] > 64u*
 static_assert(ChooseJitMemoryPlan(false, true, 2ull * 1024 * kMiB).a64 == kA64Baseline);
 static_assert(ChooseJitMemoryPlan(false, true, 8ull * 1024 * kMiB).a64[3] == 16u*kMiB);
 static_assert(ChooseJitMemoryPlan(false, true, std::numeric_limits<std::size_t>::max()).a64[0] <= kSingleArenaAddressingLimit);
-} // namespace Eden::Experimental
+} // namespace Eden::JitMemory

@@ -25,7 +25,8 @@ assert 'words > (native_limit - address) / bytes_per_word' in helper
 assert 'std::forward<IsMapped>(is_mapped)(address, words * bytes_per_word)' in helper
 assert 'if (words == 0) return true;' in helper
 cmake=(ROOT/'headless/CMakeLists.txt').read_text()
-assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' in cmake
+assert 'EDEN_NS2_NATIVE_GPU_DISPATCH' not in cmake
+assert 'EDEN_NS2_NATIVE_GPU_PULLER' in cmake
 assert 'set(EDEN_MAINTAINED_GPU_DMA ' in cmake
 assert 'set(EDEN_NS2_NVDRV_GPU_ROOT ' in cmake
 assert '"${EDEN_NS2_NVDRV_GPU_ROOT}"' in cmake
@@ -34,7 +35,7 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     step=source.split('bool DmaPusher::Step() {',1)[1].split(
         'void DmaPusher::ProcessCommands(',1)[0]
     assert '"core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h"' in source
-    assert '#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH' in step
+    assert '#ifdef PS5_NATIVE' in step
     assert 'NativeGpfifoFetchMapped(' in step
     assert 'memory_manager.IsFullyMappedRange(addr, bytes)' in step
     assert 'throw std::runtime_error("Native GPFIFO command unmapped at GPU fetch")' in step
@@ -61,7 +62,8 @@ for active_worker in (worker,dev_worker):
     assert active_worker.index('scheduler.Push(system.GPU()') < active_worker.index('state.signaled_fence.store(next.fence,')
     assert active_worker.index('state.signaled_fence.store(next.fence,') < active_worker.index('} catch (const std::exception& error)')
     assert 'std::rethrow_exception(failure);' in active_worker
-assert 'gpu_thread_quiet.cpp' in cmake and 'gpu_thread_dev.cpp' in cmake
+assert 'gpu_thread_quiet.cpp' in cmake
+assert 'gpu_thread_dev.cpp' not in cmake  # no alternate GPU worker in unified PS5 build
 
 compiler=shutil.which('clang++') or shutil.which('g++')
 assert compiler
@@ -121,7 +123,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     inc=['-I'+str(v) for v in includes if v.is_dir()]
     flags=[compiler,'-std=c++20','-fsyntax-only',
            '-Wno-unused-parameter','-DFMT_HEADER_ONLY',
-           '-DPS5_NATIVE=1','-DEDEN_NS2_NATIVE_GPU_DISPATCH=1',
+           '-DPS5_NATIVE=1',
            '-DEDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1',
            *standard,*inc]
     sources=[DMA/'dma_pusher.cpp',DMA/'dma_pusher_dev.cpp',

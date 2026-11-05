@@ -29,7 +29,11 @@ dma_dev = (gpu_root / "dma_pusher_dev.cpp").read_text()
 puller_normal = (gpu_root / "engines/puller.cpp").read_text()
 puller_dev = (gpu_root / "engines/puller_dev.cpp").read_text()
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_GPU_DMA}" "${EDEN_MAINTAINED_GPU_PULLER}")' in cmake
-assert 'dma_pusher_dev.cpp' in cmake and 'engines/puller_dev.cpp' in cmake
+# The native application selects only maintained normal DMA/puller
+# sources; development timing owners are retained solely as test oracles.
+assert 'set(EDEN_MAINTAINED_GPU_DMA "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp")' in cmake
+assert 'set(EDEN_MAINTAINED_GPU_PULLER "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/engines/puller.cpp")' in cmake
+assert 'dma_pusher_dev.cpp' not in cmake and 'engines/puller_dev.cpp' not in cmake
 for text in (dma_normal, dma_dev):
     assert "sync_cv.wait_for(lk, std::chrono::milliseconds(10))" in text
 for text in (puller_normal, puller_dev):

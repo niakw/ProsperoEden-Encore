@@ -118,19 +118,17 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g19_selected}")
             raise AssertionError("G19 direct selection failed: " + name)
         live_sources = (select_stage / "selected.txt").read_text().split(";")
         owned_kernel = root / "vendor/encore-active/eden-core/src/core/hle/kernel"/(
-            "kernel_dev.cpp" if dev else "kernel_standard.cpp")
+            "kernel_standard.cpp")
         assert live_sources.count(str(owned_kernel)) == 1, name
         assert "hle/kernel/kernel.cpp" not in live_sources
         assert str(stage / "kernel.cpp") not in live_sources
         assert str(select_stage / "kernel.cpp") not in live_sources
         assert "hle/service/server_manager.cpp" not in live_sources
-        assert any(p.endswith("/" + server) for p in live_sources), name
-        if dev:
-            assert any("vendor/encore-active/" in p and p.endswith("/k_process.cpp")
+        assert any(p.endswith("/server_manager.cpp") for p in live_sources), name
+        assert "hle/kernel/k_process.cpp" in live_sources, name
+        assert not any("vendor/encore-active/" in p and p.endswith("/k_process.cpp")
                        for p in live_sources), name
-        else:
-            assert "hle/kernel/k_process.cpp" in live_sources
-        assert owned_kernel.read_text() == unit, name
+        assert owned_kernel.read_text() == units["standard"], name
 
     # Compare maintained G19 translation units against historical CMake
     # output byte-for-byte; the active selector is migrated only afterwards.

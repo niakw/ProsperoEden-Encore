@@ -24,13 +24,13 @@ FILES=('hle/kernel/global_scheduler_context.cpp',
        'arm/dynarmic/arm_dynarmic_32.cpp',
        'arm/dynarmic/arm_dynarmic_64.cpp')
 assert CMAKE.count('include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")')==1
-research=CMAKE.split('if(EDEN_NS2_CPU6_EXPERIMENTAL)',1)[1].split('# Shared kernel heap admission',1)[0]
+research=CMAKE.split('# Unified NS2 six-core kernel owner',1)[1].split('# Shared kernel heap admission',1)[0]
 assert 'set_property(TARGET core PROPERTY SOURCES "${eden_cpu6_core_sources}")' in research
 assert 'EDEN_CPU6_OUTPUT_ROOT' in research
 assert 'EDEN_N76_NATIVE_JIT_SOURCE' in research
 assert 'CPU6 must retain selected N76/G11 JIT source' in research
-assert 'EDEN_NS2_CPU6_EXPERIMENTAL=1' in research
-assert not CMAKE.split('# Six Switch 2 application cores',1)[0].count('include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")')
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in research
+assert 'EDEN_NS2_CPU6_EXPERIMENTAL' not in CMAKE
 assert 'NUM_CPU_CORES = 6' in (CPU6/'core/hardware_properties.h').read_text()
 assert 'NUM_LEGACY_CPU_CORES = 4' in (CPU6/'core/hardware_properties.h').read_text()
 assert 'MAX_NUM_CPU_CORES = 6' in (CPU6/'dynarmic/interface/exclusive_monitor.h').read_text()
@@ -121,26 +121,23 @@ def main()->None:
         assert dev_text.count('u64 amortized_ticks = ticks /')==1
         assert dev_text.count('m_process->GetPhysicalCoreMask()')==1
         print('P0_2_CPU6_N76_G11_NORMAL_DEV_OWNER_PASS',flush=True)
-        # Configure the exact CMake CPU6 research selector with REAL target
-        # source lists, including the required A64/dual NPDM dependency.
-        selection=CMAKE.split('if(EDEN_NS2_CPU6_EXPERIMENTAL)',1)[1].split(
-            '# Shared kernel heap admission',1)[0]
-        selection='if(EDEN_NS2_CPU6_EXPERIMENTAL)'+selection
+        # Configure the single PS5 CPU6 selector with actual target lists.
+        # Only the technical platform and NPDM ownership affect selection.
+        selection='if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)'+research.split(
+            'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)',1)[1]
         anchored='include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")'
         assert selection.count(anchored)==1
         selection=selection.replace(anchored,f'include("{SCRIPT.as_posix()}")')
-        for enabled,a64,dual,success in ((False,False,False,True),
-                                         (True,True,True,True),
-                                         (True,False,True,False),
-                                         (True,True,False,False)):
-            prj=tmp/('cmake-'+''.join(str(int(x)) for x in (enabled,a64,dual)))
+        for enabled,dual in ((False,False),(False,True),(True,False),(True,True)):
+            selected_native = enabled and dual
+            prj=tmp/('cmake-'+''.join(str(int(x)) for x in (enabled,dual)))
             prj.mkdir()
             (prj/'dummy.cpp').write_text('int cpu6_dummy=1;\n')
             for owner in FILES:
                 fake=prj/owner
                 fake.parent.mkdir(parents=True,exist_ok=True)
                 fake.write_text('int cpu6_stub=1;\n')
-            cmake_text='cmake_minimum_required(VERSION 3.20)\nproject(cpu6_selector LANGUAGES CXX)\nset(PORT_ROOT "@ROOT@")\nset(PORT_BUILD_DIR "@OUT@")\nset(EDEN_NS2_CPU6_EXPERIMENTAL @ENABLED@)\nset(EDEN_NS2_A64_EXPERIMENTAL @A64@)\nset(EDEN_REVIEWED_DUAL_NPDM @DUAL@)\nadd_library(core STATIC dummy.cpp\n    hle/kernel/global_scheduler_context.cpp\n    arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)\nadd_library(dynarmic STATIC dummy.cpp)\nadd_library(eden-headless STATIC dummy.cpp)\n'
+            cmake_text='cmake_minimum_required(VERSION 3.20)\nproject(cpu6_selector LANGUAGES CXX)\nset(PORT_ROOT "@ROOT@")\nset(PORT_BUILD_DIR "@OUT@")\nset(PS5_NATIVE @ENABLED@)\nset(EDEN_REVIEWED_DUAL_NPDM @DUAL@)\nadd_library(core STATIC dummy.cpp\n    hle/kernel/global_scheduler_context.cpp\n    arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)\nadd_library(dynarmic STATIC dummy.cpp)\nadd_library(eden-headless STATIC dummy.cpp)\n'
             cmake_text=cmake_text.replace(
                 'arm/dynarmic/arm_dynarmic_64.cpp)',
                 '"${EDEN_N76_NATIVE_JIT_SOURCE}")')
@@ -152,7 +149,6 @@ def main()->None:
             cmake_text=cmake_text.replace('@ROOT@',ROOT.as_posix()).replace(
                 '@OUT@',(prj/'generated').as_posix()).replace(
                 '@ENABLED@','ON' if enabled else 'OFF').replace(
-                '@A64@','ON' if a64 else 'OFF').replace(
                 '@DUAL@','ON' if dual else 'OFF')
             cmake_text+=selection+'\nget_target_property(pinned_core_sources core SOURCES)\nlist(FIND pinned_core_sources "@OUT@/core/hle/kernel/global_scheduler_context.cpp" cpu6_selected)\nmessage(STATUS "CPU6_GENERATED_OWNER_INDEX=${cpu6_selected}")\n'.replace('@OUT@',(prj/'generated/ns2-cpu6').as_posix())
             (prj/'CMakeLists.txt').write_text(cmake_text)
@@ -160,17 +156,13 @@ def main()->None:
                                        f'-DCMAKE_OSX_SYSROOT={sdk15}' if sdk15.is_dir()
                                        else '-DCMAKE_BUILD_TYPE=Debug'],
                                       capture_output=True,text=True,timeout=40)
-            assert (configured.returncode==0)==success,(prj,configured.stderr[-3600:])
-            if success:
-                selected='CPU6_GENERATED_OWNER_INDEX=1' if enabled else 'CPU6_GENERATED_OWNER_INDEX=-1'
-                # The actual source list includes dummy first on enabled.
-                assert selected in configured.stdout,(prj,configured.stdout[-2800:])
-                exists=(prj/'generated/ns2-cpu6/core/hle/kernel/global_scheduler_context.cpp').exists()
-                assert exists==enabled
-            else:
-                assert 'NS2 six-core mode requires' in configured.stderr
-            print('P0_2_CPU6_CMAKE_SOURCE_SELECTOR_PASS',
-                  f'enabled={enabled}',f'a64={a64}',f'dual={dual}',flush=True)
+            assert configured.returncode==0,(prj,configured.stderr[-3600:])
+            selected='CPU6_GENERATED_OWNER_INDEX=1' if selected_native else 'CPU6_GENERATED_OWNER_INDEX=-1'
+            assert selected in configured.stdout,(prj,configured.stdout[-2800:])
+            exists=(prj/'generated/ns2-cpu6/core/hle/kernel/global_scheduler_context.cpp').exists()
+            assert exists==selected_native
+            print('P0_2_UNIFIED_CPU6_CMAKE_SOURCE_SELECTOR_PASS',
+                  f'ps5_native={enabled}',f'dual_npdm={dual}',flush=True)
         flags=[compiler,'-std=c++20','-fsyntax-only','-Wno-unused-parameter',
                '-DFMT_HEADER_ONLY',*stdlib,*includes]
         def compile_owner(name:str)->tuple[str,subprocess.CompletedProcess[str]]:

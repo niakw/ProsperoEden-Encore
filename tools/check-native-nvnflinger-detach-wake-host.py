@@ -12,7 +12,8 @@ core = (ROOT / "vendor/encore-active/eden-backports/src/core/hle/service/nvnflin
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 oracle = (ROOT / "tools/check-vendor-consolidation-debt.py").read_text()
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")' in cmake
-assert 'target_compile_definitions(core PRIVATE EDEN_NVNF_DEQUEUE_PROFILE=1)' in cmake
+assert 'target_compile_definitions(core PRIVATE EDEN_NVNF_DEQUEUE_PROFILE=1)' not in cmake
+assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")' in cmake
 assert 'dequeue_expected = dequeue_expected.replace(detach_before, detach_after)' in oracle
 assert "dequeue_epoch.fetch_add(1, std::memory_order_relaxed)" in core
 core_methods_start = core.index("void BufferQueueCore::SignalDequeueCondition() {")

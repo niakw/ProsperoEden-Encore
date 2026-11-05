@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
-[[ $# == 0 || ( $# == 1 && ( "$1" == --devices || "$1" == --graphics || "$1" == --gpu-probe ) ) ]]
+# Only one native PS5 configuration is compiled; --graphics is a retained
+# spelling for existing CI/package callers, not a different binary profile.
+if [[ $# -gt 1 || ( $# == 1 && $1 != --graphics ) ]]; then
+    echo "Usage: tools/build-headless-native.sh [--graphics]" >&2
+    exit 2
+fi
 devices=OFF
-graphics=OFF
+graphics=ON
 probe=OFF
-if [[ ${1:-} == --devices ]]; then devices=ON; fi
-if [[ ${1:-} == --graphics ]]; then graphics=ON; fi
-if [[ ${1:-} == --gpu-probe ]]; then graphics=ON; probe=ON; fi
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 source "$root/tools/host-env.sh"
 eden_host_env "$root"
@@ -110,73 +112,19 @@ print(f'Encore incremental source stamps: {restored}/{len(files)} restored')
 PY_STAMPS
 
 
-# The shipping PS5 package must never silently acquire a research NS2 engine.
-# Each opt-in switch is passed verbatim to the existing CMake owners; no copied
-# renderer, JIT or loader is created by this build runner.
-ns2_research_profile=${EDEN_NS2_NATIVE_EXPERIMENTAL:-OFF}
-case "$ns2_research_profile" in
-    ON|OFF) ;;
-    *) echo "Invalid EDEN_NS2_NATIVE_EXPERIMENTAL=$ns2_research_profile" >&2; exit 2 ;;
-esac
-if [[ "$ns2_research_profile" == ON && "${EDEN_FINAL_RELEASE_PROFILE:-OFF}" == ON ]]; then
-    echo "NS2 native research cannot use EDEN_FINAL_RELEASE_PROFILE=ON" >&2
-    exit 2
-fi
-# Never silently ignore an obsolete knob. N72 is now coupled to N73;
-# the synthetic AM graphics-scale service was intentionally removed.
-for retired_ns2_option in EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL; do
-    if [[ "${!retired_ns2_option:-OFF}" != OFF ]]; then
-        echo "Retired NS2 selector: $retired_ns2_option (no standalone implementation)" >&2
-        exit 2
-    fi
-done
-ns2_cmake_args=()
-ns2_options=(
-    EDEN_NS2_SPARSE_CACHE_PROBE_EXPERIMENTAL
-    EDEN_NS2_EXEFS_EXPERIMENTAL
-    EDEN_NS2_A64_EXPERIMENTAL
-    EDEN_NS2_CPU6_EXPERIMENTAL
-    EDEN_NS2_NVDRV_EXPERIMENTAL
-    EDEN_NS2_GPU_SESSION_EXPERIMENTAL
-    EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL
-    EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
-    EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
-)
-for ns2_option in "${ns2_options[@]}"; do
-    ns2_value=${!ns2_option:-OFF}
-    case "$ns2_value" in
-        ON|OFF) ;;
-        *) echo "Invalid $ns2_option=$ns2_value (expected ON or OFF)" >&2; exit 2 ;;
-    esac
-    if [[ "$ns2_value" == ON && "$ns2_research_profile" != ON ]]; then
-        echo "$ns2_option=ON requires EDEN_NS2_NATIVE_EXPERIMENTAL=ON" >&2
-        exit 2
-    fi
-    ns2_cmake_args+=("-D$ns2_option=$ns2_value")
-done
-
+# The native PS5 binary uses one source graph and one renderer profile.
+# No release/DEV/P5 selector may alter the compiled program.
 cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
-    -DCMAKE_TOOLCHAIN_FILE="$root/headless/ps5.cmake" -DPS5_NATIVE=ON -DEDEN_DEVICE_FRONTEND="$devices" \
+    -DCMAKE_TOOLCHAIN_FILE="$root/headless/ps5.cmake" -DPS5_NATIVE=ON \
     -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DEDEN_ENCORE_SOURCE_COMMIT="$source_commit" \
     -DEDEN_LAUNCHER_BUILD_LABEL="$build_label" \
-    -DEDEN_SHARED_JIT="${EDEN_SHARED_JIT:-OFF}" \
-    -DEDEN_JIT_COMPILE_BATCH="${EDEN_JIT_COMPILE_BATCH:-OFF}" \
-    -DEDEN_FINAL_RELEASE_PROFILE="${EDEN_FINAL_RELEASE_PROFILE:-OFF}" \
-    -DEDEN_GUEST_WRITE_BRIDGE_DEV="${EDEN_GUEST_WRITE_BRIDGE_DEV:-OFF}" \
-    -DEDEN_UNQUALIFIED_FERMI2D_COPY="${EDEN_UNQUALIFIED_FERMI2D_COPY:-OFF}" \
-    -DEDEN_INLINE_EXCLUSIVES="${EDEN_INLINE_EXCLUSIVES:-OFF}" \
-    -DEDEN_PS5_VULKAN="${EDEN_PS5_VULKAN:-OFF}" \
-    -DEDEN_VULKAN_DRIVER="${EDEN_VULKAN_DRIVER:-CUSTOM}" \
-    -DEDEN_DEV_VULKAN="${EDEN_DEV_VULKAN:-OFF}" \
+    -DEDEN_PS5_VULKAN=ON \
+    -DEDEN_VULKAN_DRIVER=RADV \
     -DCMAKE_C_COMPILER_LAUNCHER="$cache" -DCMAKE_CXX_COMPILER_LAUNCHER="$cache" \
-    -DEDEN_DEV_ROM_ID="${EDEN_DEV_ROM_ID:-}" \
-    -DEDEN_DEV_PROFILE="${EDEN_DEV_PROFILE:-OFF}" \
-    -DEDEN_DEV_PROFILE_TITLE="${EDEN_DEV_PROFILE_TITLE:-$(cat "$root/.local/dev-profile-title" 2>/dev/null || true)}" \
-    -DEDEN_DEV_WAIT_CALLERS="${EDEN_DEV_WAIT_CALLERS:-OFF}" \
     -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=ON \
     -DCMAKE_PROJECT_yuzu_INCLUDE="$root/headless/inject.cmake" \
-    -DEDEN_GPU_PROBE="$probe" -DENABLE_QT=OFF -DYUZU_CMD=OFF -DYUZU_ROOM=OFF -DYUZU_ROOM_STANDALONE=OFF \
+    -DENABLE_QT=OFF -DYUZU_CMD=OFF -DYUZU_ROOM=OFF -DYUZU_ROOM_STANDALONE=OFF \
     -DYUZU_TESTS=OFF -DBUILD_TESTING=OFF -DENABLE_OPENGL="$graphics" -DEDEN_PS5_OPENGL="$graphics" -DENABLE_CUBEB=OFF \
     -DENABLE_WEB_SERVICE=OFF -DENABLE_LIBUSB=OFF -DYUZU_CRASH_DUMPS=OFF \
     -U 'FFmpeg_*' -DYUZU_USE_EXTERNAL_FFMPEG=OFF -DFFMPEG_DIR="$ffmpeg" \
@@ -185,8 +133,8 @@ cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
     -DZLIB_INCLUDE_DIR="$cdeps/include" -DZLIB_LIBRARY="$cdeps/lib/libz.a" \
     -DENABLE_WERROR=OFF -Dzstd_FORCE_BUNDLED=ON -DBoost_FORCE_BUNDLED=ON -Dfmt_FORCE_BUNDLED=ON \
     -DDYNARMIC_ENABLE_NO_EXECUTE_SUPPORT=ON -DDYNARMIC_IGNORE_ASSERTS=OFF \
-    -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF -DSDL_RENDER=OFF -DSDL_GPU=OFF \
-    "${ns2_cmake_args[@]}"
+    -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF -DSDL_RENDER=OFF -DSDL_GPU=OFF
+
 python3 -B "$root/headless/check_slab_lifetime.py" \
     "$scratch/native-local/headless/include/core/hle/kernel/slab_helpers.h" \
     "$scratch/source/src/core/hle/kernel/slab_helpers.h"
@@ -195,18 +143,9 @@ python3 -B "$root/headless/check_slab_lifetime.py" \
 # This does not run tests or execute any generator side effects.
 python3 -B "$root/tools/check-python-source-syntax.py"
 
-# Native PS5 syntax gate: both all-on dev and release compile the same launcher
-# and shader translation units. Dev skips release-only source contracts, NOT this
-# compiler check. The explicit prebuild bypass still disables it.
-if [[ "$graphics" == ON && ${EDEN_SKIP_PREBUILD_SOURCE_CHECKS:-0} != 1 ]]; then
+# The same native source syntax gate applies to every PS5 build.
+if [[ ${EDEN_SKIP_PREBUILD_SOURCE_CHECKS:-0} != 1 ]]; then
     python3 -B "$root/tools/check-native-source-syntax.py" "$scratch/native-local"
-    if [[ ${EDEN_DEV_PROFILE:-OFF} == ON ]]; then
-        # The all-on development PKG skips only release-shaped assertions:
-        # it must still exercise the real generated GPU worker and stop-aware
-        # SPSC queue before committing to a full native SDK compilation.
-        python3 -B "$root/tools/check-native-gpu-thread.py"
-        python3 -B "$root/tools/check-gpu-producer-stop.py"
-    fi
 fi
 
 # Run every source/harness check that only needs the configured/generated source tree BEFORE the
@@ -228,11 +167,6 @@ if [[ ${EDEN_SKIP_SOURCE_CHECKS:-0} != 1 && ${EDEN_SKIP_PREBUILD_SOURCE_CHECKS:-
     python3 -B "$root/tools/check-jit-patch-lookup.py"
     python3 -B "$root/tools/check-jit-assert.py"
     python3 -B "$root/tools/check-crash-report.py"
-    if [[ "$probe" != OFF ]]; then
-        # The graphics-only entry returns before Core construction; its JIT is dead-stripped.
-        python3 -B "$root/tools/check-gpu-probe.py" --self-test
-        python3 -B "$root/tools/check-native-queue-probe.py"
-    fi
     if [[ "$graphics" == ON ]]; then
         python3 -B "$root/tools/check-native-gpu-thread.py"
         python3 -B "$root/tools/check-gpu-producer-stop.py"

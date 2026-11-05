@@ -1,5 +1,18 @@
 # Eden Encore — migration des sélecteurs de recherche NS2 vers un moteur commun
 
+> **État actuel, 5 novembre 2026 :** cette table conserve **l’historique**
+> des anciennes options de recherche ; ce n’est pas une liste de modes
+> disponibles dans l’application. Dans la branche
+> `integration/unified-native-runtime-20261105`, aucune option
+> `EDEN_NS2_*_EXPERIMENTAL`, aucun profil `EDEN_DEV_PROFILE` ni
+> `EDEN_FINAL_RELEASE_PROFILE` n’est exposé dans `headless/CMakeLists.txt`.
+> Les propriétaires ExeFS, CPU6, NVDRV, GPU session et Ampere/Vulkan sont
+> sélectionnés ensemble sur PS5 et le contenu NUP est systématiquement
+> compilé. L’activation du dispatch natif dépend de l’identité réelle du
+> processus, des tickets de canal et des contrôles GMMU, jamais du nom
+> d’un jeu. Cette preuve de sources ne démontre pas un framebuffer PS5.
+
+
 **Inventaire revu le 04/11/2026**, dérivé de `headless/CMakeLists.txt`. Voir la [roadmap vivante #15](https://github.com/niakw/ProsperoEden-Encore/issues/15) (P0.2). **Les 9 commutateurs encore utiles à la recherche sont OFF par défaut ; N1, N3b, N49, N50, N51, N52, N54, N56, N57, N60 et N76 sont désormais sélectionnés automatiquement par leur propriétaire commun.** Leur existence ne prouve pas que les fonctionnalités NS2 soient intégrées au produit distribué.
 
 | Domaine et destination de production | Flags `EDEN_NS2_…_EXPERIMENTAL` à résorber | Critère de promotion/suppression |

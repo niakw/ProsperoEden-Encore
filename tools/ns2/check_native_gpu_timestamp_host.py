@@ -18,7 +18,7 @@ assert "GetGlobalTimeNs().count()" in source
 assert "GpuClockMultiplier(Settings::values.gpu_clock.GetValue())" in source
 assert 'foreach(n76_target IN ITEMS core common eden-headless video_core)' in cmake
 assert 'EDEN_NS2_GUEST_COUNTER=1' in cmake
-npdm=(ROOT/'vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp').read_text()
+npdm=(ROOT/'vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp').read_text()
 main=(ROOT/'headless/main.cpp').read_text()
 assert 'SelectProgram(metadata.IsSwitch2(), Common::g_cpu_caps.tsc_frequency)' in npdm
 assert 'SelectProgram(false, Common::g_cpu_caps.tsc_frequency)' in main

@@ -33,7 +33,7 @@ def main() -> None:
     a64_unit = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp")
     a32_native = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/a32_interface_native.cpp")
     worker_script = read("tools/prepare-vulkan-port.py")
-    jit_policy = read("headless/experimental_performance.h")
+    jit_policy = read("headless/jit_memory_policy.h")
     native_alloc = read("headless/jit-allocator.h")
 
     # Distinguish kernel direct-memory enumeration from the newer JIT-owned
@@ -214,7 +214,7 @@ def main() -> None:
             require(budget in unit,
                     f"Native A{bits} {profile} wrapper must consume runtime JIT memory budget")
             require('ConstructWithCapacityFallback(' in unit and
-                    f"kA{bits}Baseline[m_core_index]" in unit,
+                    f"A{bits}BaselineBytes(m_core_index)" in unit,
                     f"Native A{bits} {profile} startup retry must retain its per-core baseline")
             require(unit.count('if (!CheckMemoryAccess(vaddr') == (4 if bits == 32 else 5),
                     f"Native A{bits} {profile} memory reads must honor abort guards")

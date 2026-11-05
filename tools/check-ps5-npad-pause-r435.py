@@ -11,8 +11,9 @@ normal=(root/'vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cp
 dev=(root/'vendor/encore-active/eden-core/src/hid_core/resources/npad/npad_pause_diag.cpp').read_text()
 input_src=(root/'headless/pad.cpp').read_text()
 pad_header=(root/'third_party/ps5_pad.hpp').read_text()
-assert 'if(PS5_NATIVE AND EDEN_DEV_PROFILE)' in cmake
-assert 'set(EDEN_NPAD_SELECTED "${EDEN_MAINTAINED_NPAD_DEV}")' in cmake
+assert 'set(EDEN_MAINTAINED_NPAD' in cmake
+assert 'EDEN_MAINTAINED_NPAD_DEV' not in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
 assert 'set(EDEN_NPAD_SELECTED "${EDEN_MAINTAINED_NPAD}")' in cmake
 assert cmake.count('list(APPEND npad_sources "${EDEN_NPAD_SELECTED}")') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/npad_pause_diag.cpp"' not in cmake
@@ -56,4 +57,4 @@ with tempfile.TemporaryDirectory(prefix='eden-r435-') as d:
     subprocess.run([cxx,'-std=c++20','-O2','-pthread',str(src),'-o',str(exe)],
                    check=True,timeout=90)
     subprocess.run([str(exe)],check=True,timeout=90)
-print("R435 PASS: dev-only Npad fullkey Plus LIFO witness; source pinned and writes unchanged")
+print("R435 PASS: historical dev NPad Plus LIFO tested; unified PS5 selects safe standard NPad")

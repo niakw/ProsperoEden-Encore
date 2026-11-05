@@ -80,7 +80,7 @@ endfunction()
         selected = (stage / "g21_selected.txt").read_text()
         expected_selected = (root/"vendor/encore-active/eden-core/src/video_core"/
             ("gpu_vulkan.cpp" if not gl else
-             "gpu_gl_" + ("native" if native else "host") + ("_dev" if dev else "") + ".cpp"))
+             "gpu_gl_" + ("native" if native else "host") + ".cpp"))
         assert selected == str(expected_selected), (name, selected)
         assert 'gpu_failure.h' in actual if gl else True
         assert len(actual) >= len(upstream) - 2048, (name, len(actual))

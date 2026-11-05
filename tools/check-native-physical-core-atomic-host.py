@@ -58,7 +58,9 @@ with tempfile.TemporaryDirectory(prefix="encore-physical-atomic-") as folder:
     for profile in (False, True):
         path = base / ("profile.cpp" if profile else "default.cpp")
         build_script = base / ("profile.cmake" if profile else "default.cmake")
-        maintained = owned / ("physical_core_dev.cpp" if profile else "physical_core_standard.cpp")
+        # The native PS5 target ALWAYS selects the standard atomic core;
+        # toggling an obsolete diagnostic setting must not switch sources.
+        maintained = owned / "physical_core_standard.cpp"
         selection_begin = cmake_source.index('set(EDEN_PHYSICAL_CORE_DIR "')
         selection_end = cmake_source.index('list(REMOVE_ITEM core_sources "hle/kernel/physical_core.cpp")', selection_begin)
         selection = cmake_source[selection_begin:selection_end]
@@ -74,14 +76,20 @@ with tempfile.TemporaryDirectory(prefix="encore-physical-atomic-") as folder:
         assert staged.read_bytes() == maintained.read_bytes()
         derived = staged.read_text()
         assert derived.startswith("#include <atomic>\n")
-        assert derived.count("m_is_interrupted") == (6 if profile else 5)
-        assert derived.count("__atomic_load_n(&m_is_interrupted, __ATOMIC_RELAXED)") == (4 if profile else 3)
+        assert derived.count("m_is_interrupted") == 5
+        assert derived.count("__atomic_load_n(&m_is_interrupted, __ATOMIC_RELAXED)") == 3
         assert derived.count("__atomic_store_n(&m_is_interrupted,") == 2
         assert "return m_is_interrupted;" not in derived
         assert "m_is_interrupted = true;" not in derived
         assert "m_is_interrupted = false;" not in derived
         snapshots[profile] = derived
 
+    assert snapshots[True] == snapshots[False], 'Native CMake selected a second profile'
+    # The independently maintained diagnostic core remains source-reviewed;
+    # it is never a second PS5 app/CMake branch.
+    dev_source = (owned / 'physical_core_dev.cpp').read_text()
+    assert dev_source.count('m_is_interrupted') == 6
+    assert dev_source.count('__atomic_load_n(&m_is_interrupted, __ATOMIC_RELAXED)') == 4
     source = snapshots[False]
     maintained_run = method(source,
         "void PhysicalCore::RunThread(KernelCore& kernel, Kernel::KThread* thread) {",

@@ -14,6 +14,17 @@ une autre source de vérité. Les scripts d'installation peuvent copier les
 fichiers maintenus et refuser toute dérive SHA, mais pas inventer de
 nouveaux corps C++ destinés à la console.
 
+## Mise à jour du 5 novembre 2026 — source native unique
+
+Les chiffres, variantes et captures d'écran d'octobre ci-dessous sont des
+**archives**, pas l'état des options de compilation. NUP v1 est compilé
+**systématiquement** dans `eden-headless` et `eden-metadata` via
+`headless/nup_v1_runtime.cmake`. Le CMake PS5 n'expose plus de choix de profils
+`EDEN_DEV_PROFILE`, `EDEN_FINAL_RELEASE_PROFILE` ni d'options NS2
+`*_EXPERIMENTAL`. Les unités NS1 et NS2 sont attribuées au même graphe ; le
+choix des commandes Ampere repose sur l'identité du processus et du canal.
+Les tests hôte de sélection n'établissent pas un premier rendu sur PS5.
+
 ## État concret au 27 octobre 2026
 
 - `vendor/encore-active` : **337 sources et en-têtes suivis** (hors 107 unités NS2 expérimentales), dont 335 avec IDs de graphe et 2 en-têtes d'hygiène partagés possédant un garde de provenance et un installateur dédié. Le snapshot Eden original reste immuable. Couverture documentaire, **pas** validation console.
@@ -61,9 +72,11 @@ de compilation native. Cette preuve couvre les frontières de build
 | `headless/guest_write_deferred_bridge.cmake` | Sélection de six variantes expérimentales maintenues | Sélecteur conforme ; M12 retiré |
 | `headless/inject.cmake` | Orchestration ou toolchain | Sélecteur / configuration |
 | `headless/jit-alias.cmake` | Sélection/copie de l'en-tête Xbyak et de ConstantPool complets | Sélecteur conforme ; X09 retiré |
-| `headless/nup_v1_runtime.cmake` | Sélection des sources NUP v1 et des propriétaires AoC/RomFS existants | P5 uniquement, OFF par défaut, interdit en release finale ; aucune génération C++ |
+| `headless/ns2_cpu6_source_bridge.cmake` | Attribution des unités CPU6 maintenues à l'application native unique | Sélecteur conforme, sans profil DEV |
+| `headless/nup_v1_runtime.cmake` | Sélection des sources NUP v1 et des propriétaires AoC/RomFS existants | **Intégré à chaque build PS5 ; aucun verrou P5 ni option de release ; aucune génération C++** |
 | `headless/ps5.cmake` | Orchestration ou toolchain | Sélecteur / configuration |
 | `headless/scalar-memory.cmake` | Sélection des émetteurs vectoriel et data processing maintenus | Sélecteur conforme ; X08 retiré |
+| `headless/shared_a64_ldapr.cmake` | Prise en charge LDAPR A64 dans l'interface partagée | Sélecteur conforme, NS1 préservé |
 | `headless/vulkan.cmake` | Sélection/copie de sources Encore maintenues | Sélecteur / configuration |
 <!-- SINGLE_SOURCE_CMAKE_END -->
 

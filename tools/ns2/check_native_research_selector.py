@@ -1,146 +1,43 @@
 #!/usr/bin/env python3
-"""Exercise the real native PS5 NS2 selector gate without compiling the SDK."""
+"""P0 compile graph owner proof for the single unified PS5 native product.
+
+The original research-selector assertions are obsolete. Refuse their return;
+configure the real native source-owner CMake segment instead of inspecting
+legacy OFF flags or accepting mocked guest frames.
+"""
 from pathlib import Path
 import os
-import re
 import subprocess
+import sys
 
-root = Path(__file__).resolve().parents[2]
-cmake = (root / "headless/CMakeLists.txt").read_text()
-native_script = root / "tools/build-headless-native.sh"
-script = native_script.read_text()
-
-declared = re.findall(r"option\((EDEN_NS2_[A-Z0-9_]+)\s", cmake)
-assert declared and len(declared) == len(set(declared)), "missing/duplicate NS2 CMake options"
-start = script.index("# The shipping PS5 package must never silently acquire")
-end = script.index('cmake -S "$scratch/source"', start)
-gate = script[start:end]
-forwarded = re.findall(r"^    (EDEN_NS2_[A-Z0-9_]+)$", gate, re.MULTILINE)
-assert set(forwarded) == set(declared), (
-    "Native CMake options drifted", sorted(set(declared) - set(forwarded)),
-    sorted(set(forwarded) - set(declared))
-)
-assert '"${ns2_cmake_args[@]}"' in script, "native CMake does not receive selector array"
-# Native RasterizerVulkan::DispatchNativeCompute must override the SAME
-# RasterizerInterface ABI seen by core and all Vulkan consumers.
-rasterizer_header = (root / "vendor/sources/eden/src/video_core/rasterizer_interface.h").read_text()
-assert 'virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in rasterizer_header
-assert 'file(STRINGS "${EDEN_NS2_RASTERIZER_INTERFACE}"' in cmake
+root=Path(__file__).resolve().parents[2]
+cmake=(root/'headless/CMakeLists.txt').read_text()
+assert 'EDEN_FINAL_RELEASE_PROFILE' not in cmake
+assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in cmake
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in cmake
+assert 'if(EDEN_SHARED_NS2_AMPERE_CORE)' in cmake
+assert 'if(EDEN_SHARED_NS2_SPIRV_COMPILER)' in cmake
+assert 'if(NOT eden_ns2_match_count EQUAL 1)' in cmake or 'EQUAL -1' in cmake
 assert 'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in cmake
-assert 'target_compile_definitions(video_core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)' in cmake
-assert 'target_compile_definitions(core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)' in cmake
-assert 'EDEN_FINAL_RELEASE_PROFILE=ON' in gate
-assert 'EDEN_NS2_NATIVE_EXPERIMENTAL=ON' in gate
-
-subprocess.run(["bash", "-n", str(native_script)], check=True)
-test_code = "set -euo pipefail\n" + gate + '\nprintf "%s\n" "${ns2_cmake_args[@]}"\n'
-
-def verify(overrides, expected_exit):
-    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin")}
-    env.update(overrides)
-    run = subprocess.run(["bash", "-c", test_code], env=env, text=True,
-                         capture_output=True, timeout=10)
-    assert (run.returncode == 0) == (expected_exit == 0), (
-        overrides, run.returncode, run.stderr
-    )
-    return run
-
-normal = verify({}, 0)
-assert len(normal.stdout.splitlines()) == len(declared)
-assert set(normal.stdout.splitlines()) == {f"-D{name}=OFF" for name in declared}
-research = verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
-                   "EDEN_NS2_EXEFS_EXPERIMENTAL": "ON"}, 0)
-assert "-DEDEN_NS2_EXEFS_EXPERIMENTAL=ON" in research.stdout.splitlines()
-verify({"EDEN_NS2_EXEFS_EXPERIMENTAL": "ON"}, 2)
-# Deleted AM stub and now-redundant standalone N72 queue switch must not
-# silently appear to work. N73 is the sole research owner of sparse queue.
-for removed in ("EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL",
-                "EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL"):
-    verify({removed: "ON"}, 2)
-    verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON", removed: "ON"}, 2)
-verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
-        "EDEN_FINAL_RELEASE_PROFILE": "ON"}, 2)
-verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "maybe"}, 2)
-verify({"EDEN_NS2_NATIVE_EXPERIMENTAL": "ON",
-        "EDEN_NS2_A64_EXPERIMENTAL": "maybe"}, 2)
-# N76 must compose with the already-optimized G11 PS5 A64 backend.
-# Replacing the G11 translation unit would silently drop NS1 performance work.
-n76 = cmake.split("# N76 -- NS2 guest CNTPCT calibration", 1)[1].split(
-    "option(EDEN_HOST_ASAN", 1
-)[0]
-assert "n76_selected_g11_owner_idx" in n76
-assert 'set(EDEN_N76_G11_PROFILE normal)' in n76
-assert 'set(EDEN_N76_G11_PROFILE dev)' in n76
-assert 'list(REMOVE_ITEM n76_core_sources' not in n76
-assert 'list(APPEND n76_core_sources' not in n76
-assert 'set_property(TARGET core PROPERTY SOURCES "${n76_core_sources}")' not in n76
-g11_root = root / "vendor/encore-active/eden-core/src/core/arm/dynarmic/g11"
-for profile in ("normal", "dev"):
-    owner = (g11_root / f"arm_dynarmic_64_native_{profile}.cpp").read_text()
-    assert owner.count("#ifdef EDEN_NS2_GUEST_COUNTER") == 2, profile
-    assert owner.count('#include "encore/guest_counter_policy.h"') == 1, profile
-    assert owner.count("config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());") == 1
-    assert owner.count("config.cntfrq_el0 = Hardware::CNTFREQ;") == 1
-
-# Exercise the *actual* final-release CMake cache-variable gate with
-# cmake -P. Individual flags must all fail closed even if someone bypasses the
-# build-headless-native.sh environment selector and invokes CMake directly.
-import tempfile
-release_start = cmake.index("    # Fail closed for *all* opt-in NS2 engines")
-release_end = cmake.index(
-    "    target_compile_definitions(eden-headless PRIVATE EDEN_FINAL_RELEASE_PROFILE=1)",
-    release_start
-)
-release_fragment = cmake[release_start:release_end]
-assert 'get_cmake_property(eden_release_cache_vars CACHE_VARIABLES)' in release_fragment
-assert 'MATCHES "^EDEN_NS2_.*_EXPERIMENTAL$"' in release_fragment
-
-with tempfile.TemporaryDirectory(prefix="encore-ns2-release-gate-") as temporary:
-    scenario = Path(temporary) / "release-gate.cmake"
-    def run_release_cache(enabled):
-        lines = ["set(EDEN_FINAL_RELEASE_PROFILE ON)"]
-        for flag in declared:
-            state = "ON" if flag == enabled else "OFF"
-            lines.append(f'set({flag} {state} CACHE BOOL "" FORCE)')
-        if enabled and enabled not in declared:
-            lines.append(f'set({enabled} ON CACHE BOOL "" FORCE)')
-        lines.extend(["if(EDEN_FINAL_RELEASE_PROFILE)", release_fragment, "endif()"])
-        scenario.write_text("\n".join(lines) + "\n")
-        result = subprocess.run(["cmake", "-P", str(scenario)], capture_output=True, text=True)
-        if enabled:
-            assert result.returncode != 0 and enabled in result.stderr, (
-                enabled, result.returncode, result.stderr
-            )
-        else:
-            assert result.returncode == 0, result.stderr
-    run_release_cache(None)
-    for flag in declared:
-        run_release_cache(flag)
-    run_release_cache("EDEN_NS2_FUTURE_UNREVIEWED_EXPERIMENTAL")
-print("NS2_RELEASE_CMAKE_FAIL_CLOSED_PASS", len(declared), "plus future flag")
-
-# P5 owner gate: source and host testing may complete P0-P4, but neither
-# workflow is permitted to compile or package PS5 before an explicit P5
-# authorization. A manual workflow_dispatch or [full-build] marker is not
-# permission to bypass this hard job-level stop.
-native_workflows = (
-    (root / ".github/workflows/build-040-zbic.yml", "build"),
-    (root / ".github/workflows/ns2-native-ps5-research.yml", "compile-native-ps5"),
-)
-for native_workflow, native_job in native_workflows:
-    workflow_text = native_workflow.read_text()
-    marker = f"  {native_job}:\n"
-    assert workflow_text.count(marker) == 1, (
-        "PS5 job declaration drifted; review P5 lock", native_workflow
-    )
-    # Only the exact unconditional expression counts: branch filters and
-    # optional workflow inputs must not silently authorize a native build.
-    declaration = workflow_text.split(marker, 1)[1].split(
-        "    runs-on:", 1
-    )[0]
-    assert re.search(r"(?m)^    if: \$\{\{ false \}\}\s*$", declaration), (
-        "PS5 native compilation unlocked before P5", native_workflow
-    )
-print("P5_OWNER_BUILD_LOCK_PASS native_workflows=2 host_only_before_P5=1")
-
-print(f"PASS: {len(declared)} native NS2 CMake selectors; opt-in research; release fail-closed")
+# Run the independently maintained, exact CMake source-graph configure proof.
+source=root/'tools/ns2/check_unified_native_gpu_graph_host.py'
+assert source.is_file()
+env=os.environ.copy()
+if sys.platform=='darwin':
+    sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
+    if sdk.is_dir():env['SDKROOT']=str(sdk)
+run=subprocess.run([sys.executable,'-B',str(source)],cwd=root,env=env,
+                   capture_output=True,text=True,timeout=85)
+assert run.returncode==0,run.stdout[-2500:]+run.stderr[-2500:]
+assert 'UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS' in run.stdout,run.stdout
+build_workflow=(root/'.github/workflows/build-040-zbic.yml').read_text()
+assert "if: >-\n      ${{ github.event_name == 'workflow_dispatch' ||" in build_workflow
+assert "contains(github.event.head_commit.message || '', '[full-build]')" in build_workflow
+assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in build_workflow
+assert "needs.build.result == 'success'" in build_workflow
+assert 'if: ${{ false }}' not in build_workflow
+# An archived alternate workflow remains unselected; only the single real
+# native app/package workflow can be invoked deliberately by its operator.
+legacy=(root/'.github/workflows/ns2-native-ps5-research.yml').read_text()
+assert 'if: ${{ false }}' in legacy
+print('P0_SINGLE_NATIVE_GPU_CMAKE_GRAPH_PASS build_modes=1 native_owners=registered ps5_console=not_tested')

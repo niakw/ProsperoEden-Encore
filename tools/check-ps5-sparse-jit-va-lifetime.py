@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import tempfile
 root = Path(__file__).resolve().parents[1]
-policy = (root / "headless/experimental_performance.h").read_text()
+policy = (root / "headless/jit_memory_policy.h").read_text()
 boot = (root / "headless/main.cpp").read_text()
 allocator = (root / "headless/jit-allocator.h").read_text()
 ps5 = (root / "src/memory_pages.cpp").read_text()
@@ -23,8 +23,8 @@ assert "ChooseJitMemoryPlan(false, true, verified_lifetime_peak)" in policy
 assert "static std::size_t verified_sparse_peak_extent = 0;" in boot
 assert "if (experimental_sparse_jit && jit_memory_known && !safe_launch)" in boot
 assert "verified_sparse_peak_extent = std::max(" in boot
-assert "jit_plan = Eden::Experimental::ChooseSparseVirtualJitPlan(" in boot
-assert "Eden::Experimental::ApplyJitMemoryPlan(jit_plan)" in boot
+assert "jit_plan = Eden::JitMemory::ChooseSparseVirtualJitPlan(" in boot
+assert "Eden::JitMemory::ApplyJitMemoryPlan(jit_plan)" in boot
 assert "physical_policy=demand_pages" in boot
 assert "Common::ProbeSparseJitAlias()" in boot
 assert "ReserveSparseJitCode(sparse_span, &writable)" in allocator
@@ -99,9 +99,9 @@ assert "return rc == 0;" in table_slot
 cxx = next((e for e in ("clang++-18", "clang++", "g++") if shutil.which(e)), None)
 if not cxx: raise SystemExit("Need C++20 compiler for sparse policy test")
 code = r"""
-#include "experimental_performance.h"
+#include "jit_memory_policy.h"
 #include <cassert>
-using namespace Eden::Experimental;
+using namespace Eden::JitMemory;
 constexpr auto small_dense = ChooseJitMemoryPlan(false, true, 4128ull*kMiB);
 constexpr auto large_dense = ChooseJitMemoryPlan(false, true, 11824ull*kMiB);
 constexpr auto second_sparse = ChooseSparseVirtualJitPlan(false, true, 4128ull*kMiB, 11824ull*kMiB);

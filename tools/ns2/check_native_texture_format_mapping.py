@@ -147,11 +147,12 @@ header = (overlay / "texture_cache_base.h").read_text()
 impl = (overlay / "texture_cache.h").read_text()
 upstream_header = (vendor / "sources/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
 backport_header = (vendor / "encore-active/eden-backports/src/video_core/texture_cache/texture_cache_base.h").read_text()
-native_gate = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)"
+native_gate = "#ifdef PS5_NATIVE"
 for sym in ("AcquireNativeImageView", "AcquireNativeSampler"):
     assert sym in header and sym in impl, sym
     assert sym not in upstream_header and sym not in backport_header, sym
-assert native_gate in header and native_gate in impl
+assert native_gate + "\n    // An already authenticated native TIC/TSC record" in header
+assert native_gate + "\n// NS2 and NS1 use one TextureCache channel map" in impl
 assert "channel_state->image_views.try_emplace(descriptor)" in impl
 assert "slot_images[view.image_id].flags & ImageFlagBits::Remapped" in impl
 assert "CreateImageView(descriptor)" in impl
@@ -619,7 +620,7 @@ astc_base = (astc_root / "texture_cache_base.h").read_text()
 astc_impl = (astc_root / "texture_cache.h").read_text()
 vulkan_base = (vulkan_root / "texture_cache_base.h").read_text()
 vulkan_impl = (vulkan_root / "texture_cache.h").read_text()
-native_gate = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)"
+native_gate = "#ifdef PS5_NATIVE"
 
 
 def native_cache_slice(text: str, start: str, following: str) -> str:

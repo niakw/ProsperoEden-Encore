@@ -113,14 +113,16 @@ assert "launch_handoff.hpp" in generator
 assert "loading_jacket_buffer = std::move(buffer);" in oracle
 assert "cmdbuf.CopyBufferToImage(upload, target," in oracle
 assert renderer.count("EDEN_LOADER_JACKET_HANDOFF_VULKAN") == 4  # success + fallback + retries + unsupported format
-# A native build has been deliberately blocked until full NS2 / NS1
-# compatibility and console validation; host-only tests remain enabled.
+# A native build can be requested explicitly; console qualification and
+# publication are independent decisions, not compilation-time P5 gates.
 research = (root / ".github/workflows/ns2-native-ps5-research.yml").read_text()
 release = (root / ".github/workflows/build-040-zbic.yml").read_text()
 assert "  workflow_dispatch:" in research
 assert "  push:" not in research
 assert "    if: ${{ false }}" in research
-assert "    if: ${{ false }}" in release
+assert "if: >-\n      ${{ github.event_name == 'workflow_dispatch' ||" in release
+assert "contains(github.event.head_commit.message || '', '[full-build]')" in release
+assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in release
 # Compile and execute the tiny mailbox owner in host mode: one transfer,
 # bounded dimensions, no stale snapshot and no copied pixels on subsequent
 # Vulkan warm-up ticks. Does not build the PS5 app or GPU runtime.
@@ -136,6 +138,6 @@ with tempfile.TemporaryDirectory(prefix="encore-single-loader-") as directory:
     )
     subprocess.run([str(exe)], check=True)
 print("ENCORE_LOADER_MAILBOX_HOST_PASS single_use=1 bounded=1")
-print("ENCORE_SINGLE_LOADER_HANDOFF_SOURCE_PASS build_ps5_blocked=1")
+print("ENCORE_SINGLE_LOADER_HANDOFF_SOURCE_PASS build_ps5_operator_triggered=1")
 
 print("ENCORE_VULKAN_LOADING_DIAGNOSTIC_PASS first_guest_frame_not_claimed=1 max_reports=2 reset_per_title=1")

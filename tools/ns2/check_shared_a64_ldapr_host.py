@@ -22,11 +22,11 @@ REL=Path('dynarmic/frontend/A64')
 FILES=('decoder/a64.h','decoder/a64.inc','translate/impl/impl.h',
        'translate/impl/load_store_exclusive.cpp')
 assert 'set(EDEN_SHARED_NS2_A64_LDAPR ON)' in CMAKE
-assert 'if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)' in CMAKE
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in CMAKE
 assert 'include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")' in CMAKE
 assert 'target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")' in CMAKE
-assert 'if(EDEN_NS2_A64_EXPERIMENTAL)' in CMAKE
-assert 'NOT EDEN_NS2_A64_EXPERIMENTAL' not in CMAKE.split('# P0.2: limited A64 LDAPR promotion',1)[1].split('# Six Switch 2',1)[0]
+assert 'EDEN_NS2_A64_EXPERIMENTAL' not in CMAKE
+assert 'include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")' in CMAKE
 assert all((BASE/REL/f).is_file() for f in FILES)
 # Run the EXACT production file transforms, not a Python reimplementation.
 

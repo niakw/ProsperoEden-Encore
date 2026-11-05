@@ -25,7 +25,7 @@ assert "if (totals) start = Common::g_wall_clock.GetTimeNS();" in perf
 assert "if (!totals) return;" in perf
 assert "std::chrono::nanoseconds start{};" in perf
 # The dev worker retains diagnostics; the quiet worker has none.
-assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp")' in cmake
+assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp")' not in cmake
 assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp")' in cmake
 assert 'configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"' in cmake
 for name in ("idle_timer", "dispatch_timer", "full_timer"):

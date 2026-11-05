@@ -142,11 +142,11 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g11_sources}")
                     assert ("::Eden::Performance::CpuSampleDue" in src) == dev, (label,bits)
                     if native:
                         assert "ConstructWithCapacityFallback" in src, (label,bits)
-                        assert "experimental_performance.h" in src, (label,bits)
+                        assert "jit_memory_policy.h" in src, (label,bits)
                         assert "jit-startup-retry.h" in src, (label,bits)
                         assert src.count("if (!CheckMemoryAccess(vaddr") == (4 if bits==32 else 5)
-                        assert ("::Eden::Experimental::A32CacheBytes" in src) == (bits==32)
-                        assert ("::Eden::Experimental::A64CacheBytes" in src) == (bits==64)
+                        assert ("::Eden::JitMemory::A32CacheBytes" in src) == (bits==32)
+                        assert ("::Eden::JitMemory::A64CacheBytes" in src) == (bits==64)
                     else:
                         assert "ConstructWithCapacityFallback" not in src, (label,bits)
                         assert "if (!CheckMemoryAccess(vaddr" not in src, (label,bits)
@@ -163,7 +163,7 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g11_sources}")
                         f"arm_dynarmic_{bits}_{'native' if native else 'host'}_{'dev' if dev else 'normal'}.cpp")
                     candidate = owner.read_text()
                     expected = src
-                    for header in ("experimental_performance.h", "performance.h",
+                    for header in ("jit_memory_policy.h", "performance.h",
                                    "jit-startup-retry.h", "crash_site.h", "watch.h"):
                         expected = expected.replace(
                             '#include "'+str(root/"headless"/header)+'"',
@@ -186,6 +186,13 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g11_sources}")
                         candidate = reverse_exact_n76_clock(candidate, required=native)
                     else:
                         assert "EDEN_NS2_GUEST_COUNTER" not in expected + candidate
+                    # The unified native fallback is bounds-checked for CPU6;
+                    # historical generation used a four-entry array. Normalize
+                    # only this separately UBSan-tested change for parity.
+                    if native:
+                        expected=expected.replace(
+                            f'::Eden::JitMemory::kA{bits}Baseline[m_core_index]',
+                            f'::Eden::JitMemory::A{bits}BaselineBytes(m_core_index)')
                     assert candidate.replace(match.group(0),chosen) == expected, (
                         label,bits,"G11 maintained source parity drift")
                     outputs[(native,dev,inline,bits)] = src
@@ -242,11 +249,12 @@ endforeach()
                 assert live_sources.count(str(live/"empty.cpp")) == 1, (label,live_sources)
                 for bits in (32,64):
                     expected_owner = root/"vendor/encore-active/eden-core/src/core/arm/dynarmic/g11"/(
-                        f"arm_dynarmic_{bits}_{'native' if native else 'host'}_{'dev' if dev else 'normal'}.cpp")
+                        f"arm_dynarmic_{bits}_{'native' if native else 'host'}_normal.cpp")
                     assert live_sources.count(str(expected_owner)) == 1, (label,bits)
                     assert f"arm/dynarmic/arm_dynarmic_{bits}.cpp" not in live_sources
-                    assert (live_stage/f"compile{bits}.txt").read_text() == (
-                        "EDEN_INLINE_EXCLUSIVES=1" if inline else "EDEN_INLINE_EXCLUSIVES=0")
+                    # The one production source graph is always the normal
+                    # JIT and does not change with historical DEV/inline flags.
+                    assert (live_stage/f"compile{bits}.txt").read_text() == "EDEN_INLINE_EXCLUSIVES=0"
 
     for bits in (32,64):
         assert len({hashlib.sha256(value.encode()).digest()

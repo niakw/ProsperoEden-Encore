@@ -24,9 +24,16 @@ assert "EDEN_STAGE_DIR: build/release/PPSA99008" in workflow
 assert "Eden-Encore-PS5-FTP-PPSA99008" in workflow
 assert '\\ndev)\\n' not in builder and "EDEN_SPARSE_JIT_DEV" not in builder
 assert "EDEN_SPARSE_JIT_DEV" not in cmake and "EDEN_SPARSE_JIT_DEV" not in native
-assert "if(EDEN_FINAL_RELEASE_PROFILE)" in cmake
-assert "if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH OR" in cmake
-assert "EDEN_SHARED_JIT=OFF EDEN_JIT_COMPILE_BATCH=OFF" in builder
+# Unified PS5 builds have one native source graph and one package format.
+# Release publication is an Actions decision, not an alternate CMake mode.
+assert "EDEN_FINAL_RELEASE_PROFILE" not in cmake
+assert "EDEN_DEV_PROFILE" not in cmake
+assert "EDEN_JIT_COMPILE_BATCH_AVAILABLE=0" in cmake
+assert "EDEN_SHARED_JIT_AVAILABLE=0" in cmake
+assert "EDEN_SHARED_JIT=OFF EDEN_JIT_COMPILE_BATCH=OFF" not in builder
+assert "-DEDEN_PS5_VULKAN=ON" in native
+assert "-DEDEN_VULKAN_DRIVER=RADV" in native
+assert "-DPS5_NATIVE=ON" in native
 assert "EDEN_EXPERIMENT_DEFAULTS sparse=%u logical_cpu=%u frame_probe=%u safe=%u" in source
 assert "experimental_sparse_jit = true;" in source
 assert "if (!Common::ProbeSparseJitAlias())" in source
@@ -36,7 +43,9 @@ assert "Common::ReserveSparseJitCode(sparse_span, &writable)" in jit
 assert "Common::AllocateMemoryPages(size);" not in jit
 assert "::Common::CommitSparseJitCode(const_cast<u8*>(getCode()), target.bytes)" in boc
 assert "TrimSparseJitCode(const_cast<u8*>(getCode()), begin)" in boc
-assert '"EDEN_FINAL_RELEASE_PROFILE:BOOL": "ON"' in release_gate
+assert '"CMAKE_BUILD_TYPE:STRING": "Release"' in release_gate
+assert '"PS5_NATIVE"' in release_gate
+assert "EDEN_FINAL_RELEASE_PROFILE:BOOL" not in release_gate
 assert '"EDEN_PS5_VULKAN:BOOL": "ON"' in release_gate
 assert '"EDEN_VULKAN_DRIVER:STRING": "RADV"' in release_gate
 assert "EDEN_JIT_SPARSE_TRIM released=" in release_gate
@@ -53,7 +62,10 @@ launcher=read("headless/prosperoeden/pe/ui/launcher.cpp")
 assert '#include "pe/core/log.hpp"' in launcher
 assert 'sys::log("EDEN_UI_HOTSPOT phase=%s elapsed_ms=%lld"' in launcher
 assert native.count('check-native-source-syntax.py') == 1
-gate_marker="# Native PS5 syntax gate:"
+assert native.count('graphics=ON') == 1
+assert 'graphics=OFF' not in native
+assert '-DENABLE_OPENGL="$graphics" -DEDEN_PS5_OPENGL="$graphics"' in native
+gate_marker="# The same native source syntax gate applies to every PS5 build."
 release_marker="# Run every source/harness check"
 build_marker='echo "Building Eden with'
 assert native.index(gate_marker) < native.index(release_marker) < native.index(build_marker)
@@ -66,29 +78,27 @@ with tempfile.TemporaryDirectory() as tmp:
     calls=Path(tmp)/"calls.txt"
     harness=(
         'set -euo pipefail\n'
-        'root=/ci-mock; scratch=/ci-mock; probe=OFF\n'
+        'root=/ci-mock; scratch=/ci-mock; probe=OFF; graphics=ON\n'
         'python3() { printf "%s\\n" "$*" >> "$EDEN_GATE_CALLS"; }\n'
         + gate_shell
     )
-    def run_gate(skip_source: str, skip_prebuild: str, graphics: str) -> list[str]:
+    def run_gate(skip_source: str, skip_prebuild: str) -> list[str]:
         calls.write_text("")
         env=dict(os.environ, EDEN_GATE_CALLS=str(calls),
                  EDEN_SKIP_SOURCE_CHECKS=skip_source,
-                 EDEN_SKIP_PREBUILD_SOURCE_CHECKS=skip_prebuild,
-                 graphics=graphics)
+                 EDEN_SKIP_PREBUILD_SOURCE_CHECKS=skip_prebuild)
         result=subprocess.run(["bash", "-c", harness], env=env, text=True,
                               capture_output=True, timeout=15)
         assert result.returncode == 0, result.stderr
         return calls.read_text().splitlines()
 
-    bypass_source=run_gate("1", "0", "ON")
+    bypass_source=run_gate("1", "0")
     assert len(bypass_source)==1 and "check-native-source-syntax.py" in bypass_source[0], bypass_source
-    release=run_gate("0", "0", "ON")
+    release=run_gate("0", "0")
     assert release and "check-native-source-syntax.py" in release[0], release
     assert any("check-load-failure.py" in call for call in release), release
-    assert run_gate("1", "1", "ON")==[]
-    assert run_gate("0", "1", "ON")==[]
-    assert run_gate("1", "0", "OFF")==[]
+    assert run_gate("1", "1")==[]
+    assert run_gate("0", "1")==[]
 # A real regression check for the argument-vector bug in run #231. The
 # upstream-generated units inherit a Clang-18-unsupported -Wno-error-all;
 # dropping it in this preflight cannot suppress actual syntax errors.
@@ -106,5 +116,5 @@ print("PASS: native Clang syntax flags reject invalid upstream alias and preserv
 
 print("PASS: single native release syntax gate runs with or without source review bypass")
 
-print("PASS SINGLE_PS5_RELEASE_CONTRACT: PS5 sparse JIT on, dev/dense package absent, no shared/batch variant")
+print("PASS SINGLE_PS5_NATIVE_CONTRACT: PS5 RADV, no second graphics or DEV profile, package built once")
 print("No PS5 hardware/glyph art qualification, SDK build or CI run")

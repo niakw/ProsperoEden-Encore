@@ -22,7 +22,7 @@ probe = HEADLESS / "gpu_probe.inc"
 # is separate so another inclusion chain cannot accidentally replace it.
 consumers = {
     "jit-startup-retry.h": (g11_a32, g11_a64_dev),
-    "experimental_performance.h": (g11_a32, g11_a64_dev, main),
+    "jit_memory_policy.h": (g11_a32, g11_a64_dev, main),
     "performance.h": (g11_a64_dev, main, graphics, performance),
     "gpu_fault_rate_limit.h": (main, performance),
     "guest_fault.h": (main, physical_core),

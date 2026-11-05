@@ -15,8 +15,8 @@ assert "return Eden::GuestCounter::CpuTicksToGuest(cpu_tick);" in clock_header
 assert "Common::WallClock::CPUTickToCNTPCT(cpu_ticks)" in timing_owner
 assert "Common::WallClock::NSToCNTPCT" in (root/"vendor/sources/eden/src/common/cpu_features.h").read_text() or "NSToCNTPCT" in clock_header
 jit=(vendor/"src/core/arm/dynarmic/arm_dynarmic_64.cpp").read_text()
-npdm=(root/"vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp").read_text()
-loader=(root/"vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp").read_text()
+npdm=(root/"vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp").read_text()
+loader=(root/"vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 for witness in ("Eden::GuestCounter::NativeFactor()", "Eden::GuestCounter::NanosecondsToGuest(", "rdtsc_frequency == 0"):
     assert witness in clock,witness
@@ -33,7 +33,8 @@ assert "foreach(n76_target IN ITEMS core common eden-headless video_core)" in cm
 main=(root/"headless/main.cpp").read_text()
 assert "Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);" in main
 assert main.index("Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);") < main.index("loaded = system.Load(window, guest, params);")
-assert "if(EDEN_NS2_EXEFS_EXPERIMENTAL OR EDEN_SHARED_NS2_EXEFS)" in cmake
+assert "if(EDEN_SHARED_NS2_EXEFS)" in cmake
+assert "EDEN_NS2_EXEFS_EXPERIMENTAL" not in cmake
 assert "n76_core_sources" in cmake
 program=r"""
 #include <cassert>

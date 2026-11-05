@@ -296,7 +296,9 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-vulkan-reinterpret-") as folde
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
                  *(['-DPS5_NATIVE=1'] if native else []),str(path),"-o",str(binary)]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=45)
-            assert built.returncode==0,(native,opt,built.stderr[-6000:])
+            assert built.returncode==0,(native,opt,
+                "FIRST_COMPILER_ERRORS:\n"+built.stderr[:5000],
+                "LAST_COMPILER_ERRORS:\n"+built.stderr[-2500:])
             ran=subprocess.run([str(binary)],capture_output=True,text=True,timeout=15)
             assert ran.returncode==0,(native,opt,ran.stderr[-6000:])
 # Execute the maintained native image upload no-op before any resolve,
@@ -413,9 +415,15 @@ struct MsaaScratchImage {
     u64 tick{};
     u32 unused_frames{};
 };
+struct NativeGpuPinWitness {
+    bool pinned{};
+    bool CanRetireNativeGpu() const noexcept { return !pinned; }
+};
 struct PendingGpuResource {
     u64 tick{};
     u64 frame{};
+    std::shared_ptr<NativeGpuPinWitness> resource =
+        std::make_shared<NativeGpuPinWitness>();
 };
 struct Semaphore {
     u64 completed{};
@@ -578,6 +586,20 @@ int main() {
     retirement.TickFrame();
     assert(retirement.pending_retired_images.empty());
     assert(retirement.scheduler.semaphore.polls==9);
+    // A completed timeline alone is not sufficient for an image that an
+    // active native guest dispatch still holds. Verify the exact extracted
+    // production predicate retains the REAL owner until the pin drops.
+    TextureCacheRuntime pinned;
+    pinned.pending_retired_images.push_back({2, 0});
+    assert(pinned.pending_retired_images[0].resource);
+    pinned.pending_retired_images[0].resource->pinned = true;
+    pinned.scheduler.semaphore.completed = 2;
+    for (u32 i=0; i<10; ++i) pinned.TickFrame();
+    assert(pinned.pending_retired_images.size()==1);
+    pinned.pending_retired_images[0].resource->pinned = false;
+    pinned.TickFrame();
+    assert(pinned.pending_retired_images.empty());
+    assert(pinned.scheduler.semaphore.polls==11);
 #else
     assert(resolve_only.scheduler.is_free_calls==1);
 #endif
@@ -594,7 +616,9 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-msaa-snapshot-") as folder:
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
                  *(['-DPS5_NATIVE=1'] if native else []),str(unit),"-o",str(binary)]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=45)
-            assert built.returncode==0,(native,opt,built.stderr[-6000:])
+            assert built.returncode==0,(native,opt,
+                "FIRST_COMPILER_ERRORS:\n"+built.stderr[:5000],
+                "LAST_COMPILER_ERRORS:\n"+built.stderr[-2500:])
             ran=subprocess.run([str(binary)],capture_output=True,text=True,timeout=15)
             assert ran.returncode==0,(native,opt,ran.stderr[-6000:])
-print("F07_MSAA_GC_SOURCE_EXTRACTED_PASS native_one_tick_per_scan=1 empty_scan_no_poll=1 checked_out_no_poll=1 wrong_key_no_poll=1 resolve_only=1 desktop_original=1 delayed_reuse_safe=1 O0=1 O2=1")
+print("F07_MSAA_GC_SOURCE_EXTRACTED_PASS native_one_tick_per_scan=1 empty_scan_no_poll=1 checked_out_no_poll=1 wrong_key_no_poll=1 resolve_only=1 desktop_original=1 delayed_reuse_safe=1 native_gpu_pin_release_guard=1 O0=1 O2=1")

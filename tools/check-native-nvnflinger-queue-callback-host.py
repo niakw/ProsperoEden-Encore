@@ -11,7 +11,10 @@ pinned = (ROOT / "vendor/sources/eden/src/core/hle/service/nvnflinger/buffer_que
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 oracle = (ROOT / "tools/check-vendor-consolidation-debt.py").read_text()
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")' in cmake
-assert 'target_compile_definitions(core PRIVATE EDEN_NVNF_DEQUEUE_PROFILE=1)' in cmake
+# The unified app retains one queue producer without a DEV profiling build.
+# The source-extracted listener/slot/fence tests below still run unchanged.
+assert 'target_compile_definitions(core PRIVATE EDEN_NVNF_DEQUEUE_PROFILE=1)' not in cmake
+assert cmake.count('list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")') == 1
 assert "dequeue_expected = dequeue_expected.replace(queue_before, queue_after)" in oracle
 begin_marker = "Status BufferQueueProducer::QueueBuffer("
 end_marker = "\nvoid BufferQueueProducer::CancelBuffer("

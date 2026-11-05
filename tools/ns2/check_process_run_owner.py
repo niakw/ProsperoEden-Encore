@@ -31,7 +31,7 @@ assert 'inline void Unregister(std::uint64_t pid)' in TRACE.read_text()
 assert 'option(EDEN_NS2_PROCESS_RUN_GUARD_EXPERIMENTAL' not in CMAKE
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND' in CMAKE
 assert 'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE
-assert '(EDEN_NS2_EXEFS_EXPERIMENTAL OR EDEN_SHARED_NS2_EXEFS)' in CMAKE
+assert 'if(EDEN_SHARED_NS2_EXEFS)' in CMAKE and 'EDEN_NS2_EXEFS_EXPERIMENTAL' not in CMAKE
 assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE
 assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE
 assert 'headless/ns2/overrides/core/hle/service/os/process.cpp' not in CMAKE

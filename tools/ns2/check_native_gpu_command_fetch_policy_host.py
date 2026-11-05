@@ -15,9 +15,14 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 OWNER=ROOT/'vendor/encore-active/eden-core/src/video_core'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
-assert CMAKE.count('target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)')==1
-assert CMAKE.index('if(EDEN_NS2_NVDRV_EXPERIMENTAL)') < CMAKE.index('target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)')
-assert CMAKE.index('target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)') < CMAKE.index('option(EDEN_NS2_GPU_SESSION_EXPERIMENTAL')
+# Native SafeRead belongs to PS5 process/channel authentication, not a
+# separately selectable research build profile. NS1 retains its historical
+# DMA choice unless the channel itself is registered as native Ampere.
+assert 'EDEN_NS2_NATIVE_GPU_DISPATCH' not in CMAKE
+assert 'EDEN_NS2_NVDRV_EXPERIMENTAL' not in CMAKE
+assert 'EDEN_NS2_GPU_SESSION_EXPERIMENTAL' not in CMAKE
+assert 'EDEN_NS2_NATIVE_GPU_PULLER' in CMAKE
+assert 'EDEN_NS2_NVDRV_GPU_SOURCE' in CMAKE
 start='        bool use_safe = Settings::IsDMALevelDefault() ?'
 end='        if (use_safe) {'
 policies=[]
@@ -25,7 +30,7 @@ for filename in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     owner=(OWNER/filename).read_text()
     assert owner.count(start)==owner.count(end)==1
     policy=owner[owner.index(start):owner.index(end)]
-    assert policy.count('#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH')==1
+    assert policy.count('#ifdef PS5_NATIVE')==1
     assert policy.count('NativeGpuChannelRegistry::Instance().IsNative(&channel_state)')==1
     assert 'GpuGuestMemory<Tegra::CommandHeader, Tegra::Memory::GuestMemoryFlags::SafeRead>' in owner
     assert 'GpuGuestMemory<Tegra::CommandHeader, Tegra::Memory::GuestMemoryFlags::UnsafeRead>' in owner
@@ -76,7 +81,7 @@ int main() {
         registry.authorized=authorized;
         const unsigned before=registry.calls;
         const bool historical=default_level ? bool(high) : bool(safe);
-#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH
+#ifdef PS5_NATIVE
         assert(dma.SafeRead()==(historical || authorized));
         assert(registry.calls==before+1);
 #else
@@ -99,14 +104,14 @@ with tempfile.TemporaryDirectory(prefix='encore-native-dma-fetch-') as scratch:
             exe=Path(scratch)/f'policy-{native}-{level}'
             args=[compiler,'-std=c++20',f'-O{level}','-Wall','-Wextra','-Werror',
                   '-fsanitize=undefined','-fno-sanitize-recover=all']
-            if native: args+=['-DEDEN_NS2_NATIVE_GPU_DISPATCH=1']
+            if native: args+=['-DPS5_NATIVE=1']
             args += [str(src),'-o',str(exe)]
             built=subprocess.run(args,env=env,capture_output=True,text=True,timeout=45)
             assert built.returncode==0, built.stderr[-2500:]
             run=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
             assert run.returncode==0,run.stderr[-1500:]
             print('P2_7_NATIVE_FETCH_POLICY_PASS',
-                  'native' if native else 'shipping_NS1','O'+str(level),
+                  'native' if native else 'host_legacy' ,'O'+str(level),
                   'cases=16', 'asan=not_run', 'ubsan=pass')
     # Compile the actual Eden Core::GuestMemory template with a simulated
     # GPU-produced command list. Prove that SafeRead flushes GPU backing

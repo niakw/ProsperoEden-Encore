@@ -436,6 +436,7 @@ tick_cpp = r"""
 #include <cstdint>
 #include <cstdio>
 #include <limits>
+#include <memory>
 #include <utility>
 #include <vector>
 using u32 = std::uint32_t;
@@ -459,7 +460,18 @@ struct TextureCacheRuntime {
     std::vector<MsaaScratchImage> msaa_scratch_images;
     std::vector<std::pair<u64,int>> pending_resolve_shadows;
 #ifdef PS5_NATIVE
-    struct PendingRetiredOwner { u64 tick{}; u64 frame{}; };
+    struct NativeGpuPinWitness {
+        bool pinned{};
+        bool CanRetireNativeGpu() const noexcept { return !pinned; }
+    };
+    struct PendingRetiredOwner {
+        u64 tick{};
+        u64 frame{};
+        // Mimic the *actual* native Image/ImageView lease, which the
+        // source-extracted retirement lambda calls after timeline/frame.
+        std::shared_ptr<NativeGpuPinWitness> resource =
+            std::make_shared<NativeGpuPinWitness>();
+    };
     u64 gpu_retire_frame{};
     std::vector<PendingRetiredOwner> pending_retired_views;
     std::vector<PendingRetiredOwner> pending_retired_images;
@@ -529,6 +541,17 @@ int main() {
     r.scheduler.master.completed = 31;
     r.TickFrame();
     assert(r.pending_retired_views.empty());
+    assert(r.pending_retired_images.empty());
+    // A completed timeline AND eight elapsed frames cannot reclaim an
+    // Image still referenced by a native compute/graphics descriptor.
+    r.pending_retired_images.push_back({32, r.gpu_retire_frame});
+    assert(r.pending_retired_images[0].resource);
+    r.pending_retired_images[0].resource->pinned = true;
+    r.scheduler.master.completed = 32;
+    for (int i = 0; i < 10; ++i) r.TickFrame();
+    assert(r.pending_retired_images.size() == 1);
+    r.pending_retired_images[0].resource->pinned = false;
+    r.TickFrame();
     assert(r.pending_retired_images.empty());
 #else
     (void)probes;

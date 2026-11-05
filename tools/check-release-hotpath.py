@@ -8,7 +8,8 @@ perf=(root/'headless/performance.cpp').read_text()
 # Separate complete, maintained A64 source owners must enforce DEV profiling
 # without losing the native allocation fallback in the shipping variant.
 assert 'if(PS5_NATIVE)\n    set(EDEN_G11_PLATFORM native)' in cmake
-assert 'if(EDEN_DEV_PROFILE)\n    set(EDEN_G11_PROFILE dev)\nelse()\n    set(EDEN_G11_PROFILE normal)' in cmake
+assert 'set(EDEN_G11_PROFILE normal)' in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
 assert 'arm_dynarmic_${bits}_${EDEN_G11_PLATFORM}_${EDEN_G11_PROFILE}.cpp' in cmake
 assert 'if(NOT EXISTS "${EDEN_G11_SOURCE}")' in cmake
 assert 'list(REMOVE_ITEM core_sources "${relative}")' in cmake
@@ -21,11 +22,13 @@ assert 'Performance::SampleCpu(' not in normal
 assert 'Performance::SampleCpu(' in dev
 assert '#include "performance.h"' not in normal
 assert '#include "performance.h"' in dev
-# A final build must be rejected if any experimental JIT or DEV profile is ON.
-assert 'if(EDEN_FINAL_RELEASE_PROFILE)' in cmake
-assert 'if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH OR' in cmake
-assert 'EDEN_SPARSE_JIT_DEV' not in cmake
-assert 'EDEN_INLINE_EXCLUSIVES OR EDEN_DEV_PROFILE OR EDEN_DEV_VULKAN OR' in cmake
+# One production JIT source is selected. Preserve the unselected diagnostic
+# source as an exact C++ witness, never as a second shipping profile.
+for forbidden in ('EDEN_FINAL_RELEASE_PROFILE', 'EDEN_DEV_VULKAN',
+                  'EDEN_DEV_PROFILE', 'EDEN_SPARSE_JIT_DEV'):
+    assert forbidden not in cmake, forbidden
+assert 'set(EDEN_G11_INLINE_VALUE 0)' in cmake
+assert 'COMPILE_DEFINITIONS "EDEN_INLINE_EXCLUSIVES=${EDEN_G11_INLINE_VALUE}"' in cmake
 start=main.index('// Shipping path: no periodic profiler/watchdog work')
 end=main.index('#endif',start)
 release=main[start:end]

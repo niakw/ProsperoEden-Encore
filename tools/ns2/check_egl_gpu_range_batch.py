@@ -123,6 +123,7 @@ assert "option(EDEN_NS2_GPU_RANGE_BATCH_EXPERIMENTAL" not in CMAKE
 assert "# N51: the same PS5 GPU MemoryManager" in CMAKE
 assert "target_compile_definitions(video_core PRIVATE EDEN_NS2_GPU_RANGE_BATCH=1)" in CMAKE
 assert "EDEN_NS2_GPU_RANGE_BATCH=1" in CMAKE
-assert "EDEN_FINAL_RELEASE_PROFILE" in CMAKE
+assert 'EDEN_FINAL_RELEASE_PROFILE' not in CMAKE
+assert 'EDEN_NS2_GPU_RANGE_BATCH=1' in CMAKE
 assert "headless/ns2/eglantine/video_core/memory_manager.cpp" not in CMAKE
 print("N51_NATIVE_GPU_SINGLE_VENDOR_OWNER_AND_F07_BASELINE_PASS")

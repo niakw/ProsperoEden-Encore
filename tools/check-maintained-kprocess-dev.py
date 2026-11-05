@@ -17,9 +17,12 @@ for before, after in edits:
     expected = expected[:loc] + after + expected[loc+len(before):]
 assert active == expected, "Maintained KProcess differs from retired DEV CMake generator"
 assert active.count("EDEN_SHUTDOWN_PROCESS step=%s ms=%.1f") == 1
-assert 'if(EDEN_DEV_PROFILE)\n    # Select the complete Encore-maintained diagnostic variant' in cmake
-assert 'list(APPEND process_core_sources "${EDEN_MAINTAINED_DEV_PROCESS}")' in cmake
+# Historical diagnostic KProcess TU remains byte-for-byte reviewed, but
+# production uses its standard process owner without a DEV fork.
+assert 'EDEN_DEV_PROFILE' not in cmake
+assert 'EDEN_MAINTAINED_DEV_PROCESS' not in cmake
+assert 'list(APPEND process_core_sources "${EDEN_MAINTAINED_DEV_PROCESS}")' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/k_process.cpp"' not in cmake
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/k_process.cpp" process_source)' not in cmake
 assert "eden_patch_process(" not in cmake
-print("VENDOR_MAINTAINED_KPROCESS_DEV_PARITY_PASS: 5 scoped edits, DEV-only selection")
+print("VENDOR_MAINTAINED_KPROCESS_DEV_PARITY_PASS: 5 scoped edits, DEV source unselected in unified PS5")

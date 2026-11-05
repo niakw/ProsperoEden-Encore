@@ -93,7 +93,6 @@ que des fichiers C/C++ apparaissent dans `headless/` sans être ajoutés
 | `headless/encore_overrides_runtime.h` | en-tête/fragment | U54 | Chemin indexé, preuve dépend du graphe |
 | `headless/encore_performance_policy.h` | en-tête/fragment | U55 | Chemin indexé, preuve dépend du graphe |
 | `headless/error_applet.h` | en-tête/fragment | U60 | Chemin indexé, preuve dépend du graphe |
-| `headless/experimental_performance.h` | en-tête/fragment | U23 | Chemin indexé, preuve dépend du graphe |
 | `headless/extracted_npdm_identity.h` | en-tête/fragment | U87 | Chemin indexé, preuve dépend du graphe |
 | `headless/fastmem_handler.cpp` | runtime/bridge | J07 | Chemin indexé, preuve dépend du graphe |
 | `headless/filesystem_probe.h` | en-tête/fragment | U35 | Chemin indexé, preuve dépend du graphe |
@@ -124,6 +123,7 @@ que des fichiers C/C++ apparaissent dans `headless/` sans être ajoutés
 | `headless/jit-sparse-commit.h` | en-tête/fragment | J05 | Chemin indexé, preuve dépend du graphe |
 | `headless/jit-startup-retry.h` | en-tête/fragment | U22 | Chemin indexé, preuve dépend du graphe |
 | `headless/jit_list.h` | en-tête/fragment | J11 | Chemin indexé, preuve dépend du graphe |
+| `headless/jit_memory_policy.h` | en-tête/fragment | U23 | Chemin indexé, preuve dépend du graphe |
 | `headless/launch_handoff.hpp` | launcher/UI | — | À qualifier |
 | `headless/log_pipe.h` | en-tête/fragment | U37 | Chemin indexé, preuve dépend du graphe |
 | `headless/main.cpp` | runtime/bridge | U01 | Chemin indexé, preuve dépend du graphe |

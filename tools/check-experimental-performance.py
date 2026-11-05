@@ -11,7 +11,7 @@ import sys
 
 root = Path(__file__).resolve().parents[1]
 read = lambda name: (root / name).read_text()
-header = read("headless/experimental_performance.h")
+header = read("headless/jit_memory_policy.h")
 main = read("headless/main.cpp")
 cmake = read("headless/CMakeLists.txt")
 native_boc = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp")
@@ -32,20 +32,28 @@ assert "jit_cache_tier{0}" not in header
 # One test profile for all games. Legacy per-game experiments.json
 # switches must not silently turn off sparse and diagnostic features.
 assert 'ConfigFile("experiments.json")' not in main
-assert "if (!safe_launch)" in main
+assert 'const bool safe_launch = std::getenv("EDEN_SAFE_LAUNCH") != nullptr;' in main
+assert 'if (safe_launch) unsetenv("EDEN_SAFE_LAUNCH");' in main
+assert 'if (experimental_sparse_jit && jit_memory_known && !safe_launch)' in main
 assert "experimental_sparse_jit = true;" in main
-assert "experimental_logical_cpu = true;" in main
-assert "experimental_frame_probe = true;" in main
+assert "bool experimental_logical_cpu = false;" in main
+assert "experimental_logical_cpu = true;" not in main
+assert "bool experimental_frame_probe = false;" in main
+assert "experimental_frame_probe = true;" not in main
 assert 'if (!Common::ProbeSparseJitAlias())' in main
 assert 'throw std::runtime_error("PS5 sparse JIT alias preflight failed")' in main
 package=read("tools/build-package.sh")
 assert 'EDEN_SPARSE_JIT_DEV' not in package
 assert '\ndev)\n' not in package
 release=package.split("release|release-stage)\n",1)[1].split("\n    ;;",1)[0]
-assert 'export EDEN_SHARED_JIT=OFF EDEN_JIT_COMPILE_BATCH=OFF' in release
-assert 'export EDEN_GUEST_WRITE_BRIDGE_DEV=OFF EDEN_UNQUALIFIED_FERMI2D_COPY=OFF' in release
+# The native app has no release/dev JIT/bridge selector. Packaging never
+# injects old OFF flags merely to produce a second executable variant.
+assert 'export EDEN_SHARED_JIT=OFF EDEN_JIT_COMPILE_BATCH=OFF' not in release
+assert 'export EDEN_GUEST_WRITE_BRIDGE_DEV=OFF EDEN_UNQUALIFIED_FERMI2D_COPY=OFF' not in release
+assert 'EDEN_SHARED_JIT_AVAILABLE=0' in cmake
+assert 'EDEN_JIT_COMPILE_BATCH_AVAILABLE=0' in cmake
 assert 'EDEN_EXPERIMENT_DEFAULTS sparse=%u logical_cpu=%u frame_probe=%u safe=%u' in main
-experimental_section = main[main.index('bool experimental_sparse_jit = false;'):main.index('Eden::Experimental::ApplyJitMemoryPlan(jit_plan);')]
+experimental_section = main[main.index('bool experimental_sparse_jit = false;'):main.index('Eden::JitMemory::ApplyJitMemoryPlan(jit_plan);')]
 assert '#ifdef PS5_NATIVE' in experimental_section
 assert '#if defined(PS5_NATIVE) && defined(EDEN_DEV_PROFILE)' not in experimental_section
 assert 'EDEN_SPARSE_JIT_DEV' not in experimental_section
@@ -53,7 +61,8 @@ assert 'EDEN_SPARSE_JIT_DEV' not in read("tools/build-headless-native.sh")
 assert 'EDEN_SPARSE_JIT_DEV' not in cmake
 assert 'python3 -B tools/ci/check-release-experiments.py "$EDEN_STAGE_DIR"' in read('.github/workflows/build-040-zbic.yml')
 subprocess.run([sys.executable, '-B', str(root / 'tools/ci/check-release-experiments.py'), '--self-test'], check=True)
-assert "EnableExperimentalLogicalPlacement();" in main
+assert "if (experimental_logical_cpu)" in main
+assert "Eden::Performance::EnableExperimentalLogicalPlacement();" in main
 assert 'jit == "balanced"' not in main and 'jit == "expanded"' not in main
 assert "ChooseJitMemoryPlan(" in main and "ApplyJitMemoryPlan(" in main
 # Every explicit sparse JIT allocation is sparse-or-fail, never dense.
@@ -101,15 +110,17 @@ for bits in (32,64):
     cache_policy = f"A{bits}CacheBytes(m_core_index"
     assert cache_policy in native and cache_policy in native_dev
     assert cache_policy not in host_src
-    assert '#include "experimental_performance.h"' in native
+    assert '#include "jit_memory_policy.h"' in native
     assert '#include "jit-startup-retry.h"' in native
     assert "ConstructWithCapacityFallback(" in native and "ConstructWithCapacityFallback(" in native_dev
     assert '#include "performance.h"' in native_dev
     assert '#include "performance.h"' not in native
     assert native.count("if (!CheckMemoryAccess(vaddr") == (4 if bits==32 else 5)
-print("ENCORE_EXPERIMENTAL_G11_MAINTAINED_SOURCE_OWNER_PASS native_profiles=4")
-assert 'option(EDEN_SHARED_JIT "Enable the experimental cross-core A64 JIT" OFF)' in cmake
-assert 'option(EDEN_JIT_COMPILE_BATCH "Compile bounded A64 successor chains on a cache miss" OFF)' in cmake
+print("ENCORE_NATIVE_G11_MAINTAINED_SOURCE_OWNER_PASS native_standard=2 legacy_diagnostic_sources=2")
+assert 'option(EDEN_SHARED_JIT ' not in cmake
+assert 'option(EDEN_JIT_COMPILE_BATCH ' not in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
+assert 'EDEN_FINAL_RELEASE_PROFILE' not in cmake
 
 assert "EnableExperimentalLogicalPlacementImpl" in cpu
 # The logical-only path cannot prove SMT sibling groups: it must NEVER

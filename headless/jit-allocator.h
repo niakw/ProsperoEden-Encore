@@ -15,7 +15,7 @@
 #include <xbyak/xbyak.h>
 
 #ifdef EDEN_JIT_ALIAS_NATIVE
-#include "experimental_performance.h"
+#include "jit_memory_policy.h"
 #endif
 namespace Eden::Jit {
 class AliasPositiveCache {

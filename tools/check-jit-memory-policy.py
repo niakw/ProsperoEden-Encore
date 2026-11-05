@@ -21,9 +21,9 @@ code = r"""
 #include <cassert>
 #include <cstdint>
 #include <limits>
-#include "experimental_performance.h"
+#include "jit_memory_policy.h"
 
-using namespace Eden::Experimental;
+using namespace Eden::JitMemory;
 
 int main() {
     const auto reference = ChooseJitMemoryPlan(false, false, 0);

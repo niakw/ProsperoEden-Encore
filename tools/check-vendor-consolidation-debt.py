@@ -167,8 +167,11 @@ fs_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_profile.
 assert fs_pinned.count(fs_old) == 1
 assert fs_maintained == '#include "performance.h"\n' + fs_pinned.replace(fs_old, fs_new), (
     "Maintained IFile profile TU diverges from the already-audited generated source")
-assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_FILE}")') == 1
-assert 'list(REMOVE_ITEM core_sources "hle/service/filesystem/fsp/fs_i_file.cpp")' in c
+# Native production inherits Eden's complete standard IFile TU; the
+# former diagnostic owner is a provenance witness only, not a second target.
+assert 'EDEN_MAINTAINED_PROFILE_FS_FILE' not in c
+assert 'list(REMOVE_ITEM core_sources "hle/service/filesystem/fsp/fs_i_file.cpp")' not in c
+assert 'list(REMOVE_ITEM core_sources "hle/service/filesystem/fsp/fs_i_file.cpp")' not in c
 assert 'target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/gpu_thread.cpp"' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h"' not in c
@@ -202,7 +205,7 @@ storage_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_pro
 assert storage_pinned.count(storage_old) == 1
 assert storage_maintained == '#include "performance.h"\n' + storage_pinned.replace(storage_old, storage_new), (
     "Maintained IStorage profile TU diverges from the earlier CMake-generated source")
-assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_STORAGE}")') == 1
+assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_storage.cpp"' not in c
 assert "fs_storage_source" not in c
 assert counts["write_derived("] <= 63, counts
@@ -232,9 +235,9 @@ for kind, expression in fs_system_calls:
     fs_system_expected = fs_system_expected.replace(before, after)
 assert fs_system_maintained == fs_system_expected, (
     "Maintained IFileSystem diagnostic diverges from former CMake-generated TU")
-assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_SYSTEM}")') == 1
-assert c.count('list(REMOVE_ITEM core_sources "hle/service/filesystem/fsp/fs_i_filesystem.cpp")') == 1
-assert 'if(NOT EXISTS "${EDEN_MAINTAINED_PROFILE_FS_SYSTEM}")' in c
+assert 'EDEN_MAINTAINED_PROFILE_FS_SYSTEM' not in c
+assert 'list(REMOVE_ITEM core_sources "hle/service/filesystem/fsp/fs_i_filesystem.cpp")' not in c
+assert 'EDEN_MAINTAINED_PROFILE_FS_SYSTEM' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_filesystem.cpp"' not in c
 assert "fs_system_source" not in c
 print("VENDOR_MAINTAINED_FS_IFILESYSTEM_PARITY_PASS: three opens, quiet guard, DEV selection")
@@ -255,9 +258,9 @@ nvctrl_new = """    const auto wait_start = ::Eden::Performance::detailed_gpu_pr
 assert nvctrl_pinned.count(nvctrl_old) == 1
 assert nvctrl_maintained == '#include "performance.h"\n' + nvctrl_pinned.replace(nvctrl_old, nvctrl_new), (
     "Maintained nvhost_ctrl source diverges from original event-wait instrumentation")
-assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_NVCTRL}")') == 1
-assert c.count('list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_ctrl.cpp")') == 1
-assert 'if(NOT EXISTS "${EDEN_MAINTAINED_PROFILE_NVCTRL}")' in c
+assert 'EDEN_MAINTAINED_PROFILE_NVCTRL' not in c
+assert 'list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_ctrl.cpp")' not in c
+assert 'EDEN_MAINTAINED_PROFILE_NVCTRL' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/nvhost_ctrl.cpp"' not in c
 assert "ctrl_source" not in c and "ctrl_old" not in c
 
@@ -529,7 +532,7 @@ assert 'check-fc27-f05-producer-release-wake-host.py' in (
 
 # Compile one maintained source; CMake owns DEV's compile-time profiler switch.
 assert c.count('buffer_queue_producer_standard.cpp') == 0
-assert c.count('target_compile_definitions(core PRIVATE EDEN_NVNF_DEQUEUE_PROFILE=1)') == 1
+assert c.count('target_compile_definitions(core PRIVATE EDEN_NVNF_DEQUEUE_PROFILE=1)') == 0
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")') == 1
 assert c.count('list(REMOVE_ITEM core_sources "hle/service/nvnflinger/buffer_queue_producer.cpp")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")' in c
@@ -771,18 +774,19 @@ ipc_standard_expected = (ipc_pinned.replace(ipc_timeout_old, ipc_timeout_fixed)
 assert ipc_standard == ipc_standard_expected, (
     "Maintained normal IPC source diverges from pinned + deadline, initialized index, guarded successful slot")
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")' in c
-assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_HLE_SERVICE}"' in c
-for name, pinned_path in (
-        ("HLE_SERVICE", "hle/service/service.cpp"),
-        ("SVC_IPC", "hle/kernel/svc/svc_ipc.cpp")):
-    assert f'set(EDEN_MAINTAINED_PROFILE_{name}' in c
-    assert ('"${EDEN_MAINTAINED_PROFILE_' + name + '}"') in c
-    assert f'"{pinned_path}"' in c
-    assert ('write_derived("${PORT_BUILD_DIR}' + "/" + ("hle_service" if name == "HLE_SERVICE" else "svc_ipc") + '.cpp"') not in c
-assert c.count('list(REMOVE_ITEM core_sources "hle/service/service.cpp" "hle/kernel/svc/svc_ipc.cpp")') == 1
+# The maintained normal SVC now owns the native IPC process; the old
+# HLE/DEV services remain exact source-provenance witnesses but are not
+# separately selectable or compiled into the unified application.
+assert 'EDEN_MAINTAINED_PROFILE_HLE_SERVICE' not in c
+assert 'EDEN_MAINTAINED_PROFILE_SVC_IPC' not in c
+assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")') == 1
+assert c.count('list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")') == 1
+assert 'list(REMOVE_ITEM core_sources "hle/service/service.cpp" "hle/kernel/svc/svc_ipc.cpp")' not in c
+for legacy_name in ('hle_service.cpp','svc_ipc.cpp'):
+    assert f'write_derived("${{PORT_BUILD_DIR}}/{legacy_name}"' not in c
 for name in ("hle_source", "ipc_source", "hle_call", "ipc_old"):
     assert name not in c, ("legacy configure-time HLE rewrite still referenced", name)
-print("VENDOR_MAINTAINED_HLE_IPC_PARITY_PASS: both dispatches, caller traces, guest IPC attribution, DEV selection")
+print("VENDOR_MAINTAINED_HLE_IPC_PARITY_PASS: both dispatches, caller traces, guest IPC attribution, DEV source unselected")
 
 # Native common/runtime unit selection must be real maintained C++, not
 # transient CMake string-rewritten source. Exact source parity is checked,
@@ -1070,8 +1074,8 @@ gl_trace = "        static unsigned copy_errors = 0;\n        const GLenum copy_
 assert gl_src.count(gl_anchor) == 1, "Pinned development GL copy site drift"
 gl_old_generated = "#include <cstdio>\n" + gl_src.replace(gl_anchor, gl_anchor + "\n" + gl_trace)
 assert (active / "eden-core/src/video_core/renderer_opengl/gl_texture_cache.cpp").read_text() == gl_old_generated
-assert c.count('list(APPEND video_sources "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")') == 1
-assert 'if(NOT EXISTS "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")' in c
+assert c.count('list(APPEND video_sources "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")') == 0
+assert 'if(NOT EXISTS "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/gl_texture_cache.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/video_core/renderer_opengl/gl_texture_cache.cpp" texture_source)' not in c
 assert 'renderer_opengl/gl_texture_cache.cpp' in (sources / "eden/src/video_core/CMakeLists.txt").read_text()
@@ -1115,12 +1119,38 @@ for before, after in (
 ):
     assert nvdrv_expected.count(before) == 1, ("nvdrv source anchor drift", before)
     nvdrv_expected = nvdrv_expected.replace(before, after)
+# P1.3: the production-owner CloseSession now refuses out-of-range IDs,
+# duplicate final closes, inactive sessions, and null process owners BEFORE
+# decrementing or unmapping. Reconstruct the exact ten-line addition from
+# the pinned historical unit; all earlier edits retain strict byte parity.
+original_close = (
+    "    std::unique_lock lk(impl->session_guard);\n"
+    "    auto& session = impl->sessions[session_id.id];\n"
+    "    if (--session.ref_count > 0) {\n"
+)
+checked_close = (
+    "    std::unique_lock lk(impl->session_guard);\n"
+    "    // SessionId originates in the NVDRV FD table; stale and malformed FDs\n"
+    "    // must not index outside the stable deque or close a reused ASID twice.\n"
+    "    // Keep the existing lock through NvMap cleanup: the cleanup may call\n"
+    "    // GetSession recursively and already depends on that ordering.\n"
+    "    if (session_id.id >= impl->sessions.size()) {\n"
+    "        return;\n"
+    "    }\n"
+    "    auto& session = impl->sessions[session_id.id];\n"
+    "    if (!session.is_active || session.ref_count <= 0 || !session.process) {\n"
+    "        return;\n"
+    "    }\n"
+    "    if (--session.ref_count > 0) {\n"
+)
+assert nvdrv_expected.count(original_close) == 1, "N07 pinned session close changed"
+nvdrv_expected = nvdrv_expected.replace(original_close, checked_close)
 assert (active / "eden-core/src" / nvdrv_rel).read_text() == nvdrv_expected
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_CONTAINER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_CONTAINER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/nvdrv_container.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/nvdrv/core/container.cpp" nvcontainer)' not in c
-print("VENDOR_MAINTAINED_NVDRV_SESSION_PARITY_PASS source=1 selections=1")
+print("VENDOR_MAINTAINED_NVDRV_SESSION_PARITY_PASS source=1 selections=1 invalid_close=refused")
 
 # The direct controller TU must reproduce the previous CMake-generated TU.
 rumble_original = (sources / "eden/src/hid_core/frontend/emulated_controller.cpp").read_text()
@@ -1177,7 +1207,7 @@ assert instrumentation.startswith("                {\n") and instrumentation.end
 assert npad_dev_body[:loc+len(fullkey_start)] + npad_dev_body[tail:] == npad_expected, (
     "DEV NPad diverges outside the Fullkey diagnostic witness")
 assert npad_dev_body.count(npad_new_pair) == 1 and npad_dev_body.count(npad_new_entry) == 1
-assert 'set(EDEN_NPAD_SELECTED "${EDEN_MAINTAINED_NPAD_DEV}")' in c
+assert 'set(EDEN_NPAD_SELECTED "${EDEN_MAINTAINED_NPAD_DEV}")' not in c
 assert 'set(EDEN_NPAD_SELECTED "${EDEN_MAINTAINED_NPAD}")' in c
 assert c.count('list(APPEND npad_sources "${EDEN_NPAD_SELECTED}")') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/npad_pause_diag.cpp"' not in c
@@ -1444,7 +1474,7 @@ print("VENDOR_MAINTAINED_SW_BLITTER_OWNER_PASS")
 
 # KProcess finalization timing is selected from a complete DEV-only TU.
 assert (active / "eden-core/src/core/hle/kernel/k_process.cpp").is_file()
-assert 'list(APPEND process_core_sources "${EDEN_MAINTAINED_DEV_PROCESS}")' in c
+assert 'list(APPEND process_core_sources "${EDEN_MAINTAINED_DEV_PROCESS}")' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/k_process.cpp"' not in c
 assert (root / "tools/check-maintained-kprocess-dev.py").is_file()
 print("VENDOR_MAINTAINED_KPROCESS_DEV_OWNER_PASS")
@@ -1984,7 +2014,7 @@ maxwell_new_end = "    }\n    }\n    ::Eden::Performance::CountCondition(\n     
 assert maxwell_pinned.count(maxwell_old_accel) == maxwell_pinned.count(maxwell_old_end) == 1
 maxwell_expected = '#include "performance.h"\n' + maxwell_pinned.replace(maxwell_old_accel, maxwell_new_accel).replace(maxwell_old_end, maxwell_new_end)
 assert (active / "eden-core/src/video_core/engines/maxwell_3d.cpp").read_text() == maxwell_expected
-assert 'list(APPEND video_sources "${EDEN_MAINTAINED_DEV_MAXWELL}")' in c
+assert 'list(APPEND video_sources "${EDEN_MAINTAINED_DEV_MAXWELL}")' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_3d.cpp"' not in c
 print("VENDOR_MAINTAINED_MAXWELL_DEV_PARITY_PASS: two render-condition instruments")
 # Native RADV startup: previously generated from the pinned boilerplate,

@@ -194,11 +194,19 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-cold-stalls-") as d:
 catch_anchor = "} catch (const Shader::Exception& exception) {"
 function_anchor = "std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(\n    ShaderPools& pools"
 start = pipeline.index(catch_anchor, pipeline.index(function_anchor))
-end = pipeline.index("\n}\n\nstd::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline()", start) + 2
+# A second authenticated-Ampere std::exception catch now follows the
+# historical Shader::Exception handler. Isolate ONLY the exact original
+# catch, including its closing brace, so the executable NS1/PS5 dump
+# oracle below cannot accidentally accept different catch semantics.
+end_marker = "\n#ifdef PS5_NATIVE\ncatch (const std::exception& exception) {"
+assert pipeline.count(end_marker) == 1, "Native Ampere graphics catch owner changed"
+end = pipeline.index(end_marker, start)
 catch_fragment = pipeline[start:end]
 assert catch_fragment.count("env.Dump(hash, key.unique_hashes[index]);") == 1
 assert "if (Settings::values.dump_guest_shaders)" in catch_fragment
 assert "Failed shader diagnostic dump:" in catch_fragment
+assert catch_fragment.rstrip().endswith("}")
+assert catch_fragment.count("env.Dump(hash, key.unique_hashes[index]);") == 1
 assert "F07 PS5 skip duplicate CFG and dumps after shader exception unless opted in" in gen
 
 shader_exception_fixture = r"""

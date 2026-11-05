@@ -321,7 +321,7 @@ jobs:
       - name: Install host-only C++ fixture headers
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libboost-container-dev nlohmann-json3-dev
+          sudo apt-get install -y --no-install-recommends libboost-container-dev nlohmann-json3-dev libx11-dev libwayland-dev
       - name: C++ compiler version
         run: |
           g++ --version

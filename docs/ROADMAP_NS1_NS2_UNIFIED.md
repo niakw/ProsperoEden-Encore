@@ -11,7 +11,57 @@
 
 Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache shaders, cache textures, buffer cache, ordonnanceur, services communs et UI. Les détails intrinsèquement différents (instructions Maxwell/Ampere, descripteurs QMD, capacités GPU, fréquences, services et formats firmware) sont sélectionnés automatiquement et vérifiés; **aucun réglage « expérimental » dans le profil final**. Cela ne signifie pas supprimer les contrôles de sécurité ni prétendre qu'une instruction Ampere est du Maxwell.
 
-**Verrou P5 imposé par le propriétaire : aucun build PS5 et aucun test console avant l'entrée formelle en P5, après traitement des jalons P0 à P4.** Jusqu'à cette frontière, seuls les changements source, contrôles Clang/GCC, tests host, analyses de parité et previews hors console sont permis. Les workflows natifs restent désactivés; leur réactivation et la qualification de vrais jeux requièrent une autorisation explicite en P5. Aucun jalon P0-P4 ne doit être maintenu artificiellement ouvert parce qu'il manque un essai console réservé à P5.
+**Règle corrigée le 5 novembre 2026 : aucune condition P5, DEV, expérimentation ou « release » ne sélectionne une autre application dans le code.** Le build natif PS5 unique peut être lancé **volontairement** depuis GitHub Actions (`workflow_dispatch` ou marqueur explicite `[full-build]` sur `main`). Une compilation n'autorise **jamais** à elle seule une publication : l'opérateur choisit séparément `publish`, et la sortie publique exige les critères P5 de validation console. Les tests source/hôte P0–P4 n'affirment ni premier rendu invité ni compatibilité des jeux. Les anciennes références à un « verrou P5 du build » plus bas dans l'historique sont obsolètes.
+
+## Audit d’intégration du 5 novembre 2026 — P0 → P1 → P2 → P4
+
+**Production / branches :** `main e44c965` garde NUP activé en permanence.
+Le lot de sources unifiées est sur la branche
+`integration/unified-native-runtime-20261105` avec son vendor épinglé :
+CMake PS5 sans choix release/DEV/expérimental, NPDM/ExeFS, six cœurs, NVDRV
+4 KiB, GPU session, VI2, Ampere et Vulkan Compute dans **un même graphe**.
+Ce travail n’est **pas fusionné sur `main`** tant que le couple exact n’a
+pas passé la qualification de source et l’absence de régression.
+
+- **P0.2 — raccordement source réalisé sur branche, pas encore clôture du
+  jalon dans l’issue #15 :** inventaires 337 sources vendored historiques,
+  193 sources `headless` et 518 éléments de revue F07 réconciliés. Quatre
+  unités NPDM/ExeFS ont été déplacées sans modification de contenu ; la
+  politique JIT renommée dispose de nouveaux tests CPU6 bornés. Le vrai
+  graphe natif NVDRV/GPU session/SPIR-V est vérifié par configure-only.
+- **P1 — préqualification source/hôte partielle :** 32/32 témoins exécutés
+  sur la copie de travail pour firmwares, NUP, CPU6, SVC, mémoire, NVDRV,
+  audio/Sysmix, VFS. P1.3 demeure ouvert lorsque des IPC ou commandes
+  matérielles restent sans implémentation fidèle ; pas de progression de PC
+  invité prouvée sur console.
+- **P1.3 — NVDRV `CloseSession` vérifié (source/hôte) :** le propriétaire
+  `NvCore::Container` refuse une session hors plage, inactive, déjà libérée
+  ou sans processus avant la décrémentation, le `NvMap::UnmapAllHandles`
+  et la désinscription SMMU/ASID. Le chemin valide, le verrou existant et
+  le `process->Close` différé restent inchangés. Le test compile le préambule
+  C++ exact sous UBSan O0/O2 avec table `std::deque`, fermeture double et
+  identifiants invalides. Vendor `ecb4d9877`, avec contrôle de reconstruction
+  historique N07 complet. **N'affirme ni sécurité de concurrence globale
+  `GetSession`, ni exécution PS5, ni fermeture complète de P1.3.**
+- **P2 — état réel :** P2.3 CBUF/SSBO à formes dynamiques et P2.4 ISA/3D
+  Ampere, task/mesh et instructions non couvertes restent ouverts. Une
+  compilation de shaders et un test Vulkan hôte ne prouvent ni image ni
+  synchronisation GPU réelle. Aucune fonctionnalité inconnue n’est remplacée
+  par un succès fictif.
+- **Reçu hôte vérifiable avant ce correctif :** 36/36 tests P4 à
+  `main 8383d64a4b78b067f4b2e847ee8b3d212bbe643c` / vendor
+  `a7790471c0544613cf59df8f5926f866d6a46560`, et 32/32 témoins P1
+  sur le même couple de sources. Le générateur Vulkan a été remis en
+  conformité avec les gardes PS5 uniques : 45 fichiers régénérés égaux aux
+  propriétaires versionnés ; les additions P2.5 sont normalisées avec
+  empreintes exactes pour conserver la preuve historique N57. Les quatre
+  témoins CI Vulkan/ASTC/texture/selector font désormais partie de la
+  qualification SHA-épinglée P4 ; celle du nouveau commit reste à effectuer.
+- **P4 — requalification en cours :** l’ancien lot de tests cherchait les
+  flags supprimés. Les tests conservent leurs témoins C++/UBSan, mais
+  vérifient désormais le véritable CMake commun. **La fermeture exige un
+  reçu `qualify_host_batch.py` sur le SHA commité du main et du vendor**, et
+  pas seulement des succès locaux avec sources non commitées.
 
 ## État technique vérifié au départ
 
@@ -25,7 +75,7 @@ Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache
 | Mémoire et VRAM | GMMU, NVMap, sparse/ASTC et contrôles hôte partiels | Résidence physique 12 GiB et premières images sur PS5 non prouvées |
 | HLE / synchronisation | Nombreux services et correctifs IPC, VI2, scheduler | Pas de chemin complet invités → VI2 → frame certifié |
 | UI et jaquettes | Index LaunchBox Switch 2, cache fronts/backs/spines, opacité et conservation d'inventaire corrigés; preview hôte verte | Jaquettes réellement récupérées sur console et transition GL→Vulkan sans flash à valider |
-| Release | Builds natifs verrouillés | Pas de qualification console de cette révision |
+| Build / diffusion | Compilation native uniquement sur demande ; publication séparée | Pas de qualification console de cette révision |
 
 ## Séquence des jalons
 
@@ -36,7 +86,7 @@ Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache
 | **P2** | GPU Vulkan source/hôte partagé | TIC/TSC, texel-buffers et images, UBO/SSBO, caches, graphics/compute Ampere, ASTC/sparse/VRAM et synchronisations **dans le code** | Le premier framebuffer et les capacités du pilote réel sont qualifiés en P5; les instructions/stages non codés restent de vrais manques P2 |
 | **P3** | UI / rendu partagé sans régression de source | Jaquettes, navigation sans rescan, chargement unique et transitions vérifiables sans PS5 | Récupération des jaquettes et FC27/BOTW réels réservés à P5 |
 | **P4** | Préqualification strictement hôte | Contrats ciblés C++ Clang/GCC, mémoire/fences simulées, parité des sources et recette de release sans faux succès | Qualification de toutes les CI au dernier SHA faite à la frontière P5, sans bloquer le traitement du code |
-| **P5** | Build PS5 contrôlé, qualification console et stabilisation | Autorisation explicite du build, puis MKW + Bananza première image invitée, FC27 match sans crash, BOTW, ressources et performances | Release seulement si critères console remplis |
+| **P5** | Qualification console et stabilisation | MKW + Bananza première image invitée, FC27 match sans crash, BOTW, ressources et performances | Release seulement si critères console remplis, indépendamment de la compilation |
 
 Ces jalons ne sont **pas** des estimations de délais; chacun se ferme uniquement sur preuve. Un test de traduction shader, une preview OpenGL ou une compilation native réussie ne remplace pas une image issue du GPU invité.
 

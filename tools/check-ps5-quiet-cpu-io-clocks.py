@@ -6,14 +6,16 @@ import platform, shutil, subprocess, sys, tempfile
 
 root = Path(__file__).resolve().parents[1]
 cmake = (root / "headless/CMakeLists.txt").read_text()
-# The quiet/DEV implementation belongs to maintained C++, not CMake.
+# Production selects the quiet maintained TU; DEV diagnostics remain
+# independently audited source variants and are not selectable build modes.
 core_dir = root / "vendor/encore-active/eden-core/src/core/hle/kernel"
 dev_source = (core_dir / "physical_core_dev.cpp").read_text()
 standard_source = (core_dir / "physical_core_standard.cpp").read_text()
 idle_start = dev_source.index("void PhysicalCore::Idle() {")
 idle_end = dev_source.index("\nbool PhysicalCore::IsInterrupted()", idle_start)
 idle = dev_source[idle_start:idle_end].strip()
-assert "physical_core_dev.cpp" in cmake and "physical_core_standard.cpp" in cmake
+assert 'set(EDEN_PHYSICAL_CORE_SOURCE "${EDEN_PHYSICAL_CORE_DIR}/physical_core_standard.cpp")' in cmake
+assert "physical_core_dev.cpp" not in cmake
 assert any("configure_file" in line and "EDEN_PHYSICAL_CORE_SOURCE" in line
            and "physical_core.cpp" in line for line in cmake.splitlines())
 assert "void PhysicalCore::Idle() {" in standard_source
@@ -43,7 +45,7 @@ assert dequeue.index("Status status = WaitForFreeSlotThenRelock(async") < dequeu
 # Host-syncpoint event-wait callback is now maintained C++ (DEV only).
 nvctrl = (Path(__file__).resolve().parents[1] /
           "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_ctrl.cpp").read_text()
-assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_NVCTRL}")' in cmake
+assert 'EDEN_MAINTAINED_PROFILE_NVCTRL' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/nvhost_ctrl.cpp"' not in cmake
 assert "const auto wait_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;" in nvctrl
 assert "RegisterHostAction(fence_id, target_value, [this, slot, wait_start]()" in nvctrl
@@ -55,10 +57,10 @@ assert nvctrl.index("RegisterHostAction(fence_id") < nvctrl.index("if (wait_star
 root = Path(__file__).resolve().parents[1]
 ipc = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
 service = (root / "vendor/encore-active/eden-core/src/core/hle/service/service.cpp").read_text()
-assert 'set(EDEN_MAINTAINED_PROFILE_SVC_IPC' in cmake
-assert 'set(EDEN_MAINTAINED_PROFILE_HLE_SERVICE' in cmake
-assert '"${EDEN_MAINTAINED_PROFILE_SVC_IPC}"' in cmake
-assert '"${EDEN_MAINTAINED_PROFILE_HLE_SERVICE}"' in cmake
+assert 'EDEN_MAINTAINED_PROFILE_SVC_IPC' not in cmake
+assert 'EDEN_MAINTAINED_PROFILE_HLE_SERVICE' not in cmake
+assert 'list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")' in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp"' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/hle_service.cpp"' not in cmake
 # Per-thread attribution only after the Detailed gate and before a blocking call.
@@ -78,8 +80,8 @@ assert service.count("EDEN_FS_CALLER command=") == 2
 maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/core/hle/service/filesystem/fsp"
 fs_file = (maintained / "fs_i_file.cpp").read_text()
 fs_storage = (maintained / "fs_i_storage.cpp").read_text()
-assert 'EDEN_MAINTAINED_PROFILE_FS_FILE' in cmake
-assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' in cmake
+assert 'EDEN_MAINTAINED_PROFILE_FS_FILE' not in cmake
+assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in cmake
 for fragment, name in [(fs_file, "guest_fs_file"), (fs_storage, "guest_fs_storage")]:
     assert "const auto fs_start = ::Eden::Performance::detailed_gpu_profile.load" in fragment
     assert f"if (fs_start) {{\n        ::Eden::Performance::AddSince(::Eden::Performance::{name}, fs_start);" in fragment
@@ -87,8 +89,8 @@ assert fs_file.index("backend->Read(") < fs_file.index("if (fs_start)") < fs_fil
 assert fs_storage.index("EDEN_FS_SHORT_STORAGE") < fs_storage.index("if (fs_start)")
 assert "fs_read != static_cast<std::size_t>(length)" in fs_storage
 fs_open = (maintained / "fs_i_filesystem.cpp").read_text()
-assert 'EDEN_MAINTAINED_PROFILE_FS_SYSTEM' in cmake
-assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_SYSTEM}")' in cmake
+assert 'EDEN_MAINTAINED_PROFILE_FS_SYSTEM' not in cmake
+assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_SYSTEM}")' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_filesystem.cpp"' not in cmake
 # All three requested operations must gate their diagnostic logging; no
 # new clock sampling on the quiet (non-profiled) filesystem path.

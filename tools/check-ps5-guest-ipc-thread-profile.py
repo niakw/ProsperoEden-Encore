@@ -27,8 +27,18 @@ assert "GetThreadName" not in impl and "mutex" not in impl.lower()
 # The actual DEV IPC instrumentation is a maintained C++ source, not a
 # configure-time CMake replacement. The quiet/active counters stay native.
 ipc = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
-assert 'set(EDEN_MAINTAINED_PROFILE_SVC_IPC' in cmake
+standard = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp").read_text()
+# Production has ONE safe and uninstrumented IPC owner. The optional
+# diagnostic source remains a host reference for counter correctness, but
+# must never enter the native PS5 CMake target or change Switch 1 timing.
+assert 'set(EDEN_MAINTAINED_SVC_IPC_STANDARD' in cmake
+assert 'list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")' in cmake
+assert 'set(EDEN_MAINTAINED_PROFILE_SVC_IPC' not in cmake
+assert 'EDEN_DEV_PROFILE' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp"' not in cmake
+assert 'session->SendSyncRequest(kernel, message, buffer_size)' in standard
+assert 'BeginGuestIpc' not in standard and 'FinishGuestIpc' not in standard
+assert 'if (index < 0 || index >= num_objects || objs[index] == nullptr)' in standard
 anchor = ipc.index('const auto ipc_tid = ipc_profile ? GetCurrentThread(kernel).GetThreadId() : 0;')
 assert anchor < ipc.index("session->SendSyncRequest(kernel, message, buffer_size);", anchor)
 assert "if (ipc_profile) ::Eden::Performance::FinishGuestIpc(" in ipc
@@ -136,4 +146,4 @@ with tempfile.TemporaryDirectory(prefix="eden-r393-guest-ipc-") as temp:
                     "-fno-sanitize-recover=all", str(src), "-o", str(exe)],
                    check=True, env=env, timeout=90)
     subprocess.run([str(exe)], check=True, env=env, timeout=30)
-print("PASS R395 bounded R393 IPC counters under ASan/UBSan, collisions, saturation, overflow and detailed-only SVC gate")
+print("PASS R395 bounded R393 IPC diagnostic counters under ASan/UBSan; production standard source uninstrumented, invalid wake guarded")

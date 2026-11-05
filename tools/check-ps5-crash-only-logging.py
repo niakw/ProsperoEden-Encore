@@ -73,14 +73,16 @@ crash_header = read("headless/crash_report.h")
 crash_source = read("headless/crash_report.cpp")
 gpu_worker_generator = read("headless/CMakeLists.txt")
 # The production GPU worker is no longer constructed inside CMake:
-# both maintained variants are selected by CMake but compiled from Encore.
+# the shipping quiet source alone is selected by CMake and compiled from Encore.
+# The DEV variant below is retained only as a historical breadcrumb parity oracle.
 gpu_worker_sources = {
     profile: read(f"vendor/encore-active/eden-gpu/gpu_thread_{profile}.cpp")
     for profile in ("dev", "quiet")
 }
-assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp")' in gpu_worker_generator
+assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp")' not in gpu_worker_generator
 assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp")' in gpu_worker_generator
 assert 'configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"' in gpu_worker_generator
+assert 'list(APPEND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp")' in gpu_worker_generator
 watchdog = read("headless/stall_watchdog.h")
 assert 'inline std::atomic<std::uint64_t> gpu_completed_commands{0};' in crash_header
 assert 'inline std::atomic<unsigned> gpu_stall_suspicions{0};' in crash_header

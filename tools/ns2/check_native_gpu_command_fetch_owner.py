@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parents[2]
 vendor = root / "vendor"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp"' in cmake
-assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher_dev.cpp"' in cmake
+assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher_dev.cpp"' not in cmake
 assert '"${EDEN_MAINTAINED_GPU_DMA}"' in cmake
 owner = vendor / "encore-active/eden-core/src/video_core"
 for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
@@ -30,11 +30,12 @@ for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
     assert "GpuGuestMemory<Tegra::CommandHeader," in step
     assert "GuestMemoryFlags::SafeRead" in step
     assert "GuestMemoryFlags::UnsafeRead" in step
-    assert "#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH" in step
+    assert "#ifdef PS5_NATIVE" in step
     assert 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);' in step
     assert step.index('NativeGpuChannelRegistry::Instance().IsNative(&channel_state);') < step.index(
         'GpuGuestMemory<Tegra::CommandHeader,')
-    assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' in cmake
+    assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' not in cmake
+    assert 'EDEN_NS2_NATIVE_GPU_PULLER' in cmake
     assert (root / "tools/ns2/check_native_gpu_fence_policy_host.py").is_file()
     assert 'const bool use_safe =' not in step
     assert 'const bool explicit_sync = command_list.command_lists[dma_pushbuffer_subindex].sync;' in step

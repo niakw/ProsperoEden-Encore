@@ -20,7 +20,8 @@ files = [
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert "core/hle/service/audio/nx2_sysmix.cpp" in cmake
 assert "list(APPEND eden_ns2_audio_sources" in cmake
-assert "EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM" in cmake
+assert "if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)" in cmake
+assert "EDEN_FINAL_RELEASE_PROFILE" not in cmake
 assert all(path.is_file() for path in files)
 assert 'RegisterNamedService("audsmx:u"' in files[1].read_text()
 assert 'RegisterNamedService("auddmg:u"' in files[1].read_text()

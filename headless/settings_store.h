@@ -118,6 +118,10 @@ struct Preferences {
     bool high_contrast = false;
     bool reduce_motion = false;
     int ui_theme = 0; // 0 Encore (default), 1 Switch-style
+    int color_palette = 0; // 0 Neon, 1 Dark, 2 Light
+    int accent_color = 0; // 0 Default, 1 Ocean, 2 Emerald, 3 Amber, 4 Rose
+    int background_style = 0; // 0 Auto, 1 Artwork, 2 Glow, 3 Solid
+    bool check_updates_on_start = false;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -345,6 +349,14 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.high_contrast = Settings::Bool(document, Json::json_pointer("/accessibility/high_contrast"), false);
     result.reduce_motion = Settings::Bool(document, Json::json_pointer("/accessibility/reduce_motion"), false);
     result.ui_theme = Settings::String(document, Json::json_pointer("/appearance/theme")) == "switch" ? 1 : 0;
+    const int palette = Settings::Int(document, Json::json_pointer("/appearance/palette"), 0);
+    const int accent = Settings::Int(document, Json::json_pointer("/appearance/accent"), 0);
+    const int background = Settings::Int(document, Json::json_pointer("/appearance/background"), 0);
+    if (palette >= 0 && palette <= 2) result.color_palette = palette;
+    if (accent >= 0 && accent <= 4) result.accent_color = accent;
+    if (background >= 0 && background <= 3) result.background_style = background;
+    result.check_updates_on_start = Settings::Bool(
+        document, Json::json_pointer("/app_updates/check_on_start"), false);
     return result;
 }
 
@@ -398,6 +410,11 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["accessibility"]["high_contrast"] = value.high_contrast;
     document["accessibility"]["reduce_motion"] = value.reduce_motion;
     document["appearance"]["theme"] = value.ui_theme == 1 ? "switch" : "encore";
+    document["appearance"]["palette_schema"] = 1;
+    document["appearance"]["palette"] = std::clamp(value.color_palette, 0, 2);
+    document["appearance"]["accent"] = std::clamp(value.accent_color, 0, 4);
+    document["appearance"]["background"] = std::clamp(value.background_style, 0, 3);
+    document["app_updates"]["check_on_start"] = value.check_updates_on_start;
     return Settings::Write(document, file);
 }
 

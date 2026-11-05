@@ -530,8 +530,8 @@ if(NOT EXISTS "${EDEN_MAINTAINED_NVNF_CONSUMER}")
 endif()
 list(REMOVE_ITEM core_sources "hle/service/nvnflinger/buffer_queue_consumer.cpp")
 list(APPEND core_sources "${EDEN_MAINTAINED_NVNF_CONSUMER}")
-# Both normal and DEV IPC paths use maintained source owners. The
-# DEV-only request profiler remains isolated to its existing unit.
+# The native app selects one maintained standard guest IPC unit.
+# The old development request-profiler source remains unselected.
 set(EDEN_MAINTAINED_SVC_IPC_STANDARD
     "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")

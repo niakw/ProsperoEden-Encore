@@ -34,8 +34,13 @@ assert QUIET.index(OPT)<QUIET.index("state.cv.notify_all();")
 assert DEV.index(OPT)<DEV.index("state.cv.notify_all();")
 assert QUIET.count("std::memory_order_release")>=1
 assert DEV.count("std::memory_order_release")>=1
-assert "gpu_thread_quiet.cpp" in (ROOT/"headless/CMakeLists.txt").read_text()
-assert "gpu_thread_dev.cpp" in (ROOT/"headless/CMakeLists.txt").read_text()
+# The unified app links only the quiet production worker. The historical
+# DEV worker still exists as an unselected regression witness for fence
+# publication, not as a selectable PS5 build/profile.
+cmake=(ROOT/"headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp")' in cmake
+assert 'configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"' in cmake
+assert 'gpu_thread_dev.cpp' not in cmake
 
 cpp=r"""
 #include <atomic>
@@ -89,4 +94,4 @@ with tempfile.TemporaryDirectory(prefix="encore-fence-release-") as tmp:
                         "-fno-sanitize-recover=all",str(target),"-o",str(output)],
                        check=True,timeout=90)
         subprocess.run([str(output)],check=True,timeout=45)
-print("GPU_FENCE_RELEASE_HOST_PASS native_modes=quiet,dev publisher=release reader=acquire; ps5_fps=unknown")
+print("GPU_FENCE_RELEASE_HOST_PASS tested_variants=quiet,dev selected=quiet publisher=release reader=acquire; ps5_fps=unknown")

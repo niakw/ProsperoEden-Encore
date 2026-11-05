@@ -11,8 +11,12 @@ inline const char* UpscalingGuide(int filter) {
     switch (filter) {
     case 0: return tr(TR("Bilinear: fast and soft. Best when the game already renders near the TV resolution."));
     case 1: return tr(TR("AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."));
-    case 2: return tr(TR("Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."));
-    default: return tr(TR("Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."));
+    case 2: return tr(TR("Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."));
+    case 3: return tr(TR("Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."));
+    case 4: return tr(TR("Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."));
+    case 5: return tr(TR("SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."));
+    case 6: return tr(TR("SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."));
+    default: return tr(TR("Bilinear: fast and soft. Best when the game already renders near the TV resolution."));
     }
 }
 inline const char* AntiAliasingGuide(int aa) {
@@ -23,10 +27,15 @@ inline const char* AntiAliasingGuide(int aa) {
     default: return tr(TR("SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."));
     }
 }
-inline const char* FsrSharpnessGuide(bool active) {
-    return active
-        ? tr(TR("Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."))
-        : tr(TR("Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."));
+inline const char* SharpnessGuide(int filter,bool renderer_compatible) {
+    if (!renderer_compatible || (filter != 1 && filter != 5 && filter != 6))
+        return tr(TR("Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."));
+    if (filter == 1)
+        return tr(TR("Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."));
+    return tr(TR("SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."));
+}
+inline const char* UpscalingUnsupportedGuide() {
+    return tr(TR("SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."));
 }
 inline const char* FxaaUnsupportedGuide() {
     return tr(TR("FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."));
@@ -35,7 +44,7 @@ inline const char* FramegenUnsupportedGuide() {
     return tr(TR("This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."));
 }
 inline const char* TextureGuide() {
-    return tr(TR("Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."));
+    return tr(TR("Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."));
 }
 inline void DrawVideoGuide(Canvas& c, std::string_view label,
                            std::string_view explanation,

@@ -57,9 +57,13 @@ inline constexpr const char* kResolutionLabels[] = {
     "4x (extreme memory)"};
 static_assert(std::size(kResolutionLabels) == std::size(kResolutionKeys));
 inline constexpr int kNativeResolution = 3;
-inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
+// Existing indices stable. SGSR options are native Vulkan only; Lanczos
+// uses the upstream window-adapt shader on Vulkan and OpenGL.
+inline constexpr const char* kUpscalingFilterKeys[] = {
+    "bilinear", "fsr", "bicubic", "nearest", "lanczos", "sgsr", "sgsr_edge"};
 // These are spatial display filters, NOT FSR 3 temporal reconstruction.
-inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "FSR 1", "Bicubic", "Nearest"};
+inline constexpr const char* kUpscalingFilterLabels[] = {
+    "Bilinear", "FSR 1", "Bicubic", "Nearest", "Lanczos", "SGSR", "SGSR Edge"};
 // Keep existing indices stable; index 3 is a new Vulkan-only shader.
 inline constexpr const char* kAntiAliasingKeys[] = {"none", "fxaa", "smaa", "fxaa_quality"};
 inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra", "FXAA+"};

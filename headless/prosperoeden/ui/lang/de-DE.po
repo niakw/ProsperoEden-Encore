@@ -710,18 +710,6 @@ msgstr "Französisch"
 msgid "French (Canada)"
 msgstr "Französisch (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR-Schärfe"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR-SCHÄRFE"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Die FSR-Schärfe ändert die Detailwiederherstellung nur, wenn AMD FSR ausgewählt ist. Verringern Sie den Wert, wenn das Bild körnig oder zu scharf erscheint."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Aktualisierungen (Spiel/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "UPDATES, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Upscaling-Filter"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automatisch"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bikubisch: schärfer als bilinear, kann aber helle Kanten erzeugen. Der FSR-Schärferegler gilt nicht."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilinear: schnell und sanft. Am besten, wenn das Spiel bereits in der Nähe der TV-Auflösung gerendert wird."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: Leichte Kantenglättung in einem Durchgang. Es kann Text und feine
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Spielstandard"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Für diesen Filter inaktiv. Wählen Sie unter Upscaling AMD FSR 1 aus, um die Schärfe anzupassen. Die Texturen des Spiels werden dadurch nicht verändert."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Durch die Texturfilterung bleiben entfernte Böden und Oberflächen in einem Winkel klarer; Eine höhere Anisotropie verbraucht mehr GPU-Bandbreite."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Durch die Texturfilterung werden Straßen, Böden und Wände aus einem Winkel betrachtet schärfer dargestellt. Beginnen Sie mit 4x; 8x/16x nutzen mehr GPU-Bandbreite. Im Gegensatz zur FSR-Schärfe wird nicht das gesamte Bild geschärft."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "HOCHSKALIERUNG"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ erfordert Vulkan. Wählen Sie Vulkan oder eine andere Anti-Aliasin
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: erweiterte Kantensuche. Kann stärker gezackte Kanten glätten, aber möglicherweise weichere Texturen. Vergleichen Sie mit SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inaktiv: Diese Upscale-Methode unterstützt den Schärferegler nicht. Verwenden Sie FSR 1 oder SGSR mit Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: Scharfe Rekonstruktion eines skalierten Bildes. Feine Details sehen möglicherweise klarer aus, Kanten können jedoch helle Lichthöfe bilden."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: kantengesteuertes Qualcomm-Upscale mit einem anderen Vulkan-Shader. Vergleichen Sie feine Details und Lichthöfe."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR-Kantenschärfe: 0 % deaktiviert die zusätzliche Kantenintensität, 50 % ist ausgeglichen, 100 % ist am stärksten. Reduzieren Sie bei Bedarf Lichthöfe."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR braucht Vulkan. OpenGL würde Bilinear stillschweigend verwenden; Wählen Sie Vulkan oder eine andere gehobene Methode."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Räumliche Hochskalierung von Qualcomm mithilfe eines separaten Vulkan-Shaders. Probieren Sie es aus, wenn FSR 1 weich aussieht."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Schärfe"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bikubisch: schärfer als bilinear, kann aber zu hellen Kanten führen. Der Schärferegler gilt nicht."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Die Bildschärfe betrifft nur FSR 1 und SGSR. Beginnen Sie bei 50 % und reduzieren Sie den Wert, wenn feine Kanten schimmern oder Lichthöfe zeigen."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "SCHÄRFE"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Durch die Texturfilterung werden Straßen, Böden und Wände aus einem Winkel betrachtet schärfer dargestellt. Beginnen Sie mit 4x; 8x/16x nutzen mehr GPU-Bandbreite. Im Gegensatz zur Bildschärfe wird nicht das gesamte Bild geschärft."

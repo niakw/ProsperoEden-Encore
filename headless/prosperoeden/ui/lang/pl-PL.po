@@ -710,18 +710,6 @@ msgstr "Francuski"
 msgid "French (Canada)"
 msgstr "Francuski (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Ostrość FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "OSTROŚĆ FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Ostrość FSR zmienia odtwarzanie szczegółów tylko wtedy, gdy wybrano AMD FSR. Obniż go, jeśli obraz wygląda na ziarnisty lub zbyt ostry."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Aktualizacje (Gra/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "AKTUALIZACJE, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Filtr skalowania"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automatyczny"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Dwusześcienny: ostrzejszy niż dwuliniowy, ale może tworzyć jasne krawędzie. Suwak ostrości FSR nie ma zastosowania."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Dwuliniowy: szybki i miękki. Najlepiej, gdy gra renderuje się już w rozdzielczości zbliżonej do telewizora."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: lekkie wygładzanie krawędzi w jednym przejściu. Może nieznaczn
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Domyślne ustawienie gry"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Nieaktywne dla tego filtra. Wybierz AMD FSR 1 w obszarze Upscaling, aby dostosować ostrość. Nie zmienia to tekstur gry."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Filtrowanie tekstur sprawia, że odległe podłoże i powierzchnie są wyraźniejsze pod kątem; wyższa anizotropia wykorzystuje większą przepustowość procesora graficznego."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Filtrowanie tekstur wyostrza drogi, podłogi i ściany oglądane pod kątem. Zacznij od 4x; 8x/16x zużywają większą przepustowość procesora graficznego. W odróżnieniu od ostrości FSR nie wyostrza całości obrazu."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "SKALOWANIE"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ wymaga Vulkana. Wybierz Vulkan lub inną metodę wygładzania."
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: rozszerzone wyszukiwanie krawędzi. Może wygładzić bardziej postrzępione krawędzie, ale może zmiękczyć tekstury. Porównaj z SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Nieaktywny: ta ekskluzywna metoda nie obsługuje suwaka ostrości. Użyj FSR 1 lub SGSR z Vulkanem."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: ostra rekonstrukcja przeskalowanego obrazu. Drobne szczegóły mogą wyglądać wyraźniej, ale krawędzie mogą tworzyć jasne aureole."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: ekskluzywny procesor Qualcomm ukierunkowany na krawędzie z innym modułem cieniującym Vulkan. Porównaj drobne szczegóły i aureole."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Ostrość krawędzi SGSR: 0% wyłącza dodatkową intensywność krawędzi, 50% jest zrównoważone, 100% jest najsilniejsze. W razie potrzeby zmniejsz aureolę."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR potrzebuje Vulkana. OpenGL po cichu używałby Bilinear; wybierz Vulkan lub inną ekskluzywną metodę."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Upscale przestrzenna Qualcomm przy użyciu oddzielnego modułu cieniującego Vulkan. Wypróbuj, gdy FSR 1 wygląda miękko."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Ostrość"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Dwusześcienny: ostrzejszy niż dwuliniowy, ale może tworzyć jasne krawędzie. Suwak ostrości nie ma zastosowania."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Ostrość obrazu dotyczy tylko FSR 1 i SGSR. Zacznij od 50% i zmniejsz go, jeśli drobne krawędzie błyszczą lub pojawiają się aureole."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "OSTROŚĆ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Filtrowanie tekstur wyostrza drogi, podłogi i ściany oglądane pod kątem. Zacznij od 4x; 8x/16x zużywają większą przepustowość procesora graficznego. W przeciwieństwie do ostrości obrazu, nie wyostrza całego obrazu."

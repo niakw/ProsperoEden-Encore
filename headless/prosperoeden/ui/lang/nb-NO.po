@@ -710,18 +710,6 @@ msgstr "Fransk"
 msgid "French (Canada)"
 msgstr "Fransk (Canada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR-skarphet"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR-SKARPHET"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "FSR-skarphet endrer detaljgjenoppretting bare når AMD FSR er valgt. Senk den hvis bildet ser kornete ut eller for skarpt."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Oppdateringer (Spill/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "OPPDATERINGER, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Oppskaleringsfilter"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automatisk"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bikubisk: skarpere enn bilineær, men kan skape lyse kanter. FSR skarphetsglidebryteren gjelder ikke."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilineær: rask og myk. Best når spillet allerede gjengis nær TV-oppløsningen."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: lett kantutjevning i én omgang. Det kan myke opp tekst og fine de
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Spillstandard"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Inaktiv for dette filteret. Velg AMD FSR 1 under Oppskalering for å justere skarpheten. Det endrer ikke spillets teksturer."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Teksturfiltrering holder fjerntliggende underlag og overflater klarere i vinkel; høyere anisotropi bruker mer GPU-båndbredde."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Teksturfiltrering skjerper veier, gulv og vegger sett i vinkel. Start på 4x; 8x/16x bruker mer GPU-båndbredde. I motsetning til FSR-skarphet, gjør den ikke hele bildet skarpere."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "OPPSKALERING"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ krever Vulkan. Velg Vulkan eller en annen anti-aliasing-metode."
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: utvidet kantsøk. Kan jevne ut mer taggete kanter, men kan myke opp teksturer. Sammenlign med SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inaktiv: denne oppskaleringsmetoden støtter ikke skyveknappen for skarphet. Bruk FSR 1 eller SGSR med Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: skarp rekonstruksjon av et skalert bilde. Fine detaljer kan se klarere ut, men kanter kan danne lyse glorier."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: kantrettet Qualcomm oppskalere med en annen Vulkan shader. Sammenlign fine detaljer og glorier."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR-kantskarphet: 0 % deaktiverer ekstra kantintensitet, 50 % er balansert, 100 % er sterkest. Reduser glorier om nødvendig."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR trenger Vulkan. OpenGL ville i det stille bruke Bilinear; velg Vulkan eller en annen oppskalert metode."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm romlig oppskalering ved hjelp av en separat Vulkan shader. Prøv det når FSR 1 ser myk ut."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Skarphet"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bikubisk: skarpere enn bilineær, men kan skape lyse kanter. Skyveknappen for skarphet gjelder ikke."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Bildeskarphet påvirker kun FSR 1 og SGSR. Start på 50 % og reduser det hvis fine kanter skimrer eller viser glorier."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "SKARPSHET"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Teksturfiltrering skjerper veier, gulv og vegger sett i vinkel. Start på 4x; 8x/16x bruker mer GPU-båndbredde. I motsetning til bildeskarphet, gjør den ikke hele bildet skarpere."

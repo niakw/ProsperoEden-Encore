@@ -39,7 +39,7 @@ core_ui = {
     "Anti-aliasing", "ANTI-ALIASING", "Button mapping", "BUTTON MAPPING",
     "Quick settings", "QUICK SETTINGS", "Storage", "STORAGE",
     "Video preset", "VIDEO PRESET", "Game resolution", "GAME RESOLUTION",
-    "TV output", "TV OUTPUT", "FSR sharpness", "FSR SHARPNESS",
+    "TV output", "TV OUTPUT", "Sharpness", "SHARPNESS",
     "Stick deadzone", "STICK DEADZONE",
     "Vibration strength", "VIBRATION STRENGTH", "Play", "Cancel", "Confirm",
     "Reset", "Ultra", "Recommended", "Minimum", "Home", "Clear cache",

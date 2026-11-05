@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/video_presets.hpp"
+#include "pe/ui/texture_quality.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -648,18 +649,20 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     const int baseFilter=authored?base.filter:prefs_.filter;
     const int baseFsr=authored?base.fsr_sharpness:prefs_.fsr_sharpness;
     const int baseAa=authored?base.anti_aliasing:prefs_.anti_aliasing;
+    const int baseAniso=authored ? Eden::EncoreTextureProfiles::ForTitle(
+        id,prefs_.performance_profile) : prefs_.texture_anisotropy;
     const int baseHz=authored?base.refresh:prefs_.refresh;
     static constexpr const char* names[]={
         TR("Console mode"),TR("Renderer"),TR("Video preset"),TR("TV output"),
-        TR("Resolution"),TR("Upscaling filter"),TR("FSR sharpness"),
-        TR("Anti-aliasing"),TR("Refresh rate"),TR("Button mapping"),TR("Mods"),
-        TR("Save data")};
+        TR("Resolution"),TR("Upscaling"),TR("Sharpness"),
+        TR("Anti-aliasing"),TR("Texture filtering"),TR("Enhanced smoothness"),
+        TR("Refresh rate"),TR("Button mapping"),TR("Mods"),TR("Save data")};
     const auto fallback=[](int local,const std::string& def,
                            const std::string& selected)->std::string{
         return local<0?switch_default(def):selected;
     };
     const auto g=game_settings_;
-    const std::array<std::string,12> values={
+    const std::array<std::string,14> values={
         game_docked_?tr("Docked"):tr("Handheld"),
         fallback(g.renderer,baseRenderer?"Vulkan":"OpenGL",g.renderer?"Vulkan":"OpenGL"),
         fallback(g.performance_profile,
@@ -674,6 +677,15 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
             std::to_string(g.fsr_sharpness)+"%"),
         fallback(g.anti_aliasing,switch_value(services_.anti_aliasing_labels(),baseAa),
             switch_value(services_.anti_aliasing_labels(),g.anti_aliasing)),
+        fallback(g.texture_anisotropy,TextureAnisotropyName(baseAniso),
+            TextureAnisotropyName(g.texture_anisotropy)),
+        fallback(g.frame_generation,
+            prefs_.frame_generation == 0 ? tr("Off") :
+                prefs_.frame_generation == 1 ? "MihawkGen" :
+                prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
+            g.frame_generation == 0 ? tr("Off") :
+                g.frame_generation == 1 ? "MihawkGen" :
+                g.frame_generation == 2 ? "FSR 3" : "LSFG"),
         fallback(g.refresh,hertz(baseHz),hertz(g.refresh)),
         g.own_mapping?
             switch_profile_name(g.controller_layout>=0?g.controller_layout:prefs_.controller_layout,
@@ -692,15 +704,15 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     };
     d.push_clip(kAdvancedClip);
     for(int i=game_rows_.first_row();i<=game_rows_.last_row();++i) {
-        if(i<0||i>=12)continue;
+        if(i<0||i>=14)continue;
         const float y=318+float(i)*96-game_rows_.scroll();
         advanced_row(c,y,i==option_,tr(names[i]),values[static_cast<std::size_t>(i)],
                      game_rows_.row_alpha(i,92));
     }
     d.pop_clip();
     if(confirmation_==Confirmation::none)
-        advanced_status(c,message_,message_warning_,option_==11?TR("Import"):
-                        option_==10?TR("Open"):TR("Change"));
+        advanced_status(c,message_,message_warning_,option_==13?TR("Import"):
+                        option_==12?TR("Open"):TR("Change"));
     d.pop_opacity();
 }
 void Launcher::draw_switch_mods(Canvas& c,float opened) {
@@ -902,7 +914,8 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         case Modal::video: {
             static constexpr const char* labels[]={
                 TR("Renderer"),TR("Video preset"),TR("TV output"),TR("Game resolution"),
-                TR("Upscaling filter"),TR("FSR sharpness"),TR("Anti-aliasing"),
+                TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
+                TR("Texture filtering"),TR("Enhanced smoothness"),
                 TR("Refresh rate"),TR("FPS overlay")};
             label=tr(labels[i]);
             switch(i) {
@@ -913,7 +926,11 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             case 4:value=switch_value(services_.filter_labels(),prefs_.filter);break;
             case 5:value=std::to_string(prefs_.fsr_sharpness)+"%";break;
             case 6:value=switch_value(services_.anti_aliasing_labels(),prefs_.anti_aliasing);break;
-            case 7:value=prefs_.refresh?"120 Hz":"60 Hz";break;
+            case 7:value=TextureAnisotropyName(prefs_.texture_anisotropy);break;
+            case 8:value=prefs_.frame_generation==0?tr("Off"):
+                          prefs_.frame_generation==1?"MihawkGen":
+                          prefs_.frame_generation==2?"FSR 3":"LSFG";break;
+            case 9:value=prefs_.refresh?"120 Hz":"60 Hz";break;
             default:value=prefs_.hud?tr("On"):tr("Off");break;
             }
             break;

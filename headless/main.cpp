@@ -1569,14 +1569,22 @@ int main(int argc, char** argv) {
                 Settings::ResolutionSetup::Res4X};
             static_assert(std::size(resolutions) == std::size(Eden::kResolutionKeys));
             static constexpr Settings::ScalingFilter filters[] = {
-                Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr, Settings::ScalingFilter::Bicubic,
-                Settings::ScalingFilter::NearestNeighbor};
+                Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr,
+                Settings::ScalingFilter::Bicubic, Settings::ScalingFilter::NearestNeighbor,
+                Settings::ScalingFilter::Lanczos, Settings::ScalingFilter::Sgsr,
+                Settings::ScalingFilter::SgsrEdge};
             const int resolution = safe_launch ? Eden::kNativeResolution :
                 (game_video.resolution >= 0 ? game_video.resolution : profile_resolution);
             const int filter = safe_launch ? 0 :
                 (game_video.upscaling_filter >= 0 ? game_video.upscaling_filter : profile_filter);
             Settings::values.resolution_setup.SetValue(resolutions[resolution]);
-            Settings::values.scaling_filter.SetValue(filters[filter]);
+            // SGSR has real native Vulkan pipelines, but OpenGL only
+            // falls back to Bilinear: never advertise an imaginary effect.
+            const int selected_filter = std::clamp(filter, 0, 6);
+            const bool native_sgsr = selected_filter == 5 || selected_filter == 6;
+            const int mapped_filter =
+                native_sgsr && profile_renderer == 0 ? 0 : selected_filter;
+            Settings::values.scaling_filter.SetValue(filters[mapped_filter]);
             const int fsr_sharpness = safe_launch ? 50 :
                 (game_video.fsr_sharpness >= 0 ? game_video.fsr_sharpness : profile_fsr);
             const int anti_aliasing = safe_launch ? 0 :

@@ -710,18 +710,6 @@ msgstr "Французька"
 msgid "French (Canada)"
 msgstr "Французька (Канада)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Різкість FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "РІЗКІСТЬ FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Чіткість FSR змінює відновлення деталей лише тоді, коли вибрано AMD FSR. Знизьте його, якщо зображення виглядає зернистим або надмірно чітким."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Оновлення (Гра/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "ОНОВЛЕННЯ, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Фільтр"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "США"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Автоматично"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Бікубічний: гостріший, ніж білінійний, але може створювати яскраві краї. Повзунок різкості FSR не застосовується."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Білінійний: швидкий і м’який. Найкраще, коли гра вже рендериться в роздільній здатності телевізора."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: легке згладжування країв за один пр�
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Гра за умовчанням"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Неактивний для цього фільтра. Виберіть AMD FSR 1 у розділі Upscaling, щоб відрегулювати різкість. Це не змінює текстури гри."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Фільтрація текстури робить віддалену землю та поверхні чіткішими під кутом; вища анізотропія використовує більшу пропускну здатність GPU."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Фільтрація текстур робить дороги, підлогу та стіни різкішими під кутом. Почніть із 4х; 8x/16x використовує більшу пропускну здатність GPU. На відміну від різкості FSR, він не збільшує різкість всього зображення."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "АПСКЕЙЛІНГ"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ потребує Vulkan. Виберіть Vulkan або інший
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: розширений пошук по краях. Може згладити більш нерівні краї, але може пом’якшити текстури. Порівняйте з SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Неактивний: цей висококласний метод не підтримує повзунок різкості. Використовуйте FSR 1 або SGSR з Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Ланцош: чітка реконструкція масштабованого зображення. Дрібні деталі можуть виглядати чіткіше, але краї можуть утворювати яскраві ореоли."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: розширений Qualcomm, орієнтований на краї, з іншим шейдером Vulkan. Порівняйте дрібні деталі та ореоли."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Різкість країв SGSR: 0% вимикає додаткову інтенсивність країв, 50% збалансовано, 100% найсильніше. Зменште ореоли, якщо потрібно."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR потребує Vulkan. OpenGL мовчки використовуватиме Bilinear; виберіть Vulkan або інший висококласний метод."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: просторове збільшення Qualcomm за допомогою окремого шейдера Vulkan. Спробуйте це, коли FSR 1 виглядає м’яким."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Різкість"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Бікубічний: гостріший, ніж білінійний, але може створювати яскраві краї. Повзунок різкості не застосовується."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Різкість зображення впливає лише на FSR 1 і SGSR. Почніть з 50% і зменшіть його, якщо тонкі краї мерехтять або мають ореоли."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "РІЗКОСТЬ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Фільтрація текстур робить дороги, підлогу та стіни різкішими під кутом. Почніть із 4х; 8x/16x використовує більшу пропускну здатність GPU. На відміну від різкості зображення, це не збільшує різкість всього зображення."

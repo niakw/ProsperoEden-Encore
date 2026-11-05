@@ -710,18 +710,6 @@ msgstr "Fransızca"
 msgid "French (Canada)"
 msgstr "Fransızca (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR keskinliği"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR KESKİNLİĞİ"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "FSR keskinliği, ayrıntı kurtarmayı yalnızca AMD FSR seçildiğinde değiştirir. Resim grenli veya aşırı keskin görünüyorsa indirin."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Güncellemeler (Oyun/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "GÜNCELLEME, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Ölçekleme filtresi"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "ABD"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Otomatik"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bikübik: çift doğrusaldan daha keskindir ancak parlak kenarlar oluşturabilir. FSR keskinlik kaydırıcısı geçerli değildir."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Çift doğrusal: hızlı ve yumuşak. Oyunun zaten TV çözünürlüğüne yakın görüntülenmesi en iyisidir."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: tek geçişte hafif kenar yumuşatma. Metni ve ince ayrıntıları
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Oyun varsayılanı"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Bu filtre için etkin değil. Keskinliği ayarlamak için Yükseltme altında AMD FSR 1'i seçin. Oyunun dokularını değiştirmez."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Doku filtreleme, uzak zemini ve yüzeyleri belirli bir açıyla daha net tutar; daha yüksek anizotropi daha fazla GPU bant genişliği kullanır."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Doku filtreleme, belirli bir açıdan bakıldığında yolları, zeminleri ve duvarları keskinleştirir. 4x'ten başlayın; 8x/16x daha fazla GPU bant genişliği kullanır. FSR keskinliğinden farklı olarak resmin tamamını keskinleştirmez."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "YÜKSELTME"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+, Vulkan'ı gerektirir. Vulkan'ı veya başka bir kenar yumuşatma 
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: genişletilmiş kenar araması. Daha pürüzlü kenarları yumuşatabilir ancak dokuları yumuşatabilir. SMAA Ultra ile karşılaştırın."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Etkin değil: Bu yükseltme yöntemi keskinlik kaydırıcısını desteklemez. Vulkan ile FSR 1 veya SGSR'yi kullanın."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: ölçekli bir görüntünün keskin bir şekilde yeniden yapılandırılması. İnce ayrıntılar daha net görünebilir ancak kenarlar parlak haleler oluşturabilir."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: farklı bir Vulkan gölgelendiriciyle uç yönlendirmeli Qualcomm yükseltmesi. İnce ayrıntıları ve haleleri karşılaştırın."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR kenar keskinliği: %0 ekstra kenar yoğunluğunu devre dışı bırakır, %50 dengelidir, %100 en güçlüdür. Gerekirse haleleri azaltın."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR'nin Vulkan'a ihtiyacı var. OpenGL sessizce Bilinear'ı kullanırdı; Vulkan'ı veya başka bir lüks yöntemi seçin."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Ayrı bir Vulkan gölgelendirici kullanan Qualcomm'un mekansal yükseltmesi. FSR 1 yumuşak göründüğünde deneyin."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Keskinlik"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bikübik: çift doğrusaldan daha keskindir ancak parlak kenarlar oluşturabilir. Keskinlik kaydırıcısı geçerli değildir."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Görüntü keskinliği yalnızca FSR 1 ve SGSR'yi etkiler. %50'den başlayın ve ince kenarlar parlıyorsa veya haleler gösteriyorsa bu oranı azaltın."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "KESKİNLİK"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Doku filtreleme, belirli bir açıdan bakıldığında yolları, zeminleri ve duvarları keskinleştirir. 4x'ten başlayın; 8x/16x daha fazla GPU bant genişliği kullanır. Görüntü keskinliğinden farklı olarak resmin tamamını keskinleştirmez."

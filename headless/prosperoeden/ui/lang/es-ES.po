@@ -710,18 +710,6 @@ msgstr "Francés"
 msgid "French (Canada)"
 msgstr "Francés (Canadá)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Nitidez FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "NITIDEZ FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "La nitidez FSR solo actúa al seleccionar AMD FSR. Redúcela si la imagen parece granulada o demasiado enfocada."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Actualizaciones de Eden Encore, no de los juegos ni del firmware."
 msgid "UPDATES, DLC"
 msgstr "EXTRAS"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Escalado"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "EE. UU."
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automático"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicúbico: más nítido que bilineal, pero puede crear bordes brillantes. El control deslizante de nitidez FSR no se aplica."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilineal: rápido y suave. Es mejor cuando el juego ya se reproduce cerca de la resolución del televisor."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: alisado de bordes ligero en una sola pasada. Puede suavizar ligera
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Juego predeterminado"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Inactivo para este filtro. Seleccione AMD FSR 1 en Mejora de escala para ajustar la nitidez. No altera las texturas del juego."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "El filtrado de texturas mantiene el suelo y las superficies distantes más claros en ángulo; una anisotropía más alta utiliza más ancho de banda de GPU."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "El filtrado de texturas agudiza los caminos, pisos y paredes vistos en ángulo. Comience en 4x; 8x/16x utilizan más ancho de banda de GPU. A diferencia de la nitidez FSR, no enfoca toda la imagen."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "AMPLIACIÓN"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ requiere Vulkan. Elija Vulkan u otro método anti-aliasing."
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: búsqueda de borde extendida. Puede suavizar bordes más irregulares pero puede suavizar texturas. Comparar con SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inactivo: este método exclusivo no admite el control deslizante de nitidez. Utilice FSR 1 o SGSR con Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: reconstrucción nítida de una imagen escalada. Los detalles finos pueden parecer más claros, pero los bordes pueden formar halos brillantes."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Qualcomm exclusivo dirigido al borde con un sombreador Vulkan diferente. Compara detalles finos y halos."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Nitidez de los bordes SGSR: 0 % desactiva la intensidad de los bordes adicionales, 50 % está equilibrada, 100 % es la más fuerte. Reduzca los halos si es necesario."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR necesita Vulkan. OpenGL usaría silenciosamente Bilinear; seleccione Vulkan u otro método exclusivo."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: escalamiento espacial de Qualcomm utilizando un sombreador Vulkan separado. Pruébelo cuando FSR 1 parezca suave."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Nitidez"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicúbico: más nítido que bilineal, pero puede crear bordes brillantes. El control deslizante de nitidez no se aplica."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "La nitidez de la imagen afecta únicamente a FSR 1 y SGSR. Comience con un 50% y redúzcalo si los bordes finos brillan o muestran halos."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "NITIDEZ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "El filtrado de texturas agudiza los caminos, pisos y paredes vistos en ángulo. Comience en 4x; 8x/16x utilizan más ancho de banda de GPU. A diferencia de la nitidez de la imagen, no enfoca toda la imagen."

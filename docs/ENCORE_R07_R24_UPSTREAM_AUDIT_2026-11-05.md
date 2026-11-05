@@ -10,8 +10,9 @@ des objectifs contractuels, pas des annonces de disponibilité sur PS5.
 
 | Méthode | Nature | État Encore | Véritable preuve requise |
 |---|---|---|---|
-| Natif / upscale classique | Bilinéaire, bicubique, nearest | Existant | Vérifier rendu/output/crop et fidélité A/B |
+| Natif / upscale classique | Bilinéaire, bicubique, nearest, **Lanczos** (déjà présent dans le renderer, désormais exposé) | Raccordé en source | Vérifier rendu/output/crop et fidélité A/B |
 | **FSR 1** | **Spatial** : EASU puis RCAS | Existant ; nouvel override PS5 de la netteté sur cette PR | Contrôle live sur PS5 et mesures comparatives |
+| **SGSR / SGSR Edge** | Deux vrais shaders spatiaux Qualcomm, distincts, et netteté réglable | **Raccordés dans les sources Vulkan PS5** ; OpenGL désactivé par l'interface au lieu du faux fallback bilinéaire | Résultat visuel / artefacts / coût GPU sur PS5 |
 | **FSR 3.1 temporel** | Historique, depth, mouvement et jitter par frame, accumulation et reconstruction | **Non raccordé au pipeline générique de l'émulateur** | Trace guest réelle des entrées + bridge scheduler Vulkan + fallback + performance |
 | FSR 3 Optical Flow FG | **Génération d'images**, pas upscale temporel AMD complet | Intégré source en #21, non qualifié console | Comparer frames affichées, cadence et ghosting |
 | SSAA via Game resolution 1,25–2x | Suréchantillonnage de résolution, pas AA multisample | Contrôle de résolution déjà existant | Coût GPU/VRAM et image sur console |
@@ -30,6 +31,19 @@ Fsr1SharpnessFromInternal en préservant l'inversion existante :
 100 % = 0 stop (RCAS fort). Le test hôte vérifie les **101 valeurs**
 du pourcentage public et prévient toute double inversion.
 Hors FSR 1, l'option est visible mais grisée/non réglable.
+
+**Qualité SGSR/Lanczos.** Le moteur Eden possédait déjà
+\`MakeLanczos\`, \`SGSR1_SHADER_MOBILE_FRAG_SPV\` et
+\`SGSR1_SHADER_MOBILE_EDGE_DIRECTION_FRAG_SPV\`, mais l'interface
+Encore ne les exposait pas. Les nouvelles valeurs sont ajoutées après
+les quatre filtres historiques (les indices sauvegardés restent stables).
+Le menu n'annonce pas SGSR en OpenGL puisque cette architecture
+retomberait silencieusement sur le bilinéaire. Le sélecteur de netteté
+est actif pour FSR1 et les deux SGSR, inactif ailleurs. SGSR convertit
+le pourcentage visible en intensité du shader : 0 % = 0, 50 % = 1,
+100 % = 2. Les deux shaders SGSR et le shader Lanczos sont vérifiés
+par glslang/spirv-val hôtes. L'upscaling reste **spatial** ; aucun
+shader ne transforme ces choix en FSR3.1 temporel.
 
 ## R24 — Anticrénelage perceptible (toujours ouvert)
 

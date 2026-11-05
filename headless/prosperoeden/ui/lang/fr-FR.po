@@ -754,18 +754,6 @@ msgstr "Français"
 msgid "French (Canada)"
 msgstr "Français (Canada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Netteté FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "NETTETÉ FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "La netteté FSR agit uniquement avec AMD FSR. Réduisez-la si l’image paraît granuleuse ou trop accentuée."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1926,10 +1914,6 @@ msgstr "Mises à jour de l'application Eden Encore, pas des jeux ni du firmware.
 msgid "UPDATES, DLC"
 msgstr "MISES À JOUR, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Filtre de mise à l'échelle"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -2116,10 +2100,6 @@ msgid "Automatic"
 msgstr "Automatique"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicubique : plus net que bilinéaire, mais peut créer des bords brillants. Le curseur de netteté FSR ne s’applique pas."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilinéaire : rapide et doux. Idéal lorsque le rendu du jeu est déjà proche de la résolution du téléviseur."
 
@@ -2134,10 +2114,6 @@ msgstr "FXAA : lissage léger des bords en un seul passage. Il peut adoucir lé
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Jeu par défaut"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Inactif pour ce filtre. Sélectionnez AMD FSR 1 sous Upscaling pour régler la netteté. Cela ne modifie pas les textures du jeu."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2172,10 +2148,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Le filtrage des textures maintient les sols et les surfaces éloignés plus clairs selon un angle ; une anisotropie plus élevée utilise plus de bande passante GPU."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Le filtrage des textures accentue la netteté des routes, des sols et des murs vus sous un angle. Commencez à 4x ; 8x/16x utilisent plus de bande passante GPU. Contrairement à la netteté FSR, elle ne rend pas l’image entière plus nette."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "AMÉLIORATION"
 
@@ -2206,3 +2178,60 @@ msgstr "FXAA+ nécessite Vulkan. Choisis Vulkan ou un autre anticrénelage."
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+ : recherche étendue des contours. Lisse davantage certains escaliers, mais peut adoucir les textures. Compare avec SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inactif : cette méthode haut de gamme ne prend pas en charge le curseur de netteté. Utilisez FSR 1 ou SGSR avec Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos : reconstruction nette d'une image mise à l'échelle. Les détails fins peuvent paraître plus clairs, mais les bords peuvent former des halos lumineux."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge : mise à niveau Qualcomm orientée vers les bords avec un shader Vulkan différent. Comparez les détails fins et les halos."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Netteté des bords SGSR : 0 % désactive l'intensité supplémentaire des bords, 50 % est équilibré, 100 % est le plus fort. Réduisez les halos si nécessaire."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR a besoin de Vulkan. OpenGL utiliserait silencieusement Bilinéaire ; sélectionnez Vulkan ou une autre méthode haut de gamme."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR : mise à l'échelle spatiale Qualcomm à l'aide d'un shader Vulkan séparé. Essayez-le lorsque FSR 1 semble mou."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Netteté"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubique : plus net que le bilinéaire, mais peut créer des halos. Le réglage de netteté n'a aucun effet ici."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "La netteté agit uniquement avec FSR 1 ou SGSR. Commence à 50 % et diminue si les contours scintillent ou présentent des halos."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "NETTETÉ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Le filtrage des textures rend plus nets les routes, sols et murs vus en biais. Commence à 4× ; 8×/16× utilisent plus de bande passante GPU. Contrairement à la netteté de l'image, ce réglage ne renforce pas toute l'image."

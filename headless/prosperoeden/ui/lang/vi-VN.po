@@ -710,18 +710,6 @@ msgstr "Tiếng Pháp"
 msgid "French (Canada)"
 msgstr "Tiếng Pháp (Canada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Độ sắc nét FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "ĐỘ SẮC NÉT FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Độ sắc nét của FSR chỉ thay đổi khả năng phục hồi chi tiết khi AMD FSR được chọn. Hãy hạ thấp nó xuống nếu hình ảnh trông có vẻ nổi hạt hoặc bị sắc nét quá mức."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Cập nhật (Trò chơi/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "CẬP NHẬT, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Bộ lọc phóng to"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "Mỹ"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Tự động"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicubic: sắc nét hơn song tuyến tính, nhưng có thể tạo ra các cạnh sáng. Thanh trượt độ sắc nét FSR không áp dụng."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Song tuyến: nhanh và mềm. Tốt nhất khi trò chơi đã hiển thị gần độ phân giải TV."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: làm mịn cạnh nhẹ chỉ trong một lần. Nó có thể là
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Trò chơi mặc định"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Không hoạt động cho bộ lọc này. Chọn AMD FSR 1 trong Upscaling để điều chỉnh độ sắc nét. Nó không làm thay đổi kết cấu của trò chơi."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Lọc kết cấu giữ cho mặt đất ở xa và các bề mặt rõ ràng hơn ở một góc; tính bất đẳng hướng cao hơn sử dụng nhiều băng thông GPU hơn."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Lọc kết cấu làm sắc nét đường, sàn và tường khi nhìn ở một góc. Bắt đầu ở mức 4x; 8x/16x sử dụng nhiều băng thông GPU hơn. Không giống như độ sắc nét của FSR, nó không làm sắc nét toàn bộ bức ảnh."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "NÂNG CẤP"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ yêu cầu Vulkan. Chọn Vulkan hoặc một phương pháp khử
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: tìm kiếm cạnh mở rộng. Có thể làm mịn các cạnh lởm chởm hơn nhưng có thể làm mềm kết cấu. So sánh với SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Không hoạt động: phương pháp nâng cao này không hỗ trợ thanh trượt độ sắc nét. Sử dụng FSR 1 hoặc SGSR với Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: tái tạo sắc nét hình ảnh được chia tỷ lệ. Chi tiết nhỏ có thể trông rõ ràng hơn nhưng các cạnh có thể tạo thành quầng sáng."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: nâng cấp Qualcomm hướng biên với bộ đổ bóng Vulkan khác. So sánh chi tiết đẹp và quầng sáng."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Độ sắc nét của cạnh SGSR: 0% vô hiệu hóa cường độ cạnh bổ sung, 50% là cân bằng, 100% là mạnh nhất. Giảm quầng sáng nếu cần."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR cần Vulkan. OpenGL sẽ âm thầm sử dụng Song tuyến tính; chọn Vulkan hoặc một phương pháp nâng cao khác."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Nâng cao không gian của Qualcomm bằng cách sử dụng bộ đổ bóng Vulkan riêng biệt. Hãy thử khi FSR 1 trông mềm mại."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Độ sắc nét"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: sắc nét hơn song tuyến tính, nhưng có thể tạo ra các cạnh sáng. Thanh trượt độ sắc nét không áp dụng."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Độ sắc nét của hình ảnh chỉ ảnh hưởng đến FSR 1 và SGSR. Bắt đầu ở mức 50% và giảm nó nếu các cạnh mịn lung linh hoặc hiển thị quầng sáng."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ĐỘ SẮC"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Lọc kết cấu làm sắc nét đường, sàn và tường khi nhìn ở một góc. Bắt đầu ở mức 4x; 8x/16x sử dụng nhiều băng thông GPU hơn. Không giống như độ sắc nét của hình ảnh, nó không làm sắc nét toàn bộ bức ảnh."

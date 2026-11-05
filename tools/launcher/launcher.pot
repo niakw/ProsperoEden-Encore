@@ -714,18 +714,6 @@ msgstr ""
 msgid "French (Canada)"
 msgstr ""
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr ""
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr ""
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr ""
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1818,10 +1806,6 @@ msgstr ""
 msgid "UPDATES, DLC"
 msgstr ""
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr ""
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr ""
@@ -1998,10 +1982,6 @@ msgid "Automatic"
 msgstr ""
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr ""
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr ""
 
@@ -2015,10 +1995,6 @@ msgstr ""
 
 #: R10 graphics UX
 msgid "Game default"
-msgstr ""
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
 msgstr ""
 
 #: R10 graphics UX
@@ -2054,10 +2030,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr ""
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr ""
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr ""
 
@@ -2087,4 +2059,61 @@ msgstr ""
 
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr ""
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr ""
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr ""
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr ""
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr ""
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr ""
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr ""
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr ""
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr ""
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr ""
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr ""
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr ""
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr ""
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr ""
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr ""

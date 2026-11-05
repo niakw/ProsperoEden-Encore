@@ -710,18 +710,6 @@ msgstr "Francia"
 msgid "French (Canada)"
 msgstr "Francia (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR-élesség"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR-ÉLESSÉG"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Az FSR élessége csak az AMD FSR kiválasztása esetén változtatja meg a részletek helyreállítását. Engedje le, ha a kép szemcsésnek vagy túlélesnek tűnik."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Frissítések (Játék/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "FRISSÍTÉSEK, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Felskálázó szűrő"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automatikus"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicubic: élesebb, mint bilineáris, de fényes éleket hozhat létre. Az FSR élesség csúszkája nem alkalmazható."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilineáris: gyors és lágy. A legjobb, ha a játék már közel a TV felbontásához."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: könnyű élsimítás egy menetben. Enyhén lágyíthatja a szöve
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Játék alapértelmezett"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Inaktív ennél a szűrőnél. Az élesség beállításához válassza az AMD FSR 1 lehetőséget a Felskálázás alatt. Nem változtatja meg a játék textúráját."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "A textúra szűrése szögben tisztábban tartja a távoli talajt és a felületeket; A nagyobb anizotrópia nagyobb GPU sávszélességet használ."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "A textúra szűrése ferdén nézve élesíti az utakat, padlókat és falakat. Kezdje 4x; 8x/16x nagyobb GPU sávszélességet használ. Az FSR élességgel ellentétben nem élesíti a teljes képet."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "FEJLESZTÉS"
 
@@ -2086,3 +2058,60 @@ msgstr "Az FXAA+-hoz Vulkan szükséges. Válassza a Vulkan vagy más élsimít�
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: kiterjesztett élkeresés. Kisimítja a szaggatottabb éleket, de lágyíthatja a textúrákat. Hasonlítsa össze az SMAA Ultra-val."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inaktív: ez a felskálázott módszer nem támogatja az élesség csúszkát. Használjon FSR 1-et vagy SGSR-t a Vulkannal."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: méretezett kép éles rekonstrukciója. A finom részletek tisztábbnak tűnhetnek, de az élek fényes fényudvarokat alkothatnak."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: élre irányított Qualcomm upscale egy másik Vulkan shaderrel. Hasonlítsa össze a finom részleteket és a fényudvarokat."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR élélesség: 0% letiltja az extra élintenzitást, 50% kiegyensúlyozott, 100% a legerősebb. Csökkentse a fényudvarokat, ha szükséges."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "Az SGSR-nek szüksége van a Vulkanra. Az OpenGL csendben használná a Bilineart; válassza a Vulkan vagy más előkelő módszert."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm térbeli felskálázása külön Vulkan shader használatával. Próbálja ki, amikor az FSR 1 puhának tűnik."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Élesség"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: élesebb, mint bilineáris, de fényes éleket hozhat létre. Az élesség csúszkája nem alkalmazható."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "A képélesség csak az FSR 1-et és az SGSR-t érinti. Kezdje 50%-kal, és csökkentse, ha a finom élek csillognak vagy fényudvarokat mutatnak."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ÉLESSÉG"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "A textúra szűrése ferdén nézve élesíti az utakat, padlókat és falakat. Kezdje 4x; 8x/16x nagyobb GPU sávszélességet használ. A képélességgel ellentétben nem élesíti a teljes képet."

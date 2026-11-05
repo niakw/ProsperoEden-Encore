@@ -710,18 +710,6 @@ msgstr "Γαλλικά"
 msgid "French (Canada)"
 msgstr "Γαλλικά (Καναδάς)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Ευκρίνεια FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "ΕΥΚΡΙΝΕΙΑ FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Η ευκρίνεια FSR αλλάζει την ανάκτηση λεπτομερειών μόνο όταν έχει επιλεγεί το AMD FSR. Χαμηλώστε το εάν η εικόνα φαίνεται κοκκώδης ή υπερβολικά ακονισμένη."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Ενημερώσεις (Παιχνίδι/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "ΕΝΗΜΕΡΩΣΕΙΣ, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Φίλτρο κλιμάκωσης"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "ΗΠΑ"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Αυτόματο"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicubic: πιο ευκρινές από το διγραμμικό, αλλά μπορεί να δημιουργήσει φωτεινές άκρες. Το ρυθμιστικό ευκρίνειας FSR δεν ισχύει."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Διγραμμικό: γρήγορο και απαλό. Καλύτερο όταν το παιχνίδι αποδίδεται ήδη κοντά στην ανάλυση της τηλεόρασης."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: ελαφριά εξομάλυνση άκρων με ένα πέρ�
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Προεπιλογή παιχνιδιού"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Ανενεργό για αυτό το φίλτρο. Επιλέξτε AMD FSR 1 στην ενότητα Upscaling για να προσαρμόσετε την ευκρίνεια. Δεν αλλάζει τις υφές του παιχνιδιού."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Το φιλτράρισμα υφής διατηρεί το απομακρυσμένο έδαφος και τις επιφάνειες πιο καθαρές υπό γωνία. Η υψηλότερη ανισοτροπία χρησιμοποιεί περισσότερο εύρος ζώνης GPU."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Το φιλτράρισμα υφής ακονίζει δρόμους, δάπεδα και τοίχους υπό γωνία. Ξεκινήστε από 4x. 8x/16x χρησιμοποιούν περισσότερο εύρος ζώνης GPU. Σε αντίθεση με την ευκρίνεια FSR, δεν βελτιώνει την ευκρίνεια ολόκληρης της εικόνας."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "ΑΝΑΠΤΥΞΗ ΚΛΙΜΑΚΩΝ"
 
@@ -2086,3 +2058,60 @@ msgstr "Το FXAA+ απαιτεί Vulkan. Επιλέξτε Vulkan ή άλλη μ
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: εκτεταμένη αναζήτηση άκρων. Μπορεί να λειάνει πιο οδοντωτές άκρες αλλά μπορεί να μαλακώσει τις υφές. Συγκρίνετε με το SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Ανενεργό: αυτή η μέθοδος αναβάθμισης δεν υποστηρίζει το ρυθμιστικό ευκρίνειας. Χρησιμοποιήστε το FSR 1 ή το SGSR με το Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: ευκρινή ανακατασκευή μιας κλίμακας εικόνας. Οι λεπτές λεπτομέρειες μπορεί να φαίνονται πιο καθαρές, αλλά οι άκρες μπορούν να σχηματίσουν φωτεινά φωτοστέφανα."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Edge-directed Qualcomm upscale με διαφορετικό shader Vulkan. Συγκρίνετε λεπτομέρεια και φωτοστέφανα."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Ευκρίνεια άκρων SGSR: Το 0% απενεργοποιεί την πρόσθετη ένταση άκρων, το 50% είναι ισορροπημένο, το 100% είναι το ισχυρότερο. Μειώστε τα φωτοστέφανα εάν χρειάζεται."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "Η SGSR χρειάζεται τη Vulkan. Το OpenGL θα χρησιμοποιούσε σιωπηλά το Bilinear. επιλέξτε Vulkan ή άλλη μέθοδο αναβάθμισης."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Χωρική αναβάθμιση της Qualcomm με χρήση ξεχωριστού σκίαστρου Vulkan. Δοκιμάστε το όταν το FSR 1 φαίνεται απαλό."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Ευκρίνεια"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: πιο ευκρινές από το διγραμμικό, αλλά μπορεί να δημιουργήσει φωτεινές άκρες. Το ρυθμιστικό ευκρίνειας δεν ισχύει."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Η ευκρίνεια εικόνας επηρεάζει μόνο τα FSR 1 και SGSR. Ξεκινήστε από το 50% και μειώστε το εάν οι λεπτές άκρες λαμπυρίζουν ή εμφανίζουν φωτοστέφανα."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ΕΥΤΥΧΙΑ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Το φιλτράρισμα υφής ακονίζει δρόμους, δάπεδα και τοίχους υπό γωνία. Ξεκινήστε από 4x. 8x/16x χρησιμοποιούν περισσότερο εύρος ζώνης GPU. Σε αντίθεση με την ευκρίνεια της εικόνας, δεν βελτιώνει την ευκρίνεια ολόκληρης της εικόνας."

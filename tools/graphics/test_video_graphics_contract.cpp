@@ -28,6 +28,36 @@ int main() {
         assert(FrameGenerationSelectable(1));
         assert(!FrameGenerationSelectable(0));
     }
+    // R07 new spatial methods: exact renderer dependencies.
+    assert(UpscalingFilterSelectable(4,0));  // Lanczos on OpenGL too.
+    assert(UpscalingFilterSelectable(4,1));
+    assert(UpscalingFilterSelectable(5,1));  // SGSR Vulkan only.
+    assert(UpscalingFilterSelectable(6,1));
+    assert(!UpscalingFilterSelectable(5,0));
+    assert(!UpscalingFilterSelectable(6,0));
+    assert(UpscalingSupportsSharpness(1));
+    assert(UpscalingSupportsSharpness(5));
+    assert(UpscalingSupportsSharpness(6));
+    for (int index: {0,2,3,4}) assert(!UpscalingSupportsSharpness(index));
+    {
+        Eden::Preferences persisted{};
+        Eden::GameSettings title{};
+        char path[]="/tmp/eden-upscales-XXXXXX";
+        int fd=mkstemp(path);
+        assert(fd>=0);
+        close(fd);
+        for(int index=0; index<=6; ++index) {
+            persisted.upscaling_filter=index;
+            assert(Eden::SavePreferences(persisted,path));
+            assert(Eden::LoadPreferences(path).upscaling_filter==index);
+            title.upscaling_filter=index;
+            assert(Eden::SaveGameSettings(fc27,title,path));
+            assert(Eden::LoadGameSettings(fc27,path).upscaling_filter==index);
+        }
+        title.upscaling_filter=7;
+        assert(!Eden::SaveGameSettings(fc27,title,path));
+        std::remove(path);
+    }
     // FXAA+ is an additional quality shader, not an alias to SMAA.
     // It must roundtrip as a manual Custom selection by game and global.
     {

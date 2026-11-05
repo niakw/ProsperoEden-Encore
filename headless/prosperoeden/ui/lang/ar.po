@@ -710,18 +710,6 @@ msgstr "الفرنسية"
 msgid "French (Canada)"
 msgstr "الفرنسية (كندا)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "حدة FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "حدة FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "تغير حدة FSR استعادة التفاصيل فقط عند تحديد AMD FSR. قم بخفضها إذا كانت الصورة تبدو محببة أو شديدة الوضوح."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · تحديثات (اللعبة/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "التحديثات، DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "فلتر التكبير"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "أمريكا"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "تلقائي"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "ثنائية التكعيب: أكثر حدة من ثنائية الخط، ولكنها قد تخلق حوافًا لامعة. لا يتم تطبيق شريط تمرير حدة FSR."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "ذو الخطين: سريع وناعم. من الأفضل أن يتم عرض اللعبة بالفعل بالقرب من دقة التلفزيون."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: تنعيم الحواف خفيف الوزن بتمريرة واح�
 #: R10 graphics UX
 msgid "Game default"
 msgstr "اللعبة الافتراضية"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "غير نشط لهذا الفلتر. حدد AMD FSR 1 ضمن Upscaling لضبط الحدة. لا يغير قوام اللعبة."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "تعمل تصفية النسيج على إبقاء الأرض والأسطح البعيدة أكثر وضوحًا عند الزاوية؛ يستخدم التباين الأعلى نطاقًا تردديًا أكبر لوحدة معالجة الرسومات."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "تعمل تصفية النسيج على زيادة وضوح الطرق والأرضيات والجدران عند النظر إليها من زاوية ما. ابدأ بـ 4x؛ يستخدم 8x/16x المزيد من النطاق الترددي لوحدة معالجة الرسومات. وعلى عكس وضوح FSR، فهو لا يزيد من وضوح الصورة بأكملها."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "الارتقاء"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ يتطلب Vulkan. اختر Vulkan أو طريقة أخرى لمن
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: بحث ممتد عن الحافة. يمكنه تنعيم الحواف الخشنة ولكن قد ينعم الأنسجة. قارنه مع SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "غير نشط: لا تدعم هذه الطريقة المتطورة شريط تمرير الحدة. استخدم FSR 1 أو SGSR مع Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "لانكزوس: إعادة بناء حادة لصورة ذات حجم محدد. قد تبدو التفاصيل الدقيقة أكثر وضوحًا، لكن الحواف يمكن أن تشكل هالات مشرقة."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: ترقية Qualcomm الموجهة نحو الحافة مع تظليل Vulkan مختلف. قارن بين التفاصيل الدقيقة والهالات."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "دقة حافة SGSR: 0% يعطل كثافة الحافة الإضافية، 50% متوازن، 100% هو الأقوى. تقليل الهالات إذا لزم الأمر."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "يحتاج SGSR إلى فولكان. سيستخدم OpenGL الخطين بصمت؛ حدد Vulkan أو طريقة راقية أخرى."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: ترقية كوالكوم المكانية باستخدام تظليل فولكان منفصل. جربه عندما يبدو FSR 1 ناعمًا."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "الحدة"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "مكعبي الشكل: أكثر حدة من الخطين، ولكن قد يخلق حوافًا لامعة. لا يتم تطبيق شريط تمرير الحدة."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "تؤثر دقة الصورة على FSR 1 وSGSR فقط. ابدأ بنسبة 50% وقم بتقليلها إذا كانت الحواف الدقيقة تومض أو تظهر عليها هالات."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "الحدة"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "تعمل تصفية النسيج على زيادة وضوح الطرق والأرضيات والجدران عند النظر إليها من زاوية ما. ابدأ بـ 4x؛ يستخدم 8x/16x المزيد من النطاق الترددي لوحدة معالجة الرسومات. على عكس وضوح الصورة، فإنه لا يزيد من حدة الصورة بأكملها."

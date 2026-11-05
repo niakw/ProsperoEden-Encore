@@ -53,6 +53,10 @@ list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp renderer_vulkan/v
 list(REMOVE_ITEM video_sources renderer_vulkan/present/fsr.cpp)
 list(APPEND video_sources "${EDEN_PORT_DIR}/vulkan_fsr1_r07.cpp")
 # FXAA+ (quality) has separate Vulkan SPIR-V. No fake MSAA or 2x FXAA run.
+# SGSR has two distinct PS5 Vulkan shaders already shipped by upstream.
+# Give their edge-sharpness slider the same visible 0..100% semantics.
+list(REMOVE_ITEM video_sources renderer_vulkan/present/sgsr.cpp)
+list(APPEND video_sources "${EDEN_PORT_DIR}/vulkan_sgsr_r07.cpp")
 list(REMOVE_ITEM video_sources renderer_vulkan/present/fxaa.cpp)
 list(APPEND video_sources
     "${EDEN_PORT_DIR}/vulkan_fxaa_r24.cpp"

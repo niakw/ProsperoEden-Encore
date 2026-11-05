@@ -710,18 +710,6 @@ msgstr "Prancis"
 msgid "French (Canada)"
 msgstr "Prancis (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Ketajaman FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "KETAJAMAN FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Ketajaman FSR mengubah pemulihan detail hanya ketika AMD FSR dipilih. Turunkan jika gambar terlihat berbintik atau terlalu tajam."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Pembaruan (Game/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "PEMBARUAN, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Filter upscaling"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "AS"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Otomatis"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bikubik: lebih tajam dari bilinear, namun dapat menghasilkan tepi yang cerah. Penggeser ketajaman FSR tidak berlaku."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilinear: cepat dan lembut. Paling baik jika game sudah dirender mendekati resolusi TV."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: penghalusan tepi yang ringan dalam satu gerakan. Ini dapat sedikit
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Default permainan"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Tidak aktif untuk filter ini. Pilih AMD FSR 1 di bawah Peningkatan untuk menyesuaikan ketajaman. Itu tidak mengubah tekstur permainan."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Pemfilteran tekstur membuat tanah dan permukaan jauh lebih jelas pada suatu sudut; anisotropi yang lebih tinggi menggunakan lebih banyak bandwidth GPU."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Pemfilteran tekstur mempertajam jalan, lantai, dan dinding jika dilihat dari sudut tertentu. Mulai dari 4x; 8x/16x menggunakan lebih banyak bandwidth GPU. Berbeda dengan ketajaman FSR, ini tidak mempertajam keseluruhan gambar."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "PENINGKATAN"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ membutuhkan Vulkan. Pilih Vulkan atau metode anti-aliasing lainnya
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: pencarian tepi yang diperluas. Dapat menghaluskan tepi yang lebih bergerigi namun dapat melembutkan tekstur. Bandingkan dengan SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Tidak aktif: metode kelas atas ini tidak mendukung penggeser ketajaman. Gunakan FSR 1 atau SGSR dengan Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: rekonstruksi tajam gambar berskala. Detail halus mungkin terlihat lebih jelas, namun tepinya dapat membentuk lingkaran cahaya terang."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Qualcomm kelas atas yang diarahkan ke tepi dengan shader Vulkan yang berbeda. Bandingkan detail halus dan lingkaran cahaya."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Ketajaman tepi SGSR: 0% menonaktifkan intensitas tepi ekstra, 50% seimbang, 100% terkuat. Kurangi lingkaran cahaya jika diperlukan."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR membutuhkan Vulkan. OpenGL akan menggunakan Bilinear secara diam-diam; pilih Vulkan atau metode kelas atas lainnya."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm spasial kelas atas menggunakan shader Vulkan terpisah. Dicoba saat FSR 1 terlihat empuk."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Ketajaman"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bikubik: lebih tajam dari bilinear, namun dapat menghasilkan tepi yang terang. Penggeser ketajaman tidak berlaku."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Ketajaman gambar hanya mempengaruhi FSR 1 dan SGSR. Mulailah dari 50% dan kurangi jika tepi halus berkilau atau menunjukkan lingkaran cahaya."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "KEAJAIBAN"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Pemfilteran tekstur mempertajam jalan, lantai, dan dinding jika dilihat dari sudut tertentu. Mulai dari 4x; 8x/16x menggunakan lebih banyak bandwidth GPU. Berbeda dengan ketajaman gambar, ini tidak mempertajam keseluruhan gambar."

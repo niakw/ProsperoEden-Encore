@@ -1653,9 +1653,15 @@ void Launcher::press_game(Key key)
         return;
     }
     if (option_ == row_fsr_sharpness &&
-        EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id) != 1) {
+        (!UpscalingSupportsSharpness(
+             EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id)) ||
+         !UpscalingFilterSelectable(
+             EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id),
+             EffectiveGameRenderer(game_settings_,prefs_,game.title_id)))) {
         // Never let invisible RCAS changes mark a game profile as Custom.
-        say(FsrSharpnessGuide(false), true);
+        say(SharpnessGuide(
+            EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id),
+            false), true);
         cue(Cue::error);
         return;
     }
@@ -1831,7 +1837,15 @@ void Launcher::press_game(Key key)
         }
         if (option_ == row_filter)
         {
-            next.filter = cycle(next.filter, static_cast<int>(services_.filter_labels().size()));
+            const int selected = cycle(next.filter,
+                static_cast<int>(services_.filter_labels().size()));
+            if (!UpscalingFilterSelectable(selected,
+                    EffectiveGameRenderer(next,prefs_,game.title_id))) {
+                say(UpscalingUnsupportedGuide(),true);
+                cue(Cue::error);
+                return;
+            }
+            next.filter = selected;
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_fsr_sharpness) {
@@ -1978,7 +1992,7 @@ void Launcher::draw_game(Canvas &c, float open)
     };
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
-        TR("Resolution"), TR("Upscaling"), TR("FSR sharpness"), TR("Anti-aliasing"),
+        TR("Resolution"), TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
         TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
         TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
@@ -2006,12 +2020,20 @@ void Launcher::draw_game(Canvas &c, float open)
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const bool inactive =
+            (row == row_filter &&
+             !UpscalingFilterSelectable(
+                 EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
+                 EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||
             (row == row_anti_aliasing &&
              (game_settings_.anti_aliasing >= 0
                 ? game_settings_.anti_aliasing : base_aa) == 3 &&
              EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1) ||
             (row == row_fsr_sharpness &&
-             EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id) != 1) ||
+             (!UpscalingSupportsSharpness(
+                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id)) ||
+              !UpscalingFilterSelectable(
+                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
+                  EffectiveGameRenderer(game_settings_,prefs_,title_id)))) ||
             (row == row_frame_generation &&
              !FrameGenerationSelectable(
                  EffectiveGameRenderer(game_settings_, prefs_, title_id)));
@@ -2074,7 +2096,7 @@ void Launcher::draw_game(Canvas &c, float open)
             TR("Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."),
             TR("Resolution follows the selected title-aware profile. Lower it for performance or memory; raise it only when the title has headroom."),
             TR("Bilinear is the lightest default. AMD FSR is useful when rendering below the TV output size."),
-            TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
+            TR("Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
             TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
             TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."),
@@ -2088,9 +2110,13 @@ void Launcher::draw_game(Canvas &c, float open)
                 ? game_settings_.anti_aliasing : base_aa;
             const char* explanation = tr(kGameAbout[static_cast<std::size_t>(option_)]);
             if (option_ == row_filter)
-                explanation = UpscalingGuide(filter);
+                explanation = UpscalingFilterSelectable(filter,
+                    EffectiveGameRenderer(game_settings_,prefs_,title_id))
+                    ? UpscalingGuide(filter) : UpscalingUnsupportedGuide();
             else if (option_ == row_fsr_sharpness)
-                explanation = FsrSharpnessGuide(filter == 1);
+                explanation = SharpnessGuide(filter,
+                    UpscalingFilterSelectable(filter,
+                        EffectiveGameRenderer(game_settings_,prefs_,title_id)));
             else if (option_ == row_anti_aliasing)
                 explanation = aa == 3 &&
                     EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1
@@ -2102,7 +2128,13 @@ void Launcher::draw_game(Canvas &c, float open)
                          EffectiveGameRenderer(game_settings_, prefs_, title_id)))
                 explanation = FramegenUnsupportedGuide();
             DrawVideoGuide(c, tr(kLabels[option_]), explanation,
-                (option_ == row_fsr_sharpness && filter != 1) ||
+                (option_ == row_filter &&
+                 !UpscalingFilterSelectable(filter,
+                     EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||
+                (option_ == row_fsr_sharpness &&
+                 (!UpscalingSupportsSharpness(filter) ||
+                  !UpscalingFilterSelectable(filter,
+                      EffectiveGameRenderer(game_settings_,prefs_,title_id)))) ||
                 (option_ == row_anti_aliasing &&
                  aa == 3 && EffectiveGameRenderer(
                      game_settings_, prefs_, title_id) != 1) ||

@@ -710,18 +710,6 @@ msgstr "法语"
 msgid "French (Canada)"
 msgstr "法语（加拿大）"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR 锐度"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR 锐度"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "仅选择 AMD FSR 时，FSR 锐化才会改变细节恢复效果。如果画面有颗粒感或过度锐化，请调低。"
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · 更新 (游戏/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "更新、DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "缩放滤镜"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "美国"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "自动"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "双三次：比双线性更锐利，但可能会产生明亮的边缘。 FSR 锐度滑块不适用。"
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "双线性：快速且柔和。当游戏已经呈现接近电视分辨率时效果最佳。"
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA：一次轻量级边缘平滑。它可以稍微柔化文本和精�
 #: R10 graphics UX
 msgid "Game default"
 msgstr "游戏默认"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "该过滤器无效。在“升级”下选择“AMD FSR 1”以调整清晰度。它不会改变游戏的纹理。"
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "纹理过滤使远处的地面和表面在一定角度下更加清晰；较高的各向异性会使用更多的 GPU 带宽。"
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "纹理过滤可以锐化从某个角度观看的道路、地板和墙壁。从 4 倍开始； 8x/16x 使用更多 GPU 带宽。与 FSR 清晰度不同，它不会锐化整个图像。"
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "升级"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ 需要 Vulkan。选择 Vulkan 或其他抗锯齿方法。"
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+：扩展边缘搜索。可以平滑更多锯齿状边缘，但可能会软化纹理。与 SMAA Ultra 进行比较。"
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "无效：此升级方法不支持清晰度滑块。将 FSR 1 或 SGSR 与 Vulkan 结合使用。"
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos：缩放图像的清晰重建。精细的细节可能看起来更清晰，但边缘可能会形成明亮的光晕。"
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge：具有不同 Vulkan 着色器的边缘导向 Qualcomm 高档。比较精细的细节和光晕。"
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR 边缘锐度：0% 禁用额外边缘强度，50% 平衡，100% 最强。如果需要，减少光晕。"
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR 需要 Vulkan。 OpenGL会默默地使用双线性；选择 Vulkan 或其他高档方法。"
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR：使用单独的 Vulkan 着色器的 Qualcomm 空间升级。当 FSR 1 看起来很软时尝试一下。"
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "清晰度"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "双三次：比双线性更锐利，但可能会产生明亮的边缘。清晰度滑块不适用。"
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "图像清晰度仅影响 FSR 1 和 SGSR。从 50% 开始，如果细边缘闪烁或出现光晕，则减少该值。"
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "锐度"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "纹理过滤可以锐化从某个角度观看的道路、地板和墙壁。从 4 倍开始； 8x/16x 使用更多 GPU 带宽。与图像清晰度不同，它不会锐化整个图像。"

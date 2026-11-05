@@ -710,18 +710,6 @@ msgstr "Ranska"
 msgid "French (Canada)"
 msgstr "Ranska (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR-terävöitys"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR-TERÄVÖITYS"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "FSR-terävyys muuttaa yksityiskohtien palautusta vain, kun AMD FSR on valittuna. Laske sitä, jos kuva näyttää rakeiselta tai yliterävältä."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Päivitykset (Peli/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "PÄIVITYKSET, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Skaalaussuodatin"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automaattinen"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicubic: terävämpi kuin bilineaarinen, mutta voi luoda kirkkaita reunoja. FSR-terävyyden liukusäädin ei ole käytössä."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Bilineaarinen: nopea ja pehmeä. Parasta, kun peli on jo lähellä television resoluutiota."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: kevyt reunan tasoitus yhdellä kertaa. Se voi hieman pehmentää t
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Pelin oletusarvo"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Ei aktiivinen tälle suodattimelle. Säädä terävyyttä valitsemalla Upscaling-kohdasta AMD FSR 1. Se ei muuta pelin tekstuuria."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Tekstuurisuodatus pitää etäällä maaperän ja pinnat selkeämmässä kulmassa; korkeampi anisotropia käyttää enemmän GPU:n kaistanleveyttä."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Tekstuurisuodatus terävöittää teitä, lattioita ja seiniä kulmassa katsottuna. Aloita 4x; 8x/16x käyttävät enemmän GPU:n kaistanleveyttä. Toisin kuin FSR-terävyys, se ei terävöi koko kuvaa."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "PARANTAMINEN"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ vaatii Vulkanin. Valitse Vulkan tai jokin muu anti-aliasing-menete
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: laajennettu reunahaku. Voi tasoittaa rosoisempia reunoja, mutta saattaa pehmentää tekstuuria. Vertaa SMAA Ultraan."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Ei aktiivinen: tämä korkeatasoinen menetelmä ei tue terävyyden liukusäädintä. Käytä FSR 1:tä tai SGSR:ää Vulkanin kanssa."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: skaalatun kuvan terävä rekonstruktio. Hienot yksityiskohdat voivat näyttää selkeämmiltä, ​​mutta reunat voivat muodostaa kirkkaita haloja."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: reunaohjattu Qualcomm upscale eri Vulkan-varjostimella. Vertaa hienoja yksityiskohtia ja haloja."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR-reunojen terävyys: 0 % poistaa ylimääräisen reunan intensiteetin käytöstä, 50 % on tasapainotettu, 100 % on vahvin. Vähennä haloja tarvittaessa."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR tarvitsee Vulkanin. OpenGL käyttäisi hiljaa Bilinearia; valitse Vulkan tai jokin muu korkeatasoinen menetelmä."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm spatial upscale käyttäen erillistä Vulkan shader. Kokeile, kun FSR 1 näyttää pehmeältä."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Terävyys"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: terävämpi kuin bilineaarinen, mutta voi luoda kirkkaita reunoja. Terävyyden liukusäädin ei ole käytössä."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Kuvan terävyys vaikuttaa vain FSR 1:een ja SGSR:ään. Aloita 50 %:sta ja vähennä sitä, jos hienot reunat hohtavat tai näyttävät haloja."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "TERÄVYYS"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Tekstuurisuodatus terävöittää teitä, lattioita ja seiniä kulmassa katsottuna. Aloita 4x; 8x/16x käyttävät enemmän GPU:n kaistanleveyttä. Toisin kuin kuvan terävyys, se ei terävöi koko kuvaa."

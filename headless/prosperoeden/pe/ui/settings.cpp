@@ -332,7 +332,7 @@ void Launcher::draw_settings(Canvas &c)
                  {tr("TV OUTPUT"), output_name(prefs_.output)},
                  {tr("GAME RESOLUTION"), pick(services_.resolution_labels(), prefs_.resolution)},
                  {tr(TR("UPSCALING")), pick(services_.filter_labels(), prefs_.filter)},
-                 {tr("FSR SHARPNESS"), percent(prefs_.fsr_sharpness)},
+                 {tr(TR("SHARPNESS")), percent(prefs_.fsr_sharpness)},
                  {tr("ANTI-ALIASING"), pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing)},
                  {tr(TR("TEXTURE FILTERING")), TextureAnisotropyName(prefs_.texture_anisotropy)},
                  {tr("REFRESH RATE"), hertz(prefs_.refresh)},
@@ -485,7 +485,7 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::game:
         // Complete per-game video overrides, button mapping and mods; save data in builds that
         // move saves.
-        return services_.save_transfer_available() ? 12 : 11;
+        return services_.save_transfer_available() ? 14 : 13;
     default:
         return 1;
     }
@@ -584,13 +584,20 @@ void Launcher::press_dialog(Key key)
         else if (option_ == video_filter)
         {
             const int count = static_cast<int>(services_.filter_labels().size());
-            prefs_.filter = (prefs_.filter + step + count) % count;
+            const int next = (prefs_.filter + step + count) % count;
+            if (!UpscalingFilterSelectable(next,prefs_.renderer)) {
+                say(UpscalingUnsupportedGuide(),true);
+                cue(Cue::error);
+                return;
+            }
+            prefs_.filter = next;
             RefreshVideoProfile(prefs_);
         }
         else if (option_ == video_fsr_sharpness)
         {
-            if (prefs_.filter != 1) {
-                say(FsrSharpnessGuide(false), true);
+            if (!UpscalingSupportsSharpness(prefs_.filter) ||
+                !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer)) {
+                say(SharpnessGuide(prefs_.filter,false), true);
                 cue(Cue::error);
                 return;
             }
@@ -838,7 +845,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."),
             TR("Game render scale follows the selected profile. Lower it for performance or memory; raise it only when a game has headroom."),
             TR("Bilinear is the lightest default. AMD FSR is most useful when rendering below the TV output size."),
-            TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
+            TR("Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
             TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
             kFramegenInfo,
@@ -947,7 +954,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         };
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
-            TR("Upscaling"), TR("FSR sharpness"), TR("Anti-aliasing"),
+            TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
             TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"),
             TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
@@ -958,7 +965,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 label(row, tr(kNames[row]), kToggle);
                 toggle(c, 1292.0f, row_centre(row), knob);
             }
-            else if ((row == video_fsr_sharpness && prefs_.filter != 1) ||
+            else if ((row == video_fsr_sharpness &&
+                       (!UpscalingSupportsSharpness(prefs_.filter) ||
+                        !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
+                     (row == video_filter &&
+                      !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer)) ||
                      (row == video_anti_aliasing && prefs_.anti_aliasing == 3 &&
                       prefs_.renderer != 1) ||
                      (row == video_frame_generation &&
@@ -1129,15 +1140,17 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     if (modal == Modal::video && message_.empty()) {
         static constexpr const char* kGuideLabels[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"),
-            TR("Game resolution"), TR("Upscaling"), TR("FSR sharpness"),
+            TR("Game resolution"), TR("Upscaling"), TR("Sharpness"),
             TR("Anti-aliasing"), TR("Texture filtering"),
             TR("Enhanced smoothness"), TR("Refresh rate"), TR("FPS overlay")};
         const int selected = std::clamp(option_, 0, kVideoRows - 1);
         const char* explanation = copy;
         if (selected == video_filter)
-            explanation = UpscalingGuide(prefs_.filter);
+            explanation = UpscalingFilterSelectable(prefs_.filter,prefs_.renderer)
+                ? UpscalingGuide(prefs_.filter) : UpscalingUnsupportedGuide();
         else if (selected == video_fsr_sharpness)
-            explanation = FsrSharpnessGuide(prefs_.filter == 1);
+            explanation = SharpnessGuide(prefs_.filter,
+                UpscalingFilterSelectable(prefs_.filter,prefs_.renderer));
         else if (selected == video_anti_aliasing)
             explanation = prefs_.anti_aliasing == 3 && prefs_.renderer != 1
                 ? FxaaUnsupportedGuide() : AntiAliasingGuide(prefs_.anti_aliasing);
@@ -1147,7 +1160,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                  !FrameGenerationSelectable(prefs_.renderer))
             explanation = FramegenUnsupportedGuide();
         DrawVideoGuide(c, tr(kGuideLabels[selected]), explanation,
-            (selected == video_fsr_sharpness && prefs_.filter != 1) ||
+            (selected == video_fsr_sharpness &&
+             (!UpscalingSupportsSharpness(prefs_.filter) ||
+              !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
             (selected == video_anti_aliasing &&
              prefs_.anti_aliasing == 3 && prefs_.renderer != 1) ||
             (selected == video_frame_generation &&

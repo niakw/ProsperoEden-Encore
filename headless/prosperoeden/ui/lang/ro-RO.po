@@ -710,18 +710,6 @@ msgstr "Franceză"
 msgid "French (Canada)"
 msgstr "Franceză (Canada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Claritate FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "CLARITATE FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Claritatea FSR modifică recuperarea detaliilor numai atunci când este selectat AMD FSR. Coborâți-l dacă imaginea pare granulată sau prea clară."
-
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
@@ -1810,10 +1798,6 @@ msgstr "Eden Encore · Actualizări (Joc/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "ACTUALIZĂRI, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Filtru de scalare"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "SUA"
@@ -1996,10 +1980,6 @@ msgid "Automatic"
 msgstr "Automat"
 
 #: R10 graphics UX
-msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
-msgstr "Bicubic: mai ascuțit decât biliniar, dar poate crea margini strălucitoare. Glisorul de claritate FSR nu se aplică."
-
-#: R10 graphics UX
 msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
 msgstr "Biliniar: rapid și moale. Cel mai bine atunci când jocul se redă deja aproape de rezoluția televizorului."
 
@@ -2014,10 +1994,6 @@ msgstr "FXAA: netezire ușoară a marginilor într-o singură trecere. Poate în
 #: R10 graphics UX
 msgid "Game default"
 msgstr "Joc implicit"
-
-#: R10 graphics UX
-msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
-msgstr "Inactiv pentru acest filtru. Selectați AMD FSR 1 sub Upscaling pentru a regla claritatea. Nu modifică texturile jocului."
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
@@ -2052,10 +2028,6 @@ msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; 
 msgstr "Filtrarea texturii menține terenul îndepărtat și suprafețele mai clare la un unghi; o anizotropie mai mare folosește mai multă lățime de bandă a GPU."
 
 #: R10 graphics UX
-msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
-msgstr "Filtrarea texturii accentuează drumurile, podelele și pereții priviți în unghi. Începe de la 4x; 8x/16x utilizează mai multă lățime de bandă GPU. Spre deosebire de claritatea FSR, aceasta nu clarifică întreaga imagine."
-
-#: R10 graphics UX
 msgid "UPSCALING"
 msgstr "UPSCALING"
 
@@ -2086,3 +2058,60 @@ msgstr "FXAA+ necesită Vulkan. Alegeți Vulkan sau altă metodă anti-aliasing.
 #: R24 FXAA Quality
 msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
 msgstr "FXAA+: căutare extinsă de margine. Poate netezi marginile mai zimțate, dar poate înmuia texturile. Comparați cu SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inactiv: această metodă upscale nu acceptă glisorul de claritate. Utilizați FSR 1 sau SGSR cu Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: reconstrucție clară a unei imagini la scară. Detaliile fine pot părea mai clare, dar marginile pot forma halouri strălucitoare."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Qualcomm upscale direcționat pe margine cu un shader Vulkan diferit. Comparați detaliile fine și halourile."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Claritatea muchiilor SGSR: 0% dezactivează intensitatea suplimentară a muchiei, 50% este echilibrată, 100% este cea mai puternică. Reduceți halourile dacă este necesar."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR are nevoie de Vulkan. OpenGL ar folosi în tăcere Bilinear; selectați Vulkan sau altă metodă de lux."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm spațial upscale folosind un shader Vulkan separat. Încercați când FSR 1 pare moale."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Claritate"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: mai ascuțit decât biliniar, dar poate crea margini strălucitoare. Glisorul de claritate nu se aplică."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Claritatea imaginii afectează doar FSR 1 și SGSR. Începeți de la 50% și reduceți-l dacă marginile fine strălucesc sau prezintă halouri."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ACTUALITATE"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Filtrarea texturii accentuează drumurile, podelele și pereții priviți în unghi. Începe de la 4x; 8x/16x utilizează mai multă lățime de bandă GPU. Spre deosebire de claritatea imaginii, aceasta nu clarifică întreaga imagine."

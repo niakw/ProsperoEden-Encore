@@ -20,6 +20,16 @@ inline VideoPresetValues VideoPresetForTitle(std::uint64_t title_id, int preset)
     return Eden::EncoreOverridesRuntime::ProfileForTitle(title_id, preset);
 }
 
+inline constexpr bool UpscalingRequiresVulkan(int filter) {
+    return filter == 5 || filter == 6; // SGSR / SGSR Edge
+}
+inline constexpr bool UpscalingSupportsSharpness(int filter) {
+    return filter == 1 || filter == 5 || filter == 6;
+}
+inline constexpr bool UpscalingFilterSelectable(int filter,int renderer) {
+    return !UpscalingRequiresVulkan(filter) || renderer == 1;
+}
+
 // Frame synthesis is implemented exclusively on the native Vulkan path.
 inline bool FrameGenerationSelectable(int renderer) {
     return renderer == 1;

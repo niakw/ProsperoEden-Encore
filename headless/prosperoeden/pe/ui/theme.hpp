@@ -7,6 +7,7 @@
 #include "pe/gfx/draw_list.hpp"
 
 #include <algorithm>
+#include <array>
 
 namespace pe::ui
 {
@@ -19,38 +20,38 @@ namespace theme
 {
 
 // Eden brand palette: dark neutral surfaces with the official violet/pink/blue accents.
-inline const Color kBase = Color::rgb(0x07070d);
-inline const Color kScrim = Color::rgb(0x04040a);
-inline const Color kGlass = Color::rgb(0x120f1c);  // translucent Eden surfaces
-inline const Color kPanel = Color::rgb(0x0b0a12);  // screens and dialogs
-inline const Color kPanelEdge = Color::rgb(0x8c78ad);
-inline const Color kPanelEdgeSoft = Color::rgb(0x5b506f);
-inline const Color kRow = Color::rgb(0x12101a);
-inline const Color kRowEdge = Color::rgb(0x625875);
-inline const Color kRowFocus = Color::rgb(0x2b1b42);
-inline const Color kFocusCore = Color::rgb(0xff70e4); // Eden neon pink focus edge
-inline const Color kFocusBlue = Color::rgb(0xbb59ff); // Eden luminous violet; historic identifier retained
+inline Color kBase = Color::rgb(0x07070d);
+inline Color kScrim = Color::rgb(0x04040a);
+inline Color kGlass = Color::rgb(0x120f1c);  // translucent Eden surfaces
+inline Color kPanel = Color::rgb(0x0b0a12);  // screens and dialogs
+inline Color kPanelEdge = Color::rgb(0x8c78ad);
+inline Color kPanelEdgeSoft = Color::rgb(0x5b506f);
+inline Color kRow = Color::rgb(0x12101a);
+inline Color kRowEdge = Color::rgb(0x625875);
+inline Color kRowFocus = Color::rgb(0x2b1b42);
+inline Color kFocusCore = Color::rgb(0xff70e4); // Eden neon pink focus edge
+inline Color kFocusBlue = Color::rgb(0xbb59ff); // Eden luminous violet; historic identifier retained
 
 // Keep the historic names to avoid touching every widget; values are Eden's official accents.
-inline const Color kLime = Color::rgb(0xbf42f6);      // Eden violet
-inline const Color kLimeDeep = Color::rgb(0x6547c7);  // deep violet/blue
-inline const Color kLimePale = Color::rgb(0xe1b7ff);  // pale violet
-inline const Color kSun = Color::rgb(0xff44c4);       // Eden pink
-inline const Color kBlue = Color::rgb(0x62b4ff);      // Eden blue
-inline const Color kAccentTeal = Color::rgb(0xe0b1ff); // Eden lilac values; historic identifier retained
+inline Color kLime = Color::rgb(0xbf42f6);      // Eden violet
+inline Color kLimeDeep = Color::rgb(0x6547c7);  // deep violet/blue
+inline Color kLimePale = Color::rgb(0xe1b7ff);  // pale violet
+inline Color kSun = Color::rgb(0xff44c4);       // Eden pink
+inline Color kBlue = Color::rgb(0x62b4ff);      // Eden blue
+inline Color kAccentTeal = Color::rgb(0xe0b1ff); // Eden lilac values; historic identifier retained
 
 // Text
-inline const Color kText = Color::rgb(0xf4f2f8);
-inline const Color kTitle = Color::rgb(0xffffff);
-inline const Color kValue = Color::rgb(0xf0edf7);
-inline const Color kBody = Color::rgb(0xdedbe8);
-inline const Color kCopy = Color::rgb(0xc5c1d2);
-inline const Color kMeta = Color::rgb(0xa9a5b8);
-inline const Color kLabel = Color::rgb(0xb7b2c5);
-inline const Color kMuted = Color::rgb(0xa19cad);
-inline const Color kFaint = Color::rgb(0x7e798b);
-inline const Color kWarning = Color::rgb(0xff9f9f);
-inline const Color kRule = Color::rgb(0x3f3b51);
+inline Color kText = Color::rgb(0xf4f2f8);
+inline Color kTitle = Color::rgb(0xffffff);
+inline Color kValue = Color::rgb(0xf0edf7);
+inline Color kBody = Color::rgb(0xdedbe8);
+inline Color kCopy = Color::rgb(0xc5c1d2);
+inline Color kMeta = Color::rgb(0xa9a5b8);
+inline Color kLabel = Color::rgb(0xb7b2c5);
+inline Color kMuted = Color::rgb(0xa19cad);
+inline Color kFaint = Color::rgb(0x7e798b);
+inline Color kWarning = Color::rgb(0xff9f9f);
+inline Color kRule = Color::rgb(0x3f3b51);
 
 // Type sizes (Montserrat Medium)
 constexpr float kDisplay = 48.0f;
@@ -77,6 +78,63 @@ constexpr float kCaseSettleSeconds = 0.50f;
 constexpr float kLaunchSeconds = kCaseFrontHold + 2.0f * kCaseTurnSeconds +
                                  kCaseBackHold + kCaseSettleSeconds;
 
+
+// Color tokens share the existing draw path. Theme changes never affect game shaders.
+// Like Nuvio, the palette is separate from the selected home-screen layout.
+inline void apply_palette(int palette, int accent)
+{
+    const std::array<Color*, 27> slots = {
+        &kBase, &kScrim, &kGlass, &kPanel, &kPanelEdge, &kPanelEdgeSoft, &kRow,
+        &kRowEdge, &kRowFocus, &kFocusCore, &kFocusBlue, &kLime, &kLimeDeep,
+        &kLimePale, &kSun, &kBlue, &kAccentTeal, &kText, &kTitle, &kValue,
+        &kBody, &kCopy, &kMeta, &kLabel, &kMuted, &kFaint, &kWarning};
+    static const auto neon = [&] {
+        std::array<Color, 27> result{};
+        for (std::size_t i = 0; i < result.size(); ++i) result[i] = *slots[i];
+        return result;
+    }();
+    for (std::size_t i = 0; i < slots.size(); ++i) *slots[i] = neon[i];
+    kRule = Color::rgb(0x3f3b51);
+    if (palette == 1) { // Minimal Dark
+        kBase = Color::rgb(0x0d1014); kScrim = Color::rgb(0x080c10);
+        kGlass = Color::rgb(0x171b22); kPanel = Color::rgb(0x171b22);
+        kPanelEdge = Color::rgb(0x66717d); kPanelEdgeSoft = Color::rgb(0x3d4753);
+        kRow = Color::rgb(0x20262d); kRowEdge = Color::rgb(0x48515c);
+        kRowFocus = Color::rgb(0x23374c); kRule = Color::rgb(0x343d48);
+        kLime = Color::rgb(0x7196bc); kLimeDeep = Color::rgb(0x3b5873);
+        kLimePale = Color::rgb(0xa9cee9); kFocusCore = Color::rgb(0x8ab8ec);
+        kFocusBlue = Color::rgb(0x749fc6); kSun = Color::rgb(0x8997aa);
+        kAccentTeal = Color::rgb(0xb7d2e6);
+    } else if (palette == 2) { // Neutral Light
+        kBase = Color::rgb(0xf1f3f5); kScrim = Color::rgb(0x1a2938);
+        kGlass = Color::rgb(0xf8fafc); kPanel = Color::rgb(0xffffff);
+        kPanelEdge = Color::rgb(0x8b98a7); kPanelEdgeSoft = Color::rgb(0xc2cbd4);
+        kRow = Color::rgb(0xe6eaf0); kRowEdge = Color::rgb(0xa7b4c3);
+        kRowFocus = Color::rgb(0xc9e0f3);
+        kLime = Color::rgb(0x286898); kLimeDeep = Color::rgb(0x194e7a);
+        kLimePale = Color::rgb(0x15527e); kFocusCore = Color::rgb(0x135eaa);
+        kFocusBlue = Color::rgb(0x216ba6); kSun = Color::rgb(0x427e9a);
+        kBlue = Color::rgb(0x246b9a); kAccentTeal = Color::rgb(0x206b95);
+        kText = Color::rgb(0x16202c); kTitle = Color::rgb(0x101820);
+        kValue = Color::rgb(0x172532); kBody = Color::rgb(0x30404f);
+        kCopy = Color::rgb(0x435363); kMeta = Color::rgb(0x526372);
+        kLabel = Color::rgb(0x394b5c); kMuted = Color::rgb(0x586979);
+        kFaint = Color::rgb(0x667789); kWarning = Color::rgb(0xa52a2a);
+        kRule = Color::rgb(0xc4ced8);
+    }
+    if (accent > 0 && accent <= 4) {
+        static constexpr std::uint32_t swatches[] = {
+            0x000000u, 0x347fc4u, 0x278b70u, 0xb17724u, 0xc04f72u};
+        static constexpr std::uint32_t bright[] = {
+            0x000000u, 0x9ccbf7u, 0x8bd9b5u, 0xf7cc87u, 0xf5a6c4u};
+        kLime = Color::rgb(swatches[accent]);
+        kLimePale = Color::rgb(palette == 2 ? swatches[accent] : bright[accent]);
+        kFocusCore = kLimePale;
+        kFocusBlue = kFocusCore;
+        kAccentTeal = kLimePale;
+    }
+}
+
 } // namespace theme
 
 // How the launcher is shown: Settings > Accessibility.
@@ -85,6 +143,8 @@ struct Look
     bool large_text = false;    // small text is drawn larger
     bool high_contrast = false; // solid panels, brighter text, an outlined highlight
     bool reduce_motion = false; // nothing drifts, slides or zooms: screens fade
+    int palette = 0; // Neon, Dark, Light
+    int background = 0; // Auto, Artwork, Glow, Solid
 };
 inline Look &look()
 {

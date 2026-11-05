@@ -221,6 +221,28 @@ le header FFmpeg configuré et la compilation intégrale du worker PS5
 ne font pas partie de cette preuve hôte. Aucun de ces tests ne certifie
 l'ordonnancement GPU ou Vulkan sur PS5.
 
+**P0.2 — FD propriétaire à l’allocation du canal NVDRV (05/11/2026).**
+Les ioctl `H:0x18` / `H:0x1a` d’allocation du GPFIFO utilisaient
+`sessions[fd]` avant `InitChannel` ; un FD absent pouvait modifier la
+map des sessions et accéder à un `KProcess` nul. L’identité réelle du
+FD est désormais vérifiée dans un helper partagé, **avant** toute
+mutation de `program_id`, toute allocation de contexte ou toute
+initialisation du scheduler. Une session GPU native refuse l’init
+si un autre FD de l’objet NVDRV appartient à un processus différent ;
+le contrôle est réciproque pour un FD legacy coexistant avec un FD
+natif. Plusieurs FD legacy gardent leur comportement historique.
+Le même contrôle s’applique à `AllocateObjectContext`, avant sa
+mutation de `flags` et `ctxObjs`. Le verrou d’état canal protège
+également les deux variantes d’allocation GPFIFO.
+
+`check_native_gpu_channel_allocation_host.py` exécute le **corps exact**
+du validateur C++ maintenu sous UBSan O0/O2 avec sessions et processus
+simulés, vérifie les admissions/rejets, l’absence de création de FD
+fantôme, la non-mutation de `program_id`, et inspecte les vraies voies
+des deux ioctl et du contexte. Le contrôle de compilation hôte du
+véritable `nvhost_gpu.cpp` reste dans la batterie. Cela **ne prouve
+pas** la liaison native du driver ni une frame sur PS5.
+
 ## Règles de migration
 
 1. **Conserver une seule responsabilité maintenue** pour JIT, buffers, cache texture, shaders, renderer, services et UI; n'admettre des adaptations qu'aux frontières matérielles (ISA/QMD, formats/ABI/services). Pas de fork parallèle du moteur.

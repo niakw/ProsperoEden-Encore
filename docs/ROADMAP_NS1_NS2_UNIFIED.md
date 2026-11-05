@@ -1505,3 +1505,20 @@ fence non acquitté, du stop et de la notification persistante après
 consommation UI, UBSan O0/O2. Limitations : pas de preuve des cycles
 réels NVIDIA/RADV, de l'exclusion concurrente Unmap/Read ni de la fin
 du GPU NS2 sur console ; P2.7/P5 restent ouverts.
+
+
+**P0.2 — vérification FD avant initialisation GPFIFO/3D/Compute
+(05/11/2026, source/hôte) :** les ioctl `AllocGPFIFOEx` et
+`AllocGPFIFOEx2` pouvaient utiliser `sessions[fd]` avec un FD inconnu,
+puis déréférencer un `session->process` nul. `ValidateChannelOwner`
+partage désormais une seule règle pour les deux ioctl et
+`AllocateObjectContext`, avant `InitChannel`, `program_id` et
+`ctxObjs`. Un FD NS2 ne peut pas initialiser un canal partagé avec
+un processus étranger ; le contrôle inverse interdit qu’un FD NS1
+prenne la main sur un canal avec un propriétaire NS2. Les FD NS1
+valides seuls conservent leur comportement. Tests : vrai corps C++
+extrait de l’unité NVDRV maintenue, exécuté Clang UBSan O0/O2 sur
+les scénarios absents, nuls, recyclés, natifs/legacy et multi-FD ;
+la compilation syntaxique du propriétaire source est aussi contrôlée.
+**Ne valide ni la session GPU runtime ni la production NS2 ; P0.2/P5
+restent ouverts.**

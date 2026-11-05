@@ -106,7 +106,7 @@ def main():
         for f in FILES:
             before=(BASE/REL/f).read_text()
             after=(generated/REL/f).read_text()
-            static=(ROOT/'headless/maintained/a64-ldapr'/REL/f).read_text()
+            static=(ROOT/'vendor/encore-active/ns2-runtime/ldapr/maintained'/REL/f).read_text()
             assert after==static,('CMake failed to select static LDAPR source',f)
             if f=='decoder/a64.h':
                 reviewed=before

@@ -7,7 +7,7 @@ if(NOT DEFINED EDEN_A64_LDAPR_SOURCE_ROOT OR NOT DEFINED EDEN_A64_LDAPR_OUTPUT_R
 endif()
 set(eden_ldapr_source "${EDEN_A64_LDAPR_SOURCE_ROOT}/dynarmic/frontend/A64")
 set(eden_ldapr_output "${EDEN_A64_LDAPR_OUTPUT_ROOT}/dynarmic/frontend/A64")
-set(eden_ldapr_static "${CMAKE_CURRENT_LIST_DIR}/maintained/a64-ldapr/dynarmic/frontend/A64")
+set(eden_ldapr_static "${CMAKE_CURRENT_LIST_DIR}/../vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64")
 foreach(eden_ldapr_file IN ITEMS
         "decoder/a64.h" "decoder/a64.inc"
         "translate/impl/impl.h" "translate/impl/load_store_exclusive.cpp")

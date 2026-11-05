@@ -121,7 +121,7 @@ def main()->None:
             assert original.count(old)==1,('pinned owner drift',name)
             expected=original.replace(old,replacement)
             actual=(out/'core'/name).read_text()
-            maintained=(ROOT/'headless/maintained/cpu6/core'/name).read_text()
+            maintained=(ROOT/'vendor/encore-active/ns2-runtime/cpu6/maintained/core'/name).read_text()
             assert actual==expected==maintained,('static CPU6 owner parity',name)
             # Mutation control: a wrong pinned upstream byte must never pass
             # the exact maintained-owner parity gate.

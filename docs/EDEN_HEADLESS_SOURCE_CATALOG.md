@@ -2,7 +2,7 @@
 
 **Branche :** `main`. **Date du relevé :** 5 novembre 2026.
 
-Ce registre complémentaire couvre les **200 chemins** de code, en-têtes et
+Ce registre complémentaire couvre les **193 chemins** de code, en-têtes et
 fragments `.c/.cc/.cpp/.h/.hpp/.inc/.cl` du dossier `headless/`.
 Il ne remplace pas `EDEN_ACTIVE_SOURCE_CATALOG.md` : les 326 fichiers
 de `vendor/encore-active` sont déjà inventoriés séparément.
@@ -13,8 +13,8 @@ pour suivi séparé et n'autorise aucune modification du launcher depuis
 l'audit moteur. Un chemin noté « À qualifier » peut avoir été audité sous
 une autre forme : il manque seulement la référence de chemin exacte.
 
-- **200** chemins sous `headless/`, dont **72** sources C/C++ et **128** en-têtes/fragments.
-- **105** chemins déjà présents dans le graphe moteur.
+- **193** chemins sous `headless/`, dont **68** sources C/C++ et **125** en-têtes/fragments.
+- **98** chemins déjà présents dans le graphe moteur.
 - **95** chemins sans propriétaire exact dans ce graphe, à trier selon leur rôle réel et leur sélection.
 - Les deux générateurs de profils `headless/encore_overrides_generated.h`,
   `headless/glyph_overrides_generated.h` et les autres ressources générées
@@ -53,11 +53,9 @@ Quarante-cinq en-têtes applicatifs supplémentaires sont désormais rattachés
 `tools/check-headless-final-owners.py`. Ce classement ne les
 transforme pas en overrides des dépendances ni en preuves d'exécution PS5.
 
-Les sept sources maintenues CPU6/LDAPR (U90–U96) sont des
-propriétaires C++ **effectivement sélectionnés** par le CMake PS5 commun,
-copiés sans transformations. Leurs différences exactes avec les propriétaires
-Eden épinglés et leurs tests C++ hôte sont vérifiés séparément. Leur
-présence au catalogue n'atteste aucun rendu NS2 sur PS5.
+Les sept propriétaires CPU6/LDAPR (U90–U96) résident dans
+`vendor/encore-active/ns2-runtime/`, pas dans `headless/`. Ils restent
+audités séparément du catalogue historique F07 et des sources NS2 de recherche.
 
 Le contrôle `tools/check-active-source-inventory.py` confronte les chemins
 physiques, la table ci-dessous et les propriétaires du graphe ; il interdit
@@ -133,13 +131,6 @@ que des fichiers C/C++ apparaissent dans `headless/` sans être ajoutés
 | `headless/launch_handoff.hpp` | launcher/UI | — | À qualifier |
 | `headless/log_pipe.h` | en-tête/fragment | U37 | Chemin indexé, preuve dépend du graphe |
 | `headless/main.cpp` | runtime/bridge | U01 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/a64-ldapr/dynarmic/frontend/A64/decoder/a64.h` | runtime/bridge | U93 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/a64-ldapr/dynarmic/frontend/A64/decoder/a64.inc` | runtime/bridge | U94 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/a64-ldapr/dynarmic/frontend/A64/translate/impl/impl.h` | runtime/bridge | U95 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/a64-ldapr/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | runtime/bridge | U96 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/cpu6/core/arm/dynarmic/arm_dynarmic_32.cpp` | runtime/bridge | U91 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/cpu6/core/arm/dynarmic/arm_dynarmic_64.cpp` | runtime/bridge | U92 | Chemin indexé, preuve dépend du graphe |
-| `headless/maintained/cpu6/core/hle/kernel/global_scheduler_context.cpp` | runtime/bridge | U90 | Chemin indexé, preuve dépend du graphe |
 | `headless/memory_check.cpp` | harness/test | J08 | Chemin indexé, preuve dépend du graphe |
 | `headless/metadata_bridge.cpp` | runtime/bridge | U13 | Chemin indexé, preuve dépend du graphe |
 | `headless/metadata_bridge.h` | en-tête/fragment | U14 | Chemin indexé, preuve dépend du graphe |

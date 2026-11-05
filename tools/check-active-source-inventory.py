@@ -309,13 +309,37 @@ assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in unified_rasterizer
 assert 'vulkan_abi/video_core/rasterizer_interface.h' in kernel_select
 print('ENCORE_POST_F07_UNIFIED_RASTERIZER_ABI_OWNER_PASS owners=1')
 
+# Production-selected CPU6 scheduler/JIT and A64 LDAPR owners live in the
+# vendor submodule, not headless. Preserve the frozen F07 catalogue; these
+# are separately audited shipping owners, never the opt-in research ledger.
+post_f07_cpu6_ldapr_owners = {
+    "ns2-runtime/cpu6/maintained/core/hle/kernel/global_scheduler_context.cpp",
+    "ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp",
+    "ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp",
+}
+assert post_f07_cpu6_ldapr_owners <= set(physical_all), (
+    "Missing vendor-maintained CPU6/LDAPR owners",
+    sorted(post_f07_cpu6_ldapr_owners - set(physical_all)))
+assert not post_f07_cpu6_ldapr_owners.intersection(research_paths), (
+    "Shipping CPU6/LDAPR owners misclassified as research")
+assert 'vendor/encore-active/ns2-runtime/cpu6/maintained/core' in (
+    root/'headless/ns2_cpu6_source_bridge.cmake').read_text()
+assert 'vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64' in (
+    root/'headless/shared_a64_ldapr.cmake').read_text()
+print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=7")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
-            shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners]
+            shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
+            post_f07_cpu6_ldapr_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -336,6 +360,9 @@ for line in audit.splitlines():
         continue
     relative = fields[3].removeprefix("vendor/encore-active/")
     graph.setdefault(relative, []).append(fields[0])
+assert all(path in graph for path in post_f07_cpu6_ldapr_owners), (
+    "Vendor-maintained CPU6/LDAPR owners missing exact audit rows",
+    sorted(path for path in post_f07_cpu6_ldapr_owners if path not in graph))
 def role(path):
     if path.startswith("eden-backports/"):
         return "shipping-backport"

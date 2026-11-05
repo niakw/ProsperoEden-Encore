@@ -11,7 +11,7 @@ if(NOT eden_cpu6_g11_identity MATCHES "EDEN_NS2_GUEST_COUNTER" OR
    NOT eden_cpu6_g11_identity MATCHES "jit-startup-retry.h")
     message(FATAL_ERROR "CPU6 A64 input must be the maintained G11/N76 source")
 endif()
-set(eden_cpu6_static_root "${CMAKE_CURRENT_LIST_DIR}/maintained/cpu6/core")
+set(eden_cpu6_static_root "${CMAKE_CURRENT_LIST_DIR}/../vendor/encore-active/ns2-runtime/cpu6/maintained/core")
 foreach(eden_cpu6_file IN ITEMS
         "hle/kernel/global_scheduler_context.cpp"
         "arm/dynarmic/arm_dynarmic_32.cpp"

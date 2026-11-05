@@ -71,11 +71,17 @@ configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.h"
 configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/fsr31_native_bridge.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/fsr31_native_bridge.h"
     COPYONLY)
+# R24 real Vulkan multisample colour shadow+resolve primitive (not yet wired
+# into guest pipeline sample selection; no active forced-MSAA menu).
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/msaa_color_shadow_pass.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/msaa_color_shadow_pass.h"
+    COPYONLY)
 list(REMOVE_ITEM video_sources renderer_vulkan/vk_descriptor_pool.cpp)
 list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_descriptor_pool.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/msaa_color_shadow_pass.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"

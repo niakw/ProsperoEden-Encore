@@ -25,6 +25,7 @@ enum class Rejection : std::uint8_t {
     MissingGpuCompletion, NonConsecutiveFrame, SceneChanged,
     InvalidProjection, InvalidVulkanImageLayout, InvalidSharpening, UnsupportedDevice,
     UnsupportedDepthConvention, UnsupportedMotionConvention,
+    UnsupportedInputFormat, InsufficientMemoryBudget,
 };
 
 // A non-owning identity. The real backend will convert these into actual

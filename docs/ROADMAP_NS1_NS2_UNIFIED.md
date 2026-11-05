@@ -1387,3 +1387,15 @@ GMMU. Le contrôle `check_native_gpfifo_command_spans_host.py` exécute
 indépendamment **le bloc réel de vérification des commandes GPU**. Les
 deux batteries de 4 configurations Clang/GCC UBSan passent ; le
 périmètre additionnel n’est pas interprété comme un résultat console.
+
+
+**P0.2 — promotion bornée ARM64 `LDAPR` (05/11/2026, source/hôte) :**
+au lieu d’activer l’overlay A64 recherche entier, le profil PS5 final
+génère quatre sources Dynarmic à partir du propriétaire commun épinglé
+et n’y ajoute **que LDAPR** (RCpc acquire → LDAR acquire plus fort).
+Le vrai `a64_translate.cpp` passe la compilation syntaxique Clang/GCC ;
+le vrai décodeur exécute les quatre variantes dans Clang/GCC UBSan
+O0/O2 **4/4 PASS**, et les sources d’origine ne sont pas modifiées.
+`RETAA/RETAB` sans PAC, CAS/LSE et CPU6 restent hors du profil final,
+sans contourner les neuf commutateurs de recherche OFF. Ce progrès
+ne clôt ni P0.2 global, ni P1.1, ni les essais console P5.

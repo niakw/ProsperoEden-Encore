@@ -124,6 +124,30 @@ propriétaire d'implémentation réel et n'est pas un interrupteur mort.
 mais aucun des 9 chemins de recherche complets n'est activé
 en production. Certains comportements ont déjà des propriétaires partagés `EDEN_SHARED_NS2_*` — cela ne suffit pas à certifier les chemins verrouillés ici.
 
+**P0.2c — LDAPR ARM64 promu sélectivement, sans le bloc A64 de recherche (05/11/2026).**
+Le profil final PS5 dual-NPDM compile le décodeur Dynarmic original avec
+**une seule instruction supplémentaire** (`LDAPR`, tailles 8/16/32/64 bits),
+sans activer le sélecteur de recherche A64. `headless/shared_a64_ldapr.cmake`
+génère précisément quatre fichiers au-dessus des sources Dynarmic épinglées :
+`a64.h` identique (son `./a64.inc` doit provenir du même répertoire),
+la table `a64.inc`, la signature `impl.h` et la fonction de traduction
+`load_store_exclusive.cpp`. La sémantique RCpc (acquire) est conservativement
+émulée par la fonction existante `LDAR` (acquire plus fort). Cela ne modifie
+aucune instruction NS1 existante ni le backend JIT commun.
+
+**Pas de portage aveugle de RETAA/RETAB ou CAS/LSE :** ces opérations
+appartiennent toujours à l'overlay expérimental, notamment en raison de
+l'absence d'authentification PAC et des règles de reprise atomique non
+validées. La présence de `LDAPR` ne valide pas CPU6, HOS ou les nouveaux
+opcodes ARM64 restants.
+
+Preuves hôte : les 4 sorties générées sont diffées avec leur vrai propriétaire
+épinglé (modifications uniquement LDAPR), changement d'ancre refusé,
+`a64_translate.cpp` complet syntax-checké par Clang et GCC, vrai décodeur
+Dynarmic exécuté pour toutes les tailles (Clang/GCC, UBSan O0/O2 **4/4 PASS**),
+retour `RET` conservé, `RETA` non ajouté. Le build PS5 et la progression CPU
+invitée restent **P5** ; les 9 commutateurs de recherche restent OFF.
+
 ## Règles de migration
 
 1. **Conserver une seule responsabilité maintenue** pour JIT, buffers, cache texture, shaders, renderer, services et UI; n'admettre des adaptations qu'aux frontières matérielles (ISA/QMD, formats/ABI/services). Pas de fork parallèle du moteur.

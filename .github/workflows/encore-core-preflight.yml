@@ -596,6 +596,7 @@ jobs:
           python3 -B tools/ns2/check_native_puller_semaphore_shutdown_host.py
           python3 -B tools/ns2/check_native_gpu_invalid_bind_owner_host.py
           python3 -B tools/ns2/check_shared_kernel_wait64_host.py
+          python3 -B tools/ns2/check_shared_a64_ldapr_host.py
           python3 -B tools/ns2/check_ampere_scalar_alu_sources_host.py
           python3 -B tools/check-gpu-physical-copy-bounds-host.py
           python3 -B tools/check-gpu-physical-copy-cpp-host.py

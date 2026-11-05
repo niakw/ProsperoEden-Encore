@@ -20,6 +20,7 @@ TESTS = {
     "source_owner": "tools/check-ns2-source-selection.py",
     "release_profile": "tools/check-ns2-production-flags-host.py",
     "research_selector": "tools/ns2/check_native_research_selector.py",
+    "shared_a64_ldapr": "tools/ns2/check_shared_a64_ldapr_host.py",
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",
     "shared_spirv_compiler": "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
     "atomic_qmd3": "tools/ns2/check_native_qmd_atomic_span_host.py",

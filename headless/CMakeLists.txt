@@ -2332,6 +2332,25 @@ if(EDEN_NS2_A64_EXPERIMENTAL)
     target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1)
 endif()
 
+# P0.2: limited A64 LDAPR promotion for the unified PS5 JIT. It uses the
+# original pinned Dynarmic decoder and load/store owner with one reviewed
+# instruction, not the unvalidated RETAA/PAC or LSE research extensions.
+# This runs only in the reviewed final dual-NPDM target and is independent
+# of the opt-in research flags (which remain explicitly forbidden at release).
+set(EDEN_SHARED_NS2_A64_LDAPR OFF)
+if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM)
+    set(EDEN_SHARED_NS2_A64_LDAPR ON)
+    set(EDEN_A64_LDAPR_SOURCE_ROOT
+        "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src")
+    set(EDEN_A64_LDAPR_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
+    include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")
+    # Dynarmic's a64.h includes ./a64.inc, and a64_translate.cpp includes
+    # load_store_exclusive.cpp as source text. All 4 generated files must
+    # resolve under one include root, before the vendored Dynarmic headers.
+    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")
+    message(STATUS "Encore shared A64: reviewed LDAPR acquire (LDAR), no PAC/LSE research")
+endif()
+
 # Six Switch 2 application cores (old 4-core mode remains the default).
 # Kernel threading and scheduler still require full PS5 qualification.
 option(EDEN_NS2_CPU6_EXPERIMENTAL

@@ -45,14 +45,17 @@ missing = [name for name in required if not (root / name).is_file()]
 assert not missing, f"missing release/community files: {missing}"
 
 version_h = (root / "headless/prosperoeden/version.h").read_text()
-app = re.search(r'kAppVersion\s*=\s*"([^"]+)"', version_h)
 package = re.search(r'kPackageVersion\s*=\s*"([0-9.]+)"', version_h)
-assert app and package, "cannot read Encore/package versions"
-release = app.group(1)
+assert package, "cannot read PS5 package version"
 package_version = package.group(1)
-
+assert 'kAppVersion = "Unversioned"' in version_h, (
+    "source must not freeze the release revision at R1")
+assert 'EDEN_LAUNCHER_BUILD_LABEL' in version_h, (
+    "compiled R revision must come from native build definition")
 readme = (root / "README.md").read_text()
-assert f"## Changes in Encore {release}\n" in readme, f"README missing Changes in Encore {release}"
+assert re.search(r"^## Changes in Encore R[0-9]+$", readme, re.M), (
+    "README must retain its historical numbered release changelog")
+
 assert "[INSTALL.md](INSTALL.md)" in readme, "README must link INSTALL.md"
 assert "[SECURITY.md](SECURITY.md)" in readme, "README must link SECURITY.md"
 assert "GPL-3.0-or-later" in readme, "README must state GPL-3.0-or-later"
@@ -128,4 +131,4 @@ for value in (
     assert value in generated, f"missing generated video profile: {value}"
 assert "kPlayStationAutoControls{0.30f, 48, 18, 2, 0.16f, 75, 10, 4, 2, true}" in generated,     "generated PlayStation Auto profile snapshot missing"
 
-print(f"Release metadata preflight PASS (Encore {release}, package {package_version}, PPSA99008)")
+print(f"Release metadata preflight PASS (R revision attested in native artifact, PS5 package {package_version}, PPSA99008)")

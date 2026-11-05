@@ -42,6 +42,9 @@ jobs:
       EXPECTED_SOURCE_SHA: ${{ inputs.source_sha || '5629395324ff65c98b50c44f35f2142a4a92654a' }}
       ARTIFACT_NAME: Prospero.Eden-Encore-PS5-all-on-test
     steps:
+      - name: Checkout release verifier (not the native source being published)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       - name: Verify immutable green source build and artifact
         id: verify
         shell: bash
@@ -66,8 +69,7 @@ jobs:
           count=$(jq --arg name "$ARTIFACT_NAME" '[.artifacts[] | select(.name == $name and .expired == false)] | length' <<< "$artifacts")
           [[ "$count" == "1" ]] || { echo "::error::Expected one unexpired app artifact, found $count"; exit 1; }
           short="${EXPECTED_SOURCE_SHA:0:8}"
-          echo "tag=encore-R1-$short" >> "$GITHUB_OUTPUT"
-          echo "zip=Eden-Encore-$short-FTP-PPSA99008.zip" >> "$GITHUB_OUTPUT"
+          echo "short=$short" >> "$GITHUB_OUTPUT"
           echo "Approved run $SOURCE_RUN_ID, source $EXPECTED_SOURCE_SHA, artifact $ARTIFACT_NAME"
 
       - name: Download approved application artifact
@@ -82,9 +84,14 @@ jobs:
         id: package
         shell: bash
         env:
-          ZIP_NAME: ${{ steps.verify.outputs.zip }}
+          PINNED_SHA: ${{ env.EXPECTED_SOURCE_SHA }}
         run: |
           set -euo pipefail
+          # The compiled R revision is attested in the exact artifact.
+          python3 tools/ci/resolve-encore-release.py pinned-app/PPSA99008             --source-sha "$PINNED_SHA" --github-outputs > release-identifiers.txt
+          cat release-identifiers.txt >> "$GITHUB_OUTPUT"
+          ZIP_NAME=$(sed -n 's/^zip=//p' release-identifiers.txt)
+          [[ "$ZIP_NAME" =~ ^Eden-Encore-R[1-9][0-9]*-[a-f0-9]{8}-FTP-PPSA99008[.]zip$ ]]
           test -s pinned-app/PPSA99008/eboot.bin
           test -s pinned-app/PPSA99008/sce_sys/param.json
           test -d pinned-app/PPSA99008/ui
@@ -136,10 +143,11 @@ jobs:
         env:
           SOURCE_RUN_ID: ${{ env.SOURCE_RUN_ID }}
           EXPECTED_SOURCE_SHA: ${{ env.EXPECTED_SOURCE_SHA }}
+          RELEASE_REVISION: ${{ steps.package.outputs.label }}
         shell: bash
         run: |
           cat > dist/RELEASE-NOTES.md <<EOF
-          # Eden Encore — R1 native PS5 FTP package
+          # Eden Encore — $RELEASE_REVISION native PS5 FTP package
 
           **Source SHA:** \`$EXPECTED_SOURCE_SHA\`
 
@@ -169,8 +177,9 @@ jobs:
       - name: Publish visible latest standard GitHub Release
         shell: bash
         env:
-          TAG: ${{ steps.verify.outputs.tag }}
-          ZIP_NAME: ${{ steps.verify.outputs.zip }}
+          TAG: ${{ steps.package.outputs.tag }}
+          ZIP_NAME: ${{ steps.package.outputs.zip }}
+          RELEASE_REVISION: ${{ steps.package.outputs.label }}
         run: |
           set -euo pipefail
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -179,7 +188,7 @@ jobs:
             gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,tagName,isPrerelease
             exit 0
           fi
-          gh release create "$TAG"             "dist/$ZIP_NAME"             "dist/SHA256SUMS"             --repo "$GITHUB_REPOSITORY"             --target "$EXPECTED_SOURCE_SHA"             --title "Eden Encore R1 - PS5 FTP ($TAG)"             --notes-file dist/RELEASE-NOTES.md             --latest
+          gh release create "$TAG"             "dist/$ZIP_NAME"             "dist/SHA256SUMS"             --repo "$GITHUB_REPOSITORY"             --target "$EXPECTED_SOURCE_SHA"             --title "Eden Encore $RELEASE_REVISION - PS5 FTP ($TAG)"             --notes-file dist/RELEASE-NOTES.md             --latest
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,tagName,isPrerelease
 
       - name: Explain missing GitHub publication permission

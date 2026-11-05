@@ -141,6 +141,43 @@ if the release R tag increases. Real download/restart/cancellation/helper,
 signed source, mount-kind checks, rollback and PS5 hardware tests remain P5.
 No installation is enabled by this host-only tool.
 
+## Release/version identity and localization (05 November 2026)
+
+The release's **R revision** has exactly one origin: the exact native build's
+EDEN_LAUNCHER_BUILD_LABEL compiler definition. Neither a workflow run number,
+the current publisher checkout's HEAD, an old README heading, nor a constant
+R1 in a header can override the compiled value. A custom/unversioned host
+preview shows Unversioned, and a native build without a verified R number is
+rejected instead of claiming to be R1.
+
+The native packager writes a small encore-release.json alongside eboot.bin
+with build_revision (Rx), source_sha (the same SHA CMake compiled) and
+native_content_version (the numeric PS5 contentVersion). The release
+resolver checks that these agree with the approved native artifact and its
+sce_sys/param.json before deriving the GitHub tag, title, FTP ZIP basename
+and generated release notes. make-dist.py uses that manifest for both the
+normal ZIP and the .ffpfsc image name. The PS5 numeric version is distinct
+from the user-facing R revision; it must increase for a real upgrade.
+
+One immutable historical exception exists: the previously published
+encore-R1-56293953 FTP artifact has no attestation because it predates the
+change. Only the exact pinned source SHA together with its original PS5
+contentVersion 01.000.041 may be identified as R1. Old release assets are
+not rewritten. Later missing or inconsistent attestations fail closed.
+No native update installation is activated by these metadata changes.
+
+All **29 existing locale catalogs** now include the 466 active UI strings,
+including the R21 manual/automatic checking controls and R25 theme, logo,
+RGB, wallpaper and overlay settings. Both maintained French catalogs and
+the Spanish primary catalog receive contextual UI translations; additional
+language text includes provisional short labels requiring native font,
+layout and human wording review. The French embedded fallback and
+launcher.pot have been regenerated from the same source set.
+The strings checker and the full-coverage gate pass. Release status
+messages are localized on the launcher owner thread; the background
+GitHub worker returns structured status and never accesses a translation
+catalog while performing the network request.
+
 ## Tests and remaining qualification
 
 - Seven launcher C++ sources compile in host syntax checks.

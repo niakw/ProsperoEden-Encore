@@ -6,7 +6,12 @@
 namespace Eden {
 // Keep the separately versioned public package metadata stable.
 // The launcher footer uses the EXACT R-label supplied by CMake at build time.
-inline constexpr const char* kAppVersion = "R1";
+// No fabricated R revision in host previews or custom unversioned builds.
+// Native packaging passes the exact release label via the build system.
+inline constexpr const char* kAppVersion = "Unversioned";
+#if defined(PS5_NATIVE) && !defined(EDEN_LAUNCHER_BUILD_LABEL)
+#error "Native Eden Encore requires EDEN_LAUNCHER_BUILD_LABEL from the source build"
+#endif
 #ifdef EDEN_LAUNCHER_BUILD_LABEL
 inline constexpr const char* kBuildVersion = EDEN_LAUNCHER_BUILD_LABEL;
 #else

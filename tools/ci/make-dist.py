@@ -28,11 +28,24 @@ if image_only:
 if len(args) != 1:
     sys.exit(__doc__.strip())
 app = pathlib.Path(args[0]).resolve()
-version_h = (root / 'headless/prosperoeden/version.h').read_text()
-match = re.search(r'kAppVersion\s*=\s*"([^"]+)"', version_h)
-if not match:
-    sys.exit('Cannot read Encore release name from version.h')
-release = match.group(1)
+# The compiled app, not a hardcoded header or workflow HEAD, determines R.
+import importlib.util
+spec = importlib.util.spec_from_file_location("resolve_encore_release",
+                                            root / "tools/ci/resolve-encore-release.py")
+resolver = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(resolver)
+attestation_file = app / "encore-release.json"
+if not attestation_file.is_file():
+    raise SystemExit("Cannot package unversioned native app: encore-release.json missing")
+attestation = json.loads(attestation_file.read_text(encoding="utf-8"))
+source_sha = attestation.get("source_sha")
+if not isinstance(source_sha, str) or not re.fullmatch(r"[a-f0-9]{40}", source_sha):
+    raise SystemExit("Invalid source SHA in release attestation")
+try:
+    release_info = resolver.resolve(app, source_sha)
+except (OSError, ValueError, TypeError) as exc:
+    raise SystemExit(f"Native release attestation rejected: {exc}") from exc
+release = release_info["label"]
 dist = root / 'dist'
 image = dist / f'Prospero.Eden-Encore-{release}.ffpfsc'
 if image_only:
@@ -115,7 +128,13 @@ match = re.search(rf'^## Changes in {re.escape(heading)}\n(.*?)(?=^## )', readme
 if match:
     (dist / 'release-notes.md').write_text(match.group(1).strip() + '\n')
 else:
-    sys.exit(f'README.md has no "## Changes in {heading}" section; release notes are required')
+    # Do not publish outdated R1 notes for an R25 artifact.
+    (dist / 'release-notes.md').write_text(
+        f'# Eden Encore {release} — native PS5 build\n\n'
+        f'Compiled source SHA: {source_sha}\n\n'
+        'Package metadata and checksums are bound to this artifact. '
+        'A successful build does not establish gameplay or console stability.\n'
+    )
 print(f'{archive} {digest}')
 print(f'{ftp_archive} {ftp_digest}')
 print(f'{image} {image_digest}')

@@ -163,6 +163,26 @@ import re
 value['contentVersion'] = re.search(r'kPackageVersion = "([0-9.]+)"',
     (root / 'headless/prosperoeden/version.h').read_text()).group(1)
 value['localizedParameters']['en-US']['titleName'] = 'Prospero.Eden Encore'
+# Bind release metadata to the exact compiled R-label and source commit.
+revision = __import__('re').search(r'^EDEN_LAUNCHER_BUILD_LABEL:STRING=(R[1-9][0-9]{0,5})$',
+                                     (root / 'build/headless-native/CMakeCache.txt').read_text(), __import__('re').M)
+assert revision, 'Missing attested compiled launcher R revision in CMakeCache'
+import subprocess
+source_sha = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'],
+                                     text=True).strip()
+assert re.fullmatch(r'[0-9a-f]{40}', source_sha)
+# Attest the SHA CMake actually received to compile the native executable,
+# not merely whichever commit happens to be checked out at package time.
+native_cache = (root / 'build/headless-native/CMakeCache.txt').read_text()
+compiled_source = re.search(r'^EDEN_ENCORE_SOURCE_COMMIT:(?:STRING|UNINITIALIZED)=([0-9a-f]{40})$',
+                            native_cache, re.M)
+assert compiled_source and compiled_source.group(1) == source_sha, (
+    'native executable source SHA differs from the packaging checkout')
+(app / 'encore-release.json').write_text(json.dumps({
+    'build_revision': revision.group(1),
+    'source_sha': source_sha,
+    'native_content_version': value['contentVersion'],
+}, indent=2) + '\n')
 value['pubtools']['loudnessSnd0'] = '-28.00'
 # The console gives a 120 Hz output (Settings > Video, headless/display_refresh.h) only to a title
 # that declares it. Declaring it changes nothing by itself: the output stays at 60 Hz until asked.

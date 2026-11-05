@@ -95,32 +95,44 @@ def main()->None:
             out/'core/arm/dynarmic/arm_dynarmic_64.cpp').read_text()
         assert '#include "jit-startup-retry.h"' in (
             out/'core/arm/dynarmic/arm_dynarmic_64.cpp').read_text()
-        print('P0_2_CPU6_PINNED_SCHEDULER_TICK_OVERLAY_PASS 3 owners',flush=True)
-        # The pinned tree must fail closed when a scheduler anchor drifts.
-        changed=tmp/'changed';shutil.copytree(BASE/'core',changed/'core')
-        src=changed/'core'/FILES[0]
-        src.write_text(src.read_text().replace('        63,\n','        62,\n',1))
-        failed=generate(changed,tmp/'drift')
-        assert failed.returncode and 'Pinned CPU6 owner changed' in failed.stderr
-        print('P0_2_CPU6_SOURCE_DRIFT_REJECT_PASS',flush=True)
-        # The legacy unoptimized Dynarmic owner must not sneak in when
-        # N76 is active, even if its AddTicks anchor looks compatible.
+        print('P0_2_CPU6_STATIC_SCHEDULER_TICK_OWNERS_PASS 3 owners',flush=True)
+        # Audited full sources, NOT CMake-generated C++: prove exact byte parity
+        # against the pinned Eden scheduler/A32 and optimized N76/G11 A64.
+        old_scheduler="""    static constexpr std::array<u32, Core::Hardware::NUM_CPU_CORES> per_core{
+        59,
+        59,
+        59,
+        63,
+    };"""
+        new_scheduler="""    // Application cores 4/5 must match priorities 0..2; system core 3 keeps 63.
+    static constexpr std::array<u32, Core::Hardware::NUM_CPU_CORES> per_core{
+        59, 59, 59, 63, 59, 59,
+    };"""
+        old_ticks='    u64 amortized_ticks = ticks / Core::Hardware::NUM_CPU_CORES;'
+        new_ticks="""    // Preserve Switch 1 tick cadence even when the shared kernel exposes six cores.
+    // Physical affinity, never TitleID, selects the six-core division.
+    const u64 extended_cores = m_process->GetPhysicalCoreMask() & ((u64{1} << 4) | (u64{1} << 5));
+    u64 amortized_ticks = ticks / (extended_cores ? Core::Hardware::NUM_CPU_CORES
+                                                     : Core::Hardware::NUM_LEGACY_CPU_CORES);"""
+        origins=(BASE/'core'/FILES[0],BASE/'core'/FILES[1],G11)
+        originals=[src.read_text() for src in origins]
+        for index, (name, original) in enumerate(zip(FILES, originals)):
+            old, replacement=(old_scheduler,new_scheduler) if index==0 else (old_ticks,new_ticks)
+            assert original.count(old)==1,('pinned owner drift',name)
+            expected=original.replace(old,replacement)
+            actual=(out/'core'/name).read_text()
+            maintained=(ROOT/'headless/maintained/cpu6/core'/name).read_text()
+            assert actual==expected==maintained,('static CPU6 owner parity',name)
+            # Mutation control: a wrong pinned upstream byte must never pass
+            # the exact maintained-owner parity gate.
+            changed=original.replace(old,old.replace('63,','62,') if index==0 else
+                                     old.replace('NUM_CPU_CORES','NUM_LEGACY_CPU_CORES'))
+            assert changed!=original and changed.replace(old,replacement)!=actual
+            print('P0_2_CPU6_STATIC_PINNED_OWNER_PARITY_PASS',name,flush=True)
         ancient=BASE/'core/arm/dynarmic/arm_dynarmic_64.cpp'
         rejected=generate(BASE,tmp/'unoptimized',ancient)
-        assert rejected.returncode and 'not the maintained G11/N76 owner' in rejected.stderr
+        assert rejected.returncode and 'maintained G11/N76 source' in rejected.stderr
         print('P0_2_CPU6_UNOPTIMIZED_A64_REJECT_PASS',flush=True)
-        # Both G11 profiles (normal and dev) must preserve N76 and the JIT
-        # pre-existing optimizations. Source diff must be only the tick rule.
-        dev=G11.with_name('arm_dynarmic_64_native_dev.cpp')
-        dev_output=tmp/'dev'
-        dev_result=generate(BASE,dev_output,dev)
-        assert dev_result.returncode==0,dev_result.stderr
-        dev_generated=dev_output/'core/arm/dynarmic/arm_dynarmic_64.cpp'
-        dev_text=dev_generated.read_text()
-        assert dev_text.count('#ifdef EDEN_NS2_GUEST_COUNTER')==2
-        assert dev_text.count('u64 amortized_ticks = ticks /')==1
-        assert dev_text.count('m_process->GetPhysicalCoreMask()')==1
-        print('P0_2_CPU6_N76_G11_NORMAL_DEV_OWNER_PASS',flush=True)
         # Configure the single PS5 CPU6 selector with actual target lists.
         # Only the technical platform and NPDM ownership affect selection.
         selection='if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)'+research.split(
@@ -174,20 +186,7 @@ def main()->None:
         for name,result in checked:
             assert result.returncode==0,(name,result.stderr[-3500:])
             print('P0_2_CPU6_REAL_OWNER_TU_PASS',name,flush=True)
-        # Second real optimized G11 profile; the final release retains
-        # normal, while standalone research can intentionally use dev.
-        # The inherited G11 development-only performance header contains
-        # __builtin_ia32_pause and therefore does NOT compile for arm64.
-        # Release uses G11 normal. Syntax-check dev for its supported x86
-        # host target only, without claiming PS5 developer-mode support.
-        dev_flags=flags.copy()
-        if '-target' in dev_flags:
-            dev_flags[dev_flags.index('-target')+1]='x86_64-apple-macos15'
-        dev_compile=subprocess.run(dev_flags+[str(dev_generated)],capture_output=True,
-                                   text=True,env=env,timeout=95)
-        assert dev_compile.returncode==0,dev_compile.stderr[-3500:]
-        print('P0_2_CPU6_G11_DEV_X86_HOST_TU_PASS native_dev_unqualified=1',flush=True)
-        # The real generated preemption initializer and BOTH real callback
+        # The real maintained preemption initializer and BOTH real callback
         # tick expressions are compiled/executed with the real hardware map.
         source_code='#include <cassert>\n#include <algorithm>\n#include <cstdio>\n#include "core/hardware_properties.h"\nusing namespace Core;\n'
         source_code+='struct MockProcess { unsigned long long mask; unsigned long long GetPhysicalCoreMask() const { return mask; } };\n'

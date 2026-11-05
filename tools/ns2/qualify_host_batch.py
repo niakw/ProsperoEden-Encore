@@ -27,6 +27,7 @@ TESTS = {
     "qmd32_real_staging": "tools/ns2/check_native_qmd_32_slots_host.py",
     "nvdrv_4k_lifetime": "tools/ns2/check_native_nvdrv_allocation_range_host.py",
     "gp_fifo_preinit": "tools/ns2/check_native_gpfifo_preinit_host.py",
+    "dma_unbound_guard": "tools/ns2/check_native_dma_unbound_subchannel_host.py",
     "sparse_page_types": "tools/check-sparse-slot-reuse-host.py",
     "spirv_cbuf": "tools/ns2/check_native_spirv_cbuf_span_host.py",
     "sysmix_registry": "tools/ns2/check_native_sysmix_registry_host.py",

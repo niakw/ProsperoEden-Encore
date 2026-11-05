@@ -166,6 +166,32 @@ refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
 le rejet des vecteurs débordants et la traduction d'un LDG capturé.
 **Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
 
+**P2.2/P2.5 — copies Vulkan d'images Depth/Stencil et layout
+de réinterprétation (05/11, source/hôte) :** le propriétaire
+Vulkan actif et son générateur de portage ont été alignés sur
+deux règles Vulkan préalablement violées. Une région
+VkBufferImageCopy ne peut pas porter simultanément les
+aspects DEPTH et STENCIL (VUID-09103) : la copie de
+réinterprétation sélectionne désormais la profondeur pour
+les images combinées, tout en conservant **les masques
+complets** sur les barrières d'images. Cette correction
+n'implémente **pas** la préservation indépendante du
+plan stencil ; les cas nécessitant ses valeurs sont à
+qualifier/corriger distinctement, sans succès fictif.
+De plus, la barrière de destination passe à
+TRANSFER_DST_OPTIMAL : le CopyBufferToImage doit
+nommer **ce layout exact**, pas GENERAL (VUID-00180).
+
+Les précédentes protections de budget, copie vide, MSAA
+et calcul de coordonnées restent inchangées. Preuve hôte
+sur la vraie lambda d'aspects exécutée Clang/GCC O0/O2
+avec UBSan, vérification des régions source/destination
+et des layouts/barrières en code, et aller-retour exact
+des cinq transformations du générateur vers son owner
+actif ; anciens tests F07 source-exécutés verts.
+Aucun rendu ou support Depth/Stencil complet PS5
+n'est revendiqué (P5).
+
 **P2.4 — LEPC dynamique en Geometry avec provenance GMMU (05/11,
 source/hôte) :** l'adresse d'une instruction LEPC hors du prologue
 statique ne pouvait pas être reconstruite depuis les adresses

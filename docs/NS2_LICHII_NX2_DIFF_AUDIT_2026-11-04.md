@@ -16,6 +16,28 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### Vulkan — copie d'images combinées et layout, 05/11
+
+Audit du [correctif Lichii #89](https://github.com/zortos293/Lichii/commit/724aede4e)
+sur le propriétaire PS5 vk_texture_cache_cost.cpp :
+les copies tampon ↔ image de réinterprétation utilisaient
+un aspect combiné Depth|Stencil non autorisé par
+VUID-09103. Le code commun choisit désormais le seul
+aspect Depth pour ses régions tampon, mais conserve
+Depth|Stencil dans les barrières. La valeur stencil
+n'est **pas** conservée par cette seule transformation
+et reste une limitation explicite.
+
+La destination est transitionnée vers TRANSFER_DST_OPTIMAL
+avant CopyBufferToImage ; le layout indiqué par cette
+commande correspond maintenant à la barrière (VUID-00180).
+Les cinq transformations font partie du vrai générateur
+de l'overlay pour survivre aux régénérations. Témoin
+hôte exécute la lambda d'aspect réelle sur les 4 masques
+et vérifie le couple barrière/commande, ainsi que
+l'aller-retour du générateur, Clang/GCC UBSan O0/O2.
+Aucune preuve de rendu GPU PS5/NS2.
+
 ### P2.4 — LEPC Geometry à PC GPU invité connu, 05/11
 
 Comparaison ciblée avec le chemin source Lichii : le LEPC

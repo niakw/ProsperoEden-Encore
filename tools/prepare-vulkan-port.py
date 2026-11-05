@@ -6986,3 +6986,56 @@ if tess_pipeline_code.count(tess_cbuf_old) != 3:
     raise RuntimeError("P2.4 tessellation CBUF stage replay drift")
 tess_pipeline_path.write_text(
     tess_pipeline_code.replace(tess_cbuf_old, tess_cbuf_new))
+
+# P2.2/P2.5 post-F07 Vulkan image reinterpretation correctness.
+# Keep the exact generator recipe in sync with the reviewed active owner.
+# Vulkan buffer/image copy regions name ONLY ONE aspect even when the
+# attachment itself has combined depth+stencil. Barriers keep full masks.
+# A future stencil-preserving reinterpret needs independent scratch copies.
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "    // Scratch vectors are created after native extent and budget validation.\n"
+    "    const VkImageAspectFlags src_aspect_mask = src.AspectMask();\n"
+    "    const VkImageAspectFlags dst_aspect_mask = dst.AspectMask();\n\n#ifdef PS5_NATIVE",
+    "    // Scratch vectors are created after native extent and budget validation.\n"
+    "    const VkImageAspectFlags src_aspect_mask = src.AspectMask();\n"
+    "    const VkImageAspectFlags dst_aspect_mask = dst.AspectMask();\n"
+    "    // VkBufferImageCopy names a SINGLE depth/stencil aspect. Passing\n"
+    "    // DEPTH|STENCIL in one region violates VUID-09103 and can invalidate\n"
+    "    // the Vulkan device. Preserve full masks on image barriers, but\n"
+    "    // reinterpret the depth plane only for combined DS aliases.\n"
+    "    // This does not claim stencil values are copied; that would need a\n"
+    "    // separately sized/reinterpreted scratch region and explicit copies.\n"
+    "    const auto copy_aspect = [](VkImageAspectFlags mask) {\n"
+    "        return mask == (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT)\n"
+    "                   ? VkImageAspectFlags{VK_IMAGE_ASPECT_DEPTH_BIT} : mask;\n"
+    "    };\n"
+    "    const VkImageAspectFlags src_copy_aspect = copy_aspect(src_aspect_mask);\n"
+    "    const VkImageAspectFlags dst_copy_aspect = copy_aspect(dst_aspect_mask);\n\n#ifdef PS5_NATIVE",
+    "P2.5 Vulkan reinterpret single-aspect depth-stencil VkBufferImageCopy")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "                           [src_aspect_mask, bpp_in, bpp_out](const auto& copy) {",
+    "                           [src_copy_aspect, bpp_in, bpp_out](const auto& copy) {",
+    "P2.5 Vulkan reinterpret source copy aspect")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "                               return MakeBufferImageCopy(copy2, true, src_aspect_mask);",
+    "                               return MakeBufferImageCopy(copy2, true, src_copy_aspect);",
+    "P2.5 Vulkan reinterpret source copy aspect")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "    std::ranges::transform(copies, vk_out_copies.begin(), [dst_aspect_mask](const auto& copy) {\n"
+    "        return MakeBufferImageCopy(copy, false, dst_aspect_mask);",
+    "    std::ranges::transform(copies, vk_out_copies.begin(), [dst_copy_aspect](const auto& copy) {\n"
+    "        return MakeBufferImageCopy(copy, false, dst_copy_aspect);",
+    "P2.5 Vulkan reinterpret destination copy aspect")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "        cmdbuf.CopyBufferToImage(copy_buffer, dst_image, VK_IMAGE_LAYOUT_GENERAL, vk_out_copies);",
+    "        // The preceding middle_out_barrier transitions dst to\n"
+    "        // TRANSFER_DST_OPTIMAL. The Vulkan command MUST name that actual\n"
+    "        // layout (VUID-vkCmdCopyBufferToImage-dstImageLayout-00180).\n"
+    "        cmdbuf.CopyBufferToImage(copy_buffer, dst_image,\n"
+    "                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vk_out_copies);",
+    "P2.5 Vulkan reinterpret actual transfer destination layout")

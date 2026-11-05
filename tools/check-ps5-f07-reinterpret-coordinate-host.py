@@ -33,7 +33,15 @@ transform_start="    std::ranges::transform(copies, vk_in_copies.begin(),"
 assert body.count(size_start)==body.count(transform_start)==1
 assert body.index(size_start) < body.index(transform_start) < body.index(finish)
 assert body.index("if (total_size > scratch_max)") < body.index(transform_start)
-conversion=(body[body.index(begin):body.index(size_start)] +
+# The actual production copy uses one Vulkan aspect per buffer/image
+# region, so pull the reviewed aspect normalization too. The fixture must
+# not synthesize an undefined src_copy_aspect that the source doesn't own.
+aspect_start="    const auto copy_aspect = [](VkImageAspectFlags mask) {"
+aspect_end="    const VkImageAspectFlags dst_copy_aspect = copy_aspect(dst_aspect_mask);"
+assert body.count(aspect_start)==body.count(aspect_end)==1
+aspect_production=body[body.index(aspect_start):body.index(aspect_end)]
+conversion=(aspect_production + "\n" +
+            body[body.index(begin):body.index(size_start)] +
             body[body.index(transform_start):body.index(finish)])
 for token in ("if (src_block_width == 0 || dst_block_width == 0)",
               "if (bpp_in == 0 || bpp_out == 0)",
@@ -61,6 +69,8 @@ using u32=std::uint32_t;
 using u64=std::uint64_t;
 using s64=std::int64_t;
 using VkImageAspectFlags=u32;
+constexpr VkImageAspectFlags VK_IMAGE_ASPECT_DEPTH_BIT=2;
+constexpr VkImageAspectFlags VK_IMAGE_ASPECT_STENCIL_BIT=4;
 struct Offset {std::int32_t x{};};
 struct Extent {std::uint32_t width{},height{1},depth{1};};
 struct ImageCopy {Offset src_offset{};Extent extent{};};

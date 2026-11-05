@@ -226,7 +226,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
+              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-runtime/metadata \
               tools/ns2/test_nso_preflight.cpp \
               -o "build-ns2-a64/nso-preflight-${compiler//+/}"
             "build-ns2-a64/nso-preflight-${compiler//+/}"
@@ -238,7 +238,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
+              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-runtime/metadata \
               tools/ns2/test_nso_process_handoff.cpp \
               -o "build-ns2-a64/handoff-${compiler//+/}"
             "build-ns2-a64/handoff-${compiler//+/}"
@@ -252,7 +252,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=address,undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
+              -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-runtime/metadata \
               tools/ns2/test_kprocess_code_admission.cpp \
               -o "build-ns2-a64/kprocess-code-${compiler//+/}"
             "build-ns2-a64/kprocess-code-${compiler//+/}"
@@ -682,7 +682,7 @@ jobs:
           python3 tools/ns2/test_process_run_source.py
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -DEDEN_NS2_PROCESS_RUN_GUARD=1 -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
+            -DEDEN_NS2_PROCESS_RUN_GUARD=1 -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-runtime/metadata \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp
@@ -917,7 +917,7 @@ jobs:
         run: |
           set -euo pipefail
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
-            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src \
+            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-runtime/metadata \
             tools/ns2/test_content_formats.cpp \
             -o build-ns2-a64/ns2-content-format-test
           build-ns2-a64/ns2-content-format-test
@@ -937,7 +937,7 @@ jobs:
         run: python3 -B tools/ns2/check_gpu_worker_registered_handles_oom_host.py
       - name: P2.7 verify NS2 GPU worker teardown fence on all live GPU objects
         run: python3 -B tools/ns2/check_gpu_worker_teardown_gpu_drain_host.py
-      - name: Run actual ProgramMetadata parser against synthetic Switch 1/2 NPDM
+      - name: Execute unified ProgramMetadata parser against synthetic Switch 1/2 NPDM
         shell: bash
         run: |
           set -euo pipefail
@@ -945,10 +945,10 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src -Ivendor/encore-active/ns2-helpers/include \
+            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-runtime/metadata -Ivendor/encore-active/ns2-helpers/include \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
-            vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp \
+            vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
             -o build-ns2-a64/npdm-real-test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
             build-ns2-a64/npdm-real-test

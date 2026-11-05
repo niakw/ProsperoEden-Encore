@@ -14,10 +14,14 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = Path(os.environ.get(
     "EDEN_GPU_DIRTY_HEADER_SOURCE",
-    str(ROOT / "vendor/sources/eden/src/core/gpu_dirty_memory_manager.h")))
+    str(ROOT / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h")))
 body = OWNER.read_text()
 assert body.count("std::scoped_lock gather_lock(gather_guard);") == 1
 assert body.count("std::mutex gather_guard;") == 1
+assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in (
+    ROOT/"headless/CMakeLists.txt").read_text()
+assert (ROOT/"vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text().count(
+    "std::mutex gather_guard;") == 0, "pinned external source must remain pristine"
 assert body.index("std::scoped_lock gather_lock(gather_guard);") < body.index(
     "front_buffer.swap(back_buffer)")
 assert body.index("front_buffer.clear();") < body.index("private:")

@@ -75,6 +75,29 @@ gather_deltas = (
 for before, after in gather_deltas:
     assert expected.count(before) == 1
     expected = expected.replace(before, after)
+# The shipping PS5 header is a maintained owner. The unchanged pinned Eden
+# source remains the exact negative-oracle baseline for these M09 rewrites.
+# Serialize the consumer after preserving every existing Collect and batch
+# behavior, rather than silently patching vendor/sources/eden.
+gather_before = """    void Gather(std::function<void(PAddr, size_t)>& callback) {
+        {
+            std::scoped_lock lk(guard);"""
+gather_after = """    void Gather(std::function<void(PAddr, size_t)>& callback) {
+        // Video decode can gather GPU dirty regions off the graphics worker.
+        // Keep the complete swap, callback walk and clear exclusive among
+        // gatherers. Collect still runs under its independent producer guard.
+        std::scoped_lock gather_lock(gather_guard);
+        {
+            std::scoped_lock lk(guard);"""
+field_before = """    std::atomic<TransformAddress> current{};
+    std::mutex guard;
+    std::vector<TransformAddress> back_buffer;"""
+field_after = """    std::atomic<TransformAddress> current{};
+    std::mutex guard;
+    std::mutex gather_guard;
+    std::vector<TransformAddress> back_buffer;"""
+assert expected.count(gather_before) == 1 and expected.count(field_before) == 1
+expected = expected.replace(gather_before, gather_after).replace(field_before, field_after)
 assert maintained == expected
 assert 'set(EDEN_NATIVE_DIRTY_HEADER_ROOT' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake

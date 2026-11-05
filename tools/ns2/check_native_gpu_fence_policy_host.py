@@ -21,7 +21,7 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     code=source[source.index(start):]
     assert stop in code
     policy=code[:code.index(stop)+len(stop)]
-    assert '#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH' in policy
+    assert '#ifdef PS5_NATIVE' in policy
     assert 'NativeGpuChannelRegistry::' in policy
     assert 'signal_sync = explicit_sync && user_sync;' in policy
     policies.append(policy)
@@ -75,7 +75,7 @@ int main() {
         const unsigned before=registry.probes;
         dma.signal_sync=true; // stale state must never bypass a false barrier
         dma.NextListFence();
-#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH
+#ifdef PS5_NATIVE
         const bool expected=explicit_sync && (user_sync || native);
         // Deferred native authorization is not needed unless an explicit
         // GPU barrier is present and the host setting did not already wait.
@@ -102,11 +102,11 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fence-') as temp:
                 cmd=[compiler,'-std=c++20',f'-O{opt}','-Wall','-Wextra',
                      '-Werror','-pedantic','-fsanitize=undefined',
                      '-fno-sanitize-recover=all',str(src),'-o',str(exe)]
-                if native:cmd.insert(1,'-DEDEN_NS2_NATIVE_GPU_DISPATCH=1')
+                if native:cmd.insert(1,'-DPS5_NATIVE=1')
                 built=subprocess.run(cmd,env=env,capture_output=True,text=True,timeout=45)
                 assert built.returncode==0,(compiler,built.stderr[-3300:])
                 run=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=15)
                 assert run.returncode==0,(compiler,run.stderr[-2500:])
                 print('P2_7_GPU_FIFO_FENCE_POLICY_PASS',Path(compiler).name,
-                      f'O{opt}','NS2-native' if native else 'NS1-legacy',
+                      f'O{opt}','PS5-unified' if native else 'desktop-legacy',
                       'cases=8',flush=True)

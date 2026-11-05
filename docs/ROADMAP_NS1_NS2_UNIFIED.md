@@ -423,6 +423,38 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — index de tableau par extraction de champ
+binaire non signé (05/11, source/hôte) :**
+le backend SPIR-V partagé émet
+OpBitFieldUExtract(base, offset, count). Lorsque
+les deux paramètres de champ sont de **vrais
+U32 immédiats**, avec offset dans [0,31],
+count dans [1,32-offset] et aucune condition
+d'indice variable, le résultat appartient
+nécessairement à [0,2^count-1]. Le collecteur
+d'atomiques Compute natif démontre alors
+l'alignement d'un éventuel décalage gauche
+constant et l'absence de perte de bits en U32.
+Il peut accepter une unique base constante
+alignée, contrôlée contre le débordement.
+Le maximum plus la largeur atomique est
+authentifié sur la taille réelle du SSBO QMD3
+et sa VA GPU de 49 bits avant publication.
+
+Les paramètres d'extraction dynamiques,
+count nul, offset + count hors 32 bits,
+shift variable, somme débordante ou
+alignement insuffisant sont refusés.
+**Tests hôte :** vrais blocs IR
+GetRegister→BitFieldUExtract→ShiftLeftLogical32
+→IAdd32→StorageAtomic, tailles de buffers
+juste suffisantes/insuffisantes, extraction
+à l'extrémité du registre, cas négatifs,
+Clang/GCC UBSan O0/O2. Aucun patch du
+backend SPIR-V commun, aucun patch NS1,
+et **aucune exécution GPU PS5 revendiquée**.
+P2.3 global/P5 restent ouverts.
+
 **P2.3 — index atomique de tableau avec décalage gauche
 constant (05/11, source/hôte) :** les expressions
 d'index en éléments (registre AND masque) << shift

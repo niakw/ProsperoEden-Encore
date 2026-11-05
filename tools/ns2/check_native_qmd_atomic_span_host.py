@@ -24,7 +24,13 @@ assert '*and_mask > std::numeric_limits<u32>::max() - width - base' in atomic_ow
 assert 'storage.gpu_address & (span.width - 1U)' in atomic_owner
 assert 'Shader::IR::Opcode::ShiftLeftLogical32' in atomic_owner
 assert 'shift >= 32' in atomic_owner
-assert '*mask > (std::numeric_limits<u32>::max() >> shift)' in atomic_owner
+assert '*bound > (std::numeric_limits<u32>::max() >> shift)' in atomic_owner
+assert 'NativeQmdAtomicLiteralExtractMax(' in atomic_owner
+assert 'Shader::IR::Opcode::BitFieldUExtract' in atomic_owner
+assert 'bits > 32 - first' in atomic_owner
+assert 'ctx.OpBitFieldUExtract(ctx.U32[1], base, offset, count)' in (
+    ROOT/'vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_integer.cpp'
+).read_text()
 assert 'instruction->GetOpcode() != Shader::IR::Opcode::BitwiseAnd32' in atomic_owner
 assert 'const Id index{StorageIndex(ctx, offset, element_size)};' in emitter
 assert 'return ctx.OpShiftRightLogical(ctx.U32[1], index, shift_id);' in emitter

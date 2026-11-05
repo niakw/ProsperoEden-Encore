@@ -134,6 +134,63 @@ static void CheckMaskedAtomic(Opcode op, u32 slot, u32 mask, bool expected,
     }
 }
 
+// Actual SPIR-V OpBitFieldUExtract uses U32 input, literal bit offset and
+// count: a count of N has range [0,2^N-1] independent of the input.
+// The only admitted byte address applies a checked constant shift, then
+// optionally an aligned, non-wrapping base.
+static std::optional<std::vector<NativeAtomicSpan>>
+MakeExtractIrSpans(Opcode op, u32 slot, u32 bit_offset, u32 bit_count,
+                   u32 shift = 2, u32 base = 0,
+                   bool variable_offset = false,
+                   bool variable_count = false,
+                   bool variable_shift = false,
+                   bool extra_dynamic_add = false) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{16};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program ir{};
+    ir.stage=Shader::Stage::Compute;
+    ir.blocks.push_back(&block);
+    ir.info.storage_buffers_descriptors.push_back(
+        {.cbuf_index=0,.cbuf_offset=0x310,.count=1,.is_written=true});
+    block.AppendNewInst(Opcode::GetRegister,{Value{Shader::IR::Reg::R12}});
+    const Value reg{&block.back()};
+    block.AppendNewInst(Opcode::BitFieldUExtract,
+        {reg,
+         variable_offset ? reg : Value{bit_offset},
+         variable_count ? reg : Value{bit_count}});
+    Value offset{&block.back()};
+    block.AppendNewInst(Opcode::ShiftLeftLogical32,
+        {offset,variable_shift ? reg : Value{shift}});
+    offset=Value{&block.back()};
+    if (base) {
+        block.AppendNewInst(Opcode::IAdd32,{offset,Value{base}});
+        offset=Value{&block.back()};
+    }
+    if (extra_dynamic_add) {
+        block.AppendNewInst(Opcode::IAdd32,{offset,reg});
+        offset=Value{&block.back()};
+    }
+    block.AppendNewInst(op,{Value{slot},offset,Value{u32{1}}});
+    return CollectNativeQmdAtomicSpans(ir);
+}
+
+static void CheckExtractAtomic(Opcode op, u32 bit_offset, u32 bit_count,
+                               u32 shift, u32 base, bool expected) {
+    const auto got=MakeExtractIrSpans(op,0,bit_offset,bit_count,shift,base);
+    if (bool(got)!=expected)
+        std::fprintf(stderr,"UExtract atomic=%u offset=%u count=%u "
+                            "shift=%u base=%u expected=%u got=%u\n",
+            static_cast<u32>(op),bit_offset,bit_count,shift,base,
+            expected,bool(got));
+    assert(bool(got)==expected);
+    if (expected) {
+        const u32 bound=(bit_count==32 ? 0xffffffffU
+                                     : (u32{1}<<bit_count)-1U);
+        assert(got->size()==1 && got->front().binding==0 &&
+               got->front().offset==(bound<<shift)+base);
+    }
+}
+
 int main() {
     static_assert(NativeAtomicSpan{1,4,4} == NativeAtomicSpan{1,4,4});
     Test(Opcode::StorageAtomicIAdd32,0,0,true);
@@ -196,6 +253,31 @@ int main() {
                       false,true,true,4,false,false,true,2);
     CheckMaskedAtomic(Opcode::StorageAtomicExchange64,0,0x07,true,
                       true,false,true,8,true,false,true,3);
+    // Native 32-bit unsigned bitfield extraction also proves a range
+    // when offset/count are real U32 literals. The same shift and base
+    // owners require exact, non-wrapping 4/8-byte address alignment.
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,3,4,2,0,true);
+    CheckExtractAtomic(Opcode::StorageAtomicExchange64,0,3,3,0,true);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,28,4,2,4,true);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd64,0,3,3,8,true);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,0,4,1,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd64,0,3,2,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,31,2,2,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,32,1,2,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,0,0,2,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,0,32,2,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,0,4,32,0,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,0,4,2,2,false);
+    CheckExtractAtomic(Opcode::StorageAtomicIAdd32,0,4,2,0xffffffc0U,false);
+    assert(!MakeExtractIrSpans(Opcode::StorageAtomicIAdd32,0,3,4,
+                               2,0,true));
+    assert(!MakeExtractIrSpans(Opcode::StorageAtomicIAdd32,0,3,4,
+                               2,0,false,true));
+    assert(!MakeExtractIrSpans(Opcode::StorageAtomicIAdd32,0,3,4,
+                               2,0,false,false,true));
+    assert(!MakeExtractIrSpans(Opcode::StorageAtomicIAdd32,0,3,4,
+                               2,0,false,false,false,true));
+
     // Low alignment bits, oversized mask, non-integral constant base,
     // overflow, a second dynamic addition, and non-atomic 32x2 fail closed.
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3e,false);
@@ -281,6 +363,25 @@ int main() {
     assert(!NativeQmdAtomicSpansFitBindings(*shifted_with_base,shifted_buffer));
     shifted_buffer[0].bytes=68;
     assert(NativeQmdAtomicSpansFitBindings(*shifted_with_base,shifted_buffer));
+    const auto extracted32=MakeExtractIrSpans(
+        Opcode::StorageAtomicIAdd32,0,3,4,2);
+    const auto extracted64=MakeExtractIrSpans(
+        Opcode::StorageAtomicIAdd64,0,0,3,3);
+    const auto extracted_with_base=MakeExtractIrSpans(
+        Opcode::StorageAtomicIAdd32,0,3,4,2,4);
+    assert(extracted32 && extracted64 && extracted_with_base);
+    assert(extracted32->front().offset==60 &&
+           extracted64->front().offset==56 &&
+           extracted_with_base->front().offset==64);
+    assert(NativeQmdAtomicSpansFitBindings(*extracted32,real_bindings));
+    assert(NativeQmdAtomicSpansFitBindings(*extracted64,real_bindings));
+    assert(!NativeQmdAtomicSpansFitBindings(*extracted_with_base,real_bindings));
+    auto extracted_buffer=real_bindings;
+    extracted_buffer[0].bytes=68;
+    assert(NativeQmdAtomicSpansFitBindings(*extracted_with_base,extracted_buffer));
+    extracted_buffer[0].bytes=63;
+    assert(!NativeQmdAtomicSpansFitBindings(*extracted32,extracted_buffer));
+
     auto short_resource=real_bindings;
     short_resource[0].bytes=63;
     assert(!NativeQmdAtomicSpansFitBindings(*masked32,short_resource));
@@ -336,7 +437,8 @@ int main() {
     std::puts("P2_3_NATIVE_ATOMIC_SPAN_REAL_IR_PASS static=1 "
               "dynamic_unbounded_rejected=1 aligned_and_max_admitted=1 "
               "aligned_base_plus_and=1 shifted_mask_index=1 "
-              "shifted_mask_plus_base=1 checked_u32_no_wrap=1 "
+              "shifted_mask_plus_base=1 bitfield_unsigned_extract=1 "
+              "extract_invalid_ranges_refused=1 checked_u32_no_wrap=1 "
               "atomic_gmmu_base_alignment=1 guest_va_49=1 "
               "dynamic_live_size_proved=1 stale_size_refused=1");
 }

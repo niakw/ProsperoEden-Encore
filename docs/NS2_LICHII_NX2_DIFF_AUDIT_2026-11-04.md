@@ -16,6 +16,22 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.3 — extraction unsigned BitFieldUExtract comme indice, 05/11
+
+Le backend commun transforme déjà l'IR
+BitFieldUExtract(base,offset,count) en
+OpBitFieldUExtract SPIR-V. Le garde NS2
+admet désormais cette forme quand offset et
+count sont littéraux, dans les limites du
+registre U32, puis avec un shift constant
+sans troncature et au plus une base alignée.
+La borne (2^count-1) détermine le maximum
+effectif de l'indice, indépendamment des
+valeurs de registres invités. Le buffer QMD3
+réel doit couvrir ce maximum et la largeur
+de l'atomique. Pas de nouveau chemin NS1,
+pas d'opcode inventé, pas de rendu GPU prouvé.
+
 ### P2.3 — index de tableau atomique shifté et borné, 05/11
 
 Admission générique de

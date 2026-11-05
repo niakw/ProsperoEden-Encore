@@ -2115,3 +2115,24 @@ msgstr "ความคมชัด"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "การกรองพื้นผิวทำให้ถนน พื้น และผนังคมชัดเมื่อมองจากมุมหนึ่ง เริ่มต้นที่ 4x; 8x/16x ใช้แบนด์วิธ GPU มากขึ้น ต่างจากความคมชัดของภาพตรงที่มันไม่ได้ทำให้ภาพทั้งหมดคมชัดขึ้น"
+
+
+#: R10 dedicated HD textures
+msgid "Created {0}. Copy a prepared HD texture pack into it."
+msgstr "สร้างแล้ว {0} คัดลอกแพ็กพื้นผิว HD ที่เตรียมไว้ลงไป"
+
+#: R10 dedicated HD textures
+msgid "HD textures"
+msgstr "พื้นผิวแบบ HD"
+
+#: R10 dedicated HD textures
+msgid "No HD texture packs"
+msgstr "ไม่มีแพ็คพื้นผิว HD"
+
+#: R10 dedicated HD textures
+msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
+msgstr "ยังไม่มีพื้นผิวแบบ HD ใส่แพ็กที่เข้ากันได้ใน {0} แยกจาก mods/"
+
+#: R10 dedicated HD textures
+msgid "game files"
+msgstr "ไฟล์เกม"

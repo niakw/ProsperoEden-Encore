@@ -721,6 +721,47 @@ inline bool SaveModEnabled(uint64_t title_id, std::string_view name, bool enable
     return Settings::Write(document, file);
 }
 
+// R10: independent HD texture packs. Newly installed packs are OFF until
+// explicitly enabled for this Title ID; mods_off and the Mods master switch
+// are intentionally unrelated. No global game-code patch is implied.
+inline std::vector<std::string> LoadEnabledHdTexturePacks(
+    uint64_t title_id, const std::string& file = SettingsFile()) {
+    std::vector<std::string> names;
+    if (!title_id) return names;
+    using Settings::Json;
+    const auto doc=Settings::Load(file);
+    const Json::json_pointer at("/games/" + Settings::TitleKey(title_id) + "/hd_textures_on");
+    if (!doc.contains(at) || !doc.at(at).is_array()) return names;
+    for (const auto& item: doc.at(at)) {
+        if (!item.is_string()) continue;
+        const auto name=item.get<std::string>();
+        if (name.empty() || name.size()>255 || name.front()=='.' ||
+            name.find('/')!=std::string::npos ||
+            name.find('\\')!=std::string::npos) continue;
+        if (std::find(names.begin(),names.end(),name)==names.end())
+            names.push_back(name);
+        if (names.size()>=100) break;
+    }
+    return names;
+}
+inline bool SaveHdTexturePackEnabled(
+    uint64_t title_id, std::string_view name, bool enabled,
+    const std::string& file = SettingsFile()) {
+    if (!title_id || name.empty() || name.size()>255 || name.front()=='.' ||
+        name.find('/')!=std::string::npos ||
+        name.find('\\')!=std::string::npos) return false;
+    auto names=LoadEnabledHdTexturePacks(title_id,file);
+    names.erase(std::remove(names.begin(),names.end(),name),names.end());
+    if (enabled) names.emplace_back(name);
+    Settings::Json doc=Settings::Load(file);
+    doc["version"]=1;
+    auto& game=doc["games"][Settings::TitleKey(title_id)];
+    if (!game.is_object()) game=Settings::Json::object();
+    if (names.empty()) game.erase("hd_textures_on");
+    else game["hd_textures_on"]=names;
+    return Settings::Write(doc,file);
+}
+
 // The Library's Mods switch: one switch for all of a game's mods, on unless the player turned it
 // off ("mods": false). The mods' own switches (mods_off) keep their state behind it.
 inline bool LoadModsEnabled(uint64_t title_id, const std::string& file = SettingsFile()) {

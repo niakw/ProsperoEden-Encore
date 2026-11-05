@@ -438,6 +438,15 @@ class Services
         return false;
     }
 
+    // R10: independent textures/<TitleID>/ packs (not mods or GPU cache).
+    // Each pack is opt-in and applies game-native RomFS data only.
+    virtual std::vector<Mod> hd_textures(std::uint64_t) { return {}; }
+    virtual bool set_hd_texture_enabled(std::uint64_t,const std::string&,bool) {
+        return false;
+    }
+    virtual std::string hd_textures_folder(std::uint64_t) { return {}; }
+    virtual bool make_hd_textures_folder(std::uint64_t) { return false; }
+
     // ---- images ----
     virtual bool load_image(const std::string &path, gfx::Image *image) = 0;
 };

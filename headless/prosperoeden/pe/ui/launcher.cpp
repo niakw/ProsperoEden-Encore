@@ -557,7 +557,7 @@ void Launcher::press(Key key)
     pressed_key_ = key;
     if (modal_ == Modal::game)
         return press_game(key);
-    if (modal_ == Modal::mods)
+    if (modal_ == Modal::mods || modal_ == Modal::textures)
         return press_mods(key);
     if (modal_ == Modal::mapping)
         return press_mapping(key);
@@ -748,6 +748,7 @@ void Launcher::update(float dt)
     video_rows_.update(dt);
     game_rows_.update(dt);
     mod_rows_.update(dt);
+    hd_rows_.update(dt);
     mapping_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;
     mode_.update(dt, 22.0f);
@@ -1472,7 +1473,7 @@ void Launcher::draw(gfx::DrawList &list)
         list.rounded_rect(kScreen, 0.0f, theme::kScrim.with_alpha(0.69f * opened));
         if (modal_shown_ == Modal::game)
             prefs_.ui_theme == 1 ? draw_switch_game(c, opened) : draw_game(c, opened);
-        else if (modal_shown_ == Modal::mods)
+        else if (modal_shown_ == Modal::mods || modal_shown_ == Modal::textures)
             prefs_.ui_theme == 1 ? draw_switch_mods(c, opened) : draw_mods(c, opened);
         else if (modal_shown_ == Modal::mapping)
             prefs_.ui_theme == 1 ? draw_switch_mapping(c, opened) : draw_mapping(c, opened);

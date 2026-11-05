@@ -2115,3 +2115,24 @@ msgstr "الحدة"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "تعمل تصفية النسيج على زيادة وضوح الطرق والأرضيات والجدران عند النظر إليها من زاوية ما. ابدأ بـ 4x؛ يستخدم 8x/16x المزيد من النطاق الترددي لوحدة معالجة الرسومات. على عكس وضوح الصورة، فإنه لا يزيد من حدة الصورة بأكملها."
+
+
+#: R10 dedicated HD textures
+msgid "Created {0}. Copy a prepared HD texture pack into it."
+msgstr "تم الإنشاء {0}. انسخ حزمة نسيج HD مُجهزة بداخلها."
+
+#: R10 dedicated HD textures
+msgid "HD textures"
+msgstr "مواد عالية الدقة"
+
+#: R10 dedicated HD textures
+msgid "No HD texture packs"
+msgstr "لا توجد حزم نسيج عالية الدقة"
+
+#: R10 dedicated HD textures
+msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
+msgstr "لا توجد مواد عالية الدقة حتى الآن. ضع الحزم المتوافقة في {0}، منفصلة عن التعديلات/."
+
+#: R10 dedicated HD textures
+msgid "game files"
+msgstr "ملفات اللعبة"

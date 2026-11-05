@@ -13,6 +13,7 @@
 #include "metadata_bridge.h"
 #include "title_id_fallback.h"
 #include "mods.h"
+#include "hd_texture_packs.h"
 #include "native_directory.h"
 #include "pe/core/strings.hpp"
 #include "pe/gfx/image.hpp"
@@ -2454,6 +2455,35 @@ bool EdenServices::make_mods_folder(std::uint64_t title_id) {
     if (!Eden::Mods::TitleFolder(root, title_id).empty()) return true;
     (void)mkdir(root.c_str(), 0777);
     return mkdir(Eden::Mods::TitleFolderToCreate(root, title_id).c_str(), 0777) == 0;
+}
+
+std::vector<pe::ui::Mod> EdenServices::hd_textures(std::uint64_t title_id) {
+    std::vector<pe::ui::Mod> result;
+    const auto enabled=Eden::LoadEnabledHdTexturePacks(title_id);
+    for (const auto& pack: Eden::HdTextures::List(
+            Eden::AssetsPath("textures"),title_id)) {
+        result.push_back({pack.name,
+            std::to_string(pack.files)+" "+tr(TR("game files"))+", "+
+            std::to_string(pack.bytes/(1024*1024))+" MiB",
+            std::find(enabled.begin(),enabled.end(),pack.name)!=enabled.end()});
+    }
+    return result;
+}
+bool EdenServices::set_hd_texture_enabled(
+    std::uint64_t title_id, const std::string& name, bool enabled) {
+    const bool saved=Eden::SaveHdTexturePackEnabled(title_id,name,enabled);
+    if (!saved) Eden::Report("settings","Could not save HD texture pack selection");
+    return saved;
+}
+std::string EdenServices::hd_textures_folder(std::uint64_t title_id) {
+    return "textures/"+Eden::Mods::TitleName(title_id)+"/";
+}
+bool EdenServices::make_hd_textures_folder(std::uint64_t title_id) {
+    if (!title_id) return false;
+    const std::string root=Eden::AssetsPath("textures");
+    if (!Eden::Mods::TitleFolder(root,title_id).empty()) return true;
+    (void)mkdir(root.c_str(),0777);
+    return mkdir(Eden::Mods::TitleFolderToCreate(root,title_id).c_str(),0777)==0;
 }
 
 bool EdenServices::load_image(const std::string& path, pe::gfx::Image* image) {

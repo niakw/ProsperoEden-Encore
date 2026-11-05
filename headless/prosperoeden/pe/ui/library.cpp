@@ -45,6 +45,7 @@ enum GameRow : int
     row_frame_generation,
     row_refresh,
     row_controls,
+    row_textures,
     row_mods,
     row_save, // in builds that move saves
 };
@@ -1723,6 +1724,18 @@ void Launcher::press_game(Key key)
         }
         return;
     }
+    if (option_ == row_textures)
+    {
+        if (key != Key::cross) return;
+        hd_packs_=services_.hd_textures(game.title_id);
+        hd_rows_.visible=5;
+        hd_rows_.pitch=kDialogRowPitch;
+        hd_rows_.reset(static_cast<int>(hd_packs_.size()),0);
+        modal_=modal_shown_=Modal::textures;
+        message_.clear();
+        cue(Cue::open);
+        return;
+    }
     if (option_ == row_mods)
     {
         // The game's mods have their own list. It is read again: mods may have been copied in
@@ -1837,15 +1850,12 @@ void Launcher::press_game(Key key)
         }
         if (option_ == row_filter)
         {
-            const int selected = cycle(next.filter,
-                static_cast<int>(services_.filter_labels().size()));
-            if (!UpscalingFilterSelectable(selected,
-                    EffectiveGameRenderer(next,prefs_,game.title_id))) {
-                say(UpscalingUnsupportedGuide(),true);
-                cue(Cue::error);
-                return;
-            }
-            next.filter = selected;
+            next.filter = CycleQualityRanked(
+                next.filter, step, kUpscalingQualityOrder, true,
+                [&](int value) {
+                    return UpscalingFilterSelectable(
+                        value, EffectiveGameRenderer(next,prefs_,game.title_id));
+                });
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_fsr_sharpness) {
@@ -1855,14 +1865,12 @@ void Launcher::press_game(Key key)
         }
         if (option_ == row_anti_aliasing)
         {
-            const int selected = cycle(next.anti_aliasing,
-                static_cast<int>(services_.anti_aliasing_labels().size()));
-            if (selected == 3 && EffectiveGameRenderer(next, prefs_, game.title_id) != 1) {
-                say(FxaaUnsupportedGuide(), true);
-                cue(Cue::error);
-                return;
-            }
-            next.anti_aliasing = selected;
+            next.anti_aliasing = CycleQualityRanked(
+                next.anti_aliasing, step, kAntiAliasingQualityOrder, true,
+                [&](int value) {
+                    return value != 3 ||
+                        EffectiveGameRenderer(next,prefs_,game.title_id) == 1;
+                });
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_texture_filtering) {
@@ -1980,6 +1988,11 @@ void Launcher::draw_game(Canvas &c, float open)
                                     Eden::BaseMappingForLayout(game_settings_.controller_layout)) :
             fill(tr("Global ({0})"),
                  {controller_profile_name(prefs_.controller_layout, prefs_.mapping)}),
+        hd_packs_.empty() ? std::string{tr(TR("No HD texture packs"))} :
+            fill(tr("{0} of {1} on"), {
+                std::to_string(std::count_if(hd_packs_.begin(),hd_packs_.end(),
+                    [](const Mod& pack){return pack.enabled;})),
+                std::to_string(hd_packs_.size())}),
         // With the game's Mods switch off (the Library's), none of them is on.
         mods_.empty() ? std::string{tr("No mods")} :
         game != nullptr && !game->mods_enabled ? std::string{tr("Off")} :
@@ -1994,7 +2007,7 @@ void Launcher::draw_game(Canvas &c, float open)
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
         TR("Resolution"), TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
         TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
-        TR("Mods"), TR("Save data")};
+        TR("HD textures"), TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                     kDialogWindow.h + 12.0f});
@@ -2017,7 +2030,8 @@ void Launcher::draw_game(Canvas &c, float open)
         list.push_opacity(game_rows_.row_alpha(row, kDialogRowHeight));
         // The value first: the row's name takes what it leaves. Mods and Save data say what is
         // there; the others are choices.
-        const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
+        const bool there = row == row_textures ? !hd_packs_.empty() :
+            row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const bool inactive =
             (row == row_filter &&
@@ -2038,7 +2052,7 @@ void Launcher::draw_game(Canvas &c, float open)
              !FrameGenerationSelectable(
                  EffectiveGameRenderer(game_settings_, prefs_, title_id)));
         const float taken =
-            row >= row_mods ?
+            row >= row_textures ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
                             theme::kSmall, there ? theme::kLimePale : theme::kMeta, 320.0f,
                             Align::right) :
@@ -2157,6 +2171,9 @@ void Launcher::draw_game(Canvas &c, float open)
 void Launcher::press_mods(Key key)
 {
     Game &game = games_[static_cast<std::size_t>(library_.selected)];
+    const bool hd = modal_ == Modal::textures;
+    auto& entries = hd ? hd_packs_ : mods_;
+    auto& rows = hd ? hd_rows_ : mod_rows_;
     switch (key)
     {
     case Key::circle:
@@ -2169,7 +2186,7 @@ void Launcher::press_mods(Key key)
     case Key::down:
     case Key::l1:
     case Key::r1:
-        if (mod_rows_.move(key == Key::down || key == Key::r1 ? 1 : -1))
+        if (rows.move(key == Key::down || key == Key::r1 ? 1 : -1))
         {
             message_.clear();
             cue(Cue::focus);
@@ -2178,12 +2195,17 @@ void Launcher::press_mods(Key key)
     case Key::square:
     {
         // With no mods yet: the folder they go in, named after the game's ID, is made on request.
-        if (!mods_.empty())
+        if (!entries.empty())
             return;
-        const bool made = services_.make_mods_folder(game.title_id);
-        say(made ? fill(tr("Created {0}. Copy each mod's folder into it."),
-                        {services_.mods_folder(game.title_id)}) :
-                   tr("Could not create the folder. Check that the game files folder can be written."),
+        const bool made = hd
+            ? services_.make_hd_textures_folder(game.title_id)
+            : services_.make_mods_folder(game.title_id);
+        say(made ? (hd
+                    ? fill(tr(TR("Created {0}. Copy a prepared HD texture pack into it.")),
+                           {services_.hd_textures_folder(game.title_id)})
+                    : fill(tr("Created {0}. Copy each mod's folder into it."),
+                           {services_.mods_folder(game.title_id)})) :
+                    tr("Could not create the folder. Check that the game files folder can be written."),
             !made);
         cue(made ? Cue::saved : Cue::error);
         return;
@@ -2192,9 +2214,19 @@ void Launcher::press_mods(Key key)
     case Key::left:
     case Key::right:
     {
-        if (mods_.empty())
+        if (entries.empty())
             return;
-        Mod &mod = mods_[static_cast<std::size_t>(mod_rows_.selected)];
+        Mod &mod = entries[static_cast<std::size_t>(rows.selected)];
+        if (hd) {
+            const bool selected = !mod.enabled;
+            const bool saved = services_.set_hd_texture_enabled(
+                game.title_id, mod.name, selected);
+            if (saved) mod.enabled = selected;
+            say(saved ? tr("Saved for this game. Applies on next launch.") :
+                        tr("Could not save. Please try again."), !saved);
+            cue(saved ? Cue::toggle : Cue::error);
+            return;
+        }
         // With the game's Mods switch off (the Library's), choosing a mod turns the switch on and
         // that mod with it: nobody switches a mod in a list that is switched off.
         const bool revive = !game.mods_enabled;
@@ -2217,23 +2249,29 @@ void Launcher::press_mods(Key key)
 
 void Launcher::draw_mods(Canvas &c, float open)
 {
+    const bool hd = modal_shown_ == Modal::textures;
+    const auto& entries = hd ? hd_packs_ : mods_;
+    const auto& rows = hd ? hd_rows_ : mod_rows_;
     gfx::DrawList &list = c.list;
     list.push_opacity(open);
     list.push_transform(1.0f - 0.03f * (1.0f - open) * motion(), 960.0f, 540.0f, 0.0f,
                         (1.0f - open) * 26.0f * motion());
     glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f),
           1.6f);
-    text_shrink(c, tr("Mods"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
+    text_shrink(c, hd ? tr(TR("HD textures")) : tr("Mods"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
                 theme::kTitle, 736.0f);
     const Game *game = games_.empty() ? nullptr : &games_[static_cast<std::size_t>(library_.selected)];
     text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f,
              baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xc5c1d2), 736.0f);
 
-    if (mods_.empty())
+    if (entries.empty())
     {
-        text_block(c,
-                   fill(tr("No mods for this game yet. Copy each mod's folder to {0}, next to roms/."),
-                        {game != nullptr ? services_.mods_folder(game->title_id) : std::string{}}),
+        const std::string description = hd
+            ? fill(tr(TR("No HD textures yet. Put compatible packs in {0}, separate from mods/.")),
+                {game != nullptr ? services_.hd_textures_folder(game->title_id) : std::string{}})
+            : fill(tr("No mods for this game yet. Copy each mod's folder to {0}, next to roms/."),
+                {game != nullptr ? services_.mods_folder(game->title_id) : std::string{}});
+        text_block(c, description,
                    592.0f, baseline(364.0f, 40.0f, theme::kText24), theme::kText24, 40.0f,
                    theme::kBody, 736.0f, 5, kShrink);
     }
@@ -2242,25 +2280,25 @@ void Launcher::draw_mods(Canvas &c, float open)
         list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                         kDialogWindow.h + 12.0f});
         const auto row_top = [&](int row)
-        { return kDialogRowsTop + static_cast<float>(row) * kDialogRowPitch - mod_rows_.scroll(); };
-        for (int row = mod_rows_.first_row(); row <= mod_rows_.last_row(); ++row)
+        { return kDialogRowsTop + static_cast<float>(row) * kDialogRowPitch - rows.scroll(); };
+        for (int row = rows.first_row(); row <= rows.last_row(); ++row)
         {
-            list.push_opacity(mod_rows_.row_alpha(row, kDialogRowHeight));
+            list.push_opacity(rows.row_alpha(row, kDialogRowHeight));
             plate_rest(c, kRowPlate, {592.0f, row_top(row), 736.0f, kDialogRowHeight});
             list.pop_opacity();
         }
         plate_focus(c, kRowPlate,
-                    {592.0f, kDialogRowsTop + mod_rows_.cursor() - mod_rows_.scroll(), 736.0f,
+                    {592.0f, kDialogRowsTop + rows.cursor() - rows.scroll(), 736.0f,
                      kDialogRowHeight},
                     1.0f);
         // With the game's Mods switch off (the Library's) no mod is used: their own switches keep
         // their state, drawn faint.
-        const bool live = game == nullptr || game->mods_enabled;
-        for (int row = mod_rows_.first_row(); row <= mod_rows_.last_row(); ++row)
+        const bool live = hd || game == nullptr || game->mods_enabled;
+        for (int row = rows.first_row(); row <= rows.last_row(); ++row)
         {
-            const Mod &mod = mods_[static_cast<std::size_t>(row)];
+            const Mod &mod = entries[static_cast<std::size_t>(row)];
             const float top = row_top(row);
-            list.push_opacity(mod_rows_.row_alpha(row, kDialogRowHeight));
+            list.push_opacity(rows.row_alpha(row, kDialogRowHeight));
             // Its name as the player's folder has it, what it changes under it, its switch.
             text_fit(c, mod.name, 628.0f, baseline(top + 14.0f, 38.0f, theme::kText24),
                      theme::kText24, mod.enabled && live ? theme::kValue : theme::kMeta, 560.0f);
@@ -2272,7 +2310,7 @@ void Launcher::draw_mods(Canvas &c, float open)
             list.pop_opacity();
         }
         list.pop_clip();
-        scrollbar(c, mod_rows_, 1340.0f, kDialogWindow.y, kDialogWindow.h);
+        scrollbar(c, rows, 1340.0f, kDialogWindow.y, kDialogWindow.h);
     }
 
     if (!message_.empty())
@@ -2281,7 +2319,7 @@ void Launcher::draw_mods(Canvas &c, float open)
                      message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2,
                      message_warning_);
     }
-    else if (mods_.empty())
+    else if (entries.empty())
     {
         static constexpr Hint kEmpty[] = {{Pad::square, TR("Create the folder")},
                                           {Pad::circle, TR("Back")}};

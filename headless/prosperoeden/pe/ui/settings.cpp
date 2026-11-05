@@ -485,7 +485,7 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::game:
         // Complete per-game video overrides, button mapping and mods; save data in builds that
         // move saves.
-        return services_.save_transfer_available() ? 14 : 13;
+        return services_.save_transfer_available() ? 15 : 14;
     default:
         return 1;
     }
@@ -583,14 +583,9 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_filter)
         {
-            const int count = static_cast<int>(services_.filter_labels().size());
-            const int next = (prefs_.filter + step + count) % count;
-            if (!UpscalingFilterSelectable(next,prefs_.renderer)) {
-                say(UpscalingUnsupportedGuide(),true);
-                cue(Cue::error);
-                return;
-            }
-            prefs_.filter = next;
+            prefs_.filter = CycleQualityRanked(
+                prefs_.filter, step, kUpscalingQualityOrder, false,
+                [&](int value) { return UpscalingFilterSelectable(value,prefs_.renderer); });
             RefreshVideoProfile(prefs_);
         }
         else if (option_ == video_fsr_sharpness)
@@ -608,14 +603,9 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_anti_aliasing)
         {
-            const int count = static_cast<int>(services_.anti_aliasing_labels().size());
-            const int next = (prefs_.anti_aliasing + step + count) % count;
-            if (next == 3 && prefs_.renderer != 1) {
-                say(FxaaUnsupportedGuide(), true);
-                cue(Cue::error);
-                return;
-            }
-            prefs_.anti_aliasing = next;
+            prefs_.anti_aliasing = CycleQualityRanked(
+                prefs_.anti_aliasing, step, kAntiAliasingQualityOrder, false,
+                [&](int value) { return value != 3 || prefs_.renderer == 1; });
             RefreshVideoProfile(prefs_);
         }
         else if (option_ == video_texture_filtering)

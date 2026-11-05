@@ -2115,3 +2115,24 @@ msgstr "ΕΥΤΥΧΙΑ"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Το φιλτράρισμα υφής ακονίζει δρόμους, δάπεδα και τοίχους υπό γωνία. Ξεκινήστε από 4x. 8x/16x χρησιμοποιούν περισσότερο εύρος ζώνης GPU. Σε αντίθεση με την ευκρίνεια της εικόνας, δεν βελτιώνει την ευκρίνεια ολόκληρης της εικόνας."
+
+
+#: R10 dedicated HD textures
+msgid "Created {0}. Copy a prepared HD texture pack into it."
+msgstr "Δημιουργήθηκε {0}. Αντιγράψτε ένα έτοιμο πακέτο υφής HD σε αυτό."
+
+#: R10 dedicated HD textures
+msgid "HD textures"
+msgstr "Υφές HD"
+
+#: R10 dedicated HD textures
+msgid "No HD texture packs"
+msgstr "Χωρίς πακέτα υφής HD"
+
+#: R10 dedicated HD textures
+msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
+msgstr "Δεν υπάρχουν ακόμα υφές HD. Τοποθετήστε συμβατά πακέτα στο {0}, ξεχωριστά από τα mods/."
+
+#: R10 dedicated HD textures
+msgid "game files"
+msgstr "αρχεία παιχνιδιών"

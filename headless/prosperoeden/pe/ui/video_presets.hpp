@@ -7,6 +7,7 @@
 #include "pe/ui/services.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 
 namespace pe::ui {
@@ -18,6 +19,37 @@ inline constexpr int kCustomVideoProfile = Eden::EncoreOverrides::kCustomProfile
 
 inline VideoPresetValues VideoPresetForTitle(std::uint64_t title_id, int preset) {
     return Eden::EncoreOverridesRuntime::ProfileForTitle(title_id, preset);
+}
+
+// QUALITY ORDER — theoretical spatial reconstruction (BEST -> LOWEST)
+// and post-AA (BEST -> LOWEST). No static chart can guarantee superiority
+// across games/frames; see docs/ENCORE_GRAPHICS_QUALITY_RANKING.md.
+// This is ONLY the interface/cycling order: persisted enum IDs do not change.
+inline constexpr std::array<int, 7> kUpscalingQualityOrder{
+    6, 5, 1, 4, 2, 0, 3}; // SGSR Edge, SGSR, FSR1, Lanczos, Bicubic, Bilinear, Nearest
+inline constexpr std::array<int, 4> kAntiAliasingQualityOrder{
+    2, 3, 1, 0}; // SMAA Ultra, FXAA+, FXAA, None
+
+template <std::size_t N, typename Allowed>
+inline int CycleQualityRanked(int current, int step,
+                             const std::array<int, N>& order,
+                             bool allow_inherit, Allowed allowed) {
+    constexpr int kCountMax = 16;
+    static_assert(N > 0 && N <= kCountMax);
+    const int count = static_cast<int>(N) + (allow_inherit ? 1 : 0);
+    int position = allow_inherit ? 0 : -1;
+    for (int i = 0; i < static_cast<int>(N); ++i)
+        if (order[static_cast<std::size_t>(i)] == current)
+            position = i + (allow_inherit ? 1 : 0);
+    if (!allow_inherit && position < 0) position = 0;
+    const int direction = step < 0 ? -1 : 1;
+    for (int i = 0; i < count; ++i) {
+        position = (position + direction + count) % count;
+        const int candidate = allow_inherit && position == 0
+            ? -1 : order[static_cast<std::size_t>(position - (allow_inherit ? 1 : 0))];
+        if (candidate == -1 || allowed(candidate)) return candidate;
+    }
+    return current;
 }
 
 inline constexpr bool UpscalingRequiresVulkan(int filter) {

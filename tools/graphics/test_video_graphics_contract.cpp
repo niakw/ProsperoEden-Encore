@@ -28,6 +28,61 @@ int main() {
         assert(FrameGenerationSelectable(1));
         assert(!FrameGenerationSelectable(0));
     }
+    // The launcher cycles in best->least quality order, while serialized
+    // IDs remain frozen (existing user preferences are never renumbered).
+    {
+        constexpr auto all=[](int) { return true; };
+        int value=kUpscalingQualityOrder[0];
+        for (int expected: {5,1,4,2,0,3,6}) {
+            value=CycleQualityRanked(value,1,kUpscalingQualityOrder,false,all);
+            assert(value==expected);
+        }
+        value=-1;
+        for(int expected: {6,5,1,4,2,0,3,-1}) {
+            value=CycleQualityRanked(value,1,kUpscalingQualityOrder,true,all);
+            assert(value==expected);
+        }
+        value=kAntiAliasingQualityOrder[0];
+        for(int expected: {3,1,0,2}) {
+            value=CycleQualityRanked(value,1,kAntiAliasingQualityOrder,false,all);
+            assert(value==expected);
+        }
+        auto allowed_opengl=[](int option) { return option!=5 && option!=6; };
+        value=-1;
+        assert(CycleQualityRanked(value,1,kUpscalingQualityOrder,true,allowed_opengl)==1);
+        value=-1;
+        assert(CycleQualityRanked(value,-1,kUpscalingQualityOrder,true,allowed_opengl)==3);
+        auto aa_opengl=[](int option) { return option!=3; };
+        assert(CycleQualityRanked(2,1,kAntiAliasingQualityOrder,false,aa_opengl)==1);
+    }
+    // A future curated Title ID can safely load new spatial/AA keys
+    // from encore-overrides runtime. Existing general profiles remain
+    // conservative; OpenGL profiles must NOT claim absent Vulkan shaders.
+    {
+        nlohmann::json live={
+            {"renderer","vulkan"},{"tv_output","1440p"},
+            {"game_resolution",1.25},{"upscaling_filter","sgsr_edge"},
+            {"anti_aliasing","fxaa_quality"},{"fsr_sharpness",50},
+            {"refresh_rate_hz",60},{"console_mode","docked"}
+        };
+        auto p=Eden::EncoreOverridesRuntime::ParseProfile(live);
+        assert(p && p->filter==6 && p->anti_aliasing==3 && p->renderer==1);
+        live["upscaling_filter"]="sgsr";
+        p=Eden::EncoreOverridesRuntime::ParseProfile(live);
+        assert(p && p->filter==5);
+        live["upscaling_filter"]="lanczos";
+        p=Eden::EncoreOverridesRuntime::ParseProfile(live);
+        assert(p && p->filter==4);
+        live["renderer"]="opengl";
+        p=Eden::EncoreOverridesRuntime::ParseProfile(live);
+        assert(!p);
+        live["anti_aliasing"]="fxaa";
+        p=Eden::EncoreOverridesRuntime::ParseProfile(live);
+        assert(p && p->renderer==0 && p->filter==4);
+        live["upscaling_filter"]="sgsr_edge";
+        p=Eden::EncoreOverridesRuntime::ParseProfile(live);
+        assert(!p);
+    }
     // R07 new spatial methods: exact renderer dependencies.
     assert(UpscalingFilterSelectable(4,0));  // Lanczos on OpenGL too.
     assert(UpscalingFilterSelectable(4,1));

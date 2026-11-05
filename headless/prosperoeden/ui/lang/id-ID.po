@@ -2115,3 +2115,24 @@ msgstr "KEAJAIBAN"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Pemfilteran tekstur mempertajam jalan, lantai, dan dinding jika dilihat dari sudut tertentu. Mulai dari 4x; 8x/16x menggunakan lebih banyak bandwidth GPU. Berbeda dengan ketajaman gambar, ini tidak mempertajam keseluruhan gambar."
+
+
+#: R10 dedicated HD textures
+msgid "Created {0}. Copy a prepared HD texture pack into it."
+msgstr "Dibuat {0}. Salin paket tekstur HD yang sudah disiapkan ke dalamnya."
+
+#: R10 dedicated HD textures
+msgid "HD textures"
+msgstr "Tekstur HD"
+
+#: R10 dedicated HD textures
+msgid "No HD texture packs"
+msgstr "Tidak ada paket tekstur HD"
+
+#: R10 dedicated HD textures
+msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
+msgstr "Belum ada tekstur HD. Letakkan paket yang kompatibel di {0}, terpisah dari mods/."
+
+#: R10 dedicated HD textures
+msgid "game files"
+msgstr "file permainan"

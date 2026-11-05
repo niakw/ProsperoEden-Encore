@@ -1,96 +1,108 @@
-# Eden Encore — R10 : packs de textures HD compatibles RomFS
+# Eden Encore — R10 : bibliothèque indépendante de textures HD
 
-**État au 5 novembre 2026 : premier parcours fonctionnel basé sur le gestionnaire
-de mods existant ; R10 n'est pas clos.** Aucun modèle IA, aucune texture
-protégée, aucun binaire Windows et aucun remplacement dynamique GPU ne sont
-embarqués dans Eden Encore.
+**5 novembre 2026 — PR #24 et branche vendor dédiée.**
+**État : fonctionnalité RomFS HD intégrée en source, vérifiée sur hôte ; non validée sur PS5.**
 
-## Ce qui fonctionne sans toucher au renderer PS5
+## Une distinction technique réelle par rapport aux mods
 
-Le gestionnaire de mods d'Eden sait déjà appliquer les fichiers RomFS fournis
-par jeu, via le même Title ID 16 chiffres hexadécimaux que les ROMs.
-Le launcher sait afficher ces mods et activer ou désactiver chacun d'eux,
-avec application au prochain lancement. Une texture HD **déjà reconvertie
-dans le format RomFS attendu par son jeu** peut donc être fournie comme
-mod standard. Le nouveau préparateur ne remplace pas une texture inconnue
-dans le cache Vulkan : il transforme un dossier de fichiers de jeu
-compatibles en pack RomFS que l'émulateur sait réellement appliquer.
+Les textures HD possèdent désormais une racine séparée sous le dossier des
+fichiers de jeu sélectionné. Elles ne doivent **plus** être installées dans
+mods/, ni activées depuis le menu Mods.
+
+    <racine-des-jeux>/
+      roms/
+      mods/
+        0100ABCD00001000/
+          Patch 60 FPS/
+            exefs/...
+      textures/
+        0100ABCD00001000/
+          Terrain HD/
+            encore-hd-textures.json
+            romfs/
+              Model/
+                grass.bntx
+
+Le chargeur PS5 maintenu dans vendor/encore-active/eden-core lit directement
+textures/<TitleID>/<pack>/romfs, pour les fichiers de données des jeux.
+**Aucune copie, aucun lien symbolique et aucune insertion physique dans
+mods/.** Le backend de remplacement reste un overlay RomFS, ce qui
+évite d'ajouter un second moteur inutile pour les fichiers natifs.
+Les mods ordinaires peuvent toujours appliquer des patches ExeFS,
+des cheats et des remplacements RomFS ; les textures HD, elles,
+**n'injectent jamais de code ExeFS ni de cheats**.
+
+Chaque pack HD doit avoir un manifeste v1 correspondant au vrai Title ID.
+Le chargeur ne le traite que pour les enregistrements RomFS Program/Data.
+Les mods ordinaires ont priorité en cas de conflit de fichiers.
+Les dossiers absents/malformés sont ignorés ; le jeu original demeure
+la source de secours.
+
+## Activation par jeu, séparée de Mods
+
+Dans le launcher : **Fiche du jeu → HD textures → pack → Activer**.
+Le menu affiche le nombre de fichiers, la taille et l'état individuel.
+Les nouveaux packs sont **désactivés par défaut**. Leur activation
+est mémorisée par Title ID dans le réglage indépendant
+hd_textures_on ; mods_off et l'interrupteur Mods n'y changent rien.
+Le mode Safe Launch désactive aussi les textures HD uniquement
+pour la session, sans effacer les choix.
+
+Lorsque le dossier n'existe pas, dans le menu HD textures, Carré
+peut créer le dossier textures/<TitleID>/. Il est également possible
+de copier manuellement un pack déjà préparé dans ce dossier.
+Les changements prennent effet au **prochain lancement du jeu**.
 
 ## Préparer un pack sur Mac ou PC
 
-1. Préparer vous-même, légalement, des fichiers RomFS de remplacement.
-   La simple sortie PNG/WebP d'un réseau IA ne suffit généralement pas :
-   les jeux Switch utilisent des conteneurs et des formats de textures
-   spécifiques (BNTX/BFRES/etc.). La reconversion compatible avec le
-   titre est indispensable, en dehors de la PS5.
-2. Placer ces fichiers dans un dossier dont l'arborescence **reproduit
-   exactement** les chemins de RomFS du jeu (par exemple
-   `source-romfs/Model/grass.bntx`).
-3. Depuis un checkout d'Eden Encore, exécuter :
+Préparer légalement un ensemble de fichiers **déjà reconvertis au format
+attendu par les chemins RomFS du jeu**. Un PNG généré par Real-ESRGAN
+n'est pas automatiquement un BNTX/BFRES compatible : la conversion
+et l'édition des ressources spécifiques au jeu doivent se faire
+hors PS5.
 
-```bash
-python3 tools/graphics/package-hd-textures.py \
-  --title-id 0100ABCD00001000 \
-  --source-romfs /chemin/vers/source-romfs \
-  --mods-root /chemin/vers/fichiers-jeux/mods \
-  --name "Terrain HD"
-```
+Exemple (Title ID fictif, à remplacer) :
 
-Le résultat est un dossier prêt à être découvert par le gestionnaire
-de mods, sans toucher au contenu original :
+    python3 tools/graphics/package-hd-textures.py
+      --title-id 0100ABCD00001000
+      --source-romfs /chemin/romfs-compatible
+      --textures-root /chemin/fichiers-jeux/textures
+      --name "Terrain HD"
 
-```text
-mods/
-  0100ABCD00001000/
-    HD Textures - Terrain HD/
-      encore-hd-textures.json
-      romfs/
-        Model/
-          grass.bntx
-```
+L'outil n'accepte **que** une racine nommée textures. Il refusera
+expressément mods/. Il écrit le manifeste (SHA-256 et tailles),
+copie par blocs dans un dossier temporaire, puis publie le pack
+atomiquement. Un pack préexistant ne sera jamais écrasé.
+Budgets par défaut : 2 Gio par pack et 512 Mio par fichier.
+Les limites portent sur le disque, pas sur la VRAM.
 
-Le manifeste contient le Title ID, la liste exacte des fichiers,
-leur taille et leur SHA-256. Il sert à l'inspection et la reproductibilité ;
-**Eden n'interprète pas ce manifeste comme une garantie de format valide**.
-L'application lit les données de `romfs/` via le patch manager existant.
+Les PNG/JPEG/WebP intermédiaires sont refusés. L'option
+--allow-native-images est réservée aux rares jeux qui lisent
+réellement ces formats depuis leur RomFS. Elle ne convertit rien.
 
-Dans le launcher, ouvrir la fiche du jeu → **Mods** → sélectionner
-`HD Textures - Terrain HD` → activer. La désactivation d'un mod retire
-son overlay lors du prochain lancement, sans effacer les originaux.
-Les mods fonctionnent au cas par cas : un pack fait pour une autre
-version de jeu peut être incompatible ou inutilisable.
+## Contrôles et limites
 
-## Contrôles réalisés par l'outil
+- Six tests du préparateur, dont refus de fichiers malformés,
+  liens symboliques et écrasement.
+- Compilation du lecteur C++ de textures HD + test par Title ID
+  et de la liste indépendante hd_textures_on ; le scanner de Mods
+  n'énumère pas ces packs.
+- Audit statique du point d'insertion du patch manager maintenu
+  dans le vendor, avec priorité des mods, protection contre les
+  manifestes invalides et filtrage des répertoires.
+- Pas de build PS5 qualifié ni de mesure de VRAM ou FPS sur console.
 
-- Identifiant Title ID obligatoire et nom de pack contrôlé.
-- Refus des liens symboliques, des chemins excessivement profonds,
-  des fichiers vides, du dépassement des budgets disque et des
-  noms de fichiers en collision insensible à la casse.
-- Refus d'écraser un pack déjà présent. Le travail s'effectue
-  dans une zone temporaire hors du Title ID, avant publication
-  atomique, afin que l'interface ne découvre pas un pack partiel.
-- Copie par blocs bornés ; SHA-256 et taille consignés et vérifiés.
-- Cinq scénarios de tests hôtes, incluant la compilation du vrai
-  lecteur de dossier `Eden::Mods::List` et sa reconnaissance
-  du dossier produit comme mod `kFiles`.
+### Ce que R10 ne fait PAS encore
 
-Le budget par défaut est de 2 Gio pour un pack et 512 Mio par
-fichier (bornes maximales limitées à 8 Gio et 2 Gio).
-Ces limites concernent **l'espace disque**, pas la mémoire GPU.
+Aucun upscale IA automatique sur PS5, aucune génération ni conversion
+des formats natifs de jeu, aucune interception de signatures de
+textures dans le cache Vulkan, aucun téléchargement de packs tiers.
+Le mécanisme traite **uniquement des remplacements RomFS déjà valides**.
+Le moteur de substitution directe des textures GPU, s'il devient
+nécessaire, devra être conçu avec garde-fous NS1/NS2, budgets de
+cache et preuves console distinctes. Cela ne se résume pas au
+changement de dossier.
 
-## Ce que R10 ne fait pas encore
-
-- **Aucun upscale IA automatique sur PS5** : Real-ESRGAN ou autre
-  devrait être utilisé hors console, avec modèles et images autorisés.
-- **Pas de remplacement universel des textures GPU** : aucun
-  identifiant de texture/TIC/TSC, cache GPU, quantification ASTC/BCn
-  ou signature de surface n'est intercepté ici.
-- **Pas de validation générale des dimensions/formats GPU** :
-  elles dépendent du titre et des conteneurs du jeu.
-- **Pas de promesse de qualité ou de performances** sans essais
-  FC27/BOTW et mesures mémoire ; les packs massifs peuvent alourdir
-  les accès disque et la mémoire invitée.
-
-R10 reste ouvert pour la conversion vérifiée des formats spécifiques,
-le budget GPU/caches et une éventuelle substitution dynamique
-uniquement si elle est sémantiquement sûre pour NS1 et NS2.
+**Anciens packs déjà rangés dans mods/ :** ils restent des mods
+ordinaires. Aucune migration automatique destructrice. Reconditionner
+avec l'outil ci-dessus pour profiter de la gestion HD indépendante.

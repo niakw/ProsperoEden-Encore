@@ -2115,3 +2115,24 @@ msgstr "OSTROST"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Filtrování textur zostřuje silnice, podlahy a stěny při pohledu pod úhlem. Začněte na 4x; 8x/16x využívá větší šířku pásma GPU. Na rozdíl od ostrosti obrazu nedoostří celý obraz."
+
+
+#: R10 dedicated HD textures
+msgid "Created {0}. Copy a prepared HD texture pack into it."
+msgstr "Vytvořeno {0}. Zkopírujte do něj připravený balíček HD textur."
+
+#: R10 dedicated HD textures
+msgid "HD textures"
+msgstr "HD textury"
+
+#: R10 dedicated HD textures
+msgid "No HD texture packs"
+msgstr "Žádné balíčky textur HD"
+
+#: R10 dedicated HD textures
+msgid "No HD textures yet. Put compatible packs in {0}, separate from mods/."
+msgstr "Zatím žádné HD textury. Vložte kompatibilní balíčky do {0}, odděleně od modů/."
+
+#: R10 dedicated HD textures
+msgid "game files"
+msgstr "herní soubory"

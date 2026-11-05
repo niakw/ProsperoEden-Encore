@@ -656,13 +656,14 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
         TR("Console mode"),TR("Renderer"),TR("Video preset"),TR("TV output"),
         TR("Resolution"),TR("Upscaling"),TR("Sharpness"),
         TR("Anti-aliasing"),TR("Texture filtering"),TR("Enhanced smoothness"),
-        TR("Refresh rate"),TR("Button mapping"),TR("Mods"),TR("Save data")};
+        TR("Refresh rate"),TR("Button mapping"),TR("HD textures"),
+        TR("Mods"),TR("Save data")};
     const auto fallback=[](int local,const std::string& def,
                            const std::string& selected)->std::string{
         return local<0?switch_default(def):selected;
     };
     const auto g=game_settings_;
-    const std::array<std::string,14> values={
+    const std::array<std::string,15> values={
         game_docked_?tr("Docked"):tr("Handheld"),
         fallback(g.renderer,baseRenderer?"Vulkan":"OpenGL",g.renderer?"Vulkan":"OpenGL"),
         fallback(g.performance_profile,
@@ -693,6 +694,11 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
         g.controller_layout>=0?
             switch_profile_name(g.controller_layout,Eden::BaseMappingForLayout(g.controller_layout)):
             fill(tr("Global ({0})"),{switch_profile_name(prefs_.controller_layout,prefs_.mapping)}),
+        hd_packs_.empty() ? tr(TR("No HD texture packs")) :
+            fill(tr("{0} of {1} on"),{
+                std::to_string(std::count_if(hd_packs_.begin(),hd_packs_.end(),
+                    [](const Mod& p){return p.enabled;})),
+                std::to_string(hd_packs_.size())}),
         mods_.empty()?tr("No mods"):
             game&&!game->mods_enabled?tr("Off"):
             fill(tr("{0} of {1} on"),{
@@ -704,41 +710,48 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     };
     d.push_clip(kAdvancedClip);
     for(int i=game_rows_.first_row();i<=game_rows_.last_row();++i) {
-        if(i<0||i>=14)continue;
+        if(i<0||i>=15)continue;
         const float y=318+float(i)*96-game_rows_.scroll();
         advanced_row(c,y,i==option_,tr(names[i]),values[static_cast<std::size_t>(i)],
                      game_rows_.row_alpha(i,92));
     }
     d.pop_clip();
     if(confirmation_==Confirmation::none)
-        advanced_status(c,message_,message_warning_,option_==13?TR("Import"):
-                        option_==12?TR("Open"):TR("Change"));
+        advanced_status(c,message_,message_warning_,option_==14?TR("Import"):
+                        (option_==12 || option_==13)?TR("Open"):TR("Change"));
     d.pop_opacity();
 }
 void Launcher::draw_switch_mods(Canvas& c,float opened) {
+    const bool hd=modal_shown_==Modal::textures;
+    const auto& entries=hd?hd_packs_:mods_;
+    const auto& rows=hd?hd_rows_:mod_rows_;
     auto& d=c.list;
     d.push_opacity(opened);
     const Game* game=library_.selected>=0&&library_.selected<static_cast<int>(games_.size())?
         &games_[static_cast<std::size_t>(library_.selected)]:nullptr;
-    advanced_panel(c,tr("Mods"),game?game->name:std::string{});
-    if(mods_.empty())
-        text_block(c,fill(tr("No mods for this game yet. Copy each mod's folder to {0}, next to roms/."),
-                    {game?services_.mods_folder(game->title_id):std::string{}}),
+    advanced_panel(c,hd?tr(TR("HD textures")):tr("Mods"),
+                   game?game->name:std::string{});
+    if(entries.empty())
+        text_block(c,hd
+            ? fill(tr(TR("No HD textures yet. Put compatible packs in {0}, separate from mods/.")),
+                {game?services_.hd_textures_folder(game->title_id):std::string{}})
+            : fill(tr("No mods for this game yet. Copy each mod's folder to {0}, next to roms/."),
+                {game?services_.mods_folder(game->title_id):std::string{}}),
                    546,baseline(332,72,23),23,40,kInk,828,5);
     else {
-        const bool active=!game||game->mods_enabled;
+        const bool active=hd||!game||game->mods_enabled;
         d.push_clip(kAdvancedClip);
-        for(int i=mod_rows_.first_row();i<=mod_rows_.last_row();++i) {
-            if(i<0||i>=static_cast<int>(mods_.size()))continue;
-            const auto& m=mods_[static_cast<std::size_t>(i)];
-            advanced_row(c,318+float(i)*96-mod_rows_.scroll(),
-                i==mod_rows_.selected,m.name+" · "+m.kind,
-                active&&m.enabled?tr("On"):tr("Off"),mod_rows_.row_alpha(i,92));
+        for(int i=rows.first_row();i<=rows.last_row();++i) {
+            if(i<0||i>=static_cast<int>(entries.size()))continue;
+            const auto& m=entries[static_cast<std::size_t>(i)];
+            advanced_row(c,318+float(i)*96-rows.scroll(),
+                i==rows.selected,m.name+" · "+m.kind,
+                active&&m.enabled?tr("On"):tr("Off"),rows.row_alpha(i,92));
         }
         d.pop_clip();
     }
     if(confirmation_==Confirmation::none)
-        advanced_status(c,message_,message_warning_,mods_.empty()?
+        advanced_status(c,message_,message_warning_,entries.empty()?
                         TR("Create the folder"):TR("Turn on or off"));
     d.pop_opacity();
 }

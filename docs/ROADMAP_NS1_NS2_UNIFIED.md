@@ -1299,3 +1299,28 @@ prouvés sont refusés, sans fallback silencieux. Le témoin C++ hôte
 pont réel `LowerReviewedToMaxwell`, aux côtés des régressions FRND/SEL/
 FSET/MUFU ; **Clang/GCC, UBSan O0/O2 : 4/4 PASS**. P2.4 demeure
 ouvert pour les autres opcodes/stages et le rendu physique PS5 reste P5.
+
+
+**P1.3 — Kernel WaitIfEqual64 (type d’arbitrage 3), 05/11/2026, source/hôte :**
+la voie SVC NS2 issue des derniers correctifs amont nécessitait un
+`WaitForAddress64` comparant **les 64 bits**. L’ancienne table refuserait
+le type 3 par `InvalidEnumValue`, et son wrapper tronquait la valeur
+d’attente à `s32`. Un propriétaire d’arbitrage unique pour la release
+PS5 dual-NPDM prend désormais en charge ce type, avec vérification
+d’alignement sur 8 octets, accès 64 bits à la mémoire invitée *après*
+validation du mapping, et conservation des arbitrages 32 bits types 0–2
+(alignement 4, comparaison signée 32 bits, attente/notification existantes).
+Les deux dispatchers SVC maintenus transportent la valeur LP64 complète
+mais le wrapper 32-from-32 demeure à 32 bits.
+
+Source isolée : `kernel_wait64/` comprend les deux unités du noyau
+`k_address_arbiter.cpp` et `svc/svc_address_arbiter.cpp` ainsi que les
+headers ABI partagés `k_address_arbiter.h`, `k_process.h`, `svc.h`,
+sélectionnés uniquement quand le SVC GPU-access dual-NPDM est actif.
+C’est un **correctif de boot générique**, et non un contournement par jeu.
+Le témoin réel exécute les comparaisons extraites du véritable kernel
+(4/4 Clang/GCC UBSan O0/O2, 32/64 bits, valeur supérieure, négative et
+mémoire invalide) ; trois unités C++ entières du noyau et du SVC réel
+passent aussi `clang++ -fsyntax-only` avec libc++ macOS compatible.
+Ce test **ne valide pas** l'ordonnanceur entier, les SVC sur PS5, les
+CPU invités ou le lancement des jeux : qualification en P5 seulement.

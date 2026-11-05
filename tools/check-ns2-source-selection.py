@@ -963,13 +963,16 @@ def main() -> int:
             CMAKE[selection:])
         expected_owners = [
             "eden_ns2_exefs_sources", "eden_ns2_svc_sources",
-            "eden_ns2_gpu_access_sources", "eden_ns2_process_sources",
+            "eden_ns2_gpu_access_sources", "eden_wait64_sources", "eden_ns2_process_sources",
             "eden_ns2_kernel_sources", "eden_ns2_audio_sources",
             "eden_ns2_am_sources",
             "eden_ns2_nvdrv_sources", "eden_ns2_nvdrv_sources",
             "eden_ns2_research_kernel_sources", "eden_ns2_supervisor_sources",
         ]
         require(sorted(selected_owners) == sorted(expected_owners) and
+                'if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)' in CMAKE and
+                'set(EDEN_SHARED_NS2_WAIT64 ON)' in CMAKE and
+                'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_WAIT64_ROOT}")' in CMAKE and
                 'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE and
                 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE and
                 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE and

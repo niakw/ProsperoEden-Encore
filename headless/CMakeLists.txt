@@ -2236,6 +2236,47 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_GPU_ACCESS_ROOT}")
 endif()
 
+# P1.3: Switch 2 uses SVC arbitration type 3 (WaitIfEqual64), including
+# the high 32 bits. Select one reviewed kernel owner for both guests when
+# native dual-NPDM release is configured. Types 0/1/2 retain the original
+# 32-bit compare and alignment semantics; no alternate kernel/worker exists.
+set(EDEN_SHARED_NS2_WAIT64 OFF)
+if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
+    set(EDEN_SHARED_NS2_WAIT64 ON)
+    set(EDEN_NS2_WAIT64_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/kernel_wait64")
+    foreach(eden_ns2_wait_header IN ITEMS
+            "core/hle/kernel/k_address_arbiter.h"
+            "core/hle/kernel/k_process.h"
+            "core/hle/kernel/svc.h")
+        if(NOT EXISTS "${EDEN_NS2_WAIT64_ROOT}/${eden_ns2_wait_header}")
+            message(FATAL_ERROR "Missing common NS2 64-bit arbiter header: ${eden_ns2_wait_header}")
+        endif()
+    endforeach()
+    get_target_property(eden_wait64_sources core SOURCES)
+    foreach(eden_wait64_owner IN ITEMS
+            "hle/kernel/k_address_arbiter.cpp"
+            "hle/kernel/svc/svc_address_arbiter.cpp")
+        list(FIND eden_wait64_sources "${eden_wait64_owner}" eden_wait64_index)
+        if(eden_wait64_index LESS 0)
+            message(FATAL_ERROR "Pinned address arbiter owner changed: ${eden_wait64_owner}")
+        endif()
+        set(eden_wait64_replacement
+            "${EDEN_NS2_WAIT64_ROOT}/core/${eden_wait64_owner}")
+        if(NOT EXISTS "${eden_wait64_replacement}")
+            message(FATAL_ERROR "Reviewed address arbiter source missing: ${eden_wait64_replacement}")
+        endif()
+        list(REMOVE_ITEM eden_wait64_sources "${eden_wait64_owner}")
+        list(APPEND eden_wait64_sources "${eden_wait64_replacement}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_wait64_sources}")
+    # Keep class layouts and inline method signatures identical in every
+    # consumer; the GPU service may include KProcess through its core ABI.
+    target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_WAIT64_ROOT}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_WAIT64_ROOT}")
+    message(STATUS "Encore common kernel arbitration: 32-bit legacy + native WaitIfEqual64")
+endif()
+
 # N52: the shared PS5 ExeFS loader registers the actual NS2 KProcess PID.
 # Admit a guest only if its native kernel Run succeeds; preserve the original
 # NS1 Process::Run path when no NS2 PID is registered, without title hacks.

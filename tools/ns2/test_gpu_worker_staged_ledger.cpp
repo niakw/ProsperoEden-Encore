@@ -11,7 +11,9 @@ void* operator new(std::size_t n) {
     if (void* p = std::malloc(n)) return p;
     throw std::bad_alloc{};
 }
-void operator delete(void* ptr) noexcept { std::free(ptr); }
+// CI fixture only: prevent GCC 13 from inlining our matching malloc/free
+// replacement delete into an allocation site and misdiagnosing new/delete.
+[[gnu::noinline]] [[gnu::noinline]] void operator delete(void* ptr) noexcept { std::free(ptr); }
 void operator delete(void* ptr,std::size_t) noexcept { std::free(ptr); }
 
 namespace GW = Service::AM::GpuWorkerProtocol;

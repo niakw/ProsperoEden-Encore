@@ -113,18 +113,18 @@ def main():
             elif f=='decoder/a64.inc':
                 old='INST(RET, "RET", "1101011001011111000000nnnnn00000")'
                 assert before.count(old)==1
-                reviewed=before.replace(old,old+'\\nINST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")')
+                reviewed=before.replace(old,old+'\nINST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")')
             elif f=='translate/impl/impl.h':
                 old='bool LDAPR(Reg Rn, Reg Rt);'
                 assert before.count(old)==1
                 reviewed=before.replace(old,'bool LDAPR(Imm<2> size, Reg Rn, Reg Rt);')
             else:
-                old='namespace Dynarmic::A64 {\\n'
+                old='namespace Dynarmic::A64 {\n'
                 assert before.count(old)==1
                 reviewed=before.replace(old,old+
-                    '\\n// Reviewed RCpc LDAPR: LDAR\'s acquire ordering is strictly stronger.\\n'
-                    'bool TranslatorVisitor::LDAPR(Imm<2> size, Reg Rn, Reg Rt) {\\n'
-                    '    return LDAR(size, Rn, Rt);\\n}\\n')
+                    '\n// Reviewed RCpc LDAPR: LDAR\'s acquire ordering is strictly stronger.\n'
+                    'bool TranslatorVisitor::LDAPR(Imm<2> size, Reg Rn, Reg Rt) {\n'
+                    '    return LDAR(size, Rn, Rt);\n}\n')
             assert after==reviewed,('LDAPR static owner no longer equals pinned reviewed change',f)
             changes=list(difflib.unified_diff(before.splitlines(),after.splitlines()))
             assert (len(changes)==0 if f=='decoder/a64.h' else 0<len(changes)<=26), (f,changes)

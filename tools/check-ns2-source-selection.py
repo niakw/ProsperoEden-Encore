@@ -97,8 +97,10 @@ def check() -> None:
     puller=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp')
     require('NativeGpuChannelRegistry::Instance().IsNative(' in puller and
             'ProcessNativeComputeQmdAt(' in puller and
-            'CaptureNativeComputeShader(' in puller,
-            'native Ampere channel and QMD3 dispatch missing')
+            'pusher.rasterizer->DispatchNativeCompute(*launch)' in puller and
+            'CaptureNativeComputeShader(' not in puller and
+            'if (mapped && release_targets_mapped)' in puller,
+            'native Ampere QMD3 single-dispatch graph missing or capture duplicated')
     require('EDEN_NS2_NATIVE_GPU_PULLER' in CMAKE and
             'EDEN_SHARED_NS2_AMPERE_CORE' in CMAKE and
             'EDEN_SHARED_NS2_SPIRV_COMPILER' in CMAKE,
@@ -112,6 +114,8 @@ def check() -> None:
     raster=read('vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp')
     require('virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in header and
             'bool RasterizerVulkan::DispatchNativeCompute(' in raster and
+            'CaptureNativeComputeShader(' in raster and
+            'if (!captured.Ready()' in raster and
             'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in CMAKE and
             'EDEN_NS2_NATIVE_VULKAN' not in CMAKE,
             'native compute vtable not unified across core/renderer')

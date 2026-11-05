@@ -109,7 +109,10 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # The real GPU worker and puller units must compile under the NATIVE
     # macro regime; normal host source-only checks do not exercise it.
     deps=ROOT/'vendor/sources/eden-cpm'
-    includes=[ROOT/'headless',
+    # Select the shipping PS5 virtual rasterizer interface before desktop Eden.
+    abi=ROOT/'vendor/encore-active/ns2-runtime/vulkan_abi'
+    assert (abi/'video_core/rasterizer_interface.h').is_file()
+    includes=[abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

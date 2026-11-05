@@ -65,8 +65,13 @@ assert "macro(eden_shared_jit_emitter_header)" not in macros
 assert "macro(eden_shared_jit_emitter)" not in macros
 
 # ABI contract: both caller and implementation must see publish signature.
-assert "target_compile_definitions(dynarmic PRIVATE EDEN_JIT_A64_PUBLISH=1)" in cm
-assert "if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH)" in cm
+# The unified PS5 target installs standard emitter/header unconditionally.
+# Shared/Publish remain exact historical source+ABI host witnesses below;
+# no caller-supplied DEV/JIT profile can alter the production source graph.
+assert 'target_compile_definitions(dynarmic PRIVATE EDEN_JIT_A64_PUBLISH=1)' not in cm
+assert 'if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH)' not in cm
+assert 'set(EDEN_A64_EMITTER_UNIT "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.cpp")' in cm
+assert 'set(EDEN_A64_EMITTER_HEADER "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.h")' in cm
 assert 'write_derived("${PORT_BUILD_DIR}/a${bits}_emit_x64.cpp"' not in cm
 assert 'configure_file("${EDEN_EMITTER_UNIT}" "${PORT_BUILD_DIR}/a${bits}_emit_x64.cpp" COPYONLY)' in cm
 assert shutil.which("cmake"), "CMake required"
@@ -97,9 +102,9 @@ with tempfile.TemporaryDirectory(prefix="encore-emitters-") as tmp:
                     )
                     subprocess.run(["cmake", "-P", str(script)], check=True, timeout=30)
                     assert (output / "a32_emit_x64.cpp").read_text() == a32
-                    assert (output / "a64_emit_x64.cpp").read_text() == (shared if shared_mode else a64)
-                    assert (output / "include/dynarmic/backend/x64/a64_emit_x64.h").read_text() == (shared_h if shared_mode else normal_h)
-print("ENCORE_EMITTER_OWNERS_PASS sources=3 headers=2 selection_modes=16")
+                    assert (output / "a64_emit_x64.cpp").read_text() == a64
+                    assert (output / "include/dynarmic/backend/x64/a64_emit_x64.h").read_text() == normal_h
+print("ENCORE_EMITTER_OWNERS_PASS source=standard shared_source=reviewed profile_inputs_ignored=16")
 
 # Compile actual header/implementation signature boundaries in both standard
 # modes and the shared mode. Full-unit parity alone reproduced the malformed

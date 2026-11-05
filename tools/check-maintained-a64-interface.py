@@ -18,8 +18,14 @@ cmake = (root / "headless/CMakeLists.txt").read_text()
 assert not (root / "headless/jit-compile-batch.inc").exists()
 assert 'write_derived("${PORT_BUILD_DIR}/a64_interface.cpp"' not in cmake
 assert 'configure_file("${EDEN_A64_INTERFACE_UNIT}" "${PORT_BUILD_DIR}/a64_interface.cpp" COPYONLY)' in cmake
-for flag in ("EDEN_JIT_A64_BATCH=1", "EDEN_JIT_A64_DEV_PROFILE=1", "PS5_NATIVE=1"):
-    assert 'APPEND PROPERTY COMPILE_DEFINITIONS "' + flag + '"' in cmake
+# One native application always installs the maintained standard A64 TU.
+# The shared/batch/DEV variants below remain byte-audited source witnesses,
+# not selectable CMake profiles or another executable.
+assert 'set(EDEN_A64_INTERFACE_UNIT "${EDEN_A64_INTERFACE_ROOT}/a64_interface_standard.cpp")' in cmake
+for flag in ('EDEN_JIT_A64_BATCH=1', 'EDEN_JIT_A64_DEV_PROFILE=1'):
+    assert flag not in cmake
+assert 'a64_interface_shared.cpp' not in cmake
+assert 'set(EDEN_G11_PROFILE normal)' in cmake
 
 def git_blob(content):
     return hashlib.sha1(b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest()
@@ -75,6 +81,8 @@ with tempfile.TemporaryDirectory(prefix="encore-a64-selection-") as folder:
                         + selection
                     )
                     subprocess.run(["cmake", "-P", str(script)], check=True, timeout=30)
-                    expected = shared if shared_mode else standard
+                    # Obsolete caller-supplied profile variables must not
+                    # select a different source even when both are set.
+                    expected = standard
                     assert (output / "a64_interface.cpp").read_text() == expected
-print("MAINTAINED_A64_INTERFACE_PASS source_modes=2 profile_stages=16 batch_blob=exact")
+print("MAINTAINED_A64_INTERFACE_PASS native_selected=standard profile_inputs_ignored=16 shared_source_provenance=reviewed batch_blob=exact")

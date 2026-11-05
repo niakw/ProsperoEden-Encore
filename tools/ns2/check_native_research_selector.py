@@ -30,8 +30,14 @@ run=subprocess.run([sys.executable,'-B',str(source)],cwd=root,env=env,
                    capture_output=True,text=True,timeout=85)
 assert run.returncode==0,run.stdout[-2500:]+run.stderr[-2500:]
 assert 'UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS' in run.stdout,run.stdout
-for name in ('build-040-zbic.yml','ns2-native-ps5-research.yml'):
-    workflow=(root/'.github/workflows'/name).read_text()
-    # Workflows may await operator authorization; app CMake must not.
-    assert 'if: ${{ false }}' in workflow
+build_workflow=(root/'.github/workflows/build-040-zbic.yml').read_text()
+assert "if: >-\n      ${{ github.event_name == 'workflow_dispatch' ||" in build_workflow
+assert "contains(github.event.head_commit.message || '', '[full-build]')" in build_workflow
+assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in build_workflow
+assert "needs.build.result == 'success'" in build_workflow
+assert 'if: ${{ false }}' not in build_workflow
+# An archived alternate workflow remains unselected; only the single real
+# native app/package workflow can be invoked deliberately by its operator.
+legacy=(root/'.github/workflows/ns2-native-ps5-research.yml').read_text()
+assert 'if: ${{ false }}' in legacy
 print('P0_SINGLE_NATIVE_GPU_CMAKE_GRAPH_PASS build_modes=1 native_owners=registered ps5_console=not_tested')

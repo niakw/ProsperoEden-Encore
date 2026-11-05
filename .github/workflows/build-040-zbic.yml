@@ -39,10 +39,15 @@ concurrency:
 
 jobs:
   build:
-    # Owner hard stop: no full PS5 compile/package until NS1/NS2 are
-    # complete, optimized, and console-validated with one jacket loader.
-    # Explicitly re-enable after the acceptance gates are satisfied.
-    if: ${{ false }}
+    # Compilation and publication are separate operator decisions. P5 is
+    # a roadmap/console-qualification milestone, never a CMake or CI build
+    # selector. Ordinary main pushes do not compile. Manual dispatch, or an
+    # explicit [full-build] / verified [resume-stage:...] commit, does.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'push' &&
+           (contains(github.event.head_commit.message || '', '[full-build]') ||
+            contains(github.event.head_commit.message || '', '[resume-stage:37728435816]'))) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     env:

@@ -11,7 +11,7 @@
 
 Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache shaders, cache textures, buffer cache, ordonnanceur, services communs et UI. Les détails intrinsèquement différents (instructions Maxwell/Ampere, descripteurs QMD, capacités GPU, fréquences, services et formats firmware) sont sélectionnés automatiquement et vérifiés; **aucun réglage « expérimental » dans le profil final**. Cela ne signifie pas supprimer les contrôles de sécurité ni prétendre qu'une instruction Ampere est du Maxwell.
 
-**Verrou P5 imposé par le propriétaire : aucun build PS5 et aucun test console avant l'entrée formelle en P5, après traitement des jalons P0 à P4.** Jusqu'à cette frontière, seuls les changements source, contrôles Clang/GCC, tests host, analyses de parité et previews hors console sont permis. Les workflows natifs restent désactivés; leur réactivation et la qualification de vrais jeux requièrent une autorisation explicite en P5. Aucun jalon P0-P4 ne doit être maintenu artificiellement ouvert parce qu'il manque un essai console réservé à P5.
+**Règle corrigée le 5 novembre 2026 : aucune condition P5, DEV, expérimentation ou « release » ne sélectionne une autre application dans le code.** Le build natif PS5 unique peut être lancé **volontairement** depuis GitHub Actions (`workflow_dispatch` ou marqueur explicite `[full-build]` sur `main`). Une compilation n'autorise **jamais** à elle seule une publication : l'opérateur choisit séparément `publish`, et la sortie publique exige les critères P5 de validation console. Les tests source/hôte P0–P4 n'affirment ni premier rendu invité ni compatibilité des jeux. Les anciennes références à un « verrou P5 du build » plus bas dans l'historique sont obsolètes.
 
 ## Audit d’intégration du 5 novembre 2026 — P0 → P1 → P2 → P4
 
@@ -66,7 +66,7 @@ pas passé la qualification de source et l’absence de régression.
 | Mémoire et VRAM | GMMU, NVMap, sparse/ASTC et contrôles hôte partiels | Résidence physique 12 GiB et premières images sur PS5 non prouvées |
 | HLE / synchronisation | Nombreux services et correctifs IPC, VI2, scheduler | Pas de chemin complet invités → VI2 → frame certifié |
 | UI et jaquettes | Index LaunchBox Switch 2, cache fronts/backs/spines, opacité et conservation d'inventaire corrigés; preview hôte verte | Jaquettes réellement récupérées sur console et transition GL→Vulkan sans flash à valider |
-| Release | Builds natifs verrouillés | Pas de qualification console de cette révision |
+| Build / diffusion | Compilation native uniquement sur demande ; publication séparée | Pas de qualification console de cette révision |
 
 ## Séquence des jalons
 
@@ -77,7 +77,7 @@ pas passé la qualification de source et l’absence de régression.
 | **P2** | GPU Vulkan source/hôte partagé | TIC/TSC, texel-buffers et images, UBO/SSBO, caches, graphics/compute Ampere, ASTC/sparse/VRAM et synchronisations **dans le code** | Le premier framebuffer et les capacités du pilote réel sont qualifiés en P5; les instructions/stages non codés restent de vrais manques P2 |
 | **P3** | UI / rendu partagé sans régression de source | Jaquettes, navigation sans rescan, chargement unique et transitions vérifiables sans PS5 | Récupération des jaquettes et FC27/BOTW réels réservés à P5 |
 | **P4** | Préqualification strictement hôte | Contrats ciblés C++ Clang/GCC, mémoire/fences simulées, parité des sources et recette de release sans faux succès | Qualification de toutes les CI au dernier SHA faite à la frontière P5, sans bloquer le traitement du code |
-| **P5** | Build PS5 contrôlé, qualification console et stabilisation | Autorisation explicite du build, puis MKW + Bananza première image invitée, FC27 match sans crash, BOTW, ressources et performances | Release seulement si critères console remplis |
+| **P5** | Qualification console et stabilisation | MKW + Bananza première image invitée, FC27 match sans crash, BOTW, ressources et performances | Release seulement si critères console remplis, indépendamment de la compilation |
 
 Ces jalons ne sont **pas** des estimations de délais; chacun se ferme uniquement sur preuve. Un test de traduction shader, une preview OpenGL ou une compilation native réussie ne remplace pas une image issue du GPU invité.
 

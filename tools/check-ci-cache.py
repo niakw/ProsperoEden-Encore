@@ -26,8 +26,9 @@ native_toolchain = workflow.split("      - name: Install build toolchain", 1)[1]
     "      - name: Upgrade Meson", 1)[0]
 # Native source changes now trigger core verification independent of commit
 # message suffixes. Narrow push paths avoid unnecessary runs.
-# Per-SHA groups keep previous long-running audits conclusive while new native
-# pushes validate independently; no cancellation of an older SHA.
+# Latest-source host validations supersede obsolete SHA work. This is an
+# intentional throughput policy: the current reviewed vendor pin must receive
+# a full result, but superseded source revisions should release CI runners.
 host_push = host_workflow.split("  push:", 1)[1].split("  workflow_dispatch:", 1)[0]
 host_group = host_workflow.split("concurrency:", 1)[1].split("jobs:", 1)[0]
 assert "branches: [main]" in host_push
@@ -43,8 +44,18 @@ assert "'docs/**'" not in host_push
 assert "'launcher/**'" not in host_push
 assert "${{ github.ref }}" in host_group
 assert "${{ github.event_name }}" in host_group
-assert "${{ github.sha }}" in host_group
-assert "cancel-in-progress: false" in host_group
+assert "${{ github.sha }}" not in host_group, "stale SHA-scoped host validations"
+assert "cancel-in-progress: true" in host_group
+for host_guard in (
+    ".github/workflows/encore-core-fast-gate.yml",
+    ".github/workflows/ns2-research-host.yml",
+):
+    guard = (root / host_guard).read_text()
+    group = guard.split("concurrency:", 1)[1].split("jobs:", 1)[0]
+    assert "${{ github.ref }}" in group
+    assert "${{ github.event_name }}" in group
+    assert "${{ github.sha }}" not in group
+    assert "cancel-in-progress: true" in group
 assert "if: ${{ github.event_name == 'workflow_dispatch' ||" not in host_workflow
 
 assert "libboost-container-dev" in host_workflow

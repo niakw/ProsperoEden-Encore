@@ -25,7 +25,7 @@ int main() {
     caps.framegen.native_vulkan=true;
     caps.framegen.game_fps=30;
     caps.framegen.mihawk_compute=true;
-    caps.framegen.model_weights_verified_and_licensed=true;
+    caps.framegen.model_weights_verified_and_loaded=true;
     caps.fsr_temporal_backend_ready=true;
     caps.neural_vulkan_spirv_ready=true;
     caps.neural_weights_redistributable=true;

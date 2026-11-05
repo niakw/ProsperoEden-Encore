@@ -601,7 +601,9 @@ void Launcher::press_dialog(Key key)
             // Save the selected method. The Vulkan renderer uses actual
             // runtime capabilities; choosing a method never fabricates FPS.
             prefs_.frame_generation = (prefs_.frame_generation + step + 4) % 4;
-            if (prefs_.frame_generation)
+            // Only FSR 3 / LSFG lack a native PS5 dispatch path. MihawkGen
+            // now has an actual runtime pipeline (console qualification pending).
+            if (prefs_.frame_generation >= 2)
                 say(tr(kFramegenUnavailable), true);
         }
         else if (option_ == video_refresh)

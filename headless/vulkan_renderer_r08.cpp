@@ -13,6 +13,8 @@
 #include <vector>
 
 #include <fmt/ranges.h>
+#include <algorithm>
+#include <chrono>
 
 #include "common/logging.h"
 #include <ranges>
@@ -27,6 +29,7 @@
 #include "video_core/renderer_vulkan/renderer_vulkan.h"
 #include "display_refresh.h"
 #include "frame_metrics.h"
+#include "hud.h"
 #include "mihawk_native_session.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/vk_blit_screen.h"
@@ -252,13 +255,26 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     }
 #endif
 
-    // R08: capture the ACTUAL composited frame into a private Vulkan image.
-    // PresentManager can recycle Frame after presentation; it must never be
-    // stored as history. No screenshot/overlay shortcuts or per-game fixes.
+    // R08 native interpolation. The true guest composite is ALWAYS presented,
+    // even when synthesis, GPU pacing, model load or extra FIFO slots fail.
+    // The synthetic midpoint must precede the newest real frame in FIFO.
     Eden::FeatureLab::MihawkCapturePermit r08_capture{};
+    Frame* r08_synthetic = nullptr;
+    bool r08_generated = false;
     if (Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 1 &&
         !framebuffers.empty()) {
-        if (!mihawk_native) mihawk_native = std::make_unique<Eden::FeatureLab::MihawkNativeSession>();
+        // Zero steady-clock reads or interpolation allocations for the
+        // default OFF path. Source IDs count actual compositor callbacks,
+        // not generated frames or the game's requested VI cadence.
+        ++mihawk_source_sequence;
+        const u64 r08_source_ns = static_cast<u64>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::steady_clock::now().time_since_epoch()).count());
+        const u64 r08_delta_ns = r08_source_ns > mihawk_previous_source_ns
+            ? r08_source_ns - mihawk_previous_source_ns : 0;
+        mihawk_previous_source_ns = r08_source_ns;
+        if (!mihawk_native)
+            mihawk_native = std::make_unique<Eden::FeatureLab::MihawkNativeSession>();
         if (!mihawk_init_attempted) {
             mihawk_init_attempted = true;
             const auto model = Eden::AppResourceFile("mihawkgen/network.fgw");
@@ -273,6 +289,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
                 .model_path = model
             })) {
                 mihawk_capture_fences.ResetAfterDeviceIdle();
+                mihawk_present_gate.Reset();
             }
         }
         if (mihawk_native->Ready() &&
@@ -282,19 +299,123 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
             r08_capture = mihawk_capture_fences.Acquire(
                 [this](u64 tick) { return scheduler.IsFree(tick); });
             if (r08_capture.valid) {
-                const auto& image = mihawk_native->Images().History(r08_capture.slot);
-                const Eden::FeatureLab::MihawkSourceRecord snapshot{
+                const auto& owned = mihawk_native->Images();
+                const auto& private_history = owned.History(r08_capture.slot);
+                const Eden::FeatureLab::MihawkSourceRecord source{
                     .source_real = *frame->image,
-                    .history_owned = image.image,
-                    .history_initialized = mihawk_native->Images().Initialized(r08_capture.slot),
-                    .width = frame->width, .height = frame->height
+                    .history_owned = private_history.image,
+                    .history_initialized = owned.Initialized(r08_capture.slot),
+                    .width = frame->width,
+                    .height = frame->height
                 };
-                if (Eden::FeatureLab::ValidateOwnedSnapshotInput(snapshot)
+
+                if (Eden::FeatureLab::ValidateOwnedSnapshotInput(source)
                     == Eden::FeatureLab::MihawkRecordResult::Recorded) {
+                    const int actual_output_mhz =
+                        Eden::Display::output_millihertz.load(std::memory_order_relaxed);
+                    const unsigned actual_hz = actual_output_mhz > 0
+                        ? static_cast<unsigned>((actual_output_mhz + 500) / 1000) : 0U;
+                    const bool native_hud_visible = Eden::GetVulkanHud().width != 0;
+                    // Observed compositor interval, NEVER the guest's requested VI
+                    // clock or the synthetic display-frame counter.
+                    const unsigned observed_fps = r08_delta_ns >= 8'000'000 &&
+                        r08_delta_ns <= 100'000'000
+                        ? static_cast<unsigned>(1'000'000'000ULL / r08_delta_ns) : 0U;
+                    const Eden::FeatureLab::GraphicsCapabilities graphics{
+                        .native_vulkan = true,
+                        .mihawk_compute = mihawk_native->Ready(),
+                        .model_weights_verified_and_loaded = mihawk_native->Ready(),
+                        .game_fps = observed_fps
+                    };
+                    const Eden::FeatureLab::PresentGateInput input{
+                        .real_frame_id = mihawk_source_sequence,
+                        .timestamp_ns = r08_source_ns,
+                        .width = frame->width,
+                        .height = frame->height,
+                        .output_hz = actual_hz,
+                        .display_mode_verified =
+                            actual_output_mhz > 0 && (actual_hz == 60 || actual_hz == 120),
+                        .overlay_changed = native_hud_visible
+                    };
+                    const auto decision = mihawk_present_gate.OnRealFrame(
+                        Eden::FeatureLab::FrameGeneration::MihawkGen, graphics, input);
+                    const bool prior_snapshot_fenced =
+                        mihawk_capture_fences.CanGenerate(
+                            r08_capture, mihawk_source_sequence,
+                            [this](u64 tick) { return scheduler.IsFree(tick); });
+
+                    Eden::FeatureLab::MihawkGenerateRecord neural{};
+                    if (decision.eligible() && prior_snapshot_fenced) {
+                        // TryReserve never waits and never resets a fence until
+                        // the synthetic image is fully prepared for submission.
+                        r08_synthetic = present_manager.TryReserveRenderFrame();
+                        if (r08_synthetic &&
+                            r08_synthetic->width == frame->width &&
+                            r08_synthetic->height == frame->height) {
+                            const auto format = present_manager.SwapchainImageFormat();
+                            const auto& previous = owned.History(r08_capture.slot ^ 1U);
+                            neural = {
+                                .context = mihawk_native->Context(),
+                                .previous_owned = previous.image,
+                                .current_owned = private_history.image,
+                                .previous_view = previous.view,
+                                .current_view = private_history.view,
+                                .private_rgba_output = owned.RgbaOutput().image,
+                                .private_rgba_view = owned.RgbaOutput().view,
+                                .synthetic_present = *r08_synthetic->image,
+                                .width = frame->width,
+                                .height = frame->height,
+                                .descriptor_slot = 0,
+                                .context_slot_count = mihawk_native->DescriptorSlots(),
+                                .output_was_blitted = mihawk_native->OutputWasBlitted(),
+                                .capabilities = {
+                                    .enabled = true,
+                                    .native_vulkan = true,
+                                    .compute_and_storage = mihawk_native->Ready(),
+                                    .model_verified_and_loaded = mihawk_native->Ready(),
+                                    .blit_rgba_to_present = true,  // probed by allocator
+                                    .owned_history_pair = previous.image != private_history.image,
+                                    .history_matches_source_format = owned.SourceFormat() == format,
+                                    .private_output_rgba8_storage = owned.RgbaOutput().image != VK_NULL_HANDLE,
+                                    .present_image_transfer_dst = true, // RecreateFrame usage
+                                    .history_descriptor_slots_fenced = prior_snapshot_fenced,
+                                    .present_queue_ordered = true, // same scheduler/queue
+                                    .native_hud_absent = !native_hud_visible,
+                                    .available_present_frames =
+                                        static_cast<std::uint8_t>(
+                                            std::min<std::size_t>(
+                                                present_manager.MaxExtraFrames() + 1, 255)),
+                                    .width = frame->width,
+                                    .height = frame->height,
+                                    .compositor_format =
+                                        format == VK_FORMAT_R8G8B8A8_UNORM
+                                            ? Eden::FeatureLab::ColorFormat::Rgba8Unorm
+                                            : format == VK_FORMAT_B8G8R8A8_UNORM
+                                                ? Eden::FeatureLab::ColorFormat::Bgra8Unorm
+                                                : Eden::FeatureLab::ColorFormat::Other
+                                }
+                            };
+                            r08_generated =
+                                Eden::FeatureLab::ValidateNativeMihawkPairInput(neural) ==
+                                Eden::FeatureLab::MihawkRecordResult::Recorded;
+                        }
+                        if (!r08_generated && r08_synthetic) {
+                            // No fence reset, no GPU commands: return the slot as-is.
+                            present_manager.CancelReservedRenderFrame(r08_synthetic);
+                            r08_synthetic = nullptr;
+                        }
+                    }
+
                     scheduler.RequestOutsideRenderPassOperationContext();
-                    scheduler.Record([snapshot](vk::CommandBuffer command) mutable {
-                        snapshot.cmd = *command;
-                        (void)Eden::FeatureLab::RecordOwnedSnapshot(snapshot);
+                    scheduler.Record([source, neural, r08_generated](vk::CommandBuffer cmd) mutable {
+                        source.cmd = *cmd;
+                        (void)Eden::FeatureLab::RecordOwnedSnapshot(source);
+                        if (r08_generated) {
+                            // Current history is ready for sampling after the
+                            // source-copy barriers in this SAME command buffer.
+                            neural.cmd = *cmd;
+                            (void)Eden::FeatureLab::RecordNativeMihawkPair(neural);
+                        }
                     });
                 } else {
                     mihawk_capture_fences.AbortUnsubmitted();
@@ -302,14 +423,39 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
                 }
             }
         }
+    } else {
+        // Game/menu/renderer switch cannot reuse an old source pair.
+        mihawk_present_gate.Reset();
+        mihawk_previous_source_ns = 0;
     }
 
-    const u64 r08_submitted_tick = scheduler.Flush(*frame->render_ready);
-    if (r08_capture.valid &&
-        mihawk_capture_fences.Commit(r08_capture, r08_submitted_tick)) {
+    // If generated, submit and queue the midpoint FIRST. The original real
+    // frame is flushed and queued next. Both use existing PresentManager FIFO.
+    if (r08_generated) {
+        present_manager.ConfirmReservedRenderFrame(r08_synthetic);
+        const u64 generated_tick = scheduler.Flush(*r08_synthetic->render_ready);
+        if (r08_capture.valid) {
+            if (mihawk_capture_fences.Commit(
+                    r08_capture, generated_tick, mihawk_source_sequence, true)) {
+                mihawk_native->Images().MarkInitialized(r08_capture.slot);
+                mihawk_native->MarkOutputBlitted();
+            } else {
+                // The GPU command was submitted but its tick could not be
+                // attested. Preserve quarantine: never reuse private images
+                // or claim the output can be overwritten by the next frame.
+                mihawk_present_gate.Reset();
+            }
+        }
+        present_manager.Present(r08_synthetic);
+        ::Eden::FrameMetrics::OnGeneratedQueued();
+    }
+
+    const u64 real_tick = scheduler.Flush(*frame->render_ready);
+    if (r08_capture.valid && !r08_generated &&
+        mihawk_capture_fences.Commit(
+            r08_capture, real_tick, mihawk_source_sequence, false)) {
         mihawk_native->Images().MarkInitialized(r08_capture.slot);
     }
-
     present_manager.Present(frame);
     ::Eden::FrameMetrics::OnRealQueued();
     scheduler.DispatchWork();

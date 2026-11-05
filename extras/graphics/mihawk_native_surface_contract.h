@@ -12,7 +12,7 @@ enum class NativeMihawkReject : std::uint8_t {
     None,
     Disabled,
     MissingCompute,
-    UnlicensedWeights,
+    MissingModel,
     NonNativeVulkan,
     UnsupportedFormat,
     InsufficientSlots,
@@ -22,7 +22,7 @@ enum class NativeMihawkReject : std::uint8_t {
     MissingPresentTransferUsage,
     InFlightResources,
     MissingBlitSupport,
-    UnsafeHud,
+    NativeHudPresent,
     NoPresenterSync,
     InvalidExtent
 };
@@ -37,7 +37,7 @@ struct MihawkSurfaceCapabilities {
     bool enabled = false;                 // qualified backend actually built
     bool native_vulkan = false;
     bool compute_and_storage = false;
-    bool model_licensed_and_loaded = false;
+    bool model_verified_and_loaded = false;
     bool blit_rgba_to_present = false;     // both formats support src/dst BLIT
     bool owned_history_pair = false;
     bool history_matches_source_format = false;
@@ -45,7 +45,7 @@ struct MihawkSurfaceCapabilities {
     bool present_image_transfer_dst = false;
     bool history_descriptor_slots_fenced = false;
     bool present_queue_ordered = false;
-    bool hud_isolated = false;
+    bool native_hud_absent = false;  // Encore's own HUD, not the guest's score/menu
     std::uint8_t available_present_frames = 0;
     std::uint32_t width = 0, height = 0;
     ColorFormat compositor_format = ColorFormat::Other;
@@ -56,7 +56,7 @@ constexpr NativeMihawkReject CheckNativeMihawkSurface(
     if (!x.enabled) return NativeMihawkReject::Disabled;
     if (!x.native_vulkan) return NativeMihawkReject::NonNativeVulkan;
     if (!x.compute_and_storage) return NativeMihawkReject::MissingCompute;
-    if (!x.model_licensed_and_loaded) return NativeMihawkReject::UnlicensedWeights;
+    if (!x.model_verified_and_loaded) return NativeMihawkReject::MissingModel;
     if (!x.width || !x.height || x.width > 7680 || x.height > 4320)
         return NativeMihawkReject::InvalidExtent;
     if (x.compositor_format != ColorFormat::Rgba8Unorm &&
@@ -70,7 +70,7 @@ constexpr NativeMihawkReject CheckNativeMihawkSurface(
     if (!x.present_image_transfer_dst) return NativeMihawkReject::MissingPresentTransferUsage;
     if (!x.history_descriptor_slots_fenced) return NativeMihawkReject::InFlightResources;
     if (!x.present_queue_ordered) return NativeMihawkReject::NoPresenterSync;
-    if (!x.hud_isolated) return NativeMihawkReject::UnsafeHud;
+    if (!x.native_hud_absent) return NativeMihawkReject::NativeHudPresent;
     // The source may be BGRA, but the network writes *RGBA8*. A dedicated
     // storage image must be blitted (including format conversion if BGRA).
     // Even RGBA->RGBA requires that BLIT_SRC and BLIT_DST be supported.

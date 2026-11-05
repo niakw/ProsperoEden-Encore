@@ -24,9 +24,25 @@ public:
         pending_ = true;
         return {serial, next_slot_, true};
     }
+    // Previous real source must actually have been captured immediately
+    // before this one. Pure guest frame IDs and clock estimates never stand
+    // in for a GPU-completed captured history image.
+    template<class IsFree>
+    bool CanGenerate(const MihawkCapturePermit& permit, std::uint64_t real_id,
+                     IsFree&& is_free) const noexcept {
+        if (!permit.valid || !pending_ || quarantined_ ||
+            permit.slot != next_slot_ || real_id == 0 ||
+            previous_source_id_ == 0 || previous_source_id_ + 1 != real_id)
+            return false;
+        const auto previous_tick = busy_until_[permit.slot ^ 1];
+        return previous_tick != 0 && is_free(previous_tick) &&
+            (output_busy_until_ == 0 || is_free(output_busy_until_));
+    }
+
     // Must be called immediately after Scheduler::Flush returns the actual
     // submission tick. A zero or regressing tick quarantines this ring.
-    bool Commit(const MihawkCapturePermit& permit, std::uint64_t actual_tick) noexcept {
+    bool Commit(const MihawkCapturePermit& permit, std::uint64_t actual_tick,
+                std::uint64_t source_id = 0, bool generated = false) noexcept {
         if (!pending_ || !permit.valid || permit.slot != next_slot_ ||
             permit.previous_gpu_tick != busy_until_[next_slot_])
             return false;
@@ -37,6 +53,13 @@ public:
             return false;
         }
         busy_until_[next_slot_] = actual_tick;
+        if (generated) {
+            // The compute dispatch sampled the previous snapshot and wrote
+            // the sole RGBA output until this same GPU tick is complete.
+            busy_until_[next_slot_ ^ 1] = actual_tick;
+            output_busy_until_ = actual_tick;
+        }
+        previous_source_id_ = source_id;
         latest_gpu_tick_ = actual_tick;
         next_slot_ ^= 1;
         return true;
@@ -50,6 +73,8 @@ public:
     bool Quarantined() const noexcept { return quarantined_; }
     bool Pending() const noexcept { return pending_; }
     std::uint64_t LatestGpuTick() const noexcept { return latest_gpu_tick_; }
+    std::uint64_t OutputBusyUntil() const noexcept { return output_busy_until_; }
+    std::uint64_t PreviousSourceId() const noexcept { return previous_source_id_; }
     std::uint64_t BusyUntil(std::uint32_t slot) const noexcept {
         return busy_until_[slot & 1];
     }
@@ -57,6 +82,8 @@ public:
 private:
     std::array<std::uint64_t, 2> busy_until_{};
     std::uint64_t latest_gpu_tick_ = 0;
+    std::uint64_t previous_source_id_ = 0;
+    std::uint64_t output_busy_until_ = 0;
     std::uint8_t next_slot_ = 0;
     bool quarantined_ = false;
     bool pending_ = false;

@@ -7,7 +7,7 @@ int main() {
     GraphicsCapabilities caps{};
     caps.native_vulkan = true;
     caps.mihawk_compute = true;
-    caps.model_weights_verified_and_licensed = true;
+    caps.model_weights_verified_and_loaded = true;
     caps.game_fps = 30;
     PresentGateInput f{};
     f.real_frame_id = 1; f.timestamp_ns = 1'000'000'000;
@@ -38,10 +38,10 @@ int main() {
     assert(gate.OnRealFrame(FrameGeneration::MihawkGen, caps, f).reason ==
            PresentGateReason::Paused);
     f.scene_reset = false;
-    caps.model_weights_verified_and_licensed = false;
+    caps.model_weights_verified_and_loaded = false;
     assert(gate.OnRealFrame(FrameGeneration::MihawkGen, caps, f).reason ==
            PresentGateReason::Unsupported);
-    caps.model_weights_verified_and_licensed = true;
+    caps.model_weights_verified_and_loaded = true;
     caps.game_fps = 60; f.output_hz = 120; f.real_frame_id = 1;
     f.timestamp_ns = 2'000'000'000;
     assert(!gate.OnRealFrame(FrameGeneration::MihawkGen, caps, f).eligible());

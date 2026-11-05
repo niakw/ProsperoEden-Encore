@@ -39,4 +39,36 @@ int main() {
     assert(p.valid && p.slot == 0);
     assert(!gate.Commit(p, 0)); // missing actual tick is never accepted
     assert(gate.Quarantined());
+
+    // Full sequence: generation holds old history + output until real
+    // scheduler tick. Skipping a guest source frame invalidates the pair.
+    gate.ResetAfterDeviceIdle();
+    completed = 0;
+    p = gate.Acquire(is_free);
+    assert(p.valid && p.slot == 0);
+    assert(!gate.CanGenerate(p, 1, is_free));
+    assert(gate.Commit(p, 8, 1, false));
+    completed = 8;
+    p = gate.Acquire(is_free);
+    assert(p.valid && p.slot == 1);
+    assert(gate.CanGenerate(p, 2, is_free));
+    assert(!gate.CanGenerate(p, 3, is_free)); // frame ID gap
+    assert(gate.Commit(p, 9, 2, true));
+    assert(gate.BusyUntil(0) == 9 && gate.BusyUntil(1) == 9);
+    assert(gate.OutputBusyUntil() == 9);
+    completed = 8;
+    assert(!gate.Acquire(is_free).valid); // old history still sampled by GPU
+    completed = 9;
+    p = gate.Acquire(is_free);
+    assert(gate.CanGenerate(p, 3, is_free));
+    assert(gate.Commit(p, 10, 3, true));
+    completed = 10;
+    p = gate.Acquire(is_free);
+    assert(!gate.CanGenerate(p, 5, is_free)); // dropped frame 4
+    assert(gate.Commit(p, 11, 5, false));
+    completed = 11;
+    p = gate.Acquire(is_free);
+    assert(gate.CanGenerate(p, 6, is_free));
+    gate.AbortUnsubmitted();
+
 }

@@ -99,6 +99,7 @@ void MihawkNativeSession::Destroy() noexcept {
         owned_.Destroy();
     }
     model_loaded_ = false;
+    output_was_blitted_ = false;
     // Destroy waited for private resources to finish. All GPU serials
     // associated with this allocation generation are now retired.
     encoder_.ResetAfterDeviceIdle();

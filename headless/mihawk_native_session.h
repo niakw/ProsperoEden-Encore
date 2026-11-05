@@ -27,6 +27,8 @@ public:
     const MihawkVulkanResources& Images() const noexcept { return owned_; }
     MihawkVulkanResources& Images() noexcept { return owned_; }
     fg_context* Context() const noexcept { return context_; }
+    bool OutputWasBlitted() const noexcept { return output_was_blitted_; }
+    void MarkOutputBlitted() noexcept { output_was_blitted_ = true; }
     std::uint32_t DescriptorSlots() const noexcept { return 1; }
     MihawkEncoderImages CaptureImages() const noexcept {
         return MihawkEncoderImages::FromOwned(owned_);
@@ -34,6 +36,7 @@ public:
 private:
     fg_context* context_ = nullptr;
     bool model_loaded_ = false;
+    bool output_was_blitted_ = false;
     MihawkVulkanResources owned_{};
     MihawkVulkanEncoder encoder_{};
 };

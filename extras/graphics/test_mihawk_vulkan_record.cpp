@@ -106,15 +106,16 @@ int main() {
     r.context_slot_count = 3;
     r.capabilities = {
         .enabled=true, .native_vulkan=true, .compute_and_storage=true,
-        .model_licensed_and_loaded=true, .blit_rgba_to_present=true,
+        .model_verified_and_loaded=true, .blit_rgba_to_present=true,
         .owned_history_pair=true, .history_matches_source_format=true,
         .private_output_rgba8_storage=true, .present_image_transfer_dst=true,
         .history_descriptor_slots_fenced=true,
-        .present_queue_ordered=true, .hud_isolated=true,
+        .present_queue_ordered=true, .native_hud_absent=true,
         .available_present_frames=3,
         .width=1920, .height=1080,
         .compositor_format=ColorFormat::Bgra8Unorm
     };
+    assert(ValidateNativeMihawkPairInput(r) == MihawkRecordResult::Recorded);
     assert(RecordNativeMihawkPair(r) == MihawkRecordResult::Recorded);
     assert((calls == std::vector<char>{'B','G','B','L','B'}));
     assert(last_pair.prev_color == r.previous_view);
@@ -131,9 +132,9 @@ int main() {
     assert(captured[0].oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
     calls.clear(); captured.clear();
-    r.capabilities.hud_isolated = false;
+    r.capabilities.native_hud_absent = false;
     assert(RecordNativeMihawkPair(r) == MihawkRecordResult::Unsupported);
-    r.capabilities.hud_isolated = true;
+    r.capabilities.native_hud_absent = true;
     r.synthetic_present = r.previous_owned;
     assert(RecordNativeMihawkPair(r) == MihawkRecordResult::DuplicateImages);
     r.synthetic_present = H<VkImage>(0x9);
@@ -151,7 +152,7 @@ int main() {
     input.request.mode = FrameGeneration::MihawkGen;
     input.request.graphics.native_vulkan = true;
     input.request.graphics.mihawk_compute = true;
-    input.request.graphics.model_weights_verified_and_licensed = true;
+    input.request.graphics.model_weights_verified_and_loaded = true;
     input.request.graphics.game_fps = 30;
     input.request.surface = r.capabilities;
     input.request.source = {
@@ -240,14 +241,14 @@ int main() {
     neural_available = true;
 
     // A HUD that cannot be separated from the game image fails closed.
-    input.request.surface.hud_isolated = false;
+    input.request.surface.native_hud_absent = false;
     encoded = encoder.Record(input);
     assert(!encoded.IsRecorded() && encoded.plan.status == MihawkPlanStatus::UnsafeResources);
     assert(calls.empty());
 
     // Even if Vulkan recycles identical opaque VkImage handles, an allocation
     // generation change discards the encoder's old history and layouts.
-    input.request.surface.hud_isolated = true;
+    input.request.surface.native_hud_absent = true;
     ++input.images.resource_generation;
     ++input.request.source.real_frame_id;
     input.request.source.timestamp_ns += 33'333'333;

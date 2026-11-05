@@ -24,7 +24,7 @@ struct GraphicsCapabilities {
     bool guest_motion_vectors = false;
     bool guest_depth = false;
     bool mihawk_compute = false;
-    bool model_weights_verified_and_licensed = false;
+    bool model_weights_verified_and_loaded = false;
     bool lossless_scaling_provider_available = false;
     // Real game progression FPS: NEVER interpolated display FPS.
     std::uint32_t game_fps = 0;
@@ -44,7 +44,7 @@ constexpr Availability QualifyFrameGeneration(
             !caps.guest_depth) return Availability::Unsupported;
         break;
     case FrameGeneration::MihawkGen:
-        if (!caps.mihawk_compute || !caps.model_weights_verified_and_licensed)
+        if (!caps.mihawk_compute || !caps.model_weights_verified_and_loaded)
             return Availability::Unsupported;
         break;
     case FrameGeneration::LosslessScaling:

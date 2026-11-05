@@ -10,8 +10,8 @@ int main() {
     caps.native_vulkan = true;
     assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::MissingCompute);
     caps.compute_and_storage = true;
-    assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::UnlicensedWeights);
-    caps.model_licensed_and_loaded = true;
+    assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::MissingModel);
+    caps.model_verified_and_loaded = true;
     caps.width = 1920; caps.height = 1080;
     assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::UnsupportedFormat);
     caps.compositor_format = ColorFormat::Bgra8Unorm;
@@ -30,8 +30,8 @@ int main() {
     caps.history_descriptor_slots_fenced = true;
     assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::NoPresenterSync);
     caps.present_queue_ordered = true;
-    assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::UnsafeHud);
-    caps.hud_isolated = true;
+    assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::NativeHudPresent);
+    caps.native_hud_absent = true;
     assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::MissingBlitSupport);
     caps.blit_rgba_to_present = true;
     assert(CheckNativeMihawkSurface(caps) == NativeMihawkReject::None);

@@ -64,7 +64,7 @@ MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
     return MihawkRecordResult::Recorded;
 }
 
-MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& r) noexcept {
+MihawkRecordResult ValidateNativeMihawkPairInput(const MihawkGenerateRecord& r) noexcept {
     if (CheckNativeMihawkSurface(r.capabilities) != NativeMihawkReject::None)
         return MihawkRecordResult::Unsupported;
     if (!r.context || !fg_method_available(r.context, FG_METHOD_NEURAL))
@@ -72,7 +72,7 @@ MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& r) noexc
     if (r.descriptor_slot >= r.context_slot_count || r.context_slot_count == 0 ||
         r.context_slot_count > 8)
         return MihawkRecordResult::InvalidSlot;
-    if (!r.cmd || !r.previous_owned || !r.current_owned || !r.previous_view ||
+    if (!r.previous_owned || !r.current_owned || !r.previous_view ||
         !r.current_view || !r.private_rgba_output || !r.private_rgba_view ||
         !r.synthetic_present || r.width != r.capabilities.width ||
         r.height != r.capabilities.height)
@@ -83,6 +83,11 @@ MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& r) noexc
         r.synthetic_present == r.current_owned)
         return MihawkRecordResult::DuplicateImages;
     return MihawkRecordResult::Recorded;
+}
+
+MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& r) noexcept {
+    if (!r.cmd) return MihawkRecordResult::InvalidHandles;
+    return ValidateNativeMihawkPairInput(r);
 }
 
 MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& r) noexcept {

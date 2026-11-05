@@ -28,7 +28,7 @@ int main() {
     assert(QualifyFrameGeneration(FrameGeneration::MihawkGen, caps)
            == Availability::Unsupported); // Backend & weights missing.
     caps.mihawk_compute = true;
-    caps.model_weights_verified_and_licensed = true;
+    caps.model_weights_verified_and_loaded = true;
     assert(QualifyFrameGeneration(FrameGeneration::MihawkGen, caps)
            == Availability::Ready);
     caps.game_fps = 29;

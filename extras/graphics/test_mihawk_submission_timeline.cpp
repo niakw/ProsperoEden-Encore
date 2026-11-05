@@ -8,17 +8,17 @@ static MihawkSubmitRequest StandardRequest() {
     r.mode = FrameGeneration::MihawkGen;
     r.graphics.native_vulkan = true;
     r.graphics.mihawk_compute = true;
-    r.graphics.model_weights_verified_and_licensed = true;
+    r.graphics.model_weights_verified_and_loaded = true;
     r.graphics.game_fps = 30;
     r.surface = {
         .enabled = true, .native_vulkan = true,
-        .compute_and_storage = true, .model_licensed_and_loaded = true,
+        .compute_and_storage = true, .model_verified_and_loaded = true,
         .blit_rgba_to_present = true, .owned_history_pair = true,
         .history_matches_source_format = true,
         .private_output_rgba8_storage = true,
         .present_image_transfer_dst = true,
         .history_descriptor_slots_fenced = true,
-        .present_queue_ordered = true, .hud_isolated = true,
+        .present_queue_ordered = true, .native_hud_absent = true,
         .available_present_frames = 3,
         .width = 1920, .height = 1080,
         .compositor_format = ColorFormat::Bgra8Unorm
@@ -119,9 +119,9 @@ int main() {
     r.source.overlay_changed = true;
     assert(timeline.Prepare(r).status == MihawkPlanStatus::RejectedCadence);
     r.source.overlay_changed = false;
-    r.surface.hud_isolated = false;
+    r.surface.native_hud_absent = false;
     assert(timeline.Prepare(r).status == MihawkPlanStatus::UnsafeResources);
-    r.surface.hud_isolated = true;
+    r.surface.native_hud_absent = true;
     r.mode = FrameGeneration::Fsr3Vulkan;
     assert(timeline.Prepare(r).status == MihawkPlanStatus::Disabled);
     r.mode = FrameGeneration::Off;

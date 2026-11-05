@@ -1662,7 +1662,10 @@ void Launcher::press_game(Key key)
         next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
         const bool saved = services_.set_game_settings(game.title_id, next);
         if (saved) { game_settings_ = next; home_settings_cache_.erase(game.title_id); }
-        say(saved ? tr(kFramegenUnavailable) : tr("Could not save. Please try again."), !saved);
+        if (!saved)
+            say(tr("Could not save. Please try again."), true);
+        else if (next.frame_generation >= 2)
+            say(tr(kFramegenUnavailable), true);
         cue(saved ? Cue::toggle : Cue::error);
         return;
     }

@@ -49,6 +49,9 @@ struct MihawkGenerateRecord {
 
 // Records one neural interpolation with format-aware transfer to a distinct
 // presentation frame. Does not submit, flush, present or increment guest FPS.
+// Preflight does not require a command handle; the actual recording path
+// separately verifies VkCommandBuffer before emitting its first command.
+MihawkRecordResult ValidateNativeMihawkPairInput(const MihawkGenerateRecord& record) noexcept;
 MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& record) noexcept;
 MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& record) noexcept;
 

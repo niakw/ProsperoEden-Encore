@@ -13,6 +13,8 @@ file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")
 # source injection or changes to the pinned vendor repository.
 configure_file("${EDEN_PORT_DIR}/renderer_vulkan_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/renderer_vulkan.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vk_present_manager_r08.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_present_manager.h" COPYONLY)
 file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${EDEN_VULKAN_FORK_FILES})
 # These shaders are build inputs; the five older .inc injections only

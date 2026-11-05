@@ -278,3 +278,34 @@ Le test `check-r08-renderer-wiring.py` vérifie
 composite -> capture -> Flush -> présentation, ressources du packaging
 et l'absence de faux compteur de frames synthétiques. Le ring de fences
 dispose aussi de tests hôtes dédiés.
+
+
+### C2.7 — frames synthétiques mises dans la FIFO du vrai renderer (lot courant)
+
+Le Composite de l'émulateur crée désormais les vrais enregistrements GPU
+d'une interpolation neurale avec RecordNativeMihawkPair, puis planifie
+deux présentations dans cet ordre : **interpolée d'abord, vraie ensuite**.
+Ces deux appels passent par le PresentManager du renderer natif existant,
+et un unique état FrameMetrics distingue frames réelles et générées.
+Les frames invitées ne sont pas réinjectées dans le VI ou le CPU du jeu.
+
+La nouvelle méthode TryReserveRenderFrame vérifie la disponibilité de la
+file et la clôture du fence, **sans attendre**. Aucun buffer synthétique
+ne force le renderer à attendre un slot libre ; en cas de panne de modèle,
+de retard GPU, de fréquence de sortie non vérifiée ou de HUD natif visible,
+l'image réelle suit le pipeline habituel.
+
+MihawkCaptureFences retient désormais les deux slots d'historique et
+la texture RGBA8 de sortie jusqu'à la fin du tick qui a lu ou écrit ces
+ressources. Les paires de frames source ne traversent pas un saut de
+numéro, et les timestamps utilisés proviennent des vrais appels
+Composite mesurés par steady_clock ; on ne prend pas le souhait de FPS
+du guest pour une mesure de progression réelle.
+
+**Périmètre de validation :** CMake 9/9 tests hôtes et contrôle de source
+de la FIFO synthétique puis réelle, mais aucun résultat de rendu obtenu
+sur PS5. Le backend doit encore être compilé avec le SDK PS5, exécuté
+avec les shaders de MihawkGen et observé sur écran. Le HUD de l'application
+est bloquant lorsqu'il est visible ; les scores, menus et glyphes *du jeu*
+restent inclus dans la source et peuvent subir du ghosting. Le moteur
+n'est donc pas certifié « 30→60 » ni validé pour une release.

@@ -28,6 +28,7 @@
 #include "video_core/vulkan_common/vulkan_memory_allocator.h"
 #include "video_core/vulkan_common/vulkan_wrapper.h"
 #include "mihawk_capture_fences.h"
+#include "framegen_present_gate.h"
 
 namespace Core::Memory {
 class Memory;
@@ -114,6 +115,9 @@ private:
     std::unique_ptr<Eden::FeatureLab::MihawkNativeSession> mihawk_native;
     bool mihawk_init_attempted = false;
     Eden::FeatureLab::MihawkCaptureFences mihawk_capture_fences{};
+    Eden::FeatureLab::FramegenPresentGate mihawk_present_gate{};
+    u64 mihawk_source_sequence = 0;
+    u64 mihawk_previous_source_ns = 0;
 
     Frame applet_frame;
 };

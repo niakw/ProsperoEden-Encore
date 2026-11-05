@@ -20,7 +20,7 @@ namespace
 {
 
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
-constexpr const char* kFramegenUnavailable = TR("MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed.");
+constexpr const char* kFramegenInfo = TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL.");
 enum Category
 {
     kVideo,
@@ -598,6 +598,7 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_frame_generation)
         {
+            // UI order: Off, MihawkGen, FSR3 optical flow, Lossless (DLL last).
             // Save the selected method. The Vulkan renderer uses actual
             // runtime capabilities; choosing a method never fabricates FPS.
             const int next = (prefs_.frame_generation + step + 4) % 4;
@@ -607,8 +608,6 @@ void Launcher::press_dialog(Key key)
                 break;
             }
             prefs_.frame_generation = next;
-            if (next == 2)
-                say(tr(kFramegenUnavailable), true);
         }
         else if (option_ == video_refresh)
         {
@@ -816,7 +815,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Bilinear is the lightest default. AMD FSR is most useful when rendering below the TV output size."),
             TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
-            kFramegenUnavailable,
+            kFramegenInfo,
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
             TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
         copy = tr(kAbout[std::clamp(option_, 0, kVideoRows - 1)]);

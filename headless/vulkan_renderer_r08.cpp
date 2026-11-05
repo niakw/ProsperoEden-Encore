@@ -15,6 +15,7 @@
 #include <fmt/ranges.h>
 #include <algorithm>
 #include <chrono>
+#include <limits>
 
 #include "common/logging.h"
 #include <ranges>
@@ -29,6 +30,7 @@
 #include "video_core/renderer_vulkan/renderer_vulkan.h"
 #include "display_refresh.h"
 #include "frame_metrics.h"
+#include "fsr3_optical_session.h"
 #include "hud.h"
 #include "mihawk_native_session.h"
 #include "mihawk_session_resize.h"
@@ -205,6 +207,7 @@ RendererVulkan::~RendererVulkan() {
     // This runs only at renderer shutdown, never in the frame loop.
     scheduler.Finish();
     mihawk_native.reset();
+    fsr3_optical.reset();
     void(device.GetLogical().WaitIdle());
 }
 
@@ -238,7 +241,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         Eden::Display::frame_generation_method.load(std::memory_order_relaxed);
     const bool mihawk_selected = native_fg_method == 1 && !framebuffers.empty();
     const bool postprocess_hud_required =
-        (native_fg_method == 1 || native_fg_method == 3) && !framebuffers.empty();
+        (native_fg_method >= 1 && native_fg_method <= 3) && !framebuffers.empty();
     const Eden::HudSnapshot postprocess_hud =
         postprocess_hud_required ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
     scheduler.RequestOutsideRenderPassOperationContext();
@@ -268,6 +271,108 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     }
     }
 #endif
+
+    // The AMD FSR3-derived optical-flow interpolator consumes only the real
+    // game frame pair. Its private resources must be fenced before reuse;
+    // the real frame is always presented even if generation drops out.
+    Frame* fsr3_synthetic = nullptr;
+    bool fsr3_generated = false;
+    bool fsr3_captured = false;
+    if (native_fg_method == 2 && !framebuffers.empty()) {
+        ++fsr3_source_sequence;
+        const u64 source_ns = static_cast<u64>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::steady_clock::now().time_since_epoch()).count());
+        const u64 delta_ns = source_ns > fsr3_previous_source_ns
+            ? source_ns - fsr3_previous_source_ns : 0;
+        fsr3_previous_source_ns = source_ns;
+        if (!fsr3_optical)
+            fsr3_optical = std::make_unique<Eden::FeatureLab::Fsr3OpticalSession>();
+        const auto resize = Eden::FeatureLab::ChooseMihawkSessionAction(
+            fsr3_optical->Ready(), fsr3_optical->Width(), fsr3_optical->Height(),
+            fsr3_optical->Format(), frame->width, frame->height,
+            present_manager.SwapchainImageFormat());
+        if (resize == Eden::FeatureLab::MihawkSessionAction::RecreateAfterGpuIdle) {
+            scheduler.Finish();
+            present_manager.WaitPresent();
+            fsr3_optical->Destroy();
+            fsr3_init_attempted = false;
+            fsr3_present_gate.Reset();
+            fsr3_last_capture_tick = 0;
+            fsr3_last_capture_id = 0;
+        }
+        if (resize != Eden::FeatureLab::MihawkSessionAction::InvalidTarget &&
+            !fsr3_init_attempted) {
+            fsr3_init_attempted = true;
+            if (fsr3_optical->Create(
+                    dld.vkGetInstanceProcAddr, *instance,
+                    device.GetPhysical(), *device.GetLogical(),
+                    frame->width, frame->height,
+                    present_manager.SwapchainImageFormat()))
+                fsr3_present_gate.Reset();
+        }
+        if (fsr3_optical->Ready()) {
+            // The engine keeps TWO source images and one reusable output.
+            // Do not touch them while the previous GPU submission is live.
+            const bool previous_completed = fsr3_last_capture_tick &&
+                scheduler.IsFree(fsr3_last_capture_tick);
+            const bool consecutive = fsr3_last_capture_id &&
+                fsr3_source_sequence == fsr3_last_capture_id + 1;
+            if (!previous_completed || !consecutive)
+                fsr3_present_gate.Reset();
+            if (fsr3_last_capture_tick == 0 || previous_completed) {
+                const int output_mhz =
+                    Eden::Display::output_millihertz.load(std::memory_order_relaxed);
+                const unsigned output_hz = output_mhz > 0
+                    ? static_cast<unsigned>((output_mhz + 500) / 1000) : 0U;
+                const unsigned source_fps =
+                    delta_ns >= 8'000'000 && delta_ns <= 100'000'000
+                    ? static_cast<unsigned>(1'000'000'000ULL / delta_ns) : 0U;
+                const Eden::FeatureLab::GraphicsCapabilities caps{
+                    .native_vulkan = true,
+                    .fsr3_optical_flow = true,
+                    .game_fps = source_fps
+                };
+                const Eden::FeatureLab::PresentGateInput input{
+                    .real_frame_id = fsr3_source_sequence,
+                    .timestamp_ns = source_ns,
+                    .width = frame->width,
+                    .height = frame->height,
+                    .output_hz = output_hz,
+                    .display_mode_verified =
+                        output_mhz > 0 && (output_hz == 60 || output_hz == 120)
+                };
+                const auto decision = fsr3_present_gate.OnRealFrame(
+                    Eden::FeatureLab::FrameGeneration::Fsr3Vulkan, caps, input);
+                if (decision.eligible() && previous_completed && consecutive) {
+                    fsr3_synthetic = present_manager.TryReserveRenderFrame();
+                    if (fsr3_synthetic &&
+                        (fsr3_synthetic->width != frame->width ||
+                         fsr3_synthetic->height != frame->height)) {
+                        present_manager.CancelReservedRenderFrame(fsr3_synthetic);
+                        fsr3_synthetic = nullptr;
+                    }
+                    fsr3_generated = fsr3_synthetic != nullptr;
+                }
+                // Always record the real source when the private GPU images
+                // are free. The first copy only primes the optical history.
+                scheduler.RequestOutsideRenderPassOperationContext();
+                auto* session = fsr3_optical.get();
+                const VkImage real_image = *frame->image;
+                const VkImage extra_image =
+                    fsr3_generated ? *fsr3_synthetic->image : VK_NULL_HANDLE;
+                const bool synth = fsr3_generated;
+                scheduler.Record([session, real_image, extra_image, synth](
+                    vk::CommandBuffer cmd) {
+                    (void)session->Record(*cmd, real_image, extra_image, synth);
+                });
+                fsr3_captured = true;
+            }
+        }
+    } else {
+        fsr3_present_gate.Reset();
+        fsr3_previous_source_ns = 0;
+    }
 
     // R08 native interpolation. The true guest composite is ALWAYS presented,
     // even when synthesis, GPU pacing, model load or extra FIFO slots fail.
@@ -483,11 +588,35 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         ::Eden::FrameMetrics::OnGeneratedQueued();
     }
 
+    // Exactly one method can own synthetic presentation. The original
+    // composite always follows any generated frame in PresentManager FIFO.
+    if (fsr3_generated) {
+        blit_swapchain.DrawHudOverlay(device, fsr3_synthetic, postprocess_hud);
+        present_manager.ConfirmReservedRenderFrame(fsr3_synthetic);
+        const u64 synthetic_tick = scheduler.Flush(*fsr3_synthetic->render_ready);
+        present_manager.Present(fsr3_synthetic);
+        ::Eden::FrameMetrics::OnGeneratedQueued();
+        // The real frame flush below fences the full command sequence.
+        (void)synthetic_tick;
+    }
+
     // HUD is always restored on the true frame, including when no midpoint
     // could be generated; do not deprive the user of diagnostic overlay.
     if (postprocess_hud_required)
         blit_swapchain.DrawHudOverlay(device, frame, postprocess_hud);
     const u64 real_tick = scheduler.Flush(*frame->render_ready);
+    if (fsr3_captured) {
+        if (real_tick != 0 && real_tick > fsr3_last_capture_tick) {
+            fsr3_last_capture_tick = real_tick;
+            fsr3_last_capture_id = fsr3_source_sequence;
+        } else {
+            // The command was submitted but its GPU lifetime is unproven.
+            // Quarantine the private history rather than reuse it.
+            fsr3_last_capture_tick = std::numeric_limits<u64>::max();
+            fsr3_last_capture_id = 0;
+            fsr3_present_gate.Reset();
+        }
+    }
     if (r08_capture.valid && !r08_generated &&
         mihawk_capture_fences.Commit(
             r08_capture, real_tick, mihawk_source_sequence, false)) {

@@ -1992,8 +1992,8 @@ msgstr "{0}/ (тека на кожен ID гри)"
 msgid "Enhanced smoothness"
 msgstr "Покращена плавність"
 
-msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
-msgstr "Пріоритет — MihawkGen для PS5. FSR 3 заплановано; LSFG потребує перевірки ліцензії та нативної підтримки. Генерацію кадрів не встановлено."
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Генерація кадрів може зробити зображення плавнішим, не прискорюючи гру. Для Lossless Scaling потрібен власний DLL-файл."
 
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

@@ -63,6 +63,9 @@ inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA"};
 // Settings > Video: the refresh rate of the output while a game runs. 120 Hz is asked of the
 // display (display_refresh.h); one that cannot show it stays at 60 Hz.
 inline constexpr const char* kRefreshKeys[] = {"60", "120"};
+// UI preference order: Off -> MihawkGen -> AMD FSR3 optical flow ->
+// Lossless Scaling LAST because it requires the user's Lossless.dll.
+// Keep persisted indices stable across releases; do not reorder separately.
 inline constexpr const char* kFrameGenerationKeys[] = {"off", "mihawkgen", "fsr3", "lsfg"};
 inline constexpr int kRefreshHz[] = {60, 120};
 // Settings > Video: the size of the picture the app puts out, for the menu and for a game (its

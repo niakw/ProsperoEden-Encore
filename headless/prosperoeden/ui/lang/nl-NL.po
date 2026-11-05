@@ -1992,8 +1992,8 @@ msgstr "{0}/ (één map per titel-ID)"
 msgid "Enhanced smoothness"
 msgstr "Vloeiender beeld"
 
-msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
-msgstr "MihawkGen voor PS5 heeft prioriteit. FSR 3 staat gepland; LSFG vereist controle van licentie en native ondersteuning. Framegeneratie is niet geïnstalleerd."
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Framegeneratie kan het beeld vloeiender maken zonder het spel te versnellen. Lossless Scaling vereist je eigen DLL-bestand."
 
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

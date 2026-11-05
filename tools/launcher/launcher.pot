@@ -1072,7 +1072,7 @@ msgid "Menu sounds"
 msgstr ""
 
 #: pe/ui/settings.cpp
-msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
 msgstr ""
 
 #: settings_store.h

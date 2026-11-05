@@ -388,3 +388,39 @@ Le HUD natif est recomposé après interpolation sur les sorties MihawkGen
 et LSFG. Ce raccordement LSFG est **en source et contrôlé statiquement** ;
 aucune compilation complète PS5, validation des pipelines par le pilote
 PS5, latence ou affichage 30->60 sur console n'est encore démontré.
+
+
+### C2.10 — troisième backend : AMD FSR3 optical flow PS5 (source-only)
+
+Le dépôt Swordpdf/ps5-framegen est épinglé sous
+third_party/PS5_FSR3OpticalFlow, SHA 64362101757cdd6f7df9eeb984cb53f03f1fbfca.
+Ce port GPL-3 des passes optical-flow AMD (HLSL AMD MIT -> SPIR-V)
+reconstruit une image intermédiaire **sans motion vectors ni depth
+invités**. Ce n'est pas le backend FSR3 3.1 complet d'AMD.
+
+Le renderer appelle Fsr3OpticalSession sur le même VkInstance/VkDevice.
+Le contexte vérifie les capacités de stockage et subgroup quad
+en compute, ses formats de blit et la résolution. Les copies entrent
+dans deux textures privées, en préservant les pixels de l'image
+composée. Les commandes optical flow sont enregistrées sur le worker
+Scheduler serial et une unique image synthétique est proposée avec
+TryReserveRenderFrame. Son flush/present précède ceux de la vraie frame.
+Le HUD d'Encore est ajouté après génération sur les deux images.
+Si le GPU précédent n'est pas libre, aucun historique n'est écrasé ;
+les frames du jeu continuent d'être affichées. Un tick GPU invalide
+bloque la réutilisation de l'historique tant que la session n'est pas
+recréée. Resize/format : scheduler drain et création propre.
+
+Pour les réglages globaux et par jeu, l'ordre stable est :
+**Off → MihawkGen → FSR 3 optical flow → Lossless Scaling**,
+ce dernier dépendant de Lossless.dll. L'ordre est celui voulu pour
+le menu, **pas** un benchmark PS5. FSR1 EASU/RCAS reste une option
+distincte pour la résolution, pas une méthode de framegen.
+
+Preuves actuelles : 10 shaders AMD SPIR-V validés (vulkan1.1),
+objets C++ optiques compilés dans CMake hôte, test de cadence
+amont (911 vérifications), et 13/13 CTest + contrôles de source.
+**Aucune compilation complète PS5 ni mesure écran / input lag.**
+Sur les émulateurs, le pacer amont fondé sur ticks invités n'est pas
+encore relié à la télémétrie VI du guest : la sélection hôte reste
+conservatrice et doit être qualifiée sur console.

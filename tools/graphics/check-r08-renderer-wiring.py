@@ -27,6 +27,27 @@ present_synthetic = between("present_manager.Present(r08_synthetic);", gpu_synth
 gpu_real = between("const u64 real_tick = scheduler.Flush(*frame->render_ready);", present_synthetic)
 present_real = between("present_manager.Present(frame);", gpu_real)
 assert composite < draw < copy < neural < gpu_synthetic < present_synthetic < gpu_real < present_real
+# FSR3 optical-flow must use a private source pair and actual GPU serials,
+# never guest MV placeholders; original REAL frame always follows synthetic.
+assert "Fsr3OpticalSession" in header
+assert "fsr3_last_capture_tick" in header
+assert "fsr3_last_capture_id" in header
+assert "fsr3_optical->Create(" in fork
+assert "fsr3_optical->Ready()" in fork
+assert "fsr3_present_gate.OnRealFrame(" in fork
+assert "FrameGeneration::Fsr3Vulkan" in fork
+assert "fsr3_last_capture_tick = std::numeric_limits<u64>::max()" in fork
+assert "fsr3_synthetic = present_manager.TryReserveRenderFrame()" in fork
+assert "present_manager.CancelReservedRenderFrame(fsr3_synthetic)" in fork
+assert "present_manager.ConfirmReservedRenderFrame(fsr3_synthetic)" in fork
+assert "present_manager.Present(fsr3_synthetic)" in fork
+assert "blit_swapchain.DrawHudOverlay(device, fsr3_synthetic, postprocess_hud)" in fork
+assert "fsr3_optical.reset()" in fork
+assert "fsr3_optical_session.cpp" in cmake
+assert 'third_party/PS5_FSR3OpticalFlow' in cmake
+assert fork.index("present_manager.Present(fsr3_synthetic)") < fork.index(
+    "const u64 real_tick = scheduler.Flush(*frame->render_ready)")
+assert "guest_motion_vectors = true" not in fork
 assert "    ::Eden::FrameMetrics::OnRealQueued();" in fork
 assert "    ::Eden::FrameMetrics::OnGeneratedQueued();" in fork
 assert "r08_generated" in fork

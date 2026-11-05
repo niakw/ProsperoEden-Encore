@@ -13,7 +13,11 @@ assert vendor.exists(), "pinned source vendor is needed"
 assert "Settings::ScalingFilter::Fsr" in main
 assert "Settings::values.fsr_sharpening_slider.SetValue(" in main
 assert "Fsr3Vulkan" in read("extras/graphics/framegen_capabilities.h")
-assert "Fsr3Vulkan" not in render, "do not fake an FSR3 runtime"
+# Actual source-only AMD FSR3 optical-flow backend is distinct from
+# official FSR3 motion/depth pipeline, and is now connected to Composite.
+assert "FrameGeneration::Fsr3Vulkan" in render
+assert "fsr3_optical->Create(" in render
+assert "fsr3_optical->Ready()" in render
 # Android-only upstream LSFG option is not enough on PS5; compile ALL C++
 # components in production and resolve the exact per-title user selection.
 lsfg_sources=[
@@ -37,7 +41,7 @@ assert "Settings::values.frame_gen.SetValue(lossless_available)" in main
 assert "Eden::Display::frame_generation_method.load" in render
 assert "frame_gen.Process(" in render and "frame_gen.GenerateInto(" in render
 assert "Settings::values.frame_gen.SetValue(lossless_available)" in main
-assert "(native_fg_method == 1 || native_fg_method == 3)" in render
+assert "(native_fg_method >= 1 && native_fg_method <= 3)" in render
 assert "blit_swapchain.DrawHudOverlay(device, generated, postprocess_hud);" in render
 assert "if (postprocess_hud_required)" in render
 assert "present_manager.Present(generated);" in render
@@ -54,7 +58,7 @@ assert "LOSSLESS_DLL_FILE" in reader
 pack=read("tools/package-headless-native.sh")
 assert 'Lossless.dll' not in pack and 'lossless_dll_r08.cpp' not in pack
 assert "model.fgw" not in reader
-print("GRAPHICS SOURCES OK: Vulkan FSR spatial active, LSFG native sources attached, user DLL-only, FSR3 not misrepresented")
+print("GRAPHICS SOURCES OK: spatial FSR1, FSR3 optical-flow derivative, native LSFG with user DLL")
 
 status = read("headless/lossless_user_file.h")
 menu = read("headless/prosperoeden/pe/ui/settings.cpp")

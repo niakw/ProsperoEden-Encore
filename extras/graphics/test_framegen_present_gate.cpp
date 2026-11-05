@@ -53,6 +53,15 @@ int main() {
     caps.guest_motion_vectors = false;
     assert(gate.OnRealFrame(FrameGeneration::Fsr3Vulkan, caps, f).reason ==
            PresentGateReason::Unsupported);
+    caps.fsr3_optical_flow = true;
+    f.real_frame_id = 1;
+    f.output_hz = 120;
+    f.timestamp_ns = 3'000'000'000;
+    assert(gate.OnRealFrame(FrameGeneration::Fsr3Vulkan, caps, f).reason ==
+           PresentGateReason::NoStablePair);
+    ++f.real_frame_id;
+    f.timestamp_ns += 16'666'667;
+    assert(gate.OnRealFrame(FrameGeneration::Fsr3Vulkan, caps, f).eligible());
     assert(gate.OnRealFrame(FrameGeneration::LosslessScaling, caps, f).reason ==
            PresentGateReason::Unsupported);
     assert(gate.OnRealFrame(FrameGeneration::Off, caps, f).reason ==

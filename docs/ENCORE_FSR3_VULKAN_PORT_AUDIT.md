@@ -82,8 +82,20 @@ restent raisonnables sur la console.
 ## Verdict actuel
 
 **R07 / FSR 1 spatial : présent.**
-**R08 / FSR 3 Frame Generation : port techniquement envisageable, mais
-backend non relié et entrée guest motion/depth non démontrée.**
-Le menu ne doit ni afficher de FPS générés fictifs, ni imposer de
-changement à la cadence du jeu. Les pipelines MihawkGen et LSFG
-restent indépendants de ce travail.
+**R08 / FSR 3 Frame Generation complet et officiel : aucun backend
+intégré ; les entrées du jeu (motion/depth/jitter) restent à démontrer.**
+
+**R08 / alternative FSR3 optical flow : code natif désormais intégré en
+PR #21**, via Swordpdf/ps5-framegen à SHA 6436210 et 10 shaders SPIR-V
+validés. C'est une adaptation du flux optique AMD FSR 3, utilisant
+les deux images compositées successives sans prétendre posséder des
+vecteurs de mouvement invités. La génération est enregistrée dans le
+Composite Vulkan, les images sont soumises synthétique puis réelle,
+et les historiques privés sont protégés par ticks GPU. L'ordre d'UI
+conserve MihawkGen puis FSR3 puis Lossless (DLL utilisateur dernier).
+
+**Validation :** code source, compilation des objets C++ hôtes,
+13/13 tests CTest (dont 911 cas pacing), 10 SPIR-V valides.
+**Ne pas déclarer de résultat PS5 ni de gains de FPS mesurés.**
+Le port reste à vérifier sur console et le pacing réel de l'émulateur
+est conservateur tant qu'un compteur VI fiable n'est pas raccordé.

@@ -28,10 +28,6 @@ namespace
 {
 
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
-// R08: same translated availability explanation as Settings > Video.
-// The per-title selector must not claim an inactive native GPU backend works.
-constexpr const char* kFramegenUnavailable = TR("MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed.");
-
 // The game settings dialog's rows, and the window that shows five of them (also the Mods list's).
 enum GameRow : int
 {
@@ -1656,7 +1652,8 @@ void Launcher::press_game(Key key)
     if (option_ == row_frame_generation)
     {
         GameSettings next = game_settings_;
-        // Default, Off, MihawkGen, FSR 3, LSFG. Runtime handles
+        // Default, Off, MihawkGen, FSR3 optical flow, LSFG (user DLL last).
+        // Runtime handles
         // actual backend availability independently of the chosen mode.
         const int step = key == Key::left ? -1 : 1;
         next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
@@ -1669,8 +1666,6 @@ void Launcher::press_game(Key key)
         if (saved) { game_settings_ = next; home_settings_cache_.erase(game.title_id); }
         if (!saved)
             say(tr("Could not save. Please try again."), true);
-        else if (next.frame_generation == 2)
-            say(tr(kFramegenUnavailable), true);
         cue(saved ? Cue::toggle : Cue::error);
         return;
     }

@@ -3,12 +3,20 @@
 Le menu **Paramètres > Vidéo > Fluidité améliorée** et le réglage par jeu
 **Bibliothèque > Jeu > Fluidité améliorée** proposent quatre valeurs :
 
+Les options sont présentées dans l'ordre de priorité souhaité :
+**Désactivé → MihawkGen → FSR 3 (optical flow) → Lossless Scaling**.
+Lossless est toujours dernier parce qu'il faut un fichier personnel.
+Cet ordre n'est PAS un classement GPU mesuré : aucune comparaison
+MihawkGen/FSR3/LSFG sur la PS5 n'a encore été validée.
+
 - **Désactivé** : aucun frame generation.
 - **MihawkGen** : interpolation neurale portée en Vulkan, avec données réseau
   et GPU privés à Eden Encore.
-- **FSR 3** : génération d'images AMD ; intégration Vulkan non achevée,
-  en attente de données de mouvement, profondeur et jitter fiables provenant
-  des images invitées. Le choix ne garantit aucune frame supplémentaire.
+- **FSR 3 (optical flow)** : adaptation PS5 du flux optique AMD FSR 3
+  provenant de Swordpdf/ps5-framegen, à partir de deux images réelles
+  successives. Le code natif est relié, mais n'a pas été qualifié sur console.
+  Il n'exige pas de vecteurs de mouvement/profondeur du jeu. Ce n'est pas
+  l'implémentation complète et officielle du SDK FSR 3.
 - **Lossless Scaling (LSFG)** : utilise les shaders contenus dans le
   fichier Lossless.dll fourni **par l'utilisateur**. Le projet ne copie
   ni n'exécute une DLL Windows et ne fournit pas ce fichier.

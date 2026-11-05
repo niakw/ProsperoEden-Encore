@@ -21,6 +21,9 @@ enum class Availability : std::uint8_t {
 struct GraphicsCapabilities {
     bool native_vulkan = false;
     bool fsr3_swapchain = false;
+    // Real FSR3 optical-flow from Swordpdf/ps5-framegen: no guest depth/MV.
+    // True only with a ready host Vulkan pipeline on the actual device.
+    bool fsr3_optical_flow = false;
     bool guest_motion_vectors = false;
     bool guest_depth = false;
     bool mihawk_compute = false;
@@ -40,8 +43,9 @@ constexpr Availability QualifyFrameGeneration(
         return Availability::Unsupported;
     switch (requested) {
     case FrameGeneration::Fsr3Vulkan:
-        if (!caps.fsr3_swapchain || !caps.guest_motion_vectors ||
-            !caps.guest_depth) return Availability::Unsupported;
+        if (!caps.fsr3_optical_flow &&
+            (!caps.fsr3_swapchain || !caps.guest_motion_vectors || !caps.guest_depth))
+            return Availability::Unsupported;
         break;
     case FrameGeneration::MihawkGen:
         if (!caps.mihawk_compute || !caps.model_weights_verified_and_loaded)

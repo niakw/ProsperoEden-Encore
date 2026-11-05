@@ -155,6 +155,20 @@ target_include_directories(eden-mihawkgen-native PRIVATE
     "${PORT_ROOT}/extras/graphics" "${EDEN_PORT_DIR}")
 target_sources(video_core PRIVATE $<TARGET_OBJECTS:eden-mihawkgen-native>)
 
+# R08 AMD candidate: FSR3 optical-flow shaders and a PS5-native Vulkan
+# interpolator, from Swordpdf/ps5-framegen. Not an official FSR3 backend.
+set(EDEN_FSR3_OF_ROOT "${PORT_ROOT}/third_party/PS5_FSR3OpticalFlow")
+if(NOT EXISTS "${EDEN_FSR3_OF_ROOT}/src/framegen/fg_shaders.inc")
+    message(FATAL_ERROR "Missing pinned PS5 FSR3 optical-flow source")
+endif()
+target_sources(video_core PRIVATE
+    "${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
+    "${EDEN_PORT_DIR}/fsr3_optical_session.cpp")
+set_source_files_properties("${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
+    PROPERTIES COMPILE_DEFINITIONS "PS5_FRAMEGEN_VULKAN_HEADER=\"mihawk_volk.h\"")
+target_include_directories(video_core PRIVATE "${EDEN_FSR3_OF_ROOT}/src")
+
+
 # R08 / LSFG: reuse the GPL-3 Vulkan shader extraction/interpolation
 # engine on PS5, rather than duplicate it. Android is its default upstream.
 # The private Lossless.dll is supplied by the user, NEVER packaged.

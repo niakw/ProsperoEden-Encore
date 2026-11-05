@@ -15,6 +15,10 @@ int main() {
     caps.game_fps = 30;
     assert(QualifyFrameGeneration(FrameGeneration::Fsr3Vulkan, caps)
            == Availability::Unsupported);
+    caps.fsr3_optical_flow = true;
+    assert(QualifyFrameGeneration(FrameGeneration::Fsr3Vulkan, caps) ==
+           Availability::ReadyLowCadence); // AMD optical flow: no guessed guest MV
+    caps.fsr3_optical_flow = false;
     caps.fsr3_swapchain = true;
     caps.guest_motion_vectors = true;
     assert(QualifyFrameGeneration(FrameGeneration::Fsr3Vulkan, caps)

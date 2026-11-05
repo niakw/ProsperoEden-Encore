@@ -38,7 +38,7 @@ namespace Tegra {
 class GPU;
 }
 
-namespace Eden::FeatureLab { class MihawkNativeSession; }
+namespace Eden::FeatureLab { class MihawkNativeSession; class Fsr3OpticalSession; }
 
 namespace Vulkan {
 
@@ -118,6 +118,14 @@ private:
     Eden::FeatureLab::FramegenPresentGate mihawk_present_gate{};
     u64 mihawk_source_sequence = 0;
     u64 mihawk_previous_source_ns = 0;
+    // Source-only AMD FSR3 optical flow (distinct from FSR1 upscaling).
+    std::unique_ptr<Eden::FeatureLab::Fsr3OpticalSession> fsr3_optical;
+    Eden::FeatureLab::FramegenPresentGate fsr3_present_gate{};
+    bool fsr3_init_attempted = false;
+    u64 fsr3_source_sequence = 0;
+    u64 fsr3_previous_source_ns = 0;
+    u64 fsr3_last_capture_tick = 0;
+    u64 fsr3_last_capture_id = 0;
 
     Frame applet_frame;
 };

@@ -33,6 +33,7 @@ int main() {
         {0x986,{24,32}},         // uniform-address STG
         {0x3a8,{16,24,32}},     // GPR-address ATOMG old value, address pair
         {0x9a8,{16,32}},        // uniform-pointer ATOMG high data/output
+        {0x98e,{24,32}},       // RED: 64-bit register address + 32-bit data
     };
     for (const auto& fixture : fixtures) {
         Instruction original{{fixture.opcode | (252U<<16) | (248U<<24),
@@ -163,6 +164,142 @@ int main() {
         const auto refusal=LowerToMaxwell(program,{},false);
         assert(!refusal && refusal.error=="native program uses lowering scratch registers");
     }
+    // Native RED uses a 64-bit address and a 32-bit data source, not
+    // the destination field at bit 16. Both kinds of address must be
+    // insulated from the high-register scratch bank. In uniform-pointer
+    // mode the U bank itself must be reserved even if no other uniform
+    // opcode occurs in this shader.
+    constexpr Instruction ReduceGpr{{
+        0x98eU | (7U << 12) | (255U << 16) | (250U << 24),
+        252U,
+        0x0010e100U,
+        0U
+    }};
+    constexpr Instruction ReduceUniform{{
+        0x98eU | (7U << 12) | (255U << 16) | (255U << 24),
+        244U,
+        0x0c10e100U,
+        0U
+    }};
+    for (const auto reduce : {ReduceGpr, ReduceUniform}) {
+        const bool uniform_pointer = reduce.Bits(24, 8) == 255;
+        const u32 boundary = uniform_pointer ? 216U : 248U;
+        const auto pressure = PrepareRegisterPressure(reduce, boundary);
+        assert(pressure.valid && !pressure.prefix.empty());
+        assert(pressure.prefix.size() == pressure.suffix.size());
+        assert(pressure.instruction.Bits(32, 8) < boundary);
+        if (uniform_pointer) {
+            assert(pressure.instruction.Bits(24, 8) == 255);
+            // The uniform pointer stays in the virtual uniform bank.
+            assert(pressure.instruction.Bits(64, 8) == 0);
+        } else {
+            assert(pressure.instruction.Bits(24, 8) < boundary);
+            assert((pressure.instruction.Bits(24, 8) & 1U) == 0);
+            assert(!NativeVectorCrossesScratch(pressure.instruction, boundary));
+        }
+        const std::array program{UniformMarker, reduce, Exit};
+        const auto lowered = LowerToMaxwell(program, {}, true);
+        if (!lowered)
+            std::fprintf(stderr, "RED lowering refused: %.*s at %#x\n",
+                static_cast<int>(lowered.error.size()), lowered.error.data(),
+                lowered.error_offset);
+        assert(lowered && lowered.source_size == sizeof(program));
+        const u32 begin = lowered.source_instruction_offsets[1];
+        const u32 end = lowered.source_instruction_offsets[2];
+        assert(std::equal(pressure.prefix.begin(), pressure.prefix.end(),
+                          lowered.instructions.begin() + begin));
+        assert(std::equal(pressure.suffix.begin(), pressure.suffix.end(),
+                          lowered.instructions.begin() + end - pressure.suffix.size()));
+        const auto reduction_word = lowered.instructions[
+            end - pressure.suffix.size() - 1];
+        assert((reduction_word & 0xfff8000000000000ULL) ==
+                0xebf8000000000000ULL);
+        assert((reduction_word & 0xffU) == pressure.instruction.Bits(32, 8));
+        assert(((reduction_word >> 8) & 0xffU) ==
+               (uniform_pointer ? 250U : pressure.instruction.Bits(24, 8)));
+        const auto refused = LowerToMaxwell(program, {}, false);
+        assert(!refused &&
+               refused.error == "native program uses lowering scratch registers");
+    }
+    // The two words of a RED pointer must be physically contiguous.
+    Instruction straddles_reduction = ReduceGpr;
+    straddles_reduction.words[0] =
+        (straddles_reduction.words[0] & 0x00ffffffU) | (247U << 24);
+    assert(NativeVectorCrossesScratch(straddles_reduction, 248));
+    assert(!PrepareRegisterPressure(straddles_reduction, 248).valid);
+    assert(!LowerToMaxwell(
+        std::array{UniformMarker, straddles_reduction, Exit}, {}, true));
+    // The real Maxwell RED word has a 20-bit signed byte displacement.
+    // Ampere exposes 24 bits, so out-of-range values must be refused,
+    // never truncated. GPR and uniform address variants must encode the
+    // exact 32-bit signed/unsigned reduction modes and data operand.
+    for (const bool uniform_pointer : {false, true}) {
+        for (const s32 offset : {-0x80000, -16, 0, 32, 0x7ffff}) {
+            for (const u32 type : {0U, 1U}) {
+                auto reduce = uniform_pointer ? ReduceUniform : ReduceGpr;
+                const u32 src = 44U;
+                reduce.words[0] =
+                    0x98eU | (7U << 12) | (255U << 16) |
+                    ((uniform_pointer ? 255U : 32U) << 24);
+                reduce.words[1] = src |
+                    ((static_cast<u32>(offset) & 0xffffffU) << 8);
+                reduce.words[2] =
+                    (uniform_pointer ? 0x0c10e100U : 0x0010e100U) |
+                    (type << 9) | (2U << 23) | (uniform_pointer ? 60U : 0U);
+                const std::array program{UniformMarker,reduce,Exit};
+                const auto lowered = LowerToMaxwell(program, {}, true);
+                if (!lowered)
+                    std::fprintf(stderr,"RED offset=%d type=%u uniform=%d: %.*s\n",
+                        offset,type,uniform_pointer,
+                        static_cast<int>(lowered.error.size()),lowered.error.data());
+                assert(lowered);
+                const u32 begin = lowered.source_instruction_offsets[1];
+                const u32 end = lowered.source_instruction_offsets[2];
+                assert(end > begin);
+                const u64 word = lowered.instructions[end - 1];
+                assert((word & 0xfff8000000000000ULL) ==
+                       0xebf8000000000000ULL);
+                assert((word & 0xffU) == src);
+                assert(((word >> 8) & 0xffU) ==
+                       (uniform_pointer ? 250U : 32U));
+                assert(((word >> 20) & 7U) == type);
+                assert(((word >> 23) & 7U) == 2U);
+                assert(((word >> 28) & 0xfffffU) ==
+                       (static_cast<u32>(offset) & 0xfffffU));
+            }
+        }
+    }
+    auto invalid_reduction = ReduceGpr;
+    invalid_reduction.words[0] =
+        0x98eU | (7U << 12) | (255U << 16) | (32U << 24);
+    invalid_reduction.words[1] = 44U | (0x80000U << 8);
+    const auto bad_positive = LowerToMaxwell(
+        std::array{UniformMarker,invalid_reduction,Exit}, {}, true);
+    assert(!bad_positive && bad_positive.error=="native global reduction mode");
+    invalid_reduction.words[1] = 44U | (0x7fffffU << 8);
+    const auto bad_negative = LowerToMaxwell(
+        std::array{UniformMarker,invalid_reduction,Exit}, {}, true);
+    assert(!bad_negative && bad_negative.error=="native global reduction mode");
+    invalid_reduction.words[1] = 44;
+    invalid_reduction.words[2] = 0x0010e100U | (3U << 9);
+    assert(!LowerToMaxwell(
+        std::array{UniformMarker,invalid_reduction,Exit}, {}, true));
+    invalid_reduction.words[2] = 0x0010e100U;
+    invalid_reduction.words[0] =
+        0x98eU | (7U << 12) | (255U << 16) | (33U << 24);
+    assert(!LowerToMaxwell(
+        std::array{UniformMarker,invalid_reduction,Exit}, {}, true));
+    // U62's high word is U63/RZ; borrowing the neighboring physical
+    // GPR would produce an unrelated 64-bit atomic address.
+    auto bad_uniform_reduction = ReduceUniform;
+    bad_uniform_reduction.words[2] =
+        (bad_uniform_reduction.words[2] & ~0x3fU) | 62U;
+    assert(!LowerToMaxwell(
+        std::array{UniformMarker,bad_uniform_reduction,Exit}, {}, true));
+    bad_uniform_reduction.words[2] =
+        (bad_uniform_reduction.words[2] & ~0x3fU) | 61U;
+    assert(!LowerToMaxwell(
+        std::array{UniformMarker,bad_uniform_reduction,Exit}, {}, true));
     // GPR-address atomic pointer must be genuinely even/aligned, not
     // misrepresented as a register pair crossing an unsupported operand.
     auto odd_address=AtomGpr;
@@ -187,6 +324,7 @@ int main() {
     // base register without guaranteeing contiguous physical operands.
     Instruction straddles_atomic{{0x3a8U | (4U<<16) | (248U<<24),240U,0x001ee100U,0U}};
     assert(NativeVectorCrossesScratch(straddles_atomic,249));
-    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=18 opcode_families "
-              "atomic_global_gpr=1 atomic_uniform_pointer=1 uniform_u62_refused=1 ns1_unchanged=1");
+    std::puts("P2_4_AMPERE_REGISTER_PRESSURE_PASS high_gpr=19 opcode_families "
+              "atomic_global_gpr=1 reduction_signed_offsets=1 reduction_high_gpr=1 "
+              "uniform_u62_refused=1 ns1_unchanged=1");
 }

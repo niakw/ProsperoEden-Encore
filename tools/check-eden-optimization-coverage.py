@@ -219,6 +219,40 @@ assert "python3 tools/ns2/check_native_gpu_pte_remap_host.py" in (
 print("NS1_NS2_SHARED_GPU_REMAP_F07_ISOLATION_PASS",
       f"post_snapshot_reviewed={len(post_f07_shared_gpu_remap_owners)}")
 
+# The native QMD3 static atomic resource span owner was added on 05/11,
+# AFTER the frozen 518-path F07 optimization snapshot. It is a real NS2
+# source owner, not retroactively optimized Switch 1 code. Preserve the
+# original baseline and independently assert the actual integration/tests.
+post_f07_native_atomic_span_owners = {
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_atomic_span.h",
+}
+assert post_f07_native_atomic_span_owners <= all_owners, sorted(
+    post_f07_native_atomic_span_owners - all_owners)
+assert not post_f07_native_atomic_span_owners & (
+    research_owners | hygiene_owners | ns2_shared_release_owners |
+    ns2_shared_audio_owners | ns2_shared_gpu_access_owners |
+    post_f07_native_vulkan_owners | post_f07_shared_compute_owners |
+    post_f07_launcher_handoff_owners | post_f07_ns2_typed_cache_owners |
+    post_f07_shared_gpu_scalar_owners | post_f07_shared_gpu_remap_owners
+)
+native_atomic_header = (ROOT / next(iter(post_f07_native_atomic_span_owners))).read_text()
+assert "CollectNativeQmdAtomicSpans(" in native_atomic_header
+assert "NativeQmdAtomicSpansFitBindings(" in native_atomic_header
+assert "if (!binding.IsImmediate() || !offset.IsImmediate())" in native_atomic_header
+assert '#include "shader_recompiler/frontend/ampere/native_atomic_span.h"' in (
+    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
+).read_text()
+assert "NativeQmdAtomicSpansFitBindings(" in (
+    ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp"
+).read_text()
+assert "python3 -B tools/ns2/check_native_qmd_atomic_span_host.py" in (
+    ROOT / ".github/workflows/ns2-research-host.yml"
+).read_text()
+assert (ROOT / "tools/ns2/test_native_qmd_atomic_span.cpp").is_file()
+print("NS2_POST_F07_ATOMIC_SPAN_ISOLATION_PASS",
+      f"new_native_headers={len(post_f07_native_atomic_span_owners)}",
+      "historical_F07_unchanged=1")
+
 # NUP v1 parser/adapter/loader/router additions came after the frozen
 # 518-path F07 optimization audit. Their native CMake gate is OFF by default,
 # forbidden in the final profile, and has no PS5 runtime proof. Keep this
@@ -299,7 +333,7 @@ print("NUP_V1_POST_F07_OWNER_ISOLATION_PASS",
       f"not_retroactive_F07={len(post_f07_nup_vfs_owners)}",
       "shipping_selection=absent")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

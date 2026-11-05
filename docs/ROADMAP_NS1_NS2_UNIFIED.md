@@ -166,6 +166,29 @@ refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
 le rejet des vecteurs débordants et la traduction d'un LDG capturé.
 **Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
 
+**P2.4 — RED global natif, réduction 32 bits et adresse sûre
+(05/11, source/hôte) :** le lowerer Ampere ne repérait pas la
+vraie source GPR à bit 32 de RED 0x98e et ne protégeait pas
+sa paire d'adresse 64 bits (bits 24–31) lorsque l'un des
+registres traversait la limite des scratch Maxwell.
+La forme avec pointeur uniforme n'activait pas non plus
+systématiquement la réservation du banc U. Désormais les
+deux modes utilisent le **spill/restauration des vrais GPR**,
+rejettent les paires non contiguës et interdisent U62/U63
+comme faux pointeur 64 bits.
+
+La réduction 32 bits reconnaît les types entier non signé
+et signé, et les offsets natifs signés de 24 bits ne sont
+émis comme immédiats Maxwell de 20 bits **que si** la
+valeur entière tient dans la plage -0x80000 à 0x7ffff.
+Les modes inconnus et les offsets tronquables sont refusés.
+Aucun contournement propre à un jeu ni modification Maxwell
+NS1. Tests du vrai lowerer et de PrepareRegisterPressure :
+haut GPR et uniforme, copie/restauration exacte, 20
+encodages de décalages/type, refus sous/débordement et
+pointeurs irréguliers, Clang/GCC O0/O2 UBSan.
+**Pas d'exécution Vulkan/PS5 prouvée : P2.4/P5 restent ouverts.**
+
 **P2.4 — atomiques globaux Ampere et préservation des GPR hauts (04/11,
 source/hôte) :** deux opérations natives ATOMG U32 déjà reconnues
 pouvaient malgré tout corrompre les résultats. Pour l'adresse GPR

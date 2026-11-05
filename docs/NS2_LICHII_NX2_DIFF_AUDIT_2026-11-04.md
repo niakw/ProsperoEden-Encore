@@ -16,6 +16,29 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.4 — RED Ampere générique et registres hauts, 05/11
+
+Relecture de la famille 0x98e dans les correctifs shader
+amont récents : source GPR au bit 32, adresse en paire GPR
+au bit 24 ou en registre uniforme, type entier signé/non
+signé et déplacement signé natif sur 24 bits.
+L'ancien lowerer Encore émettait l'adresse uniquement à
+offset zéro, sans déclarer ses GPR au spilleur et sans
+réserver systématiquement les registres U en présence de
+RED uniforme.
+
+L'adaptation conserve le chemin Maxwell historique et
+la mise en GPR temporaire des deux mots d'une adresse
+uniforme existante. Le spilleur natif protège les vrais
+registres de données/adresse, avec test de contiguïté et
+de sortie de la zone scratch. Le RED Maxwell n'a qu'un
+déplacement de 20 bits : **plage vérifiée avant encodage**,
+jamais troncature silencieuse. L'admission de type reste
+limitée aux formes 32 bits entières reconnues.
+Le test réel Ampere lowerer Clang/GCC UBSan O0/O2 couvre
+les valeurs signées extrêmes et négatifs de modes, sans
+prétendre exécuter un shader PS5.
+
 ### Complément 05/11 — CBUF réel, longueur et ordre des slots NVN
 
 L'audit du propriétaire NativeQmdAtomicStorageIRAdmissible

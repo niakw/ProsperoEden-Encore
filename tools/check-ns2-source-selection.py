@@ -467,6 +467,12 @@ def main() -> int:
                 "opcode != 0x220 && opcode != 0x221" in native_lower_src and
                 "case 0x223:" in pressure_src and
                 "case 0x919:" in pressure_src and
+                "case 0x98e: return input.Bits(24, 8) != 255 && crosses(24, 2)" in pressure_src and
+                "case 0x98e: // RED:" in pressure_src and
+                "opcode != 0x9a8 && opcode != 0x98e" in native_lower_src and
+                "(op == 0x98e && instruction.Bits(91, 1))" in native_lower_src and
+                "native global reduction register address" in native_lower_src and
+                "reduction_signed_offsets=1" in shadow_fixture.read_text() and
                 "input.Bits(90, 1) ? 2 : 1" in pressure_src and
                 "opcode != 0x386 && opcode != 0x986" in native_lower_src and
                 shadow_fixture.is_file() and

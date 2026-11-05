@@ -23,6 +23,8 @@ enum class Rejection : std::uint8_t {
     MissingMotionConvention, MissingDepthConvention, MissingHudSeparation,
     InvalidResolution, InvalidJitter, InvalidMotionScale, InvalidTiming,
     MissingGpuCompletion, NonConsecutiveFrame, SceneChanged,
+    InvalidProjection, InvalidVulkanImageLayout, InvalidSharpening, UnsupportedDevice,
+    UnsupportedDepthConvention, UnsupportedMotionConvention,
 };
 
 // A non-owning identity. The real backend will convert these into actual
@@ -47,10 +49,13 @@ struct Inputs {
     MotionConvention motion_convention{MotionConvention::Unknown};
     std::array<float,2> jitter{};
     std::array<float,2> motion_scale{};
+    std::array<float,4> depth_to_view{};
+    float tan_half_fov{};
     float elapsed_ms{};
     bool native_hud_is_separate{};
     bool guest_hud_is_separate{};
     bool captured_gpu_work_complete{};
+    bool vulkan_inputs_in_general_layout{};
 };
 [[nodiscard]] inline Rejection Validate(const Inputs& f) noexcept {
     if (!f.scene_color.frame_id || !f.scene_color.scene_id)
@@ -65,12 +70,16 @@ struct Inputs {
     }
     if (f.depth_convention == DepthConvention::Unknown)
         return Rejection::MissingDepthConvention;
+    if (f.depth_convention != DepthConvention::Reversed)
+        return Rejection::UnsupportedDepthConvention;
     if (f.motion_convention == MotionConvention::Unknown)
         return Rejection::MissingMotionConvention;
+    if (f.motion_convention != MotionConvention::PixelOffsetToPreviousFrame)
+        return Rejection::UnsupportedMotionConvention;
     if (!f.native_hud_is_separate || !f.guest_hud_is_separate)
         return Rejection::MissingHudSeparation;
-    if (!f.render_width || !f.render_height || !f.output_width ||
-        !f.output_height || f.render_width>8192 || f.render_height>8192 ||
+    if (f.render_width < 64 || f.render_height < 64 ||
+        f.output_width < 64 || f.output_height < 64 || f.render_width>8192 || f.render_height>8192 ||
         f.output_width>8192 || f.output_height>8192 ||
         f.output_width < f.render_width ||
         f.output_height < f.render_height ||
@@ -83,9 +92,18 @@ struct Inputs {
     for (const auto s : f.motion_scale)
         if (!std::isfinite(s) || s<=0.0f || s>8192.0f)
             return Rejection::InvalidMotionScale;
+    for (float parameter : f.depth_to_view)
+        if (!std::isfinite(parameter))
+            return Rejection::InvalidProjection;
+    if (!std::isfinite(f.tan_half_fov) || f.tan_half_fov<=0.0f ||
+        f.tan_half_fov>100.0f || f.depth_to_view[1] <= 0.0f ||
+        f.depth_to_view[3] <= 0.0f)
+        return Rejection::InvalidProjection;
     if (!std::isfinite(f.elapsed_ms) || f.elapsed_ms<=0.0f ||
         f.elapsed_ms>250.0f)
         return Rejection::InvalidTiming;
+    if (!f.vulkan_inputs_in_general_layout)
+        return Rejection::InvalidVulkanImageLayout;
     if (!f.captured_gpu_work_complete)
         return Rejection::MissingGpuCompletion;
     return Rejection::None;

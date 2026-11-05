@@ -14,10 +14,13 @@ pas de build PS5 complet ni capture graphique de console.
 - La couche de présentation exécute FXAA/SMAA **avant** FSR spatial.
   Le HUD natif PS5 est dessiné séparément à la fin du composite.
   Le HUD *du jeu invité* reste intégré à la framebuffer Switch.
-- Aucun MSAA 2x/4x/8x ni TAA temporel complet ne peut être annoncé :
-  l'AA postprocess ne sait pas fabriquer les vrais échantillons de
-  rasterization ; les motion vectors et la depth guest ne sont pas
-  suffisamment fiables pour un TAA complet.
+- Le **vrai MSAA 2×/4×/8×/16× demandé par le guest** existe
+  dans les pipelines Vulkan de l'émulateur. Le **forçage utilisateur**
+  n'existe pas encore : il faut des surfaces hôtes temporaires et
+  un resolve compatible guest, et non multiplier les passes SMAA.
+- Le moteur AMD FSR 3.1 temporel est compilable dans le vendor,
+  sans source générique de motion/profondeur/projection pour
+  les jeux ; il n'est pas encore effectif dans les rendus PS5.
 
 ## Défaut corrigé
 

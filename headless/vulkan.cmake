@@ -22,6 +22,72 @@ configure_file("${EDEN_PORT_DIR}/vulkan_present_layer_r24.h"
 configure_file("${EDEN_PORT_DIR}/vulkan_fxaa_r24.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/fxaa.h" COPYONLY)
 
+# R07: REAL AMD FSR 3.1.4 temporal upscaler shader passes (MIT SDK
+# source pinned in our vendor), never substituted with spatial FSR1.
+# Always compile in native PS5 video_core; release decisions are external.
+set(EDEN_AMD_FSR31_SOURCE_DIR "${PORT_ROOT}/vendor/encore-active/amd-fsr31")
+set(EDEN_AMD_FSR31_BACKEND_DIR "${PORT_ROOT}/vendor/encore-active/eden-vulkan")
+if(NOT EXISTS "${EDEN_AMD_FSR31_SOURCE_DIR}/LICENSE.txt")
+    message(FATAL_ERROR "Missing versioned FidelityFX SDK FSR3.1.4 and MIT license in vendor")
+endif()
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+find_program(EDEN_R07_FSR31_GLSLANG NAMES glslangValidator REQUIRED)
+find_program(EDEN_R07_FSR31_SPIRV_VAL NAMES spirv-val REQUIRED)
+set(EDEN_FSR31_SHADER_DIR "${PORT_BUILD_DIR}/include/video_core/host_shaders")
+set(EDEN_FSR31_NAMES
+    prepare_inputs luma_pyramid luma_pyramid_nowave
+    shading_change_pyramid shading_change_pyramid_nowave
+    shading_change prepare_reactivity luma_instability
+    accumulate accumulate_sharpen rcas)
+set(EDEN_FSR31_HEADERS "")
+foreach(shader IN LISTS EDEN_FSR31_NAMES)
+    list(APPEND EDEN_FSR31_HEADERS
+        "${EDEN_FSR31_SHADER_DIR}/fsr3_upscaler_${shader}_comp_spv.h")
+endforeach()
+file(GLOB_RECURSE EDEN_FSR31_SDK_FILES CONFIGURE_DEPENDS
+    "${EDEN_AMD_FSR31_SOURCE_DIR}/include/*"
+    "${EDEN_AMD_FSR31_SOURCE_DIR}/shaders/*")
+add_custom_command(
+    OUTPUT ${EDEN_FSR31_HEADERS}
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/build-fsr31-amd-shaders.py"
+        --vendor "${EDEN_AMD_FSR31_SOURCE_DIR}"
+        --output "${EDEN_FSR31_SHADER_DIR}"
+    DEPENDS
+        "${PORT_ROOT}/tools/graphics/build-fsr31-amd-shaders.py"
+        ${EDEN_FSR31_SDK_FILES}
+    VERBATIM)
+add_custom_target(eden-r07-fsr31-shaders DEPENDS ${EDEN_FSR31_HEADERS})
+add_dependencies(video_core eden-r07-fsr31-shaders)
+# Descriptor pools in upstream Eden only allocate combined image-samplers;
+# FSR31 requires real SAMPLED_IMAGE and immutable SAMPLER descriptor counts.
+# Override the shared bank layout and pool allocator TOGETHER, not one alone.
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/vk_descriptor_pool.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_descriptor_pool.h"
+    COPYONLY)
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_fsr3_upscaler.h"
+    COPYONLY)
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/fsr31_native_bridge.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/fsr31_native_bridge.h"
+    COPYONLY)
+list(REMOVE_ITEM video_sources renderer_vulkan/vk_descriptor_pool.cpp)
+list(APPEND video_sources
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_descriptor_pool.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp")
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    ${EDEN_FSR31_HEADERS})
+set_property(SOURCE
+    "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_compute_pass.cpp"
+    "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_compute_pipeline.cpp"
+    "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_descriptor_pool.h")
+
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.
 find_program(EDEN_R24_GLSLANG NAMES glslangValidator REQUIRED)

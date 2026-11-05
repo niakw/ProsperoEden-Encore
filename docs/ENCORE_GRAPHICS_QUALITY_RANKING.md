@@ -66,7 +66,10 @@ L'ordre de FXAA+ et FXAA peut s'inverser si l'on privilégie la netteté
 plutôt que la force du lissage. SMAA Ultra existait déjà ; FXAA+ est un
 shader distinct non encore jugé visuellement sur PS5.
 
-**MSAA x2/x4/x8 NON livré.** Ce sont des nombres d'échantillons de
+**MSAA invité 2×/4×/8×/16× existe déjà dans le GPU
+émulé Vulkan.** Le forçage utilisateur Auto/2×/4×/8×/16×
+reste non livré : seuls les contrôles de compatibilité et de
+budget sont prêts. Ce sont des nombres d'échantillons de
 rasterisation, non des intensités du post-AA. Ils exigent des render
 targets multisamples, un resolve et la compatibilité sémantique avec
 les surfaces du GPU invité : aucune de ces preuves n'est acquise.

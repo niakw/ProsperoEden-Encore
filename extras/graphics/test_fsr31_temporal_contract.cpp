@@ -16,8 +16,11 @@ static Inputs Verified(std::uint64_t frame=1) {
             .depth_convention=DepthConvention::Reversed,
             .motion_convention=MotionConvention::PixelOffsetToPreviousFrame,
             .jitter={0.25f,-0.25f},.motion_scale={1.0f,1.0f},
+            .depth_to_view={0.0f,0.1f,1.0f,1.0f},
+            .tan_half_fov=0.577350f,
             .elapsed_ms=33.3f,.native_hud_is_separate=true,
-            .guest_hud_is_separate=true,.captured_gpu_work_complete=true};
+            .guest_hud_is_separate=true,.captured_gpu_work_complete=true,
+            .vulkan_inputs_in_general_layout=true};
 }
 int main() {
     auto f=Verified();
@@ -45,6 +48,12 @@ int main() {
     assert(Validate(f)==Rejection::MissingDepthConvention);
     f=Verified(); f.motion_convention=MotionConvention::Unknown;
     assert(Validate(f)==Rejection::MissingMotionConvention);
+    f=Verified(); f.depth_convention=DepthConvention::Forward;
+    assert(Validate(f)==Rejection::UnsupportedDepthConvention);
+    f=Verified(); f.motion_convention=MotionConvention::NormalizedOffsetToPreviousFrame;
+    assert(Validate(f)==Rejection::UnsupportedMotionConvention);
+    f=Verified(); f.render_width=1;
+    assert(Validate(f)==Rejection::InvalidResolution);
     f=Verified(); f.guest_hud_is_separate=false;
     assert(Validate(f)==Rejection::MissingHudSeparation);
     f=Verified(); f.render_width=4000;
@@ -55,6 +64,12 @@ int main() {
     assert(Validate(f)==Rejection::InvalidMotionScale);
     f=Verified(); f.elapsed_ms=1000;
     assert(Validate(f)==Rejection::InvalidTiming);
+    f=Verified(); f.vulkan_inputs_in_general_layout=false;
+    assert(Validate(f)==Rejection::InvalidVulkanImageLayout);
+    f=Verified(); f.tan_half_fov=0.0f;
+    assert(Validate(f)==Rejection::InvalidProjection);
+    f=Verified(); f.depth_to_view[0]=std::numeric_limits<float>::infinity();
+    assert(Validate(f)==Rejection::InvalidProjection);
     f=Verified(); f.captured_gpu_work_complete=false;
     assert(Validate(f)==Rejection::MissingGpuCompletion);
     assert(sequence.Observe(f)==Rejection::MissingGpuCompletion);

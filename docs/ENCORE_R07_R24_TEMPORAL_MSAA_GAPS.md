@@ -2,7 +2,7 @@
 
 **05/11/2026 — audit d'architecture et contrat C++ testé, sans build PS5 ni preuve console.**
 
-## FSR 3.1 temporel : backend réel identifié, non intégré
+## FSR 3.1 temporel : moteur AMD natif compilable, entrée invité manquante
 
 Lichii nx2 propose un vrai backend GPU multi-passes
 src/video_core/renderer_vulkan/vk_fsr3_upscaler.cpp avec
@@ -24,7 +24,26 @@ ressources manquantes, identité ou provenance estimée,
 mélange de frames, conventions profondeur/motion inconnues,
 jitter et timing invalides, HUD non séparé, work GPU non terminé,
 historique discontinu et changement de scène.
-**Ce contrat n'est pas encore un moteur FSR 3.1.**
+Le nouveau vendor f3722585 contient maintenant un **vrai moteur
+AMD FSR 3.1.4 multi-passes Vulkan**, adapté depuis Lichii,
+avec la copie source du SDK AMD v1.1.4 sous licence MIT.
+Les **11 passes GPU** produisent toutes du SPIR-V 1.3 valide ;
+le port C++ du scheduler et ses descripteurs SAMPLED_IMAGE /
+SAMPLER séparés passent la compilation syntaxique hôte.
+Le CMake PS5 ajoute ces unités au video_core sans build
+conditionnel expérimental.
+
+Le pont natif exige couleur, profondeur reversed-Z, mouvement
+en pixels, vrai jitter, vraie projection du jeu, frames cohérentes,
+GPU synchronisé et HUD invité/natif séparé. Il réinitialise
+l'historique si des frames manquent ou la scène change.
+L'ancien FOV 60 degrés par défaut du port externe a été supprimé.
+
+**Blocage vérifié : le GPU invité actuel d'Encore ne fournit pas
+de source générique complète de ces données pour tous les jeux**.
+Le moteur FSR3.1 est donc compilable et raccordé comme composant
+native Vulkan, **mais sans dispatch en jeu ni présentation de
+frames temporelles PS5**. Ne pas créer un bouton fonctionnel fictif.
 
 
 
@@ -52,14 +71,14 @@ de DLSS dans un jeu NS2 peut suffire à **ce jeu**, mais pas à une
 implémentation générique. L'ordre des opérations AA/upscale/HUD doit
 aussi être prouvé avant activation.
 
-**Prochaine réalisation vérifiable** : tracer les vrais producteurs
-de depth/motion/jitter côté GPU invité, définir une structure de données
-versionnée par frame, écrire un garde-fou strict de cohérence des entrées,
-puis raccorder un backend Vulkan temporel réel. Les tests sans image
+**Prochaine réalisation vérifiable** : raccorder un véritable
+producteur GPU invité générique de depth/motion/jitter/projection
+au moteur FSR 3.1 désormais compilable, puis raccorder sa sortie
+au framebuffer invité, avec séparateur HUD et repli FSR 1. Les tests sans image
 GPU ne suffisent pas à conclure à la qualité. Ne pas ajouter de
 bouton « FSR 3.1 » tant que le backend ne reconstruit pas de frames.
 
-## MSAA invité 2×/4×/8× : DÉJÀ présent, pas de forçage global
+## MSAA invité 2×/4×/8×/16× : DÉJÀ présent, forçage ouvert
 
 Le renderer Eden Vulkan accepte le **vrai MSAA demandé par le GPU
 invité** : MaxwellToVK::MsaaMode convertit Msaa2x1, Msaa2x2 et
@@ -76,6 +95,19 @@ casser les résolutions, aliasing et lectures du jeu. Il n'existe
 pas actuellement et ne doit pas être affiché comme livré.
 La prise en charge PS5 précise reste à qualifier par format et
 par jeu ; certains formats ou resolves peuvent être limités.
+
+Pour le forçage volontaire Auto / 2× / 4× / 8× / 16×,
+le code extras/graphics/msaa_force_policy.h vérifie la
+compatibilité Vulkan **par format**, les dimensions,
+le budget mémoire, les alias/lectures invitées ainsi que
+l'existence d'un attachement multisample hôte dédié et des
+resolves couleur/profondeur vers le vrai framebuffer invité.
+
+Le garde-fou répond encore ShadowRendererNotImplemented :
+les surfaces temporaires et leurs resolves restent à coder.
+Il serait dangereux de modifier directement le champ samples
+des textures invitées. Aucun mode forcé n'est donc présenté
+comme effectif dans l'interface.
 
 Le MSAA augmente les échantillons **pendant la rasterisation** ;
 aucun filtre FXAA/SMAA, même exécuté 2/4/8 fois, n'est du MSAA.

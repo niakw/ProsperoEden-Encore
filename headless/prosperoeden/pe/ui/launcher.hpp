@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <future>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -225,7 +226,12 @@ class Launcher
     std::chrono::steady_clock::time_point last_ui_hotspot_report_{};
     std::string clock_;
     std::string version_;
-    std::future<AppUpdateInfo> update_check_;
+    struct UpdateCheckState {
+        AppUpdateInfo result{};
+        std::atomic<bool> completed{false};
+    };
+    // Shared with an independent worker that never captures the launcher.
+    std::shared_ptr<UpdateCheckState> update_check_;
     AppUpdateInfo update_info_{};
     bool update_check_manual_ = false;
     bool update_checked_this_launch_ = false;

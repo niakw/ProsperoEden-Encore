@@ -2045,7 +2045,7 @@ std::string LocalDay() {
 }
 } // namespace
 
-pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {
+static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current) {
     using Report = pe::ui::AppUpdateInfo;
     Report report;
     report.installed_version = current;
@@ -2107,6 +2107,17 @@ pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current)
         "New stable release " + report.latest_version +
         " detected. No supported installable PS5 package; FTP ZIP is excluded.";
     return report;
+}
+
+pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {
+    return QueryAppReleaseMetadata(current);
+}
+
+std::function<pe::ui::AppUpdateInfo()> EdenServices::detached_app_update_task(
+    const std::string& current) {
+    // Never capture this: HTTP may still be in progress when the app launches
+    // a game and destroys the launcher/frontend Services instance.
+    return [installed = current] { return QueryAppReleaseMetadata(installed); };
 }
 
 std::vector<std::string> EdenServices::wallpapers() {

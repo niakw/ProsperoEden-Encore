@@ -83,7 +83,9 @@ opt-in check at launcher startup (off by default). Stable metadata comes
 solely from:
 https://api.github.com/repos/niakw/Prospero.Eden-Encore/releases/latest
 
-A background worker performs the query. The parser rejects drafts,
+A background worker performs the query. The worker holds an isolated, reference-free
+release query task and a shared result; destruction of the launcher does not
+join the network request or block game admission. The parser rejects drafts,
 prereleases, unexpected JSON, hostile tags, unsupported assets, and
 network failures without interrupting normal navigation. R revisions are
 compared numerically rather than lexically.

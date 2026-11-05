@@ -10,6 +10,7 @@
 #include <cctype>
 #include <cmath>
 #include <utility>
+#include <thread>
 
 namespace pe::ui
 {
@@ -96,8 +97,6 @@ Launcher::~Launcher()
         diagnostics_scan_.wait();
     if (profile_avatar_scan_.valid())
         profile_avatar_scan_.wait();
-    if (update_check_.valid())
-        update_check_.wait();
     if (wallpaper_scan_.valid())
         wallpaper_scan_.wait();
     if (daily_wallpaper_scan_.valid())
@@ -215,15 +214,28 @@ void Launcher::close_modal()
 
 void Launcher::start_app_update_check(bool manual)
 {
-    if (update_check_.valid()) return; // no concurrent requests
+    if (update_check_ && !update_check_->completed.load(std::memory_order_acquire))
+        return; // no concurrent queries within this launcher
+    // Bind a self-contained task without a reference to the launcher or the
+    // service. Its network lifetime never blocks a game launch or its teardown.
+    auto query = services_.detached_app_update_task(version_);
+    const auto state = std::make_shared<UpdateCheckState>();
+    update_check_ = state;
     update_check_manual_ = manual;
     update_checked_this_launch_ = true;
     update_info_ = {};
     update_info_.summary = tr("Checking official releases...");
-    const std::string current = version_;
-    update_check_ = std::async(std::launch::async, [this, current] {
-        return services_.check_app_update(current);
-    });
+    std::thread([state, query = std::move(query)]() mutable {
+        try {
+            state->result = query();
+        } catch (...) {
+            state->result = {AppUpdateInfo::State::offline, {}, {},
+                             "Could not reach GitHub Releases."};
+        }
+        // Results are written before the release-store and only read after
+        // the UI thread observes the matching acquire-load.
+        state->completed.store(true, std::memory_order_release);
+    }).detach();
 }
 
 void Launcher::apply_look()
@@ -527,14 +539,11 @@ void Launcher::update(float dt)
         }
     }
     textures_.pump(dt);
-    if (update_check_.valid() &&
-        update_check_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        try {
-            update_info_ = update_check_.get();
-        } catch (...) {
-            update_info_ = {AppUpdateInfo::State::offline, version_, {},
-                            tr("Could not reach GitHub Releases.")};
-        }
+    if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
+        update_info_ = std::move(update_check_->result);
+        update_check_.reset();
+        if (update_info_.installed_version.empty())
+            update_info_.installed_version = version_;
         if (update_check_manual_) {
             say(update_info_.summary,
                 update_info_.state == AppUpdateInfo::State::offline ||

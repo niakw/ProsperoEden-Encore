@@ -23,6 +23,7 @@ struct MihawkSourceRecord {
 
 // Prepares copy with explicit GENERAL -> TRANSFER_SRC -> GENERAL on the
 // actual composed frame. Only the private image is kept for interpolation.
+MihawkRecordResult ValidateOwnedSnapshot(const MihawkSourceRecord& record) noexcept;
 MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& record) noexcept;
 
 struct MihawkGenerateRecord {
@@ -45,6 +46,7 @@ struct MihawkGenerateRecord {
 
 // Records one neural interpolation with format-aware transfer to a distinct
 // presentation frame. Does not submit, flush, present or increment guest FPS.
+MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& record) noexcept;
 MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& record) noexcept;
 
 } // namespace Eden::FeatureLab

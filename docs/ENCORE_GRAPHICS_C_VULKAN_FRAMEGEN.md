@@ -173,3 +173,35 @@ numéros invalides, sortie GPU occupée, sérialisation du cycle Prepare/Commit.
 **Limite :** Encore doit encore exposer son vrai fence/timeline de scheduler
 et appeler le protocole depuis le chemin `Composite`. Aucun système de
 fence PS5 n'est artificiellement déclaré fonctionnel ici.
+
+### C2.4 — protocole de raccordement au renderer (code hôte qualifié)
+
+L'encodeur `mihawk_vulkan_encoder.cpp` regroupe les contrats R08 :
+`MihawkSubmissionTimeline → ValidateOwnedSnapshot/ValidateNativeMihawkPair
+→ RecordOwnedSnapshot → RecordNativeMihawkPair → Commit`.
+
+Il valide **toutes** les préconditions avant le premier appel GPU, refuse une
+deuxième préparation en attente, et réinitialise automatiquement les layouts
+et références quand le groupe d'images change (y compris lorsqu'un handle
+opaque Vulkan est réutilisé avec un nouveau numéro de génération d'allocation).
+
+Le scheduler actif possède des API `Scheduler::CurrentTick()`,
+`Scheduler::IsFree(tick)` et `Scheduler::Flush()` renvoyant la valeur de
+soumission GPU. Le protocole autorise une réservation minimale avant
+l'enregistrement, puis exige **le tick réellement renvoyé par Flush** pour
+`Commit`; un tick inférieur à la réservation met les images en quarantaine,
+jusqu'à `vkDeviceWaitIdle` + recréation. `PollCompleted` accepte seulement
+une preuve `IsFree` appliquée aux ticks en vol, sans blocage de l'affichage.
+
+Cette compatibilité d'interface **ne vaut pas intégration dans le jeu** :
+l'appel direct depuis `RendererVulkan::Composite`, l'obtention non bloquante
+des frames synthétiques du PresentManager, l'ordre réel d'affichage,
+l'isolation du HUD et le budget GPU sont toujours à vérifier.
+
+Les 7 unités de source C++ (4 MihawkGen + stage + allocation + encodeur)
+compilent sur hôte avec un projet CMake dédié :
+`cmake -S tools/graphics -B /tmp/eden-r08-host && cmake --build /tmp/eden-r08-host`.
+`ctest --test-dir /tmp/eden-r08-host --output-on-failure` exécute **6 tests**
+host-only. Le script `tools/graphics/check-r08-host.sh` ajoute les validations
+de la licence/empreinte source, les 21 shaders SPIR-V et les sanitizers.
+Ni ces objets macOS ni CTest ne constituent une compilation sur PS5.

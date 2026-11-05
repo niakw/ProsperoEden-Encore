@@ -171,6 +171,7 @@ MihawkAllocateError MihawkVulkanResources::Create(
             return error;
         }
     }
+    ++generation_;
     ready_ = true;
     return MihawkAllocateError::None;
 }

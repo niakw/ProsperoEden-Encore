@@ -44,8 +44,8 @@ int main() {
     assert(!timeline.Pending() && timeline.LastSubmittedSerial() == 0);
     auto p = timeline.Prepare(r);
     assert(p.CanCapture() && !p.CanGenerate() && p.capture_slot == 0);
-    assert(timeline.Commit(p));
-    assert(!timeline.Commit(p));
+    assert(timeline.Commit(p, p.reserved_gpu_serial));
+    assert(!timeline.Commit(p, p.reserved_gpu_serial));
     assert(timeline.SlotBusyUntil(0) == 1);
 
     // GPU hasn't signaled serial 1 yet: second snapshot may be copied, but
@@ -55,7 +55,7 @@ int main() {
     r.reserved_gpu_serial = 2;
     p = timeline.Prepare(r);
     assert(p.status == MihawkPlanStatus::CaptureOnly && p.capture_slot == 1);
-    assert(timeline.Commit(p));
+    assert(timeline.Commit(p, p.reserved_gpu_serial));
     assert(timeline.SlotBusyUntil(1) == 2);
 
     // Slot 0 still busy -> skip rather than overwrite the previous source.
@@ -71,7 +71,7 @@ int main() {
     r.source.timestamp_ns += 33'333'333;
     p = timeline.Prepare(r);
     assert(p.status == MihawkPlanStatus::CaptureOnly && p.capture_slot == 0);
-    assert(timeline.Commit(p));
+    assert(timeline.Commit(p, p.reserved_gpu_serial));
 
     ++r.source.real_frame_id;
     r.source.timestamp_ns += 33'333'333;
@@ -79,7 +79,7 @@ int main() {
     r.completed_gpu_serial = 3;
     p = timeline.Prepare(r);
     assert(p.CanGenerate() && p.capture_slot == 1 && p.previous_slot == 0);
-    assert(timeline.Commit(p));
+    assert(timeline.Commit(p, p.reserved_gpu_serial));
     assert(timeline.OutputBusyUntil() == 4);
     assert(timeline.SlotBusyUntil(0) == 4);
     assert(timeline.SlotBusyUntil(1) == 4);
@@ -96,7 +96,7 @@ int main() {
     r.source.timestamp_ns += 33'333'333;
     p = timeline.Prepare(r);
     assert(p.CanCapture() && !p.CanGenerate());
-    assert(timeline.Commit(p));
+    assert(timeline.Commit(p, p.reserved_gpu_serial));
 
     // Scene change resets the source pair and never allocates a synthetic
     // image from a stale game / HUD / TV mode.

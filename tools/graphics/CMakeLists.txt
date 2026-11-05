@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 3.20)
+project(eden_r08_mihawk_host_checks LANGUAGES CXX)
+# Host-only: compile exactly the source files used by the Encore PS5
+# qualification target. No renderer or SDK, and no PS5 packaging.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+enable_testing()
+get_filename_component(EDEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+set(FG_ROOT "${EDEN_ROOT}/third_party/PS5_MihawkGen")
+set(FG_CORE "${FG_ROOT}/framegen/src")
+set(FG_INCLUDE "${FG_ROOT}/framegen/include")
+set(FG_EXT "${FG_ROOT}/external")
+set(EDEN_H "${EDEN_ROOT}/headless")
+set(FG_QUAL "${EDEN_ROOT}/extras/graphics")
+set(VOLK_HEADER "${FG_ROOT}/ps5/third_party/volk/volk.h")
+foreach(REQUIRED "${FG_INCLUDE}/framegen.h" "${VOLK_HEADER}")
+    if(NOT EXISTS "${REQUIRED}")
+        message(FATAL_ERROR "Run git submodule update --init third_party/PS5_MihawkGen: ${REQUIRED}")
+    endif()
+endforeach()
+add_library(eden-r08-native-objects OBJECT
+    "${FG_CORE}/fg_common.cpp"
+    "${FG_CORE}/fg_vulkan.cpp"
+    "${FG_CORE}/fg_neural.cpp"
+    "${FG_CORE}/fg_splat.cpp"
+    "${EDEN_H}/mihawk_vulkan_stage.cpp"
+    "${EDEN_H}/mihawk_vulkan_resources.cpp"
+    "${EDEN_H}/mihawk_vulkan_encoder.cpp")
+target_include_directories(eden-r08-native-objects PRIVATE
+    "${FG_INCLUDE}" "${FG_CORE}" "${FG_EXT}" "${FG_QUAL}" "${EDEN_H}")
+target_compile_definitions(eden-r08-native-objects PRIVATE VK_NO_PROTOTYPES=1)
+target_compile_options(eden-r08-native-objects PRIVATE
+    -Wall -Wextra -Wno-missing-designated-field-initializers
+    "SHELL:-include ${VOLK_HEADER}")
+set_target_properties(eden-r08-native-objects PROPERTIES EXCLUDE_FROM_ALL OFF)
+
+function(eden_r08_test NAME)
+    add_executable("${NAME}" "${EDEN_ROOT}/extras/graphics/${NAME}.cpp" ${ARGN})
+    target_include_directories("${NAME}" PRIVATE "${FG_EXT}" "${FG_INCLUDE}" "${EDEN_H}" "${FG_QUAL}")
+    target_compile_options("${NAME}" PRIVATE -Wall -Wextra)
+    add_test(NAME "${NAME}" COMMAND "${NAME}")
+endfunction()
+eden_r08_test(test_framegen_present_gate)
+eden_r08_test(test_mihawk_native_surface_contract)
+eden_r08_test(test_mihawk_submission_timeline)
+eden_r08_test(test_mihawk_vulkan_history_barriers)
+eden_r08_test(test_mihawk_vulkan_record
+    "${EDEN_H}/mihawk_vulkan_stage.cpp"
+    "${EDEN_H}/mihawk_vulkan_encoder.cpp")
+eden_r08_test(test_mihawk_vulkan_resources "${EDEN_H}/mihawk_vulkan_resources.cpp")

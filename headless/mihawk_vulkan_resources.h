@@ -51,6 +51,9 @@ public:
     VkDeviceSize AllocatedBytes() const noexcept { return total_bytes_; }
     std::uint32_t Width() const noexcept { return width_; }
     std::uint32_t Height() const noexcept { return height_; }
+    // Incremented for every successfully recreated allocation group. This
+    // distinguishes handles recycled by VkDevice/VkAllocator after reset.
+    std::uint64_t Generation() const noexcept { return generation_; }
 
 private:
     bool CreateImage(std::uint32_t slot, VkFormat format, VkImageUsageFlags usage,
@@ -63,6 +66,7 @@ private:
     VkFormat source_format_ = VK_FORMAT_UNDEFINED;
     std::uint32_t width_ = 0, height_ = 0;
     VkDeviceSize total_bytes_ = 0;
+    std::uint64_t generation_ = 0;
     bool ready_ = false;
 };
 

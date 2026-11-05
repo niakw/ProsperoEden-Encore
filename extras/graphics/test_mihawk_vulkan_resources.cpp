@@ -119,6 +119,7 @@ int main() {
         assert(images.Create(device, physical, 1920, 1080,
                              VK_FORMAT_B8G8R8A8_UNORM) == MihawkAllocateError::None);
         assert(images.IsReady());
+        assert(images.Generation() == 1);
         assert(images.SourceFormat() == VK_FORMAT_B8G8R8A8_UNORM);
         assert(images.AllocatedBytes() == 24u * 1024 * 1024);
         assert(images.History(0).image != images.History(1).image);

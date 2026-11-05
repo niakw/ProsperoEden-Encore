@@ -32,13 +32,18 @@ bool Distinct3(VkImage a, VkImage b, VkImage c) noexcept {
 }
 } // namespace
 
-MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
+MihawkRecordResult ValidateOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
     if (!r.cmd || !r.source_real || !r.history_owned ||
         r.width == 0 || r.height == 0 || r.width > 7680 || r.height > 4320)
         return MihawkRecordResult::InvalidHandles;
     if (r.source_real == r.history_owned)
         return MihawkRecordResult::DuplicateImages;
+    return MihawkRecordResult::Recorded;
+}
 
+MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
+    const auto validated = ValidateOwnedSnapshot(r);
+    if (validated != MihawkRecordResult::Recorded) return validated;
     const auto before = BeforeHistoryCopy(r.source_real, r.history_owned, r.history_initialized);
     const std::array barriers{before.source, before.history};
     vkCmdPipelineBarrier(r.cmd, before.src_stage, before.dst_stage, 0, 0, nullptr,
@@ -54,7 +59,7 @@ MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
     return MihawkRecordResult::Recorded;
 }
 
-MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& r) noexcept {
+MihawkRecordResult ValidateNativeMihawkPair(const MihawkGenerateRecord& r) noexcept {
     if (CheckNativeMihawkSurface(r.capabilities) != NativeMihawkReject::None)
         return MihawkRecordResult::Unsupported;
     if (!r.context || !fg_method_available(r.context, FG_METHOD_NEURAL))
@@ -72,7 +77,12 @@ MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& r) noexcep
         r.synthetic_present == r.previous_owned ||
         r.synthetic_present == r.current_owned)
         return MihawkRecordResult::DuplicateImages;
+    return MihawkRecordResult::Recorded;
+}
 
+MihawkRecordResult RecordNativeMihawkPair(const MihawkGenerateRecord& r) noexcept {
+    const auto validated = ValidateNativeMihawkPair(r);
+    if (validated != MihawkRecordResult::Recorded) return validated;
     const VkImageMemoryBarrier output_prepare =
         BeforeNeuralOutput(r.private_rgba_output, r.output_was_blitted);
     vkCmdPipelineBarrier(r.cmd,

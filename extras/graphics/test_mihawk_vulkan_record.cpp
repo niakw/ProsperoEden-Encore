@@ -2,6 +2,7 @@
 // Hermetic host test. Records the GPU command sequence with mocked Vulkan
 // entry points; no device, real driver or controller is involved.
 #include "mihawk_vulkan_stage.h"
+#include "mihawk_vulkan_encoder.h"
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
@@ -47,7 +48,7 @@ extern "C" VKAPI_ATTR void VKAPI_CALL vkCmdCopyImage(
     VkImage dst, VkImageLayout dst_layout, std::uint32_t count,
     const VkImageCopy* regions) {
     calls.push_back('C');
-    assert(src == H<VkImage>(0x2) && dst == H<VkImage>(0x3));
+    assert(src == H<VkImage>(0x2) && (dst == H<VkImage>(0x3) || dst == H<VkImage>(0x5)));
     assert(src_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     assert(dst_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     assert(count == 1 && regions && regions->extent.width == 1920);
@@ -142,4 +143,106 @@ int main() {
     neural_available = false;
     assert(RecordNativeMihawkPair(r) == MihawkRecordResult::NotReady);
     assert(calls.empty()); // no half-recorded frame on error
+
+    // End-to-end *recording* of a frame pair (still no GPU/PS5).
+    neural_available = true;
+    MihawkVulkanEncoder encoder{};
+    MihawkEncoderInput input{};
+    input.request.mode = FrameGeneration::MihawkGen;
+    input.request.graphics.native_vulkan = true;
+    input.request.graphics.mihawk_compute = true;
+    input.request.graphics.model_weights_verified_and_licensed = true;
+    input.request.graphics.game_fps = 30;
+    input.request.surface = r.capabilities;
+    input.request.source = {
+        .real_frame_id = 1, .timestamp_ns = 1'000'000'000,
+        .width = 1920, .height = 1080,
+        .output_hz = 60, .display_mode_verified = true
+    };
+    input.request.reserved_gpu_serial = 1;
+    input.commands = H<VkCommandBuffer>(0x1);
+    input.real_composited_image = H<VkImage>(0x2);
+    input.synthetic_present_image = H<VkImage>(0x9);
+    input.neural_context = H<fg_context*>(0x100);
+    input.descriptor_slots = 3;
+    input.images.history[0] = H<VkImage>(0x3);
+    input.images.history[1] = H<VkImage>(0x5);
+    input.images.history_view[0] = H<VkImageView>(0x456);
+    input.images.history_view[1] = H<VkImageView>(0x567);
+    input.images.rgba_output = H<VkImage>(0x8);
+    input.images.rgba_view = H<VkImageView>(0x12345);
+
+    calls.clear(); captured.clear();
+    auto encoded = encoder.Record(input);
+    assert(encoded.IsRecorded() && !encoded.WillPresentSynthetic());
+    assert((calls == std::vector<char>{'B','C','B'}));
+    auto pending = encoder.Record(input);
+    assert(pending.plan.status == MihawkPlanStatus::SubmissionPending);
+    assert((calls == std::vector<char>{'B','C','B'}));
+    assert(encoder.Commit(encoded, encoded.plan.reserved_gpu_serial));
+    assert(!encoder.Commit(encoded, encoded.plan.reserved_gpu_serial));
+
+
+    ++input.request.source.real_frame_id;
+    input.request.source.timestamp_ns += 33'333'333;
+    input.request.completed_gpu_serial = 1;
+    input.request.reserved_gpu_serial = 2;
+    calls.clear(); captured.clear();
+    encoded = encoder.Record(input);
+    assert(encoded.IsRecorded() && encoded.WillPresentSynthetic());
+    assert((calls == std::vector<char>{'B','C','B','B','G','B','L','B'}));
+    assert(last_pair.prev_color == input.images.history_view[0]);
+    assert(last_pair.next_color == input.images.history_view[1]);
+    assert(encoder.Commit(encoded, encoded.plan.reserved_gpu_serial));
+
+
+    // Do not copy into a snapshot still referenced by neural work.
+    ++input.request.source.real_frame_id;
+    input.request.source.timestamp_ns += 33'333'333;
+    input.request.reserved_gpu_serial = 3;
+    calls.clear(); captured.clear();
+    encoded = encoder.Record(input);
+    assert(!encoded.IsRecorded());
+    assert(encoded.plan.status == MihawkPlanStatus::GpuBusy);
+    assert(calls.empty());
+
+    ++input.request.source.real_frame_id;
+    input.request.source.timestamp_ns += 33'333'333;
+    input.request.completed_gpu_serial = 2;
+    calls.clear(); captured.clear();
+    encoded = encoder.Record(input);
+    assert(encoded.IsRecorded() && !encoded.WillPresentSynthetic());
+    assert((calls == std::vector<char>{'B','C','B'}));
+    assert(encoder.Commit(encoded, encoded.plan.reserved_gpu_serial));
+
+    // Before recording even the first copy, reject unavailable neural model.
+    ++input.request.source.real_frame_id;
+    input.request.source.timestamp_ns += 33'333'333;
+    input.request.reserved_gpu_serial = 4;
+    input.request.completed_gpu_serial = 3;
+    neural_available = false;
+    calls.clear(); captured.clear();
+    encoded = encoder.Record(input);
+    assert(!encoded.IsRecorded() && encoded.recording == MihawkRecordResult::NotReady);
+    assert(calls.empty());
+    neural_available = true;
+
+    // A HUD that cannot be separated from the game image fails closed.
+    input.request.surface.hud_isolated = false;
+    encoded = encoder.Record(input);
+    assert(!encoded.IsRecorded() && encoded.plan.status == MihawkPlanStatus::UnsafeResources);
+    assert(calls.empty());
+
+    // Even if Vulkan recycles identical opaque VkImage handles, an allocation
+    // generation change discards the encoder's old history and layouts.
+    input.request.surface.hud_isolated = true;
+    ++input.images.resource_generation;
+    ++input.request.source.real_frame_id;
+    input.request.source.timestamp_ns += 33'333'333;
+    calls.clear(); captured.clear();
+    encoded = encoder.Record(input);
+    assert(encoded.IsRecorded() && !encoded.WillPresentSynthetic());
+    assert(captured[1].oldLayout == VK_IMAGE_LAYOUT_UNDEFINED);
+    encoder.Abort();
+    assert(calls.size() == 3);
 }

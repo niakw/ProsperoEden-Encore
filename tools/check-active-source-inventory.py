@@ -215,12 +215,37 @@ assert "tools/ns2/check_native_gpu_pte_remap_host.py" in (
     root / ".github/workflows/ns2-research-host.yml").read_text()
 print("ENCORE_POST_F07_SHARED_GPU_REMAP_OWNER_PASS",
       f"owners={len(shared_gpu_remap_owners)}")
+# P2.3 opt-in native Compute atomic-span policy was added AFTER the frozen
+# historical 337-source graph. Preserve that baseline without misclassifying
+# this new NS2-only header as a shipping/performance source.
+post_f07_native_atomic_owners = {
+    "ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_atomic_span.h",
+}
+assert post_f07_native_atomic_owners <= set(physical_all), (
+    "Missing native QMD3 atomic span owner",
+    sorted(post_f07_native_atomic_owners - set(physical_all)))
+assert not post_f07_native_atomic_owners.intersection(
+    set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+    shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
+    shared_compute_owners | native_typed_texture_owners |
+    shared_gpu_scalar_owners | shared_gpu_remap_owners)
+atomic_owner=(active/next(iter(post_f07_native_atomic_owners))).read_text()
+assert "CollectNativeQmdAtomicSpans(" in atomic_owner
+assert "NativeQmdAtomicSpansFitBindings(" in atomic_owner
+assert 'native_atomic_span.h' in (
+    active/"ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
+).read_text()
+assert "python3 -B tools/ns2/check_native_qmd_atomic_span_host.py" in (
+    root/".github/workflows/ns2-research-host.yml").read_text()
+print("ENCORE_POST_F07_NATIVE_ATOMIC_SPAN_OWNER_PASS",
+      f"owners={len(post_f07_native_atomic_owners)}")
 
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
-            shared_gpu_scalar_owners | shared_gpu_remap_owners]
+            shared_gpu_scalar_owners | shared_gpu_remap_owners |
+            post_f07_native_atomic_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

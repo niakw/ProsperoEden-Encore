@@ -266,6 +266,31 @@ résidence GPU de l'adresse atomique dynamique,
 ni le premier rendu NS2 sur PS5 : P2.3/P5
 restent ouverts.
 
+**P2.3 — vérification des plages atomiques contre le buffer QMD3
+réel (05/11, source/hôte) :** l'authentification de l'emplacement SSBO
+ne prouvait pas que chaque offset atomique serait présent dans les
+**octets effectivement alloués** au moment où le QMD3 publie son
+plan de ressources. Le nouveau passage natif capture, depuis
+l'IR réel, la banque SSBO aplatie, l'offset et la largeur de chaque
+StorageAtomic (4/8 octets), puis refuse les offsets atomiques
+dynamiques tant que l'émetteur SPIR-V partagé ne possède pas de
+garde de plage exécutable. À la sortie de BuildResourcePlan, le
+chemin GPU QMD3 compare chaque plage constante à la taille réelle
+lue depuis son descripteur guest et refuse **avant publication**
+tout dépassement, buffer non inscriptible, taille inconnue, alias
+ou décalage non aligné. Aucun accès hors plage ne peut être
+sécurisé en le ramenant au premier mot du buffer.
+
+Preuve hôte : extraction des vrais Opcode/IR::Block, tests d'offsets
+4/8 octets, bords extrêmes u32, descripteurs réduits ou modifiés,
+offsets dynamiques et absence de taille ; Clang/GCC UBSan O0/O2 ;
+compilation syntaxique O0/O2 des deux vrais propriétaires
+renderer_spirv_bridge.cpp et ns2_shader_spirv_compile.cpp.
+**Les atomiques dynamiques ne sont pas implémentés par ce lot** :
+ils sont explicitement refusés, sans imiter une exécution réussie.
+Il n'y a toujours pas de preuve Vulkan/PS5 ni de chemin Maxwell NS1
+modifié.
+
 **P2.3 — admission des atomiques Compute sous véritable SSBO
 (04/11, source/hôte) :** le compilateur NS2 Compute passe désormais
 le vrai IR post-traduction par une vérification *avant* l'émission

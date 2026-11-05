@@ -1200,3 +1200,19 @@ initial/en cours et erreur GPU immédiate/différée, **8 configurations PASS**.
 Il est ajouté au preflight et à la batterie P4, sans build PS5.
 Cette correction garantit une issue aux attentes arrêtées/échouées en
 source ; l'exécution et la cohérence des vraies fences GPU restent P5.
+
+
+**P2.7 — refus des classes GPU inconnues après rebind natif (05/11, source/hôte) :**
+le puller Ampere retirait correctement l’identité du moteur précédent
+mais conservait son pointeur `DmaPusher::subchannels` lorsqu’une classe
+de moteur non reconnue était sélectionnée ; des commandes suivantes
+pouvaient alors exécuter l'ancien moteur malgré un ID désormais invalide.
+Les canaux natifs NS2 effacent ce pointeur après retrait des propriétaires
+3D/Compute ; le pusher commun, déjà protégé contre les moteurs nuls,
+refuse alors les commandes jusqu'au prochain bind reconnu.
+Les binds rejetés avant modification de la propriété ne touchent pas
+à l'état ancien. L'attitude historique NS1 en cas de classe inconnue est
+préservée, sans changement du moteur commun. Test hôte de la **vraie méthode**
+avec classes Maxwell, Ampere 3D/Compute/DMA, classes invalides, échec de
+propriété et retour en NS1 : Clang/GCC O0/O2, profils host/PS5 simulés,
+UBSan, huit configurations réussies. La GPU réelle reste à qualifier en P5.

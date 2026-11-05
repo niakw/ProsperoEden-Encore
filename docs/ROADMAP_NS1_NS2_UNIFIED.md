@@ -1265,3 +1265,20 @@ avec les GPR de sortie restent refusées. Le test combiné
 `FRND-CBUF`, `SEL-UR` et `FSET-UR`, sous Clang/GCC UBSan O0/O2 :
 **4/4 PASS**. Aucun framebuffer PS5 ou support complet de stages
 Ampere n'en découle : P2.4/P5 restent ouverts.
+
+
+**P2.4 — `MUFU` à immédiat 32 bits (05/11, source/hôte) :**
+la forme Ampere `0x908`, déjà recensée par l'ISA officielle du vendor,
+utilise le même compilateur que MUFU registre/uniforme mais sa source
+est directement le mot immédiat natif. Le sélecteur du véritable lowerer
+la matérialise dans un GPR temporaire et émet l'instruction Maxwell,
+en conservant la conversion en radians déjà revue pour SIN/COS. La forme
+refuse les champs de source A et modificateurs incompatibles, les
+fonctions matérielles non traduites et les champs inconnus ; aucun
+mode graphique arbitraire n'est « rendu compatible » par défaut.
+Le témoin commun exécute les véritables classificateur, lowerer et
+pont `LowerReviewedToMaxwell`, vérifie l'encodage MUFU, l'identité
+de la constante, les mutations rejetées, et les chemins historiques
+`FRND-CBUF`/`SEL-UR`/`FSET-UR`. Clang/GCC UBSan O0/O2 : **4/4 PASS**.
+Le runtime Vulkan/PS5 et les autres instructions/stages non traduits
+restent une limite réelle P2.4 et nécessitent P5 pour la console.

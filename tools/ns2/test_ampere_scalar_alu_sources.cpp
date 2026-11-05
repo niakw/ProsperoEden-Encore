@@ -134,5 +134,39 @@ int main() {
     Require(!Bridge(bad_mode).Ready(), "unreviewed FSET operation refused");
     Require(Bridge(UniformSel(0x20a,5,6,8)).Ready(),
             "ordinary FSET regression guard");
+    // Immediate MUFU 0x908 is decoded as operand(1) using the same
+    // floating-point operation path as the register and uniform variants.
+    // Prove the emitted Maxwell instruction uses a materialized source,
+    // rather than treating the 32-bit immediate as an uninitialized GPR.
+    const auto immediate_mufu=[](u32 bits, u32 operation=2) {
+        return Instruction{{(7U << 12) | 0x908 | (5U << 16), bits,
+                            operation << 10, 0x000fe200U}};
+    };
+    const auto mufu=immediate_mufu(0x3f800000U);
+    Require(Reviewed(mufu), "immediate MUFU admitted by native ISA table");
+    const auto lowered_mufu=Bridge(mufu);
+    Require(lowered_mufu.Ready(), lowered_mufu.reason.data());
+    bool has_mufu=false;
+    for (const u64 word:lowered_mufu.maxwell_instructions) {
+        if ((word>>52)==0x508) {
+            Require(((word>>8)&255)==251, "immediate MUFU must use materialized operand R251");
+            Require(((word>>20)&255)==2, "MUFU operation selector must survive lowering");
+            has_mufu=true;
+        }
+    }
+    Require(has_mufu && lowered_mufu.maxwell_instructions.size()>=3,
+            "immediate materialization followed by real Maxwell MUFU");
+    const auto other_mufu=Bridge(immediate_mufu(0x40000000U));
+    Require(other_mufu.Ready() &&
+            other_mufu.maxwell_instructions!=lowered_mufu.maxwell_instructions,
+            "MUFU immediate bytes must affect the generated Maxwell program");
+    auto bad_mufu=immediate_mufu(0x3f800000U);
+    bad_mufu.words[0]|=3U<<24; // illegal source A for immediate form
+    Require(!Bridge(bad_mufu).Ready(), "MUFU immediate source A must be empty");
+    bad_mufu=immediate_mufu(0x3f800000U);
+    bad_mufu.words[2]|=1U<<16; // unknown modifier, forbidden by ISA/mode
+    Require(!Bridge(bad_mufu).Ready(), "MUFU immediate modifier rejected");
+    bad_mufu=immediate_mufu(0x3f800000U,7); // unsupported hardware function mode
+    Require(!Bridge(bad_mufu).Ready(), "MUFU unsupported operation rejected");
     std::puts("P2_4_REAL_AMPERE_SCALAR_ALU_SOURCE_PASS");
 }

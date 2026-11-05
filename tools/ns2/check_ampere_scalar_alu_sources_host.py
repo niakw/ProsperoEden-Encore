@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P2.4: real Ampere FRND-CBUF, SEL-UR and FSET-UR lowering (host only)."""
+"""P2.4: real Ampere FRND-CBUF, SEL-UR, FSET-UR and MUFU-imm lowering (host only)."""
 from pathlib import Path
 import os
 import shutil
@@ -15,6 +15,7 @@ assert 'constant_source && (!valid_cbuf() || insn.Bits(54, 5) >= 18)' in LOWER
 assert 'constant_source ? cbuf()' in LOWER
 assert 'case 0x207: case 0x807: case 0xa07: case 0xc07:' in LOWER
 assert 'case 0x20a: case 0x80a: case 0xa0a: case 0xc0a:' in LOWER
+assert 'case 0x308: case 0x908: case 0xb08: case 0xd08:' in LOWER
 assert 'uses_uniform_bank |= op == 0xc07' in LOWER
 TEST=(SOURCE).read_text()
 assert 'FirstUnreviewedBit(inst,*row)' in TEST

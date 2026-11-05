@@ -27,6 +27,7 @@ TESTS = {
     "qmd32_real_staging": "tools/ns2/check_native_qmd_32_slots_host.py",
     "nvdrv_4k_lifetime": "tools/ns2/check_native_nvdrv_allocation_range_host.py",
     "gp_fifo_preinit": "tools/ns2/check_native_gpfifo_preinit_host.py",
+    "native_gpfifo_spans": "tools/ns2/check_native_gpfifo_command_spans_host.py",
     "dma_unbound_guard": "tools/ns2/check_native_dma_unbound_subchannel_host.py",
     "native_semaphore_shutdown": "tools/ns2/check_native_puller_semaphore_shutdown_host.py",
     "native_invalid_bind": "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",

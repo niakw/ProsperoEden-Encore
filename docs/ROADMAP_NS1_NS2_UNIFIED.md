@@ -1359,3 +1359,22 @@ de l’immédiat, refus de registres hors domaine et de modes inconnus ;
 **4/4 Clang/GCC UBSan, O0/O2 PASS**, avec régression FRND/SEL/FSET/
 MUFU/UPOPC dans les mêmes binaires. Ce lot améliore la couverture ISA
 générique et ne ferme **ni P2.4 ni le rendu GPU NS2 sur PS5**.
+
+
+**P2.7 — admission stricte des segments GPFIFO natifs (05/11/2026) :**
+l’ioctl de commande possède deux frontières distinctes : la liste
+`CommandListHeader` lue dans la mémoire **CPU invitée**, puis les
+`entry.addr/size` de chaque tampon de commandes dans la **GMMU**.
+Le contrôle existant n’authentifiait que la première. Le propriétaire
+`nvhost_gpu::SubmitGPFIFOImpl` vérifie désormais que **chaque** segment
+non vide est entièrement mappé dans la GMMU native avant
+`InitChannel`, la liaison du propriétaire ou la réservation de fence.
+La vérification utilise la vraie `MemoryManager::IsFullyMappedRange`
+(avec gardes de limite d’adressage et pages 4 KiB) et le format de
+`Tegra::CommandHeader` du moteur ; aucun comportement NS1 n’est changé.
+Le témoin hôte exécute l’admission extraite de ce propriétaire, y
+compris trou de page, liste mixte, frontière 49 bits, zéro octet,
+VA nulle et chemin Maxwell ; **Clang/GCC UBSan O0/O2 : 4/4 PASS**.
+Ce garde supprime une possibilité d’acquittement d’une commande
+initialement non mappée ; il ne constitue pas une preuve d’absence de
+courses si le guest modifie la GMMU après l’admission.

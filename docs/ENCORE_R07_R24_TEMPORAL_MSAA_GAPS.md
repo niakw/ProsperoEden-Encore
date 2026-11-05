@@ -119,13 +119,20 @@ resolves couleur/profondeur vers le vrai framebuffer invité.
 
 Le garde-fou reste conservateur : `ShadowRendererNotImplemented`
 reste le résultat tant que le moteur de rendu complet n'est pas
-raccordé. Le vendor `a4c6c8c` apporte un **premier composant natif
+raccordé. Le vendor `9d7f766ef` apporte un **premier composant natif
 Vulkan couleur** : une image multisample temporaire, une image view,
 un framebuffer avec render pass et resolve couleur vers la surface
 1× originale, sous conditions strictes (un seul attachement couleur,
 clear intégral, aucune profondeur, aucun aliasing/lecture incompatible,
 formats et budgets contrôlés). Le composant invalide son framebuffer
 si l'image **ou la vue** invitée change.
+Le renderer vérifie désormais les capacités d'échantillonnage du
+format, du type d'image, de son usage (attachement couleur transient)
+et de ses dimensions via `vkGetPhysicalDeviceImageFormatProperties`.
+Le seul masque global de samples ne suffit donc plus à autoriser 16×.
+L'extension `VK_EXT_multisampled_render_to_single_sampled` nécessite
+notamment un flag de création spécifique pour les images invitées 1×,
+et ne peut pas être activée aveuglément sur les textures existantes.
 
 **Ce composant n'est pas appelé par le chemin des draws invités** : la
 sélection du pipeline rasterisationSamples, les clears, l'ordre des

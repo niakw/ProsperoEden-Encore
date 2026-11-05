@@ -19,7 +19,9 @@ void Check(bool cond, const char* why) {
 }
 namespace Shader::Ampere {
 // Test link replaces real lowering only to make a Clear-vs-translation race deterministic.
-MaxwellShaderImage BuildMaxwellShaderImage(std::span<const u8>,std::span<const u8>,u32) {
+MaxwellShaderImage BuildMaxwellShaderImage(
+    std::span<const u8>, std::span<const u8>, u32,
+    std::span<const NativeIndirectBranchPlan>, std::optional<u64>) {
     {
         std::unique_lock lock{gate_mutex};
         entered = true;

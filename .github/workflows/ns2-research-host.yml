@@ -755,6 +755,24 @@ jobs:
               -o "build-ns2-a64/ampere-cache-${cxx//+/}"
             "build-ns2-a64/ampere-cache-${cxx//+/}"
           done
+      - name: P2.4 native Geometry LEPC authentic GMMU PC, image and cache host proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-ns2-a64
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -Wno-unused-parameter -fsanitize=undefined -fno-sanitize-recover=all \
+              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/sources/eden/src \
+              tools/ns2/test_native_lepc_capture.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/capture.cpp \
+              -o "build-ns2-a64/ampere-lepc-$cxx"
+            UBSAN_OPTIONS=halt_on_error=1 "build-ns2-a64/ampere-lepc-$cxx"
+          done
       - name: Verify in-flight shader cache invalidation under a deterministic race (Clang and GCC)
         shell: bash
         run: |

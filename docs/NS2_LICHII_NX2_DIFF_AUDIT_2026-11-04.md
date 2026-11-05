@@ -16,6 +16,27 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.4 — LEPC Geometry à PC GPU invité connu, 05/11
+
+Comparaison ciblée avec le chemin source Lichii : le LEPC
+ne renvoie pas le PC Maxwell reconstruit, mais l'adresse
+du code natif GPU plus 16 octets par instruction Ampere.
+L'adaptation Encore passe cette adresse depuis la capture
+GMMU du shader Geometry aux propriétaires de compilation,
+puis encode les deux moitiés du PC invité dans les MOV
+Maxwell. Les autres stages ne peuvent pas fournir de PC
+inventé ; le prologue ATEXIT historique reste supporté.
+
+Le cache LRU compare maintenant la **base de code GPU**
+lorsqu'elle est fournie, en plus du header, des octets et
+du stage. Le hash d'image tient compte de cette valeur,
+sans remplacer les vérifications réelles par un hash.
+Captures et tests de lecture/mutation GMMU, deux VAs
+distinctes, mapping invalide, stages non Geometry et
+test de race Clang/GCC UBSan O0/O2.
+Ce n'est pas un décodeur général de branche dynamique,
+ni une implémentation task/mesh.
+
 ### P2.4 — REDUX warp signed MIN/MAX et XOR, 05/11
 
 Adaptation sélective du chemin de réduction déjà intégré
@@ -158,7 +179,7 @@ dimensions, registres, canaux et chevauchements des registres scratch), prédica
 sous Clang/GCC et UBSan. Vérification du bridge existant en parallèle.
 
 **Limites :** aucun shader complet, pipeline RADV ou framebuffer invité prouvé ;
-P2.4 reste ouvert pour les autres instructions, la LEPC dynamique et task/mesh.
+P2.4 reste ouvert pour les autres instructions, LEPC hors Geometry non attesté et task/mesh.
 Le correctif ne garantit pas que le cache textures puisse satisfaire tous les
 handles natifs ou que tous les kernels Compute aient une traduction complète.
 

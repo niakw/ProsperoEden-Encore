@@ -483,6 +483,18 @@ def main() -> int:
                 "crossing_lowered.error ==" in shadow_fixture.read_text(),
                 "P2.4 Ampere high-GPR spill must cover register load/store,"
                 " ALU, S2R and exact host regressions")
+        lepc_fixture = ROOT / "tools/ns2/test_native_lepc_capture.cpp"
+        ampere_capture = (native_ampere_files / "capture.cpp").read_text()
+        ampere_cache = (native_ampere_files / "translation_cache.cpp").read_text()
+        ampere_image = (native_ampere_files / "maxwell_image.cpp").read_text()
+        require(lepc_fixture.is_file() and
+                "P2_4_NATIVE_LEPC_GMMU_CAPTURE_PASS" in lepc_fixture.read_text() and
+                "native_code_address = std::nullopt" in native_lower_src and
+                "native_code_address" in ampere_capture and
+                "e.native_code_address == native_code_address" in ampere_cache and
+                "shader_stage != static_cast<u32>(Shader::Stage::Geometry)" in ampere_image and
+                "test_native_lepc_capture.cpp" in host_workflow,
+                "P2.4 LEPC requires original Geometry GMMU PC and address-separated LRU")
         redux_fixture = ROOT / "tools/ns2/test_ampere_warp_redux.cpp"
         require(redux_fixture.is_file() and
                 "P2_4_REDux_REAL_AMPERE_LOWER_PASS" in redux_fixture.read_text() and
@@ -1219,7 +1231,7 @@ def main() -> int:
                     (ampere_root / "lower_bridge.cpp").read_text() and
                 "ProbeProgram(native_code)" in
                     (ampere_root / "lower_bridge.cpp").read_text() and
-                "LowerToMaxwell(input, {}, false, indirect_dispatch)" in
+                "LowerToMaxwell(input, {}, false, indirect_dispatch, native_code_address)" in
                     (ampere_root / "lower_bridge.cpp").read_text() and
                 "BridgeMaxInstructions = 4096" in
                     (ampere_root / "lower_bridge.cpp").read_text() and
@@ -1230,7 +1242,7 @@ def main() -> int:
                 "NativeProgramAddress(code, address)" in (ampere_root / "maxwell_image.cpp").read_text() and
                 "ImageSalt =" in (ampere_root / "maxwell_image.cpp").read_text() and
                 "MaxwellSchedulingPeriod = 0x20" in (ampere_root / "maxwell_image.cpp").read_text() and
-                "LowerReviewedToMaxwell(native_code, indirect_dispatch)" in (ampere_root / "maxwell_image.cpp").read_text() and
+                "LowerReviewedToMaxwell(native_code, indirect_dispatch, native_code_address)" in (ampere_root / "maxwell_image.cpp").read_text() and
                 "MaxwellImageStatus::InvalidLayout" in (ampere_root / "maxwell_image.cpp").read_text() and
                 (ROOT / "tools/ns2/test_ampere_maxwell_image.cpp").is_file() and
                 (ROOT / "tools/ns2/test_ampere_gpu_capture.cpp").is_file() and
@@ -1282,7 +1294,7 @@ def main() -> int:
                 'lru.splice(lru.begin(), lru, it)' in
                     (ampere_root / "translation_cache.cpp").read_text() and
                 '!image.Ready()' in (ampere_root / "translation_cache.cpp").read_text() and
-                'cache->GetOrTranslate(maxwell_header, source, stage)' in
+                'cache->GetOrTranslate(maxwell_header, source, stage, native_code_address)' in
                     (ampere_root / "capture.cpp").read_text() and
                 'NativeTranslationCache* cache' in
                     (ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp").read_text(),

@@ -92,7 +92,7 @@ Le fournisseur Vulkan conserve désormais au plus **12 pipelines Compute Ampere*
 **Restes P0–P4 qui exigent du CODE (non requalifiables par un simple essai PS5)** :
 la promotion des commutateurs de recherche vers la sélection automatique de production,
 les instructions/stages graphiques Ampere encore explicitement refusés
-(task/mesh, LEPC dynamique et autres opcodes non traduits ; Geometry et la
+(task/mesh, LEPC hors Geometry sans provenance PC et autres opcodes non traduits ; Geometry et la
 paire TessControl/TessEval sont liées en source, sans preuve GPU PS5),
 les liaisons HLE ou
 synchronisations non implémentées, et tout descripteur GPU dont l'ABI ne peut
@@ -113,7 +113,7 @@ Ce paragraphe est une preuve d'intégration source, pas un premier rendu PS5.
 maintenant être capturé et traduit dans la **pipeline Vulkan graphique complète**,
 avec ses CBUF de stage 3 et la liaison inter-stage créée par le même
 GraphicsPipeline commun. Seuls les opcodes déjà revus par le lowerer sont
-acceptés; LEPC dynamique et task/mesh restent refusés.
+acceptés ; LEPC hors Geometry sans adresse GMMU vérifiée et task/mesh restent refusés.
 Cette prise en charge n'est **pas** une preuve de géométrie correcte sur PS5.
 **P2.4 — relecture après compilation :** la création du pipeline graphique
 réauthentifie désormais la configuration des stages, leurs offsets et les
@@ -133,7 +133,7 @@ hôte (Clang, politique de stages et ISA) et parité intégrale du fork Vulkan
 testées ; les instructions Ampere non prises en charge restent bloquées.
 **Cela n'établit pas le bon fonctionnement de la tessellation sur PS5** :
 validation d'un véritable patch tessellé et des capacités RADV en P5.
-Task/mesh et LEPC dynamique restent des manques de code P2.4.
+Task/mesh et les usages de LEPC non couverts par l'origine PC Geometry vérifiée restent des manques de code P2.4.
 
 **P2.2/P2.3 — handles de textures dynamiques avec sampler statique :**
 Dans le planificateur natif QMD3, une texture échantillonnée à
@@ -165,6 +165,40 @@ le lowerer ou le budget de registres ne peuvent représenter restent
 refusées. Les tests Clang/GCC UBSan vérifient les champs immuables,
 le rejet des vecteurs débordants et la traduction d'un LDG capturé.
 **Ce correctif ne change ni Maxwell NS1 ni la limite console P5.**
+
+**P2.4 — LEPC dynamique en Geometry avec provenance GMMU (05/11,
+source/hôte) :** l'adresse d'une instruction LEPC hors du prologue
+statique ne pouvait pas être reconstruite depuis les adresses
+Maxwell traduites : les instructions Ampere ont 16 octets,
+le code Maxwell utilise 8 octets et des mots d'ordonnancement.
+Le chemin de capture graphique transmet maintenant
+l'**adresse GPU invitée authentifiée de la première instruction
+native** exclusivement au stage Geometry. Le lowerer LEPC
+matérialise alors ses deux mots de PC 64 bits depuis cette
+origine plus index × 16, avec validation de la plage GMMU
+49 bits, du format ISA et des deux registres de destination.
+Sans adresse réelle, hors Geometry, ou en mode de LEPC
+non reconnu, la traduction reste refusée. Le prologue
+ATEXIT vérifié antérieurement conserve sa compatibilité.
+
+L'origine native parcourt le vrai pont d'ISA, l'image
+Maxwell et le cache LRU ; l'identité de cache inclut désormais
+l'adresse source **en plus des octets complets**, empêchant
+de réutiliser la mauvaise constante PC pour deux shaders
+identiques à des adresses GPU différentes. Les captures
+GMMU sont recontrôlées sur chaque réutilisation ; les races
+d'invalidation conservent leur garde d'époque.
+**Tests hôte réels :** CaptureNativeGraphicsShader,
+BuildMaxwellShaderImage, LowerReviewedToMaxwell, LowerToMaxwell,
+GetOrTranslate, relecture GMMU, deux VAs 64 bits, LRU,
+refus VertexB, LEPC prédicat illégal, registre haut,
+GMMU hors plage et disparition de mapping, Clang/GCC UBSan
+O0/O2 ; ancien cache et son test de race PASS. Aucune
+modification de Maxwell/NS1 ni de Vulkan.
+Cette avancée clôt la **voie LEPC Geometry avec PC attesté**,
+pas les transferts de contrôle par adresses
+calculées non prouvées, ni task/mesh, ni le premier
+frame PS5 (P2.4/P5 ouverts).
 
 **P2.4 — REDUX warp signé et XOR (05/11, source/hôte) :**
 le lowerer Ampere reconnaît désormais les modes de réduction
@@ -267,8 +301,8 @@ Compilation/exécution Mac Apple Clang O0/O2 avec UBSan, plus tests
 d'ISA/BRX, capture du shader et lot des correctifs génériques nx2
 réussis. Le compilateur Maxwell NS1, la file Vulkan et les sélecteurs
 de recherche ne sont pas modifiés. L'exécution des shaders sur GPU
-PS5 et la prise en charge complète de task/mesh et LEPC dynamique
-restent **non prouvées**.
+PS5, task/mesh et LEPC hors Geometry sans PC attesté restent
+**non prouvés**.
 
 **P2.3 — écritures globales Compute NS2 sans lecture globale (source/hôte) :**
 Le collecteur NVN commun ne construit ses descripteurs globaux que lorsque

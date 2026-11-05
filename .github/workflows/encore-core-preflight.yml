@@ -610,6 +610,7 @@ jobs:
           python3 -B tools/ns2/check_native_gpfifo_command_spans_host.py
           python3 -B tools/ns2/check_native_gpu_fetch_admission_host.py
           python3 -B tools/ns2/check_native_gpu_contiguous_range_cache_host.py
+          python3 -B tools/ns2/check_shared_gpu_dirty_gather_host.py
           python3 -B tools/ns2/check_native_dma_unbound_subchannel_host.py
           python3 -B tools/ns2/check_native_gpu_fence_policy_host.py
           python3 -B tools/ns2/check_native_puller_semaphore_shutdown_host.py

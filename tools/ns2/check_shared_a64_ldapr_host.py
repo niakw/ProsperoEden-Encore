@@ -63,7 +63,25 @@ int main() {
 
 
 def main():
-    compilers=list(dict.fromkeys(c for c in (shutil.which('clang++'),shutil.which('g++')) if c))
+    # On macOS `/usr/bin/g++` is another Apple Clang driver, NOT GCC.
+    # Avoid recompiling identical compiler/target combinations: this host
+    # witness is a Dynarmic source/decoder proof, not four distinct compilers.
+    candidates=list(dict.fromkeys(c for c in (shutil.which('clang++'),shutil.which('g++')) if c))
+    compilers=[]
+    signatures=set()
+    for candidate in candidates:
+        info=subprocess.run([candidate, '--version'], capture_output=True,
+                            text=True, timeout=10)
+        assert info.returncode==0
+        version=info.stdout.splitlines()[0]
+        # Apple-clang executable frontends are aliases regardless of basename.
+        signature=version
+        if signature in signatures:
+            print('P0_2_A64_LDAPR_DUPLICATE_HOST_COMPILER_SKIPPED',
+                  Path(candidate).name,signature,flush=True)
+            continue
+        signatures.add(signature)
+        compilers.append(candidate)
     assert compilers
     env=os.environ.copy()
     sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')

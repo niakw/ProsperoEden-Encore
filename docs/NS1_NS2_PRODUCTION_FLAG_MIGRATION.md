@@ -143,9 +143,11 @@ opcodes ARM64 restants.
 
 Preuves hôte : les 4 sorties générées sont diffées avec leur vrai propriétaire
 épinglé (modifications uniquement LDAPR), changement d'ancre refusé,
-`a64_translate.cpp` complet syntax-checké par Clang et GCC, vrai décodeur
-Dynarmic exécuté pour toutes les tailles (Clang/GCC, UBSan O0/O2 **4/4 PASS**),
-retour `RET` conservé, `RETA` non ajouté. Le build PS5 et la progression CPU
+`a64_translate.cpp` complet syntax-checké par Apple Clang, vrai décodeur
+Dynarmic exécuté pour toutes les tailles (**O0/O2**, UBSan, 2/2 PASS sur
+le Mac courant). `g++` système est un alias Apple Clang et n’est pas
+un deuxième compilateur indépendant. Le décodage `RET` est conservé et
+`RETA` n’est pas ajouté. Le build PS5 et la progression CPU
 invitée restent **P5** ; les 9 commutateurs de recherche restent OFF.
 
 ## Règles de migration

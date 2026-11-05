@@ -1393,9 +1393,9 @@ périmètre additionnel n’est pas interprété comme un résultat console.
 au lieu d’activer l’overlay A64 recherche entier, le profil PS5 final
 génère quatre sources Dynarmic à partir du propriétaire commun épinglé
 et n’y ajoute **que LDAPR** (RCpc acquire → LDAR acquire plus fort).
-Le vrai `a64_translate.cpp` passe la compilation syntaxique Clang/GCC ;
-le vrai décodeur exécute les quatre variantes dans Clang/GCC UBSan
-O0/O2 **4/4 PASS**, et les sources d’origine ne sont pas modifiées.
+Le vrai `a64_translate.cpp` passe la compilation syntaxique
+Apple Clang ; le vrai décodeur exécute les quatre variantes avec UBSan
+O0/O2 **2/2 PASS** (le `g++` macOS est le même compilateur, pas GCC). Les sources d’origine ne sont pas modifiées.
 `RETAA/RETAB` sans PAC, CAS/LSE et CPU6 restent hors du profil final,
 sans contourner les neuf commutateurs de recherche OFF. Ce progrès
 ne clôt ni P0.2 global, ni P1.1, ni les essais console P5.

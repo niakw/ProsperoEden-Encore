@@ -43,8 +43,11 @@ void* operator new(std::size_t bytes) {
     if (void* ptr = std::malloc(bytes)) return ptr;
     throw std::bad_alloc{};
 }
-void operator delete(void* pointer) noexcept { std::free(pointer); }
-void operator delete(void* pointer,std::size_t) noexcept { std::free(pointer); }
+// Keep the test allocator/deallocator as a real ABI boundary. GCC 13 at
+// -O2 would otherwise inline free() into a new/delete expression and emit
+// a spurious -Wmismatched-new-delete under -Werror.
+[[gnu::noinline]] void operator delete(void* pointer) noexcept { std::free(pointer); }
+[[gnu::noinline]] void operator delete(void* pointer,std::size_t) noexcept { std::free(pointer); }
 u64 GetInteger(u64 value) { return value; }
 struct DenseRegion {
     u64 address{}, size{}, alias{};

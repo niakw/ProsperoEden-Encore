@@ -8,6 +8,7 @@ the selected SVC dispatcher. Does not simulate scheduling, PS5 or game boot.
 from pathlib import Path
 import difflib
 import os
+import platform
 import shutil
 import subprocess
 import tempfile
@@ -95,9 +96,12 @@ message(STATUS "WAIT64_SOURCES=${actual}")
 message(STATUS "WAIT64_INCLUDES=${exposed}")
 '''
         (project/'CMakeLists.txt').write_text(probe)
+        sdk_arg = (['-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk']
+                   if platform.system() == 'Darwin' and
+                   Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk').is_dir()
+                   else [])
         result = subprocess.run(['cmake','-S',str(project),'-B',str(project/'build'),
-                                 '-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk'],
-                                capture_output=True,text=True,timeout=40)
+                                 *sdk_arg], capture_output=True,text=True,timeout=40)
         assert result.returncode==0,result.stderr[-4000:]
         assert ('WAIT64_SELECTED=ON' if selected else 'WAIT64_SELECTED=OFF') in result.stdout
         chosen = str(KERNEL/'k_address_arbiter.cpp')

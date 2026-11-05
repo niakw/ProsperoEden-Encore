@@ -240,12 +240,36 @@ assert "python3 -B tools/ns2/check_native_qmd_atomic_span_host.py" in (
 print("ENCORE_POST_F07_NATIVE_ATOMIC_SPAN_OWNER_PASS",
       f"owners={len(post_f07_native_atomic_owners)}")
 
+# P1.3: five new shared kernel arbiter owners are release-selected only
+# with the reviewed dual-NPDM GPU-access SVC. Keep the frozen 337-file
+# source catalogue intact, with a separate verified post-F07 owner list.
+shared_ns2_wait64_owners = {
+    "ns2-runtime/kernel_wait64/core/hle/kernel/k_address_arbiter.cpp",
+    "ns2-runtime/kernel_wait64/core/hle/kernel/k_address_arbiter.h",
+    "ns2-runtime/kernel_wait64/core/hle/kernel/k_process.h",
+    "ns2-runtime/kernel_wait64/core/hle/kernel/svc.h",
+    "ns2-runtime/kernel_wait64/core/hle/kernel/svc/svc_address_arbiter.cpp",
+}
+assert shared_ns2_wait64_owners <= set(physical_all), sorted(
+    shared_ns2_wait64_owners - set(physical_all))
+assert not shared_ns2_wait64_owners.intersection(
+    set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+    shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
+    shared_compute_owners | native_typed_texture_owners |
+    shared_gpu_scalar_owners | shared_gpu_remap_owners |
+    post_f07_native_atomic_owners)
+assert 'if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)' in kernel_select
+assert 'set(EDEN_SHARED_NS2_WAIT64 ON)' in kernel_select
+assert 'set_property(TARGET core PROPERTY SOURCES "${eden_wait64_sources}")' in kernel_select
+assert (root/'tools/ns2/check_shared_kernel_wait64_host.py').is_file()
+print("ENCORE_SHARED_NS2_WAIT64_SOURCE_PASS", f"post_f07_owners={len(shared_ns2_wait64_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
-            post_f07_native_atomic_owners]
+            post_f07_native_atomic_owners | shared_ns2_wait64_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

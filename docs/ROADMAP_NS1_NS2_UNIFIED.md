@@ -1335,3 +1335,12 @@ conservent l’inventaire historique F07 immuable de **518/518**.
 Le `check_shared_kernel_wait64_host.py` contrôle cette bascule et
 l'alignement, les deux variantes 32/64 bits et les unités C++ réelles.
 P1.3 reste soumis à la validation du scheduler complet et de la console.
+
+
+**P4.1 — conservation des catalogues F07 (05/11) :** les cinq unités
+`kernel_wait64` sont enregistrées explicitement comme source/hôte
+post-F07 dans *les deux* validateurs de manifest, sans changer les
+contreparties immuables **518/518** (code optimisé audité) et
+**337** (catalogue physique historique). Les deux contrôles réels
+`check-eden-optimization-coverage.py` et
+`check-active-source-inventory.py` passent à nouveau.

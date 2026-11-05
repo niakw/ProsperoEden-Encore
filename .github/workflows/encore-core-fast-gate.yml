@@ -301,10 +301,10 @@ permissions:
   contents: read
 
 concurrency:
-  # Validate each actual source revision to completion. Rapid successive pushes
-  # must not cancel the only Clang/GCC proof for an older SHA.
-  group: encore-fast-core-${{ github.ref }}-${{ github.sha }}
-  cancel-in-progress: false
+  # Latest-source host verification only. Obsolete SHA suites must not
+  # consume runners while a newer source tree is being qualified.
+  group: encore-fast-core-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
 
 jobs:
   native-core-host-smoke:

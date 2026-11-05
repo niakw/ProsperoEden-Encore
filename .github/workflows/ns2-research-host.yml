@@ -19,9 +19,10 @@ permissions:
   contents: read
 
 concurrency:
-  # Native ABI guards need a conclusive result for every submitted SHA.
-  group: ns2-research-${{ github.ref }}-${{ github.sha }}
-  cancel-in-progress: false
+  # Research host checks supersede obsolete SHA work; the latest reviewed
+  # vendor gitlink remains the sole release admission candidate.
+  group: ns2-research-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
 
 jobs:
   dynarmic-a64-syntax:

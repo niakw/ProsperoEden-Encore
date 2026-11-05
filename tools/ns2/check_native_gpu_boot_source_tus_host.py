@@ -9,7 +9,12 @@ import os, subprocess, shutil, sys
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
 inc=['vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
 inc=[r/i for i in inc]+list((deps/'boost/boost-1.90.0/libs').glob('*/include'))
-flags=[shutil.which('clang++') or shutil.which('g++'),'-std=c++20',
+# The PS5 native NVDRV/AM owners instantiate a large C++20 template graph.
+# Ubuntu's Clang 18 frontend has repeatedly crashed while parsing it, even
+# when compiled serially. Keep the full six-owner syntax proof on Linux
+# using GCC; Clang still checks the other smaller host/native fixtures.
+compiler=(shutil.which('g++') if sys.platform=='linux' else None) or shutil.which('clang++') or shutil.which('g++')
+flags=[compiler,'-std=c++20',
        '-fsyntax-only','-Wno-unused-parameter','-DFMT_HEADER_ONLY']
 if sys.platform=='darwin' and sdk26.is_dir():
     flags+=['-target','arm64-apple-macos15','-nostdinc++',

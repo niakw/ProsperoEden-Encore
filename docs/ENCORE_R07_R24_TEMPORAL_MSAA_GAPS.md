@@ -24,7 +24,7 @@ ressources manquantes, identité ou provenance estimée,
 mélange de frames, conventions profondeur/motion inconnues,
 jitter et timing invalides, HUD non séparé, work GPU non terminé,
 historique discontinu et changement de scène.
-Le nouveau vendor f3722585 contient maintenant un **vrai moteur
+Le vendor maintenant épinglé sur `a4c6c8c` contient un **vrai moteur
 AMD FSR 3.1.4 multi-passes Vulkan**, adapté depuis Lichii,
 avec la copie source du SDK AMD v1.1.4 sous licence MIT.
 Les **11 passes GPU** produisent toutes du SPIR-V 1.3 valide ;
@@ -32,6 +32,11 @@ le port C++ du scheduler et ses descripteurs SAMPLED_IMAGE /
 SAMPLER séparés passent la compilation syntaxique hôte.
 Le CMake PS5 ajoute ces unités au video_core sans build
 conditionnel expérimental.
+
+Le pont natif refuse désormais les formats d'entrée non reconnus et
+vérifie un budget mémoire FSR 3.1 nominal avant allocation (contrôle
+conservateur, sans preuve de capacité PS5). Il vide les deux jeux
+ping-pong d'historique lors d'une réinitialisation temporelle.
 
 Le pont natif exige couleur, profondeur reversed-Z, mouvement
 en pixels, vrai jitter, vraie projection du jeu, frames cohérentes,
@@ -112,11 +117,23 @@ le budget mémoire, les alias/lectures invitées ainsi que
 l'existence d'un attachement multisample hôte dédié et des
 resolves couleur/profondeur vers le vrai framebuffer invité.
 
-Le garde-fou répond encore ShadowRendererNotImplemented :
-les surfaces temporaires et leurs resolves restent à coder.
-Il serait dangereux de modifier directement le champ samples
-des textures invitées. Aucun mode forcé n'est donc présenté
-comme effectif dans l'interface.
+Le garde-fou reste conservateur : `ShadowRendererNotImplemented`
+reste le résultat tant que le moteur de rendu complet n'est pas
+raccordé. Le vendor `a4c6c8c` apporte un **premier composant natif
+Vulkan couleur** : une image multisample temporaire, une image view,
+un framebuffer avec render pass et resolve couleur vers la surface
+1× originale, sous conditions strictes (un seul attachement couleur,
+clear intégral, aucune profondeur, aucun aliasing/lecture incompatible,
+formats et budgets contrôlés). Le composant invalide son framebuffer
+si l'image **ou la vue** invitée change.
+
+**Ce composant n'est pas appelé par le chemin des draws invités** : la
+sélection du pipeline rasterisationSamples, les clears, l'ordre des
+barrières/lifetimes et les attachments depth/stencil ne sont pas
+raccordés ni validés sur console. Il n'existe donc toujours aucun
+MSAA forcé utilisable par l'utilisateur. Il serait dangereux de
+modifier directement le champ samples des textures invitées ;
+aucun mode forcé n'est présenté comme effectif dans l'interface.
 
 Le MSAA augmente les échantillons **pendant la rasterisation** ;
 aucun filtre FXAA/SMAA, même exécuté 2/4/8 fois, n'est du MSAA.
@@ -138,9 +155,12 @@ restent les solutions vérifiées en source. Le SSAA accessible via
 la résolution interne 1,25× / 1,5× / 2× est une autre technique ;
 2× en largeur/hauteur coûte 4× les pixels, sans devenir du MSAA.
 
-**Prochaine réalisation vérifiable** : inventaire des MSAA sample counts
-par format Vulkan, des cibles NS1/NS2 et de leurs resolves, puis test
-isolé sur une scène dont le résultat guest reste correct. Ne pas
+**Prochaine réalisation vérifiable** : relier la préparation de l'image
+couleur multisample au pipeline guest, avec un pipeline Vulkan du même
+sample count et l'enregistrement réel d'un render pass complet ; ajouter
+ensuite les attachements profondeur/stencil et les formats/draws pris en
+charge. Auditer les cibles NS1/NS2, les transitions et le budget,
+puis tester une scène dont le résultat guest reste identique. Ne pas
 exposer un menu de ratios avant l'existence de ces surfaces.
 
 ## Décision et acceptation

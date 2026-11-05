@@ -16,6 +16,23 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### Complément 05/11 — CBUF réel, longueur et ordre des slots NVN
+
+L'audit du propriétaire NativeQmdAtomicStorageIRAdmissible
+a confirmé qu'un masque de banque CBUF et un bit
+nvn_buffer_used peuvent exister sans le record
+effectivement lu par l'émetteur. Le garde vérifie
+désormais la présence d'un ConstantBufferDescriptor
+couvrant l'index, la longueur de réflexion jusqu'à la
+fin du descripteur de 16 octets et l'identité
+storage.cbuf_offset = nvn_buffer_base + slot*16.
+Cela prévient un SSBO déplacé ou un slot atomique
+réordonné qui écrirait dans la mauvaise mémoire invitée.
+Seul le bridge NS2 est modifié. Tests du véritable IR
+avec deux slots valides puis inversés, masques sans
+descripteur et tailles absentes. Ce correctif ne prouve
+pas le mappage GPU physique en cours de dispatch.
+
 ### P2.3 — provenance réelle des pointeurs atomiques SSBO, 04/11
 
 Le backend SPIR-V partagé laisse les GlobalAtomic sans origine

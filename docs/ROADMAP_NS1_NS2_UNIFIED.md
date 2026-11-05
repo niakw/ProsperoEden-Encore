@@ -244,6 +244,28 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — correspondance stricte SSBO ↔ descripteur CBUF/NVN
+(05/11, source/hôte) :** un masque CBUF actif ne suffit pas à
+authentifier la provenance d'une écriture atomique. Le garde
+du vrai bridge Compute exige maintenant également un
+descripteur CBUF qui **couvre réellement** la banque
+matérielle, une taille réfléchie suffisante pour le
+record NVN de 16 octets, et la correspondance exacte
+entre l'indice SSBO aplati et l'enregistrement
+NVN base + 16 × slot. Une métadonnée décalée,
+un slot inversé ou un descripteur absent conduisent à
+un **refus**, jamais à un atomique dans un autre buffer.
+
+Témoin source-exécuté avec le vrai IR du compilateur :
+cas positifs et négatifs, banques sans descripteur,
+tailles absentes, base NVN incorrecte, deux slots
+corrects puis inversés, Clang/GCC. Le chemin Maxwell
+NS1 n'est pas modifié. Le test hôte vérifie la
+provenance statique mais ne démontre **pas** la
+résidence GPU de l'adresse atomique dynamique,
+ni le premier rendu NS2 sur PS5 : P2.3/P5
+restent ouverts.
+
 **P2.3 — admission des atomiques Compute sous véritable SSBO
 (04/11, source/hôte) :** le compilateur NS2 Compute passe désormais
 le vrai IR post-traduction par une vérification *avant* l'émission

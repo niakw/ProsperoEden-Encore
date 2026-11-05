@@ -45,7 +45,9 @@ static void CheckNativeAtomic(
     bool writable = true, bool declared = true, bool used = true,
     bool aliases = true, bool int64_atomics = true,
     bool dynamic_binding = false, u32 cbuf_offset = 0x310,
-    u32 atomic_offset = 0, bool int64 = true) {
+    u32 atomic_offset = 0, bool int64 = true,
+    bool declared_record = true, bool sized_record = true,
+    u32 nvn_base = 0x310, u32 reflected_size = 0x10000) {
     Shader::ObjectPool<Shader::IR::Inst> pool{16};
     Shader::IR::Block block{pool};
     Shader::IR::Program program{};
@@ -53,8 +55,12 @@ static void CheckNativeAtomic(
     program.blocks.push_back(&block);
     if (declared) {
         program.info.constant_buffer_mask = 1;
-        program.info.constant_buffer_descriptors.push_back({0, 1});
+        if (declared_record)
+            program.info.constant_buffer_descriptors.push_back({0, 1});
+        if (sized_record)
+            program.info.constant_buffer_used_sizes[0] = reflected_size;
     }
+    program.info.nvn_buffer_base = nvn_base;
     program.info.storage_buffers_descriptors.push_back(
         {.cbuf_index = 0, .cbuf_offset = cbuf_offset,
          .count = 1, .is_written = writable});
@@ -84,6 +90,33 @@ static void CheckNativeAtomic(
             static_cast<unsigned>(opcode), expected, actual);
         std::abort();
     }
+}
+// Real flattened NVN descriptors may contain several SSBOs. The
+// reflected slot 1 must refer to NVN base+16, not be accepted merely
+// because both CBUF records happen to be writable and in bounds.
+static void CheckNativeAtomicSlotOrder(bool swapped, bool accepted) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{16};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage = Shader::Stage::Compute;
+    program.blocks.push_back(&block);
+    program.info.constant_buffer_mask = 1;
+    program.info.constant_buffer_descriptors.push_back({0,1});
+    program.info.constant_buffer_used_sizes[0] = 0x330;
+    program.info.nvn_buffer_base = 0x310;
+    program.info.nvn_buffer_used.set(0);
+    program.info.nvn_buffer_used.set(1);
+    program.info.storage_buffers_descriptors.push_back({
+        .cbuf_index = 0, .cbuf_offset = swapped ? 0x320U : 0x310U,
+        .count = 1, .is_written = true});
+    program.info.storage_buffers_descriptors.push_back({
+        .cbuf_index = 0, .cbuf_offset = swapped ? 0x310U : 0x320U,
+        .count = 1, .is_written = true});
+    block.AppendNewInst(Opcode::StorageAtomicIAdd32,
+        {Value{u32{1}}, Value{u32{0}}, Value{u32{7}}});
+    const bool actual = Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
+        program, Shader::Profile{});
+    assert(actual == accepted);
 }
 int main() {
     // P2.3: actual native global memory OpAccessChain must never start
@@ -214,7 +247,26 @@ int main() {
     // The shared SPIR-V emitter fails on unresolved GlobalAtomic, and
     // silently substitutes non-atomic loads/stores for U32x2 or unsupported
     // U64 atomics. Only reflected, writable native storage slots are safe.
+    CheckNativeAtomicSlotOrder(false, true);
+    CheckNativeAtomicSlotOrder(true, false);
     CheckNativeAtomic(Opcode::StorageAtomicIAdd32,true);
+    // The old guard trusted only the CBUF mask bit. These negative
+    // inputs look allocated, but lack the actual CBUF descriptor or
+    // the reflected 16-byte NVN record. No atomic must reach SPIR-V.
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,
+                      true,false,0x310,0,true,false,true);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,
+                      true,false,0x310,0,true,true,false);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,
+                      true,false,0x310,0,true,true,true,0x320);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,true,true,true,true,true,
+                      true,false,0x310,0,true,true,true,0x310,0x320);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,
+                      true,false,0x310,0,true,true,true,0x310,0x31f);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,
+                      true,false,0x318,0,true,true,true,0x318);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32,false,true,true,true,true,
+                      true,false,0x320,0,true,true,true,0x310);
     CheckNativeAtomic(Opcode::StorageAtomicExchange32,true);
     CheckNativeAtomic(Opcode::StorageAtomicIAdd64,true);
     CheckNativeAtomic(Opcode::StorageAtomicExchange64,true);

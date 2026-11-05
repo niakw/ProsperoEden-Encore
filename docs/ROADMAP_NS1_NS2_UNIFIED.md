@@ -1,6 +1,6 @@
 # Eden Encore — roadmap suivable pour un moteur PS5 commun NS1 / NS2
 
-**Mise à jour : 2026-11-04 · branche unique : `main`**
+**Mise à jour : 2026-11-05 · branche unique : `main`**
 
 > **Suivi vivant à cases cochables : [GitHub Issue #15 — ROADMAP](https://github.com/niakw/ProsperoEden-Encore/issues/15)**
 > **Audit technique et preuves de boot : [GitHub Issue #14](https://github.com/niakw/ProsperoEden-Encore/issues/14)**
@@ -15,15 +15,23 @@ Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache
 
 ## Audit d’intégration du 5 novembre 2026 — P0 → P1 → P2 → P4
 
-**Production / branches :** `main e44c965` garde NUP activé en permanence.
-Le lot de sources unifiées est sur la branche
-`integration/unified-native-runtime-20261105` avec son vendor épinglé :
-CMake PS5 sans choix release/DEV/expérimental, NPDM/ExeFS, six cœurs, NVDRV
-4 KiB, GPU session, VI2, Ampere et Vulkan Compute dans **un même graphe**.
-Ce travail n’est **pas fusionné sur `main`** tant que le couple exact n’a
-pas passé la qualification de source et l’absence de régression.
+**Production / branches — actualisation du 5 novembre :** la
+[PR #22](https://github.com/niakw/ProsperoEden-Encore/pull/22)
+est **fusionnée sur `main`** par le commit `9a030641`.
+Le moteur PS5 natif unique contient désormais les propriétaires NS1/NS2
+NPDM/ExeFS, CPU/JIT, NVDRV, GPU session/VI2, Ampere et Vulkan/SPIR-V,
+sans sélecteur de produit DEV, expérimental ou « release ».
+NUP demeure inclus. Couple revu : `main a347fad7` /
+vendor épinglé `ecb4d987`. Ce couple est **intégré, pas encore
+qualifié dans toutes les CI** : Core fast gate réussi sur `b3455d6`,
+tests historiques CodeQL, diagnostic de version, A64 et propriétaires
+ExeFS remis en conformité dans les commits suivants ; Source preflight
+et NS2 research host guards du dernier SHA restent à confirmer.
+La preview launcher du merge `9a030641` a échoué sur une différence
+de pixels nulle entre focus et zoom. Aucun framebuffer GPU invité ou
+résultat console n’est démontré : **P0–P4 non clôturés globalement**.
 
-- **P0.2 — raccordement source réalisé sur branche, pas encore clôture du
+- **P0.2 — raccordement source fusionné sur `main`, pas encore clôture du
   jalon dans l’issue #15 :** inventaires 337 sources vendored historiques,
   193 sources `headless` et 518 éléments de revue F07 réconciliés. Quatre
   unités NPDM/ExeFS ont été déplacées sans modification de contenu ; la

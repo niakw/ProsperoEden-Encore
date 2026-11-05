@@ -756,6 +756,31 @@ La compilation du vrai `TickFrame()` extrait et les tests Clang/GCC avec
 ASan/UBSan passent. Les performances et le comportement matériel PS5
 restent P5 ; aucun mode expérimental ne commande cette politique.
 
+**P0.2 — coeur Ampere intégré à la compilation du produit
+commun (05/11, source/hôte) :** sélection automatique du
+frontend natif lors d'un profil PS5 final avec NPDM
+commun et Vulkan, sans activer les neuf options
+EXPERIMENTAL. Les huit vraies unités de compilation
+Ampere (capture GMMU, code 128 bits, lowering Maxwell,
+environnement, pont IR et cache) sont indépendantes
+de l'overlay de cache NS2. Cette séparation est
+essentielle : le header de cache recherché modifie
+à la fois 16→32 emplacements SSBO et les signatures
+de fonctions C++ ; il ne doit jamais entrer dans
+la construction NS1 sans propriétaire d'implémentation
+complet et preuve ABI. Seul le header IR corrigeant
+Generic31Y/Z/W est sélectionné depuis l'overlay,
+sans changer les layouts des buffers.
+
+**Preuves :** sélecteur CMake réel exécuté sur cinq
+combinaisons (release/desktop/NPDM/Vulkan), syntaxe
+Clang C++20 des huit unités de traduction sous
+en-têtes Eden épinglés, contrôles source/production.
+Aucune exécution GPU, aucun build PS5 et aucune
+promotion de GPU session/GPFIFO/SPIR-V ne sont
+revendiqués : ces dépendances P0.2 restent ouvertes
+et la première image NS2 reste P5.
+
 **P0.2 — décision sur les modes de recherche (04/11) :**
 L'ancien Graphics Scale AM command 60 renvoyait une valeur de résolution
 prototype sans source d'état écran et sans événement 1050. Il était

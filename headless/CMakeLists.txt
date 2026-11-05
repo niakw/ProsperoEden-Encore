@@ -2617,26 +2617,46 @@ if(EDEN_NS2_GRAPHICS_SUPERVISOR_EXPERIMENTAL)
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
 endif()
 
-# Isolated Ampere SM70+ ISA decode and reviewed native-to-Maxwell lowering.
-# This compiles the real
-# 128-bit decoder into shader_recompiler only for a deliberately selected NS2
-# research build. No shader translation or renderer enablement is implied.
+# P0.2: Compile the same native Ampere-to-Maxwell frontend in the ONE
+# qualified native release source graph. Shader execution is still routed
+# exclusively by the separate GPU session/renderer owner: compiling these
+# units does not make a Switch 1 shader enter the Ampere translator.
+# Keep the opt-in research variant for separate runtime and GMMU experiments.
 option(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL
     "Research only: bounded Ampere 128-bit ISA probe and reviewed Maxwell lowering" OFF)
-if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
+set(EDEN_SHARED_NS2_AMPERE_CORE OFF)
+if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND
+   EDEN_REVIEWED_DUAL_NPDM AND EDEN_PS5_VULKAN)
+    set(EDEN_SHARED_NS2_AMPERE_CORE ON)
+endif()
+if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR EDEN_SHARED_NS2_AMPERE_CORE)
     if(NOT EDEN_REVIEWED_DUAL_NPDM)
         message(FATAL_ERROR "NS2 Ampere ISA probe requires reviewed native NPDM")
     endif()
-    # Never modify or intercept Eden's pinned upstream source tree.
-    # NS2 shader varyings and storage slots are research-only header owners.
+    # The research overlay replaces BufferCache C++ signatures, changes
+    # NUM_STORAGE_BUFFERS (16 -> 32), and is NOT ABI-safe as a header-only
+    # release override. Never select it in the shared shipping profile.
     set(EDEN_NS2_SHADER_RESOURCE_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/shader_resource/include")
     if(NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/shader_recompiler/frontend/ir/attribute.h" OR
        NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/video_core/buffer_cache/buffer_cache_base.h")
         message(FATAL_ERROR "Missing NS2 opt-in shader/texture resource headers")
     endif()
-    target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_SHADER_RESOURCE_ROOT}")
-    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_SHADER_RESOURCE_ROOT}")
+    if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL)
+        target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_SHADER_RESOURCE_ROOT}")
+        target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_SHADER_RESOURCE_ROOT}")
+    else()
+        # The generic31 Y/Z/W classifier is a pure, shared IR fix. Copy
+        # only this reviewed header into the common build include tree;
+        # do not silently replace the BufferCache layout or methods.
+        file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/include/shader_recompiler/frontend/ir")
+        configure_file(
+            "${EDEN_NS2_SHADER_RESOURCE_ROOT}/shader_recompiler/frontend/ir/attribute.h"
+            "${PORT_BUILD_DIR}/include/shader_recompiler/frontend/ir/attribute.h" COPYONLY)
+        target_include_directories(shader_recompiler BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+        target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+        target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+    endif()
     set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere")
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")

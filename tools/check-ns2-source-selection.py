@@ -73,6 +73,26 @@ def main() -> int:
                 'target_compile_definitions(video_core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)' in CMAKE and
                 'target_compile_definitions(core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)' in CMAKE,
                 "Native QMD3 RasterizerInterface selector or public ABI guard missing")
+        # P0.2 compile-only promotion: PS5 release links the maintained
+        # Ampere decoder/translator but must NEVER select the NS2 research
+        # BufferCache header with incompatible method signatures.
+        shared_ampere = CMAKE.split(
+            "# P0.2: Compile the same native Ampere-to-Maxwell frontend",1
+        )[1].split("# N3m: compile a renderer-callable",1)[0]
+        require(
+            "set(EDEN_SHARED_NS2_AMPERE_CORE OFF)" in shared_ampere and
+            "if(PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND" in shared_ampere and
+            "EDEN_REVIEWED_DUAL_NPDM AND EDEN_PS5_VULKAN)" in shared_ampere and
+            "if(EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR EDEN_SHARED_NS2_AMPERE_CORE)"
+                in shared_ampere and
+            "target_sources(shader_recompiler PRIVATE" in shared_ampere and
+            "target_sources(video_core PRIVATE" in shared_ampere and
+            "target_include_directories(core BEFORE PRIVATE" in shared_ampere and
+            "check_shared_ampere_source_host.py" in (
+                ROOT / ".github/workflows/encore-core-preflight.yml"
+            ).read_text(),
+            "P0.2 shared Ampere owner must be compile-only in release and host-tested"
+        )
         # Experimental engine code may have only one maintained vendor owner.
         require((ROOT / "vendor/encore-active/ns2-helpers/include/npdm_layout.h").is_file(),
                 "The NPDM parser must use the maintained vendor ACID helper")

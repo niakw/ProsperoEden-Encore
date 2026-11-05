@@ -28,6 +28,35 @@ sur Vulkan ; elles ne sont **pas** appelées automatiquement pendant le rendu
 et ne doivent pas être présentées comme un support GPU opérationnel.
 Ces neuf options sont nécessaires **à la recherche**, pas aux livrables NS1.
 
+**P0.2 — promotion partielle du coeur ISA Ampere (05/11) :**
+le profil PS5 final avec NPDM commun et Vulkan compile désormais les
+huit vraies unités de capture/traduction Ampere (frontend, GMMU,
+Maxwell lowering, cache de traduction, environnement et pont IR)
+**sans activer la session GPU NS2 ni le pont de rendu**.
+Le mode recherche explicite continue d'utiliser la même sélection
+source, et ses neuf options restent toutes OFF par défaut.
+
+La migration sépare surtout les deux variantes de l'overlay
+shader_resource : le classificateur IR Generic31Y/Z/W est un
+correctif générique sans changement de layout, copié dans
+l'arbre d'en-têtes commun ; en revanche l'en-tête
+buffer_cache_base.h de recherche change NUM_STORAGE_BUFFERS
+de 16 à 32 **et** des signatures C++ de méthodes. Ce dernier
+n'est **pas** sélectionné dans le profil commun, faute de
+migration de son implémentation et preuve d'ABI NS1.
+Le garde hôte exécute le vrai sélecteur CMake dans cinq profils,
+compile les huit unités de traduction avec les en-têtes Eden
+d'origine et vérifie l'absence d'injection du cache expérimental.
+
+Ce jalon rend le coeur Ampere **compilable** depuis le produit
+commun, mais ne revendique ni son activation au dispatch,
+ni la prise en charge des 32 SSBO par le cache commun,
+ni les premières images PS5. Le sélecteur
+EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL reste utile pour
+tester le chemin complet de recherche et ne peut pas être
+supprimé avant la migration du GPU. Le blocage P0.2
+GPU/session/CPU6 et la validation P5 restent ouverts.
+
 **Une option et quatre sources supprimées :** l'ancien proxy AM Graphics
 Scale rendait une réponse synthétique échelle 10, ratio 1/1, sans état
 écran réel ni événement. Le supprimer, ainsi que sa sélection native et
@@ -36,7 +65,9 @@ proxy Eden original et la commande 320 partagée restent seuls sélectionnés.
 Le contrôle source vérifie désormais que tout opt-in conservé possède un
 propriétaire d'implémentation réel et n'est pas un interrupteur mort.
 
-**État du 04/11 :** 22 commutateurs initiaux recensés ; **9 restent OFF par défaut ; un prototype inutile a été supprimé et deux options sparse fusionnées** ; **N1 (NPDM 2048/3072), N3b (AM320), N49 (vues), N50 (continuité), N51 (notifications PTE), N52 (HOS), N54 (scratch CPU), N56 (cache Vulkan), N57 (décodage ASTC), N60 (cache/layers ASTC) et N76 (horloge NPDM) sont promus sans flag de recherche**. Aucun des 9 autres n'est promu. Certains comportements ont déjà des propriétaires partagés `EDEN_SHARED_NS2_*` — cela ne suffit pas à certifier les chemins verrouillés ici.
+**État du 04/11 :** 22 commutateurs initiaux recensés ; **9 restent OFF par défaut ; un prototype inutile a été supprimé et deux options sparse fusionnées** ; **N1 (NPDM 2048/3072), N3b (AM320), N49 (vues), N50 (continuité), N51 (notifications PTE), N52 (HOS), N54 (scratch CPU), N56 (cache Vulkan), N57 (décodage ASTC), N60 (cache/layers ASTC) et N76 (horloge NPDM) sont promus sans flag de recherche**. Le coeur compilable d'Ampere est désormais promu en source,
+mais aucun des 9 chemins de recherche complets n'est activé
+en production. Certains comportements ont déjà des propriétaires partagés `EDEN_SHARED_NS2_*` — cela ne suffit pas à certifier les chemins verrouillés ici.
 
 ## Règles de migration
 

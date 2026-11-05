@@ -774,6 +774,45 @@ Ce dispositif réduit les reprises redondantes ;
 il ne constitue **pas** la matrice P0–P4
 exhaustive ni une preuve d'une frame PS5.
 
+**P0.2b — compilation partagée du shader SPIR-V NS2
+(05/11, source/hôte) :** les propriétaires du
+compilateur GPU Ampere déjà existants sont
+désormais inclus dans le graphe source
+du profil PS5 final : frontend Ampere
+(progression précédente), bridge SPIR-V
+graphics/Compute QMD3, et les deux TUs
+d'émission SPIR-V CBUF/globale avec les
+contrôles natifs. CMake remplace exactement
+les deux sources SPIR-V épinglées,
+sans compiler deux symboles concurrents.
+La configuration desktop garde les TUs
+Maxwell d'origine.
+
+**Protection NS1 :** pour une émission
+Maxwell sans NativeSpirvCbufBoundsScope,
+le bloc complet du sélecteur indirect à
+14 banques est strictement identique
+à celui du vendor Eden épinglé, et
+indépendant de la présence ou non de
+banques dans un masque partiel. La voie
+NS2 utilise le scope thread-local
+uniquement quand le caller réel du
+bridge l'établit ; elle conserve les
+refus des CBUF et accès GPU non prouvés.
+
+**Preuves :** deux configurations CMake
+réelles de graphes de cibles factices
+release/native et desktop (aucun build
+PS5), quatre vraies unités C++20
+Clang syntax-only, contrat d'identité
+du CBUF Maxwell d'origine, tests CBUF
+native et garde-fous source.
+**Ne signifie pas GPU rendu actif :**
+GPFIFO/NVDRV 4 KiB, GPU Session, dispatch
+Vulkan et scène invitée attendent le
+raccordement et la qualification P5.
+P0.2/P2.3 globaux restent ouverts.
+
 **P0.2/P2.3 — 32 SSBO Compute NS2 sans modifier
 l'ABI du cache NS1 (05/11, vrai propriétaire source/hôte) :**
 le chemin Compute natif possède déjà un plan
@@ -825,9 +864,10 @@ sans changer les layouts des buffers.
 combinaisons (release/desktop/NPDM/Vulkan), syntaxe
 Clang C++20 des huit unités de traduction sous
 en-têtes Eden épinglés, contrôles source/production.
-Aucune exécution GPU, aucun build PS5 et aucune
-promotion de GPU session/GPFIFO/SPIR-V ne sont
-revendiqués : ces dépendances P0.2 restent ouvertes
+Ce lot Ampere n'activait aucun GPU. Le compilateur
+SPIR-V est ensuite promu séparément en P0.2b,
+mais la GPU session, GPFIFO, NVDRV et le dispatch
+restent des dépendances ouvertes
 et la première image NS2 reste P5.
 
 **P0.2 — décision sur les modes de recherche (04/11) :**

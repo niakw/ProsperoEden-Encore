@@ -371,6 +371,7 @@ jobs:
           python3 -B tools/check-ps5-f07-reinterpret-stencil-regions-host.py
           python3 -B tools/check-ps5-vulkan-texture-tu-syntax-host.py
           python3 -B tools/ns2/check_shared_ampere_source_host.py
+          python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py
           python3 -B tools/check-ps5-compute-shader-handoff-host.py
           python3 -B tools/check-ps5-f07-compute-translation-priority-host.py
           python3 -B tools/check-ps5-f07-gc-projected-eviction-host.py

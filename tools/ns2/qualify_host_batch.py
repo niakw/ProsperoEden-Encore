@@ -21,6 +21,7 @@ TESTS = {
     "release_profile": "tools/check-ns2-production-flags-host.py",
     "research_selector": "tools/ns2/check_native_research_selector.py",
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",
+    "shared_spirv_compiler": "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
     "atomic_qmd3": "tools/ns2/check_native_qmd_atomic_span_host.py",
     "cbuf_qmd3": "tools/ns2/check_native_qmd_direct_cbuf_host.py",
     "qmd32_real_staging": "tools/ns2/check_native_qmd_32_slots_host.py",

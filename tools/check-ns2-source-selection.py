@@ -93,6 +93,30 @@ def main() -> int:
             ).read_text(),
             "P0.2 shared Ampere owner must be compile-only in release and host-tested"
         )
+        # P0.2: promote native SPIR-V C++ compilation in the shared
+        # PS5 renderer graph without enabling its unqualified GPFIFO or
+        # altering RasterizerInterface for NS1. A real CMake configure-only
+        # source graph and byte-for-byte Maxwell CBUF emitter parity are
+        # checked independently in the pinned host witness.
+        shared_spirv = CMAKE.split(
+            "# P0.2: the native SPIR-V compiler and QMD3 bounds emitter", 1
+        )[1].split("# N50: shared native PS5 device-memory", 1)[0]
+        require(
+            "set(EDEN_SHARED_NS2_SPIRV_COMPILER OFF)" in shared_spirv and
+            "if(EDEN_SHARED_NS2_AMPERE_CORE)" in shared_spirv and
+            "if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR EDEN_SHARED_NS2_SPIRV_COMPILER)"
+                in shared_spirv and
+            shared_spirv.count(
+                "if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)") == 2 and
+            "target_sources(video_core PRIVATE" in shared_spirv and
+            "set_property(TARGET shader_recompiler PROPERTY SOURCES" in shared_spirv and
+            "target_include_directories(video_core BEFORE PRIVATE" in shared_spirv and
+            "check_shared_ns2_spirv_compiler_host.py" in (
+                ROOT / ".github/workflows/encore-core-preflight.yml"
+            ).read_text(),
+            "P0.2 NS2 SPIR-V compiler must select shared PS5 sources while"
+            " keeping native Vulkan dispatch research-only"
+        )
         # Experimental engine code may have only one maintained vendor owner.
         require((ROOT / "vendor/encore-active/ns2-helpers/include/npdm_layout.h").is_file(),
                 "The NPDM parser must use the maintained vendor ACID helper")

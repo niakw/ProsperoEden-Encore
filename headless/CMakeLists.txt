@@ -2724,13 +2724,25 @@ endif()
 # only a session-verified NS2 caller may invoke this isolated API.
 option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL
     "Research only: explicit NS2 VertexB to Vulkan SPIR-V compiler API" OFF)
-if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
-    if(NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
-       NOT EDEN_REVIEWED_DUAL_NPDM OR
-       NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_NVDRV_EXPERIMENTAL OR
-       NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
-        message(FATAL_ERROR
-            "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, dual NPDM and native PS5 Vulkan")
+# P0.2: the native SPIR-V compiler and QMD3 bounds emitter are complete
+# maintained C++ source owners. Compile them in the PS5 release library,
+# while keeping the actual Vulkan dispatch, GPU session and 4K NVDRV
+# research-only until the GPU-owner/process chain is qualified. The SPIR-V
+# overrides use a thread-local Ampere scope: Maxwell takes its original
+# indirect-bank switch, byte-for-byte (see the host source parity test).
+set(EDEN_SHARED_NS2_SPIRV_COMPILER OFF)
+if(EDEN_SHARED_NS2_AMPERE_CORE)
+    set(EDEN_SHARED_NS2_SPIRV_COMPILER ON)
+endif()
+if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR EDEN_SHARED_NS2_SPIRV_COMPILER)
+    if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
+        if(NOT EDEN_NS2_AMPERE_PROBE_EXPERIMENTAL OR
+           NOT EDEN_REVIEWED_DUAL_NPDM OR
+           NOT EDEN_NS2_GPU_SESSION_EXPERIMENTAL OR NOT EDEN_NS2_NVDRV_EXPERIMENTAL OR
+           NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+            message(FATAL_ERROR
+                "NS2 Vulkan shader bridge requires GPU session/NVDRV, Ampere, dual NPDM and native PS5 Vulkan")
+        endif()
     endif()
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
@@ -2776,6 +2788,10 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
     target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+    # Only the qualified NS2 research runtime may alter Vulkan rasterizer
+    # virtual methods. Release just compiles callable native shader helpers,
+    # never exposes the unqualified GPU session, puller or native driver.
+    if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     # Native Vulkan's RasterizerVulkan::DispatchNativeCompute overrides a
     # RasterizerInterface virtual method. The pinned build-source archive
     # otherwise provides the pre-NS2 interface, causing an 'override' error
@@ -2799,6 +2815,7 @@ if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
     # Do not give video_core a private, incompatible interpretation.
     target_compile_definitions(video_core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
     target_compile_definitions(core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)
+    endif()
 endif()
 
 # N50: shared native PS5 device-memory contiguous page-run safety.

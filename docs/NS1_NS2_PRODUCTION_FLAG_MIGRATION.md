@@ -28,6 +28,43 @@ sur Vulkan ; elles ne sont **pas** appelées automatiquement pendant le rendu
 et ne doivent pas être présentées comme un support GPU opérationnel.
 Ces neuf options sont nécessaires **à la recherche**, pas aux livrables NS1.
 
+**P0.2b — compilateur SPIR-V NS2 admis dans la source
+PS5 finale (05/11, sans activation GPU) :**
+le même profil PS5 final qui inclut le décodeur
+Ampere sélectionne désormais les quatre vrais
+propriétaires de compilation SPIR-V NS2 :
+deux unités natives de shader/Compute QMD3,
+plus deux remplacements complets de fonctions
+SPIR-V pour l'indirection CBUF et les bornes
+des accès mémoire. Les deux compilateurs
+desktop et PS5 restent dans un seul moteur.
+
+Le point de compatibilité critique est
+l'émission des CBUF indirects Maxwell. La
+branche sans NativeSpirvCbufBoundsScope
+reproduit maintenant mot pour mot le vrai
+sélecteur de 14 banques du propriétaire Eden
+épinglé, même si son masque de métadonnées
+est partiel. La branche NS2 n'est choisie
+que depuis un scope thread-local authentifié,
+avec les 8 banques QMD3 réelles et leurs
+limites, et sans injecter d'en-tête BufferCache
+modifiant l'ABI NS1.
+
+**Preuves :** configuration CMake réelle
+de deux projets hôte éphémères, source release
+(4 unités remplacées/sélectionnées, aucun
+macro GPU de recherche) et source desktop
+inchangée ; quatre compilations syntaxiques
+Clang C++20 de vrais TUs, parité du corps
+Maxwell original, gardes de source et
+régressions CBUF. Aucune compilation PS5
+ou liaison finale n'est prétendue.
+**L'exécution GPU native reste verrouillée**
+sur NVDRV 4 KiB, GPFIFO, GPU Session et
+RasterizerVulkan::DispatchNativeCompute.
+Les neuf options expérimentales restent OFF.
+
 **P0.2/P2.3 — clarification 32 SSBO Compute (05/11) :**
 le rendu Compute natif a déjà son propriétaire QMD3
 qui reflète et valide jusqu'à 32 enregistrements,

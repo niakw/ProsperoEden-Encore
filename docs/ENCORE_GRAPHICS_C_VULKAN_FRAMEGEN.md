@@ -10,7 +10,7 @@ Branche : `feat/encore-c-vulkan-framegen`. Ne pas fusionner `main` ni modifier l
 | 2 | FSR 3.1 Frame Generation | AMD FidelityFX SDK, code MIT ; nécessite flux temporal/motion/depth et swapchain Vulkan qualifiés | Contrat R06 seulement | Prouver depth/motion/jitter invités, HUD distinct, profil de latence ; comparer aux mêmes images |
 | 3 | LSFG / Lossless Scaling | Intégration amont ProsperoEden pouvant dépendre d'une DLL Windows non redistribuable | Non intégré à Encore ; aucune DLL embarquée | Confirmer droits de distribution et backend **natif PS5** ; sinon refuser cette option |
 
-Le sous-module MihawkGen, pas les fichiers de son `external/` en bloc, constitue la provenance. Avant diffusion de tout modèle, confirmer séparément code, poids et notices.
+Le sous-module MihawkGen, pas les fichiers de son `external/` en bloc, constitue la provenance. Avant diffusion de tout modèle, confirmer séparément code, poids et notices. Selon le README MihawkGen, le réseau fourni a été entraîné sur des clips privés, avec certaines cibles distillées de modèles publics sous licences permissives : l’attribution et les conditions des poids sont à vérifier avant packaging. La présence du fichier dans le sous-module ne constitue pas une autorisation de redistribution dans les Releases Encore.
 
 ## Premier garde-fou exécuté
 

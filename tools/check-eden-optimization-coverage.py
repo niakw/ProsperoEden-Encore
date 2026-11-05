@@ -244,6 +244,9 @@ assert "instruction->GetOpcode() != Shader::IR::Opcode::BitwiseAnd32" in native_
 assert "if (lhs.IsImmediate() == rhs.IsImmediate()) return std::nullopt;" in native_atomic_header
 assert "NativeQmdAtomicAlignedMask(" in native_atomic_header
 assert "addition->GetOpcode() != Shader::IR::Opcode::IAdd32" in native_atomic_header
+assert "Shader::IR::Opcode::ShiftLeftLogical32" in native_atomic_header
+assert "shift >= 32" in native_atomic_header
+assert "*mask > (std::numeric_limits<u32>::max() >> shift)" in native_atomic_header
 assert "*and_mask > std::numeric_limits<u32>::max() - width - base" in native_atomic_header
 assert "(storage.gpu_address & (span.width - 1U))" in native_atomic_header
 assert "storage.bytes > gpu_limit - storage.gpu_address" in native_atomic_header
@@ -252,6 +255,8 @@ atomic_fixture = (ROOT / "tools/ns2/test_native_qmd_atomic_span.cpp").read_text(
 assert "aligned_and_max_admitted=1" in atomic_fixture
 assert "aligned_base_plus_and=1" in atomic_fixture
 assert "atomic_gmmu_base_alignment=1" in atomic_fixture
+assert "shifted_mask_index=1" in atomic_fixture
+assert "shifted_mask_plus_base=1" in atomic_fixture
 assert "guest_va_49=1" in atomic_fixture
 assert '#include "shader_recompiler/frontend/ampere/native_atomic_span.h"' in (
     ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"

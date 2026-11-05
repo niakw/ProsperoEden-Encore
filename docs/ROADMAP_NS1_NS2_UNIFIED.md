@@ -423,6 +423,39 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — index atomique de tableau avec décalage gauche
+constant (05/11, source/hôte) :** les expressions
+d'index en éléments (registre AND masque) << shift
+sont désormais authentifiables quand l'IR contient
+exactement BitwiseAnd32 suivi de ShiftLeftLogical32
+avec un décalage **immédiat de 0 à 31**. Le compilateur
+prouve que le masque ne perd aucun bit sur 32 bits,
+que le résultat est aligné sur la largeur atomique
+(4 ou 8 octets) pour **toutes** les valeurs du registre,
+puis calcule sa borne supérieure exacte. Une base
+constante alignée peut suivre, avec le même contrôle
+de somme sans débordement que P2.3j.
+
+Cela couvre le cas générique de tableaux de
+32/64-bit indexés en unités d'élément, sans
+confondre offset invité et offset de stockage SPIR-V.
+La borne supérieure est vérifiée sur les **octets
+réels du SSBO QMD3**, avec adresse GPU de base alignée
+et span dans la plage GMMU de 49 bits. L'offset
+dynamique d'origine est toujours celui émis par
+l'IR du shader.
+
+Les décalages dynamiques, décalages >=32, masques
+qui perdraient des bits, sous-alignement,
+index SSBO inconnus et additions supplémentaires
+non bornées restent refusés. Témoin du vrai IR
+GetRegister → AND → ShiftLeftLogical32 → IAdd32
+→ StorageAtomic, Clang/GCC UBSan O0/O2,
+cas positifs/négatifs, tailles QMD3 insuffisantes,
+compilation des vrais propriétaires et garde-fous
+de sélection NS1/NS2. **Ce n'est pas une
+validation GPU ni la clôture intégrale de P2.3/P5.**
+
 **P2.3 — accès atomiques base + (index AND masque) et base
 GMMU alignée (05/11, source/hôte) :** nouvelle forme
 décodable depuis l'IR Compute réel :

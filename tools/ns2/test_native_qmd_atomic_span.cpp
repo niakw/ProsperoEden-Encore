@@ -64,7 +64,9 @@ static std::optional<std::vector<NativeAtomicSpan>>
 MakeMaskedIrSpans(Opcode op, u32 slot, u32 mask, bool swap_constant = false,
                   bool wrap_identity = false, bool add_after_mask = false,
                   u32 addend = 4, bool swap_addition = false,
-                  bool unbounded_second_addition = false) {
+                  bool unbounded_second_addition = false,
+                  bool shift_after_mask = false, u32 shift_by = 2,
+                  bool dynamic_shift = false) {
     Shader::ObjectPool<Shader::IR::Inst> pool{14};
     Shader::IR::Block block{pool};
     Shader::IR::Program ir{};
@@ -82,6 +84,11 @@ MakeMaskedIrSpans(Opcode op, u32 slot, u32 mask, bool swap_constant = false,
     Value index{&block.back()};
     if (wrap_identity) {
         block.AppendNewInst(Opcode::Identity,{index});
+        index=Value{&block.back()};
+    }
+    if (shift_after_mask) {
+        block.AppendNewInst(Opcode::ShiftLeftLogical32,
+            {index,dynamic_shift ? register_value : Value{shift_by}});
         index=Value{&block.back()};
     }
     if (add_after_mask) {
@@ -103,22 +110,27 @@ static void CheckMaskedAtomic(Opcode op, u32 slot, u32 mask, bool expected,
                               bool wrap_identity = false,
                               bool add_after_mask = false,
                               u32 addend = 4, bool swap_addition = false,
-                              bool unbounded_second_addition = false) {
+                              bool unbounded_second_addition = false,
+                              bool shift_after_mask = false, u32 shift_by = 2,
+                              bool dynamic_shift = false) {
     const auto spans=MakeMaskedIrSpans(
         op,slot,mask,swap_constant,wrap_identity,add_after_mask,
-        addend,swap_addition,unbounded_second_addition);
+        addend,swap_addition,unbounded_second_addition,
+        shift_after_mask,shift_by,dynamic_shift);
     if (bool(spans)!=expected)
         std::fprintf(stderr,"masked atomic op=%u slot=%u mask=%#x "
                              "swap=%u identity=%u plus=%u delta=%#x "
-                             "swap_plus=%u dynamic_second=%u expected=%u got=%u\n",
+                             "swap_plus=%u dynamic_second=%u shift=%u "
+                             "shift_by=%u dynamic_shift=%u expected=%u got=%u\n",
             static_cast<u32>(op),slot,mask,swap_constant,wrap_identity,
             add_after_mask,addend,swap_addition,unbounded_second_addition,
-            expected,bool(spans));
+            shift_after_mask,shift_by,dynamic_shift,expected,bool(spans));
     assert(bool(spans)==expected);
     if (expected) {
+        const u32 bound = shift_after_mask ? mask << shift_by : mask;
         assert(spans->size()==1 && spans->front().binding==slot &&
                spans->front().offset==
-                  (add_after_mask ? mask + addend : mask));
+                  (add_after_mask ? bound + addend : bound));
     }
 }
 
@@ -172,6 +184,18 @@ int main() {
                       false,false,true,8);
     CheckMaskedAtomic(Opcode::StorageAtomicExchange64,0,0x0,true,
                       true,false,true,8,true);
+    // Dynamic guest array indices in element units are commonly masked
+    // and left-shifted to atomically addressed BYTE offsets. The shift
+    // and optional constant base must be literal, alignment-preserving
+    // and non-overflowing for EVERY possible register value.
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x0f,true,
+                      false,false,false,4,false,false,true,2);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x07,true,
+                      true,true,false,4,false,false,true,3);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x0f,true,
+                      false,true,true,4,false,false,true,2);
+    CheckMaskedAtomic(Opcode::StorageAtomicExchange64,0,0x07,true,
+                      true,false,true,8,true,false,true,3);
     // Low alignment bits, oversized mask, non-integral constant base,
     // overflow, a second dynamic addition, and non-atomic 32x2 fail closed.
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3e,false);
@@ -188,6 +212,20 @@ int main() {
                       false,false,true,0xffffffc0U);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,false,
                       false,false,true,4,false,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x03,false,
+                      false,false,false,4,false,false,true,1);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x0f,false,
+                      false,false,false,4,false,false,true,0);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x07,false,
+                      false,false,false,4,false,false,true,2);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x80000000U,false,
+                      false,false,false,4,false,false,true,2);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x0f,false,
+                      false,false,false,4,false,false,true,32);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x0f,false,
+                      false,false,false,4,false,false,true,2,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x0f,false,
+                      false,false,true,0xffffffc0U,false,false,true,2);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32x2,0,0x38,false);
     CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,2,0x3c,false);
 
@@ -223,6 +261,26 @@ int main() {
     region68[0].bytes=72;
     assert(NativeQmdAtomicSpansFitBindings(*base_shifted32,region68));
     assert(NativeQmdAtomicSpansFitBindings(*base_shifted64,region68));
+    const auto shifted32 = MakeMaskedIrSpans(
+        Opcode::StorageAtomicIAdd32,0,0x0f,false,false,false,
+        4,false,false,true,2);
+    const auto shifted64 = MakeMaskedIrSpans(
+        Opcode::StorageAtomicIAdd64,0,0x07,false,false,false,
+        4,false,false,true,3);
+    const auto shifted_with_base = MakeMaskedIrSpans(
+        Opcode::StorageAtomicIAdd32,0,0x0f,true,true,true,
+        4,true,false,true,2);
+    assert(shifted32 && shifted64 && shifted_with_base);
+    assert(shifted32->front().offset==60 &&
+           shifted64->front().offset==56 &&
+           shifted_with_base->front().offset==64);
+    assert(NativeQmdAtomicSpansFitBindings(*shifted32,real_bindings));
+    assert(NativeQmdAtomicSpansFitBindings(*shifted64,real_bindings));
+    auto shifted_buffer=real_bindings;
+    shifted_buffer[0].bytes=67;
+    assert(!NativeQmdAtomicSpansFitBindings(*shifted_with_base,shifted_buffer));
+    shifted_buffer[0].bytes=68;
+    assert(NativeQmdAtomicSpansFitBindings(*shifted_with_base,shifted_buffer));
     auto short_resource=real_bindings;
     short_resource[0].bytes=63;
     assert(!NativeQmdAtomicSpansFitBindings(*masked32,short_resource));
@@ -277,7 +335,8 @@ int main() {
         std::array{NativeAtomicSpan{0,60,4}},mutated));
     std::puts("P2_3_NATIVE_ATOMIC_SPAN_REAL_IR_PASS static=1 "
               "dynamic_unbounded_rejected=1 aligned_and_max_admitted=1 "
-              "aligned_base_plus_and=1 checked_u32_no_wrap=1 "
+              "aligned_base_plus_and=1 shifted_mask_index=1 "
+              "shifted_mask_plus_base=1 checked_u32_no_wrap=1 "
               "atomic_gmmu_base_alignment=1 guest_va_49=1 "
               "dynamic_live_size_proved=1 stale_size_refused=1");
 }

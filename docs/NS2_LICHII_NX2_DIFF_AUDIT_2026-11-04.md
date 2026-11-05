@@ -16,6 +16,20 @@ Le commit #82 ne concerne que les releases de Lichii, pas le GPU Encore. Sélect
 | [#55 / d48f75b](https://github.com/zortos293/Lichii/commit/d48f75bdfb3e54b72be907eb114a49d16379a9) | Branches Ampere `BRA.U` : bits 32–33 du mot relatif indiquent le mode, et non le déplacement | Mode `.U` reconnu uniquement après vérification des champs réservés ; suppression des deux bits de mode avant calcul de cible signée, réutilisation du relocateur Maxwell borné. Tests 133 instructions, branche arrière, prédicats et rejections. |
 | [#65 / d9748a5](https://github.com/zortos293/Lichii/commit/d9748a5d5814489a0576e8af46856f36e8270138) (sous-ensemble générique) | Extension de `PrepareRegisterPressure` aux familles d'opcodes déjà traduites et aux sources GPR hautes | Seuls les champs d'opérandes authentifiés sont ajoutés à l'owner Ampere : seize familles, dont FMUL registre 0x220, adresses 64 bits, sources FFMA et tailles vectorielles ; pas de modification de `TexturePass` partagé ni du cache Maxwell NS1. Test des registres originaux, des préfixes/suffixes et d'un LDG capturé Clang/GCC UBSan. |
 
+### P2.3 — index de tableau atomique shifté et borné, 05/11
+
+Admission générique de
+ShiftLeftLogical32(BitwiseAnd32(R, masque),
+shift_constante) puis d'une base IAdd32 alignée
+optionnelle. Le masque doit survivre entièrement
+au shift sans wrap U32, et le maximum de tous
+les offsets possibles reste aligné 4/8.
+La borne + largeur est prouvée sur le buffer QMD3
+réel, pas sur un indice de jeu présumé.
+Les shifts variables, décalages >=32 et
+séquences non garanties restent fermés.
+Vrai IR UBSan Clang/GCC O0/O2, sans GPU PS5.
+
 ### P2.3 — index atomique masqué avec base constante, 05/11
 
 Extension générique à l'adresse réelle

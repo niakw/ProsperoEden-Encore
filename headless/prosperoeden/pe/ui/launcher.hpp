@@ -130,6 +130,7 @@ class Launcher
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
     void start_app_update_check(bool manual);
+    void draw_update_notice(Canvas &c);
 
 
     // ---- home (home.cpp) ----
@@ -227,12 +228,20 @@ class Launcher
     std::string clock_;
     std::string version_;
     struct UpdateCheckState {
+        bool manual = false;
         AppUpdateInfo result{};
         std::atomic<bool> completed{false};
     };
     // Shared with an independent worker that never captures the launcher.
     std::shared_ptr<UpdateCheckState> update_check_;
+    // Shared within the process across game entry/return and language restarts.
+    // Only the UI owner thread changes these pointers and flags.
+    static std::shared_ptr<UpdateCheckState> process_update_check_;
+    static bool process_update_checked_;
+    static std::string process_notified_version_;
     AppUpdateInfo update_info_{};
+    bool update_notice_pending_ = false;
+    bool update_notice_visible_ = false;
     bool update_check_manual_ = false;
     bool update_checked_this_launch_ = false;
     float daily_refresh_wait_ = 0.0f;

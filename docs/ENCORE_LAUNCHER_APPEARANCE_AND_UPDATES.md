@@ -88,7 +88,21 @@ release query task and a shared result; destruction of the launcher does not
 join the network request or block game admission. The parser rejects drafts,
 prereleases, unexpected JSON, hostile tags, unsupported assets, and
 network failures without interrupting normal navigation. R revisions are
-compared numerically rather than lexically.
+compared numerically rather than lexically. The parser now lives in
+`headless/prosperoeden/launcher_update_release.hpp`: it checks the exact
+GitHub asset URL, PPSA99008 identity, format, declared byte size (1 MiB to
+1 GiB) and SHA-256 digest metadata. **These checks qualify metadata only**;
+they never authorize execution, even if the published digest is present.
+
+Automatic checking is performed at most once per application process. The
+worker and its last result are shared across launcher reconstruction after
+starting a game or switching languages. An in-progress check can finish
+while the player is in a game, then be reported on returning Home. A newer
+stable version causes at most one controller-dismissable informational notice
+per version and running process, with a bounded official changelog excerpt.
+Manual `Check now` always starts a fresh check once no request is in flight,
+regardless of the automatic-check switch. Invalid/offline responses do not
+show a popup. No automatic downloading or installing occurs.
 
 **Important safety limitation:** no installation/download button is exposed
 until a verified native PS5 installer exists. Current official releases
@@ -100,7 +114,8 @@ confirmation popup, cancellation, restart strategy and real-console proof.
 ## Tests and remaining qualification
 
 - Seven launcher C++ sources compile in host syntax checks.
-- R21 version and R25 theme-preference host executables passed (including
+- R21 version, R21 release-metadata scenario matrix and R25 theme-preference
+  host executables passed (including
   corrupted configuration and hostile wallpaper paths).
 - Five hermetic Python unit tests passed for feed dates, platform validation,
   safe image sources, atomic writes and outage recovery.

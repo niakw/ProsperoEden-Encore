@@ -22,6 +22,7 @@
 #include "settings_store.h"
 #include "version.h"
 #include "launcher_update_version.hpp"
+#include "launcher_update_release.hpp"
 #include <string_view>
 
 #include <algorithm>
@@ -2049,8 +2050,8 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     using Report = pe::ui::AppUpdateInfo;
     Report report;
     report.installed_version = current;
-    // This is the official application release repo, NOT the main repo,
-    // not guest game/DLC updates and not a generic URL from release notes.
+    // The checked URL is a constant; never derive a download address from
+    // release notes, redirects or arbitrary GitHub API JSON.
     const auto response = Common::Net::MakeRequest(
         "https://api.github.com", "/repos/niakw/Prospero.Eden-Encore/releases/latest");
     if (!response || response->empty() || response->size() > 512u * 1024u) {
@@ -2058,54 +2059,32 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
         report.summary = "GitHub Releases unavailable. The launcher stays usable offline.";
         return report;
     }
-    const nlohmann::json data = nlohmann::json::parse(*response, nullptr, false);
-    if (data.is_discarded() || !data.is_object() ||
-        !data.contains("draft") || !data["draft"].is_boolean() ||
-        !data.contains("prerelease") || !data["prerelease"].is_boolean() ||
-        data["draft"].get<bool>() || data["prerelease"].get<bool>() ||
-        !data.contains("tag_name") || !data["tag_name"].is_string()) {
+    const auto result = Eden::EncoreUpdate::AssessStableRelease(*response, current);
+    report.latest_version = result.latest_version;
+    report.notes = result.notes;
+    switch (result.status) {
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::malformed:
         report.state = Report::State::incompatible;
-        report.summary = "No eligible stable release metadata found.";
-        return report;
-    }
-    const std::string tag = data["tag_name"].get<std::string>();
-    const int installed = Eden::EncoreUpdate::ParseRevision(current, false);
-    const int latest = Eden::EncoreUpdate::ParseRevision(tag, true);
-    if (installed < 0 || latest < 0) {
-        report.state = Report::State::incompatible;
-        report.summary = "Cannot compare installed and published R revisions safely.";
-        return report;
-    }
-    report.latest_version = "R" + std::to_string(latest);
-    if (latest <= installed) {
+        report.summary = "No eligible stable release metadata or comparable version.";
+        break;
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::current:
         report.state = Report::State::up_to_date;
-        report.summary = "Already up to date (" + report.latest_version + ").";
-        return report;
+        report.summary = "Already up to date (" + result.latest_version + ").";
+        break;
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_without_package:
+        report.state = Report::State::newer_uninstallable;
+        report.summary = "Stable " + result.latest_version +
+            " exists, but no compatible PPSA99008 package is published.";
+        break;
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_package_candidate:
+        report.state = Report::State::newer_uninstallable;
+        report.summary = "Stable " + result.latest_version +
+            " has a checksum-bound PS5 package; native installation is not qualified.";
+        break;
     }
-    // FTP ZIP artifacts cannot be installed in place. No speculative
-    // PS5 package installer or in-place binary overwrite is performed.
-    bool verified_asset = false;
-    if (data.contains("assets") && data["assets"].is_array()) {
-        for (const auto& asset : data["assets"]) {
-            if (!asset.is_object() || !asset.contains("name") ||
-                !asset["name"].is_string() || !asset.contains("digest") ||
-                !asset["digest"].is_string()) continue;
-            const auto name = asset["name"].get<std::string>();
-            const auto digest = asset["digest"].get<std::string>();
-            const bool package = name.size() > 8 &&
-                (name.ends_with(".ffpfsc") || name.ends_with(".pkg"));
-            if (package && digest.size() == 71 && digest.starts_with("sha256:") &&
-                std::all_of(digest.begin() + 7, digest.end(), [](char c) {
-                    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'); }))
-                verified_asset = true;
-        }
-    }
-    report.state = Report::State::incompatible;
-    report.summary = verified_asset ?
-        "New stable release " + report.latest_version +
-        " detected, but safe native installation is not available yet." :
-        "New stable release " + report.latest_version +
-        " detected. No supported installable PS5 package; FTP ZIP is excluded.";
+    // Even a valid SHA-256 in a trusted release is only a candidate. An
+    // independently audited installer, title-ID check, download verification,
+    // restart and recovery proof are required before State::available is used.
     return report;
 }
 

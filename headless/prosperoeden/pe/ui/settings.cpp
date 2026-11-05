@@ -1003,6 +1003,10 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         text_block(c, update_info_.summary, 592.0f,
                    baseline(700.0f, 30.0f, theme::kSmall), theme::kSmall,
                    30.0f, theme::kMeta, 736.0f, 2, kShrink);
+        if (!update_info_.notes.empty())
+            text_block(c, update_info_.notes, 592.0f,
+                       baseline(789.0f, 26.0f, theme::kSmall), theme::kSmall,
+                       28.0f, theme::kMeta, 736.0f, 2, kShrink);
         break;
     case Modal::accessibility:
     {

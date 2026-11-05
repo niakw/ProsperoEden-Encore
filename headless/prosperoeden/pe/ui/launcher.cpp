@@ -17,6 +17,10 @@ namespace pe::ui
 
 using audio::Cue;
 
+std::shared_ptr<Launcher::UpdateCheckState> Launcher::process_update_check_{};
+bool Launcher::process_update_checked_ = false;
+std::string Launcher::process_notified_version_{};
+
 namespace
 {
 
@@ -56,7 +60,15 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
         return services_.profile_avatar();
     });
     apply_look();
-    if (prefs_.check_updates_on_start) start_app_update_check(false);
+    // A game return reconstructs the launcher. Adopt any in-flight/completed
+    // process check instead of issuing a second request or losing the result.
+    if (process_update_check_) {
+        update_check_ = process_update_check_;
+        if (!update_check_->completed.load(std::memory_order_acquire))
+            update_info_.summary = tr("Checking official releases...");
+    }
+    if (prefs_.check_updates_on_start && !process_update_checked_)
+        start_app_update_check(false);
 
     // Show the existing Home shell immediately; native recent-ROM metadata
     // comes from one background snapshot. This is NOT a failed setup state.
@@ -220,7 +232,10 @@ void Launcher::start_app_update_check(bool manual)
     // service. Its network lifetime never blocks a game launch or its teardown.
     auto query = services_.detached_app_update_task(version_);
     const auto state = std::make_shared<UpdateCheckState>();
+    state->manual = manual;
     update_check_ = state;
+    process_update_check_ = state;
+    process_update_checked_ = true;
     update_check_manual_ = manual;
     update_checked_this_launch_ = true;
     update_info_ = {};
@@ -411,6 +426,17 @@ void Launcher::press(Key key)
 {
     // Avoid opening/launching the placeholder while the initial native
     // Home snapshot is still being read in the background.
+    if (update_notice_visible_) {
+        // No installation is available: Cross/Circle are dismissal only.
+        // Never let this key press reach the underlying game or settings.
+        if (key == Key::cross || key == Key::circle) {
+            update_notice_visible_ = false;
+            cue(Cue::back);
+        } else {
+            cue(Cue::error);
+        }
+        return;
+    }
     if (!home_loaded_)
         return;
     if (!selected_game_.empty())
@@ -540,18 +566,31 @@ void Launcher::update(float dt)
     }
     textures_.pump(dt);
     if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
-        update_info_ = std::move(update_check_->result);
+        const bool was_manual = update_check_->manual;
+        // Copy: this finished task is reused after a game return.
+        update_info_ = update_check_->result;
         update_check_.reset();
         if (update_info_.installed_version.empty())
             update_info_.installed_version = version_;
         if (update_check_manual_) {
             say(update_info_.summary,
-                update_info_.state == AppUpdateInfo::State::offline ||
-                update_info_.state == AppUpdateInfo::State::incompatible);
+                update_info_.state != AppUpdateInfo::State::up_to_date);
+        } else if (!was_manual && prefs_.check_updates_on_start &&
+                   update_info_.state == AppUpdateInfo::State::newer_uninstallable &&
+                   !update_info_.latest_version.empty() &&
+                   process_notified_version_ != update_info_.latest_version) {
+            update_notice_pending_ = true;
         }
         update_check_manual_ = false;
-        // Deliberately no installation/popup unless a verified native installer exists.
-        // FTP ZIPs and unvalidated packages never become a confirmation candidate.
+        // A new release can be announced, but is never presented as
+        // installable until its native PS5 installation path is qualified.
+    }
+
+    if (update_notice_pending_ && home_loaded_ && screen_ == Screen::home &&
+        modal_ == Modal::none && selected_game_.empty() && intro_ >= 0.7f) {
+        update_notice_pending_ = false;
+        update_notice_visible_ = true;
+        process_notified_version_ = update_info_.latest_version;
     }
 
     if (profile_avatar_scan_.valid() &&
@@ -897,6 +936,39 @@ void Launcher::draw_confirmation(Canvas &c)
         {Pad::cross, TR("Confirm")}, {Pad::circle, TR("Cancel")}};
     draw_hints(c, kConfirmHints, 2, panel.x + 64.0f, panel.y + panel.h - 52.0f,
                theme::kText, panel.w - 128.0f);
+}
+
+void Launcher::draw_update_notice(Canvas &c)
+{
+    if (!update_notice_visible_) return;
+    const bool paper = prefs_.ui_theme == 1;
+    const Rect panel{475.0f, 310.0f, 970.0f, 445.0f};
+    const Color ink = paper ? Color::rgb(0x172333) : theme::kTitle;
+    const Color sub = paper ? Color::rgb(0x38495b) : theme::kBody;
+    c.list.rounded_rect(kScreen, 0.0f, theme::kScrim.with_alpha(0.78f));
+    if (paper)
+        c.list.rounded_rect(panel, 24.0f, Color::rgb(0xffffff, 0.98f));
+    else
+        glass(c, panel, 24.0f, theme::kGlass.with_alpha(0.98f),
+              theme::kLime.with_alpha(0.62f), 1.2f);
+
+    text_shrink(c, tr("New Eden Encore release"), panel.x + 52.0f,
+                baseline(panel.y + 32.0f, 52.0f, theme::kHeading),
+                theme::kHeading, ink, panel.w - 104.0f);
+    text_shrink(c, version_ + "  →  " + update_info_.latest_version,
+                panel.x + 52.0f, baseline(panel.y + 105.0f, 34.0f, theme::kText24),
+                theme::kText24, sub, panel.w - 104.0f);
+    text_block(c, update_info_.summary, panel.x + 52.0f,
+               baseline(panel.y + 162.0f, 32.0f, theme::kText24),
+               theme::kText24, 34.0f, sub, panel.w - 104.0f, 2, kShrink);
+    if (!update_info_.notes.empty())
+        text_block(c, update_info_.notes, panel.x + 52.0f,
+                   baseline(panel.y + 263.0f, 25.0f, theme::kSmall),
+                   theme::kSmall, 29.0f, sub, panel.w - 104.0f, 2, kShrink);
+    static constexpr Hint hints[] = {
+        {Pad::cross, TR("Later")}, {Pad::circle, TR("Close")}};
+    draw_hints(c, hints, 2, panel.x + 52.0f, panel.y + panel.h - 55.0f,
+               sub, panel.w - 104.0f);
 }
 
 void Launcher::draw_launch(Canvas &c)
@@ -1302,6 +1374,7 @@ void Launcher::draw(gfx::DrawList &list)
         draw_switch_confirmation(c);
     else
         draw_confirmation(c);
+    draw_update_notice(c);
     list.pop_transform();
     if (launching)
         draw_launch(c);

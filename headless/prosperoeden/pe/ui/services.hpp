@@ -145,11 +145,12 @@ struct Home
 
 // R21 is metadata-only until a verified PS5-native installer is available.
 struct AppUpdateInfo {
-    enum class State { not_checked, up_to_date, incompatible, available, offline };
+    enum class State { not_checked, up_to_date, incompatible, newer_uninstallable, available, offline };
     State state = State::not_checked;
     std::string installed_version;
     std::string latest_version;
     std::string summary;
+    std::string notes; // bounded official release notes, never executable content
 };
 
 struct Preferences

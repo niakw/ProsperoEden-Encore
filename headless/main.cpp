@@ -1586,6 +1586,27 @@ int main(int argc, char** argv) {
             static constexpr Settings::AntiAliasing aa[] = {
                 Settings::AntiAliasing::None, Settings::AntiAliasing::Fxaa, Settings::AntiAliasing::Smaa};
             Settings::values.anti_aliasing.SetValue(aa[std::clamp(anti_aliasing, 0, 2)]);
+            // Real texture LOD sampler filtering (not image postprocessing).
+            // A per-title override wins; otherwise retain the global choice.
+            const int aniso_tier =
+                game_video.performance_profile >= 0 &&
+                    game_video.performance_profile < EncoreOverrides::kAuthoredProfileCount
+                ? game_video.performance_profile : launch_preferences.performance_profile;
+            // The authored game profile owns its own sampler level. Otherwise
+            // global Custom and per-game manual overrides are preserved.
+            const int recommended_aniso = aniso_tier >= 0 &&
+                aniso_tier < EncoreOverrides::kAuthoredProfileCount
+                ? EncoreTextureProfiles::ForTitle(launch_title_id, aniso_tier)
+                : launch_preferences.texture_anisotropy;
+            const int aniso = safe_launch ? 1 :
+                (game_video.texture_anisotropy >= 0
+                    ? game_video.texture_anisotropy : recommended_aniso);
+            static constexpr Settings::AnisotropyMode anisotropies[] = {
+                Settings::AnisotropyMode::Automatic, Settings::AnisotropyMode::Default,
+                Settings::AnisotropyMode::X2, Settings::AnisotropyMode::X4,
+                Settings::AnisotropyMode::X8, Settings::AnisotropyMode::X16};
+            Settings::values.max_anisotropy.SetValue(
+                anisotropies[std::clamp(aniso, 0, 5)]);
             Settings::UpdateRescalingInfo();
             // The output's refresh rate while the game runs (display_refresh.h): the renderer asks
             // for it as it opens the output.

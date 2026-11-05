@@ -165,6 +165,7 @@ struct Preferences
     int filter = 0;
     int fsr_sharpness = 50;
     int anti_aliasing = 1; // 0 none, 1 FXAA, 2 SMAA
+    int texture_anisotropy = 0; // Automatic, guest default, 2x/4x/8x/16x
     int refresh = 0; // the output while a game runs: 0 60 Hz, 1 120 Hz
     int frame_generation = 0; // 0 Off, 1 MihawkGen, 2 FSR3, 3 LSFG
     int output = 1;  // Recommended: 1440p
@@ -207,6 +208,7 @@ struct GameSettings
     int filter = -1;
     int fsr_sharpness = -1;
     int anti_aliasing = -1;
+    int texture_anisotropy = -1; // -1 follows global
     int refresh = -1;
     int frame_generation = -1;
     int performance_profile = -1;

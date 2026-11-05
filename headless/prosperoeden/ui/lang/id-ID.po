@@ -102,10 +102,6 @@ msgstr "Semua Perangkat Lunak"
 msgid "Already up to date: {0}"
 msgstr "Terbaru Versi: {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
-
 #: eden_services.cpp
 msgid "Another language"
 msgstr "Bahasa lain"
@@ -1610,10 +1606,6 @@ msgstr "Validasi penyiapan gagal. Periksa apakah file firmware dan kunci dapat d
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "Menampilkan FPS langsung saat bermain. Mati lebih bersih untuk penggunaan normal; Touchpad + R1 mengaktifkannya kapan saja."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "perangkat lunak · Triangle"
@@ -1822,10 +1814,6 @@ msgstr "PEMBARUAN, DLC"
 msgid "Upscaling filter"
 msgstr "Filter upscaling"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "FILTER UPSCALING"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "AS"
@@ -1998,3 +1986,92 @@ msgstr "Pembuatan frame dapat memperhalus tampilan tanpa mempercepat game. Lossl
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU memperbesar gambar; RCAS menambah ketajaman. Paling berguna di bawah resolusi keluaran TV."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Otomatis"
+
+#: R10 graphics UX
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
+msgstr "Bikubik: lebih tajam dari bilinear, namun dapat menghasilkan tepi yang cerah. Penggeser ketajaman FSR tidak berlaku."
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Bilinear: cepat dan lembut. Paling baik jika game sudah dirender mendekati resolusi TV."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Pilih pengaturan; pengaruhnya dijelaskan di bawah ini."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: penghalusan tepi yang ringan dalam satu gerakan. Ini dapat sedikit memperhalus teks dan detail halus."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Default permainan"
+
+#: R10 graphics UX
+msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
+msgstr "Tidak aktif untuk filter ini. Pilih AMD FSR 1 di bawah Peningkatan untuk menyesuaikan ketajaman. Itu tidak mengubah tekstur permainan."
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Terdekat: menjaga tepi piksel keras, dengan tangga yang terlihat. Terbaik untuk seni piksel, bukan sebagian besar game 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Mati: tidak ada penghalusan tepi. Paling cepat, namun garis diagonal mungkin terlihat bergerigi."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Hanya AMD FSR 1 yang menggunakan persentase ini. Mulai dari 50%. Tingkatkan secara perlahan untuk detailnya; kurangi jika tepinya berkilau atau menunjukkan lingkaran cahaya."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: penghalusan tepi multi-pass berkualitas tinggi. Kontur lebih jelas tetapi GPU bekerja lebih banyak daripada FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "PENYARINGAN TEKSTUR"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Pemfilteran tekstur"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Pemfilteran tekstur membuat tanah dan permukaan jauh lebih jelas pada suatu sudut; anisotropi yang lebih tinggi menggunakan lebih banyak bandwidth GPU."
+
+#: R10 graphics UX
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
+msgstr "Pemfilteran tekstur mempertajam jalan, lantai, dan dinding jika dilihat dari sudut tertentu. Mulai dari 4x; 8x/16x menggunakan lebih banyak bandwidth GPU. Berbeda dengan ketajaman FSR, ini tidak mempertajam keseluruhan gambar."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "PENINGKATAN"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Peningkatan"
+
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Pembuatan bingkai membutuhkan Vulkan. Pilih Vulkan untuk mengaktifkan opsi ini."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Opsi ini memerlukan Vulkan. OpenGL tidak dapat menghasilkan frame tambahan; mengubahnya tidak akan berpengaruh."

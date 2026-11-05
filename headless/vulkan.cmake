@@ -28,6 +28,10 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${EDEN_VULKAN_FOR
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${EDEN_PORT_DIR}/vulkan_hud.vert" "${EDEN_PORT_DIR}/vulkan_hud.frag")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp renderer_vulkan/vk_scheduler.cpp)
+# Spatial FSR1 stock percentage was reversed relative to RCAS stops:
+# 0=strongest, higher stops=weaker. Replace native source only, not vendor.
+list(REMOVE_ITEM video_sources renderer_vulkan/present/fsr.cpp)
+list(APPEND video_sources "${EDEN_PORT_DIR}/vulkan_fsr1_r07.cpp")
 list(APPEND video_sources "${PORT_BUILD_DIR}/vulkan_device.cpp" "${PORT_BUILD_DIR}/vulkan_scheduler.cpp")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_instance.cpp vulkan_common/vulkan_wrapper.cpp
     vulkan_common/vulkan_library.cpp vulkan_common/vulkan_surface.cpp

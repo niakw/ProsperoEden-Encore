@@ -4,6 +4,8 @@
 
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/video_presets.hpp"
+#include "pe/ui/texture_quality.hpp"
+#include "pe/ui/video_guidance.hpp"
 
 #include <algorithm>
 #include <array>
@@ -53,6 +55,7 @@ enum VideoRow : int
     video_filter,
     video_fsr_sharpness,
     video_anti_aliasing,
+    video_texture_filtering,
     video_frame_generation,
     video_refresh,
     video_overlay,
@@ -61,7 +64,7 @@ enum VideoRow : int
 constexpr float kVideoRowsTop = 334.0f;
 constexpr float kVideoRowPitch = 96.0f;
 constexpr float kVideoRowHeight = 94.0f;
-constexpr int kVideoRowsShown = 5;
+constexpr int kVideoRowsShown = 4; // 4 rows + readable highlighted help card
 constexpr Rect kVideoWindow{592.0f, kVideoRowsTop, 736.0f,
                             kVideoRowPitch * (kVideoRowsShown - 1) + kVideoRowHeight};
 // The sizes of Preferences::output, as every language writes them.
@@ -248,7 +251,7 @@ void Launcher::press_settings(Key key)
                 wallpaper_scan_ = std::async(std::launch::async, [this] {
                     return services_.wallpapers();
                 });
-            video_rows_.visible = kVideoRowsShown;
+            video_rows_.visible = 5; // preserve five-row appearance list
             video_rows_.pitch = kVideoRowPitch;
             video_rows_.reset(kAppearanceRows, 0);
             option_ = 0;
@@ -328,9 +331,10 @@ void Launcher::draw_settings(Canvas &c)
                  {tr("RENDERER"), prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"},
                  {tr("TV OUTPUT"), output_name(prefs_.output)},
                  {tr("GAME RESOLUTION"), pick(services_.resolution_labels(), prefs_.resolution)},
-                 {tr("UPSCALING FILTER"), pick(services_.filter_labels(), prefs_.filter)},
+                 {tr(TR("UPSCALING")), pick(services_.filter_labels(), prefs_.filter)},
                  {tr("FSR SHARPNESS"), percent(prefs_.fsr_sharpness)},
                  {tr("ANTI-ALIASING"), pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing)},
+                 {tr(TR("TEXTURE FILTERING")), TextureAnisotropyName(prefs_.texture_anisotropy)},
                  {tr("REFRESH RATE"), hertz(prefs_.refresh)},
                  {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
         break;
@@ -585,6 +589,11 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_fsr_sharpness)
         {
+            if (prefs_.filter != 1) {
+                say(FsrSharpnessGuide(false), true);
+                cue(Cue::error);
+                return;
+            }
             if (!adjust) return;
             prefs_.fsr_sharpness = std::clamp(prefs_.fsr_sharpness + 5 * step, 0, 100);
             RefreshVideoProfile(prefs_);
@@ -596,8 +605,18 @@ void Launcher::press_dialog(Key key)
             prefs_.anti_aliasing = (prefs_.anti_aliasing + step + count) % count;
             RefreshVideoProfile(prefs_);
         }
+        else if (option_ == video_texture_filtering)
+        {
+            prefs_.texture_anisotropy = (prefs_.texture_anisotropy + step + 6) % 6;
+            RefreshVideoProfile(prefs_);
+        }
         else if (option_ == video_frame_generation)
         {
+            if (!FrameGenerationSelectable(prefs_.renderer)) {
+                say(tr(TR("Frame generation needs Vulkan. Select Vulkan to enable this option.")), true);
+                cue(Cue::error);
+                break;
+            }
             // UI order: Off, MihawkGen, FSR3 optical flow, Lossless (DLL last).
             // Save the selected method. The Vulkan renderer uses actual
             // runtime capabilities; choosing a method never fabricates FPS.
@@ -815,6 +834,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Bilinear is the lightest default. AMD FSR is most useful when rendering below the TV output size."),
             TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
+            TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
             kFramegenInfo,
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
             TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
@@ -856,17 +876,21 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
     text_shrink(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
                 theme::kTitle, 736.0f);
-    text_shrink(c, copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall,
-                Color::rgb(0xc5c1d2), 736.0f);
+    text_shrink(c, modal == Modal::video
+                    ? tr(TR("Choose a setting; its effect is explained below."))
+                    : copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
+                theme::kSmall, Color::rgb(0xc5c1d2), 736.0f);
 
     const int rows = dialog_rows(modal);
     // Video's rows scroll in a window of five; the other dialogs show all of theirs.
     const bool scrolls = modal == Modal::video || modal == Modal::appearance;
     const int first = scrolls ? video_rows_.first_row() : 0;
     const int last = scrolls ? video_rows_.last_row() : rows - 1;
+    const float view_height = modal == Modal::appearance
+        ? kVideoRowPitch * 4.0f + kVideoRowHeight : kVideoWindow.h;
     if (scrolls)
-        list.push_clip({kVideoWindow.x - 24.0f, kVideoWindow.y - 6.0f, kVideoWindow.w + 48.0f,
-                        kVideoWindow.h + 12.0f});
+        list.push_clip({kVideoWindow.x - 24.0f, kVideoWindow.y - 6.0f,
+                        kVideoWindow.w + 48.0f, view_height + 12.0f});
     for (int row = first; row <= last; ++row)
     {
         list.push_opacity(scrolls ? video_rows_.row_alpha(row, kVideoRowHeight) : 1.0f);
@@ -881,10 +905,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 1.0f);
 
     // A row's name takes what its control (`taken` wide, at the right) leaves of the row.
-    const auto label = [&](int row, const char *value, float taken)
+    const auto label = [&](int row, const char *value, float taken, bool inactive = false)
     {
         text_shrink(c, value, 628.0f, baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
-                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
+                    theme::kText24, inactive ? theme::kMeta : theme::kValue,
+                    664.0f - taken - 28.0f);
     };
     const auto choice = [&](int row, const std::string &value)
     {
@@ -908,6 +933,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             pick(services_.filter_labels(), prefs_.filter),
             percent(prefs_.fsr_sharpness),
             pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing),
+            TextureAnisotropyName(prefs_.texture_anisotropy),
             prefs_.frame_generation == 0 ? tr("Off") :
                 prefs_.frame_generation == 1 ? "MihawkGen" :
                 prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
@@ -915,8 +941,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         };
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
-            TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-            TR("Enhanced smoothness"), TR("Refresh rate"), TR("FPS overlay")};
+            TR("Upscaling"), TR("FSR sharpness"), TR("Anti-aliasing"),
+            TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"),
+            TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
         {
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
@@ -924,6 +951,17 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             {
                 label(row, tr(kNames[row]), kToggle);
                 toggle(c, 1292.0f, row_centre(row), knob);
+            }
+            else if ((row == video_fsr_sharpness && prefs_.filter != 1) ||
+                     (row == video_frame_generation &&
+                      !FrameGenerationSelectable(prefs_.renderer)))
+            {
+                // Retain the preference, but no arrows on unavailable controls.
+                // RCAS needs FSR 1; frame synthesis requires native Vulkan.
+                const float taken = text_shrink(c, values[row], 1292.0f,
+                    baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
+                    theme::kText24, theme::kMeta, 240.0f, Align::right);
+                label(row, tr(kNames[row]), taken, true);
             }
             else
             {
@@ -1075,10 +1113,38 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     if (scrolls)
     {
         list.pop_clip();
-        scrollbar(c, video_rows_, 1340.0f, kVideoWindow.y, kVideoWindow.h);
+        scrollbar(c, video_rows_, 1340.0f, kVideoWindow.y, view_height);
     }
 
-    // Under the rows: Video's five end lower than the other dialogs' three.
+    // The former one-line legend above the options was clipped on PS5.
+    // Reserve a high-contrast, multi-line guide card under four visible rows.
+    if (modal == Modal::video && message_.empty()) {
+        static constexpr const char* kGuideLabels[kVideoRows] = {
+            TR("Renderer"), TR("Video preset"), TR("TV output"),
+            TR("Game resolution"), TR("Upscaling"), TR("FSR sharpness"),
+            TR("Anti-aliasing"), TR("Texture filtering"),
+            TR("Enhanced smoothness"), TR("Refresh rate"), TR("FPS overlay")};
+        const int selected = std::clamp(option_, 0, kVideoRows - 1);
+        const char* explanation = copy;
+        if (selected == video_filter)
+            explanation = UpscalingGuide(prefs_.filter);
+        else if (selected == video_fsr_sharpness)
+            explanation = FsrSharpnessGuide(prefs_.filter == 1);
+        else if (selected == video_anti_aliasing)
+            explanation = AntiAliasingGuide(prefs_.anti_aliasing);
+        else if (selected == video_texture_filtering)
+            explanation = TextureGuide();
+        else if (selected == video_frame_generation &&
+                 !FrameGenerationSelectable(prefs_.renderer))
+            explanation = FramegenUnsupportedGuide();
+        DrawVideoGuide(c, tr(kGuideLabels[selected]), explanation,
+            (selected == video_fsr_sharpness && prefs_.filter != 1) ||
+            (selected == video_frame_generation &&
+             !FrameGenerationSelectable(prefs_.renderer)),
+            prefs_.ui_theme == 1);
+    }
+
+    // Under the rows: Video's four rows leave space for the full guide.
     const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls ? 848.0f : 811.0f;
     if (!message_.empty())
     {

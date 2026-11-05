@@ -102,10 +102,6 @@ msgstr "جميع البرامج"
 msgid "Already up to date: {0}"
 msgstr "الأحدث الإصدار: {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
-
 #: eden_services.cpp
 msgid "Another language"
 msgstr "لغة أخرى"
@@ -1610,10 +1606,6 @@ msgstr "فشل التحقق من الإعداد. تأكد من أن ملفات �
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "يعرض FPS المباشر أثناء اللعب. يعد إيقاف التشغيل أكثر نظافة للاستخدام العادي؛ تقوم لوحة اللمس + R1 بتبديلها في أي وقت."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "سما"
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "البرامج · Triangle"
@@ -1822,10 +1814,6 @@ msgstr "التحديثات، DLC"
 msgid "Upscaling filter"
 msgstr "فلتر التكبير"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "فلتر التكبير"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "أمريكا"
@@ -1998,3 +1986,92 @@ msgstr "قد تجعل الصور المولدة العرض أكثر سلاسة �
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: تقوم EASU بتكبير الصورة؛ يضيف RCAS الحدة. الأكثر فائدة تحت دقة إخراج التلفزيون."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "تلقائي"
+
+#: R10 graphics UX
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
+msgstr "ثنائية التكعيب: أكثر حدة من ثنائية الخط، ولكنها قد تخلق حوافًا لامعة. لا يتم تطبيق شريط تمرير حدة FSR."
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "ذو الخطين: سريع وناعم. من الأفضل أن يتم عرض اللعبة بالفعل بالقرب من دقة التلفزيون."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "اختر الإعداد؛ تأثيره موضح أدناه."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: تنعيم الحواف خفيف الوزن بتمريرة واحدة. يمكنه تنعيم النص والتفاصيل الدقيقة قليلاً."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "اللعبة الافتراضية"
+
+#: R10 graphics UX
+msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
+msgstr "غير نشط لهذا الفلتر. حدد AMD FSR 1 ضمن Upscaling لضبط الحدة. لا يغير قوام اللعبة."
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "الأقرب: يحتفظ بحواف البكسل الصلبة، مع درجات سلم مرئية. الأفضل لفن البكسل، وليس لمعظم الألعاب ثلاثية الأبعاد."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "إيقاف: لا يوجد تجانس للحواف. الأسرع، ولكن الخطوط القطرية قد تبدو خشنة."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "فقط AMD FSR 1 يستخدم هذه النسبة. ابدأ بنسبة 50%. زيادة بلطف لمزيد من التفاصيل. قلل إذا كانت الحواف تومض أو تظهر هالات."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: تنعيم الحواف متعدد التمريرات عالي الجودة. ملامح أكثر وضوحًا ولكن تعمل وحدة معالجة الرسومات بشكل أكبر من FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "تصفية النسيج"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "تصفية الملمس"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "تعمل تصفية النسيج على إبقاء الأرض والأسطح البعيدة أكثر وضوحًا عند الزاوية؛ يستخدم التباين الأعلى نطاقًا تردديًا أكبر لوحدة معالجة الرسومات."
+
+#: R10 graphics UX
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
+msgstr "تعمل تصفية النسيج على زيادة وضوح الطرق والأرضيات والجدران عند النظر إليها من زاوية ما. ابدأ بـ 4x؛ يستخدم 8x/16x المزيد من النطاق الترددي لوحدة معالجة الرسومات. وعلى عكس وضوح FSR، فهو لا يزيد من وضوح الصورة بأكملها."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "الارتقاء"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "الارتقاء"
+
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "يحتاج إنشاء الإطار إلى فولكان. حدد Vulkan لتمكين هذا الخيار."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "يحتاج هذا الخيار إلى فولكان. لا يمكن لـ OpenGL إنشاء إطارات إضافية؛ تغييره لن يكون له أي تأثير."

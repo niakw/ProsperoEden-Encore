@@ -37,6 +37,7 @@
 
 #include "button_mapping.h"
 #include "encore_overrides_generated.h"
+#include "encore_texture_profiles.h"
 #include "encore_overrides_runtime.h"
 #include "storage_paths.h"
 #include "game_files.h"
@@ -57,9 +58,14 @@ inline constexpr const char* kResolutionLabels[] = {
 static_assert(std::size(kResolutionLabels) == std::size(kResolutionKeys));
 inline constexpr int kNativeResolution = 3;
 inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
-inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
+// These are spatial display filters, NOT FSR 3 temporal reconstruction.
+inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "FSR 1", "Bicubic", "Nearest"};
 inline constexpr const char* kAntiAliasingKeys[] = {"none", "fxaa", "smaa"};
-inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA"};
+inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra"};
+// Real Eden Vulkan texture sampler anisotropy, separate from spatial upscaling,
+// frame generation and resolution. 0 uses Eden's automatic choice.
+inline constexpr const char* kTextureAnisotropyKeys[] = {
+    "automatic", "default", "2x", "4x", "8x", "16x"};
 // Settings > Video: the refresh rate of the output while a game runs. 120 Hz is asked of the
 // display (display_refresh.h); one that cannot show it stays at 60 Hz.
 inline constexpr const char* kRefreshKeys[] = {"60", "120"};
@@ -108,6 +114,7 @@ struct Preferences {
     int upscaling_filter = EncoreOverrides::kGeneralProfiles[1].filter;
     int fsr_sharpness = EncoreOverrides::kGeneralProfiles[1].fsr_sharpness;
     int anti_aliasing = EncoreOverrides::kGeneralProfiles[1].anti_aliasing;
+    int texture_anisotropy = EncoreTextureProfiles::ForTitle(0, 1); // Recommended: 4x
     int refresh = EncoreOverrides::kGeneralProfiles[1].refresh;
     int frame_generation = 0; // Off, MihawkGen, FSR3, LSFG; method, not fake FPS
     int output = EncoreOverrides::kGeneralProfiles[1].output;
@@ -333,6 +340,10 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     if (fsr_sharpness >= 0 && fsr_sharpness <= 100) result.fsr_sharpness = fsr_sharpness;
     result.anti_aliasing = KeyIndex(Settings::String(document, Json::json_pointer("/video/anti_aliasing")),
                                     kAntiAliasingKeys, int(std::size(kAntiAliasingKeys)), result.anti_aliasing);
+    result.texture_anisotropy = KeyIndex(
+        Settings::String(document, Json::json_pointer("/video/texture_anisotropy")),
+        kTextureAnisotropyKeys, int(std::size(kTextureAnisotropyKeys)),
+        result.texture_anisotropy);
     result.refresh = KeyIndex(Settings::String(document, Json::json_pointer("/video/refresh_rate")),
                               kRefreshKeys, int(std::size(kRefreshKeys)), result.refresh);
     result.frame_generation = KeyIndex(Settings::String(document, Json::json_pointer("/video/frame_generation")),
@@ -342,6 +353,13 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     // The profile label is derived from the actual settings. This migrates older three-profile
     // Encore configs honestly: a combination that no longer matches a current authored tier is Custom.
     result.performance_profile = DetectPerformanceProfile(result);
+    // Migration: older saved profiles lacked a sampler level. Preserve their
+    // authored preset rather than reclassifying every old High/Ultra as Custom.
+    if (!document.contains(Json::json_pointer("/video/texture_anisotropy")) &&
+        result.performance_profile >= 0 &&
+        result.performance_profile < EncoreOverrides::kAuthoredProfileCount)
+        result.texture_anisotropy =
+            EncoreTextureProfiles::ForTitle(0, result.performance_profile);
     const Json::json_pointer global_layout("/controls/layout");
     const Json::json_pointer global_mapping("/controls/mapping");
     const std::string saved_layout = Settings::String(document, global_layout);
@@ -411,6 +429,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
         value.fsr_sharpness < 0 || value.fsr_sharpness > 100 ||
         value.anti_aliasing < 0 || value.anti_aliasing >= int(std::size(kAntiAliasingKeys)) ||
+        value.texture_anisotropy < 0 ||
+        value.texture_anisotropy >= int(std::size(kTextureAnisotropyKeys)) ||
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < 0 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
@@ -429,6 +449,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["upscaling_filter"] = kUpscalingFilterKeys[value.upscaling_filter];
     document["video"]["fsr_sharpness"] = value.fsr_sharpness;
     document["video"]["anti_aliasing"] = kAntiAliasingKeys[value.anti_aliasing];
+    document["video"]["texture_anisotropy"] =
+        kTextureAnisotropyKeys[value.texture_anisotropy];
     document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
     document["video"]["frame_generation"] = kFrameGenerationKeys[value.frame_generation];
     document["video"]["output_resolution"] = kOutputKeys[value.output];
@@ -545,6 +567,7 @@ struct GameSettings {
     int upscaling_filter = -1;  // index into kUpscalingFilterKeys
     int fsr_sharpness = -1;     // 0-100; -1 follows global
     int anti_aliasing = -1;     // index into kAntiAliasingKeys
+    int texture_anisotropy = -1; // -1 inherits global, 0 Automatic ... 5 16x
     int refresh = -1;           // index into kRefreshKeys
     int frame_generation = -1; // -1 inherits global, 0=off, 1=MihawkGen, 2=FSR3, 3=LSFG
     int performance_profile = -1; // index into kPerformanceProfileKeys
@@ -573,6 +596,9 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     const int fsr_sharpness = Settings::Int(document, Json::json_pointer(base + "/fsr_sharpness"), -1);
     result.fsr_sharpness = fsr_sharpness >= 0 && fsr_sharpness <= 100 ? fsr_sharpness : -1;
     result.anti_aliasing = KeyIndex(key("anti_aliasing"), kAntiAliasingKeys, int(std::size(kAntiAliasingKeys)), -1);
+    result.texture_anisotropy = KeyIndex(
+        key("texture_anisotropy"), kTextureAnisotropyKeys,
+        int(std::size(kTextureAnisotropyKeys)), -1);
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
     result.frame_generation = KeyIndex(key("frame_generation"), kFrameGenerationKeys,
                                        int(std::size(kFrameGenerationKeys)), -1);
@@ -614,6 +640,8 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.upscaling_filter < -1 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
         value.fsr_sharpness < -1 || value.fsr_sharpness > 100 ||
         value.anti_aliasing < -1 || value.anti_aliasing >= int(std::size(kAntiAliasingKeys)) ||
+        value.texture_anisotropy < -1 ||
+        value.texture_anisotropy >= int(std::size(kTextureAnisotropyKeys)) ||
         value.refresh < -1 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < -1 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
         value.performance_profile < -1 ||
@@ -638,6 +666,7 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     if (value.fsr_sharpness < 0) game.erase("fsr_sharpness");
     else game["fsr_sharpness"] = value.fsr_sharpness;
     store("anti_aliasing", value.anti_aliasing, kAntiAliasingKeys);
+    store("texture_anisotropy", value.texture_anisotropy, kTextureAnisotropyKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
     store("frame_generation", value.frame_generation, kFrameGenerationKeys);
     store("performance_profile", value.performance_profile, kPerformanceProfileKeys);

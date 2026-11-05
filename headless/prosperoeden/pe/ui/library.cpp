@@ -4,6 +4,8 @@
 
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/video_presets.hpp"
+#include "pe/ui/texture_quality.hpp"
+#include "pe/ui/video_guidance.hpp"
 #include "pe/ui/case_media_selection.hpp"
 
 #include "pe/core/log.hpp"
@@ -39,6 +41,7 @@ enum GameRow : int
     row_filter,
     row_fsr_sharpness,
     row_anti_aliasing,
+    row_texture_filtering,
     row_frame_generation,
     row_refresh,
     row_controls,
@@ -48,7 +51,7 @@ enum GameRow : int
 constexpr float kDialogRowsTop = 334.0f;
 constexpr float kDialogRowPitch = 96.0f;
 constexpr float kDialogRowHeight = 94.0f;
-constexpr int kDialogRowsShown = 5;
+constexpr int kDialogRowsShown = 4; // selected option + readable guide
 constexpr Rect kDialogWindow{592.0f, kDialogRowsTop, 736.0f,
                              kDialogRowPitch * (kDialogRowsShown - 1) + kDialogRowHeight};
 constexpr float kDialogHints = 848.0f;
@@ -1649,8 +1652,21 @@ void Launcher::press_game(Key key)
     default:
         return;
     }
+    if (option_ == row_fsr_sharpness &&
+        EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id) != 1) {
+        // Never let invisible RCAS changes mark a game profile as Custom.
+        say(FsrSharpnessGuide(false), true);
+        cue(Cue::error);
+        return;
+    }
     if (option_ == row_frame_generation)
     {
+        if (!FrameGenerationSelectable(
+                EffectiveGameRenderer(game_settings_, prefs_, game.title_id))) {
+            say(tr(TR("Frame generation needs Vulkan. Select Vulkan to enable this option.")), true);
+            cue(Cue::error);
+            return;
+        }
         GameSettings next = game_settings_;
         // Default, Off, MihawkGen, FSR3 optical flow, LSFG (user DLL last).
         // Runtime handles
@@ -1709,7 +1725,7 @@ void Launcher::press_game(Key key)
             return;
         mods_ = services_.mods(game.title_id);
         count_mods(game, mods_);
-        mod_rows_.visible = kDialogRowsShown;
+        mod_rows_.visible = 5; // mods have their own full-height list, no guide card
         mod_rows_.pitch = kDialogRowPitch;
         mod_rows_.reset(static_cast<int>(mods_.size()), 0);
         modal_ = modal_shown_ = Modal::mods;
@@ -1798,6 +1814,7 @@ void Launcher::press_game(Key key)
                 next.filter = -1;
                 next.fsr_sharpness = -1;
                 next.anti_aliasing = -1;
+                next.texture_anisotropy = -1;
                 next.refresh = -1;
             }
         }
@@ -1825,6 +1842,10 @@ void Launcher::press_game(Key key)
         if (option_ == row_anti_aliasing)
         {
             next.anti_aliasing = cycle(next.anti_aliasing, static_cast<int>(services_.anti_aliasing_labels().size()));
+            RefreshVideoProfile(next, prefs_, game.title_id);
+        }
+        if (option_ == row_texture_filtering) {
+            next.texture_anisotropy = cycle(next.texture_anisotropy, 6);
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_refresh)
@@ -1906,11 +1927,20 @@ void Launcher::draw_game(Canvas &c, float open)
         game_settings_.resolution >= 0 ? pick(resolutions, game_settings_.resolution) :
             fill(tr("Default ({0})"), {short_resolution(pick(resolutions, base_resolution))}),
         game_settings_.filter >= 0 ? pick(filters, game_settings_.filter) :
-            fill(tr("Default ({0})"), {pick(filters, base_filter)}),
+            fill(tr("Default ({0})"), {pick(filters,
+                EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id))}),
         game_settings_.fsr_sharpness >= 0 ? percentage(game_settings_.fsr_sharpness) :
             fill(tr("Default ({0})"), {percentage(base_fsr)}),
         game_settings_.anti_aliasing >= 0 ? pick(anti_aliasing, game_settings_.anti_aliasing) :
             fill(tr("Default ({0})"), {pick(anti_aliasing, base_aa)}),
+        game_settings_.texture_anisotropy >= 0
+            ? TextureAnisotropyName(game_settings_.texture_anisotropy)
+            : fill(tr("Default ({0})"), {
+                TextureAnisotropyName(
+                    prefs_.performance_profile < kAuthoredVideoProfiles
+                    ? Eden::EncoreTextureProfiles::ForTitle(
+                        title_id, std::max(0, prefs_.performance_profile))
+                    : prefs_.texture_anisotropy)}),
         game_settings_.frame_generation < 0 ?
             fill(tr("Default ({0})"), {prefs_.frame_generation == 0 ? tr("Off") :
                 prefs_.frame_generation == 1 ? "MihawkGen" :
@@ -1941,8 +1971,8 @@ void Launcher::draw_game(Canvas &c, float open)
     };
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
-        TR("Resolution"), TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-        TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Resolution"), TR("Upscaling"), TR("FSR sharpness"), TR("Anti-aliasing"),
+        TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
         TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
@@ -1968,15 +1998,25 @@ void Launcher::draw_game(Canvas &c, float open)
         // there; the others are choices.
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
+        const bool inactive =
+            (row == row_fsr_sharpness &&
+             EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id) != 1) ||
+            (row == row_frame_generation &&
+             !FrameGenerationSelectable(
+                 EffectiveGameRenderer(game_settings_, prefs_, title_id)));
         const float taken =
             row >= row_mods ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
                             theme::kSmall, there ? theme::kLimePale : theme::kMeta, 320.0f,
                             Align::right) :
+            inactive ? text_shrink(c, values[row], 1292.0f,
+                            baseline(top, kDialogRowHeight, theme::kText24),
+                            theme::kText24, theme::kMeta, 320.0f, Align::right) :
                 chooser(c, values[row], 1296.0f, baseline(top, kDialogRowHeight, theme::kText24),
                         focus, theme::kLimePale);
         text_shrink(c, tr(kLabels[row]), 628.0f, baseline(top, kDialogRowHeight, theme::kText24),
-                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
+                    theme::kText24, inactive ? theme::kMeta : theme::kValue,
+                    664.0f - taken - 28.0f);
         list.pop_opacity();
     }
     list.pop_clip();
@@ -2025,14 +2065,36 @@ void Launcher::draw_game(Canvas &c, float open)
             TR("Bilinear is the lightest default. AMD FSR is useful when rendering below the TV output size."),
             TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
+            TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
+            TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."),
             TR("60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."),
             TR("Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."),
         }};
         static_assert(kGameAbout.size() == static_cast<std::size_t>(row_mods));
-        if (option_ >= row_mode && option_ < static_cast<int>(kGameAbout.size()))
-            text_shrink(c, tr(kGameAbout[static_cast<std::size_t>(option_)]), 592.0f,
-                        baseline(kDialogHints - 34.0f, 24.0f, 18.0f), 18.0f,
-                        theme::kMeta, 736.0f);
+        if (option_ >= row_mode && option_ < static_cast<int>(kGameAbout.size())) {
+            const int filter = EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id);
+            const int aa = game_settings_.anti_aliasing >= 0
+                ? game_settings_.anti_aliasing : base_aa;
+            const char* explanation = tr(kGameAbout[static_cast<std::size_t>(option_)]);
+            if (option_ == row_filter)
+                explanation = UpscalingGuide(filter);
+            else if (option_ == row_fsr_sharpness)
+                explanation = FsrSharpnessGuide(filter == 1);
+            else if (option_ == row_anti_aliasing)
+                explanation = AntiAliasingGuide(aa);
+            else if (option_ == row_texture_filtering)
+                explanation = TextureGuide();
+            else if (option_ == row_frame_generation &&
+                     !FrameGenerationSelectable(
+                         EffectiveGameRenderer(game_settings_, prefs_, title_id)))
+                explanation = FramegenUnsupportedGuide();
+            DrawVideoGuide(c, tr(kLabels[option_]), explanation,
+                (option_ == row_fsr_sharpness && filter != 1) ||
+                (option_ == row_frame_generation &&
+                 !FrameGenerationSelectable(
+                     EffectiveGameRenderer(game_settings_, prefs_, title_id))),
+                prefs_.ui_theme == 1);
+        }
         static constexpr Hint kHints[] = {
             {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")},
             {Pad::triangle, TR("Reset overrides")}, {Pad::circle, TR("Back")}};

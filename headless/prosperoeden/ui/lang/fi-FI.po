@@ -102,10 +102,6 @@ msgstr "Kaikki ohjelmistot"
 msgid "Already up to date: {0}"
 msgstr "Uusin Versio: {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
-
 #: eden_services.cpp
 msgid "Another language"
 msgstr "Muu kieli"
@@ -1610,10 +1606,6 @@ msgstr "Määrityksen tarkistus epäonnistui. Varmista, että laiteohjelmisto ja
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "Näyttää live-FPS:n pelaamisen aikana. Off on puhtaampi normaalikäyttöön; Kosketuslevy + R1 vaihtaa sen milloin tahansa."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "ohjelmistot · Triangle"
@@ -1822,10 +1814,6 @@ msgstr "PÄIVITYKSET, DLC"
 msgid "Upscaling filter"
 msgstr "Skaalaussuodatin"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "SKAALAUSSUODATIN"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1998,3 +1986,92 @@ msgstr "Kuvien generointi voi tasoittaa näyttöä nopeuttamatta peliä. Lossles
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU suurentaa kuvaa; RCAS lisää terävyyttä. Hyödyllisin TV-lähdön resoluution alapuolella."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Automaattinen"
+
+#: R10 graphics UX
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
+msgstr "Bicubic: terävämpi kuin bilineaarinen, mutta voi luoda kirkkaita reunoja. FSR-terävyyden liukusäädin ei ole käytössä."
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Bilineaarinen: nopea ja pehmeä. Parasta, kun peli on jo lähellä television resoluutiota."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Valitse asetus; sen vaikutus selitetään alla."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: kevyt reunan tasoitus yhdellä kertaa. Se voi hieman pehmentää tekstiä ja hienoja yksityiskohtia."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Pelin oletusarvo"
+
+#: R10 graphics UX
+msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
+msgstr "Ei aktiivinen tälle suodattimelle. Säädä terävyyttä valitsemalla Upscaling-kohdasta AMD FSR 1. Se ei muuta pelin tekstuuria."
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Lähin: säilyttää kovat pikselin reunat, näkyvissä portaissa. Paras pikselitaiteelle, ei useimpiin 3D-peleihin."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Pois: ei reunan tasoitusta. Nopein, mutta vinoviivat voivat näyttää rosoisilta."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Vain AMD FSR 1 käyttää tätä prosenttiosuutta. Aloita 50 prosentista. Suurenna varovasti yksityiskohtia varten; vähentää, jos reunat hohtavat tai näyttävät haloja."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: korkealaatuinen monivaiheinen reunojen tasoitus. Selkeämmät ääriviivat, mutta enemmän GPU-työtä kuin FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "TEKSTUURISUODATUS"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Tekstuurisuodatus"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Tekstuurisuodatus pitää etäällä maaperän ja pinnat selkeämmässä kulmassa; korkeampi anisotropia käyttää enemmän GPU:n kaistanleveyttä."
+
+#: R10 graphics UX
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
+msgstr "Tekstuurisuodatus terävöittää teitä, lattioita ja seiniä kulmassa katsottuna. Aloita 4x; 8x/16x käyttävät enemmän GPU:n kaistanleveyttä. Toisin kuin FSR-terävyys, se ei terävöi koko kuvaa."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "PARANTAMINEN"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Skaalaus"
+
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Kehyksen luominen vaatii Vulkanin. Ota tämä vaihtoehto käyttöön valitsemalla Vulkan."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Tämä vaihtoehto vaatii Vulkanin. OpenGL ei voi luoda ylimääräisiä kehyksiä; sen muuttamisella ei olisi vaikutusta."

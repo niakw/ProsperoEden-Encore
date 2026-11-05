@@ -102,10 +102,6 @@ msgstr "所有软件"
 msgid "Already up to date: {0}"
 msgstr "已是最新版本：{0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
-
 #: eden_services.cpp
 msgid "Another language"
 msgstr "其他语言"
@@ -1610,10 +1606,6 @@ msgstr "设置验证失败。请确认固件和密钥文件可以读取且有效
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "游戏过程中显示实时 FPS。正常使用时关闭更简洁；随时按触摸板 + R1 可切换。"
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "软件 · Triangle"
@@ -1822,10 +1814,6 @@ msgstr "更新、DLC"
 msgid "Upscaling filter"
 msgstr "缩放滤镜"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "缩放滤镜"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "美国"
@@ -1998,3 +1986,92 @@ msgstr "帧生成可以让画面更流畅，但不会加快游戏运行速度。
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1：EASU放大图； RCAS 增加了清晰度。在电视输出分辨率以下最有用。"
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "自动"
+
+#: R10 graphics UX
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
+msgstr "双三次：比双线性更锐利，但可能会产生明亮的边缘。 FSR 锐度滑块不适用。"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "双线性：快速且柔和。当游戏已经呈现接近电视分辨率时效果最佳。"
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "选择设置；下面解释其效果。"
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA：一次轻量级边缘平滑。它可以稍微柔化文本和精细细节。"
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "游戏默认"
+
+#: R10 graphics UX
+msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
+msgstr "该过滤器无效。在“升级”下选择“AMD FSR 1”以调整清晰度。它不会改变游戏的纹理。"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "最近：保留硬像素边缘，并具有可见的阶梯。最适合像素艺术，而不是大多数 3D 游戏。"
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "关闭：无边缘平滑。最快，但对角线可能看起来呈锯齿状。"
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "仅 AMD FSR 1 使用此百分比。从 50% 开始。轻轻增加细节；如果边缘闪烁或出现光晕，则减少。"
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra：高质量多通道边缘平滑。与 FXAA 相比，轮廓更清晰，但 GPU 工作量更多。"
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "纹理过滤"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "纹理过滤"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "纹理过滤使远处的地面和表面在一定角度下更加清晰；较高的各向异性会使用更多的 GPU 带宽。"
+
+#: R10 graphics UX
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
+msgstr "纹理过滤可以锐化从某个角度观看的道路、地板和墙壁。从 4 倍开始； 8x/16x 使用更多 GPU 带宽。与 FSR 清晰度不同，它不会锐化整个图像。"
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "升级"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "升级"
+
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "帧生成需要 Vulkan。选择 Vulkan 以启用此选项。"
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "此选项需要 Vulkan。 OpenGL无法生成额外的帧；改变它不会有任何影响。"

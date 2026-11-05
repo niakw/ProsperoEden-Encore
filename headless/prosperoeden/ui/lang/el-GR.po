@@ -102,10 +102,6 @@ msgstr "Όλο το λογισμικό"
 msgid "Already up to date: {0}"
 msgstr "Τελευταία Έκδοση: {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
-
 #: eden_services.cpp
 msgid "Another language"
 msgstr "Άλλη γλώσσα"
@@ -1610,10 +1606,6 @@ msgstr "Η επαλήθευση της ρύθμισης απέτυχε. Ελέγ
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "Εμφανίζει ζωντανά FPS κατά την αναπαραγωγή. Το Off είναι καθαρότερο για κανονική χρήση. Το Touchpad + R1 το αλλάζει ανά πάσα στιγμή."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "λογισμικό · Triangle"
@@ -1822,10 +1814,6 @@ msgstr "ΕΝΗΜΕΡΩΣΕΙΣ, DLC"
 msgid "Upscaling filter"
 msgstr "Φίλτρο κλιμάκωσης"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "ΦΙΛΤΡΟ ΚΛΙΜΑΚΩΣΗΣ"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "ΗΠΑ"
@@ -1998,3 +1986,92 @@ msgstr "Η δημιουργία καρέ μπορεί να κάνει την ε�
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: Η EASU μεγεθύνει την εικόνα. Το RCAS προσθέτει ευκρίνεια. Το πιο χρήσιμο κάτω από την ανάλυση εξόδου τηλεόρασης."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Αυτόματο"
+
+#: R10 graphics UX
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The FSR sharpness slider does not apply."
+msgstr "Bicubic: πιο ευκρινές από το διγραμμικό, αλλά μπορεί να δημιουργήσει φωτεινές άκρες. Το ρυθμιστικό ευκρίνειας FSR δεν ισχύει."
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Διγραμμικό: γρήγορο και απαλό. Καλύτερο όταν το παιχνίδι αποδίδεται ήδη κοντά στην ανάλυση της τηλεόρασης."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Επιλέξτε μια ρύθμιση. Η επίδρασή του εξηγείται παρακάτω."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: ελαφριά εξομάλυνση άκρων με ένα πέρασμα. Μπορεί να απαλύνει ελαφρώς το κείμενο και τις λεπτές λεπτομέρειες."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Προεπιλογή παιχνιδιού"
+
+#: R10 graphics UX
+msgid "Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."
+msgstr "Ανενεργό για αυτό το φίλτρο. Επιλέξτε AMD FSR 1 στην ενότητα Upscaling για να προσαρμόσετε την ευκρίνεια. Δεν αλλάζει τις υφές του παιχνιδιού."
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Πλησιέστερο: διατηρεί σκληρές άκρες pixel, με ορατά σκαλοπάτια. Το καλύτερο για τέχνη pixel, όχι για τα περισσότερα παιχνίδια 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Off: χωρίς εξομάλυνση άκρων. Οι πιο γρήγορες, αλλά οι διαγώνιες γραμμές μπορεί να φαίνονται οδοντωτές."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Μόνο το AMD FSR 1 χρησιμοποιεί αυτό το ποσοστό. Ξεκινήστε από το 50%. Αυξήστε απαλά για λεπτομέρεια. μειώστε εάν οι άκρες λαμπυρίζουν ή εμφανίζουν φωτοστέφανα."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: εξομάλυνση άκρων πολλαπλών περασμάτων υψηλής ποιότητας. Πιο ξεκάθαρα περιγράμματα αλλά περισσότερη δουλειά GPU από το FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "ΦΙΛΤΡΟ ΥΦΗΣ"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Φιλτράρισμα υφής"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Το φιλτράρισμα υφής διατηρεί το απομακρυσμένο έδαφος και τις επιφάνειες πιο καθαρές υπό γωνία. Η υψηλότερη ανισοτροπία χρησιμοποιεί περισσότερο εύρος ζώνης GPU."
+
+#: R10 graphics UX
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike FSR sharpness, it does not sharpen the whole picture."
+msgstr "Το φιλτράρισμα υφής ακονίζει δρόμους, δάπεδα και τοίχους υπό γωνία. Ξεκινήστε από 4x. 8x/16x χρησιμοποιούν περισσότερο εύρος ζώνης GPU. Σε αντίθεση με την ευκρίνεια FSR, δεν βελτιώνει την ευκρίνεια ολόκληρης της εικόνας."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "ΑΝΑΠΤΥΞΗ ΚΛΙΜΑΚΩΝ"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Αναβάθμιση"
+
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Η παραγωγή πλαισίων χρειάζεται τη Vulkan. Επιλέξτε Vulkan για να ενεργοποιήσετε αυτήν την επιλογή."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Αυτή η επιλογή χρειάζεται Vulkan. Το OpenGL δεν μπορεί να δημιουργήσει επιπλέον πλαίσια. η αλλαγή του δεν θα είχε κανένα αποτέλεσμα."

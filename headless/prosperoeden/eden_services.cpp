@@ -1881,6 +1881,7 @@ pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     result.filter = saved.upscaling_filter;
     result.fsr_sharpness = saved.fsr_sharpness;
     result.anti_aliasing = saved.anti_aliasing;
+    result.texture_anisotropy = saved.texture_anisotropy;
     result.refresh = saved.refresh;
     result.frame_generation = saved.frame_generation;
     result.performance_profile = saved.performance_profile;
@@ -1899,6 +1900,7 @@ bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameS
     value.upscaling_filter = settings.filter;
     value.fsr_sharpness = settings.fsr_sharpness;
     value.anti_aliasing = settings.anti_aliasing;
+    value.texture_anisotropy = settings.texture_anisotropy;
     value.refresh = settings.refresh;
     value.frame_generation = settings.frame_generation;
     value.performance_profile = settings.performance_profile;
@@ -1922,6 +1924,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.filter = saved.upscaling_filter;
     result.fsr_sharpness = saved.fsr_sharpness;
     result.anti_aliasing = saved.anti_aliasing;
+    result.texture_anisotropy = saved.texture_anisotropy;
     result.refresh = saved.refresh;
     result.frame_generation = saved.frame_generation;
     result.output = saved.output;
@@ -1965,6 +1968,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.upscaling_filter = preferences.filter;
     value.fsr_sharpness = preferences.fsr_sharpness;
     value.anti_aliasing = preferences.anti_aliasing;
+    value.texture_anisotropy = preferences.texture_anisotropy;
     value.refresh = preferences.refresh;
     value.frame_generation = preferences.frame_generation;
     value.output = preferences.output;

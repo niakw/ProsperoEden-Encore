@@ -1426,10 +1426,6 @@ msgstr "L'initialisation de la manette PS5 a échoué."
 msgid "Public room service unavailable."
 msgstr "Service des salons publics indisponible."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Salons publics (consultation seule)"
-
 #: Nlib metadata
 msgid "Puzzle"
 msgstr "Réflexion"
@@ -1449,10 +1445,6 @@ msgstr "Quitter"
 #: Nlib metadata
 msgid "Racing"
 msgstr "Course"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Annuaire des salons (lecture seule)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1568,10 +1560,6 @@ msgstr "ROM absente du dossier des fichiers de jeu"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM absente de la racine de stockage"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "La connexion aux salons n'est pas encore disponible."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -2108,3 +2096,31 @@ msgstr "{0}/ (NSP ou XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (un dossier par ID de titre)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Salons publics"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Connexion au salon..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Connecté au salon"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Rejoignez un salon ou hébergez un salon LAN."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Salon indisponible."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Rejoindre"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Héberger / Quitter"

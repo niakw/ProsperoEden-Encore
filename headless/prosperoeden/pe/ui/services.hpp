@@ -337,6 +337,16 @@ class Services
 
     // R14: separate, read-only public room discovery task. Worker MUST be
     // self-contained and must not capture a launcher or service object.
+    // Join/host/leave are explicit user actions, always performed on a
+    // worker. Tasks own their arguments: they never capture a UI or Services.
+    virtual std::function<Eden::Multiplayer::RoomActionResult()>
+    detached_room_action_task(Eden::Multiplayer::RoomAction,
+                              const Eden::Multiplayer::PublicRoom& = {}) {
+        return [] { return Eden::Multiplayer::RoomActionResult{
+            false, "Network room transport is unavailable."}; };
+    }
+    virtual bool room_connected() const { return false; }
+    virtual bool room_hosting() const { return false; }
     virtual std::function<Eden::Multiplayer::RoomDirectory()> detached_room_directory_task() {
         return [] {
             return Eden::Multiplayer::RoomDirectory{{},

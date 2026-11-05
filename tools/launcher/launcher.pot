@@ -1354,10 +1354,6 @@ msgstr ""
 msgid "Public room service unavailable."
 msgstr ""
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr ""
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr ""
@@ -1368,10 +1364,6 @@ msgstr ""
 
 #: pe/ui/home.cpp
 msgid "Quit"
-msgstr ""
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -1479,10 +1471,6 @@ msgstr ""
 
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
-msgstr ""
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -1987,4 +1975,32 @@ msgstr ""
 #. {0} is the mods folder; inside it each game has a folder named after its ID (16 letters and digits).
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
 msgstr ""

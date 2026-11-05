@@ -20,4 +20,13 @@ struct RoomDirectory {
 };
 inline constexpr std::size_t MaxDirectoryBytes = 2 * 1024 * 1024;
 RoomDirectory ParseRoomDirectory(std::string_view body, unsigned protocol);
+// A discovered room is not automatically a safe/compatible join target.
+bool CanJoinPublicRoom(const PublicRoom& room);
+
+enum class RoomAction : unsigned char { Join, HostPrivate, Leave };
+struct RoomActionResult {
+    bool ok{};
+    std::string message;
+};
+
 }

@@ -44,11 +44,23 @@ Network::network_version réellement défini dans le moteur Eden
 d'identifier correctement les salles du même protocole.
 Un test refuse les salles de version 0 ou 2.
 
-Le menu reste en lecture seule. Les boutons rejoindre, créer/héberger
-et les échanges invité via Network::RoomMember, ENet, BSD et LDN
-ne sont pas raccordés au launcher PS5. L'amont possède bien ces
-composants, mais cela ne prouve pas leur compatibilité native sur
-firmware 13.60. Aucun transfert invité ni salon joignable vérifié.
+Le menu est désormais relié aux actions de transport amont :
+**Croix : rejoindre** un salon public compatible, non protégé et non plein ;
+**Carré : héberger** un salon LAN privé ou le **quitter**. Les commandes
+Network::Room, RoomMember et ENet s'exécutent sur un worker séparé
+sans bloquer l'interface. L'initialisation réutilise le Network::Init
+déjà présent pour ne pas écraser les objets réseau du guest. Le worker
+ne capture ni le lanceur ni le service, et une opération en cours
+ne peut pas être lancée deux fois. La vue et les commandes sont
+traduites dans les 29 catalogues.
+
+**Périmètre :** hébergement local LAN uniquement, sans enregistrement
+du salon dans un annuaire public ni traversée NAT ; aucun mot de passe
+ni système de comptes. LDN/traffic proxy, paquets invités NS1/NS2,
+compatibilité firmware et sessions entre consoles demandent une
+validation sur PS5. Les messages de statut du réseau doivent encore
+être qualifiés avec les scénarios réels de déconnexion. Ne pas annoncer
+le multijoueur comme garanti fonctionnel sur console.
 
 ## Vérifications effectivement exécutées
 

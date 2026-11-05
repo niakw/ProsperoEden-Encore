@@ -266,6 +266,11 @@ class Launcher
         Eden::Multiplayer::RoomDirectory result{};
         std::atomic<bool> completed{false};
     };
+    struct RoomActionState {
+        Eden::Multiplayer::RoomActionResult result{};
+        std::atomic<bool> completed{false};
+    };
+    std::shared_ptr<RoomActionState> room_action_;
     std::shared_ptr<RoomLoadState> room_load_;
     Eden::Multiplayer::RoomDirectory room_directory_{};
     bool rooms_loaded_ = false;

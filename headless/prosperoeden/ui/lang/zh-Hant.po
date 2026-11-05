@@ -1354,10 +1354,6 @@ msgstr "PS5 控制器初始化失敗"
 msgid "Public room service unavailable."
 msgstr "房間服務無法使用。"
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "公開房間（僅瀏覽）"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "快速設定"
@@ -1369,10 +1365,6 @@ msgstr "快速設定"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "離開"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "房間列表（僅瀏覽）"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "遊戲檔案的資料夾中缺少 ROM"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "存儲根目錄中缺少 ROM"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "暫不支援加入房間。"
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/（NSP 或 XCI）"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/（每個遊戲 ID 一個資料夾）"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "公開房間"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "正在連線房間..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "已連線房間"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "加入房間或建立區域網路房間。"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "房間無法使用。"
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "加入"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "建立 / 離開"

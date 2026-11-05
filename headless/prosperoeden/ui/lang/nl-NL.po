@@ -1354,10 +1354,6 @@ msgstr "Initialisatie van de PS5-controller mislukt"
 msgid "Public room service unavailable."
 msgstr "Kamerdienst niet beschikbaar."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Openbare kamers (alleen lezen)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "SNELLE INSTELLINGEN"
@@ -1369,10 +1365,6 @@ msgstr "Snelle instellingen"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Afsluiten"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Kamerlijst (alleen lezen)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM ontbreekt in de map met gamebestanden"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM ontbreekt in de opslagroot"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Deelnemen aan kamers is nog niet mogelijk."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/ (NSP of XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (één map per titel-ID)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Openbare kamers"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Verbinden met kamer..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Verbonden met kamer"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Neem deel aan een kamer of host een LAN-kamer."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Kamer niet beschikbaar."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Deelnemen"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Hosten / Verlaten"

@@ -1354,10 +1354,6 @@ msgstr "PS5コントローラーの初期化に失敗しました"
 msgid "Public room service unavailable."
 msgstr "ルームサービスに接続できません。"
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "公開ルーム（閲覧のみ）"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "クイック設定"
@@ -1369,10 +1365,6 @@ msgstr "クイック設定"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "終了"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "ルーム一覧（閲覧のみ）"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ゲームファイルのフォルダーにROMがありません"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ストレージルートにROMがありません"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "ルームへの参加はまだ利用できません。"
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/（NSPまたはXCI）"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/（タイトルIDごとに1フォルダー）"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "公開ルーム"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "ルームに接続中..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "ルームに接続しました"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "ルームに参加するか、LAN ルームをホストします。"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "ルームは利用できません。"
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "参加"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "ホスト / 退出"

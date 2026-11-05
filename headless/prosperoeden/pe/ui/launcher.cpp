@@ -657,6 +657,12 @@ void Launcher::update(float dt)
             std::max(0, static_cast<int>(room_directory_.rooms.size()) - 1));
         room_load_.reset();
     }
+    if (room_action_ && room_action_->completed.load(std::memory_order_acquire)) {
+        // All network I/O ran off-thread; the UI alone owns the notice.
+        say(room_action_->result.message, !room_action_->result.ok);
+        cue(room_action_->result.ok ? Cue::toggle : Cue::error);
+        room_action_.reset();
+    }
     if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
         const bool was_manual = update_check_->manual;
         const bool recheck_manual = update_check_->recheck_manual;

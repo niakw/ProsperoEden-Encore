@@ -1354,10 +1354,6 @@ msgstr "Error al inicializar el mando de PS5."
 msgid "Public room service unavailable."
 msgstr "El servicio de salas públicas no está disponible."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Salas públicas (solo lectura)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "AJUSTES RÁPIDOS"
@@ -1369,10 +1365,6 @@ msgstr "Ajustes rápidos"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Salir"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Directorio de salas (solo lectura)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "Falta la ROM en la carpeta de archivos de juego"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "Falta la ROM en la carpeta raíz"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Aún no es posible unirse a las salas."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/ (NSP o XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (una carpeta por ID de título)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Salas públicas"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Conectando a la sala..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Conectado a la sala"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Únete a una sala o crea una sala LAN."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Sala no disponible."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Unirse"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Crear / Salir"

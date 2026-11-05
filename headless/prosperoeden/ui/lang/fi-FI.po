@@ -1354,10 +1354,6 @@ msgstr "PS5-ohjaimen alustus epäonnistui"
 msgid "Public room service unavailable."
 msgstr "Huonepalvelu ei ole käytettävissä."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Julkiset huoneet (vain katselu)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "PIKA-ASETUKSET"
@@ -1369,10 +1365,6 @@ msgstr "Pika-asetukset"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Lopeta"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Huoneluettelo (vain katselu)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM puuttuu pelitiedostojen kansiosta"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM puuttuu tallennusjuuresta"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Huoneisiin liittyminen ei ole vielä käytössä."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/ (NSP tai XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (kansio kutakin nimiketunnusta kohden)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Julkiset huoneet"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Yhdistetään huoneeseen..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Yhdistetty huoneeseen"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Liity huoneeseen tai isännöi LAN-huonetta."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Huone ei ole käytettävissä."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Liity"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Isännöi / Poistu"

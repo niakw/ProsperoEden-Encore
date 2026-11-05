@@ -22,6 +22,9 @@
 #include "settings_store.h"
 #include "version.h"
 #include "network/room.h"
+#include "network/network.h"
+#include "network/room_member.h"
+#include "enet/enet.h"
 #include "launcher_update_version.hpp"
 #include "launcher_update_release.hpp"
 #include <string_view>
@@ -2087,6 +2090,116 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     // independently audited installer, title-ID check, download verification,
     // restart and recovery proof are required before State::available is used.
     return report;
+}
+
+namespace {
+struct NativeRoomSession {
+    std::mutex mutex;
+    bool initialized = false;
+    bool hosting = false;
+
+    bool EnsureNetwork() {
+        if (initialized) return true;
+        // The active emulator may already own Network::Init. Reuse its
+        // RoomMember; a second call would replace the guest HLE bridge.
+        if (!Network::GetRoomMember().expired()) {
+            initialized = true;
+            return true;
+        }
+        initialized = Network::Init();
+        return initialized;
+    }
+};
+NativeRoomSession& RoomSession() {
+    // Intentionally process-lifetime: a detached network worker may still
+    // be running during launcher destruction. Never destroy the Room/ENet
+    // objects concurrently from a static global destructor.
+    static auto* session = new NativeRoomSession;
+    return *session;
+}
+
+Eden::Multiplayer::RoomActionResult RoomAction(
+    Eden::Multiplayer::RoomAction action, Eden::Multiplayer::PublicRoom room) {
+    using Eden::Multiplayer::RoomAction;
+    auto& session = RoomSession();
+    std::lock_guard lock(session.mutex);
+    if (action == RoomAction::Join &&
+        !Eden::Multiplayer::CanJoinPublicRoom(room))
+        return {false, "Room is incompatible, protected, full or unsafe."};
+    if (action != RoomAction::Leave && !session.EnsureNetwork())
+        return {false, "Network initialization failed."};
+    auto member = Network::GetRoomMember().lock();
+    auto host = Network::GetRoom().lock();
+    if (!member || !host)
+        return {action == RoomAction::Leave, "Network room is unavailable."};
+    if (action == RoomAction::Leave) {
+        if (member->IsConnected()) member->Leave();
+        if (host->GetState() == Network::Room::State::Open) host->Destroy();
+        session.hosting = false;
+        return {true, "Disconnected from room."};
+    }
+
+    // Preflight the native ENet socket: upstream Join asserts on failure
+    // to create its own client, which would otherwise crash the console.
+    ENetHost* probe = enet_host_create(nullptr, 1, Network::NumChannels, 0, 0);
+    if (!probe) return {false, "Network socket unavailable."};
+    enet_host_destroy(probe);
+
+    if (member->IsConnected()) member->Leave();
+    if (host->GetState() == Network::Room::State::Open) host->Destroy();
+    session.hosting = false;
+    const bool hosting = action == RoomAction::HostPrivate;
+    if (hosting &&
+        !host->Create("Eden Encore PS5", "", "", Network::DefaultRoomPort,
+                      "", 8))
+        return {false, "Could not host private room."};
+    session.hosting = hosting;
+    const std::string address = hosting ? "127.0.0.1" : room.address;
+    const auto port = hosting ? Network::DefaultRoomPort : room.port;
+    // Per-session nickname avoids recurring collisions without reading
+    // a PSN identity or transmitting any console identifier.
+    const auto timestamp = static_cast<unsigned long long>(
+        std::chrono::steady_clock::now().time_since_epoch().count());
+    const std::string nickname = "Encore-" + std::to_string(timestamp % 100000000ull);
+    member->Join(nickname, address.c_str(), port);
+
+    // Join establishes ENet first, then the room-version/password handshake
+    // completes on its dedicated event loop. Poll on this worker only.
+    for (int i = 0; i < 100; ++i) {
+        const auto state = member->GetState();
+        if (state == Network::RoomMember::State::Joined ||
+            state == Network::RoomMember::State::Moderator)
+            return {true, hosting ? "Private LAN room hosted." : "Connected to room."};
+        if (state == Network::RoomMember::State::Idle) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    if (member->IsConnected()) member->Leave();
+    if (hosting && host->GetState() == Network::Room::State::Open)
+        host->Destroy();
+    session.hosting = false;
+    return {false, "Room handshake failed or timed out."};
+}
+} // namespace
+
+std::function<Eden::Multiplayer::RoomActionResult()>
+EdenServices::detached_room_action_task(
+    Eden::Multiplayer::RoomAction action,
+    const Eden::Multiplayer::PublicRoom& room) {
+    return [action, room] { return RoomAction(action, room); };
+}
+
+bool EdenServices::room_connected() const {
+    auto member = Network::GetRoomMember().lock();
+    if (!member) return false;
+    const auto state = member->GetState();
+    return state == Network::RoomMember::State::Joined ||
+           state == Network::RoomMember::State::Moderator;
+}
+
+bool EdenServices::room_hosting() const {
+    auto& session = RoomSession();
+    std::lock_guard lock(session.mutex);
+    return session.hosting;
 }
 
 std::function<Eden::Multiplayer::RoomDirectory()>

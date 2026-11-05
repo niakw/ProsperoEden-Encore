@@ -1354,10 +1354,6 @@ msgstr "PS5 컨트롤러를 초기화하지 못했습니다"
 msgid "Public room service unavailable."
 msgstr "방 서비스를 사용할 수 없습니다."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "공개 방(보기 전용)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "빠른 설정"
@@ -1369,10 +1365,6 @@ msgstr "빠른 설정"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "종료"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "방 목록(보기 전용)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "게임 파일 폴더에 ROM이 없습니다"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "저장소 루트에 ROM이 없습니다."
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "아직 방에 참가할 수 없습니다."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/(NSP 또는 XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/(타이틀 ID마다 폴더 하나)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "공개 방"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "방에 연결 중..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "방에 연결됨"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "방에 참가하거나 LAN 방을 호스팅하세요."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "방을 사용할 수 없습니다."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "참가"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "호스트 / 나가기"

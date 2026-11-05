@@ -21,6 +21,18 @@ int main() {
         auto result=parse(json::array({room()}));
         assert(result.error.empty() && result.rooms.size()==1 &&
                result.rooms[0].compatible && result.rooms[0].players==2);
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(result.rooms[0]));
+        auto open = result.rooms[0];
+        open.password = false;
+        assert(Eden::Multiplayer::CanJoinPublicRoom(open));
+        open.players = open.capacity;
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(open));
+        open.players = 0;
+        open.address = "127.0.0.1";
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(open));
+        open.address = "8.8.8.8";
+        open.compatible = false;
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(open));
     }
     {
         auto zero=room("8.8.4.4",0,1);

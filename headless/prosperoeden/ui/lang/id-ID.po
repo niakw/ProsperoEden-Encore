@@ -1354,10 +1354,6 @@ msgstr "Inisialisasi controller PS5 gagal"
 msgid "Public room service unavailable."
 msgstr "Layanan ruang tidak tersedia."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Ruang publik (hanya lihat)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "PENGATURAN CEPAT"
@@ -1369,10 +1365,6 @@ msgstr "Pengaturan cepat"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Keluar"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Daftar ruang (hanya lihat)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM tidak ada di folder file game"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM hilang dari root penyimpanan"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Bergabung ke ruang belum tersedia."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/ (NSP atau XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (satu folder per ID judul)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Ruang publik"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Menghubungkan ke ruang..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Terhubung ke ruang"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Gabung ruang atau hosting ruang LAN."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Ruang tidak tersedia."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Gabung"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Host / Keluar"

@@ -1354,10 +1354,6 @@ msgstr "PS5-controlleren kunne ikke initialiseres"
 msgid "Public room service unavailable."
 msgstr "Rumtjenesten er ikke tilgængelig."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Offentlige rum (kun visning)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "HURTIGINDSTILLINGER"
@@ -1369,10 +1365,6 @@ msgstr "Hurtigindstillinger"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Afslut"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Rumliste (kun visning)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM mangler i mappen med spilfiler"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM mangler fra lagerroden"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Det er endnu ikke muligt at deltage."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,31 @@ msgstr "{0}/ (NSP eller XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (en mappe pr. titel-id)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Offentlige rum"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Opretter forbindelse til rum..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Forbundet til rum"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Deltag i et rum eller vær vært for et LAN-rum."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Rum er ikke tilgængeligt."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Deltag"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Vært / Forlad"

@@ -110,5 +110,29 @@ int main() {
     Require(!Bridge(alias).Ready(), "uniform bank cannot alias a high output GPR");
     const auto reg_sel=UniformSel(0x207,5,6,8);
     Require(Bridge(reg_sel).Ready(), "normal scalar SEL remains functional");
+    // Uniform FSET (0xc0a) uses the same actual bank owner as uniform SEL,
+    // but must keep its own float-comparison opcode, operation and predicate.
+    for (const auto [ureg, expected_gpr] :
+         std::array<std::pair<u32,u32>,3>{{{4,220},{17,201},{63,255}}}) {
+        const auto compare=UniformSel(0xc0a,5,6,ureg);
+        Require(Reviewed(compare), "uniform FSET fields admitted by reviewed ISA");
+        const auto bridge=Bridge(compare);
+        Require(bridge.Ready(), bridge.reason.data());
+        const u64 word=bridge.maxwell_instructions[bridge.source_instruction_offsets[0]];
+        Require((word>>56)==0x58 && (word&255)==5,
+                "uniform FSET uses Maxwell floating comparison, destination preserved");
+        Require(((word>>8)&255)==6, "FSET direct source A preserved");
+        Require(((word>>20)&255)==expected_gpr,
+                "FSET uniform B mapped into the protected UR register bank");
+    }
+    Require(!Bridge(UniformSel(0xc0a,5,6,64)).Ready(),
+            "invalid FSET uniform register cannot compile");
+    Require(!Bridge(UniformSel(0xc0a,220,6,4)).Ready(),
+            "FSET uniform bank must not overwrite high destination");
+    auto bad_mode=UniformSel(0xc0a,5,6,4);
+    bad_mode.words[2] |= 3U << 10; // invalid floating operation selection
+    Require(!Bridge(bad_mode).Ready(), "unreviewed FSET operation refused");
+    Require(Bridge(UniformSel(0x20a,5,6,8)).Ready(),
+            "ordinary FSET regression guard");
     std::puts("P2_4_REAL_AMPERE_SCALAR_ALU_SOURCE_PASS");
 }

@@ -1249,3 +1249,19 @@ ne produit jamais un faux shader. Test regroupé des deux nouvelles formes
 Ampere **FRND-CBUF + SEL-UR** sur les vraies fonctions
 `ProbeProgram`, `LowerReviewedToMaxwell` et `LowerToMaxwell` :
 Clang/GCC, O0/O2, UBSan **4/4 PASS** ; aucune preuve de rendu PS5.
+
+
+**P2.4 — `FSET.BF` avec source uniforme (05/11, source/hôte) :**
+la forme Ampere `0xc0a` était reconnue dans la table ISA mais non traduite,
+alors que le propriétaire partagé possède déjà le `FSET` Maxwell et
+son accès au banc UR. Elle rejoint le même lowerer, sans introduire
+de pipeline parallèle : le registre uniforme B est découvert avant
+l'allocation du banc protégé et son numéro est mappé dans l'ABI Maxwell.
+Les comparaisons avec registres ou immédiats restent identiques ; les
+combinaisons de mode hors contrat, les UR invalides et les collisions
+avec les GPR de sortie restent refusées. Le test combiné
+`check_ampere_scalar_alu_sources_host.py` exécute les vrais propriétaires
+`ProbeProgram`, `LowerToMaxwell`, `LowerReviewedToMaxwell` pour
+`FRND-CBUF`, `SEL-UR` et `FSET-UR`, sous Clang/GCC UBSan O0/O2 :
+**4/4 PASS**. Aucun framebuffer PS5 ou support complet de stages
+Ampere n'en découle : P2.4/P5 restent ouverts.

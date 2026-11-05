@@ -27,6 +27,7 @@
 #include "enet/enet.h"
 #include "launcher_update_version.hpp"
 #include "launcher_update_release.hpp"
+#include "native_app_update.hpp"
 #include <string_view>
 
 #include <algorithm>
@@ -2084,11 +2085,28 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
         report.summary = "Stable " + result.latest_version +
             " exists, but no compatible PPSA99008 package is published.";
         break;
-    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_package_candidate:
-        report.state = Report::State::newer_uninstallable;
-        report.summary = "Stable " + result.latest_version +
-            " has a checksum-bound PS5 package; native installation is not qualified.";
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_package_candidate: {
+        // The updater may be advertised only if this app actually carries
+        // its separately built helper ELF, never on host/preview builds.
+        bool helper_ready = false;
+#ifdef PS5_NATIVE
+        std::error_code ec;
+        const auto status =
+            std::filesystem::symlink_status("/app0/self-updater.elf", ec);
+        if (!ec && std::filesystem::is_regular_file(status) &&
+            !std::filesystem::is_symlink(status)) {
+            const auto bytes =
+                std::filesystem::file_size("/app0/self-updater.elf", ec);
+            helper_ready = !ec && bytes >= 4096 && bytes <= (16u << 20);
+        }
+#endif
+        report.state = helper_ready ? Report::State::available
+                                    : Report::State::newer_uninstallable;
+        report.summary = helper_ready
+            ? "Stable PS5 update is available; installation requires confirmation."
+            : "Stable PS5 package exists but its native helper is unavailable.";
         break;
+    }
     }
     // Even a valid SHA-256 in a trusted release is only a candidate. An
     // independently audited installer, title-ID check, download verification,
@@ -2229,6 +2247,31 @@ EdenServices::detached_room_directory_task()
 
 pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {
     return QueryAppReleaseMetadata(current);
+}
+
+std::function<pe::ui::AppUpdateInstallResult()>
+EdenServices::detached_app_update_install_task(
+    const pe::ui::AppUpdateInfo& candidate) {
+    // The archived metadata is not sufficient by itself: re-query the same
+    // official stable release before downloading anything, rejecting changes.
+    return [candidate] {
+        const auto current = QueryAppReleaseMetadata(candidate.installed_version);
+        if (current.latest_version.empty() ||
+            current.latest_version != candidate.latest_version ||
+            current.package_name.empty() ||
+            current.package_name != candidate.package_name ||
+            current.package_path != candidate.package_path ||
+            current.package_bytes != candidate.package_bytes ||
+            current.package_sha256 != candidate.package_sha256)
+            return pe::ui::AppUpdateInstallResult{
+                false, "Release metadata changed. Run a new update check."};
+        const auto result = Eden::EncoreUpdate::InstallNativeApp({
+            candidate.installed_version, candidate.latest_version,
+            candidate.package_name, candidate.package_path,
+            candidate.package_sha256, candidate.package_bytes
+        });
+        return pe::ui::AppUpdateInstallResult{result.applying,result.message};
+    };
 }
 
 std::function<pe::ui::AppUpdateInfo()> EdenServices::detached_app_update_task(

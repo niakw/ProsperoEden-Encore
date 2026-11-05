@@ -2004,3 +2004,19 @@ msgstr "Tham gia"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Tạo / Rời"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Cài đặt"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Cài đặt bản cập nhật đã xác minh? Eden Encore sẽ đóng sau đó."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Đang tải và xác minh bản cập nhật PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Không thể cập nhật trên thiết bị này."

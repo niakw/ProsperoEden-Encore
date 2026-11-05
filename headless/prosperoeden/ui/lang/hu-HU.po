@@ -2004,3 +2004,19 @@ msgstr "Csatlakozás"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Házigazda / Kilépés"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Telepítés"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Telepíti az ellenőrzött frissítést? Az Eden Encore ezután bezárul."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "A PS5-frissítés letöltése és ellenőrzése..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "A frissítések nem érhetők el ezen az eszközön."

@@ -2004,3 +2004,19 @@ msgstr "Katıl"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Kur / Ayrıl"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Yükle"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Doğrulanmış güncelleme yüklensin mi? Eden Encore daha sonra kapanacak."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "PS5 güncellemesi indiriliyor ve doğrulanıyor..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Güncellemeler bu cihazda kullanılamıyor."

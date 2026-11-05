@@ -2004,3 +2004,19 @@ msgstr "Gabung"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Host / Keluar"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Instal"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Instal pembaruan terverifikasi? Eden Encore akan ditutup setelahnya."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Mengunduh dan memverifikasi pembaruan PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Pembaruan tidak tersedia pada perangkat ini."

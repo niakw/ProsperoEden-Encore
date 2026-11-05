@@ -2004,3 +2004,19 @@ msgstr "Войти"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Создать / Выйти"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Установить"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Установить проверенное обновление? После этого Eden Encore закроется."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Загрузка и проверка обновления PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Обновления недоступны на этом устройстве."

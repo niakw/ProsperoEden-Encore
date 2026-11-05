@@ -144,7 +144,8 @@ struct Home
     std::string system_status;
 };
 
-// R21 is metadata-only until a verified PS5-native installer is available.
+// R21: official stable-release metadata, and explicit-consent installation
+// only when a verified candidate and independent native helper both exist.
 struct AppUpdateInfo {
     enum class State { not_checked, up_to_date, incompatible, newer_uninstallable, available, offline };
     State state = State::not_checked;
@@ -158,6 +159,10 @@ struct AppUpdateInfo {
     std::string package_path;
     std::string package_sha256;
     std::uint64_t package_bytes = 0;
+};
+struct AppUpdateInstallResult {
+    bool applying = false;
+    std::string message;
 };
 
 struct Preferences
@@ -341,6 +346,13 @@ class Services
         };
     }
 
+    // The user explicitly confirms an install after an official stable
+    // release check. The independent job never captures UI/Services.
+    virtual std::function<AppUpdateInstallResult()>
+    detached_app_update_install_task(const AppUpdateInfo&) {
+        return [] { return AppUpdateInstallResult{
+            false, "Native PS5 update installer unavailable."}; };
+    }
     // R14: separate, read-only public room discovery task. Worker MUST be
     // self-contained and must not capture a launcher or service object.
     // Join/host/leave are explicit user actions, always performed on a

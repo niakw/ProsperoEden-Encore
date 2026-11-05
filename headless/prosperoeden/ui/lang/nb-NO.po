@@ -2004,3 +2004,19 @@ msgstr "Bli med"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Vert / Forlat"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Installer"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Installere bekreftet oppdatering? Eden Encore lukkes deretter."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Laster ned og verifiserer PS5-oppdateringen..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Oppdateringer er ikke tilgjengelige på denne enheten."

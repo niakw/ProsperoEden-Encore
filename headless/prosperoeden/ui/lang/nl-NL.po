@@ -2004,3 +2004,19 @@ msgstr "Deelnemen"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Hosten / Verlaten"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Installeren"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Geverifieerde update installeren? Eden Encore sluit daarna."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "PS5-update downloaden en controleren..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Updates niet beschikbaar op dit apparaat."

@@ -2004,3 +2004,19 @@ msgstr "Připojit"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Hostovat / Opustit"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Instalovat"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Nainstalovat ověřenou aktualizaci? Eden Encore se poté ukončí."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Stahování a ověřování aktualizace PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Aktualizace nejsou na tomto zařízení dostupné."

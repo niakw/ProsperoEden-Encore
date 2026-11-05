@@ -40,6 +40,8 @@ public:
     bool set_preferences(const pe::ui::Preferences& preferences) override;
     pe::ui::AppUpdateInfo check_app_update(const std::string& current) override;
     std::function<pe::ui::AppUpdateInfo()> detached_app_update_task(const std::string& current) override;
+    std::function<pe::ui::AppUpdateInstallResult()>
+    detached_app_update_install_task(const pe::ui::AppUpdateInfo& candidate) override;
     std::function<Eden::Multiplayer::RoomDirectory()> detached_room_directory_task() override;
     std::function<Eden::Multiplayer::RoomActionResult()>
     detached_room_action_task(Eden::Multiplayer::RoomAction action,

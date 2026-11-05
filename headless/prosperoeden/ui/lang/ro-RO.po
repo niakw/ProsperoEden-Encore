@@ -2004,3 +2004,19 @@ msgstr "Intră"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Găzduiește / Ieși"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Instalează"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Instalați actualizarea verificată? Eden Encore se va închide după aceea."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Se descarcă și se verifică actualizarea PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Actualizările nu sunt disponibile pe acest dispozitiv."

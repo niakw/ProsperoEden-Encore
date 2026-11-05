@@ -2004,3 +2004,19 @@ msgstr "Συμμετοχή"
 #: pe/ui/multiplayer.cpp
 msgid "Host / Leave"
 msgstr "Φιλοξενία / Έξοδος"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Εγκατάσταση"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Να εγκατασταθεί η επαληθευμένη ενημέρωση; Το Eden Encore θα κλείσει μετά."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Λήψη και επαλήθευση της ενημέρωσης PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Οι ενημερώσεις δεν είναι διαθέσιμες σε αυτή τη συσκευή."

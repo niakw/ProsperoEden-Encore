@@ -32,11 +32,24 @@ réutilisé. Tests hôtes ASan/UBSan. Ce précontrôle n'autorise pas seul
 le remplacement des fichiers : le helper doit encore vérifier
 l'archive ZIP et la cible d'installation.
 
-Le statut State::available n'est jamais émis par les services natifs.
-Le helper self_update_helper dispose d'un protocole sécurisé, d'extraction
-bornée et de sauvegarde, mais n'est pas connecté au launcher, à un
-téléchargement vérifié ni à un redémarrage PS5. Il serait donc trompeur
-d'annoncer que le bouton installe l'application.
+Le chemin natif est maintenant raccordé en source : le packager
+construit et copie self-updater.elf ; la version stable possède un
+état available seulement si cet ELF est présent et l'archive officielle
+répond aux règles. Sur confirmation explicite, un worker recharge
+les métadonnées stables et refuse tout changement, télécharge sur HTTPS
+avec le magasin de certificats maintenu et vérifie intégralement
+taille/SHA256. Il transmet alors le helper ELF au loader local 9021,
+puis les chunks bornés ZIP. Le helper valide fichiers, chemin, version,
+empreinte, sauvegardes, restauration et espace libre avant de répondre
+staged. L'application envoie apply, attend applying puis ferme le
+processus pour que le helper puisse modifier le répertoire cible.
+
+**Attention** : compilation syntaxique PS5 simulée sur Mac, tests
+de contrat/cryptographie hôtes seulement. Aucun build PS5 complet,
+téléchargement réel sur console, ni installation/rollback en conditions
+PS5 13.60 démontrés. L'activation réelle ne sera établie qu'après tests
+console. La recherche peut être automatique ; l'installation exige
+toujours une confirmation et ne s'effectue jamais silencieusement.
 
 La cible d'installation du helper est exclusivement
 /data/homebrew/PPSA99008. Les archives FFPFSC ou PKG ne sont pas

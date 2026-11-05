@@ -154,3 +154,29 @@ target_include_directories(eden-mihawkgen-native PRIVATE
     "${EDEN_MIHAWKGEN_ROOT}/external" "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk"
     "${PORT_ROOT}/extras/graphics" "${EDEN_PORT_DIR}")
 target_sources(video_core PRIVATE $<TARGET_OBJECTS:eden-mihawkgen-native>)
+
+# R08 / LSFG: reuse the GPL-3 Vulkan shader extraction/interpolation
+# engine on PS5, rather than duplicate it. Android is its default upstream.
+# The private Lossless.dll is supplied by the user, NEVER packaged.
+set(EDEN_LSFG_SOURCES_ROOT "${PROJECT_SOURCE_DIR}/src/video_core")
+set(EDEN_LSFG_NATIVE_SOURCES
+    "${EDEN_PORT_DIR}/lossless_dll_r08.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/frame_gen/lsfg_translate.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/frame_gen.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/frame_gen_pacer.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_alpha.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_beta.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_chain.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_common.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_delta.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_gamma.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_generate.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_mipmaps.cpp"
+    "${EDEN_LSFG_SOURCES_ROOT}/renderer_vulkan/present/lsfg_shaders.cpp")
+foreach(path IN LISTS EDEN_LSFG_NATIVE_SOURCES)
+    if(NOT EXISTS "${path}")
+        message(FATAL_ERROR "Missing maintained LSFG native input: ${path}")
+    endif()
+endforeach()
+target_sources(video_core PRIVATE ${EDEN_LSFG_NATIVE_SOURCES})
+target_compile_definitions(video_core PUBLIC HAS_LSFG)

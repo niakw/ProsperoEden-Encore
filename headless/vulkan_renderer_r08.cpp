@@ -231,18 +231,20 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     }
     Frame* frame = present_manager.GetRenderFrame();
 
-    // Keep Encore's native HUD *out* of MihawkGen inputs. It will be drawn
-    // only AFTER interpolation, on both synthetic and real frames.
-    // HUD baked into guest framebuffer remains inseparable.
-    const bool mihawk_selected =
-        Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 1 &&
-        !framebuffers.empty();
+    // Keep Encore's own overlay out of BOTH interpolation backends, not only
+    // MihawkGen. Draw once AFTER generating on each image; guest HUD pixels
+    // remain inseparable without per-game hooks.
+    const int native_fg_method =
+        Eden::Display::frame_generation_method.load(std::memory_order_relaxed);
+    const bool mihawk_selected = native_fg_method == 1 && !framebuffers.empty();
+    const bool postprocess_hud_required =
+        (native_fg_method == 1 || native_fg_method == 3) && !framebuffers.empty();
     const Eden::HudSnapshot postprocess_hud =
-        mihawk_selected ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
+        postprocess_hud_required ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
     scheduler.RequestOutsideRenderPassOperationContext();
     blit_swapchain.DrawToFrame(device, rasterizer, frame, framebuffers,
                                render_window.GetFramebufferLayout(), present_manager.SwapchainImageCount(),
-                               present_manager.SwapchainImageViewFormat(), !mihawk_selected);
+                               present_manager.SwapchainImageViewFormat(), !postprocess_hud_required);
 
 #ifdef HAS_LSFG
     // User-selected LSFG only. Do not mix a legacy generator with MihawkGen
@@ -257,6 +259,9 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         Frame* generated = present_manager.GetRenderFrame();
         blit_swapchain.PrepareFrame(device, generated, render_window.GetFramebufferLayout());
         frame_gen.GenerateInto(device, generated, generation);
+        // LSFG's shader output is in GENERAL. Native UI is post-composited
+        // like MihawkGen, so it never enters optical-flow calculations.
+        blit_swapchain.DrawHudOverlay(device, generated, postprocess_hud);
         scheduler.Flush(*generated->render_ready);
         present_manager.Present(generated);
         ::Eden::FrameMetrics::OnGeneratedQueued();
@@ -480,7 +485,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 
     // HUD is always restored on the true frame, including when no midpoint
     // could be generated; do not deprive the user of diagnostic overlay.
-    if (mihawk_selected)
+    if (postprocess_hud_required)
         blit_swapchain.DrawHudOverlay(device, frame, postprocess_hud);
     const u64 real_tick = scheduler.Flush(*frame->render_ready);
     if (r08_capture.valid && !r08_generated &&

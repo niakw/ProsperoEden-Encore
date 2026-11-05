@@ -1598,8 +1598,13 @@ int main(int argc, char** argv) {
                 (game_video.renderer >= 0 ? game_video.renderer : profile_renderer);
             const int requested_framegen = game_video.frame_generation >= 0
                 ? game_video.frame_generation : launch_preferences.frame_generation;
-            Eden::Display::frame_generation_method.store(
-                session_renderer == 1 && !safe_launch ? std::clamp(requested_framegen, 0, 3) : 0);
+            const int effective_framegen = session_renderer == 1 && !safe_launch
+                ? std::clamp(requested_framegen, 0, 3) : 0;
+            Eden::Display::frame_generation_method.store(effective_framegen);
+            // The upstream LSFG pacer depends on frame_gen for its GPU
+            // generation budget. Resolve once per title; no runtime menu
+            // setting alone is proof of compatible user-supplied shaders.
+            Settings::values.frame_gen.SetValue(effective_framegen == 3);
             Eden::Display::output_millihertz.store(0);
             setenv(Eden::Display::kVulkanSwitch, refresh ? "1" : "0", 1);
             Eden::Display::game_millihertz.store(60000);

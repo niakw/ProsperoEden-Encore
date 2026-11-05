@@ -355,3 +355,36 @@ dimension zéro ou supérieure à 3840x2160, ne déclenchent pas de
 chargement du modèle. Le test hôte couvre le redimensionnement,
 le basculement RGBA/BGRA, l'absence de changement et les formats
 invalides. Aucun comportement console PS5 n'est revendiqué.
+
+
+### C / FSR spatial et LSFG — audit de source
+
+Le filtre AMD FSR existant est un **upscaler spatial FSR 1 (EASU/RCAS)** :
+la méthode ScalingFilter::Fsr du launcher sélectionne les passes FSR de
+Layer::ConfigureDraw dans le fork Vulkan versionné. BlitScreen effectue
+ensuite un simple affichage bilinéaire de l'image déjà reconstituée. Ce
+n'est **ni FSR 3 temporel ni FSR 3 Frame Generation** ; ces deux pipelines
+n'ont toujours pas de vecteurs de mouvement/profondeur/jitter invités
+fiables et leur sélection ne démarre aucun vrai backend FSR3.
+
+Le code LSFG existant dans Eden comprend déjà un lecteur des ressources
+shaders d'un fichier Lossless.dll, un traducteur SPIR-V, les passes
+Alpha/Beta/Gamma/Delta et le pacer. Mais upstream ne les compile que
+sur Android. Encore inclut désormais ces unités GPL dans video_core
+pour PS5, avec HAS_LSFG activé sur la cible et synchronisation du choix
+global/par jeu avec Settings::values.frame_gen au lancement.
+
+Le fichier personnel de l'utilisateur est recherché via le répertoire
+EdenPath::LosslessDir à
+/data/prosperoeden/user/lossless/Lossless.dll
+(sandbox du jeu : dossier utilisateur équivalent). **Aucune DLL n'est
+incorporée aux livrables, exécutée ou téléchargée** ; seules ses données
+shaders sont lues. Le lecteur natif refuse les liens symboliques, les
+fichiers non réguliers et une taille nulle ou supérieure à 256 Mio.
+Sans fichier valide, LsfgShaders refuse l'activation et la présentation
+du jeu reste normale.
+
+Le HUD natif est recomposé après interpolation sur les sorties MihawkGen
+et LSFG. Ce raccordement LSFG est **en source et contrôlé statiquement** ;
+aucune compilation complète PS5, validation des pipelines par le pilote
+PS5, latence ou affichage 30->60 sur console n'est encore démontré.

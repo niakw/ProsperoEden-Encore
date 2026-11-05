@@ -39,7 +39,7 @@ assert "mihawk_native->MarkOutputBlitted();" in fork
 assert "mihawk_present_gate.Reset();" in fork
 assert "Eden::Display::output_millihertz.load" in fork
 assert "std::chrono::steady_clock::now()" in fork
-assert "mihawk_selected ? Eden::GetVulkanHud()" in fork
+assert "postprocess_hud_required ? Eden::GetVulkanHud()" in fork
 assert "blit_swapchain.DrawHudOverlay(device, r08_synthetic, postprocess_hud);" in fork
 assert "blit_swapchain.DrawHudOverlay(device, frame, postprocess_hud);" in fork
 assert ".native_hud_absent = true" in fork
@@ -57,7 +57,7 @@ assert "const bool mihawk_selected" in fork
 assert "present_manager.Present(r08_synthetic);" in fork
 assert "present_manager.Present(frame);" in fork
 assert "DrawToFrame(device, rasterizer, frame, framebuffers," in fork
-assert "present_manager.SwapchainImageViewFormat(), !mihawk_selected" in fork
+assert "present_manager.SwapchainImageViewFormat(), !postprocess_hud_required" in fork
 assert "VK_IMAGE_LAYOUT_GENERAL);" in overlay_src
 assert "BeginRenderPass(cmdbuf, rp, fb, size);" in overlay_src
 assert "cmdbuf.EndRenderPass();" in overlay_src

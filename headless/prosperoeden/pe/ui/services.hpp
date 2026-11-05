@@ -168,6 +168,10 @@ struct Preferences
     bool high_contrast = false;
     bool reduce_motion = false;
     int ui_theme = 0; // 0 Encore (default), 1 Switch
+    int color_palette = 0; // Neon, Dark, Light
+    int accent_color = 0; // Default, Ocean, Emerald, Amber, Rose
+    int background_style = 0; // Auto, Artwork, Glow, Solid
+    bool check_updates_on_start = false; // opt-in only
 };
 
 // One game's overrides; -1 uses Settings > Video.

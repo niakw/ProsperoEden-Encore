@@ -1928,6 +1928,10 @@ pe::ui::Preferences EdenServices::preferences() {
     result.high_contrast = saved.high_contrast;
     result.reduce_motion = saved.reduce_motion;
     result.ui_theme = saved.ui_theme;
+    result.color_palette = saved.color_palette;
+    result.accent_color = saved.accent_color;
+    result.background_style = saved.background_style;
+    result.check_updates_on_start = saved.check_updates_on_start;
     return result;
 }
 
@@ -1956,6 +1960,10 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.high_contrast = preferences.high_contrast;
     value.reduce_motion = preferences.reduce_motion;
     value.ui_theme = preferences.ui_theme;
+    value.color_palette = preferences.color_palette;
+    value.accent_color = preferences.accent_color;
+    value.background_style = preferences.background_style;
+    value.check_updates_on_start = preferences.check_updates_on_start;
     const bool saved = Eden::SavePreferences(value);
     if (!saved) Eden::Report("settings", "Could not write preferences");
 #ifdef PS5_NATIVE

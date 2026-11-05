@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "자동 확인 · 켜짐"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "뒤로"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilinear는 가장 가벼운 기본값입니다. AMD FSR은 TV 출력 크기 이하로 렌더링할 때 유용합니다."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "이동"
 
@@ -299,6 +299,10 @@ msgstr "자동 확인 (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "확인 GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "공개 방 검색 중..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "모드 없음"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "이 게임에는 아직 모드가 없습니다. 각 모드의 폴더를 roms/ 옆의 {0}에 복사하세요."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "표시할 공개 방이 없습니다."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "ROM 파일을 찾을 수 없습니다."
@@ -1265,6 +1273,10 @@ msgstr "페이지"
 msgid "Parent folder"
 msgstr "상위 폴더"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "비밀번호"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 포크"
 msgid "PS5 controller initialization failed"
 msgstr "PS5 컨트롤러를 초기화하지 못했습니다"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "방 서비스를 사용할 수 없습니다."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "공개 방(보기 전용)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "빠른 설정"
@@ -1349,6 +1369,10 @@ msgstr "빠른 설정"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "종료"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "방 목록(보기 전용)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "움직임 줄이기"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "움직임 줄이기"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "새로고침"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "게임 파일 폴더에 ROM이 없습니다"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "저장소 루트에 ROM이 없습니다."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "아직 방에 참가할 수 없습니다."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

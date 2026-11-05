@@ -187,7 +187,7 @@ msgid "Auto check on"
 msgstr "Vérification auto activée"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Retour"
 
@@ -230,7 +230,7 @@ msgid "Board Game"
 msgstr "Jeu de société"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Parcourir"
 
@@ -331,6 +331,10 @@ msgstr "Vérifier au démarrage du launcher"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "Vérification des versions officielles..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Recherche des salons publics..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1230,6 +1234,10 @@ msgstr "Aucun mod"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Aucun mod pour ce jeu pour l'instant. Copiez le dossier de chaque mod dans {0}, à côté de roms/."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Aucun salon public à afficher."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Aucun fichier ROM trouvé."
@@ -1337,6 +1345,10 @@ msgstr "Dossier parent"
 msgid "Party"
 msgstr "Jeu de groupe"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Mot de passe"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1414,6 +1426,14 @@ msgstr "FORK PS5 13.60"
 msgid "PS5 controller initialization failed"
 msgstr "L'initialisation de la manette PS5 a échoué."
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Service des salons publics indisponible."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Salons publics (consultation seule)"
+
 #: Nlib metadata
 msgid "Puzzle"
 msgstr "Réflexion"
@@ -1433,6 +1453,10 @@ msgstr "Quitter"
 #: Nlib metadata
 msgid "Racing"
 msgstr "Course"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Annuaire des salons (lecture seule)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1462,6 +1486,10 @@ msgstr "RÉDUIRE LES ANIMATIONS"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Réduire les animations"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Actualiser"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1544,6 +1572,10 @@ msgstr "ROM absente du dossier des fichiers de jeu"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM absente de la racine de stockage"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "La connexion aux salons n'est pas encore disponible."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

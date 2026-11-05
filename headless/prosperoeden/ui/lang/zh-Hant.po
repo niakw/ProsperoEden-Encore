@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "自動 檢查 · 開啟"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "返回"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "雙線性過濾是開銷最低的默認選項。渲染分辨率低於電視輸出分辨率時，AMD FSR 很有用。"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "瀏覽"
 
@@ -299,6 +299,10 @@ msgstr "自動 檢查 (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "檢查 GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "正在搜尋公開房間..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "沒有模組"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "此遊戲尚無模組。請將每個模組的資料夾複製到 roms/ 旁邊的 {0}。"
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "沒有可顯示的公開房間。"
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "找不到 ROM 檔案。"
@@ -1265,6 +1273,10 @@ msgstr "翻頁"
 msgid "Parent folder"
 msgstr "上層資料夾"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "密碼"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 分支"
 msgid "PS5 controller initialization failed"
 msgstr "PS5 控制器初始化失敗"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "房間服務無法使用。"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "公開房間（僅瀏覽）"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "快速設定"
@@ -1349,6 +1369,10 @@ msgstr "快速設定"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "離開"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "房間列表（僅瀏覽）"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "減少動態效果"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "減少動態效果"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "重新整理"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "遊戲檔案的資料夾中缺少 ROM"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "存儲根目錄中缺少 ROM"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "暫不支援加入房間。"
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

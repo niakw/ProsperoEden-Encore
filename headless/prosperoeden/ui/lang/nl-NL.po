@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "Automatisch Controleren · Aan"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Terug"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilineair is de lichtste standaard. AMD FSR is handig bij weergave onder het tv-uitvoerformaat."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Bladeren"
 
@@ -299,6 +299,10 @@ msgstr "Automatisch Controleren (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "Controleren GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Openbare kamers zoeken..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "Geen mods"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Nog geen mods voor deze game. Kopieer de map van elke mod naar {0}, naast roms/."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Geen openbare kamers om te tonen."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Geen ROM-bestanden gevonden."
@@ -1265,6 +1273,10 @@ msgstr "Pagina"
 msgid "Parent folder"
 msgstr "Bovenliggende map"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Wachtwoord"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 VORK"
 msgid "PS5 controller initialization failed"
 msgstr "Initialisatie van de PS5-controller mislukt"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Kamerdienst niet beschikbaar."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Openbare kamers (alleen lezen)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "SNELLE INSTELLINGEN"
@@ -1349,6 +1369,10 @@ msgstr "Snelle instellingen"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Afsluiten"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Kamerlijst (alleen lezen)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "BEWEGING VERMINDEREN"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Beweging verminderen"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Vernieuwen"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "ROM ontbreekt in de map met gamebestanden"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM ontbreekt in de opslagroot"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Deelnemen aan kamers is nog niet mogelijk."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

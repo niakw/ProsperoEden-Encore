@@ -1752,6 +1752,8 @@ endif()
                 "${launcher_dir}/pe/platform/display_egl.cpp"
                 "${launcher_dir}/pe/ui/browse.cpp"
                 "${launcher_dir}/pe/ui/home.cpp"
+                "${launcher_dir}/room_directory.cpp"
+                "${launcher_dir}/pe/ui/multiplayer.cpp"
                 "${launcher_dir}/pe/ui/launcher.cpp"
                 "${launcher_dir}/pe/ui/library.cpp"
                 "${launcher_dir}/pe/ui/mapping.cpp"

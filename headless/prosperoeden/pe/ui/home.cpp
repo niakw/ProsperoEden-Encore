@@ -400,6 +400,11 @@ void Launcher::press_home(Key key)
             (void)confirm_action(Confirmation::exit_app);
         }
         return;
+    case Key::options:
+        // In Encore theme, Options opens the read-only multiplayer directory.
+        // The Switch theme keeps its explicit Multiplayer HOME shortcut.
+        enter_multiplayer();
+        return;
     case Key::triangle:
     {
         if (focus >= kHomeRecentFirst && focus < kHomeRecentFirst + recent_count)
@@ -1074,6 +1079,10 @@ void Launcher::draw_home(Canvas &c)
             {Pad::dpad, TR("Navigate")}, {Pad::circle, TR("Quit")}};
         draw_hints(c, kHints, 4, 60.0f, 1020.0f, theme::kMuted, 1340.0f);
     }
+    text_shrink(c, tr("Multiplayer"), 1560.0f, 1026.0f,
+                theme::kSmall, theme::kMeta, 145.0f, Align::right);
+    text(c, "OPTIONS", 1724.0f, 1026.0f,
+         theme::kSmall, theme::kMeta, Align::right);
     text(c, version_, 1860.0f, 1026.0f,
          theme::kSmall, theme::kMeta, Align::right);
     end_band();

@@ -6,6 +6,7 @@
 
 #include "pe/gfx/image.hpp"
 #include "button_mapping.h"
+#include "room_directory.hpp"
 
 #include <array>
 #include <atomic>
@@ -322,14 +323,24 @@ class Services
     // Called only by the launcher background worker. Native implementation
     // consults official stable GitHub Releases (never games/firmware updates).
     virtual AppUpdateInfo check_app_update(const std::string& current) {
-        return {AppUpdateInfo::State::incompatible, current, {}, "Updates unavailable on this host."};
+        return {AppUpdateInfo::State::incompatible, current, {},
+                "Updates unavailable on this host.", {}};
     }
     // A task returned here MUST NOT capture Services or Launcher. The
     // background worker may outlive both during game admission/shutdown.
     virtual std::function<AppUpdateInfo()> detached_app_update_task(const std::string& current) {
         return [current]() -> AppUpdateInfo {
             return {AppUpdateInfo::State::incompatible, current, {},
-                    "Updates unavailable on this host."};
+                    "Updates unavailable on this host.", {}};
+        };
+    }
+
+    // R14: separate, read-only public room discovery task. Worker MUST be
+    // self-contained and must not capture a launcher or service object.
+    virtual std::function<Eden::Multiplayer::RoomDirectory()> detached_room_directory_task() {
+        return [] {
+            return Eden::Multiplayer::RoomDirectory{{},
+                "Public room discovery is unavailable in this build."};
         };
     }
 

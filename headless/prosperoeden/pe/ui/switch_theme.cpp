@@ -385,8 +385,7 @@ void Launcher::press_switch_home(Key key) {
         } else if(current==kHomeShortcutFirst+1) {
             open(Screen::files,true);enter_files();
         } else if(current==kHomeShortcutFirst+2) {
-            // Online multiplayer is not supported by this port.
-            cue(Cue::error);
+            enter_multiplayer();
         } else if(current==kHomeShortcutFirst+3) {
             open_mapping(false);
         } else if(current==kHomeShortcutFirst+4) {

@@ -314,7 +314,7 @@ void Launcher::start_app_update_check(bool manual)
             state->result = query();
         } catch (...) {
             state->result = {AppUpdateInfo::State::offline, {}, {},
-                             "Could not reach GitHub Releases."};
+                             "Could not reach GitHub Releases.", {}};
         }
         // Results are written before the release-store and only read after
         // the UI thread observes the matching acquire-load.
@@ -578,6 +578,8 @@ void Launcher::press(Key key)
         return prefs_.ui_theme == 1 ? press_switch_settings(key) : press_settings(key);
     case Screen::files:
         return press_files(key);
+    case Screen::multiplayer:
+        return press_multiplayer(key);
     case Screen::language:
         return press_language(key);
     case Screen::about:
@@ -647,6 +649,14 @@ void Launcher::update(float dt)
         }
     }
     textures_.pump(dt);
+    if (room_load_ && room_load_->completed.load(std::memory_order_acquire)) {
+        room_directory_ = std::move(room_load_->result);
+        rooms_loaded_ = true;
+        room_selected_ = std::clamp(
+            room_selected_, 0,
+            std::max(0, static_cast<int>(room_directory_.rooms.size()) - 1));
+        room_load_.reset();
+    }
     if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
         const bool was_manual = update_check_->manual;
         const bool recheck_manual = update_check_->recheck_manual;
@@ -795,6 +805,8 @@ void Launcher::draw_screen(Canvas &c, Screen screen)
         return prefs_.ui_theme == 1 ? draw_switch_settings(c) : draw_settings(c);
     case Screen::files:
         return prefs_.ui_theme == 1 ? draw_switch_files(c) : draw_files(c);
+    case Screen::multiplayer:
+        return draw_multiplayer(c);
     case Screen::language:
         return prefs_.ui_theme == 1 ? draw_switch_language(c) : draw_language(c);
     case Screen::about:

@@ -2088,6 +2088,24 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     return report;
 }
 
+std::function<Eden::Multiplayer::RoomDirectory()>
+EdenServices::detached_room_directory_task()
+{
+    // No live networking occurs on the UI thread. The parser isolates
+    // untrusted directory data; guest traffic is NOT enabled by this feature.
+    return []() -> Eden::Multiplayer::RoomDirectory {
+        const auto response =
+            Common::Net::MakeRequest("https://api.ynet-fun.xyz", "/lobby");
+        if (!response)
+            return {{}, "Public room service could not be reached."};
+        if (response->size() > Eden::Multiplayer::MaxDirectoryBytes)
+            return {{}, "Public room response exceeded the safe size limit."};
+        // Protocol compatibility is not asserted before the LDN bridge is
+        // connected to the pinned emulator network version.
+        return Eden::Multiplayer::ParseRoomDirectory(*response, 0);
+    };
+}
+
 pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {
     return QueryAppReleaseMetadata(current);
 }

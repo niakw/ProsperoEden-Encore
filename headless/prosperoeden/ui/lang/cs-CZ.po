@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "Automaticky Zkontrolovat · Zapnuto"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Zpět"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilineární je nejsvětlejší výchozí nastavení. AMD FSR je užitečné při renderování pod velikost TV výstupu."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Procházet"
 
@@ -299,6 +299,10 @@ msgstr "Automaticky Zkontrolovat (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "Zkontrolovat GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Hledání veřejných místností..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "Žádné mody"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Tato hra zatím nemá žádné mody. Zkopíruj složku každého modu do {0}, vedle roms/."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Žádné veřejné místnosti k zobrazení."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Žádné soubory ROM nenalezeny."
@@ -1265,6 +1273,10 @@ msgstr "Stránka"
 msgid "Parent folder"
 msgstr "Nadřazená složka"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Heslo"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13,60 VIDLICE"
 msgid "PS5 controller initialization failed"
 msgstr "Inicializace ovladače PS5 se nezdařila"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Služba místností není dostupná."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Veřejné místnosti (jen prohlížení)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "RYCHLÁ NASTAVENÍ"
@@ -1349,6 +1369,10 @@ msgstr "Rychlá nastavení"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Ukončit"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Seznam místností (jen prohlížení)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "OMEZENÍ POHYBU"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Omezení pohybu"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Obnovit"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "Ve složce herních souborů chybí ROM"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "Chybí ROM v kořenovém adresáři úložiště"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Připojení k místnostem zatím není dostupné."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr ""
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr ""
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr ""
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr ""
 
@@ -298,6 +298,10 @@ msgstr ""
 
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -1093,7 +1097,7 @@ msgstr ""
 msgid "Move cover"
 msgstr ""
 
-#: pe/ui/switch_theme.cpp
+#: pe/ui/home.cpp, pe/ui/multiplayer.cpp, pe/ui/switch_theme.cpp
 msgid "Multiplayer"
 msgstr ""
 
@@ -1168,6 +1172,10 @@ msgstr ""
 #. {0} is a folder; roms/ is a folder name (unchanged).
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
 msgstr ""
 
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1265,6 +1273,10 @@ msgstr ""
 msgid "Parent folder"
 msgstr ""
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr ""
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr ""
 msgid "PS5 controller initialization failed"
 msgstr ""
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr ""
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr ""
@@ -1348,6 +1368,10 @@ msgstr ""
 
 #: pe/ui/home.cpp
 msgid "Quit"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -1377,6 +1401,10 @@ msgstr ""
 #. A switch: no drifting, sliding or zooming on screen.
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
 msgstr ""
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
@@ -1451,6 +1479,10 @@ msgstr ""
 
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
+msgstr ""
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
 msgstr ""
 
 #: pe/ui/settings.cpp

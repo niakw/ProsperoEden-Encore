@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "自動 確認 · オン"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "戻る"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "バイリニアは最も軽いデフォルトです。 AMD FSR は、TV 出力サイズ未満でレンダリングする場合に役立ちます。"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "移動"
 
@@ -299,6 +299,10 @@ msgstr "自動 確認 (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "確認 GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "公開ルームを検索中..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "MODなし"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "このゲームのMODはまだありません。各MODのフォルダーを roms/ の隣の {0} にコピーしてください。"
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "表示できる公開ルームがありません。"
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "ROMファイルが見つかりません。"
@@ -1265,6 +1273,10 @@ msgstr "ページ"
 msgid "Parent folder"
 msgstr "上のフォルダー"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "パスワード"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 フォーク"
 msgid "PS5 controller initialization failed"
 msgstr "PS5コントローラーの初期化に失敗しました"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "ルームサービスに接続できません。"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "公開ルーム（閲覧のみ）"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "クイック設定"
@@ -1349,6 +1369,10 @@ msgstr "クイック設定"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "終了"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "ルーム一覧（閲覧のみ）"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "動きを減らす"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "動きを減らす"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "更新"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "ゲームファイルのフォルダーにROMがありません"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ストレージルートにROMがありません"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "ルームへの参加はまだ利用できません。"
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

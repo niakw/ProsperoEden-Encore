@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "Automaattinen Tarkista · Päällä"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Takaisin"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilineaarinen on kevyin oletusarvo. AMD FSR on hyödyllinen, kun renderöinti on pienempi kuin television lähtökoko."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Selaa"
 
@@ -299,6 +299,10 @@ msgstr "Automaattinen Tarkista (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "Tarkista GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Haetaan julkisia huoneita..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "Ei modeja"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Tällä pelillä ei ole vielä modeja. Kopioi kunkin modin kansio kohteeseen {0}, roms/-kansion viereen."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Julkisia huoneita ei löytynyt."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "ROM-tiedostoja ei löytynyt."
@@ -1265,6 +1273,10 @@ msgstr "Sivu"
 msgid "Parent folder"
 msgstr "Yläkansio"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Salasana"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 FORK"
 msgid "PS5 controller initialization failed"
 msgstr "PS5-ohjaimen alustus epäonnistui"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Huonepalvelu ei ole käytettävissä."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Julkiset huoneet (vain katselu)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "PIKA-ASETUKSET"
@@ -1349,6 +1369,10 @@ msgstr "Pika-asetukset"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Lopeta"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Huoneluettelo (vain katselu)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "VÄHENNÄ LIIKETTÄ"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Vähennä liikettä"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Päivitä"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "ROM puuttuu pelitiedostojen kansiosta"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM puuttuu tallennusjuuresta"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Huoneisiin liittyminen ei ole vielä käytössä."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

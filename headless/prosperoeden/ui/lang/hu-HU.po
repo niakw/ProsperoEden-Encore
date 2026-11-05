@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "Automatikus Ellenőrzés · Be"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Vissza"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "A bilineáris a legkönnyebb alapértelmezett. Az AMD FSR akkor hasznos, ha a TV kimeneti mérete alatti megjelenítést végez."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Böngészés"
 
@@ -299,6 +299,10 @@ msgstr "Automatikus Ellenőrzés (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "Ellenőrzés GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Nyilvános szobák keresése..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "Nincs mod"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Ehhez a játékhoz még nincs mod. Másold az egyes modok mappáját ide: {0}, a roms/ mellé."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Nincs megjeleníthető nyilvános szoba."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Nem található ROM-fájl."
@@ -1265,6 +1273,10 @@ msgstr "Lapozás"
 msgid "Parent folder"
 msgstr "Szülőmappa"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Jelszó"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 FORK"
 msgid "PS5 controller initialization failed"
 msgstr "A PS5-vezérlő inicializálása sikertelen"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "A szobaszolgáltatás nem elérhető."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Nyilvános szobák (csak megtekintés)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "GYORSBEÁLLÍTÁSOK"
@@ -1349,6 +1369,10 @@ msgstr "Gyorsbeállítások"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Kilépés"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Szobalista (csak megtekintés)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "MOZGÁS CSÖKKENTÉSE"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Mozgás csökkentése"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Frissítés"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "A ROM hiányzik a játékfájlok mappájából"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "A ROM hiányzik a tároló gyökérből"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "A szobákhoz csatlakozás még nem elérhető."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

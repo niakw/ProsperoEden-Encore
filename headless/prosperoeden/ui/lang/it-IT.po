@@ -167,7 +167,7 @@ msgid "Auto check on"
 msgstr "Automatico Controlla · Attivo"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Indietro"
 
@@ -206,7 +206,7 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilineare è l'impostazione predefinita più leggera. AMD FSR è utile quando si esegue il rendering al di sotto della dimensione dell'uscita TV."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Scorri"
 
@@ -299,6 +299,10 @@ msgstr "Automatico Controlla (launcher)"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp
 msgid "Checking official releases..."
 msgstr "Controlla GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Ricerca delle stanze pubbliche..."
 
 #: pe/ui/settings.cpp
 msgid "Checks official stable GitHub Releases only. No automatic installation."
@@ -1170,6 +1174,10 @@ msgstr "Nessuna mod"
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Ancora nessuna mod per questo gioco. Copia la cartella di ogni mod in {0}, accanto a roms/."
 
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Nessuna stanza pubblica da mostrare."
+
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Nessun file ROM trovato."
@@ -1265,6 +1273,10 @@ msgstr "Pagina"
 msgid "Parent folder"
 msgstr "Cartella superiore"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Password"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -1338,6 +1350,14 @@ msgstr "PS5 13.60 FORCELLA"
 msgid "PS5 controller initialization failed"
 msgstr "Inizializzazione del controller PS5 non riuscita."
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Servizio delle stanze non disponibile."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Stanze pubbliche (sola lettura)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "IMPOSTAZIONI RAPIDE"
@@ -1349,6 +1369,10 @@ msgstr "Impostazioni rapide"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Esci"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Elenco stanze (sola lettura)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1378,6 +1402,10 @@ msgstr "RIDUCI MOVIMENTO"
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Riduci movimento"
+
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Aggiorna"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -1452,6 +1480,10 @@ msgstr "ROM mancante nella cartella dei file di gioco"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM mancante dalla radice di archiviazione"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Non è ancora possibile entrare nelle stanze."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"

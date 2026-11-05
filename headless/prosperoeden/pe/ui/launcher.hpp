@@ -76,6 +76,7 @@ class Launcher
         library,
         settings,
         files,
+        multiplayer,
         language,
         about,
     };
@@ -135,6 +136,12 @@ class Launcher
     void draw_update_button(Canvas &c, float x, float y, bool focused, bool paper) const;
     void draw_update_notice(Canvas &c);
 
+
+    // ---- read-only public multiplayer directory (multiplayer.cpp) ----
+    void enter_multiplayer();
+    void refresh_multiplayer();
+    void press_multiplayer(Key key);
+    void draw_multiplayer(Canvas &c);
 
     // ---- home (home.cpp) ----
     void press_home(Key key);
@@ -254,6 +261,15 @@ class Launcher
     // Profile cache discovery is I/O and runs once outside the render thread.
     std::future<std::string> profile_avatar_scan_;
     std::string profile_avatar_path_;
+
+    struct RoomLoadState {
+        Eden::Multiplayer::RoomDirectory result{};
+        std::atomic<bool> completed{false};
+    };
+    std::shared_ptr<RoomLoadState> room_load_;
+    Eden::Multiplayer::RoomDirectory room_directory_{};
+    bool rooms_loaded_ = false;
+    int room_selected_ = 0;
 
     // navigation
     Screen screen_ = Screen::home;

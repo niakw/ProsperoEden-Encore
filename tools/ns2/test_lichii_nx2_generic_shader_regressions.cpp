@@ -292,8 +292,28 @@ int main() {
         invalid.words[2] |= invalid_width << 9;
         assert(!Lower(invalid));
     }
-    auto direct_subword = Instruction{{0x06077ab9,0x01002080,0x00000000,0x000fe400}};
-    assert(!Lower(direct_subword)); // direct fetch must not alias an indexed byte load
+    // Direct byte/halfword ULDC is also legal when the immediate is
+    // naturally aligned and below Maxwell's subword displacement limit.
+    for (const auto& [instruction, byte_offset, width] :
+         std::array<std::tuple<Instruction,u32,u32>,2>{{
+             {Instruction{{0x06077ab9,0x01002080,0x00000000,0x000fe400}}, 0x82, 0},
+             {Instruction{{0x06077ab9,0x01000080,0x00000400,0x000fe400}}, 2, 2}
+         }}) {
+        const auto lowered = Lower(instruction);
+        assert(lowered && lowered.source_instruction_offsets.size() == 2);
+        const u64 word = lowered.instructions[lowered.source_instruction_offsets[0]];
+        assert((word & 255U) == 223U);
+        assert(((word >> 8) & 255U) == 255U); // direct, no UR offset
+        assert(((word >> 20) & 0xffffU) == byte_offset);
+        assert(((word >> 48) & 7U) == width);
+        const auto bridge = LowerReviewedToMaxwell(Bytes(instruction));
+        assert(bridge.Ready());
+        assert(bridge.maxwell_instructions[bridge.source_instruction_offsets[0]] == word);
+    }
+    auto direct_bad_alignment = Instruction{{0x06077ab9,0x010000c0,0x00000400,0x000fe400}};
+    assert(!Lower(direct_bad_alignment)); // U16 at odd byte address
+    auto direct_bad_range = Instruction{{0x06077ab9,0x01200000,0x00000000,0x000fe400}};
+    assert(!Lower(direct_bad_range)); // direct short displacement sign bit set
     auto bad_index = Instruction{{0x3f077abb,0x01002080,0x08000000,0x000fe400}};
     assert(!Lower(bad_index)); // no UR63 as a dynamic index
     std::puts("P2_4_LICHII_NX2_GENERIC_AMPERE_LOWERING_PASS 0x499 0x59f 0x817 0x998 0x99c BRA.U renderer_bridge=ready");

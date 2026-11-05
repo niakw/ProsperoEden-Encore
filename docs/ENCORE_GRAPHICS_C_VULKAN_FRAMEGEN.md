@@ -29,7 +29,11 @@ Test hôte : `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk cl
 ## Jalons à clôturer
 
 1. **C1, présent :** sources/version/licence sélectionnées et garde de cadence prouvé sur hôte ; aucun test PS5.
-2. **C2, ouvert :** compilation GPU PS5 de Mihawk, vérification de son modèle et du chemin d'entrée Vulkan utilisé par Encore. Ne pas activer le mode dans l'UI tant qu'inexécutable.
+2. **C2, ouvert :** les 4 unités C++ Mihawk passent la syntaxe hôte et les 21 shaders SPIR-V passent `spirv-val --target-env vulkan1.3`; le modèle `network.fgw` (1 757 240 octets) est épinglé à SHA-256 `31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b`. La cible CMake `EDEN_BUILD_MIHAWKGEN_CORE=ON` prépare une compilation des sources natives **isolée**, sans les ajouter au renderer. Compilation/toolchain GPU PS5 et chargement autorisé du modèle restent à prouver. Ne pas activer le mode dans l'UI tant qu'inexécutable.
 3. **C3, ouvert :** enchaînement réel frames précédent/courant/synthétique avec mémoire, ownership, layouts, barrières, fences et timing PS5 ; repli sans régression NS1/NS2.
-4. **C4, ouvert :** exposer les modes réellement disponibles en Paramètres > Vidéo et par titre, sérialisation et traductions, sans choix fictif.
+4. **C4, partiel :** la catégorie **Paramètres > Vidéo** affiche « Génération d'images : Désactivé » avec explication MihawkGen / FSR3 / LSFG. Cette ligne refuse toute activation tant que le runtime PS5 n'est pas validé. Les 29 catalogues ont été mis à jour, y compris le fallback français embarqué ; contrôles de couverture : 477/477 clés. Les sélecteurs opérationnels, la sérialisation et les profils par jeu restent ouverts.
 5. **C5, ouvert :** A/B visuel et latence PS5 ; comparer FSR 3 sur même scène, accepter/refuser LSFG selon la faisabilité native et la licence.
+
+## Point de sécurité découvert dans le port amont ProsperoEden
+
+Le wrapper d'exemple `mihawkgen.cpp` de ProsperoEden applique `VK_IMAGE_LAYOUT_UNDEFINED` aux images couleur source. Cela peut invalider leur contenu ; l'exemple n'établit pas, à lui seul, l'ownership de plusieurs frames en vol ni les fences nécessaires. **Ne pas copier le bloc tel quel en production.** Avant d'activer l'option, relever les layouts réels, attendre les fences des buffers relus et ajouter une passe de présentation des images générées sans écraser les images encore lues par Vulkan.

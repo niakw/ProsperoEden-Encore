@@ -99,3 +99,36 @@ target_link_libraries(video_core PRIVATE "${vk_isolated}/libps5vk.a" "${vk_isola
     "${PORT_ROOT}/build/stubs/libSceAgcDriver.so"
     "${sdk}/target/lib/libSceSysmodule.so")
 endif()
+
+# R08 / MihawkGen PS5-native readiness: this is an isolated compilation target
+# for the pinned, GPL-compatible framegen sources. It does NOT link a frame
+# generator into the renderer or enable a user-visible mode. The existing
+# Vulkan image/barrier/fence ownership contract must be implemented first.
+option(EDEN_BUILD_MIHAWKGEN_CORE
+    "Compile MihawkGen native core for qualification (no runtime integration)" OFF)
+if(EDEN_BUILD_MIHAWKGEN_CORE)
+    set(EDEN_MIHAWKGEN_ROOT "${PORT_ROOT}/third_party/PS5_MihawkGen")
+    set(EDEN_MIHAWKGEN_INC "${EDEN_MIHAWKGEN_ROOT}/framegen/include")
+    set(EDEN_MIHAWKGEN_SRC "${EDEN_MIHAWKGEN_ROOT}/framegen/src")
+    set(EDEN_MIHAWKGEN_VOLK "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk/volk.h")
+    foreach(path "${EDEN_MIHAWKGEN_INC}/framegen.h"
+                 "${EDEN_MIHAWKGEN_VOLK}"
+                 "${EDEN_MIHAWKGEN_SRC}/shaders/nn_conv.comp.h")
+        if(NOT EXISTS "${path}")
+            message(FATAL_ERROR "Missing pinned MihawkGen submodule component: ${path}")
+        endif()
+    endforeach()
+    add_library(eden-mihawkgen-core OBJECT
+        "${EDEN_MIHAWKGEN_SRC}/fg_common.cpp"
+        "${EDEN_MIHAWKGEN_SRC}/fg_vulkan.cpp"
+        "${EDEN_MIHAWKGEN_SRC}/fg_neural.cpp"
+        "${EDEN_MIHAWKGEN_SRC}/fg_splat.cpp")
+    target_compile_features(eden-mihawkgen-core PRIVATE cxx_std_20)
+    target_include_directories(eden-mihawkgen-core PRIVATE
+        "${EDEN_MIHAWKGEN_INC}" "${EDEN_MIHAWKGEN_SRC}"
+        "${EDEN_MIHAWKGEN_ROOT}/external")
+    target_compile_definitions(eden-mihawkgen-core PRIVATE VK_NO_PROTOTYPES=1)
+    target_compile_options(eden-mihawkgen-core PRIVATE
+        "SHELL:-include ${EDEN_MIHAWKGEN_VOLK}")
+    message(STATUS "MihawkGen native source-check target only; runtime disabled")
+endif()

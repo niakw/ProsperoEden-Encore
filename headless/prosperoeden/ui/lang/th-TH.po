@@ -1988,3 +1988,9 @@ msgstr "{0}/ (NSP หรือ XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (หนึ่ง​โฟลเดอร์​ต่อ ID ​ของ​เกม)"
+
+msgid "Frame generation"
+msgstr "การสร้างเฟรม"
+
+msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
+msgstr "ให้ความสำคัญกับ MihawkGen บน PS5 ก่อน FSR 3 อยู่ในแผน ส่วน LSFG ต้องตรวจสอบสิทธิ์ใช้งานและการรองรับแบบเนทีฟ ยังไม่ได้ติดตั้งการสร้างเฟรม"

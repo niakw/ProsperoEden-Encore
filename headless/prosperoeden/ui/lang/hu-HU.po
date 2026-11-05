@@ -1988,3 +1988,9 @@ msgstr "{0}/ (NSP vagy XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (játékazonosítónként egy mappa)"
+
+msgid "Frame generation"
+msgstr "Képkockagenerálás"
+
+msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
+msgstr "A PS5-ös MihawkGen az elsődleges. Az FSR 3 tervezett; az LSFG licenc- és natív támogatási ellenőrzést igényel. A képkockagenerálás nincs telepítve."

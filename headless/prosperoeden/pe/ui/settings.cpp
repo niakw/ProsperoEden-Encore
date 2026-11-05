@@ -20,6 +20,7 @@ namespace
 {
 
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
+constexpr const char* kFramegenUnavailable = TR("MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed.");
 enum Category
 {
     kVideo,
@@ -52,6 +53,7 @@ enum VideoRow : int
     video_filter,
     video_fsr_sharpness,
     video_anti_aliasing,
+    video_frame_generation,
     video_refresh,
     video_overlay,
     kVideoRows,
@@ -594,6 +596,14 @@ void Launcher::press_dialog(Key key)
             prefs_.anti_aliasing = (prefs_.anti_aliasing + step + count) % count;
             RefreshVideoProfile(prefs_);
         }
+        else if (option_ == video_frame_generation)
+        {
+            // MihawkGen / FSR 3 / LSFG are not active in the shipping native
+            // renderer. Never let a menu setting masquerade as generated FPS.
+            say(tr(kFramegenUnavailable), true);
+            cue(Cue::error);
+            return;
+        }
         else if (option_ == video_refresh)
         {
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
@@ -800,6 +810,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Bilinear is the lightest default. AMD FSR is most useful when rendering below the TV output size."),
             TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
+            kFramegenUnavailable,
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
             TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
         copy = tr(kAbout[std::clamp(option_, 0, kVideoRows - 1)]);
@@ -892,12 +903,13 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             pick(services_.filter_labels(), prefs_.filter),
             percent(prefs_.fsr_sharpness),
             pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing),
+            tr("Off"),
             hertz(prefs_.refresh),
         };
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
             TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-            TR("Refresh rate"), TR("FPS overlay")};
+            TR("Frame generation"), TR("Refresh rate"), TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
         {
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));

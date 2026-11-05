@@ -706,6 +706,10 @@ msgstr ""
 msgid "FPS overlay"
 msgstr ""
 
+#: pe/ui/settings.cpp
+msgid "Frame generation"
+msgstr ""
+
 #: settings_store.h
 msgid "French"
 msgstr ""
@@ -1065,6 +1069,10 @@ msgstr ""
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed."
 msgstr ""
 
 #: settings_store.h

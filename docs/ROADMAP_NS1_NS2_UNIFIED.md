@@ -1234,3 +1234,18 @@ invalides, l'adresse non alignée et le mode non reconnu : Clang/GCC,
 O0/O2, UBSan **4/4 PASS** sur hôte. Ce sous-jalon ajoute une instruction
 traduite mais ne valide ni les autres opcodes, ni les stages task/mesh,
 ni un vrai rendu graphique PS5 (P5).
+
+
+**P2.4 — `SEL` avec registre uniforme B (05/11, source/hôte) :**
+le décodeur reconnaissait la forme `0xc07`, mais elle n'était pas
+acheminée vers le sélecteur Maxwell déjà partagé par `SEL/FSEL`.
+Le frontend Ampere l'admet maintenant en calculant le registre uniforme
+à partir du B natif, avec **réservation du banc UR avant traduction** :
+les sorties GPR hautes qui le chevaucheraient sont refusées. Les UR
+0–15, UR étendus et UR63 (zéro) sont contrôlés par le même propriétaire.
+La forme registre `0x207` reste fonctionnelle, sans changement à NS1
+ni à la politique opt-in FSEL existante. Le banc UR absent/invalide
+ne produit jamais un faux shader. Test regroupé des deux nouvelles formes
+Ampere **FRND-CBUF + SEL-UR** sur les vraies fonctions
+`ProbeProgram`, `LowerReviewedToMaxwell` et `LowerToMaxwell` :
+Clang/GCC, O0/O2, UBSan **4/4 PASS** ; aucune preuve de rendu PS5.

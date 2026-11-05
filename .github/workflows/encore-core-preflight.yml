@@ -594,7 +594,7 @@ jobs:
           python3 -B tools/ns2/check_native_gpu_fence_policy_host.py
           python3 -B tools/ns2/check_native_puller_semaphore_shutdown_host.py
           python3 -B tools/ns2/check_native_gpu_invalid_bind_owner_host.py
-          python3 -B tools/ns2/check_ampere_frnd_cbuf_host.py
+          python3 -B tools/ns2/check_ampere_scalar_alu_sources_host.py
           python3 -B tools/check-gpu-physical-copy-bounds-host.py
           python3 -B tools/check-gpu-physical-copy-cpp-host.py
           python3 -B tools/check-gpu-atomic-forward-cpp-host.py

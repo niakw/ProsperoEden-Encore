@@ -30,7 +30,7 @@ TESTS = {
     "dma_unbound_guard": "tools/ns2/check_native_dma_unbound_subchannel_host.py",
     "native_semaphore_shutdown": "tools/ns2/check_native_puller_semaphore_shutdown_host.py",
     "native_invalid_bind": "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",
-    "ampere_frnd_cbuf": "tools/ns2/check_ampere_frnd_cbuf_host.py",
+    "ampere_frnd_cbuf": "tools/ns2/check_ampere_scalar_alu_sources_host.py",
     "sparse_page_types": "tools/check-sparse-slot-reuse-host.py",
     "spirv_cbuf": "tools/ns2/check_native_spirv_cbuf_span_host.py",
     "sysmix_registry": "tools/ns2/check_native_sysmix_registry_host.py",

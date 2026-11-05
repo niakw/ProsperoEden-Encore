@@ -131,7 +131,7 @@ inline ReleaseAssessment AssessStableRelease(std::string_view response,
         const auto bytes = asset["size"].get<std::uint64_t>();
         if (bytes < (1u << 20) || bytes > (1ull << 30)) continue;
         const std::string expected =
-            "https://github.com/niakw/Prospero.Eden-Encore/releases/download/" +
+            "https://github.com/niakw/ProsperoEden-Encore/releases/download/" +
             tag + "/" + name;
         if (asset["browser_download_url"].get<std::string>() != expected)
             continue;

@@ -81,7 +81,7 @@ image, leaving the user's own background visible.
 An Application settings category exposes manual forced checking and an
 opt-in check at launcher startup (off by default). Stable metadata comes
 solely from:
-https://api.github.com/repos/niakw/Prospero.Eden-Encore/releases/latest
+https://api.github.com/repos/niakw/ProsperoEden-Encore/releases/latest
 
 A background worker performs the query. The worker holds an isolated, reference-free
 release query task and a shared result; destruction of the launcher does not

@@ -21,6 +21,7 @@
 #include "radio_input.h"
 #include "settings_store.h"
 #include "version.h"
+#include "network/room.h"
 #include "launcher_update_version.hpp"
 #include "launcher_update_release.hpp"
 #include <string_view>
@@ -2053,7 +2054,7 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     // The checked URL is a constant; never derive a download address from
     // release notes, redirects or arbitrary GitHub API JSON.
     const auto response = Common::Net::MakeRequest(
-        "https://api.github.com", "/repos/niakw/Prospero.Eden-Encore/releases/latest");
+        "https://api.github.com", "/repos/niakw/ProsperoEden-Encore/releases/latest");
     if (!response || response->empty() || response->size() > 512u * 1024u) {
         report.state = Report::State::offline;
         report.summary = "GitHub Releases unavailable. The launcher stays usable offline.";
@@ -2102,7 +2103,10 @@ EdenServices::detached_room_directory_task()
             return {{}, "Public room response exceeded the safe size limit."};
         // Protocol compatibility is not asserted before the LDN bridge is
         // connected to the pinned emulator network version.
-        return Eden::Multiplayer::ParseRoomDirectory(*response, 0);
+        // The actual linked Room/RoomMember and LDN HLE use this exact
+        // network protocol. Zero makes every real room appear incompatible.
+        return Eden::Multiplayer::ParseRoomDirectory(
+            *response, Network::network_version);
     };
 }
 

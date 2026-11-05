@@ -6,7 +6,7 @@ temp="$(mktemp -d "${TMPDIR:-/tmp}/encore-self-update.XXXXXXXX")"
 trap 'rm -rf "$temp"' EXIT
 cc="${CC:-clang}"
 cxx="${CXX:-clang++}"
-common=( -DUPDATE_CHECK_NO_NETWORK -I"$root/headless/update_check" -I"$root/third_party" )
+common=( -DUPDATE_CHECK_NO_NETWORK -I"$root/headless/update_check" -I"$root/third_party" -I"$root/headless/self_update_helper" )
 if [[ "$(uname)" == Darwin ]]; then
     sdk="/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk"
     [[ -d "$sdk" ]] && common+=( -isysroot "$sdk" )
@@ -25,6 +25,8 @@ done
   "$root/headless/self_update_helper/archive.cpp" \
   "$root/headless/self_update_helper/files.cpp" "$temp/"*.o \
   -o "$temp/helper-check"
+"$cxx" -std=c++20 -O0 "${common[@]}" -pthread   "$root/tools/launcher/helper_archive_check.cpp"   "$root/headless/self_update_helper/archive.cpp"   "$root/headless/self_update_helper/files.cpp" "$temp/"*.o   -o "$temp/archive-check"
+python3 "$root/tools/launcher/test_native_helper_archive.py" "$temp/archive-check"
 "$temp/helper-check"
 "$cxx" -std=c++20 -O0 "${common[@]}" -pthread \
   "$root/headless/self_update_files_check.cpp" \

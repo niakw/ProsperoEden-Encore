@@ -12,6 +12,57 @@ This batch adapts the room-directory parser into `headless/prosperoeden/room_dir
 
 **Joining is explicitly disabled.** No guest socket or LDN IPC handler has been changed; no packet is sent to room servers and no password is collected or stored. The parser receives protocol `0` only as a placeholder and **does not** make compatibility claims until a pinned protocol constant and real transport are integrated. A directory outage does not prevent offline gaming.
 
+## Pin-level integration audit (05 November 2026)
+
+The precise Encore vendor gitlink at the time of this audit is
+`c62ecbb58555fd71b13f98266e745fe22789111d` (repo
+`niakw/Prospero.Eden-Encore-vendor`). GitHub file/directory inspection
+finds `encore-active/eden-core/src/core/hle/service/sockets/bsd.cpp`
+and `core/internal_network/network.cpp`, and the source contains socket
+proxy includes, but the active `eden-core/src/core/hle/service/`
+service list does **not** include `ldn`. The separate
+`eden-backports/src/core/hle/service/` service list has NIFM and sockets
+but no LDN service. `eden-core/src/network/`, expected by upstream's
+`network/network.h` / `RoomMember` integration, is not present at this
+gitlink path.
+
+The original ProsperoEden multiplayer design depends specifically on:
+`Network::RoomMember` for room lifecycle and ENet handshake;
+`Network::ProxySocket` and BSD descriptor interception to carry guest
+game traffic; `Service::LDN` packet and service types for Switch Local
+Wireless. These are *not* equivalent to merely downloading the public
+room list. Directly pasting `multiplayer_bsd.inc` into Encore's BSD code
+would therefore be incorrect, especially for NS1/NS2 coexistence.
+
+**Preserve the existing security boundary.** Encore has both
+`eden-ps5-guest-offline.patch` and
+`eden-ps5-guest-domain-filter.patch` in the source. The latter
+intentionally changes `kGuestNetworkOffline` from `true` to `false`
+while applying domain filtering. Never replace these guards with a
+global unconditional "Internet enabled" switch for guest games. A real
+room connection needs an independently owned and bounded LDN transport
+with no fallback to arbitrary host sockets when a room is lost.
+
+This audit read the exact pinned public source on GitHub; a full local
+vendor checkout/PS5 SDK was unavailable, so neither the full emulator
+network layer nor the native payload has been compiled or tested here.
+The offline `tools/check-universal-emulation-policy.py` source-policy
+check passed. `tools/check-guest-network-isolation.py` could not finish
+because this local worktree does not contain a populated vendor folder,
+not because the check reported a network-policy failure.
+
+### Next source change to unblock R14
+
+1. Establish the pinned core's real LDN service registration and guest
+   socket APIs, and reconcile its backported NS1 HLE service code.
+2. Port the upstream ENet `RoomMember` and BSD proxy only through an
+   ABI-checked adapter with explicit per-process guest mode and memory
+   and peer limits; preserve existing DNS/IP-domain policies.
+3. Compile the core and linker with the correct pinned vendor before
+   advertising Join. Then validate session lifecycle and two actual
+   running guest titles. Do not mark read-only directory as multiplayer
+   compatibility.
+
 ## Work needed before claiming network multiplayer
 
 1. Confirm the exact ENet/RoomMember protocol, version, packet and authentication semantics in the pinned Encore core; pin sources and adapt independently of any one game.

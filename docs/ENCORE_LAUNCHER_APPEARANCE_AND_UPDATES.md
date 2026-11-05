@@ -210,8 +210,18 @@ release path. The developer --image-only command remains opt-in.
 
 The reviewed upstream updater's helper engine is imported for isolated
 development. It rejects a destination other than the literal
-/data/homebrew/PPSA99008, inspects ZIP contents, and refuses a folder replacement that would erase any existing nested file,
-including user-managed keys, firmware, ROMs, updates, DLC, mods or saves. Host tests exercise destination refusal, conflict
+/data/homebrew/PPSA99008, inspects ZIP contents, and refuses a folder replacement that would
+remove any existing nested file, including user-managed keys, firmware,
+ROMs, updates, DLC, mods or saves. The host test runner also checks the
+real C++ ZIP-directory
+inspector and extraction engine on disposable archives: two accepted
+app ZIPs and seven rejected unsafe cases (traversal, symlinks,
+duplicate entries, protected data, missing required contents). An
+unrelated second app is not extracted, matching the helper's documented
+single-title isolation policy. None of these tests uses /data/homebrew
+or executes a payload.
+
+Host tests exercise destination refusal, conflict
 preservation and backup creation. The engine is NOT invoked by the
 launcher: there is no PS5-qualified download-to-helper, restart handoff,
 rollback/recovery or real 13.60 console test. Do not enable installation

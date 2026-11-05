@@ -45,6 +45,13 @@ assert "CAMERA_NEAR" not in upscaler
 assert "CAMERA_FOV" not in upscaler
 assert "Temporal::FrameContinuity" in (backend/"include/video_core/renderer_vulkan/fsr31_native_bridge.h").read_text()
 assert "continuity.Observe(frame.metadata)" in bridge
+assert "Fsr31Budget::Evaluate" in bridge
+assert "GetDeviceLocalMemory" in bridge
+assert "GetDeviceMemoryUsage" in bridge
+assert "UnsupportedInputFormat" in bridge
+assert "scheduler.RequestOutsideRenderPassOperationContext()" in bridge
+assert (root/"extras/graphics/fsr31_vram_budget.h").exists()
+assert "&accumulation, &luma, &luma_history, &internal_upscaled" in upscaler
 assert "std::isfinite(frame.sharpness)" in bridge
 assert "std::nullopt" in bridge and "ResetHistory()" in bridge
 assert "scheduler.Finish()" in bridge

@@ -39,6 +39,15 @@ GPU synchronisé et HUD invité/natif séparé. Il réinitialise
 l'historique si des frames manquent ou la scène change.
 L'ancien FOV 60 degrés par défaut du port externe a été supprimé.
 
+La réserve VRAM du moteur FSR 3.1 est vérifiée avant la création
+ou le redimensionnement des images intermédiaires : taille calculée
+à partir des formats réels, plafond strict de 512 MiB et contrôle
+sur le budget local disponible. La profondeur et les vecteurs de
+mouvement acceptés sont désormais limités aux formats réellement
+attendus par les shaders. La mise à zéro des deux historiques
+ping-pong est imposée lors d'un changement de scène pour éviter
+un ghosting venant des ressources de la scène précédente.
+
 **Blocage vérifié : le GPU invité actuel d'Encore ne fournit pas
 de source générique complète de ces données pour tous les jeux**.
 Le moteur FSR3.1 est donc compilable et raccordé comme composant

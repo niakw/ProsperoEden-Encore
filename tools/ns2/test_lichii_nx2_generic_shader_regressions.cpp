@@ -78,7 +78,7 @@ int main() {
         }
     }
     for (const Instruction original : {UniformClamp, UniformWrap}) {
-        for (const auto [word, bit] : std::array{
+        for (const auto& [word, bit] : std::array{
             std::pair{0U, 24U}, std::pair{2U, 8U}, std::pair{2U, 9U},
             std::pair{2U, 12U}, std::pair{2U, 16U}, std::pair{2U, 27U},
             std::pair{3U, 0U}, std::pair{3U, 30U}}) {
@@ -120,7 +120,7 @@ int main() {
         assert(plain && predicated);
         assert(predicated.instructions.front() ==
                ((plain.instructions.front() & ~(u64{0xf} << 16)) | (u64{9} << 16)));
-        for (const auto [word, bit] : std::array{
+        for (const auto& [word, bit] : std::array{
                 std::pair{1U, 8U}, std::pair{1U, 28U}, std::pair{2U, 12U},
                 std::pair{2U, 13U}, std::pair{2U, 20U}, std::pair{2U, 31U},
                 std::pair{3U, 0U}, std::pair{3U, 30U}}) {

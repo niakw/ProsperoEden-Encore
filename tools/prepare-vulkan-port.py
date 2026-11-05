@@ -7065,3 +7065,18 @@ apply_reviewed_delta(
     '    [[nodiscard]] bool DispatchNativeCompute(const Tegra::NativeComputeLaunch& launch) override;',
     'P0.2 single PS5 native RasterizerVulkan vtable',
 )
+
+# P2/P4 shared NS1/NS2 Vulkan occlusion query continuity. A GPU command
+# submission must never reset the guest's ZPass sample window; close only.
+# Limit a never-reported host query to one physical 256-slot bank to avoid
+# retaining unbounded native query resources. Exactly one source anchor each.
+apply_reviewed_delta(
+    "vulkan_scheduler.cpp",
+    "void Scheduler::EndPendingOperations() {\n    query_cache->CounterReset(VideoCommon::QueryType::ZPassPixelCount64);\n    EndRenderPass();\n}",
+    "void Scheduler::EndPendingOperations() {\n    // A guest ZPass counter measures from its own reset until its report.\n    // A Vulkan queue submission is not a guest reset: only close/pause the\n    // current host query so a subsequent draw resumes its sample window.\n    query_cache->CounterClose(VideoCommon::QueryType::ZPassPixelCount64);\n    EndRenderPass();\n}",
+    "P2/P4 shared ZPass query continuity on Vulkan submit")
+apply_reviewed_delta(
+    "vulkan_query_cache.cpp",
+    "    void CloseCounter() override {\n        PauseCounter();\n    }\n\n    bool HasPendingSync() const override {",
+    "    void CloseCounter() override {\n        PauseCounter();\n        // The guest may leave counting enabled through menu/title screens\n        // without issuing a report or reset. A query spanning more than\n        // one 256-slot host bank pins unbounded GPU query resources.\n        // Bound it to one bank while keeping ordinary cross-submit counts.\n        if (current_query && current_query->size_slots > SamplesQueryBank::BANK_SIZE) {\n            ResetCounter();\n        }\n    }\n\n    bool HasPendingSync() const override {",
+    "P2/P4 bounded native occlusion query bank lifetime")

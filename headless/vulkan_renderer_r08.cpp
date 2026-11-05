@@ -31,6 +31,7 @@
 #include "frame_metrics.h"
 #include "hud.h"
 #include "mihawk_native_session.h"
+#include "mihawk_session_resize.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/vk_blit_screen.h"
 #include "video_core/renderer_vulkan/vk_rasterizer.h"
@@ -282,7 +283,25 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         mihawk_previous_source_ns = r08_source_ns;
         if (!mihawk_native)
             mihawk_native = std::make_unique<Eden::FeatureLab::MihawkNativeSession>();
-        if (!mihawk_init_attempted) {
+        const auto session_action = Eden::FeatureLab::ChooseMihawkSessionAction(
+            mihawk_native->Ready(),
+            mihawk_native->Images().Width(), mihawk_native->Images().Height(),
+            mihawk_native->Images().SourceFormat(),
+            frame->width, frame->height, present_manager.SwapchainImageFormat());
+        if (session_action == Eden::FeatureLab::MihawkSessionAction::RecreateAfterGpuIdle) {
+            // Genuine extent / format change: drain queued commands FIRST.
+            // Device-idle and neural network recreation are one-time work
+            // per resize, not a hidden VkDeviceWaitIdle in the frame loop.
+            scheduler.Finish();
+            present_manager.WaitPresent();
+            mihawk_native->Destroy();
+            mihawk_capture_fences.ResetAfterDeviceIdle();
+            mihawk_present_gate.Reset();
+            mihawk_previous_source_ns = 0;
+            mihawk_init_attempted = false;
+        }
+        if (session_action != Eden::FeatureLab::MihawkSessionAction::InvalidTarget &&
+            !mihawk_init_attempted) {
             mihawk_init_attempted = true;
             const auto model = Eden::AppResourceFile("mihawkgen/network.fgw");
             if (mihawk_native->Create({

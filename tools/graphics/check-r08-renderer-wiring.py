@@ -67,6 +67,10 @@ assert "cmdbuf.ClearAttachments" not in overlay_src[overlay_src.index("void Wind
 assert ".native_hud_absent = true" in fork
 assert "Eden::Display::game_millihertz.load" not in fork
 assert "scheduler.Finish();" in fork and "mihawk_native.reset();" in fork
+assert "ChooseMihawkSessionAction(" in fork
+assert "MihawkSessionAction::RecreateAfterGpuIdle" in fork
+assert "present_manager.WaitPresent();" in fork
+assert "mihawk_capture_fences.ResetAfterDeviceIdle();" in fork
 assert "std::unique_ptr<Eden::FeatureLab::MihawkNativeSession>" in header
 
 # Synthetic reservation must NOT block on frame condition variables, and it

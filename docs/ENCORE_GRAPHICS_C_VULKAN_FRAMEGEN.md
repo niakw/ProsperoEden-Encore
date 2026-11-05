@@ -337,3 +337,21 @@ vulkan_window_adapt_r08.cpp, vulkan_blit_screen_r08.cpp et leurs en-têtes.
 La validation hôte passe à 10/10 tests CTest, avec un test des
 transitions/bandes de synchronisation nécessaires au post-HUD.
 La compilation complète et le rendu effectif sur PS5 restent à vérifier.
+
+
+### C2.9 — renouvellement de session lors d'un changement de format
+
+Le renderer détecte maintenant les transitions de résolution ou de
+format de composition avec ChooseMihawkSessionAction. Le cas inchangé
+n'a aucune attente GPU ; sur changement effectif, Scheduler::Finish
+termine les commandes enregistrées, PresentManager::WaitPresent clôt
+le précédent affichage et la session recrée ses images privées et son
+contexte neural. Les captures et la cadence sont réinitialisées après
+GPU idle, sans garder des handles Vulkan de l'ancienne résolution.
+
+Cette régénération ne modifie pas le sous-module vendor et reste dans
+le pipeline normal de l'application. Les surfaces invalides, dont une
+dimension zéro ou supérieure à 3840x2160, ne déclenchent pas de
+chargement du modèle. Le test hôte couvre le redimensionnement,
+le basculement RGBA/BGRA, l'absence de changement et les formats
+invalides. Aucun comportement console PS5 n'est revendiqué.

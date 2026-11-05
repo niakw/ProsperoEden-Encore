@@ -24,6 +24,7 @@ build_run test_mihawk_capture_fences -fsanitize=address,undefined \
     extras/graphics/test_mihawk_capture_fences.cpp
 build_run test_mihawk_vulkan_history_barriers "${vk[@]}" extras/graphics/test_mihawk_vulkan_history_barriers.cpp
 build_run test_mihawk_post_hud_barriers "${vk[@]}" extras/graphics/test_mihawk_post_hud_barriers.cpp
+build_run test_mihawk_session_resize "${vk[@]}" extras/graphics/test_mihawk_session_resize.cpp
 build_run test_mihawk_vulkan_record "${vk[@]}" "${native[@]}" \
     extras/graphics/test_mihawk_vulkan_record.cpp headless/mihawk_vulkan_stage.cpp headless/mihawk_vulkan_encoder.cpp
 build_run test_mihawk_vulkan_resources -fsanitize=address,undefined \

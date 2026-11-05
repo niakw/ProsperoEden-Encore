@@ -451,8 +451,12 @@ def main() -> int:
                 "if (reg == 0x6c3)" in puller and
                 "if (method == 0x6c3)" in puller and
                 "NativeComputeSemaphoreReduction(" in puller and
+                "NativeComputeSemaphoreSpanValid(address, write_bytes)" in puller and
+                "NativeComputeSemaphoreSpanValid(address, sizeof(u32))" in puller and
+                "constexpr bool NativeComputeSemaphoreSpanValid(" in qmd_header and
+                "bytes <= limit - address" in qmd_header and
                 "QueryType::Payload" in puller,
-                "Ampere report semaphores must work for direct and TU104 MME emits")
+                "Ampere report semaphores must reject 49-bit overflow before GPU access")
         require("EDEN_NS2_GPFIFO submit=" in nvdrv_source and
                 "EDEN_NS2_GPU_BIND count=" in puller and
                 "engine == 0xc7c0" in puller and

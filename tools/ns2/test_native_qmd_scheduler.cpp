@@ -224,6 +224,30 @@ int main() {
     const unsigned collapsed=burst.back();
     assert(sequential==collapsed);
     assert(!Tegra::NativeComputePlainRegister(0x107U));
+    // GPU semaphore report addresses use the original 57-bit register
+    // composition, but the native GMMU maps at most 49 bits. A forged
+    // high address must NEVER alias a lower mapped page via truncation.
+    // The 16-byte timeout record is validated in full, not only its
+    // first word. All failures happen before any memory-manager call.
+    {
+        constexpr std::uint64_t va_limit=std::uint64_t{1}<<49;
+        using Tegra::NativeComputeSemaphoreSpanValid;
+        static_assert(NativeComputeSemaphoreSpanValid(va_limit-4,4));
+        static_assert(NativeComputeSemaphoreSpanValid(va_limit-16,16));
+        static_assert(!NativeComputeSemaphoreSpanValid(va_limit-12,16));
+        static_assert(!NativeComputeSemaphoreSpanValid(va_limit-3,4));
+        static_assert(!NativeComputeSemaphoreSpanValid(va_limit,4));
+        static_assert(!NativeComputeSemaphoreSpanValid(va_limit+0x1000,4));
+        static_assert(!NativeComputeSemaphoreSpanValid(
+            std::uint64_t{1}<<56,4));
+        static_assert(!NativeComputeSemaphoreSpanValid(0,4));
+        static_assert(!NativeComputeSemaphoreSpanValid(0x1001,4));
+        static_assert(!NativeComputeSemaphoreSpanValid(0x1000,0));
+        static_assert(!NativeComputeSemaphoreSpanValid(0x1000,8));
+        static_assert(!NativeComputeSemaphoreSpanValid(0x1000,20));
+        assert(NativeComputeSemaphoreSpanValid(0x1000,4));
+        assert(NativeComputeSemaphoreSpanValid(0x1000,16));
+    }
     // Native 0xC7C0 SET_REPORT_SEMAPHORE_D reductions are performed after
     // a real GPU fence, not by reusing the Switch 1 semaphore decoder.
     assert(Tegra::NativeComputeSemaphoreReduction(6,4,0)==10);

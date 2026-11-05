@@ -1542,7 +1542,7 @@ if(PS5_NATIVE)
     # supplied once by eden-headless's native network_domain_rules.c.
     # The guest derived DNS source includes the matching policy prototype.
     target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
-    target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
+target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
     if(EDEN_HEAP_GUARD)
         set_property(SOURCE "${EDEN_HEAP_SOURCE}" TARGET_DIRECTORY eden-headless
             APPEND PROPERTY COMPILE_DEFINITIONS EDEN_HEAP_GUARD=1)
@@ -1618,8 +1618,13 @@ set(EDEN_LAUNCHER_BUILD_LABEL "" CACHE STRING "Exact Eden Encore compiled R revi
 if(NOT EDEN_LAUNCHER_BUILD_LABEL MATCHES "^R[0-9]+$")
     message(FATAL_ERROR "Missing/invalid Eden R revision: provide -DEDEN_LAUNCHER_BUILD_LABEL=R<number> via the native build tool; no default R1")
 endif()
+set(EDEN_LAUNCHER_PACKAGE_VERSION "" CACHE STRING "Numeric PS5 contentVersion derived from R revision")
+if(PS5_NATIVE AND NOT EDEN_LAUNCHER_PACKAGE_VERSION MATCHES "^[0-9][0-9][.][0-9][0-9][0-9][.][0-9][0-9][0-9]$")
+    message(FATAL_ERROR "Missing or invalid compiled native PS5 contentVersion")
+endif()
 target_compile_definitions(eden-headless PRIVATE
     EDEN_LAUNCHER_BUILD_LABEL=\"${EDEN_LAUNCHER_BUILD_LABEL}\"
+    EDEN_LAUNCHER_PACKAGE_VERSION=\"${EDEN_LAUNCHER_PACKAGE_VERSION}\"
     EDEN_SHARED_JIT_AVAILABLE=$<BOOL:${EDEN_SHARED_JIT}>
     EDEN_JIT_COMPILE_BATCH_AVAILABLE=$<BOOL:${EDEN_JIT_COMPILE_BATCH}>)
 target_link_libraries(eden-headless PRIVATE core eden-pad)

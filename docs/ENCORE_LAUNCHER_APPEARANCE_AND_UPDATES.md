@@ -157,7 +157,15 @@ resolver checks that these agree with the approved native artifact and its
 sce_sys/param.json before deriving the GitHub tag, title, FTP ZIP basename
 and generated release notes. make-dist.py uses that manifest for both the
 normal ZIP and the .ffpfsc image name. The PS5 numeric version is distinct
-from the user-facing R revision; it must increase for a real upgrade.
+from the user-facing R revision and **must increase** for a real upgrade.
+The native builder derives it monotonically using
+tools/ci/native-content-version.py: R1 (historical) = 01.000.041;
+R2 = 01.000.042; R25 = 01.000.065; R385 = 01.000.425.
+CMake compiles both version identifiers, package-headless-native.sh
+checks the matching CMakeCache entries, and the release resolver refuses
+artifacts whose manifest/param.json version does not match their R label.
+No future release can silently inherit the original 01.000.041
+contentVersion. Host previews without a compiled revision are Unversioned.
 
 One immutable historical exception exists: the previously published
 encore-R1-56293953 FTP artifact has no attestation because it predates the

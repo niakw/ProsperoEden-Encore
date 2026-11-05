@@ -6,6 +6,7 @@ SHA 56293953..) predates the attestation file. All later artifacts MUST
 include an attestation written when their eboot.bin was packaged.
 """
 import argparse
+import runpy
 import json
 import re
 import sys
@@ -43,6 +44,13 @@ def resolve(app: Path, expected_sha: str):
         label = "R1"
     else:
         raise ValueError("release attestation missing: cannot infer R revision safely")
+    # The public revision label must advance the numeric native PS5 version
+    # as well. This prevents correctly named R25 releases with R1 contentVersion
+    # that the helper would reject as not an upgrade.
+    versioning = runpy.run_path(str(Path(__file__).with_name("native-content-version.py")))
+    expected_native = versioning["package_version"](label)
+    if content_version != expected_native:
+        raise ValueError("native contentVersion does not match compiled R revision")
     short = expected_sha[:8]
     return {
         "label": label,

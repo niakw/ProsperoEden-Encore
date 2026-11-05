@@ -45,9 +45,12 @@ missing = [name for name in required if not (root / name).is_file()]
 assert not missing, f"missing release/community files: {missing}"
 
 version_h = (root / "headless/prosperoeden/version.h").read_text()
-package = re.search(r'kPackageVersion\s*=\s*"([0-9.]+)"', version_h)
-assert package, "cannot read PS5 package version"
-package_version = package.group(1)
+legacy = re.search(r'kLegacyPackageVersion\s*=\s*"([0-9.]+)"', version_h)
+assert legacy and legacy.group(1) == "01.000.041", "historical R1 contentVersion changed"
+assert "kPackageVersion = EDEN_LAUNCHER_PACKAGE_VERSION" in version_h, (
+    "compiled PS5 contentVersion must not be frozen in version.h")
+assert "native-content-version.py" in (root / "tools/build-headless-native.sh").read_text()
+package_version = "compiled-Rx"
 assert 'kAppVersion = "Unversioned"' in version_h, (
     "source must not freeze the release revision at R1")
 assert 'EDEN_LAUNCHER_BUILD_LABEL' in version_h, (

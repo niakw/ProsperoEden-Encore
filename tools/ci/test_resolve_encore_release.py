@@ -22,13 +22,13 @@ class ReleaseVersionTest(unittest.TestCase):
         self.native = {
             "titleId": module.TITLE,
             "contentId": module.CONTENT_ID,
-            "contentVersion": "01.000.042",
+            "contentVersion": "01.000.065",
         }
         self.write_native()
         self.manifest = {
             "build_revision": "R25",
             "source_sha": SOURCE,
-            "native_content_version": "01.000.042",
+            "native_content_version": "01.000.065",
         }
         self.write_manifest()
 
@@ -45,12 +45,20 @@ class ReleaseVersionTest(unittest.TestCase):
         self.assertEqual(result["zip"], "Eden-Encore-R25-aaaaaaaa-FTP-PPSA99008.zip")
         self.assertFalse(result["legacy"])
 
+    def test_correct_r_label_wrong_native_version_refused(self):
+        self.native["contentVersion"] = "01.000.064"
+        self.manifest["native_content_version"] = "01.000.064"
+        self.write_native()
+        self.write_manifest()
+        with self.assertRaisesRegex(ValueError, "does not match compiled R revision"):
+            module.resolve(self.app, SOURCE)
+
     def test_mismatch_source_refused(self):
         with self.assertRaisesRegex(ValueError, "source SHA"):
             module.resolve(self.app, "b" * 40)
 
     def test_mismatch_native_version_refused(self):
-        self.native["contentVersion"] = "01.000.041"
+        self.native["contentVersion"] = "01.000.064"
         self.write_native()
         with self.assertRaisesRegex(ValueError, "contentVersion mismatch"):
             module.resolve(self.app, SOURCE)

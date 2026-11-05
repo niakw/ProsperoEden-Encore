@@ -79,7 +79,8 @@ assert 'EDEN_LAUNCHER_BUILD_LABEL=' in cmake
 assert r'EDEN_LAUNCHER_BUILD_LABEL=\"${EDEN_LAUNCHER_BUILD_LABEL}\"' in cmake
 assert 'EDEN_LAUNCHER_BUILD_LABEL="$build_label"' in native
 assert 'GITHUB_RUN_NUMBER' not in native
-assert 'kAppVersion = "Unversioned"' in version and 'kPackageVersion = "01.000.041"' in version
+assert 'kAppVersion = "Unversioned"' in version and 'kLegacyPackageVersion = "01.000.041"' in version
+assert 'kPackageVersion = EDEN_LAUNCHER_PACKAGE_VERSION' in version
 assert 'Native Eden Encore requires EDEN_LAUNCHER_BUILD_LABEL' in version
 assert 'text(c, version_, 1860.0f, 1026.0f' in home
 script=root/'tools/ci/derive-encore-build-label.py'

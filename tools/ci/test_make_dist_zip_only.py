@@ -22,7 +22,7 @@ class NativeZipReleaseTest(unittest.TestCase):
             root = Path(tmp)
             script_dir = root / "tools/ci"
             script_dir.mkdir(parents=True)
-            for name in ("make-dist.py", "resolve-encore-release.py"):
+            for name in ("make-dist.py", "resolve-encore-release.py", "native-content-version.py"):
                 shutil.copyfile(SOURCE_ROOT / "tools/ci" / name, script_dir / name)
             (root / "LICENSES").mkdir()
             (root / "README.md").write_text("# Eden Encore\n")
@@ -37,12 +37,12 @@ class NativeZipReleaseTest(unittest.TestCase):
             (app / "sce_sys/param.json").write_text(json.dumps({
                 "titleId": "PPSA99008",
                 "contentId": "UP9000-PPSA99008_00-PROSPEROEDEN0001",
-                "contentVersion": "01.000.050",
+                "contentVersion": "01.000.065",
             }))
             (app / "encore-release.json").write_text(json.dumps({
                 "source_sha": SHA,
                 "build_revision": "R25",
-                "native_content_version": "01.000.050",
+                "native_content_version": "01.000.065",
             }))
             process = subprocess.run(
                 [sys.executable, str(script_dir / "make-dist.py"), str(app)],

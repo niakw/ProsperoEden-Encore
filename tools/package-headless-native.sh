@@ -160,8 +160,17 @@ value = json.loads((template / 'sce_sys/param.json').read_text())
 value.update(titleId='PPSA99008', conceptId='99008', contentId='UP9000-PPSA99008_00-PROSPEROEDEN0001')
 # The app version has one home: the launcher shows the same value.
 import re
-value['contentVersion'] = re.search(r'kPackageVersion = "([0-9.]+)"',
-    (root / 'headless/prosperoeden/version.h').read_text()).group(1)
+native_cache = (root / 'build/headless-native/CMakeCache.txt').read_text()
+compiled_revision = re.search(r'^EDEN_LAUNCHER_BUILD_LABEL:STRING=(R[1-9][0-9]{0,5})$', native_cache, re.M)
+compiled_version = re.search(r'^EDEN_LAUNCHER_PACKAGE_VERSION:STRING=([0-9]{2}[.][0-9]{3}[.][0-9]{3})$', native_cache, re.M)
+assert compiled_revision and compiled_version, 'Missing compiled native R version provenance'
+import subprocess
+expected_version = subprocess.check_output([
+    sys.executable, str(root / 'tools/ci/native-content-version.py'),
+    compiled_revision.group(1)], text=True).strip()
+assert compiled_version.group(1) == expected_version, (
+    'Compiled R revision and PS5 contentVersion do not match')
+value['contentVersion'] = compiled_version.group(1)
 value['localizedParameters']['en-US']['titleName'] = 'Prospero.Eden Encore'
 # Bind release metadata to the exact compiled R-label and source commit.
 revision = __import__('re').search(r'^EDEN_LAUNCHER_BUILD_LABEL:STRING=(R[1-9][0-9]{0,5})$',

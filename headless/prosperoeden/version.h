@@ -17,5 +17,11 @@ inline constexpr const char* kBuildVersion = EDEN_LAUNCHER_BUILD_LABEL;
 #else
 inline constexpr const char* kBuildVersion = kAppVersion;
 #endif
-inline constexpr const char* kPackageVersion = "01.000.041";
+// Only the historical public R1 release used this immutable number.
+inline constexpr const char* kLegacyPackageVersion = "01.000.041";
+#ifdef EDEN_LAUNCHER_PACKAGE_VERSION
+inline constexpr const char* kPackageVersion = EDEN_LAUNCHER_PACKAGE_VERSION;
+#else
+inline constexpr const char* kPackageVersion = "Unversioned";
+#endif
 }

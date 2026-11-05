@@ -1216,3 +1216,21 @@ préservée, sans changement du moteur commun. Test hôte de la **vraie méthode
 avec classes Maxwell, Ampere 3D/Compute/DMA, classes invalides, échec de
 propriété et retour en NS1 : Clang/GCC O0/O2, profils host/PS5 simulés,
 UBSan, huit configurations réussies. La GPU réelle reste à qualifier en P5.
+
+
+**P2.4 — instruction générale `FRND.F32` avec opérande CBUF natif (05/11, source/hôte) :**
+le frontend Ampere reconnaissait déjà `0xb07` dans la table ISA maintenue,
+mais le lowerer Maxwell refusait cette forme faute de cas de traduction.
+La forme CBUF est désormais émise en un véritable `FRND` Maxwell
+(`0x4ca8…`) avec encodage de la banque et conversion de l'offset CBUF
+octets → mots ; seule une banque existante **0–17**, une adresse alignée
+sur 4 octets et des modes de format/rondi admis sont acceptés. Aucun
+`TitleID`, source factice ni shader de repli. La forme registre `0x307`
+reste inchangée et les autres variantes non prises en charge restent
+refusées. Le test C++ exécute le vrai `LowerToMaxwell`, le classificateur
+ISA et le **pont `LowerReviewedToMaxwell` utilisé par le renderer**,
+avec les cas positifs, la conformité du mot Maxwell, les banques
+invalides, l'adresse non alignée et le mode non reconnu : Clang/GCC,
+O0/O2, UBSan **4/4 PASS** sur hôte. Ce sous-jalon ajoute une instruction
+traduite mais ne valide ni les autres opcodes, ni les stages task/mesh,
+ni un vrai rendu graphique PS5 (P5).

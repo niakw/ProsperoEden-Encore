@@ -756,6 +756,24 @@ La compilation du vrai `TickFrame()` extrait et les tests Clang/GCC avec
 ASan/UBSan passent. Les performances et le comportement matériel PS5
 restent P5 ; aucun mode expérimental ne commande cette politique.
 
+**P4.1 — qualification hôte accélérée, figée au couple SHA :
+** une commande locale unique de tests vérifiés
+(tools/ns2/qualify_host_batch.py) exécute en parallèle,
+avec un plafond de 3 travaux par défaut, 17 témoins
+pertinents pour les sélecteurs source/release,
+Ampere, QMD3/CUBF/atomiques, SPIR-V, Sysmix/audio,
+Vulkan et l'inventaire historique NS1.
+Le mode smoke ne relance que 6 gardes rapides
+lors de petites modifications. Le runner
+vérifie que main et le gitlink vendor pointent
+au même commit qu'au début et à la fin,
+refuse les arbres de code suivis modifiés
+et écrit un reçu JSON sous .build-local,
+**sans CI ni compilation console**.
+Ce dispositif réduit les reprises redondantes ;
+il ne constitue **pas** la matrice P0–P4
+exhaustive ni une preuve d'une frame PS5.
+
 **P0.2 — coeur Ampere intégré à la compilation du produit
 commun (05/11, source/hôte) :** sélection automatique du
 frontend natif lors d'un profil PS5 final avec NPDM

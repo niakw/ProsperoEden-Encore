@@ -108,3 +108,40 @@ de mémoire/images/views; exécution ASan/UBSan positive. Il ne mesure pas la
 VRAM ni la vitesse d'un pilote PS5. Il reste à brancher l'allocation à un
 RendererVulkan réel, à surveiller les fences/descripteurs et à isoler le HUD.
 L'allocation ne rend donc pas MihawkGen utilisable dans l'application.
+
+
+## C — comparaison FSR 3 / LSFG et limites de licence
+
+L'audit du dépôt Swordpdf/ProsperoEden (branche publique au 05/11/2026)
+confirme que LSFG est activé via ENABLE_LSFG/HAS_LSFG, mais son chemin
+utilisateur s'appuie sur une copie personnelle de Lossless.dll et
+ProsperoEden précise ne pas pouvoir distribuer cette bibliothèque.
+**Ne pas copier, demander ni redistribuer la DLL sous Encore.**
+Une solution compatible ne peut être affichée que si un moteur PS5
+natif/portable légalement redistribuable est démontré, puis testé.
+
+Le SDK officiel FidelityFX d'AMD expose une interface Vulkan FSR 3 pour
+la génération d'images, y compris un callback de composition de l'UI
+et une gestion propre de la présentation. Le chemin Encore actuel ne
+dispose pas d'un jeu prouvé de motion vectors/depth/jitter invités.
+La présence des API AMD **ne signifie pas** qu'un fallback FSR 3 est
+disponible ou que les méthodes sont interchangeables. MihawkGen reste
+le premier candidat natif; comparaison métrique FSR 3 ensuite.
+
+Les modes par titre ou globaux (MihawkGen, FSR 3, LSFG) ne doivent
+apparaître comme sélectionnables que lorsque le backend correspondant
+possède une preuve du rendu natif PS5. La ligne UI désactivée actuelle
+reste un état honnête.
+
+## C2.2 — HUD de jeu distinct du HUD d'Encore
+
+WindowAdaptPass::Draw se termine par le dessin du HUD **Encore** après
+les surfaces invitées, dans le même render pass. Ce HUD spécifique peut
+en principe être déplacé après l'interpolation par un passe séparée
+sous feature flag, mais **les scores, menus et glyphes du jeu sont déjà
+dans les surfaces compositées invitées**. Retirer le HUD d'Encore avec
+draw_hud=false ne sépare donc pas le HUD *du jeu*. Il faut refuser
+d'appeler cette modification une « séparation HUD » complète. Prévoir
+un masque/historique du jeu ou un repli lorsque les overlays invités
+rendent la génération visuellement inacceptable. Validation FC27/BOTW
+nécessaire avant activation générale.

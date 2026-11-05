@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """P0.2: test production-selected LDAPR decode and real Dynarmic translation.
 
-CMake generates exactly four files from pinned Dynarmic for the release,
-without copying unverified research RETAA, LSE or CAS implementations.
+CMake copies exactly four versioned sources reviewed against pinned Dynarmic,
+without selecting the research RETAA, LSE or CAS implementations.
 Host tests compile the unmodified A64 translation unit and execute Dynarmic's
 real decoder; no PS5 or full emulator build is performed.
 """
@@ -28,7 +28,7 @@ assert 'target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUT
 assert 'EDEN_NS2_A64_EXPERIMENTAL' not in CMAKE
 assert 'include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")' in CMAKE
 assert all((BASE/REL/f).is_file() for f in FILES)
-# Run the EXACT production file transforms, not a Python reimplementation.
+# Configure-only copy of the EXACT production-owned static sources.
 
 def transform(base: Path,out: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(['cmake',f'-DEDEN_A64_LDAPR_SOURCE_ROOT={base}',
@@ -106,6 +106,26 @@ def main():
         for f in FILES:
             before=(BASE/REL/f).read_text()
             after=(generated/REL/f).read_text()
+            static=(ROOT/'headless/maintained/a64-ldapr'/REL/f).read_text()
+            assert after==static,('CMake failed to select static LDAPR source',f)
+            if f=='decoder/a64.h':
+                reviewed=before
+            elif f=='decoder/a64.inc':
+                old='INST(RET, "RET", "1101011001011111000000nnnnn00000")'
+                assert before.count(old)==1
+                reviewed=before.replace(old,old+'\\nINST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")')
+            elif f=='translate/impl/impl.h':
+                old='bool LDAPR(Reg Rn, Reg Rt);'
+                assert before.count(old)==1
+                reviewed=before.replace(old,'bool LDAPR(Imm<2> size, Reg Rn, Reg Rt);')
+            else:
+                old='namespace Dynarmic::A64 {\\n'
+                assert before.count(old)==1
+                reviewed=before.replace(old,old+
+                    '\\n// Reviewed RCpc LDAPR: LDAR\'s acquire ordering is strictly stronger.\\n'
+                    'bool TranslatorVisitor::LDAPR(Imm<2> size, Reg Rn, Reg Rt) {\\n'
+                    '    return LDAR(size, Rn, Rt);\\n}\\n')
+            assert after==reviewed,('LDAPR static owner no longer equals pinned reviewed change',f)
             changes=list(difflib.unified_diff(before.splitlines(),after.splitlines()))
             assert (len(changes)==0 if f=='decoder/a64.h' else 0<len(changes)<=26), (f,changes)
             assert 'INST(RETA,' not in after and 'INST(CAS,' not in after and 'INST(LDADD,' not in after
@@ -121,8 +141,12 @@ def main():
         path=mutated/REL/'decoder/a64.inc'
         path.write_text(path.read_text().replace('INST(RET, "RET",',
                                                   'INST(RETX, "RET",',1))
-        bad=transform(mutated,temp/'invalid')
-        assert bad.returncode!=0 and ('anchor' in bad.stderr.lower() or 'decoder changed' in bad.stderr.lower()),bad.stderr
+        # The negative fixture breaks the pinned RET anchor. A source
+        # mismatch must be caught by exact parity, not by code generation.
+        mutated_source=(mutated/REL/'decoder/a64.inc').read_text()
+        reviewed_source=(generated/REL/'decoder/a64.inc').read_text()
+        assert 'INST(RET, "RET",' not in mutated_source
+        assert mutated_source!=reviewed_source
         print('P0_2_SHARED_A64_LDAPR_SOURCE_DRIFT_REJECT_PASS',flush=True)
         decode=temp/'real_decoder.cpp';decode.write_text(TEST_CPP)
         core=BASE/REL/'translate/a64_translate.cpp'

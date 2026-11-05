@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Derive increasing native PS5 contentVersion from the compiled Encore R label.
+"""Map new Encore revisions R1..R999 to native PS5 01.400.001..01.400.999.
 
-The immutable public R1 release is 01.000.041. Its successor R2 must be
-01.000.042, and so on. The user-visible R revision is still independent.
+The already-published legacy R1 artifact (01.000.041) is immutable and
+handled only by the separately pinned legacy resolver exception.
 """
+
 import re
 import sys
 
-LEGACY_FIRST = 40
-MAX_COUNTER = 999_999
+NATIVE_MAJOR = 1
+NATIVE_MINOR = 400
+MAX_REVISION = 999
 
 
 def package_version(revision: str) -> str:
     if not re.fullmatch(r"R[1-9][0-9]{0,5}", revision):
         raise ValueError("invalid native Encore release revision")
-    count = LEGACY_FIRST + int(revision[1:])
-    if count > MAX_COUNTER:
-        raise ValueError("native contentVersion would exceed the PS5 format")
-    return f"01.{count // 1000:03d}.{count % 1000:03d}"
+    number = int(revision[1:])
+    if number > MAX_REVISION:
+        raise ValueError("R revision exceeds the supported 01.400.xxx format")
+    return f"{NATIVE_MAJOR:02d}.{NATIVE_MINOR:03d}.{number:03d}"
 
 
 def main() -> None:

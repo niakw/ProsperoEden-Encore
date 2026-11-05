@@ -159,8 +159,12 @@ and generated release notes. make-dist.py uses that manifest for both the
 normal ZIP and the .ffpfsc image name. The PS5 numeric version is distinct
 from the user-facing R revision and **must increase** for a real upgrade.
 The native builder derives it monotonically using
-tools/ci/native-content-version.py: R1 (historical) = 01.000.041;
-R2 = 01.000.042; R25 = 01.000.065; R385 = 01.000.425.
+tools/ci/native-content-version.py: new R1 = 01.400.001,
+R25 = 01.400.025, R323 = 01.400.323, R385 = 01.400.385.
+The immutable 2026 public R1 artifact alone retains 01.000.041; it
+is recognized by its exact source SHA and original native version.
+The fixed 01.400.xxx format intentionally rejects R1000 and above
+rather than silently inventing a rollover convention.
 CMake compiles both version identifiers, package-headless-native.sh
 checks the matching CMakeCache entries, and the release resolver refuses
 artifacts whose manifest/param.json version does not match their R label.

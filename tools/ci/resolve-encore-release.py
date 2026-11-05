@@ -39,8 +39,7 @@ def resolve(app: Path, expected_sha: str):
         if not isinstance(label, str) or not re.fullmatch(r"R[1-9][0-9]{0,5}", label):
             raise ValueError("missing or invalid compiled R revision")
     elif expected_sha == LEGACY_SHA and content_version == "01.000.041":
-        # The only public pre-attestation release. Never infer R1 for any
-        # other source SHA or for a rewritten native content version.
+        # Only the historical, pre-attestation R1 artifact is accepted.
         label = "R1"
     else:
         raise ValueError("release attestation missing: cannot infer R revision safely")
@@ -49,15 +48,17 @@ def resolve(app: Path, expected_sha: str):
     # that the helper would reject as not an upgrade.
     versioning = runpy.run_path(str(Path(__file__).with_name("native-content-version.py")))
     expected_native = versioning["package_version"](label)
-    if content_version != expected_native:
+    legacy = not manifest_path.is_file()
+    if not legacy and content_version != expected_native:
         raise ValueError("native contentVersion does not match compiled R revision")
     short = expected_sha[:8]
     return {
         "label": label,
         "tag": f"encore-{label}-{short}",
-        "zip": f"Eden-Encore-{label}-{short}-FTP-{TITLE}.zip",
+        "zip": ("Eden-Encore-56293953-FTP-PPSA99008.zip" if legacy
+                else f"Eden-Encore-{label}-{short}-FTP-{TITLE}.zip"),
         "native_content_version": content_version,
-        "legacy": not manifest_path.is_file(),
+        "legacy": legacy,
     }
 
 

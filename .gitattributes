@@ -4,5 +4,7 @@
 headless/backports/*.patch -whitespace
 # Reviewed P1.2/N51 exact reverse diff likewise needs context-prefix spaces.
 tools/ns2/p1_2_gpu_preinvalidate.patch -whitespace
+# The reviewed GPU PTE range-cache reverse diff uses the same required context prefixes.
+tools/ns2/p1_2_gpu_contiguous_range_cache.patch -whitespace
 # Pinned third-party CPM sources: preserve byte-for-byte original line endings.
 vendor/sources/eden-cpm/** -text

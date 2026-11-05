@@ -21,6 +21,7 @@ TESTS = {
     "release_profile": "tools/check-ns2-production-flags-host.py",
     "research_selector": "tools/ns2/check_native_research_selector.py",
     "shared_a64_ldapr": "tools/ns2/check_shared_a64_ldapr_host.py",
+    "cpu6_scheduler_tick": "tools/ns2/check_cpu6_scheduler_tick_host.py",
     "native_gpu_owners_syntax": "tools/ns2/check_native_gpu_boot_source_tus_host.py",
     "qmd_state_allocation": "tools/ns2/check_native_qmd_allocation_host.py",
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",

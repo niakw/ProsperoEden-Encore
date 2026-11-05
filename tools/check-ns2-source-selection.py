@@ -202,6 +202,19 @@ def main() -> int:
         require("MAX_NUM_CPU_CORES = 6" in
                 (cpu6 / "dynarmic/interface/exclusive_monitor.h").read_text(),
                 "Six-slot Dynarmic exclusive monitor missing")
+        require(
+            'include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")'
+                in CMAKE and
+            'if(NOT EDEN_SHARED_NS2_GUEST_COUNTER OR' in CMAKE and
+            'set(EDEN_CPU6_A64_SOURCE "${EDEN_N76_NATIVE_JIT_SOURCE}")' in CMAKE and
+            'list(FIND eden_cpu6_core_sources' in CMAKE and
+            '"${EDEN_N76_NATIVE_JIT_SOURCE}" eden_cpu6_g11_owner_idx)' in CMAKE and
+            'list(REMOVE_ITEM eden_cpu6_core_sources "${EDEN_N76_NATIVE_JIT_SOURCE}")'
+                in CMAKE and
+            'set_property(TARGET core PROPERTY SOURCES "${eden_cpu6_core_sources}")'
+                in CMAKE,
+            "CPU6 research must preserve the N76/G11 native JIT owner"
+        )
         bridge_gate = CMAKE[CMAKE.index("# N3m: compile a renderer-callable"):
                            CMAKE.index("# Release gate: Vulkan/RADV")]
         require('option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' in bridge_gate and
@@ -964,7 +977,7 @@ def main() -> int:
         expected_owners = [
             "eden_ns2_exefs_sources", "eden_ns2_svc_sources",
             "eden_ns2_gpu_access_sources", "eden_wait64_sources", "eden_ns2_process_sources",
-            "eden_ns2_kernel_sources", "eden_ns2_audio_sources",
+            "eden_cpu6_core_sources", "eden_ns2_kernel_sources", "eden_ns2_audio_sources",
             "eden_ns2_am_sources",
             "eden_ns2_nvdrv_sources", "eden_ns2_nvdrv_sources",
             "eden_ns2_research_kernel_sources", "eden_ns2_supervisor_sources",

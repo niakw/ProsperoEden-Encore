@@ -150,6 +150,33 @@ un deuxième compilateur indépendant. Le décodage `RET` est conservé et
 `RETA` n’est pas ajouté. Le build PS5 et la progression CPU
 invitée restent **P5** ; les 9 commutateurs de recherche restent OFF.
 
+**P0.2 CPU6 — preflight de six cœurs corrigé, recherche seulement (05/11/2026).**
+L’ancien override CPU6 portait `NUM_CPU_CORES` à six sans adapter les
+priorités du scheduler : ses deux nouvelles cases étaient implicitement
+`0`, ce qui constitue une priorité incorrecte. Les deux nouveaux cœurs
+applicatifs reçoivent la priorité `59`, tandis que les quatre valeurs
+historiques restent `59, 59, 59, 63`.
+
+Le passage de quatre à six cœurs changeait aussi **le diviseur des ticks
+invités NS1**, même quand aucun nouveau cœur n'était utilisé. La correction
+dérivée des vrais propriétaires `DynarmicCallbacks32/64::AddTicks` garde
+le diviseur de **4** pour tout processus sans affinité physique sur
+les cœurs 4/5, et emploie **6** uniquement si l'`KProcess` est réellement
+autorisé à en utiliser un. Aucune dépendance à un TitleID ou un switch
+éditeur. Le G11 natif optimisé et la fréquence N76 sélectionnée par NPDM
+restent **le propriétaire A64 source**, et le CMake refuse le remplacement
+par le vieux `arm_dynarmic_64.cpp`. Les trois adaptations sont générées
+via `headless/ns2_cpu6_source_bridge.cmake` après les propriétaires G11.
+
+Preuves hôte : 4 configurations CMake (sélection OFF, ON avec prérequis,
+deux refus sans prérequis), garde contre les dérives de source, refus du
+JIT historique, compilation syntaxique des trois vraies unités C++
+(scheduler, A32, G11 normal), vérification G11 dev x86 seulement, et
+exécution UBSan O0/O2 des vraies expressions de préemption et de ticks,
+avec comparaison de la cadence NS1 avant/après. **La promotion CPU6 en
+production, son ABI complet et la validation sur PS5 restent ouverts :**
+le commutateur CPU6 de recherche est toujours OFF et interdit en release.
+
 ## Règles de migration
 
 1. **Conserver une seule responsabilité maintenue** pour JIT, buffers, cache texture, shaders, renderer, services et UI; n'admettre des adaptations qu'aux frontières matérielles (ISA/QMD, formats/ABI/services). Pas de fork parallèle du moteur.

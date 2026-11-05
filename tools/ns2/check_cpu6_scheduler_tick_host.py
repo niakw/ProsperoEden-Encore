@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""Real CPU6 scheduler and per-process JIT tick source qualification.
+
+Reproduces only three pinned-source substitutions used in NS2 research.
+The shipping NS1 selector stays untouched. Exercises exact generated C++
+fragments and compiles all real owner TUs; no PS5 build and no gameplay proof.
+"""
+from pathlib import Path
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
+
+ROOT=Path(__file__).resolve().parents[2]
+SCRIPT=ROOT/'headless/ns2_cpu6_source_bridge.cmake'
+BASE=ROOT/'vendor/sources/eden/src'
+CPU6=ROOT/'vendor/encore-active/ns2-runtime/cpu6'
+G11=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
+CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
+FILES=('hle/kernel/global_scheduler_context.cpp',
+       'arm/dynarmic/arm_dynarmic_32.cpp',
+       'arm/dynarmic/arm_dynarmic_64.cpp')
+assert CMAKE.count('include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")')==1
+research=CMAKE.split('if(EDEN_NS2_CPU6_EXPERIMENTAL)',1)[1].split('# Shared kernel heap admission',1)[0]
+assert 'set_property(TARGET core PROPERTY SOURCES "${eden_cpu6_core_sources}")' in research
+assert 'EDEN_CPU6_OUTPUT_ROOT' in research
+assert 'EDEN_N76_NATIVE_JIT_SOURCE' in research
+assert 'CPU6 must retain selected N76/G11 JIT source' in research
+assert 'EDEN_NS2_CPU6_EXPERIMENTAL=1' in research
+assert not CMAKE.split('# Six Switch 2 application cores',1)[0].count('include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")')
+assert 'NUM_CPU_CORES = 6' in (CPU6/'core/hardware_properties.h').read_text()
+assert 'NUM_LEGACY_CPU_CORES = 4' in (CPU6/'core/hardware_properties.h').read_text()
+assert 'MAX_NUM_CPU_CORES = 6' in (CPU6/'dynarmic/interface/exclusive_monitor.h').read_text()
+
+
+def generate(src:Path,out:Path,jit:Path=G11)->subprocess.CompletedProcess[str]:
+    return subprocess.run(['cmake',f'-DEDEN_CPU6_SOURCE_ROOT={src}',
+                           f'-DEDEN_CPU6_A64_SOURCE={jit}',
+                           f'-DEDEN_CPU6_OUTPUT_ROOT={out}','-P',str(SCRIPT)],
+                          capture_output=True,text=True,timeout=35)
+
+
+def run_checked(command:list[str],env:dict[str,str],timeout:int=100)->str:
+    r=subprocess.run(command,capture_output=True,text=True,env=env,timeout=timeout)
+    assert r.returncode==0,(command,r.stderr[-4000:],r.stdout[-1200:])
+    return r.stdout
+
+
+def main()->None:
+    env=os.environ.copy()
+    sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
+    sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk')
+    if sdk15.is_dir():env['SDKROOT']=str(sdk15)
+    compiler=shutil.which('clang++') or shutil.which('g++')
+    assert compiler
+    stdlib=[]
+    if sys.platform=='darwin' and sdk26.is_dir():
+        stdlib=['-target','arm64-apple-macos15','-nostdinc++',
+                '-isystem',str(sdk26/'usr/include/c++/v1')]
+    deps=ROOT/'vendor/sources/eden-cpm'
+    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/ns2-runtime/kernel_wait64',
+              ROOT/'vendor/encore-active/ns2-runtime/gpu_access_svc',
+              BASE,BASE/'dynarmic/src',ROOT/'vendor/sources/fmt/include',
+              ROOT/'vendor/encore-active/eden-core/overrides',
+              ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11',
+              ROOT/'vendor/encore-active/eden-core/include',
+              deps/'xbyak/v7.40.1',
+              *sorted((deps/'boost/boost-1.90.0/libs').glob('*/include'))]
+    includes=['-I'+str(p) for p in includes if p.is_dir()]
+    with tempfile.TemporaryDirectory(prefix='encore-cpu6-') as work:
+        tmp=Path(work)
+        out=tmp/'generated'
+        first=generate(BASE,out)
+        assert first.returncode==0,first.stderr
+        expected={'core/'+f for f in FILES}
+        actual={str(p.relative_to(out)) for p in out.rglob('*') if p.is_file()}
+        assert actual==expected,(actual,expected)
+        kernel=(out/'core'/FILES[0]).read_text()
+        priorities=re.search(r'(?s)static constexpr std::array<u32, Core::Hardware::NUM_CPU_CORES> per_core\s*\{.*?\};',kernel)
+        assert priorities, 'Actual generated KScheduler preemption table missing'
+        assert '59, 59, 59, 63, 59, 59' in priorities.group(0)
+        for name in FILES[1:]:
+            src=(out/'core'/name).read_text()
+            assert 'm_process->GetPhysicalCoreMask()' in src
+            assert 'Core::Hardware::NUM_LEGACY_CPU_CORES' in src
+            assert src.count('const u64 extended_cores =')==1
+            assert src.count('amortized_ticks = ticks /')==1
+            old=(G11 if name.endswith('arm_dynarmic_64.cpp')
+                 else BASE/'core'/name).read_text()
+            assert old.count('ticks / Core::Hardware::NUM_CPU_CORES')==1
+        assert '#ifdef EDEN_NS2_GUEST_COUNTER' in (
+            out/'core/arm/dynarmic/arm_dynarmic_64.cpp').read_text()
+        assert '#include "jit-startup-retry.h"' in (
+            out/'core/arm/dynarmic/arm_dynarmic_64.cpp').read_text()
+        print('P0_2_CPU6_PINNED_SCHEDULER_TICK_OVERLAY_PASS 3 owners',flush=True)
+        # The pinned tree must fail closed when a scheduler anchor drifts.
+        changed=tmp/'changed';shutil.copytree(BASE/'core',changed/'core')
+        src=changed/'core'/FILES[0]
+        src.write_text(src.read_text().replace('        63,\n','        62,\n',1))
+        failed=generate(changed,tmp/'drift')
+        assert failed.returncode and 'Pinned CPU6 owner changed' in failed.stderr
+        print('P0_2_CPU6_SOURCE_DRIFT_REJECT_PASS',flush=True)
+        # The legacy unoptimized Dynarmic owner must not sneak in when
+        # N76 is active, even if its AddTicks anchor looks compatible.
+        ancient=BASE/'core/arm/dynarmic/arm_dynarmic_64.cpp'
+        rejected=generate(BASE,tmp/'unoptimized',ancient)
+        assert rejected.returncode and 'not the maintained G11/N76 owner' in rejected.stderr
+        print('P0_2_CPU6_UNOPTIMIZED_A64_REJECT_PASS',flush=True)
+        # Both G11 profiles (normal and dev) must preserve N76 and the JIT
+        # pre-existing optimizations. Source diff must be only the tick rule.
+        dev=G11.with_name('arm_dynarmic_64_native_dev.cpp')
+        dev_output=tmp/'dev'
+        dev_result=generate(BASE,dev_output,dev)
+        assert dev_result.returncode==0,dev_result.stderr
+        dev_generated=dev_output/'core/arm/dynarmic/arm_dynarmic_64.cpp'
+        dev_text=dev_generated.read_text()
+        assert dev_text.count('#ifdef EDEN_NS2_GUEST_COUNTER')==2
+        assert dev_text.count('u64 amortized_ticks = ticks /')==1
+        assert dev_text.count('m_process->GetPhysicalCoreMask()')==1
+        print('P0_2_CPU6_N76_G11_NORMAL_DEV_OWNER_PASS',flush=True)
+        # Configure the exact CMake CPU6 research selector with REAL target
+        # source lists, including the required A64/dual NPDM dependency.
+        selection=CMAKE.split('if(EDEN_NS2_CPU6_EXPERIMENTAL)',1)[1].split(
+            '# Shared kernel heap admission',1)[0]
+        selection='if(EDEN_NS2_CPU6_EXPERIMENTAL)'+selection
+        anchored='include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")'
+        assert selection.count(anchored)==1
+        selection=selection.replace(anchored,f'include("{SCRIPT.as_posix()}")')
+        for enabled,a64,dual,success in ((False,False,False,True),
+                                         (True,True,True,True),
+                                         (True,False,True,False),
+                                         (True,True,False,False)):
+            prj=tmp/('cmake-'+''.join(str(int(x)) for x in (enabled,a64,dual)))
+            prj.mkdir()
+            (prj/'dummy.cpp').write_text('int cpu6_dummy=1;\n')
+            for owner in FILES:
+                fake=prj/owner
+                fake.parent.mkdir(parents=True,exist_ok=True)
+                fake.write_text('int cpu6_stub=1;\n')
+            cmake_text='cmake_minimum_required(VERSION 3.20)\nproject(cpu6_selector LANGUAGES CXX)\nset(PORT_ROOT "@ROOT@")\nset(PORT_BUILD_DIR "@OUT@")\nset(EDEN_NS2_CPU6_EXPERIMENTAL @ENABLED@)\nset(EDEN_NS2_A64_EXPERIMENTAL @A64@)\nset(EDEN_REVIEWED_DUAL_NPDM @DUAL@)\nadd_library(core STATIC dummy.cpp\n    hle/kernel/global_scheduler_context.cpp\n    arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)\nadd_library(dynarmic STATIC dummy.cpp)\nadd_library(eden-headless STATIC dummy.cpp)\n'
+            cmake_text=cmake_text.replace(
+                'arm/dynarmic/arm_dynarmic_64.cpp)',
+                '"${EDEN_N76_NATIVE_JIT_SOURCE}")')
+            cmake_text=cmake_text.replace(
+                'add_library(core STATIC dummy.cpp',
+                'set(EDEN_SHARED_NS2_GUEST_COUNTER ON)\n'
+                f'set(EDEN_N76_NATIVE_JIT_SOURCE "{G11}")\n'
+                'add_library(core STATIC dummy.cpp')
+            cmake_text=cmake_text.replace('@ROOT@',ROOT.as_posix()).replace(
+                '@OUT@',(prj/'generated').as_posix()).replace(
+                '@ENABLED@','ON' if enabled else 'OFF').replace(
+                '@A64@','ON' if a64 else 'OFF').replace(
+                '@DUAL@','ON' if dual else 'OFF')
+            cmake_text+=selection+'\nget_target_property(pinned_core_sources core SOURCES)\nlist(FIND pinned_core_sources "@OUT@/core/hle/kernel/global_scheduler_context.cpp" cpu6_selected)\nmessage(STATUS "CPU6_GENERATED_OWNER_INDEX=${cpu6_selected}")\n'.replace('@OUT@',(prj/'generated/ns2-cpu6').as_posix())
+            (prj/'CMakeLists.txt').write_text(cmake_text)
+            configured=subprocess.run(['cmake','-S',str(prj),'-B',str(prj/'build'),
+                                       f'-DCMAKE_OSX_SYSROOT={sdk15}' if sdk15.is_dir()
+                                       else '-DCMAKE_BUILD_TYPE=Debug'],
+                                      capture_output=True,text=True,timeout=40)
+            assert (configured.returncode==0)==success,(prj,configured.stderr[-3600:])
+            if success:
+                selected='CPU6_GENERATED_OWNER_INDEX=1' if enabled else 'CPU6_GENERATED_OWNER_INDEX=-1'
+                # The actual source list includes dummy first on enabled.
+                assert selected in configured.stdout,(prj,configured.stdout[-2800:])
+                exists=(prj/'generated/ns2-cpu6/core/hle/kernel/global_scheduler_context.cpp').exists()
+                assert exists==enabled
+            else:
+                assert 'NS2 six-core mode requires' in configured.stderr
+            print('P0_2_CPU6_CMAKE_SOURCE_SELECTOR_PASS',
+                  f'enabled={enabled}',f'a64={a64}',f'dual={dual}',flush=True)
+        flags=[compiler,'-std=c++20','-fsyntax-only','-Wno-unused-parameter',
+               '-DFMT_HEADER_ONLY',*stdlib,*includes]
+        def compile_owner(name:str)->tuple[str,subprocess.CompletedProcess[str]]:
+            src=out/'core'/name
+            return name,subprocess.run(flags+[str(src)],capture_output=True,
+                                       text=True,env=env,timeout=95)
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            checked=list(pool.map(compile_owner,FILES))
+        for name,result in checked:
+            assert result.returncode==0,(name,result.stderr[-3500:])
+            print('P0_2_CPU6_REAL_OWNER_TU_PASS',name,flush=True)
+        # Second real optimized G11 profile; the final release retains
+        # normal, while standalone research can intentionally use dev.
+        # The inherited G11 development-only performance header contains
+        # __builtin_ia32_pause and therefore does NOT compile for arm64.
+        # Release uses G11 normal. Syntax-check dev for its supported x86
+        # host target only, without claiming PS5 developer-mode support.
+        dev_flags=flags.copy()
+        if '-target' in dev_flags:
+            dev_flags[dev_flags.index('-target')+1]='x86_64-apple-macos15'
+        dev_compile=subprocess.run(dev_flags+[str(dev_generated)],capture_output=True,
+                                   text=True,env=env,timeout=95)
+        assert dev_compile.returncode==0,dev_compile.stderr[-3500:]
+        print('P0_2_CPU6_G11_DEV_X86_HOST_TU_PASS native_dev_unqualified=1',flush=True)
+        # The real generated preemption initializer and BOTH real callback
+        # tick expressions are compiled/executed with the real hardware map.
+        source_code='#include <cassert>\n#include <algorithm>\n#include <cstdio>\n#include "core/hardware_properties.h"\nusing namespace Core;\n'
+        source_code+='struct MockProcess { unsigned long long mask; unsigned long long GetPhysicalCoreMask() const { return mask; } };\n'
+        source_code+='auto Priorities() { '+priorities.group(0)+' return per_core; }\n'
+        for num,name in enumerate(FILES[1:]):
+            src=(out/'core'/name).read_text()
+            start=src.index('    const u64 extended_cores =')
+            stop=src.index('    m_parent.m_system.CoreTiming().AddTicks(amortized_ticks);',start)
+            snippet=src[start:stop]
+            assert 'std::max<u64>(amortized_ticks, 1)' in snippet
+            source_code+=f'u64 Ticks{num}(u64 ticks,const MockProcess* m_process) {{\n'+snippet+'    return amortized_ticks;\n}\n'
+        source_code+='''int main() {
+    static_assert(Core::Hardware::NUM_CPU_CORES==6);
+    static_assert(Core::Hardware::NUM_LEGACY_CPU_CORES==4);
+    static_assert(Core::Hardware::VirtualToPhysicalCoreMap[0]==0 &&
+                  Core::Hardware::VirtualToPhysicalCoreMap[3]==3 &&
+                  Core::Hardware::VirtualToPhysicalCoreMap[4]==4 &&
+                  Core::Hardware::VirtualToPhysicalCoreMap[5]==5 &&
+                  Core::Hardware::VirtualToPhysicalCoreMap[6]==3 &&
+                  Core::Hardware::VirtualToPhysicalCoreMap[7]==3 &&
+                  Core::Hardware::VirtualToPhysicalCoreMap[63]==3);
+    constexpr auto old=Core::Hardware::ConvertVirtualCoreMaskToPhysical(0xFULL);
+    static_assert(old==0xFULL);
+    const auto priority=Priorities();
+    assert(priority.size()==6 && priority[0]==59 && priority[1]==59 &&
+           priority[2]==59 && priority[3]==63 && priority[4]==59 && priority[5]==59);
+    MockProcess legacy{0xFULL},native{0x3FULL},restricted{0x2FULL},service{1ULL<<3};
+    for (auto n:{0ULL,1ULL,3ULL,4ULL,6ULL,12ULL,24ULL,4096ULL}) {
+        const auto old=std::max<u64>(n/4,1);
+        assert(Ticks0(n,&legacy)==old && Ticks1(n,&legacy)==old);
+        assert(Ticks0(n,&service)==old && Ticks1(n,&service)==old);
+        const auto newer=std::max<u64>(n/6,1);
+        assert(Ticks0(n,&native)==newer && Ticks1(n,&native)==newer);
+        assert(Ticks0(n,&restricted)==newer && Ticks1(n,&restricted)==newer);
+    }
+    std::puts("P0_2_CPU6_REAL_PREEMPTION_AND_TICK_LOGIC_PASS");
+}
+'''
+        fixture=tmp/'cpu6_actual_source.cpp';fixture.write_text(source_code)
+        for optimization in (0,2):
+            executable=tmp/f'cpu6-O{optimization}'
+            args=[compiler,'-std=c++20',f'-O{optimization}',
+                  '-fsanitize=undefined','-fno-sanitize-recover=all',
+                  *stdlib,*includes,str(fixture),'-o',str(executable)]
+            run_checked(args,env)
+            result=run_checked([str(executable)],env,timeout=15)
+            assert 'P0_2_CPU6_REAL_PREEMPTION_AND_TICK_LOGIC_PASS' in result
+            print('P0_2_CPU6_PREEMPTION_TICKS_UBSAN_PASS',f'O{optimization}',flush=True)
+
+if __name__=='__main__':main()

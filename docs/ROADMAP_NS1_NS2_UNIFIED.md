@@ -1428,3 +1428,21 @@ allocation hôte et vérifie refus, absence de mutation GPU et reprise,
 tandis que `test_native_qmd_scheduler.cpp` revalide dépendances,
 semáphores et absence de dispatch dupliqué ; **4/4 compilations/exécutions
 Clang/UBSan O0/O2 PASS**. P2.7 et la validation console restent ouverts.
+
+
+**P0.2 CPU6 — correction de blocages de préemption et de ticks (05/11) :**
+le mode six cœurs research utilisait un `std::array` de six priorités
+avec seulement quatre initialiseurs (`59,59,59,63`) : les cœurs 4 et 5
+recevaient implicitement la priorité `0`. Le CMake génère désormais
+un scheduler cohérent `59,59,59,63,59,59` depuis le propriétaire Eden.
+Les callbacks Dynarmic 32/64 conservent **4** comme diviseur de ticks
+pour tout `KProcess` sans affinité réelle sur les cœurs physiques 4/5 ;
+les processus disposant de ces nouveaux cœurs utilisent **6**. Le
+propriétaire A64 est la vraie unité G11 optimisée, avec N76 conservé,
+**jamais** le vieil `arm_dynarmic_64.cpp`. Tests : CMake réel ON/OFF
+avec prérequis/refus, dérive d’ancre refusée, 3 vrais TUs C++20
+syntaxiques, logique de préemption et diviseur extraite de la source
+exécutée UBSan O0/O2. La variante G11 dev ne passe qu’en x86 hôte ;
+aucun support PS5 de cette variante n’est revendiqué. **CPU6 reste
+désactivé en production**, pas de preuve de 6 cores sur console ;
+NS1 ne change pas hors sélection explicite research. P0.2/P5 ouverts.

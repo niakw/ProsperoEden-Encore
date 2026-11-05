@@ -2372,6 +2372,43 @@ if(EDEN_NS2_CPU6_EXPERIMENTAL)
     target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
     target_compile_definitions(core PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
     target_compile_definitions(dynarmic PRIVATE EDEN_NS2_CPU6_EXPERIMENTAL=1)
+    # The original 4-core scheduler table defaults the two added preemption
+    # priorities to zero; the original Dynarmic AddTicks divides even NS1
+    # cycles by six. Both defects must be fixed before CPU6 can be exercised.
+    # Derive three narrow sources from the pinned baseline without forking
+    # unrelated scheduler, kernel or JIT code into the native release.
+    # N76 must already have selected the current optimized G11 normal/dev
+    # JIT. NEVER replace that TU with the legacy Eden arm_dynarmic_64.cpp.
+    if(NOT EDEN_SHARED_NS2_GUEST_COUNTER OR
+       NOT DEFINED EDEN_N76_NATIVE_JIT_SOURCE OR
+       NOT EXISTS "${EDEN_N76_NATIVE_JIT_SOURCE}")
+        message(FATAL_ERROR "CPU6 needs the existing N76/G11 native A64 owner")
+    endif()
+    set(EDEN_CPU6_SOURCE_ROOT "${PORT_ROOT}/vendor/sources/eden/src")
+    set(EDEN_CPU6_A64_SOURCE "${EDEN_N76_NATIVE_JIT_SOURCE}")
+    set(EDEN_CPU6_OUTPUT_ROOT "${PORT_BUILD_DIR}/ns2-cpu6")
+    include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")
+    get_target_property(eden_cpu6_core_sources core SOURCES)
+    foreach(eden_cpu6_file IN ITEMS
+            "hle/kernel/global_scheduler_context.cpp"
+            "arm/dynarmic/arm_dynarmic_32.cpp")
+        list(FIND eden_cpu6_core_sources "${eden_cpu6_file}" eden_cpu6_owner_idx)
+        if(eden_cpu6_owner_idx EQUAL -1)
+            message(FATAL_ERROR "Pinned CPU6 scheduler/tick owner changed: ${eden_cpu6_file}")
+        endif()
+        list(REMOVE_ITEM eden_cpu6_core_sources "${eden_cpu6_file}")
+        list(APPEND eden_cpu6_core_sources
+            "${EDEN_CPU6_OUTPUT_ROOT}/core/${eden_cpu6_file}")
+    endforeach()
+    list(FIND eden_cpu6_core_sources
+         "${EDEN_N76_NATIVE_JIT_SOURCE}" eden_cpu6_g11_owner_idx)
+    if(eden_cpu6_g11_owner_idx EQUAL -1)
+        message(FATAL_ERROR "CPU6 must retain selected N76/G11 JIT source")
+    endif()
+    list(REMOVE_ITEM eden_cpu6_core_sources "${EDEN_N76_NATIVE_JIT_SOURCE}")
+    list(APPEND eden_cpu6_core_sources
+        "${EDEN_CPU6_OUTPUT_ROOT}/core/arm/dynarmic/arm_dynarmic_64.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_cpu6_core_sources}")
 endif()
 
 # Shared kernel heap admission for Switch 2: the 39-bit guest virtual heap

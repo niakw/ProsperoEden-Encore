@@ -215,6 +215,21 @@ int main() {
         collision.storage_buffers_descriptors.push_back({0, 0x310, 1, true});
         assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(collision, 1));
         assert(collision.storage_buffers_descriptors.size() == 1);
+        auto duplicate_bank = missing_pin;
+        duplicate_bank.constant_buffer_descriptors.push_back({0,1});
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(duplicate_bank,1));
+        assert(duplicate_bank.storage_buffers_descriptors.empty());
+        auto phantom_bank = missing_pin;
+        phantom_bank.constant_buffer_mask = 3;
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(phantom_bank,3));
+        assert(phantom_bank.storage_buffers_descriptors.empty());
+        auto disabled_bank = missing_pin;
+        disabled_bank.constant_buffer_descriptors.push_back({1,1});
+        disabled_bank.constant_buffer_mask = 3;
+        assert(!NormalizeNativeQmdGlobalStoreOnlyInfo(disabled_bank,1));
+        assert(disabled_bank.storage_buffers_descriptors.empty());
+        assert(NormalizeNativeQmdGlobalStoreOnlyInfo(disabled_bank,3));
+        assert(disabled_bank.storage_buffers_descriptors.size() == 1);
         auto no_global = missing_pin;
         no_global.stores_global_memory = false;
         assert(NormalizeNativeQmdGlobalStoreOnlyInfo(no_global, 0));
@@ -250,6 +265,34 @@ int main() {
     CheckNativeAtomicSlotOrder(false, true);
     CheckNativeAtomicSlotOrder(true, false);
     CheckNativeAtomic(Opcode::StorageAtomicIAdd32,true);
+    // Wrong-width immediate IR operands and missing blocks are not valid
+    // QMD3 descriptors. Never reinterpret a U64 slot as a flattened U32.
+    {
+        Shader::ObjectPool<Shader::IR::Inst> pool{8};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program bad{};
+        bad.stage = Shader::Stage::Compute;
+        bad.blocks.push_back(&block);
+        bad.info.constant_buffer_mask = 1;
+        bad.info.constant_buffer_descriptors.push_back({0,1});
+        bad.info.constant_buffer_used_sizes[0] = 0x320;
+        bad.info.nvn_buffer_base = 0x310;
+        bad.info.nvn_buffer_used.set(0);
+        bad.info.storage_buffers_descriptors.push_back({0,0x310,1,true});
+        block.AppendNewInst(Opcode::StorageAtomicIAdd32,
+                            {Value{u64{0}}, Value{u32{0}}, Value{u32{1}}});
+        assert(!Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(bad,Shader::Profile{}));
+        Shader::ObjectPool<Shader::IR::Inst> second_pool{4};
+        Shader::IR::Block second{second_pool};
+        second.AppendNewInst(Opcode::StorageAtomicIAdd32,
+                             {Value{u32{0}}, Value{u64{0}}, Value{u32{1}}});
+        bad.blocks[0] = &second;
+        assert(!Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(bad,Shader::Profile{}));
+        bad.blocks.push_back(nullptr);
+        assert(!Shader::Ampere::NormalizeNativeQmdIndirectCbufIR(bad,1));
+        bad.info.uses_cbuf_indirect = true;
+        assert(!Shader::Ampere::NormalizeNativeQmdIndirectCbufIR(bad,1));
+    }
     // The old guard trusted only the CBUF mask bit. These negative
     // inputs look allocated, but lack the actual CBUF descriptor or
     // the reflected 16-byte NVN record. No atomic must reach SPIR-V.

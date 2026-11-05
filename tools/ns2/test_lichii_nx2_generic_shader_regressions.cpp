@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <tuple>
 #include <vector>
 #include "shader_recompiler/frontend/ampere/lower_to_maxwell.h"
 #include "shader_recompiler/frontend/ampere/lower_bridge.h"
@@ -262,5 +263,38 @@ int main() {
         const auto rejected = LowerToMaxwell(std::array{branch, Exit});
         assert(!rejected && rejected.instructions.empty());
     }
+    // P2.3: native QMD CBUF reads use the actual Ampere opcode/byte
+    // offset and the reviewed shared Maxwell indexed load, never a
+    // special-case title path or guessed aligned word read.
+    for (const auto& [instruction, bank, byte_offset, width, dst, index] :
+         std::array<std::tuple<Instruction,u32,u32,u32,u32,u32>, 3>{{
+             {Instruction{{0x11047abb,0x01400000,0x08000400,0x000fe400}}, 5, 0, 2, 220, 201},
+             {Instruction{{0x06077abb,0x01002080,0x08000000,0x000fe400}}, 4, 0x82, 0, 223, 222},
+             {Instruction{{0x0d047abb,0x014000c0,0x08000000,0x000fe400}}, 5, 3, 0, 220, 229},
+         }}) {
+        const auto probe = Probe(instruction);
+        assert(probe.status == ProbeStatus::Recognized);
+        const auto lowered = Lower(instruction);
+        assert(lowered && lowered.source_instruction_offsets.size() == 2);
+        const u64 word = lowered.instructions[lowered.source_instruction_offsets[0]];
+        assert((word & 0xff00000000000000ULL) == 0xef00000000000000ULL);
+        assert((word & 255U) == dst);
+        assert(((word >> 8) & 255U) == index);
+        assert(((word >> 20) & 0xffffU) == byte_offset);
+        assert(((word >> 36) & 31U) == bank);
+        assert(((word >> 48) & 7U) == width);
+        const auto bridge = LowerReviewedToMaxwell(Bytes(instruction));
+        assert(bridge.Ready() && bridge.source_instruction_offsets.size() == 2);
+        assert(bridge.maxwell_instructions[bridge.source_instruction_offsets[0]] == word);
+    }
+    for (const u32 invalid_width : {1U,3U,6U,7U}) {
+        auto invalid = Instruction{{0x06077abb,0x01002080,0x08000000,0x000fe400}};
+        invalid.words[2] |= invalid_width << 9;
+        assert(!Lower(invalid));
+    }
+    auto direct_subword = Instruction{{0x06077ab9,0x01002080,0x00000000,0x000fe400}};
+    assert(!Lower(direct_subword)); // direct fetch must not alias an indexed byte load
+    auto bad_index = Instruction{{0x3f077abb,0x01002080,0x08000000,0x000fe400}};
+    assert(!Lower(bad_index)); // no UR63 as a dynamic index
     std::puts("P2_4_LICHII_NX2_GENERIC_AMPERE_LOWERING_PASS 0x499 0x59f 0x817 0x998 0x99c BRA.U renderer_bridge=ready");
 }

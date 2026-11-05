@@ -37,30 +37,54 @@ inline std::string BoundedNotes(const nlohmann::json& data) {
     std::string notes;
     notes.reserve(std::min<std::size_t>(value.size(), 240));
     bool space = false;
-    for (unsigned char c : value) {
-        if (notes.size() >= 240) break;
+    for (std::size_t pos = 0; pos < value.size();) {
+        const unsigned char c = static_cast<unsigned char>(value[pos]);
         if (c == '\n' || c == '\r' || c == '\t' || c == ' ') {
             space = !notes.empty();
+            ++pos;
             continue;
         }
-        // Do not allow raw C0/C1 control bytes into the UI text renderer.
-        if (c < 32 || c == 127) continue;
+        if (c < 32 || c == 127) { ++pos; continue; }
+        // Do not split a UTF-8 character at the UI's 240-byte limit.
+        // nlohmann::json already validated the source UTF-8 on parse.
+        const std::size_t width = c < 0x80 ? 1 : c < 0xE0 ? 2 :
+                                  c < 0xF0 ? 3 : 4;
+        if (pos + width > value.size()) break;
+        // Unicode C1 control range U+0080..U+009F.
+        if (c == 0xC2 && width == 2 &&
+            static_cast<unsigned char>(value[pos + 1]) >= 0x80 &&
+            static_cast<unsigned char>(value[pos + 1]) <= 0x9F) {
+            pos += 2;
+            continue;
+        }
+        if (notes.size() + width + (space ? 1u : 0u) > 240) break;
         if (space) notes.push_back(' ');
         space = false;
-        notes.push_back(static_cast<char>(c));
+        notes.append(value, pos, width);
+        pos += width;
     }
     return notes;
 }
 
 inline bool SafeAssetName(std::string_view name) {
+    const auto id = name.find("PPSA99008");
     if (name.size() < 12 || name.size() > 128 ||
-        name.find("PPSA99008") == std::string_view::npos)
+        id == std::string_view::npos)
+        return false;
+    // Identity must be a distinct filename token, not part of another ID.
+    if (id > 0 && name[id - 1] != '-' && name[id - 1] != '_')
+        return false;
+    const auto after = id + sizeof("PPSA99008") - 1;
+    if (after < name.size() && name[after] != '-' &&
+        name[after] != '_' && name[after] != '.')
         return false;
     for (unsigned char c : name)
         if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
               (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.'))
             return false;
-    return name.ends_with(".ffpfsc") || name.ends_with(".pkg");
+    // Only known homebrew image format is a metadata candidate here.
+    // Neither a retail .pkg nor an FTP .zip is a validated image installer.
+    return name.ends_with(".ffpfsc");
 }
 
 inline bool SafeSha256(std::string_view digest) {

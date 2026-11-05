@@ -97,6 +97,16 @@ int main() {
     }
     {
         auto copy = j;
+        copy["assets"][0]["name"] = "PPSA99008-R2.pkg";
+        expect(copy, Status::newer_without_package);
+    }
+    {
+        auto copy = j;
+        copy["assets"][0]["name"] = "notPPSA99008-R2.ffpfsc";
+        expect(copy, Status::newer_without_package);
+    }
+    {
+        auto copy = j;
         copy["assets"][0]["name"] = "PPSA99999-R2.ffpfsc";
         expect(copy, Status::newer_without_package);
     }
@@ -146,6 +156,18 @@ int main() {
         assert(r.notes.size() <= 240);
         assert(r.notes.find('\n') == std::string::npos);
         assert(r.notes.find(char(1)) == std::string::npos);
+    }
+    {
+        auto copy = j;
+        copy["body"] = std::string(239, 'x') + std::string({char(0xC3), char(0xA9)}) + "more";
+        const auto r = expect(copy, Status::newer_package_candidate);
+        assert(r.notes.size() == 239);
+    }
+    {
+        auto copy = j;
+        copy["body"] = std::string("Hi") + std::string({char(0xC2), char(0x85)}) + "there";
+        const auto r = expect(copy, Status::newer_package_candidate);
+        assert(r.notes == "Hithere");
     }
     {
         auto copy = fixture("encore-R10-abcdef12");

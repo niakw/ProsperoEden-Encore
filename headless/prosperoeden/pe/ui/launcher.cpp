@@ -226,8 +226,15 @@ void Launcher::close_modal()
 
 void Launcher::start_app_update_check(bool manual)
 {
-    if (update_check_ && !update_check_->completed.load(std::memory_order_acquire))
-        return; // no concurrent queries within this launcher
+    if (update_check_ && !update_check_->completed.load(std::memory_order_acquire)) {
+        // Manual always means a NEW network request. Coalesce repeated Cross
+        // presses into one follow-up after this in-flight request completes.
+        if (manual) {
+            update_check_->recheck_manual = true;
+            update_info_.summary = tr("New manual check queued after current request.");
+        }
+        return;
+    }
     // Bind a self-contained task without a reference to the launcher or the
     // service. Its network lifetime never blocks a game launch or its teardown.
     auto query = services_.detached_app_update_task(version_);
@@ -238,6 +245,7 @@ void Launcher::start_app_update_check(bool manual)
     process_update_checked_ = true;
     update_check_manual_ = manual;
     update_checked_this_launch_ = true;
+    update_notice_pending_ = false; // a user-forced check supersedes a pending auto notice
     update_info_ = {};
     update_info_.summary = tr("Checking official releases...");
     std::thread([state, query = std::move(query)]() mutable {
@@ -567,27 +575,35 @@ void Launcher::update(float dt)
     textures_.pump(dt);
     if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
         const bool was_manual = update_check_->manual;
+        const bool recheck_manual = update_check_->recheck_manual;
         // Copy: this finished task is reused after a game return.
         update_info_ = update_check_->result;
         update_check_.reset();
         if (update_info_.installed_version.empty())
             update_info_.installed_version = version_;
-        if (update_check_manual_) {
-            say(update_info_.summary,
-                update_info_.state != AppUpdateInfo::State::up_to_date);
-        } else if (!was_manual && prefs_.check_updates_on_start &&
-                   update_info_.state == AppUpdateInfo::State::newer_uninstallable &&
-                   !update_info_.latest_version.empty() &&
-                   process_notified_version_ != update_info_.latest_version) {
-            update_notice_pending_ = true;
+        if (recheck_manual) {
+            // The previous response must not masquerade as the forced query.
+            // The new task also survives game-entry/recreation of the launcher.
+            start_app_update_check(true);
+        } else {
+            if (update_check_manual_ || was_manual) {
+                say(update_info_.summary,
+                    update_info_.state != AppUpdateInfo::State::up_to_date);
+            } else if (prefs_.check_updates_on_start &&
+                       update_info_.state == AppUpdateInfo::State::newer_uninstallable &&
+                       !update_info_.latest_version.empty() &&
+                       process_notified_version_ != update_info_.latest_version) {
+                update_notice_pending_ = true;
+            }
+            update_check_manual_ = false;
         }
-        update_check_manual_ = false;
         // A new release can be announced, but is never presented as
         // installable until its native PS5 installation path is qualified.
     }
 
     if (update_notice_pending_ && home_loaded_ && screen_ == Screen::home &&
-        modal_ == Modal::none && selected_game_.empty() && intro_ >= 0.7f) {
+        modal_ == Modal::none && confirmation_ == Confirmation::none &&
+        selected_game_.empty() && intro_ >= 0.7f) {
         update_notice_pending_ = false;
         update_notice_visible_ = true;
         process_notified_version_ = update_info_.latest_version;

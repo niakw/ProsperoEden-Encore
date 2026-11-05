@@ -229,6 +229,8 @@ class Launcher
     std::string version_;
     struct UpdateCheckState {
         bool manual = false;
+        // UI-thread flag: a forced manual request made while auto check runs.
+        bool recheck_manual = false;
         AppUpdateInfo result{};
         std::atomic<bool> completed{false};
     };

@@ -250,6 +250,17 @@ Regrouper les **fonctionnalités utilisateur et l'expérience launcher** : fichi
 
 **Preuves avant validation R21** : tests hôtes avec réponses GitHub simulées (aucune release, déjà à jour, version supérieure, prerelease/draft, asset manquant, manifest/hash altéré, réseau lent/absent, annulation, refus, reprise), tests de versionnement, non-régression boot/menus/manette, tests de sûreté de l'installateur réel, build PS5 et CI. Vérifier sur console seulement après qualification complète, et **uniquement sur la branche laboratoire** jusqu'à décision R20. **Statut : PR de travail. Détection manuelle/auto, vérification unique par processus, résultat conservé au retour du jeu, notification informative non bloquante et tests hôtes JSON/asset/URL/digest intégrés. Installation native volontairement indisponible tant que l'installateur PS5, le format de paquet et la reprise sur échec ne sont pas validés.**
 
+**Complément R21 (05/11/2026) :** le contrôle manuel demandé pendant
+une consultation auto est mis en file pour une véritable nouvelle requête ;
+une notification attend la fermeture d'une confirmation existante.
+Prévalidation hors console des ZIP officiels : SHA-256, identité
+PPSA99008/contentId, version native strictement croissante, anti-ZIP-bomb,
+chemins, liens et données utilisateur. 19 tests hôtes valides.
+L'assistant natif de l'amont ne démontre que le remplacement d'une
+installation en dossier. Installation image .ffpfsc, assistant natif
+intégré, restauration et preuve sur PS5 13.60 restent P5.
+Aucune installation activée par ce lot.
+
 ## E — Réseau et multijoueur local privé
 
 Garder le protocole LDN indépendant du GPU, des mises à jour de l'application et du système de trophées.

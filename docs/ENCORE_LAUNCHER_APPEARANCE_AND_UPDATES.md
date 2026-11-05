@@ -111,6 +111,36 @@ This PR never overwrites an active executable or touches saves/settings.
 Completing R21 requires an audited installer, SHA-256 verification, explicit
 confirmation popup, cancellation, restart strategy and real-console proof.
 
+### R21 — offline directory ZIP preflight (not installation)
+
+The host-only tool tools/launcher/preflight_app_update_zip.py accepts an
+already-downloaded ZIP, the official release SHA-256, and the installed PS5
+contentVersion. It does NOT download, extract or modify any app:
+
+    python3 tools/launcher/preflight_app_update_zip.py release.zip \
+      --sha256 HEX_DIGEST_FROM_OFFICIAL_RELEASE \
+      --installed-version 01.000.041
+
+The check rejects wrong SHA-256, corrupt archives, traversal, symlinks,
+duplicate filenames, app/user data paths, ZIP expansion bombs, wrong
+PPSA99008 title/content identity, missing eboot or libc and native
+contentVersion that does not increase. Quotas: 1 GiB archive, 8192 entries,
+512 MiB per file, 2 GiB total uncompressed size. It never extracts the ZIP.
+
+The official public R1 release (October 15, 2026) is an FTP directory ZIP.
+The upstream PS5 Native App Boilerplate has a self-update helper that runs
+after the app exits and can swap a folder-install with a backup. However,
+the original ProsperoEden integration refuses image-mounted installations
+(mount_img.lnk). Its proof on some firmware does not qualify an Encore
+.ffpfsc image install nor our target firmware 13.60. Never overwrite a
+running eboot.bin or delete the app's saves, settings, ROMs, firmware or keys.
+
+The visible R revision and PS5 contentVersion are independent. A future
+native updater must verify both and refuse stale package versions even
+if the release R tag increases. Real download/restart/cancellation/helper,
+signed source, mount-kind checks, rollback and PS5 hardware tests remain P5.
+No installation is enabled by this host-only tool.
+
 ## Tests and remaining qualification
 
 - Seven launcher C++ sources compile in host syntax checks.
@@ -120,6 +150,7 @@ confirmation popup, cancellation, restart strategy and real-console proof.
 - Five hermetic Python unit tests passed for feed dates, platform validation,
   safe image sources, atomic writes and outage recovery.
 - A real current snapshot generated 16 images, 8 NS1 plus 8 NS2, ~2.2 MB.
+- R21 offline ZIP preflight: 19 hermetic Python scenarios pass; no extract/install.
 - Still required: full native PS5 build, five-theme screenshots/contrast and
   navigation audit, capture-gallery permission audit, and secure native
   installation before closing R21 or all of R25.

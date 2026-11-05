@@ -1399,3 +1399,17 @@ O0/O2 **2/2 PASS** (le `g++` macOS est le même compilateur, pas GCC). Les sourc
 `RETAA/RETAB` sans PAC, CAS/LSE et CPU6 restent hors du profil final,
 sans contourner les neuf commutateurs de recherche OFF. Ce progrès
 ne clôt ni P0.2 global, ni P1.1, ni les essais console P5.
+
+
+**P0.2 — qualification hôte de six unités réelles du chaînage GPU
+(05/11/2026) :** `check_native_gpu_boot_source_tus_host.py` compile en
+parallèle avec le même frontend C++20 les propriétaires de sources
+`nvhost_as_gpu`, `nvhost_gpu`, `puller Ampere`, `gpu_session`,
+`gpu_worker` et `graphics_supervisor` depuis l’overlay vendor courant.
+**6/6 compilations syntaxiques hôte PASS**, avec interfaces partagées
+NVDRV/GMMU/HLE et le vrai jeu de headers. Ce témoin est désormais
+branché à la préqualification P4 et au Core fast gate. **Limite :** il
+ni ne lie l’ensemble ni ne définit `PS5_NATIVE` ; aucun GPU/VI2 n’est
+activé et aucune commande n’est soumise au matériel PS5. Le profil
+final garde les neuf chemins de recherche désactivés tant que les
+contrats runtime/process GPU et P5 ne sont pas établis.

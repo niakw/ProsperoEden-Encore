@@ -24,7 +24,6 @@ REQUIRED = {
     "EDEN_DEV_VULKAN:BOOL": "OFF",
     "EDEN_SHARED_JIT:BOOL": "OFF",
     "EDEN_JIT_COMPILE_BATCH:BOOL": "OFF",
-    "EDEN_NUP_V1_RUNTIME:BOOL": "OFF",
 }
 # Sparse fallback diagnostics may be linked from maintained JIT source even
 # when runtime sparse selection is OFF. Strings alone are not activation proof.

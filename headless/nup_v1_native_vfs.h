@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Native FileSys adapter for the verified NUP v1 core. Deliberately NOT registered
+// Native FileSys adapter for the verified NUP v1 core. Registered by the unified NUP loader
 // as a loadable format or added to the PS5 source selectors.
 #pragma once
 

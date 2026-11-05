@@ -26,11 +26,11 @@ assert cm.count(final_gate) == 1
 section = cm.split(final_gate, 1)[1].split("\nendif()", 1)[0]
 nup_selector = (root / "headless/nup_v1_runtime.cmake").read_text()
 assert cm.count('include("${CMAKE_CURRENT_LIST_DIR}/nup_v1_runtime.cmake")') == 1
-assert nup_selector.count("option(EDEN_NUP_V1_RUNTIME") == 1
-assert 'route verified NUP containers to shared loader" OFF)' in nup_selector
-assert nup_selector.count("if(EDEN_NUP_V1_RUNTIME)") == 1
-assert "if(EDEN_FINAL_RELEASE_PROFILE)" in nup_selector
-assert "NUP v1 P5 qualification is not yet allowed in a final release" in nup_selector
+assert 'option(EDEN_NUP_V1_RUNTIME' not in nup_selector
+assert 'EDEN_FINAL_RELEASE_PROFILE' not in nup_selector
+assert 'target_sources(core PRIVATE' in nup_selector
+assert 'nup_v1_native_loader.cpp' in nup_selector
+assert 'nup_v1_aoc_service.cpp' in nup_selector
 for token in ("NOT PS5_NATIVE", "NOT EDEN_PS5_VULKAN", "NOT EDEN_PS5_OPENGL",
               'NOT EDEN_VULKAN_DRIVER STREQUAL "RADV"', "EDEN_SHARED_JIT",
               "EDEN_JIT_COMPILE_BATCH", "EDEN_DEV_PROFILE",
@@ -43,7 +43,7 @@ assert "EDEN_SPARSE_JIT_DEV" not in pkg and "EDEN_SPARSE_JIT_DEV" not in cm
 assert "EDEN_SPARSE_JIT_DEV" not in build
 assert "EDEN_JIT_SPARSE_TRIM" in validator
 assert '"EDEN_FINAL_RELEASE_PROFILE:BOOL": "ON"' in validator
-assert '"EDEN_NUP_V1_RUNTIME:BOOL": "OFF"' in validator
+assert '"EDEN_NUP_V1_RUNTIME:BOOL": "OFF"' not in validator
 assert 'EDEN_NS2_.*_EXPERIMENTAL:BOOL' in validator
 assert "target_compile_definitions(eden-headless PRIVATE EDEN_FINAL_RELEASE_PROFILE=1)" in cm
 assert 'experimental_sparse_jit = true;' in main

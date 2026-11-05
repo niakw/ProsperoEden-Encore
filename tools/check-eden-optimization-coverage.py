@@ -333,58 +333,52 @@ assert not post_f07_nup_vfs_owners & (
     post_f07_native_vulkan_owners | post_f07_shared_compute_owners |
     post_f07_launcher_handoff_owners | post_f07_ns2_typed_cache_owners
 )
-# The native router is prepared but must remain *conditional*, never a
-# default shipping source. The old "not in CMake at all" rule became stale
-# when the explicit P5 gate was introduced.
-# The active headless CMake entrypoint explicitly includes the isolated
-# P5 NUP selector; test the actual included file, not stale inline CMake.
+# NUP is always selected with the single native loader. It was introduced
+# after frozen F07, so inventory remains historical, not a release gate.
 nup_include = 'include("${CMAKE_CURRENT_LIST_DIR}/nup_v1_runtime.cmake")'
 assert release_cmake.count(nup_include) == 1
 nup_select = (ROOT / "headless/nup_v1_runtime.cmake").read_text()
-assert nup_select.count("option(EDEN_NUP_V1_RUNTIME") == 1
-assert 'route verified NUP containers to shared loader" OFF)' in nup_select
-assert nup_select.count("if(EDEN_NUP_V1_RUNTIME)") == 1
-nup_gate = nup_select.split("if(EDEN_NUP_V1_RUNTIME)", 1)[1].split("\nendif()", 1)[0]
-assert 'if(EDEN_FINAL_RELEASE_PROFILE)' in nup_gate
-assert "NUP v1 P5 qualification is not yet allowed in a final release" in nup_gate
-assert "target_sources(core PRIVATE" in nup_gate
+assert 'option(EDEN_NUP_V1_RUNTIME' not in nup_select
+assert 'EDEN_FINAL_RELEASE_PROFILE' not in nup_select
+assert 'target_sources(core PRIVATE' in nup_select
+assert 'set_property(TARGET core PROPERTY SOURCES "${eden_nup_runtime_sources}")' in nup_select
+assert 'if(NOT eden_nup_match_count EQUAL 1)' in nup_select
 for selected in (
     "nup_v1_vfs.cpp", "nup_v1_native_vfs.cpp",
     "nup_v1_native_content.cpp", "nup_v1_native_aoc.cpp",
     "nup_v1_native_loader.cpp", "nup_v1_loader_route.cpp",
 ):
     source_ref = '"${EDEN_PORT_DIR}/' + selected + '"'
-    assert nup_gate.count(source_ref) == 1
+    assert nup_select.count(source_ref) == 1
     assert release_cmake.count(source_ref) == 0
-# P5's two maintained-owner replacements are also post-F07, and must stay
-# inside the same explicit gate. Replacing original source without a unique
-# match fails at configure time; never treat the replacements as shipped.
+# NUP's two maintained owner replacements remain post-F07 history; normal
+# CMake selects exactly one existing source for each without policy gates.
 for original, replacement in (
     ("file_sys/romfs_factory.cpp", "nup_v1_romfs_factory.cpp"),
     ("hle/service/aoc/addon_content_manager.cpp", "nup_v1_aoc_service.cpp"),
 ):
     pair = '"' + original + "|" + replacement + '"'
-    assert nup_gate.count(pair) == 1
+    assert nup_select.count(pair) == 1
     assert replacement not in release_cmake
-assert 'list(LENGTH eden_nup_matches eden_nup_match_count)' in nup_gate
-assert 'if(NOT eden_nup_match_count EQUAL 1)' in nup_gate
-assert 'set_property(TARGET core PROPERTY SOURCES "${eden_nup_runtime_sources}")' in nup_gate
+assert 'list(LENGTH eden_nup_matches eden_nup_match_count)' in nup_select
+assert 'if(NOT eden_nup_match_count EQUAL 1)' in nup_select
+assert 'set_property(TARGET core PROPERTY SOURCES "${eden_nup_runtime_sources}")' in nup_select
 assert (ROOT / "tools/check-nup-v1-runtime-cmake.py").is_file()
 nup_core = (ROOT / "headless/nup_v1_vfs.h").read_text()
 nup_adapter = (ROOT / "headless/nup_v1_native_vfs.h").read_text()
-assert "Not wired into the PS5 loader or game catalogue." in nup_core
-assert "Deliberately NOT registered" in nup_adapter
+assert "Used by the unified native loader and catalogue." in nup_core
+assert "Registered by the unified NUP loader" in nup_adapter
 assert "AllowsVerifiedMemberCache() const override { return false; }" in (
     ROOT / "headless/nup_v1_native_vfs.cpp").read_text()
-assert "Inactive native NUP content bridge" in (
+assert "Native NUP content bridge" in (
     ROOT / "headless/nup_v1_native_content.h").read_text()
-assert "INACTIVE NUP v1 application-loader adapter." in (
+assert "Shared NUP v1 application-loader adapter." in (
     ROOT / "headless/nup_v1_native_loader.h").read_text()
 assert "NupAppLoader::Open(" in (
     ROOT / "headless/nup_v1_native_loader.cpp").read_text()
-print("NUP_V1_POST_F07_OWNER_ISOLATION_PASS",
+print("NUP_V1_POST_F07_OWNER_INTEGRATION_PASS",
       f"not_retroactive_F07={len(post_f07_nup_vfs_owners)}",
-      "shipping_selection=absent")
+      "shipping_selection=unified")
 
 # P1.3: the five shared WaitIfEqual64 kernel source/ABI owners were
 # introduced after the frozen F07 inventory. Qualify them with the real

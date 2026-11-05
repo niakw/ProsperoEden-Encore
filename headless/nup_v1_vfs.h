@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Read-only NUP v1 VFS core. Not wired into the PS5 loader or game catalogue.
+// Read-only NUP v1 VFS core. Used by the unified native loader and catalogue.
 // No game IDs, keys, title-dependent hacks, GPU or host filesystem assumptions.
 #pragma once
 

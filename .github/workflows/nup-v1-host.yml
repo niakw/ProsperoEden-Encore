@@ -102,9 +102,9 @@ jobs:
         run: python3 tools/check-nup-v1-native-abi.py
       - name: Build actual pinned vendor RomFS tables from synthetic NUP trees
         run: python3 tools/check-nup-v1-real-romfs-host.py
-      - name: Configure-only P5 NUP loader gate (no console build)
+      - name: Configure unified NUP loader owners (no console build)
         run: python3 tools/check-nup-v1-runtime-cmake.py
-      - name: Compile library discovery with NUP OFF and P5 ON
+      - name: Compile unified NUP game discovery with legacy formats
         run: python3 tools/check-nup-v1-game-discovery.py
       - name: Check maintained AoC and RomFS source parity (no full core build)
         run: python3 tools/check-nup-v1-service-parity-host.py

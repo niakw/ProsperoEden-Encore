@@ -2970,5 +2970,5 @@ if(EDEN_FINAL_RELEASE_PROFILE)
     endif()
 endif()
 
-# P5 NUP loader selector; OFF by default.
+# Shared NUP content loader, metadata and AoC owners for the regular build.
 include("${CMAKE_CURRENT_LIST_DIR}/nup_v1_runtime.cmake")

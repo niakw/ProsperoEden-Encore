@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Fail closed if P5-only NUP service overlays drift from the pinned vendor.
+"""Fail closed if unified NUP service overlays drift from the pinned vendor.
 
 This is source parity verification, NOT a compile/link or a console test.
-Only the two intended services are changed when EDEN_NUP_V1_RUNTIME=ON.
+Exactly two maintained service owners are replaced in the single build.
 """
 from __future__ import annotations
 from pathlib import Path
@@ -115,17 +115,19 @@ def main() -> None:
         assert marker in romfs, f"missing NUP RomFS fallback gate: {marker}"
 
     runtime = (ROOT / "headless/nup_v1_runtime.cmake").read_text()
-    assert 'option(EDEN_NUP_V1_RUNTIME' in runtime
+    assert 'option(EDEN_NUP_V1_RUNTIME' not in runtime
+    assert runtime.count('target_compile_definitions(eden-headless PRIVATE EDEN_NUP_V1_RUNTIME=1)') == 1
+    assert runtime.count('target_compile_definitions(eden-metadata PRIVATE EDEN_NUP_V1_RUNTIME=1)') == 1
     assert 'nup_v1_romfs_factory.cpp' in runtime
     assert 'nup_v1_aoc_service.cpp' in runtime
-    assert 'EDEN_FINAL_RELEASE_PROFILE' in runtime
+    assert 'EDEN_FINAL_RELEASE_PROFILE' not in runtime
     assert 'exactly one existing AoC/ROMFS source owner' in runtime
     metadata = (ROOT / "headless/metadata_bridge.cpp").read_text()
     assert '#ifdef EDEN_NUP_V1_RUNTIME' in metadata
     assert 'ReadLocalizedTitle(nup_title, PreferredNupLocale())' in metadata
     assert 'ReadLocalizedIcon(icon_bytes, PreferredNupLocale())' in metadata
     assert 'HasNupV1Header(file)' in metadata
-    # Game discovery may advertise the extension only in P5.
+    # NUP is always available alongside the other container formats.
     game_files = (ROOT / "headless/game_files.h").read_text()
     assert '#ifdef EDEN_NUP_V1_RUNTIME' in game_files
     assert 'IsNupFile(name)' in game_files
@@ -187,7 +189,7 @@ int main() {
                      str(source), "-o", str(executable)], check=True, timeout=40)
                 subprocess.run([str(executable)], check=True, timeout=15)
 
-    print(f"NUP service source parity {pinned[:12]}: maintained NCA/extracted paths retained, P5-only hooks present")
+    print(f"NUP service source parity {pinned[:12]}: maintained NCA/extracted paths retained, unified NUP hooks present")
 
 if __name__ == "__main__":
     main()

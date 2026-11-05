@@ -36,7 +36,7 @@ active_mutation = re.compile(
     r'|string\s*\(\s*REPLACE\b'
     r'|write_derived\s*\('
     r'|execute_process\s*\()', re.I | re.M)
-# The P5-only NUP gate tokenizes two audited source-owner names, not C++
+# The unified NUP owner selector tokenizes two audited source-owner names, not C++
 # source text. Permit that ONE exact list-parsing invocation only. Do not
 # exempt the module, a generic string(REPLACE), or future source transforms.
 nup_gate_path = ROOT/"headless/nup_v1_runtime.cmake"

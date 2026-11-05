@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// INACTIVE NUP v1 application-loader adapter. It is not registered in
+// Shared NUP v1 application-loader adapter. It is not registered in
 // GetLoader, FileType, CMake, ROM scanning, the frontend, or AoC.
 #pragma once
 

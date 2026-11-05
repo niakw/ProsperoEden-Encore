@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Inactive native NUP content bridge: no FileType/launcher/AoC registration.
+// Native NUP content bridge: no FileType/launcher/AoC registration.
 #pragma once
 
 #include <cstddef>

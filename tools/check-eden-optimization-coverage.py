@@ -421,7 +421,30 @@ assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in unified_rasterizer
 assert 'vulkan_abi/video_core/rasterizer_interface.h' in release_cmake
 print('NS1_NS2_UNIFIED_VULKAN_ABI_F07_ISOLATION_PASS new_native_headers=1')
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners
+# Seven reviewed static CPU6/LDAPR units were moved from headless into
+# vendor AFTER the frozen 518-owner F07 historical review. They are verified
+# by exact pinned-source parity/UBSan, never retroactively counted as F07.
+post_f07_static_engine_owners = {
+    "vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp",
+    "vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp",
+    "vendor/encore-active/ns2-runtime/cpu6/maintained/core/hle/kernel/global_scheduler_context.cpp",
+    "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h",
+    "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc",
+    "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h",
+    "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp",
+}
+assert len(post_f07_static_engine_owners) == 7
+assert post_f07_static_engine_owners <= all_owners, (
+    "Missing post-F07 maintained native source owner",
+    sorted(post_f07_static_engine_owners - all_owners))
+assert not post_f07_static_engine_owners & research_owners
+assert 'vendor/encore-active/ns2-runtime/cpu6/maintained' in (
+    ROOT/'headless/ns2_cpu6_source_bridge.cmake').read_text()
+assert 'vendor/encore-active/ns2-runtime/ldapr/maintained' in (
+    ROOT/'headless/shared_a64_ldapr.cmake').read_text()
+print("ENCORE_POST_F07_NATIVE_SOURCE_ISOLATION_PASS owners=7")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

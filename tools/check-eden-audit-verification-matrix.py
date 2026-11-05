@@ -70,6 +70,16 @@ def build_matrix(rows: list[dict], workflow: str, catalog: str) -> tuple[list[di
     keyed = {r["id"]: r for r in rows}
     assert len(keyed) == len(rows), "duplicate contract IDs"
     assert all(x["symbols"] and all(x["symbols"]) for x in rows)
+    # Keep the historical F07 catalog separate from reviewed new vendor owners.
+    post_begin = "<!-- POST_F07_MAINTAINED_OWNER_START -->"
+    post_end = "<!-- POST_F07_MAINTAINED_OWNER_END -->"
+    assert catalog.count(post_begin) == catalog.count(post_end) == 1
+    old_catalog = catalog.split("<!-- ACTIVE_SOURCE_CATALOG_START -->")[1].split(
+        "<!-- ACTIVE_SOURCE_CATALOG_END -->")[0]
+    new_catalog = catalog.split(post_begin)[1].split(post_end)[0]
+    post_source_ids = {r["id"] for r in rows if r["id"] in {
+        "U90", "U91", "U92", "U93", "U94", "U95", "U96"}}
+    assert len(post_source_ids) == 7, "lost post-F07 owner audit IDs"
     accounted = 0
     for row in rows:
         assert all(p in keyed and p != row["id"] for p in row["prerequisites"]), row["id"]
@@ -84,7 +94,15 @@ def build_matrix(rows: list[dict], workflow: str, catalog: str) -> tuple[list[di
         path = row["path"]
         if path.startswith("vendor/encore-active/"):
             rel = path.removeprefix("vendor/encore-active/")
-            assert ("| `" + rel + "` |") in catalog, (row["id"], "missing active catalogue owner", rel)
+            signature = "| `" + rel + "` |"
+            if row["id"] in post_source_ids:
+                assert signature in new_catalog, (
+                    row["id"], "missing supplemental post-F07 vendor owner", rel)
+                assert signature not in old_catalog, (
+                    row["id"], "post-F07 native owner mixed into frozen F07", rel)
+            else:
+                assert signature in old_catalog, (
+                    row["id"], "missing historical active catalogue owner", rel)
             owner = "encore-active"
         elif path.startswith("vendor/sources/"):
             owner = "pinned-reference"

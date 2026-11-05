@@ -369,6 +369,25 @@ reste dans `docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md`.
 | `ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c` | `driver-fork` | R22 |
 <!-- ACTIVE_SOURCE_CATALOG_END -->
 
+## Sources maintenues après le gel F07 — propriétaires natifs versionnés
+Les sept unités CPU6/LDAPR appartiennent au **moteur maintenu dans le sous-module vendor**.
+Elles sont sélectionnées par le CMake PS5 unique et vérifiées contre leurs
+sources épinglées. Ce registre complémentaire est séparé des **337 sources
+historiques F07**, conservées sans modification de leur décompte.
+L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
+
+<!-- POST_F07_MAINTAINED_OWNER_START -->
+| Chemin relatif à `vendor/encore-active/` | ID du graphe |
+| --- | --- |
+| `ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp` | U91 |
+| `ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp` | U92 |
+| `ns2-runtime/cpu6/maintained/core/hle/kernel/global_scheduler_context.cpp` | U90 |
+| `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h` | U93 |
+| `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc` | U94 |
+| `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h` | U95 |
+| `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
+<!-- POST_F07_MAINTAINED_OWNER_END -->
+
 ## Fichiers de build du snapshot de backports (hors sources C/C++)
 
 | Chemin | Rôle |

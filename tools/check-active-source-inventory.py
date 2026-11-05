@@ -363,6 +363,19 @@ for line in audit.splitlines():
 assert all(path in graph for path in post_f07_cpu6_ldapr_owners), (
     "Vendor-maintained CPU6/LDAPR owners missing exact audit rows",
     sorted(path for path in post_f07_cpu6_ldapr_owners if path not in graph))
+# A separate supplemental catalog keeps new runtime sources explicitly owned,
+# without re-dating or silently increasing the immutable 337-path F07 snapshot.
+post_begin, post_end = ("<!-- POST_F07_MAINTAINED_OWNER_START -->",
+                        "<!-- POST_F07_MAINTAINED_OWNER_END -->")
+assert document.count(post_begin) == document.count(post_end) == 1
+post_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].splitlines()
+             if line.startswith("| `ns2-runtime/")]
+post_expected = [
+    f"| `{path}` | {','.join(graph[path])} |"
+    for path in sorted(post_f07_cpu6_ldapr_owners)]
+assert post_rows == post_expected, ("post-F07 vendor source owner drift",
+                                   post_rows, post_expected)
+print("ENCORE_POST_F07_VENDOR_CATALOG_PASS", f"maintained={len(post_rows)}")
 def role(path):
     if path.startswith("eden-backports/"):
         return "shipping-backport"

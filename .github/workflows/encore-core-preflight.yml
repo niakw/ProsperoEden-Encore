@@ -72,6 +72,18 @@ jobs:
         with:
           submodules: true
 
+      # Catch cheap source-contract regressions before lengthy APT setup and
+      # hundreds of source-audit fixtures; never suppress the full audit.
+      - name: P0 quick source contract (audit shard only)
+        if: ${{ matrix.suite == 'audit' }}
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-active-cmake-source-boundary.py
+          python3 -B tools/check-vendored-guest-title-version.py
+          python3 -B tools/check-codeql-security-scope.py
+          python3 -B tools/check-ns2-shipping-exefs-owner.py
+          python3 -B tools/check-ns2-production-flags-host.py
+
       - name: Install host-only JSON, Boost.Container and clang sanitizer fixtures
         run: |
           # Some hosted runners have an unrelated Microsoft APT feed that can

@@ -2075,3 +2075,14 @@ msgstr "Çerçeve oluşturmanın Vulkan'a ihtiyacı var. Bu seçeneği etkinleş
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Bu seçeneğin Vulkan'a ihtiyacı var. OpenGL ekstra çerçeveler oluşturamaz; değiştirmenin hiçbir etkisi olmayacaktır."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+, Vulkan'ı gerektirir. Vulkan'ı veya başka bir kenar yumuşatma yöntemini seçin."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: genişletilmiş kenar araması. Daha pürüzlü kenarları yumuşatabilir ancak dokuları yumuşatabilir. SMAA Ultra ile karşılaştırın."

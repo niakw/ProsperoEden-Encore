@@ -2075,3 +2075,14 @@ msgstr "A keretgeneráláshoz Vulkan szükséges. Válassza a Vulkan lehetőség
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Ehhez a lehetőséghez Vulkan szükséges. Az OpenGL nem tud extra kereteket generálni; megváltoztatása nem lenne hatással."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "Az FXAA+-hoz Vulkan szükséges. Válassza a Vulkan vagy más élsimítási módszert."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: kiterjesztett élkeresés. Kisimítja a szaggatottabb éleket, de lágyíthatja a textúrákat. Hasonlítsa össze az SMAA Ultra-val."

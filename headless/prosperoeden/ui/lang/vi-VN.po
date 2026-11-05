@@ -2075,3 +2075,14 @@ msgstr "Tạo khung cần Vulkan. Chọn Vulkan để kích hoạt tùy chọn n
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Tùy chọn này cần Vulkan. OpenGL không thể tạo thêm khung; thay đổi nó sẽ không có tác dụng."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ yêu cầu Vulkan. Chọn Vulkan hoặc một phương pháp khử răng cưa khác."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: tìm kiếm cạnh mở rộng. Có thể làm mịn các cạnh lởm chởm hơn nhưng có thể làm mềm kết cấu. So sánh với SMAA Ultra."

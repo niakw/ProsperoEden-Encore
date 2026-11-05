@@ -2198,5 +2198,17 @@ msgstr "La génération de trames nécessite Vulkan. Sélectionnez Vulkan pour a
 
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
-msgstr "Cette option nécessite Vulkan. OpenGL ne peut pas générer de trames supplémentaires ; le changer n'aurait aucun effet.")FRPO";
+msgstr "Cette option nécessite Vulkan. OpenGL ne peut pas générer de trames supplémentaires ; le changer n'aurait aucun effet."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ nécessite Vulkan. Choisis Vulkan ou un autre anticrénelage."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+ : recherche étendue des contours. Lisse davantage certains escaliers, mais peut adoucir les textures. Compare avec SMAA Ultra."
+)FRPO";
 }

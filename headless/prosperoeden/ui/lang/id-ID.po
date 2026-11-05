@@ -2075,3 +2075,14 @@ msgstr "Pembuatan bingkai membutuhkan Vulkan. Pilih Vulkan untuk mengaktifkan op
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Opsi ini memerlukan Vulkan. OpenGL tidak dapat menghasilkan frame tambahan; mengubahnya tidak akan berpengaruh."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ membutuhkan Vulkan. Pilih Vulkan atau metode anti-aliasing lainnya."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: pencarian tepi yang diperluas. Dapat menghaluskan tepi yang lebih bergerigi namun dapat melembutkan tekstur. Bandingkan dengan SMAA Ultra."

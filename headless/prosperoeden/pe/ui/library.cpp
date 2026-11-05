@@ -1841,7 +1841,14 @@ void Launcher::press_game(Key key)
         }
         if (option_ == row_anti_aliasing)
         {
-            next.anti_aliasing = cycle(next.anti_aliasing, static_cast<int>(services_.anti_aliasing_labels().size()));
+            const int selected = cycle(next.anti_aliasing,
+                static_cast<int>(services_.anti_aliasing_labels().size()));
+            if (selected == 3 && EffectiveGameRenderer(next, prefs_, game.title_id) != 1) {
+                say(FxaaUnsupportedGuide(), true);
+                cue(Cue::error);
+                return;
+            }
+            next.anti_aliasing = selected;
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_texture_filtering) {
@@ -1999,6 +2006,10 @@ void Launcher::draw_game(Canvas &c, float open)
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const bool inactive =
+            (row == row_anti_aliasing &&
+             (game_settings_.anti_aliasing >= 0
+                ? game_settings_.anti_aliasing : base_aa) == 3 &&
+             EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1) ||
             (row == row_fsr_sharpness &&
              EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id) != 1) ||
             (row == row_frame_generation &&
@@ -2081,7 +2092,9 @@ void Launcher::draw_game(Canvas &c, float open)
             else if (option_ == row_fsr_sharpness)
                 explanation = FsrSharpnessGuide(filter == 1);
             else if (option_ == row_anti_aliasing)
-                explanation = AntiAliasingGuide(aa);
+                explanation = aa == 3 &&
+                    EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1
+                    ? FxaaUnsupportedGuide() : AntiAliasingGuide(aa);
             else if (option_ == row_texture_filtering)
                 explanation = TextureGuide();
             else if (option_ == row_frame_generation &&
@@ -2090,6 +2103,9 @@ void Launcher::draw_game(Canvas &c, float open)
                 explanation = FramegenUnsupportedGuide();
             DrawVideoGuide(c, tr(kLabels[option_]), explanation,
                 (option_ == row_fsr_sharpness && filter != 1) ||
+                (option_ == row_anti_aliasing &&
+                 aa == 3 && EffectiveGameRenderer(
+                     game_settings_, prefs_, title_id) != 1) ||
                 (option_ == row_frame_generation &&
                  !FrameGenerationSelectable(
                      EffectiveGameRenderer(game_settings_, prefs_, title_id))),

@@ -19,6 +19,26 @@ configure_file("${EDEN_PORT_DIR}/window_adapt_pass_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/window_adapt_pass.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vulkan_present_layer_r24.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/layer.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vulkan_fxaa_r24.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/fxaa.h" COPYONLY)
+
+# R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
+# The PS5 image contains only the compiled shader, no runtime compiler.
+find_program(EDEN_R24_GLSLANG NAMES glslangValidator REQUIRED)
+set(EDEN_R24_FXAA_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/host_shaders/fxaa_quality_frag_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R24_FXAA_HEADER}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${PORT_BUILD_DIR}/include/video_core/host_shaders"
+    COMMAND "${EDEN_R24_GLSLANG}" -V --target-env spirv1.3
+            -DUseUniformBlock=1 --variable-name FXAA_QUALITY_FRAG_SPV
+            -o "${EDEN_R24_FXAA_HEADER}" "${EDEN_PORT_DIR}/fxaa_quality.frag"
+    DEPENDS "${EDEN_PORT_DIR}/fxaa_quality.frag"
+    VERBATIM)
+add_custom_target(eden-r24-fxaa-quality-spv DEPENDS "${EDEN_R24_FXAA_HEADER}")
+add_dependencies(video_core eden-r24-fxaa-quality-spv)
+
 configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_blit_screen.h" COPYONLY)
 file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
@@ -32,6 +52,14 @@ list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp renderer_vulkan/v
 # 0=strongest, higher stops=weaker. Replace native source only, not vendor.
 list(REMOVE_ITEM video_sources renderer_vulkan/present/fsr.cpp)
 list(APPEND video_sources "${EDEN_PORT_DIR}/vulkan_fsr1_r07.cpp")
+# FXAA+ (quality) has separate Vulkan SPIR-V. No fake MSAA or 2x FXAA run.
+list(REMOVE_ITEM video_sources renderer_vulkan/present/fxaa.cpp)
+list(APPEND video_sources
+    "${EDEN_PORT_DIR}/vulkan_fxaa_r24.cpp"
+    "${EDEN_PORT_DIR}/fxaa_quality_select.cpp")
+set_property(SOURCE "${EDEN_PORT_DIR}/vulkan_fxaa_r24.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R24_FXAA_HEADER}")
 list(APPEND video_sources "${PORT_BUILD_DIR}/vulkan_device.cpp" "${PORT_BUILD_DIR}/vulkan_scheduler.cpp")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_instance.cpp vulkan_common/vulkan_wrapper.cpp
     vulkan_common/vulkan_library.cpp vulkan_common/vulkan_surface.cpp

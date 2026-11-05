@@ -2075,3 +2075,14 @@ msgstr "Kehyksen luominen vaatii Vulkanin. Ota tämä vaihtoehto käyttöön val
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Tämä vaihtoehto vaatii Vulkanin. OpenGL ei voi luoda ylimääräisiä kehyksiä; sen muuttamisella ei olisi vaikutusta."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ vaatii Vulkanin. Valitse Vulkan tai jokin muu anti-aliasing-menetelmä."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: laajennettu reunahaku. Voi tasoittaa rosoisempia reunoja, mutta saattaa pehmentää tekstuuria. Vertaa SMAA Ultraan."

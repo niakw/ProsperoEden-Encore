@@ -46,6 +46,26 @@ maintenue du port, pas le vendor épinglé. L'ancien fork reste
 disponible pour audit. L'ordre AA → FSR → composite HUD n'a pas été
 changé ; les choix sauvegardés non plus.
 
+## FXAA+ — deuxième shader FXAA (nouveau R24)
+
+- L'algorithme FXAA original, léger, garde son identifiant 1. SMAA
+  Ultra garde l'identifiant 2 et ses 3 passes historiques.
+- Nouvelle option 3 : **FXAA+**, recherche spatiale étendue ;
+  shader dans headless/fxaa_quality.frag. Le choix ne redirige pas
+  le même shader : Vulkan utilise un second module SPIR-V compilé
+  via glslangValidator, sans modification du vendor.
+- Distinctions : FXAA_SPAN_MAX 12 au lieu de 8 ;
+  FXAA_REDUCE_MUL 1/16 au lieu de 1/8 ;
+  FXAA_REDUCE_MIN 1/256 au lieu de 1/128. Cela modifie
+  le comportement sur des contours faibles/fins, mais peut flouter ;
+  **aucune supériorité visuelle n'est affirmée avant capture PS5**.
+- Les identifiants et les profils antérieurs restent stables.
+  L'option est proposée globalement et par jeu sur Vulkan ;
+  l'app refuse le nouveau choix si le renderer est OpenGL.
+- Tests : compilation des deux modules SPIR-V, validation spirv-val,
+  empreintes différentes, source native de sélection, atomique
+  inter-threads, persistence des préférences et des overrides titres.
+
 ## Preuves hôte et limites
 
 - Test `AaSourceExtent` compile en C++20 (dimensions raw, escaladées,

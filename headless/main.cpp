@@ -38,6 +38,7 @@
 #include "devices.h"
 #include "encore_overrides_generated.h"
 #include "encore_overrides_runtime.h"
+#include "fxaa_quality_select.h"
 #include "encore_performance_policy.h"
 #include "experimental_performance.h"
 #include "diagnostics.h"
@@ -1583,9 +1584,15 @@ int main(int argc, char** argv) {
             // Eden's raw FSR control is reversed (0 = sharpest, 200 = softest). Encore presents
             // a normal 0-100 sharpness percentage.
             Settings::values.fsr_sharpening_slider.SetValue(200 - std::clamp(fsr_sharpness, 0, 100) * 2);
+            // FXAA+ (index 3) uses a distinct native Vulkan shader.
+            // Both FXAA choices retain the upstream enum value, so the
+            // guest and OpenGL never receive an unrecognized enum value.
             static constexpr Settings::AntiAliasing aa[] = {
-                Settings::AntiAliasing::None, Settings::AntiAliasing::Fxaa, Settings::AntiAliasing::Smaa};
-            Settings::values.anti_aliasing.SetValue(aa[std::clamp(anti_aliasing, 0, 2)]);
+                Settings::AntiAliasing::None, Settings::AntiAliasing::Fxaa,
+                Settings::AntiAliasing::Smaa, Settings::AntiAliasing::Fxaa};
+            Settings::values.anti_aliasing.SetValue(aa[std::clamp(anti_aliasing, 0, 3)]);
+            Eden::Graphics::SetEnhancedFxaa(
+                anti_aliasing == 3 && profile_renderer == 1);
             // Real texture LOD sampler filtering (not image postprocessing).
             // A per-title override wins; otherwise retain the global choice.
             const int aniso_tier =

@@ -19,6 +19,7 @@ inline const char* AntiAliasingGuide(int aa) {
     switch (aa) {
     case 0: return tr(TR("Off: no edge smoothing. Fastest, but diagonal lines may look jagged."));
     case 1: return tr(TR("FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."));
+    case 3: return tr(TR("FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."));
     default: return tr(TR("SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."));
     }
 }
@@ -26,6 +27,9 @@ inline const char* FsrSharpnessGuide(bool active) {
     return active
         ? tr(TR("Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."))
         : tr(TR("Inactive for this filter. Select AMD FSR 1 under Upscaling to adjust sharpness. It does not alter the game's textures."));
+}
+inline const char* FxaaUnsupportedGuide() {
+    return tr(TR("FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."));
 }
 inline const char* FramegenUnsupportedGuide() {
     return tr(TR("This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."));

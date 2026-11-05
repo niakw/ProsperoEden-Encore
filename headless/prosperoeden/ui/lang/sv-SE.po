@@ -2075,3 +2075,14 @@ msgstr "Frame generation behöver Vulkan. Välj Vulkan för att aktivera det hä
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Detta alternativ behöver Vulkan. OpenGL kan inte generera extra ramar; att ändra det skulle inte ha någon effekt."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ kräver Vulkan. Välj Vulkan eller annan kantutjämningsmetod."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: utökad kantsökning. Kan jämna ut mer taggiga kanter men kan mjuka upp texturer. Jämför med SMAA Ultra."

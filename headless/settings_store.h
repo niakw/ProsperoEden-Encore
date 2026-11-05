@@ -60,8 +60,9 @@ inline constexpr int kNativeResolution = 3;
 inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
 // These are spatial display filters, NOT FSR 3 temporal reconstruction.
 inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "FSR 1", "Bicubic", "Nearest"};
-inline constexpr const char* kAntiAliasingKeys[] = {"none", "fxaa", "smaa"};
-inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra"};
+// Keep existing indices stable; index 3 is a new Vulkan-only shader.
+inline constexpr const char* kAntiAliasingKeys[] = {"none", "fxaa", "smaa", "fxaa_quality"};
+inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra", "FXAA+"};
 // Real Eden Vulkan texture sampler anisotropy, separate from spatial upscaling,
 // frame generation and resolution. 0 uses Eden's automatic choice.
 inline constexpr const char* kTextureAnisotropyKeys[] = {

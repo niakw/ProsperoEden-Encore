@@ -28,6 +28,27 @@ int main() {
         assert(FrameGenerationSelectable(1));
         assert(!FrameGenerationSelectable(0));
     }
+    // FXAA+ is an additional quality shader, not an alias to SMAA.
+    // It must roundtrip as a manual Custom selection by game and global.
+    {
+        Preferences extended{};
+        ApplyVideoPreset(extended,1);
+        extended.anti_aliasing=3;
+        assert(DetectVideoProfile(extended)==kCustomVideoProfile);
+        Eden::Preferences stored{};
+        stored.anti_aliasing=3;
+        char fn[]="/tmp/eden-fxaa-quality-XXXXXX";
+        int handle=mkstemp(fn);
+        assert(handle>=0);
+        close(handle);
+        assert(Eden::SavePreferences(stored,fn));
+        assert(Eden::LoadPreferences(fn).anti_aliasing==3);
+        Eden::GameSettings title{};
+        title.anti_aliasing=3;
+        assert(Eden::SaveGameSettings(fc27,title,fn));
+        assert(Eden::LoadGameSettings(fc27,fn).anti_aliasing==3);
+        std::remove(fn);
+    }
     // No custom sampler may be silently classified as an authored preset.
     Preferences p{};
     ApplyVideoPreset(p,1);

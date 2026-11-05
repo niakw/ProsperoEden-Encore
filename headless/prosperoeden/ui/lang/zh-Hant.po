@@ -2075,3 +2075,14 @@ msgstr "幀生成需要 Vulkan。選擇 Vulkan 以啟用此選項。"
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "此選項需要 Vulkan。 OpenGL無法產生額外的幀；改變它不會有任何影響。"
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ 需要 Vulkan。選擇 Vulkan 或其他抗鋸齒方法。"
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+：擴展邊緣搜尋。可以平滑更多鋸齒狀邊緣，但可能會軟化紋理。與 SMAA Ultra 進行比較。"

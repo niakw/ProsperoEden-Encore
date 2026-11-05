@@ -2075,3 +2075,14 @@ msgstr "Generarea cadrelor necesită Vulkan. Selectați Vulkan pentru a activa a
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Această opțiune necesită Vulkan. OpenGL nu poate genera cadre suplimentare; schimbarea lui nu ar avea niciun efect."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ necesită Vulkan. Alegeți Vulkan sau altă metodă anti-aliasing."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: căutare extinsă de margine. Poate netezi marginile mai zimțate, dar poate înmuia texturile. Comparați cu SMAA Ultra."

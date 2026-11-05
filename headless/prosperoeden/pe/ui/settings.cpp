@@ -602,7 +602,13 @@ void Launcher::press_dialog(Key key)
         else if (option_ == video_anti_aliasing)
         {
             const int count = static_cast<int>(services_.anti_aliasing_labels().size());
-            prefs_.anti_aliasing = (prefs_.anti_aliasing + step + count) % count;
+            const int next = (prefs_.anti_aliasing + step + count) % count;
+            if (next == 3 && prefs_.renderer != 1) {
+                say(FxaaUnsupportedGuide(), true);
+                cue(Cue::error);
+                return;
+            }
+            prefs_.anti_aliasing = next;
             RefreshVideoProfile(prefs_);
         }
         else if (option_ == video_texture_filtering)
@@ -953,6 +959,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 toggle(c, 1292.0f, row_centre(row), knob);
             }
             else if ((row == video_fsr_sharpness && prefs_.filter != 1) ||
+                     (row == video_anti_aliasing && prefs_.anti_aliasing == 3 &&
+                      prefs_.renderer != 1) ||
                      (row == video_frame_generation &&
                       !FrameGenerationSelectable(prefs_.renderer)))
             {
@@ -1131,7 +1139,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         else if (selected == video_fsr_sharpness)
             explanation = FsrSharpnessGuide(prefs_.filter == 1);
         else if (selected == video_anti_aliasing)
-            explanation = AntiAliasingGuide(prefs_.anti_aliasing);
+            explanation = prefs_.anti_aliasing == 3 && prefs_.renderer != 1
+                ? FxaaUnsupportedGuide() : AntiAliasingGuide(prefs_.anti_aliasing);
         else if (selected == video_texture_filtering)
             explanation = TextureGuide();
         else if (selected == video_frame_generation &&
@@ -1139,6 +1148,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             explanation = FramegenUnsupportedGuide();
         DrawVideoGuide(c, tr(kGuideLabels[selected]), explanation,
             (selected == video_fsr_sharpness && prefs_.filter != 1) ||
+            (selected == video_anti_aliasing &&
+             prefs_.anti_aliasing == 3 && prefs_.renderer != 1) ||
             (selected == video_frame_generation &&
              !FrameGenerationSelectable(prefs_.renderer)),
             prefs_.ui_theme == 1);

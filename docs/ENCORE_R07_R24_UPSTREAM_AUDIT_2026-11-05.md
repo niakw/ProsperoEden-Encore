@@ -43,10 +43,21 @@ Hors FSR 1, l'option est visible mais grisée/non réglable.
   utilise les dimensions **réelles** de la source raw/accélérée
   et recrée les surfaces AA sur resize ; host policy vérifiée.
   Cela répare un problème de dimensionnement sans ajouter de méthode.
-- **Paliers supplémentaires :** Ryubing possède des variantes SMAA
-  Low/Medium/High/Ultra ; Encore ne les propose pas avant
-  configuration de shaders et pipelines **distincts** avec tests
-  d'application par frame et comparaison qualité/coût.
+- **Nouveau palier FXAA+ (native Vulkan, PR #24) :** source distincte
+  headless/fxaa_quality.frag ; recherche de contours plus large
+  (FXAA_SPAN_MAX : 8 vers 12), atténuation réduite
+  (1/8 vers 1/16 ; 1/128 vers 1/256). Le CMake produit
+  un vrai shader SPIR-V séparé, validé par spirv-val ; la source C++
+  du pass choisit explicitement l'ancien shader ou ce nouveau module.
+  La sélection globale/par jeu est conservée avec une nouvelle clé
+  fxaa_quality (index 3) ; en OpenGL, aucun faux effet n'est promis.
+  Cela n'est pas du MSAA ou du TAA. **Ce palier peut également
+  accentuer le flou** selon la scène ; il faut encore un A/B réel
+  pour démontrer son gain perceptuel sur FC27/BOTW.
+- **Autres paliers :** Ryubing possède des variantes SMAA
+  Low/Medium/High/Ultra ; Encore conserve SMAA Ultra existant.
+  Les variantes supplémentaires nécessitent des shaders et pipelines
+  distincts, pas un bouton décoratif, puis un comparatif qualité/coût.
   FXAA renforcé exige pareillement un vrai shader/preset différent.
 - **MSAA 2x/4x/8x :** les surfaces multisample du guest sont connues
   du texture cache et des render passes, avec `num_samples`.
@@ -86,11 +97,13 @@ licence. Les branches et fichiers peuvent évoluer après le 05/11/2026.*
 indépendante. Il faut encore le chemin temporel générique, les entrées
 et la gestion des ressources (pas seulement tester une console).
 
-**R24 : non clos.** La correction de taille est intégrée, mais de
-**nouveaux paliers ou une nouvelle méthode AA réellement efficace**
-restent à implémenter et à vérifier sans trafiquer l'émulation. Les
-captures/mesures PS5 sont ensuite nécessaires et ne peuvent être
-simulées par les tests hôte.
+**R24 : intégré en source, non clos.** Le dimensionnement est corrigé et
+FXAA+ est maintenant un véritable shader distinct, sélectionnable,
+non un alias. Les tests hôtes vérifient sa compilation SPIR-V,
+le routage, les ressources et la persistance. Le **gain de qualité
+perceptible** et le coût GPU ne sont pas prouvés sur PS5 ;
+MSAA 2/4/8, TAA temporel et paliers SMAA supplémentaires restent
+des analyses non livrées. Aucun benchmark console n'est fabriqué.
 
 **À ne pas faire :** inventer FSR3 spatial, simuler un MSAA via postprocess,
 appeler le filtrage anisotrope une texture HD, assimiler « shader

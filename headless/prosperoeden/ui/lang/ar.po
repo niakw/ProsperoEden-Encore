@@ -2075,3 +2075,14 @@ msgstr "يحتاج إنشاء الإطار إلى فولكان. حدد Vulkan ل
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "يحتاج هذا الخيار إلى فولكان. لا يمكن لـ OpenGL إنشاء إطارات إضافية؛ تغييره لن يكون له أي تأثير."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ يتطلب Vulkan. اختر Vulkan أو طريقة أخرى لمنع التعرج."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: بحث ممتد عن الحافة. يمكنه تنعيم الحواف الخشنة ولكن قد ينعم الأنسجة. قارنه مع SMAA Ultra."

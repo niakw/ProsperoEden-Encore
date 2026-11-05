@@ -2075,3 +2075,14 @@ msgstr "프레임 생성에는 Vulkan이 필요합니다. 이 옵션을 활성�
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "이 옵션에는 Vulkan이 필요합니다. OpenGL은 추가 프레임을 생성할 수 없습니다. 변경해도 아무런 효과가 없습니다."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+에는 Vulkan이 필요합니다. Vulkan 또는 다른 앤티앨리어싱 방법을 선택합니다."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: 확장된 에지 검색. 울퉁불퉁한 가장자리를 더 부드럽게 만들 수 있지만 질감이 부드러워질 수도 있습니다. SMAA 울트라와 비교해 보세요."

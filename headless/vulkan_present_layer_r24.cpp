@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <variant>
 #include "aa_source_extent.h"
+#include "fxaa_quality_select.h"
 #include "video_core/present.h"
 #include "video_core/renderer_vulkan/present/anti_alias_pass.h"
 /* X11 defines */
@@ -241,11 +242,14 @@ void Layer::SetAntiAliasPass(const Device& device, VkExtent2D source_extent) {
     const auto requested_aa =
         Eden::Graphics::AaValid({source_extent.width, source_extent.height})
         ? filters.get_anti_aliasing() : Settings::AntiAliasing::None;
+    const bool enhanced = requested_aa == Settings::AntiAliasing::Fxaa &&
+                          Eden::Graphics::EnhancedFxaa();
     // Disabled AA has no GPU resources to rebuild. The old guard skipped
     // only live FXAA/SMAA and reconstructed the monostate on every frame,
     // including when the filter remained disabled across thousands of draws.
     // A resize resets a live pass to monostate, so FXAA/SMAA still rebuild.
     if (anti_alias_setting == requested_aa &&
+        fxaa_enhanced_setting == enhanced &&
         source_extent.width == anti_alias_extent.width &&
         source_extent.height == anti_alias_extent.height &&
         (!std::holds_alternative<std::monostate>(anti_alias) ||
@@ -257,6 +261,7 @@ void Layer::SetAntiAliasPass(const Device& device, VkExtent2D source_extent) {
         requested_aa == Settings::AntiAliasing::None) {
         anti_alias_setting = requested_aa;
         anti_alias_extent = source_extent;
+        fxaa_enhanced_setting = enhanced;
         return;
     }
 #else
@@ -273,11 +278,12 @@ void Layer::SetAntiAliasPass(const Device& device, VkExtent2D source_extent) {
 #endif
     anti_alias_setting = requested_aa;
     anti_alias_extent = source_extent;
+    fxaa_enhanced_setting = enhanced;
     const VkExtent2D render_area = source_extent;
 
     switch (anti_alias_setting) {
     case Settings::AntiAliasing::Fxaa:
-        anti_alias.emplace<FXAA>(device, memory_allocator, image_count, render_area);
+        anti_alias.emplace<FXAA>(device, memory_allocator, image_count, render_area, enhanced);
         break;
     case Settings::AntiAliasing::Smaa:
         anti_alias.emplace<SMAA>(device, memory_allocator, image_count, render_area);

@@ -2075,3 +2075,14 @@ msgstr "Η παραγωγή πλαισίων χρειάζεται τη Vulkan. �
 #: R10 video menu
 msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
 msgstr "Αυτή η επιλογή χρειάζεται Vulkan. Το OpenGL δεν μπορεί να δημιουργήσει επιπλέον πλαίσια. η αλλαγή του δεν θα είχε κανένα αποτέλεσμα."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "Το FXAA+ απαιτεί Vulkan. Επιλέξτε Vulkan ή άλλη μέθοδο anti-aliasing."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: εκτεταμένη αναζήτηση άκρων. Μπορεί να λειάνει πιο οδοντωτές άκρες αλλά μπορεί να μαλακώσει τις υφές. Συγκρίνετε με το SMAA Ultra."

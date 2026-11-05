@@ -94,6 +94,7 @@ private:
 
     Settings::AntiAliasing anti_alias_setting{};
     VkExtent2D anti_alias_extent{}; // actual source dimensions, not requested scaling
+    bool fxaa_enhanced_setting{}; // actual SPIR-V variant used by FXAA
     std::variant<std::monostate, FXAA, SMAA> anti_alias{};
     std::variant<std::monostate, SGSR, FSR> sr_filter{};
     std::vector<u64> resource_ticks{};

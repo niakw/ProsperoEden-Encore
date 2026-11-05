@@ -31,12 +31,13 @@ aa = layer.index('fxaa->Draw(')
 smaa = layer.index('smaa->Draw(')
 fsr = layer.index('fsr->Draw(')
 assert aa < fsr and smaa < fsr
-# Upstream's imported SMAA uses PRESET_ULTRA already. Do not claim a fake
-# higher tier; don't change persisted None/FXAA/SMAA ids.
-assert 'kAntiAliasingKeys[] = {"none", "fxaa", "smaa"}' in settings
-assert 'Settings::AntiAliasing::Fxaa, Settings::AntiAliasing::Smaa' in launcher
+# Upstream's imported SMAA uses PRESET_ULTRA already; preserve its
+# historic enum/index and append the separate FXAA Quality SPIR-V option.
+assert 'kAntiAliasingKeys[] = {"none", "fxaa", "smaa", "fxaa_quality"}' in settings
+assert 'Settings::AntiAliasing::Smaa, Settings::AntiAliasing::Fxaa' in launcher
+assert 'SetEnhancedFxaa(' in launcher and 'anti_aliasing == 3' in launcher
 # The exact persisted filter must reach the runtime rather than being a
 # UI-only control or overwritten by a per-game profile silently.
 assert 'Settings::values.anti_aliasing.SetValue(aa[' in launcher
 assert 'game_video.anti_aliasing >= 0 ? game_video.anti_aliasing : profile_aa' in launcher
-print("PASS R24 source: original None/FXAA/SMAA, corrected real source extents, resize, AA before upscale")
+print("PASS R24 source: existing None/FXAA/SMAA preserved, distinct FXAA+ renderer, actual source extent, resize, AA before upscale")

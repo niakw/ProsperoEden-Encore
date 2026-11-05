@@ -9,6 +9,10 @@ if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/vulkan_renderer.cpp")
     message(FATAL_ERROR "Missing checked-in Encore Vulkan fork")
 endif()
 file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")
+# Encore owns the versioned native renderer and its header; no generated
+# source injection or changes to the pinned vendor repository.
+configure_file("${EDEN_PORT_DIR}/renderer_vulkan_r08.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/renderer_vulkan.h" COPYONLY)
 file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${EDEN_VULKAN_FORK_FILES})
 # These shaders are build inputs; the five older .inc injections only
@@ -27,7 +31,7 @@ list(REMOVE_ITEM video_sources vulkan_common/vulkan_instance.cpp vulkan_common/v
 list(APPEND video_sources "${PORT_BUILD_DIR}/vulkan_instance.cpp" "${PORT_BUILD_DIR}/vulkan_wrapper.cpp"
     "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${PORT_BUILD_DIR}/vulkan_blit_screen.cpp"
     "${PORT_BUILD_DIR}/vulkan_window_adapt_pass.cpp" "${PORT_BUILD_DIR}/vulkan_present_layer.cpp"
-    "${PORT_BUILD_DIR}/vulkan_renderer.cpp"
+    "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"
     "${PORT_BUILD_DIR}/vulkan_library.cpp" "${EDEN_PORT_DIR}/vulkan_surface.cpp" "${EDEN_PORT_DIR}/vulkan_allocator.cpp"
     "${PORT_BUILD_DIR}/vulkan_present_manager.cpp" "${PORT_BUILD_DIR}/vulkan_swapchain.cpp"
     "${PORT_BUILD_DIR}/vulkan_query_cache.cpp")
@@ -38,7 +42,10 @@ endforeach()
 
 target_include_directories(video_core BEFORE PUBLIC "${PORT_BUILD_DIR}/include")
 target_include_directories(video_core BEFORE PUBLIC "${PORT_BUILD_DIR}/vulkan-cache")
-target_include_directories(video_core PRIVATE "${PORT_BUILD_DIR}" "${EDEN_PORT_DIR}")
+target_include_directories(video_core PRIVATE
+    "${PORT_BUILD_DIR}" "${EDEN_PORT_DIR}" "${PORT_ROOT}/extras/graphics"
+    "${PORT_ROOT}/third_party/PS5_MihawkGen/framegen/include"
+    "${PORT_ROOT}/third_party/PS5_MihawkGen/external")
 # The descriptor-buffer writer override (null descriptors): rebuild its callers once,
 # since existing depfiles still name the upstream header.
 set_property(SOURCE
@@ -52,7 +59,7 @@ set_property(SOURCE
     "${PROJECT_SOURCE_DIR}/src/video_core/video_core.cpp"
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_turbo_mode.cpp"
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/present/frame_gen.cpp"
-    "${PORT_BUILD_DIR}/vulkan_renderer.cpp" "${PORT_BUILD_DIR}/vulkan_blit_screen.cpp"
+    "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp" "${PORT_BUILD_DIR}/vulkan_blit_screen.cpp"
     "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp" "${PORT_BUILD_DIR}/vulkan_window_adapt_pass.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_present_manager.h")
@@ -124,14 +131,16 @@ set(EDEN_MIHAWKGEN_SOURCES
     "${EDEN_MIHAWKGEN_VOLK}"
     "${EDEN_PORT_DIR}/mihawk_vulkan_stage.cpp"
     "${EDEN_PORT_DIR}/mihawk_vulkan_resources.cpp"
-    "${EDEN_PORT_DIR}/mihawk_vulkan_encoder.cpp")
+    "${EDEN_PORT_DIR}/mihawk_vulkan_encoder.cpp"
+    "${EDEN_PORT_DIR}/mihawk_native_session.cpp")
 # Keep volk's function-pointer symbols inside namespace volk. In particular
 # vkGetInstanceProcAddr must not collide with the RADV function exported by
 # Encore's existing Vulkan driver.
 set_source_files_properties("${EDEN_MIHAWKGEN_VOLK}" PROPERTIES LANGUAGE CXX)
 add_library(eden-mihawkgen-native OBJECT ${EDEN_MIHAWKGEN_SOURCES})
 target_compile_features(eden-mihawkgen-native PRIVATE cxx_std_20)
-target_compile_definitions(eden-mihawkgen-native PRIVATE VK_NO_PROTOTYPES=1 VOLK_NAMESPACE=1)
+target_compile_definitions(eden-mihawkgen-native PRIVATE
+    VK_NO_PROTOTYPES=1 VOLK_NAMESPACE=1 PS5_NATIVE=1)
 target_compile_options(eden-mihawkgen-native PRIVATE
     "SHELL:-include ${EDEN_MIHAWKGEN_NAMESPACED_HEADER}")
 target_include_directories(eden-mihawkgen-native PRIVATE

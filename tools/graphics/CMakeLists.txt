@@ -26,6 +26,7 @@ add_library(eden-r08-native-objects OBJECT
     "${EDEN_H}/mihawk_vulkan_stage.cpp"
     "${EDEN_H}/mihawk_vulkan_resources.cpp"
     "${EDEN_H}/mihawk_vulkan_encoder.cpp"
+    "${EDEN_H}/mihawk_native_session.cpp"
     "${FG_ROOT}/ps5/third_party/volk/volk.c")
 target_include_directories(eden-r08-native-objects PRIVATE
     "${FG_INCLUDE}" "${FG_CORE}" "${FG_EXT}" "${FG_QUAL}" "${EDEN_H}")
@@ -49,6 +50,7 @@ eden_r08_test(test_graphics_pipeline_policy)
 eden_r08_test(test_framegen_present_gate)
 eden_r08_test(test_mihawk_native_surface_contract)
 eden_r08_test(test_mihawk_submission_timeline)
+eden_r08_test(test_mihawk_capture_fences)
 eden_r08_test(test_mihawk_vulkan_history_barriers)
 eden_r08_test(test_mihawk_vulkan_record
     "${EDEN_H}/mihawk_vulkan_stage.cpp"

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
-// R08 private history and output resources. Offline by default: not linked to
-// Encore's actual renderer until presentation lifetime and HUD are qualified.
+// R08 private history and output resources. Linked in Encore's native Vulkan
+// renderer; synthetic presentation requires independent runtime qualification.
 #include <vulkan/vulkan.h>
 #include <array>
 #include <cstdint>

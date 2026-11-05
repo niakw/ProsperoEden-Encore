@@ -172,6 +172,18 @@ int main() {
     input.images.rgba_output = H<VkImage>(0x8);
     input.images.rgba_view = H<VkImageView>(0x12345);
 
+    // Validating a source before the scheduler assigns a real command
+    // buffer is a pure input check, NOT a forged Vulkan handle.
+    MihawkSourceRecord preflight{};
+    preflight.source_real = input.real_composited_image;
+    preflight.history_owned = input.images.history[0];
+    preflight.width = input.request.source.width;
+    preflight.height = input.request.source.height;
+    assert(ValidateOwnedSnapshotInput(preflight) == MihawkRecordResult::Recorded);
+    assert(ValidateOwnedSnapshot(preflight) == MihawkRecordResult::InvalidHandles);
+    preflight.history_owned = preflight.source_real;
+    assert(ValidateOwnedSnapshotInput(preflight) == MihawkRecordResult::DuplicateImages);
+
     calls.clear(); captured.clear();
     auto encoded = encoder.Record(input);
     assert(encoded.IsRecorded() && !encoded.WillPresentSynthetic());

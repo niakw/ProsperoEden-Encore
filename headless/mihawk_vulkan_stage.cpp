@@ -32,13 +32,18 @@ bool Distinct3(VkImage a, VkImage b, VkImage c) noexcept {
 }
 } // namespace
 
-MihawkRecordResult ValidateOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
-    if (!r.cmd || !r.source_real || !r.history_owned ||
+MihawkRecordResult ValidateOwnedSnapshotInput(const MihawkSourceRecord& r) noexcept {
+    if (!r.source_real || !r.history_owned ||
         r.width == 0 || r.height == 0 || r.width > 7680 || r.height > 4320)
         return MihawkRecordResult::InvalidHandles;
     if (r.source_real == r.history_owned)
         return MihawkRecordResult::DuplicateImages;
     return MihawkRecordResult::Recorded;
+}
+
+MihawkRecordResult ValidateOwnedSnapshot(const MihawkSourceRecord& r) noexcept {
+    if (!r.cmd) return MihawkRecordResult::InvalidHandles;
+    return ValidateOwnedSnapshotInput(r);
 }
 
 MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& r) noexcept {

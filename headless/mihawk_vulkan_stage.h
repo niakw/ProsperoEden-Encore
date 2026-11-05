@@ -23,6 +23,9 @@ struct MihawkSourceRecord {
 
 // Prepares copy with explicit GENERAL -> TRANSFER_SRC -> GENERAL on the
 // actual composed frame. Only the private image is kept for interpolation.
+// Preflight before VkCommandBuffer is allocated. Command recording later
+// checks the actual command handle; never fabricate a VkCommandBuffer.
+MihawkRecordResult ValidateOwnedSnapshotInput(const MihawkSourceRecord& record) noexcept;
 MihawkRecordResult ValidateOwnedSnapshot(const MihawkSourceRecord& record) noexcept;
 MihawkRecordResult RecordOwnedSnapshot(const MihawkSourceRecord& record) noexcept;
 

@@ -249,3 +249,32 @@ raccordement au RendererVulkan::Composite**. Le chemin effectif de
 génération d'image reste à intégrer et à valider sur PS5. Les huit tests
 CMake sur hôte passent et la compilation native Mac utilise les
 symboles Volk isolés ; aucune compilation complète PS5 n'a été lancée.
+
+
+### C2.6 — vrai renderer : captures privées et tick réel
+
+`vulkan_renderer_r08.cpp` et son en-tête sont versionnés dans
+Encore. Le CMake natif remplace la source originale du fork par cette unité,
+sans modifier le gitlink `vendor` ni injecter des substitutions
+textuelles au build. La session `mihawk_native_session.cpp`
+utilise le même VkInstance/VkDevice qu'Encore ; le modèle réseau est copié
+dans le packaging depuis le sous-module MihawkGen avec notices légales.
+
+Quand MihawkGen est sélectionné, le composite de la vraie frame est copié
+dans un snapshot GPU privé AVANT Scheduler::Flush. Le composite original
+est toujours présenté. Les ticks réels Scheduler::Flush et IsFree protègent
+la réutilisation des deux textures. Un tick nul ou non monotone interdit
+toute capture suivante. Scheduler::Finish draine l'enregistrement différé
+avant la libération des images à l'arrêt du renderer.
+
+**Limite :** ce chemin ne crée pas encore de frame synthétique.
+RecordNativeMihawkPair et la FIFO du PresentManager, le HUD invité,
+la validation native PS5 et les performances console restent ouverts.
+Choisir MihawkGen charge son contexte et amorce l'historique sans encore
+doubler les frames affichées. FSR 3 et LSFG sont enregistrés comme
+préférences, mais ne disposent pas d'un backend PS5 qualifié.
+
+Le test `check-r08-renderer-wiring.py` vérifie
+composite -> capture -> Flush -> présentation, ressources du packaging
+et l'absence de faux compteur de frames synthétiques. Le ring de fences
+dispose aussi de tests hôtes dédiés.

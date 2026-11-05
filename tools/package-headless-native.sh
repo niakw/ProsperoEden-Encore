@@ -69,6 +69,22 @@ rm -rf "$app/legal"
 mkdir -p "$app/legal"
 cp "$root/LICENSE" "$root/THIRD_PARTY_NOTICES.md" "$app/legal/"
 cp -a "$root/LICENSES" "$app/legal/LICENSES"
+# PS5-native MihawkGen network, bundled with the installed app only, including
+# the upstream GPL-3.0-or-later licence and all model distillation credits.
+# A mismatching/missing model must not silently produce a broken package.
+mihawk_root="$root/third_party/PS5_MihawkGen"
+python3 - "$mihawk_root/framegen/models/network.fgw" <<'PY_MIHAWK_NETWORK'
+import hashlib, sys
+from pathlib import Path
+network = Path(sys.argv[1])
+assert network.is_file(), "MihawkGen submodule/model missing"
+assert network.stat().st_size == 1757240, "MihawkGen model size mismatch"
+assert hashlib.sha256(network.read_bytes()).hexdigest() == "31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b", "MihawkGen model hash mismatch"
+PY_MIHAWK_NETWORK
+mkdir -p "$app/mihawkgen"
+cp "$mihawk_root/framegen/models/network.fgw" "$app/mihawkgen/network.fgw"
+cp "$mihawk_root/LICENSE.md" "$app/legal/MIHAWKGEN_LICENSE.md"
+cp "$mihawk_root/THIRD_PARTY_NOTICES.txt" "$app/legal/MIHAWKGEN_THIRD_PARTY_NOTICES.txt"
 # Some ShadowMount/package-image install paths preserve ui/lang but drop .po payloads.
 # Keep the canonical catalogs and add byte-identical .txt companions; the runtime accepts either.
 for catalog in "$app/ui/lang/"*.po; do

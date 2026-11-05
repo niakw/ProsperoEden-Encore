@@ -63,7 +63,10 @@ __FLUSH__
 }
 }
 int main() {
-    Vulkan::RasterizerVulkan renderer, other;
+    Vulkan::RasterizerVulkan renderer;
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)
+    Vulkan::RasterizerVulkan other;
+#endif
     using VideoCommon::CacheType;
     renderer.FlushTexture(16,4,CacheType::TextureCache);
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)

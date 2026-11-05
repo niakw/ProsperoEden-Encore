@@ -2129,50 +2129,58 @@ std::string EdenServices::daily_wallpaper() {
     // Same concept as NiakPS5: an offline release-art snapshot is rotated locally
     // by calendar day. The manifest is refreshed by the package/catalog updater,
     // never through a request on the UI thread. Missing catalog => no artwork.
-    const auto folder = std::filesystem::path(Eden::UserDir()) / "wallpapers" / "daily";
-    const auto index = folder / "index.json";
-    std::error_code ec;
-    if (std::filesystem::is_symlink(std::filesystem::symlink_status(index, ec)) ||
-        ec || !std::filesystem::is_regular_file(index, ec) ||
-        std::filesystem::file_size(index, ec) > 256u * 1024u || ec) return {};
-    std::ifstream stream(index, std::ios::binary);
-    if (!stream) return {};
-    nlohmann::json parsed = nlohmann::json::parse(stream, nullptr, false);
-    if (parsed.is_discarded() || !parsed.is_object() || !parsed.contains("entries") ||
-        !parsed["entries"].is_array()) return {};
-    const auto today = LocalDay();
-    if (today.empty()) return {};
-    struct Candidate { std::string date; std::string path; };
-    std::vector<Candidate> candidates;
-    for (const auto& item : parsed["entries"]) {
-        if (candidates.size() >= 64) break;
-        if (!item.is_object()) continue;
-        if (!item.contains("approved") || !item["approved"].is_boolean() ||
-            !item["approved"].get<bool>()) continue;
-        if (!item.contains("filename") || !item["filename"].is_string() ||
-            !item.contains("release_date") || !item["release_date"].is_string() ||
-            !item.contains("platform") || !item["platform"].is_string()) continue;
-        const std::string platform = item["platform"].get<std::string>();
-        if (platform != "ns1" && platform != "ns2") continue;
-        const std::string date = item["release_date"].get<std::string>();
-        if (date.size() != 10 || date[4] != '-' || date[7] != '-' || date > today ||
-            !std::all_of(date.begin(), date.end(), [](char c) {
-                return (c >= '0' && c <= '9') || c == '-'; })) continue;
-        const std::string file = item["filename"].get<std::string>();
-        const auto path = CheckedWallpaper(folder, file);
-        if (!path.empty()) candidates.push_back({date, path});
+    // User-curated images override the optional read-only package snapshot.
+    // Both paths pass the same bounded manifest and local-image checks.
+    const std::array<std::filesystem::path, 2> sources = {
+        std::filesystem::path(Eden::UserDir()) / "wallpapers" / "daily",
+        std::filesystem::path(Eden::AppFile("ui/art/daily"))
+    };
+    for (const auto& folder : sources) {
+        const auto index = folder / "index.json";
+        std::error_code ec;
+        if (std::filesystem::is_symlink(std::filesystem::symlink_status(index, ec)) ||
+            ec || !std::filesystem::is_regular_file(index, ec) ||
+            std::filesystem::file_size(index, ec) > 256u * 1024u || ec) continue;
+        std::ifstream stream(index, std::ios::binary);
+        if (!stream) continue;
+        nlohmann::json parsed = nlohmann::json::parse(stream, nullptr, false);
+        if (parsed.is_discarded() || !parsed.is_object() || !parsed.contains("entries") ||
+            !parsed["entries"].is_array()) continue;
+        const auto today = LocalDay();
+        if (today.empty()) return {};
+        struct Candidate { std::string date; std::string path; };
+        std::vector<Candidate> candidates;
+        for (const auto& item : parsed["entries"]) {
+            if (candidates.size() >= 64) break;
+            if (!item.is_object()) continue;
+            if (!item.contains("approved") || !item["approved"].is_boolean() ||
+                !item["approved"].get<bool>()) continue;
+            if (!item.contains("filename") || !item["filename"].is_string() ||
+                !item.contains("release_date") || !item["release_date"].is_string() ||
+                !item.contains("platform") || !item["platform"].is_string()) continue;
+            const std::string platform = item["platform"].get<std::string>();
+            if (platform != "ns1" && platform != "ns2") continue;
+            const std::string date = item["release_date"].get<std::string>();
+            if (date.size() != 10 || date[4] != '-' || date[7] != '-' || date > today ||
+                !std::all_of(date.begin(), date.end(), [](char c) {
+                    return (c >= '0' && c <= '9') || c == '-'; })) continue;
+            const std::string file = item["filename"].get<std::string>();
+            const auto path = CheckedWallpaper(folder, file);
+            if (!path.empty()) candidates.push_back({date, path});
+        }
+        if (candidates.empty()) continue;
+        std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) {
+            return a.date > b.date || (a.date == b.date && a.path < b.path);
+        });
+        // At most the most recent 16 RELEASED titles are eligible for rotation.
+        if (candidates.size() > 16) candidates.resize(16);
+        const std::time_t now = std::time(nullptr);
+        const std::tm* local = std::localtime(&now);
+        // Use a stable per-day index, not process randomness.
+        const int day = local ? (local->tm_year * 366 + local->tm_yday) : 0;
+        return candidates[static_cast<std::size_t>(day) % candidates.size()].path;
     }
-    if (candidates.empty()) return {};
-    std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) {
-        return a.date > b.date || (a.date == b.date && a.path < b.path);
-    });
-    // At most the most recent 16 RELEASED titles are eligible for rotation.
-    if (candidates.size() > 16) candidates.resize(16);
-    const std::time_t now = std::time(nullptr);
-    const std::tm* local = std::localtime(&now);
-    // Use a stable per-day index, not process randomness.
-    const int day = local ? (local->tm_year * 366 + local->tm_yday) : 0;
-    return candidates[static_cast<std::size_t>(day) % candidates.size()].path;
+    return {};
 }
 
 const std::vector<std::string>& EdenServices::resolution_labels() {

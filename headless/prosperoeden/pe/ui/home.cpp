@@ -635,6 +635,7 @@ void Launcher::draw_home(Canvas &c)
     // is centre-cropped, never stretched or confined to a hero "block".
     // The approved mock-up needs a dark dispersion on BOTH the left and bottom.
     // Two long translucent fades preserve the full hero scene in the centre.
+    if (prefs_.show_game_background) {
     list.hgradient_rect(hero, 0.0f,
                         theme::kScrim.with_alpha(0.91f),
                         theme::kScrim.with_alpha(0.025f));
@@ -651,6 +652,13 @@ void Launcher::draw_home(Canvas &c)
     list.gradient_rect({0.0f, 0.0f, 1920.0f, 175.0f}, 0.0f,
                        theme::kBase.with_alpha(0.73f),
                        theme::kBase.with_alpha(0.0f));
+    } else {
+        // Personal wallpaper is truly permanent: keep a readable left-side
+        // content veil, never the game hero's nearly opaque bottom fade.
+        list.hgradient_rect({0.0f, 0.0f, 880.0f, 1080.0f}, 0.0f,
+                            theme::kPanel.with_alpha(0.78f),
+                            theme::kPanel.with_alpha(0.0f));
+    }
 
     text(c, hero_recent != nullptr ? tr("SELECTED GAME") : tr("CONTINUE PLAYING"),
          90.0f, baseline(133.0f, 30.0f, theme::kSmall),
@@ -899,7 +907,7 @@ void Launcher::draw_home(Canvas &c)
             const float f = focus(kHomeRecentFirst + i);
             begin_lift(r, f, 0.030f);
             // Paint bloom BEFORE the opaque cover, not over its pixels.
-            if (f > 0.01f) {
+            if (f > 0.01f && look().glow) {
                 list.shadow({r.x - 8.0f, r.y - 8.0f, r.w + 16.0f, r.h + 16.0f},
                             26.0f, 33.0f, theme::kSun.with_alpha(0.33f * f));
                 list.shadow({r.x - 14.0f, r.y - 14.0f, r.w + 28.0f, r.h + 28.0f},

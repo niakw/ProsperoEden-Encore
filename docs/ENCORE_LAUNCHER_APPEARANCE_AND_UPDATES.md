@@ -17,10 +17,11 @@ Automatic logo choices are Neon for Neon, Non-Neon for Non-Neon, White for
 Dark and Dark for Light. The user can override the choice using the same
 four official logos; no arbitrary image is accepted as an app logo.
 
-Settings > Appearance includes a controller-first 14-row editor:
-theme, logo, accent, background, local image, two colors, neon focus on/off,
-focus intensity, overlay darkness, motion, image fit, show selected-game
-background on/off, reset to defaults. The selections persist in the existing
+Settings > Appearance includes a controller-first 20-row editor:
+theme, logo, accent, background, local image, two swatch presets and six
+R/G/B channels (0..255) for solid/gradient colors, focus neon on/off and
+strength, image darkness, motion, fit, selected-game background on/off,
+and reset to Neon. Left/Right change RGB by 8, Cross changes by 1. The selections persist in the existing
 atomically written prosperoeden.json, with backwards-compatible defaults and
 range/type checks. They do not write any game configuration.
 
@@ -30,11 +31,25 @@ than 120 characters) are accepted. WebP imports must be converted to PNG or
 JPEG until a native PS5 WebP decoder is linked and tested. Decoding occurs
 on the existing launcher texture worker, never synchronously in draw().
 
-The daily wallpaper mode uses a reviewed, offline metadata snapshot at
-<Eden::UserDir()>/wallpapers/daily/index.json. Eligible records have a
-Switch 1 or Switch 2 platform, an already elapsed ISO date, approved=true,
-and a local image filename. The most recent 16 valid candidates rotate by
-local calendar day; no network calls are made in the rendering loop.
+Daily Switch 1/2 mode rotates at most 16 verified, cached JPEGs by local
+console date; there is no network access in the UI loop. The app first
+checks the user override folder:
+<Eden::UserDir()>/wallpapers/daily/index.json
+and then the packaged snapshot:
+<Eden::AppFile(ui/art/daily)>/index.json
+
+The package-time generator tools/launcher/fetch_daily_switch.py uses recent
+Switch 2 metadata and Switch 1 candidate IDs checked independently against
+Nlib release-date/type metadata. It only accepts already released titles,
+confirmed banners from allowlisted Nintendo/Nlib hosts, bounded input and
+output, and converts media to 1280x720 JPEG at quality 80. Portrait/square
+art is placed on a blurred canvas; it is not distorted.
+
+Packaging prepares the snapshot best-effort by default. A packager can
+disable it with EDEN_BAKE_DAILY_SWITCH_ART=0 for offline reproducibility
+or media licensing review. Failed downloads never block launch or builds.
+The snapshot is refreshed on package builds (NiakPS5's architecture),
+while wallpaper selection rotates each day completely offline.
 Example manifest with a placeholder image supplied by the user:
 
 ~~~json
@@ -51,11 +66,11 @@ Example manifest with a placeholder image supplied by the user:
 }
 ~~~
 
-Copy the matching image file to the daily/ folder. An operator-maintained,
-up-to-date releases catalog and legally sourced images remain prerequisites
-for claiming automatically fetched, recent Switch 1/2 releases. The
-implementation must not invent or silently download unverified media.
-Without a valid catalog, the authored launcher backdrop is retained.
+User-supplied images with the matching manifest override packaged art.
+Publishing externally sourced game promotional media may require permission
+from the rights holders; confirm redistribution rights before release.
+Direct PS5 gallery access still awaits native permission/API validation.
+An absent or invalid manifest falls back to the authored Encore backdrop.
 
 When the user disables the game-specific backdrop, Home preserves title
 metadata and actions while hiding the selected game's full-screen hero
@@ -82,10 +97,12 @@ confirmation popup, cancellation, restart strategy and real-console proof.
 
 ## Tests and remaining qualification
 
-- Host syntax checks for the changed launcher C++ screens and textures.
-- Compile-time version parsing assertions.
-- Preference roundtrip source assertions, including corrupt configuration,
-  logo, background, game-backdrop toggle and update opt-in.
-- Still needed: full native PS5 build, visual previews across all five
-  themes, usable maintained daily-release media catalog, and secure native
-  update installation before these roadmap IDs can be closed.
+- Seven launcher C++ sources compile in host syntax checks.
+- R21 version and R25 theme-preference host executables passed (including
+  corrupted configuration and hostile wallpaper paths).
+- Five hermetic Python unit tests passed for feed dates, platform validation,
+  safe image sources, atomic writes and outage recovery.
+- A real current snapshot generated 16 images, 8 NS1 plus 8 NS2, ~2.2 MB.
+- Still required: full native PS5 build, five-theme screenshots/contrast and
+  navigation audit, capture-gallery permission audit, and secure native
+  installation before closing R21 or all of R25.

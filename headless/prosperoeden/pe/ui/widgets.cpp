@@ -318,8 +318,9 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
         // very faint Eden-violet halo gives the premium console-card separation of the mockup.
         c.list.shadow({r.x + 8.0f, r.y + 22.0f, r.w - 16.0f, r.h - 10.0f}, radius, 54.0f,
                       kBlack.with_alpha(0.48f * shadow));
-        c.list.shadow({r.x - 4.0f, r.y - 2.0f, r.w + 8.0f, r.h + 8.0f}, radius + 4.0f, 36.0f,
-                      theme::kLimeDeep.with_alpha(0.075f * shadow));
+        if (look().glow)
+            c.list.shadow({r.x - 4.0f, r.y - 2.0f, r.w + 8.0f, r.h + 8.0f}, radius + 4.0f, 36.0f,
+                          theme::kLimeDeep.with_alpha(0.075f * shadow * look().glow_strength));
     }
     if (look().high_contrast)
     {
@@ -342,41 +343,64 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
                          kWhite.with_alpha(0.045f), kWhite.with_alpha(0.0f));
 }
 
-const Plate kRowPlate{20.0f,
+Plate kRowPlate{20.0f,
                       theme::kRow.with_alpha(0.82f),
                       theme::kRowEdge.with_alpha(0.42f),
                       theme::kRowFocus.with_alpha(0.92f),
                       theme::kFocusBlue.with_alpha(0.36f),
                       theme::kLimeDeep.with_alpha(0.54f),
                       theme::kFocusCore.with_alpha(0.82f)};
-const Plate kListPlate{20.0f,
+Plate kListPlate{20.0f,
                        Color::rgb(0x191a28, 0.91f),
                        Color::rgb(0x5b5572, 0.47f),
                        Color::rgb(0x2b2140, 0.95f),
                        theme::kLime.with_alpha(0.44f),
                        theme::kLimeDeep.with_alpha(0.50f),
                        theme::kLime.with_alpha(0.63f)};
-const Plate kButtonPlate{22.0f,
+Plate kButtonPlate{22.0f,
                          Color::rgb(0xf0edf7, 0.085f),
                          kWhite.with_alpha(0.16f),
                          Color::rgb(0x1d172b, 0.68f),
                          theme::kFocusBlue.with_alpha(0.35f),
                          theme::kLimeDeep.with_alpha(0.60f),
                          theme::kFocusCore.with_alpha(0.90f)};
-const Plate kTilePlate{22.0f,
+Plate kTilePlate{22.0f,
                        Color::rgb(0xf4f2f8, 0.045f),
                        kWhite.with_alpha(0.105f),
                        Color::rgb(0x1b1428, 0.50f),
                        theme::kFocusBlue.with_alpha(0.30f),
                        theme::kLimeDeep.with_alpha(0.50f),
                        theme::kFocusCore.with_alpha(0.86f)};
-const Plate kNavPlate{20.0f,
+Plate kNavPlate{20.0f,
                       kWhite.with_alpha(0.0f),
                       kWhite.with_alpha(0.0f),
                       Color::rgb(0x241833, 0.34f),
                       theme::kFocusBlue.with_alpha(0.28f),
                       theme::kLimeDeep.with_alpha(0.38f),
                       theme::kFocusCore.with_alpha(0.82f)};
+
+void resolve_theme_plates()
+{
+    // The original authored Neon components are immutable snapshots.
+    static const std::array<Plate,5> original = {
+        kRowPlate, kListPlate, kButtonPlate, kTilePlate, kNavPlate};
+    const std::array<Plate*,5> plates = {
+        &kRowPlate, &kListPlate, &kButtonPlate, &kTilePlate, &kNavPlate};
+    if (look().palette == 0) {
+        for (std::size_t i = 0; i < plates.size(); ++i) *plates[i] = original[i];
+        return;
+    }
+    for (auto* plate : plates) {
+        const bool tile = plate == &kTilePlate;
+        const bool nav = plate == &kNavPlate;
+        plate->fill = theme::kRow.with_alpha(tile ? 0.12f : nav ? 0.0f : 0.82f);
+        plate->edge = theme::kRowEdge.with_alpha(nav ? 0.0f : 0.60f);
+        plate->focus_base = theme::kRowFocus.with_alpha(tile ? 0.14f : 0.78f);
+        plate->focus_left = theme::kFocusBlue.with_alpha(0.35f);
+        plate->focus_right = theme::kLimeDeep.with_alpha(0.38f);
+        plate->focus_edge = theme::kFocusCore.with_alpha(0.90f);
+    }
+}
 
 void plate_rest(Canvas &c, const Plate &style, const Rect &r)
 {
@@ -397,6 +421,13 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)
         // The highlight is a dark fill inside a bright outline: it does not rest on colour.
         c.list.bordered_rect(r, style.radius, Color::rgb(0x2a1d3a, amount), 3.0f,
                              Color::rgb(0xd6a4ff, amount));
+        return;
+    }
+    if (!look().glow || look().glow_strength <= 0.001f) {
+        // A clean, legible controller focus: no bloom, breathing, or neon sweep.
+        c.list.bordered_rect(r, style.radius,
+            theme::kRowFocus.with_alpha(0.10f * amount), 2.8f,
+            theme::kFocusCore.with_alpha(0.95f * amount));
         return;
     }
     // Eden Encore luminous focus: pink/violet dual halo, crisp outer edge and

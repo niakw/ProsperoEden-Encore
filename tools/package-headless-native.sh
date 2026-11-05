@@ -50,6 +50,16 @@ cp "$root/assets/icon0.png" "$app/sce_sys/icon0.png"
 cp "$root/assets/icon0.dds" "$app/sce_sys/icon0.dds"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
+# Best-effort build-time Switch 1/2 wallpaper snapshot (NiakPS5 pattern).
+# Default on for a ready-to-use Daily background; packagers may explicitly disable
+# redistribution with EDEN_BAKE_DAILY_SWITCH_ART=0 after their rights review.
+# Network errors never fail package creation or stall a console launch.
+# The native loader accepts the same schema under the user's wallpaper folder.
+if [[ ${EDEN_BAKE_DAILY_SWITCH_ART:-1} == 1 ]]; then
+    python3 "$root/tools/launcher/fetch_daily_switch.py" \
+        --output "$app/ui/art/daily" ||
+        echo "Daily Switch artwork unavailable; keep the original Encore background" >&2
+fi
 # Read-only embedded hosts policy. Release must never lose this file.
 cp "$root/headless/network-hosts.txt" "$app/network-hosts.txt"
 rm -f "$app/ui/art/backdrop.tga" "$app/ui/art/backdrop-blur.tga"

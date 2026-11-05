@@ -98,6 +98,12 @@ Launcher::~Launcher()
         profile_avatar_scan_.wait();
     if (update_check_.valid())
         update_check_.wait();
+    if (wallpaper_scan_.valid())
+        wallpaper_scan_.wait();
+    if (daily_wallpaper_scan_.valid())
+        daily_wallpaper_scan_.wait();
+    if (local_wallpaper_scan_.valid())
+        local_wallpaper_scan_.wait();
 
 }
 
@@ -235,10 +241,30 @@ void Launcher::apply_look()
     value.background_overlay = prefs_.background_overlay;
     value.background_animate = prefs_.background_animate;
     value.background_fit = prefs_.background_fit;
-    if (value.background == 4) value.wallpaper_path = services_.wallpaper_path(prefs_.wallpaper_file);
-    if (value.background == 5) value.wallpaper_path = services_.daily_wallpaper();
+    if (value.background == 4) {
+        if (cached_wallpaper_name_ == prefs_.wallpaper_file)
+            value.wallpaper_path = cached_wallpaper_path_;
+        else if (!local_wallpaper_scan_.valid()) {
+            // File type, size and symlinks are verified on the worker before
+            // the image path is ever handed to the renderer/texture decoder.
+            pending_wallpaper_name_ = prefs_.wallpaper_file;
+            const std::string name = pending_wallpaper_name_;
+            local_wallpaper_scan_ = std::async(std::launch::async, [this, name] {
+                return services_.wallpaper_path(name);
+            });
+        }
+    }
+    if (value.background == 5) {
+        value.wallpaper_path = cached_daily_wallpaper_;
+        if (!daily_wallpaper_scanned_ && !daily_wallpaper_scan_.valid()) {
+            daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
+                return services_.daily_wallpaper();
+            });
+        }
+    }
     look() = std::move(value);
     theme::apply_palette(look().palette, std::clamp(prefs_.accent_color, 0, 4));
+    resolve_theme_plates();
 }
 
 bool Launcher::save_preferences(bool quiet)
@@ -462,14 +488,42 @@ void Launcher::update(float dt)
                      phase, static_cast<long long>(elapsed.count()));
         }
     };
-    // Daily curated release artwork changes with the local calendar, without
-    // reloading metadata from the network or recalculating during every draw.
+    // Browse/index metadata asynchronously; no disk I/O in the UI update/render path.
+    if (wallpaper_scan_.valid() &&
+        wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try { wallpaper_options_ = wallpaper_scan_.get(); }
+        catch (...) { wallpaper_options_.clear(); }
+    }
+    if (local_wallpaper_scan_.valid() &&
+        local_wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try { cached_wallpaper_path_ = local_wallpaper_scan_.get(); }
+        catch (...) { cached_wallpaper_path_.clear(); }
+        cached_wallpaper_name_ = std::move(pending_wallpaper_name_);
+        if (prefs_.ui_theme == 0 && prefs_.background_style == 4) {
+            if (prefs_.wallpaper_file == cached_wallpaper_name_)
+                look().wallpaper_path = cached_wallpaper_path_;
+            else apply_look(); // a second selection arrived while the first was checked
+        }
+    }
+    if (daily_wallpaper_scan_.valid() &&
+        daily_wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try { cached_daily_wallpaper_ = daily_wallpaper_scan_.get(); }
+        catch (...) { cached_daily_wallpaper_.clear(); }
+        daily_wallpaper_scanned_ = true;
+        if (prefs_.ui_theme == 0 && prefs_.background_style == 5)
+            look().wallpaper_path = cached_daily_wallpaper_;
+    }
     if (prefs_.ui_theme == 0 && prefs_.background_style == 5 &&
         selected_game_.empty()) {
         daily_refresh_wait_ += dt;
         if (daily_refresh_wait_ >= 600.0f) {
             daily_refresh_wait_ = 0.0f;
-            look().wallpaper_path = services_.daily_wallpaper();
+            // Re-check the local day and manifest off-thread only.
+            daily_wallpaper_scanned_ = false;
+            if (!daily_wallpaper_scan_.valid())
+                daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
+                    return services_.daily_wallpaper();
+                });
         }
     }
     textures_.pump(dt);

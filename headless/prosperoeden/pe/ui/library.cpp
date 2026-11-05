@@ -1405,7 +1405,7 @@ void Launcher::draw_library(Canvas &c)
             list.shadow({x - 5.0f, rail_y - 4.0f, sleeve_w + 10.0f, sleeve_h + 13.0f},
                         8.0f, selected ? 30.0f : 17.0f,
                         theme::kScrim.with_alpha(0.72f));
-            if (selected)
+            if (selected && look().glow)
                 list.shadow({x - 5.0f, rail_y - 4.0f, sleeve_w + 10.0f, sleeve_h + 9.0f},
                             8.0f, 28.0f, theme::kLime.with_alpha(0.30f));
             flat_retail_sleeve(c, game, sleeve, false, 0.24f);

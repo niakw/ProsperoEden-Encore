@@ -464,9 +464,9 @@ void Launcher::draw_switch_settings(Canvas& c) {
     list.rounded_rect({92,173,1736,1},0,kGrey);
     list.rounded_rect({608,175,2,755},0,kGrey);
     for(int i=0;i<n;++i) {
-        const Rect r{98.0f,194.0f+float(i)*87.0f,493.0f,77.0f};
+        const Rect r{98.0f,194.0f+float(i)*77.0f,493.0f,70.0f};
         if(i==selected)list.rounded_rect(r,3.0f,kFocus);
-        text_shrink(c,tr(categories[i]),r.x+26,baseline(r.y,77,25),
+        text_shrink(c,tr(categories[i]),r.x+26,baseline(r.y,70,25),
                     25,i==selected?kWhite:kInk,r.w-48);
     }
     const char* title=tr(categories[selected]);
@@ -823,7 +823,9 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         case Modal::appearance: {
             const char* labels[] = {
                 TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
-                TR("Local image"), TR("Color 1"), TR("Color 2"),
+                TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"),
+                TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
+                TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
                 TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
                 TR("Background motion"), TR("Image scaling"), TR("Game background"),
                 TR("Reset appearance")};
@@ -844,13 +846,19 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             case 3: value = backgrounds[std::clamp(prefs_.background_style,0,5)]; break;
             case 4: value = prefs_.wallpaper_file.empty()?tr("None"):prefs_.wallpaper_file; break;
             case 5: value = std::to_string(prefs_.background_color); break;
-            case 6: value = std::to_string(prefs_.background_color2); break;
-            case 7: value = prefs_.glow_enabled?tr("On"):tr("Off"); break;
-            case 8: value = std::to_string(prefs_.glow_strength)+"%"; break;
-            case 9: value = std::to_string(prefs_.background_overlay)+"%"; break;
-            case 10: value = prefs_.background_animate?tr("On"):tr("Off"); break;
-            case 11: value = prefs_.background_fit?tr("Contain"):tr("Fill"); break;
-            case 12: value = prefs_.show_game_background?tr("On"):tr("Off"); break;
+            case 6: case 7: case 8:
+                value = std::to_string((prefs_.background_color >> (16 - 8*(i-6))) & 255u);
+                break;
+            case 9: value = std::to_string(prefs_.background_color2); break;
+            case 10: case 11: case 12:
+                value = std::to_string((prefs_.background_color2 >> (16 - 8*(i-10))) & 255u);
+                break;
+            case 13: value = prefs_.glow_enabled?tr("On"):tr("Off"); break;
+            case 14: value = std::to_string(prefs_.glow_strength)+"%"; break;
+            case 15: value = std::to_string(prefs_.background_overlay)+"%"; break;
+            case 16: value = prefs_.background_animate?tr("On"):tr("Off"); break;
+            case 17: value = prefs_.background_fit?tr("Contain"):tr("Fill"); break;
+            case 18: value = prefs_.show_game_background?tr("On"):tr("Off"); break;
             default: value = tr("Restore Neon"); break;
             }
             break;

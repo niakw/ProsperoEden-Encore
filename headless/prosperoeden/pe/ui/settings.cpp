@@ -66,7 +66,9 @@ constexpr Rect kVideoWindow{592.0f, kVideoRowsTop, 736.0f,
 constexpr const char *kOutputs[] = {"1080p", "1440p", "2160p"};
 enum AppearanceRow {
     app_theme, app_logo, app_accent, app_background, app_image,
-    app_color_a, app_color_b, app_glow, app_glow_strength, app_overlay,
+    app_color_a, app_a_red, app_a_green, app_a_blue,
+    app_color_b, app_b_red, app_b_green, app_b_blue,
+    app_glow, app_glow_strength, app_overlay,
     app_animate, app_fit, app_game_background, app_reset, kAppearanceRows
 };
 constexpr std::array<std::uint32_t, 12> kColorSwatches = {
@@ -106,6 +108,17 @@ std::uint32_t cycle_color(std::uint32_t current, int step) {
     return kColorSwatches[static_cast<std::size_t>((index + step + count) % count)];
 }
 
+
+unsigned rgb_channel(std::uint32_t color, int channel) {
+    return (color >> (16 - 8 * channel)) & 0xffu;
+}
+void adjust_rgb(std::uint32_t& color, int channel, int step, bool fine) {
+    const int shift = 16 - 8 * channel;
+    const unsigned current = (color >> shift) & 0xffu;
+    const unsigned next = static_cast<unsigned>(std::clamp(
+        static_cast<int>(current) + step * (fine ? 1 : 8), 0, 255));
+    color = (color & ~(0xffu << shift)) | (next << shift);
+}
 
 const char *output_name(int output)
 {
@@ -229,7 +242,10 @@ void Launcher::press_settings(Key key)
             break;
         case kAppearance:
             open_modal(Modal::appearance);
-            wallpaper_options_ = services_.wallpapers();
+            if (!wallpaper_scan_.valid())
+                wallpaper_scan_ = std::async(std::launch::async, [this] {
+                    return services_.wallpapers();
+                });
             video_rows_.visible = kVideoRowsShown;
             video_rows_.pitch = kVideoRowPitch;
             video_rows_.reset(kAppearanceRows, 0);
@@ -279,7 +295,7 @@ void Launcher::draw_settings(Canvas &c)
     {
         const Rect r{rail_x + float(row) * (card_w + gap), rail_y, card_w, card_h};
         const bool selected = row == settings_.selected;
-        if (selected)
+        if (selected && look().glow)
             list.shadow({r.x - 4.0f, r.y - 3.0f, r.w + 8.0f, r.h + 10.0f},
                         24.0f, 32.0f, theme::kLime.with_alpha(0.16f));
         plate_rest(c, kTilePlate, r);
@@ -651,7 +667,8 @@ void Launcher::press_dialog(Key key)
             prefs_.background_style = (prefs_.background_style + step + 6) % 6; break;
         case app_image:
             if (wallpaper_options_.empty()) {
-                say(tr("No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."), true);
+                say(wallpaper_scan_.valid() ? tr("Scanning local wallpapers...") :
+                    tr("No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."), true);
                 return;
             }
             {
@@ -669,6 +686,12 @@ void Launcher::press_dialog(Key key)
             prefs_.background_color = cycle_color(prefs_.background_color, step); break;
         case app_color_b:
             prefs_.background_color2 = cycle_color(prefs_.background_color2, step); break;
+        case app_a_red: case app_a_green: case app_a_blue:
+            adjust_rgb(prefs_.background_color, option_ - app_a_red, step, activate);
+            sound = Cue::slider; break;
+        case app_b_red: case app_b_green: case app_b_blue:
+            adjust_rgb(prefs_.background_color2, option_ - app_b_red, step, activate);
+            sound = Cue::slider; break;
         case app_glow:
             prefs_.glow_enabled = !prefs_.glow_enabled; break;
         case app_glow_strength:
@@ -945,7 +968,14 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 std::clamp(prefs_.accent_color, 0, 4)],
             background_name(prefs_.background_style),
             prefs_.wallpaper_file.empty() ? tr("None") : prefs_.wallpaper_file,
-            color_hex(prefs_.background_color), color_hex(prefs_.background_color2),
+            color_hex(prefs_.background_color),
+            std::to_string(rgb_channel(prefs_.background_color, 0)),
+            std::to_string(rgb_channel(prefs_.background_color, 1)),
+            std::to_string(rgb_channel(prefs_.background_color, 2)),
+            color_hex(prefs_.background_color2),
+            std::to_string(rgb_channel(prefs_.background_color2, 0)),
+            std::to_string(rgb_channel(prefs_.background_color2, 1)),
+            std::to_string(rgb_channel(prefs_.background_color2, 2)),
             on_off(prefs_.glow_enabled), percent(prefs_.glow_strength),
             percent(prefs_.background_overlay), on_off(prefs_.background_animate),
             prefs_.background_fit ? tr("Contain") : tr("Fill"),
@@ -953,7 +983,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         };
         static constexpr const char* labels[kAppearanceRows] = {
             TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
-            TR("Local image"), TR("Color 1"), TR("Color 2"),
+            TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"),
+            TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
+            TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
             TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
             TR("Background motion"), TR("Image scaling"), TR("Game background"),
             TR("Reset appearance")

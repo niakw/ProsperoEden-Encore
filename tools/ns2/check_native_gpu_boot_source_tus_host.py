@@ -21,6 +21,7 @@ if sys.platform=='darwin' and sdk26.is_dir():
             '-isystem',str(sdk26/'usr/include/c++/v1')]
 flags+=['-I'+str(i) for i in inc if i.is_dir()]
 assert flags[0] and all((r/i).exists() for i in [
+    'vendor/encore-active/ns2-runtime/vulkan_abi',
     'vendor/encore-active/ns2-runtime/nvdrv_as',
     'vendor/encore-active/ns2-runtime/nvdrv_gpu',
     'vendor/encore-active/ns2-runtime/gpu_dispatch',
@@ -53,4 +54,23 @@ for path in sources:
         print(err[-3100:],file=sys.stderr,flush=True)
         raise AssertionError(('P0.2 native GPU source syntax failed',p,rc))
 assert len(results)==6 and all(rc==0 for _,rc,_ in results), 'P0.2 NS2 native owner syntax failed'
+
+# The unified QMD3 puller must compile with the actual PS5 rasterizer ABI:
+# earlier desktop-only TU probes did not instantiate DispatchNativeCompute.
+# The real Vulkan renderer owns shader capture; no duplicate diagnostic read
+# is permitted on the latency-sensitive GPU worker path.
+puller = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp'
+body = puller.read_text()
+assert body.count('pusher.rasterizer->DispatchNativeCompute(*launch)') == 1
+assert 'CaptureNativeComputeShader(' not in body
+assert 'EDEN_NS2_COMPUTE_SHADER_CAPTURE' not in body
+assert 'if (sample && (!mapped || !release_targets_mapped))' in body
+abi = r/'vendor/encore-active/ns2-runtime/vulkan_abi'
+native_flags = [
+    flags[0], '-I'+str(abi), '-I'+str(r/'headless'),
+    *flags[1:], '-DPS5_NATIVE=1']
+built = subprocess.run(native_flags+[str(puller)], capture_output=True,
+                       text=True, env=env, timeout=95)
+assert built.returncode == 0, ('PS5 native QMD3 puller ABI',built.stderr[-3500:])
+print('P2_7_NATIVE_QMD3_SINGLE_SHADER_CAPTURE_PASS native_abi=1 dispatch=1 redundancy=0')
 print('P0_2_NATIVE_GPU_BOOT_SOURCES_SYNTAX_PASS 6/6 host_only=1 PS5_build=OFF',flush=True)

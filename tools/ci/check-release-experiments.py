@@ -14,17 +14,19 @@ ROOT = Path(__file__).resolve().parents[2]
 CACHE = ROOT / "build/headless-native/CMakeCache.txt"
 RELEASE = ROOT / "build/release/PPSA99008"
 REQUIRED = {
+    # One native PS5 product irrespective of guest platform; release is
+    # a packaging decision, not a different CPU/GPU feature profile.
+    "CMAKE_BUILD_TYPE:STRING": "Release",
     "EDEN_PS5_VULKAN:BOOL": "ON",
     "EDEN_VULKAN_DRIVER:STRING": "RADV",
-    "EDEN_FINAL_RELEASE_PROFILE:BOOL": "ON",
-    "EDEN_GUEST_WRITE_BRIDGE_DEV:BOOL": "OFF",
-    "EDEN_UNQUALIFIED_FERMI2D_COPY:BOOL": "OFF",
     "EDEN_PS5_OPENGL:BOOL": "ON",
-    "EDEN_DEV_PROFILE:BOOL": "OFF",
-    "EDEN_DEV_VULKAN:BOOL": "OFF",
-    "EDEN_SHARED_JIT:BOOL": "OFF",
-    "EDEN_JIT_COMPILE_BATCH:BOOL": "OFF",
 }
+NATIVE_SETTING = "PS5_NATIVE"
+# These old diagnostic selectors are not the product configuration. The
+# unselected CMake modules must not be activated by an inherited build cache.
+DISALLOWED_ACTIVE = ("EDEN_GUEST_WRITE_BRIDGE_DEV", "EDEN_UNQUALIFIED_FERMI2D_COPY")
+OFF_VALUES = {"OFF", "FALSE", "0", ""}
+
 # Sparse fallback diagnostics may be linked from maintained JIT source even
 # when runtime sparse selection is OFF. Strings alone are not activation proof.
 # The compiled CMakeCache policy is checked fail-closed below.
@@ -45,12 +47,20 @@ def verify(cache: str, eboot: bytes) -> None:
         f"{k}={config.get(k)!r} (expected {want!r})"
         for k, want in REQUIRED.items() if config.get(k) != want
     ]
-    # A new NS2 research switch must never evade release verification just
-    # because it was added after this script's fixed REQUIRED list.
+    # The native toolchain can declare this -D switch BOOL or leave it as
+    # UNINITIALIZED. Validate its value independently of CMake's type.
+    native = [value for key, value in config.items()
+              if key.split(':', 1)[0] == NATIVE_SETTING]
+    if len(native) != 1 or native[0] != "ON":
+        mismatches.append(f"{NATIVE_SETTING}={native!r} (expected one ON)")
+    # Reject active deprecated research flags and diagnostic subsystems.
+    # The old DEV/release profile names are intentionally NOT REQUIRED.
     for key, value in config.items():
-        if re.fullmatch(r"EDEN_NS2_.*_EXPERIMENTAL:BOOL", key):
-            if value not in ("OFF", "FALSE", "0"):
-                mismatches.append(f"{key}={value!r} (expected 'OFF')")
+        selector = key.split(':', 1)[0]
+        if (re.fullmatch(r"EDEN_NS2_.*_EXPERIMENTAL", selector) or
+                selector in DISALLOWED_ACTIVE):
+            if value.upper() not in OFF_VALUES:
+                mismatches.append(f"{key}={value!r} (must be inactive)")
     if mismatches:
         raise ValueError("release compile profile mismatch: " + ", ".join(mismatches))
     missing = [value.decode() for value in MARKERS if value not in eboot]
@@ -58,7 +68,8 @@ def verify(cache: str, eboot: bytes) -> None:
         raise ValueError("release binary lacks runtime markers: " + ", ".join(missing))
 
 def self_test() -> None:
-    valid = "\n".join(f"{k}={v}" for k, v in REQUIRED.items())
+    valid = "\n".join([*(f"{k}={v}" for k, v in REQUIRED.items()),
+                       "PS5_NATIVE:UNINITIALIZED=ON"])
     eboot = b"".join(MARKERS)
     verify(valid, eboot)
     for key, value in REQUIRED.items():
@@ -72,6 +83,8 @@ def self_test() -> None:
     for injected in (
         "EDEN_NS2_FUTURE_UNREVIEWED_EXPERIMENTAL:BOOL=ON",
         "EDEN_NS2_EXEFS_EXPERIMENTAL:BOOL=ON",
+        "EDEN_GUEST_WRITE_BRIDGE_DEV:BOOL=ON",
+        "EDEN_UNQUALIFIED_FERMI2D_COPY:BOOL=ON",
     ):
         try:
             verify(valid + "\n" + injected, eboot)
@@ -79,6 +92,15 @@ def self_test() -> None:
             assert injected.split("=", 1)[0] in str(exc)
         else:
             raise AssertionError(f"unreviewed NS2 release selector accepted: {injected}")
+    for wrong_native in ("OFF", "FALSE", "INVALID"):
+        try:
+            verify(valid.replace("PS5_NATIVE:UNINITIALIZED=ON",
+                                 f"PS5_NATIVE:UNINITIALIZED={wrong_native}"), eboot)
+        except ValueError as exc:
+            assert "PS5_NATIVE" in str(exc)
+        else:
+            raise AssertionError("non-native PS5 configuration accepted")
+    verify(valid.replace("PS5_NATIVE:UNINITIALIZED=ON", "PS5_NATIVE:BOOL=ON"), eboot)
     # A non-NS2 flag must not accidentally match the catch-all checker.
     verify(valid + "\nEDEN_UNRELATED_FEATURE:BOOL=ON", eboot)
     for marker in MARKERS:
@@ -88,7 +110,7 @@ def self_test() -> None:
             assert marker.decode() in str(exc)
         else:
             raise AssertionError(f"missing binary marker accepted: {marker!r}")
-    print("PASS: one native final release profile, fail-closed experimental flags and markers")
+    print("PASS: one native compiled application, independently controlled publishing, strict GPU configuration and markers")
 
 def main() -> int:
     if len(sys.argv) == 2 and sys.argv[1] == "--self-test":

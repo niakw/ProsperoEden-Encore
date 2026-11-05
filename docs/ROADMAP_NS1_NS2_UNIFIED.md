@@ -390,6 +390,40 @@ Le témoin réel de validation avant marquage GPU-dirty couvre désormais
 les **SSBO et texel buffers** sans régression de transaction.
 **Ce résultat ne valide pas l'exécution GPU PS5**, reportée à P5.
 
+**P2.3 — offsets atomiques dynamiques bornés par masque AND
+(05/11, source/hôte) :** l'absence de garde SPIR-V
+dans le backend commun imposait jusque-là le refus de
+**tous** les offsets SSBO dynamiques. Pour les formes
+exactes BitwiseAnd32(registre, masque_const),
+le code post-traduction peut toutefois démontrer
+**sans supposition** que chaque offset envoyé au SPIR-V
+est compris entre zéro et la valeur du masque, et
+que ses bits bas garantissent un alignement de 4 ou
+8 octets. Le collecteur de l'IR natif conserve donc
+le **maximum prouvé**, puis le propriétaire QMD3
+compare ce maximum plus la largeur exacte à la
+longueur réelle du SSBO au moment du plan de
+ressources. Un buffer trop court fait échouer la
+publication du shader. La preuve fonctionne pour les
+deux ordres du AND et les identités IR, sans rajouter
+de voie au compilateur Maxwell NS1.
+
+Les additions, PHI, masques mal alignés, masques
+débordants, index de liaison SSBO dynamiques et
+fallbacks atomiques U32x2 restent **refusés**.
+L'émetteur de stockage conserve le **même offset
+réel** : il n'utilise pas la borne pour calculer
+les écritures, seulement pour vérifier le plan
+QMD3. Tests du vrai IR Compute avec registre R12,
+AND 32/64 bits, bords de buffer, mutation du
+descripteur, positives et négatives, UBSan
+Clang/GCC O0/O2 ; tests de syntaxe propriétaires
+et garde-fous NS1/NS2. Les offsets dynamiques
+arbitraires nécessitent toujours le vrai prédicat
+SPIR-V ou une autre preuve complète.
+**Aucune instruction GPU PS5 n'a été exécutée :
+P2.3 global/P5 ouverts.**
+
 **P2.3 — correspondance stricte SSBO ↔ descripteur CBUF/NVN
 (05/11, source/hôte) :** un masque CBUF actif ne suffit pas à
 authentifier la provenance d'une écriture atomique. Le garde
@@ -419,8 +453,9 @@ ne prouvait pas que chaque offset atomique serait présent dans les
 plan de ressources. Le nouveau passage natif capture, depuis
 l'IR réel, la banque SSBO aplatie, l'offset et la largeur de chaque
 StorageAtomic (4/8 octets), puis refuse les offsets atomiques
-dynamiques tant que l'émetteur SPIR-V partagé ne possède pas de
-garde de plage exécutable. À la sortie de BuildResourcePlan, le
+dynamiques non bornés tant que l'émetteur SPIR-V partagé ne
+possède pas de garde de plage exécutable. Le cas du
+masque AND aligné prouvé est ajouté ci-dessus. À la sortie de BuildResourcePlan, le
 chemin GPU QMD3 compare chaque plage constante à la taille réelle
 lue depuis son descripteur guest et refuse **avant publication**
 tout dépassement, buffer non inscriptible, taille inconnue, alias
@@ -432,8 +467,9 @@ Preuve hôte : extraction des vrais Opcode/IR::Block, tests d'offsets
 offsets dynamiques et absence de taille ; Clang/GCC UBSan O0/O2 ;
 compilation syntaxique O0/O2 des deux vrais propriétaires
 renderer_spirv_bridge.cpp et ns2_shader_spirv_compile.cpp.
-**Les atomiques dynamiques ne sont pas implémentés par ce lot** :
-ils sont explicitement refusés, sans imiter une exécution réussie.
+**Les atomiques dynamiques arbitraires ne sont pas implémentés** :
+ils sont refusés, sauf la forme AND alignée et bornée ajoutée
+ci-dessus, sans imiter une exécution réussie.
 Il n'y a toujours pas de preuve Vulkan/PS5 ni de chemin Maxwell NS1
 modifié.
 

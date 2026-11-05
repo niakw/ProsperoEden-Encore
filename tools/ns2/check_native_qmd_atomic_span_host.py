@@ -8,6 +8,20 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
+# Prove that the admitted masked IR flows through the real renderer owner
+# and its emitted SPIR-V index, rather than living only in this host test.
+ampere=ROOT/'vendor/encore-active/ns2-runtime/ampere'
+bridge=(ampere/'shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
+gpu_owner=(ampere/'video_core/ns2_shader_spirv_compile.cpp').read_text()
+atomic_owner=(ampere/'shader_recompiler/frontend/ampere/native_atomic_span.h').read_text()
+emitter=(ROOT/'vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp').read_text()
+assert 'if (!NativeQmdAtomicStorageIRAdmissible(ir, profile))' in bridge
+assert 'const auto atomic_spans = CollectNativeQmdAtomicSpans(ir);' in bridge
+assert 'NativeQmdAtomicSpansFitBindings(' in gpu_owner
+assert 'NativeQmdAtomicMaximumByteOffset(offset, width)' in atomic_owner
+assert 'instruction->GetOpcode() != Shader::IR::Opcode::BitwiseAnd32' in atomic_owner
+assert 'const Id index{StorageIndex(ctx, offset, element_size)};' in emitter
+assert 'return ctx.OpShiftRightLogical(ctx.U32[1], index, shift_id);' in emitter
 ir=ROOT/'vendor/sources/eden/src/shader_recompiler/frontend/ir'
 srcs=[ROOT/'tools/ns2/test_native_qmd_atomic_span.cpp'] + [
     ir/(name+'.cpp') for name in ('basic_block','microinstruction','opcodes','value')]

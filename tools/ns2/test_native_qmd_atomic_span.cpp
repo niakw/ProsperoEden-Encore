@@ -56,6 +56,58 @@ static void Test(Opcode op, u32 slot, u32 offset, bool expected,
     }
 }
 
+// The backend's REAL emitted address is (R12 & mask), not a guessed
+// host-side offset. An aligned constant AND mask bounds every possible
+// byte index regardless of the runtime register value. No other dynamic
+// arithmetic is accepted without a runtime SPIR-V conditional.
+static std::optional<std::vector<NativeAtomicSpan>>
+MakeMaskedIrSpans(Opcode op, u32 slot, u32 mask, bool swap_constant = false,
+                  bool wrap_identity = false, bool add_after_mask = false) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{14};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program ir{};
+    ir.stage=Shader::Stage::Compute;
+    ir.blocks.push_back(&block);
+    ir.info.storage_buffers_descriptors.push_back(
+        {.cbuf_index=0,.cbuf_offset=0x310,.count=1,.is_written=true});
+    ir.info.storage_buffers_descriptors.push_back(
+        {.cbuf_index=0,.cbuf_offset=0x320,.count=1,.is_written=true});
+    block.AppendNewInst(Opcode::GetRegister,{Value{Shader::IR::Reg::R12}});
+    const Value register_value{&block.back()};
+    block.AppendNewInst(Opcode::BitwiseAnd32,
+        swap_constant ? std::initializer_list<Value>{Value{mask},register_value}
+                      : std::initializer_list<Value>{register_value,Value{mask}});
+    Value index{&block.back()};
+    if (wrap_identity) {
+        block.AppendNewInst(Opcode::Identity,{index});
+        index=Value{&block.back()};
+    }
+    if (add_after_mask) {
+        block.AppendNewInst(Opcode::IAdd32,{index,Value{u32{4}}});
+        index=Value{&block.back()};
+    }
+    block.AppendNewInst(op,{Value{slot},index,Value{u32{1}}});
+    return CollectNativeQmdAtomicSpans(ir);
+}
+
+static void CheckMaskedAtomic(Opcode op, u32 slot, u32 mask, bool expected,
+                              bool swap_constant = false,
+                              bool wrap_identity = false,
+                              bool add_after_mask = false) {
+    const auto spans=MakeMaskedIrSpans(
+        op,slot,mask,swap_constant,wrap_identity,add_after_mask);
+    if (bool(spans)!=expected)
+        std::fprintf(stderr,"masked atomic op=%u slot=%u mask=%#x "
+                             "swap=%u identity=%u plus=%u expected=%u got=%u\n",
+            static_cast<u32>(op),slot,mask,swap_constant,
+            wrap_identity,add_after_mask,expected,bool(spans));
+    assert(bool(spans)==expected);
+    if (expected) {
+        assert(spans->size()==1 && spans->front().binding==slot &&
+               spans->front().offset==mask);
+    }
+}
+
 int main() {
     static_assert(NativeAtomicSpan{1,4,4} == NativeAtomicSpan{1,4,4});
     Test(Opcode::StorageAtomicIAdd32,0,0,true);
@@ -85,6 +137,25 @@ int main() {
     Test(Opcode::StorageAtomicIAdd32,0,0xfffffff8U,true);
     Test(Opcode::StorageAtomicIAdd32,0,0xfffffffcU,false);
 
+    // 32-bit atomic: R12&0x3c yields [0,60] in 4-byte units, which
+    // fits a 64-byte QMD3 SSBO exactly. 64-bit works with mask 0x38.
+    // Both constant operand orders and IR identity wrappers are valid.
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicExchange32,0,0x3c,true,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicSMin32,0,0x3c,true,false,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x38,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicExchange64,1,0x0,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicAddF32,0,0x3c,true);
+    // Any low alignment bit, oversized mask, arithmetic after the mask,
+    // unsupported 32x2 fallback or unknown binding fails closed.
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3e,false);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0x3c,false);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0xfffffffcU,false);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd64,0,0xfffffff8U,false);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,0,0x3c,false,false,false,true);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32x2,0,0x38,false);
+    CheckMaskedAtomic(Opcode::StorageAtomicIAdd32,2,0x3c,false);
+
     const std::vector<NativeQmdStorageBinding> real_bindings{
         {0x100000,64,true,true}, {0x200000,8,true,true}};
     const auto prove=[&](std::initializer_list<NativeAtomicSpan> accesses,
@@ -96,6 +167,18 @@ int main() {
     prove({},true);
     prove({{0,0,4},{0,60,4},{1,0,8}},true);
     prove({{0,56,8},{1,4,4}},true);
+    // These are conservatively proven UPPER bounds of dynamic masked IR,
+    // not arbitrary snapshot offsets. Actual live resource lengths decide.
+    const auto masked32 = MakeMaskedIrSpans(Opcode::StorageAtomicIAdd32,0,0x3c);
+    const auto masked64 = MakeMaskedIrSpans(Opcode::StorageAtomicIAdd64,0,0x38);
+    assert(masked32 && masked64);
+    assert(NativeQmdAtomicSpansFitBindings(*masked32,real_bindings));
+    assert(NativeQmdAtomicSpansFitBindings(*masked64,real_bindings));
+    auto short_resource=real_bindings;
+    short_resource[0].bytes=63;
+    assert(!NativeQmdAtomicSpansFitBindings(*masked32,short_resource));
+    short_resource[0].bytes=60;
+    assert(!NativeQmdAtomicSpansFitBindings(*masked64,short_resource));
     prove({{0,60,8}},false); // last word leaves buffer
     prove({{1,4,8}},false);  // last word leaves small binding
     prove({{0,2,4}},false);  // alignment cannot silently floor index
@@ -127,5 +210,6 @@ int main() {
     assert(!NativeQmdAtomicSpansFitBindings(
         std::array{NativeAtomicSpan{0,60,4}},mutated));
     std::puts("P2_3_NATIVE_ATOMIC_SPAN_REAL_IR_PASS static=1 "
-              "dynamic_rejected=1 actual_bound=1 stale_size_refused=1");
+              "dynamic_unbounded_rejected=1 aligned_and_max_admitted=1 "
+              "dynamic_live_size_proved=1 stale_size_refused=1");
 }

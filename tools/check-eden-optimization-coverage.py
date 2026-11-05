@@ -219,7 +219,8 @@ assert "python3 tools/ns2/check_native_gpu_pte_remap_host.py" in (
 print("NS1_NS2_SHARED_GPU_REMAP_F07_ISOLATION_PASS",
       f"post_snapshot_reviewed={len(post_f07_shared_gpu_remap_owners)}")
 
-# The native QMD3 static atomic resource span owner was added on 05/11,
+# The native QMD3 atomic resource span owner (static or proof-bounded)
+# was added on 05/11,
 # AFTER the frozen 518-path F07 optimization snapshot. It is a real NS2
 # source owner, not retroactively optimized Switch 1 code. Preserve the
 # original baseline and independently assert the actual integration/tests.
@@ -238,7 +239,14 @@ assert not post_f07_native_atomic_span_owners & (
 native_atomic_header = (ROOT / next(iter(post_f07_native_atomic_span_owners))).read_text()
 assert "CollectNativeQmdAtomicSpans(" in native_atomic_header
 assert "NativeQmdAtomicSpansFitBindings(" in native_atomic_header
-assert "if (!binding.IsImmediate() || !offset.IsImmediate())" in native_atomic_header
+assert "NativeQmdAtomicMaximumByteOffset(" in native_atomic_header
+assert "instruction->GetOpcode() != Shader::IR::Opcode::BitwiseAnd32" in native_atomic_header
+assert "if (lhs.IsImmediate() == rhs.IsImmediate()) return std::nullopt;" in native_atomic_header
+assert "mask > std::numeric_limits<u32>::max() - width" in native_atomic_header
+assert "NativeQmdAtomicMaximumByteOffset(offset, width)" in native_atomic_header
+assert "aligned_and_max_admitted=1" in (
+    ROOT / "tools/ns2/test_native_qmd_atomic_span.cpp"
+).read_text()
 assert '#include "shader_recompiler/frontend/ampere/native_atomic_span.h"' in (
     ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 ).read_text()

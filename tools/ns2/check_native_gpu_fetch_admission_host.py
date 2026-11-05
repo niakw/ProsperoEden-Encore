@@ -37,16 +37,31 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     assert '#ifdef EDEN_NS2_NATIVE_GPU_DISPATCH' in step
     assert 'NativeGpfifoFetchMapped(' in step
     assert 'memory_manager.IsFullyMappedRange(addr, bytes)' in step
-    assert '::Eden::RecordGpuFailure(std::make_exception_ptr(' in step
+    assert 'throw std::runtime_error("Native GPFIFO command unmapped at GPU fetch")' in step
     assert 'return false;' in step.split('NativeGpfifoFetchMapped(',1)[1].split('if (subchannels[dma_state.subchannel]',1)[0]
     fetch=step.index('NativeGpfifoFetchMapped(')
     assert step.index('dma_state.dma_get = header.addr;') < fetch
     assert fetch < step.index('memory_manager.IsMemoryDirty(') < step.index('ProcessCommands(headers);')
     assert step.index('if (signal_sync && !synced)') < fetch
-    assert step.index('::Eden::RecordGpuFailure') < step.index('ProcessCommands(headers);')
+    assert step.index('throw std::runtime_error(') < step.index('ProcessCommands(headers);')
     assert 'signal_sync = explicit_sync && user_sync;' in step
     assert 'NativeGpuChannelRegistry::Instance().IsNative(' in step
     assert 'if (header.size > 0) {' in step
+
+# A fatal native fetch must stop the PS5 queue worker BEFORE its owning
+# fence can be marked complete. The actual threaded caller catches at the
+# pthread entry, records a permanent failure and wakes blocking submitters.
+worker=(ROOT/'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
+dev_worker=(ROOT/'vendor/encore-active/eden-gpu/gpu_thread_dev.cpp').read_text()
+for active_worker in (worker,dev_worker):
+    assert 'scheduler.Push(system.GPU(), submit_list->channel, std::move(submit_list->entries));' in active_worker
+    assert 'Eden::RecordGpuFailure(std::current_exception());' in active_worker
+    assert 'start->owner->stop_source.request_stop();' in active_worker
+    assert 'state.signaled_fence.store(next.fence, std::memory_order_release);' in active_worker
+    assert active_worker.index('scheduler.Push(system.GPU()') < active_worker.index('state.signaled_fence.store(next.fence,')
+    assert active_worker.index('state.signaled_fence.store(next.fence,') < active_worker.index('} catch (const std::exception& error)')
+    assert 'std::rethrow_exception(failure);' in active_worker
+assert 'gpu_thread_quiet.cpp' in cmake and 'gpu_thread_dev.cpp' in cmake
 
 compiler=shutil.which('clang++') or shutil.which('g++')
 assert compiler
@@ -71,6 +86,25 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
         assert run.returncode==0,run.stderr[-3400:]
         assert 'P2_7_REAL_NATIVE_GPFIFO_FETCH_RECHECK_PASS' in run.stdout
         print('P2_7_GPFIFO_FETCH_RECHECK_UBSAN_PASS',f'O{opt}',flush=True)
+    # The maintained queue fence is published only after Scheduler::Push;
+    # a fatal native fetch must throw to pthread's catch, then request_stop.
+    # Execute the same failure and GPU fence/persistent alert semantics
+    # with production gpu_failure.h and real native admission helper.
+    fatal_test=ROOT/'tools/ns2/test_native_gpu_fetch_fatal_worker.cpp'
+    assert fatal_test.is_file()
+    for opt in (0,2):
+        exe=Path(td)/f'fetch-fatal-O{opt}'
+        built=subprocess.run([compiler,'-std=c++20',f'-O{opt}','-Wall',
+                              '-Wextra','-Werror','-fsanitize=undefined',
+                              '-fno-sanitize-recover=all',*standard,
+                              '-I'+str(NATIVE),'-I'+str(ROOT/'headless'),
+                              str(fatal_test),'-o',str(exe)],
+                             capture_output=True,text=True,env=env,timeout=70)
+        assert built.returncode==0,built.stderr[-3700:]
+        ran=subprocess.run([str(exe)],capture_output=True,text=True,env=env,timeout=20)
+        assert ran.returncode==0,ran.stderr[-3700:]
+        assert 'P2_7_GPU_FETCH_FATAL_NO_FALSE_FENCE_PASS' in ran.stdout
+        print('P2_7_NATIVE_GPU_FATAL_FENCE_UBSAN_PASS',f'O{opt}',flush=True)
     # The real GPU worker and puller units must compile under the NATIVE
     # macro regime; normal host source-only checks do not exercise it.
     deps=ROOT/'vendor/sources/eden-cpm'

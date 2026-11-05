@@ -1484,3 +1484,24 @@ emploie des intrinsics x86 hors du périmètre release. Cela atteste
 la cohérence source des chemins natifs, pas une liaison ou une exécution
 matérielle PS5. P2.7/P5 restent ouverts pour le cycle de vie GPU
 réel, les fences et le premier framebuffer.
+
+
+**P2.7 — correction du faux acquittement après refus GPFIFO
+(05/11/2026, source/hôte) :** le premier recheck de la mémoire au
+fetch interrompait seulement `DmaPusher::Step` (`return false`) en
+enregistrant une erreur. Or `Scheduler::Push` revenait alors
+normalement, et `GPUThread::RunWorker` pouvait publier le fence
+**comme si les commandes avaient été exécutées** et traiter les
+complétions futures. Les deux sources DMA maintenues normal/DEV
+propagent désormais l'échec natif PS5 par `std::runtime_error` :
+la vraie entrée `pthread` des deux workers GPU intercepte l'exception,
+publie l'échec persistant et demande l'arrêt avant la publication du
+queue-fence. Le code est compilé uniquement avec
+`EDEN_NS2_NATIVE_GPU_DISPATCH` et lève l'exception uniquement en
+`PS5_NATIVE`, sans changer le flux NS1 normal. Témoin source réel des
+deux workers et simulation exécutable avec **les vrais
+`gpu_failure.h` et `native_gpu_fetch_admission.h`**, vérification du
+fence non acquitté, du stop et de la notification persistante après
+consommation UI, UBSan O0/O2. Limitations : pas de preuve des cycles
+réels NVIDIA/RADV, de l'exclusion concurrente Unmap/Read ni de la fin
+du GPU NS2 sur console ; P2.7/P5 restent ouverts.

@@ -202,15 +202,24 @@ la table GMMU peut être modifiée avant la consommation effective par
 `DmaPusher::Step`. Les propriétaires maintenus normal et DEV revalident
 désormais le span et refusent les paquets supprimés, au lieu de lire des
 zéros qui pourraient sembler être une commande native et libérer un fence
-non exécuté. Sur PS5, la faute native est enregistrée dans le registre
-persistant `gpu_failure` ; aucune exception ne sort du `std::jthread`
-GPU. Le garde-fou n'existe que sous `EDEN_NS2_NATIVE_GPU_DISPATCH`.
+non exécuté. Sur PS5, la faute native se propage au **catch de l'entrée pthread
+maintenue** qui publie le registre persistant `gpu_failure` et arrête
+le worker GPU **avant la publication du fence de commande**. Le simple
+`return false` de `DmaPusher::Step` était insuffisant : il laissait le
+scheduler traiter la commande comme achevée. Aucune exception ne sort
+de l'entrée du thread OS. Le garde-fou n'existe que sous `EDEN_NS2_NATIVE_GPU_DISPATCH`.
 
 Deux témoins UBSan O0/O2 exécutent le véritable helper de validation,
 avec démap/remap entre soumission et lecture. Sept vrais propriétaires
 GPU passent aussi le `syntax-only` avec macros natives Ampere actives sur
 hôte ARM64, sauf le profil DEV historiquement x86, contrôlé séparément.
-Aucun de ces tests ne certifie l'ordonnancement GPU ou Vulkan sur PS5.
+Le témoin fatal O0/O2 exerce `gpu_failure.h` et la véritable validation
+GPFIFO sous le modèle d'arrêt pthread avec vérification du fence
+**non avancé** et du défaut toujours observable après `TakeGpuFailure`.
+La structure exacte des deux vrais workers est également contrôlée ;
+le header FFmpeg configuré et la compilation intégrale du worker PS5
+ne font pas partie de cette preuve hôte. Aucun de ces tests ne certifie
+l'ordonnancement GPU ou Vulkan sur PS5.
 
 ## Règles de migration
 

@@ -1119,12 +1119,38 @@ for before, after in (
 ):
     assert nvdrv_expected.count(before) == 1, ("nvdrv source anchor drift", before)
     nvdrv_expected = nvdrv_expected.replace(before, after)
+# P1.3: the production-owner CloseSession now refuses out-of-range IDs,
+# duplicate final closes, inactive sessions, and null process owners BEFORE
+# decrementing or unmapping. Reconstruct the exact ten-line addition from
+# the pinned historical unit; all earlier edits retain strict byte parity.
+original_close = (
+    "    std::unique_lock lk(impl->session_guard);\n"
+    "    auto& session = impl->sessions[session_id.id];\n"
+    "    if (--session.ref_count > 0) {\n"
+)
+checked_close = (
+    "    std::unique_lock lk(impl->session_guard);\n"
+    "    // SessionId originates in the NVDRV FD table; stale and malformed FDs\n"
+    "    // must not index outside the stable deque or close a reused ASID twice.\n"
+    "    // Keep the existing lock through NvMap cleanup: the cleanup may call\n"
+    "    // GetSession recursively and already depends on that ordering.\n"
+    "    if (session_id.id >= impl->sessions.size()) {\n"
+    "        return;\n"
+    "    }\n"
+    "    auto& session = impl->sessions[session_id.id];\n"
+    "    if (!session.is_active || session.ref_count <= 0 || !session.process) {\n"
+    "        return;\n"
+    "    }\n"
+    "    if (--session.ref_count > 0) {\n"
+)
+assert nvdrv_expected.count(original_close) == 1, "N07 pinned session close changed"
+nvdrv_expected = nvdrv_expected.replace(original_close, checked_close)
 assert (active / "eden-core/src" / nvdrv_rel).read_text() == nvdrv_expected
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_CONTAINER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_CONTAINER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/nvdrv_container.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/nvdrv/core/container.cpp" nvcontainer)' not in c
-print("VENDOR_MAINTAINED_NVDRV_SESSION_PARITY_PASS source=1 selections=1")
+print("VENDOR_MAINTAINED_NVDRV_SESSION_PARITY_PASS source=1 selections=1 invalid_close=refused")
 
 # The direct controller TU must reproduce the previous CMake-generated TU.
 rumble_original = (sources / "eden/src/hid_core/frontend/emulated_controller.cpp").read_text()

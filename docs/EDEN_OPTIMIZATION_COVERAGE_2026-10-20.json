@@ -3123,7 +3123,7 @@
       "prior_status": "SOURCE",
       "proof_ref": "tools/check-vendor-consolidation-debt.py",
       "profile_visibility": "profile_dependent_or_selected",
-      "evidence": "Previously maintained complete source/profile or former generated source replay; contract N07: Session retains process until final owner Close after unlocking mutex; exact pinned-generator parity, native event/session teardown unproven. CI witness retained. No FPS claim."
+      "evidence": "Previously maintained complete source/profile or former generated source replay; contract N07: Session retains process until final owner Close after unlocking mutex; exact pinned-generator parity, native event/session teardown unproven. CI witness retained. No FPS claim. 2026-11-05 P1.3 native NVDRV CloseSession now refuses out-of-range/stale/inactive/null/refcount-zero IDs BEFORE unmap or ASID release, preserving the existing lock and final Close process lifetime. Exact N07 pinned-source reconstruction updated; source-extracted C++ std::deque/lock negative host fixture O0/O2 UBSan passes. GetSession unchanged; console and concurrency lifetime not demonstrated."
     },
     {
       "path": "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h",

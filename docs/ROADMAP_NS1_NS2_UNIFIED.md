@@ -34,6 +34,15 @@ pas passé la qualification de source et l’absence de régression.
   audio/Sysmix, VFS. P1.3 demeure ouvert lorsque des IPC ou commandes
   matérielles restent sans implémentation fidèle ; pas de progression de PC
   invité prouvée sur console.
+- **P1.3 — NVDRV `CloseSession` vérifié (source/hôte) :** le propriétaire
+  `NvCore::Container` refuse une session hors plage, inactive, déjà libérée
+  ou sans processus avant la décrémentation, le `NvMap::UnmapAllHandles`
+  et la désinscription SMMU/ASID. Le chemin valide, le verrou existant et
+  le `process->Close` différé restent inchangés. Le test compile le préambule
+  C++ exact sous UBSan O0/O2 avec table `std::deque`, fermeture double et
+  identifiants invalides. Vendor `ecb4d9877`, avec contrôle de reconstruction
+  historique N07 complet. **N'affirme ni sécurité de concurrence globale
+  `GetSession`, ni exécution PS5, ni fermeture complète de P1.3.**
 - **P2 — état réel :** P2.3 CBUF/SSBO à formes dynamiques et P2.4 ISA/3D
   Ampere, task/mesh et instructions non couvertes restent ouverts. Une
   compilation de shaders et un test Vulkan hôte ne prouvent ni image ni

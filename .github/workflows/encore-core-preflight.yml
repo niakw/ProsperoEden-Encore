@@ -672,6 +672,9 @@ jobs:
         run: |
           set -euxo pipefail
           python3 -B tools/check-maintained-heap-sources.py
+          # P1.3 real close-admission body: refuse malformed/stale NVDRV session
+          # IDs BEFORE NvMap cleanup and ASID unregistration.
+          python3 -B tools/ns2/check_native_nvcore_session_close_host.py
           python3 -B tools/check-heap-growth.py
           python3 -B tools/check-heap-growth-rollback-host.py
           python3 -B tools/check-heap-growth-diagnostics-host.py

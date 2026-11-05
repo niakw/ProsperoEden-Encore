@@ -1378,3 +1378,12 @@ VA nulle et chemin Maxwell ; **Clang/GCC UBSan O0/O2 : 4/4 PASS**.
 Ce garde supprime une possibilité d’acquittement d’une commande
 initialement non mappée ; il ne constitue pas une preuve d’absence de
 courses si le guest modifie la GMMU après l’admission.
+
+
+**P4.1 — séparation des contrôles NVDRV (05/11) :** le témoin de
+pré-initialisation `check_native_gpfifo_preinit_host.py` reste dédié aux
+flags et à la propriété des FD, en s’arrêtant à la nouvelle frontière
+GMMU. Le contrôle `check_native_gpfifo_command_spans_host.py` exécute
+indépendamment **le bloc réel de vérification des commandes GPU**. Les
+deux batteries de 4 configurations Clang/GCC UBSan passent ; le
+périmètre additionnel n’est pas interprété comme un résultat console.

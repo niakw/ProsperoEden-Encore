@@ -17,7 +17,7 @@ OWNER = (ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvd
 entry = OWNER.split("NvResult nvhost_gpu::SubmitGPFIFOImpl(", 1)[1].split(
     "Core::Memory::Memory& nvhost_gpu::GetSessionMemory(", 1)[0]
 start = "    const bool native = UsesNativeAbi(fd);"
-end = "    // Lazily initialize channel when address space is available"
+end = "    // P2.7: every native GPFIFO entry must refer to a fully mapped GMMU"
 assert entry.count(start) == entry.count(end) == 1
 admission = entry[entry.index(start):entry.index(end)]
 assert "if (native && !native_plan) return NvResult::BadParameter;" in admission

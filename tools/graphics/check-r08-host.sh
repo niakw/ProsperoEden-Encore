@@ -32,5 +32,6 @@ build_run test_mihawk_vulkan_resources -fsanitize=address,undefined \
     -include third_party/PS5_MihawkGen/ps5/third_party/volk/volk.h \
     headless/mihawk_vulkan_stage.cpp headless/mihawk_vulkan_resources.cpp headless/mihawk_vulkan_encoder.cpp
 echo "PASS native Vulkan source syntax (volk/VK_NO_PROTOTYPES)"
+python3 tools/graphics/check-r08-not-enabled.py
 python3 tools/graphics/verify-mihawkgen-source.py
 echo 'R08 HOST PASS — native PS5 GPU and real game untested'

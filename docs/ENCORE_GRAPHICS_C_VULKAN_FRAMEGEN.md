@@ -205,3 +205,15 @@ compilent sur hôte avec un projet CMake dédié :
 host-only. Le script `tools/graphics/check-r08-host.sh` ajoute les validations
 de la licence/empreinte source, les 21 shaders SPIR-V et les sanitizers.
 Ni ces objets macOS ni CTest ne constituent une compilation sur PS5.
+
+
+### C4 — réglages par titre sans fausse activation
+
+La fenêtre **Bibliothèque > Paramètres du jeu** possède désormais la même
+ligne « Génération d'images : Désactivé » que Paramètres > Vidéo.
+Croix / gauche / droite affichent une explication de non-disponibilité,
+sans sauvegarder de configuration mensongère ni modifier les profils NS1/NS2.
+La ligne désactivée ne dessine pas de flèches de sélection. Elle partage
+une chaîne traduite avec les 29 catalogues et les textes embarqués FR.
+Le contrôle check-r08-not-enabled.py protège la présence de cette garde
+ainsi que l'absence de linkage production video_core/Mihawk.

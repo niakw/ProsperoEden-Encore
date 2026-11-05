@@ -28,6 +28,9 @@ namespace
 {
 
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
+// R08: same translated availability explanation as Settings > Video.
+// The per-title selector must not claim an inactive native GPU backend works.
+constexpr const char* kFramegenUnavailable = TR("MihawkGen PS5 is first. FSR 3 is planned; LSFG needs native and license checks. Frame generation is not installed.");
 
 // The game settings dialog's rows, and the window that shows five of them (also the Mods list's).
 enum GameRow : int
@@ -40,6 +43,7 @@ enum GameRow : int
     row_filter,
     row_fsr_sharpness,
     row_anti_aliasing,
+    row_frame_generation,
     row_refresh,
     row_controls,
     row_mods,
@@ -1649,6 +1653,14 @@ void Launcher::press_game(Key key)
     default:
         return;
     }
+    if (option_ == row_frame_generation)
+    {
+        // Presentation source and guest-HUD safety must be demonstrated on
+        // console before the title is allowed to enable synthetic frames.
+        say(tr(kFramegenUnavailable), true);
+        cue(Cue::error);
+        return;
+    }
     if (option_ == row_controls)
     {
         if (key == Key::cross) {
@@ -1891,6 +1903,7 @@ void Launcher::draw_game(Canvas &c, float open)
             fill(tr("Default ({0})"), {percentage(base_fsr)}),
         game_settings_.anti_aliasing >= 0 ? pick(anti_aliasing, game_settings_.anti_aliasing) :
             fill(tr("Default ({0})"), {pick(anti_aliasing, base_aa)}),
+        tr("Off"),
         game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
             fill(tr("Default ({0})"), {hertz(base_refresh)}),
         game_settings_.own_mapping ?
@@ -1915,7 +1928,8 @@ void Launcher::draw_game(Canvas &c, float open)
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
         TR("Resolution"), TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-        TR("Refresh rate"), TR("Button mapping"), TR("Mods"), TR("Save data")};
+        TR("Frame generation"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                     kDialogWindow.h + 12.0f});
@@ -1941,7 +1955,7 @@ void Launcher::draw_game(Canvas &c, float open)
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const float taken =
-            row >= row_mods ?
+            (row >= row_mods || row == row_frame_generation) ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
                             theme::kSmall, there ? theme::kLimePale : theme::kMeta, 320.0f,
                             Align::right) :

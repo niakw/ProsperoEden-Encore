@@ -37,3 +37,51 @@ Test hôte : `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk cl
 ## Point de sécurité découvert dans le port amont ProsperoEden
 
 Le wrapper d'exemple `mihawkgen.cpp` de ProsperoEden applique `VK_IMAGE_LAYOUT_UNDEFINED` aux images couleur source. Cela peut invalider leur contenu ; l'exemple n'établit pas, à lui seul, l'ownership de plusieurs frames en vol ni les fences nécessaires. **Ne pas copier le bloc tel quel en production.** Avant d'activer l'option, relever les layouts réels, attendre les fences des buffers relus et ajouter une passe de présentation des images générées sans écraser les images encore lues par Vulkan.
+
+## C2 — source native Vulkan et sécurité des images (vendor c62ecbb)
+
+L'analyse du renderer réellement copié par headless/vulkan.cmake et
+du PresentManager a établi le chemin suivant :
+
+1. BlitScreen::DrawToFrame compose la frame source; le renderpass termine
+   en layout GENERAL. PresentManager::CopyToSwapchainImpl suppose GENERAL,
+   utilise un transfert puis restaure GENERAL.
+2. Les Frame* acquis par GetRenderFrame retournent dans free_queue
+   après présentation : **il est dangereux de conserver Frame* comme
+   historique d'une interpolation**. Deux images privées stables sont nécessaires
+   pour les entrées précédentes/courantes.
+3. Le chemin de génération historique du renderer est derrière
+   HAS_LSFG. Sa présence n'atteste **pas** d'un backend MihawkGen PS5.
+4. Sans HAS_LSFG, CanStoreToFrame refuse le stockage direct dans les
+   images de présentation. Le modèle Mihawk exige un output **RGBA8 storage**;
+   sur swapchain BGRA8, une image RGBA8 distincte et un vkCmdBlitImage
+   avec formats/usage vérifiés sont requis.
+5. Le composite actuel passe draw_hud=true. Le **HUD n'est pas isolé**
+   du chemin de présentation ; un effet temporel actif pourrait produire
+   du ghosting sur le score/menu.
+
+### Code ajouté dans le lot de sécurité
+
+- mihawk_native_surface_contract.h refuse les chemins sans propriétaire
+  des images d'historique, slots/fences, format, conversion, HUD isolé et
+  synchronisation du presenter prouvés. Le mode non qualifié reste OFF.
+- mihawk_vulkan_history_barriers.h définit les transitions exactes
+  GENERAL → TRANSFER_SRC → GENERAL de la vraie frame, les transitions
+  des snapshots privés et celles de l'output RGBA8.
+- mihawk_vulkan_stage.cpp **enregistre réellement** les commandes Vulkan
+  vkCmdPipelineBarrier, vkCmdCopyImage, fg_record_generate et vkCmdBlitImage
+  vers une image synthétique **uniquement si un appelant fournit toutes
+  les ressources et préconditions**.
+- headless/vulkan.cmake ajoute cette unité à la cible de validation
+  EDEN_BUILD_MIHAWKGEN_CORE=ON, encore **OFF par défaut** et non liée au
+  binaire de production.
+- tools/graphics/check-r08-host.sh exécute quatre tests de règles,
+  barrières et séquence de commandes. Le dernier module utilise des
+  mocks de commandes Vulkan : preuve de l'ordre, des paramètres et du refus
+  avant enregistrement, **pas** d'exécution GPU PS5.
+
+**Travail restant :** allocateur avec budget VRAM, propriété des deux
+snapshots, fences jusqu'à la fin des lectures GPU, frames/timestamps réels,
+séparation HUD, réinitialisation après pause/jeu/changement de sortie,
+branchement sur le renderer actif, qualification modèle et RADV/PS5, benchmark
+sur console. Ne jamais coder les booléens de preuve à true artificiellement.

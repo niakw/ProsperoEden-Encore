@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(eden_r08_mihawk_host_checks LANGUAGES CXX)
+project(eden_r08_mihawk_host_checks LANGUAGES C CXX)
 # Host-only: compile exactly the source files used by the Encore PS5
 # qualification target. No renderer or SDK, and no PS5 packaging.
 set(CMAKE_CXX_STANDARD 20)
@@ -25,13 +25,17 @@ add_library(eden-r08-native-objects OBJECT
     "${FG_CORE}/fg_splat.cpp"
     "${EDEN_H}/mihawk_vulkan_stage.cpp"
     "${EDEN_H}/mihawk_vulkan_resources.cpp"
-    "${EDEN_H}/mihawk_vulkan_encoder.cpp")
+    "${EDEN_H}/mihawk_vulkan_encoder.cpp"
+    "${FG_ROOT}/ps5/third_party/volk/volk.c")
 target_include_directories(eden-r08-native-objects PRIVATE
     "${FG_INCLUDE}" "${FG_CORE}" "${FG_EXT}" "${FG_QUAL}" "${EDEN_H}")
-target_compile_definitions(eden-r08-native-objects PRIVATE VK_NO_PROTOTYPES=1)
+set_source_files_properties("${FG_ROOT}/ps5/third_party/volk/volk.c"
+    PROPERTIES LANGUAGE CXX)
+target_compile_definitions(eden-r08-native-objects PRIVATE
+    VK_NO_PROTOTYPES=1 VOLK_NAMESPACE=1)
 target_compile_options(eden-r08-native-objects PRIVATE
     -Wall -Wextra -Wno-missing-designated-field-initializers
-    "SHELL:-include ${VOLK_HEADER}")
+    "SHELL:-include ${EDEN_H}/mihawk_volk.h")
 set_target_properties(eden-r08-native-objects PROPERTIES EXCLUDE_FROM_ALL OFF)
 
 function(eden_r08_test NAME)
@@ -40,6 +44,8 @@ function(eden_r08_test NAME)
     target_compile_options("${NAME}" PRIVATE -Wall -Wextra)
     add_test(NAME "${NAME}" COMMAND "${NAME}")
 endfunction()
+eden_r08_test(test_framegen_capabilities)
+eden_r08_test(test_graphics_pipeline_policy)
 eden_r08_test(test_framegen_present_gate)
 eden_r08_test(test_mihawk_native_surface_contract)
 eden_r08_test(test_mihawk_submission_timeline)

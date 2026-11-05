@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// OPTIONAL EXPERIMENTAL design contract only. No PS5 backend wired yet.
+// PS5-native frame generation capabilities; user preference is not proof of displayed frames.
 // Prevent a PC-only NVIDIA/DLSS option from being advertised as native PS5.
 #pragma once
 #include <cstdint>
@@ -7,16 +7,16 @@
 namespace Eden::FeatureLab {
 enum class FrameGeneration : std::uint8_t {
     Off = 0,
-    Fsr3Vulkan = 1,
-    MihawkGen = 2,
+    MihawkGen = 1,
+    Fsr3Vulkan = 2,
     LosslessScaling = 3,
     DlssPcOnlyUnsupported = 4,
 };
 enum class Availability : std::uint8_t {
     Disabled,
     Unsupported,
-    ExperimentalLowCadence,
-    Experimental,
+    ReadyLowCadence,
+    Ready,
 };
 struct GraphicsCapabilities {
     bool native_vulkan = false;
@@ -57,7 +57,7 @@ constexpr Availability QualifyFrameGeneration(
     }
     // 30->60 presented is not 60 Hz game simulation, and AMD recommends
     // a source cadence at or above 60 fps for good interpolation quality.
-    return caps.game_fps < 60 ? Availability::ExperimentalLowCadence
-                              : Availability::Experimental;
+    return caps.game_fps < 60 ? Availability::ReadyLowCadence
+                              : Availability::Ready;
 }
 } // namespace Eden::FeatureLab

@@ -21,16 +21,16 @@ int main() {
            == Availability::Unsupported); // Depth absent.
     caps.guest_depth = true;
     assert(QualifyFrameGeneration(FrameGeneration::Fsr3Vulkan, caps)
-           == Availability::ExperimentalLowCadence);
+           == Availability::ReadyLowCadence);
     caps.game_fps = 60;
     assert(QualifyFrameGeneration(FrameGeneration::Fsr3Vulkan, caps)
-           == Availability::Experimental);
+           == Availability::Ready);
     assert(QualifyFrameGeneration(FrameGeneration::MihawkGen, caps)
            == Availability::Unsupported); // Backend & weights missing.
     caps.mihawk_compute = true;
     caps.model_weights_verified_and_licensed = true;
     assert(QualifyFrameGeneration(FrameGeneration::MihawkGen, caps)
-           == Availability::Experimental);
+           == Availability::Ready);
     caps.game_fps = 29;
     assert(QualifyFrameGeneration(FrameGeneration::MihawkGen, caps)
            == Availability::Unsupported);
@@ -39,7 +39,7 @@ int main() {
            == Availability::Unsupported);
     caps.lossless_scaling_provider_available = true;
     assert(QualifyFrameGeneration(FrameGeneration::LosslessScaling, caps)
-           == Availability::Experimental);
+           == Availability::Ready);
     assert(QualifyFrameGeneration(
                FrameGeneration::DlssPcOnlyUnsupported, caps)
            == Availability::Unsupported);

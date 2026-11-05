@@ -29,7 +29,7 @@ Test hôte : `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk cl
 ## Jalons à clôturer
 
 1. **C1, présent :** sources/version/licence sélectionnées et garde de cadence prouvé sur hôte ; aucun test PS5.
-2. **C2, ouvert :** les 4 unités C++ Mihawk passent la syntaxe hôte et les 21 shaders SPIR-V passent `spirv-val --target-env vulkan1.3`; le modèle `network.fgw` (1 757 240 octets) est épinglé à SHA-256 `31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b`. La cible CMake `EDEN_BUILD_MIHAWKGEN_CORE=ON` prépare une compilation des sources natives **isolée**, sans les ajouter au renderer. Compilation/toolchain GPU PS5 et chargement autorisé du modèle restent à prouver. Ne pas activer le mode dans l'UI tant qu'inexécutable.
+2. **C2, ouvert :** les 4 unités C++ Mihawk passent la syntaxe hôte et les 21 shaders SPIR-V passent `spirv-val --target-env vulkan1.3`; le modèle `network.fgw` (1 757 240 octets) est épinglé à SHA-256 `31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b`. La cible de production `eden-mihawkgen-native` compile les objets du moteur, avec des symboles Volk distincts, dans `video_core`. Le renderer doit encore les appeler avant de pouvoir générer des frames. Compilation/toolchain GPU PS5 et chargement autorisé du modèle restent à prouver. Ne pas activer le mode dans l'UI tant qu'inexécutable.
 3. **C3, ouvert :** enchaînement réel frames précédent/courant/synthétique avec mémoire, ownership, layouts, barrières, fences et timing PS5 ; repli sans régression NS1/NS2.
 4. **C4, partiel :** la catégorie **Paramètres > Vidéo** affiche « Génération d'images : Désactivé » avec explication MihawkGen / FSR3 / LSFG. Cette ligne refuse toute activation tant que le runtime PS5 n'est pas validé. Les 29 catalogues ont été mis à jour, y compris le fallback français embarqué ; contrôles de couverture : 477/477 clés. Les sélecteurs opérationnels, la sérialisation et les profils par jeu restent ouverts.
 5. **C5, ouvert :** A/B visuel et latence PS5 ; comparer FSR 3 sur même scène, accepter/refuser LSFG selon la faisabilité native et la licence.
@@ -233,3 +233,19 @@ jeu conservent les méthodes dans le profil, mais avertissent qu'elles
 ne sont pas encore effectivement disponibles dans le pipeline PS5.
 Les préférences FSR sharpness et anti-aliasing restent désormais intactes
 lors des modifications du menu.
+
+
+### C2.5 — compilation de production unique, sans profil de release
+
+Le moteur MihawkGen est désormais compilé dans un objet C++ de production
+avec des pointeurs Vulkan distincts, placés dans l'espace de noms Volk.
+Cela évite de confondre le vrai symbole vkGetInstanceProcAddr du RADV
+d'Encore et la variable du chargeur Volk. La dépendance est ajoutée au
+video_core natif sans option conditionnelle de build ou de release ;
+elle ne modifie pas main ni le gitlink vendor.
+
+La présence des objets compilés n'est toutefois **pas une preuve de
+raccordement au RendererVulkan::Composite**. Le chemin effectif de
+génération d'image reste à intégrer et à valider sur PS5. Les huit tests
+CMake sur hôte passent et la compilation native Mac utilise les
+symboles Volk isolés ; aucune compilation complète PS5 n'a été lancée.

@@ -100,40 +100,42 @@ target_link_libraries(video_core PRIVATE "${vk_isolated}/libps5vk.a" "${vk_isola
     "${sdk}/target/lib/libSceSysmodule.so")
 endif()
 
-# R08 / MihawkGen PS5-native readiness: this is an isolated compilation target
-# for the pinned, GPL-compatible framegen sources. It does NOT link a frame
-# generator into the renderer or enable a user-visible mode. The existing
-# Vulkan image/barrier/fence ownership contract must be implemented first.
-option(EDEN_BUILD_MIHAWKGEN_CORE
-    "Compile MihawkGen native core for qualification (no runtime integration)" OFF)
-if(EDEN_BUILD_MIHAWKGEN_CORE)
-    set(EDEN_MIHAWKGEN_ROOT "${PORT_ROOT}/third_party/PS5_MihawkGen")
-    set(EDEN_MIHAWKGEN_INC "${EDEN_MIHAWKGEN_ROOT}/framegen/include")
-    set(EDEN_MIHAWKGEN_SRC "${EDEN_MIHAWKGEN_ROOT}/framegen/src")
-    set(EDEN_MIHAWKGEN_VOLK "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk/volk.h")
-    foreach(path "${EDEN_MIHAWKGEN_INC}/framegen.h"
-                 "${EDEN_MIHAWKGEN_VOLK}"
-                 "${EDEN_MIHAWKGEN_SRC}/shaders/nn_conv.comp.h")
-        if(NOT EXISTS "${path}")
-            message(FATAL_ERROR "Missing pinned MihawkGen submodule component: ${path}")
-        endif()
-    endforeach()
-    add_library(eden-mihawkgen-core OBJECT
-        "${EDEN_MIHAWKGEN_SRC}/fg_common.cpp"
-        "${EDEN_MIHAWKGEN_SRC}/fg_vulkan.cpp"
-        "${EDEN_MIHAWKGEN_SRC}/fg_neural.cpp"
-        "${EDEN_MIHAWKGEN_SRC}/fg_splat.cpp"
-        "${EDEN_PORT_DIR}/mihawk_vulkan_stage.cpp"
-        "${EDEN_PORT_DIR}/mihawk_vulkan_resources.cpp"
-        "${EDEN_PORT_DIR}/mihawk_vulkan_encoder.cpp")
-    target_include_directories(eden-mihawkgen-core PRIVATE
-        "${PORT_ROOT}/extras/graphics")
-    target_compile_features(eden-mihawkgen-core PRIVATE cxx_std_20)
-    target_include_directories(eden-mihawkgen-core PRIVATE
-        "${EDEN_MIHAWKGEN_INC}" "${EDEN_MIHAWKGEN_SRC}"
-        "${EDEN_MIHAWKGEN_ROOT}/external")
-    target_compile_definitions(eden-mihawkgen-core PRIVATE VK_NO_PROTOTYPES=1)
-    target_compile_options(eden-mihawkgen-core PRIVATE
-        "SHELL:-include ${EDEN_MIHAWKGEN_VOLK}")
-    message(STATUS "MihawkGen native source-check target only; runtime disabled")
-endif()
+# Native MihawkGen always compiles into the production Vulkan renderer.
+# The selected method and measured device capabilities decide runtime use;
+# no dev/release/roadmap profile controls this integration.
+set(EDEN_MIHAWKGEN_ROOT "${PORT_ROOT}/third_party/PS5_MihawkGen")
+set(EDEN_MIHAWKGEN_INC "${EDEN_MIHAWKGEN_ROOT}/framegen/include")
+set(EDEN_MIHAWKGEN_SRC "${EDEN_MIHAWKGEN_ROOT}/framegen/src")
+set(EDEN_MIHAWKGEN_VOLK "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk/volk.c")
+set(EDEN_MIHAWKGEN_NAMESPACED_HEADER "${EDEN_PORT_DIR}/mihawk_volk.h")
+foreach(path "${EDEN_MIHAWKGEN_INC}/framegen.h"
+             "${EDEN_MIHAWKGEN_VOLK}"
+             "${EDEN_MIHAWKGEN_NAMESPACED_HEADER}"
+             "${EDEN_MIHAWKGEN_SRC}/shaders/nn_conv.comp.h")
+    if(NOT EXISTS "${path}")
+        message(FATAL_ERROR "Missing pinned native MihawkGen source: ${path}")
+    endif()
+endforeach()
+set(EDEN_MIHAWKGEN_SOURCES
+    "${EDEN_MIHAWKGEN_SRC}/fg_common.cpp"
+    "${EDEN_MIHAWKGEN_SRC}/fg_vulkan.cpp"
+    "${EDEN_MIHAWKGEN_SRC}/fg_neural.cpp"
+    "${EDEN_MIHAWKGEN_SRC}/fg_splat.cpp"
+    "${EDEN_MIHAWKGEN_VOLK}"
+    "${EDEN_PORT_DIR}/mihawk_vulkan_stage.cpp"
+    "${EDEN_PORT_DIR}/mihawk_vulkan_resources.cpp"
+    "${EDEN_PORT_DIR}/mihawk_vulkan_encoder.cpp")
+# Keep volk's function-pointer symbols inside namespace volk. In particular
+# vkGetInstanceProcAddr must not collide with the RADV function exported by
+# Encore's existing Vulkan driver.
+set_source_files_properties("${EDEN_MIHAWKGEN_VOLK}" PROPERTIES LANGUAGE CXX)
+add_library(eden-mihawkgen-native OBJECT ${EDEN_MIHAWKGEN_SOURCES})
+target_compile_features(eden-mihawkgen-native PRIVATE cxx_std_20)
+target_compile_definitions(eden-mihawkgen-native PRIVATE VK_NO_PROTOTYPES=1 VOLK_NAMESPACE=1)
+target_compile_options(eden-mihawkgen-native PRIVATE
+    "SHELL:-include ${EDEN_MIHAWKGEN_NAMESPACED_HEADER}")
+target_include_directories(eden-mihawkgen-native PRIVATE
+    "${EDEN_MIHAWKGEN_INC}" "${EDEN_MIHAWKGEN_SRC}"
+    "${EDEN_MIHAWKGEN_ROOT}/external" "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk"
+    "${PORT_ROOT}/extras/graphics" "${EDEN_PORT_DIR}")
+target_sources(video_core PRIVATE $<TARGET_OBJECTS:eden-mihawkgen-native>)

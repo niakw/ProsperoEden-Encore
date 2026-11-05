@@ -214,7 +214,7 @@ def main() -> None:
             require(budget in unit,
                     f"Native A{bits} {profile} wrapper must consume runtime JIT memory budget")
             require('ConstructWithCapacityFallback(' in unit and
-                    f"kA{bits}Baseline[m_core_index]" in unit,
+                    f"A{bits}BaselineBytes(m_core_index)" in unit,
                     f"Native A{bits} {profile} startup retry must retain its per-core baseline")
             require(unit.count('if (!CheckMemoryAccess(vaddr') == (4 if bits == 32 else 5),
                     f"Native A{bits} {profile} memory reads must honor abort guards")

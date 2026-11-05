@@ -10,106 +10,36 @@ import platform
 import shutil
 import subprocess
 import tempfile
+import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 section=CMAKE.split("# P0.2: the native SPIR-V compiler and QMD3 bounds emitter",1)[1].split("# N50: shared native PS5 device-memory",1)[0]
-assert "set(EDEN_SHARED_NS2_SPIRV_COMPILER OFF)" in section
-assert "if(EDEN_SHARED_NS2_AMPERE_CORE)" in section
-assert "if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR EDEN_SHARED_NS2_SPIRV_COMPILER)" in section
-assert "target_sources(video_core PRIVATE" in section
-assert "target_sources(shader_recompiler PRIVATE" not in section
-assert "list(REMOVE_ITEM eden_ns2_shader_sources" in section
-assert "backend/spirv/spirv_emit_context.cpp" in section
-assert "backend/spirv/emit_spirv_context_get_set.cpp" in section
-assert "target_include_directories(video_core BEFORE PRIVATE" in section
-assert section.count("if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)") == 2
-assert 'target_compile_definitions(core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)' in section
-# The real Vulkan rasterizer's native-Compute virtual and its ABI-breaking
-# macro remain inside the research-only nested conditional.
-assert section.index("    if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)\n    # Native Vulkan") < section.index(
-    "target_compile_definitions(core PUBLIC EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1)")
+assert 'set(EDEN_SHARED_NS2_SPIRV_COMPILER OFF)' in section
+assert 'if(EDEN_SHARED_NS2_AMPERE_CORE)' in section
+assert 'if(EDEN_SHARED_NS2_SPIRV_COMPILER)' in section
+assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in section
+assert 'target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")' in section
+assert 'target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")' in section
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources' in section
+assert 'backend/spirv/spirv_emit_context.cpp' in section
+assert 'backend/spirv/emit_spirv_context_get_set.cpp' in section
+assert 'set_property(TARGET shader_recompiler PROPERTY SOURCES' in section
+assert 'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in section
+assert 'EDEN_NS2_NATIVE_VULKAN' not in section
 
-selector=section[section.index("set(EDEN_SHARED_NS2_SPIRV_COMPILER OFF)"):section.index(
-    "if(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL OR EDEN_SHARED_NS2_SPIRV_COMPILER)")]
-with tempfile.TemporaryDirectory(prefix="encore-shared-spirv-") as tmp:
-    script=Path(tmp)/"selector.cmake"
-    for active,expected in ((True,"ON"),(False,"OFF")):
-        script.write_text(
-            "set(EDEN_SHARED_NS2_AMPERE_CORE "+("ON" if active else "OFF")+")\n"
-            +selector+'\nmessage(STATUS "NS2_SPIRV=@{EDEN_SHARED_NS2_SPIRV_COMPILER}")\n'.replace("@{",chr(36)+"{"))
-        result=subprocess.run(["cmake","-P",str(script)],capture_output=True,
-                              text=True,timeout=15)
-        assert result.returncode==0 and "NS2_SPIRV="+expected in result.stdout, (
-            result.stdout,result.stderr)
-print("P0_2_SHARED_SPIRV_SELECTOR_PASS qualified=ON desktop=OFF research_macro=OFF",flush=True)
-
-# Verify the real source-owner CMake block in a tiny configure-only
-# project, not merely by grepping conditional text. This checks the two
-# actual target source lists while leaving the native PS5 build disabled.
-block=CMAKE[CMAKE.index("option(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL"):
-            CMAKE.index("# N50: shared native PS5 device-memory")]
-with tempfile.TemporaryDirectory(prefix="encore-spv-graph-") as temp:
-    for active in (False,True):
-        stage=Path(temp)/("native_release" if active else "desktop")
-        (stage/"backend/spirv").mkdir(parents=True)
-        for name in ("spirv_emit_context.cpp","emit_spirv_context_get_set.cpp"):
-            (stage/"backend/spirv"/name).write_text("int stub_"+name.split(".")[0]+"=0;")
-        (stage/"stub.cpp").write_text("int stub=0;")
-        cxx_root=stage/"CMakeLists.txt"
-        bootstrap=(
-            "cmake_minimum_required(VERSION 3.23)\n"
-            "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)\n"
-            "project(EncoreSpirvPreview LANGUAGES CXX)\n"
-            "add_library(core STATIC stub.cpp)\n"
-            "add_library(video_core STATIC stub.cpp)\n"
-            "add_library(shader_recompiler STATIC stub.cpp)\n"
-            "target_sources(shader_recompiler PRIVATE "
-            "backend/spirv/spirv_emit_context.cpp "
-            "backend/spirv/emit_spirv_context_get_set.cpp)\n"
-        )
-        config=(
-            "set(PS5_NATIVE "+("ON" if active else "OFF")+")\n"
-            "set(EDEN_REVIEWED_DUAL_NPDM "+("ON" if active else "OFF")+")\n"
-            "set(EDEN_PS5_VULKAN "+("ON" if active else "OFF")+")\n"
-            "set(EDEN_FINAL_RELEASE_PROFILE "+("ON" if active else "OFF")+")\n"
-            "set(EDEN_SHARED_NS2_AMPERE_CORE "+("ON" if active else "OFF")+")\n"
-            'set(PORT_ROOT "'+str(ROOT)+'")\n'
-            'set(PORT_BUILD_DIR "'+str(stage/"derived")+'")\n'
-            'set(EDEN_NS2_AMPERE_ROOT "'+
-                str(ROOT/"vendor/encore-active/ns2-runtime/ampere")+'")\n'
-        )
-        dollar=chr(36)
-        checks=(
-            f'get_target_property(spv_sources shader_recompiler SOURCES)\n'
-            f'get_target_property(video_sources video_core SOURCES)\n'
-            f'get_target_property(video_flags video_core COMPILE_DEFINITIONS)\n'
-            f'get_target_property(core_flags core COMPILE_DEFINITIONS)\n'
-            f'message(STATUS "NATIVE_SPIRV_SOURCE={dollar}{{EDEN_SHARED_NS2_SPIRV_COMPILER}}")\n'
-            f'message(STATUS "SHADER_SOURCES={dollar}{{spv_sources}}")\n'
-            f'message(STATUS "VIDEO_SOURCES={dollar}{{video_sources}}")\n'
-            f'message(STATUS "NATIVE_FLAGS={dollar}{{video_flags}};{dollar}{{core_flags}}")\n'
-        )
-        cxx_root.write_text(bootstrap+config+block+checks)
-        env=os.environ.copy()
-        args=["cmake","-S",str(stage),"-B",str(stage/"build"),
-              "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY"]
-        if platform.system()=="Darwin":
-            env["SDKROOT"]="/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk"
-            args.append("-DCMAKE_OSX_SYSROOT="+env["SDKROOT"])
-        result=subprocess.run(args,capture_output=True,text=True,
-                              env=env,timeout=70)
-        assert result.returncode==0,(active,result.stdout[-1800:],result.stderr[-3000:])
-        output=result.stdout
-        expected="ON" if active else "OFF"
-        assert "NATIVE_SPIRV_SOURCE="+expected in output
-        compiler_owner="vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
-        renderer_owner="vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
-        assert (compiler_owner in output)==active
-        assert (renderer_owner in output)==active
-        assert "NATIVE_FLAGS=video_flags-NOTFOUND;core_flags-NOTFOUND" in output
-        print("P0_2_SHARED_SPIRV_REAL_CMAKE_GRAPH_PASS",
-              "native_release" if active else "desktop",flush=True)
+# Exact real CMake configure-only target source graph, shared with P0.2.
+owner=root_probe=ROOT/'tools/ns2/check_unified_native_gpu_graph_host.py'
+assert owner.is_file()
+env=os.environ.copy()
+if platform.system()=='Darwin':
+    sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
+    if sdk.is_dir():env['SDKROOT']=str(sdk)
+real=subprocess.run([sys.executable,'-B',str(owner)],cwd=ROOT,env=env,
+                    capture_output=True,text=True,timeout=85)
+assert real.returncode==0 and 'UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS' in real.stdout,(
+    real.stdout[-1600:],real.stderr[-2200:])
+print('P0_2_UNIFIED_SPIRV_CMAKE_GRAPH_PASS ps5_npdm_owners=1 maxwell=preserved',flush=True)
 
 pinned=(ROOT/"vendor/sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
 native=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()

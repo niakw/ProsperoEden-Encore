@@ -512,8 +512,8 @@ endif()
 target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
 list(REMOVE_ITEM core_sources "hle/kernel/k_spin_lock.cpp")
 list(APPEND core_sources "${eden_kernel_spin}")
-# A single source owns the queue correctness fixes for release and DEV.
-# Profiling is compiled only with EDEN_DEV_PROFILE; never duplicate the TU.
+# One source owns queue correctness and tracing in the native application.
+# Its profiling counters do not change the selected source graph.
 set(EDEN_MAINTAINED_PROFILE_DEQUEUE
     "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")
@@ -2189,7 +2189,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_GPU_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_GPU_ROOT}" "${EDEN_NS2_NVDRV_ROOT}" "${EDEN_NS2_NVDRV_AS_ROOT}")
-    # Research-only native DMA dispatch: upstream Ampere class 0xc7b5 uses
+    # Native DMA dispatch: upstream Ampere class 0xc7b5 uses
     # the same DMA engine methods, authenticated by live process generation.
     # Do not replace the shipping NS1 puller or alias Ampere 3D/compute.
     set(EDEN_NS2_NATIVE_GPU_PULLER
@@ -2298,7 +2298,7 @@ endif()
 # qualified native release source graph. Shader execution is still routed
 # exclusively by the separate GPU session/renderer owner: compiling these
 # units does not make a Switch 1 shader enter the Ampere translator.
-# Keep the opt-in research variant for separate runtime and GMMU experiments.
+# Guest process and channel identity selects Maxwell or Ampere at runtime.
 set(EDEN_SHARED_NS2_AMPERE_CORE OFF)
 if(PS5_NATIVE AND
    EDEN_REVIEWED_DUAL_NPDM AND EDEN_PS5_VULKAN)
@@ -2306,16 +2306,16 @@ if(PS5_NATIVE AND
 endif()
 if(EDEN_SHARED_NS2_AMPERE_CORE)
     if(NOT EDEN_REVIEWED_DUAL_NPDM)
-        message(FATAL_ERROR "NS2 Ampere ISA probe requires reviewed native NPDM")
+        message(FATAL_ERROR "NS2 Ampere ISA requires reviewed native NPDM")
     endif()
-    # The research overlay replaces BufferCache C++ signatures, changes
+    # The alternative 32-slot resource header changes BufferCache signatures,
     # NUM_STORAGE_BUFFERS (16 -> 32), and is NOT ABI-safe as a header-only
-    # release override. Never select it in the shared shipping profile.
+    # native override. Do not include it in the shared 16-slot NS1 BufferCache ABI.
     set(EDEN_NS2_SHADER_RESOURCE_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/shader_resource/include")
     if(NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/shader_recompiler/frontend/ir/attribute.h" OR
        NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/video_core/buffer_cache/buffer_cache_base.h")
-        message(FATAL_ERROR "Missing NS2 opt-in shader/texture resource headers")
+        message(FATAL_ERROR "Missing native NS2 shader/texture resource headers")
     endif()
     # The generic31 Y/Z/W classifier is a pure, shared IR fix. Copy
     # only this reviewed header into the common build include tree;
@@ -2374,7 +2374,7 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
     set(EDEN_NS2_MAXWELL_IR_BRIDGE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/ir_bridge.cpp")
     if(NOT EXISTS "${EDEN_NS2_MAXWELL_IR_BRIDGE}")
-        message(FATAL_ERROR "Missing NS2 Maxwell CFG/IR research handoff")
+        message(FATAL_ERROR "Missing native Ampere Maxwell CFG/IR handoff")
     endif()
     target_sources(shader_recompiler PRIVATE
         "${EDEN_NS2_MAXWELL_IR_BRIDGE}"
@@ -2395,7 +2395,7 @@ endif()
 # P0.2: the native SPIR-V compiler and QMD3 bounds emitter are complete
 # maintained C++ source owners. Compile them in the PS5 release library,
 # while keeping the actual Vulkan dispatch, GPU session and 4K NVDRV
-# research-only until the GPU-owner/process chain is qualified. The SPIR-V
+# through the same GPU-owner/process chain. The SPIR-V
 # overrides use a thread-local Ampere scope: Maxwell takes its original
 # indirect-bank switch, byte-for-byte (see the host source parity test).
 set(EDEN_SHARED_NS2_SPIRV_COMPILER OFF)
@@ -2406,7 +2406,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
     if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
-        message(FATAL_ERROR "Missing opt-in NS2 renderer-side SPIR-V compiler")
+        message(FATAL_ERROR "Missing NS2 renderer-side SPIR-V compiler")
     endif()
     set(EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp")
@@ -2416,7 +2416,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     endif()
     # P2.3: SPIR-V indirect CBUF dispatch uses exactly the reflected native
     # QMD3 banks, never the generic 14-bank Maxwell switch. Select the
-    # complete tracked source only when the NS2 shader bridge is enabled.
+    # complete tracked source with the shared native Ampere compiler.
     set(EDEN_NS2_QMD_CBUF_SPIRV
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/spirv_emit_context.cpp")
     set(EDEN_NS2_QMD_CBUF_DIRECT_SPIRV
@@ -2435,7 +2435,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/spirv_emit_context.cpp")
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")
     # Native direct-bank LDC also requires a pre-access bounds check. Replace
-    # this FULL companion translation unit only for the NS2 opt-in bridge.
+    # this FULL companion translation unit for both authenticated guest modes.
     list(FIND eden_ns2_shader_sources
         "backend/spirv/emit_spirv_context_get_set.cpp" eden_ns2_cbuf_direct_source_idx)
     if(eden_ns2_cbuf_direct_source_idx LESS 0)
@@ -2447,14 +2447,14 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
     target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
-    # Only the qualified NS2 research runtime may alter Vulkan rasterizer
-    # virtual methods. Release just compiles callable native shader helpers,
-    # never exposes the unqualified GPU session, puller or native driver.
+    # The single native PS5 runtime exposes the same Vulkan rasterizer
+    # virtual methods. The real channel owner selects native QMD3 dispatch,
+    # while legacy NS1 commands keep the maintained Maxwell dispatch.
     # Native Vulkan's RasterizerVulkan::DispatchNativeCompute overrides a
     # RasterizerInterface virtual method. The pinned build-source archive
     # otherwise provides the pre-NS2 interface, causing an 'override' error
     # when unrelated Vulkan consumers compile. Select the REVIEWED vendor
-    # interface only in this opt-in NS2 research profile.
+    # interface for every native PS5 compilation target.
     set(EDEN_NS2_RASTERIZER_INTERFACE
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h")
     if(NOT EXISTS "${EDEN_NS2_RASTERIZER_INTERFACE}")

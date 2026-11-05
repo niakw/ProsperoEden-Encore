@@ -22,10 +22,13 @@ assert flags[0] and all((r/i).exists() for i in [
     'vendor/encore-active/ns2-runtime/gpu_session',
     'vendor/encore-active/ns2-runtime/graphics_supervisor']), 'Expected pinned NS2 source owners missing'
 cmake=(r/'headless/CMakeLists.txt').read_text()
-assert 'EDEN_NS2_GPU_SESSION_EXPERIMENTAL' in cmake and 'EDEN_NS2_NVDRV_EXPERIMENTAL' in cmake
-assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' in cmake
-assert 'if(EDEN_FINAL_RELEASE_PROFILE)' in cmake
-assert 'if(${eden_release_flag})' in cmake
+assert 'EDEN_NS2_GPU_SESSION_SOURCE' in cmake and 'EDEN_NS2_NVDRV_GPU_SOURCE' in cmake
+assert 'EDEN_NS2_RASTERIZER_INTERFACE' in cmake
+for forbidden in ('EDEN_NS2_GPU_SESSION_EXPERIMENTAL','EDEN_NS2_NVDRV_EXPERIMENTAL',
+                  'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL',
+                  'EDEN_FINAL_RELEASE_PROFILE'):
+    assert forbidden not in cmake
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in cmake
 sources=['vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp','vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp','vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp','vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp','vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp','vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp']
 def run(p):
     owner=r/p

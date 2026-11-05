@@ -14,7 +14,7 @@
       "name": "loader-content",
       "scope": "shared-with-generation-adapters",
       "owner": "headless/ns2_title_catalog.h",
-      "ns2_adapter": "vendor/encore-active/ns2-experimental/src/core/loader/deconstructed_rom_directory.cpp",
+      "ns2_adapter": "vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp",
       "witness": "tools/check-ns2-extracted-inputs-host.py",
       "remaining": "NPDM/NSO overlays, update/DLC and executable guest progress"
     },

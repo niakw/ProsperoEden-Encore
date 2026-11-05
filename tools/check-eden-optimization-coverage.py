@@ -111,7 +111,7 @@ assert not post_f07_native_vulkan_owners & (
 )
 native_rasterizer_header = (ROOT / next(iter(post_f07_native_vulkan_owners))).read_text()
 assert native_rasterizer_header.count("DispatchNativeCompute(") == 1
-assert "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)" in native_rasterizer_header
+assert "#ifdef PS5_NATIVE" in native_rasterizer_header
 assert "[[nodiscard]] bool DispatchNativeCompute(const Tegra::NativeComputeLaunch& launch) override;" in native_rasterizer_header
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in (
     ROOT / "headless/vulkan.cmake"
@@ -174,7 +174,7 @@ cache_header = (ROOT / next(iter(post_f07_ns2_typed_cache_owners))).read_text()
 assert "AcquireNativeImageView(" in cache_header
 assert "NativeChannelMatches(" in cache_header
 assert "AcquireNativeSampler(" in cache_header
-assert "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)" in cache_header
+assert "#ifdef PS5_NATIVE" in cache_header
 print("NS2_POST_F07_TYPED_CACHE_ABI_ISOLATION_PASS",
       f"new_native_headers={len(post_f07_ns2_typed_cache_owners)}")
 # P1.2 shared GPU scalar fix is newer than the immutable F07 518 owners.
@@ -300,7 +300,10 @@ for dma in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     owner=(ROOT/'vendor/encore-active/eden-core/src/video_core'/dma).read_text()
     assert '#include "core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h"' in owner
     assert 'NativeGpfifoFetchMapped(' in owner
-assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' in release_cmake
+assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' not in release_cmake
+assert 'vulkan_abi/video_core/rasterizer_interface.h' in release_cmake
+for dma in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
+    assert '#ifdef PS5_NATIVE' in (ROOT/'vendor/encore-active/eden-core/src/video_core'/dma).read_text()
 assert 'python3 -B tools/ns2/check_native_gpu_fetch_admission_host.py' in (
     ROOT/'.github/workflows/encore-core-preflight.yml').read_text()
 print('NS2_POST_F07_NATIVE_GPFIFO_FETCH_ISOLATION_PASS',
@@ -408,14 +411,35 @@ assert 'python3 -B tools/ns2/check_shared_kernel_wait64_host.py' in (
 print('NS1_NS2_SHARED_WAIT64_F07_ISOLATION_PASS',
       f'post_snapshot_source_owners={len(post_f07_shared_wait64_owners)}')
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners
+post_f07_unified_rasterizer_owners = {
+    'vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h',
+}
+assert post_f07_unified_rasterizer_owners <= all_owners
+unified_rasterizer = (ROOT/next(iter(post_f07_unified_rasterizer_owners))).read_text()
+assert 'virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in unified_rasterizer
+assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in unified_rasterizer
+assert 'vulkan_abi/video_core/rasterizer_interface.h' in release_cmake
+print('NS1_NS2_UNIFIED_VULKAN_ABI_F07_ISOLATION_PASS new_native_headers=1')
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"
 print("NS2_F07_TRIAGE_ISOLATION_PASS", f"unreviewed_research_sources={len(research_owners)}",
       "separate_shared_warning_headers=2")
 entries=STATE["handled_paths"]
-handled={e["path"] for e in entries}
+# Translate the explicitly reviewed U23 rename. Its historical F07 blob
+# is NOT asserted unchanged: the new bounded CPU6 retry policy is separately
+# qualified against its real production header under UBSan O0/O2.
+U23_LEGACY='headless/experimental_performance.h'
+U23_CURRENT='headless/jit_memory_policy.h'
+assert sum(e['path']==U23_LEGACY and e['contract_id']=='U23' for e in entries)==1
+assert (ROOT/U23_CURRENT).is_file()
+assert (ROOT/'tools/ns2/check_unified_jit_cpu6_baseline_host.py').is_file()
+policy=(ROOT/U23_CURRENT).read_text()
+assert 'A64BaselineBytes(std::size_t core)' in policy
+assert 'A32BaselineBytes(std::size_t core)' in policy
+handled={U23_CURRENT if e['path']==U23_LEGACY else e['path'] for e in entries}
 assert len(entries)==len(handled),"duplicate optimization owner"
 assert extracted_aoc_owners<=handled, ("AOC source review missing", sorted(extracted_aoc_owners-handled))
 assert handled<=owners,sorted(handled-owners)
@@ -587,6 +611,16 @@ assert len(pending_code)==len(launcher_pending)+len(pending_code-launcher_pendin
 # identical Git blob. A changed header must trigger a fresh optimization triage.
 for e in entries:
     if not e.get("reviewed_source_git_blob"):
+        continue
+    if e['path']==U23_LEGACY:
+        # Preserve the exact old audit receipt and explicitly mark that the
+        # current JIT policy has moved/changed; do not forge old blob parity.
+        changed=subprocess.check_output(['git','hash-object',U23_CURRENT],
+                                        cwd=ROOT,text=True).strip()
+        assert changed != e['reviewed_source_git_blob']
+        print('U23_JIT_POST_F07_POLICY_UPDATE_SEPARATE_PROOF',
+              'legacy_blob='+e['reviewed_source_git_blob'],
+              'current_blob='+changed)
         continue
     actual=subprocess.check_output(["git","hash-object",e["path"]],cwd=ROOT,text=True).strip()
     assert actual==e["reviewed_source_git_blob"],("source changed: repeat optimization review",e["path"])

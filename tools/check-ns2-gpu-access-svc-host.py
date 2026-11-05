@@ -13,7 +13,8 @@ helper = (base / "core/hle/kernel/ns2_gpu_memory_attribute.h").read_text()
 pid = (vendor / "ns2-helpers/include/core/loader/ns2_svc_trace.h").read_text()
 recipe = (root / "headless/CMakeLists.txt").read_text()
 assert recipe.count("set(EDEN_SHARED_NS2_GPU_ACCESS_SVC ON)") == 1
-assert 'PS5_NATIVE AND EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in recipe
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in recipe
+assert 'EDEN_FINAL_RELEASE_PROFILE' not in recipe
 assert 'list(REMOVE_ITEM eden_ns2_gpu_access_sources "hle/kernel/svc.cpp")' in recipe
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in recipe
 assert 'Eden::NS2::SvcTrace::IsActive(process.GetProcessId())' in src
@@ -37,6 +38,9 @@ expected_svc = installed_svc.replace(
     baseline_attribute,
     baseline_attribute + '\n'
     + '    GpuAccessible = (1 << 5), // NS2 SVC 0x80; preserve maintained NS1 source ABI')
+expected_svc = expected_svc.replace(
+    '    WaitIfEqual = 2,',
+    '    WaitIfEqual = 2,\n    WaitIfEqual64 = 3, // 8-byte aligned compare, no truncated upper word')
 assert svc_enum == expected_svc
 assert 'Unknown37 = 37' in svc_enum and 'Unknown38 = 38' in svc_enum
 # Native 4K worker research must run against the SAME persisted SVC 0x80
@@ -44,11 +48,12 @@ assert 'Unknown37 = 37' in svc_enum and 'Unknown38 = 38' in svc_enum
 worker = (vendor / "ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
 assert 'True(info.m_attribute & Kernel::KMemoryAttribute::GpuAccessible)' in worker
 assert 'LockForMapDeviceAddressSpace(' in worker
-assert 'EDEN_NS2_GPU_ACCESS_RESEARCH_SOURCE' in recipe
-assert 'list(REMOVE_ITEM eden_ns2_research_kernel_sources "${EDEN_NS2_NATIVE_SVC_SOURCE}")' in recipe
-assert 'list(APPEND eden_ns2_research_kernel_sources "${EDEN_NS2_GPU_ACCESS_RESEARCH_SOURCE}")' in recipe
-assert 'NOT PS5_NATIVE OR NOT EDEN_NS2_EXEFS_EXPERIMENTAL' in recipe
-assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_RESEARCH_ROOT}")' in recipe
+# Source selected through the shared native owner, never an optional
+# research SVC shim; preserve the real SVC, PID and attribute checks below.
+assert 'set(EDEN_NS2_GPU_ACCESS_SOURCE' in recipe
+assert 'list(REMOVE_ITEM eden_ns2_gpu_access_sources "hle/kernel/svc.cpp")' in recipe
+assert 'list(APPEND eden_ns2_gpu_access_sources "${EDEN_NS2_GPU_ACCESS_SOURCE}")' in recipe
+assert 'EDEN_NS2_EXEFS_EXPERIMENTAL' not in recipe
 assert '#ifdef EDEN_NS2_SVC_TRACE' in src
 assert 'SvcTrace::Next(process.GetProcessId())' in src
 assert 'GpuAccessible = static_cast<u8>(Svc::MemoryAttribute::GpuAccessible)' in block_enum

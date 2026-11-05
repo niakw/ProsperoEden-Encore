@@ -13,6 +13,38 @@ Une seule application PS5 et un seul socle de moteur Vulkan, CPU/JIT, HLE, cache
 
 **Verrou P5 imposé par le propriétaire : aucun build PS5 et aucun test console avant l'entrée formelle en P5, après traitement des jalons P0 à P4.** Jusqu'à cette frontière, seuls les changements source, contrôles Clang/GCC, tests host, analyses de parité et previews hors console sont permis. Les workflows natifs restent désactivés; leur réactivation et la qualification de vrais jeux requièrent une autorisation explicite en P5. Aucun jalon P0-P4 ne doit être maintenu artificiellement ouvert parce qu'il manque un essai console réservé à P5.
 
+## Audit d’intégration du 5 novembre 2026 — P0 → P1 → P2 → P4
+
+**Production / branches :** `main e44c965` garde NUP activé en permanence.
+Le lot de sources unifiées est sur la branche
+`integration/unified-native-runtime-20261105` avec son vendor épinglé :
+CMake PS5 sans choix release/DEV/expérimental, NPDM/ExeFS, six cœurs, NVDRV
+4 KiB, GPU session, VI2, Ampere et Vulkan Compute dans **un même graphe**.
+Ce travail n’est **pas fusionné sur `main`** tant que le couple exact n’a
+pas passé la qualification de source et l’absence de régression.
+
+- **P0.2 — raccordement source réalisé sur branche, pas encore clôture du
+  jalon dans l’issue #15 :** inventaires 337 sources vendored historiques,
+  193 sources `headless` et 518 éléments de revue F07 réconciliés. Quatre
+  unités NPDM/ExeFS ont été déplacées sans modification de contenu ; la
+  politique JIT renommée dispose de nouveaux tests CPU6 bornés. Le vrai
+  graphe natif NVDRV/GPU session/SPIR-V est vérifié par configure-only.
+- **P1 — préqualification source/hôte partielle :** 32/32 témoins exécutés
+  sur la copie de travail pour firmwares, NUP, CPU6, SVC, mémoire, NVDRV,
+  audio/Sysmix, VFS. P1.3 demeure ouvert lorsque des IPC ou commandes
+  matérielles restent sans implémentation fidèle ; pas de progression de PC
+  invité prouvée sur console.
+- **P2 — état réel :** P2.3 CBUF/SSBO à formes dynamiques et P2.4 ISA/3D
+  Ampere, task/mesh et instructions non couvertes restent ouverts. Une
+  compilation de shaders et un test Vulkan hôte ne prouvent ni image ni
+  synchronisation GPU réelle. Aucune fonctionnalité inconnue n’est remplacée
+  par un succès fictif.
+- **P4 — requalification en cours :** l’ancien lot de tests cherchait les
+  flags supprimés. Les tests conservent leurs témoins C++/UBSan, mais
+  vérifient désormais le véritable CMake commun. **La fermeture exige un
+  reçu `qualify_host_batch.py` sur le SHA commité du main et du vendor**, et
+  pas seulement des succès locaux avec sources non commitées.
+
 ## État technique vérifié au départ
 
 | Domaine | État au 02/11/2026 | Limite de la preuve |

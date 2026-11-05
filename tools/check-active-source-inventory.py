@@ -82,7 +82,7 @@ assert shared_ns2_kernel_owners <= set(physical_all), (
 assert not shared_ns2_kernel_owners.intersection(research_paths)
 kernel_select = (root / "headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_SHARED_NS2_KERNEL_HEAP ON)' in kernel_select
-assert 'EDEN_FINAL_RELEASE_PROFILE AND EDEN_REVIEWED_DUAL_NPDM' in kernel_select
+assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in kernel_select
 for relative in shared_ns2_kernel_owners:
     if relative.startswith("ns2-runtime/kernel/core/"):
         assert relative.removeprefix("ns2-runtime/kernel/core/") in kernel_select
@@ -132,7 +132,7 @@ assert not post_f07_native_vulkan_owners.intersection(
 )
 native_rasterizer_header = (active / next(iter(post_f07_native_vulkan_owners))).read_text()
 assert native_rasterizer_header.count("DispatchNativeCompute(") == 1
-assert "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)" in native_rasterizer_header
+assert "#ifdef PS5_NATIVE" in native_rasterizer_header
 assert "[[nodiscard]] bool DispatchNativeCompute(const Tegra::NativeComputeLaunch& launch) override;" in native_rasterizer_header
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in (
     root / "headless/vulkan.cmake"
@@ -171,7 +171,7 @@ assert not native_typed_texture_owners.intersection(
     shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners | shared_compute_owners
 )
 typed_cache_header = (active / next(iter(native_typed_texture_owners))).read_text()
-assert "#if defined(PS5_NATIVE) && defined(EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL)" in typed_cache_header
+assert "#ifdef PS5_NATIVE" in typed_cache_header
 assert "AcquireNativeImageView(" in typed_cache_header
 assert "NativeChannelMatches(" in typed_cache_header
 assert "AcquireNativeSampler(" in typed_cache_header
@@ -292,13 +292,30 @@ assert 'set_property(TARGET core PROPERTY SOURCES "${eden_wait64_sources}")' in 
 assert (root/'tools/ns2/check_shared_kernel_wait64_host.py').is_file()
 print("ENCORE_SHARED_NS2_WAIT64_SOURCE_PASS", f"post_f07_owners={len(shared_ns2_wait64_owners)}")
 
+# The unified PS5 RasterizerInterface was introduced after the historical
+# F07 snapshot, replacing a per-mode vtable guard. Preserve historical
+# provenance without hiding or counting this new production owner as F07.
+post_f07_unified_rasterizer_owners = {
+    "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h",
+}
+assert post_f07_unified_rasterizer_owners <= set(physical_all)
+assert not post_f07_unified_rasterizer_owners.intersection(
+    set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+    shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners)
+unified_rasterizer = (active / next(iter(post_f07_unified_rasterizer_owners))).read_text()
+assert 'virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in unified_rasterizer
+assert '#ifdef PS5_NATIVE' in unified_rasterizer
+assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in unified_rasterizer
+assert 'vulkan_abi/video_core/rasterizer_interface.h' in kernel_select
+print('ENCORE_POST_F07_UNIFIED_RASTERIZER_ABI_OWNER_PASS owners=1')
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
-            shared_ns2_wait64_owners]
+            shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -528,7 +545,16 @@ for entry in audit.splitlines():
         continue
     cells = [cell.strip() for cell in entry.strip().strip("|").split("|")]
     if len(cells) == 9 and re.fullmatch("[A-Z][0-9]{2,3}", cells[0]) and cells[3].startswith("headless/"):
-        headless_graph.setdefault(cells[3], []).append(cells[0])
+        # U23 was renamed without removing its owner; its CPU6 JIT fallback
+        # changed after the frozen F07 snapshot and is retested separately.
+        current_path = (
+            'headless/jit_memory_policy.h'
+            if cells[3] == 'headless/experimental_performance.h' else cells[3]
+        )
+        if current_path == 'headless/jit_memory_policy.h':
+            assert cells[0] == 'U23'
+            assert (root/'tools/ns2/check_unified_jit_cpu6_baseline_host.py').is_file()
+        headless_graph.setdefault(current_path, []).append(cells[0])
 # These three headless runtime translation units are application-owned,
 # not third-party dependency overrides. They must remain indexed and selected
 # by their actual CMake targets; moving them into vendor would be misleading.

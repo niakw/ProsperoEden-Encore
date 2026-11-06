@@ -400,3 +400,20 @@ fichier, refus de matrices mal dimensionnées, chemins absents et
 troncature après ouverture. L'étape upload Vulkan, la vérification
 SHA-256 des poids et la connexion automatique au graphe restent à
 implémenter.
+
+
+## Arène d'upload des poids (préparation mémoire CPU)
+
+Le module vendor nr_rdna2_weight_arena.h associe au chargeur
+NRMODEL1 un espace contigu de poids lus à la demande et
+convertis, avec offsets alignés à 256 octets et budget 256 Mio.
+AppendTiled prépare les E4M3FN 16×16 au format row-major ;
+AppendRaw conserve les octets des constantes/poids non tuilés.
+Les offsets/longueurs sont conservés en u32 pour la future
+création des buffers Vulkan. Les noms dupliqués sont rejetés.
+
+Test intégré : paquet temporaire, conversion 16×32 exacte,
+contrôle des offsets et de l'absence de doublons, test RAW,
+remise à zéro. Le matériel PS5 ne reçoit encore aucun buffer ;
+cette arène est uniquement la préparation CPU. Le chargeur
+actif de modèle et les descripteurs GPU restent à finaliser.

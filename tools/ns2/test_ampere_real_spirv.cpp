@@ -481,6 +481,19 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
                  Shader::IR::Value{}, Shader::IR::Value{},
                  Shader::IR::Value{}});
             block.back().SetFlags(info);
+            // Exercise the non-immediate index path too. This IR value
+            // remains an OpIAdd result at emission time, not a literal
+            // descriptor index baked into OpAccessChain.
+            block.AppendNewInst(
+                Shader::IR::Opcode::IAdd32,
+                {Shader::IR::Value{u32{0}}, Shader::IR::Value{u32{1}}});
+            const Shader::IR::Value dynamic_index{&block.back()};
+            block.AppendNewInst(
+                Shader::IR::Opcode::ImageFetch,
+                {dynamic_index, Shader::IR::Value{u32{8}},
+                 Shader::IR::Value{}, Shader::IR::Value{},
+                 Shader::IR::Value{}});
+            block.back().SetFlags(info);
         }
         Shader::Profile profile{};
         profile.supported_spirv = 0x00010500;
@@ -511,8 +524,8 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
             pos += count;
         }
         Require(arrays >= 1, "missing SPIR-V OpTypeArray for texture buffers");
-        Require(fetches == 1 && address_chains >= 1,
-                "native texel fetch did not index a real descriptor array");
+        Require(fetches == 2 && address_chains >= 2,
+                "native literal/dynamic texel fetch did not index the real descriptor array");
         const std::string file_name = prefix + "-texbuf-array.spv";
         std::ofstream output{file_name, std::ios::binary | std::ios::trunc};
         Require(bool(output), "cannot open descriptor array module");
@@ -522,7 +535,7 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
     };
     compile(2, false);
     compile(0, true);
-    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=1 zero_rejected=1");
+    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=2 dynamic_index=1 zero_rejected=1");
 }
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");

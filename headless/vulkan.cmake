@@ -106,6 +106,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_ffwd3.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_float_quantize.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_qkv.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_graph.cpp"
@@ -505,6 +506,27 @@ add_dependencies(video_core eden-r09-rdna2-nr-fswin-upsample-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_FSWIN_UPSAMPLE_HEADER}")
+
+# R09: FP32 projection -> E4M3FN GPU quantization, Vulkan 1.1 / RDNA2.
+set(EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_float_quantize_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-float-quantize-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/float_quantize_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-float-quantize-spv.py"
+    COMMENT "Compile FP32-to-E4M3FN neural bridge (RDNA2 Vulkan)"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-float-quantize-spv
+    DEPENDS "${EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-float-quantize-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_float_quantize.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

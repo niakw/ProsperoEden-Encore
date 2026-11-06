@@ -36,6 +36,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r0
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-upsample-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/float_quantize_rdna2.comp")
+    add_test(NAME test_rdna2_nr_float_quantize_spirv_abi
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-float-quantize-spv.py"
+            --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_downsample_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_downsample_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
@@ -187,6 +193,7 @@ eden_r08_test(test_rdna2_nr_fswin_chain_layout_policy)
 eden_r08_test(test_rdna2_nr_native_plan_bridge)
 eden_r08_test(test_rdna2_nr_fswin_output_view_policy)
 eden_r08_test(test_rdna2_nr_fswin_downsample_policy)
+eden_r08_test(test_rdna2_nr_float_quantize_policy)
 eden_r08_test(test_rdna2_nr_fswin_level_link_policy)
 add_executable(test_neural_video_policy
     "${EDEN_ROOT}/tools/graphics/test_neural_video_policy.cpp")

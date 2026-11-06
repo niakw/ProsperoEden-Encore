@@ -318,3 +318,10 @@ ce fonctionnement. Aucune optimisation de performance engagée.
 Le vendor ajoute `nr_rdna2_native_graph_schedule.h` : décodage typé de **toutes les 152 étapes Original et 76 étapes Compact**, y compris pré/post-image, FSwin, Split-Swin, les cinq familles ViT et le décodeur 1024→512. Chaque opération conserve les entrées, les canaux et les dimensions. Une famille inconnue, une forme incorrecte, une dépendance future ou l'absence du post-traitement invalide le **plan entier**, jamais un préfixe exécutable par erreur.
 
 Le test hôte `test_rdna2_nr_native_graph_schedule` recoupe chaque famille et ses effectifs sur les deux corpus, puis vérifie quatre mutations négatives. **Attention : décoder un type n'exécute pas le calcul**. Les kernels Split-Swin/ViT, le pré/post-image, les gains complets et le branchement final à Vulkan restent à assembler. Pas de validation console annoncée.
+
+
+## Pont GPU FP32 → E4M3FN pour les projections Split-Swin/ViT
+
+Le nouveau shader portable `float_quantize_rdna2.comp` convertit les sorties flottantes des projections Vulkan en tenseurs E4M3FN compacts (4 valeurs FP8 par mot). Arrondi nearest-even, écrêtage E4M3FN 448, conservation du signe et encodage NaN sont explicités. `NrRdna2FloatQuantize::Record` n'utilise que des buffers Vulkan, insère une barrière de visibilité compute→compute et rejette les allocations aliasées, indices hors portée ou dispatchs dépassant 65535 workgroups. Shader Vulkan 1.1, sans coopération FP8 ou HIP.
+
+Le contrat C++ hôte teste les tailles utiles ViT 2560×512/1024/4096, les décalages, la capacité et les échecs. L'ABI SPIR-V et le build PS5 source sont enregistrés. La **liaison effective de ce convertisseur à chaque projection Split-Swin/ViT** reste à faire ; pas d'inférence globale ni de rendu validé.

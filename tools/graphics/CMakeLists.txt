@@ -381,3 +381,15 @@ target_compile_options(test_rdna2_nr_split_window_weight_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_split_window_weight_loader
     COMMAND test_rdna2_nr_split_window_weight_loader)
+
+# Native Split-Swin FFWD: two canonical source matrices -> W1/W2/W3,
+# roundtrip and every address verified against the upstream bit maps.
+add_executable(test_rdna2_nr_split_ffwd_weights
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_ffwd_weights.cpp")
+target_include_directories(test_rdna2_nr_split_ffwd_weights PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_ffwd_weights PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_ffwd_weights
+    COMMAND test_rdna2_nr_split_ffwd_weights)

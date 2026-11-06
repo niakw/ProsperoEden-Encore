@@ -109,6 +109,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_attention_link.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_model_buffers.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_float_quantize.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_projection_quantized.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"

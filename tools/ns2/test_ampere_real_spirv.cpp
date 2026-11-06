@@ -318,6 +318,7 @@ static void VerifyRealTaskMeshSpirv(const std::string& prefix) {
         program.info.is_task = is_task;
         program.info.is_mesh = !is_task;
         program.info.uses_local_invocation_id = !is_task;
+        program.info.uses_workgroup_id = true;
         if (!is_task) {
             program.mesh.max_vertices = 3;
             program.mesh.max_primitives = 1;
@@ -332,6 +333,30 @@ static void VerifyRealTaskMeshSpirv(const std::string& prefix) {
         }
         program.blocks.push_back(&block);
         block.AppendNewInst(Opcode::Prologue, {});
+        // Lower actual ISBERD/ISBEWR IR through the maintained backend.
+        // The prior Task/Mesh fixture emitted only Prologue/Epilogue,
+        // which never exercised guest stage-buffer data transfers.
+        block.AppendNewInst(Opcode::IsbeRead, {Shader::IR::Value{u32{0}}});
+        const Shader::IR::Value incoming{&block.back()};
+        block.AppendNewInst(Opcode::IsbeWriteAttribute,
+                            {Shader::IR::Value{u32{0}}, incoming});
+        if (is_task) {
+            // Task output payload word 1 carries the mesh-group count.
+            block.AppendNewInst(Opcode::IsbeWriteAttribute,
+                                {Shader::IR::Value{u32{4}},
+                                 Shader::IR::Value{u32{1}}});
+        } else {
+            // Mesh primitive count and three vertex-index bytes must be
+            // written through the real stage-buffer map ABI.
+            block.AppendNewInst(Opcode::IsbeWriteMapU32,
+                                {Shader::IR::Value{u32{3}},
+                                 Shader::IR::Value{u32{1}}});
+            for (u32 lane = 0; lane < 3; ++lane) {
+                block.AppendNewInst(Opcode::IsbeWriteMapU8,
+                                    {Shader::IR::Value{u32{4 + lane}},
+                                     Shader::IR::Value{lane}});
+            }
+        }
         block.AppendNewInst(Opcode::Epilogue, {});
         auto& node = program.syntax_list.emplace_back();
         node.type = Shader::IR::AbstractSyntaxNode::Type::Block;

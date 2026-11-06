@@ -152,10 +152,21 @@ assert 'component - output.first_element' in index_store
 assert 'output_generics[index][0].num_components != 4' not in index_store
 assert 'elements[0].num_components == 4' in index_store
 assert 'OpSwitch(masked_index, merge_label, component_values, component_labels)' in index_store
-assert 'Indexed TCS transform feedback store' in index_store
+assert 'Indexed TCS transform feedback store' not in index_store
 assert 'Invalid transform feedback component' in index_store
-assert 'OpAccessChain(output_f32, output.id, local_component)' in index_store
-print("P2_4_SPLIT_XFB_INDEXED_STORE_ABI_PASS scalar_vector=4 tcs=fail_closed",flush=True)
+assert 'OpAccessChain(output_f32, output.id, vertex, local_component)' in index_store
+assert 'OpAccessChain(output_f32, elements[0].id, vertex, masked_index)' in index_store
+assert 'OpAccessChain(output_f32, output_position, vertex, masked_index)' in index_store
+assert 'OpAccessChain(output_f32, clip_distances, vertex, fixed_index)' in index_store
+assert 'const Id func_type_store{is_array ? TypeFunction(void_id, U32[1], F32[1], U32[1])' in index_store
+assert 'stage == Stage::TessellationControl ||' in index_store
+assert 'stage == Stage::TessellationEval' in index_store
+assert 'const Id vertex{is_array ? OpFunctionParameter(U32[1]) : Id{}}' in index_store
+patch_set=patch_emitter.split('void EmitSetAttributeIndexed(',1)[1].split('Id EmitGetPatch(',1)[0]
+assert 'ctx.stage == Stage::TessellationControl' in patch_set
+assert 'ctx.indexed_store_func, offset, value, vertex' in patch_set
+assert 'ctx.indexed_store_func, offset, value);' in patch_set
+print("P2_4_SPLIT_XFB_INDEXED_STORE_ABI_PASS scalar_vector=4 tcs=explicit_vertex tes=load_abi",flush=True)
 
 
 cpm=ROOT/"vendor/sources/eden-cpm"

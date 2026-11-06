@@ -471,11 +471,12 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
             // Verify an actual element-1 texel read in the real SPIR-V
             // backend, not merely an unused declaration of OpTypeArray.
             Shader::IR::TextureInstInfo info{};
-            info.raw = 0;
-            info.type = Shader::TextureType::Buffer;
-            info.descriptor_index = 0;
+            // This maintained IR ABI stores the texture kind in raw bits
+            // 16..18; its BitField assignment operators are intentionally
+            // deleted, so construct the flag word in one operation.
+            info.raw = static_cast<u32>(Shader::TextureType::Buffer) << 16;
             block.AppendNewInst(
-                Opcode::ImageFetch,
+                Shader::IR::Opcode::ImageFetch,
                 {Shader::IR::Value{u32{1}}, Shader::IR::Value{u32{4}},
                  Shader::IR::Value{}, Shader::IR::Value{},
                  Shader::IR::Value{}});

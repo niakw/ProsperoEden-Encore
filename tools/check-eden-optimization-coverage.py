@@ -672,7 +672,29 @@ assert "EDEN_NS2_GPFIFO_SCHEDULER" in release_cmake
 assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_GPFIFO_ISOLATION_PASS", "owners=3")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners
+# PR #20/#23/#21/#24 introduced new launcher and Vulkan/AMD source
+# owners after the exact 518-owner F07 audit. The separately versioned
+# source list is an inventory, NOT a claim that 209 new files are optimized.
+feature_stack = json.loads(
+    (ROOT / "docs/ENCORE_POST_F07_FEATURE_STACK_OWNERS.json").read_text())
+assert feature_stack["schema_version"] == 1
+assert feature_stack["counts"] == {"headless": 54, "vendor_active": 155, "total": 209}
+assert feature_stack["headless"] == sorted(set(feature_stack["headless"]))
+assert feature_stack["vendor_active"] == sorted(set(feature_stack["vendor_active"]))
+post_f07_feature_stack_owners = (
+    set(feature_stack["headless"]) |
+    {"vendor/encore-active/" + p for p in feature_stack["vendor_active"]}
+)
+assert len(post_f07_feature_stack_owners) == 209
+assert post_f07_feature_stack_owners <= all_owners, (
+    "Missing merged feature stack sources",
+    sorted(post_f07_feature_stack_owners - all_owners))
+assert not post_f07_feature_stack_owners & research_owners
+assert all((ROOT / path).is_file() for path in post_f07_feature_stack_owners)
+print("ENCORE_POST_F07_FEATURE_STACK_ISOLATION_PASS",
+      "new_sources=209", "historical_F07=518", "console_not_qualified=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

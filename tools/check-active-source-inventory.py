@@ -559,6 +559,29 @@ assert "ResumePendingNative" in (
     active / "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp").read_text()
 print("ENCORE_POST_F07_NATIVE_GPFIFO_OWNER_PASS", "owners=3")
 
+# The four merged feature PRs added sources after the frozen F07 snapshot.
+# They remain visible in a separate exact file ledger, not retroactively
+# counted as 337 historically audited vendor sources or as console proofs.
+feature_stack = json.loads((root / "docs/ENCORE_POST_F07_FEATURE_STACK_OWNERS.json").read_text())
+assert feature_stack["schema_version"] == 1
+assert feature_stack["counts"] == {"headless": 54, "vendor_active": 155, "total": 209}
+post_f07_feature_vendor_owners = set(feature_stack["vendor_active"])
+post_f07_feature_headless_owners = set(feature_stack["headless"])
+assert len(post_f07_feature_vendor_owners) == 155
+assert len(post_f07_feature_headless_owners) == 54
+assert feature_stack["vendor_active"] == sorted(post_f07_feature_vendor_owners)
+assert feature_stack["headless"] == sorted(post_f07_feature_headless_owners)
+assert post_f07_feature_vendor_owners <= set(physical_all), (
+    "Missing merged native graphics owners",
+    sorted(post_f07_feature_vendor_owners - set(physical_all)))
+assert not post_f07_feature_vendor_owners.intersection(research_paths)
+assert all(p.startswith(("amd-fsr31/", "eden-vulkan/"))
+           for p in post_f07_feature_vendor_owners)
+assert all(p.startswith("headless/") and (root / p).is_file()
+           for p in post_f07_feature_headless_owners)
+print("ENCORE_MERGED_FEATURE_STACK_POST_F07_PASS",
+      "headless=54", "vendor=155", "historical_F07_unchanged=1")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -571,7 +594,7 @@ physical = [p for p in physical_all
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
-             post_f07_native_gpfifo_owners]
+             post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -804,6 +827,7 @@ headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
+    and p.relative_to(root).as_posix() not in post_f07_feature_headless_owners
 )
 headless_rows = []
 for entry in headless_doc.split(headless_start, 1)[1].split(headless_end, 1)[0].splitlines():

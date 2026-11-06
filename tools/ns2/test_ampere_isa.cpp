@@ -72,4 +72,29 @@ int main() {
     for (u32 mask : {0x00U, 0x01U, 0x04U, 0x06U, 0x08U, 0x10U,
                      0x20U, 0x21U, 0x24U, 0x26U, 0x40U, 0xffU})
         assert(!NativeGraphicsStageMaskSupported(mask));
+
+    // NVC597 SET_MESH_CONTROL selects a distinct ABI. A solo Mesh is
+    // installed in VertexB; a Task in VertexB is paired with Mesh in
+    // TessControl (bit 2), NOT TessEval (bit 3).
+    for (u32 mask : {0x02U, 0x06U, 0x12U, 0x16U,
+                     0x22U, 0x26U, 0x32U, 0x36U})
+        assert(NativeMeshGraphicsStageMaskSupported(mask, true));
+    for (u32 mask : {0x00U, 0x01U, 0x03U, 0x08U, 0x0aU,
+                     0x0eU, 0x20U, 0x3aU, 0x40U, 0xffU})
+        assert(!NativeMeshGraphicsStageMaskSupported(mask, true));
+    assert(NativeMeshGraphicsStageMaskSupported(0x0eU, false));
+    assert(NativeMeshTaskPresent(0x06U, true));
+    assert(!NativeMeshTaskPresent(0x02U, true));
+    assert(!NativeMeshTaskPresent(0x06U, false));
+    const auto task = static_cast<Shader::Stage>(
+        static_cast<u32>(Shader::Stage::VertexA) + 1U);
+    const auto mesh = static_cast<Shader::Stage>(
+        static_cast<u32>(Shader::Stage::VertexA) + 2U);
+    // Stage identity alone cannot give a Mesh CBUF bank: solo Mesh and
+    // Task+Mesh use different physical register slots.
+    assert(NativeGraphicsCbufBank(mesh) == ~u32{0});
+    assert(NativeMeshSlotCbufBank(task, true) == 0U);
+    assert(NativeMeshSlotCbufBank(task, false) == ~u32{0});
+    assert(NativeMeshSlotCbufBank(mesh, true) == 1U);
+    assert(NativeMeshSlotCbufBank(mesh, false) == 0U);
 }

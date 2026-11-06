@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // RDNA2 scalar 32-head ViT attention on E4M3FN row-major Q/K/V tensors.
+// The native 1920x1080 model uses 2560 tokens; its real size must pass.
 #pragma once
 #include <cstdint>
 #include <limits>
@@ -13,7 +14,7 @@ struct VitAttentionStorage {
 };
 [[nodiscard]] constexpr bool CanVitAttention(
     const VitAttention& p,const VitAttentionStorage& s){
-    if(!p.tokens || p.tokens>2048u)return false;
+    if(!p.tokens || p.tokens>4096u)return false;
     if((p.q_base_bytes|p.k_base_bytes|
         p.v_base_bytes|p.out_base_bytes)&3u)return false;
     const auto extent=std::uint64_t(p.tokens)*32u*32u;

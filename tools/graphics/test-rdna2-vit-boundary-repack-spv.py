@@ -23,10 +23,10 @@ def main():
         dis=subprocess.check_output(['spirv-dis',str(spv)],text=True)
         assert 'OpExecutionMode %main LocalSize 256 1 1' in dis
         for name,binding in [('source',0),('target',1)]:
-            assert re.search(rf'OpDecorate %{name} DescriptorSet 0\\b',dis),(name,'set')
-            assert re.search(rf'OpDecorate %{name} Binding {binding}\\b',dis),(name,'binding')
+            assert f'OpDecorate %{name} DescriptorSet 0' in dis,(name,'set')
+            assert f'OpDecorate %{name} Binding {binding}' in dis,(name,'binding')
         for i in range(7):
-            assert re.search(rf'OpMemberDecorate %Params {i} Offset {i*4}\\b',dis),i
+            assert f'OpMemberDecorate %Params {i} Offset {i*4}' in dis,i
         assert 'OpCapability Shader' in dis
         if args.header:
             blob=spv.read_bytes()

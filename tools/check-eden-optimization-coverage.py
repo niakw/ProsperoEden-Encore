@@ -572,7 +572,30 @@ assert not post_f07_r437_buffer_base_owners & research_owners
 assert "set(EDEN_MAINTAINED_BUFFER_BASE" in release_cmake
 print("ENCORE_POST_F07_R437_F07_ISOLATION_PASS", "native_headers=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners
+# The reviewed P2.2c descriptor-array image emitter is explicitly tracked
+# by the active-source catalogue; it did not exist in the immutable F07
+# 518-source optimization review. Preserve that exact historical count.
+image_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_image_array_owners"
+        for t in node.targets
+    )
+]
+assert len(image_nodes) == 1, "Image-array owner catalogue missing"
+image_paths = ast.literal_eval(image_nodes[0])
+assert image_paths == {
+    "ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp"
+}
+post_f07_image_array_owners = {"vendor/encore-active/" + p for p in image_paths}
+assert post_f07_image_array_owners <= all_owners
+assert not post_f07_image_array_owners & research_owners
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in release_cmake
+print("ENCORE_P22C_IMAGE_SPIRV_F07_ISOLATION_PASS", "new_sources=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

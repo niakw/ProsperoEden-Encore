@@ -2505,7 +2505,12 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/spirv_emit_context.cpp")
     set(EDEN_NS2_QMD_CBUF_DIRECT_SPIRV
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp")
-    if(NOT EXISTS "${EDEN_NS2_QMD_CBUF_SPIRV}" OR
+    # Real SPIR-V descriptor arrays must have the same variable type that
+    # the shared image emitter indexes, including storage texel buffers.
+    set(EDEN_NS2_SPIRV_IMAGE_ARRAY
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/emit_spirv_image.cpp")
+    if(NOT EXISTS "${EDEN_NS2_SPIRV_IMAGE_ARRAY}" OR
+       NOT EXISTS "${EDEN_NS2_QMD_CBUF_SPIRV}" OR
        NOT EXISTS "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}" OR
        NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_indirect_cbuf.h" OR
        NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_global_atomic_binding.h")
@@ -2528,6 +2533,15 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     endif()
     list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_context_get_set.cpp")
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}")
+    # Exactly one shared SPIR-V image emitter; remove the pinned owner
+    # rather than adding a second translation unit or per-title shader.
+    list(FIND eden_ns2_shader_sources
+        "backend/spirv/emit_spirv_image.cpp" eden_ns2_image_source_idx)
+    if(eden_ns2_image_source_idx LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V image emitter owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")
+    list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns2_shader_sources}")
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")

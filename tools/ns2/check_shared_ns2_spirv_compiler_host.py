@@ -24,6 +24,8 @@ assert 'target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}"
 assert 'list(REMOVE_ITEM eden_ns2_shader_sources' in section
 assert 'backend/spirv/spirv_emit_context.cpp' in section
 assert 'backend/spirv/emit_spirv_context_get_set.cpp' in section
+assert 'backend/spirv/emit_spirv_image.cpp' in section
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in section
 assert 'set_property(TARGET shader_recompiler PROPERTY SOURCES' in section
 assert 'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in section
 assert 'EDEN_NS2_NATIVE_VULKAN' not in section
@@ -99,10 +101,27 @@ assert '"backend/spirv/spirv_emit_context.cpp"' in CMAKE
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")' in CMAKE
 print("P2_3_REAL_SPIRV_CAS_WORD_ABI_PASS f16x2=3 f32x2=3 u32_word=1 atomics=real",flush=True)
 
+# P2.2c: sampled texel, storage texel and storage-image arrays share the
+# real reflected descriptor counts. Scalar NS1 descriptors retain their
+# pointer layout; zero-length/unsupported cases remain fail-closed.
+for owner in ("DefineTextureBuffers", "DefineImageBuffers", "DefineImages"):
+    body=cas_owner.split("void EmitContext::"+owner+"(",1)[1].split("\nvoid EmitContext::",1)[0]
+    assert "desc.count == 0" in body, owner
+    assert "DescType(*this," in body, owner
+assert "Array of texture buffers" not in cas_owner
+pinned_image=(ROOT/"vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+image_owner=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+assert "const Id ptr{ctx.OpAccessChain(ctx.image_buffer_type, def.id, idx)};" in pinned_image
+assert "ctx.TypePointer(spv::StorageClass::UniformConstant, ctx.image_buffer_type)" in image_owner
+assert "ctx.OpAccessChain(element_ptr_type, def.id, idx)" in image_owner
+assert "ctx.OpLoad(ctx.image_buffer_type, ptr)" in image_owner
+print("P2_2C_REAL_SPIRV_TEXEL_DESCRIPTOR_ARRAY_SOURCE_PASS scalar=unchanged pointer=typed",flush=True)
+
 cpm=ROOT/"vendor/sources/eden-cpm"
 sources=(
     "shader_recompiler/backend/spirv/spirv_emit_context.cpp",
     "shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     "shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp",
     "video_core/ns2_shader_spirv_compile.cpp",
 )

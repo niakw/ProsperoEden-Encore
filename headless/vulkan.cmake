@@ -101,7 +101,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_token_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_upsample_view.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_noise_field.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -272,6 +273,28 @@ add_dependencies(video_core eden-r09-rdna2-nr-decoder-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_DECODER_HEADER}")
+
+# R09 RDNA2: unfused 64-token x 32-channel attention/context pass.
+# Host already provides Q/K/V in normalized preprojected E4M3FN layout.
+set(EDEN_R09_RDNA2_ATTN_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_window_attention_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_ATTN_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-attention-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_ATTN_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/window_attention_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-attention-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 unfused neural attention"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-attention-spv
+    DEPENDS "${EDEN_R09_RDNA2_ATTN_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-attention-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_ATTN_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

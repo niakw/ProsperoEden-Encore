@@ -68,7 +68,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 |---|---|
 | gemm1x1.comp | Produit matriciel de base Vulkan RDNA2 développé ; famille complète non terminée |
 | fswin_t.comp | Non porté |
-| attn.comp | Non porté |
+| attn.comp | Calcul du contexte d’attention 64×32 préprojeté RDNA2 ; QKV fusionnés manquants, famille **partielle** |
 | vit_attn.comp | Non porté |
 | ffwd3_t.comp | Non porté |
 | decoder_upsample.comp | Première variante 2× à 512 canaux, projection FP16 + skip FP8 + gain FP16, sortie E4M3FN ; validée sur hôte, sans graphe |
@@ -78,7 +78,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
-**État vérifiable : cinq primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16 et décodeur ×2) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
+**État vérifiable : six primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
 
 ## Nouveaux dépôts utiles, examinés le 6 novembre
 
@@ -150,3 +150,33 @@ Les coordonnées utilisent les mêmes groupes de tokens 4×4 que l'amont.
 FP8 et fonctions mathématiques), coût GPU, modèles/poids, exécution de
 la chaîne entière, mesures sur PS5. Les couches d'attention et FFWD
 restent non portées ; aucun mode DLSS activé dans l'interface.
+
+
+## Sixième primitive — attention fenêtrée 64×32 non fusionnée (06/11)
+
+La première passe `window_attention_rdna2.comp` adapte les opérations
+de contexte du shader MIT `attn.comp` :
+- 64 tokens par fenêtre, 32 canaux par tête, 1/2/4/8/16 têtes.
+- Trois flux E4M3FN **déjà projetés** Q/K/V ; Q/K supposés
+  **déjà normalisés et pondérés**. Aucun calcul fusionné QKV.
+- Produits scalaires Q·K en FP32, biais relatif `64×64` par tête,
+  softmax stable (soustraction du maximum), quantification E4M3FN
+  des probabilités, produit P·V en FP32, sortie E4M3FN.
+- Buffer partagé (LDS) K et V de **16 Kio par groupe**, 64 lanes
+  pour 64 queries ; chaque lane écrit 32 canaux et aucun octet
+  de sortie ne partage son mot `uint32` avec une autre lane.
+- 5 buffers storage + 28 octets de push constants. Dispatch
+  `(1, têtes, fenêtres)` et barrière `compute→compute`.
+- Contrat hôte : taille de chaque arène et des biais, offsets,
+  budget max 256 Mio par tenseur, indexation `uint32`, nombre de
+  têtes autorisé et limites des dimensions du dispatch.
+- Tests : shader Vulkan 1.1 `spirv-val` + descripteurs ABI,
+  référence C++ (probabilités 1/64, biais focalisé ±100, scores
+  Q/K et saturation/arrondis FP8), syntaxe du wrapper Vulkan hôte.
+
+**Limites importantes** : ce n'est pas encore le port complet de
+`attn.comp` car la projection QKV (responsable de la majeure partie
+de ses calculs) n'est pas fusionnée ni planifiée ; les biais/poids
+ne sont pas fournis, la conversion de précision diffère de l'amont
+(fast_exp/FP16), et aucun résultat/performance PS5 n'a été mesuré.
+Un enregistrement de pipeline n'est pas une inférence complète.

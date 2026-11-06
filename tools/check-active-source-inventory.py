@@ -482,6 +482,23 @@ assert len(post_f07_task_mesh_source_owners) == 29
 assert "EDEN_NATIVE_TASK_MESH_ROOT" in (root / "headless/CMakeLists.txt").read_text()
 print("ENCORE_P24_TASK_MESH_STAGED_SOURCE_PASS", f"owners={len(post_f07_task_mesh_source_owners)}")
 
+# P2.2c's maintained SPIR-V image emitter is a new post-F07 production
+# source, not a historical F07 optimization or an unselected experiment.
+# Keep the immutable 337-file source audit exact and independently prove the
+# new source is selected once by the native shared shader graph.
+post_f07_image_array_owners = {
+    "ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+}
+assert post_f07_image_array_owners <= set(physical_all), (
+    "Missing maintained native descriptor array source",
+    sorted(post_f07_image_array_owners - set(physical_all)))
+assert not post_f07_image_array_owners.intersection(research_paths)
+image_select = (root / "headless/CMakeLists.txt").read_text()
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")' in image_select
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in image_select
+print("ENCORE_P22C_SPIRV_DESCRIPTOR_ARRAY_OWNER_PASS",
+      f"owners={len(post_f07_image_array_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -492,7 +509,7 @@ physical = [p for p in physical_all
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
-            post_f07_r437_buffer_base_owners]
+            post_f07_r437_buffer_base_owners | post_f07_image_array_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

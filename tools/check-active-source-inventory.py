@@ -254,6 +254,8 @@ shader_bridge=(active/"ns2-runtime/ampere/shader_recompiler/frontend/ampere/rend
 assert "NativeAtomic::Rewrite(ir)" in shader_bridge
 assert "native_global_atomic_binding.h" in shader_bridge
 assert "Opcode::PackUint2x32" in atomic_binding
+assert "Opcode::CompositeConstructU32x2" in atomic_binding
+assert "left_pointer == right_pointer" in atomic_binding
 assert "rec.cbuf_offset == address->descriptor" in atomic_binding
 assert "python3 -B tools/ns2/check_native_qmd_direct_cbuf_host.py" in (
     root/".github/workflows/ns2-research-host.yml").read_text()

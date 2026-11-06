@@ -836,6 +836,25 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P2.3 — reconstruction des pointeurs atomiques CBUF scalaires (06/11, source/hôte) :**
+Le traducteur accepte désormais les deux représentations exactes de l'adresse
+SSBO QMD3 : `PackUint2x32(GetCbufU32x2)` et
+`PackUint2x32(CompositeConstructU32x2(GetCbufU32(low),GetCbufU32(high)))`.
+La seconde forme doit lire les octets contigus `base` et `base+4` **dans la
+même banque** ; une seconde lecture différente ou un dépassement U32 est
+refusé. Le calcul `IAdd64` accepte le descripteur à gauche ou à droite,
+avec un décalage U64 constant ou un `ConvertU64U32` d'offset dynamique
+préalablement borné et aligné. Les deux parcours utilisent exactement les
+mêmes preuves de liaison SSBO réelle, de plage d'accès atomique et de
+capacités Vulkan. Une table NVN à plusieurs SSBO conserve l'index du
+**slot aplati** : l'entrée n° 1 à CBUF0+0x320 n'est jamais confondue avec
+la n° 0 à CBUF0+0x310, et une table permutée est rejetée.
+Suite IR réelle `check_native_qmd_direct_cbuf_host.py` : deux mots CBUF,
+calcul commutatif, masque dynamique, second slot, adresses décalées ou
+non contiguës et refus d'adressages arbitraires. P2.3 n'est pas clos :
+les accès atomiques non liés à un pointeur QMD3 prouvé restent refusés,
+et aucun framebuffer PS5 n'est revendiqué.
+
 **P2.3 — atomiques Global→Storage depuis pointeur QMD3 authentifié (06/11, source/hôte) :**
 Le compilateur Compute NS2 utilise désormais `NativeAtomic::Rewrite` après
 `ConvertLegacyToGeneric` et le normaliseur CBUF QMD3. Les atomiques 32 bits

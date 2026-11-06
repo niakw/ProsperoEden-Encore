@@ -159,13 +159,63 @@ static void CheckNativeAtomicSlotOrder(bool swapped, bool accepted) {
         program, Shader::Profile{});
     assert(actual == accepted);
 }
+// The real NVN descriptor table is flattened: CBUF bank zero can own
+// multiple distinct SSBOs at 0x310, 0x320, ... . Never use the CBUF bank
+// number as the SPIR-V binding: here the source pointer belongs to slot ONE.
+static void CheckNativeGlobalAtomicSecondSlot(bool swapped, bool accepted) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{24};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage = Shader::Stage::Compute;
+    program.blocks.push_back(&block);
+    program.info.constant_buffer_mask=1;
+    program.info.constant_buffer_descriptors.push_back({0,1});
+    program.info.constant_buffer_used_sizes[0]=0x340;
+    program.info.nvn_buffer_base=0x310;
+    program.info.nvn_buffer_used.set(0);
+    program.info.nvn_buffer_used.set(1);
+    program.info.storage_buffers_descriptors.push_back({
+        .cbuf_index=0,.cbuf_offset=swapped ? 0x320U : 0x310U,
+        .count=1,.is_written=true});
+    program.info.storage_buffers_descriptors.push_back({
+        .cbuf_index=0,.cbuf_offset=swapped ? 0x310U : 0x320U,
+        .count=1,.is_written=true});
+    block.AppendNewInst(Opcode::GetCbufU32,
+        {Value{u32{0}},Value{u32{0x320}}});
+    const Value low{&block.back()};
+    block.AppendNewInst(Opcode::GetCbufU32,
+        {Value{u32{0}},Value{u32{0x324}}});
+    const Value high{&block.back()};
+    block.AppendNewInst(Opcode::CompositeConstructU32x2,{low,high});
+    block.AppendNewInst(Opcode::PackUint2x32,{Value{&block.back()}});
+    block.AppendNewInst(Opcode::GlobalAtomicIAdd32,
+        {Value{&block.back()},Value{u32{5}}});
+    const bool ok=Shader::Ampere::NativeAtomic::Rewrite(program);
+    assert(ok==accepted);
+    if (!ok) return;
+    bool found=false;
+    for (const auto& inst:block.Instructions()) {
+        if (inst.GetOpcode()!=Opcode::StorageAtomicIAdd32) continue;
+        found=true;
+        assert(inst.Arg(0).IsImmediate() && inst.Arg(0).U32()==1);
+        assert(inst.Arg(1).IsImmediate() && inst.Arg(1).U32()==0);
+    }
+    assert(found);
+    assert(Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
+        program,Shader::Profile{}));
+    const auto spans=Shader::Ampere::CollectNativeQmdAtomicSpans(program);
+    assert(spans && spans->size()==1 && (*spans)[0].binding==1 &&
+           (*spans)[0].width==4);
+}
 // The original CUDA-like guest pointer is not a literal host address: it is
 // a 64-bit value actually read from an authenticated QMD3 NVN descriptor.
 static void CheckNativeGlobalAtomicPointer(
     Opcode opcode, bool accepted, u32 cbuf_bank = 0, u32 descriptor = 0x310,
     u64 displacement = 0, u32 actual_cbuf_offset = 0x310,
     bool writable = true, bool live = true, bool malformed_pointer = false,
-    bool dynamic_offset = false, u32 dynamic_mask = 0x3c) {
+    bool dynamic_offset = false, u32 dynamic_mask = 0x3c,
+    bool split_cbuf = false, bool reverse_add = false,
+    bool invalid_upper_word = false) {
     Shader::ObjectPool<Shader::IR::Inst> pool{24};
     Shader::IR::Block block{pool};
     Shader::IR::Program program{};
@@ -179,10 +229,24 @@ static void CheckNativeGlobalAtomicPointer(
     program.info.storage_buffers_descriptors.push_back({
         .cbuf_index = 0, .cbuf_offset = actual_cbuf_offset,
         .count = 1, .is_written = writable});
-    block.AppendNewInst(Opcode::GetCbufU32x2,
-        {Value{cbuf_bank}, Value{descriptor}});
-    auto& address_pair = block.back();
-    block.AppendNewInst(Opcode::PackUint2x32, {Value{&address_pair}});
+    Value address_words;
+    if (split_cbuf) {
+        block.AppendNewInst(Opcode::GetCbufU32,
+            {Value{cbuf_bank}, Value{descriptor}});
+        Value lower{&block.back()};
+        block.AppendNewInst(Opcode::GetCbufU32,
+            {Value{cbuf_bank}, Value{descriptor +
+                (invalid_upper_word ? 8U : 4U)}});
+        Value upper{&block.back()};
+        block.AppendNewInst(Opcode::CompositeConstructU32x2,
+            {lower, upper});
+        address_words = Value{&block.back()};
+    } else {
+        block.AppendNewInst(Opcode::GetCbufU32x2,
+            {Value{cbuf_bank}, Value{descriptor}});
+        address_words = Value{&block.back()};
+    }
+    block.AppendNewInst(Opcode::PackUint2x32, {address_words});
     Value addr{&block.back()};
     if (dynamic_offset) {
         block.AppendNewInst(Opcode::IAdd32,
@@ -192,12 +256,16 @@ static void CheckNativeGlobalAtomicPointer(
             {varying, Value{dynamic_mask}});
         const Value bounded{&block.back()};
         block.AppendNewInst(Opcode::ConvertU64U32, {bounded});
+        const Value increment{&block.back()};
         block.AppendNewInst(Opcode::IAdd64,
-            {addr, Value{&block.back()}});
+            reverse_add ? std::initializer_list<Value>{increment, addr} :
+                          std::initializer_list<Value>{addr, increment});
         addr = Value{&block.back()};
-    } else if (displacement || malformed_pointer) {
+    } else if (displacement || malformed_pointer || reverse_add) {
+        const Value increment = malformed_pointer ? addr : Value{displacement};
         block.AppendNewInst(Opcode::IAdd64,
-            {addr, malformed_pointer ? addr : Value{displacement}});
+            reverse_add ? std::initializer_list<Value>{increment, addr} :
+                          std::initializer_list<Value>{addr, increment});
         addr = Value{&block.back()};
     }
     const bool wide = opcode >= Opcode::GlobalAtomicIAdd64 &&
@@ -484,6 +552,26 @@ int main() {
                                    0,0x310,0,0x310,true,true,false,true,0x3f);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,false,
                                    0,0x310,0,0x310,true,true,false,true,0xff);
+    CheckNativeGlobalAtomicSecondSlot(false,true);
+    CheckNativeGlobalAtomicSecondSlot(true,false);
+    // The actual Maxwell translator can construct a 64-bit pointer
+    // from two scalar CBUF loads (low at 0x310, high at 0x314).
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true,
+                                   0,0x310,0,0x310,true,true,false,false,0x3c,
+                                   true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicExchange64,true,
+                                   0,0x310,8,0x310,true,true,false,false,0x3c,
+                                   true,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true,
+                                   0,0x310,0,0x310,true,true,false,true,0x3c,
+                                   true,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x310,true,true,false,false,0x3c,
+                                   true,false,true); // high word not contiguous
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x310,true,true,false,true,0x3f,
+                                   true); // dynamic offset not aligned
+
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
                                    0,0x310,3); // not aligned
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,

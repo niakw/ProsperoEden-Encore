@@ -286,6 +286,8 @@ assert post_f07_native_global_atomic_owners <= all_owners
 assert not post_f07_native_global_atomic_owners & (research_owners | hygiene_owners)
 atomic_binding = (ROOT / next(iter(post_f07_native_global_atomic_owners))).read_text()
 assert 'NativeAtomic' in atomic_binding and 'Rewrite(Shader::IR::Program&' in atomic_binding
+assert 'Opcode::CompositeConstructU32x2' in atomic_binding
+assert 'left_pointer == right_pointer' in atomic_binding
 assert 'NativeAtomic::Rewrite(ir)' in (
     ROOT / 'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
 print('NS2_POST_F07_GLOBAL_ATOMIC_OWNER_PASS', 'new_native_headers=1', 'historical_F07_unchanged=1')

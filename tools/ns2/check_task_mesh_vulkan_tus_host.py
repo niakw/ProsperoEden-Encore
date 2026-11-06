@@ -51,6 +51,10 @@ assert 'mesh_registers = source.MeshRegisters();' in env_owner
 assert 'mesh_primitive_header = source.MeshPrimitiveHeader();' in env_owner
 capture_owner = MESH_STAGE_OWNERS[2].read_text()
 assert 'NativeMeshSlotCbufBank(shader_stage, has_task)' in capture_owner
+assert 'NativeMeshRegisterPipelineKey(' in capture_owner
+assert 'NativeMeshRegisterPipelineKey(' in (
+    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h"
+).read_text()
 cache_owner = (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
 assert cache_owner.count("NativeMeshSlotCbufBank(stage, has_task)") == 3
 assert cache_owner.count("NativeMeshGraphicsStageMaskSupported(") == 2

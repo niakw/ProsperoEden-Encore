@@ -40,6 +40,7 @@ includes = [
     ACTIVE / "include",
     ROOT / "vendor/encore-active/ns2-astc/include",
     ROOT / "vendor/encore-active/ns2-helpers/include",
+    ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu",
     ROOT / "vendor/sources/eden/src",
     CPM / "vulkanheaders/v1.4.345/include",
     CPM / "vulkanmemoryallocator/v3.3.0/include",
@@ -70,19 +71,19 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     # supplies only declarations needed by syntax-only parsing; no affinity
     # behavior, PS5 headers, object or ELF is synthesized.
     (sysdir / "cpuset.h").write_text(
-        "#pragma once\\n"
-        "#define CPU_LEVEL_WHICH 3\\n#define CPU_WHICH_TID 4\\n"
-        "#ifdef __linux__\\n"
-        "#include <sched.h>\\n"
-        "using cpuset_t = cpu_set_t;\\n"
-        "inline int cpuset_getaffinity(int, int, int, size_t size, cpuset_t* mask) {\\n"
-        "    return sched_getaffinity(0, size, mask);\\n"
-        "}\\n"
-        "#else\\n"
-        "struct cpuset_t { unsigned long bits[16]; };\\n"
-        "inline int cpuset_getaffinity(int, int, int, size_t, cpuset_t*) { return -1; }\\n"
-        "#ifndef CPU_ISSET\\n#define CPU_ISSET(cpu, mask) false\\n#endif\\n"
-        "#endif\\n")
+        "#pragma once\n"
+        "#define CPU_LEVEL_WHICH 3\n#define CPU_WHICH_TID 4\n"
+        "#ifdef __linux__\n"
+        "#include <sched.h>\n"
+        "using cpuset_t = cpu_set_t;\n"
+        "inline int cpuset_getaffinity(int, int, int, size_t size, cpuset_t* mask) {\n"
+        "    return sched_getaffinity(0, size, mask);\n"
+        "}\n"
+        "#else\n"
+        "struct cpuset_t { unsigned long bits[16]; };\n"
+        "inline int cpuset_getaffinity(int, int, int, size_t, cpuset_t*) { return -1; }\n"
+        "#ifndef CPU_ISSET\n#define CPU_ISSET(cpu, mask) false\n#endif\n"
+        "#endif\n")
     command += ["-I" + str(Path(scratch))]
     if platform.system() == "Darwin":
         sdk = next((p for p in (
@@ -107,7 +108,12 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         return owner, result.returncode, result.stderr[-6000:]
     with ThreadPoolExecutor(max_workers=3) as pool:
         checked = list(pool.map(check, OWNERS))
+    failures = []
     for owner, code, stderr in checked:
-        assert code == 0, ("P2.4 maintained Vulkan TU syntax failed", owner, stderr)
-        print("P24_REAL_VULKAN_TASK_MESH_TU_PASS", owner, flush=True)
+        if code:
+            failures.append((owner, stderr))
+            print("P24_REAL_VULKAN_TASK_MESH_TU_FAIL", owner, stderr, flush=True)
+        else:
+            print("P24_REAL_VULKAN_TASK_MESH_TU_PASS", owner, flush=True)
+    assert not failures, ("P2.4 maintained Vulkan TU syntax failed", failures)
 print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=3 console=NOT_TESTED", flush=True)

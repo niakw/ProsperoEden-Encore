@@ -1,8 +1,8 @@
 # Audit indépendant — `seedds/nxnative` face à Eden Encore (NS1 / NS2)
 
-**Date :** 6 novembre 2026  
-**Nature :** revue indépendante de sources publiques, de relevés par jeu, des fichiers et des écarts architecturaux ; **aucune modification de code**, aucun démarrage de jeu, aucun build PS5.  
-**Focalisation :** [`dm/games/040074A01BF12000`](https://github.com/seedds/nxnative/tree/b4318c7a4d0bcbd16e7873ce63f33d344d1acbfb/dm/games/040074A01BF12000), **Donkey Kong Bananza**.  
+**Date :** 6 novembre 2026
+**Nature :** revue indépendante de sources publiques, de relevés par jeu, des fichiers et des écarts architecturaux ; **aucune modification de code**, aucun démarrage de jeu, aucun build PS5.
+**Focalisation :** [`dm/games/040074A01BF12000`](https://github.com/seedds/nxnative/tree/b4318c7a4d0bcbd16e7873ce63f33d344d1acbfb/dm/games/040074A01BF12000), **Donkey Kong Bananza**.
 **Objectif :** extraire les invariants matériels/protocolaires et les constats reproductibles de `nxnative`, les confronter à nos sources **NS1 et NS2**, puis définir des corrections **génériques** et des qualifications hôte compatibles avec la roadmap **P0 → P1 → P2 → P4**, sans déplacer la validation PS5 hors de **P5**.
 
 ## Statut : référence différée pour les optimisations après P5

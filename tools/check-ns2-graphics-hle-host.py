@@ -152,6 +152,8 @@ def main()->int:
         assert evidence in text, "VI2 compositor must preserve real queue/fence owner: " + evidence
 
     for command, method in (
+        (902, "OpenVideoDecoderSession"), (905, "OpenVideoDecoderSession"),
+        (906, "OpenVideoDecoderSession"), (1002, "OpenVideoDecoderSession"),
         (911, "CreateVideoImagePool"), (912, "DestroyVideoImagePool"),
         (961, "GetCpuVideoImageDescriptor"),
         (426, "MapVideoGpuImage"), (427, "UnmapVideoGpuImage"),

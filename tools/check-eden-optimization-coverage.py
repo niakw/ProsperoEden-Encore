@@ -476,13 +476,16 @@ post_f07_video_decoder_owners = {
     "vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/h264_packet.h",
     "vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.h",
     "vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp",
+    "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.h",
+    "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp",
 }
-assert len(post_f07_video_decoder_owners) == 3
+assert len(post_f07_video_decoder_owners) == 5
 assert post_f07_video_decoder_owners <= all_owners, (
     "Missing post-F07 native decoder", sorted(post_f07_video_decoder_owners - all_owners))
 assert not post_f07_video_decoder_owners & (research_owners | hygiene_owners)
 assert "EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT" in release_cmake
 assert (ROOT / "tools/ns2/check_native_video_decoder_backend_host.py").is_file()
+assert (ROOT / "tools/ns2/check_native_video_decoder_ipc_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_ISOLATION_PASS",
       f"new_shared_sources={len(post_f07_video_decoder_owners)}")
 

@@ -358,6 +358,8 @@ post_f07_video_decoder_owners = {
     "ns2-runtime/video_decoder/video_core/host1x/h264_packet.h",
     "ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.h",
     "ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp",
+    "ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.h",
+    "ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp",
 }
 assert post_f07_video_decoder_owners <= set(physical_all), (
     "Missing maintained native FFmpeg owner",
@@ -365,6 +367,7 @@ assert post_f07_video_decoder_owners <= set(physical_all), (
 assert not post_f07_video_decoder_owners.intersection(research_paths)
 assert "EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT" in (
     root / "headless/CMakeLists.txt").read_text()
+assert (root / "tools/ns2/check_native_video_decoder_ipc_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_OWNER_PASS", f"owners={len(post_f07_video_decoder_owners)}")
 
 physical = [p for p in physical_all

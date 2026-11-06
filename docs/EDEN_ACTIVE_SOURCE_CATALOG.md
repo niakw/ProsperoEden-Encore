@@ -390,13 +390,30 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 
 ### P1.3 — décodeur vidéo H.264/VP8/VP9 natif commun (06/11/2026)
 
-Trois sources maintenues dans `vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x` :
-`nx2_video_decoder.{h,cpp}` et `h264_packet.h` (licence GPL-3.0, portage
-à partir d'Eden NX2/Lichii `nx2`). Sélectionnées via la cible `video_core`
-et les bibliothèques FFmpeg déjà intégrées pour le binaire natif partagé.
-Ce premier lot n'inclut **pas encore** le service IPC enfant ni la création
-de frames côté invité ; les capacités FFmpeg du moteur figé sont H.264,
-VP8 et VP9, AV1 refusé. Témoin `check_native_video_decoder_backend_host.py`.
+Cinq sources maintenues dans `vendor/encore-active/ns2-runtime/video_decoder` :
+`video_core/host1x/nx2_video_decoder.{h,cpp}`, `h264_packet.h` (GPL-3.0,
+portage adapté d'Eden NX2/Lichii `nx2`) et le véritable service IPC
+`core/hle/service/am/service/graphics_video_decoder_session.{h,cpp}`.
+Le backend est sélectionné par `video_core`, le service par `core`, dans
+le même binaire natif NS1/NS2 sans mode expérimental.
+
+La famille de sessions GSV 902/905/906/1002 crée de vrais handles, la
+sous-session 1 crée le décodeur ; 200/201/202 vérifient le KTransferMemory,
+101 configure uniquement des codecs réellement ouverts H.264/VP8/VP9,
+6 démarre, 3 fournit un KEvent réel, 311/314/212 gèrent les images de sortie
+et leurs fences, 109/400 alimentent le décodeur, 213 retourne uniquement
+des images effectivement écrites dans le NVMap du processus. Un échec de
+Render/WriteBlock, une image détruite ou une fence de retour non atteinte
+**ne signale aucune frame**. Il n'y a pas de branche spéciale pour un jeu.
+
+Témoins hôte Clang/GCC UBSan O0/O2 :
+`check_native_video_decoder_backend_host.py` (framing H264),
+`check_native_video_decoder_ipc_host.py` (réelle méthode `Pump` extraite,
+fences, écriture, échecs). Syntaxe C++ des vrais backend et service validée
+sur Mac. Pas encore de preuve end-to-end HOS/codec/frame sur PS5 ; les
+cas limites EOS/flush/backpressure et l'AV1 restent à qualifier/traiter. La
+compilation du supervisor entier sur Mac requiert les propriétaires kernel
+GPU natifs (attribut `GpuAccessible` absent du header Eden hôte).
 
 
 ### P1.3 — propriétaires NVDRV communs post-F07 (06/11/2026)

@@ -2314,6 +2314,13 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}")
+    set(EDEN_SHARED_NATIVE_VIDEO_SESSION_SOURCE
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/core/hle/service/am/service/graphics_video_decoder_session.cpp")
+    if(NOT EXISTS "${EDEN_SHARED_NATIVE_VIDEO_SESSION_SOURCE}" OR
+       NOT EXISTS "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/core/hle/service/am/service/graphics_video_decoder_session.h")
+        message(FATAL_ERROR "Missing maintained NS2 video IPC session owner")
+    endif()
+    target_sources(core PRIVATE "${EDEN_SHARED_NATIVE_VIDEO_SESSION_SOURCE}")
 endif()
 
 # Unified native GraphicsSupervisor / SelfController IPC and VI2 cadence.

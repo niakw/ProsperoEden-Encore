@@ -338,6 +338,11 @@ assert "LocaleCaseCandidates(selected->second[side], language_choice, side)" in 
 assert 'regions = {"us", "ca", "world", "uk", "eu", "fr"};' in native
 assert 'regions = {"fr", "eu", "world", "uk", "ca", "us"};' in native
 assert "face == 1" in native
+# Check local offline WebP migration and edition-proof guarding.
+assert 'MigrateGeneratedTga(CaseFacePath(title_id, side), true)' in native
+assert 'MigrateGeneratedTga(NlibHeroPath(title_id), false)' in native
+assert 'const std::string base = path.substr(0, path.size() - 5);' in native
+assert 'const std::string old_receipt = legacy + ".source";' in native
 assert "EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert "9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg" in indexer
 assert "a8bcb4cc-a3b0-4cf0-82f3-cb10dd18b27c.jpg" in indexer

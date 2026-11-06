@@ -22,9 +22,27 @@ int main(int argc, char** argv) {
     std::fclose(f);
     assert(n == data.size());
     int width = 0, height = 0;
-    assert(WebPGetInfo(data.data(), data.size(), &width, &height));
-    assert(width > 0 && height > 0 && width <= 4096 && height <= 4096);
-    std::uint8_t* rgba = WebPDecodeRGBA(data.data(), data.size(), &width, &height);
+    std::uint8_t* rgba = nullptr;
+    std::vector<std::uint8_t> decoded;
+    if (std::string(argv[1]).ends_with(".tga")) {
+        // Matches the trusted, Encore-generated 32-bit BGRA, top-left TGA.
+        assert(data.size() >= 18 && data[0] == 0 && data[1] == 0 &&
+               data[2] == 2 && data[16] == 32 && data[17] == 0x28);
+        width = data[12] | (data[13] << 8);
+        height = data[14] | (data[15] << 8);
+        assert(width > 0 && height > 0 && width <= 4096 && height <= 2160);
+        assert(data.size() == 18u + static_cast<std::size_t>(width) * height * 4);
+        std::uint8_t* compressed_bgra = nullptr;
+        const auto encoded_bgra = WebPEncodeBGRA(
+            data.data() + 18, width, height, width * 4, 80.0f, &compressed_bgra);
+        assert(encoded_bgra && compressed_bgra);
+        rgba = WebPDecodeRGBA(compressed_bgra, encoded_bgra, &width, &height);
+        WebPFree(compressed_bgra);
+    } else {
+        assert(WebPGetInfo(data.data(), data.size(), &width, &height));
+        assert(width > 0 && height > 0 && width <= 4096 && height <= 4096);
+        rgba = WebPDecodeRGBA(data.data(), data.size(), &width, &height);
+    }
     assert(rgba);
     std::uint8_t* compressed = nullptr;
     const auto bytes = WebPEncodeRGBA(rgba, width, height, width * 4, 80.0f, &compressed);

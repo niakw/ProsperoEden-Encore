@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <future>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -87,6 +88,7 @@ class Launcher
         library,
         settings,
         files,
+        multiplayer,
         language,
         about,
     };
@@ -98,6 +100,7 @@ class Launcher
         controls,
         accessibility,
         appearance,
+        application,
         diagnostics,
         game,
         mods, // a game's mods, opened from its settings
@@ -111,6 +114,7 @@ class Launcher
         mapping_reset,
         shader_caches,
         console_mode,
+        app_update,
         exit_app,
     };
 
@@ -139,6 +143,17 @@ class Launcher
     std::array<bool, 3> switch_states(Modal modal) const;
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
+    void start_app_update_check(bool manual);
+    void open_update_confirmation();
+    void draw_update_button(Canvas &c, float x, float y, bool focused, bool paper) const;
+    void draw_update_notice(Canvas &c);
+
+
+    // ---- read-only public multiplayer directory (multiplayer.cpp) ----
+    void enter_multiplayer();
+    void refresh_multiplayer();
+    void press_multiplayer(Key key);
+    void draw_multiplayer(Canvas &c);
 
     // ---- home (home.cpp) ----
     void press_home(Key key);
@@ -234,6 +249,27 @@ class Launcher
     std::chrono::steady_clock::time_point last_ui_hotspot_report_{};
     std::string clock_;
     std::string version_;
+    struct UpdateCheckState {
+        bool manual = false;
+        // UI-thread flag: a forced manual request made while auto check runs.
+        bool recheck_manual = false;
+        AppUpdateInfo result{};
+        std::atomic<bool> completed{false};
+    };
+    // Shared with an independent worker that never captures the launcher.
+    std::shared_ptr<UpdateCheckState> update_check_;
+    // Shared within the process across game entry/return and language restarts.
+    // Only the UI owner thread changes these pointers and flags.
+    static std::shared_ptr<UpdateCheckState> process_update_check_;
+    static bool process_update_checked_;
+    static std::string process_notified_version_;
+    AppUpdateInfo update_info_{};
+    bool update_notice_pending_ = false;
+    bool update_notice_visible_ = false;
+    bool update_check_manual_ = false;
+    bool update_checked_this_launch_ = false;
+    float daily_refresh_wait_ = 0.0f;
+
     struct ProfileAvatarProbe {
         std::string path;
         std::uint64_t device = 0, inode = 0, size = 0, mtime = 0, ctime = 0;
@@ -245,6 +281,15 @@ class Launcher
     ProfileAvatarProbe profile_avatar_active_{};
     float profile_avatar_refresh_elapsed_ = 0.0f;
     std::string profile_avatar_path_;
+
+    struct RoomLoadState {
+        Eden::Multiplayer::RoomDirectory result{};
+        std::atomic<bool> completed{false};
+    };
+    std::shared_ptr<RoomLoadState> room_load_;
+    Eden::Multiplayer::RoomDirectory room_directory_{};
+    bool rooms_loaded_ = false;
+    int room_selected_ = 0;
 
     // navigation
     Screen screen_ = Screen::home;
@@ -262,7 +307,7 @@ class Launcher
     Confirmation confirmation_ = Confirmation::none;
     Key confirmation_key_ = Key::cross;
     Key pressed_key_ = Key::cross;
-    int top_nav_focus_ = -1; // -1 = content; 0..3 = Home/Library/Recents/Settings
+    int top_nav_focus_ = -1; // -1 = content; 0..4 = Home/Library/Recents/Updates/Settings
     int active_main_tab_ = 0; // the Recent rail is its own tab, sharing Home content
 
     // launching a game
@@ -321,7 +366,7 @@ class Launcher
     std::array<float, 4> controller_pop_{}; // 1 when a controller appears, then decays
     int home_focus_ = 0;
     int home_quick_edit_ = -1; // -1 browsing; 0-6 editing one quick-setting row
-    std::array<tween::Spring, 23> home_springs_{};
+    std::array<tween::Spring, 24> home_springs_{};
     float intro_ = 0.0f;
     bool first_start_ = true;
 
@@ -368,6 +413,15 @@ class Launcher
     tween::Spring option_cursor_; // highlight position in pixels
     std::array<tween::Spring, 4> switches_{};
     ListView video_rows_; // the Video dialog's rows (more than it shows)
+    std::vector<std::string> wallpaper_options_;
+    std::future<std::vector<std::string>> wallpaper_scan_;
+    std::future<std::string> daily_wallpaper_scan_;
+    std::future<std::string> local_wallpaper_scan_;
+    std::string pending_wallpaper_name_;
+    std::string cached_wallpaper_name_;
+    std::string cached_wallpaper_path_;
+    std::string cached_daily_wallpaper_;
+    bool daily_wallpaper_scanned_ = false;
     GameSettings game_settings_;
     bool game_docked_ = true;
     SaveSource import_source_ = SaveSource::none; // what Save data could import for the game

@@ -59,9 +59,17 @@ msgstr "%8 tavsiye edilir. Çubuk sürüklenmesi için artırın; Daha hassas he
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Bir firmware NCA dosyası okunamıyor. Firmware dökümünü yeniden yükleyin."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "Hakkında"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "Eden Encore Hakkında"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "Vurgu"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "ERİŞİM"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "Erişilebilirlik"
 
@@ -82,9 +90,17 @@ msgstr "ERİŞİLEBİLİRLİK"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Eklentiler: {0}  /  Dil: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Eden emülatöründeki tüm emek, geliştiricilerine ve katkıda bulunanlara aittir."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "Tüm Yazılımlar"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "En son Sürüm: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "Başka bir dil"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "Kenar yumuşatma"
 
@@ -106,7 +122,27 @@ msgstr "KENAR YUMUŞATMA"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "Kenar yumuşatma pürüzlü kenarları düzeltir. Hiçbiri en hızlısı değildir; FXAA hafiftir; SMAA görüntü kalitesine öncelik verir."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "Görünüm"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "GÖRÜNÜM"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "Uygulama"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "UYGULAMA"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "Uygulama · Güncellemeler"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "Ses"
 
@@ -114,14 +150,42 @@ msgstr "Ses"
 msgid "AUDIO"
 msgstr "SES"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "Avustralya"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "OTOMATIK KONTROL ET"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "Otomatik Kontrol et"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "Otomatik Kontrol et · Açık"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Geri"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "Geri · Ana Sayfa"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "ARKA PLAN"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "Arka plan"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "Arka plan · Animasyon"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -142,9 +206,13 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilinear en hafif varsayılandır. AMD FSR, TV çıkış boyutunun altında görüntü oluştururken kullanışlıdır."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Göz at"
+
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "Klasörlere göz at · D-pad / A"
 
 #: pe/ui/library.cpp
 msgid "Browse games"
@@ -154,7 +222,7 @@ msgstr "Oyunlara göz at"
 msgid "Browse settings"
 msgstr "Ayarlara göz at"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "Tuş eşleme"
 
@@ -178,7 +246,7 @@ msgstr "Düğme eşlemesi kaydedildi."
 msgid "BUTTON PROFILE"
 msgstr "BUTON PROFİLİ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "Düğme profili"
 
@@ -186,11 +254,15 @@ msgstr "Düğme profili"
 msgid "CACHE"
 msgstr "ÖNBELLEK"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "Önbellek"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "Önbellek: {0} |  Günlükler: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "İptal"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "{0} içindeki firmware/ okunamıyor. Çıkarılmış firmware NCA dosyalarını yükleyin."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "Değiştir"
 
@@ -212,7 +284,31 @@ msgstr "Bu oyun için konsol modu değiştirilsin mi?"
 msgid "Cheats"
 msgstr "Hileler"
 
-#: eden_services.cpp
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "Eden Encore güncellemeleri şimdi kontrol edilsin mi?"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "Kontrol et Şimdi"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "Otomatik Kontrol et (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "Kontrol et GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Herkese açık odalar aranıyor..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (resmi) · Kurulum Kapalı"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "Çin"
 
@@ -233,23 +329,35 @@ msgstr "Seç"
 msgid "Choose a game from your library."
 msgstr "Kütüphanenizden bir oyun seçin."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "Tema · Logo · Arka plan · Parıltı (Oyun: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Anahtarlar, donanım yazılımı, oyunlar, güncellemeler ve modlar için tek bir kök seçin"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "Oyunların kullanacağı dili seçin"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "Seç · arayüz. yazılımlar / Kontroller — değişmedi."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "Seç · dil"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "Daire"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "Temizlemek"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "Önbelleği temizle"
 
@@ -261,7 +369,47 @@ msgstr "Önbellek temizlensin mi?"
 msgid "Cleared {0} of cache."
 msgstr "{0} önbellek temizlendi."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "Kapat"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "Renk 1 · Mavi"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "Renk 1 · Yeşil"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "Renk 1 · Ön ayar"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "Renk 1 · Kırmızı"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "Renk 2 · Mavi"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "Renk 2 · Yeşil"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "Renk 2 · Ön ayar"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "Renk 2 · Kırmızı"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "Yapılandır"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "Onayla"
 
@@ -269,9 +417,13 @@ msgstr "Onayla"
 msgid "Confirm this action?"
 msgstr "Bu işlem onaylansın mı?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "Konsol modu"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "Sığdır"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +433,10 @@ msgstr "OYNAMAYA DEVAM ET"
 msgid "Controller mapping"
 msgstr "Denetleyici eşlemesi"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "Kontrolcü profili"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "Denetleyici profili: {0}"
@@ -289,11 +445,11 @@ msgstr "Denetleyici profili: {0}"
 msgid "CONTROLLERS"
 msgstr "KONTROL CİHAZLARI"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "Kumandalar"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "Kontroller"
 
@@ -325,12 +481,12 @@ msgstr "Depolama kökü kaydedilemedi. Lütfen tekrar deneyin."
 msgid "Could not save. Please try again."
 msgstr "Kaydedilemedi. Lütfen tekrar deneyin."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "Yaratmak"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "Klasörü oluştur"
 
@@ -339,11 +495,11 @@ msgstr "Klasörü oluştur"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "{0} oluşturuldu. Her modun klasörünü içine kopyalayın."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "Emeği geçenler ve kurulum"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "Geçmek"
 
@@ -351,15 +507,15 @@ msgstr "Geçmek"
 msgid "Custom"
 msgstr "Özel"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "Özel PS5"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "Özel Anahtar"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "Özelleştirmek"
 
@@ -376,7 +532,7 @@ msgid "Data: {0}"
 msgstr "Veri: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "Varsayılan ({0})"
 
@@ -384,7 +540,7 @@ msgstr "Varsayılan ({0})"
 msgid "DETAILED LOGGING"
 msgstr "DETAYLI KAYIT"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "Ayrıntılı günlük kaydı"
 
@@ -392,7 +548,7 @@ msgstr "Ayrıntılı günlük kaydı"
 msgid "Detailed logs on"
 msgstr "Ayrıntılı günlükler açık"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "Tanılama"
 
@@ -401,7 +557,7 @@ msgid "DIAGNOSTICS"
 msgstr "TANILAMA"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "TV"
 
@@ -424,6 +580,10 @@ msgstr "DualSense haritalama, kalibrasyon, titreşim ve kısayollar."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Felemenkçe"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +614,15 @@ msgstr "İngilizce (İngiltere)"
 msgid "English (US)"
 msgstr "İngilizce (ABD)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "Kapağı büyüt"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Avrupa"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "Eden Encore'dan çık"
 
@@ -489,6 +653,14 @@ msgstr "Dosyalar"
 msgid "FILESYSTEM"
 msgstr "DOSYA SİSTEMİ"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "Doldur"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "Filtre"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "Son uygulama çıktı boyutu. Daha düşük bellek kullanımı için 1080p'yi, denge için 1440p'yi veya maksimum çıktı ayrıntısı için 2160p'yi seçin."
@@ -505,7 +677,7 @@ msgstr "FIRMWARE"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "Firmware NCA doğrulaması başarısız oldu (kod {0}). Firmware ile prod.keys dosyasının uyumlu olduğunu kontrol edin."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "Firmware hazır"
 
@@ -517,6 +689,10 @@ msgstr "Firmware SystemVersion verisi eksik veya okunamıyor. Eksiksiz bir firmw
 msgid "Fixed Encore folder structure"
 msgstr "Encore klasör yapısı düzeltildi"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "Odak · Parıltı"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "KLASÖRLER"
@@ -526,7 +702,7 @@ msgstr "KLASÖRLER"
 msgid "FPS OVERLAY"
 msgstr "FPS SAYACI"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "FPS sayacı"
 
@@ -538,7 +714,7 @@ msgstr "Fransızca"
 msgid "French (Canada)"
 msgstr "Fransızca (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "FSR keskinliği"
 
@@ -563,10 +739,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "Oyun sesi; PS5 sistem menüsü müziği değişmez."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "OYUN ARKA PLAN"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "Oyun · Arka plan"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "Oyun başlatılamadı: {0} Ayrıntılar: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "Klasörlere göz at · yazılımlar"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +772,11 @@ msgstr "Oyunun görüntü oluşturma ölçeği seçilen profili takip eder. Perf
 msgid "GAME RESOLUTION"
 msgstr "OYUN ÇÖZÜNÜRLÜĞÜ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "Oyun çözünürlüğü"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "Oyun ayarları"
 
@@ -596,7 +784,7 @@ msgstr "Oyun ayarları"
 msgid "GAME VOLUME"
 msgstr "OYUN SES DÜZEYİ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "Oyun ses düzeyi"
 
@@ -612,6 +800,10 @@ msgstr "OYUNLAR"
 msgid "Games and cache"
 msgstr "Oyunlar ve önbellek"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "Oyunlar bulundu"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "Oyunlar destekliyorsa bu dili, desteklemiyorsa kendi varsayılan dilini kullanır. Oyun başlatıldığında geçerli olur."
@@ -619,6 +811,10 @@ msgstr "Oyunlar destekliyorsa bu dili, desteklemiyorsa kendi varsayılan dilini 
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "Başlattığınız oyunlar burada görünür."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +824,21 @@ msgstr "Almanca"
 msgid "GETTING STARTED"
 msgstr "BAŞLARKEN"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · Durum: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "Küresel ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "Genel denetleyici profili: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "Parıltı (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +849,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "Grafik işleyici hazırlanamadı. Ayarlar'da başka bir işleyici deneyin; sürücü ayrıntıları için stderr.log ve eden_log.txt dosyalarına bakın."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "Taşınabilir"
 
@@ -662,7 +866,7 @@ msgid "HIGH CONTRAST"
 msgstr "YÜKSEK KONTRAST"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "Yüksek kontrast"
 
@@ -670,8 +874,16 @@ msgstr "Yüksek kontrast"
 msgid "Home"
 msgstr "Ana sayfa"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "Görsel · Karartma"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "Görsel · Ölçek"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "İçe aktar"
 
@@ -692,6 +904,14 @@ msgstr "İçe aktarıldı. Yerini aldığı kayıt yedeklendi."
 msgid "IN USE"
 msgstr "KULLANIMDA"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "YÜKLÜ"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "Yüklü"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "Dahili depolama"
@@ -704,7 +924,7 @@ msgstr "Dahili depolama kaydedildi. Kullanmak için Encore'u yeniden açın."
 msgid "Italian"
 msgstr "İtalyanca"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "Japonya"
 
@@ -721,7 +941,15 @@ msgstr "ANAHTARLAR"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "Anahtarlar ve firmware: başlangıç denetimleri başarılı. Oyuna özgü uyumluluk, oyun başlatılırken denetlenir."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "Anahtarlar bulundu"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "Anahtarlar eksik"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "Kore"
 
@@ -729,7 +957,7 @@ msgstr "Kore"
 msgid "Korean"
 msgstr "Korece"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "Dil"
 
@@ -746,7 +974,7 @@ msgid "LARGER TEXT"
 msgstr "BÜYÜK METİN"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "Büyük metin"
 
@@ -754,6 +982,18 @@ msgstr "Büyük metin"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "Son açılan oyun"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "Sonra"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "EN SON SÜRÜM"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "En son Sürüm"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +1003,7 @@ msgstr "Oyunu başlat"
 msgid "LAYOUT"
 msgstr "DÜZEN"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "Sol çubuğa basın"
 
@@ -783,6 +1023,18 @@ msgstr "Resim yükleniyor"
 msgid "Loading game library..."
 msgstr "Oyun kütüphanesi yükleniyor..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "Yerel Görsel"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "LOGO"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "Logo"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "GÜNLÜKLER"
@@ -790,6 +1042,18 @@ msgstr "GÜNLÜKLER"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "Menüyü görmeyi ve takip etmeyi kolaylaştırın."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "Yönet"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "Elle"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "Elle Kontrol et"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1063,7 @@ msgstr "Maks. oyuncular: {0}"
 msgid "MENU SOUNDS"
 msgstr "MENÜ SESLERİ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "Menü sesleri"
 
@@ -825,15 +1089,23 @@ msgid "MODS"
 msgstr "MODLAR"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "Modlar"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "Kapağı taşı"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "Çok oyunculu"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "SESSİZE AL"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "Sessize al"
 
@@ -855,10 +1127,26 @@ msgstr "En yakın"
 msgid "Needs attention"
 msgstr "Dikkat gerekiyor"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · En son Sürüm"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · Kurulum: Kapalı"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "Elle Kontrol et: Sonra."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "Sonraki açılış: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · Kontrol et Şimdi · Kapalı"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1160,25 @@ msgstr "{0} içinde firmware NCA dosyası bulunamadı."
 msgid "No folders here."
 msgstr "Burada klasör yok."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "Oyun bulunamadı"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "Mod yok"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Bu oyun için henüz mod yok. Her modun klasörünü roms/ klasörünün yanındaki {0} konumuna kopyalayın."
 
-#: pe/ui/library.cpp
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Gösterilecek açık oda yok."
+
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "ROM dosyası bulunamadı."
 
@@ -894,23 +1190,35 @@ msgstr "roms klasörü yok"
 msgid "No screenshots available"
 msgstr "Ekran görüntüsü yok"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "Arka plan: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Yok"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "Kontrol et Şimdi · Kapalı"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "İçe aktarılacak kayıt yok"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "Kapalı"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "Logo (resmi)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "Açık"
 
@@ -924,9 +1232,13 @@ msgid "OPEN"
 msgstr "AÇ"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "Aç"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "Klasörleri aç"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1260,7 @@ msgstr "Depolama alanını aç"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "Oyun başına DualSense eşlemesini açın. Genel kullanımlar Ayarlar > Kontroller; Özel, yalnızca bu oyun için bunu geçersiz kılar."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "Seçenekler"
 
@@ -961,6 +1273,10 @@ msgstr "Sayfa"
 msgid "Parent folder"
 msgstr "Üst klasör"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Şifre"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -970,7 +1286,7 @@ msgstr "Yama"
 msgid "Play"
 msgstr "Oyna"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation'ı"
 
@@ -991,7 +1307,7 @@ msgid "Portuguese (Brazil)"
 msgstr "Portekizce (Brezilya)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Gücünü Eden'den alır"
 
@@ -1034,6 +1350,14 @@ msgstr "PS5 13.60 ÇATAL"
 msgid "PS5 controller initialization failed"
 msgstr "PS5 kontrol cihazı hazırlanamadı"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Oda hizmetine ulaşılamıyor."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Herkese açık odalar (salt okunur)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "HIZLI AYARLAR"
@@ -1045,6 +1369,10 @@ msgstr "Hızlı ayarlar"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Çıkış"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Oda dizini (salt okunur)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1071,12 +1399,16 @@ msgid "REDUCE MOTION"
 msgstr "HAREKETİ AZALTMA"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Hareketi azaltma"
 
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Yenile"
+
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "Yenileme hızı"
 
@@ -1089,7 +1421,7 @@ msgstr "YENİLEME HIZI"
 msgid "REGION"
 msgstr "BÖLGE"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "İşleyici"
 
@@ -1100,6 +1432,10 @@ msgstr "İŞLEYİCİ"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "Sıfırla"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "Sıfırla Tema"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1449,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "Bu oyunun özel ayarları sıfırlansın mı?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "Çözünürlük"
 
@@ -1129,7 +1465,11 @@ msgstr "Varsayılan ayarlar geri yüklensin mi?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "Sıfırla Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Sağ çubuk tuşuna basın"
 
@@ -1140,6 +1480,10 @@ msgstr "ROM, oyun dosyaları klasöründe yok"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "Depolama kökünde ROM eksik"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Odalara katılma henüz kullanılamıyor."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1154,7 +1498,7 @@ msgid "Russian"
 msgstr "Rusça"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Ryujinx kaydı bulundu"
 
@@ -1176,12 +1520,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "Kısıtlı (kod {0}): yalnızca uygulama klasörü"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "Kaydedilen veriler"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "Kayıt klasörü bulundu"
 
@@ -1198,8 +1542,16 @@ msgstr "Kaydedildi. 120 Hz gösteremeyen ekran 60 Hz'te kalır."
 msgid "Saved. Applies when a game starts."
 msgstr "Kaydedildi. Oyun başlatıldığında geçerli olur."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "Ara Yerel Arka plan..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "Ara GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "Seç"
 
@@ -1210,6 +1562,10 @@ msgstr "Bir oyun seçin"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "Başlamak için bir oyun seçin"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "Seç · kategoriler"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1590,7 @@ msgstr "Ayarlar"
 msgid "SETUP"
 msgstr "KURULUM"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "Kurulum gerekli"
 
@@ -1258,6 +1614,10 @@ msgstr "Oynarken canlı FPS'yi gösterir. Kapalı normal kullanım için daha te
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "yazılımlar · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "Opak paneller, daha parlak metin ve çerçeveli vurgu."
@@ -1274,7 +1634,7 @@ msgstr "İspanyolca"
 msgid "Spanish (Latin America)"
 msgstr "İspanyolca (Latin Amerika)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "Kare"
 
@@ -1289,10 +1649,18 @@ msgid "STARTING"
 msgstr "BAŞLATILIYOR"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "DURUM"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "Durum"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "ÇUBUK ÖLÜ BÖLGESİ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "Çubuk ölü bölgesi"
 
@@ -1300,7 +1668,7 @@ msgstr "Çubuk ölü bölgesi"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "Burada ve yükleme ekranında arka planın süzülmesini ve ekranların kaymasını durdurur."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "Depolama"
 
@@ -1324,7 +1692,7 @@ msgstr "Depolama kökü kaydedildi. Kullanmak için Encore'u yeniden açın."
 msgid "Supply your own files"
 msgstr "Kendi dosyalarınızı ekleyin"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "Anahtar"
 
@@ -1336,7 +1704,11 @@ msgstr "Kartı değiştir"
 msgid "System"
 msgstr "Sistem"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "Sistem Ayarları"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "Tayvan"
 
@@ -1349,7 +1721,7 @@ msgstr "Tayca"
 msgid "THANKS"
 msgstr "TEŞEKKÜRLER"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "Tüm PS5 homebrew topluluğuna ve sürücüleri, araçları ve kütüphaneleri Eden Encore'u mümkün kılan tüm geliştiricilere teşekkür ederiz."
 
@@ -1365,6 +1737,14 @@ msgstr "Oyunun grafik belleği tükendi. Ayarlar, Video bölümünde (veya oyunu
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Oyunlar destekliyorsa kullanılacak dil."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "TEMA"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "Tema"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1767,16 @@ msgstr "BU KÖK"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "İçe aktarmak için roms/ yanındaki ryujinx/ içine bir Ryujinx klasörü veya save-import/{0}/ içine bir kayıt kopyalayın."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "Dokunmatik yüzey"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "Üçgen"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "Aç veya kapat"
 
@@ -1404,7 +1784,7 @@ msgstr "Aç veya kapat"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "Oyunlar için DualSense titreşimini açar veya kapatır."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "TV çıkışı"
 
@@ -1430,11 +1810,15 @@ msgstr "YUKARI"
 msgid "Update {0}"
 msgstr "Güncelleme {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · Güncellemeler (Oyun/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "GÜNCELLEME, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "Ölçekleme filtresi"
 
@@ -1442,7 +1826,7 @@ msgstr "Ölçekleme filtresi"
 msgid "UPSCALING FILTER"
 msgstr "ÖLÇEKLEME FİLTRESİ"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "ABD"
 
@@ -1458,7 +1842,7 @@ msgstr "Bu kökü kullan"
 msgid "VIBRATION"
 msgstr "TİTREŞİM"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "Titreşim"
 
@@ -1466,11 +1850,11 @@ msgstr "Titreşim"
 msgid "VIBRATION STRENGTH"
 msgstr "TİTREŞİM GÜCÜ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "Titreşim gücü"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "Video"
 
@@ -1478,7 +1862,7 @@ msgstr "Video"
 msgid "VIDEO"
 msgstr "VİDEO"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "Video ön ayarı"
 
@@ -1486,8 +1870,12 @@ msgstr "Video ön ayarı"
 msgid "VIDEO PRESET"
 msgstr "VİDEO ÖN AYARI"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "Ses düzeyi"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (önerilen)"
 
@@ -1507,6 +1895,14 @@ msgstr "Oyunlarınız"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "Sıradaki maceranız"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "Yakınlaştır"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "Uzaklaştır"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1970,7 @@ msgid "{0} of {1} mods on"
 msgstr "{0}/{1} mod açık"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "{0}/{1} açık"
 
@@ -1592,171 +1988,3 @@ msgstr "{0}/ (NSP veya XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (her oyun kimliği için bir klasör)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "Kapağı büyüt"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "Kapat"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "Uzaklaştır"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "Yakınlaştır"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "Kapağı taşı"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "Görünüm"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "GÖRÜNÜM"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "TEMA"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "Tema"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "VARSAYILAN"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "ÖNIZLEME"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "Sistem Ayarları"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "Tüm Yazılımlar"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "Etkin"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "Yapılandır"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "Anahtarlar bulundu"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "Anahtarlar eksik"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "Oyunlar bulundu"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "Oyun bulunamadı"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "Klasörlere göz at · yazılımlar"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "Geri · Ana Sayfa"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "Seç · dil"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "Seç · kategoriler"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "yazılımlar · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "Klasörlere göz at · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "Ana Sayfa · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "Ana Sayfa · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "arayüz · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "arayüz · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "Seç · Encore / Switch. yazılımlar / Kontroller — değişmedi."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "Seç · arayüz. yazılımlar / Kontroller — değişmedi."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "Hakkında"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "Çok oyunculu"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "Ses düzeyi"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "Kontrolcü profili"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "Önbellek"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "Yönet"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "Klasörleri aç"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "Filtre"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

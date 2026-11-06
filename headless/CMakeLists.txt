@@ -1565,7 +1565,7 @@ if(PS5_NATIVE)
     # supplied once by eden-headless's native network_domain_rules.c.
     # The guest derived DNS source includes the matching policy prototype.
     target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
-    target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
+target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
     # Only main.cpp needs to recompile when the SHA changes. The stable
     # video_core and other native app objects keep their incremental caches.
     if(NOT DEFINED EDEN_ENCORE_SOURCE_COMMIT)
@@ -1630,12 +1630,17 @@ else()
 endif()
 target_include_directories(eden-headless PRIVATE "${PROJECT_SOURCE_DIR}/src")
 # The R-label is injected by the native compiler, independently of sce_sys.
-set(EDEN_LAUNCHER_BUILD_LABEL "R1" CACHE STRING "Eden Encore compiled R revision")
+set(EDEN_LAUNCHER_BUILD_LABEL "" CACHE STRING "Exact Eden Encore compiled R revision (required for native builds)")
 if(NOT EDEN_LAUNCHER_BUILD_LABEL MATCHES "^R[0-9]+$")
-    message(FATAL_ERROR "Invalid Eden launcher revision: ${EDEN_LAUNCHER_BUILD_LABEL}")
+    message(FATAL_ERROR "Missing/invalid Eden R revision: provide -DEDEN_LAUNCHER_BUILD_LABEL=R<number> via the native build tool; no default R1")
+endif()
+set(EDEN_LAUNCHER_PACKAGE_VERSION "" CACHE STRING "Numeric PS5 contentVersion derived from R revision")
+if(PS5_NATIVE AND NOT EDEN_LAUNCHER_PACKAGE_VERSION MATCHES "^[0-9][0-9][.][0-9][0-9][0-9][.][0-9][0-9][0-9]$")
+    message(FATAL_ERROR "Missing or invalid compiled native PS5 contentVersion")
 endif()
 target_compile_definitions(eden-headless PRIVATE
     EDEN_LAUNCHER_BUILD_LABEL=\"${EDEN_LAUNCHER_BUILD_LABEL}\"
+    EDEN_LAUNCHER_PACKAGE_VERSION=\"${EDEN_LAUNCHER_PACKAGE_VERSION}\"
     EDEN_SHARED_JIT_AVAILABLE=0
     EDEN_JIT_COMPILE_BATCH_AVAILABLE=0)
 target_link_libraries(eden-headless PRIVATE core eden-pad)
@@ -1797,6 +1802,8 @@ endif()
                 "${launcher_dir}/pe/platform/display_egl.cpp"
                 "${launcher_dir}/pe/ui/browse.cpp"
                 "${launcher_dir}/pe/ui/home.cpp"
+                "${launcher_dir}/room_directory.cpp"
+                "${launcher_dir}/pe/ui/multiplayer.cpp"
                 "${launcher_dir}/pe/ui/launcher.cpp"
                 "${launcher_dir}/pe/ui/library.cpp"
                 "${launcher_dir}/pe/ui/mapping.cpp"

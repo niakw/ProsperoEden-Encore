@@ -23,6 +23,8 @@ constexpr int kHomeGameSlots = 6;
 constexpr int kHomeAllSoftware = 6;
 constexpr int kHomeShortcutFirst = 7;
 constexpr int kHomeShortcuts = 6;
+constexpr int kHomeUpdate = kHomeShortcutFirst + kHomeShortcuts;
+constexpr int kHomeSettingsHeader = kHomeUpdate + 1;
 constexpr int kLibraryColumns = 6;
 constexpr int kLibraryPageSize = 18;
 constexpr float kSwitchHomeTileSize = 384.0f;
@@ -238,6 +240,14 @@ void Launcher::draw_switch_header(Canvas& c, const char *heading) {
         list.rounded_rect({px-21,py+12,42,17},9,kWhite);
     }
     }
+    // Header actions are reachable by the R1 shoulder button on HOME
+    // and via the existing controller navigation. Never imply "up-to-date" without a checked result.
+    const bool home = heading != nullptr && heading[0] == '\0';
+    draw_update_button(c, 1540.0f, 98.0f,
+                       home && switch_home_focus_ == kHomeUpdate, true);
+    settings_gear(c, 1640.0f, 98.0f, 23.0f, kInk);
+    if (home && switch_home_focus_ == kHomeSettingsHeader)
+        list.ring(1640.0f, 98.0f, 35.0f, 4.0f, kFocus);
     text(c,clock_,1814.0f,baseline(80.0f,50.0f,30.0f),30.0f,kInk,Align::right);
 }
 
@@ -319,14 +329,19 @@ void Launcher::draw_switch_home(Canvas& c) {
 void Launcher::press_switch_home(Key key) {
     const int count=switch_recent_count(home_);
     const int current=count==0 && switch_home_focus_<kHomeShortcutFirst ?
-        kHomeAllSoftware : std::clamp(switch_home_focus_,0,kHomeShortcutFirst+kHomeShortcuts-1);
+        kHomeAllSoftware : std::clamp(switch_home_focus_,0,kHomeSettingsHeader);
     switch(key) {
+    case Key::r1:
+        // Reach the update status from HOME in one action.
+        switch_home_focus_=kHomeUpdate;
+        cue(Cue::focus);
+        return;
     case Key::left:
     case Key::right: {
         const int delta=key==Key::right?1:-1;
         const int next=current>=kHomeShortcutFirst ?
             std::clamp(current+delta,kHomeShortcutFirst,
-                       kHomeShortcutFirst+kHomeShortcuts-1) :
+                       kHomeSettingsHeader) :
             std::clamp((current==kHomeAllSoftware?count:current)+delta,0,count);
         const int candidate=current>=kHomeShortcutFirst?next:
             next==count?kHomeAllSoftware:next;
@@ -370,14 +385,19 @@ void Launcher::press_switch_home(Key key) {
         } else if(current==kHomeShortcutFirst+1) {
             open(Screen::files,true);enter_files();
         } else if(current==kHomeShortcutFirst+2) {
-            // Online multiplayer is not supported by this port.
-            cue(Cue::error);
+            enter_multiplayer();
         } else if(current==kHomeShortcutFirst+3) {
             open_mapping(false);
         } else if(current==kHomeShortcutFirst+4) {
             open(Screen::settings,true);prefs_=services_.preferences();section_.snap(1.0f);
         } else if(current==kHomeShortcutFirst+5) {
             (void)confirm_action(Confirmation::exit_app);
+        } else if (current==kHomeUpdate) {
+            open_update_confirmation();
+        } else if (current==kHomeSettingsHeader) {
+            open(Screen::settings,true);
+            prefs_=services_.preferences();
+            section_.snap(1.0f);
         }
         return;
     default:return;
@@ -466,15 +486,15 @@ void Launcher::draw_switch_settings(Canvas& c) {
     auto& list=c.list;
     static constexpr const char *categories[]={
         TR("Video"),TR("Audio"),TR("Controls"),TR("Accessibility"),
-        TR("Appearance"),TR("Diagnostics"),TR("Storage"),TR("Language")};
-    constexpr int n=8;
+        TR("Appearance"),TR("Diagnostics"),TR("Storage"),TR("Language"),TR("Application")};
+    constexpr int n=9;
     const int selected=std::clamp(settings_.selected,0,n-1);
     list.rounded_rect({92,173,1736,1},0,kGrey);
     list.rounded_rect({608,175,2,755},0,kGrey);
     for(int i=0;i<n;++i) {
-        const Rect r{98.0f,194.0f+float(i)*87.0f,493.0f,77.0f};
+        const Rect r{98.0f,194.0f+float(i)*77.0f,493.0f,70.0f};
         if(i==selected)list.rounded_rect(r,3.0f,kFocus);
-        text_shrink(c,tr(categories[i]),r.x+26,baseline(r.y,77,25),
+        text_shrink(c,tr(categories[i]),r.x+26,baseline(r.y,70,25),
                     25,i==selected?kWhite:kInk,r.w-48);
     }
     const char* title=tr(categories[selected]);
@@ -505,10 +525,14 @@ void Launcher::draw_switch_settings(Canvas& c) {
               Line{TR("Reduce motion"),prefs_.reduce_motion?tr("On"):tr("Off")},Line{"",""}};
         size=3;break;
     case 4:
-        rows={Line{TR("Theme"),prefs_.ui_theme?"Switch":"Encore"},
-              Line{TR("Original Encore interface"),prefs_.ui_theme?"":tr("Active")},
-              Line{TR("Switch-style interface"),prefs_.ui_theme?tr("Active"):""},Line{"",""}};
-        size=3;break;
+        rows={Line{TR("Theme"),prefs_.ui_theme?"Switch":
+                         prefs_.color_palette==1?"Encore Non-Neon":
+                         prefs_.color_palette==2?"Encore Dark":
+                         prefs_.color_palette==3?"Encore Light":"Encore Neon"},
+              Line{TR("Logo"),std::to_string(prefs_.logo_choice)},
+              Line{TR("Background"),std::to_string(prefs_.background_style)},
+              Line{TR("Game background"),prefs_.show_game_background?tr("On"):tr("Off")}};
+        size=4;break;
     case 5:
         rows={Line{TR("Detailed logging"),prefs_.detailed_logging?tr("On"):tr("Off")},
               Line{TR("Cache"),tr("Manage")},Line{"",""},Line{"",""}};size=2;break;
@@ -516,6 +540,10 @@ void Launcher::draw_switch_settings(Canvas& c) {
         rows={Line{TR("Game files"),tr("Open folders")},Line{"",""},Line{"",""},Line{"",""}};size=1;break;
     case 7:
         rows={Line{TR("Language"),tr("Change")},Line{"",""},Line{"",""},Line{"",""}};size=1;break;
+    case 8:
+        rows={Line{TR("Installed"),version_},Line{TR("Latest release"),update_info_.latest_version},
+              Line{TR("Auto check"),prefs_.check_updates_on_start?tr("On"):tr("Off")},
+              Line{TR("Status"),update_info_.summary}};size=4;break;
     }
     for(int i=0;i<size;++i){
         const float y=310.0f+float(i)*110.0f;
@@ -765,6 +793,8 @@ void Launcher::draw_switch_confirmation(Canvas& c) {
                 9,32,kBlack.with_alpha(0.18f));
     list.rounded_rect(panel,5,kWhite);
     const char* title=tr("Confirm");
+    if (confirmation_==Confirmation::app_update)
+        title=tr("Application updates");
     if(confirmation_==Confirmation::exit_app)
         title=tr("Exit Eden Encore");
     else if(confirmation_==Confirmation::console_mode)
@@ -800,6 +830,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
     case Modal::controls:heading=tr("Controls");break;
     case Modal::accessibility:heading=tr("Accessibility");break;
     case Modal::appearance:heading=tr("Appearance");break;
+    case Modal::application:heading=tr("Application updates");break;
     case Modal::diagnostics:heading=tr("Diagnostics");break;
     default:break;
     }
@@ -807,7 +838,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                 36.0f,kInk,910.0f);
     list.rounded_rect({493,245,932,2},0,kGrey);
     const int total=dialog_rows(modal);
-    const int first=modal==Modal::video?std::clamp(option_-2,0,std::max(0,total-5)):0;
+    const int first=(modal==Modal::video || modal==Modal::appearance)?std::clamp(option_-2,0,std::max(0,total-5)):0;
     const int last=std::min(total,first+5);
     for(int i=first;i<last;++i) {
         const float y=278.0f+float(i-first)*112.0f;
@@ -819,9 +850,53 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         const char *label="";
         std::string value;
         switch(modal) {
-        case Modal::appearance:
-            label=i==0?"Encore":"Switch";
-            value=(prefs_.ui_theme==i)?tr("Active"):tr("Select");
+        case Modal::appearance: {
+            const char* labels[] = {
+                TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
+                TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"),
+                TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
+                TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
+                TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
+                TR("Background motion"), TR("Image scaling"), TR("Game background"),
+                TR("Reset appearance")};
+            const char* theme_names[] = {
+                "Encore Neon", "Switch", "Encore Non-Neon", "Encore Dark", "Encore Light"};
+            const char* logos[] = {"Automatic", "Neon", "Non-Neon", "White", "Dark"};
+            const char* backgrounds[] = {
+                "Theme default", "Encore artwork", "Solid color", "Gradient",
+                "Local image", "Daily Switch"};
+            const char* accents[] = {"Original", "Ocean", "Emerald", "Amber", "Rose"};
+            const int theme = prefs_.ui_theme ? 1 :
+                (prefs_.color_palette == 0 ? 0 : std::clamp(prefs_.color_palette+1, 2, 4));
+            label = tr(labels[i]);
+            switch(i) {
+            case 0: value = theme_names[theme]; break;
+            case 1: value = logos[std::clamp(prefs_.logo_choice,0,4)]; break;
+            case 2: value = accents[std::clamp(prefs_.accent_color,0,4)]; break;
+            case 3: value = backgrounds[std::clamp(prefs_.background_style,0,5)]; break;
+            case 4: value = prefs_.wallpaper_file.empty()?tr("None"):prefs_.wallpaper_file; break;
+            case 5: value = std::to_string(prefs_.background_color); break;
+            case 6: case 7: case 8:
+                value = std::to_string((prefs_.background_color >> (16 - 8*(i-6))) & 255u);
+                break;
+            case 9: value = std::to_string(prefs_.background_color2); break;
+            case 10: case 11: case 12:
+                value = std::to_string((prefs_.background_color2 >> (16 - 8*(i-10))) & 255u);
+                break;
+            case 13: value = prefs_.glow_enabled?tr("On"):tr("Off"); break;
+            case 14: value = std::to_string(prefs_.glow_strength)+"%"; break;
+            case 15: value = std::to_string(prefs_.background_overlay)+"%"; break;
+            case 16: value = prefs_.background_animate?tr("On"):tr("Off"); break;
+            case 17: value = prefs_.background_fit?tr("Contain"):tr("Fill"); break;
+            case 18: value = prefs_.show_game_background?tr("On"):tr("Off"); break;
+            default: value = tr("Restore Neon"); break;
+            }
+            break;
+        }
+        case Modal::application:
+            label = i==0 ? tr("Check now") : tr("Check on launcher start");
+            value = i==0 ? tr("Search GitHub Releases") :
+                             (prefs_.check_updates_on_start ? tr("On") : tr("Off"));
             break;
         case Modal::accessibility:
             label=i==0?tr("Larger text"):i==1?tr("High contrast"):tr("Reduce motion");

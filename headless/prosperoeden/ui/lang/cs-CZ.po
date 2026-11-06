@@ -59,9 +59,17 @@ msgstr "Doporučuje se 8 %. Zvyšte ji pro drift hole; snižte jej pro citlivěj
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Některý ze souborů NCA firmwaru nelze přečíst. Nainstaluj dump firmwaru znovu."
 
-#: pe/ui/browse.cpp
+#: pe/ui/switch_theme.cpp
+msgid "About"
+msgstr "O aplikaci"
+
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "About Eden Encore"
 msgstr "O Eden Encore"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Accent"
+msgstr "Akcent"
 
 #. Label: which folders the app can read.
 #: pe/ui/browse.cpp
@@ -69,7 +77,7 @@ msgid "ACCESS"
 msgstr "PŘÍSTUP"
 
 #. A settings category: options that make the menu easier to see and follow.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Accessibility"
 msgstr "Přístupnost"
 
@@ -82,9 +90,17 @@ msgstr "PŘÍSTUPNOST"
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Doplňky: {0}  /  Jazyk: {1}"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
 msgstr "Veškeré uznání za emulátor Eden patří jeho vývojářům a přispěvatelům."
+
+#: pe/ui/switch_theme.cpp
+msgid "All Software"
+msgstr "Veškerý software"
+
+#: pe/ui/launcher.cpp
+msgid "Already up to date: {0}"
+msgstr "Nejnovější Verze: {0}"
 
 #: settings_store.h
 msgid "AMD FSR"
@@ -94,7 +110,7 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "Jiný jazyk"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Anti-aliasing"
 msgstr "Vyhlazování hran"
 
@@ -106,7 +122,27 @@ msgstr "VYHLAZOVÁNÍ HRAN"
 msgid "Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."
 msgstr "Anti-aliasing vyhlazuje zubaté okraje. Žádný není nejrychlejší; FXAA je lehký; SMAA upřednostňuje kvalitu obrazu."
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Appearance"
+msgstr "Vzhled"
+
+#: pe/ui/settings.cpp
+msgid "APPEARANCE"
+msgstr "VZHLED"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application"
+msgstr "Aplikace"
+
+#: pe/ui/settings.cpp
+msgid "APPLICATION"
+msgstr "APLIKACE"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Application updates"
+msgstr "Aplikace · Aktualizace"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
 msgstr "Zvuk"
 
@@ -114,14 +150,42 @@ msgstr "Zvuk"
 msgid "AUDIO"
 msgstr "ZVUK"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "Australia"
 msgstr "Austrálie"
 
+#: pe/ui/settings.cpp
+msgid "AUTO CHECK"
+msgstr "AUTOMATICKY ZKONTROLOVAT"
+
+#: pe/ui/switch_theme.cpp
+msgid "Auto check"
+msgstr "Automaticky Zkontrolovat"
+
+#: pe/ui/settings.cpp
+msgid "Auto check on"
+msgstr "Automaticky Zkontrolovat · Zapnuto"
+
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Back"
 msgstr "Zpět"
+
+#: pe/ui/switch_theme.cpp
+msgid "Back to HOME"
+msgstr "Zpět · Domů"
+
+#: pe/ui/settings.cpp
+msgid "BACKGROUND"
+msgstr "POZADÍ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background"
+msgstr "Pozadí"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Background motion"
+msgstr "Pozadí · Animace"
 
 #. An upscaling filter.
 #: settings_store.h
@@ -142,9 +206,13 @@ msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below 
 msgstr "Bilineární je nejsvětlejší výchozí nastavení. AMD FSR je užitečné při renderování pod velikost TV výstupu."
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Procházet"
+
+#: pe/ui/switch_theme.cpp
+msgid "Browse folders: D-pad / Open: A"
+msgstr "Procházet složky · D-pad / A"
 
 #: pe/ui/library.cpp
 msgid "Browse games"
@@ -154,7 +222,7 @@ msgstr "Procházet hry"
 msgid "Browse settings"
 msgstr "Procházet nastavení"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button mapping"
 msgstr "Mapování tlačítek"
 
@@ -178,7 +246,7 @@ msgstr "Mapování tlačítek bylo uloženo."
 msgid "BUTTON PROFILE"
 msgstr "PROFIL TLAČÍTKA"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Button profile"
 msgstr "Tlačítkový profil"
 
@@ -186,11 +254,15 @@ msgstr "Tlačítkový profil"
 msgid "CACHE"
 msgstr "CACHE"
 
+#: pe/ui/switch_theme.cpp
+msgid "Cache"
+msgstr "Mezipaměť"
+
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
 msgstr "Mezipaměť: {0} |  Protokoly: {1}"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
 msgstr "Zrušit"
 
@@ -199,7 +271,7 @@ msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "Složku firmware/ v {0} nelze přečíst. Nainstaluj rozbalené soubory NCA firmwaru."
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Change"
 msgstr "Změnit"
 
@@ -212,7 +284,31 @@ msgstr "Změnit režim konzoly pro tuto hru?"
 msgid "Cheats"
 msgstr "Cheaty"
 
-#: eden_services.cpp
+#: pe/ui/launcher.cpp
+msgid "Check for an Eden Encore update now?"
+msgstr "Eden Encore · Zkontrolovat Nyní?"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check now"
+msgstr "Zkontrolovat Nyní"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Check on launcher start"
+msgstr "Automaticky Zkontrolovat (launcher)"
+
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+msgid "Checking official releases..."
+msgstr "Zkontrolovat GitHub Releases..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Checking public rooms..."
+msgstr "Hledání veřejných místností..."
+
+#: pe/ui/settings.cpp
+msgid "Checks official stable GitHub Releases only. No automatic installation."
+msgstr "GitHub Releases (oficiální) · Instalace Vypnuto"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "China"
 msgstr "Čína"
 
@@ -233,23 +329,35 @@ msgstr "Zvolit"
 msgid "Choose a game from your library."
 msgstr "Vyber si hru z knihovny."
 
+#: pe/ui/settings.cpp
+msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
+msgstr "Motiv · Logo · Pozadí · Záře (Hra: —)"
+
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Vyberte jeden kořen pro klíče, firmware, hry, aktualizace a mody"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Choose the language games use"
 msgstr "Zvol jazyk, který hry používají"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp
+msgid "Choose the launcher interface without changing game or controller settings."
+msgstr "Vyberte · rozhraní. software / Ovládání — beze změny."
+
+#: pe/ui/switch_theme.cpp
+msgid "Choose your preferred language"
+msgstr "Vyberte · jazyk"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Circle"
 msgstr "Kruh"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear"
 msgstr "Jasný"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
 msgstr "Vymazat mezipaměť"
 
@@ -261,7 +369,47 @@ msgstr "Vymazat mezipaměť?"
 msgid "Cleared {0} of cache."
 msgstr "Vymazáno {0} mezipaměti."
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/library.cpp
+msgid "Close"
+msgstr "Zavřít"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 blue"
+msgstr "Barva 1 · Modrá"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 green"
+msgstr "Barva 1 · Zelená"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 preset"
+msgstr "Barva 1 · Předvolba"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 1 red"
+msgstr "Barva 1 · Červená"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 blue"
+msgstr "Barva 2 · Modrá"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 green"
+msgstr "Barva 2 · Zelená"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 preset"
+msgstr "Barva 2 · Předvolba"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Color 2 red"
+msgstr "Barva 2 · Červená"
+
+#: pe/ui/switch_theme.cpp
+msgid "Configure"
+msgstr "Nastavit"
+
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Confirm"
 msgstr "Potvrdit"
 
@@ -269,9 +417,13 @@ msgstr "Potvrdit"
 msgid "Confirm this action?"
 msgstr "Potvrdit tuto akci?"
 
-#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Console mode"
 msgstr "Režim konzole"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Contain"
+msgstr "Přizpůsobit"
 
 #: pe/ui/home.cpp
 msgid "CONTINUE PLAYING"
@@ -281,6 +433,10 @@ msgstr "POKRAČOVAT VE HRANÍ"
 msgid "Controller mapping"
 msgstr "Mapování ovladače"
 
+#: pe/ui/switch_theme.cpp
+msgid "Controller profile"
+msgstr "Profil ovladače"
+
 #: pe/ui/settings.cpp
 msgid "Controller profile: {0}"
 msgstr "Profil ovladače: {0}"
@@ -289,11 +445,11 @@ msgstr "Profil ovladače: {0}"
 msgid "CONTROLLERS"
 msgstr "OVLADAČE"
 
-#: pe/ui/home.cpp
+#: pe/ui/home.cpp, pe/ui/switch_theme.cpp
 msgid "Controllers"
 msgstr "Ovladače"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Controls"
 msgstr "Ovládání"
 
@@ -325,12 +481,12 @@ msgstr "Kořenový adresář úložiště nelze uložit. Zkuste to prosím znovu
 msgid "Could not save. Please try again."
 msgstr "Uložení se nezdařilo. Zkus to znovu."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Create"
 msgstr "Vytvořit"
 
 #. Button hint: make the folder a game's mods go in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Create the folder"
 msgstr "Vytvořit složku"
 
@@ -339,11 +495,11 @@ msgstr "Vytvořit složku"
 msgid "Created {0}. Copy each mod's folder into it."
 msgstr "Složka {0} vytvořena. Zkopíruj do ní složku každého modu."
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
 msgstr "Autoři a konfigurace"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
 msgstr "kříž"
 
@@ -351,15 +507,15 @@ msgstr "kříž"
 msgid "Custom"
 msgstr "Vlastní"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom PS5"
 msgstr "Vlastní PS5"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
 msgstr "Vlastní přepínač"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
 msgstr "Přizpůsobit"
 
@@ -376,7 +532,7 @@ msgid "Data: {0}"
 msgstr "Údaje: {0}"
 
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Default ({0})"
 msgstr "Výchozí ({0})"
 
@@ -384,7 +540,7 @@ msgstr "Výchozí ({0})"
 msgid "DETAILED LOGGING"
 msgstr "PODROBNÉ PŘIHLÁŠENÍ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Detailed logging"
 msgstr "Podrobné logování"
 
@@ -392,7 +548,7 @@ msgstr "Podrobné logování"
 msgid "Detailed logs on"
 msgstr "Podrobné logy zapnuty"
 
-#: pe/ui/launcher.cpp, pe/ui/settings.cpp
+#: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
 msgstr "Diagnostika"
 
@@ -401,7 +557,7 @@ msgid "DIAGNOSTICS"
 msgstr "DIAGNOSTIKA"
 
 #. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Docked"
 msgstr "V doku"
 
@@ -424,6 +580,10 @@ msgstr "DualSense mapování, kalibrace, vibrace a zkratky."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Nizozemština"
+
+#: pe/ui/switch_theme.cpp
+msgid "Eden Encore"
+msgstr "Eden Encore"
 
 #: pe/ui/browse.cpp
 msgid "Eden Encore builds on the proven ProsperoEden 0.40 PS5 base for firmware 13.60, with the Eden core, safer recovery, and targeted compatibility, performance and TV-first UX improvements."
@@ -454,11 +614,15 @@ msgstr "Angličtina (UK)"
 msgid "English (US)"
 msgstr "Angličtina (US)"
 
+#: pe/ui/library.cpp
+msgid "Enlarge cover"
+msgstr "Zvětšit obal"
+
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Evropa"
 
-#: pe/ui/launcher.cpp
+#: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Exit Eden Encore"
 msgstr "Ukončete Eden Encore"
 
@@ -489,6 +653,14 @@ msgstr "Soubory"
 msgid "FILESYSTEM"
 msgstr "SOUBOROVÝ SYSTÉM"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Fill"
+msgstr "Vyplnit"
+
+#: pe/ui/switch_theme.cpp
+msgid "Filter"
+msgstr "Filtr"
+
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."
 msgstr "Konečná výstupní velikost aplikace. Zvolte 1080p pro menší využití paměti, 1440p pro vyvážení nebo 2160p pro maximální detaily výstupu."
@@ -505,7 +677,7 @@ msgstr "FIRMWARE"
 msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
 msgstr "Ověření souboru NCA firmwaru selhalo (kód {0}). Zkontroluj, zda jsou firmware a prod.keys kompatibilní."
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Firmware ready"
 msgstr "Firmware připraven"
 
@@ -517,6 +689,10 @@ msgstr "Data SystemVersion firmwaru chybí nebo je nelze přečíst. Nainstaluj 
 msgid "Fixed Encore folder structure"
 msgstr "Opravena struktura složek Encore"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Focus glow"
+msgstr "Zaměření · Záře"
+
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
 msgstr "SLOŽKY"
@@ -526,7 +702,7 @@ msgstr "SLOŽKY"
 msgid "FPS OVERLAY"
 msgstr "POČÍTADLO FPS"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FPS overlay"
 msgstr "Počítadlo FPS"
 
@@ -538,7 +714,7 @@ msgstr "Francouzština"
 msgid "French (Canada)"
 msgstr "Francouzština (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "FSR sharpness"
 msgstr "Ostrost FSR"
 
@@ -563,10 +739,22 @@ msgstr "FXAA"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "Zvuk her; hudba v systémové nabídce PS5 se nemění."
 
+#: pe/ui/settings.cpp
+msgid "GAME BACKDROP"
+msgstr "HRA POZADÍ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Game background"
+msgstr "Hra · Pozadí"
+
 #. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "Hru se nepodařilo spustit: {0} Podrobnosti: {1}"
+
+#: pe/ui/switch_theme.cpp
+msgid "Game files"
+msgstr "Procházet složky · software"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -584,11 +772,11 @@ msgstr "Měřítko vykreslení hry sleduje vybraný profil. Snižte ji kvůli v�
 msgid "GAME RESOLUTION"
 msgstr "ROZLIŠENÍ HRY"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game resolution"
 msgstr "Rozlišení hry"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Game settings"
 msgstr "Nastavení hry"
 
@@ -596,7 +784,7 @@ msgstr "Nastavení hry"
 msgid "GAME VOLUME"
 msgstr "HLASITOST HER"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Game volume"
 msgstr "Hlasitost her"
 
@@ -612,6 +800,10 @@ msgstr "HRY"
 msgid "Games and cache"
 msgstr "Hry a mezipaměť"
 
+#: pe/ui/switch_theme.cpp
+msgid "Games found"
+msgstr "Hry nalezeny"
+
 #: pe/ui/browse.cpp
 msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
 msgstr "Hry použijí tento jazyk, pokud ho nabízejí, jinak svůj výchozí. Změna se projeví při spuštění hry."
@@ -619,6 +811,10 @@ msgstr "Hry použijí tento jazyk, pokud ho nabízejí, jinak svůj výchozí. Z
 #: pe/ui/home.cpp
 msgid "Games you launch will appear here."
 msgstr "Zde se objeví hry, které spustíš."
+
+#: pe/ui/library.cpp
+msgid "GB"
+msgstr "GB"
 
 #: settings_store.h
 msgid "German"
@@ -628,13 +824,21 @@ msgstr "Němčina"
 msgid "GETTING STARTED"
 msgstr "ZAČÍNÁME"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp
+#: pe/ui/launcher.cpp
+msgid "GitHub Releases unavailable. You can keep using the launcher."
+msgstr "GitHub Releases · Stav: offline"
+
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global ({0})"
 msgstr "Globální ({0})"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Global controller profile: {0}"
 msgstr "Globální profil správce: {0}"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Glow intensity"
+msgstr "Záře (%)"
 
 #: pe/ui/settings.cpp
 msgid "Graphics backend and how games are scaled to your TV."
@@ -645,7 +849,7 @@ msgid "Graphics backend initialization failed. Try another backend in Settings; 
 msgstr "Inicializace rendereru se nezdařila. Zkus v Nastavení jiný renderer; podrobnosti o grafickém ovladači najdeš v souborech stderr.log a eden_log.txt."
 
 #. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Handheld"
 msgstr "Přenosný"
 
@@ -662,7 +866,7 @@ msgid "HIGH CONTRAST"
 msgstr "VYSOKÝ KONTRAST"
 
 #. A switch: solid dark panels, brighter text.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "High contrast"
 msgstr "Vysoký kontrast"
 
@@ -670,8 +874,16 @@ msgstr "Vysoký kontrast"
 msgid "Home"
 msgstr "Domů"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image darkness"
+msgstr "Obrázek · Ztmavení"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Image scaling"
+msgstr "Obrázek · Měřítko"
+
 #. Button hint: copy a save in.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Import"
 msgstr "Importovat"
 
@@ -692,6 +904,14 @@ msgstr "Importováno. Nahrazená data byla zálohována."
 msgid "IN USE"
 msgstr "POUŽÍVÁ SE"
 
+#: pe/ui/settings.cpp
+msgid "INSTALLED"
+msgstr "NAINSTALOVÁNO"
+
+#: pe/ui/switch_theme.cpp
+msgid "Installed"
+msgstr "Nainstalováno"
+
 #: pe/ui/browse.cpp
 msgid "Internal storage"
 msgstr "Interní úložiště"
@@ -704,7 +924,7 @@ msgstr "Interní úložiště bylo uloženo. Chcete-li jej použít, znovu otev�
 msgid "Italian"
 msgstr "Italština"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Japan"
 msgstr "Japonsko"
 
@@ -721,7 +941,15 @@ msgstr "KLÍČE"
 msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
 msgstr "Klíče a firmware: kontroly při startu proběhly v pořádku. Kompatibilita konkrétní hry se ověřuje při jejím spuštění."
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "Keys found"
+msgstr "Klíče nalezeny"
+
+#: pe/ui/switch_theme.cpp
+msgid "Keys missing"
+msgstr "Klíče chybí"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Korea"
 msgstr "Korea"
 
@@ -729,7 +957,7 @@ msgstr "Korea"
 msgid "Korean"
 msgstr "Korejština"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Language"
 msgstr "Jazyk"
 
@@ -746,7 +974,7 @@ msgid "LARGER TEXT"
 msgstr "VĚTŠÍ PÍSMO"
 
 #. A switch: the menu's small text is drawn larger.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Larger text"
 msgstr "Větší písmo"
 
@@ -754,6 +982,18 @@ msgstr "Větší písmo"
 #: eden_services.cpp
 msgid "Last game opened"
 msgstr "Naposledy spuštěná hra"
+
+#: pe/ui/launcher.cpp
+msgid "Later"
+msgstr "Později"
+
+#: pe/ui/settings.cpp
+msgid "LATEST RELEASE"
+msgstr "NEJNOVĚJŠÍ VERZE"
+
+#: pe/ui/switch_theme.cpp
+msgid "Latest release"
+msgstr "Nejnovější Verze"
 
 #: pe/ui/library.cpp
 msgid "Launch game"
@@ -763,7 +1003,7 @@ msgstr "Spustit hru"
 msgid "LAYOUT"
 msgstr "ROZLOŽENÍ"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
 msgstr "Stiskněte levou páku"
 
@@ -783,6 +1023,18 @@ msgstr "Načítání uměleckých děl"
 msgid "Loading game library..."
 msgstr "Načítání knihovny her..."
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Local image"
+msgstr "Místní Obrázek"
+
+#: pe/ui/settings.cpp
+msgid "LOGO"
+msgstr "LOGO"
+
+#: pe/ui/switch_theme.cpp
+msgid "Logo"
+msgstr "Logo"
+
 #: pe/ui/settings.cpp
 msgid "LOGS"
 msgstr "LOGY"
@@ -790,6 +1042,18 @@ msgstr "LOGY"
 #: pe/ui/settings.cpp
 msgid "Make the menu easier to see and follow."
 msgstr "Udělej si nabídku čitelnější a přehlednější."
+
+#: pe/ui/switch_theme.cpp
+msgid "Manage"
+msgstr "Spravovat"
+
+#: pe/ui/settings.cpp
+msgid "Manual"
+msgstr "Ručně"
+
+#: pe/ui/settings.cpp
+msgid "Manual check available"
+msgstr "Ručně Zkontrolovat"
 
 #: pe/ui/home.cpp
 msgid "Max. players: {0}"
@@ -799,7 +1063,7 @@ msgstr "Max. hráči: {0}"
 msgid "MENU SOUNDS"
 msgstr "ZVUKY NABÍDKY"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
 msgstr "Zvuky nabídky"
 
@@ -825,15 +1089,23 @@ msgid "MODS"
 msgstr "MODY"
 
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Mods"
 msgstr "Mody"
+
+#: pe/ui/library.cpp
+msgid "Move cover"
+msgstr "Posunout obal"
+
+#: Nlib metadata
+msgid "Multiplayer"
+msgstr "Hra pro více hráčů"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "ZTLUMENÍ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Mute"
 msgstr "Ztlumení"
 
@@ -855,10 +1127,26 @@ msgstr "Nejbližší soused"
 msgid "Needs attention"
 msgstr "Vyžaduje pozornost"
 
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release"
+msgstr "Eden Encore · Nejnovější Verze"
+
+#: pe/ui/launcher.cpp
+msgid "New Eden Encore release {0}; installation is not available yet."
+msgstr "Eden Encore {0} · Instalace: Vypnuto"
+
+#: pe/ui/launcher.cpp
+msgid "New manual check queued after current request."
+msgstr "Ručně Zkontrolovat: Později."
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "Po restartu: {0}"
+
+#: pe/ui/launcher.cpp
+msgid "No eligible official stable release could be verified."
+msgstr "GitHub Releases · Zkontrolovat Nyní · Vypnuto"
 
 #: pe/ui/browse.cpp
 msgid "No firmware folder"
@@ -872,17 +1160,25 @@ msgstr "V {0} nejsou žádné soubory NCA firmwaru."
 msgid "No folders here."
 msgstr "Nejsou tu žádné složky."
 
+#: pe/ui/switch_theme.cpp
+msgid "No games found"
+msgstr "Žádné hry"
+
 #. Shown on the Mods row of a game that has none.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods"
 msgstr "Žádné mody"
 
 #. {0} is a folder; roms/ is a folder name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
 msgstr "Tato hra zatím nemá žádné mody. Zkopíruj složku každého modu do {0}, vedle roms/."
 
-#: pe/ui/library.cpp
+#: pe/ui/multiplayer.cpp
+msgid "No public rooms to display."
+msgstr "Žádné veřejné místnosti k zobrazení."
+
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
 msgstr "Žádné soubory ROM nenalezeny."
 
@@ -894,23 +1190,35 @@ msgstr "Chybí složka roms"
 msgid "No screenshots available"
 msgstr "Nejsou k dispozici žádné snímky obrazovky"
 
+#: pe/ui/settings.cpp
+msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
+msgstr "Pozadí: PNG/JPEG/TGA → wallpapers/"
+
 #. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, settings_store.h
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Žádné"
 
+#: pe/ui/settings.cpp
+msgid "Not checked"
+msgstr "Zkontrolovat Nyní · Vypnuto"
+
 #. Short status at the right of the Save data row.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Nothing to import"
 msgstr "Nic k importu"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Off"
 msgstr "Vypnuto"
 
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Official logo"
+msgstr "Logo (oficiální)"
+
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "On"
 msgstr "Zapnuto"
 
@@ -924,9 +1232,13 @@ msgid "OPEN"
 msgstr "OTEVŘÍT"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Open"
 msgstr "Otevřít"
+
+#: pe/ui/switch_theme.cpp
+msgid "Open folders"
+msgstr "Otevřít složky"
 
 #: pe/ui/home.cpp
 msgid "Open library"
@@ -948,7 +1260,7 @@ msgstr "Otevřete úložiště"
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
 msgstr "Otevřete mapování DualSense pro jednotlivé hry. Globální používá Nastavení > Ovládací prvky; Vlastní jej přepíše pouze pro tuto hru."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Options"
 msgstr "Možnosti"
 
@@ -961,6 +1273,10 @@ msgstr "Stránka"
 msgid "Parent folder"
 msgstr "Nadřazená složka"
 
+#: pe/ui/multiplayer.cpp
+msgid "Password"
+msgstr "Heslo"
+
 #. What a mod is made of: a change to the game's program (not a game update).
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
@@ -970,7 +1286,7 @@ msgstr "Patch"
 msgid "Play"
 msgstr "Hrát"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
 
@@ -991,7 +1307,7 @@ msgid "Portuguese (Brazil)"
 msgstr "Portugalština (Brazílie)"
 
 #. Eden is the emulator's name (unchanged).
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Powered by Eden"
 msgstr "Běží na emulátoru Eden"
 
@@ -1034,6 +1350,14 @@ msgstr "PS5 13,60 VIDLICE"
 msgid "PS5 controller initialization failed"
 msgstr "Inicializace ovladače PS5 se nezdařila"
 
+#: pe/ui/multiplayer.cpp
+msgid "Public room service unavailable."
+msgstr "Služba místností není dostupná."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Veřejné místnosti (jen prohlížení)"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "RYCHLÁ NASTAVENÍ"
@@ -1045,6 +1369,10 @@ msgstr "Rychlá nastavení"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Ukončit"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Seznam místností (jen prohlížení)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1071,12 +1399,16 @@ msgid "REDUCE MOTION"
 msgstr "OMEZENÍ POHYBU"
 
 #. A switch: no drifting, sliding or zooming on screen.
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Reduce motion"
 msgstr "Omezení pohybu"
 
+#: pe/ui/multiplayer.cpp
+msgid "Refresh"
+msgstr "Obnovit"
+
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
 msgstr "Obnovovací frekvence"
 
@@ -1089,7 +1421,7 @@ msgstr "OBNOVOVACÍ FREKVENCE"
 msgid "REGION"
 msgstr "REGION"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Renderer"
 msgstr "Renderer"
 
@@ -1100,6 +1432,10 @@ msgstr "RENDERER"
 #: pe/ui/mapping.cpp
 msgid "Reset"
 msgstr "Obnovit"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Reset appearance"
+msgstr "Obnovit Motiv"
 
 #: pe/ui/launcher.cpp
 msgid "Reset controller mapping?"
@@ -1113,7 +1449,7 @@ msgstr "Reset overrides"
 msgid "Reset this game's custom settings?"
 msgstr "Resetovat vlastní nastavení této hry?"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
 msgstr "Rozlišení"
 
@@ -1129,7 +1465,11 @@ msgstr "Obnovit výchozí nastavení?"
 msgid "Restore defaults"
 msgstr "Restore defaults"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Restore Neon"
+msgstr "Obnovit Neon"
+
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Stiskněte pravou páku"
 
@@ -1140,6 +1480,10 @@ msgstr "Ve složce herních souborů chybí ROM"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "Chybí ROM v kořenovém adresáři úložiště"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Připojení k místnostem zatím není dostupné."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1154,7 +1498,7 @@ msgid "Russian"
 msgstr "Ruština"
 
 #. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Ryujinx save found"
 msgstr "Nalezena data Ryujinx"
 
@@ -1176,12 +1520,12 @@ msgid "Sandboxed (code {0}): app folder only"
 msgstr "Omezený (kód {0}): jen složka aplikace"
 
 #. A row of a game's settings: the game's saved progress, which can be copied in or out.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save data"
 msgstr "Uložená data"
 
 #. Short status at the right of the Save data row: a folder with a save to import.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Save folder found"
 msgstr "Nalezena složka s daty"
 
@@ -1198,8 +1542,16 @@ msgstr "Uloženo. Displej, který 120 Hz nezvládne, zůstane na 60 Hz."
 msgid "Saved. Applies when a game starts."
 msgstr "Uloženo. Projeví se při spuštění hry."
 
+#: pe/ui/settings.cpp
+msgid "Scanning local wallpapers..."
+msgstr "Hledat Místní Pozadí..."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Search GitHub Releases"
+msgstr "Hledat GitHub Releases"
+
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Select"
 msgstr "Vybrat"
 
@@ -1210,6 +1562,10 @@ msgstr "Vyber hru"
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
 msgstr "Začni výběrem hry"
+
+#: pe/ui/switch_theme.cpp
+msgid "Select a settings category"
+msgstr "Vyberte · kategorie"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1234,7 +1590,7 @@ msgstr "Nastavení"
 msgid "SETUP"
 msgstr "KONFIGURACE"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/switch_theme.cpp
 msgid "Setup required"
 msgstr "Nutná konfigurace"
 
@@ -1258,6 +1614,10 @@ msgstr "Při hraní zobrazuje živé FPS. Vypnuto je čistší pro běžné pou�
 msgid "SMAA"
 msgstr "SMAA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Software options: Triangle"
+msgstr "software · Triangle"
+
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."
 msgstr "Neprůhledné panely, jasnější písmo a orámované zvýraznění."
@@ -1274,7 +1634,7 @@ msgstr "Španělština"
 msgid "Spanish (Latin America)"
 msgstr "Španělština (Latinská Amerika)"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
 msgstr "náměstí"
 
@@ -1289,10 +1649,18 @@ msgid "STARTING"
 msgstr "SPOUŠTĚNÍ"
 
 #: pe/ui/settings.cpp
+msgid "STATUS"
+msgstr "STAV"
+
+#: pe/ui/switch_theme.cpp
+msgid "Status"
+msgstr "Stav"
+
+#: pe/ui/settings.cpp
 msgid "STICK DEADZONE"
 msgstr "MRTVÁ ZÓNA PÁČKY"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Stick deadzone"
 msgstr "Mrtvá zóna páčky"
 
@@ -1300,7 +1668,7 @@ msgstr "Mrtvá zóna páčky"
 msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
 msgstr "Zastaví pohyb pozadí a posouvání obrazovek, tady i na načítací obrazovce."
 
-#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Storage"
 msgstr "Úložiště"
 
@@ -1324,7 +1692,7 @@ msgstr "Kořenový adresář úložiště byl uložen. Chcete-li jej použít, z
 msgid "Supply your own files"
 msgstr "Přidej vlastní soubory"
 
-#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Switch"
 msgstr "Přepnout"
 
@@ -1336,7 +1704,11 @@ msgstr "Přepnout kartu"
 msgid "System"
 msgstr "Systém"
 
-#: eden_services.cpp
+#: pe/ui/switch_theme.cpp
+msgid "System Settings"
+msgstr "Nastavení systému"
+
+#: eden_services.cpp, pe/ui/library.cpp
 msgid "Taiwan"
 msgstr "Tchaj-wan"
 
@@ -1349,7 +1721,7 @@ msgstr "Thajština"
 msgid "THANKS"
 msgstr "PODĚKOVÁNÍ"
 
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Eden Encore possible."
 msgstr "Díky celé komunitě PS5 homebrew a všem vývojářům, jejichž ovladače, nástroje a knihovny umožňují Eden Encore."
 
@@ -1365,6 +1737,14 @@ msgstr "Hře došla grafická paměť. Sniž rozlišení v Nastavení, Video (ne
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Jazyk, který hry použijí, pokud ho nabízejí."
+
+#: pe/ui/settings.cpp
+msgid "THEME"
+msgstr "MOTIV"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Theme"
+msgstr "Motiv"
 
 #: pe/ui/browse.cpp
 msgid "This folder cannot be opened."
@@ -1387,16 +1767,16 @@ msgstr "TENTO KOŘEN"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Pro import zkopíruj složku Ryujinx do ryujinx/ nebo uložená data do save-import/{0}/, vedle roms/."
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Touchpad"
 msgstr "Touchpad"
 
-#: pe/ui/mapping.cpp
+#: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Triangle"
 msgstr "Trojúhelník"
 
 #. Button hint: switch the highlighted mod on or off.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Turn on or off"
 msgstr "Zapnout nebo vypnout"
 
@@ -1404,7 +1784,7 @@ msgstr "Zapnout nebo vypnout"
 msgid "Turns DualSense vibration on or off for games."
 msgstr "Zapne nebo vypne vibrace DualSense pro hry."
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "TV output"
 msgstr "Výstup na TV"
 
@@ -1430,11 +1810,15 @@ msgstr "NAHORU"
 msgid "Update {0}"
 msgstr "Aktualizace {0}"
 
+#: pe/ui/settings.cpp
+msgid "Updates for the Eden Encore app, not games or firmware."
+msgstr "Eden Encore · Aktualizace (Hra/firmware: -)"
+
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "AKTUALIZACE, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Upscaling filter"
 msgstr "Filtr škálování"
 
@@ -1442,7 +1826,7 @@ msgstr "Filtr škálování"
 msgid "UPSCALING FILTER"
 msgstr "FILTR ŠKÁLOVÁNÍ"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
 
@@ -1458,7 +1842,7 @@ msgstr "Použijte tento kořen"
 msgid "VIBRATION"
 msgstr "VIBRACE"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration"
 msgstr "Vibrace"
 
@@ -1466,11 +1850,11 @@ msgstr "Vibrace"
 msgid "VIBRATION STRENGTH"
 msgstr "SÍLA VIBRACÍ"
 
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vibration strength"
 msgstr "Síla vibrací"
 
-#: pe/ui/home.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video"
 msgstr "Video"
 
@@ -1478,7 +1862,7 @@ msgstr "Video"
 msgid "VIDEO"
 msgstr "VIDEO"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Video preset"
 msgstr "Předvolba videa"
 
@@ -1486,8 +1870,12 @@ msgstr "Předvolba videa"
 msgid "VIDEO PRESET"
 msgstr "PŘEDVOLBA VIDEA"
 
+#: pe/ui/switch_theme.cpp
+msgid "Volume"
+msgstr "Hlasitost"
+
 #. Vulkan is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (doporučeno)"
 
@@ -1507,6 +1895,14 @@ msgstr "Tvoje hry"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "Tvoje další dobrodružství"
+
+#: pe/ui/library.cpp
+msgid "Zoom in"
+msgstr "Přiblížit"
+
+#: pe/ui/library.cpp
+msgid "Zoom out"
+msgstr "Oddálit"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1574,7 +1970,7 @@ msgid "{0} of {1} mods on"
 msgstr "Zapnuté mody: {0} z {1}"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
-#: pe/ui/library.cpp
+#: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "{0} of {1} on"
 msgstr "Zapnuto: {0} z {1}"
 
@@ -1592,171 +1988,3 @@ msgstr "{0}/ (NSP nebo XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (složka pro každé ID titulu)"
-
-#: pe/ui/library.cpp
-msgid "GB"
-msgstr "GB"
-
-#: pe/ui/library.cpp
-msgid "Enlarge cover"
-msgstr "Zvětšit obal"
-
-#: pe/ui/library.cpp
-msgid "Close"
-msgstr "Zavřít"
-
-#: pe/ui/library.cpp
-
-#: pe/ui/library.cpp
-msgid "Zoom out"
-msgstr "Oddálit"
-
-#: pe/ui/library.cpp
-msgid "Zoom in"
-msgstr "Přiblížit"
-
-#: pe/ui/library.cpp
-msgid "Move cover"
-msgstr "Posunout obal"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Appearance"
-msgstr "Vzhled"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "APPEARANCE"
-msgstr "VZHLED"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "THEME"
-msgstr "MOTIV"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Theme"
-msgstr "Motiv"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "DEFAULT"
-msgstr "VÝCHOZÍ"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "PREVIEW"
-msgstr "NÁHLED"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "System Settings"
-msgstr "Nastavení systému"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "All Software"
-msgstr "Veškerý software"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Active"
-msgstr "Aktivní"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Configure"
-msgstr "Nastavit"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys found"
-msgstr "Klíče nalezeny"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Keys missing"
-msgstr "Klíče chybí"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Games found"
-msgstr "Hry nalezeny"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "No games found"
-msgstr "Žádné hry"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Game files"
-msgstr "Procházet složky · software"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Back to HOME"
-msgstr "Zpět · Domů"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose your preferred language"
-msgstr "Vyberte · jazyk"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Select a settings category"
-msgstr "Vyberte · kategorie"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Software options: Triangle"
-msgstr "software · Triangle"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Browse folders: D-pad / Open: A"
-msgstr "Procházet složky · D-pad / A"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Encore home screen"
-msgstr "Domů · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch home screen"
-msgstr "Domů · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Original Encore interface"
-msgstr "rozhraní · Encore"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Switch-style interface"
-msgstr "rozhraní · Switch"
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose Encore or Switch. Your games and control mapping stay unchanged."
-msgstr "Vyberte · Encore / Switch. software / Ovládání — beze změny."
-
-#: pe/ui/switch_theme.cpp, pe/ui/settings.cpp
-msgid "Choose the launcher interface without changing game or controller settings."
-msgstr "Vyberte · rozhraní. software / Ovládání — beze změny."
-
-#: pe/ui/switch_theme.cpp
-msgid "About"
-msgstr "O aplikaci"
-
-#: pe/ui/switch_theme.cpp
-msgid "Multiplayer"
-msgstr "Hra pro více hráčů"
-
-#: pe/ui/switch_theme.cpp
-msgid "Volume"
-msgstr "Hlasitost"
-
-#: pe/ui/switch_theme.cpp
-msgid "Controller profile"
-msgstr "Profil ovladače"
-
-#: pe/ui/switch_theme.cpp
-msgid "Cache"
-msgstr "Mezipaměť"
-
-#: pe/ui/switch_theme.cpp
-msgid "Manage"
-msgstr "Spravovat"
-
-#: pe/ui/switch_theme.cpp
-msgid "Open folders"
-msgstr "Otevřít složky"
-
-#: pe/ui/switch_theme.cpp
-msgid "Filter"
-msgstr "Filtr"
-
-#: pe/ui/switch_theme.cpp
-msgid "Eden Encore"
-msgstr "Eden Encore"

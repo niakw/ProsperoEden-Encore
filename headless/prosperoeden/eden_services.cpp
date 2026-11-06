@@ -25,6 +25,9 @@
 #include "radio_input.h"
 #include "settings_store.h"
 #include "version.h"
+#include "launcher_update_version.hpp"
+#include "launcher_update_release.hpp"
+#include <string_view>
 
 #include <algorithm>
 #include <array>
@@ -2330,6 +2333,20 @@ pe::ui::Preferences EdenServices::preferences() {
     result.high_contrast = saved.high_contrast;
     result.reduce_motion = saved.reduce_motion;
     result.ui_theme = saved.ui_theme;
+    result.color_palette = saved.color_palette;
+    result.accent_color = saved.accent_color;
+    result.background_style = saved.background_style;
+    result.check_updates_on_start = saved.check_updates_on_start;
+    result.logo_choice = saved.logo_choice;
+    result.glow_enabled = saved.glow_enabled;
+    result.glow_strength = saved.glow_strength;
+    result.background_color = saved.background_color;
+    result.background_color2 = saved.background_color2;
+    result.background_overlay = saved.background_overlay;
+    result.background_animate = saved.background_animate;
+    result.background_fit = saved.background_fit;
+    result.show_game_background = saved.show_game_background;
+    result.wallpaper_file = saved.wallpaper_file;
     return result;
 }
 
@@ -2358,6 +2375,20 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.high_contrast = preferences.high_contrast;
     value.reduce_motion = preferences.reduce_motion;
     value.ui_theme = preferences.ui_theme;
+    value.color_palette = preferences.color_palette;
+    value.accent_color = preferences.accent_color;
+    value.background_style = preferences.background_style;
+    value.check_updates_on_start = preferences.check_updates_on_start;
+    value.logo_choice = preferences.logo_choice;
+    value.glow_enabled = preferences.glow_enabled;
+    value.glow_strength = preferences.glow_strength;
+    value.background_color = preferences.background_color;
+    value.background_color2 = preferences.background_color2;
+    value.background_overlay = preferences.background_overlay;
+    value.background_animate = preferences.background_animate;
+    value.background_fit = preferences.background_fit;
+    value.show_game_background = preferences.show_game_background;
+    value.wallpaper_file = preferences.wallpaper_file;
     const bool saved = Eden::SavePreferences(value);
     if (!saved) Eden::Report("settings", "Could not write preferences");
 #ifdef PS5_NATIVE
@@ -2379,6 +2410,187 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     }
 #endif
     return saved;
+}
+
+namespace {
+// Treat all user wallpaper names as opaque BASENAMES under Eden's own data dir.
+// Never traverse the PS5 system gallery or accept a symlink to other app data.
+bool ValidWallpaperName(const std::string& name) {
+    if (name.empty() || name.size() > 120 || name == "." || name == ".." ||
+        name.find("..") != std::string::npos ||
+        name.find_first_of("/\\") != std::string::npos)
+        return false;
+    const auto pos = name.find_last_of('.');
+    if (pos == std::string::npos) return false;
+    std::string ext = name.substr(pos);
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c)); });
+    return ext == ".png" || ext == ".jpg" || ext == ".jpeg" ||
+           ext == ".tga";
+}
+std::string CheckedWallpaper(const std::filesystem::path& folder, const std::string& name) {
+    if (!ValidWallpaperName(name)) return {};
+    std::error_code ec;
+    const auto path = folder / name;
+    const auto info = std::filesystem::symlink_status(path, ec);
+    if (ec || !std::filesystem::is_regular_file(info)) return {};
+    const auto bytes = std::filesystem::file_size(path, ec);
+    if (ec || bytes < 32 || bytes > 12u * 1024u * 1024u) return {};
+    return path.string();
+}
+std::string LocalDay() {
+    const auto now = std::time(nullptr);
+    const std::tm* local = std::localtime(&now);
+    if (!local) return {};
+    char date[11]{};
+    if (std::strftime(date, sizeof(date), "%Y-%m-%d", local) == 0) return {};
+    return date;
+}
+} // namespace
+
+static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current) {
+    using Report = pe::ui::AppUpdateInfo;
+    Report report;
+    report.installed_version = current;
+    // The checked URL is a constant; never derive a download address from
+    // release notes, redirects or arbitrary GitHub API JSON.
+    const auto response = Common::Net::MakeRequest(
+        "https://api.github.com", "/repos/niakw/Prospero.Eden-Encore/releases/latest");
+    if (!response || response->empty() || response->size() > 512u * 1024u) {
+        report.state = Report::State::offline;
+        report.summary = "GitHub Releases unavailable. The launcher stays usable offline.";
+        return report;
+    }
+    const auto result = Eden::EncoreUpdate::AssessStableRelease(*response, current);
+    report.latest_version = result.latest_version;
+    report.notes = result.notes;
+    switch (result.status) {
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::malformed:
+        report.state = Report::State::incompatible;
+        report.summary = "No eligible stable release metadata or comparable version.";
+        break;
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::current:
+        report.state = Report::State::up_to_date;
+        report.summary = "Already up to date (" + result.latest_version + ").";
+        break;
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_without_package:
+        report.state = Report::State::newer_uninstallable;
+        report.summary = "Stable " + result.latest_version +
+            " exists, but no compatible PPSA99008 package is published.";
+        break;
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_package_candidate:
+        report.state = Report::State::newer_uninstallable;
+        report.summary = "Stable " + result.latest_version +
+            " has a checksum-bound PS5 package; native installation is not qualified.";
+        break;
+    }
+    // Even a valid SHA-256 in a trusted release is only a candidate. An
+    // independently audited installer, title-ID check, download verification,
+    // restart and recovery proof are required before State::available is used.
+    return report;
+}
+
+std::function<Eden::Multiplayer::RoomDirectory()>
+EdenServices::detached_room_directory_task()
+{
+    // No live networking occurs on the UI thread. The parser isolates
+    // untrusted directory data; guest traffic is NOT enabled by this feature.
+    return []() -> Eden::Multiplayer::RoomDirectory {
+        const auto response =
+            Common::Net::MakeRequest("https://api.ynet-fun.xyz", "/lobby");
+        if (!response)
+            return {{}, "Public room service could not be reached."};
+        if (response->size() > Eden::Multiplayer::MaxDirectoryBytes)
+            return {{}, "Public room response exceeded the safe size limit."};
+        // Protocol compatibility is not asserted before the LDN bridge is
+        // connected to the pinned emulator network version.
+        return Eden::Multiplayer::ParseRoomDirectory(*response, 0);
+    };
+}
+
+pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {
+    return QueryAppReleaseMetadata(current);
+}
+
+std::function<pe::ui::AppUpdateInfo()> EdenServices::detached_app_update_task(
+    const std::string& current) {
+    // Never capture this: HTTP may still be in progress when the app launches
+    // a game and destroys the launcher/frontend Services instance.
+    return [installed = current] { return QueryAppReleaseMetadata(installed); };
+}
+
+std::vector<std::string> EdenServices::wallpapers() {
+    std::vector<std::string> names;
+    const auto folder = std::filesystem::path(Eden::UserDir()) / "wallpapers";
+    std::error_code ec;
+    for (std::filesystem::directory_iterator it(folder,
+              std::filesystem::directory_options::skip_permission_denied, ec), end;
+         !ec && it != end && names.size() < 64; it.increment(ec)) {
+        const std::string name = it->path().filename().string();
+        if (!CheckedWallpaper(folder, name).empty()) names.push_back(name);
+    }
+    std::sort(names.begin(), names.end());
+    return names;
+}
+std::string EdenServices::wallpaper_path(const std::string& file) {
+    return CheckedWallpaper(std::filesystem::path(Eden::UserDir()) / "wallpapers", file);
+}
+std::string EdenServices::daily_wallpaper() {
+    // Same concept as NiakPS5: an offline release-art snapshot is rotated locally
+    // by calendar day. The manifest is refreshed by the package/catalog updater,
+    // never through a request on the UI thread. Missing catalog => no artwork.
+    // User-curated images override the optional read-only package snapshot.
+    // Both paths pass the same bounded manifest and local-image checks.
+    const std::array<std::filesystem::path, 2> sources = {
+        std::filesystem::path(Eden::UserDir()) / "wallpapers" / "daily",
+        std::filesystem::path(Eden::AppFile("ui/art/daily"))
+    };
+    for (const auto& folder : sources) {
+        const auto index = folder / "index.json";
+        std::error_code ec;
+        if (std::filesystem::is_symlink(std::filesystem::symlink_status(index, ec)) ||
+            ec || !std::filesystem::is_regular_file(index, ec) ||
+            std::filesystem::file_size(index, ec) > 256u * 1024u || ec) continue;
+        std::ifstream stream(index, std::ios::binary);
+        if (!stream) continue;
+        nlohmann::json parsed = nlohmann::json::parse(stream, nullptr, false);
+        if (parsed.is_discarded() || !parsed.is_object() || !parsed.contains("entries") ||
+            !parsed["entries"].is_array()) continue;
+        const auto today = LocalDay();
+        if (today.empty()) return {};
+        struct Candidate { std::string date; std::string path; };
+        std::vector<Candidate> candidates;
+        for (const auto& item : parsed["entries"]) {
+            if (candidates.size() >= 64) break;
+            if (!item.is_object()) continue;
+            if (!item.contains("approved") || !item["approved"].is_boolean() ||
+                !item["approved"].get<bool>()) continue;
+            if (!item.contains("filename") || !item["filename"].is_string() ||
+                !item.contains("release_date") || !item["release_date"].is_string() ||
+                !item.contains("platform") || !item["platform"].is_string()) continue;
+            const std::string platform = item["platform"].get<std::string>();
+            if (platform != "ns1" && platform != "ns2") continue;
+            const std::string date = item["release_date"].get<std::string>();
+            if (date.size() != 10 || date[4] != '-' || date[7] != '-' || date > today ||
+                !std::all_of(date.begin(), date.end(), [](char c) {
+                    return (c >= '0' && c <= '9') || c == '-'; })) continue;
+            const std::string file = item["filename"].get<std::string>();
+            const auto path = CheckedWallpaper(folder, file);
+            if (!path.empty()) candidates.push_back({date, path});
+        }
+        if (candidates.empty()) continue;
+        std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) {
+            return a.date > b.date || (a.date == b.date && a.path < b.path);
+        });
+        // At most the most recent 16 RELEASED titles are eligible for rotation.
+        if (candidates.size() > 16) candidates.resize(16);
+        const std::time_t now = std::time(nullptr);
+        const std::tm* local = std::localtime(&now);
+        // Use a stable per-day index, not process randomness.
+        const int day = local ? (local->tm_year * 366 + local->tm_yday) : 0;
+        return candidates[static_cast<std::size_t>(day) % candidates.size()].path;
+    }
+    return {};
 }
 
 const std::vector<std::string>& EdenServices::resolution_labels() {

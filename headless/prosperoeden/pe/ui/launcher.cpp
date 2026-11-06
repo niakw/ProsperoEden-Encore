@@ -11,14 +11,38 @@
 #include <cmath>
 #include <utility>
 #include <sys/stat.h>
+#include <thread>
 
 namespace pe::ui
 {
 
 using audio::Cue;
 
+std::shared_ptr<Launcher::UpdateCheckState> Launcher::process_update_check_{};
+bool Launcher::process_update_checked_ = false;
+std::string Launcher::process_notified_version_{};
+
 namespace
 {
+
+// GitHub/transport stays outside the UI and returns status codes. Format
+// user-facing strings on the launcher thread in the selected language.
+std::string LocalizedReleaseStatus(const AppUpdateInfo& info)
+{
+    switch (info.state) {
+    case AppUpdateInfo::State::up_to_date:
+        return pe::fill(tr("Already up to date: {0}"), {info.latest_version});
+    case AppUpdateInfo::State::newer_uninstallable:
+        return pe::fill(tr("New Eden Encore release {0}; installation is not available yet."),
+                        {info.latest_version});
+    case AppUpdateInfo::State::offline:
+        return tr("GitHub Releases unavailable. You can keep using the launcher.");
+    case AppUpdateInfo::State::incompatible:
+        return tr("No eligible official stable release could be verified.");
+    default:
+        return info.summary;
+    }
+}
 
 constexpr Rect kScreen{0.0f, 0.0f, 1920.0f, 1080.0f};
 const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
@@ -76,6 +100,16 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
         return probe_profile_avatar(services_);
     });
     apply_look();
+    // A game return reconstructs the launcher. Adopt any in-flight/completed
+    // process check instead of issuing a second request or losing the result.
+    if (process_update_check_) {
+        update_check_ = process_update_check_;
+        if (!update_check_->completed.load(std::memory_order_acquire))
+            update_info_.summary = tr("Checking official releases...");
+    }
+    if (prefs_.check_updates_on_start && !process_update_checked_)
+        start_app_update_check(false);
+
     // Show the existing Home shell immediately; native recent-ROM metadata
     // comes from one background snapshot. This is NOT a failed setup state.
     home_.setup_ready = true;
@@ -86,7 +120,7 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     read_home();
     settings_.visible = 7;
     settings_.pitch = 88.0f;
-    settings_.reset(8, 0);
+    settings_.reset(9, 0);
     section_.snap(1.0f);
     detail_.snap(1.0f);
     // Defer the welcome/recovery cue and ROM enumeration until Home
@@ -115,6 +149,13 @@ Launcher::~Launcher()
         diagnostics_scan_.wait();
     if (profile_avatar_scan_.valid())
         profile_avatar_scan_.wait();
+    if (wallpaper_scan_.valid())
+        wallpaper_scan_.wait();
+    if (daily_wallpaper_scan_.valid())
+        daily_wallpaper_scan_.wait();
+    if (local_wallpaper_scan_.valid())
+        local_wallpaper_scan_.wait();
+
 }
 
 std::vector<Cue> Launcher::take_cues()
@@ -151,6 +192,7 @@ bool Launcher::confirm_action(Confirmation action)
         case Confirmation::shader_caches: question = TR("Clear cache?"); break;
         case Confirmation::console_mode: question = TR("Change console mode for this game?"); break;
         case Confirmation::exit_app: question = TR("Exit Eden Encore?"); break;
+        case Confirmation::app_update: question = TR("Check for an Eden Encore update now?"); break;
         default: break;
         }
         say(tr(question), true);
@@ -228,9 +270,123 @@ void Launcher::close_modal()
     cue(Cue::modal_close);
 }
 
+void Launcher::open_update_confirmation()
+{
+    // A forced check never runs on the input/render thread. Confirmation
+    // is separate from accepting any future native installation.
+    if (confirmation_ != Confirmation::none || modal_ != Modal::none)
+        return;
+    confirmation_ = Confirmation::app_update;
+    message_ = tr("Check for an Eden Encore update now?");
+    message_warning_ = false;
+    message_age_ = 0.0f;
+    cue(Cue::notify);
+}
+
+void Launcher::draw_update_button(Canvas &c, float x, float y,
+                                  bool focused, bool paper) const
+{
+    auto& l = c.list;
+    const bool checking = update_check_ &&
+        !update_check_->completed.load(std::memory_order_acquire);
+    const bool current = !checking &&
+        update_info_.state == AppUpdateInfo::State::up_to_date;
+    const bool newer = !checking &&
+        (update_info_.state == AppUpdateInfo::State::newer_uninstallable ||
+         update_info_.state == AppUpdateInfo::State::available);
+    // Unknown/unreachable is gray, not falsely green. Checking is blue.
+    const Color fill = current ? Color::rgb(0x269c59) :
+                       newer ? Color::rgb(0xdf9229) :
+                       checking ? Color::rgb(0x398fc9) :
+                       Color::rgb(paper ? 0x858b96 : 0x57516c);
+    const Color ink = Color::rgb(0xffffff);
+    l.rounded_rect({x - 29.0f, y - 29.0f, 58.0f, 58.0f}, 19.0f, fill);
+    if (focused)
+        l.ring(x, y, 34.0f, 3.7f,
+               paper ? Color::rgb(0x0a84a5) : theme::kLimePale);
+    // Original vector download/check symbol; no platform asset.
+    l.line(x, y - 13.0f, x, y + 7.0f, 3.0f, ink);
+    l.line(x - 9.0f, y, x, y + 9.0f, 3.0f, ink);
+    l.line(x, y + 9.0f, x + 9.0f, y, 3.0f, ink);
+    l.line(x - 11.0f, y + 15.0f, x + 11.0f, y + 15.0f, 2.6f, ink);
+}
+
+void Launcher::start_app_update_check(bool manual)
+{
+    if (update_check_ && !update_check_->completed.load(std::memory_order_acquire)) {
+        // Manual always means a NEW network request. Coalesce repeated Cross
+        // presses into one follow-up after this in-flight request completes.
+        if (manual) {
+            update_check_->recheck_manual = true;
+            update_info_.summary = tr("New manual check queued after current request.");
+        }
+        return;
+    }
+    // Bind a self-contained task without a reference to the launcher or the
+    // service. Its network lifetime never blocks a game launch or its teardown.
+    auto query = services_.detached_app_update_task(version_);
+    const auto state = std::make_shared<UpdateCheckState>();
+    state->manual = manual;
+    update_check_ = state;
+    process_update_check_ = state;
+    process_update_checked_ = true;
+    update_check_manual_ = manual;
+    update_checked_this_launch_ = true;
+    update_notice_pending_ = false; // a user-forced check supersedes a pending auto notice
+    update_info_ = {};
+    update_info_.summary = tr("Checking official releases...");
+    std::thread([state, query = std::move(query)]() mutable {
+        try {
+            state->result = query();
+        } catch (...) {
+            state->result = {AppUpdateInfo::State::offline, {}, {},
+                             "Could not reach GitHub Releases.", {}};
+        }
+        // Results are written before the release-store and only read after
+        // the UI thread observes the matching acquire-load.
+        state->completed.store(true, std::memory_order_release);
+    }).detach();
+}
+
 void Launcher::apply_look()
 {
-    look() = {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion};
+    Look value;
+    value.large_text = prefs_.large_text;
+    value.high_contrast = prefs_.high_contrast;
+    value.reduce_motion = prefs_.reduce_motion;
+    value.palette = prefs_.ui_theme == 1 ? 0 : std::clamp(prefs_.color_palette, 0, 3);
+    value.background = prefs_.ui_theme == 1 ? 0 : std::clamp(prefs_.background_style, 0, 5);
+    value.glow = prefs_.glow_enabled;
+    value.glow_strength = std::clamp(prefs_.glow_strength, 0, 100) / 100.0f;
+    value.background_color = prefs_.background_color;
+    value.background_color2 = prefs_.background_color2;
+    value.background_overlay = prefs_.background_overlay;
+    value.background_animate = prefs_.background_animate;
+    value.background_fit = prefs_.background_fit;
+    if (value.background == 4) {
+        if (cached_wallpaper_name_ == prefs_.wallpaper_file)
+            value.wallpaper_path = cached_wallpaper_path_;
+        else if (!local_wallpaper_scan_.valid()) {
+            // File type, size and symlinks are verified on the worker before
+            // the image path is ever handed to the renderer/texture decoder.
+            pending_wallpaper_name_ = prefs_.wallpaper_file;
+            const std::string name = pending_wallpaper_name_;
+            local_wallpaper_scan_ = std::async(std::launch::async, [this, name] {
+                return services_.wallpaper_path(name);
+            });
+        }
+    }
+    if (value.background == 5) {
+        value.wallpaper_path = cached_daily_wallpaper_;
+        if (!daily_wallpaper_scanned_ && !daily_wallpaper_scan_.valid()) {
+            daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
+                return services_.daily_wallpaper();
+            });
+        }
+    }
+    look() = std::move(value);
+    theme::apply_palette(look().palette, std::clamp(prefs_.accent_color, 0, 4));
+    resolve_theme_plates();
 }
 
 bool Launcher::save_preferences(bool quiet)
@@ -374,6 +530,17 @@ void Launcher::press(Key key)
 {
     // Avoid opening/launching the placeholder while the initial native
     // Home snapshot is still being read in the background.
+    if (update_notice_visible_) {
+        // No installation is available: Cross/Circle are dismissal only.
+        // Never let this key press reach the underlying game or settings.
+        if (key == Key::cross || key == Key::circle) {
+            update_notice_visible_ = false;
+            cue(Cue::back);
+        } else {
+            cue(Cue::error);
+        }
+        return;
+    }
     if (!home_loaded_)
         return;
     if (!selected_game_.empty())
@@ -385,6 +552,19 @@ void Launcher::press(Key key)
     // through to the underlying screen while the dialog is visible.
     if (confirmation_ != Confirmation::none)
     {
+        if (confirmation_ == Confirmation::app_update) {
+            if (key == Key::cross) {
+                clear_confirmation();
+                message_.clear();
+                start_app_update_check(true);
+                cue(Cue::saved);
+            } else if (key == Key::circle) {
+                clear_confirmation();
+                message_.clear();
+                cue(Cue::back);
+            } else cue(Cue::error);
+            return;
+        }
         // Exit is unlike setting resets: confirming it must not be replayed
         // as another Circle event, which would immediately reopen the dialog.
         if (confirmation_ == Confirmation::exit_app && key == Key::cross) {
@@ -443,6 +623,8 @@ void Launcher::press(Key key)
         return prefs_.ui_theme == 1 ? press_switch_settings(key) : press_settings(key);
     case Screen::files:
         return press_files(key);
+    case Screen::multiplayer:
+        return press_multiplayer(key);
     case Screen::language:
         return press_language(key);
     case Screen::about:
@@ -473,7 +655,91 @@ void Launcher::update(float dt)
                      phase, static_cast<long long>(elapsed.count()));
         }
     };
+    // Browse/index metadata asynchronously; no disk I/O in the UI update/render path.
+    if (wallpaper_scan_.valid() &&
+        wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try { wallpaper_options_ = wallpaper_scan_.get(); }
+        catch (...) { wallpaper_options_.clear(); }
+    }
+    if (local_wallpaper_scan_.valid() &&
+        local_wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try { cached_wallpaper_path_ = local_wallpaper_scan_.get(); }
+        catch (...) { cached_wallpaper_path_.clear(); }
+        cached_wallpaper_name_ = std::move(pending_wallpaper_name_);
+        if (prefs_.ui_theme == 0 && prefs_.background_style == 4) {
+            if (prefs_.wallpaper_file == cached_wallpaper_name_)
+                look().wallpaper_path = cached_wallpaper_path_;
+            else apply_look(); // a second selection arrived while the first was checked
+        }
+    }
+    if (daily_wallpaper_scan_.valid() &&
+        daily_wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        try { cached_daily_wallpaper_ = daily_wallpaper_scan_.get(); }
+        catch (...) { cached_daily_wallpaper_.clear(); }
+        daily_wallpaper_scanned_ = true;
+        if (prefs_.ui_theme == 0 && prefs_.background_style == 5)
+            look().wallpaper_path = cached_daily_wallpaper_;
+    }
+    if (prefs_.ui_theme == 0 && prefs_.background_style == 5 &&
+        selected_game_.empty()) {
+        daily_refresh_wait_ += dt;
+        if (daily_refresh_wait_ >= 600.0f) {
+            daily_refresh_wait_ = 0.0f;
+            // Re-check the local day and manifest off-thread only.
+            daily_wallpaper_scanned_ = false;
+            if (!daily_wallpaper_scan_.valid())
+                daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
+                    return services_.daily_wallpaper();
+                });
+        }
+    }
     textures_.pump(dt);
+    if (room_load_ && room_load_->completed.load(std::memory_order_acquire)) {
+        room_directory_ = std::move(room_load_->result);
+        rooms_loaded_ = true;
+        room_selected_ = std::clamp(
+            room_selected_, 0,
+            std::max(0, static_cast<int>(room_directory_.rooms.size()) - 1));
+        room_load_.reset();
+    }
+    if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
+        const bool was_manual = update_check_->manual;
+        const bool recheck_manual = update_check_->recheck_manual;
+        // Copy: this finished task is reused after a game return.
+        update_info_ = update_check_->result;
+        update_check_.reset();
+        if (update_info_.installed_version.empty())
+            update_info_.installed_version = version_;
+        // The background worker never calls the catalog or formats a locale.
+        update_info_.summary = LocalizedReleaseStatus(update_info_);
+        if (recheck_manual) {
+            // The previous response must not masquerade as the forced query.
+            // The new task also survives game-entry/recreation of the launcher.
+            start_app_update_check(true);
+        } else {
+            if (update_check_manual_ || was_manual) {
+                say(update_info_.summary,
+                    update_info_.state != AppUpdateInfo::State::up_to_date);
+            } else if (prefs_.check_updates_on_start &&
+                       update_info_.state == AppUpdateInfo::State::newer_uninstallable &&
+                       !update_info_.latest_version.empty() &&
+                       process_notified_version_ != update_info_.latest_version) {
+                update_notice_pending_ = true;
+            }
+            update_check_manual_ = false;
+        }
+        // A new release can be announced, but is never presented as
+        // installable until its native PS5 installation path is qualified.
+    }
+
+    if (update_notice_pending_ && home_loaded_ && screen_ == Screen::home &&
+        modal_ == Modal::none && confirmation_ == Confirmation::none &&
+        selected_game_.empty() && intro_ >= 0.7f) {
+        update_notice_pending_ = false;
+        update_notice_visible_ = true;
+        process_notified_version_ = update_info_.latest_version;
+    }
+
     if (profile_avatar_scan_.valid() &&
         profile_avatar_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         ProfileAvatarProbe found;
@@ -603,6 +869,8 @@ void Launcher::draw_screen(Canvas &c, Screen screen)
         return prefs_.ui_theme == 1 ? draw_switch_settings(c) : draw_settings(c);
     case Screen::files:
         return prefs_.ui_theme == 1 ? draw_switch_files(c) : draw_files(c);
+    case Screen::multiplayer:
+        return draw_multiplayer(c);
     case Screen::language:
         return prefs_.ui_theme == 1 ? draw_switch_language(c) : draw_language(c);
     case Screen::about:
@@ -621,7 +889,7 @@ bool Launcher::press_top_nav(Key key)
     case Key::right:
     {
         const int step = key == Key::right ? 1 : -1;
-        top_nav_focus_ = (top_nav_focus_ + step + 4) % 4;
+        top_nav_focus_ = (top_nav_focus_ + step + 5) % 5;
         cue(Cue::focus);
         return true;
     }
@@ -667,6 +935,10 @@ bool Launcher::press_top_nav(Key key)
                 home_focus_ = 2; // Home's Recently Played header item
             }
         }
+        else if (target == 3)
+        {
+            open_update_confirmation();
+        }
         else
         {
             if (screen_ == Screen::settings)
@@ -694,22 +966,26 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
     // The packaged brand.tga comes from assets/icon0.png: the real
     // neon palm Eden Encore logo, not a synthetic cyan flower.
     // Draw the brand texture unmodified; never recolor its authored pixels.
-    if (c.textures.brand() != 0)
-        list.image(c.textures.brand(), {56.0f, 17.0f, 110.0f, 110.0f},
+    const int auto_logo = prefs_.color_palette == 1 ? 1 :
+                          prefs_.color_palette == 2 ? 2 :
+                          prefs_.color_palette == 3 ? 3 : 0;
+    const int logo = prefs_.logo_choice == 0 ? auto_logo :
+                     std::clamp(prefs_.logo_choice - 1, 0, 3);
+    if (const auto texture = c.textures.logo(logo); texture != 0)
+        list.image(texture, {56.0f, 17.0f, 110.0f, 110.0f},
                    {0.0f, 0.0f, 1.0f, 1.0f}, kWhite);
     text(c, "EDEN", 175.0f, baseline(31.0f, 39.0f, 30.0f), 30.0f,
          theme::kTitle, Align::left, 2.3f);
     text(c, "ENCORE", 176.0f, baseline(76.0f, 21.0f, 17.0f), 17.0f,
          theme::kLimePale, Align::left, 4.0f);
 
-    // Three principal tabs; Settings is the separate top-right gear.
-    // Four stable focus positions preserve controller navigation and actions.
+    // Three primary tabs + Updates next to the Settings gear.
     static constexpr const char* labels[] = {TR("Home"), TR("Library"), TR("Recent")};
-    static constexpr float xs[] = {355.0f, 558.0f, 790.0f, 1480.0f};
-    static constexpr float widths[] = {190.0f, 218.0f, 220.0f, 68.0f};
-    for (int i = 0; i < 4; ++i)
+    static constexpr float xs[] = {355.0f, 558.0f, 790.0f, 1398.0f, 1490.0f};
+    static constexpr float widths[] = {190.0f, 218.0f, 220.0f, 68.0f, 68.0f};
+    for (int i = 0; i < 5; ++i)
     {
-        const Rect r{xs[i], i == 3 ? 40.0f : 44.0f, widths[i], i == 3 ? 60.0f : 54.0f};
+        const Rect r{xs[i], i >= 3 ? 40.0f : 44.0f, widths[i], i >= 3 ? 60.0f : 54.0f};
         const bool active = i == active_tab;
         const float focused = i == focus_tab ? tween::clamp01(focus_amount) : 0.0f;
         if (active)
@@ -741,6 +1017,8 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
             list.ring(gx, gy, 13.0f, 2.6f, ink);
             list.line(gx, gy, gx, gy - 8.0f, 2.6f, ink);
             list.line(gx, gy, gx + 7.0f, gy + 5.0f, 2.6f, ink);
+        } else if (i == 3) {
+            draw_update_button(c, gx, gy, focused > 0.01f, false);
         } else {
             settings_gear(c, gx, gy, 19.0f, ink);
         }
@@ -790,7 +1068,7 @@ void Launcher::draw_frame(Canvas &c, const char *title, const char *copy)
 {
     // Storage, Language and About are Settings subpages; keep the global TV shell visible so
     // entering a utility never feels like falling back to the old launcher.
-    draw_top_nav(c, 3);
+    draw_top_nav(c, 4);
     text_shrink(c, title, 72.0f, baseline(142.0f, 38.0f, theme::kHeading), theme::kHeading,
                 theme::kTitle, 1280.0f);
     text_shrink(c, copy, 72.0f, baseline(176.0f, 24.0f, 18.0f), 18.0f, theme::kMeta,
@@ -809,6 +1087,8 @@ void Launcher::draw_confirmation(Canvas &c)
         return;
 
     const char *title = tr("Settings");
+    if (confirmation_ == Confirmation::app_update)
+        title = tr("Application updates");
     if (confirmation_ == Confirmation::console_mode)
         title = tr("Console mode");
     else if (confirmation_ == Confirmation::mapping_reset)
@@ -832,6 +1112,39 @@ void Launcher::draw_confirmation(Canvas &c)
         {Pad::cross, TR("Confirm")}, {Pad::circle, TR("Cancel")}};
     draw_hints(c, kConfirmHints, 2, panel.x + 64.0f, panel.y + panel.h - 52.0f,
                theme::kText, panel.w - 128.0f);
+}
+
+void Launcher::draw_update_notice(Canvas &c)
+{
+    if (!update_notice_visible_) return;
+    const bool paper = prefs_.ui_theme == 1;
+    const Rect panel{475.0f, 310.0f, 970.0f, 445.0f};
+    const Color ink = paper ? Color::rgb(0x172333) : theme::kTitle;
+    const Color sub = paper ? Color::rgb(0x38495b) : theme::kBody;
+    c.list.rounded_rect(kScreen, 0.0f, theme::kScrim.with_alpha(0.78f));
+    if (paper)
+        c.list.rounded_rect(panel, 24.0f, Color::rgb(0xffffff, 0.98f));
+    else
+        glass(c, panel, 24.0f, theme::kGlass.with_alpha(0.98f),
+              theme::kLime.with_alpha(0.62f), 1.2f);
+
+    text_shrink(c, tr("New Eden Encore release"), panel.x + 52.0f,
+                baseline(panel.y + 32.0f, 52.0f, theme::kHeading),
+                theme::kHeading, ink, panel.w - 104.0f);
+    text_shrink(c, version_ + "  →  " + update_info_.latest_version,
+                panel.x + 52.0f, baseline(panel.y + 105.0f, 34.0f, theme::kText24),
+                theme::kText24, sub, panel.w - 104.0f);
+    text_block(c, update_info_.summary, panel.x + 52.0f,
+               baseline(panel.y + 162.0f, 32.0f, theme::kText24),
+               theme::kText24, 34.0f, sub, panel.w - 104.0f, 2, kShrink);
+    if (!update_info_.notes.empty())
+        text_block(c, update_info_.notes, panel.x + 52.0f,
+                   baseline(panel.y + 263.0f, 25.0f, theme::kSmall),
+                   theme::kSmall, 29.0f, sub, panel.w - 104.0f, 2, kShrink);
+    static constexpr Hint hints[] = {
+        {Pad::cross, TR("Later")}, {Pad::circle, TR("Close")}};
+    draw_hints(c, hints, 2, panel.x + 52.0f, panel.y + panel.h - 55.0f,
+               sub, panel.w - 104.0f);
 }
 
 void Launcher::draw_launch(Canvas &c)
@@ -1251,6 +1564,7 @@ void Launcher::draw(gfx::DrawList &list)
         draw_switch_confirmation(c);
     else
         draw_confirmation(c);
+    draw_update_notice(c);
     list.pop_transform();
     if (launching)
         draw_launch(c);

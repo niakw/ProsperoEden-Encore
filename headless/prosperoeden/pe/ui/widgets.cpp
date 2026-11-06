@@ -55,7 +55,7 @@ const Color kBlack{0.0f, 0.0f, 0.0f, 1.0f};
 void Backdrop::update(float dt)
 {
     // With reduced motion the art stands still.
-    time_ += dt * motion();
+    time_ += dt * motion() * (look().background_animate ? 1.0f : 0.0f);
 }
 
 Rect Backdrop::art() const
@@ -72,22 +72,60 @@ Rect Backdrop::uv(const Rect &r) const
     return {(r.x - a.x) / a.w, (r.y - a.y) / a.h, r.w / a.w, r.h / a.h};
 }
 
-void Backdrop::draw(gfx::DrawList &list, const Textures &textures, float dim) const
+void Backdrop::draw(gfx::DrawList &list, Textures &textures, float dim) const
 {
     const Rect screen{0.0f, 0.0f, 1920.0f, 1080.0f};
     list.rounded_rect(screen, 0.0f, theme::kBase);
+    if (look().background == 2)
+        list.rounded_rect(screen, 0.0f, Color::rgb(look().background_color));
+    if (look().background == 3)
+        list.gradient_rect(screen, 0.0f, Color::rgb(look().background_color),
+                           Color::rgb(look().background_color2));
+    if ((look().background == 4 || look().background == 5) &&
+        !look().wallpaper_path.empty() && !look().high_contrast)
+    {
+        const Cover picture = textures.cover(look().wallpaper_path, 1920.0f);
+        if (picture.texture) {
+            const float source = std::max(0.01f, picture.aspect);
+            Rect uv{0.0f, 0.0f, 1.0f, 1.0f};
+            Rect target = screen;
+            const float aspect = 1920.0f / 1080.0f;
+            if (look().background_fit == 0) {
+                if (source > aspect) {
+                    uv.w = aspect / source; uv.x = (1.0f - uv.w) * 0.5f;
+                } else {
+                    uv.h = source / aspect; uv.y = (1.0f - uv.h) * 0.5f;
+                }
+            } else {
+                if (source > aspect) {
+                    target.h = 1920.0f / source;
+                    target.y = (1080.0f - target.h) * 0.5f;
+                } else {
+                    target.w = 1080.0f * source;
+                    target.x = (1920.0f - target.w) * 0.5f;
+                }
+            }
+            list.image(picture.texture, target, uv, kWhite);
+            if (look().background_overlay > 0)
+                list.rounded_rect(screen, 0.0f,
+                    Color::rgb(0x000000, look().background_overlay / 100.0f));
+        }
+    }
 
     // A single Eden art direction across the PS5 shell, launcher and game-loading transition.
     // The oversized crop drifts by only a few pixels, giving the shell depth without making
     // navigation feel busy.
-    if (textures.backdrop() != 0 && !look().high_contrast)
+    if (textures.backdrop() != 0 && !look().high_contrast &&
+        (look().background == 1 || (look().background == 5 && look().wallpaper_path.empty()) ||
+         (look().background == 0 && look().palette == 0)))
     {
         const Rect a = art();
         list.image(textures.backdrop(), a, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite.with_alpha(0.72f));
         list.gradient_rect(screen, 0.0f, Color::rgb(0x07070d, 0.20f), Color::rgb(0x05040b, 0.78f));
     }
 
-    if (!look().high_contrast)
+    if (!look().high_contrast && look().background <= 1 &&
+        (look().background == 1 || (look().background == 0 && look().palette == 0)))
     {
         const float drift = motion();
         const float violet_x = 330.0f + 42.0f * std::sin(time_ * 0.08f) * drift;
@@ -280,8 +318,9 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
         // very faint Eden-violet halo gives the premium console-card separation of the mockup.
         c.list.shadow({r.x + 8.0f, r.y + 22.0f, r.w - 16.0f, r.h - 10.0f}, radius, 54.0f,
                       kBlack.with_alpha(0.48f * shadow));
-        c.list.shadow({r.x - 4.0f, r.y - 2.0f, r.w + 8.0f, r.h + 8.0f}, radius + 4.0f, 36.0f,
-                      theme::kLimeDeep.with_alpha(0.075f * shadow));
+        if (look().glow)
+            c.list.shadow({r.x - 4.0f, r.y - 2.0f, r.w + 8.0f, r.h + 8.0f}, radius + 4.0f, 36.0f,
+                          theme::kLimeDeep.with_alpha(0.075f * shadow * look().glow_strength));
     }
     if (look().high_contrast)
     {
@@ -304,41 +343,64 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
                          kWhite.with_alpha(0.045f), kWhite.with_alpha(0.0f));
 }
 
-const Plate kRowPlate{20.0f,
+Plate kRowPlate{20.0f,
                       theme::kRow.with_alpha(0.82f),
                       theme::kRowEdge.with_alpha(0.42f),
                       theme::kRowFocus.with_alpha(0.92f),
                       theme::kFocusBlue.with_alpha(0.36f),
                       theme::kLimeDeep.with_alpha(0.54f),
                       theme::kFocusCore.with_alpha(0.82f)};
-const Plate kListPlate{20.0f,
+Plate kListPlate{20.0f,
                        Color::rgb(0x191a28, 0.91f),
                        Color::rgb(0x5b5572, 0.47f),
                        Color::rgb(0x2b2140, 0.95f),
                        theme::kLime.with_alpha(0.44f),
                        theme::kLimeDeep.with_alpha(0.50f),
                        theme::kLime.with_alpha(0.63f)};
-const Plate kButtonPlate{22.0f,
+Plate kButtonPlate{22.0f,
                          Color::rgb(0xf0edf7, 0.085f),
                          kWhite.with_alpha(0.16f),
                          Color::rgb(0x1d172b, 0.68f),
                          theme::kFocusBlue.with_alpha(0.35f),
                          theme::kLimeDeep.with_alpha(0.60f),
                          theme::kFocusCore.with_alpha(0.90f)};
-const Plate kTilePlate{22.0f,
+Plate kTilePlate{22.0f,
                        Color::rgb(0xf4f2f8, 0.045f),
                        kWhite.with_alpha(0.105f),
                        Color::rgb(0x1b1428, 0.50f),
                        theme::kFocusBlue.with_alpha(0.30f),
                        theme::kLimeDeep.with_alpha(0.50f),
                        theme::kFocusCore.with_alpha(0.86f)};
-const Plate kNavPlate{20.0f,
+Plate kNavPlate{20.0f,
                       kWhite.with_alpha(0.0f),
                       kWhite.with_alpha(0.0f),
                       Color::rgb(0x241833, 0.34f),
                       theme::kFocusBlue.with_alpha(0.28f),
                       theme::kLimeDeep.with_alpha(0.38f),
                       theme::kFocusCore.with_alpha(0.82f)};
+
+void resolve_theme_plates()
+{
+    // The original authored Neon components are immutable snapshots.
+    static const std::array<Plate,5> original = {
+        kRowPlate, kListPlate, kButtonPlate, kTilePlate, kNavPlate};
+    const std::array<Plate*,5> plates = {
+        &kRowPlate, &kListPlate, &kButtonPlate, &kTilePlate, &kNavPlate};
+    if (look().palette == 0) {
+        for (std::size_t i = 0; i < plates.size(); ++i) *plates[i] = original[i];
+        return;
+    }
+    for (auto* plate : plates) {
+        const bool tile = plate == &kTilePlate;
+        const bool nav = plate == &kNavPlate;
+        plate->fill = theme::kRow.with_alpha(tile ? 0.12f : nav ? 0.0f : 0.82f);
+        plate->edge = theme::kRowEdge.with_alpha(nav ? 0.0f : 0.60f);
+        plate->focus_base = theme::kRowFocus.with_alpha(tile ? 0.14f : 0.78f);
+        plate->focus_left = theme::kFocusBlue.with_alpha(0.35f);
+        plate->focus_right = theme::kLimeDeep.with_alpha(0.38f);
+        plate->focus_edge = theme::kFocusCore.with_alpha(0.90f);
+    }
+}
 
 void plate_rest(Canvas &c, const Plate &style, const Rect &r)
 {
@@ -361,6 +423,13 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)
                              Color::rgb(0xd6a4ff, amount));
         return;
     }
+    if (!look().glow || look().glow_strength <= 0.001f) {
+        // A clean, legible controller focus: no bloom, breathing, or neon sweep.
+        c.list.bordered_rect(r, style.radius,
+            theme::kRowFocus.with_alpha(0.10f * amount), 2.8f,
+            theme::kFocusCore.with_alpha(0.95f * amount));
+        return;
+    }
     // Eden Encore luminous focus: pink/violet dual halo, crisp outer edge and
     // a dark-to-plum translucent sweep. Unlike a solid focused rectangle,
     // the cover artwork remains fully visible under the selected tile.
@@ -374,13 +443,13 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)
     // Shadows fill the interior of rounded shapes in this shader. For cover
     // tiles the glow is instead emitted BEFORE the image (Home/Library draw
     // order), otherwise a focused red/green cover becomes an opaque pink card.
-    if (!artwork_plate) {
+    if (!artwork_plate && look().glow && look().glow_strength > 0.0f) {
         c.list.shadow({r.x - 13.0f, r.y - 10.0f, r.w + 26.0f, r.h + 24.0f},
                       style.radius + 13.0f, 43.0f,
-                      theme::kLime.with_alpha(0.30f * amount * breathe));
+                      theme::kLime.with_alpha(0.30f * amount * breathe * look().glow_strength));
         c.list.shadow({r.x - 5.0f, r.y - 5.0f, r.w + 10.0f, r.h + 10.0f},
                       style.radius + 6.0f, 19.0f,
-                      theme::kSun.with_alpha(0.29f * amount * breathe));
+                      theme::kSun.with_alpha(0.29f * amount * breathe * look().glow_strength));
     }
     if (style.focus_base.a > 0.0f)
         c.list.rounded_rect(r, style.radius,

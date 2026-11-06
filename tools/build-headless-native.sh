@@ -24,6 +24,8 @@ source_commit=$(git -C "$root" rev-parse --verify HEAD)
 # Do not conflate GitHub run numbers with Encore's R-revisions.
 build_label="${EDEN_LAUNCHER_BUILD_LABEL:-$(python3 -B "$root/tools/ci/derive-encore-build-label.py")}"
 [[ "$build_label" =~ ^R[0-9]+$ ]] || { echo "Invalid Encore build label: $build_label" >&2; exit 1; }
+# Native contentVersion advances with the compiled R revision.
+native_version="$(python3 -B "$root/tools/ci/native-content-version.py" "$build_label")"
 [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]] || {
     echo "Cannot attest the native Encore source commit" >&2
     exit 1
@@ -119,6 +121,7 @@ cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DEDEN_ENCORE_SOURCE_COMMIT="$source_commit" \
     -DEDEN_LAUNCHER_BUILD_LABEL="$build_label" \
+    -DEDEN_LAUNCHER_PACKAGE_VERSION="$native_version" \
     -DEDEN_PS5_VULKAN=ON \
     -DEDEN_VULKAN_DRIVER=RADV \
     -DCMAKE_C_COMPILER_LAUNCHER="$cache" -DCMAKE_CXX_COMPILER_LAUNCHER="$cache" \

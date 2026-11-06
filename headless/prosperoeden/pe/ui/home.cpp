@@ -25,6 +25,7 @@ constexpr int kHomeHero = 0;
 constexpr int kHomeNavLibrary = 1;
 constexpr int kHomeNavRecent = 2;
 constexpr int kHomeNavSettings = 3;
+constexpr int kHomeNavUpdate = 23; // appended without renumbering quick/game focus
 constexpr int kHomeDetails = 4;
 constexpr int kHomeRecentFirst = 5;
 constexpr int kHomeRecentMax = 7;
@@ -302,7 +303,8 @@ void Launcher::press_home(Key key)
             focus = recent_count > 0 ? kHomeRecentFirst : (hero_ready ? kHomeHero : kHomeNavRecent);
         break;
     case Key::down:
-        if (focus >= kHomeNavLibrary && focus <= kHomeNavSettings)
+        if ((focus >= kHomeNavLibrary && focus <= kHomeNavSettings) ||
+            focus == kHomeNavUpdate)
         {
             if (hero_ready)
                 focus = kHomeHero;
@@ -325,9 +327,17 @@ void Launcher::press_home(Key key)
     case Key::right:
     {
         const int delta = key == Key::right ? 1 : -1;
-        if (focus >= kHomeNavLibrary && focus <= kHomeNavSettings)
+        if ((focus >= kHomeNavLibrary && focus <= kHomeNavSettings) ||
+            focus == kHomeNavUpdate)
         {
-            focus = kHomeNavLibrary + (focus - kHomeNavLibrary + delta + 3) % 3;
+            // Header order: Library, Recent, Update, Settings. Keep all
+            // previously allocated Home IDs and animation springs stable.
+            constexpr std::array items{kHomeNavLibrary, kHomeNavRecent,
+                                       kHomeNavUpdate, kHomeNavSettings};
+            const auto found = std::find(items.begin(), items.end(), focus);
+            const int current = found == items.end() ? 0 :
+                static_cast<int>(found - items.begin());
+            focus = items[static_cast<std::size_t>((current + delta + 4) % 4)];
             if (focus == kHomeNavLibrary && !ready)
                 focus = delta > 0 ? kHomeNavRecent : kHomeNavSettings;
         }
@@ -389,6 +399,11 @@ void Launcher::press_home(Key key)
             // Circle on the Home root: confirm, never force-kill the title.
             (void)confirm_action(Confirmation::exit_app);
         }
+        return;
+    case Key::options:
+        // In Encore theme, Options opens the read-only multiplayer directory.
+        // The Switch theme keeps its explicit Multiplayer HOME shortcut.
+        enter_multiplayer();
         return;
     case Key::triangle:
     {
@@ -462,6 +477,11 @@ void Launcher::press_home(Key key)
                 refresh_home_hero();
             }
             cue(Cue::focus);
+        }
+        else if (focus == kHomeNavUpdate)
+        {
+            open_update_confirmation();
+            return;
         }
         else if (focus == kHomeNavSettings)
         {
@@ -614,7 +634,7 @@ void Launcher::draw_home(Canvas &c)
     // the actual Eden wallpaper already drawn underneath, NOT a solid
     // placeholder covering the entire TV. The normal texture cache retries
     // asynchronously when Nlib finishes its atomic file write.
-    if (!hero_artwork.empty()) {
+    if (prefs_.show_game_background && !hero_artwork.empty()) {
         const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f);
         if (hero_picture.texture != 0) {
             const float source = std::max(0.01f, hero_picture.aspect);
@@ -635,6 +655,7 @@ void Launcher::draw_home(Canvas &c)
     // is centre-cropped, never stretched or confined to a hero "block".
     // The approved mock-up needs a dark dispersion on BOTH the left and bottom.
     // Two long translucent fades preserve the full hero scene in the centre.
+    if (prefs_.show_game_background) {
     list.hgradient_rect(hero, 0.0f,
                         theme::kScrim.with_alpha(0.91f),
                         theme::kScrim.with_alpha(0.025f));
@@ -651,6 +672,13 @@ void Launcher::draw_home(Canvas &c)
     list.gradient_rect({0.0f, 0.0f, 1920.0f, 175.0f}, 0.0f,
                        theme::kBase.with_alpha(0.73f),
                        theme::kBase.with_alpha(0.0f));
+    } else {
+        // Personal wallpaper is truly permanent: keep a readable left-side
+        // content veil, never the game hero's nearly opaque bottom fade.
+        list.hgradient_rect({0.0f, 0.0f, 880.0f, 1080.0f}, 0.0f,
+                            theme::kPanel.with_alpha(0.78f),
+                            theme::kPanel.with_alpha(0.0f));
+    }
 
     text(c, hero_recent != nullptr ? tr("SELECTED GAME") : tr("CONTINUE PLAYING"),
          90.0f, baseline(133.0f, 30.0f, theme::kSmall),
@@ -899,7 +927,7 @@ void Launcher::draw_home(Canvas &c)
             const float f = focus(kHomeRecentFirst + i);
             begin_lift(r, f, 0.030f);
             // Paint bloom BEFORE the opaque cover, not over its pixels.
-            if (f > 0.01f) {
+            if (f > 0.01f && look().glow) {
                 list.shadow({r.x - 8.0f, r.y - 8.0f, r.w + 16.0f, r.h + 16.0f},
                             26.0f, 33.0f, theme::kSun.with_alpha(0.33f * f));
                 list.shadow({r.x - 14.0f, r.y - 14.0f, r.w + 28.0f, r.h + 28.0f},
@@ -1051,6 +1079,10 @@ void Launcher::draw_home(Canvas &c)
             {Pad::dpad, TR("Navigate")}, {Pad::circle, TR("Quit")}};
         draw_hints(c, kHints, 4, 60.0f, 1020.0f, theme::kMuted, 1340.0f);
     }
+    text_shrink(c, tr("Multiplayer"), 1560.0f, 1026.0f,
+                theme::kSmall, theme::kMeta, 145.0f, Align::right);
+    text(c, "OPTIONS", 1724.0f, 1026.0f,
+         theme::kSmall, theme::kMeta, Align::right);
     text(c, version_, 1860.0f, 1026.0f,
          theme::kSmall, theme::kMeta, Align::right);
     end_band();
@@ -1059,9 +1091,12 @@ void Launcher::draw_home(Canvas &c)
     // the artwork paints over the navigation, brand and focus ring.
     begin_band(0, -16.0f);
     const int header_focus =
-        home_focus_ >= kHomeNavLibrary && home_focus_ <= kHomeNavSettings ? home_focus_ : -1;
+        home_focus_ == kHomeNavUpdate ? 3 :
+        home_focus_ == kHomeNavSettings ? 4 :
+        (home_focus_ >= kHomeNavLibrary && home_focus_ <= kHomeNavRecent ?
+            home_focus_ : -1);
     draw_top_nav(c, 0, header_focus,
-                 header_focus >= 0 ? focus(header_focus) : 0.0f);
+                 header_focus >= 0 ? focus(home_focus_) : 0.0f);
     end_band();
 }
 

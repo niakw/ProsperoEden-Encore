@@ -118,6 +118,20 @@ struct Preferences {
     bool high_contrast = false;
     bool reduce_motion = false;
     int ui_theme = 0; // 0 Encore (default), 1 Switch-style
+    int color_palette = 0; // 0 Neon, 1 Non-Neon, 2 Dark, 3 Light
+    int accent_color = 0; // 0 Default, 1 Ocean, 2 Emerald, 3 Amber, 4 Rose
+    int background_style = 0; // 0 Auto, 1 Artwork, 2 Solid, 3 Gradient, 4 Image, 5 Daily
+    int logo_choice = 0;
+    bool glow_enabled = true;
+    int glow_strength = 100;
+    unsigned background_color = 0x121824u;
+    unsigned background_color2 = 0x263d59u;
+    int background_overlay = 20;
+    bool background_animate = true;
+    int background_fit = 0;
+    bool show_game_background = true;
+    std::string wallpaper_file;
+    bool check_updates_on_start = false;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -356,6 +370,34 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.high_contrast = Settings::Bool(document, Json::json_pointer("/accessibility/high_contrast"), false);
     result.reduce_motion = Settings::Bool(document, Json::json_pointer("/accessibility/reduce_motion"), false);
     result.ui_theme = Settings::String(document, Json::json_pointer("/appearance/theme")) == "switch" ? 1 : 0;
+    const int palette = Settings::Int(document, Json::json_pointer("/appearance/palette"), 0);
+    const int accent = Settings::Int(document, Json::json_pointer("/appearance/accent"), 0);
+    const int background = Settings::Int(document, Json::json_pointer("/appearance/background"), 0);
+    if (palette >= 0 && palette <= 3) result.color_palette = palette;
+    if (accent >= 0 && accent <= 4) result.accent_color = accent;
+    if (background >= 0 && background <= 5) result.background_style = background;
+    result.check_updates_on_start = Settings::Bool(
+        document, Json::json_pointer("/app_updates/check_on_start"), false);
+    const int logo = Settings::Int(document, Json::json_pointer("/appearance/logo"), 0);
+    const int strength = Settings::Int(document, Json::json_pointer("/appearance/glow_strength"), 100);
+    const int overlay = Settings::Int(document, Json::json_pointer("/appearance/overlay"), 20);
+    const int fit = Settings::Int(document, Json::json_pointer("/appearance/fit"), 0);
+    const int color_a = Settings::Int(document, Json::json_pointer("/appearance/color_a"), 0x121824);
+    const int color_b = Settings::Int(document, Json::json_pointer("/appearance/color_b"), 0x263d59);
+    if (logo >= 0 && logo <= 4) result.logo_choice = logo;
+    if (strength >= 0 && strength <= 100) result.glow_strength = strength;
+    if (overlay >= 0 && overlay <= 80) result.background_overlay = overlay;
+    if (fit >= 0 && fit <= 1) result.background_fit = fit;
+    if (color_a >= 0 && color_a <= 0xffffff) result.background_color = static_cast<unsigned>(color_a);
+    if (color_b >= 0 && color_b <= 0xffffff) result.background_color2 = static_cast<unsigned>(color_b);
+    result.glow_enabled = Settings::Bool(document, Json::json_pointer("/appearance/glow"), true);
+    result.background_animate = Settings::Bool(document, Json::json_pointer("/appearance/animate"), true);
+    result.show_game_background = Settings::Bool(document, Json::json_pointer("/appearance/game_background"), true);
+    const std::string wallpaper = Settings::String(document, Json::json_pointer("/appearance/wallpaper"));
+    if (wallpaper.size() <= 120 && !wallpaper.empty() && wallpaper != "." && wallpaper != ".." &&
+        wallpaper.find("..") == std::string::npos &&
+        wallpaper.find_first_of("/\\") == std::string::npos)
+        result.wallpaper_file = wallpaper;
     return result;
 }
 
@@ -409,6 +451,24 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["accessibility"]["high_contrast"] = value.high_contrast;
     document["accessibility"]["reduce_motion"] = value.reduce_motion;
     document["appearance"]["theme"] = value.ui_theme == 1 ? "switch" : "encore";
+    document["appearance"]["palette_schema"] = 1;
+    document["appearance"]["palette"] = std::clamp(value.color_palette, 0, 3);
+    document["appearance"]["accent"] = std::clamp(value.accent_color, 0, 4);
+    document["appearance"]["background"] = std::clamp(value.background_style, 0, 5);
+    document["appearance"]["logo"] = std::clamp(value.logo_choice, 0, 4);
+    document["appearance"]["glow"] = value.glow_enabled;
+    document["appearance"]["glow_strength"] = std::clamp(value.glow_strength, 0, 100);
+    document["appearance"]["color_a"] = std::min(value.background_color, 0xffffffu);
+    document["appearance"]["color_b"] = std::min(value.background_color2, 0xffffffu);
+    document["appearance"]["overlay"] = std::clamp(value.background_overlay, 0, 80);
+    document["appearance"]["fit"] = std::clamp(value.background_fit, 0, 1);
+    document["appearance"]["animate"] = value.background_animate;
+    document["appearance"]["game_background"] = value.show_game_background;
+    if (value.wallpaper_file.size() <= 120 && value.wallpaper_file.find("..") == std::string::npos &&
+        value.wallpaper_file.find_first_of("/\\") == std::string::npos)
+        document["appearance"]["wallpaper"] = value.wallpaper_file;
+    else document["appearance"]["wallpaper"] = "";
+    document["app_updates"]["check_on_start"] = value.check_updates_on_start;
     return Settings::Write(document, file);
 }
 

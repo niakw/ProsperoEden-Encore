@@ -563,7 +563,6 @@ jobs:
           set -euo pipefail
           test -f release-bundle/dist/SHA256SUMS
           ls release-bundle/dist/*.zip >/dev/null
-          ls release-bundle/dist/*.ffpfsc >/dev/null
           (cd release-bundle/dist && sha256sum -c SHA256SUMS)
 
       - name: Publish immutable GitHub Release
@@ -571,16 +570,37 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          short="${GITHUB_SHA:0:7}"
-          tag="encore-R1-${short}"
+          short="${GITHUB_SHA:0:8}"
+          # Use the compiled artifact's R label; an older release bundle with
+          # no attestation must fail instead of being silently tagged R1.
+          label=$(python3 - <<'PY_RELEASE_LABEL'
+          import glob, json, os, re, zipfile
+          from pathlib import Path
+          candidates = [Path(p) for p in glob.glob("release-bundle/dist/*.zip")
+                        if re.fullmatch(r"Prospero[.]Eden-Encore-R[1-9][0-9]*[.]zip",Path(p).name)]
+          if len(candidates) != 1:
+              raise SystemExit("Expected exactly one release ZIP with attested R revision")
+          with zipfile.ZipFile(candidates[0]) as z:
+              source = json.loads(z.read("PPSA99008/encore-release.json"))
+              native = json.loads(z.read("PPSA99008/sce_sys/param.json"))
+          revision = source.get("build_revision")
+          if not isinstance(revision,str) or not re.fullmatch(r"R[1-9][0-9]{0,5}",revision):
+              raise SystemExit("Invalid native build R revision")
+          if source.get("source_sha") != os.environ["GITHUB_SHA"] or (
+                  source.get("native_content_version") != native.get("contentVersion")
+                  or native.get("titleId") != "PPSA99008"):
+              raise SystemExit("Release/source/native version mismatch")
+          print(revision)
+          PY_RELEASE_LABEL
+          )
+          tag="encore-${label}-${short}"
           notes="release-bundle/dist/release-notes.md"
           test -f "$notes"
           gh release create "$tag" \
             release-bundle/dist/*.zip \
-            release-bundle/dist/*.ffpfsc \
             release-bundle/dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "Prospero.Eden Encore R1 (${short})" \
+            --title "Prospero.Eden Encore ${label} (${short})" \
             --notes-file "$notes" \
             --latest

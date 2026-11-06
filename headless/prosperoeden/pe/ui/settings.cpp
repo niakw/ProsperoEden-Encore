@@ -6,6 +6,8 @@
 #include "pe/ui/video_presets.hpp"
 
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -28,15 +30,16 @@ enum Category
     kDiagnostics,
     kStorage,
     kLanguage,
+    kApplication,
     kCategoryCount,
 };
 constexpr const char *kCategories[kCategoryCount] = {
     TR("Video"), TR("Audio"), TR("Controls"), TR("Accessibility"), TR("Appearance"),
-    TR("Diagnostics"), TR("Storage"), TR("Language")};
+    TR("Diagnostics"), TR("Storage"), TR("Language"), TR("Application")};
 // The same as headings: capitals differ by language, so each is its own text.
 constexpr const char *kHeadings[kCategoryCount] = {
     TR("VIDEO"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"), TR("APPEARANCE"),
-    TR("DIAGNOSTICS"), TR("STORAGE"), TR("LANGUAGE")};
+    TR("DIAGNOSTICS"), TR("STORAGE"), TR("LANGUAGE"), TR("APPLICATION")};
 
 // The Video dialog's rows, and the window that shows five of them (placed as a game's settings
 // are).
@@ -61,6 +64,61 @@ constexpr Rect kVideoWindow{592.0f, kVideoRowsTop, 736.0f,
                             kVideoRowPitch * (kVideoRowsShown - 1) + kVideoRowHeight};
 // The sizes of Preferences::output, as every language writes them.
 constexpr const char *kOutputs[] = {"1080p", "1440p", "2160p"};
+enum AppearanceRow {
+    app_theme, app_logo, app_accent, app_background, app_image,
+    app_color_a, app_a_red, app_a_green, app_a_blue,
+    app_color_b, app_b_red, app_b_green, app_b_blue,
+    app_glow, app_glow_strength, app_overlay,
+    app_animate, app_fit, app_game_background, app_reset, kAppearanceRows
+};
+constexpr std::array<std::uint32_t, 12> kColorSwatches = {
+    0x121824u, 0x263d59u, 0x0b0c0fu, 0xf1f3f5u,
+    0x0a2848u, 0x17566au, 0x165c45u, 0x694a20u,
+    0x582a58u, 0x452935u, 0xdee4eau, 0xffffffu
+};
+int selected_theme(const Preferences& p) {
+    if (p.ui_theme == 1) return 1;
+    return std::clamp(p.color_palette, 0, 3) == 0 ? 0 :
+           std::clamp(p.color_palette, 0, 3) + 1;
+}
+const char* theme_name(int value) {
+    static constexpr const char* names[] = {
+        "Encore Neon", "Switch", "Encore Non-Neon", "Encore Dark", "Encore Light"};
+    return names[std::clamp(value, 0, 4)];
+}
+const char* logo_name(int value) {
+    static constexpr const char* names[] = {"Automatic", "Neon", "Non-Neon", "White", "Dark"};
+    return names[std::clamp(value, 0, 4)];
+}
+const char* background_name(int value) {
+    static constexpr const char* names[] = {
+        "Theme default", "Encore artwork", "Solid color", "Gradient", "Local image", "Daily Switch"};
+    return names[std::clamp(value, 0, 5)];
+}
+std::string color_hex(std::uint32_t value) {
+    char out[8]{};
+    std::snprintf(out, sizeof(out), "#%06X", value & 0xffffffu);
+    return out;
+}
+std::uint32_t cycle_color(std::uint32_t current, int step) {
+    auto found = std::find(kColorSwatches.begin(), kColorSwatches.end(), current);
+    const int index = found == kColorSwatches.end() ? 0 :
+                      static_cast<int>(found - kColorSwatches.begin());
+    const int count = static_cast<int>(kColorSwatches.size());
+    return kColorSwatches[static_cast<std::size_t>((index + step + count) % count)];
+}
+
+
+unsigned rgb_channel(std::uint32_t color, int channel) {
+    return (color >> (16 - 8 * channel)) & 0xffu;
+}
+void adjust_rgb(std::uint32_t& color, int channel, int step, bool fine) {
+    const int shift = 16 - 8 * channel;
+    const unsigned current = (color >> shift) & 0xffu;
+    const unsigned next = static_cast<unsigned>(std::clamp(
+        static_cast<int>(current) + step * (fine ? 1 : 8), 0, 255));
+    color = (color & ~(0xffu << shift)) | (next << shift);
+}
 
 const char *output_name(int output)
 {
@@ -179,10 +237,20 @@ void Launcher::press_settings(Key key)
         case kAccessibility:
             open_modal(Modal::accessibility);
             break;
+        case kApplication:
+            open_modal(Modal::application);
+            break;
         case kAppearance:
             open_modal(Modal::appearance);
-            option_ = std::clamp(prefs_.ui_theme, 0, 1);
-            option_cursor_.snap(dialog_row_top(Modal::appearance, option_));
+            if (!wallpaper_scan_.valid())
+                wallpaper_scan_ = std::async(std::launch::async, [this] {
+                    return services_.wallpapers();
+                });
+            video_rows_.visible = kVideoRowsShown;
+            video_rows_.pitch = kVideoRowPitch;
+            video_rows_.reset(kAppearanceRows, 0);
+            option_ = 0;
+            option_cursor_.snap(dialog_row_top(Modal::appearance, 0));
             break;
         default:
             open_modal(Modal::diagnostics);
@@ -197,7 +265,7 @@ void Launcher::press_settings(Key key)
 void Launcher::draw_settings(Canvas &c)
 {
     gfx::DrawList &list = c.list;
-    draw_top_nav(c, 3, top_nav_focus_, top_nav_focus_ >= 0 ? 1.0f : 0.0f);
+    draw_top_nav(c, 4, top_nav_focus_, top_nav_focus_ >= 0 ? 1.0f : 0.0f);
     text_shrink(c, tr("Settings"), 72.0f, baseline(142.0f, 38.0f, theme::kHeading),
                 theme::kHeading, theme::kTitle, 980.0f);
     text_shrink(c, tr("Fine-tune your experience"), 72.0f, baseline(176.0f, 24.0f, 18.0f),
@@ -209,10 +277,11 @@ void Launcher::draw_settings(Canvas &c)
         prefs_.mute ? tr("Muted") : percent(prefs_.volume),
         controller_profile_name(prefs_.controller_layout, prefs_.mapping),
         prefs_.large_text || prefs_.high_contrast || prefs_.reduce_motion ? tr("On") : tr("Off"),
-        prefs_.ui_theme == 1 ? "Switch" : "Encore",
+        theme_name(selected_theme(prefs_)),
         prefs_.detailed_logging ? tr("Detailed logs on") : tr("Ready"),
         short_path(services_.files_folder(), 18),
         pick(services_.language_labels(), prefs_.language),
+        prefs_.check_updates_on_start ? tr("Auto check on") : tr("Manual"),
     };
 
     // ---- category rail: one row, controller-first ----
@@ -226,7 +295,7 @@ void Launcher::draw_settings(Canvas &c)
     {
         const Rect r{rail_x + float(row) * (card_w + gap), rail_y, card_w, card_h};
         const bool selected = row == settings_.selected;
-        if (selected)
+        if (selected && look().glow)
             list.shadow({r.x - 4.0f, r.y - 3.0f, r.w + 8.0f, r.h + 10.0f},
                         24.0f, 32.0f, theme::kLime.with_alpha(0.16f));
         plate_rest(c, kTilePlate, r);
@@ -287,9 +356,10 @@ void Launcher::draw_settings(Canvas &c)
         break;
     case kAppearance:
         about = tr("Choose the launcher interface without changing game or controller settings.");
-        lines = {{tr("THEME"), prefs_.ui_theme == 1 ? "Switch" : "Encore"},
-                 {tr("DEFAULT"), "Encore"},
-                 {tr("PREVIEW"), prefs_.ui_theme == 1 ? tr("Switch home screen") : tr("Encore home screen")}};
+        lines = {{tr("THEME"), theme_name(selected_theme(prefs_))},
+                 {tr("LOGO"), logo_name(prefs_.logo_choice)},
+                 {tr("BACKGROUND"), background_name(prefs_.background_style)},
+                 {tr("GAME BACKDROP"), on_off(prefs_.show_game_background)}};
         break;
     case kDiagnostics:
     {
@@ -308,6 +378,15 @@ void Launcher::draw_settings(Canvas &c)
         about = tr("One root for keys, firmware, games, updates, mods and transfers.");
         lines = {{tr("ROOT"), short_path(services_.files_folder(), 34)},
                  {tr("LAYOUT"), tr("Fixed Encore folder structure")}};
+        break;
+    case kApplication:
+        about = tr("Updates for the Eden Encore app, not games or firmware.");
+        lines = {{tr("INSTALLED"), version_},
+                 {tr("LATEST RELEASE"), update_info_.latest_version.empty() ? tr("Not checked") :
+                      update_info_.latest_version},
+                 {tr("AUTO CHECK"), on_off(prefs_.check_updates_on_start)},
+                 {tr("STATUS"), update_info_.summary.empty() ? tr("Manual check available") :
+                     update_info_.summary}};
         break;
     case kLanguage:
         about = tr("The language games use when they offer it.");
@@ -389,8 +468,10 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::audio:
     case Modal::accessibility:
         return 3;
-    case Modal::appearance:
+    case Modal::application:
         return 2;
+    case Modal::appearance:
+        return kAppearanceRows;
     case Modal::controls:
         return 5;
     case Modal::diagnostics:
@@ -414,6 +495,8 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     case Modal::accessibility:
         return 370.0f + 102.0f * static_cast<float>(row);
     case Modal::appearance:
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - video_rows_.scroll();
+    case Modal::application:
         return 404.0f + 112.0f * static_cast<float>(row);
     case Modal::diagnostics:
         return 570.0f + 102.0f * static_cast<float>(row);
@@ -442,7 +525,8 @@ void Launcher::press_dialog(Key key)
         return;
     }
     if ((key == Key::up || key == Key::down ||
-         key == Key::l1 || key == Key::r1) && modal_ == Modal::video)
+         key == Key::l1 || key == Key::r1) &&
+        (modal_ == Modal::video || modal_ == Modal::appearance))
     {
         if (video_rows_.move(key == Key::down || key == Key::r1 ? 1 : -1))
         {
@@ -566,8 +650,83 @@ void Launcher::press_dialog(Key key)
         }
         break;
     case Modal::appearance:
-        prefs_.ui_theme = option_;
+        switch (option_) {
+        case app_theme: {
+            const int next = (selected_theme(prefs_) + step + 5) % 5;
+            prefs_.ui_theme = next == 1 ? 1 : 0;
+            prefs_.color_palette = next < 2 ? 0 : next - 1;
+            // The default effect follows the selected preset; it can then be overridden.
+            prefs_.glow_enabled = next == 0;
+            break;
+        }
+        case app_logo:
+            prefs_.logo_choice = (prefs_.logo_choice + step + 5) % 5; break;
+        case app_accent:
+            prefs_.accent_color = (prefs_.accent_color + step + 5) % 5; break;
+        case app_background:
+            prefs_.background_style = (prefs_.background_style + step + 6) % 6; break;
+        case app_image:
+            if (wallpaper_options_.empty()) {
+                say(wallpaper_scan_.valid() ? tr("Scanning local wallpapers...") :
+                    tr("No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."), true);
+                return;
+            }
+            {
+                auto it = std::find(wallpaper_options_.begin(), wallpaper_options_.end(),
+                                    prefs_.wallpaper_file);
+                const int count = static_cast<int>(wallpaper_options_.size());
+                const int index = it == wallpaper_options_.end() ? 0 :
+                    static_cast<int>(it - wallpaper_options_.begin());
+                prefs_.wallpaper_file = wallpaper_options_[static_cast<std::size_t>(
+                    (index + step + count) % count)];
+                prefs_.background_style = 4;
+            }
+            break;
+        case app_color_a:
+            prefs_.background_color = cycle_color(prefs_.background_color, step); break;
+        case app_color_b:
+            prefs_.background_color2 = cycle_color(prefs_.background_color2, step); break;
+        case app_a_red: case app_a_green: case app_a_blue:
+            adjust_rgb(prefs_.background_color, option_ - app_a_red, step, activate);
+            sound = Cue::slider; break;
+        case app_b_red: case app_b_green: case app_b_blue:
+            adjust_rgb(prefs_.background_color2, option_ - app_b_red, step, activate);
+            sound = Cue::slider; break;
+        case app_glow:
+            prefs_.glow_enabled = !prefs_.glow_enabled; break;
+        case app_glow_strength:
+            prefs_.glow_strength = std::clamp(prefs_.glow_strength + step * 10, 0, 100);
+            sound = Cue::slider; break;
+        case app_overlay:
+            prefs_.background_overlay = std::clamp(prefs_.background_overlay + step * 10, 0, 80);
+            sound = Cue::slider; break;
+        case app_animate:
+            prefs_.background_animate = !prefs_.background_animate; break;
+        case app_fit:
+            prefs_.background_fit = 1 - prefs_.background_fit; break;
+        case app_game_background:
+            prefs_.show_game_background = !prefs_.show_game_background; break;
+        case app_reset:
+            prefs_.ui_theme = 0; prefs_.color_palette = 0; prefs_.logo_choice = 0;
+            prefs_.accent_color = 0; prefs_.background_style = 0;
+            prefs_.glow_enabled = true; prefs_.glow_strength = 100;
+            prefs_.background_color = 0x121824u; prefs_.background_color2 = 0x263d59u;
+            prefs_.background_overlay = 20; prefs_.background_animate = true;
+            prefs_.background_fit = 0; prefs_.show_game_background = true;
+            prefs_.wallpaper_file.clear();
+            break;
+        default: return;
+        }
         sound = Cue::saved;
+        break;
+    case Modal::application:
+        if (option_ == 0) {
+            if (!activate) return;
+            start_app_update_check(true);
+            say(tr("Checking official releases..."));
+            return;
+        }
+        prefs_.check_updates_on_start = !prefs_.check_updates_on_start;
         break;
     case Modal::accessibility:
         if (option_ == 0)
@@ -600,7 +759,10 @@ void Launcher::press_dialog(Key key)
         return;
     }
     // The launcher's look changes on the spot: that is its own confirmation.
-    if (!save_preferences(modal_ == Modal::accessibility))
+    // Appearance updates never invalidate game metadata or start a game-library rescan.
+    const bool saved = (modal_ == Modal::appearance || modal_ == Modal::application) ?
+        services_.set_preferences(prefs_) : save_preferences(modal_ == Modal::accessibility);
+    if (!saved)
     {
         prefs_ = before;
         sound = Cue::error;
@@ -661,7 +823,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
     case Modal::appearance:
         title = tr("Appearance");
-        copy = tr("Choose Encore or Switch. Your games and control mapping stay unchanged.");
+        copy = tr("Choose a theme, logo, background and focus effects. Games stay unchanged.");
+        break;
+    case Modal::application:
+        title = tr("Application updates");
+        copy = tr("Checks official stable GitHub Releases only. No automatic installation.");
         break;
     case Modal::accessibility:
         title = tr("Accessibility");
@@ -679,7 +845,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
 
     const int rows = dialog_rows(modal);
     // Video's rows scroll in a window of five; the other dialogs show all of theirs.
-    const bool scrolls = modal == Modal::video;
+    const bool scrolls = modal == Modal::video || modal == Modal::appearance;
     const int first = scrolls ? video_rows_.first_row() : 0;
     const int last = scrolls ? video_rows_.last_row() : rows - 1;
     if (scrolls)
@@ -795,10 +961,52 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         break;
     }
     case Modal::appearance:
-        for (int row = 0; row < 2; ++row) {
-            const char *value = row == 0 ? "Encore" : "Switch";
-            label(row, value, choice(row, row == prefs_.ui_theme ? tr("Active") : tr("Select")));
+    {
+        const std::string values[kAppearanceRows] = {
+            theme_name(selected_theme(prefs_)), logo_name(prefs_.logo_choice),
+            std::vector<std::string>{"Original", "Ocean", "Emerald", "Amber", "Rose"}[
+                std::clamp(prefs_.accent_color, 0, 4)],
+            background_name(prefs_.background_style),
+            prefs_.wallpaper_file.empty() ? tr("None") : prefs_.wallpaper_file,
+            color_hex(prefs_.background_color),
+            std::to_string(rgb_channel(prefs_.background_color, 0)),
+            std::to_string(rgb_channel(prefs_.background_color, 1)),
+            std::to_string(rgb_channel(prefs_.background_color, 2)),
+            color_hex(prefs_.background_color2),
+            std::to_string(rgb_channel(prefs_.background_color2, 0)),
+            std::to_string(rgb_channel(prefs_.background_color2, 1)),
+            std::to_string(rgb_channel(prefs_.background_color2, 2)),
+            on_off(prefs_.glow_enabled), percent(prefs_.glow_strength),
+            percent(prefs_.background_overlay), on_off(prefs_.background_animate),
+            prefs_.background_fit ? tr("Contain") : tr("Fill"),
+            on_off(prefs_.show_game_background), tr("Restore Neon")
+        };
+        static constexpr const char* labels[kAppearanceRows] = {
+            TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
+            TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"),
+            TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
+            TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
+            TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
+            TR("Background motion"), TR("Image scaling"), TR("Game background"),
+            TR("Reset appearance")
+        };
+        for (int row = first; row <= last; ++row) {
+            list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
+            label(row, tr(labels[row]), choice(row, values[row]));
+            list.pop_opacity();
         }
+        break;
+    }
+    case Modal::application:
+        label(0, tr("Check now"), choice(0, tr("Search GitHub Releases")));
+        label(1, tr("Check on launcher start"), choice(1, on_off(prefs_.check_updates_on_start)));
+        text_block(c, update_info_.summary, 592.0f,
+                   baseline(700.0f, 30.0f, theme::kSmall), theme::kSmall,
+                   30.0f, theme::kMeta, 736.0f, 2, kShrink);
+        if (!update_info_.notes.empty())
+            text_block(c, update_info_.notes, 592.0f,
+                       baseline(789.0f, 26.0f, theme::kSmall), theme::kSmall,
+                       28.0f, theme::kMeta, 736.0f, 2, kShrink);
         break;
     case Modal::accessibility:
     {
@@ -852,7 +1060,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
 
     // Under the rows: Video's five end lower than the other dialogs' three.
-    const float foot = modal == Modal::video || modal == Modal::controls ? 848.0f : 811.0f;
+    const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls ? 848.0f : 811.0f;
     if (!message_.empty())
     {
         notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,

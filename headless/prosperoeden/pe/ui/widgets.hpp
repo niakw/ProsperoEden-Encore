@@ -31,7 +31,7 @@ class Backdrop
   public:
     void update(float dt);
     // dim darkens the art (0 home, more behind full screens).
-    void draw(gfx::DrawList &list, const Textures &textures, float dim) const;
+    void draw(gfx::DrawList &list, Textures &textures, float dim) const;
     // Where the art lies in virtual pixels this frame.
     Rect art() const;
     // The part of the (blurred) art behind r, as a UV rectangle.
@@ -119,12 +119,14 @@ struct Plate
     Color focus_right;
     Color focus_edge;
 };
-extern const Plate kRowPlate;     // settings and dialog rows
-extern const Plate kListPlate;    // library, folder and language rows
-extern const Plate kButtonPlate;  // home hero buttons
-extern const Plate kTilePlate;    // recently played tiles
-extern const Plate kNavPlate;     // header navigation
+extern Plate kRowPlate;     // settings and dialog rows
+extern Plate kListPlate;    // library, folder and language rows
+extern Plate kButtonPlate;  // home hero buttons
+extern Plate kTilePlate;    // recently played tiles
+extern Plate kNavPlate;     // header navigation
 // The surface at rest, with `focus` (0..1) of the highlight blended over it.
+// Resolve the active tokens; preserves all original Neon plates bit-for-bit.
+void resolve_theme_plates();
 void plate(Canvas &c, const Plate &style, const Rect &r, float focus);
 // The surface at rest only (lists draw one gliding highlight over their rows).
 void plate_rest(Canvas &c, const Plate &style, const Rect &r);

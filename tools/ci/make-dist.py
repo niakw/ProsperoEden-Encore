@@ -6,10 +6,9 @@
 
 dist/Prospero.Eden-Encore-RN.zip (the folder plus README, INSTALL, SECURITY, LICENSE,
 THIRD_PARTY_NOTICES and LICENSES/; fixed timestamps, so equal inputs give equal bytes),
-dist/Prospero.Eden-Encore-RN-FTP.zip (minimal PPSA99008 folder for manual FTP installs:
+dist/Eden-Encore-RN-<source-sha8>-FTP-PPSA99008.zip (minimal PPSA99008 folder for manual FTP installs:
 runtime files only, without installed legal texts or ShadowMount-only .txt language companions),
-dist/Prospero.Eden-Encore-RN.ffpfsc
-(the same title as a package image, tools/ci/package-image.sh), SHA256SUMS and release-notes.md.
+SHA256SUMS and release-notes.md (no FFPFSC by default).
 """
 import hashlib
 import json
@@ -28,11 +27,24 @@ if image_only:
 if len(args) != 1:
     sys.exit(__doc__.strip())
 app = pathlib.Path(args[0]).resolve()
-version_h = (root / 'headless/prosperoeden/version.h').read_text()
-match = re.search(r'kAppVersion\s*=\s*"([^"]+)"', version_h)
-if not match:
-    sys.exit('Cannot read Encore release name from version.h')
-release = match.group(1)
+# The compiled app, not a hardcoded header or workflow HEAD, determines R.
+import importlib.util
+spec = importlib.util.spec_from_file_location("resolve_encore_release",
+                                            root / "tools/ci/resolve-encore-release.py")
+resolver = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(resolver)
+attestation_file = app / "encore-release.json"
+if not attestation_file.is_file():
+    raise SystemExit("Cannot package unversioned native app: encore-release.json missing")
+attestation = json.loads(attestation_file.read_text(encoding="utf-8"))
+source_sha = attestation.get("source_sha")
+if not isinstance(source_sha, str) or not re.fullmatch(r"[a-f0-9]{40}", source_sha):
+    raise SystemExit("Invalid source SHA in release attestation")
+try:
+    release_info = resolver.resolve(app, source_sha)
+except (OSError, ValueError, TypeError) as exc:
+    raise SystemExit(f"Native release attestation rejected: {exc}") from exc
+release = release_info["label"]
 dist = root / 'dist'
 image = dist / f'Prospero.Eden-Encore-{release}.ffpfsc'
 if image_only:
@@ -58,9 +70,9 @@ digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 
 # Manual PS5 FTP servers commonly support binary STOR only. FileZilla may switch .txt files to
 # ASCII automatically, so publish a separate runtime-only folder archive for manual FTP installs.
-# The full ZIP and FFPFSC above remain the canonical distribution artifacts and keep every legal
-# notice plus the ShadowMount .txt catalog companions.
-ftp_archive = dist / f'Prospero.Eden-Encore-{release}-FTP.zip'
+# The full ZIP retains legal notices; the FTP ZIP is the update install target.
+# FFPFSC is an explicit --image-only developer command, never a release asset.
+ftp_archive = dist / release_info['zip']
 ftp_files = []
 for path in sorted(app.rglob('*')):
     if not path.is_file():
@@ -80,30 +92,11 @@ with zipfile.ZipFile(ftp_archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as
         zip_file.writestr(info, path.read_bytes())
 ftp_digest = hashlib.sha256(ftp_archive.read_bytes()).hexdigest()
 
-subprocess.run(['bash', str(root / 'tools/ci/package-image.sh'), str(app), str(image)], check=True)
-image_digest = hashlib.sha256(image.read_bytes()).hexdigest()
-# Prove the package-image path is deterministic before publishing its checksum. This catches a
-# third-party timestamp/randomness regression instead of silently changing release bytes.
-# Pack twice to the SAME canonical destination. A change of output
-# basename can affect tool metadata independently of source determinism.
-# Preserve the original bytes and restore them even after a failed check.
-repro = dist / f'.{image.name}.repro'
-image.replace(repro)
-try:
-    subprocess.run(['bash', str(root / 'tools/ci/package-image.sh'), str(app), str(image)], check=True)
-    repro_digest = hashlib.sha256(image.read_bytes()).hexdigest()
-    if repro_digest != image_digest:
-        # Keep this fail-closed: diagnose the bytes, never waive the mismatch.
-        subprocess.run([sys.executable, str(root / 'tools/ci/diagnose-image-repro.py'),
-                        str(repro), str(image)], check=False)
-        raise SystemExit(f'FFPFSC reproducibility check failed: {image_digest} != {repro_digest}')
-finally:
-    image.unlink(missing_ok=True)
-    repro.replace(image)
+# The standard distribution is folder-based. Do not generate or advertise
+# .ffpfsc image files, since an image cannot be replaced by the updater.
 (dist / 'SHA256SUMS').write_text(
     f'{digest}  {archive.name}\n'
     f'{ftp_digest}  {ftp_archive.name}\n'
-    f'{image_digest}  {image.name}\n'
 )
 # The unstripped executable of this release, to name the functions in a crash report later
 # (tools/symbolize-crash.py). Kept out of dist/: it is not a release file.
@@ -119,7 +112,12 @@ match = re.search(rf'^## Changes in {re.escape(heading)}\n(.*?)(?=^## )', readme
 if match:
     (dist / 'release-notes.md').write_text(match.group(1).strip() + '\n')
 else:
-    sys.exit(f'README.md has no "## Changes in {heading}" section; release notes are required')
+    # Do not publish outdated R1 notes for an R25 artifact.
+    (dist / 'release-notes.md').write_text(
+        f'# Eden Encore {release} — native PS5 build\n\n'
+        f'Compiled source SHA: {source_sha}\n\n'
+        'Package metadata and checksums are bound to this artifact. '
+        'A successful build does not establish gameplay or console stability.\n'
+    )
 print(f'{archive} {digest}')
 print(f'{ftp_archive} {ftp_digest}')
-print(f'{image} {image_digest}')

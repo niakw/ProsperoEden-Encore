@@ -4,6 +4,8 @@
 // SPDX-FileCopyrightText: Copyright 2024 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
+#include <cstdint>
 #include <boost/container/small_vector.hpp>
 
 #include "core/frontend/framebuffer_layout.h"

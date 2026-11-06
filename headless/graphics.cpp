@@ -546,9 +546,12 @@ private:
     double last_stats{}, speed_percent{100.0};
 };
 }
+void SetHudEnabled(bool enabled) {
+    hud_enabled.store(enabled, std::memory_order_release);
+}
 void ToggleHud() {
     const bool enabled = !hud_enabled.load(std::memory_order_relaxed);
-    hud_enabled.store(enabled, std::memory_order_relaxed);
+    SetHudEnabled(enabled);
     auto preferences = LoadPreferences();
     preferences.hud = enabled;
     if (!SavePreferences(preferences)) Report("settings", "Could not save HUD preference");

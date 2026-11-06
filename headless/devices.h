@@ -92,7 +92,17 @@ public:
     bool Open();
     bool Poll();
     bool TakeReturnToMenu() { return return_to_menu.exchange(false); }
-    bool TakeHudToggle() { return hud_toggle.exchange(false); }
+    // Touchpad click (not the Sony PS/Home button) owns the in-game overlay.
+    void EnableOverlay(bool enabled) {
+        overlay_enabled.store(enabled, std::memory_order_release);
+        if (!enabled) {
+            overlay_open.store(false, std::memory_order_release);
+            overlay_actions.store(0, std::memory_order_release);
+        }
+    }
+    bool OverlayVisible() const { return overlay_open.load(std::memory_order_acquire); }
+    void CloseOverlay() { overlay_open.store(false, std::memory_order_release); }
+    std::uint32_t TakeOverlayActions() { return overlay_actions.exchange(0, std::memory_order_acq_rel); }
     // Players with a controller (bit per player), and those whose controller came or went.
     unsigned ConnectedPlayers() const { return connected_players.load(); }
     unsigned TakeConnectionChanges() { return connection_changes.exchange(0); }
@@ -111,12 +121,12 @@ private:
         int handle = -1;
         u32 last_buttons = 0;
         u64 last_motion_us = 0;
-        // The touchpad as a guest button (Minus by default), see Consume.
+        // Long touch holds guest Minus; short click is reserved for Encore's overlay.
         bool touch_chord = false;  // this press was part of a shortcut
         GuestSystemButtonRoute guest_home; // Touchpad+Options fallback; Sony PS reserved
         bool select_held = false;  // a long press: its mapped button stays down until release
         unsigned touch_polls = 0;  // polls the touchpad has been down
-        unsigned select_pulse = 0; // polls left of a tap's mapped-button press
+        unsigned select_pulse = 0; // legacy guest Minus tap only when quick menu is unavailable
     };
     void Rescan();
     void OpenSlot(std::size_t player, int user);
@@ -136,7 +146,9 @@ private:
     std::array<Slot, kMaxPlayers> slots{};
     bool owns_user_service = false;
     std::atomic<bool> return_to_menu = false;
-    std::atomic<bool> hud_toggle = false;
+    std::atomic<bool> overlay_enabled{false};
+    std::atomic<bool> overlay_open{false};
+    std::atomic<std::uint32_t> overlay_actions{0};
     std::atomic<unsigned> connected_players = 0;
     std::atomic<unsigned> connection_changes = 0;
     unsigned polls_since_scan = 0;

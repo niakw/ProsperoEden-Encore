@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "devices.h"
+#include "in_game_overlay.h"
 #include "log_pipe.h"
 #include <algorithm>
 #include <cmath>
@@ -26,9 +27,8 @@ void ReportInputThreadGpuLiveness();
 }
 // Look for newly signed-in (or signed-out) users about once a second at the 4 ms poll interval.
 constexpr unsigned kPollsPerScan = 250;
-// The touchpad is Select (the guest's Minus) as well as the shortcut key. So that a shortcut
-// never reaches the game as a press of Minus, a tap presses Minus when the touchpad is released
-// (for about 100 ms), and a press held this long (about a quarter of a second) holds Minus.
+// Short touchpad click opens/closes Encore's overlay; a sustained hold
+// remains guest Minus when the overlay is closed. Chords never count as clicks.
 constexpr unsigned kSelectTapPolls = 25;
 constexpr unsigned kSelectHoldPolls = 60;
 // Eden's virtual gamepad numbers the right Joy-Con's SL and SR after its named buttons
@@ -275,6 +275,7 @@ void Pad::Close() {
     }
     connected_players = 0;
     connection_changes = 0;
+    EnableOverlay(false);
     if (owns_user_service) { sceUserServiceTerminate(); owns_user_service = false; }
 }
 bool Pad::Poll() {
@@ -395,11 +396,11 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         {kButtonL1, static_cast<Button>(kRightSL)}, {kButtonR1, static_cast<Button>(kRightSR)},
     };
     auto& slot = slots[player];
-    // Only the touchpad presses Minus (tap or hold). Physical Create now
-    // provides virtual Switch Capture, not a second, surprise Minus press.
+    // Long touchpad hold publishes guest Minus. Short click toggles the local
+    // overlay, and physical Create continues to publish Switch Capture.
     // The launch-time mapping cannot change while guest HID is open. Resolve
     // inverse button lookups once per pad batch, not for every sampled frame.
-    // Empty 4 ms polls still need only the touch lookup for pulse expiry.
+    // Empty 4 ms polls still need the touch lookup for hold expiry.
     const auto& active_mapping = ActiveMapping();
     const int touch_button = MappedTo(active_mapping, pad_touchpad);
     const bool create_is_capture = !samples.empty() &&
@@ -407,6 +408,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
     const auto set_touch = [&](u32 pressed) {
         if (touch_button < 0) return;
         engine->SetButtonState(player, kGame[touch_button],
+            !overlay_open.load(std::memory_order_relaxed) &&
             !slot.guest_home.BlockChordButtons() &&
             (slot.select_held || slot.select_pulse > 0));
     };
@@ -426,17 +428,15 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         // The guest title owns its saved gameplay assignments. Publish the
         // same physical-to-guest buttons in match, pause, and cinematics.
         constexpr ButtonMask menu_chord = kButtonTouchPad | kButtonL1;
-        constexpr ButtonMask hud_chord = kButtonTouchPad | kButtonR1;
         const auto pressed = sample.buttons;
-        // The launcher/menu and HUD shortcuts still work from every controller.
-        if ((pressed & menu_chord) == menu_chord &&
+        // Touchpad+L1 remains a library shortcut only when the overlay is closed.
+        // Touchpad+R1 no longer toggles the FPS HUD.
+        if (!overlay_open.load(std::memory_order_relaxed) &&
+            (pressed & menu_chord) == menu_chord &&
             (last_buttons & menu_chord) != menu_chord)
             return_to_menu = true;
-        if ((pressed & hud_chord) == hud_chord &&
-            (last_buttons & hud_chord) != hud_chord)
-            hud_toggle = true;
-        if ((pressed & menu_chord) == menu_chord || (pressed & hud_chord) == hud_chord)
-            mapped_buttons &= ~(kButtonTouchPad | kButtonL1 | kButtonR1);
+        if ((pressed & menu_chord) == menu_chord)
+            mapped_buttons &= ~(kButtonTouchPad | kButtonL1);
         // libScePad does not expose the physical Sony PS/Home button.
         // Touchpad + Options is a local guest HOME substitute, NEVER a
         // Nintendo system menu shortcut. It suppresses guest Plus and Minus
@@ -447,31 +447,59 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             (pressed & (kButtonL1 | kButtonR1)) != 0);
         if (slot.guest_home.BlockChordButtons()) {
             mapped_buttons &= ~(kButtonTouchPad | kButtonOptions);
-            // A tap pulse from an earlier interaction must not leak through
-            // during the guest HOME chord or immediately after its release.
-            slot.select_pulse = 0;
             slot.select_held = false;
+            slot.select_pulse = 0;
         }
-        engine->SetButtonState(player, Button::ButtonHome, guest_home);
-        // The touchpad on its own: see kSelectTapPolls.
+        engine->SetButtonState(player, Button::ButtonHome,
+            guest_home && !overlay_open.load(std::memory_order_relaxed));
+        // A short click opens Encore only in the Vulkan quick-menu session;
+        // the old guest Minus tap survives in OpenGL/legacy input sessions.
         const bool touch = (pressed & kButtonTouchPad) != 0;
         const bool touched = (last_buttons & kButtonTouchPad) != 0;
         if (touch && !touched) {
             slot.touch_chord = false;
             slot.touch_polls = 0;
+            slot.select_pulse = 0;
         }
         if (touch && (pressed & (kButtonL1 | kButtonR1 | kButtonOptions)) != 0) {
             slot.touch_chord = true;
             slot.select_held = false;
         }
         if (!touch && touched) {
-            if (!slot.touch_chord && !slot.select_held) slot.select_pulse = kSelectTapPolls + 1;
+            if (usable && !slot.touch_chord && !slot.select_held) {
+                if (player == 0 && overlay_enabled.load(std::memory_order_acquire)) {
+                    const bool opening = !overlay_open.load(std::memory_order_relaxed);
+                    overlay_open.store(opening, std::memory_order_release);
+                    overlay_actions.store(0, std::memory_order_release);
+                } else if (!overlay_open.load(std::memory_order_relaxed)) {
+                    slot.select_pulse = kSelectTapPolls + 1;
+                }
+            }
             slot.select_held = false;
         }
         if (!usable) {
-            // A controller that went away neither tapped nor holds anything.
-            slot.select_pulse = 0;
             slot.select_held = false;
+            slot.select_pulse = 0;
+        }
+        const bool intercept_overlay = overlay_open.load(std::memory_order_acquire);
+        if (player == 0 && intercept_overlay && usable) {
+            const ButtonMask edges = pressed & ~last_buttons;
+            std::uint32_t actions = QuickOverlay::none;
+            if (edges & kButtonUp) actions |= QuickOverlay::up;
+            if (edges & kButtonDown) actions |= QuickOverlay::down;
+            if (edges & kButtonLeft) actions |= QuickOverlay::left;
+            if (edges & kButtonRight) actions |= QuickOverlay::right;
+            if (edges & kButtonCross) actions |= QuickOverlay::select;
+            if (edges & kButtonCircle) actions |= QuickOverlay::back;
+            if (edges & kButtonL1) actions |= QuickOverlay::previous_tab;
+            if (edges & kButtonR1) actions |= QuickOverlay::next_tab;
+            if (actions) overlay_actions.fetch_or(actions, std::memory_order_release);
+        }
+        // Overlay navigation must never be forwarded to the guest.
+        if (intercept_overlay) {
+            mapped_buttons = 0;
+            slot.select_held = false;
+            slot.select_pulse = 0;
         }
 #ifdef EDEN_DEV_PROFILE
         // Diagnostic input trace only. Per-button fprintf in a shipping 4 ms
@@ -498,8 +526,8 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         for (const auto [mask, button] : fixed)
             engine->SetButtonState(player, button, (mapped_buttons & mask) != 0);
         // The game's buttons are digital: the analog triggers count from the threshold.
-        const bool left = trigger_pressed[sample.triggers.l2];
-        const bool right = trigger_pressed[sample.triggers.r2];
+        const bool left = !intercept_overlay && trigger_pressed[sample.triggers.l2];
+        const bool right = !intercept_overlay && trigger_pressed[sample.triggers.r2];
         for (int game = 0; game < kGameButtons; ++game) {
             const int pad = active_mapping[game];
             if (pad == pad_touchpad) continue;  // set_touch
@@ -511,13 +539,15 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         // action. Only otherwise does physical Create become Switch Capture.
         engine->SetButtonState(player, Button::ButtonCapture,
             create_is_capture && (mapped_buttons & kButtonCreate) != 0);
-        engine->SetStickPosition(player, 0, axis(sample.left_stick.x), -axis(sample.left_stick.y));
-        engine->SetStickPosition(player, 1, axis(sample.right_stick.x), -axis(sample.right_stick.y));
+        engine->SetStickPosition(player, 0, intercept_overlay ? 0.0f : axis(sample.left_stick.x),
+                                 intercept_overlay ? 0.0f : -axis(sample.left_stick.y));
+        engine->SetStickPosition(player, 1, intercept_overlay ? 0.0f : axis(sample.right_stick.x),
+                                 intercept_overlay ? 0.0f : -axis(sample.right_stick.y));
         // Motion: acceleration in G and angular velocity in rad/s, mapped to Eden's axes and units
         // the way its SDL driver maps a DualSense.
         auto& last_motion = slots[player].last_motion_us;
-        if (!usable) {
-            // Away (disconnected, or input taken by the system): stop, rather than keep turning.
+        if (!usable || intercept_overlay) {
+            // Away, intercepted or local menu: stop, rather than keep turning.
             if (last_motion) engine->SetMotionAtRest(player);
             last_motion = 0;
         } else if (raw.timestamp_us > last_motion) {
@@ -531,8 +561,9 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             }
         }
     }
-    // Once per poll: a touchpad held long enough becomes a held press, and a tap's press runs out.
-    if ((last_buttons & kButtonTouchPad) != 0 && !slot.touch_chord && !slot.select_held &&
+    // Long hold maps to guest Minus only while no local menu is visible.
+    if (!overlay_open.load(std::memory_order_relaxed) &&
+        (last_buttons & kButtonTouchPad) != 0 && !slot.touch_chord && !slot.select_held &&
         ++slot.touch_polls >= kSelectHoldPolls)
         slot.select_held = true;
     if (slot.select_pulse > 0) --slot.select_pulse;

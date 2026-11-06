@@ -49,7 +49,8 @@ assert 'engine->SetButtonState(player, Button::ButtonCapture,' in pad
 assert 'slot.guest_home.BlockChordButtons()' in pad
 assert 'engine->SetButtonState(player, kGame[touch_button],' in pad
 assert 'constexpr ButtonMask menu_chord = kButtonTouchPad | kButtonL1;' in pad
-assert 'constexpr ButtonMask hud_chord = kButtonTouchPad | kButtonR1;' in pad
+assert 'constexpr ButtonMask hud_chord' not in pad
+assert 'overlay_open.store(opening, std::memory_order_release);' in pad
 
 compiler = next((x for x in ("clang++-18", "clang++", "g++") if shutil.which(x)), None)
 if compiler is None:

@@ -6,7 +6,22 @@ layout(location = 0) out vec4 color;
 #include "loading_wordmark.glsl"
 #include "loading_scene.glsl"
 void main() {
-    if (text.loading != 0u) {
+    // High sentinel values describe a native quick-menu primitive, NOT
+    // milliseconds of the loading scene. No texture or guest frame readback.
+    if (text.loading == 0xfffffff1u) {
+        vec2 uv = gl_FragCoord.xy / max(vec2(text.x, text.y), vec2(1.0));
+        float panel = step(0.53, uv.x) * (1.0 - step(0.985, uv.x)) *
+                      step(0.055, uv.y) * (1.0 - step(0.945, uv.y));
+        vec3 backdrop = vec3(0.018, 0.012, 0.029);
+        vec3 purple = mix(vec3(0.068, 0.032, 0.13),
+                          vec3(0.22, 0.092, 0.35), clamp(uv.y, 0.0, 1.0));
+        color = vec4(mix(backdrop, purple, panel), mix(0.60, 0.91, panel));
+        return;
+    }
+    bool warning_row = text.loading == 0xfffffff4u;
+    bool menu_row = text.loading == 0xfffffff2u ||
+                    text.loading == 0xfffffff3u || warning_row;
+    if (text.loading != 0u && !menu_row) {
         // The loading screen: x and y carry the picture's size, loading the milliseconds since
         // it began (plus one). Vulkan counts rows from the top.
         vec2 size = vec2(float(text.x), float(text.y));
@@ -34,6 +49,15 @@ void main() {
         int x = cell.x % 4;
         if (i < 24 && x < 3 && cell.y < 5)
             ink = ((glyphs[i] >> uint((4 - cell.y) * 3 + 2 - x)) & 1u) != 0u;
+    }
+    if (menu_row) {
+        bool selected = text.loading == 0xfffffff3u;
+        color = warning_row
+            ? (ink ? vec4(1.0, 0.83, 0.41, 1.0) : vec4(0.30, 0.17, 0.05, 0.78))
+            : (ink ? vec4(0.98, 0.96, 1.0, 1.0)
+                   : selected ? vec4(0.37, 0.17, 0.60, 0.80)
+                              : vec4(0.12, 0.065, 0.22, 0.34));
+        return;
     }
     color = ink ? vec4(0.9, 0.95, 1.0, 1.0) : vec4(0.025, 0.04, 0.075, 0.5);
 }

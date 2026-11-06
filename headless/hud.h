@@ -46,6 +46,7 @@ struct StartupGate {
     }
 };
 inline uint32_t HudGlyph(char c) {
+    if (c >= 'a' && c <= 'z') c = static_cast<char>(c - 'a' + 'A');
     switch (c) {
     case '0': return 0x7b6f;
     case '1': return 0x2c97;
@@ -72,6 +73,27 @@ inline uint32_t HudGlyph(char c) {
     case 'W': return 0x5fed;
     case '.': return 0x0002;
     case '-': return 0x01c0;
+    case 'B': return 0x6bae;
+    case 'C': return 0x3923;
+    case 'E': return 0x79a7;
+    case 'H': return 0x5bed;
+    case 'J': return 0x126a;
+    case 'M': return 0x5fed;
+    case 'Q': return 0x2b7b;
+    case 'R': return 0x6bad;
+    case 'T': return 0x7492;
+    case 'U': return 0x5b6f;
+    case 'X': return 0x5aad;
+    case 'Y': return 0x5a92;
+    case 'Z': return 0x72a7;
+    case '>': return 0x4454;
+    case '%': return 0x52a5;
+    case ':': return 0x0410;
+    case '/': return 0x12a4;
+    case '+': return 0x05d0;
+    case '_': return 0x0007;
+    case '=': return 0x0e38;
+    case '?': return 0x72c2;
     default: return 0;
     }
 }

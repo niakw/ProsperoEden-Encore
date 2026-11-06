@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "devices.h"
+#include "in_game_overlay.h"
 #include "controller_applet.h"
 #include "mock_devices.h"
 #include <algorithm>
@@ -138,34 +139,58 @@ void CheckPad() {
         CHECK(none_pressed());
         consume(); CHECK(!pad.TakeReturnToMenu());
         sample.buttons = 0; consume();
-        sample.buttons = kButtonTouchPad | kButtonR1; consume();
-        CHECK(pad.TakeHudToggle()); CHECK(!pad.TakeHudToggle());
-        CHECK(none_pressed());
-        sample.buttons = 0; consume();
-        // A shortcut is never a press of Minus, however long its keys take to come up.
-        for (int i = 0; i < 80; ++i) { consume(); CHECK(none_pressed()); }
 
-        // The touchpad as Select: a tap presses Minus (11) on release, for about 100 ms...
+        // Without the quick menu (OpenGL or earlier menu/loading phases),
+        // a short touchpad tap still publishes the original guest Minus pulse.
+        sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
+        sample.buttons = 0; consume();
+        CHECK(pad.Engine().GetButton({}, 11));
+        for (int i = 0; i < 26; ++i) consume();
+        CHECK(none_pressed());
+
+        // Touchpad+R1 no longer toggles an FPS shortcut. It is only a chord,
+        // so its release cannot open Encore's quick menu.
+        pad.EnableOverlay(true);
+        sample.buttons = kButtonTouchPad | kButtonR1; consume();
+        CHECK(pad.Engine().GetButton({}, 7)); // R1 remains a guest shoulder
+        CHECK(!pad.Engine().GetButton({}, 11)); // no accidental Minus
+        sample.buttons = 0; consume();
+        CHECK(none_pressed());
+        CHECK(!pad.OverlayVisible());
+        // Short touchpad click opens the menu and NEVER presses guest Minus.
         sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
         for (int i = 0; i < 20; ++i) { consume(); CHECK(none_pressed()); }
         sample.buttons = 0; consume();
-        for (int i = 0; i < 24; ++i) { CHECK(pad.Engine().GetButton({}, 11)); consume(); }
-        consume(); CHECK(none_pressed());
-        // ...a long press holds it until the release...
+        CHECK(pad.OverlayVisible()); CHECK(none_pressed());
+        sample.buttons = kButtonDown; consume();
+        CHECK((pad.TakeOverlayActions() & Eden::QuickOverlay::down) != 0);
+        CHECK(none_pressed()); // overlay navigation is not guest D-pad
+        sample.buttons = kButtonCross; consume();
+        CHECK((pad.TakeOverlayActions() & Eden::QuickOverlay::select) != 0);
+        CHECK(none_pressed());
+        // A second touchpad click closes the menu without guest input.
+        sample.buttons = kButtonTouchPad; consume();
+        sample.buttons = 0; consume();
+        CHECK(!pad.OverlayVisible()); CHECK(none_pressed());
+        // Long hold still maps guest Minus, with no overlay toggle.
         sample.buttons = kButtonTouchPad;
         for (int i = 0; i < 59; ++i) { consume(); CHECK(none_pressed()); }
         consume(); CHECK(pad.Engine().GetButton({}, 11));
         for (int i = 0; i < 30; ++i) { consume(); CHECK(pad.Engine().GetButton({}, 11)); }
         sample.buttons = 0; consume(); CHECK(none_pressed());
+        CHECK(!pad.OverlayVisible());
         for (int i = 0; i < 30; ++i) { consume(); CHECK(none_pressed()); }
-        // ...a shortcut started slowly gives none, and a controller that goes away is not a tap.
+        // A gradually entered chord is not a menu click, and lost
+        // controller sampling is never interpreted as a click.
         sample.buttons = kButtonTouchPad; consume(); consume();
-        sample.buttons = kButtonTouchPad | kButtonR1; consume(); CHECK(pad.TakeHudToggle());
+        sample.buttons = kButtonTouchPad | kButtonR1; consume();
         sample.buttons = kButtonTouchPad; consume();
         sample.buttons = 0; consume(); CHECK(none_pressed());
+        CHECK(!pad.OverlayVisible());
         sample.buttons = kButtonTouchPad; consume();
         sample.connected = 0; consume(); CHECK(none_pressed());
         sample.connected = 1; sample.buttons = 0; consume(); CHECK(none_pressed());
+        CHECK(!pad.OverlayVisible());
         // The real PS5 Create button now becomes virtual Switch Capture,
         // not an unexpected Minus. No Nintendo OS screenshot is emitted.
         sample.buttons = kButtonCreate; consume();

@@ -108,6 +108,19 @@ Available: **None, FXAA, SMAA**.
 
 **Off by default.** Useful while tuning or diagnosing a title.
 
+### In-game Encore quick overlay (Vulkan)
+
+**Short-click the DualSense touchpad**, not the PS button, to open the purple
+translucent in-game quick menu. Use L1/R1 to switch between Game, Graphics,
+Controller Mapping and Diagnostics. FPS visibility and bounded detailed logs
+can be toggled there instead of using the retired touchpad + R1 FPS shortcut.
+Per-game graphics and controller mapping changes are saved for the next launch.
+The existing touchpad long hold remains guest Minus when the overlay is closed;
+OpenGL games keep their previous guest tap behavior.
+
+Full controls, limits and validation status:
+[PS5 touchpad quick overlay](docs/PS5_TOUCHPAD_QUICK_OVERLAY.md).
+
 ## Console mode
 
 - **Docked — default.** Usually asks the game for its higher graphics targets.

@@ -368,11 +368,13 @@ jobs:
           set -euo pipefail
           for source in \
             vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp \
-            vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp; do
+            vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp \
+            vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp; do
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
               -Ivendor/encore-active/ns2-runtime/self_controller \
               -Ivendor/encore-active/ns2-runtime/graphics_supervisor \
+              -Ivendor/encore-active/ns2-runtime/video_decoder \
               -Ivendor/encore-active/ns2-runtime/gpu_session \
               -Ivendor/encore-active/ns2-runtime/nvdrv_as \
               -Ivendor/encore-active/ns2-runtime/hle \

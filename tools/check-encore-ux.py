@@ -297,4 +297,29 @@ assert match, 'staged-app Home focus contract has no explicit named marker list'
 for marker in re.findall(r'"(kHome[^\"]+)"', match.group(1)):
     assert marker in home, f'staged-app checker references missing Home identifier: {marker}'
 
+# Native in-game quick overlay: only Vulkan game sessions own short touchpad clicks.
+quick=read('headless/in_game_overlay.h')
+quick_menu=read('headless/in_game_overlay_menu.h')
+quick_present=read('headless/vulkan_window_adapt_r08.cpp')
+quick_shader=read('headless/vulkan_hud.frag')
+assert 'game && backend == Eden::GraphicsBackend::Vulkan' in main
+assert 'pad->TakeOverlayActions()' in main and 'pad->CloseOverlay()' in main
+assert 'pad->EnableOverlay(false)' in main
+assert 'overlay_enabled.load(std::memory_order_acquire)' in pad
+assert 'overlay_open.store(opening, std::memory_order_release)' in pad
+assert 'mapped_buttons = 0;' in pad and 'intercept_overlay ? 0.0f' in pad
+assert 'constexpr ButtonMask hud_chord' not in pad and 'TakeHudToggle' not in devices+main
+assert 'slot.select_pulse = kSelectTapPolls + 1;' in pad  # OpenGL Minus preserved
+assert 'frame_visible.load(std::memory_order_acquire)' in quick
+assert 'std::lock_guard lock(frame_mutex);' in quick
+assert 'SaveGameSettings(title_id, game)' in quick_menu
+assert 'SavePreferences(prefs)' in quick_menu
+assert 'NativeLogs::SetDetailed(prefs.detailed_logging)' in quick_menu
+assert 'SetHudEnabled(prefs.hud)' in quick_menu
+assert quick_present.count('DrawQuickOverlay(cmdbuf,') == 2
+assert 'Eden::QuickOverlay::Snapshot()' in quick_present
+for sentinel in ('0xfffffff1u','0xfffffff2u','0xfffffff3u'):
+    assert sentinel in quick_shader
+assert 'vec3 purple' in quick_shader
+
 print('Encore UX/media/profile contracts: PASS')

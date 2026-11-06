@@ -402,8 +402,12 @@ Le propriétaire existant `src/core/hle/service/nvdrv/core/container.cpp`
 rejette également les identifiants invalides ou les sessions inactives. Ces
 sources ajoutées après la revue F07 ne modifient pas ses 337 entrées historiques.
 Témoin : `tools/ns2/check_nvdrv_fd_session_owners_host.py` (Clang/GCC O0/O2) ;
-compilation syntaxique hôte des trois vrais fichiers. Le pointeur `Session*`
-reste emprunté : aucune garantie de durée de vie concurrente ni essai console.
+compilation syntaxique hôte des trois vrais fichiers. Le propriétaire NVMap
+commun récupère désormais le bon handle en cas de saturation SMMU, refuse une
+queue de récupération vide et termine sans boucle infinie. Témoin réel :
+`tools/ns2/check_native_nvmap_smmu_reclaim_host.py` (Clang/GCC O0/O2).
+Le pointeur `Session*` reste emprunté : aucune garantie de durée de vie
+concurrente ni essai console.
 
 
 ## Fichiers de build du snapshot de backports (hors sources C/C++)

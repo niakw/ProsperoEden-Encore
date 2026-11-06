@@ -67,7 +67,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 | Famille d'origine | État du port RDNA2 |
 |---|---|
 | gemm1x1.comp | Produit matriciel de base Vulkan RDNA2 développé ; famille complète non terminée |
-| fswin_t.comp | Non porté |
+| fswin_t.comp | **Partiel** : phases denses (expansion, middle groupé, contraction, projection) ; restent QKV, chaînage des passes, entrées image et down/up |
 | attn.comp | Calcul du contexte d’attention 64×32 préprojeté RDNA2 ; QKV fusionnés manquants, famille **partielle** |
 | vit_attn.comp | Première passe globale Q·K/P·V pour 32 têtes préprojetées, jusqu’à 2 048 tokens, précision différente de l’amont et non optimisée |
 | ffwd3_t.comp | Première variante groupée 512→64→256→64 en trois étapes FP8 ; port de calcul de base, non équivalent aux variantes tuilées de production |
@@ -296,3 +296,23 @@ est byte-à-byte et bidirectionnelle.
 Aucune conversion de poids n'est **encore invoquée au runtime** :
 un importeur de modèles doit la déclencher avant l'inférence GPU.
 Le convertisseur ne rend pas à lui seul les modèles NVIDIA compatibles.
+
+
+## Dixième primitive — noyau dense FSwin RDNA2
+
+Le shader fswin_dense_rdna2.comp porte quatre étapes denses
+de fswin_t.comp MIT en Vulkan 1.1 sans matrices FP8 : expansion
+C→4C avec activation cubique, produit block-diagonal par tête
+128→32, contraction C→C avec résidu pondéré rs[C], et projection
+post-attention avec résidu ars[C].
+
+C=32/64/128/256, 64 tokens par fenêtre, matrices E4M3FN
+row-major. Quatre dispatchs distincts, barrières compute→compute,
+5 buffers et 32 octets de constantes. Contrat hôte
+FSwinDense et wrapper NrRdna2FSwinDense.
+
+Les shaders et wrappers ont passé SPIR-V, ABI, test CPU et syntaxe
+C++ sur hôte avant publication. **Ce n'est pas fswin_t complet** :
+QKV, variantes image, downsample/upsample, import de modèles
+et planificateur du réseau restent à relier. Pas de performance
+PS5 ou de rendu DLSS revendiqués.

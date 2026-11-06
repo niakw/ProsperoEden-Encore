@@ -105,7 +105,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_ffwd3.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -361,6 +362,27 @@ add_dependencies(video_core eden-r09-rdna2-nr-vit-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_VIT_HEADER}")
+
+# R09 RDNA2 FSwin dense: shader SPIR-V Vulkan 1.1 ABI.
+set(EDEN_R09_RDNA2_FSWIN_DENSE_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_fswin_dense_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-dense-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_dense_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-dense-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 FSwin dense"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-fswin-dense-spv
+    DEPENDS "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-fswin-dense-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

@@ -185,6 +185,7 @@ eden_r08_test(test_rdna2_nr_qkv_projection_policy)
 eden_r08_test(test_rdna2_nr_ffwd3_policy)
 eden_r08_test(test_rdna2_nr_vit_attention_policy)
 eden_r08_test(test_rdna2_nr_vit_qkv_norm_policy)
+eden_r08_test(test_rdna2_nr_vit_projection_stage_policy)
 eden_r08_test(test_rdna2_nr_vit_epilogue_policy)
 eden_r08_test(test_rdna2_nr_split_context_repack_policy)
 eden_r08_test(test_rdna2_nr_vit_qkv_batches_policy)
@@ -468,5 +469,31 @@ target_compile_options(test_rdna2_nr_split_native_routes_policy PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_split_native_routes_policy
     COMMAND test_rdna2_nr_split_native_routes_policy
+        "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
+        "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
+
+# Local-only NRMODEL1 learned ViT FFN: 4096x1024, 1024x4096,
+# 1024x1024, and both exact 1024-value FP16 residual gains.
+add_executable(test_rdna2_nr_vit_ffn_weight_loader
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_ffn_weight_loader.cpp")
+target_include_directories(test_rdna2_nr_vit_ffn_weight_loader PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_vit_ffn_weight_loader PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_vit_ffn_weight_loader
+    COMMAND test_rdna2_nr_vit_ffn_weight_loader)
+
+# Exactly five operations per native ViT block and eight blocks per model;
+# prove real split FinalHead->ViT->decoder dependencies on both corpora.
+add_executable(test_rdna2_nr_vit_native_route_policy
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_native_route_policy.cpp")
+target_include_directories(test_rdna2_nr_vit_native_route_policy PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_vit_native_route_policy PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_vit_native_route_policy
+    COMMAND test_rdna2_nr_vit_native_route_policy
         "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
         "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")

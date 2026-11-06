@@ -552,6 +552,30 @@ assert not post_f07_task_mesh_owners & research_owners
 assert "EDEN_NATIVE_TASK_MESH_ROOT" in release_cmake
 print("ENCORE_P24_TASK_MESH_POST_F07_PASS", f"owners={len(post_f07_task_mesh_owners)}")
 
+# Reuse the literal three-file source catalogue: do not inflate the
+# immutable F07 518 reviewed owners after adding P2.4 opcode decoding.
+opcode_nodes = [
+    n.value for n in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(n, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_native_opcode_owners"
+        for t in n.targets)
+]
+assert len(opcode_nodes) == 1
+opcode_paths = ast.literal_eval(opcode_nodes[0])
+assert opcode_paths == {
+    "eden-shader/src/shader_recompiler/frontend/maxwell/decode.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/opcodes.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/opcodes.h",
+}
+post_f07_native_opcode_owners = {"vendor/encore-active/" + p for p in opcode_paths}
+assert post_f07_native_opcode_owners <= all_owners
+assert not post_f07_native_opcode_owners & (research_owners | post_f07_task_mesh_owners)
+assert "frontend/maxwell/decode.cpp" in release_cmake
+assert "frontend/maxwell/opcodes.cpp" in release_cmake
+print("ENCORE_POST_F07_NATIVE_OPCODE_ISOLATION_PASS", "owners=3")
+
 # R437 is native-only source added after F07, not an extra reviewed
 # optimization owner. Reuse the source-inventory literal set, verify it
 # exists in the vendored tree, and keep the immutable 518-owner review.
@@ -620,7 +644,7 @@ assert not post_f07_ampere_semaphore_owners & research_owners
 assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_AMPERE_SEMAPHORE_ISOLATION_PASS", "owners=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

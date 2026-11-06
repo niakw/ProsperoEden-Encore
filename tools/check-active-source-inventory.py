@@ -482,6 +482,25 @@ assert len(post_f07_task_mesh_source_owners) == 29
 assert "EDEN_NATIVE_TASK_MESH_ROOT" in (root / "headless/CMakeLists.txt").read_text()
 print("ENCORE_P24_TASK_MESH_STAGED_SOURCE_PASS", f"owners={len(post_f07_task_mesh_source_owners)}")
 
+# Track the three unified Maxwell/NS2 opcode owners added after F07.
+# These are one ABI (decode / enum / name table), not F07 optimizations.
+post_f07_native_opcode_owners = {
+    "eden-shader/src/shader_recompiler/frontend/maxwell/decode.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/opcodes.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/opcodes.h",
+}
+assert post_f07_native_opcode_owners <= set(physical_all)
+assert not post_f07_native_opcode_owners.intersection(research_paths)
+opcode_root = active / "eden-shader/src/shader_recompiler/frontend/maxwell"
+assert "INST(ISBE_nx2" in (opcode_root / "maxwell.inc").read_text()
+assert '#include "maxwell.inc"' in (opcode_root / "opcodes.h").read_text()
+for name in ("decode.cpp", "opcodes.cpp"):
+    assert '#include "shader_recompiler/frontend/maxwell/maxwell.inc"' in (
+        opcode_root / name).read_text()
+recipe = (root / "headless/CMakeLists.txt").read_text()
+assert "frontend/maxwell/decode.cpp" in recipe and "frontend/maxwell/opcodes.cpp" in recipe
+print("ENCORE_POST_F07_NATIVE_OPCODE_OWNER_PASS", "owners=3")
+
 # P2.2c's maintained SPIR-V image emitter is a new post-F07 production
 # source, not a historical F07 optimization or an unselected experiment.
 # Keep the immutable 337-file source audit exact and independently prove the
@@ -527,7 +546,7 @@ physical = [p for p in physical_all
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
-            post_f07_ampere_semaphore_owners]
+            post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

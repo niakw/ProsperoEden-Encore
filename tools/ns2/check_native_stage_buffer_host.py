@@ -31,7 +31,7 @@ using namespace Shader::Ampere;
 
 Instruction Stage(u32 op, u32 ra, u32 value, u32 byte_offset, u32 flags) {
     Instruction inst{};
-    inst.words[0] = op | (value << 16) | (ra << 24);
+    inst.words[0] = op | (op == 0x923 ? (value << 16) : 0U) | (ra << 24);
     inst.words[1] = (byte_offset << 8) | (op == 0x927 ? value : 0U);
     inst.words[2] = flags;
     return inst;

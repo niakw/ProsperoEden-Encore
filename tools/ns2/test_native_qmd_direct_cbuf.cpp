@@ -321,10 +321,19 @@ static void CheckNativeGlobalAtomicPointer(
     const bool packed_f32 = opcode == Opcode::GlobalAtomicAddF32x2 ||
         opcode == Opcode::GlobalAtomicMinF32x2 ||
         opcode == Opcode::GlobalAtomicMaxF32x2;
+    const bool packed_f16 = opcode == Opcode::GlobalAtomicAddF16x2 ||
+        opcode == Opcode::GlobalAtomicMinF16x2 ||
+        opcode == Opcode::GlobalAtomicMaxF16x2;
     Value value{u32{7}};
     if (wide) value=Value{u64{7}};
     else if (float32) value=Value{f32{1.25f}};
-    else if (packed_f32) {
+    else if (packed_f16) {
+        // Guest packed half lanes must reach SPIR-V as actual F16x2,
+        // never as the U32 return-value type of the atomic itself.
+        block.AppendNewInst(Opcode::UnpackFloat2x16,
+            {Value{u32{0x3c00bc00}}});
+        value=Value{&block.back()};
+    } else if (packed_f32) {
         block.AppendNewInst(Opcode::CompositeConstructF32x2,
             {Value{f32{1.25f}}, Value{f32{-2.0f}}});
         value=Value{&block.back()};
@@ -359,6 +368,8 @@ static void CheckNativeGlobalAtomicPointer(
         }
         assert(packed_f32 ? !inst.Arg(2).IsImmediate() &&
                              inst.Arg(2).Type() == Shader::IR::Type::F32x2 :
+               packed_f16 ? !inst.Arg(2).IsImmediate() &&
+                            inst.Arg(2).Type() == Shader::IR::Type::F16x2 :
                inst.Arg(2).IsImmediate() &&
                (float32 ? inst.Arg(2).Type() == Shader::IR::Type::F32 &&
                           inst.Arg(2).F32() == 1.25f :

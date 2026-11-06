@@ -83,10 +83,24 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     mesh_device = expected[native_mesh_device_header].read_text()
     mesh_feature_line = "    FEATURE(EXT, MeshShader, MESH_SHADER, mesh_shader)                                             \\\n"
     mesh_feature_method = "    /// Returns true if the device supports task and mesh shaders (VK_EXT_mesh_shader).\n    bool IsExtMeshShaderSupported() const {\n        return extensions.mesh_shader && features.mesh_shader.taskShader &&\n               features.mesh_shader.meshShader;\n    }\n\n"
-    assert mesh_device.count(mesh_feature_line) == mesh_device.count(mesh_feature_method) == 1
-    assert (mesh_device.replace(mesh_feature_line, '').replace(mesh_feature_method, '') ==
-            (upstream/'src/video_core/vulkan_common/vulkan_device.h').read_text()), (
-            "Native Task/Mesh device feature ABI source drift")
+    # The N58 sparse-residency header is an independently reviewed
+    # additive feature. Our single Vulkan Device ABI must retain BOTH that
+    # feature and Task/Mesh. Prove both deltas against immutable Eden.
+    pinned_device = (upstream/'src/video_core/vulkan_common/vulkan_device.h').read_text()
+    sparse_device = (root/'vendor/encore-active/ns2-helpers/include/video_core/vulkan_common/vulkan_device.h').read_text()
+    sparse_start = sparse_device.index('    // N58: image sparse residency')
+    sparse_end = sparse_device.index('    /// Returns true for tile-based deferred renderers.', sparse_start)
+    sparse_delta = sparse_device[sparse_start:sparse_end]
+    assert sparse_device.count(sparse_delta) == 1 and sparse_device.replace(sparse_delta, '') == pinned_device, (
+        "N58 source ABI must be a complete exact additive sparse residency guard")
+    assert mesh_device.count(mesh_feature_line) == 1
+    assert mesh_device.count(mesh_feature_method) == 1
+    assert mesh_device.count(sparse_delta) == 1, (
+        "Native Task/Mesh device header lost the sparse residency method")
+    assert (mesh_device.replace(mesh_feature_line, '')
+                       .replace(mesh_feature_method, '')
+                       .replace(sparse_delta, '') == pinned_device), (
+        "Native Task/Mesh + sparse residency ABI owner drift")
     assert set(actual)==set(expected)-{helper, allocator, pool_policy, storage_layout,
                                          native_mesh_device_header}, (
         f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')

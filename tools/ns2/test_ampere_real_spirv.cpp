@@ -590,6 +590,12 @@ static void VerifyRealTessPatchSpirv(const std::string& prefix) {
         }
         Require(words.size() > 5 && words[0] == 0x07230203U,
                 "TCS/TES patch emitter produced no SPIR-V");
+        // Stable wire-format SPIR-V decoration/builtin numbers, independent
+        // of the scoped/unscoped C++ enumerator spelling in pinned headers.
+        constexpr u32 DecorationBuiltIn = 11U;
+        constexpr u32 DecorationPatch = 15U;
+        constexpr u32 BuiltInTessLevelOuter = 11U;
+        constexpr u32 BuiltInTessLevelInner = 12U;
         u32 reads{}, writes{}, outer{}, inner{}, patch_decorations{};
         for (std::size_t i = 5; i < words.size();) {
             const u32 op = words[i], count = op >> 16;
@@ -599,14 +605,11 @@ static void VerifyRealTessPatchSpirv(const std::string& prefix) {
             writes += (op & 0xffffU) == static_cast<u32>(spv::Op::OpStore);
             if ((op & 0xffffU) == static_cast<u32>(spv::Op::OpDecorate) &&
                 count >= 3) {
-                patch_decorations += words[i + 2] == static_cast<u32>(
-                    spv::Decoration::Patch);
+                patch_decorations += words[i + 2] == DecorationPatch;
                 if (count >= 4 &&
-                    words[i + 2] == static_cast<u32>(spv::Decoration::BuiltIn)) {
-                    outer += words[i + 3] == static_cast<u32>(
-                        spv::BuiltIn::TessLevelOuter);
-                    inner += words[i + 3] == static_cast<u32>(
-                        spv::BuiltIn::TessLevelInner);
+                    words[i + 2] == DecorationBuiltIn) {
+                    outer += words[i + 3] == BuiltInTessLevelOuter;
+                    inner += words[i + 3] == BuiltInTessLevelInner;
                 }
             }
             i += count;

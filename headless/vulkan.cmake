@@ -109,6 +109,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_ffwd3.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_ffwd_layer.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_residual_projection.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_context_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_epilogue.cpp"
@@ -441,6 +442,29 @@ set_property(SOURCE
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_activation_comp_spv.h"
     "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_residual_comp_spv.h")
+
+
+# R09: transpose GPU attention context to contiguous token-major FP8.
+set(EDEN_R09_SPLIT_CONTEXT_REPACK_SPV
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_split_context_repack_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_SPLIT_CONTEXT_REPACK_SPV}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-split-context-repack-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_SPLIT_CONTEXT_REPACK_SPV}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/split_context_repack_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-split-context-repack-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 Split-Swin context layout transpose"
+    VERBATIM)
+add_custom_target(eden-r09-split-context-repack-spv
+    DEPENDS "${EDEN_R09_SPLIT_CONTEXT_REPACK_SPV}")
+add_dependencies(video_core eden-r09-split-context-repack-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_context_repack.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_SPLIT_CONTEXT_REPACK_SPV}")
 
 # R09 RDNA2 FSwin dense: shader SPIR-V Vulkan 1.1 ABI.
 set(EDEN_R09_RDNA2_FSWIN_DENSE_HEADER

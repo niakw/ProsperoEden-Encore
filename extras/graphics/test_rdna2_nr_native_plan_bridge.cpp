@@ -28,12 +28,21 @@ int main(){
     assert(rows[1].shift_x==-1&&rows[2].shift_y==0);
     const auto segments=ExtractNativeFSwinSegments(rows);
     assert(segments.size()==2u);
-    assert(segments[0].layers.size()==2u);
+    assert(segments[0].layers.size()==3u);
     assert(segments[1].layers.size()==2u);
     assert(segments[0].layers[0].weight_prefix==
-        "unpacked/block16.layer0.layer");
+        "unpacked/block15.layer0.layer");
     assert(segments[0].layers[1].weight_prefix==
+        "unpacked/block16.layer0.layer");
+    assert(segments[0].layers[2].weight_prefix==
         "unpacked/block17.layer0.layer");
+    assert(segments[0].layers[0].view==NativeFSwinView::InputView);
+    assert(segments[0].layers[1].view==NativeFSwinView::Plain);
+    assert(segments[0].layers[2].view==NativeFSwinView::Plain);
+    NativeFSwinView view{};
+    assert(NativeViewFSwin(rows[0],view));
+    assert(view==NativeFSwinView::InputView);
+    assert(!NativeViewFSwin(rows[3],view));
     assert(segments[0].layers[0].windows==135u);
     assert(segments[0].layers[0].channels==256u);
     const auto& first=segments[0].layers;

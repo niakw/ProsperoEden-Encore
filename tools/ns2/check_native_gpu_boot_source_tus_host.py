@@ -74,4 +74,21 @@ built = subprocess.run(native_flags+[str(puller)], capture_output=True,
                        text=True, env=env, timeout=95)
 assert built.returncode == 0, ('PS5 native QMD3 puller ABI',built.stderr[-3500:])
 print('P2_7_NATIVE_QMD3_SINGLE_SHADER_CAPTURE_PASS native_abi=1 dispatch=1 redundancy=0')
+# P2.7: compile the REAL DMA cursor and native scheduler implementation
+# against the same DmaPusher/Puller headers and PS5-native Rasterizer ABI.
+# Checking the Puller alone misses a broken dispatch/resume boundary.
+native_gpfifo_owners = [
+    r/'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp',
+    r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp',
+]
+for owner in native_gpfifo_owners:
+    assert owner.is_file(), owner
+    built = subprocess.run(native_flags + [str(owner)], capture_output=True,
+                           text=True, env=env, timeout=95)
+    if built.returncode:
+        print('P2_7_NATIVE_GPFIFO_SOURCE_TU_FAIL',owner,built.stderr[-4500:],
+              file=sys.stderr,flush=True)
+        raise AssertionError(('Native GPFIFO source ABI invalid',str(owner)))
+    print('P2_7_NATIVE_GPFIFO_SOURCE_TU_PASS',owner,flush=True)
+print('P2_7_NATIVE_GPFIFO_DISPATCH_SYNTAX_PASS units=3 host_only=1')
 print('P0_2_NATIVE_GPU_BOOT_SOURCES_SYNTAX_PASS 6/6 host_only=1 PS5_build=OFF',flush=True)

@@ -76,3 +76,7 @@ L'estimation humaine initiale de **17–46 journées** a été retirée : elle n
 5. **P4** : matrice des cas négatifs et CI au **couple SHA figé**, puis décision P5. **Aucune preuve console n'est exigée pour clore les quatre premiers jalons.**
 
 > Le backlog est volontairement un inventaire **des propriétaires et chemins auditables**, pas une affirmation que tous les cas `NotImplemented` doivent être implémentés. Au prochain audit, changer l'état des lignes sur des preuves de source/test et réduire l'estimation seulement après fermeture effective d'un groupe.
+
+### Lot Lichii nx2 — 6 novembre 2026 (validation groupée en attente)
+
+Portage GPL-3.0-or-later depuis [Lichii nx2 `55532f2d81`](https://github.com/zortos293/Lichii/commit/55532f2d814215aaf32a76c214cf129f2cb6282b). Neuf encodages dans huit familles : `F2IP 0x243`, `F2FP 0xc3e`, `SUATOM 0x593`, `SUST byte 0xb9d`, `TLD bindless 0x367`, `TXD uniform 0xf6c`, `ST local 0x987`, `TMML 0x36a/0xf69`. Adaptations génériques : protection des registres invités, réserve des registres synthétiques, admission des sources uniformes, non-recouvrement des sorties, unicité du slot TIC/TSC, et masques du probe pour quatre encodages absents de la table NAK. Source intégrée dans le propriétaire actif ; **compilation, tests hôte et CI à valider en lot** avant de cocher P2.4. `0x2a5` possède déjà une voie de réécriture spécifique à auditer ; `ISBEWR 0x927` demande le frontend Task/Mesh complet ; `CSMTEST 0x80d` n'est pas simulé par un résultat arbitraire. Aucune validation PS5 nécessaire avant P5.

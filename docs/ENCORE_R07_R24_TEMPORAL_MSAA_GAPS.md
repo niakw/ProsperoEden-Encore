@@ -196,6 +196,26 @@ avec les vraies sources Vulkan et passe les tests de politique.
 Le pipeline guest doit encore être construit dans sa variante
 multisample ET sélectionné au draw : ce code ne l'active pas seul.
 
+La variante de pipeline de production R24 (vendor 3b6ea83da)
+est maintenant construite avec une clé distincte pour chacun des
+échantillonnages 2x/4x/8x/16x : le cache graphique ne modifie ni les
+registres invités ni les images et crée un renderpass Vulkan dont le
+resolve couleur et la topologie correspondent au shadow.
+La sélection explicite CurrentGraphicsPipelineForMsaa refuse une
+cible invitée multi-attachements, avec profondeur ou déjà MSAA,
+ou un niveau d'échantillonnage inconnu ; la voie Auto originelle
+continue d'appeler CurrentGraphicsPipeline sans variante.
+Au moment de Configurer le pipeline, le draw n'est accepté que
+si le scheduler possède le renderpass MSAA compatible déjà actif.
+Le renderpass est obtenu avant la compilation asynchrone pour
+ne pas introduire de lecture concurrente non synchronisée.
+
+Reste à brancher le point de décision du guest Clear/Draw : confirmer
+la vue couleur invitée, le clear complet, les alias de shader et
+le budget réel, armer la shadow au bon instant, puis sélectionner
+cette variante de pipeline lors du draw. Ce dernier pont n'est pas
+encore présent et aucun mode forcé ne peut être déclaré opérationnel.
+
 **Ce composant n'est pas appelé par le chemin des draws invités** : la
 sélection du pipeline rasterisationSamples, les clears, l'ordre des
 barrières/lifetimes et les attachments depth/stencil ne sont pas

@@ -20,7 +20,7 @@ assert "void Consume(std::size_t player, std::span<const ps5::pad::Data> samples
 assert "void SetButtonState(std::size_t player, int button, bool value);" in HEADER
 assert "const auto& active_mapping = ActiveMapping();" in PAD
 assert "if (pad == pad_touchpad) continue;" in PAD
-assert "constexpr unsigned kSelectTapPolls = 25;" in PAD
+assert "kSelectTapPolls" not in PAD
 assert "constexpr unsigned kSelectHoldPolls = 60;" in PAD
 
 def extract(signature: str) -> str:
@@ -47,8 +47,8 @@ assert consume_source.index("const bool create_is_capture =") < consume_source.i
 assert "MappedTo(ActiveMapping(), pad_touchpad)" not in consume_source
 assert "std::array<float, 256> stick_curve{};" in HEADER
 assert "std::array<bool, 256> trigger_pressed{};" in HEADER
-assert "const bool left = trigger_pressed[sample.triggers.l2];" in consume_source
-assert "const bool right = trigger_pressed[sample.triggers.r2];" in consume_source
+assert "const bool left = !intercept_overlay && trigger_pressed[sample.triggers.l2];" in consume_source
+assert "const bool right = !intercept_overlay && trigger_pressed[sample.triggers.r2];" in consume_source
 assert "sample.triggers.l2 / 255.0f" not in consume_source
 trigger_anchor = "    for (std::size_t raw = 0; raw < trigger_pressed.size(); ++raw) {"
 assert PAD.count(trigger_anchor) == 1
@@ -97,13 +97,13 @@ cpp = r"""
 #include <utility>
 #include "button_mapping.h"
 #include "ps5_guest_system_button_route.h"
+#include "in_game_overlay.h"
 #include "ps5_pad.hpp"
 using u8 = std::uint8_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 constexpr int kRightSL = 20;
 constexpr int kRightSR = 21;
-constexpr unsigned kSelectTapPolls = 25;
 constexpr unsigned kSelectHoldPolls = 60;
 namespace NativeLogs { inline bool Detailed() { return false; } }
 namespace InputCommon {
@@ -164,7 +164,6 @@ public:
         GuestSystemButtonRoute guest_home{};
         bool select_held{};
         unsigned touch_polls{};
-        unsigned select_pulse{};
     };
     std::shared_ptr<PadEngine> engine=std::make_shared<PadEngine>();
     std::array<Slot,4> slots{};
@@ -179,7 +178,10 @@ __NATIVE_STICK_CURVE__
 __NATIVE_TRIGGER_LOOKUP__
     }
     Pad() { RebuildCurve(); RebuildTriggerLookup(); }
-    bool return_to_menu{},hud_toggle{};
+    bool return_to_menu{};
+    std::atomic<bool> overlay_enabled{false};
+    std::atomic<bool> overlay_open{false};
+    std::atomic<std::uint32_t> overlay_actions{0};
     u64 options_edges{},create_edges{};
     EdgeDiagnostics face_edges{};
     const ButtonMapping& ActiveMapping() const noexcept {return mapping;}
@@ -288,13 +290,19 @@ int main() {
     assert(!pad.engine->Get(V::TriggerL));
     assert(!pad.engine->Get(V::ButtonMinus));
     step(0);
-    // A standalone touchpad tap is Minus, then auto-releases.
+    // The short click is local and has no guest Minus pulse.
+    pad.overlay_enabled.store(true);
     step(kButtonTouchPad);
     step(0);
-    assert(pad.engine->Get(V::ButtonMinus));
-    for(int i=0;i<28;++i)pad.Consume(std::span<const Data>{});
+    assert(pad.overlay_open.load());
     assert(!pad.engine->Get(V::ButtonMinus));
-    assert(pad.engine->Rising(V::ButtonMinus)==1);
+    step(kButtonDown);
+    assert(!pad.engine->Get(V::ButtonDown));
+    assert((pad.overlay_actions.exchange(0) & QuickOverlay::down) != 0);
+    step(kButtonTouchPad);
+    step(0);
+    assert(!pad.overlay_open.load());
+    assert(pad.engine->Rising(V::ButtonMinus)==0);
     assert(pad.engine->Rising(V::ButtonPlus)==5);
     // A full scePadRead burst must retain the same mapping and not publish
     // redundant guest button transitions for held inputs.
@@ -321,7 +329,7 @@ int main() {
     assert(!mapped_create.engine->Get(V::ButtonCapture));
     std::puts("F06_NATIVE_PAD_TRANSITIONS_PASS phases=5 action_edges=5 "
               "options_plus_edges=5 disconnect_releases=1 "
-              "home_chords=1 menu_shortcuts=1 touch_taps=1 "
+              "home_chords=1 menu_shortcuts=1 quick_overlay_clicks=2 "
               "stick_curve_bytes=256 scope=source_extracted_host_mock_virtual_input_no_guest_Npad");
 }
 """.replace("__NATIVE_METHODS__",native_methods).replace(

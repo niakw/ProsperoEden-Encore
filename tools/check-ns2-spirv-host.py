@@ -53,18 +53,40 @@ def main():
         r"(?:instructions/)?[^\s()/]+\.cpp", 18,
         ["sirit.cpp", "instructions/type.cpp"])
     overlay = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere"
-    # P2.3: validate BOTH maintained QMD3 source variants, not Eden's
-    # fourteen-bank indirect switch or its unchecked direct-bank accessor.
-    native_cbuf_emitters = {
+    mesh_root = ROOT / "vendor/encore-active/eden-shader/src"
+    # Use the SAME production shader headers and translation units as the
+    # single PS5 CMake shader target. Mixed pinned headers with native TES
+    # emitters cannot compile and do not represent a real ABI witness.
+    native_owners = {
         "backend/spirv/spirv_emit_context.cpp":
             ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
         "backend/spirv/emit_spirv_context_get_set.cpp":
             ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+        "backend/spirv/emit_spirv_image.cpp":
+            ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     }
-    if any(shaders.count(owner) != 1 for owner in native_cbuf_emitters):
-        raise RuntimeError("pinned SPIR-V CBUF source owner changed")
-    sources = [native_cbuf_emitters.get(name, SHADER / name)
-               for name in shaders] + [
+    mesh_owners = (
+        "backend/spirv/emit_spirv.cpp",
+        "backend/spirv/emit_spirv_special.cpp",
+        "frontend/ir/ir_emitter.cpp",
+        "frontend/ir/microinstruction.cpp",
+        "frontend/ir/opcodes.cpp",
+        "frontend/maxwell/structured_control_flow.cpp",
+        "frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp",
+        "frontend/maxwell/translate_program.cpp",
+        "ir_opt/collect_shader_info_pass.cpp",
+    )
+    for name in mesh_owners:
+        if name in native_owners:
+            raise RuntimeError("native shader owner collision: " + name)
+        native_owners[name] = mesh_root / "shader_recompiler" / name
+    if any(shaders.count(name) != 1 for name in native_owners):
+        raise RuntimeError("pinned SPIR-V/Task/Mesh source owner changed")
+    extra_mesh = mesh_root / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp"
+    if not extra_mesh.is_file():
+        raise RuntimeError("missing actual SPIR-V mesh emitter")
+    sources = [native_owners.get(name, SHADER / name)
+               for name in shaders] + [extra_mesh] + [
         overlay / (name + ".cpp") for name in
         ("ir_bridge", "renderer_spirv_bridge", "maxwell_environment", "maxwell_image", "lower_bridge", "probe")
     ] + [overlay / "capture.cpp",
@@ -74,6 +96,13 @@ def main():
          ROOT / "tools/ns2/jit-host/common_shim.cpp",
          ROOT / "tools/ns2/test_ampere_real_spirv.cpp"]
     sources += [SIRIT / "src" / name for name in sirit_sources]
+    if len({str(p) for p in sources}) != len(sources):
+        raise RuntimeError("duplicate SPIR-V translation unit")
+    maintained_header = (mesh_root / "shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
+    for name in ("input_tess_level_outer", "input_tess_level_inner",
+                 "output_tess_level_outer", "output_tess_level_inner"):
+        if name not in maintained_header:
+            raise RuntimeError("maintained TES/TCS patch interface missing: " + name)
     missing = [str(p) for p in sources if not p.is_file()]
     if missing:
         raise RuntimeError("missing pinned shader sources: " + ", ".join(missing))
@@ -81,6 +110,7 @@ def main():
     flags = [cxx, "-std=c++20", "-O0", "-g0", "-DFMT_HEADER_ONLY",
              "-ffunction-sections", "-fdata-sections", "-Wno-unused-parameter",
              "-pthread", "-I" + str(FMT),
+              "-I" + str(mesh_root),
              "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/ampere"),
              "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch"),
              "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/hle"), "-I" + str(SRC),

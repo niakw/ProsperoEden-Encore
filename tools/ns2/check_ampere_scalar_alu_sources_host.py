@@ -10,7 +10,12 @@ ROOT=Path(__file__).resolve().parents[2]
 SHADER=ROOT/'vendor/encore-active/ns2-runtime/ampere'
 SOURCE=ROOT/'tools/ns2/test_ampere_scalar_alu_sources.cpp'
 LOWER=(SHADER/'shader_recompiler/frontend/ampere/lower_to_maxwell.h').read_text()
-assert 'case 0x307: case 0xb07:' in LOWER
+assert 'case 0x307: case 0x907: case 0xb07: case 0xd07:' in LOWER
+assert 'case 0x305: case 0x905: case 0xb05: case 0xd05:' in LOWER
+assert 'if (opcode == 0x905) mov_imm(252, insn.words[1]);' in LOWER
+assert 'case 0x307: case 0x907: case 0xb07: case 0xd07:' in LOWER
+assert 'op == 0xd07' in LOWER
+assert 'immediate ? 0U : insn.Bits(63, 1)' in LOWER
 assert 'constant_source && (!valid_cbuf() || insn.Bits(54, 5) >= 18)' in LOWER
 assert 'constant_source ? cbuf()' in LOWER
 assert 'case 0x207: case 0x807: case 0xa07: case 0xc07:' in LOWER

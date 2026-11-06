@@ -426,6 +426,20 @@ L'accès global atomique via un SSBO dont la provenance n'est pas
 authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
 et les shaders complets restent à qualifier en P5.
 
+**P2.4 — sources immédiates et uniformes FRND/F2I (06/11, source/hôte) :**
+Le lowerer Ampere commun traite désormais `FRND.F32` avec un immédiat 32 bits
+(`0x907`) ou une source uniforme (`0xd07`), et `F2I` avec immédiat 32 bits
+(`0x905`), par le même backend Maxwell que les formes registre/CBUF déjà
+admises. Les constantes sont matérialisées **bit à bit** dans un GPR, sans
+conversion par le CPU hôte ; leur bit de signe n'est jamais interprété
+comme un modificateur `abs` ou `neg`. Les UR 0–62 et UR63=RZ utilisent
+la réservation du banc partagé, avec refus des collisions GPR et champs
+de format non reconnus. Le moteur NS1 n'est pas modifié.
+Validation `check_ampere_scalar_alu_sources_host.py` sur le vrai
+`LowerReviewedToMaxwell` : 0, +1, −1 et NaN pour FRND/F2I, UR bas/hauts/63,
+cas de rejet ; **Clang/GCC UBSan O0/O2, 4/4 PASS**. P2.4 reste ouvert
+pour les familles ISA et stages non implémentés ; test PS5 en P5.
+
 **P2.4 — FLO multi-sources (06/11, source/hôte) :**
 L'instruction de recherche du bit de tête `FLO` ajoute les formes immédiate
 32 bits (`0x900`) et CBUF (`0xb00`) aux variantes GPR et UR existantes.

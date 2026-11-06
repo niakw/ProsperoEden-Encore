@@ -78,6 +78,64 @@ int main() {
     Require(((gpr_word>>20)&255)==22, "native register source unchanged");
     Require(Bridge(register_form).Ready(), "normal FRND remains accepted in the full bridge");
 
+    // F2I.F32.S32 accepts the 32-bit immediate form 0x905. Preserve the
+    // floating input bits including sign and NaN, then reuse the existing
+    // signed/unsigned conversion path with the same rounding and FTZ bits.
+    for (u32 bits : {0U, 0x3f800000U, 0xbf800000U, 0x7fc00001U}) {
+        const Instruction inst{{(7U<<12)|0x905U|(5U<<16),bits,
+                                0x00203100U,0x000fe200U}};
+        Require(Reviewed(inst),"F2I immediate accepted by actual Ampere ISA table");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        bool materialized=false,converted=false;
+        for (const u64 word : out.maxwell_instructions) {
+            if ((word>>56)==0x01 && (word&255)==252 &&
+                ((word>>20)&0xffffffffULL)==bits) materialized=true;
+            if ((word>>56)==0x5c && (word&255)==5 &&
+                ((word>>20)&255)==252 && ((word>>12)&1)==1)
+                converted=true;
+        }
+        Require(materialized && converted,"F2I retains full literal and uses actual signed Maxwell conversion");
+    }
+    Instruction bad_f2i{{(7U<<12)|0x905U|(5U<<16),0x3f800000U,
+                          0x00203101U,0x000fe200U}};
+    Require(!Bridge(bad_f2i).Ready(),"F2I immediate unreviewed rounding format is rejected");
+    // Review the complete FRND source family through the real rendering
+    // bridge. A negative or NaN bit-pattern must remain the exact literal
+    // (not be interpreted as its sign/abs modifier bits).
+    for (const u32 bits : {0U, 0x3f800000U, 0xbf800000U, 0x7fc00001U}) {
+        const Instruction inst{{(7U<<12)|0x907U|(5U<<16),bits,
+                                (2U<<11)|(2U<<20),0x000fe200U}};
+        Require(Reviewed(inst),"FRND immediate passes native ISA field review");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        bool materialized=false, rounded=false;
+        for (const u64 word : out.maxwell_instructions) {
+            if ((word>>56)==0x01 && (word&255)==251 &&
+                ((word>>20)&0xffffffffULL)==bits) materialized=true;
+            if ((word>>56)==0x5c && (word&255)==5 &&
+                ((word>>20)&255)==251 && ((word>>45)&1)==0 &&
+                ((word>>49)&1)==0) rounded=true;
+        }
+        Require(materialized && rounded,"FRND full IEEE-754 literal reaches native round opcode");
+    }
+    for (const auto& [source,expected] :
+         std::array<std::pair<u32,u32>,3>{{{3,219},{18,202},{63,255}}}) {
+        const Instruction uniform_frnd{{(7U<<12)|0xd07U|(5U<<16),source,
+                          (2U<<11)|(2U<<20)|0x08000000U,0x000fe200U}};
+        Require(Reviewed(uniform_frnd),"FRND uniform passes actual ISA review");
+        const auto out=Bridge(uniform_frnd);
+        Require(out.Ready(),out.reason.data());
+        const u64 word=out.maxwell_instructions[out.source_instruction_offsets[0]];
+        Require((word>>56)==0x5c && ((word>>20)&255)==expected &&
+                (word&255)==5,"FRND uses protected native uniform register source");
+    }
+    Instruction bad_frnd_uniform{{(7U<<12)|0xd07U|(5U<<16),64U,
+                       (2U<<11)|(2U<<20)|0x08000000U,0x000fe200U}};
+    Require(!Bridge(bad_frnd_uniform).Ready(),"FRND refuses out-of-table uniform source");
+    bad_frnd_uniform.words[0]=(7U<<12)|0xd07U|(220U<<16);
+    bad_frnd_uniform.words[1]=4;
+    Require(!Bridge(bad_frnd_uniform).Ready(),"FRND uniform register bank cannot alias output");
     for (const auto invalid : {Frnd(0xb07,5,1,7), // unaligned offset
                               Frnd(0xb07,5,4,18), // descriptor beyond supported stage slots
                               Frnd(0xb07,5,4,31)}) {

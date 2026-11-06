@@ -414,6 +414,38 @@ assert "DecodeNativeStageBufferAccess(insn)" in stage_lowerer
 assert "native_stage_buffer.h" in (root / "headless/CMakeLists.txt").read_text()
 print("ENCORE_POST_F07_STAGE_BUFFER_OWNER_PASS", f"owners={len(post_f07_native_stage_buffer_owners)}")
 
+# P2.4 Task/Mesh maintained source ports are post-F07 sources in the
+# vendor feature branch. They are NOT F07 historical optimization receipts
+# and cannot be called shipping until the full shader/Vulkan graph is selected
+# and the host compiler/spirv-val qualification passes.
+post_f07_task_mesh_source_owners = {
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_instructions.h",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_special.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h",
+    "eden-shader/src/shader_recompiler/environment.h",
+    "eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.h",
+    "eden-shader/src/shader_recompiler/frontend/ir/microinstruction.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc",
+    "eden-shader/src/shader_recompiler/frontend/ir/program.h",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/maxwell.inc",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/structured_control_flow.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp",
+    "eden-shader/src/shader_recompiler/runtime_info.h",
+    "eden-shader/src/shader_recompiler/shader_info.h",
+    "eden-shader/src/shader_recompiler/stage.h",
+    "eden-vulkan/include/video_core/vulkan_common/vulkan_device.h",
+}
+assert post_f07_task_mesh_source_owners <= set(physical_all), (
+    "Missing maintained Task/Mesh source", sorted(post_f07_task_mesh_source_owners - set(physical_all)))
+assert not post_f07_task_mesh_source_owners.intersection(research_paths)
+assert len(post_f07_task_mesh_source_owners) == 20
+print("ENCORE_P24_TASK_MESH_STAGED_SOURCE_PASS", f"owners={len(post_f07_task_mesh_source_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -423,7 +455,7 @@ physical = [p for p in physical_all
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
-            post_f07_native_stage_buffer_owners]
+            post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

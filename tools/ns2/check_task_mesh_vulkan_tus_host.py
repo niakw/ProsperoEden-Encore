@@ -113,7 +113,10 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     )
     assert maintained_buffer.is_file(), "R437 maintained BufferCache owner missing"
     shutil.copyfile(maintained_buffer, buffer_overlay / "buffer_cache.h")
-    command += ["-I" + str(Path(scratch) / "buffer-pages")]
+    # Header search must prefer the PS5-native generated R437 owner over
+    # vendor/sources/eden/src; appending this -I selects the wrong template.
+    command.insert(command.index("-I" + str(includes[0])),
+                   "-I" + str(Path(scratch) / "buffer-pages"))
     command += ["-I" + str(Path(scratch))]
     if platform.system() == "Darwin":
         sdk = next((p for p in (

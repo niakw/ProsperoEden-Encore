@@ -325,3 +325,10 @@ Le test hôte `test_rdna2_nr_native_graph_schedule` recoupe chaque famille et se
 Le nouveau shader portable `float_quantize_rdna2.comp` convertit les sorties flottantes des projections Vulkan en tenseurs E4M3FN compacts (4 valeurs FP8 par mot). Arrondi nearest-even, écrêtage E4M3FN 448, conservation du signe et encodage NaN sont explicités. `NrRdna2FloatQuantize::Record` n'utilise que des buffers Vulkan, insère une barrière de visibilité compute→compute et rejette les allocations aliasées, indices hors portée ou dispatchs dépassant 65535 workgroups. Shader Vulkan 1.1, sans coopération FP8 ou HIP.
 
 Le contrat C++ hôte teste les tailles utiles ViT 2560×512/1024/4096, les décalages, la capacité et les échecs. L'ABI SPIR-V et le build PS5 source sont enregistrés. La **liaison effective de ce convertisseur à chaque projection Split-Swin/ViT** reste à faire ; pas d'inférence globale ni de rendu validé.
+
+
+### Projection quantifiée GPU enchaînée (FP8→FP32→FP8)
+
+`NrRdna2ProjectionQuantized` relie désormais **deux kernels Vulkan effectifs sur le même scheduler**, d'abord le GEMM 1×1 FP8→FP32, puis la quantification FP32→E4M3FN. Les transitions de visibilité sont enregistrées entre passes ; les quatre buffers doivent être des ressources STORAGE indépendantes et vivantes, liées aux deux descriptor sets fournis par l'orchestrateur. `PrepareQuantizedProjection` valide **toutes les tailles avant le premier dispatch** et refuse de produire une sortie partielle en cas de forme non prise en charge.
+
+Ce composant permet une transition tensorielle nécessaire aux projections Split-Swin/ViT, mais ne charge pas à lui seul les poids ni ne construit un modèle complet. Les projections FFN géantes dépassant le garde-fou `CanDispatch` restent bloquées ; il faudra les diviser en segments sûrs plutôt que supprimer la borne. Test de contrat host ajouté au CTest. Pas de métriques GPU PS5 ni de frame validé.

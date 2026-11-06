@@ -194,6 +194,7 @@ eden_r08_test(test_rdna2_nr_native_plan_bridge)
 eden_r08_test(test_rdna2_nr_fswin_output_view_policy)
 eden_r08_test(test_rdna2_nr_fswin_downsample_policy)
 eden_r08_test(test_rdna2_nr_float_quantize_policy)
+eden_r08_test(test_rdna2_nr_projection_quantized_policy)
 eden_r08_test(test_rdna2_nr_fswin_level_link_policy)
 add_executable(test_neural_video_policy
     "${EDEN_ROOT}/tools/graphics/test_neural_video_policy.cpp")

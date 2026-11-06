@@ -152,6 +152,7 @@ def main()->int:
         assert evidence in text, "VI2 compositor must preserve real queue/fence owner: " + evidence
 
     for command, method in (
+        (901, "InitializeVideoCodecContext"), (1001, "InitializeVideoCodecContext"),
         (902, "OpenVideoDecoderSession"), (905, "OpenVideoDecoderSession"),
         (906, "OpenVideoDecoderSession"), (1002, "OpenVideoDecoderSession"),
         (911, "CreateVideoImagePool"), (912, "DestroyVideoImagePool"),
@@ -160,6 +161,13 @@ def main()->int:
         (428, "QueryVideoGpuImage"),
     ):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
+    init_video = text.split('void IGraphicsSupervisor::InitializeVideoCodecContext(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    for proof in ('command == 901 || command == 1001',
+                  'packet[0] == command + 0x10 && packet[1] == 0',
+                  'm_bootstrap.GpuContextReady()',
+                  'source ? source->GetModule() : nullptr',
+                  'if (module) result = ResultSuccess;'):
+        assert proof in init_video, 'Missing fail-closed real video context admission: '+proof
     for snippet in (
         'CalculateNativeVideoImageLayout(preference, count)',
         'm_video_pools.Add(static_cast<u32>(m_next_image_id),',

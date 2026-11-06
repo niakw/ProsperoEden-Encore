@@ -551,3 +551,13 @@ et la libération de l'objet KEvent, évitant le pointeur de callback périmé.
 Le vrai propriétaire C++ compile et les tests hôte
 `check_native_video_ready_event_host.py` Clang/GCC UBSan O0/O2 passent.
 Cela ne prouve pas la cadence de la console PS5.
+
+#### P1.3 — initialisation native du contexte vidéo GSV (06/11/2026)
+
+Les commandes TIPC `901` et `1001` d'initialisation du service codec
+reconnaissent désormais la requête sans arguments de l'API `nn::codec::video`.
+Le succès IPC est conditionné à la préparation réelle du contexte GPU et à
+la présence du module NVDRV de ce processus ; mauvaises tailles, service
+absent et GPU non initialisé sont refusés. Les sessions décodage 902/905/906
+et 1002 restent gérées avec des objets kernel propres au processus.
+Vérification de source et compilation hôte : `check-ns2-graphics-hle-host.py`.

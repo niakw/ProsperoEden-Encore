@@ -142,6 +142,22 @@ assert "Non-generic patch load" not in patch_get
 assert "IR::GenericPatchIndex(patch)" in patch_get
 print("P2_4_TESS_PATCH_REAL_INPUT_OUTPUT_ABI_PASS slots=4+2 generic=preserved",flush=True)
 
+# P2.4: the indexed GenericN physical output writes must select the actual
+# per-component OpVariable when transform feedback partitions a location.
+# Keep TCS with a separate invocation coordinate fail-closed until that
+# function ABI can represent a per-invocation store.
+index_store=cas_owner.split("void EmitContext::DefineAttributeMemAccess(",1)[1].split(
+    "void EmitContext::DefineWriteStorageCasLoopFunction(",1)[0]
+assert 'component - output.first_element' in index_store
+assert 'output_generics[index][0].num_components != 4' not in index_store
+assert 'elements[0].num_components == 4' in index_store
+assert 'OpSwitch(masked_index, merge_label, component_values, component_labels)' in index_store
+assert 'Indexed TCS transform feedback store' in index_store
+assert 'Invalid transform feedback component' in index_store
+assert 'OpAccessChain(output_f32, output.id, local_component)' in index_store
+print("P2_4_SPLIT_XFB_INDEXED_STORE_ABI_PASS scalar_vector=4 tcs=fail_closed",flush=True)
+
+
 cpm=ROOT/"vendor/sources/eden-cpm"
 sources=(
     "shader_recompiler/backend/spirv/spirv_emit_context.cpp",

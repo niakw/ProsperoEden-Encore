@@ -12,6 +12,9 @@ SOURCE=ROOT/'tools/ns2/test_ampere_scalar_alu_sources.cpp'
 LOWER=(SHADER/'shader_recompiler/frontend/ampere/lower_to_maxwell.h').read_text()
 assert 'case 0x307: case 0x907: case 0xb07: case 0xd07:' in LOWER
 assert 'case 0x305: case 0x905: case 0xb05: case 0xd05:' in LOWER
+assert 'case 0x304: case 0x904: case 0xb04: case 0xd04:' in LOWER
+assert 'op == 0xd04' in LOWER
+assert 'if (immediate) mov_imm(251, insn.words[1]);' in LOWER
 assert 'if (opcode == 0x905) mov_imm(252, insn.words[1]);' in LOWER
 assert 'case 0x307: case 0x907: case 0xb07: case 0xd07:' in LOWER
 assert 'op == 0xd07' in LOWER

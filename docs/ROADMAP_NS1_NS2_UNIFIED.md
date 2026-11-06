@@ -426,6 +426,19 @@ L'accès global atomique via un SSBO dont la provenance n'est pas
 authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
 et les shaders complets restent à qualifier en P5.
 
+**P2.4 — F2F.F16.F32 avec les quatre sources natives (06/11, source/hôte) :**
+La conversion canonique F32→F16 conserve la forme GPR `0x304` et prend
+désormais en charge les formes immédiate 32 bits `0x904`, CBUF `0xb04` et
+uniforme `0xd04` dans le même lowerer Maxwell : `F2F` registre (`0x5ca8`)
+ou sa version CBUF directe (`0x4ca8`). Le NaN et le signe négatif conservent
+leur représentation IEEE-754 complète dans le GPR intermédiaire ; les UR
+passent par le banc réservé et les banques CBUF sont contrôlées 0–17 avec
+alignement octet. Les modes F2F non examinés restent rejetés ; aucun
+changement du frontend NS1 ni d'exception par titre.
+Validation sur le vrai `LowerReviewedToMaxwell` : 0, +1, −1, NaN,
+CBUF 0 et 17, UR bas/haut/63, refus des adresses et UR invalides.
+Hôte Clang/GCC O0/O2 UBSan ; la validation PS5 reste P5.
+
 **P2.4 — sources immédiates et uniformes FRND/F2I (06/11, source/hôte) :**
 Le lowerer Ampere commun traite désormais `FRND.F32` avec un immédiat 32 bits
 (`0x907`) ou une source uniforme (`0xd07`), et `F2I` avec immédiat 32 bits

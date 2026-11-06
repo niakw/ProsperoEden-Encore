@@ -78,6 +78,56 @@ int main() {
     Require(((gpr_word>>20)&255)==22, "native register source unchanged");
     Require(Bridge(register_form).Ready(), "normal FRND remains accepted in the full bridge");
 
+    // The canonical F2F.F16.F32 conversion shares the original Maxwell
+    // F2F opcode for GPR, 32-bit literal, direct CBUF, and uniform source.
+    for (const u32 bits : {0U,0x3f800000U,0xbf800000U,0x7fc00001U}) {
+        const Instruction inst{{(7U<<12)|0x904U|(5U<<16),bits,
+                                0x00200800U,0x000fe200U}};
+        Require(Reviewed(inst),"F2F immediate ISA recognized");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        bool materialized=false,converted=false;
+        for (const u64 word:out.maxwell_instructions) {
+            if ((word>>56)==0x01 && (word&255)==251 &&
+                ((word>>20)&0xffffffffULL)==bits) materialized=true;
+            if ((word>>56)==0x5c && (word&255)==5 &&
+                ((word>>20)&255)==251 && ((word>>8)&3)==1 &&
+                ((word>>10)&3)==2 && ((word>>45)&1)==0 &&
+                ((word>>49)&1)==0) converted=true;
+        }
+        Require(materialized && converted,"F2F immediate preserves IEEE-754 word and emits Maxwell F16 conversion");
+    }
+    for (const auto& [bank,offset] :
+         std::array<std::pair<u32,u32>,2>{{{0,4},{17,508}}}) {
+        const Instruction inst{{(7U<<12)|0xb04U|(5U<<16),
+                           (offset<<6)|(bank<<22),0x00200800U,0x000fe200U}};
+        Require(Reviewed(inst),"F2F CBUF admitted by actual ISA table");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        const u64 word=out.maxwell_instructions[out.source_instruction_offsets[0]];
+        Require((word>>56)==0x4c && (word&255)==5 &&
+                ((word>>20)&0x3fff)==offset/4 && ((word>>34)&31)==bank &&
+                ((word>>8)&3)==1 && ((word>>10)&3)==2,
+                "F2F directly converts an exact bound CBUF F32 word");
+    }
+    for (const auto& [reg,expected] :
+         std::array<std::pair<u32,u32>,3>{{{2,218},{17,201},{63,255}}}) {
+        const Instruction inst{{(7U<<12)|0xd04U|(5U<<16),reg,
+                                0x08200800U,0x000fe200U}};
+        Require(Reviewed(inst),"F2F uniform admitted by actual ISA table");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        const u64 word=out.maxwell_instructions[out.source_instruction_offsets[0]];
+        Require((word>>56)==0x5c && (word&255)==5 &&
+                ((word>>20)&255)==expected,
+                "F2F uses protected uniform register source");
+    }
+    const Instruction invalid_f2f{{(7U<<12)|0xb04U|(5U<<16),
+                           (3U<<6)|(7U<<22),0x00200800U,0x000fe200U}};
+    Require(!Bridge(invalid_f2f).Ready(),"F2F refuses unaligned CBUF bytes");
+    const Instruction invalid_f2f_ur{{(7U<<12)|0xd04U|(5U<<16),
+                                     64U,0x08200800U,0x000fe200U}};
+    Require(!Bridge(invalid_f2f_ur).Ready(),"F2F rejects invalid uniform register");
     // F2I.F32.S32 accepts the 32-bit immediate form 0x905. Preserve the
     // floating input bits including sign and NaN, then reuse the existing
     // signed/unsigned conversion path with the same rounding and FTZ bits.

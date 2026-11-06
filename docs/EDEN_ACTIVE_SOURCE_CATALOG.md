@@ -397,6 +397,13 @@ par `headless/CMakeLists.txt` dans le moteur commun :
   pin/unmap ; refuse une session introuvable au lieu de la déréférencer.
 - `src/core/hle/service/nvdrv/devices/nvmap.cpp` — conserve le rollback
   d'allocation PS5 N11 et rejette les FD absents/fermés avant `Alloc`/`Free`.
+- `src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp` — refuse
+  une adresse basse non épinglée et restaure les références NVMap déjà
+  acquises lorsqu'un élément ultérieur d'un lot NVDEC échoue.
+Le propriétaire `ns2-runtime/nvdrv_as` commun refuse aussi tout pin SMMU
+nul ou physiquement hors plage avant `gmmu->Map`, pour les fonctions
+legacy NS1 et les fonctions natives NS2. Une allocation du bas de l'espace
+GPU qui échoue ne compte plus comme un pin réussi.
 
 Le propriétaire existant `src/core/hle/service/nvdrv/core/container.cpp`
 rejette également les identifiants invalides ou les sessions inactives. Ces

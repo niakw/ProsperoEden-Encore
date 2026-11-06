@@ -338,6 +338,7 @@ print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=7")
 post_f07_shared_nvdrv_owners = {
     "eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp",
     "eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp",
+    "eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp",
 }
 assert post_f07_shared_nvdrv_owners <= set(physical_all), (
     "Missing complete maintained NVDRV NVMap owners",
@@ -346,6 +347,7 @@ assert not post_f07_shared_nvdrv_owners.intersection(research_paths)
 nvmap_recipe = (root / "headless/CMakeLists.txt").read_text()
 assert "EDEN_MAINTAINED_NVDRV_NVMAP_CORE" in nvmap_recipe
 assert "EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE" in nvmap_recipe
+assert "EDEN_MAINTAINED_NVDRV_NVDEC" in nvmap_recipe
 assert "python3 -B tools/ns2/check_nvdrv_fd_session_owners_host.py" in (
     root / ".github/workflows/encore-core-preflight.yml").read_text()
 print("ENCORE_POST_F07_SHARED_NVDRV_OWNER_PASS", f"owners={len(post_f07_shared_nvdrv_owners)}")

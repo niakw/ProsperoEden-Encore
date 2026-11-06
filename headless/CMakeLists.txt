@@ -834,6 +834,20 @@ list(APPEND core_sources
     "${EDEN_MAINTAINED_NVDRV_NVMAP_CORE}"
     "${EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
+# The shared NVDEC IOCTL must roll back earlier pins if a later handle fails.
+set(EDEN_MAINTAINED_NVDRV_NVDEC
+    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_NVDEC}")
+    message(FATAL_ERROR "Missing maintained NVDEC pin-rollback owner")
+endif()
+get_target_property(core_sources core SOURCES)
+list(FIND core_sources "hle/service/nvdrv/devices/nvhost_nvdec_common.cpp" eden_nvdec_index)
+if(eden_nvdec_index EQUAL -1)
+    message(FATAL_ERROR "Pinned NVDEC owner changed; re-audit source selection")
+endif()
+list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_nvdec_common.cpp")
+list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_NVDEC}")
+set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Finalize alone leaves both event references and its owner process open.
 # Use the same paired close as the other HID event owners.
 # Maintained full-source HID event lifetime correction; immutable upstream preserved.

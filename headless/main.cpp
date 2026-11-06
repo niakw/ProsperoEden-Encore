@@ -1597,8 +1597,13 @@ int main(int argc, char** argv) {
             // guest and OpenGL never receive an unrecognized enum value.
             static constexpr Settings::AntiAliasing aa[] = {
                 Settings::AntiAliasing::None, Settings::AntiAliasing::Fxaa,
-                Settings::AntiAliasing::Smaa, Settings::AntiAliasing::Fxaa};
-            Settings::values.anti_aliasing.SetValue(aa[std::clamp(anti_aliasing, 0, 3)]);
+                Settings::AntiAliasing::Smaa, Settings::AntiAliasing::Fxaa,
+                Settings::AntiAliasing::Msaa2, Settings::AntiAliasing::Msaa4,
+                Settings::AntiAliasing::Msaa8, Settings::AntiAliasing::Msaa16};
+            static_assert(std::size(aa) == std::size(Eden::kAntiAliasingKeys));
+            static_assert(std::size(aa) == std::size(Eden::kAntiAliasingLabels));
+            Settings::values.anti_aliasing.SetValue(
+                aa[std::clamp(anti_aliasing, 0, int(std::size(aa)) - 1)]);
             Eden::Graphics::SetEnhancedFxaa(
                 anti_aliasing == 3 && profile_renderer == 1);
             // Real texture LOD sampler filtering (not image postprocessing).
@@ -1676,7 +1681,9 @@ int main(int argc, char** argv) {
             Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
                                     Eden::kUpscalingFilterLabels[mapped_filter] + ", image sharpness " +
                                     std::to_string(fsr_sharpness) + "%, AA " +
-                                    Eden::kAntiAliasingLabels[std::clamp(anti_aliasing, 0, 3)] + ", output " +
+                                    Eden::kAntiAliasingLabels[
+                                        std::clamp(anti_aliasing, 0,
+                                                   int(std::size(Eden::kAntiAliasingLabels)) - 1)] + ", output " +
                                     Eden::kOutputKeys[output] + ", " + Eden::kRefreshKeys[refresh] +
                                     " Hz").c_str());
             // What a crash report says was running.

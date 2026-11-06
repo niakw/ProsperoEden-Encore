@@ -2021,7 +2021,7 @@ void Launcher::draw_game(Canvas &c, float open)
                  EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||
             (row == row_anti_aliasing &&
              (game_settings_.anti_aliasing >= 0
-                ? game_settings_.anti_aliasing : base_aa) == 3 &&
+                ? game_settings_.anti_aliasing : base_aa) >= 3 &&
              EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1) ||
             (row == row_fsr_sharpness &&
              (!UpscalingSupportsSharpness(

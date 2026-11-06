@@ -65,8 +65,14 @@ inline constexpr const char* kUpscalingFilterKeys[] = {
 inline constexpr const char* kUpscalingFilterLabels[] = {
     "Bilinear", "FSR 1", "Bicubic", "Nearest", "Lanczos", "SGSR", "SGSR Edge"};
 // Keep existing indices stable; index 3 is a new Vulkan-only shader.
-inline constexpr const char* kAntiAliasingKeys[] = {"none", "fxaa", "smaa", "fxaa_quality"};
-inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra", "FXAA+"};
+// Preserve all previously persisted AA indices 0-3. Real forced samples
+// extend the same global/per-game AA field; no parallel experimental control.
+inline constexpr const char* kAntiAliasingKeys[] = {
+    "none", "fxaa", "smaa", "fxaa_quality",
+    "msaa_2x", "msaa_4x", "msaa_8x", "msaa_16x"};
+inline constexpr const char* kAntiAliasingLabels[] = {
+    "None", "FXAA", "SMAA Ultra", "FXAA+",
+    "MSAA 2x", "MSAA 4x", "MSAA 8x", "MSAA 16x"};
 // Real Eden Vulkan texture sampler anisotropy, separate from spatial upscaling,
 // frame generation and resolution. 0 uses Eden's automatic choice.
 inline constexpr const char* kTextureAnisotropyKeys[] = {

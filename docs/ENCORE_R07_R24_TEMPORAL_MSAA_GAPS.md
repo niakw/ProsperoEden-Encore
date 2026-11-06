@@ -193,64 +193,39 @@ aliasées avec le RT, et que le clear invité est réellement connu.
 La fermeture du pass vérifie son identité et ne termine jamais par
 erreur un autre renderpass invité. Cette partie compile sur hôte
 avec les vraies sources Vulkan et passe les tests de politique.
-Le pipeline guest doit encore être construit dans sa variante
-multisample ET sélectionné au draw : ce code ne l'active pas seul.
+La sélection de pipeline et le raccordement du guest Clear/Draw sont
+maintenant **effectifs dans le code de production**, vendor R24 en attente
+de validation console : le renderer capture uniquement un clear complet
+de couleur RT0, avec image invitée 1x, une seule couleur, sans profondeur
+ni stencil, un seul layer et une région complète. Il conserve son vrai
+VkClearValue, son VkImage/View/Framebuffer, ses sous-ressources et le
+numéro de séquence des commandes du scheduler. Il rejette un clear
+partiel, les opérations compute/transfert intervenues avant le draw,
+une cible remplacée, les formats et samples incompatibles ou une
+allocation excédant le budget VRAM connu.
 
-La variante de pipeline de production R24 (vendor 3b6ea83da)
-est maintenant construite avec une clé distincte pour chacun des
-échantillonnages 2x/4x/8x/16x : le cache graphique ne modifie ni les
-registres invités ni les images et crée un renderpass Vulkan dont le
-resolve couleur et la topologie correspondent au shadow.
-La sélection explicite CurrentGraphicsPipelineForMsaa refuse une
-cible invitée multi-attachements, avec profondeur ou déjà MSAA,
-ou un niveau d'échantillonnage inconnu ; la voie Auto originelle
-continue d'appeler CurrentGraphicsPipeline sans variante.
-Au moment de Configurer le pipeline, le draw n'est accepté que
-si le scheduler possède le renderpass MSAA compatible déjà actif.
-Le renderpass est obtenu avant la compilation asynchrone pour
-ne pas introduire de lecture concurrente non synchronisée.
+Au premier draw admissible, le pipeline compilé pour 2x/4x/8x/16x est
+sélectionné par la même procédure de prévalidation que le pipeline
+standard ; la paire de mutex du cache permet ensuite de **revalider
+l'image invitée avant ouverture** du pass natif. Le shader ne peut pas
+lire ou écrire la même image par descripteurs sampled/storage ; en cas
+de rejet, le shadow est résolu puis le même draw est retenté avec le
+pipeline original 1x. Les draws suivants sur ce pass utilisent l'image
+MSAA jusqu'à une transition Vulkan ; le pass ne peut jamais redémarrer
+sans nouveau clear complet. Les images/metadata du guest sont inchangées.
 
-Reste à brancher le point de décision du guest Clear/Draw : confirmer
-la vue couleur invitée, le clear complet, les alias de shader et
-le budget réel, armer la shadow au bon instant, puis sélectionner
-cette variante de pipeline lors du draw. Ce dernier pont n'est pas
-encore présent et aucun mode forcé ne peut être déclaré opérationnel.
+Le launcher expose les modes MSAA 2x, 4x, 8x et 16x aux préférences
+globales ET par jeu dans le menu Anti-aliasing, en ajoutant les index
+4-7 sans renuméroter les index 0-3 (None, FXAA, SMAA Ultra, FXAA+).
+Aucun drapeau de développement ni changement de version d'application.
 
-**Ce composant n'est pas appelé par le chemin des draws invités** : la
-sélection du pipeline rasterisationSamples, les clears, l'ordre des
-barrières/lifetimes et les attachments depth/stencil ne sont pas
-raccordés ni validés sur console. Il n'existe donc toujours aucun
-MSAA forcé utilisable par l'utilisateur. Il serait dangereux de
-modifier directement le champ samples des textures invitées ;
-aucun mode forcé n'est présenté comme effectif dans l'interface.
-
-Le MSAA augmente les échantillons **pendant la rasterisation** ;
-aucun filtre FXAA/SMAA, même exécuté 2/4/8 fois, n'est du MSAA.
-Le renderer doit prouver :
-- un format image réellement créé avec sample count >= 2,
-  framebuffer/render-pass ou dynamic rendering compatible ;
-- les opérations de **resolve** correspondantes, y compris pour
-  depth/stencil lorsque la sémantique invité l'exige ;
-- l'équivalence des lectures/écritures, des layouts mémoire et
-  des échantillonnages/aliasing du guest NS1/NS2 ;
-- la compatibilité PS5/Vulkan et le budget VRAM/bande passante
-  pour les sample counts par format/résolution utilisés.
-
-Un MSAA imposé globalement à des textures invitées préexistantes
-peut modifier la sémantique du jeu ou casser les render targets ;
-ce n'est pas un simple réglage du post-traitement Vulkan. Sur une
-image déjà rasterisée, le post-AA **SMAA Ultra** et un upscale spatial
-restent les solutions vérifiées en source. Le SSAA accessible via
-la résolution interne 1,25× / 1,5× / 2× est une autre technique ;
-2× en largeur/hauteur coûte 4× les pixels, sans devenir du MSAA.
-
-**Prochaine réalisation vérifiable** : relier la préparation de l'image
-couleur multisample au pipeline guest, avec un pipeline Vulkan du même
-sample count et l'enregistrement réel d'un render pass complet ; ajouter
-ensuite les attachements profondeur/stencil et les formats/draws pris en
-charge. Auditer les cibles NS1/NS2, les transitions et le budget,
-puis tester une scène dont le résultat guest reste identique. Ne pas
-exposer un menu de ratios avant l'existence de ces surfaces.
+**Limites :** chemin couleur-only à clear complet. MRT, profondeur,
+stencil, lectures aliasées, contenus conservés entre passes et
+MSAA du jeu déjà présent restent sur le rendu GPU invité natif.
+Le build natif PS5, l'affichage réellement anticrénelé, la durée GPU,
+la consommation VRAM et les régressions NS1/NS2 n'ont **pas**
+encore été vérifiés. Les tests C++ hôte ne remplacent pas cette
+validation. L'intégration source ne vaut pas « terminé sur PS5 ».
 
 ## Décision et acceptation
 

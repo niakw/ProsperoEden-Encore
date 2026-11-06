@@ -5,9 +5,10 @@
 Il n'existe pas de classement universel. L'ordre ci-dessous vise la restitution
 spatiale d'une image 3D sous-résolue et le traitement de contours, **sur le
 papier uniquement**. Scintillement, transparence, finesse du HUD, budget GPU
-et échelle interne peuvent inverser plusieurs positions. Dans l'interface,
-le parcours suit cet ordre du meilleur présumé au plus simple, **sans
-changer les IDs sauvegardés**. Les options non compatibles sont sautées.
+et échelle interne peuvent inverser plusieurs positions. Ce document classe les traitements par qualité estimée, **pas par
+ID ni par ordre d'énumération** dans le launcher. Les anciens indices
+enregistrés 0-3 restent identiques ; les nouveaux MSAA sont ajoutés
+en 4-7, sans présumer d'un résultat visuel sur PS5.
 
 ## Un seul ordre effectif par réglage — pas deux modes de tri
 
@@ -17,13 +18,17 @@ flèches gauche/droite. Il existe bien **deux familles de méthodes**,
 mais **pas deux modes de tri** dans l'interface.
 
 - Upscaling : **8 positions dans l'ordre cible**, dont 7 filtres actuellement sélectionnables. FSR 3.1 temporel est le premier choix **futur**, non actif tant que le backend n'est pas réellement raccordé aux jeux.
-- Anti-aliasing : **8 positions dans l'ordre cible**, dont 4 choix actuellement sélectionnables. Les MSAA forcés 16×/8×/4×/2× sont **futurs** : aucun bouton fantôme et aucun changement de valeurs persistées.
+- Anti-aliasing : **8 positions théoriques**. Les quatre anciens filtres
+  restent aux index 0-3 du launcher ; MSAA 2×/4×/8×/16× aux nouveaux
+  index 4-7. Les modes MSAA ont maintenant un chemin Vulkan réel en code
+  (seulement couleur, clear complet, sans profondeur/alias), non encore
+  mesuré sur console ni qualifié pour une release.
 - **MSAA Auto** est le comportement natif (respect du nombre d'échantillons demandé par le jeu), **hors classement de qualité** ; « Off » retire le post-AA, pas le MSAA demandé par le GPU invité.
 - La colonne **coût GPU estimé** renseigne un deuxième **critère
   de comparaison**, pas un deuxième ordre de sélection. Aucune option
   de tri par FPS/performance n'est livrée.
 - Sur OpenGL, la navigation saute les options non prises en charge
-  (SGSR / SGSR Edge ; FXAA+ pour l'anticrénelage). Pour un jeu,
+  (SGSR / SGSR Edge ; FXAA+ et MSAA forcé pour l'anticrénelage). Pour un jeu,
   le choix « Hériter du global » s'ajoute avant les méthodes.
 - Les indices persistés des préférences **ne sont pas renumérotés**,
   même si l'ordre de navigation ne correspond pas à l'ordre historique
@@ -51,17 +56,19 @@ SGSR Edge, SGSR et FSR 1 peuvent changer de place après comparaison sur console
 | Rang | Filtre | Atout principal | Limite / risque | Statut |
 | --- | --- | --- | --- | --- |
 | 1 | **SMAA Ultra** | Lissage de contours sur l'image finale, y compris une partie des arêtes issues des shaders | Ne supprime pas tout le scintillement temporel | Sélectionnable |
-| 2 | **MSAA forcé 16×** | Couverture géométrique très fine lorsque le rendu natif l'accepte | VRAM/bande passante élevées ; ne traite pas tout l'aliasing des shaders | **Futur, non sélectionnable** |
-| 3 | **MSAA forcé 8×** | Couverture géométrique élevée | Coût et formats contraignants | **Futur, non sélectionnable** |
-| 4 | **MSAA forcé 4×** | Bon lissage géométrique à coût moindre que 8×/16× | Ne traite pas forcément alpha-test, reflets, textures ou HUD | **Futur, non sélectionnable** |
+| 2 | **MSAA forcé 16×** | Couverture géométrique très fine lorsque le rendu natif l'accepte | VRAM/bande passante élevées ; ne traite pas tout l'aliasing des shaders | **Raccordé en code, validation console requise** |
+| 3 | **MSAA forcé 8×** | Couverture géométrique élevée | Coût et formats contraignants | **Raccordé en code, validation console requise** |
+| 4 | **MSAA forcé 4×** | Bon lissage géométrique à coût moindre que 8×/16× | Ne traite pas forcément alpha-test, reflets, textures ou HUD | **Raccordé en code, validation console requise** |
 | 5 | **FXAA+** | Atténue différents contours dans l'image finale | Peut flouter texte et détails | Sélectionnable |
-| 6 | **MSAA forcé 2×** | Amélioration géométrique modérée sans post-flou | Bénéfice limité sur l'aliasing non géométrique | **Futur, non sélectionnable** |
+| 6 | **MSAA forcé 2×** | Amélioration géométrique modérée sans post-flou | Bénéfice limité sur l'aliasing non géométrique | **Raccordé en code, validation console requise** |
 | 7 | **FXAA** | Rapide et généraliste | Peut flouter les détails et laisser des escaliers | Sélectionnable |
 | 8 | **Off** | Aucun lissage post-traitement ajouté | Escaliers visibles si aucune autre technique n'intervient | Sélectionnable |
 
 **Pourquoi SMAA Ultra avant MSAA 16× ?** Cet ordre indicatif privilégie la qualité **globale** attendue sur des jeux Switch hétérogènes, pas uniquement la précision de rasterisation des triangles. Sur une scène dominée par les arêtes géométriques, **MSAA 16× peut être supérieur**, tandis que SMAA Ultra peut avoir une couverture plus large de contours déjà présents dans l'image finale. MSAA 2× n'est donc pas automatiquement supérieur à FXAA+. Aucun classement universel ni promesse de gain sur FC 27, BOTW ou NS2.
 
-**MSAA Auto n'est pas un neuvième rang.** Il ne force rien : le renderer honore le nombre d'échantillons 1×/2×/4×/8×/16× demandé par le GPU invité. Les modes forcés exigent, eux, des surfaces hôtes MSAA distinctes, un pipeline graphique avec le bon sample count, les resolves couleur/depth/stencil appropriés et le respect strict des vues/aliasing/layouts invités. Le composant Vulkan couleur shadow/resolve existant n'est **pas encore raccordé aux draws** ; aucun forçage utilisateur ne doit être annoncé comme actif.
+**MSAA Auto n'est pas un neuvième rang.** Il ne force rien : le renderer honore le nombre d'échantillons 1×/2×/4×/8×/16× demandé par le GPU invité. Les modes forcés exigent, eux, des surfaces hôtes MSAA distinctes, un pipeline graphique avec le bon sample count, les resolves couleur/depth/stencil appropriés et le respect strict des vues/aliasing/layouts invités. Le composant Vulkan couleur shadow/resolve **est maintenant raccordé
+aux draws invités compatibles** ; il reste non qualifié tant que le
+rendu PS5, la VRAM, la latence et les transitions ne sont pas validés.
 
 Le classement FXAA+/FXAA reste à confronter à des captures. **Off** désactive seulement les traitements post-AA du menu, sans supprimer l'éventuel MSAA **natif du jeu**.
 
@@ -85,4 +92,8 @@ et panoramiques) et Zelda BOTW (feuillage, arêtes fines, mouvements).
 Vérifier l'absence de régression NS1 ; aucune conclusion sur NS2 tant
 que les frames invitées ne sont pas réellement présentées.
 
-**Statut : ordre cible documenté ; ordre actuel de navigation inchangé jusqu'à l'implémentation des nouveaux modes. Tests hôtes seulement : R07 temporel et R24 MSAA forcé demeurent ouverts. Aucun changement d'ID sauvegardé ni de valeur par défaut.**
+**Statut : ordre théorique documenté ; menu de base conservé, modes
+MSAA 2×/4×/8×/16× ajoutés après FXAA+ (index 4-7). Le chemin Vulkan
+couleur-only Clear→Draw→Resolve est intégré, mais non testé sur PS5.
+FSR 3.1 temporel n'a pas de producteur générique qualifié et reste
+non sélectionnable. Aucune valeur par défaut ni ID existant modifié.**

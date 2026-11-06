@@ -960,7 +960,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                         !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
                      (row == video_filter &&
                       !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer)) ||
-                     (row == video_anti_aliasing && prefs_.anti_aliasing == 3 &&
+                     (row == video_anti_aliasing && prefs_.anti_aliasing >= 3 &&
                       prefs_.renderer != 1) ||
                      (row == video_frame_generation &&
                       !FrameGenerationSelectable(prefs_.renderer)))
@@ -1142,7 +1142,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             explanation = SharpnessGuide(prefs_.filter,
                 UpscalingFilterSelectable(prefs_.filter,prefs_.renderer));
         else if (selected == video_anti_aliasing)
-            explanation = prefs_.anti_aliasing == 3 && prefs_.renderer != 1
+            explanation = prefs_.anti_aliasing >= 3 && prefs_.renderer != 1
                 ? FxaaUnsupportedGuide() : AntiAliasingGuide(prefs_.anti_aliasing);
         else if (selected == video_texture_filtering)
             explanation = TextureGuide();
@@ -1154,7 +1154,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
              (!UpscalingSupportsSharpness(prefs_.filter) ||
               !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
             (selected == video_anti_aliasing &&
-             prefs_.anti_aliasing == 3 && prefs_.renderer != 1) ||
+             prefs_.anti_aliasing >= 3 && prefs_.renderer != 1) ||
             (selected == video_frame_generation &&
              !FrameGenerationSelectable(prefs_.renderer)),
             prefs_.ui_theme == 1);

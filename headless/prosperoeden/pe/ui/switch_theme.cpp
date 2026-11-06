@@ -1015,7 +1015,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                 !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer);
             guides=SharpnessGuide(prefs_.filter,!inactive);
         } else if (option_==6) {
-            inactive=prefs_.anti_aliasing==3 && prefs_.renderer!=1;
+            inactive=prefs_.anti_aliasing>=3 && prefs_.renderer!=1;
             guides=inactive?FxaaUnsupportedGuide():
                 AntiAliasingGuide(prefs_.anti_aliasing);
         } else if (option_==7) {

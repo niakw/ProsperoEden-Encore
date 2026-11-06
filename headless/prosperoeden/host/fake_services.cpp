@@ -201,7 +201,7 @@ constexpr const char *kResolutionLabels[] = {"0.25x (minimum)", "0.5x (fastest, 
                                              "2x (high memory)", "3x (very high memory)", "4x (extreme memory)"};
 const std::vector<std::string> kResolutionKeys = {"0.25x", "0.5x", "0.75x", "1x", "1.25x", "1.5x", "2x", "3x", "4x"};
 constexpr const char *kFilterLabels[] = {"Bilinear", "FSR 1", "Bicubic", "Nearest", "Lanczos", "SGSR", "SGSR Edge"};
-constexpr const char *kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra", "FXAA+"};
+constexpr const char *kAntiAliasingLabels[] = {"None", "FXAA", "SMAA Ultra", "FXAA+", "MSAA 2x", "MSAA 4x", "MSAA 8x", "MSAA 16x"};
 constexpr const char *kPerformanceProfileLabels[] = {"Minimum", "Recommended", "High", "Ultra", "Custom"};
 constexpr const char *kLanguageLabels[] = {
     "English (US)", "English (UK)", "French", "French (Canada)", "German", "Italian", "Spanish",

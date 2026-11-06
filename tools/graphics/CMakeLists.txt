@@ -160,6 +160,9 @@ eden_r08_test(test_rdna2_nr_fswin_graph_policy)
 eden_r08_test(test_rdna2_nr_model_pack)
 target_include_directories(test_rdna2_nr_model_pack PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+eden_r08_test(test_rdna2_nr_model_file)
+target_include_directories(test_rdna2_nr_model_file PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
 eden_r08_test(test_rdna2_nr_tile_layout)
 target_include_directories(test_rdna2_nr_tile_layout PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")

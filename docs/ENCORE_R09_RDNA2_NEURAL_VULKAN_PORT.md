@@ -379,3 +379,24 @@ Test C++ dédié : paquet synthétique à deux matrices, corruption
 de l'en-tête, doublons, traversal, offsets non alignés et hors limites.
 Cette étape rend possible un futur chargeur réel, sans être déjà
 ce chargeur. Aucune activation automatique de DLSS.
+
+
+## Import local des poids NRMODEL1
+
+Le header vendor nr_rdna2_model_file.h complète l'index sécurisé :
+NeuralModelFile::Open lit uniquement un préfixe d'index limité,
+NeuralModelFile::LoadRaw charge à la demande le poids nommé en
+vérifiant l'étendue, et LoadRowMajor convertit une matrice E4M3FN
+tuilée 16×16 vers le format row-major de nos kernels RDNA2.
+
+Le modèle doit être fourni **localement et légalement** : aucun
+poids NVIDIA n'est inclus ou distribué. Un chargement n'est pas
+possible lorsque le paquet manque ou lorsque la taille de fichier
+a changé après l'indexation.
+
+Test d'intégration : génération d'un paquet temporaire NRMODEL1,
+conversion exacte d'une matrice synthétique 16×32, lecture du
+fichier, refus de matrices mal dimensionnées, chemins absents et
+troncature après ouverture. L'étape upload Vulkan, la vérification
+SHA-256 des poids et la connexion automatique au graphe restent à
+implémenter.

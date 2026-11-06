@@ -30,6 +30,11 @@ MESH_STAGE_OWNERS = (
     ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
     ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp",
 )
+# The real SPIR-V mesh emitter must compile too. The previous six-TU
+# witness checked the pipeline but never parsed this stage-buffer lowering.
+MESH_SPIRV_OWNERS = (
+    SHADER / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
+)
 
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert "EDEN_NATIVE_TASK_MESH_ROOT" in cmake
@@ -40,8 +45,18 @@ device = (ACTIVE / "include/video_core/vulkan_common/vulkan_device.h").read_text
 assert "IsExtMeshShaderSupported()" in device
 for owner in OWNERS:
     assert (ACTIVE / owner).is_file(), owner
-for path in MESH_STAGE_OWNERS:
+for path in MESH_STAGE_OWNERS + MESH_SPIRV_OWNERS:
     assert path.is_file(), path
+mesh_emit = MESH_SPIRV_OWNERS[0].read_text()
+# Ensure invalid dimensions fail explicitly and guest out-of-bounds writes
+# cannot alias the final live primitive/payload byte.
+assert 'Mesh shader has zero workgroup threads' in mesh_emit
+assert 'Task shader payload missing mesh-group count' in mesh_emit
+assert 'Mesh shader has no task payload words' in mesh_emit
+assert 'index, ctx.Const(ctx.mesh_attribute_words)' in mesh_emit
+assert 'address, ctx.Const(ctx.mesh_map_bytes)' in mesh_emit
+assert "SharedWord(ctx, ctx.mesh_map, Clamped(" not in mesh_emit
+assert "SharedWord(ctx, ctx.mesh_attributes, Clamped(" not in mesh_emit
 stage_owner = MESH_STAGE_OWNERS[0].read_text()
 assert 'CaptureGraphicsTicket(maxwell3d).has_value()' in stage_owner
 assert 'Shader::Stage::Task : Shader::Stage::Mesh' in stage_owner
@@ -180,7 +195,8 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
             command + [str(source)], cwd=ROOT, env=env,
             capture_output=True, text=True, timeout=180)
         return str(source.relative_to(ROOT)), result.returncode, result.stderr[-20000:]
-    sources = [ACTIVE / owner for owner in OWNERS] + list(MESH_STAGE_OWNERS)
+    sources = ([ACTIVE / owner for owner in OWNERS] +
+               list(MESH_STAGE_OWNERS) + list(MESH_SPIRV_OWNERS))
     with ThreadPoolExecutor(max_workers=3) as pool:
         checked = list(pool.map(check, sources))
     failures = []
@@ -191,4 +207,4 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         else:
             print("P24_REAL_VULKAN_TASK_MESH_TU_PASS", owner, flush=True)
     assert not failures, ("P2.4 maintained Vulkan TU syntax failed", failures)
-print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=6 console=NOT_TESTED", flush=True)
+print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=7 console=NOT_TESTED", flush=True)

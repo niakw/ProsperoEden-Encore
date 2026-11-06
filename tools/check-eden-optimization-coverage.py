@@ -444,7 +444,32 @@ assert 'vendor/encore-active/ns2-runtime/ldapr/maintained' in (
     ROOT/'headless/shared_a64_ldapr.cmake').read_text()
 print("ENCORE_POST_F07_NATIVE_SOURCE_ISOLATION_PASS owners=7")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners
+# These three real NVDRV source owners joined the shared engine in P1.3,
+# after the 518-file F07 review. Keep that immutable historical set and
+# validate the new shipping CMake, active test and provenance separately.
+post_f07_shared_nvdrv_owners = {
+    "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp",
+}
+assert len(post_f07_shared_nvdrv_owners) == 3
+assert post_f07_shared_nvdrv_owners <= all_owners, (
+    "Missing maintained P1 NVDRV source", sorted(post_f07_shared_nvdrv_owners - all_owners))
+assert not post_f07_shared_nvdrv_owners & (
+    research_owners | hygiene_owners | ns2_shared_release_owners |
+    ns2_shared_audio_owners | ns2_shared_gpu_access_owners |
+    post_f07_static_engine_owners | post_f07_nup_vfs_owners)
+for selected in ("EDEN_MAINTAINED_NVDRV_NVMAP_CORE",
+                 "EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE",
+                 "EDEN_MAINTAINED_NVDRV_NVDEC"):
+    assert f"set({selected}" in release_cmake
+assert (ROOT / "tools/ns2/check_nvdrv_fd_session_owners_host.py").is_file()
+assert (ROOT / "tools/ns2/check_native_nvmap_smmu_reclaim_host.py").is_file()
+assert (ROOT / "tools/ns2/check_nvdrv_pin_failure_propagation_host.py").is_file()
+print("ENCORE_POST_F07_SHARED_NVDRV_ISOLATION_PASS",
+      f"new_shared_sources={len(post_f07_shared_nvdrv_owners)}")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

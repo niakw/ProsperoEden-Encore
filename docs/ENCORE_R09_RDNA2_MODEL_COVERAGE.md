@@ -44,3 +44,27 @@ désormais dans les segments canoniques E4M3FN sous les conditions suivantes :
 L'éligibilité FSwin devient Original 36/152 (28 plain + 8 vues) et Small 8/76
 (8 vues), avec 8 segments homogènes dans chaque cas. Il reste à valider
 la compilation C++/SPIR-V et la parité GPU et à raccorder le graphe entier.
+
+
+## Nouveau calcul FSwin DS — pool 2×2 et projection 2C × C
+
+Le shader Vulkan 1.1 FSwinDownsample prend la sortie d'un bloc FSwin
+sous forme de fenêtres E4M3FN décalées en tuiles 4×4, réduit chaque
+quadruplet de pixels 2×2 (arithmétique FP16 scalaire de référence,
+quantification FP8), puis applique la matrice apprise row-major de
+forme [2C,C] à chaque pixel de demi-résolution. Résultat : raster
+E4M3FN [ceil(W/2),ceil(H/2),2C].
+
+- Le poids resample.bin est lu uniquement depuis un NRMODEL1 fourni
+  localement via PrepareFSwinDownsampleWeights, avec requantification
+  E4M3FN du modèle comme pour les autres couches.
+- Dispatch 3D : (C/8, fenêtres_x, fenêtres_y), source et destination
+  distinctes, au plus 256 MiB par buffer et offsets u32 bornés.
+- Les dimensions XY et offsets sont explicites ; les bords hors image
+  sont considérés à zéro. Aucun hook Windows/NVIDIA.
+- Il reste à brancher le shader et les buffers au runtime de couche FSwin
+  pour les variantes ds, et à convertir la sortie projetée vers les
+  fenêtres d'entrée du niveau C→2C suivant. La parité numérique réelle
+  avec le kernel amont ainsi que la compilation/CI restent à vérifier.
+
+Aucun chiffre de performance ni frame DLSS PS5 n'est revendiqué.

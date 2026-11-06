@@ -116,7 +116,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_chain.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_window_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_raster_layout.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_output_view.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_output_view.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_downsample.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -456,6 +457,27 @@ add_dependencies(video_core eden-r09-rdna2-nr-fswin-raster-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_raster_layout.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_FSWIN_RASTER_HEADER}")
+
+# R09 RDNA2: learned FSwin DS 2x2 pooling/projection, host SPIR-V.
+set(EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_fswin_downsample_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-downsample-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_downsample_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-downsample-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 FSwin learned downsample"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-fswin-downsample-spv
+    DEPENDS "${EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-fswin-downsample-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_downsample.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

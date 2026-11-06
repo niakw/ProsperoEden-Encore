@@ -1946,16 +1946,25 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     foreach(eden_wait64_owner IN ITEMS
             "hle/kernel/k_address_arbiter.cpp"
             "hle/kernel/svc/svc_address_arbiter.cpp")
-        list(FIND eden_wait64_sources "${eden_wait64_owner}" eden_wait64_index)
+        # The PS5 guest-threading CMake module has already promoted its
+        # reviewed 32-bit HLE source. Replace THAT exact source with the
+        # combined Wait64 + validity/overflow owner, never add two owners.
+        set(eden_wait64_selected_source "${eden_wait64_owner}")
+        list(FIND eden_wait64_sources "${eden_wait64_selected_source}" eden_wait64_index)
+        if(eden_wait64_index LESS 0 AND PS5_NATIVE)
+            set(eden_wait64_selected_source
+                "${PORT_ROOT}/vendor/encore-active/eden-threading/src/core/${eden_wait64_owner}")
+            list(FIND eden_wait64_sources "${eden_wait64_selected_source}" eden_wait64_index)
+        endif()
         if(eden_wait64_index LESS 0)
-            message(FATAL_ERROR "Pinned address arbiter owner changed: ${eden_wait64_owner}")
+            message(FATAL_ERROR "Missing unified address arbiter owner: ${eden_wait64_owner}")
         endif()
         set(eden_wait64_replacement
             "${EDEN_NS2_WAIT64_ROOT}/core/${eden_wait64_owner}")
         if(NOT EXISTS "${eden_wait64_replacement}")
             message(FATAL_ERROR "Reviewed address arbiter source missing: ${eden_wait64_replacement}")
         endif()
-        list(REMOVE_ITEM eden_wait64_sources "${eden_wait64_owner}")
+        list(REMOVE_ITEM eden_wait64_sources "${eden_wait64_selected_source}")
         list(APPEND eden_wait64_sources "${eden_wait64_replacement}")
     endforeach()
     set_property(TARGET core PROPERTY SOURCES "${eden_wait64_sources}")

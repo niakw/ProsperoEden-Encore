@@ -694,3 +694,27 @@ doivent rester identiques d'un bout à l'autre de la chaîne. Cette
 U-Net, ni les blocs ViT du réseau global, ni les entrées/sorties
 d'images. Les nouveaux appels Vulkan n'ont pas été exécutés sur PS5
 et aucun chiffre de performance n'est revendiqué.
+
+
+## Conversion réversible d'un raster de caractéristiques en fenêtres FSwin (06/11)
+
+Le shader Vulkan fswin_raster_layout_rdna2.comp passe entre
+un raster E4M3FN [H,W,C] et les fenêtres 8×8 du réseau
+[fenêtre,quadrant 4×4,token,C], sans toucher aux valeurs FP8.
+
+- Mode pack : lecture raster, remplissage zéro des pixels
+  hors image dans les fenêtres de bord.
+- Mode unpack : restitution des pixels valides, padding ignoré.
+- Contrat C32/64/128/256, max 256 fenêtres, descripteurs
+  storage non aliasés, étendues CPU vérifiées avant Record.
+- Wrapper Vulkan NrRdna2FSwinRasterLayout, 24 octets de
+  push constants et compilation/validation SPIR-V au build.
+- Test CPU aller-retour exact sur 24 géométries/canaux et
+  vérifications de bornes des buffers.
+
+Cette passerelle attend toujours un **raster de caractéristiques
+E4M3FN déjà encodées** et non des pixels RGB(A) directement.
+La transformation n'est pas encore branchée automatiquement à
+l'entrée/sortie globale du modèle. Prétraitement couleur,
+U-Net/ViT, transitions de résolution et validation console
+restent nécessaires. Aucun benchmark n'a été effectué.

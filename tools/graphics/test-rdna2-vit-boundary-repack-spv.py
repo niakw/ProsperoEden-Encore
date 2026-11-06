@@ -22,7 +22,7 @@ def main():
         subprocess.run(['spirv-val','--target-env','vulkan1.1',str(spv)],check=True,capture_output=True)
         dis=subprocess.check_output(['spirv-dis',str(spv)],text=True)
         assert 'OpExecutionMode %main LocalSize 256 1 1' in dis
-        for name,binding in [('Input',0),('Output',1)]:
+        for name,binding in [('source',0),('target',1)]:
             assert re.search(rf'OpDecorate %{name} DescriptorSet 0\\b',dis),(name,'set')
             assert re.search(rf'OpDecorate %{name} Binding {binding}\\b',dis),(name,'binding')
         for i in range(7):

@@ -1,8 +1,9 @@
 # Eden Encore — DualSense touchpad quick overlay (PS5)
 
-**Status:** draft implementation on PR #28. Code is integrated with the active
-Vulkan game-present path; host/CI and PS5 hardware qualification are tracked
-separately. Do not interpret this document as a successful PS5 console test.
+**Status:** merged into `main` via PR #28 (`34f03b9`). The native Vulkan
+present-path implementation is integrated, but host/CI and PS5 hardware
+qualification remain separate outstanding checks. Do not interpret this
+document as a successful PS5 console test.
 
 ## Entry and controller behavior
 

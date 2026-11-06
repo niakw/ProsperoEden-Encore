@@ -20,8 +20,9 @@ assert "void Consume(std::size_t player, std::span<const ps5::pad::Data> samples
 assert "void SetButtonState(std::size_t player, int button, bool value);" in HEADER
 assert "const auto& active_mapping = ActiveMapping();" in PAD
 assert "if (pad == pad_touchpad) continue;" in PAD
-assert "kSelectTapPolls" not in PAD
-assert "constexpr unsigned kSelectHoldPolls = 60;" in PAD
+assert "constexpr unsigned kSelectTapPolls = 25;" in PAD
+assert "constexpr unsigned kSelectTapPolls = 25;
+constexpr unsigned kSelectHoldPolls = 60;" in PAD
 
 def extract(signature: str) -> str:
     assert PAD.count(signature) == 1, ("native source drift", signature)
@@ -164,6 +165,7 @@ public:
         GuestSystemButtonRoute guest_home{};
         bool select_held{};
         unsigned touch_polls{};
+        unsigned select_pulse{};
     };
     std::shared_ptr<PadEngine> engine=std::make_shared<PadEngine>();
     std::array<Slot,4> slots{};
@@ -303,6 +305,14 @@ int main() {
     step(0);
     assert(!pad.overlay_open.load());
     assert(pad.engine->Rising(V::ButtonMinus)==0);
+    // Disabled overlay (OpenGL and legacy paths) retains original guest Minus taps.
+    pad.overlay_enabled.store(false);
+    step(kButtonTouchPad);
+    step(0);
+    assert(pad.engine->Get(V::ButtonMinus));
+    for(int i=0;i<28;++i)pad.Consume(std::span<const Data>{});
+    assert(!pad.engine->Get(V::ButtonMinus));
+    assert(pad.engine->Rising(V::ButtonMinus)==1);
     assert(pad.engine->Rising(V::ButtonPlus)==5);
     // A full scePadRead burst must retain the same mapping and not publish
     // redundant guest button transitions for held inputs.

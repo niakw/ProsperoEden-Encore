@@ -447,12 +447,68 @@ static void VerifyTaskMeshInvalidDimensions() {
     }
     std::puts("P2_4_REAL_TASK_MESH_NEGATIVE_DIMENSIONS_PASS count=8");
 }
+// P2.2c: verify descriptor arrays through the actual native SPIR-V
+// emitter. A CMake-selected DefineTextureBuffers implementation is not
+// enough until OpTypeArray and Vulkan validation accept a live module.
+static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
+    const auto compile = [&](u32 descriptor_count, bool expect_reject) {
+        Shader::ObjectPool<Shader::IR::Inst> pool{8};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage = Shader::Stage::Compute;
+        program.workgroup_size = {1, 1, 1};
+        program.blocks.push_back(&block);
+        auto& node = program.syntax_list.emplace_back();
+        node.type = Shader::IR::AbstractSyntaxNode::Type::Block;
+        node.data.block = &block;
+        program.syntax_list.emplace_back().type =
+            Shader::IR::AbstractSyntaxNode::Type::Return;
+        Shader::TextureBufferDescriptor descriptor{};
+        descriptor.count = descriptor_count;
+        program.info.texture_buffer_descriptors.push_back(descriptor);
+        Shader::Profile profile{};
+        profile.supported_spirv = 0x00010500;
+        Shader::Backend::Bindings bindings{};
+        std::vector<u32> words;
+        try {
+            words = Shader::Backend::SPIRV::EmitSPIRV(
+                profile, Shader::RuntimeInfo{}, program, bindings);
+        } catch (const std::exception& ex) {
+            Require(expect_reject && std::string(ex.what()).find(
+                        "Empty texture buffer descriptor array") != std::string::npos,
+                    "texture-buffer descriptor rejection was not the expected ABI guard");
+            return;
+        }
+        Require(!expect_reject && words.size() > 5 && words[0] == 0x07230203U,
+                "native texture-buffer descriptor array produced no SPIR-V");
+        u32 arrays{};
+        for (std::size_t pos = 5; pos < words.size();) {
+            const u32 encoded = words[pos];
+            const u32 count = encoded >> 16;
+            Require(count && count <= words.size() - pos,
+                    "invalid real texture-buffer SPIR-V instruction stream");
+            arrays += (encoded & 0xffffU) == static_cast<u32>(spv::Op::OpTypeArray);
+            pos += count;
+        }
+        Require(arrays >= 1, "missing SPIR-V OpTypeArray for texture buffers");
+        const std::string file_name = prefix + "-texbuf-array.spv";
+        std::ofstream output{file_name, std::ios::binary | std::ios::trunc};
+        Require(bool(output), "cannot open descriptor array module");
+        output.write(reinterpret_cast<const char*>(words.data()),
+                     static_cast<std::streamsize>(words.size() * sizeof(u32)));
+        Require(bool(output), "cannot write descriptor array module");
+    };
+    compile(2, false);
+    compile(0, true);
+    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 zero_rejected=1");
+}
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
     VerifyRealFloatCasSpirv(argv[1]);
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();
+    VerifyRealTextureBufferArraySpirv(argv[1]);
     std::array<u8,0x50> header{};
     constexpr u32 pred=7U<<12,exit_true=7U<<23;
     std::vector<u8> code;

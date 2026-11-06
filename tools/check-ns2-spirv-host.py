@@ -174,6 +174,11 @@ def main():
         for env in ("spv1.5", "vulkan1.2"):
             run([validator, "--target-env", env, str(path)])
             print(f"P2_4_REAL_{stage.upper()}_SPIRV_VALIDATED {env}", flush=True)
+    # Actual SPIR-V descriptor-array module, not a stub header source check.
+    for env in ("spv1.5", "vulkan1.2"):
+        run([validator, "--target-env", env,
+             str(OUT / "synthetic-texbuf-array.spv")])
+        print(f"P2_2C_REAL_TEXTURE_BUFFER_ARRAY_VALIDATED {env}", flush=True)
     module_test = OUT / "ns2-vulkan-modules"
     run([cxx, "-std=c++20", "-O2",
          str(ROOT / "tools/ns2/test_ampere_vulkan_module.cpp"),

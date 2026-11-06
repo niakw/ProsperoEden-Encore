@@ -510,17 +510,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def git_blob_sha(text):
         data=text.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
-    def reverse_p24(name, text):
+    def reverse_p24(name, text, verify_hash=True):
         receipt=p24_by_path.get(name)
         if receipt is None:
             return text
-        assert git_blob_sha(text) == receipt['maintained_blob_sha'], (
-            'Task/Mesh maintained owner drift', name)
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['maintained_blob_sha'], (
+                'Task/Mesh maintained owner drift', name)
         for hunk in reversed(receipt['hunks']):
             assert text.count(hunk['after']) == 1, ('Task/Mesh delta hunk drift',name)
             text=text.replace(hunk['after'],hunk['before'])
-        assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
-            'Task/Mesh source reverse parity failed', name)
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
+                'Task/Mesh source reverse parity failed', name)
         return text
     for name in p24_by_path:
         assert name in expected and name in actual, ('missing Task/Mesh Vulkan source',name)
@@ -538,7 +540,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from pinned vendor')
     assert generated_n3m.count(native_compute_guard) == 1, (
         'Native Compute cache admission gate missing from generator')
-    assert generated_n3m == reverse_p24(n56_name, n3m), 'NS2 generated Vulkan source differs from P24-normalized vendor'
+    # First reverse the exact P24 hunks on raw vendor, then N56: both
+    # independent receipts must remain valid without conflating their SHAs.
+    n3m_pre_mesh = reverse_p24(n56_name, n56_current)
+    assert n3m_pre_mesh.count(n56_after) == 1
+    n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
+    assert generated_n3m == n3m_pre_mesh, 'NS2 generated Vulkan source differs from P24+N56-normalized vendor'
 
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA
@@ -642,7 +649,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         normalized_expected[blit_name] = blit_path
 
     for name in p24_by_path:
-        baseline=reverse_p24(name, expected[name].read_text())
+        # Validate the original Git blobs, but preserve all *previous*
+        # normalization passes (N56/N65/N66/etc.) before stripping P24.
+        reverse_p24(name, expected[name].read_text())
+        baseline=reverse_p24(name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False)
         path=temp/'normalized-vendor-p24'/name
         path.parent.mkdir(parents=True,exist_ok=True)
         path.write_text(baseline)

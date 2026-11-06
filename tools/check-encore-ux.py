@@ -323,3 +323,17 @@ for sentinel in ('0xfffffff1u','0xfffffff2u','0xfffffff3u'):
 assert 'vec3 purple' in quick_shader
 
 print('Encore UX/media/profile contracts: PASS')
+
+# Quick overlay UX: a saved per-title graphics/mapping edit must warn until
+# game relaunch, not merely until the menu is closed. FPS/log toggles are live.
+assert 'bool restart_required{};' in quick_menu
+assert 'restart_required = true;' in quick_menu
+assert 'RELANCER LE JEU REQUIS' in quick_menu
+assert 'restart_required ? kWarningRow : kRow' in quick_menu
+assert 'SetHudEnabled(prefs.hud);' in quick_menu
+assert 'NativeLogs::SetDetailed(prefs.detailed_logging);' in quick_menu
+assert 'kWarningRow = 0xfffffff4u;' in quick
+assert 'warning_row = text.loading == 0xfffffff4u;' in read('headless/vulkan_hud.frag')
+quick_vulkan = read('headless/vulkan_window_adapt_r08.cpp')
+assert 'hud_pipeline ? *hud_pipeline : VK_NULL_HANDLE' in quick_vulkan
+assert 'hud_layout ? *hud_layout : VK_NULL_HANDLE' in quick_vulkan

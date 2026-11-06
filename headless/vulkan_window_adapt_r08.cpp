@@ -8,6 +8,7 @@
 
 #include "core/frontend/framebuffer_layout.h"
 #include "hud.h"
+#include "in_game_overlay.h"
 #include "vulkan_hud_shaders.h"
 #include "video_core/framebuffer_config.h"
 #include "video_core/host_shaders/vulkan_present_vert_spv.h"
@@ -21,6 +22,52 @@
 #include "video_core/vulkan_common/vulkan_memory_allocator.h"
 
 namespace Vulkan {
+
+// The quick menu is composited in the already-owned framebuffer. It does not
+// touch guest images or add a second swapchain/present. Closed sessions never
+// enter this draw path.
+static void DrawQuickOverlay(vk::CommandBuffer cmdbuf,
+                             VkPipeline pipeline, VkPipelineLayout layout,
+                             VkExtent2D extent, const Eden::QuickOverlay::Frame& quick) {
+    if (!quick.visible) return;
+    const auto units = [h = extent.height](std::uint32_t value) { return value * h / 1080u; };
+    const auto draw = [&](VkRect2D scissor, Eden::HudSnapshot constants) {
+        const VkViewport viewport{static_cast<float>(scissor.offset.x),
+                                  static_cast<float>(scissor.offset.y),
+                                  static_cast<float>(scissor.extent.width),
+                                  static_cast<float>(scissor.extent.height), 0.0f, 1.0f};
+        cmdbuf.SetViewport(0, viewport);
+        cmdbuf.SetScissor(0, scissor);
+        cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        cmdbuf.PushConstants(layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
+        cmdbuf.Draw(4, 1, 0, 0);
+    };
+    Eden::HudSnapshot backdrop{};
+    backdrop.width = extent.height;
+    backdrop.x = extent.width;
+    backdrop.y = extent.height;
+    backdrop.loading = Eden::QuickOverlay::kBackdrop;
+    draw(VkRect2D{{0, 0}, extent}, backdrop);
+
+    const std::uint32_t x = extent.width * 56u / 100u;
+    const std::uint32_t panel_width = extent.width * 40u / 100u;
+    if (panel_width <= units(40)) return;
+    for (std::uint32_t i = 0; i < quick.count && i < quick.rows.size(); ++i) {
+        const std::uint32_t top = units(112u + i * 62u);
+        if (top >= extent.height) break;
+        const std::uint32_t height = std::min(units(52), extent.height - top);
+        if (!height) continue;
+        const VkRect2D row{
+            {static_cast<std::int32_t>(x + units(12)), static_cast<std::int32_t>(top)},
+            {panel_width - units(24), height}
+        };
+        auto constants = quick.rows[i];
+        constants.x = row.offset.x + units(22);
+        constants.y = top + units(15);
+        constants.width = extent.height;
+        draw(row, constants);
+    }
+}
 
 WindowAdaptPass::WindowAdaptPass(const Device& device, VkFormat frame_format, vk::Sampler&& sampler_, vk::ShaderModule&& fragment_shader_)
     : sampler(std::move(sampler_))
@@ -82,7 +129,8 @@ void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, S
     }
 
     const auto hud = draw_hud ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
-    if (hud.width && !hud_pipeline) {
+    const auto quick = draw_hud ? Eden::QuickOverlay::Snapshot() : Eden::QuickOverlay::Frame{};
+    if ((hud.width || quick.visible) && !hud_pipeline) {
         const VkPushConstantRange range{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(hud)};
         hud_layout = device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -158,6 +206,7 @@ void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, S
             cmdbuf.PushConstants(hud_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
             cmdbuf.Draw(4, 1, 0, 0);
         }
+        DrawQuickOverlay(cmdbuf, hud_graphics_pipeline, hud_pipeline_layout, render_area, quick);
 
         cmdbuf.EndRenderPass();
     });
@@ -167,7 +216,8 @@ void WindowAdaptPass::DrawHudOverlay(const Device& device, Scheduler& scheduler,
                                      Frame* dst, const Eden::HudSnapshot& hud) {
     // Does not clear the target. Both interpolated and real frames are
     // already GENERAL after copy/blit barriers, so LOAD preserves image.
-    if (!hud.width || !dst || !dst->framebuffer) return;
+    const auto quick = Eden::QuickOverlay::Snapshot();
+    if ((!hud.width && !quick.visible) || !dst || !dst->framebuffer) return;
     if (!hud_overlay_pipeline) {
         const VkPushConstantRange range{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(hud)};
         hud_overlay_layout = device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
@@ -188,33 +238,34 @@ void WindowAdaptPass::DrawHudOverlay(const Device& device, Scheduler& scheduler,
     const VkExtent2D size{dst->width, dst->height};
     scheduler.Record([=](vk::CommandBuffer cmdbuf) {
         const auto units = [rows = size.height](std::uint32_t v) { return v * rows / 1080u; };
-        if (!hud.loading &&
-            (size.width < units(hud.width + 16) || size.height < units(64)))
-            return;
-        const VkRect2D scissor = hud.loading
-            ? VkRect2D{{0, 0}, size}
-            : VkRect2D{{static_cast<int32_t>(units(16)),
-                         static_cast<int32_t>(units(16))},
-                        {units(hud.width), units(48)}};
-        const VkViewport viewport{static_cast<float>(scissor.offset.x),
-                                  static_cast<float>(scissor.offset.y),
-                                  static_cast<float>(scissor.extent.width),
-                                  static_cast<float>(scissor.extent.height), 0, 1};
         BeginRenderPass(cmdbuf, rp, fb, size);
-        cmdbuf.SetViewport(0, viewport);
-        cmdbuf.SetScissor(0, scissor);
-        cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        auto constants = hud;
-        if (hud.loading) {
-            constants.x = size.width;
-            constants.y = size.height;
-        } else {
-            constants.x = units(hud.x);
-            constants.y = units(hud.y);
-            constants.width = size.height;
+        if (hud.width &&
+            (hud.loading || (size.width >= units(hud.width + 16) && size.height >= units(64)))) {
+            const VkRect2D scissor = hud.loading
+                ? VkRect2D{{0, 0}, size}
+                : VkRect2D{{static_cast<int32_t>(units(16)),
+                             static_cast<int32_t>(units(16))},
+                            {units(hud.width), units(48)}};
+            const VkViewport viewport{static_cast<float>(scissor.offset.x),
+                                      static_cast<float>(scissor.offset.y),
+                                      static_cast<float>(scissor.extent.width),
+                                      static_cast<float>(scissor.extent.height), 0, 1};
+            cmdbuf.SetViewport(0, viewport);
+            cmdbuf.SetScissor(0, scissor);
+            cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            auto constants = hud;
+            if (hud.loading) {
+                constants.x = size.width;
+                constants.y = size.height;
+            } else {
+                constants.x = units(hud.x);
+                constants.y = units(hud.y);
+                constants.width = size.height;
+            }
+            cmdbuf.PushConstants(layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
+            cmdbuf.Draw(4, 1, 0, 0);
         }
-        cmdbuf.PushConstants(layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
-        cmdbuf.Draw(4, 1, 0, 0);
+        DrawQuickOverlay(cmdbuf, pipeline, layout, size, quick);
         cmdbuf.EndRenderPass();
     });
 }

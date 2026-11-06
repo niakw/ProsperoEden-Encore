@@ -117,6 +117,31 @@ assert "ctx.OpAccessChain(element_ptr_type, def.id, idx)" in image_owner
 assert "ctx.OpLoad(ctx.image_buffer_type, ptr)" in image_owner
 print("P2_2C_REAL_SPIRV_TEXEL_DESCRIPTOR_ARRAY_SOURCE_PASS scalar=unchanged pointer=typed",flush=True)
 
+# P2.4: non-generic tessellation patch levels are real shared SPIR-V
+# variables with distinct Input (TES) and Output (TCS) storage. Generic
+# patches retain the existing index and 4-component layout unchanged.
+stage_header=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
+patch_emitter=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+assert "Id input_tess_level_outer{};" in stage_header
+assert "Id input_tess_level_inner{};" in stage_header
+assert "input_tess_level_outer = DefineInput(" in cas_owner
+assert "input_tess_level_inner = DefineInput(" in cas_owner
+for builtin in ("TessLevelOuter", "TessLevelInner"):
+    assert ("spv::BuiltIn::"+builtin) in cas_owner
+for patch in ("TessellationLodLeft", "TessellationLodTop", "TessellationLodRight",
+              "TessellationLodBottom", "TessellationLodInteriorU",
+              "TessellationLodInteriorV"):
+    assert "IR::Patch::"+patch in patch_emitter
+patch_get=patch_emitter.split("Id EmitGetPatch(",1)[1].split("void EmitSetPatch(",1)[0]
+assert "ctx.input_tess_level_outer" in patch_get
+assert "ctx.output_tess_level_outer" in patch_get
+assert "ctx.input_tess_level_inner" in patch_get
+assert "ctx.output_tess_level_inner" in patch_get
+assert "if (!ValidId(variable))" in patch_get
+assert "Non-generic patch load" not in patch_get
+assert "IR::GenericPatchIndex(patch)" in patch_get
+print("P2_4_TESS_PATCH_REAL_INPUT_OUTPUT_ABI_PASS slots=4+2 generic=preserved",flush=True)
+
 cpm=ROOT/"vendor/sources/eden-cpm"
 sources=(
     "shader_recompiler/backend/spirv/spirv_emit_context.cpp",

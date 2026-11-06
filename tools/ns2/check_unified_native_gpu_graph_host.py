@@ -41,6 +41,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/am/service/self_controller.cpp',
+        'control/scheduler.cpp',
         'backend/spirv/spirv_emit_context.cpp',
         'backend/spirv/emit_spirv_context_get_set.cpp',
         'backend/spirv/emit_spirv_image.cpp']
@@ -64,7 +65,7 @@ add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
     hle/service/am/service/self_controller.cpp)
-add_library(video_core STATIC "{puller}" dummy.cpp)
+add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp)
 add_library(shader_recompiler STATIC dummy.cpp
     backend/spirv/spirv_emit_context.cpp
     backend/spirv/emit_spirv_context_get_set.cpp
@@ -77,6 +78,18 @@ get_target_property(selected_video video_core SOURCES)
 get_target_property(selected_shader shader_recompiler SOURCES)
 get_target_property(core_definitions core COMPILE_DEFINITIONS)
 get_target_property(video_definitions video_core COMPILE_DEFINITIONS)
+# The fixture has to model Eden's real relative scheduler owner. The
+# production selector then MUST replace, not append alongside, that TU.
+list(FIND selected_video "control/scheduler.cpp" legacy_scheduler)
+if(NOT legacy_scheduler EQUAL -1)
+    message(FATAL_ERROR "Pinned GPFIFO scheduler compiled beside native scheduler")
+endif()
+string(REGEX MATCHALL "ns2-runtime/gpu_dispatch/video_core/control/scheduler\\.cpp"
+    native_scheduler_owners "${selected_video}")
+list(LENGTH native_scheduler_owners native_scheduler_count)
+if(NOT native_scheduler_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native GPFIFO scheduler owner")
+endif()
 foreach(needle IN ITEMS
     "ns2-runtime/nvdrv_gpu/" "ns2-runtime/nvdrv_as/"
     "ns2-runtime/gpu_session/" "ns2-runtime/graphics_supervisor/")

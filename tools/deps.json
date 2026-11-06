@@ -178,10 +178,10 @@
     },
     {
       "name": "encore-overrides",
-      "about": "Full pinned 8,993-game profile, DualSense auto-control, glyph and source-sync database for PS5 Eden Encore",
+      "about": "Full pinned 9,460-game profile, DualSense auto-control, glyph and source-sync database for PS5 Eden Encore",
       "kind": "git",
       "url": "https://github.com/niakw/encore-overrides.git",
-      "commit": "4fdb329e732a71878c1936b24759e58937c1ac18",
+      "commit": "95f21edf13bfbd2888602f2b419dd856d6d0fbfa",
       "path": "../encore-overrides-review"
     },
     {

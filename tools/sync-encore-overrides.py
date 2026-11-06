@@ -33,7 +33,9 @@ def main() -> None:
     args = ap.parse_args()
     source = args.source.resolve()
     manifest = json.loads((source / "manifest.json").read_text())
-    database_revision = int(manifest.get("database_revision", 0))
+    # This shipping policy changes recommended FSR1 and adds NS2 per-title tiers.
+    # Retire any cached remote manifest from the previous revision 6 build.
+    database_revision = max(7, int(manifest.get("database_revision", 0)))
     general = {pid: json.loads((source / "general" / f"{pid}.json").read_text())["settings"] for pid in PROFILE_IDS}
     general_cpp = [profile(general[pid]) for pid in PROFILE_IDS]
     controls = json.loads((source / "general" / "controls.json").read_text())
@@ -59,7 +61,14 @@ def main() -> None:
         if not all(pid in profiles and "settings" in profiles[pid] for pid in PROFILE_IDS):
             continue
         values = [profile(profiles[pid]["settings"]) for pid in PROFILE_IDS]
-        if any(profiles[pid]["settings"] != general[pid] for pid in PROFILE_IDS):
+        # Compare the *effective compiled video tuple*, not raw JSON. Optional
+        # texture_anisotropy is handled by the native sampler tier resolver;
+        # raw dict comparisons would treat 8,992 unchanged NS1 baselines as
+        # game-specific simply because they inherit that optional setting.
+        # All native NS2 games explicitly keep their independently tuned tier.
+        if data.get("source_console") == "Nintendo Switch 2" or any(
+            values[i] != general_cpp[i] for i in range(len(PROFILE_IDS))
+        ):
             specifics.append((int(data["title_id"], 16), data.get("name", path.stem), values))
     # The full third-party catalogue is checked in as a normal vendored tree,
     # without a nested .git. Running `git rev-parse HEAD` there returns the

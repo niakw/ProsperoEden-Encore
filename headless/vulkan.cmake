@@ -111,6 +111,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_residual_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_context_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_swin_block.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_projection_pool.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_epilogue.cpp"
@@ -466,6 +467,30 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_context_repack.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_SPLIT_CONTEXT_REPACK_SPV}")
+
+
+# R09: Split-Swin ProjPool real half-precision second output, not a
+# quantized-average shortcut. All compiler and ABI gates are mandatory.
+set(EDEN_R09_SPLIT_POOL_SPV
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_split_projection_pool_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_SPLIT_POOL_SPV}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-split-projection-pool-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_SPLIT_POOL_SPV}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/split_projection_pool_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-split-projection-pool-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 Split-Swin ProjPool"
+    VERBATIM)
+add_custom_target(eden-r09-split-pool-spv
+    DEPENDS "${EDEN_R09_SPLIT_POOL_SPV}")
+add_dependencies(video_core eden-r09-split-pool-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_projection_pool.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_SPLIT_POOL_SPV}")
 
 # R09 RDNA2 FSwin dense: shader SPIR-V Vulkan 1.1 ABI.
 set(EDEN_R09_RDNA2_FSWIN_DENSE_HEADER

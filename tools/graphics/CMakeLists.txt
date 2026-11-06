@@ -429,3 +429,18 @@ target_compile_options(test_rdna2_nr_split_block_policy PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_split_block_policy
     COMMAND test_rdna2_nr_split_block_policy)
+
+# Native CCSplitSwin16HProjPool's actual second output: source mapping,
+# half-res 4x4 tiles, borders, zero-fill tail, strict descriptor bounds.
+add_executable(test_rdna2_nr_split_projection_pool_policy
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_projection_pool_policy.cpp")
+target_include_directories(test_rdna2_nr_split_projection_pool_policy PRIVATE
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_projection_pool_policy PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_projection_pool_policy
+    COMMAND test_rdna2_nr_split_projection_pool_policy)
+add_test(NAME test_rdna2_nr_split_projection_pool_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-split-projection-pool-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

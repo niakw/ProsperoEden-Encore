@@ -1,4 +1,4 @@
-# Eden Encore — R09 : bloc GPU Split-Swin non poolé (06/11/2026)
+# Eden Encore — R09 : bloc GPU Split-Swin — étape initiale et extension ProjPool (06/11/2026)
 
 ## Portage fonctionnel au niveau d'un bloc
 
@@ -20,3 +20,8 @@ Les modèles sont référencés via `unpacked-splitswin/blockN.layer{0,1,2,3}.la
 - L'entrée GPU doit déjà être en format row-major FP8 avec valeurs correctes et padding initialisé. La conversion/validation depuis les tenseurs FSwin amont et la preuve des halos de tuiles ne sont pas intégrées ici.
 - Les dépendances entre blocs, le décodage de toutes les étapes Original/Compact et la sortie image finale restent ouvertes.
 - **Le code est publié, mais l'exécution d'un bloc sur GPU, la compilation PS5 et la correspondance numérique de sortie ne sont pas encore démontrées.** Pas d'activation NR en jeu ni de branche expérimentale.
+
+
+## Extension native ProjPool publiée après cette étape
+
+Le refus originel de `ProjPool` est remplacé par une prise en charge **conditionnelle à la fourniture de la géométrie réelle et de la seconde sortie GPU**. La projection standard ne suffit toujours pas seule : `NrRdna2SplitProjectionPool` lit le GEMM FP32 et les coefficients FP16 pour produire le vrai second résultat half-precision→FP8, y compris padding/tail à zéro. Le plan continue de refuser les dimensions ou capacités manquantes. Voir `docs/ENCORE_R09_SPLIT_PROJECTION_POOL.md`. Les limitations historiques ci-dessus décrivent le lot initial, et non le périmètre courant du bloc.

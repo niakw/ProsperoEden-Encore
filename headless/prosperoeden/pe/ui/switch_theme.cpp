@@ -683,14 +683,15 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     static constexpr const char* names[]={
         TR("Console mode"),TR("Renderer"),TR("Video preset"),TR("TV output"),
         TR("Resolution"),TR("Upscaling"),TR("Sharpness"),
-        TR("Anti-aliasing"),TR("Texture filtering"),TR("Enhanced smoothness"),
+        TR("Anti-aliasing"),TR("Texture filtering"),TR("Frame Generation"),
+        TR("Neural Rendering"),TR("Intensité DLSS-NR"),
         TR("Refresh rate"),TR("Button mapping"),TR("Mods"),TR("Save data")};
     const auto fallback=[](int local,const std::string& def,
                            const std::string& selected)->std::string{
         return local<0?switch_default(def):selected;
     };
     const auto g=game_settings_;
-    const std::array<std::string,14> values={
+    const std::array<std::string,16> values={
         game_docked_?tr("Docked"):tr("Handheld"),
         fallback(g.renderer,baseRenderer?"Vulkan":"OpenGL",g.renderer?"Vulkan":"OpenGL"),
         fallback(g.performance_profile,
@@ -714,6 +715,10 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
             g.frame_generation == 0 ? tr("Off") :
                 g.frame_generation == 1 ? "MihawkGen" :
                 g.frame_generation == 2 ? "FSR 3" : "LSFG"),
+        fallback(g.neural_mode,NeuralModeName(prefs_.neural_mode),
+                 NeuralModeName(g.neural_mode)),
+        fallback(g.neural_strength,std::to_string(prefs_.neural_strength)+"%",
+                 std::to_string(g.neural_strength)+"%"),
         fallback(g.refresh,hertz(baseHz),hertz(g.refresh)),
         g.own_mapping?
             switch_profile_name(g.controller_layout>=0?g.controller_layout:prefs_.controller_layout,
@@ -732,14 +737,14 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     };
     d.push_clip(kAdvancedClip);
     for(int i=game_rows_.first_row();i<=game_rows_.last_row();++i) {
-        if(i<0||i>=14)continue;
+        if(i<0||i>=16)continue;
         const float y=318+float(i)*96-game_rows_.scroll();
         advanced_row(c,y,i==option_,tr(names[i]),values[static_cast<std::size_t>(i)],
                      game_rows_.row_alpha(i,92));
     }
     d.pop_clip();
     if (confirmation_==Confirmation::none && message_.empty() &&
-        option_>=5 && option_<=9) {
+        option_>=5 && option_<=11) {
         const int filter=EffectiveGameUpscalingFilter(game_settings_,prefs_,id);
         const int aa=game_settings_.anti_aliasing>=0?
             game_settings_.anti_aliasing:baseAa;
@@ -759,16 +764,23 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
         } else if (option_==8) {
             guide=TextureGuide();
         } else if (option_==9) {
-            inactive=!FrameGenerationSelectable(renderer);
+            inactive=!FrameGenerationSelectable(renderer) ||
+                (g.neural_mode<0?prefs_.neural_mode:g.neural_mode)!=Eden::NeuralVideo::kOff;
             guide=inactive?FramegenUnsupportedGuide():
                 tr(TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."));
+        } else if (option_==10) {
+            guide=NeuralModeGuide(g.neural_mode<0?prefs_.neural_mode:g.neural_mode);
+        } else if (option_==11) {
+            const int mode=g.neural_mode<0?prefs_.neural_mode:g.neural_mode;
+            inactive=!Eden::NeuralVideo::IsDlss(mode);
+            guide=NeuralStrengthGuide(mode);
         }
         if (guide)
             switch_video_help(c,tr(names[option_]),guide,inactive,730.0f);
     }
     if(confirmation_==Confirmation::none)
-        advanced_status(c,message_,message_warning_,option_==13?TR("Import"):
-                        option_==12?TR("Open"):TR("Change"));
+        advanced_status(c,message_,message_warning_,option_==15?TR("Import"):
+                        option_==14?TR("Open"):TR("Change"));
     d.pop_opacity();
 }
 void Launcher::draw_switch_mods(Canvas& c,float opened) {
@@ -971,7 +983,8 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             static constexpr const char* labels[]={
                 TR("Renderer"),TR("Video preset"),TR("TV output"),TR("Game resolution"),
                 TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
-                TR("Texture filtering"),TR("Enhanced smoothness"),
+                TR("Texture filtering"),TR("Frame Generation"),
+                TR("Neural Rendering"),TR("Intensité DLSS-NR"),
                 TR("Refresh rate"),TR("FPS overlay")};
             label=tr(labels[i]);
             switch(i) {
@@ -986,7 +999,9 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             case 8:value=prefs_.frame_generation==0?tr("Off"):
                           prefs_.frame_generation==1?"MihawkGen":
                           prefs_.frame_generation==2?"FSR 3":"LSFG";break;
-            case 9:value=prefs_.refresh?"120 Hz":"60 Hz";break;
+            case 9:value=NeuralModeName(prefs_.neural_mode);break;
+            case 10:value=std::to_string(prefs_.neural_strength)+"%";break;
+            case 11:value=prefs_.refresh?"120 Hz":"60 Hz";break;
             default:value=prefs_.hud?tr("On"):tr("Off");break;
             }
             break;
@@ -1012,7 +1027,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                     i==option_?kInk:kSubtle,294,Align::right);
     }
     if (modal==Modal::video && message_.empty() &&
-        option_>=4 && option_<=8) {
+        option_>=4 && option_<=10) {
         const char* guides=nullptr;
         bool inactive=false;
         if (option_==4) {
@@ -1029,13 +1044,20 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         } else if (option_==7) {
             guides=TextureGuide();
         } else if (option_==8) {
-            inactive=!FrameGenerationSelectable(prefs_.renderer);
+            inactive=!FrameGenerationSelectable(prefs_.renderer) ||
+                prefs_.neural_mode!=Eden::NeuralVideo::kOff;
             guides=inactive?FramegenUnsupportedGuide():
                 tr(TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."));
+        } else if (option_==9) {
+            guides=NeuralModeGuide(prefs_.neural_mode);
+        } else if (option_==10) {
+            inactive=!Eden::NeuralVideo::IsDlss(prefs_.neural_mode);
+            guides=NeuralStrengthGuide(prefs_.neural_mode);
         }
         static constexpr const char* labels[] = {
             TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
-            TR("Texture filtering"),TR("Enhanced smoothness")
+            TR("Texture filtering"),TR("Frame Generation"),
+            TR("Neural Rendering"),TR("Intensité DLSS-NR")
         };
         if (guides)
             switch_video_help(c,tr(labels[option_-4]),guides,inactive,744.0f);

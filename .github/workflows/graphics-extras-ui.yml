@@ -1,0 +1,33 @@
+name: Graphics extras UI consistency
+on:
+  pull_request:
+    paths:
+      - 'headless/prosperoeden/pe/ui/**'
+      - 'headless/settings_store.h'
+      - 'headless/encore_overrides_generated.h'
+      - 'headless/neural_video_policy.h'
+      - 'tools/graphics/check-extras-defaults-ui.py'
+      - 'tools/graphics/check-r07-spatial-filters.py'
+      - '.github/workflows/graphics-extras-ui.yml'
+  push:
+    branches: [main, fix/graphics-extras-switch-ui-security-20261107]
+    paths:
+      - 'headless/prosperoeden/pe/ui/**'
+      - 'headless/settings_store.h'
+      - 'headless/encore_overrides_generated.h'
+      - 'headless/neural_video_policy.h'
+      - 'tools/graphics/check-extras-defaults-ui.py'
+      - 'tools/graphics/check-r07-spatial-filters.py'
+      - '.github/workflows/graphics-extras-ui.yml'
+permissions:
+  contents: read
+jobs:
+  rows-and-extras:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Ensure both visual themes expose the same video rows
+        run: python3 -B tools/graphics/check-extras-defaults-ui.py
+      - name: Ensure quality presets remain canonical and user edits preserved
+        run: python3 -B tools/check-video-presets.py

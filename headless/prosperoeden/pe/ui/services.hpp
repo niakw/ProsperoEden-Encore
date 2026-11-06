@@ -6,6 +6,8 @@
 
 #include "pe/gfx/image.hpp"
 #include "button_mapping.h"
+#include "encore_overrides_generated.h"
+#include "encore_texture_profiles.h"
 #include "room_directory.hpp"
 
 #include <array>
@@ -173,10 +175,10 @@ struct Preferences
     bool detailed_logging = false;
     int renderer = 1; // 0 OpenGL, 1 Vulkan
     int resolution = 4; // Recommended: 1.25x
-    int filter = 0;
-    int fsr_sharpness = 50;
-    int anti_aliasing = 1; // 0 none, 1 FXAA, 2 SMAA
-    int texture_anisotropy = 0; // Automatic, guest default, 2x/4x/8x/16x
+    int filter = Eden::EncoreOverrides::kGeneralProfiles[1].filter; // FSR 1
+    int fsr_sharpness = Eden::EncoreOverrides::kGeneralProfiles[1].fsr_sharpness;
+    int anti_aliasing = Eden::EncoreOverrides::kGeneralProfiles[1].anti_aliasing;
+    int texture_anisotropy = Eden::EncoreTextureProfiles::ForTitle(0,1); // 4x
     int refresh = 0; // the output while a game runs: 0 60 Hz, 1 120 Hz
     int frame_generation = 0; // 0 Off, 1 MihawkGen, 2 FSR3, 3 LSFG
     int neural_mode = 0; // OFF by default; RDNA2 pending validation

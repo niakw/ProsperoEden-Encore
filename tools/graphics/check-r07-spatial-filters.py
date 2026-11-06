@@ -25,12 +25,14 @@ assert 'vulkan_sgsr_r07.cpp' in cmake
 assert 'renderer_vulkan/present/sgsr.cpp' in cmake
 assert 'CycleQualityRanked(' in ui and 'UpscalingFilterSelectable(value,prefs_.renderer)' in ui
 assert 'CycleQualityRanked(' in game and 'UpscalingFilterSelectable(' in game
-assert 'return services_.save_transfer_available() ? 14 : 13;' in count
-assert 'const std::array<std::string,14> values' in switch
-assert 'if(i<0||i>=14)continue;' in switch
+assert 'return services_.save_transfer_available() ? 16 : 15;' in count
+assert 'const std::array<std::string,16> values' in switch
+assert 'if(i<0||i>=16)continue;' in switch
 assert 'case 7:value=TextureAnisotropyName' in switch
 assert 'case 8:value=prefs_.frame_generation' in switch
-assert 'case 9:value=prefs_.refresh' in switch
+assert 'case 9:value=NeuralModeName' in switch
+assert 'case 10:value=std::to_string(prefs_.neural_strength)' in switch
+assert 'case 11:value=prefs_.refresh' in switch
 shader_source=pathlib.Path("/Users/admin/Developer/EdenEncore/vendor/sources/eden/src/video_core/host_shaders")
 # Compatible with portable environments: identify the pinned source through
 # actual git submodule when the developer's local mirrors are not mounted.
@@ -53,5 +55,5 @@ with tempfile.TemporaryDirectory() as tmp:
         subprocess.run([validator,"--target-env","spv1.3",str(output)],check=True)
         hashes.append(hashlib.sha256(output.read_bytes()).hexdigest())
 assert hashes[0]!=hashes[1],"SGSR and SGSR Edge compiled identically"
-print("PASS R07: Lanczos + 2 different SGSR shader paths, Vulkan-only guards, user settings and 14 game rows")
+print("PASS R07: Lanczos + 2 different SGSR shader paths, Vulkan-only guards, user settings and 16 game rows")
 for name,digest in zip(names,hashes):print(" ",name,digest[:16])

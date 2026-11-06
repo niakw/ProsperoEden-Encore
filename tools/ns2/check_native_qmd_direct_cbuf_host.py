@@ -23,6 +23,14 @@ for cache in (Path.home()/'.cache').glob('ps5-eden-*/source/.cache/cpm/boost/*/l
 env=dict(os.environ)
 sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
 if sdk.exists():env['SDKROOT']=str(sdk)
+# The real Ampere IR normalizer must reject U64 immediate and computed
+# operands before calling Value::U32() or building SPIR-V access chains.
+header = (root/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h').read_text()
+assert 'bank_value.Type() != Shader::IR::Type::U32' in header
+assert 'offset_value.Type() != Shader::IR::Type::U32' in header
+assert 'index.Type() != Shader::IR::Type::U32' in header
+assert 'offset.Type() != Shader::IR::Type::U32' in header
+assert 'byte_offset.Type() != Shader::IR::Type::U32' in header
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
 assert compilers
 with tempfile.TemporaryDirectory(prefix='encore-qmd-cbuf-') as temp:

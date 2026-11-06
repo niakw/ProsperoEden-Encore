@@ -40,6 +40,37 @@ static void Check(Opcode op, u32 bank, u32 offset, u32 reflected,
         std::abort();
     }
 }
+// Invalid-width GetCbuf operands were previously read using U32() on a
+// U64 Value. Exercise both full Maxwell reflection and direct QMD3 layouts,
+// using the *actual* Shader::IR::Block and Ampere normalizer.
+static void CheckMalformedNativeCbuf(bool indirect, bool bad_bank,
+                                     bool dynamic_bad_offset, Opcode opcode) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{16};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage = Shader::Stage::Compute;
+    program.blocks.push_back(&block);
+    program.info.uses_cbuf_indirect = indirect;
+    if (indirect) {
+        program.info.constant_buffer_mask =
+            (u32{1} << Shader::Info::MAX_INDIRECT_CBUFS) - 1U;
+        for (u32 bank = 0; bank < Shader::Info::MAX_INDIRECT_CBUFS; ++bank)
+            program.info.constant_buffer_descriptors.push_back({bank, 1});
+    } else {
+        program.info.constant_buffer_mask = 1;
+        program.info.constant_buffer_descriptors.push_back({0, 1});
+    }
+    Value bank = bad_bank ? Value{u64{0}} : Value{u32{0}};
+    Value offset = !bad_bank && !dynamic_bad_offset
+        ? Value{u64{0}} : Value{u32{0}};
+    if (dynamic_bad_offset) {
+        block.AppendNewInst(Opcode::IAdd64,
+                            {Value{u64{0}}, Value{u64{4}}});
+        offset = Value{&block.back()};
+    }
+    block.AppendNewInst(opcode, {bank, offset});
+    assert(!Shader::Ampere::NormalizeNativeQmdIndirectCbufIR(program, 1));
+}
 static void CheckNativeAtomic(
     Opcode opcode, bool expected,
     bool writable = true, bool declared = true, bool used = true,
@@ -47,7 +78,8 @@ static void CheckNativeAtomic(
     bool dynamic_binding = false, u32 cbuf_offset = 0x310,
     u32 atomic_offset = 0, bool int64 = true,
     bool declared_record = true, bool sized_record = true,
-    u32 nvn_base = 0x310, u32 reflected_size = 0x10000) {
+    u32 nvn_base = 0x310, u32 reflected_size = 0x10000,
+    bool dynamic_u64_offset = false) {
     Shader::ObjectPool<Shader::IR::Inst> pool{16};
     Shader::IR::Block block{pool};
     Shader::IR::Program program{};
@@ -79,9 +111,16 @@ static void CheckNativeAtomic(
     if (opcode >= Opcode::GlobalAtomicIAdd32 &&
         opcode <= Opcode::GlobalAtomicMaxF32x2)
         block.AppendNewInst(opcode, {Value{u64{0x100000}}, Value{u32{1}}});
-    else
+    else {
+        Value offset{atomic_offset};
+        if (dynamic_u64_offset) {
+            block.AppendNewInst(Opcode::IAdd64,
+                                {Value{u64{0}}, Value{u64{4}}});
+            offset = Value{&block.back()};
+        }
         block.AppendNewInst(opcode,
-                            {binding, Value{atomic_offset}, Value{u32{1}}});
+                            {binding, offset, Value{u32{1}}});
+    }
     const bool actual=Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
         program,profile);
     if (actual!=expected) {
@@ -235,6 +274,15 @@ int main() {
         assert(NormalizeNativeQmdGlobalStoreOnlyInfo(no_global, 0));
         assert(no_global.storage_buffers_descriptors.empty());
     }
+    for (const bool indirect : {false, true}) {
+        for (const auto opcode : {Opcode::GetCbufU8,
+                                  Opcode::GetCbufU32,
+                                  Opcode::GetCbufU32x2}) {
+            CheckMalformedNativeCbuf(indirect, true, false, opcode);
+            CheckMalformedNativeCbuf(indirect, false, false, opcode);
+            CheckMalformedNativeCbuf(indirect, false, true, opcode);
+        }
+    }
     Check(Opcode::GetCbufU32,0,0,1,1,false,false,true,16);
     Check(Opcode::GetCbufU32,0,0xfffc,1,1,false,false,true,0x10000);
     Check(Opcode::GetCbufU32,0,0xffff,1,1,false,false,false,0);
@@ -264,6 +312,12 @@ int main() {
     // U64 atomics. Only reflected, writable native storage slots are safe.
     CheckNativeAtomicSlotOrder(false, true);
     CheckNativeAtomicSlotOrder(true, false);
+    // A register-computed U64 byte offset must not reach a U32 SPIR-V
+    // storage access chain, even though it is not a literal immediate.
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd32, false, true, true, true,
+        true, true, false, 0x310, 0, true, true, true, 0x310, 0x10000, true);
+    CheckNativeAtomic(Opcode::StorageAtomicIAdd64, false, true, true, true,
+        true, true, false, 0x310, 0, true, true, true, 0x310, 0x10000, true);
     CheckNativeAtomic(Opcode::StorageAtomicIAdd32,true);
     // Wrong-width immediate IR operands and missing blocks are not valid
     // QMD3 descriptors. Never reinterpret a U64 slot as a flattened U32.

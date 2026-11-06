@@ -756,6 +756,20 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P2.3 — largeur des opérandes IR Compute native (06/11, source/hôte) :**
+Le normaliseur Ampere `GetCbuf` admet uniquement un index de banque U32 et un
+offset octet U32, qu'ils soient immédiats ou construits à partir d'un registre.
+Les anciens appels `Value::U32()` sur un immédiat U64 pouvaient provoquer
+une exception pendant le lancement Compute. Le garde opère avant la lecture
+de l'immédiat dans les deux modes : CBUF direct (8 banques QMD3) et
+remappage indirect (14 banques Maxwell vers les 8 bancs QMD3).
+La même règle refuse les offsets atomiques SSBO calculés en U64, même lorsqu'ils
+ne sont **pas** immédiats : le chemin SPIR-V aval attend un index U32.
+Témoin IR réel `test_native_qmd_direct_cbuf.cpp` : GetCbuf U8/U32/U32x2,
+bank U64, offset U64 immédiat et offset U64 dynamique, et StorageAtomic IAdd32/
+IAdd64 avec offset U64 dynamique ; Clang/GCC sous UBSan PASS. **Le P2.3 global
+reste ouvert**, et aucun rendu GPU PS5 n'a été mesuré. Le moteur NS1 reste inchangé.
+
 **P2.3 — accès complets SSBO globaux (source/hôte, 04/11) :**
 Le backend SPIR-V partagé NVN vérifiait seulement
 `base <= addr < base + size` avant chaque `OpAccessChain`. Un chargement,

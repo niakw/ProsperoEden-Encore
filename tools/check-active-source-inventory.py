@@ -499,6 +499,23 @@ assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in
 print("ENCORE_P22C_SPIRV_DESCRIPTOR_ARRAY_OWNER_PASS",
       f"owners={len(post_f07_image_array_owners)}")
 
+# P2.7: the native Ampere semaphore method decoder was created after the
+# immutable 337-file F07 audit. Keep its exact new owner in the supplemental
+# manifest, not in the frozen performance snapshot (nor research paths).
+post_f07_ampere_semaphore_owners = {
+    "ns2-runtime/gpu_dispatch/video_core/engines/native_ampere_semaphore.h",
+}
+assert post_f07_ampere_semaphore_owners <= set(physical_all), (
+    "Missing maintained Ampere semaphore decoder",
+    sorted(post_f07_ampere_semaphore_owners - set(physical_all)))
+assert not post_f07_ampere_semaphore_owners.intersection(research_paths)
+native_puller = (root / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
+assert '#include "native_ampere_semaphore.h"' in native_puller
+assert 'ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)' in native_puller
+assert (root / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
+print("ENCORE_POST_F07_AMPERE_SEMAPHORE_OWNER_PASS",
+      f"owners={len(post_f07_ampere_semaphore_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -509,7 +526,8 @@ physical = [p for p in physical_all
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
-            post_f07_r437_buffer_base_owners | post_f07_image_array_owners]
+            post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
+            post_f07_ampere_semaphore_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

@@ -33,7 +33,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends libboost-dev spirv-tools libvulkan-dev mesa-vulkan-drivers
-          mkdir -p build-ns2-deps
+          mkdir -p build-ns2-deps build-ns2-a64
           git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-a64/fmt
           test "$(git -C build-ns2-a64/fmt rev-parse HEAD)" = "407c905e45ad75fc29bf0f9bb7c5c2fd3475976f"
           git clone --depth 1 --branch v1.0.5 https://github.com/eden-emulator/sirit.git build-ns2-deps/sirit

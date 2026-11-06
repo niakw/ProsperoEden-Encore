@@ -836,6 +836,16 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P0.2 — source preflight vidéo et qualification SPIR-V (06/11) :**
+Le test de syntaxe des six propriétaires HLE/NVDRV inclut maintenant le
+répertoire maintenu `ns2-runtime/video_decoder` nécessaire à
+`graphics_supervisor.cpp` (erreur réelle CI #42161400996, en-tête
+`graphics_video_decoder_session.h` absent du chemin de compilation hôte).
+Le code vidéo n'est pas retiré. La CI SPIR-V native de `main` surveille
+également la modification du sous-module `vendor`, et son initialisation
+crée les deux dossiers d'installation avant les clones épinglés.
+Les verdicts CI restent dépendants des exécutions réelles au nouveau SHA.
+
 **P2.3 — boucles CAS F32x2 à stockage atomique U32 (06/11, source/hôte) :**
 Les trois opérateurs `f32x2_add/min/max_cas` du propriétaire SPIR-V
 maintenu utilisent désormais le type mémoire `U32[1]` correspondant à

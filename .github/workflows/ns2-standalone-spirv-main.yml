@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
     paths:
+      - 'vendor'
+      - 'vendor/encore-active/ns2-runtime/ampere/**'
+      - 'headless/CMakeLists.txt'
+      - '.github/workflows/ns2-standalone-spirv-main.yml'
+      - '.github/workflows/ns2-research-spirv.yml'
       - 'tools/ns2/test_ampere_real_spirv.cpp'
       - 'tools/ns2/test_ampere_vulkan_module.cpp'
       - 'tools/check-ns2-spirv-host.py'

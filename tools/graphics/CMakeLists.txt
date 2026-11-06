@@ -30,6 +30,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r0
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-qkv-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_upsample_rdna2.comp")
+    add_test(NAME test_rdna2_nr_fswin_upsample_spirv_abi
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-upsample-spv.py"
+            --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_downsample_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_downsample_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
@@ -181,6 +187,7 @@ eden_r08_test(test_rdna2_nr_fswin_chain_layout_policy)
 eden_r08_test(test_rdna2_nr_native_plan_bridge)
 eden_r08_test(test_rdna2_nr_fswin_output_view_policy)
 eden_r08_test(test_rdna2_nr_fswin_downsample_policy)
+eden_r08_test(test_rdna2_nr_fswin_upsample_policy)
 target_include_directories(test_rdna2_nr_fswin_output_view_policy PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
 # R09: validate recovered full native graph structural manifests.

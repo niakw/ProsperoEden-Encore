@@ -68,3 +68,25 @@ E4M3FN [ceil(W/2),ceil(H/2),2C].
   avec le kernel amont ainsi que la compilation/CI restent à vérifier.
 
 Aucun chiffre de performance ni frame DLSS PS5 n'est revendiqué.
+
+
+## Calcul autonome FSwin UPS — projection et skip
+
+Le nouveau shader FSwinUpsample RDNA2 porte le prologue de la branche
+upsample : projection [C,2C] d'un raster de caractéristiques demi-résolution
+E4M3FN, expansion plus proche voisin 2x, puis ajout de la branche de saut
+U-Net pondérée par un gain FP32 propre à chaque canal. Sortie : raster
+E4M3FN pleine résolution C, destiné au FSwin normal suivant.
+
+Les poids proviennent du paquet NRMODEL1 local. Le chargeur
+PrepareFSwinUpsampleWeights exige un tableau de gains COMPLET, sans
+padding de zéros arbitraires. L'amont signale 16 coefficients manquants
+pour les largeurs C64/128/256 : ces modèles sont refusés tant que le
+raccord de l'archive et la parité numérique ne sont pas établis. C32,
+avec un tableau complet, constitue la référence initiale.
+
+Les préconditions incluent dimensions et formats low/skip identifiés,
+buffers séparés, échelles vérifiées, limite 256 MiB par stockage et
+workgroups 3D. Le shader autonome est raccordé au build, mais pas encore
+aux allocations/transitions du graphe multi-résolution. Tests host et
+SPIR-V enregistrés, sans exécution confirmée de CI ni résultat PS5.

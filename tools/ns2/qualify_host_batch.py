@@ -29,6 +29,7 @@ TESTS = {
     "gpu_shader_cache_alloc": "tools/ns2/check_native_gpu_cache_allocation_host.py",
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",
     "native_stage_buffer": "tools/ns2/check_native_stage_buffer_host.py",
+    "task_mesh_vulkan_tus": "tools/ns2/check_task_mesh_vulkan_tus_host.py",
     "hle_condvar_access": "tools/verify/hle/check-native-hle-condvar-access-host.py",
     "hle_condvar_key": "tools/verify/hle/check-native-hle-condvar-key-host.py",
     "hle_arbiter_access": "tools/verify/hle/check-native-hle-arbiter-access-host.py",

@@ -426,6 +426,19 @@ L'accès global atomique via un SSBO dont la provenance n'est pas
 authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
 et les shaders complets restent à qualifier en P5.
 
+**P2.4 — plage complète de capture shader Ampere (06/11, source/hôte) :**
+Le bridge `LowerReviewedToMaxwell` n'a plus sa limite artificielle de 4096
+instructions : il utilise les **65536 instructions** déjà admises par le vrai
+`ProbeProgram` et `LowerToMaxwell`. La taille Maxwell reste bornée à 131072
+mots ; un dépassement échoue sans publier de shader incomplet. Le prologue
+NVN `StaticAtExitTarget` peut viser une instruction au-delà de 4096, mais
+seulement si elle appartient à la capture réelle, est alignée et reste dans
+la limite 65536. Le test de **4097 NOP/EXIT** passe le bridge réel ; 65537
+instructions et une destination ATEXIT hors de la capture sont refusées.
+Clang/GCC O1 PASS sur le vrai `test_ampere_lower_bridge.cpp`.
+**P2.4 reste ouvert** pour les opcodes/chemins task/mesh et LEPC non prouvés,
+et pour la validation GPU console. Aucune modification du compilateur NS1.
+
 **P2.4 — audit Lichii/nx2 du 04/11, correctifs ISA génériques :**
 l'authentification ISA puis la traduction vers Maxwell admettent désormais
 USHF 0x499 (mot immédiat et shift uniforme), BRA.U 0x947 (bits de mode distincts de l'offset signé), SULD/SUST 0x998/0x99c

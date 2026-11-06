@@ -57,9 +57,33 @@ int main() {
     code.clear();
     check(LowerReviewedToMaxwell(code).status == LowerBridgeStatus::InvalidInput,
           "empty shader rejected before lowering");
-    code.resize((4096U + 1) * 16U);
+    // All three real Ampere owners have a 65536-instruction bound. A valid
+    // 4097-word shader must not be stopped by a stale 4096-word ingress.
+    code.clear();
+    for (u32 index=0; index<4096; ++index)
+        Emit(code, PredTrue | 0x918);
+    Emit(code, PredTrue | 0x94d, 0, ExitCondTrue);
+    const auto beyond_4k = LowerReviewedToMaxwell(code);
+    check(beyond_4k.Ready() && beyond_4k.consumed_native_bytes == code.size() &&
+          beyond_4k.source_instruction_offsets.size() == 4097,
+          "complete native 4097-instruction shader reaches actual Maxwell lowering");
+    // NVN's authenticated static ATEXIT destination may point past source
+    // instruction 4096, but must stay inside the code currently captured.
+    std::vector<Instruction> prologue(4098,
+        Instruction{{PredTrue | 0x918, 0, 0, 0}});
+    prologue[0] = Instruction{{0x0000734e, 0, 0, 0}};
+    prologue[1] = Instruction{{0x00037802, 4097u*16, 0x00000f00, 0}};
+    prologue[2] = Instruction{{0x00007210, 3, 0x07f1e0ff, 0}};
+    prologue[3] = Instruction{{0xff017224, 0xff, 0x000e0401, 0}};
+    prologue[4] = Instruction{{0x00007357, 0, 0, 0}};
+    check(StaticAtExitTarget(prologue) == 4097,
+          "valid ATEXIT handler beyond 4096 instructions accepted");
+    prologue.pop_back();
+    check(!StaticAtExitTarget(prologue),
+          "ATEXIT target one instruction past captured guest code refused");
+    code.resize((65536U + 1) * 16U);
     check(LowerReviewedToMaxwell(code).status == LowerBridgeStatus::InvalidInput,
-          "hard 4096-instruction analysis bound enforced");
+          "real 65536-instruction shader ingress limit enforced");
 
     code.clear();
     Emit(code, PredTrue | 0x202 | (1U << 16) | (1U << 24), 2, 15U << 8);

@@ -539,3 +539,28 @@ dans le contexte du VkDevice existant.
 par le moteur appelant et aucun passage PS5 complet
 n'a été exécuté. Les nouveaux wrappers Vulkan n'ont
 pas encore été compilés contre un SDK PS5 lors de ce lot.
+
+
+## Allocation des tenseurs intermédiaires FSwin sur Vulkan
+
+Le nouveau composant NrRdna2FSwinGpuTensors alloue, avec
+l'allocateur VMA d'Eden, les buffers GPU nécessaires à un
+bloc FSwin : entrée, expansion, middle facultatif (C>=64),
+contraction, Q, K, V, contexte d'attention et sortie.
+
+L'entrée est host-visible et accepte les tokens E4M3FN via
+UploadInput(), avec Flush() avant la soumission GPU. Les
+intermédiaires sont en mémoire locale du périphérique,
+avec des tailles dérivées du contrat FSwinGraph. Chaque
+allocation respecte maxStorageBufferRange et le budget
+global de 512 Mio fixé pour cette étape.
+
+Views() construit les VkDescriptorBufferInfo réels et
+peut les transmettre à NrRdna2FSwinDescriptors en lui
+fournissant le buffer poids. Les ressources doivent
+survivre aux commandes GPU qui les emploient.
+
+Il manque toujours le pilotage automatique d'une
+couche par le renderer, le prétraitement image vers
+tokens FP8 et le plan global des blocs. Il n'y a
+encore aucune validation de frame DLSS sur console.

@@ -18,7 +18,9 @@ void main() {
         color = vec4(mix(backdrop, purple, panel), mix(0.60, 0.91, panel));
         return;
     }
-    bool menu_row = text.loading == 0xfffffff2u || text.loading == 0xfffffff3u;
+    bool warning_row = text.loading == 0xfffffff4u;
+    bool menu_row = text.loading == 0xfffffff2u ||
+                    text.loading == 0xfffffff3u || warning_row;
     if (text.loading != 0u && !menu_row) {
         // The loading screen: x and y carry the picture's size, loading the milliseconds since
         // it began (plus one). Vulkan counts rows from the top.
@@ -50,9 +52,11 @@ void main() {
     }
     if (menu_row) {
         bool selected = text.loading == 0xfffffff3u;
-        color = ink ? vec4(0.98, 0.96, 1.0, 1.0)
-                    : selected ? vec4(0.37, 0.17, 0.60, 0.80)
-                               : vec4(0.12, 0.065, 0.22, 0.34);
+        color = warning_row
+            ? (ink ? vec4(1.0, 0.83, 0.41, 1.0) : vec4(0.30, 0.17, 0.05, 0.78))
+            : (ink ? vec4(0.98, 0.96, 1.0, 1.0)
+                   : selected ? vec4(0.37, 0.17, 0.60, 0.80)
+                              : vec4(0.12, 0.065, 0.22, 0.34));
         return;
     }
     color = ink ? vec4(0.9, 0.95, 1.0, 1.0) : vec4(0.025, 0.04, 0.075, 0.5);

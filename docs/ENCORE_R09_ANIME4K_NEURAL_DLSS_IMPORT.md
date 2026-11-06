@@ -92,3 +92,54 @@ matrix ne démontrent pas leur fonctionnement sur la PS5 RDNA2.
 temporel ouvert tant que depth/motion/jitter/projection ne sont pas
 fournis de manière générique par le GPU invité. Le MSAA forcé est
 raccordé en code, mais demande également qualification console.
+
+## Évaluation RDNA2 HIP 7.2 et sources Vulkan (6 novembre 2026)
+
+L'utilisateur signale la release
+[danielblnc/DLSS-NR-on-AMD](https://github.com/danielblnc/DLSS-NR-on-AMD/releases)
+v0.6.0 (3 octobre 2026), qui annonce explicitement la série RX 6000
+(RDNA2) et demande le runtime **AMD HIP 7.2**. Le README actuel du
+projet mentionne également 0.8.0, avec RDNA2 **encore en test et NR
+seulement**, les autres fonctions DLSS visant surtout RDNA3/RDNA4.
+L'environnement ciblé reste **Windows 11, DirectX 12**, avec
+interface Vulkan seulement annoncée pour plus tard.
+
+Il ne s'agit PAS d'un dépôt de sources directement réutilisables :
+la racine publique contient README, LICENSE, THIRD_PARTY et les
+workflows GitHub, **pas les noyaux HIP ni le moteur**. La licence
+Daniel Blanco (© 2026) autorise un usage personnel non commercial,
+mais interdit la redistribution, la modification et le reverse
+engineering sauf exceptions légales obligatoires. **Ne pas intégrer
+ou redistribuer ces binaires dans Eden Encore**, même si l'utilisateur
+fournit une bibliothèque NVIDIA différente de ce logiciel.
+Source : https://github.com/danielblnc/DLSS-NR-on-AMD/blob/master/LICENSE
+
+La [documentation officielle du HIP SDK 7.2 pour Windows]
+(https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html)
+marque les GPU RX 6000 RDNA2 comme non officiellement pris en charge
+par ce SDK. Un contournement communautaire dans le mod Windows,
+si fonctionnel, ne rend **pas** ce runtime portable vers le noyau
+hôte **PS5** ; ni le pilote Adrenalin, ni les DLL HIP Windows ne
+s'y exécutent. Le support RDNA2 annoncé est donc un **signal de
+faisabilité**, pas une preuve console.
+
+Source de moteur Vulkan réellement consultable :
+[Overclockers/DLSSNR-AMD]
+(https://github.com/Overclockers/DLSSNR-AMD).
+Le dépôt publie du code Vulkan compute sous MIT, une documentation
+d'architecture, des composants Linux et Windows et des procédures
+de vérification des modèles utilisateur. Le backend testé ne cible
+**que RDNA4 RX 9000** (instructions matricielles FP8 avec
+VK_KHR_cooperative_matrix). **RDNA2 PS5 ne fournit pas ce chemin** :
+il faudrait un autre noyau de multiplication/accumulation,
+un format de poids compatible, des mesures de coût GPU, un
+contrôle indépendant des droits des modèles et une alimentation
+réelle en données jeu (notamment mouvements/profondeur/exposition).
+Ne pas importer des poids, DLL ou shaders propriétaires à partir
+d'une simple preuve de concept.
+
+**Décision R09** : les trois filtres A4K libres, compilés sur hôte
+et non encore qualifiés PS5, constituent la seule implémentation
+neuronale raccordée dans la PR #24. Conserver le port DLSSNR-AMD
+Vulkan/MIT comme **référence de recherche RDNA2**, non comme
+fonctionnalité annoncée ou dépendance nécessaire au lancement.

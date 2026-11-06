@@ -397,6 +397,32 @@ assert "EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT" in (
 assert (root / "tools/ns2/check_native_video_decoder_ipc_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_OWNER_PASS", f"owners={len(post_f07_video_decoder_owners)}")
 
+# R437: the native BufferCacheBase declarations arrived after the frozen
+# 337-source F07 register. Audit this exact added owner, not the F07 snapshot.
+post_f07_r437_buffer_base_owners = {
+    "eden-core/src/video_core/buffer_cache/buffer_cache_base.h",
+}
+assert post_f07_r437_buffer_base_owners <= set(physical_all)
+assert not post_f07_r437_buffer_base_owners.intersection(research_paths)
+r437_path = next(iter(post_f07_r437_buffer_base_owners))
+r437_body = (active / r437_path).read_text()
+pinned_base = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+old_mark = "    void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size);"
+new_mark = """    // R437: preserve the legacy three-argument call while exposing explicit
+    // write-tick ownership to the maintained native BufferCache implementation.
+    void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size,
+                           bool needs_sync = true);"""
+old_wait = "    void WaitForGpuFenceIfNeeded(Buffer& buffer);"
+new_wait = """    // Same fence-wait member as the maintained R437 BufferCache body.
+    void SynchronizeBufferWrites(Buffer& buffer);"""
+assert r437_body.count(new_mark) == r437_body.count(new_wait) == 1
+assert r437_body.replace(new_mark, old_mark).replace(new_wait, old_wait) == pinned_base, (
+    "Unreviewed R437 BufferCache base-source drift")
+r437_select = (root / "headless/CMakeLists.txt").read_text()
+assert "set(EDEN_MAINTAINED_BUFFER_BASE" in r437_select
+assert "buffer-pages/video_core/buffer_cache/buffer_cache_base.h" in r437_select
+print("ENCORE_POST_F07_R437_BUFFER_BASE_PASS", f"owners={len(post_f07_r437_buffer_base_owners)}")
+
 # P2.4: the maintained Ampere Task/Mesh stage-buffer decoder was introduced
 # after the frozen F07 337-source review. It is an active shader header, not
 # a historical optimization. Keep its exact owner and CMake selection guarded.
@@ -465,7 +491,8 @@ physical = [p for p in physical_all
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
-            post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners]
+            post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
+            post_f07_r437_buffer_base_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -501,6 +528,11 @@ post_expected = [
     for path in sorted(post_f07_cpu6_ldapr_owners)]
 assert post_rows == post_expected, ("post-F07 vendor source owner drift",
                                    post_rows, post_expected)
+r437_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].splitlines()
+             if line.startswith("| `eden-core/src/video_core/buffer_cache/buffer_cache_base.h`")]
+assert r437_rows == [
+    "| `eden-core/src/video_core/buffer_cache/buffer_cache_base.h` | R437 |",
+], ("Missing reviewed R437 BufferCache base owner catalogue", r437_rows)
 print("ENCORE_POST_F07_VENDOR_CATALOG_PASS", f"maintained={len(post_rows)}")
 def role(path):
     if path.startswith("eden-backports/"):

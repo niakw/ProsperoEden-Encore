@@ -110,6 +110,13 @@ def main():
          ROOT / "tools/ns2/jit-host/common_shim.cpp",
          ROOT / "tools/ns2/test_ampere_real_spirv.cpp"]
     sources += [SIRIT / "src" / name for name in sirit_sources]
+    # Compile the host fixture FIRST: all source owners must still build,
+    # but a local C++ fixture typo must fail in seconds rather than after
+    # compiling ~150 unrelated shader objects.
+    fixture = ROOT / "tools/ns2/test_ampere_real_spirv.cpp"
+    if sources.count(fixture) != 1:
+        raise RuntimeError("real SPIR-V host fixture owner missing or duplicated")
+    sources = [fixture] + [source for source in sources if source != fixture]
     if len({str(p) for p in sources}) != len(sources):
         raise RuntimeError("duplicate SPIR-V translation unit")
     maintained_header = (mesh_root / "shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()

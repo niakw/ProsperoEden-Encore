@@ -78,7 +78,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
-**État vérifiable : six primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
+**État vérifiable : sept primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté et projection QKV) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
 
 ## Nouveaux dépôts utiles, examinés le 6 novembre
 
@@ -180,3 +180,30 @@ de ses calculs) n'est pas fusionnée ni planifiée ; les biais/poids
 ne sont pas fournis, la conversion de précision diffère de l'amont
 (fast_exp/FP16), et aucun résultat/performance PS5 n'a été mesuré.
 Un enregistrement de pipeline n'est pas une inférence complète.
+
+
+## Septième primitive — projection QKV en Vulkan RDNA2 (6 novembre)
+
+qkv_projection_rdna2.comp réalise le triplet des projections Q/K/V
+du modèle MIT amont attn.comp sur les fenêtres de 64 tokens, en
+FP32 FMA avec lecture E4M3FN logicielle, 512 canaux d'entrée,
+32 par tête et jusqu'à 16 têtes.
+
+- Q et K sont normalisés en norme L2 par token ; Q reçoit son facteur
+  d'échelle par tête, puis les deux sont quantifiés E4M3FN après
+  arrondis FP16 via packHalf2x16 / unpackHalf2x16.
+- V passe par un arrondi FP16 suivi d'une quantification E4M3FN.
+- Entrées explicitement **row-major** (pas le tiling amont), à
+  adapter par un importeur de poids : activations [windows,64,512],
+  poids [heads,3,32,512]. Sorties [windows,heads,64,32].
+- 6 buffers storage, 32 octets de push constants, dispatch
+  (windows,heads,64), contrôle des adresses 32 bits, mémoire et
+  bornes de dispatch. Shader et wrapper C++ dans le vendor.
+- Tests GPU hôte : compilation / validation SPIR-V, ABI ; référence
+  CPU sur données synthétiques ; syntaxe du wrapper.
+
+**Important :** QKV + attention sont encore deux dispatchs séparés
+et ne reproduisent pas le kernel fusionné du réseau. Le regroupement
+des poids au format correct, les modèles, le graphe et la qualification
+des performances GPU PS5 sont non réalisés. Le coût scalaire de QKV
+peut rendre le rendu temps réel impraticable sans optimisation.

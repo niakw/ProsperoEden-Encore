@@ -657,3 +657,40 @@ Le wrapper Vulkan est ajouté au build. Il reste à raccorder
 sa ressource de descriptor set et ses appels dans la chaîne
 multi-couches en fonction des décalages réels du plan source.
 Aucune performance n'a été évaluée.
+
+## Chaînage FSwin avec fenêtres décalées — 06/11/2026
+
+La chaîne `NrRdna2FSwinChain` intègre désormais le shader Vulkan
+`fswin_window_repack_rdna2.comp` entre **deux couches consécutives
+de même résolution et même nombre de canaux**, lorsque leur disposition
+de fenêtres (décalage X/Y) diffère.
+
+- Chaque `FSwinLayerSpec` peut spécifier `layout={windows_x,windows_y,
+  shift_x,shift_y}`, avec les décalages mesurés en tuiles de 4×4
+  tokens (plage -1 à 1).
+- Pour un chemin purement non décalé, l'ancien appel avec `layout={}`
+  reste accepté ; la copie TRANSFER précédente est conservée.
+- En cas de décalage, une paire de descripteurs storage est allouée
+  par transition. Le shader lit le buffer de sortie de la couche
+  précédente et écrit directement dans le buffer d'entrée de la
+  couche suivante ; il insère sa barrière compute→compute.
+- Le nouveau contrat `CanFSwinChainWindowLayouts` vérifie
+  avant l'allocation GPU l'homogénéité des dimensions de grille,
+  le produit `windows_x×windows_y=windows`, les décalages supportés
+  et la limite de 160 couches.
+- Les passages `LinkInputFromShifted` conservent les contrôles
+  de durée de vie, de scheduler commun, de taille d'entrée/sortie
+  et d'absence d'alias. Les états `input_loaded` et
+  `output_recorded` restent liés à la réussite de l'enregistrement.
+- La validation host ajoute un test de géométrie des séquences
+  de layouts alternés, des cas 1×1/16×16 et des refus hors bornes.
+  Le shader de décalage possédait déjà son test de correspondance
+  de tokens et son validateur SPIR-V.
+
+**Limites fonctionnelles :** le chargeur externe doit toujours
+fournir le plan de fenêtres réel de chaque couche ; les dimensions
+doivent rester identiques d'un bout à l'autre de la chaîne. Cette
+étape ne porte ni les changements de résolution, ni les branches
+U-Net, ni les blocs ViT du réseau global, ni les entrées/sorties
+d'images. Les nouveaux appels Vulkan n'ont pas été exécutés sur PS5
+et aucun chiffre de performance n'est revendiqué.

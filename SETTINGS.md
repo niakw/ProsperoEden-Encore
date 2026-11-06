@@ -299,58 +299,37 @@ Still internal or not exposed include examples such as:
 The goal is **complete practical PS5 tuning**, not a one-for-one copy of every Windows engineering switch. Additional Eden controls should be exposed only when they have a real PS5 use case and a safe default.
 
 
-## Neural Rendering (NR) — paramètres en préparation
+## Neural Rendering et composition d'image
 
-Le port Vulkan/RDNA2 Neural Rendering est **en cours d'intégration**.
-Les paramètres peuvent être préparés et sauvegardés, mais **aucun rendu
-neuronal n'est encore activable**. Le mode « Neural rendering » apparaît
-donc comme « In preparation » ; le choix du modèle et l'intensité
-peuvent être configurés avant l'activation future.
+Le Neural Rendering constitue un moteur distinct du filtre d'upscaling.
+Les **six choix directs** du menu sont :
+`off`, `a4k_detail`, `a4k_soft`, `a4k_denoise`,
+`dlss_nr_original` et `dlss_nr_compact`.
 
-| Paramètre | Valeur par défaut | Choix |
-|---|---|---|
-| Neural rendering | In preparation (inactif) | Non activable à ce stade |
-| NR model | Original | Original, Compact (modèle Small) |
-| NR intensity | 100 % | 0–100 %, par pas de 5 % dans le menu |
+Les trois A4K utilisent les shaders Vulkan existants correspondant
+aux anciens identifiants internes 7/8/9, mais **ne figurent plus
+dans la liste des upscalers**. Le DLSS-NR Original/Compact conserve
+le calcul et les paramètres propres au réseau neuronal RDNA2.
+L'intensité DLSS-NR (0–100 %) est visible mais non modifiable
+tant qu'aucun des deux DLSS-NR n'est sélectionné.
 
-Les champs stables sont `video.neural_model` (`"original"` ou
-`"small"`) et `video.neural_strength` (0–100) dans
-`config/prosperoeden.json`. Chaque jeu peut utiliser les mêmes clés
-dans `games.<title_id>`; leur absence signifie **hériter du réglage
-global**, sans changer les profils Minimum/Recommended/High/Ultra.
-Les valeurs invalides sont rejetées à l'écriture et remplacées par
-les valeurs sûres à la lecture.
+- NR : `off` par défaut, y compris après installation.
+- Frame Generation : `off` par défaut, indépendant.
+- Upscaling : filtre spatial distinct, sans modes A4K.
+- AA : None/FXAA/SMAA ; composition avec MSAA forcé bloquée
+  tant qu'elle n'est pas prouvée pour NR sur PS5.
+- NR et Frame Generation ensemble : non validés, donc refusés.
+- Vulkan requis pour A4K et DLSS-NR sélectionnés.
+- Le modèle et l'intensité ne constituent pas un profil de performance
+  ni une preuve d'image DLSS-NR déjà rendue sur PS5.
 
-L'intensité NR est **indépendante** de la netteté FSR,
-d'A4K, de l'anticrénelage, de la génération d'images et du
-multiplicateur de résolution. Le modèle « Compact » ne présume
-pas de performances PS5 : ses couches spécialisées et son
-graphe nécessitent une validation indépendante.
+JSON des préférences réelles : `video.neural_rendering` (une des
+six clés) et `video.neural_strength` (0–100).
+Même syntaxe pour `games.<TITLE_ID>` ;
+l'absence de clé par jeu hérite du global.
+Les anciens filtres `anime4k_3d`, `anime4k_soft`,
+`anime4k_denoise` sont migrés vers les trois nouveaux modes NR.
+La valeur héritée `neural_rendering:rdna2` est migrée selon
+l'ancien champ `neural_model`.
 
-Tant qu'il n'existe pas de pipeline complet et d'image PS5
-validée, ces préférences restent **inertes dans le moteur**.
-Elles ne prétendent pas déclencher les kernels ni annoncer
-une compatibilité avec un jeu spécifique.
-
-### Neural Rendering and other graphics options
-
-**Neural Rendering (NR): Off by default. Frame generation: Off by default.**
-Both are extras, separate from the Minimum / Recommended / High / Ultra video presets.
-
-Neural Rendering is still incomplete on PS5. Its main option reads **Off — not available**.
-The active NR model and intensity controls are gray while NR is off; they cannot change the running image.
-
-In a game's settings, **NR preset model** and **NR preset intensity** are different:
-these can be saved now, even with NR off. The preset can inherit the global setting or
-select Original / Compact and 0–100% intensity. It will only matter after NR becomes usable.
-No per-game automatic intensity value is claimed as tested.
-
-The dynamic compatibility policy guards future combinations rather than silently resetting preferences:
-Vulkan is required; overlapping upscalers (FSR, SGSR, A4K) are not presumed composable;
-forced MSAA with NR is unverified; NR plus frame generation is not inherently impossible
-but is unverified on the PS5 port and therefore blocked until validation.
-The existing FSR sharpness, AA, output, refresh and FG choices are not overwritten by NR.
-
-Stored keys: video.neural_rendering = off, video.neural_model = original/small,
-video.neural_strength = 0..100. Per-game keys inherit global defaults when absent.
-Manually editing JSON cannot activate an unvalidated NR engine.
+Voir `docs/ENCORE_R09_NEURAL_RENDERING_UI_OVERRIDES.md`.

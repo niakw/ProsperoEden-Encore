@@ -25,8 +25,8 @@ inline VideoPresetValues VideoPresetForTitle(std::uint64_t title_id, int preset)
 // and post-AA (BEST -> LOWEST). No static chart can guarantee superiority
 // across games/frames; see docs/ENCORE_GRAPHICS_QUALITY_RANKING.md.
 // This is ONLY the interface/cycling order: persisted enum IDs do not change.
-inline constexpr std::array<int, 10> kUpscalingQualityOrder{
-    7, 8, 9, 6, 5, 1, 4, 2, 0, 3}; // A4K details, softened, cleaned, then spatial filters.
+inline constexpr std::array<int, 7> kUpscalingQualityOrder{
+    6, 5, 1, 4, 2, 0, 3}; // Spatial scaling only; the three A4K engines live in Neural Rendering.
 // Navigation order only: no visual superiority is established before console A/B.
 inline constexpr std::array<int, 4> kAntiAliasingQualityOrder{
     2, 3, 1, 0}; // SMAA Ultra, FXAA+, FXAA, None

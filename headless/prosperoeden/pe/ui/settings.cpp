@@ -57,9 +57,8 @@ enum VideoRow : int
     video_anti_aliasing,
     video_texture_filtering,
     video_frame_generation,
-    video_neural_status,
-    video_neural_model,
-    video_neural_strength,
+    video_neural_status, // Off + three A4K + two DLSS-NR modes
+    video_neural_strength, // only for DLSS-NR Original/Compact
     video_refresh,
     video_overlay,
     kVideoRows,
@@ -627,6 +626,12 @@ void Launcher::press_dialog(Key key)
             // Save the selected method. The Vulkan renderer uses actual
             // runtime capabilities; choosing a method never fabricates FPS.
             const int next = (prefs_.frame_generation + step + 4) % 4;
+            if(next!=0&&prefs_.neural_mode!=Eden::NeuralVideo::kOff){
+                say(NeuralCompatibilityGuide(
+                    Eden::NeuralVideo::Reason::FrameGenerationUnverified),true);
+                cue(Cue::error);
+                return;
+            }
             if (next == 3 && !services_.has_lossless_dll()) {
                 say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
                 cue(Cue::error);
@@ -636,19 +641,31 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_neural_status)
         {
-            say(tr(TR("NR is being integrated. This setting will become available after the complete Vulkan graph is validated.")), true);
-            cue(Cue::error);
-            return;
-        }
-        else if (option_ == video_neural_model)
-        {
-            prefs_.neural_model = (prefs_.neural_model + 1) % 2;
+            const int next=(prefs_.neural_mode+step+
+                Eden::NeuralVideo::kModeCount)%Eden::NeuralVideo::kModeCount;
+            if(next!=Eden::NeuralVideo::kOff) {
+                const auto why=Eden::NeuralVideo::CheckSelectable(
+                    next,prefs_.renderer,prefs_.filter,prefs_.anti_aliasing,
+                    prefs_.frame_generation);
+                if(why!=Eden::NeuralVideo::Reason::Available){
+                    say(NeuralCompatibilityGuide(why),true);
+                    cue(Cue::error);
+                    return;
+                }
+            }
+            prefs_.neural_mode=next;
         }
         else if (option_ == video_neural_strength)
         {
-            if (!adjust) return;
-            prefs_.neural_strength = std::clamp(prefs_.neural_strength + step * 5, 0, 100);
-            sound = Cue::slider;
+            if (!Eden::NeuralVideo::IsDlss(prefs_.neural_mode)){
+                say(NeuralStrengthGuide(prefs_.neural_mode),true);
+                cue(Cue::error);
+                return;
+            }
+            if(!adjust)return;
+            prefs_.neural_strength=std::clamp(
+                prefs_.neural_strength+step*5,0,100);
+            sound=Cue::slider;
         }
         else if (option_ == video_refresh)
         {
@@ -814,6 +831,19 @@ void Launcher::press_dialog(Key key)
     default:
         return;
     }
+    // Do not save impossible neural compositing after changing renderer,
+    // upscale, anti-aliasing, frame generation or a preset.
+    if(modal_==Modal::video&&prefs_.neural_mode!=Eden::NeuralVideo::kOff) {
+        const auto why=Eden::NeuralVideo::CheckSelectable(
+            prefs_.neural_mode,prefs_.renderer,prefs_.filter,
+            prefs_.anti_aliasing,prefs_.frame_generation);
+        if(why!=Eden::NeuralVideo::Reason::Available){
+            prefs_=before;
+            say(NeuralCompatibilityGuide(why),true);
+            cue(Cue::error);
+            return;
+        }
+    }
     // The launcher's look changes on the spot: that is its own confirmation.
     // Appearance updates never invalidate game metadata or start a game-library rescan.
     const bool saved = (modal_ == Modal::appearance || modal_ == Modal::application) ?
@@ -858,9 +888,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
             TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
             kFramegenInfo,
-            TR("Neural Rendering is not active yet. Its complete Vulkan network and PS5 output must be validated first."),
-            TR("Choose the Neural Rendering model ahead of activation. Original is the full graph; Compact uses the smaller graph."),
-            TR("Future Neural Rendering effect strength, 0 to 100 percent. It does not change FSR sharpness or frame generation."),
+            TR("Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."),
+            TR("Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."),
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
             TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
         copy = tr(kAbout[std::clamp(option_, 0, kVideoRows - 1)]);
@@ -962,16 +991,15 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             prefs_.frame_generation == 0 ? tr("Off") :
                 prefs_.frame_generation == 1 ? "MihawkGen" :
                 prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
-            tr("In preparation"),
-            prefs_.neural_model == 0 ? tr("Original") : tr("Compact"),
+            NeuralModeName(prefs_.neural_mode),
             percent(prefs_.neural_strength),
             hertz(prefs_.refresh),
         };
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
             TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
-            TR("Texture filtering"), TR("Enhanced smoothness"),
-            TR("Neural rendering"), TR("NR model"), TR("NR intensity"),
+            TR("Texture filtering"), TR("Frame Generation"),
+            TR("Neural Rendering"), TR("Intensité DLSS-NR"),
             TR("Refresh rate"), TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
         {
@@ -981,7 +1009,12 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 label(row, tr(kNames[row]), kToggle);
                 toggle(c, 1292.0f, row_centre(row), knob);
             }
-            else if (row == video_neural_status ||
+            else if ((row==video_neural_strength &&
+                       !Eden::NeuralVideo::IsDlss(prefs_.neural_mode)) ||
+                     (row==video_filter &&
+                       prefs_.neural_mode!=Eden::NeuralVideo::kOff) ||
+                     (row==video_frame_generation &&
+                       prefs_.neural_mode!=Eden::NeuralVideo::kOff) ||
                      (row == video_fsr_sharpness &&
                        (!UpscalingSupportsSharpness(prefs_.filter) ||
                         !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
@@ -1159,8 +1192,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Renderer"), TR("Video preset"), TR("TV output"),
             TR("Game resolution"), TR("Upscaling"), TR("Sharpness"),
             TR("Anti-aliasing"), TR("Texture filtering"),
-            TR("Enhanced smoothness"), TR("Neural rendering"),
-            TR("NR model"), TR("NR intensity"),
+            TR("Frame Generation"), TR("Neural Rendering"),
+            TR("Intensité DLSS-NR"),
             TR("Refresh rate"), TR("FPS overlay")};
         const int selected = std::clamp(option_, 0, kVideoRows - 1);
         const char* explanation = copy;
@@ -1178,6 +1211,10 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         else if (selected == video_frame_generation &&
                  !FrameGenerationSelectable(prefs_.renderer))
             explanation = FramegenUnsupportedGuide();
+        else if(selected==video_neural_status)
+            explanation=NeuralModeGuide(prefs_.neural_mode);
+        else if(selected==video_neural_strength)
+            explanation=NeuralStrengthGuide(prefs_.neural_mode);
         DrawVideoGuide(c, tr(kGuideLabels[selected]), explanation,
             (selected == video_fsr_sharpness &&
              (!UpscalingSupportsSharpness(prefs_.filter) ||
@@ -1185,8 +1222,10 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             (selected == video_anti_aliasing &&
              prefs_.anti_aliasing >= 3 && prefs_.renderer != 1) ||
             (selected == video_frame_generation &&
-             !FrameGenerationSelectable(prefs_.renderer)) ||
-            selected == video_neural_status,
+             (!FrameGenerationSelectable(prefs_.renderer) ||
+              prefs_.neural_mode!=Eden::NeuralVideo::kOff)) ||
+            (selected==video_neural_strength &&
+             !Eden::NeuralVideo::IsDlss(prefs_.neural_mode)),
             prefs_.ui_theme == 1);
     }
 

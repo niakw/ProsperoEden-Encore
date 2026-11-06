@@ -37,6 +37,7 @@
 #include <nlohmann/json.hpp>
 #include "devices.h"
 #include "encore_overrides_generated.h"
+#include "neural_video_policy.h"
 #include "encore_overrides_runtime.h"
 #include "fxaa_quality_select.h"
 #include "encore_performance_policy.h"
@@ -1583,13 +1584,32 @@ int main(int argc, char** argv) {
             Settings::values.resolution_setup.SetValue(resolutions[resolution]);
             // SGSR has real native Vulkan pipelines, but OpenGL only
             // falls back to Bilinear: never advertise an imaginary effect.
-            const int selected_filter = std::clamp(filter, 0,
-                                                   int(std::size(filters)) - 1);
-            const bool vulkan_only_filter =
-                selected_filter >= 5 && selected_filter <= 9;
-            const int mapped_filter =
-                vulkan_only_filter && profile_renderer == 0 ? 0 : selected_filter;
+            const int selected_filter=std::clamp(filter,0,6);
+            // The existing A4K shader enums 7/8/9 are INTERNAL to the
+            // presenter. In the menu, these are three Neural Rendering modes.
+            const int requested_nr=safe_launch?Eden::NeuralVideo::kOff:
+                (game_video.neural_mode>=0?
+                    game_video.neural_mode:launch_preferences.neural_mode);
+            const int requested_aa=safe_launch?0:
+                (game_video.anti_aliasing>=0?
+                    game_video.anti_aliasing:profile_aa);
+            const int requested_fg=safe_launch?0:
+                (game_video.frame_generation>=0?
+                    game_video.frame_generation:launch_preferences.frame_generation);
+            const bool neural_selectable=Eden::NeuralVideo::CanSelect(
+                requested_nr,profile_renderer,selected_filter,
+                requested_aa,requested_fg);
+            const int mapped_filter=neural_selectable &&
+                Eden::NeuralVideo::IsA4k(requested_nr)
+                ? Eden::NeuralVideo::InternalA4kFilter(requested_nr)
+                : (selected_filter>=5&&profile_renderer==0?0:selected_filter);
             Settings::values.scaling_filter.SetValue(filters[mapped_filter]);
+            // DLSS-NR selection persists without faking an A4K result.
+            // Image execution needs the completed GPU graph and present path.
+            if(neural_selectable&&Eden::NeuralVideo::IsDlss(requested_nr))
+                Eden::Report("neural",requested_nr==Eden::NeuralVideo::kDlssOriginal
+                    ? "DLSS-NR Original selected (image graph not yet attached)"
+                    : "DLSS-NR Compact selected (image graph not yet attached)");
             const int fsr_sharpness = safe_launch ? 50 :
                 (game_video.fsr_sharpness >= 0 ? game_video.fsr_sharpness : profile_fsr);
             const int anti_aliasing = safe_launch ? 0 :

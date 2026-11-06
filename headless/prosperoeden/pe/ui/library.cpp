@@ -45,7 +45,6 @@ enum GameRow : int
     row_texture_filtering,
     row_frame_generation,
     row_neural_status,
-    row_neural_model_preset,
     row_neural_strength_preset,
     row_refresh,
     row_controls,
@@ -1702,26 +1701,47 @@ void Launcher::press_game(Key key)
         return;
     }
     if (option_ == row_neural_status) {
-        say(tr(TR("Neural Rendering is OFF. Its RDNA2 backend is unfinished. Future per-game presets can be saved below.")), true);
-        cue(Cue::error);
-        return;
-    }
-    if (option_ == row_neural_model_preset ||
-        option_ == row_neural_strength_preset) {
         GameSettings next=game_settings_;
-        const int delta=key==Key::left?-1:1;
-        if(option_==row_neural_model_preset) {
-            // -1 inherit, 0 Original, 1 Compact.
-            next.neural_model=(next.neural_model+1+delta+3)%3-1;
-        } else {
-            const int current=next.neural_strength<0?
-                prefs_.neural_strength:next.neural_strength;
-            next.neural_strength=std::clamp(current+delta*5,0,100);
+        const int step=key==Key::left?-1:1;
+        // -1 inherits global. 0 Off, 1..3 A4K, 4..5 DLSS-NR.
+        next.neural_mode=(next.neural_mode+1+step+7)%7-1;
+        const int active=next.neural_mode<0?prefs_.neural_mode:next.neural_mode;
+        if(active!=Eden::NeuralVideo::kOff){
+            const auto why=Eden::NeuralVideo::CheckSelectable(
+                active,EffectiveGameRenderer(next,prefs_,game.title_id),
+                EffectiveGameUpscalingFilter(next,prefs_,game.title_id),
+                next.anti_aliasing>=0?next.anti_aliasing:prefs_.anti_aliasing,
+                next.frame_generation>=0?next.frame_generation:prefs_.frame_generation);
+            if(why!=Eden::NeuralVideo::Reason::Available){
+                say(NeuralCompatibilityGuide(why),true);
+                cue(Cue::error);
+                return;
+            }
         }
         const bool saved=services_.set_game_settings(game.title_id,next);
         if(saved){game_settings_=next;home_settings_cache_.erase(game.title_id);}
-        say(saved ? tr("NR preset saved for this game; Neural Rendering remains OFF.") :
-                    tr("Could not save. Please try again."),!saved);
+        say(saved?tr("Neural Rendering saved for this game."):
+                  tr("Could not save. Please try again."),!saved);
+        cue(saved?Cue::toggle:Cue::error);
+        return;
+    }
+    if (option_ == row_neural_strength_preset) {
+        const int active=game_settings_.neural_mode<0?
+            prefs_.neural_mode:game_settings_.neural_mode;
+        if(!Eden::NeuralVideo::IsDlss(active)){
+            say(NeuralStrengthGuide(active),true);
+            cue(Cue::error);
+            return;
+        }
+        GameSettings next=game_settings_;
+        const int direction=key==Key::left?-1:1;
+        const int current=next.neural_strength<0?
+            prefs_.neural_strength:next.neural_strength;
+        next.neural_strength=std::clamp(current+direction*5,0,100);
+        const bool saved=services_.set_game_settings(game.title_id,next);
+        if(saved){game_settings_=next;home_settings_cache_.erase(game.title_id);}
+        say(saved?tr("DLSS-NR intensity saved for this game."):
+                  tr("Could not save. Please try again."),!saved);
         cue(saved?Cue::toggle:Cue::error);
         return;
     }
@@ -1903,6 +1923,23 @@ void Launcher::press_game(Key key)
             next.refresh = cycle(next.refresh, 2);
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
+        // All game overrides share one compatibility policy. Do not
+        // leave an active NR choice paired with a conflicting upscaler,
+        // frame-generation engine or forced MSAA.
+        const int active_nr=next.neural_mode<0?
+            prefs_.neural_mode:next.neural_mode;
+        if(active_nr!=Eden::NeuralVideo::kOff){
+            const auto why=Eden::NeuralVideo::CheckSelectable(
+                active_nr,EffectiveGameRenderer(next,prefs_,game.title_id),
+                EffectiveGameUpscalingFilter(next,prefs_,game.title_id),
+                next.anti_aliasing>=0?next.anti_aliasing:prefs_.anti_aliasing,
+                next.frame_generation>=0?next.frame_generation:prefs_.frame_generation);
+            if(why!=Eden::NeuralVideo::Reason::Available){
+                say(NeuralCompatibilityGuide(why),true);
+                cue(Cue::error);
+                return;
+            }
+        }
         saved = services_.set_game_settings(game.title_id, next);
         if (saved) {
             game_settings_ = next;
@@ -1998,12 +2035,9 @@ void Launcher::draw_game(Canvas &c, float open)
             game_settings_.frame_generation == 0 ? tr("Off") :
             game_settings_.frame_generation == 1 ? "MihawkGen" :
             game_settings_.frame_generation == 2 ? "FSR 3" : "LSFG",
-        tr("Off — unavailable"),
-        game_settings_.neural_model < 0 ?
-            fill(tr("Preset: Default ({0})"),
-                 {prefs_.neural_model == 0 ? tr("Original") : tr("Compact")}) :
-            fill(tr("Preset: {0}"),
-                 {game_settings_.neural_model == 0 ? tr("Original") : tr("Compact")}),
+        game_settings_.neural_mode<0 ?
+            fill(tr("Default ({0})"),{NeuralModeName(prefs_.neural_mode)}) :
+            NeuralModeName(game_settings_.neural_mode),
         game_settings_.neural_strength < 0 ?
             fill(tr("Preset: Default ({0})"),{percentage(prefs_.neural_strength)}) :
             fill(tr("Preset: {0}"),{percentage(game_settings_.neural_strength)}),
@@ -2031,9 +2065,8 @@ void Launcher::draw_game(Canvas &c, float open)
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
         TR("Resolution"), TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
-        TR("Texture filtering"), TR("Enhanced smoothness"),
-        TR("Neural Rendering (NR)"), TR("NR preset model"),
-        TR("NR preset intensity"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Texture filtering"), TR("Frame Generation"),
+        TR("Neural Rendering"), TR("Intensité DLSS-NR"), TR("Refresh rate"), TR("Button mapping"),
         TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
@@ -2060,7 +2093,13 @@ void Launcher::draw_game(Canvas &c, float open)
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const bool inactive =
-            (row == row_neural_status && !Eden::NeuralVideo::kRuntimeValidated) ||
+            (row == row_neural_strength_preset &&
+             !Eden::NeuralVideo::IsDlss(
+                 game_settings_.neural_mode<0?
+                 prefs_.neural_mode:game_settings_.neural_mode)) ||
+            (row == row_filter &&
+             (game_settings_.neural_mode<0?
+              prefs_.neural_mode:game_settings_.neural_mode)!=Eden::NeuralVideo::kOff) ||
             (row == row_filter &&
              !UpscalingFilterSelectable(
                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
@@ -2076,8 +2115,10 @@ void Launcher::draw_game(Canvas &c, float open)
                   EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
                   EffectiveGameRenderer(game_settings_,prefs_,title_id)))) ||
             (row == row_frame_generation &&
-             !FrameGenerationSelectable(
-                 EffectiveGameRenderer(game_settings_, prefs_, title_id)));
+             ((game_settings_.neural_mode<0?
+               prefs_.neural_mode:game_settings_.neural_mode)!=Eden::NeuralVideo::kOff ||
+              !FrameGenerationSelectable(
+                 EffectiveGameRenderer(game_settings_, prefs_, title_id))));
         const float taken =
             row >= row_mods ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
@@ -2141,9 +2182,8 @@ void Launcher::draw_game(Canvas &c, float open)
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
             TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
             TR("Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."),
-            TR("Neural Rendering is OFF. The RDNA2 engine is unfinished. Save future game-specific presets below, without activating NR."),
-            TR("Future NR model preset: Original (152 neural steps) or Compact (76). This choice remains inactive while NR is OFF."),
-            TR("Future NR intensity preset: 0–100 percent. This per-game value is saved even when NR is OFF, independently of FSR sharpness."),
+            TR("Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."),
+            TR("L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."),
             TR("60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."),
             TR("Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."),
         }};
@@ -2171,8 +2211,19 @@ void Launcher::draw_game(Canvas &c, float open)
                      !FrameGenerationSelectable(
                          EffectiveGameRenderer(game_settings_, prefs_, title_id)))
                 explanation = FramegenUnsupportedGuide();
+            else if(option_==row_neural_status)
+                explanation=NeuralModeGuide(
+                    game_settings_.neural_mode<0?
+                    prefs_.neural_mode:game_settings_.neural_mode);
+            else if(option_==row_neural_strength_preset)
+                explanation=NeuralStrengthGuide(
+                    game_settings_.neural_mode<0?
+                    prefs_.neural_mode:game_settings_.neural_mode);
             DrawVideoGuide(c, tr(kLabels[option_]), explanation,
-                (option_ == row_neural_status && !Eden::NeuralVideo::kRuntimeValidated) ||
+                (option_ == row_neural_strength_preset &&
+                 !Eden::NeuralVideo::IsDlss(
+                     game_settings_.neural_mode<0?
+                     prefs_.neural_mode:game_settings_.neural_mode)) ||
                 (option_ == row_filter &&
                  !UpscalingFilterSelectable(filter,
                      EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||

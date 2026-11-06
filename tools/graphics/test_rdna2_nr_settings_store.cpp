@@ -1,52 +1,82 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Six direct NR choices; separate spatial scaling; legacy A4K/DLSS migration.
 #include "settings_store.h"
 #include <cassert>
 #include <cstdio>
 #include <fstream>
 #include <string>
 #include <unistd.h>
+using namespace Eden;
 int main(){
-    char path[]="/tmp/eden-neural-settings-XXXXXX";
-    const int fd=mkstemp(path);assert(fd>=0);close(fd);
-    auto prefs=Eden::LoadPreferences(path);
-    assert(prefs.neural_mode==0&&prefs.neural_model==0&&prefs.neural_strength==100);
-    assert(prefs.frame_generation==0);
-    const int filter=prefs.upscaling_filter;
-    prefs.neural_model=1;prefs.neural_strength=55;
-    assert(Eden::SavePreferences(prefs,path));
-    prefs=Eden::LoadPreferences(path);
-    assert(prefs.neural_mode==0&&prefs.neural_model==1&&prefs.neural_strength==55);
-    prefs.neural_mode=1;assert(!Eden::SavePreferences(prefs,path));
-    prefs.neural_mode=0;
-    assert(prefs.upscaling_filter==filter);
-    prefs.neural_model=2;assert(!Eden::SavePreferences(prefs,path));
-    prefs.neural_model=0;prefs.neural_strength=101;
-    assert(!Eden::SavePreferences(prefs,path));
-    prefs=Eden::LoadPreferences(path);
-    assert(prefs.neural_model==1&&prefs.neural_strength==55);
+    char path[]="/tmp/eden-nr-six-modes-XXXXXX";
+    int fd=mkstemp(path);assert(fd>=0);close(fd);
+    auto global=LoadPreferences(path);
+    assert(global.neural_mode==NeuralVideo::kOff);
+    assert(global.frame_generation==0);
+    assert(global.neural_strength==100);
+    for(int mode=NeuralVideo::kOff;mode<NeuralVideo::kModeCount;++mode){
+        global.neural_mode=mode;
+        global.upscaling_filter=0;
+        global.frame_generation=0;
+        global.neural_strength=65;
+        assert(SavePreferences(global,path));
+        auto loaded=LoadPreferences(path);
+        assert(loaded.neural_mode==mode&&loaded.neural_strength==65);
+        assert(loaded.upscaling_filter==0);
+    }
+    global.neural_mode=NeuralVideo::kA4kDetail;
+    global.upscaling_filter=7; // legacy A4K must not be saved as an upscale
+    assert(!SavePreferences(global,path));
+    global.upscaling_filter=1; // no stacked spatial upscaler
+    assert(!SavePreferences(global,path));
+    global.upscaling_filter=0;
+    global.frame_generation=2;
+    assert(!SavePreferences(global,path));
+    global.frame_generation=0;
+    global.neural_mode=NeuralVideo::kDlssCompact;
+    global.anti_aliasing=4; // no forced MSAA with current NR
+    assert(!SavePreferences(global,path));
+    global.anti_aliasing=1;
+    assert(SavePreferences(global,path));
+
     constexpr auto title=0x0100000000010000ull;
-    auto game=Eden::LoadGameSettings(title,path);
-    assert(game.neural_mode==-1&&game.neural_model==-1&&game.neural_strength==-1);
-    game.neural_model=0;game.neural_strength=0;
-    assert(Eden::SaveGameSettings(title,game,path));
-    game=Eden::LoadGameSettings(title,path);
-    assert(game.neural_model==0&&game.neural_strength==0);
-    game.neural_model=1;game.neural_strength=100;
-    assert(Eden::SaveGameSettings(title,game,path));
-    game=Eden::LoadGameSettings(title,path);
-    assert(game.neural_model==1&&game.neural_strength==100);
-    game.neural_model=2;assert(!Eden::SaveGameSettings(title,game,path));
-    game.neural_model=1;game.neural_mode=1;assert(!Eden::SaveGameSettings(title,game,path));
-    game.neural_mode=-1;
-    game.neural_model=-1;game.neural_strength=-1;
-    assert(Eden::SaveGameSettings(title,game,path));
-    game=Eden::LoadGameSettings(title,path);
-    assert(game.neural_model==-1&&game.neural_strength==-1);
-    const std::string bad=std::string(path)+".bad";
-    {std::ofstream o(bad);o<<R"({"video":{"neural_model":"bogus","neural_strength":105},"games":{"0100000000010000":{"neural_model":"bad","neural_strength":-12}}})";}
-    const auto defaults=Eden::LoadPreferences(bad);
-    const auto inherited=Eden::LoadGameSettings(title,bad);
-    assert(defaults.neural_mode==0&&defaults.neural_model==0&&defaults.neural_strength==100);
-    assert(inherited.neural_mode==-1&&inherited.neural_model==-1&&inherited.neural_strength==-1);
-    std::remove(bad.c_str());std::remove(path);
+    auto game=LoadGameSettings(title,path);
+    assert(game.neural_mode==-1&&game.neural_strength==-1);
+    for(int mode=NeuralVideo::kOff;mode<NeuralVideo::kModeCount;++mode){
+        game.neural_mode=mode;
+        game.neural_strength=40+mode*5;
+        assert(SaveGameSettings(title,game,path));
+        auto loaded=LoadGameSettings(title,path);
+        assert(loaded.neural_mode==mode);
+        assert(loaded.neural_strength==40+mode*5);
+    }
+    game.neural_mode=NeuralVideo::kOff;
+    game.neural_strength=80; // prepare per-title intensity while NR is Off
+    assert(SaveGameSettings(title,game,path));
+    assert(LoadGameSettings(title,path).neural_strength==80);
+    game.neural_mode=NeuralVideo::kDlssOriginal;
+    game.frame_generation=2;
+    assert(!SaveGameSettings(title,game,path));
+    game.frame_generation=-1;
+    game.neural_mode=-1;game.neural_strength=-1;
+    assert(SaveGameSettings(title,game,path));
+    assert(LoadGameSettings(title,path).neural_mode==-1);
+
+    const std::string legacy=std::string(path)+".legacy";
+    {std::ofstream f(legacy);
+     f<<R"({"video":{"renderer":"vulkan","upscaling_filter":"anime4k_soft","frame_generation":"off"}})";}
+    auto migrated=LoadPreferences(legacy);
+    assert(migrated.neural_mode==NeuralVideo::kA4kSoft);
+    assert(migrated.upscaling_filter==0);
+    {std::ofstream f(legacy);
+     f<<R"({"video":{"renderer":"vulkan","upscaling_filter":"bilinear","neural_rendering":"rdna2","neural_model":"small","frame_generation":"off"}})";}
+    migrated=LoadPreferences(legacy);
+    assert(migrated.neural_mode==NeuralVideo::kDlssCompact);
+    assert(migrated.upscaling_filter==0);
+    {std::ofstream f(legacy);
+     f<<R"({"video":{"neural_rendering":"nonsense","neural_strength":300}})";}
+    migrated=LoadPreferences(legacy);
+    assert(migrated.neural_mode==NeuralVideo::kOff);
+    assert(migrated.neural_strength==100);
+    std::remove(legacy.c_str());std::remove(path);
 }

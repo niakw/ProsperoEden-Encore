@@ -88,7 +88,10 @@ inline constexpr const char* kRefreshKeys[] = {"60", "120"};
 // Keep persisted indices stable across releases; do not reorder separately.
 inline constexpr const char* kFrameGenerationKeys[] = {"off", "mihawkgen", "fsr3", "lsfg"};
 // Persisted model/intensity only: cannot activate NR until the graph works.
-inline constexpr const char* kNeuralModeKeys[] = {"off", "rdna2"};
+// Stable persisted IDs; A4K is a NR engine, never a spatial upscaler.
+inline constexpr const char* kNeuralModeKeys[] = {
+    "off", "a4k_detail", "a4k_soft", "a4k_denoise",
+    "dlss_nr_original", "dlss_nr_compact"};
 inline constexpr const char* kNeuralModelKeys[] = {"original", "small"};
 inline constexpr const char* kNeuralModelLabels[] = {"Original", "Compact"};
 static_assert(std::size(kNeuralModelKeys) == std::size(kNeuralModelLabels));
@@ -136,7 +139,7 @@ struct Preferences {
     int texture_anisotropy = EncoreTextureProfiles::ForTitle(0, 1); // Recommended: 4x
     int refresh = EncoreOverrides::kGeneralProfiles[1].refresh;
     int frame_generation = 0; // Off, MihawkGen, FSR3, LSFG; method, not fake FPS
-    int neural_mode = 0; // OFF by default; engine cannot run before PS5 validation
+    int neural_mode = NeuralVideo::kOff; // Six direct choices, Off default
     int neural_model = 0; // Original or Small; staged until graph verification
     int neural_strength = 100; // 0-100% independent of FSR/A4K
     int output = EncoreOverrides::kGeneralProfiles[1].output;
@@ -370,15 +373,27 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
                               kRefreshKeys, int(std::size(kRefreshKeys)), result.refresh);
     result.frame_generation = KeyIndex(Settings::String(document, Json::json_pointer("/video/frame_generation")),
                                        kFrameGenerationKeys, int(std::size(kFrameGenerationKeys)), 0);
-    result.neural_mode = KeyIndex(Settings::String(document, Json::json_pointer("/video/neural_rendering")),
-                                   kNeuralModeKeys, int(std::size(kNeuralModeKeys)), 0);
-    // Fail closed even if an external file manually requests an unavailable
-    // backend: keep the preset model/intensity, never enable GPU work.
-    if (NeuralVideo::Check(result.neural_mode,
-          result.backend == GraphicsBackend::Vulkan ? 1 : 0,
-          result.upscaling_filter,result.anti_aliasing,
-          result.frame_generation) != NeuralVideo::Reason::Available)
-        result.neural_mode = NeuralVideo::kOff;
+    const auto mode_key = Settings::String(
+        document,Json::json_pointer("/video/neural_rendering"));
+    const auto legacy_model = KeyIndex(
+        Settings::String(document,Json::json_pointer("/video/neural_model")),
+        kNeuralModelKeys,int(std::size(kNeuralModelKeys)),0);
+    result.neural_mode = mode_key=="rdna2" ?
+        (legacy_model==0?NeuralVideo::kDlssOriginal:NeuralVideo::kDlssCompact) :
+        KeyIndex(mode_key,kNeuralModeKeys,int(std::size(kNeuralModeKeys)),0);
+    // Backward compatibility: the old three A4K filters now belong to NR.
+    if(NeuralVideo::IsA4kFilter(result.upscaling_filter)){
+        if(mode_key.empty())result.neural_mode=
+            NeuralVideo::ModeFromLegacyA4kFilter(result.upscaling_filter);
+        result.upscaling_filter=0;
+    }
+    if(result.neural_mode!=NeuralVideo::kOff &&
+       NeuralVideo::CheckSelectable(
+           result.neural_mode,
+           result.backend==GraphicsBackend::Vulkan?1:0,
+           result.upscaling_filter,result.anti_aliasing,
+           result.frame_generation)!=NeuralVideo::Reason::Available)
+        result.neural_mode=NeuralVideo::kOff;
     result.neural_model = KeyIndex(Settings::String(document, Json::json_pointer("/video/neural_model")),
                                     kNeuralModelKeys, int(std::size(kNeuralModelKeys)), 0);
     const int neural_strength = Settings::Int(document, Json::json_pointer("/video/neural_strength"), 100);
@@ -469,11 +484,12 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < 0 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
         value.neural_mode < 0 || value.neural_mode >= int(std::size(kNeuralModeKeys)) ||
-        (value.neural_mode != 0 &&
-          NeuralVideo::Check(value.neural_mode,
-            value.backend == GraphicsBackend::Vulkan ? 1 : 0,
-            value.upscaling_filter,value.anti_aliasing,value.frame_generation)
-          != NeuralVideo::Reason::Available) ||
+        value.upscaling_filter > 6 ||
+        (value.neural_mode != NeuralVideo::kOff &&
+          NeuralVideo::CheckSelectable(value.neural_mode,
+            value.backend==GraphicsBackend::Vulkan?1:0,
+            value.upscaling_filter,value.anti_aliasing,
+            value.frame_generation)!=NeuralVideo::Reason::Available) ||
         value.neural_model < 0 || value.neural_model >= int(std::size(kNeuralModelKeys)) ||
         value.neural_strength < 0 || value.neural_strength > 100 ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
@@ -497,7 +513,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
     document["video"]["frame_generation"] = kFrameGenerationKeys[value.frame_generation];
     document["video"]["neural_rendering"] = kNeuralModeKeys[value.neural_mode];
-    document["video"]["neural_model"] = kNeuralModelKeys[value.neural_model];
+    document["video"].erase("neural_model"); // now encoded by neural_rendering
     document["video"]["neural_strength"] = value.neural_strength;
     document["video"]["output_resolution"] = kOutputKeys[value.output];
     document["video"]["performance_profile"] = kPerformanceProfileKeys[value.performance_profile];
@@ -616,7 +632,7 @@ struct GameSettings {
     int texture_anisotropy = -1; // -1 inherits global, 0 Automatic ... 5 16x
     int refresh = -1;           // index into kRefreshKeys
     int frame_generation = -1; // -1 inherits global, 0=off, 1=MihawkGen, 2=FSR3, 3=LSFG
-    int neural_mode = -1; // -1 inherits global; 0 Off, 1 RDNA2; no premature activation
+    int neural_mode = -1; // Inherit, Off, three A4K, two DLSS-NR
     int neural_model = -1; // -1 inherits global; 0 Original, 1 Small
     int neural_strength = -1; // -1 inherits global, 0-100
     int performance_profile = -1; // index into kPerformanceProfileKeys
@@ -651,10 +667,18 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
     result.frame_generation = KeyIndex(key("frame_generation"), kFrameGenerationKeys,
                                        int(std::size(kFrameGenerationKeys)), -1);
-    result.neural_mode = KeyIndex(key("neural_rendering"), kNeuralModeKeys,
-                                   int(std::size(kNeuralModeKeys)), -1);
-    if (result.neural_mode == NeuralVideo::kRdna2 && !NeuralVideo::kRuntimeValidated)
-        result.neural_mode = -1; // do not activate a modified configuration
+    const auto nr_key=key("neural_rendering");
+    const int legacy_model=KeyIndex(
+        key("neural_model"),kNeuralModelKeys,
+        int(std::size(kNeuralModelKeys)),0);
+    result.neural_mode=nr_key=="rdna2"?
+        (legacy_model==0?NeuralVideo::kDlssOriginal:NeuralVideo::kDlssCompact):
+        KeyIndex(nr_key,kNeuralModeKeys,int(std::size(kNeuralModeKeys)),-1);
+    if(NeuralVideo::IsA4kFilter(result.upscaling_filter)){
+        if(nr_key.empty())result.neural_mode=
+            NeuralVideo::ModeFromLegacyA4kFilter(result.upscaling_filter);
+        result.upscaling_filter=0;
+    }
     result.neural_model = KeyIndex(key("neural_model"), kNeuralModelKeys,
                                     int(std::size(kNeuralModelKeys)), -1);
     const int neural_strength = Settings::Int(
@@ -703,7 +727,10 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.refresh < -1 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < -1 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
         value.neural_mode < -1 || value.neural_mode >= int(std::size(kNeuralModeKeys)) ||
-        (value.neural_mode == NeuralVideo::kRdna2 && !NeuralVideo::kRuntimeValidated) ||
+        value.upscaling_filter > 6 ||
+        (value.neural_mode > NeuralVideo::kOff &&
+         (value.renderer==0 || value.upscaling_filter>0 ||
+          value.anti_aliasing>=4 || value.frame_generation>0)) ||
         value.neural_model < -1 || value.neural_model >= int(std::size(kNeuralModelKeys)) ||
         value.neural_strength < -1 || value.neural_strength > 100 ||
         value.performance_profile < -1 ||
@@ -732,7 +759,7 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("refresh_rate", value.refresh, kRefreshKeys);
     store("frame_generation", value.frame_generation, kFrameGenerationKeys);
     store("neural_rendering", value.neural_mode, kNeuralModeKeys);
-    store("neural_model", value.neural_model, kNeuralModelKeys);
+    game.erase("neural_model"); // legacy, encoded by direct mode
     if (value.neural_strength < 0) game.erase("neural_strength");
     else game["neural_strength"] = value.neural_strength;
     store("performance_profile", value.performance_profile, kPerformanceProfileKeys);

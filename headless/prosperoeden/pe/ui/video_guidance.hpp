@@ -3,6 +3,7 @@
 // Short, option-specific guidance shared by global and per-game settings.
 // The highlighted help panel is separate from small secondary footer text.
 #include "pe/ui/widgets.hpp"
+#include "neural_video_policy.h"
 #include "pe/core/strings.hpp"
 #include <string_view>
 
@@ -45,6 +46,59 @@ inline const char* FxaaUnsupportedGuide() {
 }
 inline const char* FramegenUnsupportedGuide() {
     return tr(TR("This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."));
+}
+// The six choices are directly visible in NR; there is no separate
+// A4K/DLSS family selector or duplicate model submenu.
+inline const char* NeuralModeName(int mode) {
+    using namespace Eden::NeuralVideo;
+    switch(mode) {
+    case kA4kDetail: return tr(TR("A4K — Détails améliorés"));
+    case kA4kSoft: return tr(TR("A4K — Image adoucie"));
+    case kA4kDenoise: return tr(TR("A4K — Image nettoyée"));
+    case kDlssOriginal: return tr(TR("DLSS-NR — Original"));
+    case kDlssCompact: return tr(TR("DLSS-NR — Compact"));
+    default: return tr(TR("Désactivé"));
+    }
+}
+inline const char* NeuralModeGuide(int mode) {
+    using namespace Eden::NeuralVideo;
+    switch(mode) {
+    case kA4kDetail:
+        return tr(TR("A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."));
+    case kA4kSoft:
+        return tr(TR("A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."));
+    case kA4kDenoise:
+        return tr(TR("A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."));
+    case kDlssOriginal:
+        return tr(TR("DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."));
+    case kDlssCompact:
+        return tr(TR("DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."));
+    default:
+        return tr(TR("Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."));
+    }
+}
+inline const char* NeuralStrengthGuide(int mode) {
+    if(!Eden::NeuralVideo::IsDlss(mode))
+        return tr(TR("L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."));
+    return tr(TR("Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."));
+}
+inline const char* NeuralCompatibilityGuide(Eden::NeuralVideo::Reason why) {
+    using R=Eden::NeuralVideo::Reason;
+    switch(why) {
+    case R::RequiresVulkan:
+        return tr(TR("Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."));
+    case R::NeedsExclusiveUpscaler:
+        return tr(TR("Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."));
+    case R::MsaaUnverified:
+        return tr(TR("Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."));
+    case R::FrameGenerationUnverified:
+        return tr(TR("Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."));
+    case R::EngineIncomplete:
+        return tr(TR("Ce moteur n'est pas encore raccordé au rendu complet du jeu."));
+    case R::Disabled: return NeuralModeGuide(0);
+    case R::Available: return NeuralModeGuide(1);
+    }
+    return NeuralModeGuide(0);
 }
 inline const char* TextureGuide() {
     return tr(TR("Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."));

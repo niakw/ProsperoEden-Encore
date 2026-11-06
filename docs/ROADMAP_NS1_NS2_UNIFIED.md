@@ -838,18 +838,25 @@ hors formes connues et pointeurs atomiques restent ouverts.
 
 **P2.3 — atomiques flottantes authentifiées avec CAS réel (06/11, source/hôte) :**
 Le backend commun possède déjà des boucles atomiques comparées-échangées
-(`CAS`) SPIR-V pour `StorageAtomicAddF32`, `StorageAtomicAddF16x2`,
-`StorageAtomicMinF16x2` et `StorageAtomicMaxF16x2`. Le convertisseur natif
-QMD3 raccorde désormais les quatre variantes `GlobalAtomic*` correspondantes
+(`CAS`) SPIR-V pour `StorageAtomicAddF32`, ainsi que les six variantes
+add/min/max `StorageAtomic*F16x2` et `StorageAtomic*F32x2` : **sept formes**
+flottantes au total. Le convertisseur natif QMD3 raccorde désormais les sept
+variantes `GlobalAtomic*` correspondantes
 **uniquement lorsque leur pointeur est relié à un vrai slot SSBO writable**.
-La valeur flottante F32 est conservée avec son type et sa représentation,
-le F16x2 empaqueté reste U32, et les offsets sont authentifiés à 4 octets.
-Les adresses arbitraires ainsi que les variantes flottantes vectorielles
-non prouvées restent refusées. Aucune hypothèse sur un jeu particulier,
+La valeur flottante F32 est conservée avec son type et sa représentation ;
+le F16x2 empaqueté reste U32. Les variantes F32x2 sont converties par
+`OpPackHalf2x16`/`OpUnpackHalf2x16` de la boucle CAS existante, qui met à jour
+**un seul mot atomique de 32 bits**, pas une écriture 64 bits non protégée.
+Les offsets sont authentifiés à 4 octets, comme ceux du backend effectif.
+Les adresses arbitraires restent refusées. Aucune hypothèse sur un jeu particulier,
 aucun fallback en écriture non atomique, aucun changement NS1.
-`test_native_qmd_direct_cbuf.cpp` vérifie les quatre opcodes sur de vrais
-blocs IR, l'opérande F32, le parcours du contrôle des spans et les offsets
-immédiats/dynamiques. Cette validation hôte n'est pas un dispatch Vulkan PS5.
+`test_native_qmd_direct_cbuf.cpp` vérifie les sept opcodes sur de vrais
+blocs IR, les opérandes F32 et F32x2, les spans atomiques et les offsets
+immédiats/dynamiques. La chaîne de validation va jusqu'au plan de liaison
+GMMU réel (`NativeQmdAtomicSpansFitBindings`) : refus d'un SSBO raccourci
+d'un octet, en lecture seule, sans taille certaine ou à base mal alignée,
+y compris pour le second slot. L'IR conserve aussi le retour de l'opération
+atomique lorsqu'un calcul invité dépend de sa valeur précédente. Cette validation hôte n'est pas un dispatch Vulkan PS5.
 
 **P2.3 — reconstruction des pointeurs atomiques CBUF scalaires (06/11, source/hôte) :**
 Le traducteur accepte désormais les deux représentations exactes de l'adresse

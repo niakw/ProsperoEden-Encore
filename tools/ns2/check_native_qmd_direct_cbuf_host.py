@@ -41,6 +41,10 @@ assert 'Opcode::CompositeConstructU32x2' in atomic_header
 assert 'left_pointer == right_pointer' in atomic_header
 assert 'Opcode::StorageAtomicAddF32' in atomic_header
 assert 'Opcode::StorageAtomicMaxF16x2' in atomic_header
+assert 'Opcode::StorageAtomicMaxF32x2' in atomic_header
+fixture=(root/'tools/ns2/test_native_qmd_direct_cbuf.cpp').read_text()
+assert 'NativeQmdAtomicSpansFitBindings(' in fixture
+assert 'CheckNativeGlobalAtomicResultValue();' in fixture
 
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
 assert compilers

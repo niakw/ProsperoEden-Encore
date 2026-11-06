@@ -159,6 +159,37 @@ static void CheckNativeAtomicSlotOrder(bool swapped, bool accepted) {
         program, Shader::Profile{});
     assert(actual == accepted);
 }
+// The return value of an atomic is guest-visible. Verify replacing its
+// IR instruction does not detach a consumer from the original result.
+static void CheckNativeGlobalAtomicResultValue() {
+    Shader::ObjectPool<Shader::IR::Inst> pool{12};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage=Shader::Stage::Compute;
+    program.blocks.push_back(&block);
+    program.info.constant_buffer_mask=1;
+    program.info.constant_buffer_descriptors.push_back({0,1});
+    program.info.constant_buffer_used_sizes[0]=0x340;
+    program.info.nvn_buffer_base=0x310;
+    program.info.nvn_buffer_used.set(0);
+    program.info.storage_buffers_descriptors.push_back({
+        .cbuf_index=0,.cbuf_offset=0x310,.count=1,.is_written=true});
+    block.AppendNewInst(Opcode::GetCbufU32x2,
+        {Value{u32{0}},Value{u32{0x310}}});
+    block.AppendNewInst(Opcode::PackUint2x32,{Value{&block.back()}});
+    const Value pointer{&block.back()};
+    block.AppendNewInst(Opcode::GlobalAtomicIAdd32,
+        {pointer,Value{u32{7}}});
+    const Value old_atomic{&block.back()};
+    block.AppendNewInst(Opcode::IAdd32,{old_atomic,Value{u32{1}}});
+    auto* const use=&block.back();
+    assert(use->Arg(0).TryInstRecursive()->GetOpcode()==Opcode::GlobalAtomicIAdd32);
+    assert(Shader::Ampere::NativeAtomic::Rewrite(program));
+    const auto* const new_result=use->Arg(0).TryInstRecursive();
+    assert(new_result && new_result->GetOpcode()==Opcode::StorageAtomicIAdd32);
+    assert(use->Arg(0).Type()==Shader::IR::Type::U32);
+    assert(Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(program,Shader::Profile{}));
+}
 // The real NVN descriptor table is flattened: CBUF bank zero can own
 // multiple distinct SSBOs at 0x310, 0x320, ... . Never use the CBUF bank
 // number as the SPIR-V binding: here the source pointer belongs to slot ONE.
@@ -206,6 +237,22 @@ static void CheckNativeGlobalAtomicSecondSlot(bool swapped, bool accepted) {
     const auto spans=Shader::Ampere::CollectNativeQmdAtomicSpans(program);
     assert(spans && spans->size()==1 && (*spans)[0].binding==1 &&
            (*spans)[0].width==4);
+    struct LiveBinding {
+        u64 gpu_address;
+        u64 bytes;
+        bool known_size;
+        bool is_written;
+    };
+    std::array live_bindings{LiveBinding{0x100000,64,true,true},
+                    LiveBinding{0x200000,4,true,true}};
+    const auto fits=[&] { return Shader::Ampere::NativeQmdAtomicSpansFitBindings(
+        std::span<const Shader::Ampere::NativeAtomicSpan>{spans->data(),spans->size()},live_bindings); };
+    assert(fits());
+    live_bindings[1].bytes=3;
+    assert(!fits()); // second slot must be checked, not the first
+    live_bindings[1].bytes=4;
+    live_bindings[1].is_written=false;
+    assert(!fits());
 }
 // The original CUDA-like guest pointer is not a literal host address: it is
 // a 64-bit value actually read from an authenticated QMD3 NVN descriptor.
@@ -271,9 +318,18 @@ static void CheckNativeGlobalAtomicPointer(
     const bool wide = opcode >= Opcode::GlobalAtomicIAdd64 &&
                       opcode <= Opcode::GlobalAtomicExchange64;
     const bool float32 = opcode == Opcode::GlobalAtomicAddF32;
-    block.AppendNewInst(opcode, {addr,
-        float32 ? Value{f32{1.25f}} :
-        wide ? Value{u64{7}} : Value{u32{7}}});
+    const bool packed_f32 = opcode == Opcode::GlobalAtomicAddF32x2 ||
+        opcode == Opcode::GlobalAtomicMinF32x2 ||
+        opcode == Opcode::GlobalAtomicMaxF32x2;
+    Value value{u32{7}};
+    if (wide) value=Value{u64{7}};
+    else if (float32) value=Value{f32{1.25f}};
+    else if (packed_f32) {
+        block.AppendNewInst(Opcode::CompositeConstructF32x2,
+            {Value{f32{1.25f}}, Value{f32{-2.0f}}});
+        value=Value{&block.back()};
+    }
+    block.AppendNewInst(opcode, {addr,value});
     const bool ok = Shader::Ampere::NativeAtomic::Rewrite(program);
     assert(ok == accepted);
     if (!ok) return;
@@ -285,8 +341,11 @@ static void CheckNativeGlobalAtomicPointer(
             inst.GetOpcode() != Opcode::StorageAtomicExchange64 &&
             inst.GetOpcode() != Opcode::StorageAtomicAddF32 &&
             inst.GetOpcode() != Opcode::StorageAtomicAddF16x2 &&
+            inst.GetOpcode() != Opcode::StorageAtomicAddF32x2 &&
             inst.GetOpcode() != Opcode::StorageAtomicMinF16x2 &&
-            inst.GetOpcode() != Opcode::StorageAtomicMaxF16x2) continue;
+            inst.GetOpcode() != Opcode::StorageAtomicMinF32x2 &&
+            inst.GetOpcode() != Opcode::StorageAtomicMaxF16x2 &&
+            inst.GetOpcode() != Opcode::StorageAtomicMaxF32x2) continue;
         rewritten = true;
         assert(inst.Arg(0).IsImmediate() && inst.Arg(0).U32() == 0);
         if (dynamic_offset) {
@@ -298,7 +357,9 @@ static void CheckNativeGlobalAtomicPointer(
             assert(inst.Arg(1).IsImmediate() &&
                    inst.Arg(1).U32() == displacement);
         }
-        assert(inst.Arg(2).IsImmediate() &&
+        assert(packed_f32 ? !inst.Arg(2).IsImmediate() &&
+                             inst.Arg(2).Type() == Shader::IR::Type::F32x2 :
+               inst.Arg(2).IsImmediate() &&
                (float32 ? inst.Arg(2).Type() == Shader::IR::Type::F32 &&
                           inst.Arg(2).F32() == 1.25f :
                 wide ? inst.Arg(2).U64() == 7 : inst.Arg(2).U32() == 7));
@@ -315,6 +376,29 @@ static void CheckNativeGlobalAtomicPointer(
     assert((*spans)[0].binding == 0 &&
            (*spans)[0].offset == (dynamic_offset ? dynamic_mask : displacement) &&
            (*spans)[0].width == (wide ? 8U : 4U));
+    struct LiveBinding {
+        u64 gpu_address;
+        u64 bytes;
+        bool known_size;
+        bool is_written;
+    };
+    const u64 minimum_live_bytes = static_cast<u64>((*spans)[0].offset) +
+                                   (*spans)[0].width;
+    std::array live_bindings{LiveBinding{0x100000,minimum_live_bytes,true,true}};
+    const auto fits=[&] { return Shader::Ampere::NativeQmdAtomicSpansFitBindings(
+        std::span<const Shader::Ampere::NativeAtomicSpan>{spans->data(),spans->size()},live_bindings); };
+    assert(fits()); // exact length, includes the final atomic byte
+    live_bindings[0].bytes--;
+    assert(!fits()); // NEVER submit an atomic one byte out of range
+    live_bindings[0].bytes++;
+    live_bindings[0].known_size=false;
+    assert(!fits()); // unknown live GMMU length is not a proof
+    live_bindings[0].known_size=true;
+    live_bindings[0].is_written=false;
+    assert(!fits());
+    live_bindings[0].is_written=true;
+    live_bindings[0].gpu_address=0x100002;
+    assert(!fits()); // GMMU base alignment matters, too
 }
 int main() {
     // P2.3: actual native global memory OpAccessChain must never start
@@ -545,8 +629,15 @@ int main() {
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF16x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32x2,true);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMinF16x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMinF32x2,true);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMaxF16x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMaxF32x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32x2,true,
+                                   0,0x310,0,0x310,true,true,false,true,0x3c);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMinF32x2,false,
+                                   0,0x310,2); // 32-bit CAS alignment
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true,
                                    0,0x310,12); // scalar float offset
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true,
@@ -571,6 +662,7 @@ int main() {
                                    0,0x310,0,0x310,true,true,false,true,0x3f);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,false,
                                    0,0x310,0,0x310,true,true,false,true,0xff);
+    CheckNativeGlobalAtomicResultValue();
     CheckNativeGlobalAtomicSecondSlot(false,true);
     CheckNativeGlobalAtomicSecondSlot(true,false);
     // The actual Maxwell translator can construct a 64-bit pointer

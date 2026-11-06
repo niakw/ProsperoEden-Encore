@@ -1,14 +1,14 @@
 # R10 — Textures HD par IA : périmètre réel et distinction des mods
 
 **Roadmap R10 — étude et spécification, non implémenté.**
-Revue du 5 novembre 2026. La PR graphique #24 ne fournit pas de
+Revue initiale du 5 novembre 2026 ; faisabilité approfondie le 6 novembre 2026. La PR graphique #24 ne fournit pas de
 moteur de génération des fichiers de textures par IA.
 
 ## Les quatre familles graphiques
 
 - **R07 — Upscaling :** agrandir chaque image rendue avec FSR 1,
   SGSR, Lanczos, etc. Ne modifie pas les fichiers de textures du jeu.
-  FSR 3.1 temporel reste non intégré.
+  FSR 3.1 temporel possède un backend Vulkan natif mais n’est pas raccordé au rendu invité.
 - **R08 — Génération de frames :** MihawkGen, FSR3 FG optical flow,
   LSFG. Créer des images supplémentaires pour la présentation,
   sans générer de nouveaux fichiers de texture.
@@ -68,6 +68,92 @@ Un remplacement dynamique de textures dans le cache GPU
 peut être une piste ultérieure, mais n'est pas nécessaire à
 l'installation des packs RomFS et ne saurait se substituer à
 la conversion sûre des ressources.
+
+## Verdict de faisabilité — 6 novembre 2026
+
+**Oui pour générer des textures HD par IA hors console et les charger
+comme mods**, mais **non pour promettre un bouton « générer toutes les
+textures du jeu en HD » directement sur PS5**. Les conteneurs et formats
+du jeu sont le verrou principal, pas le modèle IA. Un mod RomFS qui
+remplace un fichier ne garantit pas qu'une texture de dimensions
+supérieures soit acceptée par les tables internes ou le moteur du jeu.
+
+| Cas | Faisabilité | Technique prévue |
+| --- | --- | --- |
+| Diffuse/albedo/sprites isolés avec outil d'extraction et repack éprouvé | **Bonne**, sous tests | Upscale IA local + restauration alpha + mipmaps + repack du conteneur |
+| Images en atlas / tableaux / couches / textures swizzlées | **Conditionnelle** | Métadonnées atlas/UV, niveaux et alignement doivent rester valides |
+| Normal maps, roughness, metallic, AO, masques binaires | **Ne PAS passer au modèle photo générique** | Upsampling déterministe adapté aux données, renormalisation des normales ; seuils et alpha exacts |
+| HUD, glyphes, cartes, textes, pixel art | **Au cas par cas** | Vectorisation/dessin spécifique ou nearest ; l'IA peut inventer des caractères |
+| Ressource propriétaire / chiffrée / non re-packable | **Bloquée** | Aucun pack exporté sans preuve de round-trip exact |
+| Génération dynamique en jeu sur PS5 | **Non qualifiée** | Compute/VRAM/latence imprévisibles, aucune promesse de FPS |
+
+### Pipeline technique retenu (outil hôte, pas un deuxième chargeur)
+
+1. **Inventaire après dump autorisé** : déterminer Title ID + version,
+   fichier RomFS exact, conteneur (BNTX/BFRES ou autre), format GPU
+   (ASTC, BCn, etc.), dimension, mipmaps, array layers, cubemaps, sRGB
+   et usage (couleur/normale/masque/UI). Ne jamais inférer le type de
+   texture à partir de la seule extension.
+2. **Round-trip conservateur obligatoire** : extraction → conversion
+   *sans IA* → repack → décodage/contrôle du résultat. Si le convertisseur
+   ne préserve pas le conteneur, les indices, l'alignement, l'alpha, les
+   dimensions imposées ou les métadonnées, **arrêt**.
+3. **Upscaling local sur Mac/PC** : démarrer avec Real-ESRGAN
+   (BSD-3-Clause pour le dépôt ; vérifier séparément la licence des
+   poids téléchargés), modèle général pour photos/albedo ou modèle
+   anime pour textures peintes. Traitement par tuiles possible mais
+   comparer les coutures ; ne pas appliquer de débruitage agressif
+   aux détails de gameplay, palettes ou glyphes. Les traitements des
+   canaux alpha, normales et masques restent **séparés et déterministes**.
+4. **Reconstruction complète** : mipmaps gamma/sRGB corrects,
+   conservation des canaux, compression native compatible ASTC/BCn,
+   repack par format avec taille et version supportées. Vérifier
+   l'image décompressée après recompression ; éviter la conversion
+   globale de tous les assets en RGBA8 décompressé.
+5. **Livraison contrôlée** : manifest avec hash SHA-256 de l'original
+   et du remplaçant, modèle/poids et paramètres, format, dimensions
+   et taille estimée ; export en
+   `mods/<TitleID>/<NomPack>/romfs/<chemin jeu>`.
+   Activation et désactivation **uniquement dans Mods**.
+6. **Qualification PS5** : comparer un même plan en jeu avec/sans
+   pack, captures fixes et caméra mobile, RAM/VRAM, chargement et
+   frametime. Retour instantané au mod désactivé si artefacts,
+   stutter, corruptions ou crash. Aucun remplacement de texture
+   shader/CPU à la volée dans ce premier périmètre.
+
+### Budget VRAM (ordre de grandeur indépendant de la compression)
+
+Une texture carrée **1024² RGBA8** consomme environ **4 Mio** sans
+mipmaps ; en **4096² (x4 largeur et hauteur)**, elle monte à **64 Mio**
+sans mipmaps et environ **85,3 Mio** avec une chaîne complète de
+mipmaps (≈4/3 du niveau principal). L'aire et donc la mémoire brute
+augmentent de **16×**, pas de 4×. Les formats blocs ASTC/BCn réduisent
+fortement la taille, mais le ratio d'augmentation reste proche de
+16× à format et nombre de niveaux comparables. Il faudra un
+**plafond de budget total par pack et par session**, pas seulement
+un plafond par texture ; l'impact réel du texture cache varie selon
+la scène et le moteur. Les détails ajoutés peuvent être à peine
+visibles à l'écran : sélection de textures prioritaires plutôt
+que tout traiter en 4×.
+
+### Pistes consultées
+
+- Real-ESRGAN : `https://github.com/xinntao/Real-ESRGAN` ;
+  modèles général et anime, exécution hors ligne avec
+  `Real-ESRGAN-ncnn-vulkan`, gestion des images avec alpha
+  dans le pipeline Python.
+- Outils de conteneurs Switch : `https://github.com/quatric/nintoolbox`
+  documente des formats comme BNTX et ASTC ; **leur capacité
+  d'extraction ne prouve pas le repack compatible avec chaque jeu**.
+- Aucun de ces projets ne prouve pour le moment un remplacement
+  universel NS1/NS2, ni les performances PS5 ; ce sont des pistes
+  d'outillage hôte, pas des dépendances du renderer.
+
+**Décision : R10 faisable de manière ciblée avec packs RomFS et
+conversion prouvée, pas de génération IA automatique en jeu pour
+l'instant.** R10 reste ouvert (pas de pipeline fonctionnel ajouté
+dans cette PR). Les essais de génération et de conversion se font
+hors du chemin NS1/NS2 stable.
 
 **État :** installation de packs RomFS déjà disponible via Mods ;
 **pipeline IA + conversion/validation des ressources R10 à faire.**

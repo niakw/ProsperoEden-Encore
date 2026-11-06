@@ -24,7 +24,7 @@ ressources manquantes, identité ou provenance estimée,
 mélange de frames, conventions profondeur/motion inconnues,
 jitter et timing invalides, HUD non séparé, work GPU non terminé,
 historique discontinu et changement de scène.
-Le vendor maintenant épinglé sur `a4c6c8c` contient un **vrai moteur
+Le vendor maintenant épinglé sur `a8a6bdf6a` contient un **vrai moteur
 AMD FSR 3.1.4 multi-passes Vulkan**, adapté depuis Lichii,
 avec la copie source du SDK AMD v1.1.4 sous licence MIT.
 Les **11 passes GPU** produisent toutes du SPIR-V 1.3 valide ;
@@ -37,6 +37,16 @@ Le pont natif refuse désormais les formats d'entrée non reconnus et
 vérifie un budget mémoire FSR 3.1 nominal avant allocation (contrôle
 conservateur, sans preuve de capacité PS5). Il vide les deux jeux
 ping-pong d'historique lors d'une réinitialisation temporelle.
+
+Le pont R07 compare désormais les identités réelles VkImage/VkImageView des
+trois entrées GPU invitées aux identités de provenance déclarées. Un
+handle absent, substitué ou une vue commune aux entrées couleur,
+profondeur et mouvement invalide la continuité temporelle. Les formats
+d'entrée doivent également avoir la capacité Vulkan SAMPLED_IMAGE du
+GPU hôte. Le test natif test_fsr31_native_resource_contract couvre ces
+cas. Cette vérification ne remplace pas le producteur GPU invité encore
+absent ni la validation console.
+
 
 Le pont natif exige couleur, profondeur reversed-Z, mouvement
 en pixels, vrai jitter, vraie projection du jeu, frames cohérentes,

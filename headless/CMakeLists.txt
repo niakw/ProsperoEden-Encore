@@ -86,6 +86,15 @@ if(PS5_NATIVE)
     file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache")
     configure_file("${EDEN_MAINTAINED_BUFFER_PAGES}"
         "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache.h" COPYONLY)
+    # The reviewed R437 body adds an explicit GPU-write tick policy. Select
+    # its matching template declarations, not the pinned pre-R437 ABI.
+    set(EDEN_MAINTAINED_BUFFER_BASE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h")
+    if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_BASE}")
+        message(FATAL_ERROR "Missing matching native R437 BufferCache base declarations")
+    endif()
+    configure_file("${EDEN_MAINTAINED_BUFFER_BASE}"
+        "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache_base.h" COPYONLY)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")
 endif()
 # The texture-cache small-vector Boost version dependency is a complete

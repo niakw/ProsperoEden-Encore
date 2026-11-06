@@ -113,6 +113,15 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     )
     assert maintained_buffer.is_file(), "R437 maintained BufferCache owner missing"
     shutil.copyfile(maintained_buffer, buffer_overlay / "buffer_cache.h")
+    maintained_base = ROOT / (
+        "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h"
+    )
+    assert maintained_base.is_file(), "R437 matching BufferCacheBase owner missing"
+    base_contract = maintained_base.read_text()
+    assert "bool needs_sync = true" in base_contract
+    assert "void SynchronizeBufferWrites(Buffer& buffer);" in base_contract
+    assert "EDEN_MAINTAINED_BUFFER_BASE" in cmake
+    shutil.copyfile(maintained_base, buffer_overlay / "buffer_cache_base.h")
     # Header search must prefer the PS5-native generated R437 owner over
     # vendor/sources/eden/src; appending this -I selects the wrong template.
     command.insert(command.index("-I" + str(includes[0])),

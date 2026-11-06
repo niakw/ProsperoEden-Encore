@@ -524,10 +524,41 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def git_blob_sha(text):
         data=text.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+    def reverse_native_kepler_pointer_abi(name, text, verify_hash):
+        # The maintained native QMD3 renderer uses RasterizerInterface's
+        # KeplerCompute pointer, not a reference. Reverse only 5 member
+        # accesses, 6 borrowed-reference calls and the null admission guard.
+        # Recreate the ORIGINAL reviewed blob byte-for-byte before P24 reversal,
+        # so we never bless unrelated vendor changes or weaken the hash oracle.
+        if name != 'vulkan_rasterizer.cpp':
+            return text
+        start_marker = 'bool RasterizerVulkan::DispatchNativeCompute('
+        assert text.count(start_marker) == 1, 'Native QMD3 renderer ABI owner moved'
+        start = text.index(start_marker)
+        finish = text.index('\\nvoid RasterizerVulkan::', start)
+        part = text[start:finish]
+        guard = (
+            '    // ChannelStateCache binds a KeplerCompute pointer; only native process\\n'
+            '    // tickets authorize dereference, and the channel may be unbound.\\n'
+            '    if (!kepler_compute) return false;\\n'
+        )
+        assert part.count(guard) == 1, 'Native compute null-guard drift'
+        assert part.count('kepler_compute->regs') == 5, 'QMD3 registers ABI drift'
+        assert part.count('*kepler_compute, *gpu_memory') == 6, 'QMD3 texture owner ABI drift'
+        part = part.replace(guard, '')
+        part = part.replace('kepler_compute->regs', 'kepler_compute.regs')
+        part = part.replace('*kepler_compute, *gpu_memory', 'kepler_compute, *gpu_memory')
+        baseline = text[:start] + part + text[finish:]
+        if verify_hash:
+            assert git_blob_sha(baseline) == p24_by_path[name]['maintained_blob_sha'], (
+                'Unreviewed native KeplerCompute ABI edit', name)
+        return baseline
+
     def reverse_p24(name, text, verify_hash=True):
         receipt=p24_by_path.get(name)
         if receipt is None:
             return text
+        text = reverse_native_kepler_pointer_abi(name, text, verify_hash)
         if verify_hash:
             assert git_blob_sha(text) == receipt['maintained_blob_sha'], (
                 'Task/Mesh maintained owner drift', name)

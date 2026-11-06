@@ -39,6 +39,8 @@ assert 'Opcode::GetCbufU32x2' in atomic_header
 assert 'rec.cbuf_offset == address->descriptor' in atomic_header
 assert 'Opcode::CompositeConstructU32x2' in atomic_header
 assert 'left_pointer == right_pointer' in atomic_header
+assert 'Opcode::StorageAtomicAddF32' in atomic_header
+assert 'Opcode::StorageAtomicMaxF16x2' in atomic_header
 
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
 assert compilers

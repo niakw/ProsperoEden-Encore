@@ -836,6 +836,21 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P2.3 — atomiques flottantes authentifiées avec CAS réel (06/11, source/hôte) :**
+Le backend commun possède déjà des boucles atomiques comparées-échangées
+(`CAS`) SPIR-V pour `StorageAtomicAddF32`, `StorageAtomicAddF16x2`,
+`StorageAtomicMinF16x2` et `StorageAtomicMaxF16x2`. Le convertisseur natif
+QMD3 raccorde désormais les quatre variantes `GlobalAtomic*` correspondantes
+**uniquement lorsque leur pointeur est relié à un vrai slot SSBO writable**.
+La valeur flottante F32 est conservée avec son type et sa représentation,
+le F16x2 empaqueté reste U32, et les offsets sont authentifiés à 4 octets.
+Les adresses arbitraires ainsi que les variantes flottantes vectorielles
+non prouvées restent refusées. Aucune hypothèse sur un jeu particulier,
+aucun fallback en écriture non atomique, aucun changement NS1.
+`test_native_qmd_direct_cbuf.cpp` vérifie les quatre opcodes sur de vrais
+blocs IR, l'opérande F32, le parcours du contrôle des spans et les offsets
+immédiats/dynamiques. Cette validation hôte n'est pas un dispatch Vulkan PS5.
+
 **P2.3 — reconstruction des pointeurs atomiques CBUF scalaires (06/11, source/hôte) :**
 Le traducteur accepte désormais les deux représentations exactes de l'adresse
 SSBO QMD3 : `PackUint2x32(GetCbufU32x2)` et

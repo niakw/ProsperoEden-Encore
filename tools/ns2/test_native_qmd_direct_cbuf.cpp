@@ -270,7 +270,10 @@ static void CheckNativeGlobalAtomicPointer(
     }
     const bool wide = opcode >= Opcode::GlobalAtomicIAdd64 &&
                       opcode <= Opcode::GlobalAtomicExchange64;
-    block.AppendNewInst(opcode, {addr, wide ? Value{u64{7}} : Value{u32{7}}});
+    const bool float32 = opcode == Opcode::GlobalAtomicAddF32;
+    block.AppendNewInst(opcode, {addr,
+        float32 ? Value{f32{1.25f}} :
+        wide ? Value{u64{7}} : Value{u32{7}}});
     const bool ok = Shader::Ampere::NativeAtomic::Rewrite(program);
     assert(ok == accepted);
     if (!ok) return;
@@ -279,7 +282,11 @@ static void CheckNativeGlobalAtomicPointer(
         if (inst.GetOpcode() != Opcode::StorageAtomicIAdd32 &&
             inst.GetOpcode() != Opcode::StorageAtomicExchange32 &&
             inst.GetOpcode() != Opcode::StorageAtomicIAdd64 &&
-            inst.GetOpcode() != Opcode::StorageAtomicExchange64) continue;
+            inst.GetOpcode() != Opcode::StorageAtomicExchange64 &&
+            inst.GetOpcode() != Opcode::StorageAtomicAddF32 &&
+            inst.GetOpcode() != Opcode::StorageAtomicAddF16x2 &&
+            inst.GetOpcode() != Opcode::StorageAtomicMinF16x2 &&
+            inst.GetOpcode() != Opcode::StorageAtomicMaxF16x2) continue;
         rewritten = true;
         assert(inst.Arg(0).IsImmediate() && inst.Arg(0).U32() == 0);
         if (dynamic_offset) {
@@ -292,7 +299,9 @@ static void CheckNativeGlobalAtomicPointer(
                    inst.Arg(1).U32() == displacement);
         }
         assert(inst.Arg(2).IsImmediate() &&
-               (wide ? inst.Arg(2).U64() == 7 : inst.Arg(2).U32() == 7));
+               (float32 ? inst.Arg(2).Type() == Shader::IR::Type::F32 &&
+                          inst.Arg(2).F32() == 1.25f :
+                wide ? inst.Arg(2).U64() == 7 : inst.Arg(2).U32() == 7));
     }
     assert(rewritten);
     Shader::Profile profile{};
@@ -534,6 +543,16 @@ int main() {
     // Canonical resolved guest pointer is the actual descriptor's low/high
     // words. Only known, writable, flat QMD3 bindings may become atomics.
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF16x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMinF16x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicMaxF16x2,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true,
+                                   0,0x310,12); // scalar float offset
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true,
+                                   0,0x310,0,0x310,true,true,false,true,0x3c);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,false,
+                                   0,0x310,3); // never floor misaligned F32
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicExchange32,true,
                                    0,0x310,12);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,true,

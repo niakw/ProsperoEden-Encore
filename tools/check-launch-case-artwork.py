@@ -25,7 +25,8 @@ for fragment in (
     'artwork.front = find_face("front");',
     'artwork.back = find_face("back");',
     'artwork.spine = find_face("spine");',
-    '"png", "jpg", "jpeg", "tga"',
+    '"png", "jpg", "jpeg", "webp", "tga"',
+    'valid = ValidNlibWebP(path, &width, &height);',
     "stbi_info(path.c_str()",
     "info.st_size > (16LL << 20)",
 ):

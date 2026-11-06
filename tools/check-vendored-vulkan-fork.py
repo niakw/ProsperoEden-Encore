@@ -23,8 +23,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     patched=temp/'patched-eden'
     shutil.copytree(upstream,patched,symlinks=True)
     (patched/'GIT-COMMIT').write_text('5f142c7926d0c7fcbbd0ce30794d72f638a43b2a\n')
-    subprocess.run([sys.executable,'-B',str(root/'tools/install-vendored-eden-backports.py'),
-                    str(patched)],check=True,timeout=50,capture_output=True,text=True)
+    backport_install = subprocess.run(
+        [sys.executable, '-B',
+         str(root / 'tools/install-vendored-eden-backports.py'), str(patched)],
+        timeout=50, capture_output=True, text=True)
+    if backport_install.returncode:
+        # A captured CalledProcessError alone concealed the failing source
+        # path after the graphics merge. Keep strict failure and show the
+        # actual bounded installer diagnostics for reproducible repair.
+        raise RuntimeError(
+            'Vulkan backport staging failed: ' +
+            backport_install.stderr[-2800:] + ' ' +
+            backport_install.stdout[-1200:])
     # Pin shader input text separately from binary reproducibility. Avoid
     # depending on a nondeterministic host glslangValidator version in CI.
     expected_shaders={

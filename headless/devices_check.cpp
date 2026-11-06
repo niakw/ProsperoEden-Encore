@@ -152,8 +152,10 @@ void CheckPad() {
         // so its release cannot open Encore's quick menu.
         pad.EnableOverlay(true);
         sample.buttons = kButtonTouchPad | kButtonR1; consume();
-        CHECK(none_pressed());
+        CHECK(pad.Engine().GetButton({}, 7)); // R1 remains a guest shoulder
+        CHECK(!pad.Engine().GetButton({}, 11)); // no accidental Minus
         sample.buttons = 0; consume();
+        CHECK(none_pressed());
         CHECK(!pad.OverlayVisible());
         // Short touchpad click opens the menu and NEVER presses guest Minus.
         sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());

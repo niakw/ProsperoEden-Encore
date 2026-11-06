@@ -718,3 +718,30 @@ La transformation n'est pas encore branchée automatiquement à
 l'entrée/sortie globale du modèle. Prétraitement couleur,
 U-Net/ViT, transitions de résolution et validation console
 restent nécessaires. Aucun benchmark n'a été effectué.
+
+
+## Entrée raster de caractéristiques vers la chaîne FSwin
+
+La méthode `NrRdna2FSwinChain::UploadRasterFeatures`
+permet maintenant de transmettre à la première couche FSwin un
+raster `[H,W,C]` **déjà encodé en E4M3FN**. Une conversion CPU
+exacte range les pixels en fenêtres 8×8, remplit les frontières
+incomplètes avec zéro, puis réutilise le chemin d'upload existant
+`UploadInput`.
+
+- Le contrat impose les dimensions de fenêtre déclarées dans
+  `FSwinLayerSpec::layout` pour la première couche ; ce layout
+  doit avoir un décalage initial nul. Les grilles implicites
+  ne sont pas acceptées pour cette nouvelle API.
+- L'utilitaire `nr_rdna2_fswin_raster_host.h` propose aussi
+  `UnpackFSwinFeatureRaster`, réversible pour tous les pixels
+  valides, sans ré-quantification des octets.
+- Tests hôte : 24 géométries/canaux, bords hors raster,
+  équivalence octet-à-octet, source/destination éventuellement
+  aliasées, erreurs de forme et de longueur.
+
+Ce chemin privilégie la **fonctionnalité**. Il n'est pas une
+optimisation : il effectue un pack CPU pour l'upload de features
+déjà produites. La fabrication de ces features à partir de la
+couleur réelle du jeu, la reconstruction finale en pixels et le
+graphe complet du réseau restent non intégrés.

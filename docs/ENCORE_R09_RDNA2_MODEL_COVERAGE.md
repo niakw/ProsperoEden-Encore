@@ -339,3 +339,11 @@ Ce composant permet une transition tensorielle nécessaire aux projections Split
 `BuildQuantizedProjectionBatches` et `NrRdna2ProjectionQuantized::RecordBatched` prennent désormais en charge le calcul large **2560 tokens × 4096 canaux × 1024 entrée** en segments de 1024/1024/512 tokens. Chaque segment reste sous le plafond de calcul du GEMM existant. Le tampon FP32 est réutilisé **après barrière Vulkan**, tandis que les segments E4M3FN s'écrivent à des offsets distincts dans une sortie continue. Le plan entier est validé avant tout dispatch ; le test hôte vérifie tailles, offsets, limites de scratch et rejets. Aucun code de matrice coopérative Nvidia requis.
 
 Ce chaînage est une brique réelle du FFN ViT, pas encore l'orchestrateur complet des cinq opérations par bloc ni une image PS5 validée.
+
+
+## 6 novembre — 3 dispatchs ViT et modèle Split-Swin locaux
+
+- ViT : projection GEMM FP8→FP32, QKV normalisation FP16/E4M3 et attention globale, 32 têtes. Le chargeur NRMODEL1 importe les 3 matrices 1024² et 32 températures, avec deux uploads VMA atomiques. `InitializeWithModel` conserve les buffers.
+- Split-Swin : le chargeur `unpacked-splitswin` importe la matrice QKV [1536,512] (réordonnée pour 16 têtes), le biais FP16 16×64×64 et les 16 températures de la zone tail ; trois buffers VMA et un raccord QKV→attention.
+- Tests hôte supplémentaires enregistrés : modèles synthétiques / permutations / tailles / NaN ; CMake PS5 inscrit les nouvelles sources. Un contrôle statique du câblage a réussi et un test C++ isolé du contrat QKV ViT a réussi. **Aucune CI complète, aucun dispatch Vulkan ou frame console confirmés**.
+- Les gains FSwin sont une **frontière de régions ambiguë** ; voir `docs/ENCORE_R09_UPSAMPLE_GAIN_BOUNDARY.md`. Ne pas remplacer les 16 FP16 par une hypothèse.

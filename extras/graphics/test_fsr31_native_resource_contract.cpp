@@ -21,4 +21,25 @@ int main() {
     meta.motion.view=23;n.motion.view=23;
     meta.depth.image=99;
     assert(ValidateNativeResources(meta,n)==Rejection::MismatchedNativeResource);
+    meta.depth.image=12;
+    meta.output_width=1920;
+    meta.output_height=1080;
+    NativeDestination dst{.image=88,.width=1920,.height=1080,
+                          .samples=1,.single_color_no_depth=true};
+    assert(ValidateNativeDestination(meta,dst)==Rejection::None);
+    dst.image=11;
+    assert(ValidateNativeDestination(meta,dst)==Rejection::OutputAliasesInput);
+    dst.image=12;
+    assert(ValidateNativeDestination(meta,dst)==Rejection::OutputAliasesInput);
+    dst.image=13;
+    assert(ValidateNativeDestination(meta,dst)==Rejection::OutputAliasesInput);
+    dst.image=88;
+    dst.samples=4;
+    assert(ValidateNativeDestination(meta,dst)==Rejection::InvalidResolution);
+    dst.samples=1;
+    dst.width=1280;
+    assert(ValidateNativeDestination(meta,dst)==Rejection::InvalidResolution);
+    dst.width=1920;
+    dst.single_color_no_depth=false;
+    assert(ValidateNativeDestination(meta,dst)==Rejection::InvalidResolution);
 }

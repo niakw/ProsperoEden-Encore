@@ -16,6 +16,29 @@ struct NativeResources {
     NativeResource color{}, depth{}, motion{};
 };
 
+// Reject an in-place temporal blit into any input image, even if Vulkan
+// scheduling would place compute before rasterization: guest texture cache
+// aliasing and future frame-history reads must remain strictly unchanged.
+struct NativeDestination {
+    std::uint64_t image{};
+    std::uint32_t width{};
+    std::uint32_t height{};
+    std::uint32_t samples{};
+    bool single_color_no_depth{};
+};
+[[nodiscard]] constexpr Rejection ValidateNativeDestination(
+    const Inputs& metadata, const NativeDestination& dst) noexcept {
+    if (!dst.image) return Rejection::MissingResource;
+    if (dst.image == metadata.scene_color.image ||
+        dst.image == metadata.depth.image ||
+        dst.image == metadata.motion.image)
+        return Rejection::OutputAliasesInput;
+    if (!dst.single_color_no_depth || dst.samples != 1 ||
+        dst.width != metadata.output_width || dst.height != metadata.output_height)
+        return Rejection::InvalidResolution;
+    return Rejection::None;
+}
+
 [[nodiscard]] constexpr Rejection ValidateNativeResources(
     const Inputs& metadata, const NativeResources& native) noexcept {
     const std::array<Resource,3> declared{

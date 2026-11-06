@@ -466,3 +466,26 @@ valeurs FP16 normales/subnormales, les cas non finis, la
 permutation complète des 4096 éléments et les échelles C32/C64.
 Les valeurs en FP32 sont encore à placer dans l'arène d'upload
 et à associer aux descripteurs Vulkan du graphe.
+
+
+## Correction QKV et raccordement des poids (06/11)
+
+Le modèle NRMODEL1 contient QKV dans l'ordre de lignes
+[Q(C),K(C),V(C)], alors que le kernel FSwin RDNA2 lit les poids
+dans l'ordre [head,Q(32),K(32),V(32)]. Le chargeur FSwin applique
+maintenant cette permutation, sans modifier les valeurs E4M3FN.
+Le test de permutation a été compilé et exécuté localement pour
+C=32, 64, 128 et 256.
+
+BindFSwinGraphWeights relie les offsets de l'arène de poids
+aux constantes du graphe FSwin : expand, middle éventuel,
+contract, QKV, projection, biais, résidus et échelles Q/K.
+Il contrôle les tailles exactes, les alignements 256 octets,
+les limites mémoire et les chevauchements des plages. En cas
+d'échec, le plan d'entrée n'est pas modifié.
+
+Les tests de contrat sont enregistrés en CMake. Cette étape
+prépare la lecture des bons poids sur le GPU, mais elle ne
+crée pas les buffers Vulkan, ne les peuple pas et ne branche
+pas encore les descripteurs. Le rendu DLSS de bout en bout
+reste non validé, sans priorité donnée aux performances.

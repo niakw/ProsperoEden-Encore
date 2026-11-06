@@ -509,7 +509,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     }
     def git_blob_sha(text):
         data=text.encode('utf-8')
-        return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest()
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
     def reverse_p24(name, text):
         receipt=p24_by_path.get(name)
         if receipt is None:

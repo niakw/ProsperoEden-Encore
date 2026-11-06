@@ -184,6 +184,7 @@ eden_r08_test(test_rdna2_nr_window_attention_policy)
 eden_r08_test(test_rdna2_nr_qkv_projection_policy)
 eden_r08_test(test_rdna2_nr_ffwd3_policy)
 eden_r08_test(test_rdna2_nr_vit_attention_policy)
+eden_r08_test(test_rdna2_nr_vit_qkv_norm_policy)
 eden_r08_test(test_rdna2_nr_fswin_dense_policy)
 eden_r08_test(test_rdna2_nr_fswin_qkv_policy)
 eden_r08_test(test_rdna2_nr_fswin_graph_policy)
@@ -347,3 +348,11 @@ add_test(NAME test_rdna2_nr_attention_descriptor_abi
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-attention-binding-order.py"
         --vendor "${EDEN_ROOT}/vendor")
 
+
+# Real RDNA2 ViT normalization compute shader (Vulkan 1.1 + SPIR-V ABI).
+if(EXISTS "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/r09_rdna2_nr/vit_qkv_norm_rdna2.comp")
+    add_test(NAME test_rdna2_nr_vit_qkv_norm_spirv_abi
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-qkv-norm-spv.py"
+            --vendor "${EDEN_ROOT}/vendor")
+endif()

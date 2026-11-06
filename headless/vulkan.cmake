@@ -107,6 +107,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_window_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_ffwd3.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_attention_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_float_quantize.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_projection_quantized.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"
@@ -382,6 +384,30 @@ add_dependencies(video_core eden-r09-rdna2-nr-vit-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_VIT_HEADER}")
+
+
+# R09 RDNA2: three-dispatch ViT path (FP32 GEMM -> FP8 QKV normalization
+# -> global attention). All shader bytes generated and ABI checked on host.
+set(EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_qkv_norm_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-vit-qkv-norm-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/vit_qkv_norm_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-vit-qkv-norm-spv.py"
+    COMMENT "Compile and ABI-check RDNA2 ViT 32-head QKV normalization"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-vit-qkv-spv
+    DEPENDS "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-vit-qkv-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}")
 
 # R09 RDNA2 FSwin dense: shader SPIR-V Vulkan 1.1 ABI.
 set(EDEN_R09_RDNA2_FSWIN_DENSE_HEADER

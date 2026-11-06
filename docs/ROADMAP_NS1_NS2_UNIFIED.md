@@ -846,6 +846,21 @@ Le code vidéo n'est pas retiré. La CI SPIR-V native de `main` surveille
 crée les deux dossiers d'installation avant les clones épinglés.
 Les verdicts CI restent dépendants des exécutions réelles au nouveau SHA.
 
+**P2.3 — modules SPIR-V CAS émis et validés (06/11, qualification hôte) :**
+`test_ampere_real_spirv.cpp` fabrique maintenant sept blocs IR Compute
+contenant réellement les atomiques `StorageAtomicAddF32`,
+`StorageAtomic{Add,Min,Max}F16x2` et
+`StorageAtomic{Add,Min,Max}F32x2`. Ces blocs passent dans
+`Shader::Backend::SPIRV::EmitSPIRV` — le vrai compilateur maintenu — et
+produisent chacun un module contenant `OpAtomicCompareExchange`.
+`tools/check-ns2-spirv-host.py` soumet les sept modules à `spirv-val`
+en environnements **SPIR-V 1.5** et **Vulkan 1.2**. Cela couvre le
+contrat IR → émission atomique → validation de module, sans prétendre
+à une exécution sur le GPU de la PS5. Le test de syntaxe hôte a réussi ;
+les verdicts `spirv-val` ne sont pas acquis tant que la CI dédiée n'est
+pas terminée. Ce test est déclenché sur toute modification du gitlink
+`vendor` grâce à `ns2-standalone-spirv-main.yml`.
+
 **P2.3 — boucles CAS F32x2 à stockage atomique U32 (06/11, source/hôte) :**
 Les trois opérateurs `f32x2_add/min/max_cas` du propriétaire SPIR-V
 maintenu utilisent désormais le type mémoire `U32[1]` correspondant à

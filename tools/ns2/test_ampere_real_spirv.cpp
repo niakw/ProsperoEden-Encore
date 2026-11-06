@@ -15,6 +15,7 @@
 #include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 #include "shader_recompiler/frontend/ampere/native_qmd_compute_environment.h"
 #include "shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+#include "shader_recompiler/backend/spirv/emit_spirv.h"
 #include "shader_recompiler/object_pool.h"
 #include "video_core/ns2_shader_spirv_compile.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
@@ -200,9 +201,101 @@ static void CheckNativeQmdIndirectCbufIR() {
     non_indirect(false,false,1,16,1,false); // unreflected bank
     std::puts("NS2 QMD3 real IR CBUF sparse/static/dynamic admission: PASS");
 }
+// P2.3: construct the actual Compute IR used by the native QMD3 binder
+// and submit it to the production SPIR-V emitter, not a handwritten SPV.
+// Every one of the seven existing float CAS paths must emit valid Vulkan
+// modules, not merely compile the emitter's C++ owner.
+static void VerifyRealFloatCasSpirv(const std::string& prefix) {
+    using Shader::IR::Opcode;
+    using Shader::IR::Value;
+    constexpr std::array<std::pair<Opcode, const char*>,7> cases{{
+        {Opcode::StorageAtomicAddF32,"f32-add"},
+        {Opcode::StorageAtomicAddF16x2,"f16x2-add"},
+        {Opcode::StorageAtomicMinF16x2,"f16x2-min"},
+        {Opcode::StorageAtomicMaxF16x2,"f16x2-max"},
+        {Opcode::StorageAtomicAddF32x2,"f32x2-add"},
+        {Opcode::StorageAtomicMinF32x2,"f32x2-min"},
+        {Opcode::StorageAtomicMaxF32x2,"f32x2-max"},
+    }};
+    for (const auto& [opcode,label] : cases) {
+        Shader::ObjectPool<Shader::IR::Inst> pool{32};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage=Shader::Stage::Compute;
+        program.workgroup_size={1,1,1};
+        program.blocks.push_back(&block);
+        auto& node=program.syntax_list.emplace_back();
+        node.type=Shader::IR::AbstractSyntaxNode::Type::Block;
+        node.data.block=&block;
+        program.syntax_list.emplace_back().type=
+            Shader::IR::AbstractSyntaxNode::Type::Return;
+        auto& info=program.info;
+        info.storage_buffers_descriptors.push_back({0,0,1,true});
+        info.used_storage_buffer_types=Shader::IR::Type::U32;
+        Value value{f32{1.25f}};
+        switch(opcode) {
+        case Opcode::StorageAtomicAddF32:
+            info.uses_atomic_f32_add=true;
+            break;
+        case Opcode::StorageAtomicAddF16x2:
+        case Opcode::StorageAtomicMinF16x2:
+        case Opcode::StorageAtomicMaxF16x2:
+            info.uses_fp16=true;
+            if(opcode==Opcode::StorageAtomicAddF16x2)info.uses_atomic_f16x2_add=true;
+            if(opcode==Opcode::StorageAtomicMinF16x2)info.uses_atomic_f16x2_min=true;
+            if(opcode==Opcode::StorageAtomicMaxF16x2)info.uses_atomic_f16x2_max=true;
+            block.AppendNewInst(Opcode::UnpackFloat2x16,{Value{u32{0x3c00bc00}}});
+            value=Value{&block.back()};
+            break;
+        default:
+            if(opcode==Opcode::StorageAtomicAddF32x2)info.uses_atomic_f32x2_add=true;
+            if(opcode==Opcode::StorageAtomicMinF32x2)info.uses_atomic_f32x2_min=true;
+            if(opcode==Opcode::StorageAtomicMaxF32x2)info.uses_atomic_f32x2_max=true;
+            block.AppendNewInst(Opcode::CompositeConstructF32x2,
+                                {Value{f32{1.25f}},Value{f32{-2.0f}}});
+            value=Value{&block.back()};
+            break;
+        }
+        block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},value});
+        Shader::Backend::Bindings bindings{};
+        Shader::Profile profile{};
+        profile.supported_spirv=0x00010500;
+        profile.support_int16=true;
+        profile.support_descriptor_aliasing=true;
+        std::vector<u32> words;
+        try {
+            words=Shader::Backend::SPIRV::EmitSPIRV(
+                profile,Shader::RuntimeInfo{},program,bindings);
+        } catch(const std::exception& ex) {
+            std::fprintf(stderr,"CAS SPIR-V %s: %s\n",label,ex.what());
+            Require(false,"real CAS SPIR-V emission threw");
+        }
+        Require(words.size()>5 && words[0]==0x07230203U,
+                "real floating CAS failed to produce a SPIR-V module");
+        u32 atomic_exchanges{};
+        for (std::size_t pos=5;pos<words.size();) {
+            const u32 encoded=words[pos];
+            const u32 count=encoded>>16;
+            Require(count && count<=words.size()-pos,
+                    "real CAS SPIR-V has malformed instruction stream");
+            atomic_exchanges+=(encoded&0xffffU)==230U; // OpAtomicCompareExchange
+            pos+=count;
+        }
+        Require(atomic_exchanges>=1,
+                "floating CAS did not emit an atomic compare-exchange");
+        const auto path=prefix+"-"+label+".spv";
+        std::ofstream file{path,std::ios::binary|std::ios::trunc};
+        Require(bool(file),"cannot export real float CAS module");
+        file.write(reinterpret_cast<const char*>(words.data()),
+                   static_cast<std::streamsize>(words.size()*sizeof(u32)));
+        Require(bool(file),"cannot flush real float CAS SPIR-V module");
+        std::printf("P2_3_REAL_CAS_SPIRV_EMITTED %s %zu\n",label,words.size());
+    }
+}
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
+    VerifyRealFloatCasSpirv(argv[1]);
     std::array<u8,0x50> header{};
     constexpr u32 pred=7U<<12,exit_true=7U<<23;
     std::vector<u8> code;

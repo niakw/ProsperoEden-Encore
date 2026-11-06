@@ -114,6 +114,15 @@ def main():
         print(f"spirv-val SPIR-V 1.5 {mode}: PASS")
         print(run([validator, "--target-env", "vulkan1.2", str(path)]).stdout, end="")
         print(f"spirv-val Vulkan 1.2 {mode}: PASS")
+    # The seven QMD3 floating atomic operations now reach the actual
+    # maintained SPIR-V backend. Check emitted OpAtomicCompareExchange
+    # bodies under BOTH SPIR-V 1.5 and Vulkan 1.2 validation rules.
+    for kind in ("f32-add", "f16x2-add", "f16x2-min", "f16x2-max",
+                 "f32x2-add", "f32x2-min", "f32x2-max"):
+        path = OUT / f"synthetic-{kind}.spv"
+        for env in ("spv1.5", "vulkan1.2"):
+            run([validator, "--target-env", env, str(path)])
+            print(f"P2_3_REAL_FLOAT_CAS_SPIRV_VALIDATED {kind} {env}",flush=True)
     module_test = OUT / "ns2-vulkan-modules"
     run([cxx, "-std=c++20", "-O2",
          str(ROOT / "tools/ns2/test_ampere_vulkan_module.cpp"),

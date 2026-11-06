@@ -573,3 +573,7 @@ Le propriétaire natif sélectionné `vendor/encore-active/ns2-runtime/ampere/sh
 #### P2.3 — CAS F32x2 sur mot SSBO U32 (06/11/2026)
 
 Les trois boucles CAS natives `f32x2_{add,min,max}_cas` dans `spirv_emit_context.cpp` lisent et écrivent un mot U32, avec OpUnpackHalf2x16/OpPackHalf2x16 pour la valeur F32x2 ; l'opération est un seul OpAtomicCompareExchange 32 bits. Qualification du propriétaire et du CMake dans `check_shared_ns2_spirv_compiler_host.py`.
+
+#### P2.3 — qualification réelle des sept modules SPIR-V CAS (06/11/2026)
+
+L'intégration `tools/ns2/test_ampere_real_spirv.cpp` crée sept modules Compute à travers l'émetteur SPIR-V réel. `tools/check-ns2-spirv-host.py` valide chaque sortie avec `spirv-val --target-env spv1.5` et `--target-env vulkan1.2`. Le test conserve un `OpAtomicCompareExchange` par module et ne simule pas le runtime PS5.

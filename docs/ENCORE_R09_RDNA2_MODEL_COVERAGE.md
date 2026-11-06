@@ -195,3 +195,33 @@ pas encore construits**.
 Le port ne dispose toujours pas d'une preuve de première image
 Neural Rendering sur console. Aucun travail de performance n'a
 été engagé.
+
+
+## Routage exact des quatre branches de saut U-Net
+
+Nouveau classificateur vendor `nr_rdna2_unet_skip_map.h`,
+testé sur les deux corpus natifs de 152 et 76 couches.
+Il associe une réduction `FSwin _ds` à son consommateur
+`FSwin _upsample` **via `input1` du plan**, et non par ordre
+d'apparition ou supposition sur la taille du raster.
+
+| Niveau, canaux | Original (DS → UPS) | Compact/Small (DS → UPS) |
+|---|---|---|
+| C256 | 22 → 48 | 8 → 22 |
+| C128 | 14 → 56 | 6 → 24 |
+| C64 | 8 → 62 | 4 → 26 |
+| C32 | 4 → 66 | 2 → 28 |
+
+Contrôles : 4 producteurs/4 consommateurs, références présentes,
+C et 2C cohérents, relations de dépendance, niveaux inversés,
+écarts d'un pixel maximum aux divisions par deux, refus des
+doublons/références invalides et **absence de résultat partiel**.
+Le test `test_rdna2_nr_unet_skip_map` couvre les deux
+corpus et plusieurs mutations négatives.
+
+**Limite fonctionnelle explicite :** les liens du graphe sont
+maintenant **identifiés**, mais l'allocation et la durée de vie
+des quatre buffers skip, le raccord aux descripteurs du prologue
+`upsample`, les gains incomplets C≥64 et la traversée
+Split-Swin / ViT restent à implémenter. Ne pas compter cette
+classification comme une image NR calculée sur PS5.

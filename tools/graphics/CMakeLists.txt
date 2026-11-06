@@ -212,6 +212,18 @@ target_include_directories(test_rdna2_nr_native_plan_corpus PRIVATE
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_native_plan_corpus PRIVATE
     -Wall -Wextra -UNDEBUG)
+add_executable(test_rdna2_nr_unet_skip_map
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_unet_skip_map.cpp")
+target_include_directories(test_rdna2_nr_unet_skip_map PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_unet_skip_map PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_unet_skip_map
+    COMMAND test_rdna2_nr_unet_skip_map
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
+
 add_test(NAME test_rdna2_nr_native_plan_corpus
     COMMAND test_rdna2_nr_native_plan_corpus
     "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"

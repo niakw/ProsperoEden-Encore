@@ -54,11 +54,36 @@ assert len(includes) >= 95
 assert all(path.is_dir() for path in includes), "Maintained Vulkan dependency missing"
 compiler = shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler, "Clang C++20 host compiler not installed"
+# These maintained TUs are selected in the PS5_NATIVE Vulkan graph.
+# Desktop builds use the pinned upstream owners; compiling this native
+# graphics TU without PS5_NATIVE deliberately omits its exact-descriptor
+# queue API and is NOT a valid production syntax proof.
 command = [compiler, "-std=c++20", "-O0", "-fsyntax-only",
-           "-Wno-unused-parameter", "-DFMT_HEADER_ONLY",
+           "-DPS5_NATIVE=1", "-Wno-unused-parameter",
+           "-DFMT_HEADER_ONLY",
            *["-I" + str(path) for path in includes]]
 env = os.environ.copy()
 with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
+    sysdir = Path(scratch) / "sys"
+    sysdir.mkdir()
+    # FreeBSD/Prospero cpuset API is absent from Linux/macOS CI. The shim
+    # supplies only declarations needed by syntax-only parsing; no affinity
+    # behavior, PS5 headers, object or ELF is synthesized.
+    (sysdir / "cpuset.h").write_text(
+        "#pragma once\\n"
+        "#define CPU_LEVEL_WHICH 3\\n#define CPU_WHICH_TID 4\\n"
+        "#ifdef __linux__\\n"
+        "#include <sched.h>\\n"
+        "using cpuset_t = cpu_set_t;\\n"
+        "inline int cpuset_getaffinity(int, int, int, size_t size, cpuset_t* mask) {\\n"
+        "    return sched_getaffinity(0, size, mask);\\n"
+        "}\\n"
+        "#else\\n"
+        "struct cpuset_t { unsigned long bits[16]; };\\n"
+        "inline int cpuset_getaffinity(int, int, int, size_t, cpuset_t*) { return -1; }\\n"
+        "#ifndef CPU_ISSET\\n#define CPU_ISSET(cpu, mask) false\\n#endif\\n"
+        "#endif\\n")
+    command += ["-I" + str(Path(scratch))]
     if platform.system() == "Darwin":
         sdk = next((p for p in (
             Path("/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"),

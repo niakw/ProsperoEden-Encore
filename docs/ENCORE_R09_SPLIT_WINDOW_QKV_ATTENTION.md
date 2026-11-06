@@ -17,3 +17,7 @@ Le raccord détient ses deux jeux de descripteurs `STORAGE_BUFFER`, écrit les 1
 Ce raccord n'est pas le chaînage complet des **65 opérations Split-Swin Original / 17 Compact**. Il manque notamment le chargement correct des poids/échelles/biais par bloc, les opérations de FFWD/projection/pooling/final-head, l'ordonnancement interblocs, les résidus, la liaison avec les 40 ViT de chaque modèle et les conversions image/renderer. Le graphe entier reste volontairement non activable. Aucune hypothèse de 60 FPS ni de compatibilité console n'est avancée.
 
 Source de vérité : `nr_rdna2_native_graph_schedule.h` (décodage intégral) et `nr_rdna2_split_window_link_policy.h` (liaison QKV/attention effectivement enregistrable).
+
+## ViT — correction de dimension du contrat (même lot R09)
+
+Le manifeste natif 1920×1080 indique **2560 tokens** pour le tronc ViT, mais la primitive d'attention globale RDNA2 limitait son contrat hôte à 2048. La borne passe à **4096 tokens** ; la mémoire adressée reste vérifiée en 64 bits et la géométrie des dispatchs Vulkan reste à 32 têtes, ceil(tokens/32). Le shader source était déjà paramétrique et ne nécessite pas de contournement. Tests ajoutés pour 2560 (positif) / 4096 (borne) / 4097 (refus), et capacité insuffisante. Cela élargit la **couverture dimensionnelle**, pas encore l'assemblage des 40 opérations ViT ni la validation GPU.

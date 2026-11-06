@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include <cassert>
 #include <cstdint>
+#include <initializer_list>
 #include "rdna2_nr_float_quantize_policy.h"
 using namespace Eden::Graphics::NeuralRDNA2;
 int main(){

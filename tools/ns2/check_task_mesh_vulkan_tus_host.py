@@ -43,6 +43,9 @@ assert "StageFlag(const Shader::Info&" in (ACTIVE / "vk_graphics_pipeline_cost.c
 includes = [
     ROOT / "headless",
     SHADER,
+    # Native Maxwell/Ampere shader captures share this single reviewed
+    # frontend root with the real renderer and pipeline-cache TUs.
+    ROOT / "vendor/encore-active/ns2-runtime/ampere",
     # CMake stages the reviewed PS5-native RasterizerInterface into
     # PORT_BUILD_DIR/include; source-derived host syntax must select the same
     # virtual ABI before the pinned (pre-NS2) interface, never strip override.

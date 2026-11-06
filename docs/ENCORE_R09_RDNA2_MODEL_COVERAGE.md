@@ -311,3 +311,10 @@ ViT → post-image, les poids complets, les entrées du
 renderer et la sortie d'image PS5 ne sont pas encore
 raccordés. Une CI source verte ne prouverait pas à elle seule
 ce fonctionnement. Aucune optimisation de performance engagée.
+
+
+## 6 novembre — décodage exhaustif du plan natif RDNA2
+
+Le vendor ajoute `nr_rdna2_native_graph_schedule.h` : décodage typé de **toutes les 152 étapes Original et 76 étapes Compact**, y compris pré/post-image, FSwin, Split-Swin, les cinq familles ViT et le décodeur 1024→512. Chaque opération conserve les entrées, les canaux et les dimensions. Une famille inconnue, une forme incorrecte, une dépendance future ou l'absence du post-traitement invalide le **plan entier**, jamais un préfixe exécutable par erreur.
+
+Le test hôte `test_rdna2_nr_native_graph_schedule` recoupe chaque famille et ses effectifs sur les deux corpus, puis vérifie quatre mutations négatives. **Attention : décoder un type n'exécute pas le calcul**. Les kernels Split-Swin/ViT, le pré/post-image, les gains complets et le branchement final à Vulkan restent à assembler. Pas de validation console annoncée.

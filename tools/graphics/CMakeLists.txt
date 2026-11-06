@@ -234,6 +234,19 @@ add_test(NAME test_rdna2_nr_unet_upsample_edges
 target_include_directories(test_rdna2_nr_fswin_output_view_policy PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
 # R09: validate recovered full native graph structural manifests.
+# Decode EVERY native NR graph stage, no implicit skip.
+add_executable(test_rdna2_nr_native_graph_schedule
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_native_graph_schedule.cpp")
+target_include_directories(test_rdna2_nr_native_graph_schedule PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_native_graph_schedule PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_native_graph_schedule
+    COMMAND test_rdna2_nr_native_graph_schedule
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
+
 add_executable(test_rdna2_nr_native_plan_corpus
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_native_plan_corpus.cpp")
 target_include_directories(test_rdna2_nr_native_plan_corpus PRIVATE

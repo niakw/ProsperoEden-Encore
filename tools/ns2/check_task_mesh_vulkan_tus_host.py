@@ -22,6 +22,15 @@ OWNERS = (
     "vk_pipeline_cache_cost.cpp",
     "vulkan_rasterizer.cpp",
 )
+# Compile real shader-stage construction, native translation environment and
+# GPU-source admission too: a graphics TU alone cannot prove that Mesh/Task
+# reaches the native Maxwell-to-IR stage or uses the correct CBUF bank.
+MESH_STAGE_OWNERS = (
+    ROOT / "vendor/encore-active/eden-core/src/video_core/shader_environment.cpp",
+    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
+    ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp",
+)
+
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert "EDEN_NATIVE_TASK_MESH_ROOT" in cmake
 assert "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp" in cmake
@@ -31,6 +40,20 @@ device = (ACTIVE / "include/video_core/vulkan_common/vulkan_device.h").read_text
 assert "IsExtMeshShaderSupported()" in device
 for owner in OWNERS:
     assert (ACTIVE / owner).is_file(), owner
+for path in MESH_STAGE_OWNERS:
+    assert path.is_file(), path
+stage_owner = MESH_STAGE_OWNERS[0].read_text()
+assert 'CaptureGraphicsTicket(maxwell3d).has_value()' in stage_owner
+assert 'Shader::Stage::Task : Shader::Stage::Mesh' in stage_owner
+assert 'IsShaderConfigEnabled(Maxwell::ShaderType::TessellationInit)' in stage_owner
+env_owner = MESH_STAGE_OWNERS[1].read_text()
+assert 'mesh_registers = source.MeshRegisters();' in env_owner
+assert 'mesh_primitive_header = source.MeshPrimitiveHeader();' in env_owner
+capture_owner = MESH_STAGE_OWNERS[2].read_text()
+assert 'NativeMeshSlotCbufBank(shader_stage, has_task)' in capture_owner
+cache_owner = (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
+assert cache_owner.count("NativeMeshSlotCbufBank(stage, has_task)") == 3
+assert cache_owner.count("NativeMeshGraphicsStageMaskSupported(") == 2
 assert "virtual bool DispatchNativeCompute(" in (
     ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
 ).read_text()
@@ -143,13 +166,14 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         command += ["-target", "arm64-apple-macos15", "-nostdinc++",
                     "-isystem", str(sdk / "usr/include/c++/v1"),
                     "-include", str(shim)]
-    def check(owner):
+    def check(source):
         result = subprocess.run(
-            command + [str(ACTIVE / owner)], cwd=ROOT, env=env,
+            command + [str(source)], cwd=ROOT, env=env,
             capture_output=True, text=True, timeout=180)
-        return owner, result.returncode, result.stderr[-20000:]
+        return str(source.relative_to(ROOT)), result.returncode, result.stderr[-20000:]
+    sources = [ACTIVE / owner for owner in OWNERS] + list(MESH_STAGE_OWNERS)
     with ThreadPoolExecutor(max_workers=3) as pool:
-        checked = list(pool.map(check, OWNERS))
+        checked = list(pool.map(check, sources))
     failures = []
     for owner, code, stderr in checked:
         if code:
@@ -158,4 +182,4 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         else:
             print("P24_REAL_VULKAN_TASK_MESH_TU_PASS", owner, flush=True)
     assert not failures, ("P2.4 maintained Vulkan TU syntax failed", failures)
-print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=3 console=NOT_TESTED", flush=True)
+print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=6 console=NOT_TESTED", flush=True)

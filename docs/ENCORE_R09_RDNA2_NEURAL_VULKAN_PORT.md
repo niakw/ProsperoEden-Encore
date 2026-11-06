@@ -512,3 +512,30 @@ FSwin, les buffers de tenseurs d'activation, les entrées
 image, les modèles complets et le graphe réseau global.
 Le buffer de poids doit rester vivant jusqu'à la fin
 des commandes GPU qui le lisent.
+
+
+## Descripteurs Vulkan du bloc FSwin
+
+NrRdna2FSwinDescriptors alloue désormais six ensembles de
+descripteurs de stockage via le pool Vulkan natif d'Eden :
+quatre ensembles pour les stages denses, un pour QKV et un
+pour l'attention fenêtrée. Le stage 1 C32 est volontairement
+omis et ne reçoit aucune écriture de descripteurs.
+
+Les entrées/sorties sont reliées dans l'ordre :
+input -> expanded -> middle (C>=64) -> contracted -> Q/K/V ->
+context -> output. Le buffer de poids fourni par
+NrRdna2GpuWeights est partagé en lecture seule par les
+projections, les échelles et les biais, avec les offsets
+validés par BindFSwinGraphWeights.
+
+Les contrôles refusent les handles nuls, les aliasings entre
+tenseurs, les offsets de descripteur non nuls, les plages
+hors capacités et les dimensions incorrectes. La fonction
+Initialize écrit effectivement les VkWriteDescriptorSet
+dans le contexte du VkDevice existant.
+
+**Limite :** les buffers d'activation sont encore fournis
+par le moteur appelant et aucun passage PS5 complet
+n'a été exécuté. Les nouveaux wrappers Vulkan n'ont
+pas encore été compilés contre un SDK PS5 lors de ce lot.

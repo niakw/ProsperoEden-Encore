@@ -21,8 +21,7 @@ assert "void SetButtonState(std::size_t player, int button, bool value);" in HEA
 assert "const auto& active_mapping = ActiveMapping();" in PAD
 assert "if (pad == pad_touchpad) continue;" in PAD
 assert "constexpr unsigned kSelectTapPolls = 25;" in PAD
-assert "constexpr unsigned kSelectTapPolls = 25;
-constexpr unsigned kSelectHoldPolls = 60;" in PAD
+assert "constexpr unsigned kSelectHoldPolls = 60;" in PAD
 
 def extract(signature: str) -> str:
     assert PAD.count(signature) == 1, ("native source drift", signature)

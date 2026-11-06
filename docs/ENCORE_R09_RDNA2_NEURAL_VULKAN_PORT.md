@@ -489,3 +489,26 @@ prépare la lecture des bons poids sur le GPU, mais elle ne
 crée pas les buffers Vulkan, ne les peuple pas et ne branche
 pas encore les descripteurs. Le rendu DLSS de bout en bout
 reste non validé, sans priorité donnée aux performances.
+
+
+## Premier buffer GPU de poids initialisable
+
+NrRdna2GpuWeights crée désormais, via l'allocateur VMA natif
+d'Eden, un buffer Vulkan STORAGE_BUFFER depuis les octets
+de l'arène CPU. La copie est synchrone vers une zone
+host-visible avec Flush(), avant la première soumission GPU.
+La taille est contrôlée (alignement 4, limite 256 Mio,
+et maxStorageBufferRange du périphérique).
+
+Le buffer ne peut être initialisé qu'une fois et fournit
+un VkDescriptorBufferInfo. Cette première implémentation
+utilise MemoryUsage::Upload ; son efficacité n'est pas
+encore à examiner. Un test de compilation et exécution
+avec doublures Vulkan vérifie le contrat du wrapper,
+mais ce n'est pas un test PS5 ou pilote réel.
+
+**Restent** l'allocation et l'écriture des six descripteurs
+FSwin, les buffers de tenseurs d'activation, les entrées
+image, les modèles complets et le graphe réseau global.
+Le buffer de poids doit rester vivant jusqu'à la fin
+des commandes GPU qui le lisent.

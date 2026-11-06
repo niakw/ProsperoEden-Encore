@@ -7080,3 +7080,13 @@ apply_reviewed_delta(
     "    void CloseCounter() override {\n        PauseCounter();\n    }\n\n    bool HasPendingSync() const override {",
     "    void CloseCounter() override {\n        PauseCounter();\n        // The guest may leave counting enabled through menu/title screens\n        // without issuing a report or reset. A query spanning more than\n        // one 256-slot host bank pins unbounded GPU query resources.\n        // Bound it to one bank while keeping ordinary cross-submit counts.\n        if (current_query && current_query->size_slots > SamplesQueryBank::BANK_SIZE) {\n            ResetCounter();\n        }\n    }\n\n    bool HasPendingSync() const override {",
     "P2/P4 bounded native occlusion query bank lifetime")
+
+# P2.3: the real PS5 rasterizer rechecks every reflected atomic byte span
+# against its live QMD3 SSBO before publishing any Vulkan descriptor.
+# Keep the immutable generator/oracle in parity with the versioned active
+# owner; do not alter the upstream Eden source or its NS1 interpretation.
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
+    '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // The production Vulkan path must enforce the SAME authenticated\n        // atomic byte extents as the captured-QMD compiler. A successful\n        // SPIR-V module alone does not prove a dynamic atomic stays within\n        // its real, writable GMMU-backed SSBO. Reject before any image,\n        // descriptor or pipeline is allocated; never round the offset down.\n        if (!Shader::Ampere::NativeQmdAtomicSpansFitBindings(\n                std::span<const Shader::Ampere::NativeAtomicSpan>{\n                    compiled.native_atomic_spans.data(),\n                    compiled.native_atomic_spans.size()},\n                resources->storage_buffers))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
+    "P2.3 production native atomic span gate")

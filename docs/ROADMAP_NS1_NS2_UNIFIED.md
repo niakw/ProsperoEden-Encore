@@ -859,8 +859,10 @@ SSBO du `NativeQmdResourcePlan` avant de créer le pipeline. Cette vérification
 est maintenant obligatoire avant l'acquisition des vues TIC/TSC ou toute
 préparation Vulkan ; un offset atomique hors de la plage de la ressource
 réelle ou non aligné est refusé. Le contrôle de provenance CMake et du
-`vkCmdDispatch` est ajouté aux témoins hôte ; cela ne prouve pas encore
-une frame console.
+`vkCmdDispatch` est ajouté aux témoins hôte. L’oracle historique
+`tools/prepare-vulkan-port.py` reproduit également cette correction,
+afin que la comparaison byte à byte du fork Vulkan sélectionné reste
+valide ; cela ne prouve pas encore une frame console.
 
 **P2.3 — modules SPIR-V CAS émis et validés (06/11, qualification hôte) :**
 `test_ampere_real_spirv.cpp` fabrique maintenant sept blocs IR Compute

@@ -2263,6 +2263,28 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     list(REMOVE_ITEM eden_ns2_dispatch_sources "${EDEN_MAINTAINED_GPU_PULLER}")
     list(APPEND eden_ns2_dispatch_sources "${EDEN_NS2_NATIVE_GPU_PULLER}")
     set_property(TARGET video_core PROPERTY SOURCES "${eden_ns2_dispatch_sources}")
+    # P2.7: native semaphore parking must use exactly one scheduler implementation
+    # and one set of ABI-matched Puller/DmaPusher/Scheduler declarations.
+    set(EDEN_NS2_GPFIFO_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch")
+    set(EDEN_NS2_GPFIFO_SCHEDULER
+        "${EDEN_NS2_GPFIFO_ROOT}/video_core/control/scheduler.cpp")
+    foreach(EDEN_NS2_GPFIFO_OWNER IN ITEMS
+        "${EDEN_NS2_GPFIFO_ROOT}/video_core/dma_pusher.h"
+        "${EDEN_NS2_GPFIFO_ROOT}/video_core/control/scheduler.h"
+        "${EDEN_NS2_GPFIFO_SCHEDULER}")
+        if(NOT EXISTS "${EDEN_NS2_GPFIFO_OWNER}")
+            message(FATAL_ERROR "Missing maintained native GPFIFO suspend/resume owner")
+        endif()
+    endforeach()
+    get_target_property(eden_ns2_sched_sources video_core SOURCES)
+    list(FIND eden_ns2_sched_sources "control/scheduler.cpp" eden_ns2_sched_idx)
+    if(eden_ns2_sched_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned GPFIFO scheduler owner moved; requalify")
+    endif()
+    list(REMOVE_ITEM eden_ns2_sched_sources "control/scheduler.cpp")
+    list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_SCHEDULER}")
+    set_property(TARGET video_core PROPERTY SOURCES "${eden_ns2_sched_sources}")
     # Research-only header and .cpp must be the SAME Puller class to keep
     # DmaPusher ABI consistent in every video_core translation unit.
     set(EDEN_NS2_GPU_DISPATCH_ROOT
@@ -2275,6 +2297,10 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     target_include_directories(video_core BEFORE PRIVATE
         "${EDEN_NS2_GPU_DISPATCH_ROOT}"
         "${EDEN_NS2_NVDRV_GPU_ROOT}" "${EDEN_NS2_NVDRV_ROOT}")
+    # Core stores ChannelState payloads containing DmaPusher by value.
+    # Do not permit a split Puller/DmaPusher ABI between core and video_core.
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_NS2_GPU_DISPATCH_ROOT}")
     # Native admission follows the actual channel/process registration.
     # Unregistered NS1 Maxwell commands retain the original DMA path.
 endif()

@@ -9,25 +9,55 @@ for symbol in ("ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)"
                "ProcessSemaphoreRelease(dma_pusher)",
                "ProcessSemaphoreAcquire(dma_pusher)",
                "IsNative(&dma_pusher.channel_state)",
-               "pending acquire unsupported"):
+               "pending_native_acquire = PendingNativeAcquire",
+               "ResumeNativeAcquire(DmaPusher& dma_pusher)"):
     assert symbol in puller, symbol
-# Production P2.7 coherence: an acquire cannot compare a stale CPU word
-# while its release is still resident in the Vulkan buffer cache.
+# Production P2.7 coherence: initial compare and scheduler retry share the
+# same cache-flushing GMMU read, not an out-of-date CPU-side value.
+reader = puller.split("static u32 ReadCoherentNativeSemaphore(", 1)[1].split(
+    "// Called only by the native GPFIFO scheduler", 1)[0]
 native_acquire = puller.split("void Puller::ProcessNativeSemaphoreExecute(", 1)[1].split(
     "void Puller::ProcessSemaphoreAcquire(", 1)[0]
-assert "GpuToCpuAddress(address, sizeof(u32))" in native_acquire
-assert 'Ampere SEM_EXECUTE: unmapped acquire address' in native_acquire
-assert native_acquire.count("VideoCommon::CacheType::BufferCache") == 2
-assert "MustFlushRegion(" in native_acquire
-assert "FlushRegion(" in native_acquire
-assert (native_acquire.index("ReleaseFences()") <
-        native_acquire.index("GpuToCpuAddress(") <
-        native_acquire.index("MustFlushRegion(") <
-        native_acquire.index("FlushRegion(") <
-        native_acquire.index("NativeSemaphore::AcquireReady(") <
-        native_acquire.index("memory_manager.Read<u32>(address)"))
+native_resume = puller.split("bool Puller::ResumeNativeAcquire(", 1)[1].split(
+    "// 0xC797 Ampere host SEM_EXECUTE", 1)[0]
+assert "GpuToCpuAddress(address, sizeof(u32))" in reader
+assert 'Ampere SEM_EXECUTE: unmapped acquire address' in reader
+assert reader.count("VideoCommon::CacheType::BufferCache") == 2
+assert reader.index("MustFlushRegion(") < reader.index("rasterizer->FlushRegion(")
+assert reader.index("rasterizer->FlushRegion(") < reader.index("memory_manager.Read<u32>(address)")
+assert "ReadCoherentNativeSemaphore(dma_pusher, address)" in native_acquire
+assert "ReadCoherentNativeSemaphore(dma_pusher, pending.address)" in native_resume
+assert "pending_native_acquire.reset();" in native_resume
+assert "return false;" in native_resume
+assert "pending acquire unsupported" not in native_acquire
 assert "ProcessSemaphoreRelease(dma_pusher);" in puller
 assert "ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument);" in puller
+# Real P2.7 channel suspension must keep the per-entry cursor, run other GPU
+# channels and retry CPU-released waits even when no new queue item arrives.
+dma = (ROOT / "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
+dma_header = (OWNER / "video_core/dma_pusher.h").read_text()
+scheduler = (OWNER / "video_core/control/scheduler.cpp").read_text()
+scheduler_header = (OWNER / "video_core/control/scheduler.h").read_text()
+worker = (ROOT / "vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp").read_text()
+cmake = (ROOT / "headless/CMakeLists.txt").read_text()
+assert "command_resume_offset" in dma and "command_resume_offset" in dma_header
+assert "commands.subspan(command_resume_offset)" in dma
+assert dma.count(".subspan(command_resume_offset)") >= 3
+assert "if (HasPendingNativeAcquire())" in dma
+assert "ResumeNativeAcquire()" in dma
+assert "if (!ResumeNativeAcquire())" in dma
+assert "max_write = 1;" in dma
+assert "HasPendingNativeChannels" in scheduler_header
+assert "ResumePendingNative(GPU& gpu)" in scheduler
+assert "pending_native_channels.push_back" in scheduler
+assert "pusher.DispatchCalls();" in scheduler
+assert "HasPendingNativeChannels()" in worker
+assert "scheduler.ResumePendingNative(system.GPU());" in worker
+assert "state.queue.TryPop(next)" in worker
+assert "control/scheduler.cpp" in cmake and "EDEN_NS2_GPFIFO_SCHEDULER" in cmake
+assert "target_include_directories(core BEFORE PRIVATE" in cmake
+assert "target_include_directories(video_core BEFORE PRIVATE" in cmake
+print("NATIVE_AMPERE_GPFIFO_SUSPEND_RESUME_SOURCE_PASS",flush=True)
 code = r"""
 #include <cassert>
 #include <cstdint>

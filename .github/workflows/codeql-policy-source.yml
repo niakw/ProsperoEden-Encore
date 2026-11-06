@@ -1,0 +1,25 @@
+name: CodeQL policy source gate
+on:
+  push:
+    branches: [main, fix/security-codeql-noncancelling-schedule-20261107]
+    paths:
+      - '.github/workflows/codeql-advanced.yml'
+      - '.github/workflows/codeql-policy-source.yml'
+      - '.github/codeql/codeql-config.yml'
+      - 'tools/check-codeql-scheduling-host.py'
+  pull_request:
+    paths:
+      - '.github/workflows/codeql-advanced.yml'
+      - '.github/workflows/codeql-policy-source.yml'
+      - '.github/codeql/codeql-config.yml'
+      - 'tools/check-codeql-scheduling-host.py'
+permissions:
+  contents: read
+jobs:
+  source-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify scheduled scans cannot be cancelled by push activity
+        run: python3 -B tools/check-codeql-scheduling-host.py

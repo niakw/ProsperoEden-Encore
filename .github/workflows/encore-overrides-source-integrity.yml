@@ -1,0 +1,43 @@
+name: Encore Overrides pinned source and native profile integrity
+on:
+  push:
+    branches: [main, feat/overrides-compiled-catalog-95f21ed]
+    paths:
+      - 'vendor'
+      - 'tools/deps.json'
+      - 'tools/check-vendored-overrides.py'
+      - 'tools/check-vendored-deps.py'
+      - 'tools/sync-encore-overrides.py'
+      - 'headless/encore_overrides_generated.h'
+      - 'headless/encore_texture_profiles.h'
+      - '.github/workflows/encore-overrides-source-integrity.yml'
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'tools/deps.json'
+      - 'tools/check-vendored-overrides.py'
+      - 'tools/check-vendored-deps.py'
+      - 'tools/sync-encore-overrides.py'
+      - 'headless/encore_overrides_generated.h'
+      - 'headless/encore_texture_profiles.h'
+      - '.github/workflows/encore-overrides-source-integrity.yml'
+permissions:
+  contents: read
+jobs:
+  source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          submodules: recursive
+          fetch-depth: 1
+      - name: Validate exact 9460 profiles and compiled header parity
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-vendored-overrides.py
+          python3 -B tools/check-video-presets.py
+      - name: Verify archived upstream commit offline without trusting vault-local SHA
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-vendored-deps.py

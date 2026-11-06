@@ -79,7 +79,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  assert (isolated/'.deps/eden-5f142c79.tar.gz').is_file()
  assert (isolated/'.deps/fmt-12.1.0.tar.gz').is_file()
  assert deps.revision(isolated/'.deps/zbic-11b08f27')=='11b08f2712264bbed731545085cbd9702096ceb7'
- assert deps.revision(isolated/'repos/encore-overrides-review')=='4fdb329e732a71878c1936b24759e58937c1ac18'
+ assert deps.revision(isolated/'repos/encore-overrides-review')=='95f21edf13bfbd2888602f2b419dd856d6d0fbfa'
  boilerplate=next(x for x in ITEMS if x['name']=='boilerplate')
  sdk=boilerplate['setup_prefetch'][1]
  archive=deps.download(sdk['url'],'sha256',sdk['sha256'],'boilerplate-ps5-payload-sdk.zip')

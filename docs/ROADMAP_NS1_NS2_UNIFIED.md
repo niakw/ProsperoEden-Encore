@@ -850,7 +850,11 @@ byte exact. Aucune adresse globale arbitraire n'est traitée comme un SSBO.
 L'admission exige : banque CBUF réellement déclarée, descripteur SSBO
 writable, utilisé, unique, au bon rang `nvn_buffer_base + slot*16` et
 intégralement couvert par la taille CBUF reflétée ; l'offset de 32 bits
-est aligné et sans débordement. `CollectNativeQmdAtomicSpans` et le plan
+est aligné et sans débordement. Les offsets **dynamiques** sont également
+admis lorsqu'ils proviennent de `ConvertU64U32` (zéro-extension) d'un
+`BitwiseAnd32`/extraction/shift authentifié et borné par le collecteur
+`NativeQmdAtomicMaximumByteOffset` ; la taille réelle de la ressource
+reste contrôlée par le plan de dispatch Vulkan. `CollectNativeQmdAtomicSpans` et le plan
 GPU Vulkan contrôlent ensuite la plage complète contre la taille et l'VA
 GMMU réellement liées. Les opérations/pointeurs non prouvés restent refusés.
 Témoin réel `test_native_qmd_direct_cbuf.cpp` : conversion des IAdd/Exchange,

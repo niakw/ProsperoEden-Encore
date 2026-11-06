@@ -164,7 +164,8 @@ static void CheckNativeAtomicSlotOrder(bool swapped, bool accepted) {
 static void CheckNativeGlobalAtomicPointer(
     Opcode opcode, bool accepted, u32 cbuf_bank = 0, u32 descriptor = 0x310,
     u64 displacement = 0, u32 actual_cbuf_offset = 0x310,
-    bool writable = true, bool live = true, bool malformed_pointer = false) {
+    bool writable = true, bool live = true, bool malformed_pointer = false,
+    bool dynamic_offset = false, u32 dynamic_mask = 0x3c) {
     Shader::ObjectPool<Shader::IR::Inst> pool{24};
     Shader::IR::Block block{pool};
     Shader::IR::Program program{};
@@ -183,7 +184,18 @@ static void CheckNativeGlobalAtomicPointer(
     auto& address_pair = block.back();
     block.AppendNewInst(Opcode::PackUint2x32, {Value{&address_pair}});
     Value addr{&block.back()};
-    if (displacement || malformed_pointer) {
+    if (dynamic_offset) {
+        block.AppendNewInst(Opcode::IAdd32,
+            {Value{u32{7}}, Value{u32{9}}});
+        const Value varying{&block.back()};
+        block.AppendNewInst(Opcode::BitwiseAnd32,
+            {varying, Value{dynamic_mask}});
+        const Value bounded{&block.back()};
+        block.AppendNewInst(Opcode::ConvertU64U32, {bounded});
+        block.AppendNewInst(Opcode::IAdd64,
+            {addr, Value{&block.back()}});
+        addr = Value{&block.back()};
+    } else if (displacement || malformed_pointer) {
         block.AppendNewInst(Opcode::IAdd64,
             {addr, malformed_pointer ? addr : Value{displacement}});
         addr = Value{&block.back()};
@@ -202,7 +214,15 @@ static void CheckNativeGlobalAtomicPointer(
             inst.GetOpcode() != Opcode::StorageAtomicExchange64) continue;
         rewritten = true;
         assert(inst.Arg(0).IsImmediate() && inst.Arg(0).U32() == 0);
-        assert(inst.Arg(1).IsImmediate() && inst.Arg(1).U32() == displacement);
+        if (dynamic_offset) {
+            assert(!inst.Arg(1).IsImmediate());
+            const auto maximum = Shader::Ampere::NativeQmdAtomicMaximumByteOffset(
+                inst.Arg(1), wide ? 8U : 4U);
+            assert(maximum && *maximum == dynamic_mask);
+        } else {
+            assert(inst.Arg(1).IsImmediate() &&
+                   inst.Arg(1).U32() == displacement);
+        }
         assert(inst.Arg(2).IsImmediate() &&
                (wide ? inst.Arg(2).U64() == 7 : inst.Arg(2).U32() == 7));
     }
@@ -216,7 +236,7 @@ static void CheckNativeGlobalAtomicPointer(
     const auto spans = Shader::Ampere::CollectNativeQmdAtomicSpans(program);
     assert(spans && spans->size() == 1);
     assert((*spans)[0].binding == 0 &&
-           (*spans)[0].offset == displacement &&
+           (*spans)[0].offset == (dynamic_offset ? dynamic_mask : displacement) &&
            (*spans)[0].width == (wide ? 8U : 4U));
 }
 int main() {
@@ -454,6 +474,16 @@ int main() {
                                    0,0x310,16);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,false,
                                    0,0x310,4); // 64-bit alignment
+    // Native QMD3 accepts a zero-extended U32 register offset if the
+    // actual IR proves its full upper bound via an aligned literal mask.
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true,
+                                   0,0x310,0,0x310,true,true,false,true,0x3c);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicExchange64,true,
+                                   0,0x310,0,0x310,true,true,false,true,0xf8);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x310,true,true,false,true,0x3f);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,false,
+                                   0,0x310,0,0x310,true,true,false,true,0xff);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
                                    0,0x310,3); // not aligned
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,

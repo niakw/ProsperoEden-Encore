@@ -118,10 +118,6 @@ msgstr "Tous les logiciels"
 msgid "Already up to date: {0}"
 msgstr "Déjà à jour : {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
-
 #: eden_services.cpp
 msgid "Another language"
 msgstr "Autre langue"
@@ -761,18 +757,6 @@ msgstr "Français"
 #: settings_store.h
 msgid "French (Canada)"
 msgstr "Français (Canada)"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Netteté FSR"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "NETTETÉ FSR"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "La netteté FSR agit uniquement avec AMD FSR. Réduisez-la si l’image paraît granuleuse ou trop accentuée."
 
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
@@ -1710,10 +1694,6 @@ msgstr "Simulation"
 msgid "Single Player"
 msgstr "Solo"
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "Options des logiciels : Triangle"
@@ -1925,14 +1905,6 @@ msgstr "Mises à jour de l'application Eden Encore, pas des jeux ni du firmware.
 #: pe/ui/browse.cpp
 msgid "UPDATES, DLC"
 msgstr "MISES À JOUR, DLC"
-
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Filtre de mise à l'échelle"
-
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "FILTRE DE MISE À L'ÉCHELLE"
 
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
@@ -2154,5 +2126,150 @@ msgstr "Téléchargement et vérification de la mise à jour PS5..."
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "Mises à jour indisponibles sur cet appareil."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1 : EASU agrandit l'image ; RCAS ajoute de la netteté. Très utile en dessous de la résolution de sortie TV."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Automatique"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Bilinéaire : rapide et doux. Idéal lorsque le rendu du jeu est déjà proche de la résolution du téléviseur."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Choisissez un paramètre ; son effet est expliqué ci-dessous."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA : lissage léger des bords en un seul passage. Il peut adoucir légèrement le texte et les détails fins."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Jeu par défaut"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Le plus proche : conserve les bords des pixels durs, avec des marches d'escalier visibles. Idéal pour le pixel art, pas pour la plupart des jeux 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Désactivé : pas de lissage des bords. Le plus rapide, mais les lignes diagonales peuvent paraître irrégulières."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Seul AMD FSR 1 utilise ce pourcentage. Commencez à 50 %. Augmentez doucement pour plus de détails ; réduire si les bords scintillent ou présentent des halos."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra : lissage des bords multi-passes de haute qualité. Des contours plus clairs mais plus de travail GPU que FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "FILTRAGE DES TEXTURES"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Filtrage des textures"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Le filtrage des textures maintient les sols et les surfaces éloignés plus clairs selon un angle ; une anisotropie plus élevée utilise plus de bande passante GPU."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "AMÉLIORATION"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Mise à l'échelle"
+
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "La génération de trames nécessite Vulkan. Sélectionnez Vulkan pour activer cette option."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Cette option nécessite Vulkan. OpenGL ne peut pas générer de trames supplémentaires ; le changer n'aurait aucun effet."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ nécessite Vulkan. Choisis Vulkan ou un autre anticrénelage."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+ : recherche étendue des contours. Lisse davantage certains escaliers, mais peut adoucir les textures. Compare avec SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inactif : cette méthode haut de gamme ne prend pas en charge le curseur de netteté. Utilisez FSR 1 ou SGSR avec Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos : reconstruction nette d'une image mise à l'échelle. Les détails fins peuvent paraître plus clairs, mais les bords peuvent former des halos lumineux."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge : mise à niveau Qualcomm orientée vers les bords avec un shader Vulkan différent. Comparez les détails fins et les halos."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Netteté des bords SGSR : 0 % désactive l'intensité supplémentaire des bords, 50 % est équilibré, 100 % est le plus fort. Réduisez les halos si nécessaire."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR a besoin de Vulkan. OpenGL utiliserait silencieusement Bilinéaire ; sélectionnez Vulkan ou une autre méthode haut de gamme."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR : mise à l'échelle spatiale Qualcomm à l'aide d'un shader Vulkan séparé. Essayez-le lorsque FSR 1 semble mou."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Netteté"
+
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubique : plus net que le bilinéaire, mais peut créer des halos. Le réglage de netteté n'a aucun effet ici."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "La netteté agit uniquement avec FSR 1 ou SGSR. Commence à 50 % et diminue si les contours scintillent ou présentent des halos."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "NETTETÉ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Le filtrage des textures rend plus nets les routes, sols et murs vus en biais. Commence à 4× ; 8×/16× utilisent plus de bande passante GPU. Contrairement à la netteté de l'image, ce réglage ne renforce pas toute l'image."
 )FRPO";
 }

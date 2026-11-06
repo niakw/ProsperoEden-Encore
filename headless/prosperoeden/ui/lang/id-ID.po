@@ -2030,3 +2030,158 @@ msgstr "Pembuatan frame dapat memperhalus tampilan tanpa mempercepat game. Lossl
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Ruang publik (hanya lihat)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Daftar ruang (hanya lihat)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Bergabung ke ruang belum tersedia."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU memperbesar gambar; RCAS menambah ketajaman. Paling berguna di bawah resolusi keluaran TV."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Otomatis"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Bilinear: cepat dan lembut. Paling baik jika game sudah dirender mendekati resolusi TV."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Pilih pengaturan; pengaruhnya dijelaskan di bawah ini."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: penghalusan tepi yang ringan dalam satu gerakan. Ini dapat sedikit memperhalus teks dan detail halus."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Default permainan"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Terdekat: menjaga tepi piksel keras, dengan tangga yang terlihat. Terbaik untuk seni piksel, bukan sebagian besar game 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Mati: tidak ada penghalusan tepi. Paling cepat, namun garis diagonal mungkin terlihat bergerigi."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Hanya AMD FSR 1 yang menggunakan persentase ini. Mulai dari 50%. Tingkatkan secara perlahan untuk detailnya; kurangi jika tepinya berkilau atau menunjukkan lingkaran cahaya."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: penghalusan tepi multi-pass berkualitas tinggi. Kontur lebih jelas tetapi GPU bekerja lebih banyak daripada FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "PENYARINGAN TEKSTUR"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Pemfilteran tekstur"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Pemfilteran tekstur membuat tanah dan permukaan jauh lebih jelas pada suatu sudut; anisotropi yang lebih tinggi menggunakan lebih banyak bandwidth GPU."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "PENINGKATAN"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Peningkatan"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Pembuatan bingkai membutuhkan Vulkan. Pilih Vulkan untuk mengaktifkan opsi ini."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Opsi ini memerlukan Vulkan. OpenGL tidak dapat menghasilkan frame tambahan; mengubahnya tidak akan berpengaruh."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ membutuhkan Vulkan. Pilih Vulkan atau metode anti-aliasing lainnya."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: pencarian tepi yang diperluas. Dapat menghaluskan tepi yang lebih bergerigi namun dapat melembutkan tekstur. Bandingkan dengan SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Tidak aktif: metode kelas atas ini tidak mendukung penggeser ketajaman. Gunakan FSR 1 atau SGSR dengan Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: rekonstruksi tajam gambar berskala. Detail halus mungkin terlihat lebih jelas, namun tepinya dapat membentuk lingkaran cahaya terang."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Qualcomm kelas atas yang diarahkan ke tepi dengan shader Vulkan yang berbeda. Bandingkan detail halus dan lingkaran cahaya."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Ketajaman tepi SGSR: 0% menonaktifkan intensitas tepi ekstra, 50% seimbang, 100% terkuat. Kurangi lingkaran cahaya jika diperlukan."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR membutuhkan Vulkan. OpenGL akan menggunakan Bilinear secara diam-diam; pilih Vulkan atau metode kelas atas lainnya."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm spasial kelas atas menggunakan shader Vulkan terpisah. Dicoba saat FSR 1 terlihat empuk."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Ketajaman"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bikubik: lebih tajam dari bilinear, namun dapat menghasilkan tepi yang terang. Penggeser ketajaman tidak berlaku."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Ketajaman gambar hanya mempengaruhi FSR 1 dan SGSR. Mulailah dari 50% dan kurangi jika tepi halus berkilau atau menunjukkan lingkaran cahaya."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "KEAJAIBAN"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Pemfilteran tekstur mempertajam jalan, lantai, dan dinding jika dilihat dari sudut tertentu. Mulai dari 4x; 8x/16x menggunakan lebih banyak bandwidth GPU. Berbeda dengan ketajaman gambar, ini tidak mempertajam keseluruhan gambar."

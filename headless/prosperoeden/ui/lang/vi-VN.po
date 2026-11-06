@@ -2030,3 +2030,158 @@ msgstr "Tạo khung hình có thể giúp hiển thị mượt hơn mà không t
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Phòng công khai (chỉ xem)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Danh sách phòng (chỉ xem)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Chưa hỗ trợ tham gia phòng."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU phóng to hình ảnh; RCAS tăng thêm độ sắc nét. Hữu ích nhất dưới độ phân giải đầu ra TV."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Tự động"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Song tuyến: nhanh và mềm. Tốt nhất khi trò chơi đã hiển thị gần độ phân giải TV."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Chọn cài đặt; tác dụng của nó được giải thích dưới đây."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: làm mịn cạnh nhẹ chỉ trong một lần. Nó có thể làm mềm văn bản và các chi tiết nhỏ một chút."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Trò chơi mặc định"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Gần nhất: giữ các cạnh pixel cứng, có các bậc thang hiển thị. Tốt nhất cho nghệ thuật pixel, không phải hầu hết các trò chơi 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Tắt: không làm mịn cạnh. Nhanh nhất, nhưng các đường chéo có thể trông lởm chởm."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Chỉ AMD FSR 1 mới sử dụng tỷ lệ phần trăm này. Bắt đầu ở mức 50%. Tăng nhẹ nhàng cho chi tiết; giảm nếu các cạnh lung linh hoặc hiển thị quầng sáng."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: làm mịn cạnh đa đường chất lượng cao. Đường viền rõ ràng hơn nhưng GPU hoạt động nhiều hơn FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "LỌC KẾT CẤU"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Lọc kết cấu"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Lọc kết cấu giữ cho mặt đất ở xa và các bề mặt rõ ràng hơn ở một góc; tính bất đẳng hướng cao hơn sử dụng nhiều băng thông GPU hơn."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "NÂNG CẤP"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Nâng cấp"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Tạo khung cần Vulkan. Chọn Vulkan để kích hoạt tùy chọn này."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Tùy chọn này cần Vulkan. OpenGL không thể tạo thêm khung; thay đổi nó sẽ không có tác dụng."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ yêu cầu Vulkan. Chọn Vulkan hoặc một phương pháp khử răng cưa khác."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: tìm kiếm cạnh mở rộng. Có thể làm mịn các cạnh lởm chởm hơn nhưng có thể làm mềm kết cấu. So sánh với SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Không hoạt động: phương pháp nâng cao này không hỗ trợ thanh trượt độ sắc nét. Sử dụng FSR 1 hoặc SGSR với Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: tái tạo sắc nét hình ảnh được chia tỷ lệ. Chi tiết nhỏ có thể trông rõ ràng hơn nhưng các cạnh có thể tạo thành quầng sáng."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: nâng cấp Qualcomm hướng biên với bộ đổ bóng Vulkan khác. So sánh chi tiết đẹp và quầng sáng."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Độ sắc nét của cạnh SGSR: 0% vô hiệu hóa cường độ cạnh bổ sung, 50% là cân bằng, 100% là mạnh nhất. Giảm quầng sáng nếu cần."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR cần Vulkan. OpenGL sẽ âm thầm sử dụng Song tuyến tính; chọn Vulkan hoặc một phương pháp nâng cao khác."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Nâng cao không gian của Qualcomm bằng cách sử dụng bộ đổ bóng Vulkan riêng biệt. Hãy thử khi FSR 1 trông mềm mại."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Độ sắc nét"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: sắc nét hơn song tuyến tính, nhưng có thể tạo ra các cạnh sáng. Thanh trượt độ sắc nét không áp dụng."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Độ sắc nét của hình ảnh chỉ ảnh hưởng đến FSR 1 và SGSR. Bắt đầu ở mức 50% và giảm nó nếu các cạnh mịn lung linh hoặc hiển thị quầng sáng."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ĐỘ SẮC"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Lọc kết cấu làm sắc nét đường, sàn và tường khi nhìn ở một góc. Bắt đầu ở mức 4x; 8x/16x sử dụng nhiều băng thông GPU hơn. Không giống như độ sắc nét của hình ảnh, nó không làm sắc nét toàn bộ bức ảnh."

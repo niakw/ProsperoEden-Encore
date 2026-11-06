@@ -46,8 +46,12 @@ for old, new in pairs:
 
 cmake=(root/'headless/vulkan.cmake').read_text()
 assert 'renderer_vulkan/present/layer.cpp' in cmake
-assert '"${PORT_BUILD_DIR}/vulkan_present_layer.cpp"' in cmake
-assert cmake.count('"${PORT_BUILD_DIR}/vulkan_present_layer.cpp"') >= 2
+# The R24 source overlay supersedes the generated R328 layer file.
+# Keep the upstream R328 lifetime mock while accepting either real build.
+legacy = '"${PORT_BUILD_DIR}/vulkan_present_layer.cpp"'
+native_r24 = '"${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"'
+assert legacy in cmake or native_r24 in cmake
+assert cmake.count(legacy) >= 2 or cmake.count(native_r24) >= 1
 assert 'list(REMOVE_ITEM video_sources' in cmake
 
 def methods(text):

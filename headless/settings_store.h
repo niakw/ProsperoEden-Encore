@@ -37,6 +37,8 @@
 
 #include "button_mapping.h"
 #include "encore_overrides_generated.h"
+#include "encore_texture_profiles.h"
+#include "neural_video_policy.h"
 #include "encore_overrides_runtime.h"
 #include "storage_paths.h"
 #include "game_files.h"
@@ -56,10 +58,28 @@ inline constexpr const char* kResolutionLabels[] = {
     "4x (extreme memory)"};
 static_assert(std::size(kResolutionLabels) == std::size(kResolutionKeys));
 inline constexpr int kNativeResolution = 3;
-inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
-inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
-inline constexpr const char* kAntiAliasingKeys[] = {"none", "fxaa", "smaa"};
-inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA"};
+// Existing indices stable. SGSR options are native Vulkan only; Lanczos
+// uses the upstream window-adapt shader on Vulkan and OpenGL.
+inline constexpr const char* kUpscalingFilterKeys[] = {
+    "bilinear", "fsr", "bicubic", "nearest", "lanczos", "sgsr", "sgsr_edge",
+    "anime4k_3d", "anime4k_soft", "anime4k_denoise"};
+// These are spatial display filters, NOT FSR 3 temporal reconstruction.
+inline constexpr const char* kUpscalingFilterLabels[] = {
+    "Bilinear", "FSR 1", "Bicubic", "Nearest", "Lanczos", "SGSR", "SGSR Edge",
+    "A4K — Détails améliorés", "A4K — Image adoucie", "A4K — Image nettoyée"};
+// Keep existing indices stable; index 3 is a new Vulkan-only shader.
+// Preserve all previously persisted AA indices 0-3. Real forced samples
+// extend the same global/per-game AA field; no parallel experimental control.
+inline constexpr const char* kAntiAliasingKeys[] = {
+    "none", "fxaa", "smaa", "fxaa_quality",
+    "msaa_2x", "msaa_4x", "msaa_8x", "msaa_16x"};
+inline constexpr const char* kAntiAliasingLabels[] = {
+    "None", "FXAA", "SMAA Ultra", "FXAA+",
+    "MSAA 2x", "MSAA 4x", "MSAA 8x", "MSAA 16x"};
+// Real Eden Vulkan texture sampler anisotropy, separate from spatial upscaling,
+// frame generation and resolution. 0 uses Eden's automatic choice.
+inline constexpr const char* kTextureAnisotropyKeys[] = {
+    "automatic", "default", "2x", "4x", "8x", "16x"};
 // Settings > Video: the refresh rate of the output while a game runs. 120 Hz is asked of the
 // display (display_refresh.h); one that cannot show it stays at 60 Hz.
 inline constexpr const char* kRefreshKeys[] = {"60", "120"};
@@ -67,6 +87,14 @@ inline constexpr const char* kRefreshKeys[] = {"60", "120"};
 // Lossless Scaling LAST because it requires the user's Lossless.dll.
 // Keep persisted indices stable across releases; do not reorder separately.
 inline constexpr const char* kFrameGenerationKeys[] = {"off", "mihawkgen", "fsr3", "lsfg"};
+// Persisted model/intensity only: cannot activate NR until the graph works.
+// Stable persisted IDs; A4K is a NR engine, never a spatial upscaler.
+inline constexpr const char* kNeuralModeKeys[] = {
+    "off", "a4k_detail", "a4k_soft", "a4k_denoise",
+    "dlss_nr_original", "dlss_nr_compact"};
+inline constexpr const char* kNeuralModelKeys[] = {"original", "small"};
+inline constexpr const char* kNeuralModelLabels[] = {"Original", "Compact"};
+static_assert(std::size(kNeuralModelKeys) == std::size(kNeuralModelLabels));
 inline constexpr int kRefreshHz[] = {60, 120};
 // Settings > Video: the size of the picture the app puts out, for the menu and for a game (its
 // frame after the upscaling filter). The console scales it to what the TV shows.
@@ -108,8 +136,12 @@ struct Preferences {
     int upscaling_filter = EncoreOverrides::kGeneralProfiles[1].filter;
     int fsr_sharpness = EncoreOverrides::kGeneralProfiles[1].fsr_sharpness;
     int anti_aliasing = EncoreOverrides::kGeneralProfiles[1].anti_aliasing;
+    int texture_anisotropy = EncoreTextureProfiles::ForTitle(0, 1); // Recommended: 4x
     int refresh = EncoreOverrides::kGeneralProfiles[1].refresh;
     int frame_generation = 0; // Off, MihawkGen, FSR3, LSFG; method, not fake FPS
+    int neural_mode = NeuralVideo::kOff; // Six direct choices, Off default
+    int neural_model = 0; // Original or Small; staged until graph verification
+    int neural_strength = 100; // 0-100% independent of FSR/A4K
     int output = EncoreOverrides::kGeneralProfiles[1].output;
     int performance_profile = 1;         // 0 Minimum, 1 Recommended, 2 High, 3 Ultra, 4 Custom
     int controller_layout = 0;            // 0 PlayStation, 1 Switch; custom status is derived from mapping
@@ -346,15 +378,51 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     if (fsr_sharpness >= 0 && fsr_sharpness <= 100) result.fsr_sharpness = fsr_sharpness;
     result.anti_aliasing = KeyIndex(Settings::String(document, Json::json_pointer("/video/anti_aliasing")),
                                     kAntiAliasingKeys, int(std::size(kAntiAliasingKeys)), result.anti_aliasing);
+    result.texture_anisotropy = KeyIndex(
+        Settings::String(document, Json::json_pointer("/video/texture_anisotropy")),
+        kTextureAnisotropyKeys, int(std::size(kTextureAnisotropyKeys)),
+        result.texture_anisotropy);
     result.refresh = KeyIndex(Settings::String(document, Json::json_pointer("/video/refresh_rate")),
                               kRefreshKeys, int(std::size(kRefreshKeys)), result.refresh);
     result.frame_generation = KeyIndex(Settings::String(document, Json::json_pointer("/video/frame_generation")),
                                        kFrameGenerationKeys, int(std::size(kFrameGenerationKeys)), 0);
+    const auto mode_key = Settings::String(
+        document,Json::json_pointer("/video/neural_rendering"));
+    const auto legacy_model = KeyIndex(
+        Settings::String(document,Json::json_pointer("/video/neural_model")),
+        kNeuralModelKeys,int(std::size(kNeuralModelKeys)),0);
+    result.neural_mode = mode_key=="rdna2" ?
+        (legacy_model==0?NeuralVideo::kDlssOriginal:NeuralVideo::kDlssCompact) :
+        KeyIndex(mode_key,kNeuralModeKeys,int(std::size(kNeuralModeKeys)),0);
+    // Backward compatibility: the old three A4K filters now belong to NR.
+    if(NeuralVideo::IsA4kFilter(result.upscaling_filter)){
+        if(mode_key.empty())result.neural_mode=
+            NeuralVideo::ModeFromLegacyA4kFilter(result.upscaling_filter);
+        result.upscaling_filter=0;
+    }
+    if(result.neural_mode!=NeuralVideo::kOff &&
+       NeuralVideo::CheckSelectable(
+           result.neural_mode,
+           result.backend==GraphicsBackend::Vulkan?1:0,
+           result.upscaling_filter,result.anti_aliasing,
+           result.frame_generation)!=NeuralVideo::Reason::Available)
+        result.neural_mode=NeuralVideo::kOff;
+    result.neural_model = KeyIndex(Settings::String(document, Json::json_pointer("/video/neural_model")),
+                                    kNeuralModelKeys, int(std::size(kNeuralModelKeys)), 0);
+    const int neural_strength = Settings::Int(document, Json::json_pointer("/video/neural_strength"), 100);
+    if (neural_strength >= 0 && neural_strength <= 100) result.neural_strength = neural_strength;
     result.output = KeyIndex(Settings::String(document, Json::json_pointer("/video/output_resolution")),
                              kOutputKeys, int(std::size(kOutputKeys)), result.output);
     // The profile label is derived from the actual settings. This migrates older three-profile
     // Encore configs honestly: a combination that no longer matches a current authored tier is Custom.
     result.performance_profile = DetectPerformanceProfile(result);
+    // Migration: older saved profiles lacked a sampler level. Preserve their
+    // authored preset rather than reclassifying every old High/Ultra as Custom.
+    if (!document.contains(Json::json_pointer("/video/texture_anisotropy")) &&
+        result.performance_profile >= 0 &&
+        result.performance_profile < EncoreOverrides::kAuthoredProfileCount)
+        result.texture_anisotropy =
+            EncoreTextureProfiles::ForTitle(0, result.performance_profile);
     const Json::json_pointer global_layout("/controls/layout");
     const Json::json_pointer global_mapping("/controls/mapping");
     const std::string saved_layout = Settings::String(document, global_layout);
@@ -425,8 +493,19 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
         value.fsr_sharpness < 0 || value.fsr_sharpness > 100 ||
         value.anti_aliasing < 0 || value.anti_aliasing >= int(std::size(kAntiAliasingKeys)) ||
+        value.texture_anisotropy < 0 ||
+        value.texture_anisotropy >= int(std::size(kTextureAnisotropyKeys)) ||
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < 0 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
+        value.neural_mode < 0 || value.neural_mode >= int(std::size(kNeuralModeKeys)) ||
+        value.upscaling_filter > 6 ||
+        (value.neural_mode != NeuralVideo::kOff &&
+          NeuralVideo::CheckSelectable(value.neural_mode,
+            value.backend==GraphicsBackend::Vulkan?1:0,
+            value.upscaling_filter,value.anti_aliasing,
+            value.frame_generation)!=NeuralVideo::Reason::Available) ||
+        value.neural_model < 0 || value.neural_model >= int(std::size(kNeuralModelKeys)) ||
+        value.neural_strength < 0 || value.neural_strength > 100 ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
         value.performance_profile < 0 || value.performance_profile >= int(std::size(kPerformanceProfileKeys)) ||
         value.controller_layout < 0 || value.controller_layout >= int(std::size(kControllerLayoutKeys)) ||
@@ -443,8 +522,13 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["upscaling_filter"] = kUpscalingFilterKeys[value.upscaling_filter];
     document["video"]["fsr_sharpness"] = value.fsr_sharpness;
     document["video"]["anti_aliasing"] = kAntiAliasingKeys[value.anti_aliasing];
+    document["video"]["texture_anisotropy"] =
+        kTextureAnisotropyKeys[value.texture_anisotropy];
     document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
     document["video"]["frame_generation"] = kFrameGenerationKeys[value.frame_generation];
+    document["video"]["neural_rendering"] = kNeuralModeKeys[value.neural_mode];
+    document["video"].erase("neural_model"); // now encoded by neural_rendering
+    document["video"]["neural_strength"] = value.neural_strength;
     document["video"]["output_resolution"] = kOutputKeys[value.output];
     document["video"]["performance_profile"] = kPerformanceProfileKeys[value.performance_profile];
     document["audio"]["volume"] = value.volume;
@@ -559,8 +643,12 @@ struct GameSettings {
     int upscaling_filter = -1;  // index into kUpscalingFilterKeys
     int fsr_sharpness = -1;     // 0-100; -1 follows global
     int anti_aliasing = -1;     // index into kAntiAliasingKeys
+    int texture_anisotropy = -1; // -1 inherits global, 0 Automatic ... 5 16x
     int refresh = -1;           // index into kRefreshKeys
     int frame_generation = -1; // -1 inherits global, 0=off, 1=MihawkGen, 2=FSR3, 3=LSFG
+    int neural_mode = -1; // Inherit, Off, three A4K, two DLSS-NR
+    int neural_model = -1; // -1 inherits global; 0 Original, 1 Small
+    int neural_strength = -1; // -1 inherits global, 0-100
     int performance_profile = -1; // index into kPerformanceProfileKeys
     int controller_layout = -1; // -1 follows global, 0 PlayStation, 1 Switch
     bool own_mapping = false;
@@ -587,9 +675,29 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     const int fsr_sharpness = Settings::Int(document, Json::json_pointer(base + "/fsr_sharpness"), -1);
     result.fsr_sharpness = fsr_sharpness >= 0 && fsr_sharpness <= 100 ? fsr_sharpness : -1;
     result.anti_aliasing = KeyIndex(key("anti_aliasing"), kAntiAliasingKeys, int(std::size(kAntiAliasingKeys)), -1);
+    result.texture_anisotropy = KeyIndex(
+        key("texture_anisotropy"), kTextureAnisotropyKeys,
+        int(std::size(kTextureAnisotropyKeys)), -1);
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
     result.frame_generation = KeyIndex(key("frame_generation"), kFrameGenerationKeys,
                                        int(std::size(kFrameGenerationKeys)), -1);
+    const auto nr_key=key("neural_rendering");
+    const int legacy_model=KeyIndex(
+        key("neural_model"),kNeuralModelKeys,
+        int(std::size(kNeuralModelKeys)),0);
+    result.neural_mode=nr_key=="rdna2"?
+        (legacy_model==0?NeuralVideo::kDlssOriginal:NeuralVideo::kDlssCompact):
+        KeyIndex(nr_key,kNeuralModeKeys,int(std::size(kNeuralModeKeys)),-1);
+    if(NeuralVideo::IsA4kFilter(result.upscaling_filter)){
+        if(nr_key.empty())result.neural_mode=
+            NeuralVideo::ModeFromLegacyA4kFilter(result.upscaling_filter);
+        result.upscaling_filter=0;
+    }
+    result.neural_model = KeyIndex(key("neural_model"), kNeuralModelKeys,
+                                    int(std::size(kNeuralModelKeys)), -1);
+    const int neural_strength = Settings::Int(
+        document, Json::json_pointer(base + "/neural_strength"), -1);
+    result.neural_strength = neural_strength >= 0 && neural_strength <= 100 ? neural_strength : -1;
     result.performance_profile = PerformanceProfileIndex(key("performance_profile"), -1);
     const std::string saved_game_layout = key("controller_layout");
     if (saved_game_layout == "switch" || saved_game_layout == "nintendo")
@@ -628,8 +736,17 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.upscaling_filter < -1 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
         value.fsr_sharpness < -1 || value.fsr_sharpness > 100 ||
         value.anti_aliasing < -1 || value.anti_aliasing >= int(std::size(kAntiAliasingKeys)) ||
+        value.texture_anisotropy < -1 ||
+        value.texture_anisotropy >= int(std::size(kTextureAnisotropyKeys)) ||
         value.refresh < -1 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < -1 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
+        value.neural_mode < -1 || value.neural_mode >= int(std::size(kNeuralModeKeys)) ||
+        value.upscaling_filter > 6 ||
+        (value.neural_mode > NeuralVideo::kOff &&
+         (value.renderer==0 || value.upscaling_filter>0 ||
+          value.anti_aliasing>=4 || value.frame_generation>0)) ||
+        value.neural_model < -1 || value.neural_model >= int(std::size(kNeuralModelKeys)) ||
+        value.neural_strength < -1 || value.neural_strength > 100 ||
         value.performance_profile < -1 ||
         value.performance_profile >= int(std::size(kPerformanceProfileKeys)) ||
         value.controller_layout < -1 ||
@@ -652,8 +769,13 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     if (value.fsr_sharpness < 0) game.erase("fsr_sharpness");
     else game["fsr_sharpness"] = value.fsr_sharpness;
     store("anti_aliasing", value.anti_aliasing, kAntiAliasingKeys);
+    store("texture_anisotropy", value.texture_anisotropy, kTextureAnisotropyKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
     store("frame_generation", value.frame_generation, kFrameGenerationKeys);
+    store("neural_rendering", value.neural_mode, kNeuralModeKeys);
+    game.erase("neural_model"); // legacy, encoded by direct mode
+    if (value.neural_strength < 0) game.erase("neural_strength");
+    else game["neural_strength"] = value.neural_strength;
     store("performance_profile", value.performance_profile, kPerformanceProfileKeys);
     store("controller_layout", value.controller_layout, kControllerLayoutKeys);
     if (value.own_mapping) {

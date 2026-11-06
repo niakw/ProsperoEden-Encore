@@ -2030,3 +2030,158 @@ msgstr "การสร้างเฟรมช่วยให้ภาพลื
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "ห้องสาธารณะ (ดูอย่างเดียว)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "รายการห้อง (ดูอย่างเดียว)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "ยังไม่รองรับการเข้าร่วมห้อง"
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU ขยายภาพ; RCAS เพิ่มความคม มีประโยชน์มากที่สุดที่ต่ำกว่าความละเอียดเอาท์พุตทีวี"
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "อัตโนมัติ"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Bilinear: รวดเร็วและนุ่มนวล ดีที่สุดเมื่อเกมเรนเดอร์ใกล้กับความละเอียดของทีวีอยู่แล้ว"
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "เลือกการตั้งค่า; ผลของมันจะอธิบายไว้ด้านล่าง"
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: ปรับขอบให้เรียบน้ำหนักเบาในครั้งเดียว อาจทำให้ข้อความและรายละเอียดเล็กลงเล็กน้อย"
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "ค่าเริ่มต้นของเกม"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "ที่ใกล้ที่สุด: เก็บขอบพิกเซลแบบแข็งไว้ ​​โดยมีขั้นบันไดที่มองเห็นได้ ดีที่สุดสำหรับงานศิลปะพิกเซล ไม่ใช่เกม 3D ส่วนใหญ่"
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "ปิด: ไม่มีการปรับขอบให้เรียบ เร็วที่สุดแต่เส้นทแยงมุมอาจดูเป็นรอยหยัก"
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "มีเพียง AMD FSR 1 เท่านั้นที่ใช้เปอร์เซ็นต์นี้ เริ่มต้นที่ 50% เพิ่มขึ้นอย่างนุ่มนวลเพื่อดูรายละเอียด ลดลงหากขอบมีแสงระยิบระยับหรือแสดงรัศมี"
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: การปรับขอบหลายรอบคุณภาพสูงให้เรียบ รูปทรงที่ชัดเจนกว่าแต่ใช้งาน GPU ได้ดีกว่า FXAA"
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "การกรองพื้นผิว"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "การกรองพื้นผิว"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "การกรองพื้นผิวช่วยให้พื้นและพื้นผิวที่อยู่ห่างไกลชัดเจนยิ่งขึ้นในมุมหนึ่ง แอนไอโซโทรปีที่สูงขึ้นจะใช้แบนด์วิดท์ GPU มากกว่า"
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "การปรับขนาด"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "การเพิ่มสเกล"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "การสร้างเฟรมจำเป็นต้องมีวัลแคน เลือกวัลแคนเพื่อเปิดใช้งานตัวเลือกนี้"
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "ตัวเลือกนี้ต้องการวัลแคน OpenGL ไม่สามารถสร้างเฟรมเพิ่มเติมได้ การเปลี่ยนแปลงมันจะไม่มีผล"
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ ต้องใช้วัลแคน เลือก Vulkan หรือวิธีการต่อต้านนามแฝงอื่น"
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: การค้นหาขอบแบบขยาย สามารถทำให้ขอบหยักเรียบขึ้น แต่อาจทำให้พื้นผิวนุ่มลง Compare with SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "ไม่ได้ใช้งาน: วิธีการเพิ่มระดับนี้ไม่รองรับแถบเลื่อนความคมชัด ใช้ FSR 1 หรือ SGSR กับวัลแคน"
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: การสร้างภาพที่ปรับขนาดได้อย่างคมชัด รายละเอียดเล็กๆ น้อยๆ อาจดูชัดเจนขึ้น แต่ขอบก็สามารถสร้างรัศมีที่สว่างได้"
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: ยกระดับ Qualcomm แบบเน้นขอบด้วย Vulkan shader ที่แตกต่างกัน เปรียบเทียบรายละเอียดและรัศมีที่ละเอียด"
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "ความคมชัดของขอบ SGSR: 0% ปิดใช้ความเข้มของขอบพิเศษ, 50% มีความสมดุล, 100% คือแข็งแกร่งที่สุด ลดรัศมีหากจำเป็น"
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR ต้องการวัลแคน OpenGL จะใช้ Bilinear อย่างเงียบๆ เลือก Vulkan หรือวิธีอื่นที่หรูหรา"
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: การยกระดับเชิงพื้นที่ของ Qualcomm โดยใช้ Vulkan shader แยกต่างหาก ลองใช้เมื่อ FSR 1 ดูนุ่มนวล"
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "ความคม"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: คมชัดกว่า Bilinear แต่อาจสร้างขอบที่สว่าง แถบเลื่อนความคมชัดใช้ไม่ได้"
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "ความคมชัดของภาพส่งผลต่อ FSR 1 และ SGSR เท่านั้น เริ่มต้นที่ 50% และลดขนาดลงหากขอบบาง ๆ มีแสงระยิบระยับหรือแสดงรัศมี"
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ความคมชัด"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "การกรองพื้นผิวทำให้ถนน พื้น และผนังคมชัดเมื่อมองจากมุมหนึ่ง เริ่มต้นที่ 4x; 8x/16x ใช้แบนด์วิธ GPU มากขึ้น ต่างจากความคมชัดของภาพตรงที่มันไม่ได้ทำให้ภาพทั้งหมดคมชัดขึ้น"

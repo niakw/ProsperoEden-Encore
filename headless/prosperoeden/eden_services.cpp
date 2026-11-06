@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "eden_services.h"
+#include <webp/decode.h>
+#include <webp/encode.h>
 #ifdef PS5_NATIVE
 #include "ps5_profile_avatar_staging.hpp"
 #endif
@@ -344,19 +346,19 @@ std::uint64_t ResolveTitleId(const std::string& path, const std::string& file) {
 std::string NlibHeroPath(std::uint64_t title_id) {
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
-    return Eden::CoversDir() + "/hero-" + id + ".tga";
+    return Eden::CoversDir() + "/hero-" + id + ".webp";
 }
 
 std::string NlibIconPath(std::uint64_t title_id) {
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
-    return Eden::CoversDir() + "/nlib-icon-" + id + ".tga";
+    return Eden::CoversDir() + "/nlib-icon-" + id + ".webp";
 }
 
 std::string NlibScreenshotPath(std::uint64_t title_id, int index) {
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
-    return Eden::CoversDir() + "/screen-" + id + "-" + std::to_string(index) + ".tga";
+    return Eden::CoversDir() + "/screen-" + id + "-" + std::to_string(index) + ".webp";
 }
 
 
@@ -406,72 +408,66 @@ bool AtomicWriteText(const std::string& path, const std::string& body) {
     return true;
 }
 
-bool WriteJpegTga(const std::string& encoded, const std::string& output,
-                  bool tall_case = false) {
-    // Read JPEG dimensions BEFORE allocation. Nlib artwork is fetched in
-    // parallel, so malformed/oversized JPEGs must not cause a multi-image
-    // transient allocation spike on a memory-constrained console.
+std::mutex& ArtworkCodecMutex() {
+    static std::mutex mutex;
+    return mutex;
+}
+
+bool WriteJpegWebP(const std::string& encoded, const std::string& output,
+                   bool tall_case = false) {
+    // JPEG/PNG source -> WebP directly, one lossy encode at quality 80.
+    // Runs only on the bounded network worker; never during GL navigation.
     if (encoded.empty() || encoded.size() > (16u << 20)) return false;
-    int width = 0;
-    int height = 0;
-    int channels = 0;
-    const bool dimensions_read = stbi_info_from_memory(
-            reinterpret_cast<const unsigned char*>(encoded.data()),
-            static_cast<int>(encoded.size()), &width, &height, &channels);
-    const bool standard_oversized = width > 4096 || height > 2160;
-    if (!dimensions_read || width <= 0 || height <= 0 ||
-        (standard_oversized && !tall_case) ||
-        (tall_case && (width > 4096 || height > 4096)) ||
-        static_cast<std::uint64_t>(width) * static_cast<std::uint64_t>(height) > 3840u * 2160u)
+    int width = 0, height = 0, channels = 0;
+    if (!stbi_info_from_memory(
+            reinterpret_cast<const stbi_uc*>(encoded.data()), static_cast<int>(encoded.size()),
+            &width, &height, &channels) ||
+        width <= 0 || height <= 0 || width > 4096 || height > 4096 ||
+        (!tall_case && height > 2160) ||
+        static_cast<std::uint64_t>(width) * height > 3840u * 2160u)
         return false;
-
-    unsigned char* rgba = stbi_load_from_memory(
-        reinterpret_cast<const unsigned char*>(encoded.data()), static_cast<int>(encoded.size()),
+    // Keep expensive 1080p/box encodes serial while HTTP downloads stay
+    // concurrent. This bounds peak PS5 RAM usage across background jobs.
+    std::scoped_lock codec_lock(ArtworkCodecMutex());
+    stbi_uc* rgba = stbi_load_from_memory(
+        reinterpret_cast<const stbi_uc*>(encoded.data()), static_cast<int>(encoded.size()),
         &width, &height, &channels, 4);
-    if (!rgba || width <= 0 || height <= 0 || width > 4096 || height > 4096) {
-        stbi_image_free(rgba);
-        return false;
-    }
-
-    std::FILE* file = std::fopen(output.c_str(), "wb");
-    if (!file) {
-        stbi_image_free(rgba);
-        return false;
-    }
-
-    // Case scans are unusually tall. Store only the resolution needed by
-    // the launcher: uncompressed TGA stays under 13 MiB, even for a 4K source.
-    // Normal Nlib images keep their previous pixel-for-pixel behaviour.
+    if (!rgba) return false;
     const float scale = tall_case ?
         std::min({1.0f, 1500.0f / width, 2100.0f / height}) : 1.0f;
-    const int output_width = std::max(1, static_cast<int>(width * scale));
-    const int output_height = std::max(1, static_cast<int>(height * scale));
-    unsigned char header[18]{};
-    header[2] = 2;
-    header[12] = static_cast<unsigned char>(output_width);
-    header[13] = static_cast<unsigned char>(output_width >> 8);
-    header[14] = static_cast<unsigned char>(output_height);
-    header[15] = static_cast<unsigned char>(output_height >> 8);
-    header[16] = 32;
-    header[17] = 0x28; // top-left origin + 8 alpha bits
-    bool ok = std::fwrite(header, 1, sizeof(header), file) == sizeof(header);
-    std::vector<unsigned char> row(static_cast<std::size_t>(output_width) * 4);
-    for (int y = 0; ok && y < output_height; ++y) {
-        const int source_y = y * height / output_height;
-        const unsigned char* source = rgba + static_cast<std::size_t>(source_y) *
-                                               static_cast<std::size_t>(width) * 4;
-        for (int x = 0; x < output_width; ++x) {
-            const std::size_t offset = static_cast<std::size_t>(x * width / output_width) * 4;
-            row[4 * x + 0] = source[offset + 2];
-            row[4 * x + 1] = source[offset + 1];
-            row[4 * x + 2] = source[offset + 0];
-            row[4 * x + 3] = source[offset + 3];
+    const int w = std::max(1, static_cast<int>(width * scale));
+    const int h = std::max(1, static_cast<int>(height * scale));
+    const std::uint8_t* pixels = rgba;
+    std::vector<std::uint8_t> resized;
+    if (w != width || h != height) {
+        resized.resize(static_cast<std::size_t>(w) * h * 4u);
+        for (int y = 0; y < h; ++y) {
+            const auto* row = rgba + static_cast<std::size_t>(y * height / h) * width * 4u;
+            auto* dst = resized.data() + static_cast<std::size_t>(y) * w * 4u;
+            for (int x = 0; x < w; ++x) {
+                const auto* src = row + static_cast<std::size_t>(x * width / w) * 4u;
+                std::memcpy(dst + static_cast<std::size_t>(x) * 4u, src, 4u);
+            }
         }
-        ok = std::fwrite(row.data(), 1, row.size(), file) == row.size();
+        pixels = resized.data();
     }
-    ok = std::fclose(file) == 0 && ok;
+    std::uint8_t* compressed = nullptr;
+    const std::size_t length = WebPEncodeRGBA(pixels, w, h, w * 4, 80.0f, &compressed);
     stbi_image_free(rgba);
-    return ok;
+    if (!length || !compressed || length > (16u << 20)) {
+        WebPFree(compressed);
+        return false;
+    }
+    int checked_w = 0, checked_h = 0;
+    const bool valid = WebPGetInfo(compressed, length, &checked_w, &checked_h) &&
+                       checked_w == w && checked_h == h;
+    std::FILE* file = valid ? std::fopen(output.c_str(), "wb") : nullptr;
+    if (!file) { WebPFree(compressed); return false; }
+    const bool written = std::fwrite(compressed, 1, length, file) == length;
+    const bool closed = std::fclose(file) == 0;
+    WebPFree(compressed);
+    if (!written || !closed) { (void)std::remove(output.c_str()); return false; }
+    return true;
 }
 
 std::string NlibPlayersPath(std::uint64_t title_id) {
@@ -480,7 +476,7 @@ std::string NlibPlayersPath(std::uint64_t title_id) {
     return Eden::CoversDir() + "/players-" + id + ".txt";
 }
 
-// Nlib JPEGs are converted into uncompressed BGRA TGA before being cached.
+// The old uncompressed BGRA TGA cache remains readable during WebP migration.
 // A filename alone is not sufficient: incomplete/old files previously showed
 // permanently empty tiles and prevented download retries. Validate the header
 // and complete payload without allocating or decoding image buffers.
@@ -507,10 +503,126 @@ bool ValidNlibTga(const std::string& path) {
     return static_cast<std::uint64_t>(info.st_size) >= bytes;
 }
 
+bool ValidNlibWebP(const std::string& path, int* out_width = nullptr,
+                   int* out_height = nullptr) {
+    struct stat info{};
+    if (stat(path.c_str(), &info) != 0 || !S_ISREG(info.st_mode) ||
+        info.st_size < 30 || info.st_size > (16LL << 20)) return false;
+    std::FILE* file = std::fopen(path.c_str(), "rb");
+    if (!file) return false;
+    unsigned char header[256]{};
+    const auto count = std::fread(header, 1,
+                    std::min(sizeof(header), static_cast<std::size_t>(info.st_size)), file);
+    std::fclose(file);
+    if (count < 30 || std::memcmp(header, "RIFF", 4) != 0 ||
+        std::memcmp(header + 8, "WEBP", 4) != 0) return false;
+    const std::uint64_t declared = 8ull + static_cast<std::uint32_t>(header[4]) +
+        (static_cast<std::uint32_t>(header[5]) << 8) +
+        (static_cast<std::uint32_t>(header[6]) << 16) +
+        (static_cast<std::uint32_t>(header[7]) << 24);
+    if (declared != static_cast<std::uint64_t>(info.st_size)) return false;
+    int width = 0, height = 0;
+    if (!WebPGetInfo(header, count, &width, &height) ||
+        width <= 0 || height <= 0 || width > 4096 || height > 4096 ||
+        static_cast<std::uint64_t>(width) * height > 3840u * 2160u)
+        return false;
+    if (out_width) *out_width = width;
+    if (out_height) *out_height = height;
+    return true;
+}
+
+// One-time offline migration, only for artwork known to be generated by
+// Encore. A user's own retail-scans must never be silently deleted.
+// No HTTP round-trip and no UI-thread I/O. A failed encode keeps legacy TGA.
+bool MigrateGeneratedTga(const std::string& preferred, bool require_receipt) {
+    if (!preferred.ends_with(".webp")) return false;
+    const std::string legacy = preferred.substr(0, preferred.size() - 5) + ".tga";
+    const std::string old_receipt = legacy + ".source";
+    std::string provenance;
+    if (require_receipt) {
+        std::ifstream receipt(old_receipt);
+        if (!receipt || !std::getline(receipt, provenance) || provenance.empty())
+            return false;
+    }
+    if (!ValidNlibTga(legacy)) return false;
+
+    // Restrict the migration to our own uncompressed top-left BGRA TGA
+    // contract. A manually edited, RLE, indexed or inverted asset is kept.
+    std::scoped_lock codec_lock(ArtworkCodecMutex());
+    struct stat info{};
+    if (stat(legacy.c_str(), &info) != 0 || !S_ISREG(info.st_mode) ||
+        info.st_size < 18 || info.st_size > 18LL + 3840LL * 2160 * 4) return false;
+    std::FILE* input = std::fopen(legacy.c_str(), "rb");
+    if (!input) return false;
+    std::uint8_t header[18]{};
+    const bool header_ok = std::fread(header, 1, 18, input) == 18;
+    const unsigned w = static_cast<unsigned>(header[12]) |
+                      (static_cast<unsigned>(header[13]) << 8);
+    const unsigned h = static_cast<unsigned>(header[14]) |
+                      (static_cast<unsigned>(header[15]) << 8);
+    const std::size_t payload = static_cast<std::size_t>(w) * h * 4u;
+    const bool is_generated = header_ok && header[0] == 0 && header[1] == 0 &&
+        header[2] == 2 && header[16] == 32 && header[17] == 0x28 &&
+        w > 0 && h > 0 && w <= 4096 && h <= 2160 &&
+        payload <= static_cast<std::size_t>(3840u) * 2160u * 4u &&
+        static_cast<std::uint64_t>(info.st_size) == 18u + payload;
+    if (!is_generated) { std::fclose(input); return false; }
+
+    if (!ValidNlibWebP(preferred)) {
+        std::vector<std::uint8_t> bgra(payload);
+        const bool read = std::fread(bgra.data(), 1, bgra.size(), input) == bgra.size();
+        std::fclose(input);
+        if (!read) return false;
+        std::uint8_t* encoded = nullptr;
+        const std::size_t size = WebPEncodeBGRA(
+            bgra.data(), static_cast<int>(w), static_cast<int>(h),
+            static_cast<int>(w * 4), 80.0f, &encoded);
+        if (!size || !encoded || size > (16u << 20)) {
+            WebPFree(encoded);
+            return false;
+        }
+        const std::string staged = preferred + ".new";
+        std::FILE* output = std::fopen(staged.c_str(), "wb");
+        bool written = output && std::fwrite(encoded, 1, size, output) == size;
+        if (output) written = std::fclose(output) == 0 && written;
+        WebPFree(encoded);
+        if (!written || !ValidNlibWebP(staged) ||
+            std::rename(staged.c_str(), preferred.c_str()) != 0) {
+            (void)std::remove(staged.c_str());
+            return false;
+        }
+    } else {
+        std::fclose(input);
+    }
+    // Preserve edition/region receipts before releasing source bytes.
+    if (require_receipt && !IsFile(preferred + ".source") &&
+        !AtomicWriteText(preferred + ".source", provenance + "\n")) return true;
+    if (ValidNlibWebP(preferred)) {
+        (void)std::remove(legacy.c_str());
+        if (require_receipt) (void)std::remove(old_receipt.c_str());
+    }
+    return true;
+}
+
+bool ValidCachedArtwork(const std::string& path) {
+    if (path.ends_with(".webp")) return ValidNlibWebP(path);
+    return ValidNlibTga(path);
+}
+
+// Keep legacy TGA usable until a validated WebP replacement arrives.
+std::string AvailableArtwork(const std::string& preferred) {
+    if (ValidCachedArtwork(preferred)) return preferred;
+    if (preferred.ends_with(".webp")) {
+        const std::string legacy = preferred.substr(0, preferred.size() - 5) + ".tga";
+        if (ValidNlibTga(legacy)) return legacy;
+    }
+    return {};
+}
+
 std::string CachedNlibHero(std::uint64_t title_id) {
     if (title_id == 0) return {};
     const std::string path = NlibHeroPath(title_id);
-    return ValidNlibTga(path) ? path : std::string{};
+    return AvailableArtwork(path);
 }
 
 int CachedNlibPlayers(std::uint64_t title_id) {
@@ -556,7 +668,7 @@ struct NlibEnrichment {
 std::string CachedNlibIcon(std::uint64_t title_id) {
     if (title_id == 0) return {};
     const std::string path = NlibIconPath(title_id);
-    return ValidNlibTga(path) ? path : std::string{};
+    return AvailableArtwork(path);
 }
 
 std::vector<std::string> CachedNlibScreens(std::uint64_t title_id) {
@@ -564,7 +676,7 @@ std::vector<std::string> CachedNlibScreens(std::uint64_t title_id) {
     if (title_id == 0) return screens;
     for (int index = 1; index <= 3; ++index) {
         const std::string path = NlibScreenshotPath(title_id, index);
-        if (ValidNlibTga(path)) screens.push_back(path);
+        if (auto available = AvailableArtwork(path); !available.empty()) screens.push_back(available);
     }
     return screens;
 }
@@ -603,7 +715,7 @@ void ApplyNlibMetadata(const nlohmann::json& json, NlibEnrichment* result) {
 bool CacheNlibJpeg(const std::string& endpoint, const std::string& path,
                    std::size_t minimum_bytes = 1024,
                    const std::atomic<bool>* cancel = nullptr) {
-    // Cancellation avoids new network requests and expensive JPEG/PNG-to-TGA
+    // Cancellation avoids new network requests and expensive JPEG/PNG-to-WebP
     // conversion; an HTTP request already in flight must time out naturally.
     if (cancel && cancel->load(std::memory_order_acquire)) return false;
     const auto response = Common::Net::MakeRequest("https://api.nlib.cc", endpoint);
@@ -622,7 +734,7 @@ bool CacheNlibJpeg(const std::string& endpoint, const std::string& path,
     if (cancel && cancel->load(std::memory_order_acquire)) return false;
     (void)mkdir(Eden::CoversDir().c_str(), 0777);
     const std::string staged = path + ".new";
-    if (WriteJpegTga(body, staged) && std::rename(staged.c_str(), path.c_str()) == 0)
+    if (WriteJpegWebP(body, staged) && std::rename(staged.c_str(), path.c_str()) == 0)
         return true;
     (void)std::remove(staged.c_str());
     return false;
@@ -842,7 +954,7 @@ const BoxIndex& RetailCaseIndex() {
 std::string CaseFacePath(std::uint64_t title_id, const char* side) {
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
-    return Eden::CoversDir() + "/box-" + side + "-" + id + ".tga";
+    return Eden::CoversDir() + "/box-" + side + "-" + id + ".webp";
 }
 
 // Scenic images are actual LaunchBox screenshots/fanart, cached separately
@@ -853,7 +965,7 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
     for (int i = 1; i <= 3; ++i) {
         const std::string side = "scene-" + std::to_string(i);
         const std::string path = CaseFacePath(title_id, side.c_str());
-        if (ValidNlibTga(path)) scenes.push_back(path);
+        if (auto available = AvailableArtwork(path); !available.empty()) scenes.push_back(available);
     }
     return scenes;
 }
@@ -946,11 +1058,11 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
     }
     (void)mkdir(Eden::CoversDir().c_str(), 0777);
     const std::string staged = destination + ".new";
-    if (WriteJpegTga(best, staged, true) &&
+    if (WriteJpegWebP(best, staged, true) &&
         std::rename(staged.c_str(), destination.c_str()) == 0) {
-        // Provenance for a generated TGA. A newer index can replace stale
+        // Provenance for a generated WebP. A newer index can replace stale
         // US artwork even when the cached US image has higher resolution.
-        // The TGA remains usable if this tiny receipt write fails.
+        // The WebP remains usable if this tiny receipt write fails.
         std::ofstream receipt(destination + ".source", std::ios::trunc);
         if (receipt) receipt << best_source << '\n';
         std::fprintf(stderr, "EDEN_CASE_FETCH status=stored side=%s source=%s attempts=%zu bytes=%zu\n",
@@ -1003,6 +1115,17 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return 0;
+    // The physical scans supplied by users have no Encore .source receipt.
+    // Migrate and reclaim ONLY our previously downloaded retail cases.
+    unsigned migrated_faces = 0;
+    unsigned side_index = 0;
+    for (const char* side : {"front", "back", "spine",
+                             "scene-1", "scene-2", "scene-3"}) {
+        if (cancel && cancel->load(std::memory_order_acquire)) return 0;
+        if (MigrateGeneratedTga(CaseFacePath(title_id, side), true))
+            migrated_faces |= 1u << side_index;
+        ++side_index;
+    }
     static std::mutex retry_mutex;
     static std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> retries;
     {
@@ -1015,7 +1138,9 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         retries[title_id] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
     }
     bool all_ready = true;
-    unsigned changed_faces = 0;
+    // Migration to WebP also changes the art; notify the UI even when the
+    // underlying CDN candidate was already in cache.
+    unsigned changed_faces = migrated_faces;
     // Even compact genuine spine scans are preferable to a fabricated title.
     // NS2 games may have a real front and spine but NO uploaded back.
     // Their spine must not depend on the existence of a back scan.
@@ -1030,7 +1155,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // can be followed by its spine in the SAME background enrichment;
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
-        if (side >= 3 && ValidNlibTga(CaseFacePath(title_id, "back")))
+        if (side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back")))
             continue; // authentic back never needs a constructed collage
         const auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
         if (candidates.empty()) continue;
@@ -1039,7 +1164,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         const std::string path = CaseFacePath(title_id, names[side]);
         // User-provided original scans win. Cached low-resolution CDN scans
         // may be upgraded when a better ranked alternative becomes available.
-        const std::string base = path.substr(0, path.size() - 4);
+        const std::string base = path.substr(0, path.size() - 5);
         if (IsFile(base + ".png") || IsFile(base + ".jpg") ||
             IsFile(base + ".jpeg")) continue;
         // Revalidate region provenance when the package index changes.
@@ -1048,30 +1173,18 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         std::ifstream receipt(path + ".source");
         std::string cached_source;
         if (receipt) std::getline(receipt, cached_source);
-        if (cached_source == candidates.front() && ValidNlibTga(path)) {
-            // Generated retail scans are uncompressed BGRA TGA. stb_image's
-            // stbi_info() may reject these perfectly readable files, which
-            // previously triggered a fresh CDN download on every enrichment.
-            // Match box_art() and the native TGA loader's header contract.
-            std::FILE* input = std::fopen(path.c_str(), "rb");
-            if (input) {
-                unsigned char header[18]{};
-                if (std::fread(header, 1, sizeof(header), input) == sizeof(header)) {
-                    const int width = static_cast<int>(header[12]) |
-                                      (static_cast<int>(header[13]) << 8);
-                    const int height = static_cast<int>(header[14]) |
-                                       (static_cast<int>(header[15]) << 8);
-                    if ((side == 2 && width >= 16 && height >= 250) ||
-                        (side != 2 && width >= 128 && height >= 200)) {
-                        std::fclose(input);
-                        continue;
-                    }
-                }
-                std::fclose(input);
+        if (cached_source == candidates.front()) {
+            int width = 0;
+            int height = 0;
+            // Preserve narrow authentic NS2 spines even with no back scan.
+            if (ValidNlibWebP(path, &width, &height) &&
+                ((side == 2 && width >= 16 && height >= 250) ||
+                 (side != 2 && width >= 128 && height >= 200))) {
+                continue;
             }
         }
-        // If network retrieval fails, the old cached TGA remains usable;
-        // source migration is retried later without blocking rendering.
+        // If network retrieval fails, existing cached artwork remains usable;
+        // migration can be retried without blocking rendering.
         if (!FetchCaseFace(candidates, path, side == 2, cancel)) {
             all_ready = false;
             std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable\n",
@@ -1128,7 +1241,18 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
     std::scoped_lock title_lock{title_locks[title_id % title_locks.size()]};
     if (cancelled()) return {};
 
+    // Every Nlib legacy TGA was generated by Encore, unlike arbitrary
+    // user-provided case artwork. Convert once locally; do not redownload
+    // existing banners/icons/screens or leave old multi-megabyte files.
+    bool migrated = MigrateGeneratedTga(NlibHeroPath(title_id), false);
+    migrated |= MigrateGeneratedTga(NlibIconPath(title_id), false);
+    for (int index = 1; index <= 3; ++index) {
+        if (cancelled()) return {};
+        migrated |= MigrateGeneratedTga(NlibScreenshotPath(title_id, index), false);
+    }
+
     NlibEnrichment result = CachedNlibEnrichment(title_id, language_choice);
+    result.artwork_changed |= migrated;
     const std::string language = NlibLanguageCode(language_choice);
     nlohmann::json metadata;
     const bool cached_metadata = LoadNlibMetadata(title_id, language, &metadata);
@@ -1247,10 +1371,10 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
         };
 
         // A screenshot-backed hero does not prove a real banner was cached.
-        if (has_banner && (CachedNlibHero(title_id).empty() || refresh_existing_artwork))
+        if (has_banner && (!ValidNlibWebP(NlibHeroPath(title_id)) || refresh_existing_artwork))
             request_media(std::string{"/nx/"} + id + "/banner/1080p",
                           NlibHeroPath(title_id), 4096);
-        if (has_icon && (CachedNlibIcon(title_id).empty() || refresh_existing_artwork))
+        if (has_icon && (!ValidNlibWebP(NlibIconPath(title_id)) || refresh_existing_artwork))
             request_media(std::string{"/nx/"} + id + "/icon/512",
                           NlibIconPath(title_id));
 
@@ -1258,7 +1382,7 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
         for (int index = 1; index <= wanted_screens; ++index) {
             if (cancelled()) break;
             const std::string path = NlibScreenshotPath(title_id, index);
-            if (!ValidNlibTga(path) || refresh_existing_artwork)
+            if (!ValidCachedArtwork(path) || refresh_existing_artwork)
                 request_media(std::string{"/nx/"} + id + "/screen/" + std::to_string(index),
                               path, 4096);
         }
@@ -2139,7 +2263,7 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
     const std::string root = Eden::CoversDir() + "/box-";
 
     const auto find_face = [&](const char* side) -> std::string {
-        for (const char* ext : {"png", "jpg", "jpeg", "tga"}) {
+        for (const char* ext : {"png", "jpg", "jpeg", "webp", "tga"}) {
             const std::string path = root + side + "-" + id + "." + ext;
             struct stat info{};
             if (!IsFile(path) || stat(path.c_str(), &info) != 0 ||
@@ -2147,7 +2271,9 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
                 continue;
             int width = 0, height = 0, channels = 0;
             bool valid = false;
-            if (std::strcmp(ext, "tga") == 0) {
+            if (std::strcmp(ext, "webp") == 0) {
+                valid = ValidNlibWebP(path, &width, &height);
+            } else if (std::strcmp(ext, "tga") == 0) {
                 // Old NS2 emergency covers were product photos, not flat
                 // retail scans. Do not render their white studio canvas
                 // as a genuine paper face; the worker can replace the cache
@@ -2288,8 +2414,12 @@ pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     result.filter = saved.upscaling_filter;
     result.fsr_sharpness = saved.fsr_sharpness;
     result.anti_aliasing = saved.anti_aliasing;
+    result.texture_anisotropy = saved.texture_anisotropy;
     result.refresh = saved.refresh;
     result.frame_generation = saved.frame_generation;
+    result.neural_mode = saved.neural_mode;
+    result.neural_model = saved.neural_model;
+    result.neural_strength = saved.neural_strength;
     result.performance_profile = saved.performance_profile;
     result.controller_layout = saved.controller_layout;
     result.own_mapping = saved.own_mapping;
@@ -2306,8 +2436,12 @@ bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameS
     value.upscaling_filter = settings.filter;
     value.fsr_sharpness = settings.fsr_sharpness;
     value.anti_aliasing = settings.anti_aliasing;
+    value.texture_anisotropy = settings.texture_anisotropy;
     value.refresh = settings.refresh;
     value.frame_generation = settings.frame_generation;
+    value.neural_mode = settings.neural_mode;
+    value.neural_model = settings.neural_model;
+    value.neural_strength = settings.neural_strength;
     value.performance_profile = settings.performance_profile;
     value.controller_layout = settings.controller_layout;
     value.own_mapping = settings.own_mapping;
@@ -2329,8 +2463,12 @@ pe::ui::Preferences EdenServices::preferences() {
     result.filter = saved.upscaling_filter;
     result.fsr_sharpness = saved.fsr_sharpness;
     result.anti_aliasing = saved.anti_aliasing;
+    result.texture_anisotropy = saved.texture_anisotropy;
     result.refresh = saved.refresh;
     result.frame_generation = saved.frame_generation;
+    result.neural_mode = saved.neural_mode;
+    result.neural_model = saved.neural_model;
+    result.neural_strength = saved.neural_strength;
     result.output = saved.output;
     result.performance_profile = saved.performance_profile;
     result.controller_layout = saved.controller_layout;
@@ -2372,8 +2510,12 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.upscaling_filter = preferences.filter;
     value.fsr_sharpness = preferences.fsr_sharpness;
     value.anti_aliasing = preferences.anti_aliasing;
+    value.texture_anisotropy = preferences.texture_anisotropy;
     value.refresh = preferences.refresh;
     value.frame_generation = preferences.frame_generation;
+    value.neural_mode = preferences.neural_mode;
+    value.neural_model = preferences.neural_model;
+    value.neural_strength = preferences.neural_strength;
     value.output = preferences.output;
     value.performance_profile = preferences.performance_profile;
     value.controller_layout = preferences.controller_layout;
@@ -3026,6 +3168,29 @@ bool EdenServices::load_image(const std::string& path, pe::gfx::Image* image) {
         return pe::gfx::load_avatar_dds(resolved, image);
     if (pe::gfx::load_tga(resolved, image))
         return true;
+    if (resolved.ends_with(".webp")) {
+        // WebP decoding belongs to the bounded asynchronous cover worker.
+        struct stat info{};
+        if (stat(resolved.c_str(), &info) != 0 || !S_ISREG(info.st_mode) ||
+            info.st_size < 30 || info.st_size > (16LL << 20)) return false;
+        std::FILE* file = std::fopen(resolved.c_str(), "rb");
+        if (!file) return false;
+        std::vector<std::uint8_t> bytes(static_cast<std::size_t>(info.st_size));
+        const bool read = std::fread(bytes.data(), 1, bytes.size(), file) == bytes.size();
+        std::fclose(file);
+        if (!read) return false;
+        int width = 0, height = 0;
+        if (!WebPGetInfo(bytes.data(), bytes.size(), &width, &height) ||
+            width <= 0 || height <= 0 || width > 4096 || height > 4096 ||
+            static_cast<std::uint64_t>(width) * height > 3840u * 2160u) return false;
+        std::uint8_t* rgba = WebPDecodeRGBA(bytes.data(), bytes.size(), &width, &height);
+        if (!rgba) return false;
+        image->width = width;
+        image->height = height;
+        image->rgba.assign(rgba, rgba + static_cast<std::size_t>(width) * height * 4u);
+        WebPFree(rgba);
+        return true;
+    }
 
     // Remote enrichment (Nlib) is cached as JPEG. Decode it with the same stb_image
     // implementation already linked for game metadata/icon extraction.

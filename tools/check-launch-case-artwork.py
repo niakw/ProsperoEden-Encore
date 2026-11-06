@@ -212,7 +212,7 @@ assert 'ink[x, y] = (175, 136, 76, alpha)' in render_fixed
 assert "brand fixed" in (root / "tools/launcher/preview.sh").read_text()
 package = (root / "tools/package-headless-native.sh").read_text()
 for fragment in ("for stem in switch-logo switch-rear-footer ns2-head; do",
-                 "base64.b64decode", "tga:bits-per-pixel=32",
+                 "base64.b64decode", "-define webp:lossless=true",
                  "-region '82x80+182+195'", "-fill '#af884c'"):
     assert fragment in package
 
@@ -357,7 +357,7 @@ assert '"Fanart - Background"' in indexer
 assert '"Screenshot - Game Title"' in indexer
 assert 'EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}' in indexer
 assert 'AppendCaseScenes(game.screenshots, game.title_id);' in native
-assert 'side >= 3 && ValidNlibTga(CaseFacePath(title_id, "back"))' in native
+assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' in native
 assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3"' in native
 assert "for (int side = 0; side < 6; ++side)" in native
@@ -406,7 +406,12 @@ assert '"EDEN_CASE_LOOKUP title=%016llX status=no-match' in native
 assert '"EDEN_CASE_LOOKUP title=%016llX status=match' in native
 assert "std::chrono::minutes(5)" in native
 assert "std::chrono::hours(4)" not in native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
+# Genuine compact NS2 spines do not need an uploaded back scan.
 assert "both_faces_cached_at_start" not in native
+assert 'MigrateGeneratedTga(CaseFacePath(title_id, side), true)' in native
+assert 'MigrateGeneratedTga(NlibHeroPath(title_id), false)' in native
+assert 'const std::string base = path.substr(0, path.size() - 5);' in native
+assert 'const std::string old_receipt = legacy + ".source";' in native
 # A competing background Home/Library request must wait for the atomic
 # retail-case writer instead of disappearing behind the five-minute retry.
 case_fetch = native.split("unsigned EnsureRetailCase(", 1)[1].split(
@@ -424,7 +429,7 @@ assert "return changed_faces;" in case_fetch
 # The first successful front/back download permits the optional spine in the
 # same background pass; no enforced five-minute wait for an empty case side.
 assert 'if (side == 2 && !both_faces_cached_at_start &&' not in case_fetch
-assert 'side >= 3 && ValidNlibTga(CaseFacePath(title_id, "back"))' in case_fetch
+assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' in case_fetch
 assert "attempts >= 3" in native
 assert 'std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable' in native
 assert "const bool both_faces_cached_at_start =" not in native
@@ -452,9 +457,12 @@ assert case_worker.index("EnsureRetailCase(game.title_id, scanned_name") < case_
 # A generated retail TGA must not be fetched again merely because stb_image's
 # format probe does not recognize the native loader's uncompressed BGRA TGA.
 case_cache = native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
-assert 'if (cached_source == candidates.front() && ValidNlibTga(path))' in case_cache
+assert 'if (cached_source == candidates.front())' in case_cache
+assert 'ValidNlibWebP(path, &width, &height)' in case_cache
+assert 'side == 2 && width >= 16 && height >= 250' in case_cache
+assert 'unsigned changed_faces = migrated_faces;' in case_cache
 assert 'stbi_info(path.c_str(), &width, &height, &channels)' not in case_cache
-assert 'std::fread(header, 1, sizeof(header), input)' in case_cache
+assert 'std::fread(header, 1, sizeof(header), input)' not in case_cache
 staged_validator = (root / "tools/ci/check-staged-app.py").read_text()
 assert 'case_index_source = source_ui / "box-art-index.tsv"' in staged_validator
 assert 'case_index_staged = app / "ui/box-art-index.tsv"' in staged_validator
@@ -464,7 +472,8 @@ assert 'Common::Net::MakeRequest(' in native
 assert '"https://images.launchbox-app.com"' in native
 assert "EnsureRetailCase(game.title_id, game.name," in native
 assert "1500.0f / width, 2100.0f / height" in native
-assert "ValidNlibTga(path)" in native
+assert "ValidNlibWebP(path)" in native
+assert 'return ValidNlibTga(path);' in native
 assert "EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert 'IsFile(base + ".png")' in native
 assert "ui/box-art-index.tsv" in workflow

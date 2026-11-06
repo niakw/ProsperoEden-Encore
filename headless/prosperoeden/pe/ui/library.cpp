@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
+#include "neural_video_policy.h"
 #include "pe/ui/video_presets.hpp"
+#include "pe/ui/texture_quality.hpp"
+#include "pe/ui/video_guidance.hpp"
 #include "pe/ui/case_media_selection.hpp"
 
 #include "pe/core/log.hpp"
@@ -42,7 +45,10 @@ enum GameRow : int
     row_filter,
     row_fsr_sharpness,
     row_anti_aliasing,
+    row_texture_filtering,
     row_frame_generation,
+    row_neural_status,
+    row_neural_strength_preset,
     row_refresh,
     row_controls,
     row_mods,
@@ -51,7 +57,7 @@ enum GameRow : int
 constexpr float kDialogRowsTop = 334.0f;
 constexpr float kDialogRowPitch = 96.0f;
 constexpr float kDialogRowHeight = 94.0f;
-constexpr int kDialogRowsShown = 5;
+constexpr int kDialogRowsShown = 4; // selected option + readable guide
 constexpr Rect kDialogWindow{592.0f, kDialogRowsTop, 736.0f,
                              kDialogRowPitch * (kDialogRowsShown - 1) + kDialogRowHeight};
 constexpr float kDialogHints = 848.0f;
@@ -1347,7 +1353,7 @@ bool Launcher::open_game_settings_at_file(const std::string &file)
         mods_ = services_.mods(game.title_id);
         count_mods(game, mods_);
         open_modal(Modal::game);
-        game_rows_.visible = kDialogRowsShown;
+        game_rows_.visible = prefs_.ui_theme == 1 ? 4 : kDialogRowsShown;
         game_rows_.pitch = kDialogRowPitch;
         game_rows_.reset(dialog_rows(Modal::game), 0);
         return true;
@@ -1500,7 +1506,7 @@ void Launcher::press_library(Key key)
         mods_ = services_.mods(game->title_id);
         count_mods(games_[static_cast<std::size_t>(library_.selected)], mods_);
         open_modal(Modal::game);
-        game_rows_.visible = kDialogRowsShown;
+        game_rows_.visible = prefs_.ui_theme == 1 ? 4 : kDialogRowsShown;
         game_rows_.pitch = kDialogRowPitch;
         game_rows_.reset(dialog_rows(Modal::game), 0);
         return;
@@ -1839,14 +1845,39 @@ void Launcher::press_game(Key key)
     default:
         return;
     }
+    if (option_ == row_fsr_sharpness &&
+        (!UpscalingSupportsSharpness(
+             EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id)) ||
+         !UpscalingFilterSelectable(
+             EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id),
+             EffectiveGameRenderer(game_settings_,prefs_,game.title_id)))) {
+        // Never let invisible RCAS changes mark a game profile as Custom.
+        say(SharpnessGuide(
+            EffectiveGameUpscalingFilter(game_settings_, prefs_, game.title_id),
+            false), true);
+        cue(Cue::error);
+        return;
+    }
     if (option_ == row_frame_generation)
     {
+        if (!FrameGenerationSelectable(
+                EffectiveGameRenderer(game_settings_, prefs_, game.title_id))) {
+            say(tr(TR("Frame generation needs Vulkan. Select Vulkan to enable this option.")), true);
+            cue(Cue::error);
+            return;
+        }
         GameSettings next = game_settings_;
         // Default, Off, MihawkGen, FSR3 optical flow, LSFG (user DLL last).
         // Runtime handles
         // actual backend availability independently of the chosen mode.
         const int step = key == Key::left ? -1 : 1;
         next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
+        if (next.frame_generation > 0 &&
+            (next.neural_mode >= 0 ? next.neural_mode : prefs_.neural_mode) != 0) {
+            say(tr(TR("Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5.")), true);
+            cue(Cue::error);
+            return;
+        }
         if (next.frame_generation == 3 && !services_.has_lossless_dll()) {
             say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
             cue(Cue::error);
@@ -1857,6 +1888,51 @@ void Launcher::press_game(Key key)
         if (!saved)
             say(tr("Could not save. Please try again."), true);
         cue(saved ? Cue::toggle : Cue::error);
+        return;
+    }
+    if (option_ == row_neural_status) {
+        GameSettings next=game_settings_;
+        const int step=key==Key::left?-1:1;
+        // -1 inherits global. 0 Off, 1..3 A4K, 4..5 DLSS-NR.
+        next.neural_mode=(next.neural_mode+1+step+7)%7-1;
+        const int active=next.neural_mode<0?prefs_.neural_mode:next.neural_mode;
+        if(active!=Eden::NeuralVideo::kOff){
+            const auto why=Eden::NeuralVideo::CheckSelectable(
+                active,EffectiveGameRenderer(next,prefs_,game.title_id),
+                EffectiveGameUpscalingFilter(next,prefs_,game.title_id),
+                next.anti_aliasing>=0?next.anti_aliasing:prefs_.anti_aliasing,
+                next.frame_generation>=0?next.frame_generation:prefs_.frame_generation);
+            if(why!=Eden::NeuralVideo::Reason::Available){
+                say(NeuralCompatibilityGuide(why),true);
+                cue(Cue::error);
+                return;
+            }
+        }
+        const bool saved=services_.set_game_settings(game.title_id,next);
+        if(saved){game_settings_=next;home_settings_cache_.erase(game.title_id);}
+        say(saved?tr("Neural Rendering saved for this game."):
+                  tr("Could not save. Please try again."),!saved);
+        cue(saved?Cue::toggle:Cue::error);
+        return;
+    }
+    if (option_ == row_neural_strength_preset) {
+        const int active=game_settings_.neural_mode<0?
+            prefs_.neural_mode:game_settings_.neural_mode;
+        if(!Eden::NeuralVideo::IsDlss(active)){
+            say(NeuralStrengthGuide(active),true);
+            cue(Cue::error);
+            return;
+        }
+        GameSettings next=game_settings_;
+        const int direction=key==Key::left?-1:1;
+        const int current=next.neural_strength<0?
+            prefs_.neural_strength:next.neural_strength;
+        next.neural_strength=std::clamp(current+direction*5,0,100);
+        const bool saved=services_.set_game_settings(game.title_id,next);
+        if(saved){game_settings_=next;home_settings_cache_.erase(game.title_id);}
+        say(saved?tr("DLSS-NR intensity saved for this game."):
+                  tr("Could not save. Please try again."),!saved);
+        cue(saved?Cue::toggle:Cue::error);
         return;
     }
     if (option_ == row_controls)
@@ -1899,7 +1975,7 @@ void Launcher::press_game(Key key)
             return;
         mods_ = services_.mods(game.title_id);
         count_mods(game, mods_);
-        mod_rows_.visible = kDialogRowsShown;
+        mod_rows_.visible = 5; // mods have their own full-height list, no guide card
         mod_rows_.pitch = kDialogRowPitch;
         mod_rows_.reset(static_cast<int>(mods_.size()), 0);
         modal_ = modal_shown_ = Modal::mods;
@@ -1988,6 +2064,7 @@ void Launcher::press_game(Key key)
                 next.filter = -1;
                 next.fsr_sharpness = -1;
                 next.anti_aliasing = -1;
+                next.texture_anisotropy = -1;
                 next.refresh = -1;
             }
         }
@@ -2004,7 +2081,12 @@ void Launcher::press_game(Key key)
         }
         if (option_ == row_filter)
         {
-            next.filter = cycle(next.filter, static_cast<int>(services_.filter_labels().size()));
+            next.filter = CycleQualityRanked(
+                next.filter, step, kUpscalingQualityOrder, true,
+                [&](int value) {
+                    return UpscalingFilterSelectable(
+                        value, EffectiveGameRenderer(next,prefs_,game.title_id));
+                });
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_fsr_sharpness) {
@@ -2014,13 +2096,39 @@ void Launcher::press_game(Key key)
         }
         if (option_ == row_anti_aliasing)
         {
-            next.anti_aliasing = cycle(next.anti_aliasing, static_cast<int>(services_.anti_aliasing_labels().size()));
+            next.anti_aliasing = CycleQualityRanked(
+                next.anti_aliasing, step, kAntiAliasingQualityOrder, true,
+                [&](int value) {
+                    return value != 3 ||
+                        EffectiveGameRenderer(next,prefs_,game.title_id) == 1;
+                });
+            RefreshVideoProfile(next, prefs_, game.title_id);
+        }
+        if (option_ == row_texture_filtering) {
+            next.texture_anisotropy = cycle(next.texture_anisotropy, 6);
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
         if (option_ == row_refresh)
         {
             next.refresh = cycle(next.refresh, 2);
             RefreshVideoProfile(next, prefs_, game.title_id);
+        }
+        // All game overrides share one compatibility policy. Do not
+        // leave an active NR choice paired with a conflicting upscaler,
+        // frame-generation engine or forced MSAA.
+        const int active_nr=next.neural_mode<0?
+            prefs_.neural_mode:next.neural_mode;
+        if(active_nr!=Eden::NeuralVideo::kOff){
+            const auto why=Eden::NeuralVideo::CheckSelectable(
+                active_nr,EffectiveGameRenderer(next,prefs_,game.title_id),
+                EffectiveGameUpscalingFilter(next,prefs_,game.title_id),
+                next.anti_aliasing>=0?next.anti_aliasing:prefs_.anti_aliasing,
+                next.frame_generation>=0?next.frame_generation:prefs_.frame_generation);
+            if(why!=Eden::NeuralVideo::Reason::Available){
+                say(NeuralCompatibilityGuide(why),true);
+                cue(Cue::error);
+                return;
+            }
         }
         saved = services_.set_game_settings(game.title_id, next);
         if (saved) {
@@ -2096,11 +2204,20 @@ void Launcher::draw_game(Canvas &c, float open)
         game_settings_.resolution >= 0 ? pick(resolutions, game_settings_.resolution) :
             fill(tr("Default ({0})"), {short_resolution(pick(resolutions, base_resolution))}),
         game_settings_.filter >= 0 ? pick(filters, game_settings_.filter) :
-            fill(tr("Default ({0})"), {pick(filters, base_filter)}),
+            fill(tr("Default ({0})"), {pick(filters,
+                EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id))}),
         game_settings_.fsr_sharpness >= 0 ? percentage(game_settings_.fsr_sharpness) :
             fill(tr("Default ({0})"), {percentage(base_fsr)}),
         game_settings_.anti_aliasing >= 0 ? pick(anti_aliasing, game_settings_.anti_aliasing) :
             fill(tr("Default ({0})"), {pick(anti_aliasing, base_aa)}),
+        game_settings_.texture_anisotropy >= 0
+            ? TextureAnisotropyName(game_settings_.texture_anisotropy)
+            : fill(tr("Default ({0})"), {
+                TextureAnisotropyName(
+                    prefs_.performance_profile < kAuthoredVideoProfiles
+                    ? Eden::EncoreTextureProfiles::ForTitle(
+                        title_id, std::max(0, prefs_.performance_profile))
+                    : prefs_.texture_anisotropy)}),
         game_settings_.frame_generation < 0 ?
             fill(tr("Default ({0})"), {prefs_.frame_generation == 0 ? tr("Off") :
                 prefs_.frame_generation == 1 ? "MihawkGen" :
@@ -2108,6 +2225,12 @@ void Launcher::draw_game(Canvas &c, float open)
             game_settings_.frame_generation == 0 ? tr("Off") :
             game_settings_.frame_generation == 1 ? "MihawkGen" :
             game_settings_.frame_generation == 2 ? "FSR 3" : "LSFG",
+        game_settings_.neural_mode<0 ?
+            fill(tr("Default ({0})"),{NeuralModeName(prefs_.neural_mode)}) :
+            NeuralModeName(game_settings_.neural_mode),
+        game_settings_.neural_strength < 0 ?
+            fill(tr("Preset: Default ({0})"),{percentage(prefs_.neural_strength)}) :
+            fill(tr("Preset: {0}"),{percentage(game_settings_.neural_strength)}),
         game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
             fill(tr("Default ({0})"), {hertz(base_refresh)}),
         game_settings_.own_mapping ?
@@ -2131,8 +2254,9 @@ void Launcher::draw_game(Canvas &c, float open)
     };
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
-        TR("Resolution"), TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-        TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Resolution"), TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
+        TR("Texture filtering"), TR("Frame Generation"),
+        TR("Neural Rendering"), TR("Intensité DLSS-NR"), TR("Refresh rate"), TR("Button mapping"),
         TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
@@ -2158,15 +2282,46 @@ void Launcher::draw_game(Canvas &c, float open)
         // there; the others are choices.
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
+        const bool inactive =
+            (row == row_neural_strength_preset &&
+             !Eden::NeuralVideo::IsDlss(
+                 game_settings_.neural_mode<0?
+                 prefs_.neural_mode:game_settings_.neural_mode)) ||
+            (row == row_filter &&
+             (game_settings_.neural_mode<0?
+              prefs_.neural_mode:game_settings_.neural_mode)!=Eden::NeuralVideo::kOff) ||
+            (row == row_filter &&
+             !UpscalingFilterSelectable(
+                 EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
+                 EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||
+            (row == row_anti_aliasing &&
+             (game_settings_.anti_aliasing >= 0
+                ? game_settings_.anti_aliasing : base_aa) >= 3 &&
+             EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1) ||
+            (row == row_fsr_sharpness &&
+             (!UpscalingSupportsSharpness(
+                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id)) ||
+              !UpscalingFilterSelectable(
+                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
+                  EffectiveGameRenderer(game_settings_,prefs_,title_id)))) ||
+            (row == row_frame_generation &&
+             ((game_settings_.neural_mode<0?
+               prefs_.neural_mode:game_settings_.neural_mode)!=Eden::NeuralVideo::kOff ||
+              !FrameGenerationSelectable(
+                 EffectiveGameRenderer(game_settings_, prefs_, title_id))));
         const float taken =
             row >= row_mods ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
                             theme::kSmall, there ? theme::kLimePale : theme::kMeta, 320.0f,
                             Align::right) :
+            inactive ? text_shrink(c, values[row], 1292.0f,
+                            baseline(top, kDialogRowHeight, theme::kText24),
+                            theme::kText24, theme::kMeta, 320.0f, Align::right) :
                 chooser(c, values[row], 1296.0f, baseline(top, kDialogRowHeight, theme::kText24),
                         focus, theme::kLimePale);
         text_shrink(c, tr(kLabels[row]), 628.0f, baseline(top, kDialogRowHeight, theme::kText24),
-                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
+                    theme::kText24, inactive ? theme::kMeta : theme::kValue,
+                    664.0f - taken - 28.0f);
         list.pop_opacity();
     }
     list.pop_clip();
@@ -2213,16 +2368,67 @@ void Launcher::draw_game(Canvas &c, float open)
             TR("Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."),
             TR("Resolution follows the selected title-aware profile. Lower it for performance or memory; raise it only when the title has headroom."),
             TR("Bilinear is the lightest default. AMD FSR is useful when rendering below the TV output size."),
-            TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
+            TR("Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
+            TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
+            TR("Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."),
+            TR("Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."),
+            TR("L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."),
             TR("60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."),
             TR("Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."),
         }};
         static_assert(kGameAbout.size() == static_cast<std::size_t>(row_mods));
-        if (option_ >= row_mode && option_ < static_cast<int>(kGameAbout.size()))
-            text_shrink(c, tr(kGameAbout[static_cast<std::size_t>(option_)]), 592.0f,
-                        baseline(kDialogHints - 34.0f, 24.0f, 18.0f), 18.0f,
-                        theme::kMeta, 736.0f);
+        if (option_ >= row_mode && option_ < static_cast<int>(kGameAbout.size())) {
+            const int filter = EffectiveGameUpscalingFilter(game_settings_, prefs_, title_id);
+            const int aa = game_settings_.anti_aliasing >= 0
+                ? game_settings_.anti_aliasing : base_aa;
+            const char* explanation = tr(kGameAbout[static_cast<std::size_t>(option_)]);
+            if (option_ == row_filter)
+                explanation = UpscalingFilterSelectable(filter,
+                    EffectiveGameRenderer(game_settings_,prefs_,title_id))
+                    ? UpscalingGuide(filter) : UpscalingUnsupportedGuide();
+            else if (option_ == row_fsr_sharpness)
+                explanation = SharpnessGuide(filter,
+                    UpscalingFilterSelectable(filter,
+                        EffectiveGameRenderer(game_settings_,prefs_,title_id)));
+            else if (option_ == row_anti_aliasing)
+                explanation = aa == 3 &&
+                    EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1
+                    ? FxaaUnsupportedGuide() : AntiAliasingGuide(aa);
+            else if (option_ == row_texture_filtering)
+                explanation = TextureGuide();
+            else if (option_ == row_frame_generation &&
+                     !FrameGenerationSelectable(
+                         EffectiveGameRenderer(game_settings_, prefs_, title_id)))
+                explanation = FramegenUnsupportedGuide();
+            else if(option_==row_neural_status)
+                explanation=NeuralModeGuide(
+                    game_settings_.neural_mode<0?
+                    prefs_.neural_mode:game_settings_.neural_mode);
+            else if(option_==row_neural_strength_preset)
+                explanation=NeuralStrengthGuide(
+                    game_settings_.neural_mode<0?
+                    prefs_.neural_mode:game_settings_.neural_mode);
+            DrawVideoGuide(c, tr(kLabels[option_]), explanation,
+                (option_ == row_neural_strength_preset &&
+                 !Eden::NeuralVideo::IsDlss(
+                     game_settings_.neural_mode<0?
+                     prefs_.neural_mode:game_settings_.neural_mode)) ||
+                (option_ == row_filter &&
+                 !UpscalingFilterSelectable(filter,
+                     EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||
+                (option_ == row_fsr_sharpness &&
+                 (!UpscalingSupportsSharpness(filter) ||
+                  !UpscalingFilterSelectable(filter,
+                      EffectiveGameRenderer(game_settings_,prefs_,title_id)))) ||
+                (option_ == row_anti_aliasing &&
+                 aa == 3 && EffectiveGameRenderer(
+                     game_settings_, prefs_, title_id) != 1) ||
+                (option_ == row_frame_generation &&
+                 !FrameGenerationSelectable(
+                     EffectiveGameRenderer(game_settings_, prefs_, title_id))),
+                prefs_.ui_theme == 1);
+        }
         static constexpr Hint kHints[] = {
             {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")},
             {Pad::triangle, TR("Reset overrides")}, {Pad::circle, TR("Back")}};

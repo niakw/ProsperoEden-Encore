@@ -2030,3 +2030,158 @@ msgstr "Billedgenerering kan gøre visningen mere flydende uden at øge spillets
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Offentlige rum (kun visning)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Rumliste (kun visning)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Det er endnu ikke muligt at deltage."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU forstørrer billedet; RCAS tilføjer skarphed. Mest nyttigt under tv-udgangsopløsningen."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Automatisk"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Bilineær: hurtig og blød. Bedst, når spillet allerede gengives tæt på tv-opløsningen."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Vælg en indstilling; dens virkning er forklaret nedenfor."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: letvægts kantudjævning i én omgang. Det kan blødgøre tekst og fine detaljer lidt."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Spilstandard"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Nærmeste: Bevarer hårde pixelkanter med synlige trappetrin. Bedst til pixelkunst, ikke de fleste 3D-spil."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Fra: ingen kantudjævning. Hurtigste, men diagonale linjer kan se takkede ud."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Kun AMD FSR 1 bruger denne procentdel. Start ved 50 %. Øg forsigtigt for detaljer; reducere, hvis kanterne flimrer eller viser glorier."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: højkvalitets multi-pass kantudjævning. Klarere konturer, men mere GPU-arbejde end FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "TEXTURFILTRERING"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Teksturfiltrering"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Teksturfiltrering holder fjerntliggende jord og overflader klarere i en vinkel; højere anisotropi bruger mere GPU-båndbredde."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "OPSKALING"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Opskalering"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Frame generation kræver Vulkan. Vælg Vulkan for at aktivere denne mulighed."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Denne mulighed kræver Vulkan. OpenGL kan ikke generere ekstra rammer; at ændre det ville ikke have nogen effekt."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ kræver Vulkan. Vælg Vulkan eller en anden anti-aliasing-metode."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: udvidet kantsøgning. Kan glatte mere takkede kanter, men kan blødgøre teksturer. Sammenlign med SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inaktiv: denne opskaleringsmetode understøtter ikke skyderen for skarphed. Brug FSR 1 eller SGSR med Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: skarp rekonstruktion af et skaleret billede. Fine detaljer kan se klarere ud, men kanter kan danne lyse glorier."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: kantrettet Qualcomm-opskalering med en anden Vulkan-skygge. Sammenlign fine detaljer og glorier."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR-kantskarphed: 0% deaktiverer ekstra kantintensitet, 50% er afbalanceret, 100% er stærkest. Reducer glorier om nødvendigt."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR har brug for Vulkan. OpenGL ville stille bruge Bilinear; vælg Vulkan eller en anden opskaleret metode."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm rumlige opskalering ved hjælp af en separat Vulkan shader. Prøv det, når FSR 1 ser blød ud."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Skarphed"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bikubisk: skarpere end bilineær, men kan skabe lyse kanter. Skyderen for skarphed gælder ikke."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Billedets skarphed påvirker kun FSR 1 og SGSR. Start ved 50 % og reducer det, hvis fine kanter flimrer eller viser glorier."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "SKARPE"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Teksturfiltrering skærper veje, gulve og vægge set i en vinkel. Start ved 4x; 8x/16x bruger mere GPU-båndbredde. I modsætning til billedskarphed gør den ikke hele billedet skarpere."

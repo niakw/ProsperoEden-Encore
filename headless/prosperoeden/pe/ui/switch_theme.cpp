@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/video_presets.hpp"
+#include "pe/ui/texture_quality.hpp"
+#include "pe/ui/video_guidance.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -190,6 +192,25 @@ void advanced_status(Canvas& c,const std::string& message,bool warn,
     text(c,"B",1202.0f,883.0f,18.0f,kInk,Align::center);
     text_shrink(c,tr("Back"),1230.0f,884.0f,20.0f,kInk,138.0f);
 }
+// High contrast explanatory area for Switch-style settings. Previously
+// only the PS5-default skin exposed the context-sensitive help card, while
+// Switch showed a single "Change" label regardless of the selected filter.
+void switch_video_help(Canvas& c, const char* title, const char* explanation,
+                       bool inactive, float y) {
+    const Rect panel{535.0f,y,845.0f,124.0f};
+    const auto fill=inactive?gfx::Color::rgb(0xfff4e6):
+                             gfx::Color::rgb(0xe8f5ff);
+    const auto ink=gfx::Color::rgb(0x1c3548);
+    const auto accent=inactive?gfx::Color::rgb(0x975600):kFocus;
+    c.list.rounded_rect(panel,7.0f,fill);
+    c.list.rounded_rect({panel.x,panel.y+7.0f,5.0f,panel.h-14.0f},
+                        2.5f,accent);
+    text_shrink(c,title,panel.x+17.0f,panel.y+27.0f,18.0f,accent,
+                panel.w-35.0f);
+    text_block(c,explanation,panel.x+17.0f,panel.y+49.0f,
+               16.5f,19.0f,ink,panel.w-37.0f,3,0.83f);
+}
+
 std::string switch_default(const std::string& value) {
     return fill(tr("Default ({0})"),{value});
 }
@@ -656,18 +677,20 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     const int baseFilter=authored?base.filter:prefs_.filter;
     const int baseFsr=authored?base.fsr_sharpness:prefs_.fsr_sharpness;
     const int baseAa=authored?base.anti_aliasing:prefs_.anti_aliasing;
+    const int baseAniso=authored ? Eden::EncoreTextureProfiles::ForTitle(
+        id,prefs_.performance_profile) : prefs_.texture_anisotropy;
     const int baseHz=authored?base.refresh:prefs_.refresh;
     static constexpr const char* names[]={
         TR("Console mode"),TR("Renderer"),TR("Video preset"),TR("TV output"),
-        TR("Resolution"),TR("Upscaling filter"),TR("FSR sharpness"),
-        TR("Anti-aliasing"),TR("Refresh rate"),TR("Button mapping"),TR("Mods"),
-        TR("Save data")};
+        TR("Resolution"),TR("Upscaling"),TR("Sharpness"),
+        TR("Anti-aliasing"),TR("Texture filtering"),TR("Enhanced smoothness"),
+        TR("Refresh rate"),TR("Button mapping"),TR("Mods"),TR("Save data")};
     const auto fallback=[](int local,const std::string& def,
                            const std::string& selected)->std::string{
         return local<0?switch_default(def):selected;
     };
     const auto g=game_settings_;
-    const std::array<std::string,12> values={
+    const std::array<std::string,14> values={
         game_docked_?tr("Docked"):tr("Handheld"),
         fallback(g.renderer,baseRenderer?"Vulkan":"OpenGL",g.renderer?"Vulkan":"OpenGL"),
         fallback(g.performance_profile,
@@ -682,6 +705,15 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
             std::to_string(g.fsr_sharpness)+"%"),
         fallback(g.anti_aliasing,switch_value(services_.anti_aliasing_labels(),baseAa),
             switch_value(services_.anti_aliasing_labels(),g.anti_aliasing)),
+        fallback(g.texture_anisotropy,TextureAnisotropyName(baseAniso),
+            TextureAnisotropyName(g.texture_anisotropy)),
+        fallback(g.frame_generation,
+            prefs_.frame_generation == 0 ? tr("Off") :
+                prefs_.frame_generation == 1 ? "MihawkGen" :
+                prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
+            g.frame_generation == 0 ? tr("Off") :
+                g.frame_generation == 1 ? "MihawkGen" :
+                g.frame_generation == 2 ? "FSR 3" : "LSFG"),
         fallback(g.refresh,hertz(baseHz),hertz(g.refresh)),
         g.own_mapping?
             switch_profile_name(g.controller_layout>=0?g.controller_layout:prefs_.controller_layout,
@@ -700,15 +732,43 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
     };
     d.push_clip(kAdvancedClip);
     for(int i=game_rows_.first_row();i<=game_rows_.last_row();++i) {
-        if(i<0||i>=12)continue;
+        if(i<0||i>=14)continue;
         const float y=318+float(i)*96-game_rows_.scroll();
         advanced_row(c,y,i==option_,tr(names[i]),values[static_cast<std::size_t>(i)],
                      game_rows_.row_alpha(i,92));
     }
     d.pop_clip();
+    if (confirmation_==Confirmation::none && message_.empty() &&
+        option_>=5 && option_<=9) {
+        const int filter=EffectiveGameUpscalingFilter(game_settings_,prefs_,id);
+        const int aa=game_settings_.anti_aliasing>=0?
+            game_settings_.anti_aliasing:baseAa;
+        const int renderer=EffectiveGameRenderer(game_settings_,prefs_,id);
+        const char* guide=nullptr;
+        bool inactive=false;
+        if (option_==5) {
+            inactive=!UpscalingFilterSelectable(filter,renderer);
+            guide=inactive?UpscalingUnsupportedGuide():UpscalingGuide(filter);
+        } else if (option_==6) {
+            inactive=!UpscalingSupportsSharpness(filter) ||
+                !UpscalingFilterSelectable(filter,renderer);
+            guide=SharpnessGuide(filter,!inactive);
+        } else if (option_==7) {
+            inactive=aa==3 && renderer!=1;
+            guide=inactive?FxaaUnsupportedGuide():AntiAliasingGuide(aa);
+        } else if (option_==8) {
+            guide=TextureGuide();
+        } else if (option_==9) {
+            inactive=!FrameGenerationSelectable(renderer);
+            guide=inactive?FramegenUnsupportedGuide():
+                tr(TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."));
+        }
+        if (guide)
+            switch_video_help(c,tr(names[option_]),guide,inactive,730.0f);
+    }
     if(confirmation_==Confirmation::none)
-        advanced_status(c,message_,message_warning_,option_==11?TR("Import"):
-                        option_==10?TR("Open"):TR("Change"));
+        advanced_status(c,message_,message_warning_,option_==13?TR("Import"):
+                        option_==12?TR("Open"):TR("Change"));
     d.pop_opacity();
 }
 void Launcher::draw_switch_mods(Canvas& c,float opened) {
@@ -839,7 +899,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
     list.rounded_rect({493,245,932,2},0,kGrey);
     const int total=dialog_rows(modal);
     const int first=(modal==Modal::video || modal==Modal::appearance)?std::clamp(option_-2,0,std::max(0,total-5)):0;
-    const int last=std::min(total,first+5);
+    const int last=std::min(total,first+(modal==Modal::video?4:5));
     for(int i=first;i<last;++i) {
         const float y=278.0f+float(i-first)*112.0f;
         const Rect row{495.0f,y,930.0f,101.0f};
@@ -910,7 +970,8 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         case Modal::video: {
             static constexpr const char* labels[]={
                 TR("Renderer"),TR("Video preset"),TR("TV output"),TR("Game resolution"),
-                TR("Upscaling filter"),TR("FSR sharpness"),TR("Anti-aliasing"),
+                TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
+                TR("Texture filtering"),TR("Enhanced smoothness"),
                 TR("Refresh rate"),TR("FPS overlay")};
             label=tr(labels[i]);
             switch(i) {
@@ -921,7 +982,11 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             case 4:value=switch_value(services_.filter_labels(),prefs_.filter);break;
             case 5:value=std::to_string(prefs_.fsr_sharpness)+"%";break;
             case 6:value=switch_value(services_.anti_aliasing_labels(),prefs_.anti_aliasing);break;
-            case 7:value=prefs_.refresh?"120 Hz":"60 Hz";break;
+            case 7:value=TextureAnisotropyName(prefs_.texture_anisotropy);break;
+            case 8:value=prefs_.frame_generation==0?tr("Off"):
+                          prefs_.frame_generation==1?"MihawkGen":
+                          prefs_.frame_generation==2?"FSR 3":"LSFG";break;
+            case 9:value=prefs_.refresh?"120 Hz":"60 Hz";break;
             default:value=prefs_.hud?tr("On"):tr("Off");break;
             }
             break;
@@ -945,6 +1010,35 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         text_shrink(c,label,row.x+22,baseline(y,101,26),26,kInk,590);
         text_shrink(c,value,row.x+row.w-25,baseline(y,101,24),24,
                     i==option_?kInk:kSubtle,294,Align::right);
+    }
+    if (modal==Modal::video && message_.empty() &&
+        option_>=4 && option_<=8) {
+        const char* guides=nullptr;
+        bool inactive=false;
+        if (option_==4) {
+            inactive=!UpscalingFilterSelectable(prefs_.filter,prefs_.renderer);
+            guides=inactive?UpscalingUnsupportedGuide():UpscalingGuide(prefs_.filter);
+        } else if (option_==5) {
+            inactive=!UpscalingSupportsSharpness(prefs_.filter) ||
+                !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer);
+            guides=SharpnessGuide(prefs_.filter,!inactive);
+        } else if (option_==6) {
+            inactive=prefs_.anti_aliasing>=3 && prefs_.renderer!=1;
+            guides=inactive?FxaaUnsupportedGuide():
+                AntiAliasingGuide(prefs_.anti_aliasing);
+        } else if (option_==7) {
+            guides=TextureGuide();
+        } else if (option_==8) {
+            inactive=!FrameGenerationSelectable(prefs_.renderer);
+            guides=inactive?FramegenUnsupportedGuide():
+                tr(TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."));
+        }
+        static constexpr const char* labels[] = {
+            TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
+            TR("Texture filtering"),TR("Enhanced smoothness")
+        };
+        if (guides)
+            switch_video_help(c,tr(labels[option_-4]),guides,inactive,744.0f);
     }
     list.rounded_rect({493,888,932,2},0,kGrey);
     text_shrink(c,tr("Change"),1252.0f,baseline(901,51,19),

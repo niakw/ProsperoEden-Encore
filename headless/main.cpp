@@ -42,7 +42,9 @@
 #include <nlohmann/json.hpp>
 #include "devices.h"
 #include "encore_overrides_generated.h"
+#include "neural_video_policy.h"
 #include "encore_overrides_runtime.h"
+#include "fxaa_quality_select.h"
 #include "encore_performance_policy.h"
 #include "jit_memory_policy.h"
 #include "diagnostics.h"
@@ -1602,14 +1604,46 @@ int main(int argc, char** argv) {
                 Settings::ResolutionSetup::Res4X};
             static_assert(std::size(resolutions) == std::size(Eden::kResolutionKeys));
             static constexpr Settings::ScalingFilter filters[] = {
-                Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr, Settings::ScalingFilter::Bicubic,
-                Settings::ScalingFilter::NearestNeighbor};
+                Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr,
+                Settings::ScalingFilter::Bicubic, Settings::ScalingFilter::NearestNeighbor,
+                Settings::ScalingFilter::Lanczos, Settings::ScalingFilter::Sgsr,
+                Settings::ScalingFilter::SgsrEdge, Settings::ScalingFilter::Anime4K3D,
+                Settings::ScalingFilter::Anime4KSoft, Settings::ScalingFilter::Anime4KDenoise};
+            static_assert(std::size(filters) == std::size(Eden::kUpscalingFilterKeys));
+            static_assert(std::size(filters) == std::size(Eden::kUpscalingFilterLabels));
             const int resolution = safe_launch ? Eden::kNativeResolution :
                 (game_video.resolution >= 0 ? game_video.resolution : profile_resolution);
             const int filter = safe_launch ? 0 :
                 (game_video.upscaling_filter >= 0 ? game_video.upscaling_filter : profile_filter);
             Settings::values.resolution_setup.SetValue(resolutions[resolution]);
-            Settings::values.scaling_filter.SetValue(filters[filter]);
+            // SGSR has real native Vulkan pipelines, but OpenGL only
+            // falls back to Bilinear: never advertise an imaginary effect.
+            const int selected_filter=std::clamp(filter,0,6);
+            // The existing A4K shader enums 7/8/9 are INTERNAL to the
+            // presenter. In the menu, these are three Neural Rendering modes.
+            const int requested_nr=safe_launch?Eden::NeuralVideo::kOff:
+                (game_video.neural_mode>=0?
+                    game_video.neural_mode:launch_preferences.neural_mode);
+            const int requested_aa=safe_launch?0:
+                (game_video.anti_aliasing>=0?
+                    game_video.anti_aliasing:profile_aa);
+            const int requested_fg=safe_launch?0:
+                (game_video.frame_generation>=0?
+                    game_video.frame_generation:launch_preferences.frame_generation);
+            const bool neural_selectable=Eden::NeuralVideo::CanSelect(
+                requested_nr,profile_renderer,selected_filter,
+                requested_aa,requested_fg);
+            const int mapped_filter=neural_selectable &&
+                Eden::NeuralVideo::IsA4k(requested_nr)
+                ? Eden::NeuralVideo::InternalA4kFilter(requested_nr)
+                : (selected_filter>=5&&profile_renderer==0?0:selected_filter);
+            Settings::values.scaling_filter.SetValue(filters[mapped_filter]);
+            // DLSS-NR selection persists without faking an A4K result.
+            // Image execution needs the completed GPU graph and present path.
+            if(neural_selectable&&Eden::NeuralVideo::IsDlss(requested_nr))
+                Eden::Report("neural",requested_nr==Eden::NeuralVideo::kDlssOriginal
+                    ? "DLSS-NR Original selected (image graph not yet attached)"
+                    : "DLSS-NR Compact selected (image graph not yet attached)");
             const int fsr_sharpness = safe_launch ? 50 :
                 (game_video.fsr_sharpness >= 0 ? game_video.fsr_sharpness : profile_fsr);
             const int anti_aliasing = safe_launch ? 0 :
@@ -1617,9 +1651,46 @@ int main(int argc, char** argv) {
             // Eden's raw FSR control is reversed (0 = sharpest, 200 = softest). Encore presents
             // a normal 0-100 sharpness percentage.
             Settings::values.fsr_sharpening_slider.SetValue(200 - std::clamp(fsr_sharpness, 0, 100) * 2);
+            // FXAA+ (index 3) uses a distinct native Vulkan shader.
+            // Both FXAA choices retain the upstream enum value, so the
+            // guest and OpenGL never receive an unrecognized enum value.
             static constexpr Settings::AntiAliasing aa[] = {
-                Settings::AntiAliasing::None, Settings::AntiAliasing::Fxaa, Settings::AntiAliasing::Smaa};
-            Settings::values.anti_aliasing.SetValue(aa[std::clamp(anti_aliasing, 0, 2)]);
+                Settings::AntiAliasing::None, Settings::AntiAliasing::Fxaa,
+                Settings::AntiAliasing::Smaa, Settings::AntiAliasing::Fxaa,
+                Settings::AntiAliasing::Msaa2, Settings::AntiAliasing::Msaa4,
+                Settings::AntiAliasing::Msaa8, Settings::AntiAliasing::Msaa16};
+            static_assert(std::size(aa) == std::size(Eden::kAntiAliasingKeys));
+            static_assert(std::size(aa) == std::size(Eden::kAntiAliasingLabels));
+            // Keep the user's persisted MSAA choice for a later Vulkan
+            // session, but never pass unsupported native sample modes into
+            // the OpenGL presenter. No silent 16x MSAA claim on OpenGL.
+            const int active_aa = profile_renderer != 1 && anti_aliasing >= 4
+                                      ? 0 : anti_aliasing;
+            Settings::values.anti_aliasing.SetValue(
+                aa[std::clamp(active_aa, 0, int(std::size(aa)) - 1)]);
+            Eden::Graphics::SetEnhancedFxaa(
+                anti_aliasing == 3 && profile_renderer == 1);
+            // Real texture LOD sampler filtering (not image postprocessing).
+            // A per-title override wins; otherwise retain the global choice.
+            const int aniso_tier =
+                game_video.performance_profile >= 0 &&
+                    game_video.performance_profile < EncoreOverrides::kAuthoredProfileCount
+                ? game_video.performance_profile : launch_preferences.performance_profile;
+            // The authored game profile owns its own sampler level. Otherwise
+            // global Custom and per-game manual overrides are preserved.
+            const int recommended_aniso = aniso_tier >= 0 &&
+                aniso_tier < EncoreOverrides::kAuthoredProfileCount
+                ? EncoreTextureProfiles::ForTitle(launch_title_id, aniso_tier)
+                : launch_preferences.texture_anisotropy;
+            const int aniso = safe_launch ? 1 :
+                (game_video.texture_anisotropy >= 0
+                    ? game_video.texture_anisotropy : recommended_aniso);
+            static constexpr Settings::AnisotropyMode anisotropies[] = {
+                Settings::AnisotropyMode::Automatic, Settings::AnisotropyMode::Default,
+                Settings::AnisotropyMode::X2, Settings::AnisotropyMode::X4,
+                Settings::AnisotropyMode::X8, Settings::AnisotropyMode::X16};
+            Settings::values.max_anisotropy.SetValue(
+                anisotropies[std::clamp(aniso, 0, 5)]);
             Settings::UpdateRescalingInfo();
             // The output's refresh rate while the game runs (display_refresh.h): the renderer asks
             // for it as it opens the output.
@@ -1672,9 +1743,11 @@ int main(int argc, char** argv) {
             Eden::Display::output_width.store(Eden::kOutputWidth[output]);
             Eden::Display::output_height.store(Eden::kOutputHeight[output]);
             Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
-                                    Eden::kUpscalingFilterLabels[filter] + ", FSR sharpness " +
+                                    Eden::kUpscalingFilterLabels[mapped_filter] + ", image sharpness " +
                                     std::to_string(fsr_sharpness) + "%, AA " +
-                                    Eden::kAntiAliasingLabels[std::clamp(anti_aliasing, 0, 2)] + ", output " +
+                                    Eden::kAntiAliasingLabels[
+                                        std::clamp(anti_aliasing, 0,
+                                                   int(std::size(Eden::kAntiAliasingLabels)) - 1)] + ", output " +
                                     Eden::kOutputKeys[output] + ", " + Eden::kRefreshKeys[refresh] +
                                     " Hz").c_str());
             // What a crash report says was running.
@@ -1762,7 +1835,7 @@ int main(int argc, char** argv) {
             Eden::Report("launch", ("Mods: " + mods).c_str());
             Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +
                                     "), " + Eden::BackendName(backend) + ", resolution " +
-                                    Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[filter] +
+                                    Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[mapped_filter] +
                                     ", output " + Eden::kOutputKeys[output] + ", " +
                                     Eden::kRefreshKeys[refresh] + " Hz, mods: " + mods,
                                     true);

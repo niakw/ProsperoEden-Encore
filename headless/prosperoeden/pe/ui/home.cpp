@@ -844,7 +844,7 @@ void Launcher::draw_home(Canvas &c)
         {HomeIcon::display, tr("Renderer"), renderer},
         {HomeIcon::output, tr("TV output"), output},
         {HomeIcon::resolution, tr("Resolution"), resolution},
-        {HomeIcon::filter, tr("Upscaling filter"), filter},
+        {HomeIcon::filter, tr("Upscaling"), filter},
         {HomeIcon::antialias, tr("Anti-aliasing"), antialias},
         {HomeIcon::mode, tr("Console mode"), home_game_docked_ ? tr("Docked") : tr("Handheld")},
     };

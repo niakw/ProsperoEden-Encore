@@ -2030,3 +2030,158 @@ msgstr "Generarea cadrelor poate face afișarea mai fluidă fără a accelera jo
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Camere publice (doar vizualizare)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Listă de camere (doar vizualizare)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Conectarea la camere nu este încă disponibilă."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU mărește imaginea; RCAS adaugă claritate. Cel mai util sub rezoluția de ieșire TV."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Automat"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Biliniar: rapid și moale. Cel mai bine atunci când jocul se redă deja aproape de rezoluția televizorului."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Alegeți o setare; efectul său este explicat mai jos."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: netezire ușoară a marginilor într-o singură trecere. Poate înmuia ușor textul și detaliile fine."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Joc implicit"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Cel mai apropiat: păstrează marginile pixelilor tari, cu trepte vizibile. Cel mai bun pentru pixel art, nu pentru majoritatea jocurilor 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Dezactivat: fără netezire a marginilor. Cel mai rapid, dar liniile diagonale pot părea zimțate."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Numai AMD FSR 1 utilizează acest procent. Începe de la 50%. Măriți ușor pentru detalii; reduceți dacă marginile strălucesc sau prezintă halouri."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: netezire de înaltă calitate a marginilor cu mai multe treceri. Contururi mai clare, dar funcționează mai mult GPU decât FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "FILTRAREA TEXTURILOR"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Filtrarea texturii"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Filtrarea texturii menține terenul îndepărtat și suprafețele mai clare la un unghi; o anizotropie mai mare folosește mai multă lățime de bandă a GPU."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "UPSCALING"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Upscaling"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Generarea cadrelor necesită Vulkan. Selectați Vulkan pentru a activa această opțiune."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Această opțiune necesită Vulkan. OpenGL nu poate genera cadre suplimentare; schimbarea lui nu ar avea niciun efect."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ necesită Vulkan. Alegeți Vulkan sau altă metodă anti-aliasing."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: căutare extinsă de margine. Poate netezi marginile mai zimțate, dar poate înmuia texturile. Comparați cu SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Inactiv: această metodă upscale nu acceptă glisorul de claritate. Utilizați FSR 1 sau SGSR cu Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: reconstrucție clară a unei imagini la scară. Detaliile fine pot părea mai clare, dar marginile pot forma halouri strălucitoare."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Qualcomm upscale direcționat pe margine cu un shader Vulkan diferit. Comparați detaliile fine și halourile."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Claritatea muchiilor SGSR: 0% dezactivează intensitatea suplimentară a muchiei, 50% este echilibrată, 100% este cea mai puternică. Reduceți halourile dacă este necesar."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR are nevoie de Vulkan. OpenGL ar folosi în tăcere Bilinear; selectați Vulkan sau altă metodă de lux."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Qualcomm spațial upscale folosind un shader Vulkan separat. Încercați când FSR 1 pare moale."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Claritate"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: mai ascuțit decât biliniar, dar poate crea margini strălucitoare. Glisorul de claritate nu se aplică."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Claritatea imaginii afectează doar FSR 1 și SGSR. Începeți de la 50% și reduceți-l dacă marginile fine strălucesc sau prezintă halouri."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ACTUALITATE"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Filtrarea texturii accentuează drumurile, podelele și pereții priviți în unghi. Începe de la 4x; 8x/16x utilizează mai multă lățime de bandă GPU. Spre deosebire de claritatea imaginii, aceasta nu clarifică întreaga imagine."

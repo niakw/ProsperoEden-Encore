@@ -2030,3 +2030,158 @@ msgstr "フレーム生成はゲーム速度を変えずに表示を滑らかに
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "公開ルーム（閲覧のみ）"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "ルーム一覧（閲覧のみ）"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "ルームへの参加はまだ利用できません。"
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: EASU は画像を拡大します。 RCASによりシャープさが加わります。 TV 出力解像度以下で最も有用です。"
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "自動"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "バイリニア: 高速かつソフト。ゲームがすでに TV 解像度に近い解像度でレンダリングされている場合に最適です。"
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "設定を選択します。その効果については以下で説明します。"
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: ワンパスでの軽量エッジスムージング。テキストや細かい部分をわずかに柔らかくすることができます。"
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "ゲームのデフォルト"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "最も近い: 目に見える階段を含め、ハード ピクセル エッジを維持します。ほとんどの 3D ゲームではなく、ピクセル アートに最適です。"
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "オフ: エッジのスムージングを行いません。最速ですが、斜めの線がギザギザに見える場合があります。"
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "AMD FSR 1 のみがこのパーセンテージを使用します。 50% から開始します。詳細を確認するにはゆっくりと増やしてください。エッジが光ったり、ハローが現れたりする場合は軽減します。"
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: 高品質のマルチパス エッジ スムージング。輪郭はより鮮明ですが、FXAA よりも GPU の負荷が高くなります。"
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "テクスチャフィルタリング"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "テクスチャフィルタリング"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "テクスチャ フィルタリングにより、遠くの地面や斜めの表面がより鮮明に保たれます。異方性が高いほど、より多くの GPU 帯域幅が使用されます。"
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "アップスケーリング"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "アップスケーリング"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "フレーム生成には Vulkan が必要です。このオプションを有効にするには、「Vulkan」を選択します。"
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "このオプションには Vulkan が必要です。 OpenGL は追加のフレームを生成できません。変更しても効果はありません。"
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "FXAA+ には Vulkan が必要です。 Vulkan または別のアンチエイリアシング方法を選択します。"
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: 拡張エッジ検索。よりギザギザのエッジを滑らかにすることができますが、テクスチャが柔らかくなる可能性があります。 SMAAウルトラと比較してください。"
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "非アクティブ: このアップスケール方法はシャープネス スライダーをサポートしません。 Vulkan では FSR 1 または SGSR を使用します。"
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: スケーリングされた画像の鮮明な再構成。細かい部分はより鮮明に見えるかもしれませんが、エッジが明るいハローを形成する可能性があります。"
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: 異なる Vulkan シェーダーを備えたエッジ向けの Qualcomm アップスケール。細かいディテールとハローを比較します。"
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "SGSR エッジのシャープネス: 0% で余分なエッジの強度が無効になり、50% でバランスが取れ、100% が最も強くなります。必要に応じてハローを軽減します。"
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "SGSR には Vulkan が必要です。 OpenGL は黙って Bilinear を使用します。 Vulkan または別の高級な方法を選択します。"
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: 別個の Vulkan シェーダーを使用した Qualcomm 空間アップスケール。 FSR1が柔らかいと感じたら試してみてください。"
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "シャープネス"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "バイキュービック: バイリニアよりも鮮明ですが、明るいエッジが生成される可能性があります。シャープネススライダーは適用されません。"
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "画像の鮮明さは FSR 1 と SGSR にのみ影響します。 50% から始めて、細かいエッジが光ったりハローが現れたりする場合は値を下げます。"
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "シャープネス"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "テクスチャ フィルタリングにより、斜めから見た道路、床、壁が鮮明になります。 4x から始めます。 8x/16x では、より多くの GPU 帯域幅が使用されます。画像の鮮明度とは異なり、画像全体を鮮明にしません。"

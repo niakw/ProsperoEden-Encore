@@ -2030,3 +2030,158 @@ msgstr "Η δημιουργία καρέ μπορεί να κάνει την ε�
 #: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Δημόσια δωμάτια (μόνο προβολή)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Λίστα δωματίων (μόνο προβολή)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "Η συμμετοχή σε δωμάτια δεν είναι ακόμη διαθέσιμη."
+
+#: R10 graphics UX
+msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
+msgstr "AMD FSR 1: Η EASU μεγεθύνει την εικόνα. Το RCAS προσθέτει ευκρίνεια. Το πιο χρήσιμο κάτω από την ανάλυση εξόδου τηλεόρασης."
+
+#: R10 graphics UX
+msgid "Automatic"
+msgstr "Αυτόματο"
+
+#: R10 graphics UX
+msgid "Bilinear: fast and soft. Best when the game already renders near the TV resolution."
+msgstr "Διγραμμικό: γρήγορο και απαλό. Καλύτερο όταν το παιχνίδι αποδίδεται ήδη κοντά στην ανάλυση της τηλεόρασης."
+
+#: R10 graphics UX
+msgid "Choose a setting; its effect is explained below."
+msgstr "Επιλέξτε μια ρύθμιση. Η επίδρασή του εξηγείται παρακάτω."
+
+#: R10 graphics UX
+msgid "FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."
+msgstr "FXAA: ελαφριά εξομάλυνση άκρων με ένα πέρασμα. Μπορεί να απαλύνει ελαφρώς το κείμενο και τις λεπτές λεπτομέρειες."
+
+#: R10 graphics UX
+msgid "Game default"
+msgstr "Προεπιλογή παιχνιδιού"
+
+#: R10 graphics UX
+msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."
+msgstr "Πλησιέστερο: διατηρεί σκληρές άκρες pixel, με ορατά σκαλοπάτια. Το καλύτερο για τέχνη pixel, όχι για τα περισσότερα παιχνίδια 3D."
+
+#: R10 graphics UX
+msgid "Off: no edge smoothing. Fastest, but diagonal lines may look jagged."
+msgstr "Off: χωρίς εξομάλυνση άκρων. Οι πιο γρήγορες, αλλά οι διαγώνιες γραμμές μπορεί να φαίνονται οδοντωτές."
+
+#: R10 graphics UX
+msgid "Only AMD FSR 1 uses this percentage. Start at 50%. Increase gently for detail; reduce if edges shimmer or show halos."
+msgstr "Μόνο το AMD FSR 1 χρησιμοποιεί αυτό το ποσοστό. Ξεκινήστε από το 50%. Αυξήστε απαλά για λεπτομέρεια. μειώστε εάν οι άκρες λαμπυρίζουν ή εμφανίζουν φωτοστέφανα."
+
+#: R10 graphics UX
+msgid "SMAA Ultra"
+msgstr "SMAA Ultra"
+
+#: R10 graphics UX
+msgid "SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."
+msgstr "SMAA Ultra: εξομάλυνση άκρων πολλαπλών περασμάτων υψηλής ποιότητας. Πιο ξεκάθαρα περιγράμματα αλλά περισσότερη δουλειά GPU από το FXAA."
+
+#: R10 graphics UX
+msgid "TEXTURE FILTERING"
+msgstr "ΦΙΛΤΡΟ ΥΦΗΣ"
+
+#: R10 graphics UX
+msgid "Texture filtering"
+msgstr "Φιλτράρισμα υφής"
+
+#: R10 graphics UX
+msgid "Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."
+msgstr "Το φιλτράρισμα υφής διατηρεί το απομακρυσμένο έδαφος και τις επιφάνειες πιο καθαρές υπό γωνία. Η υψηλότερη ανισοτροπία χρησιμοποιεί περισσότερο εύρος ζώνης GPU."
+
+#: R10 graphics UX
+msgid "UPSCALING"
+msgstr "ΑΝΑΠΤΥΞΗ ΚΛΙΜΑΚΩΝ"
+
+#: R10 graphics UX
+msgid "Upscaling"
+msgstr "Αναβάθμιση"
+
+#: R10 video menu
+msgid "FSR 1"
+msgstr "FSR 1"
+
+#: R10 video menu
+msgid "Frame generation needs Vulkan. Select Vulkan to enable this option."
+msgstr "Η παραγωγή πλαισίων χρειάζεται τη Vulkan. Επιλέξτε Vulkan για να ενεργοποιήσετε αυτήν την επιλογή."
+
+#: R10 video menu
+msgid "This option needs Vulkan. OpenGL cannot generate extra frames; changing it would have no effect."
+msgstr "Αυτή η επιλογή χρειάζεται Vulkan. Το OpenGL δεν μπορεί να δημιουργήσει επιπλέον πλαίσια. η αλλαγή του δεν θα είχε κανένα αποτέλεσμα."
+#: R24 FXAA Quality
+msgid "FXAA+"
+msgstr "FXAA+"
+
+#: R24 FXAA Quality
+msgid "FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."
+msgstr "Το FXAA+ απαιτεί Vulkan. Επιλέξτε Vulkan ή άλλη μέθοδο anti-aliasing."
+
+#: R24 FXAA Quality
+msgid "FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."
+msgstr "FXAA+: εκτεταμένη αναζήτηση άκρων. Μπορεί να λειάνει πιο οδοντωτές άκρες αλλά μπορεί να μαλακώσει τις υφές. Συγκρίνετε με το SMAA Ultra."
+
+#: R10 graphics UX
+msgid "Inactive: this upscale method does not support the sharpness slider. Use FSR 1 or SGSR with Vulkan."
+msgstr "Ανενεργό: αυτή η μέθοδος αναβάθμισης δεν υποστηρίζει το ρυθμιστικό ευκρίνειας. Χρησιμοποιήστε το FSR 1 ή το SGSR με το Vulkan."
+
+#: R10 graphics UX
+msgid "Lanczos"
+msgstr "Lanczos"
+
+#: R10 graphics UX
+msgid "Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."
+msgstr "Lanczos: ευκρινή ανακατασκευή μιας κλίμακας εικόνας. Οι λεπτές λεπτομέρειες μπορεί να φαίνονται πιο καθαρές, αλλά οι άκρες μπορούν να σχηματίσουν φωτεινά φωτοστέφανα."
+
+#: R10 graphics UX
+msgid "SGSR"
+msgstr "SGSR"
+
+#: R10 graphics UX
+msgid "SGSR Edge"
+msgstr "SGSR Edge"
+
+#: R10 graphics UX
+msgid "SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."
+msgstr "SGSR Edge: Edge-directed Qualcomm upscale με διαφορετικό shader Vulkan. Συγκρίνετε λεπτομέρεια και φωτοστέφανα."
+
+#: R10 graphics UX
+msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
+msgstr "Ευκρίνεια άκρων SGSR: Το 0% απενεργοποιεί την πρόσθετη ένταση άκρων, το 50% είναι ισορροπημένο, το 100% είναι το ισχυρότερο. Μειώστε τα φωτοστέφανα εάν χρειάζεται."
+
+#: R10 graphics UX
+msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+msgstr "Η SGSR χρειάζεται τη Vulkan. Το OpenGL θα χρησιμοποιούσε σιωπηλά το Bilinear. επιλέξτε Vulkan ή άλλη μέθοδο αναβάθμισης."
+
+#: R10 graphics UX
+msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
+msgstr "SGSR: Χωρική αναβάθμιση της Qualcomm με χρήση ξεχωριστού σκίαστρου Vulkan. Δοκιμάστε το όταν το FSR 1 φαίνεται απαλό."
+
+#: R10 graphics UX
+msgid "Sharpness"
+msgstr "Ευκρίνεια"
+
+#: R07 SGSR graphics
+msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."
+msgstr "Bicubic: πιο ευκρινές από το διγραμμικό, αλλά μπορεί να δημιουργήσει φωτεινές άκρες. Το ρυθμιστικό ευκρίνειας δεν ισχύει."
+
+#: R07 SGSR graphics
+msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
+msgstr "Η ευκρίνεια εικόνας επηρεάζει μόνο τα FSR 1 και SGSR. Ξεκινήστε από το 50% και μειώστε το εάν οι λεπτές άκρες λαμπυρίζουν ή εμφανίζουν φωτοστέφανα."
+
+#: R07 SGSR graphics
+msgid "SHARPNESS"
+msgstr "ΕΥΤΥΧΙΑ"
+
+#: R07 SGSR graphics
+msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+msgstr "Το φιλτράρισμα υφής ακονίζει δρόμους, δάπεδα και τοίχους υπό γωνία. Ξεκινήστε από 4x. 8x/16x χρησιμοποιούν περισσότερο εύρος ζώνης GPU. Σε αντίθεση με την ευκρίνεια της εικόνας, δεν βελτιώνει την ευκρίνεια ολόκληρης της εικόνας."

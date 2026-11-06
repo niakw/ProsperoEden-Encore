@@ -18,6 +18,8 @@ struct NativeSplitBlockRoute {
     std::uint32_t block{},first_row{},layer_count{},source_block{};
     std::uint32_t native_compute_tokens{}; // 4x4 tile domain, not padded windows
     bool input_view{},output_view{};
+    // Real XY feature raster orientation, upstream gemmpool p.W=s.H.
+    std::uint32_t raster_width{},raster_height{};
 };
 struct NativeSplitRun {
     std::uint32_t start{},count{},entry_block{},terminal_block{};
@@ -129,7 +131,8 @@ struct NativeSplitRoutes {
         run.terminal_block=block;
         built.blocks[built.count++]={
             p,block,i,layer_count,static_cast<std::uint32_t>(first.input0),
-            static_cast<std::uint32_t>(compute),input_view,output_view};
+            static_cast<std::uint32_t>(compute),input_view,output_view,
+            first.height,first.width};
         i+=layer_count-1u;
     }
     if(!built.count||built.run_count!=2u)

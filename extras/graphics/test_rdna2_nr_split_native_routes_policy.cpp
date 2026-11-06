@@ -35,6 +35,7 @@ void Check(const char* path,bool original){
         assert(p.windows==40u);
         assert(p.window_grid_x==5u&&p.window_grid_y==8u);
         assert(b.native_compute_tokens==2160u);
+        assert(b.raster_width==33u&&b.raster_height==60u);
         assert(b.layer_count==(p.has_pooled_projection?5u:4u));
         const bool has_shift=p.attention_shift_x||p.attention_shift_y;
         shifted+=has_shift;

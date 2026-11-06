@@ -44,10 +44,16 @@ int main(){
     assert(!NativePlainFSwin(rows[0])); // input view
     assert(!NativePlainFSwin(rows[3])); // downsample
     assert(!NativePlainFSwin(rows[6])); // split-Swin
-    // High-resolution raster: valid plan metadata, but no unsafe attempt to
-    // initialize the existing FSwin runtime capped at 256 windows.
+    // Normal Full HD C32 grid is now accepted (120x68 windows).
     auto large=rows[1];
-    large.grid_x=68u;large.grid_y=120u;
+    large.grid_x=120u;large.grid_y=68u;
+    large.channels=32u;large.heads=1u;
+    large.input_channels=32u;large.output_channels=32u;
+    large.type="CCTinlayoutFusedSwin1H";
+    large.kernel="cc_tinlayout_fused_swin_1h_32_1_fp8";
+    assert(NativePlainFSwin(large));
+    // Larger hidden expansion would exceed the 256-MiB buffer budget.
+    large.grid_x=480u;large.grid_y=270u;
     assert(!NativePlainFSwin(large));
     // Legacy 19-field rows are accepted, but no shift is guessed.
     const std::string legacy=

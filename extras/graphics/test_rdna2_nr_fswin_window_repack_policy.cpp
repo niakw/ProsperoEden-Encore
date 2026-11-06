@@ -40,7 +40,7 @@ int main(){
         const auto size=std::size_t(W)*H*64u*C;
         FSwinWindowRepack p{W,H,C,0,0,0,0};
         assert(CanFSwinWindowRepack(p,{size,size}));
-        assert(FSwinWindowRepackGridX(p)==W*H*C/4u);
+        assert(FSwinWindowRepackGridX(p)==C/4u);
         std::vector<std::uint32_t> original(size/4u);
         for(std::size_t i=0;i<original.size();++i)
             original[i]=std::uint32_t(i+1u);
@@ -68,6 +68,10 @@ int main(){
         p={W,H,C,0,0,0,0};
         assert(!CanFSwinWindowRepack(p,{size-1,size}));
        }
-    FSwinWindowRepack bad{17,16,64,0,0,0,0};
+    FSwinWindowRepack bad{65536,1,64,0,0,0,0};
     assert(!CanFSwinWindowRepack(bad,{UINT64_MAX,UINT64_MAX}));
+    FSwinWindowRepack fullhd{120,68,32,0,0,-1,-1};
+    const auto fullhd_bytes=std::uint64_t{120}*68u*64u*32u;
+    assert(CanFSwinWindowRepack(fullhd,{fullhd_bytes,fullhd_bytes}));
+    assert(FSwinWindowRepackGridX(fullhd)==8u);
 }

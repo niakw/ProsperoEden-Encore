@@ -29,9 +29,12 @@ int main(){
                 assert(!CanFSwinDense(p,{in,wt,C*64u,C*4u-1u,out}));
             }
         }
-    FSwinDense p{0,0,0,0,0,257,32,0};
+    FSwinDense p{0,0,0,0,0,65536,32,0};
     const FSwinDenseStorage ample{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX};
     assert(!CanFSwinDense(p,ample));
+    // 960x540 C32 -> 120x68=8160 windows is within storage budget.
+    p={0,0,0,0,0,8160,32,0};
+    assert(CanFSwinDense(p,ample));
     p.windows=1;p.channels=16;assert(!CanFSwinDense(p,ample));
     p.channels=32;p.stage=4;assert(!CanFSwinDense(p,ample));
     p.stage=0;p.x_base_bytes=1;assert(!CanFSwinDense(p,ample));

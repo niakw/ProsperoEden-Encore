@@ -14,7 +14,7 @@ static void Check(std::uint32_t width,std::uint32_t height,
     const auto raster_size=std::uint64_t(width)*height*channels;
     const auto window_size=std::uint64_t(wx)*wy*64u*channels;
     assert(CanFSwinRasterLayout(p,{raster_size,window_size}));
-    assert(FSwinRasterLayoutGridX(p)==wx*wy*wp);
+    assert(FSwinRasterLayoutGridX(p)==wp);
     std::vector<std::uint32_t> raster(raster_size/4u);
     for(std::size_t i=0;i<raster.size();++i)
         raster[i]=std::uint32_t(i*181u+7u);
@@ -57,6 +57,11 @@ int main(){
         Check(31,17,C);
         Check(64,16,C);
     }
+    const FSwinRasterLayout fullhd{1920,1080,240,135,32,0};
+    const auto input=std::uint64_t{1920}*1080u*32u;
+    const auto output=std::uint64_t{240}*135u*64u*32u;
+    assert(CanFSwinRasterLayout(fullhd,{input,output}));
+    assert(FSwinRasterLayoutGridX(fullhd)==8u);
     const FSwinRasterLayout bad{2049,2048,257,256,256,0};
     assert(!CanFSwinRasterLayout(bad,{UINT64_MAX,UINT64_MAX}));
     const FSwinRasterLayout bad_channels{8,8,1,1,16,0};

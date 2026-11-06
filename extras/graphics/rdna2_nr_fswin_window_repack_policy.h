@@ -14,7 +14,7 @@ struct FSwinWindowRepackStorage {
     const FSwinWindowRepack& p,const FSwinWindowRepackStorage& s) noexcept {
     const auto valid=[](std::int32_t v){return v>=-1&&v<=1;};
     if(!p.windows_x||!p.windows_y||
-       std::uint64_t(p.windows_x)*p.windows_y>256u||
+       std::uint64_t(p.windows_x)*p.windows_y>65535u||
        (p.channels!=32u&&p.channels!=64u&&
         p.channels!=128u&&p.channels!=256u)||
        !valid(p.src_shift_x)||!valid(p.src_shift_y)||
@@ -26,6 +26,6 @@ struct FSwinWindowRepackStorage {
 }
 [[nodiscard]] constexpr std::uint32_t FSwinWindowRepackGridX(
     const FSwinWindowRepack& p) noexcept {
-    return p.windows_x*p.windows_y*(p.channels/4u);
+    return p.channels/4u;
 }
 } // namespace Eden::Graphics::NeuralRDNA2

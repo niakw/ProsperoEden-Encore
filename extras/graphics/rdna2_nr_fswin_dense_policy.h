@@ -12,7 +12,7 @@ struct FSwinDenseStorage {
 };
 [[nodiscard]] constexpr bool CanFSwinDense(
     const FSwinDense& p,const FSwinDenseStorage& s) noexcept {
-    if(!p.windows||p.windows>256u||p.stage>3u||
+    if(!p.windows||p.windows>65535u||p.stage>3u||
        (p.stage==1u&&p.channels==32u)||
        (p.channels!=32u&&p.channels!=64u&&
         p.channels!=128u&&p.channels!=256u))return false;

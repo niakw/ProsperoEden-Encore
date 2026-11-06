@@ -15,7 +15,7 @@ struct FSwinQkvStorage {
 };
 [[nodiscard]] constexpr bool CanFSwinQkv(
     const FSwinQkv& p,const FSwinQkvStorage& s) noexcept {
-    if(!p.windows || p.windows>256u ||
+    if(!p.windows || p.windows>65535u ||
        (p.channels!=32u && p.channels!=64u &&
         p.channels!=128u && p.channels!=256u) ||
        p.heads!=p.channels/32u)return false;

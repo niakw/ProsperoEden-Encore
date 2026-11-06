@@ -31,6 +31,10 @@ int main(){
     assert(!MakeFSwinGraphPlan(16u,1u,empty));
     assert(!MakeFSwinGraphPlan(512u,1u,empty));
     assert(!MakeFSwinGraphPlan(64u,0u,empty));
-    assert(!MakeFSwinGraphPlan(64u,257u,empty));
+    assert(!MakeFSwinGraphPlan(64u,65536u,empty));
     assert(empty.dense[0].windows==0u);
+    FSwinGraph fullhd{};
+    assert(MakeFSwinGraphPlan(32u,8160u,fullhd));
+    assert(fullhd.dense[0].windows==8160u);
+    assert(!MakeFSwinGraphPlan(32u,65535u,empty));
 }

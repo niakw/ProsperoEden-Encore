@@ -22,7 +22,7 @@ struct FSwinWindowLayout {
     std::span<const FSwinWindowLayout> layouts,
     std::uint32_t windows) noexcept {
     if(layouts.empty()||layouts.size()>160u||windows==0u||
-       windows>256u)return false;
+       windows>65535u)return false;
     const auto first=layouts.front();
     const bool has_grid=first.windows_x!=0u||first.windows_y!=0u;
     if(has_grid &&

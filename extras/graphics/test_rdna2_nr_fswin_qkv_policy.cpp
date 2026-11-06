@@ -18,7 +18,7 @@ int main(){
         assert(!CanFSwinQkv(p,{a,w,heads*4u,o,o-1u,o}));
         assert(!CanFSwinQkv(p,{a,w,heads*4u,o,o,o-1u}));
         auto bad=p;bad.heads++;assert(!CanFSwinQkv(bad,s));
-        bad=p;bad.windows=257;assert(!CanFSwinQkv(bad,s));
+        bad=p;bad.windows=65536;assert(!CanFSwinQkv(bad,s));
         bad=p;bad.a_base_bytes=1;assert(!CanFSwinQkv(bad,s));
         bad=p;bad.channels=16;assert(!CanFSwinQkv(bad,s));
     }

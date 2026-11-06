@@ -11,7 +11,8 @@ int main(){
     assert(CanFSwinChainWindowLayouts(legacy,16u));
     assert(!FSwinNeedsWindowRepack(legacy[0],legacy[1]));
     assert(!CanFSwinChainWindowLayouts(legacy,0u));
-    assert(!CanFSwinChainWindowLayouts(legacy,257u));
+    assert(CanFSwinChainWindowLayouts(legacy,257u));
+    assert(!CanFSwinChainWindowLayouts(legacy,65536u));
     const std::array<FSwinWindowLayout,4> alternating{{
         {4,4,0,0},{4,4,1,1},{4,4,0,0},{4,4,-1,1},
     }};

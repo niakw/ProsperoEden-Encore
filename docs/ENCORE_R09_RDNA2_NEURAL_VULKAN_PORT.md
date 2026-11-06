@@ -39,6 +39,29 @@ entre l'ordre raster et l'ordre des tuiles 4×4 du réseau.
 - Wrapper C++ NrRdna2TokenRepack connecté au scheduler Vulkan ;
   non appelé dans les jeux faute de planificateur des couches.
 
+## Troisième primitive : changement de vue après agrandissement
+
+Le shader **upsample_view_rdna2.comp** reprend les coordonnées et
+les réinterprétations de tokens du shader MIT upsample_view.comp.
+Les pixels du tenseur source sont lus par blocs de 16 octets, avec
+un éventuel changement de plan de canaux dû au padding de la grille
+raster. Une valeur nulle est écrite quand le plan source déborde.
+La source est dans le vendor, avec la notice MIT amont.
+
+La première version demande une **vue complète de la grille
+agrandie** (nombre de tokens = largeur × hauteur agrandies, dimensions
+multiples de quatre) et un espace source distinct de la destination,
+aligné et borné à 256 Mio. Cette restriction conserve un contrat
+d'accès prouvable sans deviner les sous-vues du planificateur futur.
+
+Le module Vulkan 1.1 compile sans FP8 ni coopérative ; son ABI a un
+storage buffer et 32 octets de push constants. Le test CPU contrôle
+le transfert bit-à-bit pour une grille sans padding et le comportement
+d'une grille paddée avec canaux traversants et zéros de bord, ainsi
+que les refus d'offsets et dimensions dangereux. Le wrapper C++
+**NrRdna2UpsampleView** utilise le scheduler GPU du moteur.
+Pas de dispatch depuis les jeux faute de modèle complet.
+
 ## Couverture réelle : 9 familles du manifeste Vulkan amont
 
 | Famille d'origine | État du port RDNA2 |
@@ -50,12 +73,12 @@ entre l'ordre raster et l'ordre des tuiles 4×4 du réseau.
 | ffwd3_t.comp | Non porté |
 | decoder_upsample.comp | Non porté |
 | repack_tokens.comp | Primitive de permutation aller-retour RDNA2 intégrée en code et validée sur hôte ; pas encore de graphe de réseau |
-| upsample_view.comp | Non porté |
+| upsample_view.comp | Primitive RDNA2 de changement de vue intégrée en code et validée sur hôte, grille complète seulement |
 | noise_field.comp | Non porté |
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
-**État vérifiable : deux primitives GPU Vulkan RDNA2 (projection 1×1 et permutation des tokens) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
+**État vérifiable : trois primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
 
 ## Nouveaux dépôts utiles, examinés le 6 novembre
 

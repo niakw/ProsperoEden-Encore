@@ -98,7 +98,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/msaa_color_shadow_pass.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_projection.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_token_repack.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_token_repack.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_upsample_view.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -204,6 +205,28 @@ add_dependencies(video_core eden-r09-rdna2-nr-repack-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_token_repack.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_REPACK_HEADER}")
+
+# Third RDNA2 neural building block: padded upsample view using uvec4
+# token copies. No model weight, no GPU cooperative matrix requirement.
+set(EDEN_R09_RDNA2_UPVIEW_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_upsample_view_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_UPVIEW_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-upview-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_UPVIEW_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/upsample_view_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-upview-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 neural padded view conversion"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-upview-spv
+    DEPENDS "${EDEN_R09_RDNA2_UPVIEW_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-upview-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_upsample_view.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_UPVIEW_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

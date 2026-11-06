@@ -497,3 +497,16 @@ add_test(NAME test_rdna2_nr_vit_native_route_policy
     COMMAND test_rdna2_nr_vit_native_route_policy
         "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
         "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
+
+# R09 restored FinalHead/ViT tile-raster buffer ABI (no device required).
+add_executable(test_rdna2_nr_vit_boundary_repack_policy
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_boundary_repack_policy.cpp")
+target_include_directories(test_rdna2_nr_vit_boundary_repack_policy PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+target_compile_options(test_rdna2_nr_vit_boundary_repack_policy PRIVATE -Wall -Wextra -Werror -UNDEBUG)
+add_test(NAME test_rdna2_nr_vit_boundary_repack_policy
+    COMMAND test_rdna2_nr_vit_boundary_repack_policy)
+add_test(NAME test_rdna2_nr_vit_boundary_repack_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-boundary-repack-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

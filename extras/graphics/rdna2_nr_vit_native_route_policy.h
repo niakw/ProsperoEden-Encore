@@ -17,6 +17,7 @@ struct NativeVitBlockRoute {
 struct NativeVitRoute {
     std::array<NativeVitBlockRoute,8> blocks{};
     std::uint32_t count{},input_split_block{},decoder_block{},tokens{};
+    std::uint32_t raster_width{},raster_height{};
 };
 [[nodiscard]] inline NativeVitRouteError BuildNativeVitRoute(
     std::span<const NativePlanStep> rows,NativeVitRoute& output) {
@@ -46,11 +47,19 @@ struct NativeVitRoute {
                 return NativeVitRouteError::MissingInput;
             staged.input_split_block=static_cast<std::uint32_t>(first.input0);
             staged.tokens=static_cast<std::uint32_t>(first.tokens);
+            if(first.width<=0||first.height<=0||
+               static_cast<std::uint64_t>(first.width)*first.height>staged.tokens)
+                return NativeVitRouteError::InvalidShape;
+            staged.raster_width=static_cast<std::uint32_t>(first.width);
+            staged.raster_height=static_cast<std::uint32_t>(first.height);
         } else if(first.block!=staged.blocks[staged.count-1u].block+1u||
                   first.input0!=static_cast<std::int32_t>(
                       staged.blocks[staged.count-1u].block))
             return NativeVitRouteError::InvalidSource;
-        if(first.tokens!=staged.tokens)return NativeVitRouteError::InvalidShape;
+        if(first.tokens!=staged.tokens||
+           first.width!=staged.raster_width||
+           first.height!=staged.raster_height)
+            return NativeVitRouteError::InvalidShape;
         for(std::uint32_t j=0u;j<5u;++j){
             const auto& s=rows[i+j];
             if(schedule.instructions[i+j].operation!=expected[j]||

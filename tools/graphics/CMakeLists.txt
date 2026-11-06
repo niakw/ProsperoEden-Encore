@@ -330,3 +330,14 @@ add_executable(test_fsr3_optical_pacing
 target_include_directories(test_fsr3_optical_pacing PRIVATE "${FSR3_OF_ROOT}/src")
 target_compile_options(test_fsr3_optical_pacing PRIVATE -UNDEBUG)
 add_test(NAME test_fsr3_optical_pacing COMMAND test_fsr3_optical_pacing)
+
+# R09: QKV producer -> attention consumer: same GPU tensors, no skipped pass.
+add_executable(test_rdna2_nr_split_window_link
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_window_link.cpp")
+target_include_directories(test_rdna2_nr_split_window_link PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_window_link PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_window_link
+    COMMAND test_rdna2_nr_split_window_link)

@@ -443,3 +443,26 @@ L'ordre des poids QKV amont reste [head, Q/K/V, 32, C],
 cohérent avec les accès du port FSwin QKV. Les conversions
 FP16 originales des biais/scales et les formats de pré/post
 image restent à valider sur des poids réels.
+
+
+## Conversion FP16 des paramètres du modèle
+
+Le header vendor nr_rdna2_weight_decode.h adapte les poids
+aux paramètres réellement utilisés par les shaders RDNA2 :
+
+- Décodage little-endian FP16 vers FP32, avec rejet des NaN
+  et valeurs infinies dans les buffers de paramètres.
+- Désentrelacement du biais d'attention 64×64 par tête suivant
+  la permutation NVIDIA documentée dans le code MIT amont
+  nr_graph.cpp (fonction deswizzle_bias). La sortie correspond
+  directement aux indices bias[head][query][key] du shader RDNA2.
+- Extraction des C coefficients résiduels : détection des huit
+  zéros de padding facultatifs et prise en charge des régions
+  non paddées, dont l'alternative de lecture finale.
+
+Ces opérations sont des conversions de données, **pas des
+optimisations de performance**. Les tests hôte couvrent les
+valeurs FP16 normales/subnormales, les cas non finis, la
+permutation complète des 4096 éléments et les échelles C32/C64.
+Les valeurs en FP32 sont encore à placer dans l'arène d'upload
+et à associer aux descripteurs Vulkan du graphe.

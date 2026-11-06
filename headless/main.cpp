@@ -41,6 +41,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "devices.h"
+#include "in_game_overlay_menu.h"
 #include "encore_overrides_generated.h"
 #include "neural_video_policy.h"
 #include "encore_overrides_runtime.h"
@@ -2086,7 +2087,6 @@ int main(int argc, char** argv) {
                     load_input = std::jthread([&](std::stop_token stop) {
                         while (!stop.stop_requested()) {
                             pad->Poll();
-                            (void)pad->TakeHudToggle();
                             if (pad->TakeReturnToMenu()) {
                                 Eden::Report("exit", "Touchpad + L1 while loading; requesting bounded return");
                                 Eden::Ncz::SetUnpackAllowed(false);
@@ -2357,6 +2357,18 @@ int main(int argc, char** argv) {
 #endif
                 const auto session_start = std::chrono::steady_clock::now();
                 [[maybe_unused]] double session_seconds = 0;  // guest-fault relaunch (PS5 only)
+                Eden::QuickOverlay::Menu quick_menu(launch_title_id);
+                Eden::QuickOverlay::Reset();
+#ifdef EDEN_PS5_VULKAN
+                if (pad) pad->EnableOverlay(game);
+#else
+                if (pad) pad->EnableOverlay(false);
+#endif
+                SCOPE_EXIT {
+                    if (pad) pad->EnableOverlay(false);
+                    Eden::QuickOverlay::Reset();
+                };
+                bool quick_menu_visible = false;
                 std::jthread input_worker;
                 if (pad) input_worker = std::jthread([&](std::stop_token stop) {
 #ifdef PS5_NATIVE
@@ -2473,10 +2485,26 @@ int main(int argc, char** argv) {
                                 LOG_INFO(Input, "EDEN_PLAYER player={} connected={}", index + 1, present);
                             }
                         }
-#ifdef EDEN_PS5_OPENGL
-                        if (pad->TakeHudToggle()) Eden::ToggleHud();
-#else
-                        (void)pad->TakeHudToggle();
+#ifdef EDEN_PS5_VULKAN
+                        if (const bool visible = pad->OverlayVisible();
+                            visible != quick_menu_visible) {
+                            quick_menu_visible = visible;
+                            quick_menu.Show(visible);
+                        }
+                        if (const auto actions = pad->TakeOverlayActions();
+                            quick_menu_visible && actions) {
+                            const auto result = quick_menu.Handle(actions);
+                            if (result != Eden::QuickOverlay::Menu::Outcome::none) {
+                                pad->CloseOverlay();
+                                quick_menu_visible = false;
+                                if (result == Eden::QuickOverlay::Menu::Outcome::library) {
+                                    std::lock_guard lock(completion->mutex);
+                                    completion->return_to_menu = true;
+                                    completion->wake.notify_one();
+                                    break;
+                                }
+                            }
+                        }
 #endif
                         if (pad->TakeReturnToMenu()) {
                             std::lock_guard lock(completion->mutex);

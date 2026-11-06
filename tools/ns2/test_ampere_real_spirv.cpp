@@ -537,6 +537,96 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
     compile(0, true);
     std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=2 dynamic_index=1 zero_rejected=1");
 }
+// P2.4/G03: exercise actual non-generic tessellation patch inputs/outputs.
+// The SPIR-V backend must not treat TessLevelOuter/Inner as generic location
+// attributes: they are built-in Patch variables on *different* stages.
+static void VerifyRealTessPatchSpirv(const std::string& prefix) {
+    using Shader::IR::Opcode;
+    using Shader::IR::Patch;
+    using Shader::IR::Value;
+    constexpr std::array<Patch, 6> patches{
+        Patch::TessellationLodLeft, Patch::TessellationLodTop,
+        Patch::TessellationLodRight, Patch::TessellationLodBottom,
+        Patch::TessellationLodInteriorU, Patch::TessellationLodInteriorV,
+    };
+    for (const Shader::Stage stage : {Shader::Stage::TessellationControl,
+                                      Shader::Stage::TessellationEval}) {
+        const bool control = stage == Shader::Stage::TessellationControl;
+        Shader::ObjectPool<Shader::IR::Inst> pool{32};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage = stage;
+        program.invocations = 3;
+        program.blocks.push_back(&block);
+        if (control) {
+            program.info.stores_tess_level_outer = true;
+            program.info.stores_tess_level_inner = true;
+        }
+        for (const Patch patch : patches) {
+            if (control) {
+                block.AppendNewInst(
+                    Opcode::SetPatch, {Value{patch}, Value{f32{2.5f}}});
+            }
+            block.AppendNewInst(Opcode::GetPatch, {Value{patch}});
+        }
+        auto& node = program.syntax_list.emplace_back();
+        node.type = Shader::IR::AbstractSyntaxNode::Type::Block;
+        node.data.block = &block;
+        program.syntax_list.emplace_back().type =
+            Shader::IR::AbstractSyntaxNode::Type::Return;
+        Shader::Backend::Bindings bindings{};
+        Shader::Profile profile{};
+        profile.supported_spirv = 0x00010500;
+        Shader::RuntimeInfo runtime{};
+        runtime.tess_primitive = Shader::TessPrimitive::Triangles;
+        runtime.tess_spacing = Shader::TessSpacing::Equal;
+        std::vector<u32> words;
+        try {
+            words = Shader::Backend::SPIRV::EmitSPIRV(
+                profile, runtime, program, bindings);
+        } catch (const std::exception& ex) {
+            std::fprintf(stderr, "Real TCS/TES patch emitter: %s\n", ex.what());
+            Require(false, "tessellation patch ABI unexpectedly rejected");
+        }
+        Require(words.size() > 5 && words[0] == 0x07230203U,
+                "TCS/TES patch emitter produced no SPIR-V");
+        u32 reads{}, writes{}, outer{}, inner{}, patch_decorations{};
+        for (std::size_t i = 5; i < words.size();) {
+            const u32 op = words[i], count = op >> 16;
+            Require(count && count <= words.size() - i,
+                    "malformed real TCS/TES patch module");
+            reads += (op & 0xffffU) == static_cast<u32>(spv::Op::OpLoad);
+            writes += (op & 0xffffU) == static_cast<u32>(spv::Op::OpStore);
+            if ((op & 0xffffU) == static_cast<u32>(spv::Op::OpDecorate) &&
+                count >= 3) {
+                patch_decorations += words[i + 2] == static_cast<u32>(
+                    spv::Decoration::Patch);
+                if (count >= 4 &&
+                    words[i + 2] == static_cast<u32>(spv::Decoration::BuiltIn)) {
+                    outer += words[i + 3] == static_cast<u32>(
+                        spv::BuiltIn::TessLevelOuter);
+                    inner += words[i + 3] == static_cast<u32>(
+                        spv::BuiltIn::TessLevelInner);
+                }
+            }
+            i += count;
+        }
+        Require(reads >= 6 && (!control || writes >= 6),
+                "TCS/TES real patch levels not loaded/stored");
+        Require(outer >= 1 && inner >= 1 && patch_decorations >= 2,
+                "TCS/TES SPIR-V built-in Patch decorations missing");
+        const auto path = prefix +
+            (control ? "-tess-control.spv" : "-tess-eval.spv");
+        std::ofstream file{path, std::ios::binary | std::ios::trunc};
+        Require(bool(file), "cannot open real TCS/TES patch module output");
+        file.write(reinterpret_cast<const char*>(words.data()),
+                   static_cast<std::streamsize>(words.size() * sizeof(u32)));
+        Require(bool(file), "cannot write real TCS/TES patch module output");
+        std::printf("P2_4_REAL_TESS_%s_PATCH_SPIRV_EMITTED slots=6 words=%zu\n",
+                    control ? "CONTROL" : "EVAL", words.size());
+    }
+}
+
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
@@ -544,6 +634,7 @@ int main(int argc,char** argv) {
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();
     VerifyRealTextureBufferArraySpirv(argv[1]);
+    VerifyRealTessPatchSpirv(argv[1]);
     std::array<u8,0x50> header{};
     constexpr u32 pred=7U<<12,exit_true=7U<<23;
     std::vector<u8> code;

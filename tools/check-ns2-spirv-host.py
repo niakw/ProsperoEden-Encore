@@ -186,6 +186,13 @@ def main():
         run([validator, "--target-env", env,
              str(OUT / "synthetic-texbuf-array.spv")])
         print(f"P2_2C_REAL_TEXTURE_BUFFER_ARRAY_VALIDATED {env}", flush=True)
+    # G03: independently validate TCS output and TES input for all six
+    # built-in tessellation patch levels, not merely C++ emitter symbols.
+    for kind in ("tess-control", "tess-eval"):
+        path = OUT / f"synthetic-{kind}.spv"
+        for env in ("spv1.5", "vulkan1.2"):
+            run([validator, "--target-env", env, str(path)])
+            print(f"P2_4_REAL_{kind.upper().replace('-', '_')}_PATCH_VALIDATED {env}", flush=True)
     module_test = OUT / "ns2-vulkan-modules"
     run([cxx, "-std=c++20", "-O2",
          str(ROOT / "tools/ns2/test_ampere_vulkan_module.cpp"),

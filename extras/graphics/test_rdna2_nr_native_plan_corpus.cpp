@@ -40,12 +40,19 @@ static void Check(const char* path,bool original){
         assert(!segment.layers.empty());
         for(std::size_t i=0;i<segment.layers.size();++i){
             const auto view=segment.layers[i].view;
-            if(view==NativeFSwinView::InputView)assert(i==0u);
+            if(view==NativeFSwinView::InputView||
+               view==NativeFSwinView::Upsample)assert(i==0u);
             if(view==NativeFSwinView::OutputView||
                view==NativeFSwinView::Downsample)
                 assert(i+1u==segment.layers.size());
         }
     }
+    std::size_t upsample_bodies=0u;
+    for(const auto& segment:segments)
+        for(const auto& layer:segment.layers)
+            if(layer.view==NativeFSwinView::Upsample)
+                ++upsample_bodies;
+    assert(upsample_bodies==4u);
     for(const auto& s:rows)
         if(NativePlainFSwin(s)){
             const auto windows=std::uint64_t(s.grid_x)*s.grid_y;

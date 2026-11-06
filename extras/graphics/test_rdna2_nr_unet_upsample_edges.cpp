@@ -27,6 +27,10 @@ static void Test(std::string path,bool original){
     const std::array<std::uint32_t,4> original_up{48,56,62,66};
     const std::array<std::uint32_t,4> compact_up{22,24,26,28};
     const auto& expected=original?original_up:compact_up;
+    const auto segments=ExtractNativeFSwinSegments(rows);
+    // Every upsample must supply its OWN FSwin body, not only the
+    // prologue. Old extraction silently lost four learned layers.
+    assert(segments.size()==8u);
     std::size_t shifted_count=0u;
     for(std::size_t i=0;i<4u;++i){
         const auto& edge=map.edges[i];
@@ -37,6 +41,19 @@ static void Test(std::string path,bool original){
             [id=edge.up_block](const NativePlanStep& row){
                 return row.block==id&&row.layer==0u;});
         assert(it!=rows.end()&&it->inputs==2u);
+        assert(NativeUpsampleFSwin(*it));
+        const auto seg=std::find_if(segments.begin(),segments.end(),
+            [block=edge.up_block](const NativeFSwinSegment& candidate) {
+                return !candidate.layers.empty() &&
+                    candidate.layers.front().block==block;
+            });
+        assert(seg!=segments.end());
+        assert(seg->layers.front().view==NativeFSwinView::Upsample);
+        assert(seg->layers.front().layer==0u);
+        assert(seg->layers.front().weight_prefix==
+            "unpacked/block"+std::to_string(edge.up_block)+".layer0.layer");
+        if(seg->layers.size()>1u)
+            assert(seg->layers[1].block==edge.up_block+1u);
         assert(it->input0==static_cast<std::int32_t>(edge.up_input_block));
         assert(it->input1==static_cast<std::int32_t>(edge.down_block));
         assert(it->width==high_h/2u&&it->height==high_w/2u);
@@ -75,6 +92,12 @@ static void Test(std::string path,bool original){
         assert(CanFSwinWindowRepack(shifted,{padded,padded}));
         if(next->shift_x||next->shift_y)++shifted_count;
         assert(next->channels==edge.channels);
+        auto bad=*it;
+        bad.input_channels=edge.channels;
+        assert(!NativeUpsampleFSwin(bad));
+        bad=*it;
+        bad.input1=-1;
+        assert(!NativeUpsampleFSwin(bad));
     }
     assert(shifted_count>0u); // both models need the new shifted GPU ingress
 }

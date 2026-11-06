@@ -266,3 +266,33 @@ la réduction FP16 de l'amont. Les poids et tenseurs tuilés ne sont
 pas importés, aucune frame DLSS n'est calculée sur console et
 la faisabilité du temps réel n'a pas été démontrée. Une optimisation
 par tuiles sera nécessaire avant d'envisager une activation runtime.
+
+
+## Adaptateur de poids — tuiles 16×16 vers row-major (06/11)
+
+Le code partagé dans le vendor ajoute un convertisseur
+**déterministe et sans quantification supplémentaire**
+entre le format des blocs 16×16 E4M3FN de l'amont et le format
+row-major attendu par les nouveaux shaders QKV/FFWD3.
+
+La formule d'index tuilé, en éléments, est :
+((row / 16) * (columns / 16) + col / 16) * 256 +
+(row % 16) * 16 + col % 16.
+
+Ce format correspond aux tuiles du shader MIT coopmm.glsl et
+ffwd3_t.comp. Il **ne déduit pas** les autres formats INT4,
+les métadonnées des modèles ou les textures d'entrée.
+Sur des matrices E4M3FN déjà décompressées/décodées, la conversion
+est byte-à-byte et bidirectionnelle.
+
+- QKV : matrice [1536,512] ; FFWD3 : [512,512], [2048,64]
+  et [512,256].
+- Contrat C++ : dimensions multiples de 16, jusqu'à 256 Mio,
+  capacités source/cible et rejet des plages aliasées.
+  Aucune destination modifiée si la validation échoue.
+- Tests CPU : aller/retour bit-exact, indexation des coins de
+  tuiles et cas limites sur QKV, FFWD3 et un tenseur ViT.
+
+Aucune conversion de poids n'est **encore invoquée au runtime** :
+un importeur de modèles doit la déclencher avant l'inférence GPU.
+Le convertisseur ne rend pas à lui seul les modèles NVIDIA compatibles.

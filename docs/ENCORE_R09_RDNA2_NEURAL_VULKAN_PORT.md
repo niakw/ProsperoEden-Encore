@@ -617,3 +617,22 @@ branches U-Net et le planificateur global restent
 à raccorder. L'implémentation n'a pas été exercée
 sur GPU PS5 ; on reporte la performance jusqu'à
 la fin de l'intégration fonctionnelle.
+
+
+## Requantification des poids E4M3FN à l'import
+
+Dans le projet amont MIT, le chargement des matrices
+applique f_to_e4m3(e4m3_to_f(code)) avant leur stockage.
+L'audit exhaustif des 256 codes montre deux exceptions
+à l'identité : 0x00 devient 0x80 (zéro négatif), et 0xff
+devient 0x7f (NaN canonique positif).
+
+Le chargeur FSwin applique désormais exactement cette
+normalisation sur expand, middle, contract, QKV et projection,
+avant la permutation des têtes QKV et avant l'upload Vulkan.
+Les matrices NRMODEL1 restent en row-major à la lecture.
+
+Le test de correspondance exhaustive des 256 codes a été
+compilé et exécuté localement ; il est inscrit à CTest.
+La parité numérique des kernels GPU et le rendu console
+restent à vérifier lors de la validation fonctionnelle.

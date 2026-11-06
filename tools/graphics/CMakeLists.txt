@@ -8,6 +8,15 @@ enable_testing()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_test(NAME test_fsr31_spirv_abi_parser
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test-fsr31-spirv-abi.py")
+# If the pinned vendor submodule is populated (normal CI checkout),
+# check actual model hashes, three independent CNN graphs and labels.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/anime4k_3d.cpp")
+    add_test(NAME test_a4k_three_neural_profiles
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test-a4k-profiles.py"
+            --root "${CMAKE_CURRENT_SOURCE_DIR}/../.."
+            --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
+endif()
 get_filename_component(EDEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 set(FG_ROOT "${EDEN_ROOT}/third_party/PS5_MihawkGen")
 set(FSR3_OF_ROOT "${EDEN_ROOT}/third_party/PS5_FSR3OpticalFlow")

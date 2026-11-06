@@ -81,7 +81,13 @@ Layer::Layer(const Device& device, MemoryAllocator& memory_allocator_, Scheduler
         // Real MIT Anime4K v4 3D CNN four-pass native compute backend.
         // No fake FSR3 timeline/history nor per-game shader hash.
         sr_filter.emplace<Anime4K3D>(device, memory_allocator, scheduler, image_count,
-                                     output_size);
+                                     output_size, Anime4K3D::Profile::Details);
+    } else if (filters.get_scaling_filter() == Settings::ScalingFilter::Anime4KSoft) {
+        sr_filter.emplace<Anime4K3D>(device, memory_allocator, scheduler, image_count,
+                                     output_size, Anime4K3D::Profile::Soft);
+    } else if (filters.get_scaling_filter() == Settings::ScalingFilter::Anime4KDenoise) {
+        sr_filter.emplace<Anime4K3D>(device, memory_allocator, scheduler, image_count,
+                                     output_size, Anime4K3D::Profile::Denoise);
     }
 }
 

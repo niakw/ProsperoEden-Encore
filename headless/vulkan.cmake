@@ -129,11 +129,33 @@ add_custom_command(
         "${EDEN_R09_CNN_DIR}/compile_anime4k_3d.py"
     COMMENT "Build original Anime4K v4 3D CNN x2 MIT model as 4 Vulkan compute SPIR-V stages"
     VERBATIM)
+# Two additional pinned neural CNNs. Build all kernels on the host.
+set(EDEN_R09_PROFILE_HEADERS "")
+foreach(stage RANGE 0 3)
+    list(APPEND EDEN_R09_PROFILE_HEADERS
+        "${EDEN_FSR31_SHADER_DIR}/anime4k_soft_stage_${stage}_comp_spv.h")
+endforeach()
+foreach(stage RANGE 0 4)
+    list(APPEND EDEN_R09_PROFILE_HEADERS
+        "${EDEN_FSR31_SHADER_DIR}/anime4k_denoise_stage_${stage}_comp_spv.h")
+endforeach()
+add_custom_command(
+    OUTPUT ${EDEN_R09_PROFILE_HEADERS}
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_R09_CNN_DIR}/compile_anime4k_profiles.py"
+        --output "${EDEN_FSR31_SHADER_DIR}" --validate
+    DEPENDS
+        "${EDEN_R09_CNN_DIR}/Anime4K_Restore_CNN_Soft_S.glsl"
+        "${EDEN_R09_CNN_DIR}/Anime4K_Upscale_Denoise_CNN_x2_S.glsl"
+        "${EDEN_R09_CNN_DIR}/compile_anime4k_profiles.py"
+    COMMENT "Compile nine pinned CNN restore/denoise stages for Vulkan"
+    VERBATIM)
+add_custom_target(eden-r09-anime4k-profiles DEPENDS ${EDEN_R09_PROFILE_HEADERS})
 add_custom_target(eden-r09-anime4k-3d-shaders DEPENDS ${EDEN_R09_CNN_HEADERS})
-add_dependencies(video_core eden-r09-anime4k-3d-shaders)
+add_dependencies(video_core eden-r09-anime4k-profiles eden-r09-anime4k-3d-shaders)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
-    ${EDEN_R09_CNN_HEADERS})
+    ${EDEN_R09_CNN_HEADERS} ${EDEN_R09_PROFILE_HEADERS})
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

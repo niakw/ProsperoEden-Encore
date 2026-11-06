@@ -25,8 +25,9 @@ inline VideoPresetValues VideoPresetForTitle(std::uint64_t title_id, int preset)
 // and post-AA (BEST -> LOWEST). No static chart can guarantee superiority
 // across games/frames; see docs/ENCORE_GRAPHICS_QUALITY_RANKING.md.
 // This is ONLY the interface/cycling order: persisted enum IDs do not change.
-inline constexpr std::array<int, 7> kUpscalingQualityOrder{
-    6, 5, 1, 4, 2, 0, 3}; // SGSR Edge, SGSR, FSR1, Lanczos, Bicubic, Bilinear, Nearest
+inline constexpr std::array<int, 10> kUpscalingQualityOrder{
+    7, 8, 9, 6, 5, 1, 4, 2, 0, 3}; // A4K details, softened, cleaned, then spatial filters.
+// Navigation order only: no visual superiority is established before console A/B.
 inline constexpr std::array<int, 4> kAntiAliasingQualityOrder{
     2, 3, 1, 0}; // SMAA Ultra, FXAA+, FXAA, None
 
@@ -53,7 +54,7 @@ inline int CycleQualityRanked(int current, int step,
 }
 
 inline constexpr bool UpscalingRequiresVulkan(int filter) {
-    return filter == 5 || filter == 6; // SGSR / SGSR Edge
+    return filter >= 5 && filter <= 9; // SGSR and A4K CNN profiles; Vulkan only
 }
 inline constexpr bool UpscalingSupportsSharpness(int filter) {
     return filter == 1 || filter == 5 || filter == 6;

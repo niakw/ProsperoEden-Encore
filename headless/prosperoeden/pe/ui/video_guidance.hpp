@@ -16,6 +16,9 @@ inline const char* UpscalingGuide(int filter) {
     case 4: return tr(TR("Lanczos: sharp reconstruction of a scaled image. Fine detail may look clearer, but edges can form bright halos."));
     case 5: return tr(TR("SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."));
     case 6: return tr(TR("SGSR Edge: edge-directed Qualcomm upscale with a different Vulkan shader. Compare fine detail and halos."));
+    case 7: return tr(TR("A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."));
+    case 8: return tr(TR("A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."));
+    case 9: return tr(TR("A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."));
     default: return tr(TR("Bilinear: fast and soft. Best when the game already renders near the TV resolution."));
     }
 }
@@ -35,7 +38,7 @@ inline const char* SharpnessGuide(int filter,bool renderer_compatible) {
     return tr(TR("SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."));
 }
 inline const char* UpscalingUnsupportedGuide() {
-    return tr(TR("SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."));
+    return tr(TR("Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."));
 }
 inline const char* FxaaUnsupportedGuide() {
     return tr(TR("FXAA+ requires Vulkan. Choose Vulkan or another anti-aliasing method."));

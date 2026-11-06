@@ -1,4 +1,4 @@
-# R09 — Anime4K 3D CNN et DLL NVIDIA fournies par l'utilisateur
+# R09 — Trois profils A4K et DLL NVIDIA fournies par l'utilisateur
 
 **6 novembre 2026 | PR #24 DRAFT | aucune validation PS5 console**
 
@@ -23,17 +23,33 @@ frame en vol. Les descripteurs et barrières sont enregistrés dans le
 scheduler Vulkan déjà existant. L'alpha du jeu reste intact.
 Aucune DLL Windows, modèle distant ni modification des textures ROM.
 
-Menu Upscaling : Anime4K 3D CNN x2, nouvel index 7. Les indices 0-6
-restent inchangés. Vulkan uniquement. Sur OpenGL, l'option enregistrée
-est conservée, avec retour au Bilinear. Si ratio différent de x2,
-recadrage partiel, format non compatible ou images transitoires
-dépassant 384 Mio, retour au présentateur d'origine. Aucun rendu
-neural n'est déclenché sur le chemin de fallback.
+Trois profils réels sont proposés dans le même réglage Upscaling,
+global et par jeu, avec des noms simples précédés de A4K :
 
-Validation source : quatre kernels compilés et ABI vérifiée ;
-syntaxe C++ du backend et du Layer avec les overlays PS5 : réussie.
-**Pas encore de build PS5 complet, de capture A/B ni de mesure VRAM
-ou GPU temps : ne pas annoncer R09 comme qualifié.**
+| Indice persisté | Libellé utilisateur | Moteur Vulkan |
+|---|---|---|
+| 7 | **A4K — Détails améliorés** | CNN v4 3D ×2, 4 passes |
+| 8 | **A4K — Image adoucie** | CNN Restore Soft 4 passes puis CNN 3D ×2 4 passes, soit 8 |
+| 9 | **A4K — Image nettoyée** | CNN Upscale+Denoise v3.2 ×2, 5 passes |
+
+Les identifiants historiques 0-6 sont inchangés. Le moteur
+Anime4K3D sélectionne trois graphes de traitement distincts,
+conserve une sortie et des surfaces de convolution séparées,
+préserve le canal alpha et traite des images GPU indépendantes
+par frame en vol. Les modèles MIT supplémentaires sont épinglés
+par SHA-256 ; 13 shaders SPIR-V sont compilés sur hôte et validés
+par glslangValidator, spirv-val et une vérification des bindings.
+Un test vérifie les trois graphes, les sources épinglées et les
+libellés identiques dans les paramètres du launcher.
+
+Vulkan uniquement, avec repli Bilinear sur OpenGL, ratio différent
+de ×2, crop partiel, format incompatible ou budget mémoire dépassant
+384 Mio. La préférence utilisateur est conservée lors du repli.
+
+**Validation** : shaders compilés, ABI vérifiée, backend et
+présentateur compilés syntaxiquement sur hôte ; test de graphes passé.
+**Pas encore de build PS5 complet, de capture A/B ni de mesure VRAM ou
+temps GPU : aucun des trois profils n'est qualifié sur console.**
 
 ## Alternatives récentes à analyser après A/B
 

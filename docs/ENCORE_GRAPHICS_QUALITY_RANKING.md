@@ -17,7 +17,10 @@ Le menu PS5 présente une **ligne Upscaling** et une
 flèches gauche/droite. Il existe bien **deux familles de méthodes**,
 mais **pas deux modes de tri** dans l'interface.
 
-- Upscaling : **8 positions dans l'ordre cible**, dont 7 filtres actuellement sélectionnables. FSR 3.1 temporel est le premier choix **futur**, non actif tant que le backend n'est pas réellement raccordé aux jeux.
+- Upscaling : **10 filtres sélectionnables en code** dans le menu (7
+  historiques et 3 profils A4K). FSR 3.1 temporel reste un choix futur
+  tant que les ressources invitées n'alimentent pas son backend.
+  Les IDs des anciens filtres restent inchangés.
 - Anti-aliasing : **8 positions théoriques**. Les quatre anciens filtres
   restent aux index 0-3 du launcher ; MSAA 2×/4×/8×/16× aux nouveaux
   index 4-7. Les modes MSAA ont maintenant un chemin Vulkan réel en code
@@ -28,7 +31,7 @@ mais **pas deux modes de tri** dans l'interface.
   de comparaison**, pas un deuxième ordre de sélection. Aucune option
   de tri par FPS/performance n'est livrée.
 - Sur OpenGL, la navigation saute les options non prises en charge
-  (SGSR / SGSR Edge ; FXAA+ et MSAA forcé pour l'anticrénelage). Pour un jeu,
+  (SGSR / SGSR Edge / A4K ; FXAA+ et MSAA forcé pour l'anticrénelage). Pour un jeu,
   le choix « Hériter du global » s'ajoute avant les méthodes.
 - Les indices persistés des préférences **ne sont pas renumérotés**,
   même si l'ordre de navigation ne correspond pas à l'ordre historique
@@ -39,6 +42,9 @@ mais **pas deux modes de tri** dans l'interface.
 | Rang | Filtre | Qualité présumée / limites | Coût GPU relatif non mesuré | Statut |
 | --- | --- | --- | --- | --- |
 | 1 | **AMD FSR 3.1 Super Resolution (temporel)** | Reconstruction avec historique, mouvement et profondeur réels ; peut réduire l'aliasing temporel mais produire du ghosting si les données ne sont pas fiables | Élevé / variable | **Futur, non sélectionnable** |
+| A4K-1 | **A4K — Détails améliorés** | CNN 3D ×2, 4 passes ; qualité variable selon le jeu | Élevé (non mesuré) | Intégré en code, test PS5 requis |
+| A4K-2 | **A4K — Image adoucie** | CNN Restore Soft puis 3D ×2, 8 passes | Très élevé (non mesuré) | Intégré en code, test PS5 requis |
+| A4K-3 | **A4K — Image nettoyée** | CNN Denoise ×2, 5 passes | Élevé (non mesuré) | Intégré en code, test PS5 requis |
 | 2 | SGSR Edge | Reconstruction spatiale orientée contours ; halos possibles | Moyen / élevé | Sélectionnable, validation visuelle PS5 à faire |
 | 3 | SGSR | Reconstruction spatiale avancée ; qualité dépendante du contenu | Moyen | Sélectionnable, validation visuelle PS5 à faire |
 | 4 | AMD FSR 1 (EASU/RCAS) | Agrandissement spatial avec netteté réglable | Moyen | Sélectionnable |
@@ -47,7 +53,7 @@ mais **pas deux modes de tri** dans l'interface.
 | 7 | Bilinear | Stable, doux, peu coûteux | Très faible | Sélectionnable |
 | 8 | Nearest | Fort aliasing sur jeux 3D, mais pertinent pour le pixel art | Très faible | Sélectionnable |
 
-**FSR 3.1 temporel arrive en tête uniquement si le renderer peut fournir de vraies données invitées cohérentes** : couleur avant HUD, profondeur, motion vectors, jitter, projection, masques et historique GPU correctement synchronisé. Le moteur Vulkan est présent, mais le producteur générique et le dispatch réel ne sont pas encore achevés. Il ne figure donc **pas parmi les 7 filtres navigables aujourd'hui**. Ne pas confondre avec **FSR 3 Frame Generation (R08)**, qui génère des images intermédiaires plutôt que de faire de la reconstruction spatiale/temporelle.
+**FSR 3.1 temporel arrive en tête uniquement si le renderer peut fournir de vraies données invitées cohérentes** : couleur avant HUD, profondeur, motion vectors, jitter, projection, masques et historique GPU correctement synchronisé. Le moteur Vulkan est présent, mais le producteur générique et le dispatch réel ne sont pas encore achevés. Il ne figure donc **pas parmi les 10 filtres navigables aujourd'hui**. Ne pas confondre avec **FSR 3 Frame Generation (R08)**, qui génère des images intermédiaires plutôt que de faire de la reconstruction spatiale/temporelle.
 
 SGSR Edge, SGSR et FSR 1 peuvent changer de place après comparaison sur console. Seul Vulkan propose les deux SGSR ; Lanczos est aussi disponible avec OpenGL. Le curseur Netteté (%) ne s'applique actuellement qu'à FSR 1 et SGSR, avec des échelles différentes.
 

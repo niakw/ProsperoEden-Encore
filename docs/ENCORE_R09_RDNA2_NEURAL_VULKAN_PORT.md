@@ -332,3 +332,29 @@ ainsi qu'une mise à l'échelle par tête. Contrat validé
 CanFSwinQkv et dispatch (windows,heads,64), wrapper Vulkan
 NrRdna2FSwinQkv. Cette variante doit être compilée et
 validée numériquement sur GPU avant intégration finale.
+
+
+## Six passes FSwin — enregistrement ordonné côté renderer (06/11)
+
+Le nouveau wrapper NrRdna2FSwinGraph enregistre ces six passes
+via le scheduler Vulkan, avec une barrière compute→compute
+après chacune :
+
+1. FSwinDense stage 0 — expand et activation.
+2. FSwinDense stage 1 — middle groupé.
+3. FSwinDense stage 2 — contract et résidu.
+4. FSwinQkv — projections Q/K/V normalisées.
+5. WindowAttention — logits, biais, Softmax, P×V.
+6. FSwinDense stage 3 — projection finale et résidu.
+
+Le contrat FSwinGraph vérifie avant le premier enregistrement
+les 4 demandes denses, les dimensions partagées (fenêtres,
+canaux, têtes), les tailles QKV/attention et les limites.
+Record rejette tout descriptor set nul avant d'émettre une commande.
+
+**Limite d'intégration** : le renderer doit fournir les ressources
+réelles, les poids, leurs constantes, leur durée de vie et les
+bindings producteurs-consommateurs corrects. Le wrapper n'alloue
+pas encore les tenseurs et ne lit pas les conteneurs de modèles.
+Ce chemin constitue l'orchestration interne d'un bloc FSwin,
+pas le graph neural complet ni un mode DLSS actif.

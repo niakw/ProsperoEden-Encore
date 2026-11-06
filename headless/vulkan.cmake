@@ -107,7 +107,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_ffwd3.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_qkv.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_qkv.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_graph.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"

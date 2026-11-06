@@ -156,6 +156,7 @@ eden_r08_test(test_rdna2_nr_ffwd3_policy)
 eden_r08_test(test_rdna2_nr_vit_attention_policy)
 eden_r08_test(test_rdna2_nr_fswin_dense_policy)
 eden_r08_test(test_rdna2_nr_fswin_qkv_policy)
+eden_r08_test(test_rdna2_nr_fswin_graph_policy)
 eden_r08_test(test_rdna2_nr_tile_layout)
 target_include_directories(test_rdna2_nr_tile_layout PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")

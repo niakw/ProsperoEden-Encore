@@ -58,6 +58,28 @@ struct GuestPass {
     bool multisample_guest_reads{}; // unsupported until proven safe
     bool storage_or_alias_attachments{}; // no valid shadow resolve path
 };
+// Native draw eligibility is independent of guest image memory. The
+// graphics pipeline MUST have been built against the exact native shadow
+// render pass and its rasterization sample count. Never bind the ordinary
+// 1x guest pipeline to a 4x/8x/16x shadow framebuffer.
+struct NativeDrawBinding {
+    std::uint64_t shadow_renderpass{};
+    std::uint64_t graphics_pipeline_renderpass{};
+    std::uint32_t shadow_samples{};
+    std::uint32_t graphics_pipeline_samples{};
+    bool guest_clear_verified{};
+    bool shader_read_aliases_target{};
+};
+[[nodiscard]] constexpr bool CompatibleNativeDraw(
+    const NativeDrawBinding& binding) noexcept {
+    return binding.shadow_renderpass != 0 &&
+           binding.graphics_pipeline_renderpass == binding.shadow_renderpass &&
+           (binding.shadow_samples == 2 || binding.shadow_samples == 4 ||
+            binding.shadow_samples == 8 || binding.shadow_samples == 16) &&
+           binding.graphics_pipeline_samples == binding.shadow_samples &&
+           binding.guest_clear_verified && !binding.shader_read_aliases_target;
+}
+
 struct Implementation {
     bool native_shadow_color{};
     bool native_shadow_depth{};

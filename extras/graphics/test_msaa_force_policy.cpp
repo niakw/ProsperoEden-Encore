@@ -90,6 +90,32 @@ int main() {
            Decision::CandidateOnly);
     assert(Evaluate(static_cast<Requested>(3),guest,limits).decision==
            Decision::UnsupportedRequest);
+    // Native Vulkan pipeline/renderpass compatibility is mandatory even
+    // when the GPU format and transient allocation are eligible.
+    NativeDrawBinding binding{
+        .shadow_renderpass=17,.graphics_pipeline_renderpass=17,
+        .shadow_samples=4,.graphics_pipeline_samples=4,
+        .guest_clear_verified=true,
+    };
+    assert(CompatibleNativeDraw(binding));
+    binding.graphics_pipeline_samples=1;
+    assert(!CompatibleNativeDraw(binding));
+    binding.graphics_pipeline_samples=4;
+    binding.graphics_pipeline_renderpass=18;
+    assert(!CompatibleNativeDraw(binding));
+    binding.graphics_pipeline_renderpass=17;
+    binding.shader_read_aliases_target=true;
+    assert(!CompatibleNativeDraw(binding));
+    binding.shader_read_aliases_target=false;
+    binding.guest_clear_verified=false;
+    assert(!CompatibleNativeDraw(binding));
+    binding.guest_clear_verified=true;
+    binding.shadow_samples=1;
+    assert(!CompatibleNativeDraw(binding));
+    binding.shadow_samples=4;
+    binding.shadow_renderpass=0;
+    assert(!CompatibleNativeDraw(binding));
+
     const auto usage=Evaluate(Requested::X16,guest,limits,full);
     assert(usage.estimated_attachment_bytes==1920ULL*1080*8*16);
 }

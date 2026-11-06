@@ -149,7 +149,7 @@ resolves couleur/profondeur vers le vrai framebuffer invité.
 
 Le garde-fou reste conservateur : `ShadowRendererNotImplemented`
 reste le résultat tant que le moteur de rendu complet n'est pas
-raccordé. Le vendor `9d7f766ef` apporte un **premier composant natif
+raccordé. Le vendor `1068722ab` apporte le **composant natif
 Vulkan couleur** : une image multisample temporaire, une image view,
 un framebuffer avec render pass et resolve couleur vers la surface
 1× originale, sous conditions strictes (un seul attachement couleur,
@@ -181,6 +181,20 @@ disponible par défaut sur notre PS5. Le chemin à attachements
 MSAA séparés conserve ses propres exigences de sauvegarde/
 rechargement des contenus en cas de draws multiples et de
 lectures/écritures invitées.
+
+Le scheduler natif possède désormais RequestNativeColorResolveRenderpass
+et FinishNativeColorResolveRenderpass : vrai renderpass Vulkan avec image
+shadow MSAA + attachement de resolve invité 1x, et barrières de visibilité
+de ces deux images après fermeture. Plusieurs draws consécutifs gardent
+le pass actif sans nouveau clear intempestif. Le composant vérifie
+explicitement que VkRenderPass et rasterizationSamples du pipeline
+correspondent au pass shadow, que les textures lues ne sont pas
+aliasées avec le RT, et que le clear invité est réellement connu.
+La fermeture du pass vérifie son identité et ne termine jamais par
+erreur un autre renderpass invité. Cette partie compile sur hôte
+avec les vraies sources Vulkan et passe les tests de politique.
+Le pipeline guest doit encore être construit dans sa variante
+multisample ET sélectionné au draw : ce code ne l'active pas seul.
 
 **Ce composant n'est pas appelé par le chemin des draws invités** : la
 sélection du pipeline rasterisationSamples, les clears, l'ordre des

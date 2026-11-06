@@ -17,6 +17,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Fast, exact native Vulkan ABI witness. Uses only pinned vendor headers,
+  # the runner C++ compiler and syntax-only parsing; no apt installation,
+  # PS5 SDK, linking or GPU execution. Catch owner incompatibilities before
+  # the much longer sharded host qualification.
+  native-vulkan-syntax:
+    name: Native Vulkan Task/Mesh C++20 syntax
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact SHA and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Compile maintained native Vulkan owners without a PS5 build
+        run: python3 -B tools/ns2/check_task_mesh_vulkan_tus_host.py
+
   host-qualify:
     name: Host qualification shard ${{ matrix.shard }}/4
     runs-on: ubuntu-24.04

@@ -36,7 +36,7 @@ static std::vector<std::uint32_t> Repack(
 int main(){
     for(std::uint32_t W:{1u,2u,4u})
       for(std::uint32_t H:{1u,2u,4u})
-       for(std::uint32_t C:{32u,64u,128u,256u}){
+       for(std::uint32_t C:{32u,64u,128u,256u,512u}){
         const auto size=std::size_t(W)*H*64u*C;
         FSwinWindowRepack p{W,H,C,0,0,0,0};
         assert(CanFSwinWindowRepack(p,{size,size}));
@@ -68,6 +68,17 @@ int main(){
         p={W,H,C,0,0,0,0};
         assert(!CanFSwinWindowRepack(p,{size-1,size}));
        }
+    // Bottleneck Split-Swin16H native grid, both diagonal shifts.
+    constexpr FSwinWindowRepack split0{8u,5u,512u,0,0,-1,-1};
+    constexpr std::uint64_t split_bytes=8ull*5u*64u*512u;
+    assert(CanFSwinWindowRepack(split0,{
+        split_bytes,split_bytes}));
+    assert(FSwinWindowRepackGridX(split0)==128u);
+    constexpr FSwinWindowRepack split1{8u,5u,512u,-1,-1,0,0};
+    assert(CanFSwinWindowRepack(split1,{
+        split_bytes,split_bytes}));
+    assert(!CanFSwinWindowRepack(split1,{
+        split_bytes,split_bytes-4u}));
     FSwinWindowRepack bad{65536,1,64,0,0,0,0};
     assert(!CanFSwinWindowRepack(bad,{UINT64_MAX,UINT64_MAX}));
     FSwinWindowRepack fullhd{120,68,32,0,0,-1,-1};

@@ -9,6 +9,7 @@
 #include "rdna2_nr_projection_quantized_policy.h"
 #include "rdna2_nr_vit_epilogue_policy.h"
 #include "rdna2_nr_split_context_repack_policy.h"
+#include "rdna2_nr_fswin_window_repack_policy.h"
 #include "rdna2_nr_split_projection_pool_policy.h"
 #include "video_core/renderer_vulkan/nr_rdna2_split_window_link_policy.h"
 #include <cstdint>
@@ -20,6 +21,9 @@ struct SplitBlockPlan {
     std::uint32_t pool_windows_x{},pool_windows_y{};
     std::uint32_t pool_output_tokens{};
     std::uint32_t final_head_tokens{}; // optional 512->1024 projection
+    // Native QKV 4x4-tile shift in a 2x2-tile window grid.
+    std::uint32_t window_grid_x{},window_grid_y{};
+    std::int32_t attention_shift_x{},attention_shift_y{};
 };
 struct SplitBlockCapacity {
     std::uint64_t input{},ffwd{},ffwd_projected{},context_heads{};
@@ -27,11 +31,33 @@ struct SplitBlockCapacity {
     std::uint64_t query{},key{},value{},fp32_scratch{};
     std::uint64_t pooled{};
     std::uint64_t final_fp32{},final_fp8{};
+    std::uint64_t shifted_input{},unshifted_context{};
 };
 [[nodiscard]] constexpr bool CanSplitBlock(
     const SplitBlockPlan& p,const SplitBlockCapacity& c) noexcept {
-    if(!p.windows||p.windows>1023u)
+    if(!p.windows||p.windows>1023u||
+       p.attention_shift_x<-1||p.attention_shift_x>1||
+       p.attention_shift_y<-1||p.attention_shift_y>1)
         return false;
+    const bool needs_shift=
+        p.attention_shift_x!=0||p.attention_shift_y!=0;
+    if((p.window_grid_x||p.window_grid_y||needs_shift)&&
+       (!p.window_grid_x||!p.window_grid_y||
+        std::uint64_t(p.window_grid_x)*p.window_grid_y!=p.windows))
+        return false;
+    if(needs_shift){
+        const FSwinWindowRepack forward{
+            p.window_grid_x,p.window_grid_y,512u,0,0,
+            p.attention_shift_x,p.attention_shift_y};
+        const FSwinWindowRepack reverse{
+            p.window_grid_x,p.window_grid_y,512u,
+            p.attention_shift_x,p.attention_shift_y,0,0};
+        if(!CanFSwinWindowRepack(forward,{
+              c.ffwd_projected,c.shifted_input})||
+           !CanFSwinWindowRepack(reverse,{
+              c.context_tokens,c.unshifted_context}))
+            return false;
+    }
     if(p.has_pooled_projection){
         if(!p.pool_windows_x||!p.pool_windows_y||
            std::uint64_t(p.pool_windows_x)*p.pool_windows_y!=p.windows)
@@ -75,14 +101,16 @@ struct SplitBlockCapacity {
         {0u,0u,0u,0u,0u,0u,p.windows,16u},
         {0u,0u,0u,0u,0u,p.windows,16u}};
     const SplitWindowLinkStorage storage{
-        {c.ffwd_projected,786432u,64u,c.query,c.key,c.value},
+        {needs_shift?c.shifted_input:c.ffwd_projected,
+         786432u,64u,c.query,c.key,c.value},
         {c.query,c.key,c.value,c.context_heads,262144u}};
     if(!CanSplitWindowLink(window,storage))return false;
     const SplitContextRepack repack{p.windows,16u,0u,0u};
     if(!CanSplitContextRepack(repack,{
         c.context_heads,c.context_tokens}))return false;
     const Storage proj_storage{
-        c.context_tokens,512u*512u,
+        needs_shift?c.unshifted_context:c.context_tokens,
+        512u*512u,
         c.fp32_scratch,c.fp32_scratch};
     if(!CanDispatch(proj,proj_storage))return false;
     if(!CanVitResidual(residual,{
@@ -92,6 +120,8 @@ struct SplitBlockCapacity {
     // tensor. The GPU buffer identity and nonaliasing checks are in Vulkan.
     return c.input>=rowbytes&&c.ffwd>=rowbytes&&
            c.ffwd_projected>=rowbytes&&c.context_heads>=rowbytes&&
-           c.context_tokens>=rowbytes&&c.projected>=rowbytes;
+           c.context_tokens>=rowbytes&&c.projected>=rowbytes&&
+           (!needs_shift||(c.shifted_input>=rowbytes&&
+                            c.unshifted_context>=rowbytes));
 }
 } // namespace Eden::Graphics::NeuralRDNA2

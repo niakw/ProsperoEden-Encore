@@ -44,6 +44,26 @@ int main(){
                           {fp8,fp8,fp8,fp8,fp8,fp8,fp8,fp8,fp8,
                            fp8*4u,639u*512u}));
 
+    // Attention shift -1/-1 lives on its own input and output tensors.
+    // Without both GPU repacks the QKV/Proj descriptors would be wrong.
+    auto shift_caps=caps;
+    shift_caps.shifted_input=fp8;
+    shift_caps.unshifted_context=fp8;
+    SplitBlockPlan shifted{windows,false};
+    shifted.window_grid_x=8u;shifted.window_grid_y=5u;
+    shifted.attention_shift_x=-1;
+    shifted.attention_shift_y=-1;
+    assert(CanSplitBlock(shifted,shift_caps));
+    auto missing=shift_caps;missing.shifted_input=fp8-1u;
+    assert(!CanSplitBlock(shifted,missing));
+    missing=shift_caps;missing.unshifted_context=fp8-1u;
+    assert(!CanSplitBlock(shifted,missing));
+    shifted.attention_shift_x=2;
+    assert(!CanSplitBlock(shifted,shift_caps));
+    shifted.attention_shift_x=1;
+    assert(CanSplitBlock(shifted,shift_caps));
+    shifted.window_grid_y=4u;
+    assert(!CanSplitBlock(shifted,shift_caps));
     assert(!CanSplitBlock({windows,true},caps));
     assert(!CanSplitBlock({0u,false},caps));
     assert(!CanSplitBlock({1024u,false},caps));

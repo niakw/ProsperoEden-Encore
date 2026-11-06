@@ -16,7 +16,8 @@ struct FSwinWindowRepackStorage {
     if(!p.windows_x||!p.windows_y||
        std::uint64_t(p.windows_x)*p.windows_y>65535u||
        (p.channels!=32u&&p.channels!=64u&&
-        p.channels!=128u&&p.channels!=256u)||
+        p.channels!=128u&&p.channels!=256u&&
+        p.channels!=512u)||
        !valid(p.src_shift_x)||!valid(p.src_shift_y)||
        !valid(p.dst_shift_x)||!valid(p.dst_shift_y))return false;
     const auto bytes=std::uint64_t(p.windows_x)*p.windows_y*64u*p.channels;

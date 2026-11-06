@@ -260,3 +260,54 @@ Test host `test_rdna2_nr_unet_skip_cache_policy.cpp` :
 quatre dimensions réelles, octets exacts, limite de capacité,
 erreurs de dimension, doublons de blocs et comptage incomplet,
 sur Original et Small. Le cache ne contient aucun code par jeu.
+
+
+## 6 novembre — Raccord Vulkan des quatre branches U-Net ascendantes
+
+Le vendor introduit les composants **opérationnels à l'échelle d'un
+raccord**, et non un faux moteur complet :
+
+- `NrRdna2FSwinUpsampleOutput` : charge les matrices `resample.bin`
+  [C,2C] E4M3FN et les gains `upsample_gain.bin` FP16 [C] d'un
+  NRMODEL1 fourni localement, puis affecte deux buffers VMA Upload
+  et cinq descripteurs STORAGE aux kernels Vulkan. Sortie E4M3FN
+  [H,W,C], non RGBA. Aucune donnée du modèle embarquée.
+- `NrRdna2UNetSkipCache::RecordProducer` : enregistre les commandes
+  du producteur sur le scheduler de la branche, puis rend son
+  descripteur de saut récupérable par `ForUpsample` ;
+  un buffer seulement lié n'est plus présenté comme produit.
+- `NrRdna2UNetUpsampleLink` : refuse une mauvaise dépendance `input0`
+  ou `input1`, vérifie le niveau de canaux, la géométrie native, les
+  descripteurs, l'identité du scheduler, puis enregistre le prologue
+  `upsample` suivi de la chaîne FSwin ascendante.
+- `NrRdna2FSwinChain::BindRasterInput` accepte une première couche
+  FSwin **plain ou InputView** et, pour un décalage initial, insère
+  un buffer VMA de fenêtres canoniques et le shader de repack
+  dans l'ordre raster→fenêtres→décalage→FSwin.
+
+### Correction de bord impair — nécessaire à la fonction, pas une optimisation
+
+La pyramide native n'utilise pas `ceil(W/2)` : par exemple le
+raster de saut C128 `135×240` devient **`67×120`** à la
+résolution inférieure. Le prologue `upsample` n'accède plus à
+une 68e colonne inexistante : il utilise `floor(W/2)` et
+répète la dernière valeur valide pour le bord impair. Le
+shader `downsample`, le contrat hôte et le lien de niveau
+produisent le même format `floor(W/2)×floor(H/2)`.
+
+Les huit liens structurels des plans Original/Small sont
+testés par `test_rdna2_nr_unet_upsample_edges`, avec les niveaux
+C256 / C128 / C64 / C32, les axes natifs inversés
+et les premières couches à fenêtres décalées. Les tests de
+contrat FSwin DS/UPS et du raccord de niveaux couvrent
+également les géométries impaires.
+
+**Limitations restantes avant un premier frame DLSS-NR :**
+les tableaux de gain extraits des niveaux C64/128/256 sont
+incomplets (16 coefficients FP16 manquants dans les sources
+actuelles) et restent refusés sans substitution fictive.
+La liaison globale pré-image → U-Net complet → Split-Swin /
+ViT → post-image, les poids complets, les entrées du
+renderer et la sortie d'image PS5 ne sont pas encore
+raccordés. Une CI source verte ne prouverait pas à elle seule
+ce fonctionnement. Aucune optimisation de performance engagée.

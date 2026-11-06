@@ -24,8 +24,10 @@ struct FSwinUpsampleStorage {
     const auto wy=(std::uint64_t(p.height)+7u)/8u;
     if(wx*wy>65535u||p.windows_x!=wx||p.windows_y!=wy)return false;
     const std::uint64_t C=p.channels;
-    const auto low=((std::uint64_t(p.width)+1u)/2u)*
-        ((std::uint64_t(p.height)+1u)/2u)*(2u*C);
+    // Native U-Net downsample emits FLOOR(W/2) × FLOOR(H/2).
+    // The final odd-edge pixel reuses the last valid low-res sample.
+    const auto low=(std::uint64_t(p.width)/2u?p.width/2u:1u)*
+        (std::uint64_t(p.height)/2u?p.height/2u:1u)*(2u*C);
     const auto high=std::uint64_t(p.width)*p.height*C;
     const auto weight=2u*C*C;
     const auto gain=C;

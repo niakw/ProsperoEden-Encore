@@ -218,6 +218,19 @@ else()
     message(STATUS "R09 neural settings host test skipped: nlohmann/json.hpp unavailable")
 endif()
 eden_r08_test(test_rdna2_nr_fswin_upsample_policy)
+# Check exact native U-Net upsample edges and odd-resolution lower bounds.
+add_executable(test_rdna2_nr_unet_upsample_edges
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_unet_upsample_edges.cpp")
+target_include_directories(test_rdna2_nr_unet_upsample_edges PRIVATE
+    "${EDEN_ROOT}/extras/graphics"
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+target_compile_options(test_rdna2_nr_unet_upsample_edges PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_unet_upsample_edges
+    COMMAND test_rdna2_nr_unet_upsample_edges
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
+
 target_include_directories(test_rdna2_nr_fswin_output_view_policy PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
 # R09: validate recovered full native graph structural manifests.

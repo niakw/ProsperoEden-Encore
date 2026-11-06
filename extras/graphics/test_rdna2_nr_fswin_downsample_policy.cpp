@@ -14,8 +14,8 @@ int main(){
                 const auto input=std::uint64_t(p.windows_x)*
                     p.windows_y*64u*C;
                 const auto weights=std::uint64_t(2u)*C*C;
-                const auto output=(std::uint64_t(W+1u)/2u)*
-                    ((H+1u)/2u)*2u*C;
+                const auto output=(std::uint64_t(W)/2u)*
+                    (std::uint64_t(H)/2u)*2u*C;
                 const FSwinDownsampleStorage s{input,weights,output};
                 assert(CanFSwinDownsample(p,s));
                 assert(FSwinDownsampleGridX(p)==C/8u);

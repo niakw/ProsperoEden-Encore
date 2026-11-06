@@ -20,7 +20,8 @@ struct FSwinLevelLink {
        p.destination_channels!=p.source_channels*2u)return false;
     const std::uint64_t W=p.source_width,H=p.source_height;
     const auto sx=(W+7u)/8u,sy=(H+7u)/8u;
-    const auto tw=(W+1u)/2u,th=(H+1u)/2u;
+    const auto tw=W/2u,th=H/2u;
+    if(!tw||!th)return false;
     const auto tx=(tw+7u)/8u,ty=(th+7u)/8u;
     if(p.source_grid.windows_x!=sx||p.source_grid.windows_y!=sy||
        p.destination_grid.windows_x!=tx||

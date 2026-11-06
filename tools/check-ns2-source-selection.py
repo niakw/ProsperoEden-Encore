@@ -119,6 +119,17 @@ def check() -> None:
             'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in CMAKE and
             'EDEN_NS2_NATIVE_VULKAN' not in CMAKE,
             'native compute vtable not unified across core/renderer')
+    # The selected PS5 rasterizer must enforce *live* QMD3 atomics against
+    # the reflected storage plan; the compiler-side check is not enough.
+    require('Shader::Ampere::NativeQmdAtomicSpansFitBindings(' in raster and
+            'compiled.native_atomic_spans.data()' in raster and
+            'resources->storage_buffers' in raster and
+            'cmdbuf.Dispatch(dim[0], dim[1], dim[2])' in raster,
+            'production Vulkan native atomic span admission missing')
+    vk_select=read('headless/vulkan.cmake')
+    require('file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vk_select and
+            '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in vk_select,
+            'production Vulkan renderer no longer uses maintained source')
     maxwell=read('vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h')
     ampere=read('vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h')
     require('NUM_STORAGE_BUFFERS = 16;' in maxwell and

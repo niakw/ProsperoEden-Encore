@@ -22,6 +22,22 @@ assert "class NativeQmdTextureMetadata final : public Shader::Environment" in ra
 assert "NativeBufferOnlyMetadata" not in rasterizer
 assert "VideoCommon::PixelFormatFromTextureInfo(" in rasterizer
 assert "VideoCommon::ReadNs2GpuShader(" in rasterizer
+# P2.3: the actual Vulkan dispatch may not bypass the guest atomic span
+# proof performed by the separate captured-QMD compilation helper.
+atomic_check="Shader::Ampere::NativeQmdAtomicSpansFitBindings("
+assert native.count(atomic_check)==1
+assert native.index("resource_owner->BuildResourcePlan(*compiled.info)") < native.index(atomic_check)
+assert native.index(atomic_check) < native.index("pipeline_cache.CreateNativeComputePipeline(")
+assert "compiled.native_atomic_spans.data()" in native
+assert "resources->storage_buffers" in native
+assert "cmdbuf.Dispatch(dim[0], dim[1], dim[2])" in native
+assert "RetainNativeComputeUntilGpuTick(" in native
+# Verify the fork whose QMD3 dispatch is audited is the one actually copied
+# into the single PS5 video_core target, not the untouched old Eden TU.
+cmake_vulkan=(ROOT / "headless/vulkan.cmake").read_text()
+assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")' in cmake_vulkan
+assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake_vulkan
+assert '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in cmake_vulkan
 assert "NativeQmdTextureTables" in native
 assert "kepler_compute.regs" in native
 assert "launch.linked_tsc" in native

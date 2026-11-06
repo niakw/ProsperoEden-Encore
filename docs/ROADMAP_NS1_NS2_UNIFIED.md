@@ -846,6 +846,22 @@ Le code vidéo n'est pas retiré. La CI SPIR-V native de `main` surveille
 crée les deux dossiers d'installation avant les clones épinglés.
 Les verdicts CI restent dépendants des exécutions réelles au nouveau SHA.
 
+**P2.3 — authentification des atomiques dans le vrai rasterizer PS5 (06/11) :**
+L'ancien diagnostic « `DispatchNativeCompute` manquant » était erroné :
+`headless/vulkan.cmake` copie et compile le propriétaire réellement maintenu
+`vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp` ; son chemin QMD3
+soumet déjà `vkCmdDispatch` et garde le pipeline et les images vivants
+jusqu'au tick GPU. Le véritable défaut corrigé est ailleurs : contrairement
+au helper `CompileCapturedNs2QmdComputeSpirvWithResources`, le chemin
+rasterizer compilait le SPIR-V sans appliquer
+`NativeQmdAtomicSpansFitBindings` à `compiled.native_atomic_spans` et aux
+SSBO du `NativeQmdResourcePlan` avant de créer le pipeline. Cette vérification
+est maintenant obligatoire avant l'acquisition des vues TIC/TSC ou toute
+préparation Vulkan ; un offset atomique hors de la plage de la ressource
+réelle ou non aligné est refusé. Le contrôle de provenance CMake et du
+`vkCmdDispatch` est ajouté aux témoins hôte ; cela ne prouve pas encore
+une frame console.
+
 **P2.3 — modules SPIR-V CAS émis et validés (06/11, qualification hôte) :**
 `test_ampere_real_spirv.cpp` fabrique maintenant sept blocs IR Compute
 contenant réellement les atomiques `StorageAtomicAddF32`,

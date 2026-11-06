@@ -41,6 +41,11 @@ scheduler_header = (OWNER / "video_core/control/scheduler.h").read_text()
 worker = (ROOT / "vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp").read_text()
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert "command_resume_offset" in dma and "command_resume_offset" in dma_header
+# Header size must not depend on a per-TU PS5_NATIVE macro: core and video_core
+# both materialize ChannelState with DmaPusher by value.
+assert "#ifdef PS5_NATIVE" not in dma_header
+assert 'SOURCE "${EDEN_MAINTAINED_GPU_DMA}"' in cmake
+assert 'APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in cmake
 assert "commands.subspan(command_resume_offset)" in dma
 assert dma.count(".subspan(command_resume_offset)") >= 3
 assert "if (HasPendingNativeAcquire())" in dma

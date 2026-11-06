@@ -2285,6 +2285,11 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     list(REMOVE_ITEM eden_ns2_sched_sources "control/scheduler.cpp")
     list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_SCHEDULER}")
     set_property(TARGET video_core PROPERTY SOURCES "${eden_ns2_sched_sources}")
+    # PS5_NATIVE is not a transitive preprocessor definition. Ensure the
+    # selected DMA TU actually compiles its native resume/GPFIFO cursor
+    # code, including the non-Vulkan PS5 path; do not define it for core.
+    set_property(SOURCE "${EDEN_MAINTAINED_GPU_DMA}"
+        TARGET_DIRECTORY video_core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     # Research-only header and .cpp must be the SAME Puller class to keep
     # DmaPusher ABI consistent in every video_core translation unit.
     set(EDEN_NS2_GPU_DISPATCH_ROOT

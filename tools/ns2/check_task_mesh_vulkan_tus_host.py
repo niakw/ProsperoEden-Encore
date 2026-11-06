@@ -52,6 +52,11 @@ assert 'mesh_primitive_header = source.MeshPrimitiveHeader();' in env_owner
 capture_owner = MESH_STAGE_OWNERS[2].read_text()
 assert 'NativeMeshSlotCbufBank(shader_stage, has_task)' in capture_owner
 assert 'NativeMeshRegisterPipelineKey(' in capture_owner
+assert 'NativeMeshPrimitiveHeaderPipelineKey(' in capture_owner
+assert 'NativeMeshPrimitiveHeaderAddress(' in capture_owner
+assert 'IsShaderConfigEnabled(Maxwell::ShaderType::Geometry)' in stage_owner
+assert 'mesh_primitive_header' in stage_owner
+assert 'live_executable_stages' in (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
 assert 'NativeMeshRegisterPipelineKey(' in (
     ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h"
 ).read_text()

@@ -69,7 +69,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 | gemm1x1.comp | Produit matriciel de base Vulkan RDNA2 développé ; famille complète non terminée |
 | fswin_t.comp | Non porté |
 | attn.comp | Calcul du contexte d’attention 64×32 préprojeté RDNA2 ; QKV fusionnés manquants, famille **partielle** |
-| vit_attn.comp | Non porté |
+| vit_attn.comp | Première passe globale Q·K/P·V pour 32 têtes préprojetées, jusqu’à 2 048 tokens, précision différente de l’amont et non optimisée |
 | ffwd3_t.comp | Première variante groupée 512→64→256→64 en trois étapes FP8 ; port de calcul de base, non équivalent aux variantes tuilées de production |
 | decoder_upsample.comp | Première variante 2× à 512 canaux, projection FP16 + skip FP8 + gain FP16, sortie E4M3FN ; validée sur hôte, sans graphe |
 | repack_tokens.comp | Primitive de permutation aller-retour RDNA2 intégrée en code et validée sur hôte ; pas encore de graphe de réseau |
@@ -78,7 +78,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
-**État vérifiable : huit primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté, projection QKV et FFWD3 groupé) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
+**État vérifiable : neuf primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté, projection QKV, FFWD3 groupé et contexte ViT global) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
 
 ## Nouveaux dépôts utiles, examinés le 6 novembre
 
@@ -235,3 +235,34 @@ les ordres d'opérations et arrondis ne sont pas tous équivalents,
 les poids/modèles ne sont pas importés, et aucune mesure PS5 ne
 démontre le temps réel. Il reste à porter fswin_t et vit_attn
 et à concevoir le planificateur complet avec passes synchronisées.
+
+
+## Neuvième primitive — ViT attention globale 32 têtes (06/11)
+
+vit_attention_rdna2.comp adapte le cœur mathématique de
+vit_attn.comp du réseau MIT : une attention globale non fenêtrée,
+32 têtes de 32 dimensions (total 1 024 canaux). Entrées déjà
+projetées, normalisées et pondérées Q/K, plus V, chacune en
+row-major E4M3FN [tokens,heads,32] ; la sortie a la même structure.
+
+- Un workgroup de 32 invocations traite 32 queries par tête
+  dans un seul dispatch ; chaque invocation parcourt tous les tokens.
+- Q·K accumule en FP32, puis applique la transformation exponentielle
+  dérivée du demi-précision nr_vit_exp de swin_math.glsl.
+- Le **dénominateur** somme l'exponentielle avant quantification ;
+  le **numérateur** P·V reçoit les probabilités déjà quantifiées FP8.
+  La sortie multiplie par 1/max(den, seuil) avec arrondis FP16.
+- Quatre buffers storage, 20 octets de push constants.
+  Contrôle hôte des allocations, offsets 32 bits/alignment,
+  sortie non aliasée et **maximum de 2 048 tokens**. Dimensions de
+  dispatch bornées, aucune extension coopérative ou shaderFloat8.
+- Vérification : compilation Vulkan 1.1, validation SPIR-V/ABI,
+  tests CPU de référence sur distribution uniforme, sélection par
+  Q·K et cas mémoire, syntaxe C++ du wrapper.
+
+**Limites :** ce port est un baseline scalaire en O(32 × T² × 32).
+La réduction FP32 et les arrondis ne sont pas bit-identiques à
+la réduction FP16 de l'amont. Les poids et tenseurs tuilés ne sont
+pas importés, aucune frame DLSS n'est calculée sur console et
+la faisabilité du temps réel n'a pas été démontrée. Une optimisation
+par tuiles sera nécessaire avant d'envisager une activation runtime.

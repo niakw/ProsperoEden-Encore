@@ -121,6 +121,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_projection_stage.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_block.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_run.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_boundary_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_model_buffers.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_gpu_tensors.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_subgraph.cpp"
@@ -424,6 +425,29 @@ set_property(SOURCE
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}")
 
+
+# R09: real native FinalHead 4x4 tiles <-> padded ViT raster buffer bridge.
+# The shader is compiled to SPIR-V with a strict Vulkan 1.1 ABI check.
+set(EDEN_R09_VIT_BOUNDARY_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_boundary_repack_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_VIT_BOUNDARY_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-vit-boundary-repack-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_VIT_BOUNDARY_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/vit_boundary_repack_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-vit-boundary-repack-spv.py"
+    COMMENT "Compile and verify RDNA2 FinalHead-ViT tile/raster bridge"
+    VERBATIM)
+add_custom_target(eden-r09-vit-boundary-spv
+    DEPENDS "${EDEN_R09_VIT_BOUNDARY_HEADER}")
+add_dependencies(video_core eden-r09-vit-boundary-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_boundary_repack.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_VIT_BOUNDARY_HEADER}")
 
 # R09: native RDNA2 ViT expansion and residual epilogues, portable Vulkan.
 set(EDEN_R09_VIT_EPILOGUE_HEADERS

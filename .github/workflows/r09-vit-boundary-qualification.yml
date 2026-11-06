@@ -1,0 +1,48 @@
+name: R09 ViT boundary host and SPIR-V ABI
+on:
+  push:
+    branches: [feat/r09-rdna2-vit-boundary-wiring]
+  pull_request:
+    paths:
+      - 'extras/graphics/rdna2_nr_vit_native_route_policy.h'
+      - 'extras/graphics/test_rdna2_nr_vit_boundary_repack_policy.cpp'
+      - 'tools/graphics/test-rdna2-vit-boundary-repack-spv.py'
+      - 'headless/vulkan.cmake'
+      - 'vendor'
+permissions:
+  contents: read
+jobs:
+  r09-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          submodules: recursive
+          fetch-depth: 1
+      - name: Install only portable SPIR-V validation tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools spirv-tools
+      - name: Compile and run positive/negative policy tests with Clang and GCC
+        run: |
+          set -euo pipefail
+          mkdir -p .build-r09-boundary
+          for cxx in clang++ g++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
+              -Ivendor/encore-active/eden-vulkan/include \
+              extras/graphics/test_rdna2_nr_vit_boundary_repack_policy.cpp \
+              -o ".build-r09-boundary/policy-$cxx"
+            UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/policy-$cxx"
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
+              -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics \
+              extras/graphics/test_rdna2_nr_vit_native_route_policy.cpp \
+              -o ".build-r09-boundary/route-$cxx"
+            UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/route-$cxx" \
+              extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
+              extras/graphics/fixtures/r09_nr_small_1920x1080.txt
+          done
+      - name: Verify 7-field Vulkan 1.1 descriptor/push ABI and generate shader header
+        run: |
+          python3 -m py_compile tools/graphics/test-rdna2-vit-boundary-repack-spv.py
+          python3 tools/graphics/test-rdna2-vit-boundary-repack-spv.py \
+            --vendor vendor --header .build-r09-boundary/rdna2_nr_vit_boundary_repack_comp_spv.h
+          test -s .build-r09-boundary/rdna2_nr_vit_boundary_repack_comp_spv.h

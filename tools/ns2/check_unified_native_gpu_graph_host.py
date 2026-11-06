@@ -42,7 +42,8 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/am/service/self_controller.cpp',
         'backend/spirv/spirv_emit_context.cpp',
-        'backend/spirv/emit_spirv_context_get_set.cpp']
+        'backend/spirv/emit_spirv_context_get_set.cpp',
+        'backend/spirv/emit_spirv_image.cpp']
  for f in files:
   path=proj/f;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('int fake=0;\n')
  puller=root/'vendor/encore-active/eden-core/src/video_core/engines/puller.cpp'
@@ -66,7 +67,8 @@ add_library(core STATIC dummy.cpp
 add_library(video_core STATIC "{puller}" dummy.cpp)
 add_library(shader_recompiler STATIC dummy.cpp
     backend/spirv/spirv_emit_context.cpp
-    backend/spirv/emit_spirv_context_get_set.cpp)
+    backend/spirv/emit_spirv_context_get_set.cpp
+    backend/spirv/emit_spirv_image.cpp)
 add_library(dynarmic STATIC dummy.cpp)
 add_executable(eden-headless dummy.cpp)
 '''+owner+'''
@@ -96,8 +98,11 @@ if(core_definitions MATCHES "EDEN_NS2_NATIVE_VULKAN" OR
 endif()
 list(FIND selected_shader "backend/spirv/spirv_emit_context.cpp" legacy_emitter)
 list(FIND selected_shader "backend/spirv/emit_spirv_context_get_set.cpp" legacy_direct)
+list(FIND selected_shader "backend/spirv/emit_spirv_image.cpp" legacy_image)
 if(NOT selected_shader MATCHES "ns2-runtime/ampere/" OR
-   NOT legacy_emitter EQUAL -1 OR NOT legacy_direct EQUAL -1)
+   NOT selected_shader MATCHES "ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp" OR
+   NOT legacy_emitter EQUAL -1 OR NOT legacy_direct EQUAL -1 OR
+   NOT legacy_image EQUAL -1)
     message(FATAL_ERROR "SPIR-V QMD3 owner not installed exactly once")
 endif()
 if(NOT EXISTS "${PORT_BUILD_DIR}/include/video_core/rasterizer_interface.h")

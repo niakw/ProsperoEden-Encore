@@ -175,6 +175,10 @@ sirit=ROOT/"vendor/sources/eden-cpm/sirit/v1.0.5/include/sirit/sirit.h"
 spirv=ROOT/"vendor/sources/eden-cpm/spirv-headers/vulkan-sdk-1.4.341.0/include/spirv/unified1/spirv.hpp11"
 if boost.is_dir() and sirit.is_file() and spirv.is_file():
     includes=[ROOT/"vendor/encore-active/ns2-runtime/ampere",
+        # The actual native Task/Mesh graph selects the reviewed shader
+        # interface before pinned Eden. TES patch levels use two distinct
+        # Input variables; upstream's pre-NS2 header lacks those members.
+        ROOT/"vendor/encore-active/eden-shader/src",
         ROOT/"vendor/sources/eden/src",
         ROOT/"vendor/sources/fmt/include",
         sirit.parents[1],spirv.parents[2],

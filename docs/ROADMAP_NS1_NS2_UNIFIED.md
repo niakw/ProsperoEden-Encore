@@ -325,6 +325,21 @@ mais ne valide ni la liaison inter-stage GPU,
 ni les formes LEPC non reconnues, ni task/mesh
 ou le premier rendu NS2 PS5 (P2.4/P5 ouverts).
 
+**P2.3/P2.4 — ATOM.CAS U32 sur le compilateur partagé (06/11, portage en validation) :**
+Le lot générique de Lichii `a6e5217` est adapté aux **18 propriétaires**
+maintenus dans `vendor/sources/eden/src/shader_recompiler` : traduction
+ATOM.CAS Maxwell, deux opcodes IR, propagation d'une valeur de retour
+et des deux opérandes compare/remplacement, transformation Global→Storage,
+ainsi que l'émission `OpAtomicCompareExchange` SPIR-V (ou GLSL).
+Le chemin Compute NS2 n'admet le CAS qu'après vérification du pointeur
+QMD3 et du slot SSBO writable et authentifié ; aucune adresse globale
+inventée. Un huitième module Compute réel (`u32-cas`) est ajouté
+au test `spirv-val`. Les sept unités C++ critiques et le vrai réécrivain QMD3 ont passé les
+compilations hôte Clang, ainsi que les tests IR Clang/GCC. La validation
+SPIR-V par CI sur le SHA publié reste nécessaire ; elle ne constitue
+pas une preuve d'exécution console ou de prise en charge de tous les
+encodages d'ATOM.CAS Ampere.
+
 **P2.4 — LEPC prédicat avec PC GMMU authentifié (06/11, source/hôte) :**
 Le lowerer prend maintenant en charge le LEPC sous P0–P6 ou !P0–!P6
 lorsque la capture fournit l'adresse native 64 bits du code invité.

@@ -338,7 +338,11 @@ static void CheckNativeGlobalAtomicPointer(
             {Value{f32{1.25f}}, Value{f32{-2.0f}}});
         value=Value{&block.back()};
     }
-    block.AppendNewInst(opcode, {addr,value});
+    if (opcode == Opcode::GlobalAtomicCompareExchange32) {
+        block.AppendNewInst(opcode,{addr,Value{u32{7}},Value{u32{9}}});
+    } else {
+        block.AppendNewInst(opcode, {addr,value});
+    }
     const bool ok = Shader::Ampere::NativeAtomic::Rewrite(program);
     assert(ok == accepted);
     if (!ok) return;
@@ -346,6 +350,7 @@ static void CheckNativeGlobalAtomicPointer(
     for (const auto& inst : block.Instructions()) {
         if (inst.GetOpcode() != Opcode::StorageAtomicIAdd32 &&
             inst.GetOpcode() != Opcode::StorageAtomicExchange32 &&
+            inst.GetOpcode() != Opcode::StorageAtomicCompareExchange32 &&
             inst.GetOpcode() != Opcode::StorageAtomicIAdd64 &&
             inst.GetOpcode() != Opcode::StorageAtomicExchange64 &&
             inst.GetOpcode() != Opcode::StorageAtomicAddF32 &&
@@ -366,7 +371,11 @@ static void CheckNativeGlobalAtomicPointer(
             assert(inst.Arg(1).IsImmediate() &&
                    inst.Arg(1).U32() == displacement);
         }
-        assert(packed_f32 ? !inst.Arg(2).IsImmediate() &&
+        if (opcode == Opcode::GlobalAtomicCompareExchange32) {
+            assert(inst.GetOpcode() == Opcode::StorageAtomicCompareExchange32);
+            assert(inst.Arg(2).IsImmediate() && inst.Arg(2).U32() == 7);
+            assert(inst.Arg(3).IsImmediate() && inst.Arg(3).U32() == 9);
+        } else assert(packed_f32 ? !inst.Arg(2).IsImmediate() &&
                              inst.Arg(2).Type() == Shader::IR::Type::F32x2 :
                packed_f16 ? !inst.Arg(2).IsImmediate() &&
                             inst.Arg(2).Type() == Shader::IR::Type::F16x2 :
@@ -638,6 +647,15 @@ int main() {
     // Canonical resolved guest pointer is the actual descriptor's low/high
     // words. Only known, writable, flat QMD3 bindings may become atomics.
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicCompareExchange32,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicCompareExchange32,true,
+                                   0,0x310,0,0x310,true,true,false,true,0x3c);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicCompareExchange32,true,
+                                   0,0x310,8,0x310,true,true,false,false,0x3c,true,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicCompareExchange32,false,
+                                   0,0x310,3);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicCompareExchange32,false,
+                                   0,0x310,0,0x320);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32,true);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF16x2,true);
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicAddF32x2,true);

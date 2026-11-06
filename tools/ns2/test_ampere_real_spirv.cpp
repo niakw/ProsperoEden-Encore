@@ -208,7 +208,8 @@ static void CheckNativeQmdIndirectCbufIR() {
 static void VerifyRealFloatCasSpirv(const std::string& prefix) {
     using Shader::IR::Opcode;
     using Shader::IR::Value;
-    constexpr std::array<std::pair<Opcode, const char*>,7> cases{{
+    constexpr std::array<std::pair<Opcode, const char*>,8> cases{{
+        {Opcode::StorageAtomicCompareExchange32,"u32-cas"},
         {Opcode::StorageAtomicAddF32,"f32-add"},
         {Opcode::StorageAtomicAddF16x2,"f16x2-add"},
         {Opcode::StorageAtomicMinF16x2,"f16x2-min"},
@@ -234,6 +235,9 @@ static void VerifyRealFloatCasSpirv(const std::string& prefix) {
         info.used_storage_buffer_types=Shader::IR::Type::U32;
         Value value{f32{1.25f}};
         switch(opcode) {
+        case Opcode::StorageAtomicCompareExchange32:
+            value=Value{u32{9}};
+            break;
         case Opcode::StorageAtomicAddF32:
             info.uses_atomic_f32_add=true;
             break;
@@ -256,7 +260,12 @@ static void VerifyRealFloatCasSpirv(const std::string& prefix) {
             value=Value{&block.back()};
             break;
         }
-        block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},value});
+        if (opcode == Opcode::StorageAtomicCompareExchange32) {
+            block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},
+                                        Value{u32{7}}, value});
+        } else {
+            block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},value});
+        }
         Shader::Backend::Bindings bindings{};
         Shader::Profile profile{};
         profile.supported_spirv=0x00010500;

@@ -316,3 +316,19 @@ C++ sur hôte avant publication. **Ce n'est pas fswin_t complet** :
 QKV, variantes image, downsample/upsample, import de modèles
 et planificateur du réseau restent à relier. Pas de performance
 PS5 ou de rendu DLSS revendiqués.
+
+
+## Onzième primitive — QKV FSwin à largeur variable
+
+Un nouveau shader fswin_qkv_rdna2.comp réutilise les formules
+de la projection Q/K/V déjà présente et accepte désormais
+C=32/64/128/256, avec C/32 têtes de 32 caractéristiques.
+L'entrée row-major est [window,token,C], les poids E4M3FN
+sont [head,Q/K/V,32,C] et les sorties Q/K/V restent au format
+[window,head,token,32] du shader window_attention_rdna2.comp.
+
+Le port exige des bornes mémoire et des buffers distincts,
+ainsi qu'une mise à l'échelle par tête. Contrat validé
+CanFSwinQkv et dispatch (windows,heads,64), wrapper Vulkan
+NrRdna2FSwinQkv. Cette variante doit être compilée et
+validée numériquement sur GPU avant intégration finale.

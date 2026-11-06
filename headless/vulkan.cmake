@@ -106,7 +106,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_ffwd3.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_qkv.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -383,6 +384,27 @@ add_dependencies(video_core eden-r09-rdna2-nr-fswin-dense-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_dense.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}")
+
+# R09 RDNA2: FSwin QKV for C=32,64,128,256.
+set(EDEN_R09_RDNA2_FSWIN_QKV_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_fswin_qkv_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-qkv-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_qkv_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-qkv-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 FSwin QKV"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-fswin-qkv-spv
+    DEPENDS "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-fswin-qkv-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_qkv.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

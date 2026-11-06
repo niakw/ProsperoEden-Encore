@@ -12,6 +12,12 @@ add_test(NAME test_fsr31_spirv_abi_parser
 # check actual model hashes, three independent CNN graphs and labels.
 # RDNA2 1x1 neural projection is one Vulkan compute primitive, not DLSS:
 # validate that no FP8 WMMA/cooperative matrix instruction leaked into SPIR-V.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_qkv_rdna2.comp")
+    add_test(NAME test_rdna2_nr_fswin_qkv_spirv_abi
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-qkv-spv.py"
+            --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_dense_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_dense_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
@@ -149,6 +155,7 @@ eden_r08_test(test_rdna2_nr_qkv_projection_policy)
 eden_r08_test(test_rdna2_nr_ffwd3_policy)
 eden_r08_test(test_rdna2_nr_vit_attention_policy)
 eden_r08_test(test_rdna2_nr_fswin_dense_policy)
+eden_r08_test(test_rdna2_nr_fswin_qkv_policy)
 eden_r08_test(test_rdna2_nr_tile_layout)
 target_include_directories(test_rdna2_nr_tile_layout PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")

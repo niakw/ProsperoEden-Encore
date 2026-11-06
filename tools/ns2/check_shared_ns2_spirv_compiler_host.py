@@ -60,6 +60,25 @@ assert "inline thread_local bool native_spirv_cbuf_bounds_active = false" in (
 ).read_text()
 print("P0_2_NS1_PINNED_CBUF_PARITY_PASS sparse_maxwell=unchanged native_scope=thread_local",flush=True)
 
+# P2.3: a F16x2 atomic operates on one 32-bit SSBO word. The upstream
+# emitter's F16[2] memory operand is not a valid OpLoad/OpAtomicCompareExchange
+# from an actual U32 SSBO pointer. Native CAS must load/compare/store U32,
+# and only bitcast the 32-bit word for the paired-half arithmetic operation.
+cas_owner=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+for name in ("f16x2_add_cas", "f16x2_min_cas", "f16x2_max_cas"):
+    start=cas_owner.index(name+" = CasLoop(*this,")
+    end=cas_owner.index(";",start)
+    expression=cas_owner[start:end]
+    assert "storage_types.U32.element, F16[2], U32[1], spv::Scope::Device" in expression, name
+    assert "storage_types.U32.element, F16[2], F16[2]" not in expression, name
+assert "const Id value{ctx.OpLoad(memory_type, word_pointer)}" in cas_owner
+assert "const Id bitcast_value{matching_type ? value : ctx.OpBitcast(value_type, value)}" in cas_owner
+assert "ctx.OpAtomicCompareExchange(ctx.U32[1], word_pointer" in cas_owner
+assert "ctx.OpReturnValue(ctx.OpBitcast(value_type, atomic_res))" in cas_owner
+assert '"backend/spirv/spirv_emit_context.cpp"' in CMAKE
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")' in CMAKE
+print("P2_3_REAL_SPIRV_CAS_WORD_ABI_PASS f16x2=3 u32_word=1 atomics=real",flush=True)
+
 cpm=ROOT/"vendor/sources/eden-cpm"
 sources=(
     "shader_recompiler/backend/spirv/spirv_emit_context.cpp",

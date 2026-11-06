@@ -836,6 +836,21 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P2.3 — correction du backend CAS SPIR-V F16x2 (06/11, source/hôte) :**
+La source SPIR-V maintenue `spirv_emit_context.cpp` passe maintenant le type
+mémoire **U32[1]** aux trois boucles CAS `f16x2_add/min/max_cas`, sans
+modifier leur type d'opérande mathématique **F16[2]**. Leurs pointeurs de
+storage sont des éléments U32 et `OpAtomicCompareExchange` compare et écrit
+un **seul mot de 32 bits**. L'ancien `F16[2]` comme type de chargement et
+de comparaison ne correspondait pas au pointeur et pouvait produire un
+SPIR-V non valide. Le bitcast s'effectue seulement autour de l'opération
+mathématique, tandis que la lecture/écriture et le résultat atomique
+conservent une représentation 32 bits. Les trois variantes utilisent le
+même propriétaire actif `vendor`, épinglé par CMake ; le backend NS1 n'est
+pas modifié. Le contrôle `check_shared_ns2_spirv_compiler_host.py` vérifie
+ce contrat et compile la vraie unité C++ ; la validation d'un module
+produit via `spirv-val` et l'exécution console restent distinctes.
+
 **P2.3 — atomiques flottantes authentifiées avec CAS réel (06/11, source/hôte) :**
 Le backend commun possède déjà des boucles atomiques comparées-échangées
 (`CAS`) SPIR-V pour `StorageAtomicAddF32`, ainsi que les six variantes

@@ -1602,8 +1602,13 @@ int main(int argc, char** argv) {
                 Settings::AntiAliasing::Msaa8, Settings::AntiAliasing::Msaa16};
             static_assert(std::size(aa) == std::size(Eden::kAntiAliasingKeys));
             static_assert(std::size(aa) == std::size(Eden::kAntiAliasingLabels));
+            // Keep the user's persisted MSAA choice for a later Vulkan
+            // session, but never pass unsupported native sample modes into
+            // the OpenGL presenter. No silent 16x MSAA claim on OpenGL.
+            const int active_aa = profile_renderer != 1 && anti_aliasing >= 4
+                                      ? 0 : anti_aliasing;
             Settings::values.anti_aliasing.SetValue(
-                aa[std::clamp(anti_aliasing, 0, int(std::size(aa)) - 1)]);
+                aa[std::clamp(active_aa, 0, int(std::size(aa)) - 1)]);
             Eden::Graphics::SetEnhancedFxaa(
                 anti_aliasing == 3 && profile_renderer == 1);
             // Real texture LOD sampler filtering (not image postprocessing).

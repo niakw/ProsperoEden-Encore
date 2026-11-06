@@ -444,3 +444,15 @@ add_test(NAME test_rdna2_nr_split_projection_pool_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-split-projection-pool-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# Native FinalHead 512->1024 projection: local NRMODEL1, FP8 GEMM and
+# FP32->FP8 quantizer on the same scheduler.
+add_executable(test_rdna2_nr_split_final_head_weights
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_final_head_weights.cpp")
+target_include_directories(test_rdna2_nr_split_final_head_weights PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_final_head_weights PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_final_head_weights
+    COMMAND test_rdna2_nr_split_final_head_weights)

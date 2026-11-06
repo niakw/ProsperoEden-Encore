@@ -404,6 +404,13 @@ Le propriétaire `ns2-runtime/nvdrv_as` commun refuse aussi tout pin SMMU
 nul ou physiquement hors plage avant `gmmu->Map`, pour les fonctions
 legacy NS1 et les fonctions natives NS2. Une allocation du bas de l'espace
 GPU qui échoue ne compte plus comme un pin réussi.
+La récupération SMMU n'attend plus le verrou d'un autre handle en tenant
+celui de la file : elle essaie les candidats disponibles sans blocage mutuel,
+puis refuse l'opération si tous sont occupés. La file n'enregistre plus de
+pins négatifs après un double `UnpinHandle`; `FreeHandle` refuse aussi les
+comptages de doublons déjà nuls. Témoins :
+`check_native_nvmap_smmu_reclaim_host.py` et
+`check_native_nvmap_pin_refs_host.py`, Clang/GCC O0/O2.
 
 Le propriétaire existant `src/core/hle/service/nvdrv/core/container.cpp`
 rejette également les identifiants invalides ou les sessions inactives. Ces

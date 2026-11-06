@@ -12,11 +12,13 @@ source = root / 'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/
 if not source.exists():
     source = root.parent / 'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp'
 body = source.read_text()
-start = '            while ((address = smmu.Allocate(aligned_up)) == 0) {'
+start = '            std::size_t busy_candidates{};\n            while ((address = smmu.Allocate(aligned_up)) == 0) {'
 end = '\n\n            handle_description->d_address = address;'
 assert body.count(start) == 1 and body.count(end) == 1
 loop = body[body.index(start):body.index(end, body.index(start))]
-assert 'if (unmap_queue.empty())' in loop
+assert 'unmap_queue.empty() || busy_candidates >= unmap_queue.size()' in loop
+assert 'std::unique_lock freeLock(freeHandleDesc->mutex, std::try_to_lock);' in loop
+assert 'unmap_queue.splice(unmap_queue.end(), unmap_queue,' in loop
 assert 'freeHandleDesc->d_address' in loop
 assert 'if (handle_description->d_address)' not in loop
 assert 'unmap_queue.pop_front();' in loop
@@ -105,6 +107,26 @@ int main() {
  NvMap exhausted;
  exhausted.Enqueue(std::shared_ptr<Handle>{});
  assert(exhausted.TryPin(h,8192)==0 && exhausted.smmu.allocations==2);
+ NvMap busy;
+ auto locked=std::make_shared<Handle>();locked->d_address=0x1000;
+ busy.Enqueue(locked);
+ {
+  std::unique_lock guard(locked->mutex);
+  assert(busy.TryPin(h,4096)==0 && busy.reclaimed==0);
+  assert(busy.unmap_queue.size()==1);
+ }
+ assert(busy.TryPin(h,4096)!=0 && busy.reclaimed==1);
+ NvMap mixed;
+ auto busy_first=std::make_shared<Handle>();busy_first->d_address=0x2000;
+ auto available=std::make_shared<Handle>();available->d_address=0x3000;
+ mixed.Enqueue(busy_first);mixed.Enqueue(available);
+ {
+  std::unique_lock guard(busy_first->mutex);
+  assert(mixed.TryPin(h,4096)!=0 && mixed.reclaimed==1);
+  assert(mixed.unmap_queue.size()==1);
+  assert(mixed.unmap_queue.front().get()==busy_first.get());
+ }
+ assert(mixed.TryPin(h,4096)!=0 && mixed.reclaimed==2);
 }
 '''.replace('__REAL_LOOP__',loop)
 compilers = list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
@@ -124,4 +146,4 @@ with tempfile.TemporaryDirectory(prefix='eden-smmu-reclaim-') as folder:
             test=subprocess.run([str(exe)],text=True,capture_output=True,env=env,timeout=20)
             assert test.returncode==0,(cmd,test.stderr[-2500:])
             print(Path(compiler).name,optimization,'P1_NATIVE_NVDRV_SMMU_RECLAIM_PASS',flush=True)
-print('P1_NVDRV_SMMU_RECLAIM_VALIDATION_PASS empty=fail finite_queue=1 valid_reclaim=1 no_faux_success=1')
+print('P1_NVDRV_SMMU_RECLAIM_VALIDATION_PASS empty=fail finite_queue=1 valid_reclaim=1 lock_inversion=refused busy_skip=1 no_faux_success=1')

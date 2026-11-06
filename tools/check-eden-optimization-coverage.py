@@ -465,6 +465,7 @@ for selected in ("EDEN_MAINTAINED_NVDRV_NVMAP_CORE",
     assert f"set({selected}" in release_cmake
 assert (ROOT / "tools/ns2/check_nvdrv_fd_session_owners_host.py").is_file()
 assert (ROOT / "tools/ns2/check_native_nvmap_smmu_reclaim_host.py").is_file()
+assert (ROOT / "tools/ns2/check_native_nvmap_pin_refs_host.py").is_file()
 assert (ROOT / "tools/ns2/check_nvdrv_pin_failure_propagation_host.py").is_file()
 print("ENCORE_POST_F07_SHARED_NVDRV_ISOLATION_PASS",
       f"new_shared_sources={len(post_f07_shared_nvdrv_owners)}")

@@ -14,7 +14,8 @@ struct FSwinRasterLayoutStorage {
     const FSwinRasterLayoutStorage& storage) noexcept {
     if(!p.width||!p.height||
        (p.channels!=32u&&p.channels!=64u&&
-        p.channels!=128u&&p.channels!=256u)||
+        p.channels!=128u&&p.channels!=256u&&
+        p.channels!=512u)||
        p.direction>1u)return false;
     const auto wx=(std::uint64_t(p.width)+7u)/8u;
     const auto wy=(std::uint64_t(p.height)+7u)/8u;

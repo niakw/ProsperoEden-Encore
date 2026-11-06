@@ -49,7 +49,7 @@ static void Check(std::uint32_t width,std::uint32_t height,
     assert(!CanFSwinRasterLayout(p,{UINT64_MAX,UINT64_MAX}));
 }
 int main(){
-    for(std::uint32_t C:{32u,64u,128u,256u}) {
+    for(std::uint32_t C:{32u,64u,128u,256u,512u}) {
         Check(1,1,C);
         Check(8,8,C);
         Check(9,9,C);
@@ -73,6 +73,23 @@ int main(){
     assert(!CanFSwinRasterLayout(fail,{source,destination}));
     fail=canonical;fail.direction=1u;
     assert(!CanFSwinRasterLayout(fail,{source,destination}));
+    // Split-Swin16H input/output view uses 512-channel feature tensors.
+    // Native 1080p bottleneck: width 60, height 33, 8x5 padded windows.
+    const FSwinRasterLayout split_in{60u,33u,8u,5u,512u,0u};
+    constexpr std::uint64_t split_raster=60ull*33u*512u;
+    constexpr std::uint64_t split_windows=8ull*5u*64u*512u;
+    assert(CanFSwinRasterLayout(split_in,{
+        split_raster,split_windows}));
+    assert(FSwinRasterLayoutGridX(split_in)==128u);
+    const FSwinRasterLayout split_out{60u,33u,8u,5u,512u,1u};
+    assert(CanFSwinRasterLayout(split_out,{
+        split_windows,split_raster}));
+    assert(!CanFSwinRasterLayout(split_out,{
+        split_windows-1u,split_raster}));
+    assert(!CanFSwinRasterLayout(split_in,{
+        split_raster,split_windows-1u}));
+    // Original and Compact each require both real boundaries.
+    Check(60u,33u,512u);
     const FSwinRasterLayout bad{2049,2048,257,256,256,0};
     assert(!CanFSwinRasterLayout(bad,{UINT64_MAX,UINT64_MAX}));
     const FSwinRasterLayout bad_channels{8,8,1,1,16,0};

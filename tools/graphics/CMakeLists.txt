@@ -399,3 +399,15 @@ add_test(NAME test_rdna2_nr_vit_epilogues_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-epilogues-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# Local model Split-Swin residual projection: [512,512] FP8 plus 512 FP16
+# gain values, reject bad input and preserve complete output.
+add_executable(test_rdna2_nr_split_residual_weights
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_residual_weights.cpp")
+target_include_directories(test_rdna2_nr_split_residual_weights PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_residual_weights PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_residual_weights
+    COMMAND test_rdna2_nr_split_residual_weights)

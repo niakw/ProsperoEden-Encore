@@ -54,9 +54,14 @@ struct NativeDestination {
             return Rejection::MismatchedNativeResource;
         }
     }
-    // Distinct resources must represent distinct semantic inputs. A repeated
-    // view would confuse depth/motion sampling even if a caller marked it verified.
-    if (native.color.view==native.depth.view ||
+    // Distinct temporal semantics require distinct backing images, NOT
+    // merely different Vulkan views onto the same image. The latter could
+    // be reinterpretations of one guest allocation and would corrupt FSR
+    // depth and motion reconstruction despite different view handles.
+    if (native.color.image==native.depth.image ||
+        native.color.image==native.motion.image ||
+        native.depth.image==native.motion.image ||
+        native.color.view==native.depth.view ||
         native.color.view==native.motion.view ||
         native.depth.view==native.motion.view) {
         return Rejection::MismatchedNativeResource;

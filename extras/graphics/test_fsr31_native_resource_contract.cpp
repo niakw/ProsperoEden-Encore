@@ -19,6 +19,17 @@ int main() {
     n.motion.view=23;meta.motion.view=21;n.motion.view=21;
     assert(ValidateNativeResources(meta,n)==Rejection::MismatchedNativeResource);
     meta.motion.view=23;n.motion.view=23;
+    // Three distinct views onto the *same* VkImage remain an invalid FSR3
+    // input triple, even when declared and native resource IDs agree.
+    n.depth.image=11;meta.depth.image=11;
+    assert(ValidateNativeResources(meta,n)==Rejection::MismatchedNativeResource);
+    n.depth.image=12;meta.depth.image=12;
+    n.motion.image=11;meta.motion.image=11;
+    assert(ValidateNativeResources(meta,n)==Rejection::MismatchedNativeResource);
+    n.motion.image=12;meta.motion.image=12;
+    assert(ValidateNativeResources(meta,n)==Rejection::MismatchedNativeResource);
+    n.motion.image=13;meta.motion.image=13;
+    assert(ValidateNativeResources(meta,n)==Rejection::None);
     meta.depth.image=99;
     assert(ValidateNativeResources(meta,n)==Rejection::MismatchedNativeResource);
     meta.depth.image=12;

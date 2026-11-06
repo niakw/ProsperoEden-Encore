@@ -297,3 +297,37 @@ Still internal or not exposed include examples such as:
 - platform-specific options that do not make sense on fixed PS5 hardware.
 
 The goal is **complete practical PS5 tuning**, not a one-for-one copy of every Windows engineering switch. Additional Eden controls should be exposed only when they have a real PS5 use case and a safe default.
+
+
+## Neural Rendering (NR) — paramètres en préparation
+
+Le port Vulkan/RDNA2 Neural Rendering est **en cours d'intégration**.
+Les paramètres peuvent être préparés et sauvegardés, mais **aucun rendu
+neuronal n'est encore activable**. Le mode « Neural rendering » apparaît
+donc comme « In preparation » ; le choix du modèle et l'intensité
+peuvent être configurés avant l'activation future.
+
+| Paramètre | Valeur par défaut | Choix |
+|---|---|---|
+| Neural rendering | In preparation (inactif) | Non activable à ce stade |
+| NR model | Original | Original, Compact (modèle Small) |
+| NR intensity | 100 % | 0–100 %, par pas de 5 % dans le menu |
+
+Les champs stables sont `video.neural_model` (`"original"` ou
+`"small"`) et `video.neural_strength` (0–100) dans
+`config/prosperoeden.json`. Chaque jeu peut utiliser les mêmes clés
+dans `games.<title_id>`; leur absence signifie **hériter du réglage
+global**, sans changer les profils Minimum/Recommended/High/Ultra.
+Les valeurs invalides sont rejetées à l'écriture et remplacées par
+les valeurs sûres à la lecture.
+
+L'intensité NR est **indépendante** de la netteté FSR,
+d'A4K, de l'anticrénelage, de la génération d'images et du
+multiplicateur de résolution. Le modèle « Compact » ne présume
+pas de performances PS5 : ses couches spécialisées et son
+graphe nécessitent une validation indépendante.
+
+Tant qu'il n'existe pas de pipeline complet et d'image PS5
+validée, ces préférences restent **inertes dans le moteur**.
+Elles ne prétendent pas déclencher les kernels ni annoncer
+une compatibilité avec un jeu spécifique.

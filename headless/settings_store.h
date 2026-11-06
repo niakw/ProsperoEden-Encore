@@ -86,6 +86,10 @@ inline constexpr const char* kRefreshKeys[] = {"60", "120"};
 // Lossless Scaling LAST because it requires the user's Lossless.dll.
 // Keep persisted indices stable across releases; do not reorder separately.
 inline constexpr const char* kFrameGenerationKeys[] = {"off", "mihawkgen", "fsr3", "lsfg"};
+// Persisted model/intensity only: cannot activate NR until the graph works.
+inline constexpr const char* kNeuralModelKeys[] = {"original", "small"};
+inline constexpr const char* kNeuralModelLabels[] = {"Original", "Compact"};
+static_assert(std::size(kNeuralModelKeys) == std::size(kNeuralModelLabels));
 inline constexpr int kRefreshHz[] = {60, 120};
 // Settings > Video: the size of the picture the app puts out, for the menu and for a game (its
 // frame after the upscaling filter). The console scales it to what the TV shows.
@@ -130,6 +134,8 @@ struct Preferences {
     int texture_anisotropy = EncoreTextureProfiles::ForTitle(0, 1); // Recommended: 4x
     int refresh = EncoreOverrides::kGeneralProfiles[1].refresh;
     int frame_generation = 0; // Off, MihawkGen, FSR3, LSFG; method, not fake FPS
+    int neural_model = 0; // Original or Small; staged until graph verification
+    int neural_strength = 100; // 0-100% independent of FSR/A4K
     int output = EncoreOverrides::kGeneralProfiles[1].output;
     int performance_profile = 1;         // 0 Minimum, 1 Recommended, 2 High, 3 Ultra, 4 Custom
     int controller_layout = 0;            // 0 PlayStation, 1 Switch; custom status is derived from mapping
@@ -361,6 +367,10 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
                               kRefreshKeys, int(std::size(kRefreshKeys)), result.refresh);
     result.frame_generation = KeyIndex(Settings::String(document, Json::json_pointer("/video/frame_generation")),
                                        kFrameGenerationKeys, int(std::size(kFrameGenerationKeys)), 0);
+    result.neural_model = KeyIndex(Settings::String(document, Json::json_pointer("/video/neural_model")),
+                                    kNeuralModelKeys, int(std::size(kNeuralModelKeys)), 0);
+    const int neural_strength = Settings::Int(document, Json::json_pointer("/video/neural_strength"), 100);
+    if (neural_strength >= 0 && neural_strength <= 100) result.neural_strength = neural_strength;
     result.output = KeyIndex(Settings::String(document, Json::json_pointer("/video/output_resolution")),
                              kOutputKeys, int(std::size(kOutputKeys)), result.output);
     // The profile label is derived from the actual settings. This migrates older three-profile
@@ -446,6 +456,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.texture_anisotropy >= int(std::size(kTextureAnisotropyKeys)) ||
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < 0 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
+        value.neural_model < 0 || value.neural_model >= int(std::size(kNeuralModelKeys)) ||
+        value.neural_strength < 0 || value.neural_strength > 100 ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
         value.performance_profile < 0 || value.performance_profile >= int(std::size(kPerformanceProfileKeys)) ||
         value.controller_layout < 0 || value.controller_layout >= int(std::size(kControllerLayoutKeys)) ||
@@ -466,6 +478,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         kTextureAnisotropyKeys[value.texture_anisotropy];
     document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
     document["video"]["frame_generation"] = kFrameGenerationKeys[value.frame_generation];
+    document["video"]["neural_model"] = kNeuralModelKeys[value.neural_model];
+    document["video"]["neural_strength"] = value.neural_strength;
     document["video"]["output_resolution"] = kOutputKeys[value.output];
     document["video"]["performance_profile"] = kPerformanceProfileKeys[value.performance_profile];
     document["audio"]["volume"] = value.volume;
@@ -583,6 +597,8 @@ struct GameSettings {
     int texture_anisotropy = -1; // -1 inherits global, 0 Automatic ... 5 16x
     int refresh = -1;           // index into kRefreshKeys
     int frame_generation = -1; // -1 inherits global, 0=off, 1=MihawkGen, 2=FSR3, 3=LSFG
+    int neural_model = -1; // -1 inherits global; 0 Original, 1 Small
+    int neural_strength = -1; // -1 inherits global, 0-100
     int performance_profile = -1; // index into kPerformanceProfileKeys
     int controller_layout = -1; // -1 follows global, 0 PlayStation, 1 Switch
     bool own_mapping = false;
@@ -615,6 +631,11 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
     result.frame_generation = KeyIndex(key("frame_generation"), kFrameGenerationKeys,
                                        int(std::size(kFrameGenerationKeys)), -1);
+    result.neural_model = KeyIndex(key("neural_model"), kNeuralModelKeys,
+                                    int(std::size(kNeuralModelKeys)), -1);
+    const int neural_strength = Settings::Int(
+        document, Json::json_pointer(base + "/neural_strength"), -1);
+    result.neural_strength = neural_strength >= 0 && neural_strength <= 100 ? neural_strength : -1;
     result.performance_profile = PerformanceProfileIndex(key("performance_profile"), -1);
     const std::string saved_game_layout = key("controller_layout");
     if (saved_game_layout == "switch" || saved_game_layout == "nintendo")
@@ -657,6 +678,8 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.texture_anisotropy >= int(std::size(kTextureAnisotropyKeys)) ||
         value.refresh < -1 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.frame_generation < -1 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
+        value.neural_model < -1 || value.neural_model >= int(std::size(kNeuralModelKeys)) ||
+        value.neural_strength < -1 || value.neural_strength > 100 ||
         value.performance_profile < -1 ||
         value.performance_profile >= int(std::size(kPerformanceProfileKeys)) ||
         value.controller_layout < -1 ||
@@ -682,6 +705,9 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("texture_anisotropy", value.texture_anisotropy, kTextureAnisotropyKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
     store("frame_generation", value.frame_generation, kFrameGenerationKeys);
+    store("neural_model", value.neural_model, kNeuralModelKeys);
+    if (value.neural_strength < 0) game.erase("neural_strength");
+    else game["neural_strength"] = value.neural_strength;
     store("performance_profile", value.performance_profile, kPerformanceProfileKeys);
     store("controller_layout", value.controller_layout, kControllerLayoutKeys);
     if (value.own_mapping) {

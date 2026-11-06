@@ -188,6 +188,19 @@ eden_r08_test(test_rdna2_nr_native_plan_bridge)
 eden_r08_test(test_rdna2_nr_fswin_output_view_policy)
 eden_r08_test(test_rdna2_nr_fswin_downsample_policy)
 eden_r08_test(test_rdna2_nr_fswin_level_link_policy)
+# R09 native JSON storage regression; build only when host JSON header is present.
+include(CheckIncludeFileCXX)
+check_include_file_cxx("nlohmann/json.hpp" EDEN_R09_HAS_NLOHMANN_JSON)
+if(EDEN_R09_HAS_NLOHMANN_JSON)
+    add_executable(test_rdna2_nr_settings_store
+        "${EDEN_ROOT}/tools/graphics/test_rdna2_nr_settings_store.cpp")
+    target_include_directories(test_rdna2_nr_settings_store PRIVATE
+        "${EDEN_ROOT}/headless")
+    target_compile_options(test_rdna2_nr_settings_store PRIVATE -UNDEBUG)
+    add_test(NAME test_rdna2_nr_settings_store COMMAND test_rdna2_nr_settings_store)
+else()
+    message(STATUS "R09 neural settings host test skipped: nlohmann/json.hpp unavailable")
+endif()
 eden_r08_test(test_rdna2_nr_fswin_upsample_policy)
 target_include_directories(test_rdna2_nr_fswin_output_view_policy PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")

@@ -57,6 +57,9 @@ enum VideoRow : int
     video_anti_aliasing,
     video_texture_filtering,
     video_frame_generation,
+    video_neural_status,
+    video_neural_model,
+    video_neural_strength,
     video_refresh,
     video_overlay,
     kVideoRows,
@@ -631,6 +634,22 @@ void Launcher::press_dialog(Key key)
             }
             prefs_.frame_generation = next;
         }
+        else if (option_ == video_neural_status)
+        {
+            say(tr(TR("NR is being integrated. This setting will become available after the complete Vulkan graph is validated.")), true);
+            cue(Cue::error);
+            return;
+        }
+        else if (option_ == video_neural_model)
+        {
+            prefs_.neural_model = (prefs_.neural_model + 1) % 2;
+        }
+        else if (option_ == video_neural_strength)
+        {
+            if (!adjust) return;
+            prefs_.neural_strength = std::clamp(prefs_.neural_strength + step * 5, 0, 100);
+            sound = Cue::slider;
+        }
         else if (option_ == video_refresh)
         {
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
@@ -839,6 +858,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
             TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
             kFramegenInfo,
+            TR("Neural Rendering is not active yet. Its complete Vulkan network and PS5 output must be validated first."),
+            TR("Choose the Neural Rendering model ahead of activation. Original is the full graph; Compact uses the smaller graph."),
+            TR("Future Neural Rendering effect strength, 0 to 100 percent. It does not change FSR sharpness or frame generation."),
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
             TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
         copy = tr(kAbout[std::clamp(option_, 0, kVideoRows - 1)]);
@@ -940,13 +962,17 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             prefs_.frame_generation == 0 ? tr("Off") :
                 prefs_.frame_generation == 1 ? "MihawkGen" :
                 prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
+            tr("In preparation"),
+            prefs_.neural_model == 0 ? tr("Original") : tr("Compact"),
+            percent(prefs_.neural_strength),
             hertz(prefs_.refresh),
         };
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
             TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
-            TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"),
-            TR("FPS overlay")};
+            TR("Texture filtering"), TR("Enhanced smoothness"),
+            TR("Neural rendering"), TR("NR model"), TR("NR intensity"),
+            TR("Refresh rate"), TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
         {
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
@@ -955,7 +981,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 label(row, tr(kNames[row]), kToggle);
                 toggle(c, 1292.0f, row_centre(row), knob);
             }
-            else if ((row == video_fsr_sharpness &&
+            else if (row == video_neural_status ||
+                     (row == video_fsr_sharpness &&
                        (!UpscalingSupportsSharpness(prefs_.filter) ||
                         !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
                      (row == video_filter &&
@@ -1132,7 +1159,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Renderer"), TR("Video preset"), TR("TV output"),
             TR("Game resolution"), TR("Upscaling"), TR("Sharpness"),
             TR("Anti-aliasing"), TR("Texture filtering"),
-            TR("Enhanced smoothness"), TR("Refresh rate"), TR("FPS overlay")};
+            TR("Enhanced smoothness"), TR("Neural rendering"),
+            TR("NR model"), TR("NR intensity"),
+            TR("Refresh rate"), TR("FPS overlay")};
         const int selected = std::clamp(option_, 0, kVideoRows - 1);
         const char* explanation = copy;
         if (selected == video_filter)
@@ -1156,7 +1185,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             (selected == video_anti_aliasing &&
              prefs_.anti_aliasing >= 3 && prefs_.renderer != 1) ||
             (selected == video_frame_generation &&
-             !FrameGenerationSelectable(prefs_.renderer)),
+             !FrameGenerationSelectable(prefs_.renderer)) ||
+            selected == video_neural_status,
             prefs_.ui_theme == 1);
     }
 

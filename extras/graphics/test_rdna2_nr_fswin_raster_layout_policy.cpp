@@ -62,6 +62,17 @@ int main(){
     const auto output=std::uint64_t{240}*135u*64u*32u;
     assert(CanFSwinRasterLayout(fullhd,{input,output}));
     assert(FSwinRasterLayoutGridX(fullhd)==8u);
+    // GPU input-boundary raster produced by the previous DS stage.
+    // The plan's raster axes are 540x960; its grid is 68x120.
+    const FSwinRasterLayout canonical{540,960,68,120,32,0};
+    const auto source=std::uint64_t{540}*960u*32u;
+    const auto destination=std::uint64_t{68}*120u*64u*32u;
+    assert(CanFSwinRasterLayout(canonical,{source,destination}));
+    assert(FSwinRasterLayoutGridX(canonical)==8u);
+    auto fail=canonical;fail.windows_x=120u;
+    assert(!CanFSwinRasterLayout(fail,{source,destination}));
+    fail=canonical;fail.direction=1u;
+    assert(!CanFSwinRasterLayout(fail,{source,destination}));
     const FSwinRasterLayout bad{2049,2048,257,256,256,0};
     assert(!CanFSwinRasterLayout(bad,{UINT64_MAX,UINT64_MAX}));
     const FSwinRasterLayout bad_channels{8,8,1,1,16,0};

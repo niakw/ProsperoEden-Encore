@@ -90,3 +90,21 @@ buffers séparés, échelles vérifiées, limite 256 MiB par stockage et
 workgroups 3D. Le shader autonome est raccordé au build, mais pas encore
 aux allocations/transitions du graphe multi-résolution. Tests host et
 SPIR-V enregistrés, sans exécution confirmée de CI ni résultat PS5.
+
+
+## GPU raster-to-windows à l'entrée des segments InputView
+
+NrRdna2FSwinChain::BindRasterInput peut désormais recevoir le buffer
+Vulkan STORAGE contenant le raster E4M3FN du niveau précédent. Il valide
+la dimension complète, la disposition non décalée, les étendues source
+et destination et le non-aliasing, puis alloue les descripteurs du shader
+fswin_raster_layout_rdna2.comp en mode raster→fenêtres. Record insère ce
+calcul juste avant le premier bloc FSwin, avec sa barrière compute→compute,
+puis rend l'entrée disponible au runtime ; aucun readback CPU n'est requis.
+
+Les chemins BindRasterInput et UploadRasterFeatures sont exclusifs pour
+une même chaîne. La source doit rester vivante et exploitable pendant la
+soumission GPU ; aucune étape n'essaie de récupérer directement les pixels
+RGB d'un jeu. Ce lien rend possible le raccord de la sortie de downsample
+vers un InputView de même dimension/canaux, sans constituer à lui seul
+l'orchestration U-Net ni une preuve de rendu PS5.

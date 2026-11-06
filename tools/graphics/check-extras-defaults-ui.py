@@ -37,16 +37,16 @@ assert 'case 11:value=prefs_.refresh' in switch
 game_block = switch.split("void Launcher::draw_switch_game(", 1)[1].split(
     "void Launcher::draw_switch_mods(", 1
 )[0]
-names = re.search(r"static constexpr const char\\* names\\[\\]\\s*=\\s*\\{(.*?)\\};", game_block, re.S)
+names = re.search(r"static constexpr const char\* names\[\]\s*=\s*\{(.*?)\};", game_block, re.S)
 assert names is not None, "Switch game row labels absent"
-assert len(re.findall(r'TR\\("', names.group(1))) == 16, "Switch game labels count drift"
+assert len(re.findall(r'TR\("', names.group(1))) == 16, "Switch game labels count drift"
 
 global_block = switch.split("case Modal::video: {", 1)[1].split(
     "case Modal::controls:", 1
 )[0]
-labels = re.search(r"static constexpr const char\\* labels\\[\\]\\s*=\\s*\\{(.*?)\\};", global_block, re.S)
+labels = re.search(r"static constexpr const char\* labels\[\]\s*=\s*\{(.*?)\};", global_block, re.S)
 assert labels is not None, "Switch global video row labels absent"
-assert len(re.findall(r'TR\\("', labels.group(1))) == 13, "Switch global labels count drift"
+assert len(re.findall(r'TR\("', labels.group(1))) == 13, "Switch global labels count drift"
 assert "option_>=4 && option_<=10" in switch
 assert "option_>=5 && option_<=11" in switch
 

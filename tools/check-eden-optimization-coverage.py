@@ -525,7 +525,34 @@ assert "DecodeNativeStageBufferAccess(" in (
     ROOT / next(iter(post_f07_native_stage_buffer_owners))).read_text()
 print("ENCORE_POST_F07_STAGE_BUFFER_ISOLATION_PASS", "new_p2_owners=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners
+# P2.4 maintains a separately audited set of new Task/Mesh compiler
+# source owners. It is not part of the immutable 518-file F07 optimization
+# evidence. Reuse the exact literal inventory instead of maintaining a
+# second, diverging hardcoded list.
+import ast
+task_mesh_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_task_mesh_source_owners"
+        for t in node.targets
+    )
+]
+assert len(task_mesh_nodes) == 1, "Task/Mesh inventory definition missing"
+task_mesh_paths = ast.literal_eval(task_mesh_nodes[0])
+assert isinstance(task_mesh_paths, set) and len(task_mesh_paths) == 29
+post_f07_task_mesh_owners = {
+    "vendor/encore-active/" + p for p in task_mesh_paths
+}
+assert post_f07_task_mesh_owners <= all_owners, (
+    "Missing maintained Task/Mesh source owner",
+    sorted(post_f07_task_mesh_owners - all_owners))
+assert not post_f07_task_mesh_owners & research_owners
+assert "EDEN_NATIVE_TASK_MESH_ROOT" in release_cmake
+print("ENCORE_P24_TASK_MESH_POST_F07_PASS", f"owners={len(post_f07_task_mesh_owners)}")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

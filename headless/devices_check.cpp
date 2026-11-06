@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "devices.h"
+#include "in_game_overlay.h"
 #include "controller_applet.h"
 #include "mock_devices.h"
 #include <algorithm>

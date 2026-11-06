@@ -368,3 +368,14 @@ target_compile_options(test_rdna2_nr_vit_qkv_weight_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_vit_qkv_weight_loader
     COMMAND test_rdna2_nr_vit_qkv_weight_loader)
+
+# Split-Swin native model data: exact QKV head-major layout and FP16 bias.
+add_executable(test_rdna2_nr_split_window_weight_loader
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_window_weight_loader.cpp")
+target_include_directories(test_rdna2_nr_split_window_weight_loader PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_window_weight_loader PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_window_weight_loader
+    COMMAND test_rdna2_nr_split_window_weight_loader)

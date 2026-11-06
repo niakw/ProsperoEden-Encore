@@ -341,3 +341,9 @@ target_compile_options(test_rdna2_nr_split_window_link PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_split_window_link
     COMMAND test_rdna2_nr_split_window_link)
+# Compare actual GLSL semantic binding numbers to BOTH C++ Vulkan writers.
+add_test(NAME test_rdna2_nr_attention_descriptor_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-attention-binding-order.py"
+        --vendor "${EDEN_ROOT}/vendor")
+

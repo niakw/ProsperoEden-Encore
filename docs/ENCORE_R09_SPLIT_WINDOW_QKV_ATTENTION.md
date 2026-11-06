@@ -8,7 +8,7 @@ Le vendor fournit `NrRdna2SplitWindowLink`, qui instancie deux kernels Vulkan d�
 - `NrRdna2QkvProjection` produit Q, K, V E4M3FN par fenêtre (64 tokens, 32 canaux/tête, 1/2/4/8/16 têtes) ;
 - `NrRdna2WindowAttention` lit les **mêmes** buffers et calcule softmax + produit P×V sur la fenêtre.
 
-Le raccord détient ses deux jeux de descripteurs `STORAGE_BUFFER`, écrit les 11 bindings Vulkan avec les mêmes handles Q/K/V aux deux extrémités et vérifie les huit buffers physiques, leur indépendance, leurs plages et la limite de descripteur du périphérique. Les `Record` existants enregistrent les deux dispatchs sur le scheduler commun avec barrière compute → compute. Le propriétaire externe doit garder vivants les buffers jusqu'à la fin de la soumission GPU.
+Le raccord détient ses deux jeux de descripteurs `STORAGE_BUFFER`, écrit les 11 bindings Vulkan avec les mêmes handles Q/K/V aux deux extrémités (attention : biais en binding 3, sortie en binding 4) et vérifie les huit buffers physiques, leur indépendance, leurs plages et la limite de descripteur du périphérique. Les `Record` existants enregistrent les deux dispatchs sur le scheduler commun avec barrière compute → compute. Le propriétaire externe doit garder vivants les buffers jusqu'à la fin de la soumission GPU.
 
 `CanSplitWindowLink` refuse les différences de fenêtre, nombre de têtes, offsets Q/K/V, capacités ou strides/alignements malformés. Le test hôte `test_rdna2_nr_split_window_link` est ajouté et la nouvelle unité C++ inscrite dans `video_sources` PS5. **Compilation/CTest/CI non encore confirmés au moment de la publication.**
 

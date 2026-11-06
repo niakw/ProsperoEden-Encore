@@ -20,10 +20,6 @@ on:
       # keep security analysis on the same immutable SHA when they change.
       - 'docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json'
       - 'docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md'
-      # Versioned source-review contracts are verified by the native gates;
-      # keep security analysis on the same immutable SHA when they change.
-      - 'docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json'
-      - 'docs/EDEN_NATIVE_STARTUP_DIAGNOSTIC_REVIEW_2026-10-21.md'
   pull_request:
     branches: [main]
     paths:
@@ -43,9 +39,11 @@ permissions:
   actions: read
   contents: read
   security-events: write
+# Scheduled full-source triage must survive concurrent PR activity and
+# frequent pushes. Only superseded push/PR runs on the *same ref* cancel.
 concurrency:
-  group: encore-security-${{ github.ref }}
-  cancel-in-progress: true
+  group: encore-security-${{ github.event_name == 'schedule' && 'scheduled-main' || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})

@@ -836,6 +836,17 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P2.3 — boucles CAS F32x2 à stockage atomique U32 (06/11, source/hôte) :**
+Les trois opérateurs `f32x2_add/min/max_cas` du propriétaire SPIR-V
+maintenu utilisent désormais le type mémoire `U32[1]` correspondant à
+l'élément SSBO, avec une valeur de calcul `F32[2]`. Leur lecture est un
+`OpLoad` U32 puis `OpUnpackHalf2x16`; la recomposition passe par
+`OpPackHalf2x16` et un seul `OpAtomicCompareExchange` U32. Les versions
+précédentes passaient `F32[2]` comme type mémoire pour un pointeur U32,
+ce qui pouvait invalider le module. Le contrôle source inspecte les six
+boucles float2 et le propriétaire CMake réel ; la compilation hôte et
+`spirv-val` de modules générés restent des preuves distinctes. NS1 intact.
+
 **P2.3 — correction du backend CAS SPIR-V F16x2 (06/11, source/hôte) :**
 La source SPIR-V maintenue `spirv_emit_context.cpp` passe maintenant le type
 mémoire **U32[1]** aux trois boucles CAS `f16x2_add/min/max_cas`, sans

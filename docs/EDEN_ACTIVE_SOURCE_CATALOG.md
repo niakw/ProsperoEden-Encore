@@ -569,3 +569,7 @@ Propriétaire maintenu : `vendor/encore-active/ns2-runtime/ampere/shader_recompi
 #### P2.3 — ABI du CAS flottant F16x2 SPIR-V (06/11/2026)
 
 Le propriétaire natif sélectionné `vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp` lie `f16x2_{add,min,max}_cas` avec un `memory_type = U32[1]`, tandis que `value_type = F16[2]`. Le stockage est un mot U32 avec `OpAtomicCompareExchange` de largeur 32 bits. Vérification dans `tools/ns2/check_shared_ns2_spirv_compiler_host.py` ; NS1 conserve son propriétaire original.
+
+#### P2.3 — CAS F32x2 sur mot SSBO U32 (06/11/2026)
+
+Les trois boucles CAS natives `f32x2_{add,min,max}_cas` dans `spirv_emit_context.cpp` lisent et écrivent un mot U32, avec OpUnpackHalf2x16/OpPackHalf2x16 pour la valeur F32x2 ; l'opération est un seul OpAtomicCompareExchange 32 bits. Qualification du propriétaire et du CMake dans `check_shared_ns2_spirv_compiler_host.py`.

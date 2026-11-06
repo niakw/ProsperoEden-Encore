@@ -46,6 +46,9 @@ includes = [
     # Native Maxwell/Ampere shader captures share this single reviewed
     # frontend root with the real renderer and pipeline-cache TUs.
     ROOT / "vendor/encore-active/ns2-runtime/ampere",
+    # The reviewed QMD3 command ABI is owned by the shared GPU dispatcher,
+    # separate from the Ampere shader frontend. Match CMake's native roots.
+    ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch",
     # CMake stages the reviewed PS5-native RasterizerInterface into
     # PORT_BUILD_DIR/include; source-derived host syntax must select the same
     # virtual ABI before the pinned (pre-NS2) interface, never strip override.

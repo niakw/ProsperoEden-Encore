@@ -20,6 +20,7 @@ enum Action : std::uint32_t {
 inline constexpr std::uint32_t kBackdrop = 0xfffffff1u;
 inline constexpr std::uint32_t kRow = 0xfffffff2u;
 inline constexpr std::uint32_t kSelectedRow = 0xfffffff3u;
+inline constexpr std::uint32_t kWarningRow = 0xfffffff4u;
 inline constexpr std::size_t kMaxRows = 14;
 struct Frame {
     std::array<HudSnapshot, kMaxRows> rows{};

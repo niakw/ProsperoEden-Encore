@@ -437,8 +437,12 @@ La capture n'alloue que 4096 instructions initialement et grandit au besoin,
 sans réserver systématiquement 1 MiB pour les petits shaders. Les pages GMMU,
 les CBUF des BRX et les octets Compute sont toujours revalidés avant de publier
 l'image et avant le dispatch.
-Le prologue `StaticAtExitTarget` peut viser au-delà de 4096 uniquement si sa
-cible existe dans la capture et respecte l'alignement. Témoins du vrai moteur :
+Le prologue `StaticAtExitTarget` reconnaît une cible future alignée dès
+ses cinq premiers mots (même au-delà de 4096), afin que le lecteur GMMU
+poursuive réellement la capture ; le lowering `BMOV 0x357` exige ensuite
+la présence de cette cible dans le code effectivement authentifié.
+Le témoin `test_native_shader_texture_semantics.cpp` valide cette distinction
+et la conservation du handler ATEXIT historique. Témoins du vrai moteur :
 `test_ampere_lower_bridge.cpp` (4097 acceptées, 65537 refusées),
 `test_ampere_gpu_capture.cpp` (4097 instructions Compute, replay jusqu'au
 dernier octet, refus sans EXIT à 65536 et BRX 4097 authentifié) et

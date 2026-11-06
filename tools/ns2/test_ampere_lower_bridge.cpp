@@ -79,8 +79,10 @@ int main() {
     check(StaticAtExitTarget(prologue) == 4097,
           "valid ATEXIT handler beyond 4096 instructions accepted");
     prologue.pop_back();
-    check(!StaticAtExitTarget(prologue),
-          "ATEXIT target one instruction past captured guest code refused");
+    check(StaticAtExitTarget(prologue) == 4097,
+          "five-instruction NVN prefix retains future target for GMMU capture");
+    check(!LowerToMaxwell(prologue),
+          "lowerer refuses ATEXIT target beyond authenticated source length");
     code.resize((65536U + 1) * 16U);
     check(LowerReviewedToMaxwell(code).status == LowerBridgeStatus::InvalidInput,
           "real 65536-instruction shader ingress limit enforced");

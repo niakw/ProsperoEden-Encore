@@ -636,3 +636,24 @@ Le test de correspondance exhaustive des 256 codes a été
 compilé et exécuté localement ; il est inscrit à CTest.
 La parité numérique des kernels GPU et le rendu console
 restent à vérifier lors de la validation fonctionnelle.
+
+
+## Port du changement de fenêtre FSwin
+
+Le noyau fswin_window_repack_rdna2.comp adapte les fenêtres
+8×8 tokens E4M3FN entre décalages de 4×4 pixels sur X et Y,
+en conservant les tenseurs sur GPU. Chaque fenêtre se compose
+de quatre tuiles 4×4. Les régions hors du raster sont remplies
+avec des zéros E4M3. Les offsets suivent les coordonnées du
+shader MIT amont fswin_body.glsl.
+
+Contrat GPU : 2 buffers storage, 28 octets de constantes,
+local_size_x=64 et un dispatch borné. Contrat hôte : jusqu'à
+256 fenêtres, C32/C64/C128/C256, offsets de shifts -1 à +1,
+sorties disjointes. Référence de test CPU : identité sans
+décalage, cycle shift aller-retour à l'intérieur du raster.
+
+Le wrapper Vulkan est ajouté au build. Il reste à raccorder
+sa ressource de descriptor set et ses appels dans la chaîne
+multi-couches en fonction des décalages réels du plan source.
+Aucune performance n'a été évaluée.

@@ -113,7 +113,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_descriptors.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_gpu_tensors.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_layer_runtime.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_chain.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_chain.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_window_repack.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -411,6 +412,27 @@ add_dependencies(video_core eden-r09-rdna2-nr-fswin-qkv-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_qkv.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}")
+
+# R09 RDNA2: retile between shifted 8x8 FSwin windows.
+set(EDEN_R09_RDNA2_FSWIN_REPACK_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_fswin_window_repack_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_FSWIN_REPACK_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-window-repack-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_FSWIN_REPACK_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_window_repack_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-window-repack-spv.py"
+    COMMENT "Validate RDNA2 shifted FSwin window retile"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-fswin-window-spv
+    DEPENDS "${EDEN_R09_RDNA2_FSWIN_REPACK_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-fswin-window-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_window_repack.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_FSWIN_REPACK_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

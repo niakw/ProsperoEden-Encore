@@ -198,3 +198,10 @@ warranty disclaimer for Encore is reproduced in full in [LICENSE](LICENSE).
 ProsperoEden and Encore exist thanks to the Eden maintainers and contributors,
 Mihawk, mpereiraesaa, John Törnblom, SvenGDK, the PS5 homebrew community and
 the many upstream free/open-source projects credited above.
+
+## libwebp (WebP image codec, vendor submodule)
+
+The launcher uses a pinned official release of Google libwebp for
+cover cache and compressed embedded UI images. BSD-style license with
+patent rights grant. Source license: vendor/encore-active/libwebp/COPYING;
+installed license: legal/LIBWEBP_LICENSE.txt.

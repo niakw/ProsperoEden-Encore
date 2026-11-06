@@ -1,4 +1,10 @@
 # R10 — Textures HD par IA : périmètre réel et distinction des mods
+**ARCHIVÉ / ABANDONNÉ le 6 novembre 2026 à la demande du projet.**
+Aucune génération de packs textures HD par IA ne doit être développée
+sur la base de cette étude. Le chargement normal des mods RomFS reste intact.
+Le dernier chantier graphique est **R09 — Neural Rendering et upscaling IA
+temps réel**, indépendant des textures stockées sur disque.
+
 
 **Roadmap R10 — étude et spécification, non implémenté.**
 Revue initiale du 5 novembre 2026 ; faisabilité approfondie le 6 novembre 2026. La PR graphique #24 ne fournit pas de

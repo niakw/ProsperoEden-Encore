@@ -69,6 +69,8 @@ rm -rf "$app/legal"
 mkdir -p "$app/legal"
 cp "$root/LICENSE" "$root/THIRD_PARTY_NOTICES.md" "$app/legal/"
 cp -a "$root/LICENSES" "$app/legal/LICENSES"
+cp "$root/vendor/encore-active/libwebp/COPYING" "$app/legal/LIBWEBP_LICENSE.txt"
+cp "$root/vendor/encore-active/libwebp/PATENTS" "$app/legal/LIBWEBP_PATENTS.txt"
 # PS5-native MihawkGen network, bundled with the installed app only, including
 # the upstream GPL-3.0-or-later licence and all model distillation credits.
 # A mismatching/missing model must not silently produce a broken package.
@@ -98,39 +100,35 @@ else
     echo "ImageMagick (magick or convert) is required to build Encore launcher art" >&2
     exit 2
 fi
-# One canonical Eden background is reused for the PS5 shell art, launcher and in-game loading
-# screen. 1080p is enough for the launcher/loading texture while keeping its transient VRAM cost
-# small; the PS5 home-screen DDS stays native 4K.
-"${image_convert[@]}" "$root/assets/encore-background.jpg" -resize '1920x1080^' -gravity center -extent 1920x1080 \
-    -flip -alpha off -define tga:bits-per-pixel=24 -compress None "$app/ui/art/backdrop.tga"
-python3 - "$app/ui/art/backdrop.tga" <<'PY2'
-import pathlib, sys
-data = pathlib.Path(sys.argv[1]).read_bytes()
-if len(data) != 18 + 1920 * 1080 * 3 or data[1] != 0 or data[2] != 2 or data[16] != 24:
-    raise SystemExit("Generated Encore backdrop.tga is not 1920x1080 uncompressed true-colour TGA")
-PY2
-# OpenGL's launcher texture convention is vertically opposite ImageMagick's TGA output.
-# Flip only the generated launcher texture; the canonical PNG/PS5 tile remains untouched.
-"${image_convert[@]}" "$app/sce_sys/icon0.png" -resize 256x256 -flip -alpha on \
-    -define tga:bits-per-pixel=32 -compress None "$app/ui/art/brand.tga"
-# Three user-supplied optional Encore variants (legacy Neon/Switch never touched).
+# PS5 tile remains native; ship only compressed WebP scenery and brand.
+# ImageMagick directly decodes the JPEG/PNG source and WebP-encodes once.
+"${image_convert[@]}" "$root/assets/encore-background.jpg" -resize '1920x1080^'     -gravity center -extent 1920x1080 -flip -alpha off     -quality 80 -define webp:method=5 "$app/ui/art/backdrop.webp"
+# Keep the legacy OpenGL vertical orientation, and alpha lossless.
+"${image_convert[@]}" "$app/sce_sys/icon0.png" -resize 256x256 -flip -alpha on     -define webp:lossless=true -quality 80 "$app/ui/art/brand.webp"
 for logo in noneon white dark; do
-    "${image_convert[@]}" "$root/assets/branding/encore-${logo}.png" -resize 256x256 -flip -alpha on         -define tga:bits-per-pixel=32 -compress None "$app/ui/art/brand-${logo}.tga"
+    "${image_convert[@]}" "$root/assets/branding/encore-${logo}.png"         -resize 256x256 -flip -alpha on -define webp:lossless=true -quality 80         "$app/ui/art/brand-${logo}.webp"
 done
-python3 - "$app/ui/art/brand.tga" <<'PY'
-import pathlib, sys
-data = pathlib.Path(sys.argv[1]).read_bytes()
-if len(data) < 18 or data[1] != 0 or data[2] != 2 or data[16] not in (24, 32):
-    raise SystemExit("Generated Encore brand.tga is not an uncompressed true-colour TGA")
-PY
-# Static inserts are ONLY for reconstructed faces when the respective real
-# flat front/back is absent. Decode the user-supplied compact PNG templates
-# without network access and convert them to native 32-bit uncompressed TGA.
-# Keep the source blobs out of the installed application.
+rm -f "$app/ui/art/backdrop.tga" "$app/ui/art/brand.tga"       "$app/ui/art/brand-noneon.tga" "$app/ui/art/brand-white.tga"       "$app/ui/art/brand-dark.tga"
+python3 - "$app/ui/art/backdrop.webp" "$app/ui/art/brand.webp" <<'PY_WEBP_STAGE'
+import sys
+from pathlib import Path
+for name in sys.argv[1:]:
+    data = Path(name).read_bytes()
+    if len(data) < 30 or data[:4] != b'RIFF' or data[8:12] != b'WEBP' or (
+        int.from_bytes(data[4:8], 'little') + 8 != len(data)
+    ):
+        raise SystemExit(f"Generated launcher WebP is invalid: {name}")
+PY_WEBP_STAGE
+# UI-only assets use lossless WebP to preserve original alpha, plastic
+# jacket panels, printed spine logos and controller-mask edges.
+"${image_convert[@]}" "$root/headless/prosperoeden/ui/art/controller.tga"     -define webp:lossless=true -quality 80 "$app/ui/art/controller.webp"
+rm -f "$app/ui/art/controller.tga"
+# Immutable printed fallback panels remain derived from their compact PNG
+# source and the original gold-seal correction, but no longer expand to TGA.
 for stem in switch-logo switch-rear-footer; do
     encoded="$app/ui/art/${stem}.png.b64"
     unpacked="$app/ui/art/${stem}.png"
-    target="$app/ui/art/${stem}.tga"
+    target="$app/ui/art/${stem}.webp"
     python3 - "$encoded" "$unpacked" <<'PY_FIXED_CASE'
 import base64
 from pathlib import Path
@@ -140,22 +138,19 @@ destination.write_bytes(base64.b64decode(source.read_text().strip(), validate=Tr
 PY_FIXED_CASE
     fixed_ink=()
     if [[ $stem == switch-rear-footer ]]; then
-        # Preserve the gold seal of the user's original printed template.
-        # Apply only to ink inside the immutable seal rectangle.
-        fixed_ink=(-colorspace sRGB -region '82x80+182+195'
-                   -fill '#af884c' -opaque black +region)
+        fixed_ink=(-colorspace sRGB -region '82x80+182+195'                    -fill '#af884c' -opaque black +region)
     fi
-    "${image_convert[@]}" "$unpacked" "${fixed_ink[@]}" -type TrueColorAlpha \
-        -define tga:bits-per-pixel=32 -compress None "$target"
-    python3 - "$target" <<'PY_FIXED_TGA'
+    "${image_convert[@]}" "$unpacked" "${fixed_ink[@]}" -type TrueColorAlpha         -define webp:lossless=true -quality 80 "$target"
+    python3 - "$target" <<'PY_FIXED_WEBP'
 from pathlib import Path
 import sys
 p = Path(sys.argv[1])
-h = p.read_bytes()[:18]
-w, height = int.from_bytes(h[12:14], 'little'), int.from_bytes(h[14:16], 'little')
-if len(h) != 18 or h[2] != 2 or h[16] != 32 or w < 128 or height < 128:
-    raise SystemExit(f"Invalid fixed case art: {p.name}")
-PY_FIXED_TGA
+b = p.read_bytes()
+if len(b) < 30 or b[:4] != b'RIFF' or b[8:12] != b'WEBP' or (
+    int.from_bytes(b[4:8], 'little') + 8 != len(b)
+):
+    raise SystemExit(f"Invalid lossless WebP case art: {p.name}")
+PY_FIXED_WEBP
     rm -f "$encoded" "$unpacked"
 done
 

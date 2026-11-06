@@ -119,7 +119,13 @@ bool Textures::load_art(const std::string &directory)
     const auto load = [&](const char *name, std::uint32_t *texture)
     {
         gfx::Image image;
-        if (!gfx::load_tga(directory + "/" + name, &image))
+        const std::string legacy = directory + "/" + name;
+        const std::string preferred = legacy.ends_with(".tga")
+            ? legacy.substr(0, legacy.size() - 4) + ".webp" : legacy;
+        // The PS5 package ships WebP, while host previews and older
+        // installations may still ship the original uncompressed TGA.
+        if (!services_.load_image(preferred, &image) &&
+            !services_.load_image(legacy, &image))
         {
             sys::log("art %s could not be read", name);
             return false;

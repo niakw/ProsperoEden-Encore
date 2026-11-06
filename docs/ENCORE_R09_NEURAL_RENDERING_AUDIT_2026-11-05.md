@@ -1,6 +1,22 @@
 # Eden Encore — R09 Neural Rendering : sélection de moteur et limites PS5
 **Audit externe vérifié le 05/11/2026** · dépôt fonctions / PR #24 · état : RECHERCHE
 
+## Directive du 6 novembre 2026
+
+**R10, les textures HD générées par IA, est abandonné.** Le dernier
+point graphique est désormais R09 : **upscaling et rendu neuronal**,
+calculés sur l’image et les données du GPU invité, **sans toucher aux
+fichiers de textures ni lancer un réseau IA pendant l’extraction de ROMS**.
+Priorité à un modèle de super-résolution spatial à petit budget (ou
+temporel si de vraies entrées motion/depth/projection sont disponibles),
+avec poids légalement redistribuables et inference Vulkan RDNA2 native.
+Ne pas confondre ce travail avec FSR 3.1 (reconstruction temporelle
+non neurale) ou MihawkGen (interpolation de frames distincte).
+
+Aucun des candidats précédemment audités ne remplit encore les
+critères de licence des poids, port PS5 et évaluation visuelle.
+Ce document est donc un **audit et non une annonce d’implémentation**.
+
 ## Objectif exact
 R09 veut un traitement réellement neuronal des visages, de la peau,
 des matériaux et de la lumière via Vulkan sur PS5, sans remplacer les

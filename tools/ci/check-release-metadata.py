@@ -106,7 +106,7 @@ assert "titleId='PPSA99008'" in packager, "packager title ID contract changed"
 assert "PROSPEROEDEN0001" in packager, "packager content ID contract changed"
 assert 'assets/icon0.png' in packager and 'assets/icon0.dds' in packager, "packager must stage both Encore icon formats"
 assert '-flip' in packager and 'brand.tga' in packager, "launcher logo orientation fix missing"
-assert 'encore-background.jpg' in packager and 'backdrop.tga' in packager, "Encore background packaging missing"
+assert 'encore-background.jpg' in packager and 'backdrop.webp' in packager, "Encore background packaging missing"
 assert 'eden-official.svg' not in packager, "packager must not fall back to the old upstream logo"
 assert "Prospero.Eden Encore" in packager, "package title-name contract changed"
 

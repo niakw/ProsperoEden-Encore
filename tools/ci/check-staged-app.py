@@ -31,19 +31,27 @@ ui_expected = {
     for p in source_ui.rglob("*") if p.is_file()
 }
 ui_expected.discard("ui/art/backdrop-blur.tga")
-# Fixed user-supplied insert sources are decoded into native TGA only at
-# packaging time; encoded PNG text sources are deliberately not installed.
+ui_expected.discard("ui/art/backdrop.tga")
+ui_expected.discard("ui/art/brand.tga")
+ui_expected.discard("ui/art/controller.tga")
+ui_expected.add("ui/art/controller.webp")
+ui_expected.add("ui/art/backdrop.webp")
+ui_expected.add("ui/art/brand.webp")
+for variant in ("noneon", "white", "dark"):
+    ui_expected.add(f"ui/art/brand-{variant}.webp")
+# Fixed user-supplied insert sources become lossless WebP at packaging time.
+# Encoded source PNG text is deliberately not installed.
 for stem in ("switch-logo", "switch-rear-footer"):
     ui_expected.discard(f"ui/art/{stem}.png.b64")
-    ui_expected.add(f"ui/art/{stem}.tga")
-ui_expected.add("ui/art/backdrop.tga")
+    ui_expected.add(f"ui/art/{stem}.webp")
+
 # Resumed builds restore the already staged catalog from an earlier Actions
 # run: the source-tree index is not regenerated during a stage resume.
 ui_expected.add("ui/box-art-index.tsv")
 for source in (source_ui / "lang").glob("*.po"):
     ui_expected.add("ui/lang/" + source.with_suffix(".txt").name)
 legal_source = root / "LICENSES"
-legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md"} | {
+legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md", "legal/LIBWEBP_LICENSE.txt", "legal/LIBWEBP_PATENTS.txt"} | {
     "legal/LICENSES/" + p.name for p in legal_source.iterdir() if p.is_file()
 }
 expected = base | ui_expected | legal_expected
@@ -60,6 +68,17 @@ for name in expected:
     p = app / name
     assert not p.is_symlink(), name
     assert p.stat().st_size > 0, name
+# All shipped large UI artwork is compressed. Reject accidental regressions
+# to uncompressed TGA, extension-only renames and truncated WebP RIFF files.
+for image in sorted((app / "ui/art").glob("*.webp")):
+    data = image.read_bytes()
+    assert len(data) >= 30 and len(data) <= 16 * 1024 * 1024, image
+    assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", image
+    assert int.from_bytes(data[4:8], "little") + 8 == len(data), image
+for legacy in ("backdrop.tga", "brand.tga", "controller.tga",
+               "brand-noneon.tga", "brand-white.tga", "brand-dark.tga",
+               "switch-logo.tga", "switch-rear-footer.tga"):
+    assert not (app / "ui/art" / legacy).exists(), legacy
 
 param = json.loads((app / "sce_sys/param.json").read_text())
 assert param["titleId"] == "PPSA99008"

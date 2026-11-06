@@ -24,7 +24,7 @@ for fragment in (
     'artwork.front = find_face("front");',
     'artwork.back = find_face("back");',
     'artwork.spine = find_face("spine");',
-    '"png", "jpg", "jpeg", "tga"',
+    '"png", "jpg", "jpeg", "webp", "tga"',
     "stbi_info(path.c_str()",
     "info.st_size > (16LL << 20)",
 ):
@@ -195,6 +195,8 @@ for fragment in ('load("art/switch-logo.tga", &switch_logo_)',
                  'load("art/switch-rear-footer.tga", &switch_rear_footer_)',
                  '&switch_logo_, &switch_rear_footer_'):
     assert fragment in loader
+assert 'services_.load_image(preferred, &image)' in loader
+assert 'services_.load_image(legacy, &image)' in loader
 # Host and PS5 packaging MUST reproduce the same gold reference seal ink.
 # A source-only grayscale conversion would silently lose this fixed element.
 render_fixed = (root / "tools/launcher/render-art.py").read_text()
@@ -202,7 +204,7 @@ assert 'ink[x, y] = (175, 136, 76, alpha)' in render_fixed
 assert "brand fixed" in (root / "tools/launcher/preview.sh").read_text()
 package = (root / "tools/package-headless-native.sh").read_text()
 for fragment in ("for stem in switch-logo switch-rear-footer; do",
-                 "base64.b64decode", "tga:bits-per-pixel=32",
+                 "base64.b64decode", "-define webp:lossless=true",
                  "-region '82x80+182+195'", "-fill '#af884c'"):
     assert fragment in package
 
@@ -316,7 +318,7 @@ assert '"Fanart - Background"' in indexer
 assert '"Screenshot - Game Title"' in indexer
 assert 'EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}' in indexer
 assert 'AppendCaseScenes(game.screenshots, game.title_id);' in native
-assert 'side >= 3 && ValidNlibTga(CaseFacePath(title_id, "back"))' in native
+assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' in native
 assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3"' in native
 assert "for (int side = 0; side < 6; ++side)" in native
@@ -369,8 +371,8 @@ assert "return changed_faces;" in case_fetch
 # The first successful front/back download permits the optional spine in the
 # same background pass; no enforced five-minute wait for an empty case side.
 assert 'if (side == 2 && !both_faces_cached_at_start &&' in case_fetch
-assert '!ValidNlibTga(CaseFacePath(title_id, "front"))' in case_fetch
-assert '!ValidNlibTga(CaseFacePath(title_id, "back"))' in case_fetch
+assert '!ValidCachedArtwork(CaseFacePath(title_id, "front"))' in case_fetch
+assert '!ValidCachedArtwork(CaseFacePath(title_id, "back"))' in case_fetch
 assert "attempts >= 3" in native
 assert 'std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable' in native
 assert "const bool both_faces_cached_at_start =" in native
@@ -398,9 +400,9 @@ assert case_worker.index("EnsureRetailCase(game.title_id, scanned_name") < case_
 # A generated retail TGA must not be fetched again merely because stb_image's
 # format probe does not recognize the native loader's uncompressed BGRA TGA.
 case_cache = native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
-assert 'if (cached_source == candidates.front() && ValidNlibTga(path))' in case_cache
+assert 'if (cached_source == candidates.front())' in case_cache
 assert 'stbi_info(path.c_str(), &width, &height, &channels)' not in case_cache
-assert 'std::fread(header, 1, sizeof(header), input)' in case_cache
+assert 'ValidNlibWebP(path, &width, &height)' in case_cache
 staged_validator = (root / "tools/ci/check-staged-app.py").read_text()
 assert 'case_index_source = source_ui / "box-art-index.tsv"' in staged_validator
 assert 'case_index_staged = app / "ui/box-art-index.tsv"' in staged_validator

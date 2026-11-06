@@ -144,8 +144,10 @@ void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, S
         hud_pipeline = CreateWrappedCoverageBlendingPipeline(
             device, render_pass, hud_layout, std::tie(vertex, fragment));
     }
-    const VkPipeline hud_graphics_pipeline = *hud_pipeline;
-    const VkPipelineLayout hud_pipeline_layout = *hud_layout;
+    // When both overlays are hidden, neither lazy resource exists yet.
+    // Null handles are never bound: both draw branches are skipped.
+    const VkPipeline hud_graphics_pipeline = hud_pipeline ? *hud_pipeline : VK_NULL_HANDLE;
+    const VkPipelineLayout hud_pipeline_layout = hud_layout ? *hud_layout : VK_NULL_HANDLE;
 
     scheduler.Record([=, draws = std::move(draws)](vk::CommandBuffer cmdbuf) {
         const f32 bg_red = Settings::values.bg_red.GetValue() / 255.0f;

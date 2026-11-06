@@ -9,3 +9,13 @@ Le nouvel orchestrateur `NrRdna2SplitSwinRun` enchaîne sur le **même scheduler
 **Frontières non fermées par ce seul composant :** le premier parcours requiert une entrée issue d'`InputView` au format fenêtre FP8 déjà converti ; le dernier parcours produit des fenêtres qui doivent encore être exportées en raster `OutputView`. `RequiresInputView()` et `RequiresOutputView()` signalent ces obligations, sans prétendre que le chargement du modèle et le dispatch constituent une image NR. La transition ViT, le stockage tampon/résidu global, la sortie renderer et les tests GPU restent à faire.
 
 Aucune activation dans l'interface, aucune variante par jeu, pas de build PS5 complet avant P5.
+
+## Entrée et sortie raster natives raccordées
+
+`NrRdna2SplitSwinRun::InitializeWithModel` accepte désormais deux buffers raster optionnels, obligatoires lorsqu'une frontière native le requiert. Les marqueurs `InputView` et `OutputView` extraits du plan contrôlent directement ces contrats (pas de sélecteur de jeu) :
+
+- Pour le premier parcours, l'entrée raster E4M3FN 33×60×512 est convertie sur GPU en 5×8 fenêtres × 64 tokens × 512 canaux avant le premier FFWD3. Les colonnes et lignes hors image sont explicitement remplies de zéro.
+- Pour le second parcours, les fenêtres du dernier bloc sont converties vers le raster E4M3FN 33×60×512 après sa projection résiduelle. L'API `Result()` renvoie alors ce raster exporté.
+- Deux descriptor sets (STORAGE_BUFFER) utilisent le `NrRdna2FSwinRasterLayout` commun, sans shader dupliqué ; la création vérifie tailles, dimensions natales, buffers non aliasés et limites de plage. `Record()` insère les passes aux frontières requises avec les barrières compute→compute existantes.
+
+Les blocs internes conservent les 16/4 poids et les décalages d'attention de chaque étape du modèle. Cela ferme **les frontières locales** d'entrée/sortie des parcours Split-Swin, mais pas les connexions entre le premier parcours, la ViT, le décodeur et le second parcours ni le pipeline image complet. Aucune démonstration GPU/PS5 n'est revendiquée.

@@ -283,6 +283,25 @@ int main() {
     Require(single_table.size()==1 && single_table[0].entries==1 &&
             single_table[0].cbuf_index==7 && single_table[0].cbuf_offset==0xffc0U,
             "canonical BRX with one exact CBUF target is a valid dispatch");
+    // A verified indirect CBUF target can exceed the old 4096-word shader
+    // limit only if the exact destination exists in the captured source.
+    std::vector<Instruction> large_branch(4098,
+        Instruction{{pred_true|0x918U,0,0,0}});
+    std::copy(single_motif.begin(),single_motif.end(),large_branch.begin());
+    large_branch[4097] = Instruction{{pred_true|0x94dU,0,exit_true,0}};
+    CaptureIndirectResult large_table{};
+    large_table.base=0;
+    large_table.tables.push_back({
+        .branch=3, .cbuf_index=7, .cbuf_offset=0xffc0U,
+        .values={4097U*16U}, .targets={4097U}});
+    const auto large_plans=MakeNativeIndirectBranchPlans(large_table,large_branch);
+    Require(large_plans && large_plans->size()==1 &&
+            large_plans->front().targets.size()==1 &&
+            large_plans->front().targets.front().native_instruction_index==4097,
+            "BRX plan authenticates real native PC beyond former 4096 limit");
+    large_branch.pop_back();
+    Require(!MakeNativeIndirectBranchPlans(large_table,large_branch),
+            "BRX plan refuses stale CBUF target beyond actual guest capture");
     auto table=TrackCaptureIndirectBranches(motif);
     Require(table.size()==1 && table[0].index==3 &&
             table[0].cbuf_index==7 && table[0].cbuf_offset==0xffc0U &&

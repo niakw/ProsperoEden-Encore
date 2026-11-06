@@ -441,7 +441,7 @@ Le prologue `StaticAtExitTarget` peut viser au-delà de 4096 uniquement si sa
 cible existe dans la capture et respecte l'alignement. Témoins du vrai moteur :
 `test_ampere_lower_bridge.cpp` (4097 acceptées, 65537 refusées),
 `test_ampere_gpu_capture.cpp` (4097 instructions Compute, replay jusqu'au
-dernier octet et refus sans EXIT à 65536) et
+dernier octet, refus sans EXIT à 65536 et BRX 4097 authentifié) et
 `test_ampere_translation_cache.cpp` (entrée de 4097 instructions réutilisée
 sans fausse collision). **Apple Clang O1 : PASS** pour ces témoins ; la
 qualification GCC/Linux des derniers commits reste à établir en CI.

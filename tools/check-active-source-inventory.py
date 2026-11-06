@@ -397,16 +397,6 @@ assert "EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT" in (
 assert (root / "tools/ns2/check_native_video_decoder_ipc_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_OWNER_PASS", f"owners={len(post_f07_video_decoder_owners)}")
 
-physical = [p for p in physical_all
-            if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
-            shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
-            shared_compute_owners | native_typed_texture_owners |
-            shared_gpu_scalar_owners | shared_gpu_remap_owners |
-            post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
-            shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
-            post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
-            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
-            post_f07_native_stage_buffer_owners]
 # P2.4: the maintained Ampere Task/Mesh stage-buffer decoder was introduced
 # after the frozen F07 337-source review. It is an active shader header, not
 # a historical optimization. Keep its exact owner and CMake selection guarded.
@@ -424,6 +414,16 @@ assert "DecodeNativeStageBufferAccess(insn)" in stage_lowerer
 assert "native_stage_buffer.h" in (root / "headless/CMakeLists.txt").read_text()
 print("ENCORE_POST_F07_STAGE_BUFFER_OWNER_PASS", f"owners={len(post_f07_native_stage_buffer_owners)}")
 
+physical = [p for p in physical_all
+            if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
+            shared_compute_owners | native_typed_texture_owners |
+            shared_gpu_scalar_owners | shared_gpu_remap_owners |
+            post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
+            shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
+            post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
+            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
+            post_f07_native_stage_buffer_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

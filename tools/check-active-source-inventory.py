@@ -240,6 +240,25 @@ assert "python3 -B tools/ns2/check_native_qmd_atomic_span_host.py" in (
 print("ENCORE_POST_F07_NATIVE_ATOMIC_SPAN_OWNER_PASS",
       f"owners={len(post_f07_native_atomic_owners)}")
 
+# P2.3: canonical QMD3 global atomic-to-SSBO conversion is a separate,
+# release-selected native source owner, not a retroactive F07 optimization.
+post_f07_native_global_atomic_owners = {
+    "ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h",
+}
+assert post_f07_native_global_atomic_owners <= set(physical_all), (
+    "Missing native QMD3 global atomic binding owner",
+    sorted(post_f07_native_global_atomic_owners - set(physical_all)))
+assert not post_f07_native_global_atomic_owners.intersection(research_paths)
+atomic_binding=(active/next(iter(post_f07_native_global_atomic_owners))).read_text()
+shader_bridge=(active/"ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp").read_text()
+assert "NativeAtomic::Rewrite(ir)" in shader_bridge
+assert "native_global_atomic_binding.h" in shader_bridge
+assert "Opcode::PackUint2x32" in atomic_binding
+assert "rec.cbuf_offset == address->descriptor" in atomic_binding
+assert "python3 -B tools/ns2/check_native_qmd_direct_cbuf_host.py" in (
+    root/".github/workflows/ns2-research-host.yml").read_text()
+print("ENCORE_POST_F07_NATIVE_GLOBAL_ATOMIC_BINDING_PASS", "owners=1")
+
 # P2.7 native command-fetch recheck was introduced after the 337-source
 # historical F07 graph. It is a conditional research header, NOT a new
 # shipping optimization proof. Require a real normal/DEV owner and a host

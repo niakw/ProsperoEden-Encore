@@ -31,6 +31,13 @@ assert 'offset_value.Type() != Shader::IR::Type::U32' in header
 assert 'index.Type() != Shader::IR::Type::U32' in header
 assert 'offset.Type() != Shader::IR::Type::U32' in header
 assert 'byte_offset.Type() != Shader::IR::Type::U32' in header
+atomic_header=(root/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h').read_text()
+bridge=(root/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
+assert 'NativeAtomic::Rewrite(ir)' in bridge
+assert 'Opcode::PackUint2x32' in atomic_header
+assert 'Opcode::GetCbufU32x2' in atomic_header
+assert 'rec.cbuf_offset == address->descriptor' in atomic_header
+
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
 assert compilers
 with tempfile.TemporaryDirectory(prefix='encore-qmd-cbuf-') as temp:

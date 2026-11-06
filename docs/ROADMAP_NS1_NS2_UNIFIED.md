@@ -836,6 +836,29 @@ lignes), plus gardes directs QMD3 et CBUF graphiques. Pas de pipeline
 Vulkan complet ni de GPU matériel PS5 validé ; les CBUF indirects
 hors formes connues et pointeurs atomiques restent ouverts.
 
+**P2.3 — atomiques Global→Storage depuis pointeur QMD3 authentifié (06/11, source/hôte) :**
+Le compilateur Compute NS2 utilise désormais `NativeAtomic::Rewrite` après
+`ConvertLegacyToGeneric` et le normaliseur CBUF QMD3. Les atomiques 32 bits
+dont l'adresse provient d'un **vrai `GetCbufU32x2` QMD3**, empaqueté
+`PackUint2x32` et éventuellement augmenté d'un décalage U64 constant,
+sont réécrites en `StorageAtomic*32`; les opérations 64 bits
+(`IAdd/SMin/UMin/SMax/UMax/And/Or/Xor/Exchange`) utilisent les vraies
+`StorageAtomic*64` du backend SPIR-V avec les capacités `int64_atomics`
+et `descriptor_aliasing` obligatoires. Aucun fallback non atomique n'est
+accepté. Les sorties conservent l'index SSBO réel et l'offset
+byte exact. Aucune adresse globale arbitraire n'est traitée comme un SSBO.
+L'admission exige : banque CBUF réellement déclarée, descripteur SSBO
+writable, utilisé, unique, au bon rang `nvn_buffer_base + slot*16` et
+intégralement couvert par la taille CBUF reflétée ; l'offset de 32 bits
+est aligné et sans débordement. `CollectNativeQmdAtomicSpans` et le plan
+GPU Vulkan contrôlent ensuite la plage complète contre la taille et l'VA
+GMMU réellement liées. Les opérations/pointeurs non prouvés restent refusés.
+Témoin réel `test_native_qmd_direct_cbuf.cpp` : conversion des IAdd/Exchange,
+refus des banques, slots inversés, décalages non alignés ou U64 débordants,
+descripteurs absents/lecture seule et pointeurs dynamiques non authentifiés.
+Clang/GCC UBSan PASS, **sans preuve d'exécution PS5**. Le frontend NS1 reste
+inchangé. P2.3 est encore ouvert pour les adressages dynamiques généraux.
+
 **P2.3 — largeur des opérandes IR Compute native (06/11, source/hôte) :**
 Le normaliseur Ampere `GetCbuf` admet uniquement un index de banque U32 et un
 offset octet U32, qu'ils soient immédiats ou construits à partir d'un registre.

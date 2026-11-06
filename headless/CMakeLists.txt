@@ -2488,7 +2488,8 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp")
     if(NOT EXISTS "${EDEN_NS2_QMD_CBUF_SPIRV}" OR
        NOT EXISTS "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}" OR
-       NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_indirect_cbuf.h")
+       NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_indirect_cbuf.h" OR
+       NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_global_atomic_binding.h")
         message(FATAL_ERROR "Missing reviewed native QMD3 indirect CBUF compiler")
     endif()
     get_target_property(eden_ns2_shader_sources shader_recompiler SOURCES)

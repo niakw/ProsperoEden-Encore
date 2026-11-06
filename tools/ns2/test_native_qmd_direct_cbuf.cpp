@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include "shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+#include "shader_recompiler/frontend/ampere/native_global_atomic_binding.h"
+#include "shader_recompiler/frontend/ampere/native_atomic_span.h"
 #include "shader_recompiler/object_pool.h"
 
 using Shader::IR::Opcode;
@@ -156,6 +158,66 @@ static void CheckNativeAtomicSlotOrder(bool swapped, bool accepted) {
     const bool actual = Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
         program, Shader::Profile{});
     assert(actual == accepted);
+}
+// The original CUDA-like guest pointer is not a literal host address: it is
+// a 64-bit value actually read from an authenticated QMD3 NVN descriptor.
+static void CheckNativeGlobalAtomicPointer(
+    Opcode opcode, bool accepted, u32 cbuf_bank = 0, u32 descriptor = 0x310,
+    u64 displacement = 0, u32 actual_cbuf_offset = 0x310,
+    bool writable = true, bool live = true, bool malformed_pointer = false) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{24};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage = Shader::Stage::Compute;
+    program.blocks.push_back(&block);
+    program.info.constant_buffer_mask = 1;
+    program.info.constant_buffer_descriptors.push_back({0,1});
+    program.info.constant_buffer_used_sizes[0] = 0x340;
+    program.info.nvn_buffer_base = 0x310;
+    if (live) program.info.nvn_buffer_used.set(0);
+    program.info.storage_buffers_descriptors.push_back({
+        .cbuf_index = 0, .cbuf_offset = actual_cbuf_offset,
+        .count = 1, .is_written = writable});
+    block.AppendNewInst(Opcode::GetCbufU32x2,
+        {Value{cbuf_bank}, Value{descriptor}});
+    auto& address_pair = block.back();
+    block.AppendNewInst(Opcode::PackUint2x32, {Value{&address_pair}});
+    Value addr{&block.back()};
+    if (displacement || malformed_pointer) {
+        block.AppendNewInst(Opcode::IAdd64,
+            {addr, malformed_pointer ? addr : Value{displacement}});
+        addr = Value{&block.back()};
+    }
+    const bool wide = opcode >= Opcode::GlobalAtomicIAdd64 &&
+                      opcode <= Opcode::GlobalAtomicExchange64;
+    block.AppendNewInst(opcode, {addr, wide ? Value{u64{7}} : Value{u32{7}}});
+    const bool ok = Shader::Ampere::NativeAtomic::Rewrite(program);
+    assert(ok == accepted);
+    if (!ok) return;
+    bool rewritten = false;
+    for (const auto& inst : block.Instructions()) {
+        if (inst.GetOpcode() != Opcode::StorageAtomicIAdd32 &&
+            inst.GetOpcode() != Opcode::StorageAtomicExchange32 &&
+            inst.GetOpcode() != Opcode::StorageAtomicIAdd64 &&
+            inst.GetOpcode() != Opcode::StorageAtomicExchange64) continue;
+        rewritten = true;
+        assert(inst.Arg(0).IsImmediate() && inst.Arg(0).U32() == 0);
+        assert(inst.Arg(1).IsImmediate() && inst.Arg(1).U32() == displacement);
+        assert(inst.Arg(2).IsImmediate() &&
+               (wide ? inst.Arg(2).U64() == 7 : inst.Arg(2).U32() == 7));
+    }
+    assert(rewritten);
+    Shader::Profile profile{};
+    profile.support_int64 = wide;
+    profile.support_int64_atomics = wide;
+    profile.support_descriptor_aliasing = wide;
+    assert(Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(
+        program,profile));
+    const auto spans = Shader::Ampere::CollectNativeQmdAtomicSpans(program);
+    assert(spans && spans->size() == 1);
+    assert((*spans)[0].binding == 0 &&
+           (*spans)[0].offset == displacement &&
+           (*spans)[0].width == (wide ? 8U : 4U));
 }
 int main() {
     // P2.3: actual native global memory OpAccessChain must never start
@@ -381,6 +443,33 @@ int main() {
                       false,0x310,8);
     CheckNativeAtomic(Opcode::StorageAtomicIAdd32x2,false);
     CheckNativeAtomic(Opcode::StorageAtomicExchange32x2,false);
+    // Canonical resolved guest pointer is the actual descriptor's low/high
+    // words. Only known, writable, flat QMD3 bindings may become atomics.
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,true);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicExchange32,true,
+                                   0,0x310,12);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,true,
+                                   0,0x310,8);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicExchange64,true,
+                                   0,0x310,16);
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,false,
+                                   0,0x310,4); // 64-bit alignment
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,3); // not aligned
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x320); // cannot steal slot
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   1); // not reflected QMD bank
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x314); // different CBUF byte offset
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x310,false); // read-only
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x310,true,false); // unbound
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0,0x310,true,true,true); // dynamic
+    CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd32,false,
+                                   0,0x310,0x100000000ULL); // offset > U32
     CheckNativeAtomic(Opcode::GlobalAtomicIAdd32,false);
     CheckNativeAtomic(Opcode::GlobalAtomicExchange64,false);
     CheckNativeAtomic(Opcode::GlobalAtomicMaxF32x2,false);

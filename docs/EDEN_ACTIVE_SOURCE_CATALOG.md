@@ -561,3 +561,7 @@ la présence du module NVDRV de ce processus ; mauvaises tailles, service
 absent et GPU non initialisé sont refusés. Les sessions décodage 902/905/906
 et 1002 restent gérées avec des objets kernel propres au processus.
 Vérification de source et compilation hôte : `check-ns2-graphics-hle-host.py`.
+
+#### P2.3 — atomiques GPU Compute avec pointeur QMD3 authentifié (06/11/2026)
+
+Propriétaire maintenu : `vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h` ; dans `renderer_spirv_bridge.cpp`, le passage effectif `NativeAtomic::Rewrite(ir)` convertit les globales 32 bits à adresse de descripteur CBUF connue en véritables `StorageAtomic*32` existants. Les accès restent contraints par les vérifications SSBO/QMD3 et le contrôle de plage Vulkan. Le symbole n'est pas activé dans le pipeline NS1. Tests hôte : `tools/ns2/check_native_qmd_direct_cbuf_host.py`.

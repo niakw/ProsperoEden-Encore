@@ -277,6 +277,19 @@ print("NS2_POST_F07_ATOMIC_SPAN_ISOLATION_PASS",
       f"new_native_headers={len(post_f07_native_atomic_span_owners)}",
       "historical_F07_unchanged=1")
 
+# P2.3: the actual QMD3 address-derived atomic rewrite is a new native
+# functional owner and must NOT be folded into the historical F07 count.
+post_f07_native_global_atomic_owners = {
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h",
+}
+assert post_f07_native_global_atomic_owners <= all_owners
+assert not post_f07_native_global_atomic_owners & (research_owners | hygiene_owners)
+atomic_binding = (ROOT / next(iter(post_f07_native_global_atomic_owners))).read_text()
+assert 'NativeAtomic' in atomic_binding and 'Rewrite(Shader::IR::Program&' in atomic_binding
+assert 'NativeAtomic::Rewrite(ir)' in (
+    ROOT / 'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
+print('NS2_POST_F07_GLOBAL_ATOMIC_OWNER_PASS', 'new_native_headers=1', 'historical_F07_unchanged=1')
+
 # P2.7: the native GPFIFO live-read guard is post-F07 and gated behind
 # the exact NVDRV/Ampere GPU dispatch research profile. It is not a new
 # historical shipping optimization. Its source and executed test must be

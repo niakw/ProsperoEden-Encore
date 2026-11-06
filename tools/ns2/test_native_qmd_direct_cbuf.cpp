@@ -161,7 +161,7 @@ static void CheckNativeAtomicSlotOrder(bool swapped, bool accepted) {
 }
 // The return value of an atomic is guest-visible. Verify replacing its
 // IR instruction does not detach a consumer from the original result.
-static void CheckNativeGlobalAtomicResultValue() {
+static void CheckNativeGlobalAtomicResultValue(bool cas = false) {
     Shader::ObjectPool<Shader::IR::Inst> pool{12};
     Shader::IR::Block block{pool};
     Shader::IR::Program program{};
@@ -178,15 +178,24 @@ static void CheckNativeGlobalAtomicResultValue() {
         {Value{u32{0}},Value{u32{0x310}}});
     block.AppendNewInst(Opcode::PackUint2x32,{Value{&block.back()}});
     const Value pointer{&block.back()};
-    block.AppendNewInst(Opcode::GlobalAtomicIAdd32,
-        {pointer,Value{u32{7}}});
+    block.AppendNewInst(
+        cas ? Opcode::GlobalAtomicCompareExchange32 : Opcode::GlobalAtomicIAdd32,
+        cas ? std::initializer_list<Value>{pointer,Value{u32{7}},Value{u32{9}}} :
+              std::initializer_list<Value>{pointer,Value{u32{7}}});
     const Value old_atomic{&block.back()};
     block.AppendNewInst(Opcode::IAdd32,{old_atomic,Value{u32{1}}});
     auto* const use=&block.back();
-    assert(use->Arg(0).TryInstRecursive()->GetOpcode()==Opcode::GlobalAtomicIAdd32);
+    assert(use->Arg(0).TryInstRecursive()->GetOpcode()==
+           (cas ? Opcode::GlobalAtomicCompareExchange32 : Opcode::GlobalAtomicIAdd32));
     assert(Shader::Ampere::NativeAtomic::Rewrite(program));
     const auto* const new_result=use->Arg(0).TryInstRecursive();
-    assert(new_result && new_result->GetOpcode()==Opcode::StorageAtomicIAdd32);
+    assert(new_result && new_result->GetOpcode()==
+           (cas ? Opcode::StorageAtomicCompareExchange32 : Opcode::StorageAtomicIAdd32));
+    if (cas) {
+        assert(new_result->Arg(2).IsImmediate() && new_result->Arg(2).U32()==7);
+        assert(new_result->Arg(3).IsImmediate() && new_result->Arg(3).U32()==9);
+        assert(new_result->MayHaveSideEffects());
+    }
     assert(use->Arg(0).Type()==Shader::IR::Type::U32);
     assert(Shader::Ampere::NativeQmdAtomicStorageIRAdmissible(program,Shader::Profile{}));
 }
@@ -692,6 +701,7 @@ int main() {
     CheckNativeGlobalAtomicPointer(Opcode::GlobalAtomicIAdd64,false,
                                    0,0x310,0,0x310,true,true,false,true,0xff);
     CheckNativeGlobalAtomicResultValue();
+    CheckNativeGlobalAtomicResultValue(true); // CAS returns old guest value
     CheckNativeGlobalAtomicSecondSlot(false,true);
     CheckNativeGlobalAtomicSecondSlot(true,false);
     // The actual Maxwell translator can construct a 64-bit pointer

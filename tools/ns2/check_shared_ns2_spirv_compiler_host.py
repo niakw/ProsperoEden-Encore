@@ -111,6 +111,7 @@ includes=[
     native_root,
     ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
     ROOT/"vendor/encore-active/ns2-runtime/hle",
+    ROOT/"vendor/encore-active/eden-shader/src",
     ROOT/"vendor/sources/eden/src",
     ROOT/"vendor/sources/eden/src/dynarmic/src",
     cpm/"fmt/12.1.0/include",

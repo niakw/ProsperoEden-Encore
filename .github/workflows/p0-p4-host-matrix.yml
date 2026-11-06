@@ -49,4 +49,5 @@ jobs:
           name: p0-p4-host-${{ github.sha }}-shard-${{ matrix.shard }}
           path: .build-local/p4-host-batch-*.json
           if-no-files-found: warn
+          include-hidden-files: true
           retention-days: 14

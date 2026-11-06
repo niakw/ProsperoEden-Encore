@@ -24,7 +24,15 @@ assert 'constant_source ? cbuf()' in LOWER
 assert 'case 0x207: case 0x807: case 0xa07: case 0xc07:' in LOWER
 assert 'case 0x20a: case 0x80a: case 0xa0a: case 0xc0a:' in LOWER
 assert 'case 0x308: case 0x908: case 0xb08: case 0xd08:' in LOWER
-assert 'uses_uniform_bank |= op == 0x4a4 || op == 0x2bf || op == 0xc07' in LOWER
+# Other native opcodes were added after this fixture was written.
+# Check the complete uniform-bank assignment, not an obsolete exact substring.
+uniform_bank_assignments = [
+    line for line in LOWER.splitlines() if "uses_uniform_bank |=" in line
+]
+assert len(uniform_bank_assignments) == 1
+uniform_assignment = LOWER.split("uses_uniform_bank |=", 1)[1].split(";", 1)[0]
+for opcode in ("0x4a4", "0x2bf", "0xc07"):
+    assert "op == " + opcode in uniform_assignment, opcode
 assert 'case 0x2bf: { // UPOPC:' in LOWER
 assert 'case 0x213: case 0x813: case 0xa13: case 0xc13:' in LOWER
 assert 'case 0x301: case 0x901: case 0xb01: case 0xd01:' in LOWER

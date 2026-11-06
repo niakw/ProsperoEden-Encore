@@ -1,7 +1,9 @@
 # Eden Encore — roadmap suivable pour un moteur PS5 commun NS1 / NS2
 
-**Mise à jour : 2026-11-05 · branche unique : `main`**
+**Mise à jour : 2026-11-06 · branche unique : `main`**
 
+> **Matrice de clôture P0–P4 sans exigence console : [P0_P4_EXIT_MATRIX_2026-11-06.md](P0_P4_EXIT_MATRIX_2026-11-06.md)**
+> Les mentions historiques de tests PS5 dans P0–P4 n’en sont pas des critères de sortie : toute preuve console appartient uniquement à P5.
 > **Suivi vivant à cases cochables : [GitHub Issue #15 — ROADMAP](https://github.com/niakw/ProsperoEden-Encore/issues/15)**
 > **Audit technique et preuves de boot : [GitHub Issue #14](https://github.com/niakw/ProsperoEden-Encore/issues/14)**
 > **Réconciliation des cases ouvertes (04/11) : [audit source/hôte](NS1_NS2_ROADMAP_RECONCILIATION_2026-11-04.md)**

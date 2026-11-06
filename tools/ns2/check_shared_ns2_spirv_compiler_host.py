@@ -85,6 +85,16 @@ assert "const Id value{ctx.OpLoad(memory_type, word_pointer)}" in cas_owner
 assert "const Id bitcast_value{matching_type ? value : ctx.OpBitcast(value_type, value)}" in cas_owner
 assert "ctx.OpAtomicCompareExchange(ctx.U32[1], word_pointer" in cas_owner
 assert "ctx.OpReturnValue(ctx.OpBitcast(value_type, atomic_res))" in cas_owner
+# CAS's frontend introduces an IR::Program argument. Both maintained
+# SPIR-V owners must have the SAME function signature and preserve their
+# respective Maxwell/49-bit-GMMU semantics.
+for owner in (pinned,cas_owner):
+    assert "DefineGlobalMemoryFunctions(program);" in owner
+    assert "void EmitContext::DefineGlobalMemoryFunctions(const IR::Program& program)" in owner
+    assert "const Info& info{program.info};" in owner
+    assert "GlobalAtomicCompareExchange32" in owner
+    assert "OpAtomicCompareExchange(U32[1], pointer" in owner
+assert "NativeSpirvCbufBoundsActive()" in cas_owner
 assert '"backend/spirv/spirv_emit_context.cpp"' in CMAKE
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")' in CMAKE
 print("P2_3_REAL_SPIRV_CAS_WORD_ABI_PASS f16x2=3 f32x2=3 u32_word=1 atomics=real",flush=True)

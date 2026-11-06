@@ -38,7 +38,7 @@ jobs:
       # a redundant apt index refresh or any PS5 binary/build.
       - name: Provide system codec declarations for native Vulkan headers
         run: sudo apt-get install -y -qq --no-install-recommends libavcodec-dev libavutil-dev libswscale-dev
-      - name: Compile maintained native Vulkan owners without a PS5 build
+      - name: Syntax-check maintained native Vulkan sources
         run: python3 -B tools/ns2/check_task_mesh_vulkan_tus_host.py
 
   host-qualify:

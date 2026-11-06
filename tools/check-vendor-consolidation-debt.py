@@ -1914,7 +1914,50 @@ shader_expected = (shader_prefix + shader_pinned[:shader_begin] +
                    shader_pinned[shader_end:])
 shader_maintained = active / "eden-core/src/video_core/shader_environment.cpp"
 reader_maintained = active / "eden-core/src/video_core/shader_cache_reader.inc"
-assert shader_maintained.read_text() == shader_expected, "Shader cache source not equivalent to old CMake"
+# P2.4 NVN mesh-stage admission is additive to the shipping shader cache
+# owner. Reverse only the three exact authenticated-graphics additions and
+# still require byte-for-byte parity with the generated historical source.
+shader_mesh = shader_maintained.read_text()
+mesh_include = '''#ifdef PS5_NATIVE
+#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"
+#endif
+'''
+assert shader_mesh.count(mesh_include) == 1
+shader_mesh = shader_mesh.replace(mesh_include, '')
+mesh_select = '''#ifdef PS5_NATIVE
+    // NVC597 SET_MESH_CONTROL (0x114c) replaces the vertex stage with
+    // Task or Mesh. Only a verified native 0xC797 engine may select it.
+    const auto& regs = maxwell3d->regs;
+    const bool native_mesh =
+        Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+            .CaptureGraphicsTicket(maxwell3d).has_value() &&
+        (regs.reg_array[0x114c / 4] & 1U) != 0;
+    const bool has_task = native_mesh &&
+        regs.IsShaderConfigEnabled(Maxwell::ShaderType::TessellationInit);
+#else
+    constexpr bool native_mesh = false;
+    constexpr bool has_task = false;
+#endif
+'''
+assert shader_mesh.count(mesh_select) == 1
+shader_mesh = shader_mesh.replace(mesh_select, '')
+mesh_stage = '''    if (native_mesh &&
+        (program == Maxwell::ShaderType::VertexB ||
+         program == Maxwell::ShaderType::TessellationInit)) {
+        // Physical banks: VertexB=0 (Task or solo Mesh); TCS=1 (Mesh
+        // only with Task). No reinterpretation of ordinary NS1 stages.
+        stage = program == Maxwell::ShaderType::VertexB && has_task
+                    ? Shader::Stage::Task : Shader::Stage::Mesh;
+        mesh_registers = {maxwell3d->regs.reg_array[0x1150 / 4],
+                          maxwell3d->regs.reg_array[0x1154 / 4],
+                          maxwell3d->regs.reg_array[0x1158 / 4]};
+    }
+'''
+assert shader_mesh.count(mesh_stage) == 1
+shader_mesh = shader_mesh.replace(mesh_stage, '')
+assert shader_mesh == shader_expected, "Shader cache source differs after exact P2.4 stage normalization"
+print("ENCORE_P24_AUTHENTICATED_SHADER_ENVIRONMENT_PARITY_PASS",
+      "mesh_source=versioned native_only=1 ns1_baseline=unchanged")
 assert reader_maintained.is_file() and not (root / "headless/shader_cache_reader.inc").exists()
 check_canonical_git_object(reader_maintained, "5d652ca5cd6d8ec919c04902a18d87247673e523", "shader cache reader")
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}")' in c

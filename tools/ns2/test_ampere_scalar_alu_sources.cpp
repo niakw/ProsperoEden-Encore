@@ -239,5 +239,90 @@ int main() {
     auto bad_uimad=uniform_imad(5,4,8,0x12345678U);
     bad_uimad.words[2]^=1U<<24;
     Require(!Bridge(bad_uimad).Ready(),"non-reviewed UIMAD mode rejected");
+    // IABS immediates preserve the complete 32-bit signed magnitude input;
+    // notably INT32_MIN is not folded with host abs (which would overflow).
+    for (const u32 literal : {0U,1U,0x7fffffffU,0x80000000U,0xffffffffU}) {
+        const Instruction abs_imm{{(7U<<12)|0x813U|(5U<<16),literal,0,0x000fe200U}};
+        Require(Reviewed(abs_imm),"IABS 32-bit immediate accepted by actual ISA table");
+        const auto out=Bridge(abs_imm);
+        Require(out.Ready(),out.reason.data());
+        bool found_literal=false,found_abs=false;
+        for (const u64 word : out.maxwell_instructions) {
+            if ((word>>56)==0x01 && (word&255)==251 &&
+                ((word>>20)&0xffffffffULL)==literal) found_literal=true;
+            if ((word&0xfff0000000000000ULL)==0x5ce0000000000000ULL &&
+                (word&255)==5 && ((word>>20)&255)==251)
+                found_abs=true;
+        }
+        Require(found_literal && found_abs,"IABS sends full signed immediate to genuine Maxwell absolute opcode");
+    }
+    Instruction invalid_abs{{(7U<<12)|0x813U|(5U<<16),0x80000000U,1,0x000fe200U}};
+    Require(!Bridge(invalid_abs).Ready(),"IABS literal unknown mode fails before Maxwell emission");
+    // P2.4: native bit reversal and population count from GPR, 32-bit
+    // literal, CBUF (byte addressed) and uniform register. These modes
+    // share real Maxwell ALU opcodes, not per-game shader replacements.
+    const auto unary=[](u32 op,u32 dst,u32 source,u32 bank=0) {
+        const bool constant=op==0xb01 || op==0xb09;
+        const bool uniform=op==0xd01 || op==0xd09;
+        return Instruction{{(7U<<12)|op|(dst<<16),
+            constant ? ((source<<6)|(bank<<22)) : source,
+            uniform ? 0x08000000U : 0U,0x000fe200U}};
+    };
+    const auto find_word=[](const LowerBridgeResult& out,u64 mask,u64 match) {
+        for(const u64 word:out.maxwell_instructions)
+            if((word&mask)==match)return word;
+        return u64{};
+    };
+    constexpr u64 high_opcode_mask=0xffff000000000000ULL;
+    for (const auto& [op,src,expected] :
+        std::array<std::array<u32,3>,4>{{{{0x301,13,13}},{{0x901,0x81234567U,251}},
+                                          {{0xb01,508,251}},{{0xd01,17,201}}}}) {
+        const auto inst=unary(op,5,src,op==0xb01?7U:0U);
+        Require(Reviewed(inst),"BREV GPR/immediate/CBUF/UR recognized by real ISA table");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        const u64 rev=find_word(out,high_opcode_mask,0x3828000000000000ULL);
+        Require(rev && (rev&255)==5 && ((rev>>8)&255)==expected,
+                "BREV emits original Maxwell bit-reverse and matching source GPR");
+        if(op==0x901) {
+            const u64 imm=find_word(out,0xff00000000000000ULL,0x0100000000000000ULL);
+            Require(imm && ((imm>>20)&0xffffffffULL)==0x81234567ULL,
+                    "BREV full 32-bit literal preserved with high bit");
+        }
+        if(op==0xb01) {
+            const u64 ldc=find_word(out,0xffff000000000000ULL,0x4c98000000000000ULL);
+            Require(ldc && ((ldc>>20)&0x3fff)==508/4 && ((ldc>>34)&31)==7,
+                    "BREV CBUF reads exact source word from bank and offset");
+        }
+    }
+    for(const auto op:{0x309U,0x909U,0xb09U,0xd09U}) {
+        const auto inst=unary(op,5,op==0x309 ? 13U :
+                             op==0x909 ? 0x80000001U :
+                             op==0xb09 ? 65532U : 17U,
+                             op==0xb09?17U:0U);
+        Require(Reviewed(inst),"POPC GPR/literal/CBUF/UR recognized by real ISA table");
+        const auto out=Bridge(inst);
+        Require(out.Ready(),out.reason.data());
+        const u64 word=find_word(out,0xffff000000000000ULL,0x5c08000000000000ULL);
+        const u32 expected=op==0x309?13U:op==0xd09?201U:251U;
+        Require(word && (word&255)==5 && ((word>>20)&255)==expected,
+                "POPC emits native Maxwell population count with correct source");
+        Require(((word>>40)&1)==0,"literal high bit is data, not POPC inversion");
+    }
+    auto negative=unary(0xb01,5,3,7);
+    Require(!Bridge(negative).Ready(),"unaligned BREV CBUF never reads prior word");
+    Require(!Bridge(unary(0xb01,5,4,18)).Ready(),"BREV CBUF bank outside range refused");
+    Require(!Bridge(unary(0xb09,5,65532,18)).Ready(),"POPC CBUF bank outside range refused");
+    Require(!Bridge(unary(0xd01,5,64)).Ready(),"BREV invalid uniform register refused");
+    Require(!Bridge(unary(0xd01,220,4)).Ready(),"BREV uniform bank cannot overlap result");
+    auto unreviewed=unary(0x901,5,1);unreviewed.words[2]=1;
+    Require(!Bridge(unreviewed).Ready(),"BREV immediate unsupported mode fails closed");
+    auto popc_cbuf_inverted=unary(0xb09,5,508,7);
+    popc_cbuf_inverted.words[1]|=0x80000000U;
+    const auto inverted_result=Bridge(popc_cbuf_inverted);
+    Require(inverted_result.Ready(),"POPC CBUF encoded invert bit accepted");
+    const auto inverted_word=find_word(inverted_result,high_opcode_mask,
+                                       0x5c08000000000000ULL);
+    Require(((inverted_word>>40)&1)==1,"POPC CBUF inversion preserved");
     std::puts("P2_4_REAL_AMPERE_SCALAR_ALU_SOURCE_PASS");
 }

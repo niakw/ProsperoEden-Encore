@@ -426,6 +426,23 @@ L'accès global atomique via un SSBO dont la provenance n'est pas
 authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
 et les shaders complets restent à qualifier en P5.
 
+**P2.4 — BREV/POPC multi-sources et IABS immédiat (06/11, source/hôte) :**
+Le lowerer commun traduit désormais les formes nouvelles `BREV` immédiat
+32 bits (`0x901`), CBUF (`0xb01`) et uniforme (`0xd01`), et `POPC`
+immédiat (`0x909`) et CBUF (`0xb09`), aux côtés des variantes GPR/uniforme
+existantes. `IABS.S32` admet également son immédiat complet (`0x813`),
+y compris `INT32_MIN` sans conversion via l'`abs()` hôte.
+Les accès CBUF réutilisent la lecture Maxwell exacte de banque et offset
+alignés, avec bornage du banc 0–17 ; les UR restent soumis au banc réservé
+partagé. Pour POPC immédiat, le bit 31 du littéral reste une **donnée**,
+jamais le bit d'inversion de la forme registre. Les champs/modes non prouvés
+sont rejetés avant émission. Aucun hack par jeu et aucun changement NS1.
+Témoin réel `check_ampere_scalar_alu_sources_host.py` : admission ISA,
+`LowerReviewedToMaxwell`, mots BREV/POPC/IABS Maxwell, sources entières
+et erreurs de mode/CBUF/UR ; **Clang/GCC UBSan O0/O2, 4/4 PASS**.
+Ce lot augmente la couverture fonctionnelle mais **ne clôt pas P2.4** ni la
+validation console.
+
 **P2.4 — plage complète de capture shader Ampere (06/11, source/hôte) :**
 Le plafond de **65536 instructions** du compilateur est maintenant commun
 au bridge `LowerReviewedToMaxwell`, au lecteur GMMU `CaptureNativeShader`,

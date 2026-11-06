@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           submodules: true
@@ -45,7 +45,7 @@ jobs:
             --main build-ns2-fc27/exefs/main \
             --npdm build-ns2-fc27/exefs/main.npdm
       - name: Publish unsigned extracted-ExeFS NSP research input
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ns2-fc27-synthetic-stress
           retention-days: 7
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           submodules: true

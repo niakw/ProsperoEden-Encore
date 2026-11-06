@@ -511,7 +511,116 @@ assert (ROOT / "tools/ns2/check_native_video_ready_event_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_ISOLATION_PASS",
       f"new_shared_sources={len(post_f07_video_decoder_owners)}")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners
+# A new P2.4 active Ampere stage-buffer decoder was added after the
+# immutable F07 review. Keep it visible and explicitly unqualified for
+# optimization; never inflate or relabel the 518 reviewed owner count.
+post_f07_native_stage_buffer_owners = {
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_stage_buffer.h",
+}
+assert post_f07_native_stage_buffer_owners <= all_owners, (
+    "Missing active native stage-buffer owner",
+    sorted(post_f07_native_stage_buffer_owners - all_owners))
+assert not post_f07_native_stage_buffer_owners & research_owners
+assert "DecodeNativeStageBufferAccess(" in (
+    ROOT / next(iter(post_f07_native_stage_buffer_owners))).read_text()
+print("ENCORE_POST_F07_STAGE_BUFFER_ISOLATION_PASS", "new_p2_owners=1")
+
+# P2.4 maintains a separately audited set of new Task/Mesh compiler
+# source owners. It is not part of the immutable 518-file F07 optimization
+# evidence. Reuse the exact literal inventory instead of maintaining a
+# second, diverging hardcoded list.
+import ast
+task_mesh_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_task_mesh_source_owners"
+        for t in node.targets
+    )
+]
+assert len(task_mesh_nodes) == 1, "Task/Mesh inventory definition missing"
+task_mesh_paths = ast.literal_eval(task_mesh_nodes[0])
+assert isinstance(task_mesh_paths, set) and len(task_mesh_paths) == 29
+post_f07_task_mesh_owners = {
+    "vendor/encore-active/" + p for p in task_mesh_paths
+}
+assert post_f07_task_mesh_owners <= all_owners, (
+    "Missing maintained Task/Mesh source owner",
+    sorted(post_f07_task_mesh_owners - all_owners))
+assert not post_f07_task_mesh_owners & research_owners
+assert "EDEN_NATIVE_TASK_MESH_ROOT" in release_cmake
+print("ENCORE_P24_TASK_MESH_POST_F07_PASS", f"owners={len(post_f07_task_mesh_owners)}")
+
+# R437 is native-only source added after F07, not an extra reviewed
+# optimization owner. Reuse the source-inventory literal set, verify it
+# exists in the vendored tree, and keep the immutable 518-owner review.
+r437_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_r437_buffer_base_owners"
+        for t in node.targets)
+]
+assert len(r437_nodes) == 1
+r437_paths = ast.literal_eval(r437_nodes[0])
+assert r437_paths == {"eden-core/src/video_core/buffer_cache/buffer_cache_base.h"}
+post_f07_r437_buffer_base_owners = {"vendor/encore-active/" + p for p in r437_paths}
+assert post_f07_r437_buffer_base_owners <= all_owners
+assert not post_f07_r437_buffer_base_owners & research_owners
+assert "set(EDEN_MAINTAINED_BUFFER_BASE" in release_cmake
+print("ENCORE_POST_F07_R437_F07_ISOLATION_PASS", "native_headers=1")
+
+# The reviewed P2.2c descriptor-array image emitter is explicitly tracked
+# by the active-source catalogue; it did not exist in the immutable F07
+# 518-source optimization review. Preserve that exact historical count.
+image_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_image_array_owners"
+        for t in node.targets
+    )
+]
+assert len(image_nodes) == 1, "Image-array owner catalogue missing"
+image_paths = ast.literal_eval(image_nodes[0])
+assert image_paths == {
+    "ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp"
+}
+post_f07_image_array_owners = {"vendor/encore-active/" + p for p in image_paths}
+assert post_f07_image_array_owners <= all_owners
+assert not post_f07_image_array_owners & research_owners
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in release_cmake
+print("ENCORE_P22C_IMAGE_SPIRV_F07_ISOLATION_PASS", "new_sources=1")
+
+# P2.7 native Ampere host semaphore decoder postdates the immutable F07
+# optimization review. Its exact provenance is owned by the source
+# catalogue; do not inflate the frozen 518 historical reviewed owners.
+sem_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_ampere_semaphore_owners"
+        for t in node.targets
+    )
+]
+assert len(sem_nodes) == 1, "Ampere semaphore inventory missing"
+sem_paths = ast.literal_eval(sem_nodes[0])
+assert sem_paths == {
+    "ns2-runtime/gpu_dispatch/video_core/engines/native_ampere_semaphore.h"
+}
+post_f07_ampere_semaphore_owners = {
+    "vendor/encore-active/" + p for p in sem_paths
+}
+assert post_f07_ampere_semaphore_owners <= all_owners
+assert not post_f07_ampere_semaphore_owners & research_owners
+assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
+print("ENCORE_POST_F07_AMPERE_SEMAPHORE_ISOLATION_PASS", "owners=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

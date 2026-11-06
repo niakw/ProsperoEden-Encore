@@ -28,6 +28,20 @@ TESTS = {
     "gpu_channel_alloc_owner": "tools/ns2/check_native_gpu_channel_allocation_host.py",
     "gpu_shader_cache_alloc": "tools/ns2/check_native_gpu_cache_allocation_host.py",
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",
+    "native_stage_buffer": "tools/ns2/check_native_stage_buffer_host.py",
+    "task_mesh_vulkan_tus": "tools/ns2/check_task_mesh_vulkan_tus_host.py",
+    "hle_condvar_access": "tools/verify/hle/check-native-hle-condvar-access-host.py",
+    "hle_condvar_key": "tools/verify/hle/check-native-hle-condvar-key-host.py",
+    "hle_arbiter_access": "tools/verify/hle/check-native-hle-arbiter-access-host.py",
+    "hle_arbiter_wrap": "tools/verify/hle/check-native-hle-arbiter-wrap-host.py",
+    "hle_address_wake": "tools/verify/hle/check-native-hle-address-wake-host.py",
+    "hle_overlay_layout": "tools/verify/hle/check-hle-overlay-layout.py",
+    "hle_cmake_selector": "tools/verify/hle/check-hle-cmake-select-host.py",
+    "hle_sync_unlink": "tools/verify/hle/check-native-hle-sync-unlink-host.py",
+    "hle_wait_timeout": "tools/verify/hle/check-native-hle-wait-timeout-host.py",
+    "hle_sleep_timeout": "tools/verify/hle/check-native-hle-sleep-timeout-host.py",
+    "hle_ipc_timeout": "tools/verify/hle/check-native-hle-ipc-timeout-host.py",
+    "hle_ipc_receive_index": "tools/verify/hle/check-native-hle-ipc-receive-index-host.py",
     "shared_spirv_compiler": "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
     "atomic_qmd3": "tools/ns2/check_native_qmd_atomic_span_host.py",
     "cbuf_qmd3": "tools/ns2/check_native_qmd_direct_cbuf_host.py",
@@ -50,6 +64,7 @@ TESTS = {
     "native_gpfifo_fetch": "tools/ns2/check_native_gpu_fetch_admission_host.py",
     "dma_unbound_guard": "tools/ns2/check_native_dma_unbound_subchannel_host.py",
     "native_semaphore_shutdown": "tools/ns2/check_native_puller_semaphore_shutdown_host.py",
+    "native_ampere_sem_execute": "tools/ns2/check_native_ampere_semaphore_host.py",
     "native_invalid_bind": "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",
     "kernel_wait64": "tools/ns2/check_shared_kernel_wait64_host.py",
     "ampere_scalar_alu": "tools/ns2/check_ampere_scalar_alu_sources_host.py",
@@ -131,14 +146,25 @@ def main() -> int:
     parser.add_argument("--scope", choices=("core","smoke"), default="core")
     parser.add_argument("--jobs", type=int, choices=range(1,5), default=3,
                         metavar="{1,2,3,4}")
+    parser.add_argument("--shard", default="0/1",
+                        help="Zero-based shard/count, e.g. 1/4")
     args=parser.parse_args()
-    names = tuple(TESTS) if args.scope=="core" else SMOKE
+    try:
+        shard_index, shard_count = map(int, args.shard.split("/", 1))
+    except ValueError:
+        parser.error("--shard requires INDEX/COUNT")
+    if not 1 <= shard_count <= 8 or not 0 <= shard_index < shard_count:
+        parser.error("--shard requires 0 <= INDEX < COUNT <= 8")
+    all_names = tuple(TESTS) if args.scope=="core" else SMOKE
+    names = tuple(name for index, name in enumerate(all_names)
+                  if index % shard_count == shard_index)
     for name in names:
         if not (ROOT/TESTS[name]).is_file():
             raise RuntimeError("Missing pinned host witness: "+TESTS[name])
     main_sha, vendor_sha=checked_revisions()
     print(f"P4_HOST_BATCH_START main={main_sha} vendor={vendor_sha} "
-          f"scope={args.scope} jobs={args.jobs} count={len(names)}",flush=True)
+          f"scope={args.scope} jobs={args.jobs} shard={shard_index}/{shard_count} "
+          f"count={len(names)}",flush=True)
     env=os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"]="1"
     # A newer CLT SDK can contain .tbd formats that the installed Apple
@@ -164,10 +190,11 @@ def main() -> int:
     if checked_revisions()!=(main_sha,vendor_sha):
         raise RuntimeError("Source SHA drifted during host batch; results not qualified")
     results.sort(key=lambda r: names.index(r["name"]))
-    output=ROOT/".build-local"/f"p4-host-batch-{main_sha[:8]}.json"
+    output=ROOT/".build-local"/f"p4-host-batch-{main_sha[:8]}-s{shard_index}of{shard_count}.json"
     output.parent.mkdir(exist_ok=True)
     payload={"main_sha":main_sha,"vendor_sha":vendor_sha,
              "utc":started.isoformat(),"scope":args.scope,"jobs":args.jobs,
+             "shard_index":shard_index,"shard_count":shard_count,
              "host_only":True,"ps5_build":False,"console_frame":False,
              "passed":sum(r["passed"] for r in results),
              "total":len(results),"results":results}

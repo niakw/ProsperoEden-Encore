@@ -1,0 +1,80 @@
+name: Eden P0-P4 host qualification (sharded)
+
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/**'
+      - 'tools/**'
+      - '.github/workflows/p0-p4-host-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eden-p0-p4-host-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  # Fast, exact native Vulkan ABI witness. Uses only pinned vendor headers,
+  # the runner C++ compiler and syntax-only parsing; no apt installation,
+  # PS5 SDK, linking or GPU execution. Catch owner incompatibilities before
+  # the much longer sharded host qualification.
+  native-vulkan-syntax:
+    name: Native Vulkan Task/Mesh C++20 syntax
+    runs-on: ubuntu-24.04
+    # Hosted Linux runner package mirrors may take several minutes before
+    # clang can parse the maintained Vulkan owners. An 8-minute timeout
+    # cancelled apt itself and never tested any C++ source.
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact SHA and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      # Full-source Vulkan syntax includes FFmpeg codec declarations through
+      # the actual Host1x headers. Install just the missing headers, without
+      # a redundant apt index refresh or any PS5 binary/build.
+      - name: Provide system codec declarations for native Vulkan headers
+        run: sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends libavcodec-dev libavutil-dev libswscale-dev
+      - name: Syntax-check maintained native Vulkan sources
+        run: python3 -B tools/ns2/check_task_mesh_vulkan_tus_host.py
+
+  host-qualify:
+    name: Host qualification shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - name: Checkout exact SHA and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install host-only C++/Vulkan/video test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends clang g++ libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev libfmt-dev libssl-dev libzstd-dev libx11-dev libxcb1-dev libxext-dev libxrandr-dev libwayland-dev
+      - name: Run SHA-pinned P0-P4 tests (parallel within shard)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/ns2/qualify_host_batch.py --scope core --jobs 2 --shard '${{ matrix.shard }}/4'
+      - name: Preserve per-SHA host receipt, even for failed witnesses
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: p0-p4-host-${{ github.event.pull_request.head.sha || github.sha }}-shard-${{ matrix.shard }}
+          path: .build-local/p4-host-batch-*.json
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14

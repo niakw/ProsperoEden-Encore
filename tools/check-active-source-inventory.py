@@ -397,6 +397,125 @@ assert "EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT" in (
 assert (root / "tools/ns2/check_native_video_decoder_ipc_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_OWNER_PASS", f"owners={len(post_f07_video_decoder_owners)}")
 
+# R437: the native BufferCacheBase declarations arrived after the frozen
+# 337-source F07 register. Audit this exact added owner, not the F07 snapshot.
+post_f07_r437_buffer_base_owners = {
+    "eden-core/src/video_core/buffer_cache/buffer_cache_base.h",
+}
+assert post_f07_r437_buffer_base_owners <= set(physical_all)
+assert not post_f07_r437_buffer_base_owners.intersection(research_paths)
+r437_path = next(iter(post_f07_r437_buffer_base_owners))
+r437_body = (active / r437_path).read_text()
+pinned_base = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+old_mark = "    void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size);"
+new_mark = """    // R437: preserve the legacy three-argument call while exposing explicit
+    // write-tick ownership to the maintained native BufferCache implementation.
+    void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size,
+                           bool needs_sync = true);"""
+old_wait = "    void WaitForGpuFenceIfNeeded(Buffer& buffer);"
+new_wait = """    // Same fence-wait member as the maintained R437 BufferCache body.
+    void SynchronizeBufferWrites(Buffer& buffer);"""
+assert r437_body.count(new_mark) == r437_body.count(new_wait) == 1
+assert r437_body.replace(new_mark, old_mark).replace(new_wait, old_wait) == pinned_base, (
+    "Unreviewed R437 BufferCache base-source drift")
+r437_select = (root / "headless/CMakeLists.txt").read_text()
+assert "set(EDEN_MAINTAINED_BUFFER_BASE" in r437_select
+assert "buffer-pages/video_core/buffer_cache/buffer_cache_base.h" in r437_select
+print("ENCORE_POST_F07_R437_BUFFER_BASE_PASS", f"owners={len(post_f07_r437_buffer_base_owners)}")
+
+# P2.4: the maintained Ampere Task/Mesh stage-buffer decoder was introduced
+# after the frozen F07 337-source review. It is an active shader header, not
+# a historical optimization. Keep its exact owner and CMake selection guarded.
+post_f07_native_stage_buffer_owners = {
+    "ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_stage_buffer.h",
+}
+assert post_f07_native_stage_buffer_owners <= set(physical_all), (
+    "Missing native stage-buffer decoder owner",
+    sorted(post_f07_native_stage_buffer_owners - set(physical_all)))
+assert not post_f07_native_stage_buffer_owners.intersection(research_paths)
+stage_buffer_source = (active / next(iter(post_f07_native_stage_buffer_owners))).read_text()
+stage_lowerer = (active / "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h").read_text()
+assert "DecodeNativeStageBufferAccess(" in stage_buffer_source
+assert "DecodeNativeStageBufferAccess(insn)" in stage_lowerer
+assert "native_stage_buffer.h" in (root / "headless/CMakeLists.txt").read_text()
+print("ENCORE_POST_F07_STAGE_BUFFER_OWNER_PASS", f"owners={len(post_f07_native_stage_buffer_owners)}")
+
+# P2.4 Task/Mesh maintained source ports are post-F07 sources in the
+# vendor feature branch. They are NOT F07 historical optimization receipts
+# and cannot be called shipping until the full shader/Vulkan graph is selected
+# and the host compiler/spirv-val qualification passes.
+post_f07_task_mesh_source_owners = {
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_instructions.h",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_not_implemented.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/glasm_emit_context.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_instructions.h",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_not_implemented.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/glsl_emit_context.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_instructions.h",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_special.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h",
+    "eden-shader/src/shader_recompiler/environment.h",
+    "eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.h",
+    "eden-shader/src/shader_recompiler/frontend/ir/microinstruction.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/opcodes.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/opcodes.h",
+    "eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc",
+    "eden-shader/src/shader_recompiler/frontend/ir/program.h",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/maxwell.inc",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/structured_control_flow.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp",
+    "eden-shader/src/shader_recompiler/runtime_info.h",
+    "eden-shader/src/shader_recompiler/shader_info.h",
+    "eden-shader/src/shader_recompiler/stage.h",
+    "eden-vulkan/include/video_core/vulkan_common/vulkan_device.h",
+}
+assert post_f07_task_mesh_source_owners <= set(physical_all), (
+    "Missing maintained Task/Mesh source", sorted(post_f07_task_mesh_source_owners - set(physical_all)))
+assert not post_f07_task_mesh_source_owners.intersection(research_paths)
+assert len(post_f07_task_mesh_source_owners) == 29
+assert "EDEN_NATIVE_TASK_MESH_ROOT" in (root / "headless/CMakeLists.txt").read_text()
+print("ENCORE_P24_TASK_MESH_STAGED_SOURCE_PASS", f"owners={len(post_f07_task_mesh_source_owners)}")
+
+# P2.2c's maintained SPIR-V image emitter is a new post-F07 production
+# source, not a historical F07 optimization or an unselected experiment.
+# Keep the immutable 337-file source audit exact and independently prove the
+# new source is selected once by the native shared shader graph.
+post_f07_image_array_owners = {
+    "ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+}
+assert post_f07_image_array_owners <= set(physical_all), (
+    "Missing maintained native descriptor array source",
+    sorted(post_f07_image_array_owners - set(physical_all)))
+assert not post_f07_image_array_owners.intersection(research_paths)
+image_select = (root / "headless/CMakeLists.txt").read_text()
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")' in image_select
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in image_select
+print("ENCORE_P22C_SPIRV_DESCRIPTOR_ARRAY_OWNER_PASS",
+      f"owners={len(post_f07_image_array_owners)}")
+
+# P2.7: the native Ampere semaphore method decoder was created after the
+# immutable 337-file F07 audit. Keep its exact new owner in the supplemental
+# manifest, not in the frozen performance snapshot (nor research paths).
+post_f07_ampere_semaphore_owners = {
+    "ns2-runtime/gpu_dispatch/video_core/engines/native_ampere_semaphore.h",
+}
+assert post_f07_ampere_semaphore_owners <= set(physical_all), (
+    "Missing maintained Ampere semaphore decoder",
+    sorted(post_f07_ampere_semaphore_owners - set(physical_all)))
+assert not post_f07_ampere_semaphore_owners.intersection(research_paths)
+native_puller = (root / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
+assert '#include "native_ampere_semaphore.h"' in native_puller
+assert 'ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)' in native_puller
+assert (root / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
+print("ENCORE_POST_F07_AMPERE_SEMAPHORE_OWNER_PASS",
+      f"owners={len(post_f07_ampere_semaphore_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -405,7 +524,10 @@ physical = [p for p in physical_all
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
-            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners]
+            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
+            post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
+            post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
+            post_f07_ampere_semaphore_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -441,6 +563,11 @@ post_expected = [
     for path in sorted(post_f07_cpu6_ldapr_owners)]
 assert post_rows == post_expected, ("post-F07 vendor source owner drift",
                                    post_rows, post_expected)
+r437_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].splitlines()
+             if line.startswith("| `eden-core/src/video_core/buffer_cache/buffer_cache_base.h`")]
+assert r437_rows == [
+    "| `eden-core/src/video_core/buffer_cache/buffer_cache_base.h` | R437 |",
+], ("Missing reviewed R437 BufferCache base owner catalogue", r437_rows)
 print("ENCORE_POST_F07_VENDOR_CATALOG_PASS", f"maintained={len(post_rows)}")
 def role(path):
     if path.startswith("eden-backports/"):

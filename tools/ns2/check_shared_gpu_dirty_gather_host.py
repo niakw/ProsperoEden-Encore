@@ -20,8 +20,16 @@ assert body.count("std::scoped_lock gather_lock(gather_guard);") == 1
 assert body.count("std::mutex gather_guard;") == 1
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in (
     ROOT/"headless/CMakeLists.txt").read_text()
-assert (ROOT/"vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text().count(
-    "std::mutex gather_guard;") == 0, "pinned external source must remain pristine"
+# The pinned Eden source now carries the same concurrency fix. Verify both
+# independent implementations guard the entire front-buffer iteration; a
+# stale "upstream must have no lock" assumption is not a safety property.
+pinned = (ROOT/"vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text()
+assert pinned.count("std::mutex gather_guard;") == 1
+assert pinned.count("std::scoped_lock gather_lock{gather_guard};") == 1
+assert pinned.index("std::scoped_lock gather_lock{gather_guard};") < pinned.index(
+    "front_buffer.swap(back_buffer)")
+assert pinned.index("front_buffer.swap(back_buffer)") < pinned.index(
+    "front_buffer.clear();")
 assert body.index("std::scoped_lock gather_lock(gather_guard);") < body.index(
     "front_buffer.swap(back_buffer)")
 assert body.index("front_buffer.clear();") < body.index("private:")

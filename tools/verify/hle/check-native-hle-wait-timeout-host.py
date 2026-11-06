@@ -15,6 +15,7 @@ import tempfile
 root = Path(__file__).resolve().parents[3]
 base = root / "vendor/sources/eden/src/core/hle/kernel/svc"
 native = root / "vendor/encore-active/eden-threading/src/core/hle/kernel/svc"
+wait64_native = root / "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/svc"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/verify/hle/check-native-hle-wait-timeout-host.py" in workflow
@@ -134,10 +135,31 @@ with tempfile.TemporaryDirectory(prefix="encore-native-svc-timeout-") as td:
     temporary = Path(td)
     for name, (start, stop, old, fixed, ub) in cases.items():
         pinned = (base / name).read_text()
-        maintained = (native / name).read_text()
+        # Native dual-NPDM builds replace the threading SVC with the
+        # WaitIfEqual64 owner. Verify the 64-bit source against the pinned
+        # owner plus the deadline guard and TWO reviewed ABI spellings.
+        # Keep the historic threading SVC saturated for other selectors.
+        is_wait64 = name == "svc_address_arbiter.cpp"
+        maintained = ((wait64_native if is_wait64 else native) / name).read_text()
         assert pinned.count(old) == 1, "pinned SVC deadline source drift: " + name
-        assert maintained == pinned.replace(old, fixed), (
-            "maintained SVC not exact pinned + deadline check: " + name)
+        expected = pinned.replace(old, fixed)
+        if is_wait64:
+            for before, after in (
+                ("    case static_cast<Svc::ArbitrationType>(3): // HOS WaitIfEqual64",
+                 "    case Svc::ArbitrationType::WaitIfEqual64:"),
+                ("    const size_t alignment =\n"
+                 "        arb_type == static_cast<ArbitrationType>(3) ? sizeof(s64) : sizeof(s32);",
+                 "    const size_t alignment = arb_type == ArbitrationType::WaitIfEqual64 ? sizeof(s64) : sizeof(s32);"),
+            ):
+                assert expected.count(before) == 1, ("Pinned Wait64 ABI drift", before)
+                expected = expected.replace(before, after)
+            assert "Result WaitForAddress64(Core::System& system, u64 address, ArbitrationType arb_type, s64 value," in maintained
+            assert "sizeof(s64) : sizeof(s32)" in maintained
+            assert "eden_wait64_selected_source" in cmake
+            threading = (native / name).read_text()
+            assert fixed in threading and old not in threading
+        assert maintained == expected, (
+            "maintained SVC not exact pinned + deadline/Wait64 ABI: " + name)
         for label, source, is_fixed in (("pinned", pinned, False),
                                         ("native", maintained, True)):
             cpp = temporary / (label + "-" + name)

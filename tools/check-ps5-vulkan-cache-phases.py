@@ -200,7 +200,11 @@ assert "pipeline->PreflightDescriptorScratch();" in generator
 assert "GraphicsDescriptorScratchLease scratch;" in generator
 start = active.index("struct GraphicsDescriptorScratch {")
 stop = active.index("DescriptorLayoutBuilder MakeBuilder", start)
-scratch_helper = active[start:stop]
+# The Task/Mesh helper immediately before MakeBuilder has Vulkan types and
+# must not be included in this isolated scratch allocator fixture.
+mesh_stage_helper = active.index("VkShaderStageFlagBits StageFlag(", start, stop)
+scratch_helper = active[start:mesh_stage_helper]
+assert "class GraphicsDescriptorScratchLease" in scratch_helper
 scratch_cpp = r"""
 #include <boost/container/small_vector.hpp>
 #include <cassert>

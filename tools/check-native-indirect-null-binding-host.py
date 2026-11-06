@@ -48,7 +48,14 @@ guest_draw = method(deferred, "void RasterizerVulkan::DrawIndirect() {", "\nvoid
 # Only that intentional three-call accessor difference is permitted.
 assert draw.count("CanExecuteRecordedDraw()") == 3
 assert guest_draw.count("CanExecuteDraw()") == 3
-assert guest_draw.replace("CanExecuteDraw()", "CanExecuteRecordedDraw()") == draw
+# P2.4 introduces an additional *fail-closed* mesh indirect ABI guard.
+# Replay that single exact addition before checking legacy null bindings;
+# a data-format mismatch may never be submitted as an indexed draw.
+native_indirect_mesh_guard = "        // A native mesh indirect command has a different buffer ABI.\n        // Reject it explicitly; invoking legacy DrawIndirect would use the\n        // wrong command format and could corrupt the render stream.\n        if (mesh_draw) {\n            ::Eden::Performance::RecordGraphicsDrawDrop(\n                ::Eden::Performance::GraphicsDrawDrop::ConfigureRejected);\n            LOG_ERROR(Render_Vulkan, \"Task/Mesh indirect draw unsupported\");\n            return;\n        }\n"
+assert draw.count(native_indirect_mesh_guard) == 1
+assert draw.index("if (mesh_draw)") < draw.index("GetDrawIndirectBuffer()")
+without_mesh_guard = draw.replace(native_indirect_mesh_guard, "")
+assert guest_draw.replace("CanExecuteDraw()", "CanExecuteRecordedDraw()") == without_mesh_guard
 
 
 code = r"""

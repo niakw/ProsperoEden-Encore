@@ -2,6 +2,7 @@
 """Verify tracked native Vulkan C++ fork exactly matches validated R337 source generator."""
 from pathlib import Path
 import filecmp
+import json
 import hashlib
 import os
 import shutil
@@ -75,7 +76,33 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         raise RuntimeError('F07 allocator source parity failed (code %d):\n%s\n%s' % (
             oom_check.returncode, oom_check.stdout, oom_check.stderr))
     assert allocator not in actual, 'generated Vulkan port unexpectedly owns the allocator'
-    assert set(actual)==set(expected)-{helper, allocator, pool_policy, storage_layout}, (
+    # The native Task/Mesh device extension header is a genuine maintained
+    # header; require exact two-hunk parity with the pinned vendor snapshot.
+    native_mesh_device_header='include/video_core/vulkan_common/vulkan_device.h'
+    assert native_mesh_device_header not in actual
+    mesh_device = expected[native_mesh_device_header].read_text()
+    mesh_feature_line = "    FEATURE(EXT, MeshShader, MESH_SHADER, mesh_shader)                                             \\\n"
+    mesh_feature_method = "    /// Returns true if the device supports task and mesh shaders (VK_EXT_mesh_shader).\n    bool IsExtMeshShaderSupported() const {\n        return extensions.mesh_shader && features.mesh_shader.taskShader &&\n               features.mesh_shader.meshShader;\n    }\n\n"
+    # The N58 sparse-residency header is an independently reviewed
+    # additive feature. Our single Vulkan Device ABI must retain BOTH that
+    # feature and Task/Mesh. Prove both deltas against immutable Eden.
+    pinned_device = (upstream/'src/video_core/vulkan_common/vulkan_device.h').read_text()
+    sparse_device = (root/'vendor/encore-active/ns2-helpers/include/video_core/vulkan_common/vulkan_device.h').read_text()
+    sparse_start = sparse_device.index('    // N58: image sparse residency')
+    sparse_end = sparse_device.index('    /// Returns true for tile-based deferred renderers.', sparse_start)
+    sparse_delta = sparse_device[sparse_start:sparse_end]
+    assert sparse_device.count(sparse_delta) == 1 and sparse_device.replace(sparse_delta, '') == pinned_device, (
+        "N58 source ABI must be a complete exact additive sparse residency guard")
+    assert mesh_device.count(mesh_feature_line) == 1
+    assert mesh_device.count(mesh_feature_method) == 1
+    assert mesh_device.count(sparse_delta) == 1, (
+        "Native Task/Mesh device header lost the sparse residency method")
+    assert (mesh_device.replace(mesh_feature_line, '')
+                       .replace(mesh_feature_method, '')
+                       .replace(sparse_delta, '') == pinned_device), (
+        "Native Task/Mesh + sparse residency ABI owner drift")
+    assert set(actual)==set(expected)-{helper, allocator, pool_policy, storage_layout,
+                                         native_mesh_device_header}, (
         f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')
     helper_file=expected[helper]
     assert subprocess.check_output(['git','hash-object',str(helper_file)],text=True).strip()==(
@@ -453,8 +480,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert len(set(marker_positions)) == 3 and min(marker_positions) >= 0
     marker_hashes = (
         'ca47d210fd98b7cb',
-        '43d2b6c4a8aa4c55',
-        '5caba22fce220533',
+        'fb55f953f416aeb7',
+        '017496a2d145513d',
     )
     pinned = []
     for start, digest in zip(marker_positions, marker_hashes):
@@ -478,8 +505,74 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert 'NativeGraphicsCbufBank(' in native_shader_reader
     assert 'required_bank == ~u32{0}' in native_shader_reader
     assert n3m.count('NativeGraphicsCbufBank(stage)') == 3
-    assert 'NativeGraphicsStageMaskSupported(configured_stages)' in pinned[1]
-    assert 'NativeGraphicsStageMaskSupported(keyed_stages)' in pinned[2]
+    assert 'NativeMeshGraphicsStageMaskSupported(' in pinned[1]
+    assert 'NativeMeshGraphicsStageMaskSupported(' in pinned[2]
+    # P2.4: the Vulkan Task/Mesh changes are versioned as exact reversible
+    # source deltas. Full-file equality remains mandatory after reversing ONLY
+    # these checked hunks; do not substitute a trusted vendor copy as oracle.
+    p24 = json.loads((root/'tools/fixtures/p24-task-mesh-vulkan-deltas.json').read_text())
+    assert p24['schema_version'] == 1
+    p24_by_path = {entry['path']: entry for entry in p24['files']}
+    assert len(p24_by_path) == len(p24['files']) == 8
+    assert set(p24_by_path) == {
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h',
+        'include/video_core/renderer_vulkan/vk_rasterizer.h',
+        'include/video_core/vulkan_common/vulkan_wrapper.h',
+        'vk_graphics_pipeline_cost.cpp', 'vk_pipeline_cache_cost.cpp',
+        'vulkan_device.cpp', 'vulkan_rasterizer.cpp', 'vulkan_wrapper.cpp',
+    }
+    def git_blob_sha(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+    def reverse_native_kepler_pointer_abi(name, text, verify_hash):
+        # The maintained native QMD3 renderer uses RasterizerInterface's
+        # KeplerCompute pointer, not a reference. Reverse only 5 member
+        # accesses, 6 borrowed-reference calls and the null admission guard.
+        # Recreate the ORIGINAL reviewed blob byte-for-byte before P24 reversal,
+        # so we never bless unrelated vendor changes or weaken the hash oracle.
+        if name != 'vulkan_rasterizer.cpp':
+            return text
+        start_marker = 'bool RasterizerVulkan::DispatchNativeCompute('
+        assert text.count(start_marker) == 1, 'Native QMD3 renderer ABI owner moved'
+        start = text.index(start_marker)
+        finish = text.index('\nvoid RasterizerVulkan::', start)
+        part = text[start:finish]
+        guard = (
+            '    // ChannelStateCache binds a KeplerCompute pointer; only native process\n'
+            '    // tickets authorize dereference, and the channel may be unbound.\n'
+            '    if (!kepler_compute) return false;\n'
+        )
+        assert part.count(guard) == 1, 'Native compute null-guard drift'
+        assert part.count('kepler_compute->regs') == 5, 'QMD3 registers ABI drift'
+        assert part.count('*kepler_compute, *gpu_memory') == 6, 'QMD3 texture owner ABI drift'
+        part = part.replace(guard, '')
+        part = part.replace('kepler_compute->regs', 'kepler_compute.regs')
+        part = part.replace('*kepler_compute, *gpu_memory', 'kepler_compute, *gpu_memory')
+        baseline = text[:start] + part + text[finish:]
+        if verify_hash:
+            assert git_blob_sha(baseline) == p24_by_path[name]['maintained_blob_sha'], (
+                'Unreviewed native KeplerCompute ABI edit', name)
+        return baseline
+
+    def reverse_p24(name, text, verify_hash=True):
+        receipt=p24_by_path.get(name)
+        if receipt is None:
+            return text
+        text = reverse_native_kepler_pointer_abi(name, text, verify_hash)
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['maintained_blob_sha'], (
+                'Task/Mesh maintained owner drift', name)
+        for hunk in reversed(receipt['hunks']):
+            assert text.count(hunk['after']) == 1, ('Task/Mesh delta hunk drift',name)
+            text=text.replace(hunk['after'],hunk['before'])
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
+                'Task/Mesh source reverse parity failed', name)
+        return text
+    for name in p24_by_path:
+        assert name in expected and name in actual, ('missing Task/Mesh Vulkan source',name)
+        reverse_p24(name,expected[name].read_text())
+
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
     generated_n3m = actual[n56_name].read_text()
@@ -492,7 +585,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from pinned vendor')
     assert generated_n3m.count(native_compute_guard) == 1, (
         'Native Compute cache admission gate missing from generator')
-    assert generated_n3m == n3m, 'NS2 generated Vulkan source differs from pinned vendor'
+    # First reverse the exact P24 hunks on raw vendor, then N56: both
+    # independent receipts must remain valid without conflating their SHAs.
+    n3m_pre_mesh = reverse_p24(n56_name, n56_current)
+    assert n3m_pre_mesh.count(n56_after) == 1
+    n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
+    assert generated_n3m == n3m_pre_mesh, 'NS2 generated Vulkan source differs from P24+N56-normalized vendor'
 
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA
@@ -595,6 +693,15 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         blit_path.write_text(baseline_blit)
         normalized_expected[blit_name] = blit_path
 
+    for name in p24_by_path:
+        # Validate the original Git blobs, but preserve all *previous*
+        # normalization passes (N56/N65/N66/etc.) before stripping P24.
+        reverse_p24(name, expected[name].read_text())
+        baseline=reverse_p24(name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False)
+        path=temp/'normalized-vendor-p24'/name
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(baseline)
+        normalized_expected[name]=path
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

@@ -112,7 +112,11 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # Select the shipping PS5 virtual rasterizer interface before desktop Eden.
     abi=ROOT/'vendor/encore-active/ns2-runtime/vulkan_abi'
     assert (abi/'video_core/rasterizer_interface.h').is_file()
-    includes=[abi,ROOT/'headless',
+    # The selected NS2 shader enum and environment metadata must precede
+    # the pinned NS1 Shader::Stage header for authenticated native 0xC797 TUs.
+    # Keep this include order identical to the shared release compiler graph.
+    shader=ROOT/'vendor/encore-active/eden-shader/src'
+    includes=[shader,abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

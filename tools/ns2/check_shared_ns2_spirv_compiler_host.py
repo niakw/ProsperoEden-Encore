@@ -24,6 +24,8 @@ assert 'target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}"
 assert 'list(REMOVE_ITEM eden_ns2_shader_sources' in section
 assert 'backend/spirv/spirv_emit_context.cpp' in section
 assert 'backend/spirv/emit_spirv_context_get_set.cpp' in section
+assert 'backend/spirv/emit_spirv_image.cpp' in section
+assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in section
 assert 'set_property(TARGET shader_recompiler PROPERTY SOURCES' in section
 assert 'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in section
 assert 'EDEN_NS2_NATIVE_VULKAN' not in section
@@ -99,10 +101,79 @@ assert '"backend/spirv/spirv_emit_context.cpp"' in CMAKE
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")' in CMAKE
 print("P2_3_REAL_SPIRV_CAS_WORD_ABI_PASS f16x2=3 f32x2=3 u32_word=1 atomics=real",flush=True)
 
+# P2.2c: sampled texel, storage texel and storage-image arrays share the
+# real reflected descriptor counts. Scalar NS1 descriptors retain their
+# pointer layout; zero-length/unsupported cases remain fail-closed.
+for owner in ("DefineTextureBuffers", "DefineImageBuffers", "DefineImages"):
+    body=cas_owner.split("void EmitContext::"+owner+"(",1)[1].split("\nvoid EmitContext::",1)[0]
+    assert "desc.count == 0" in body, owner
+    assert "DescType(*this," in body, owner
+assert "Array of texture buffers" not in cas_owner
+pinned_image=(ROOT/"vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+image_owner=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+assert "const Id ptr{ctx.OpAccessChain(ctx.image_buffer_type, def.id, idx)};" in pinned_image
+assert "ctx.TypePointer(spv::StorageClass::UniformConstant, ctx.image_buffer_type)" in image_owner
+assert "ctx.OpAccessChain(element_ptr_type, def.id, idx)" in image_owner
+assert "ctx.OpLoad(ctx.image_buffer_type, ptr)" in image_owner
+print("P2_2C_REAL_SPIRV_TEXEL_DESCRIPTOR_ARRAY_SOURCE_PASS scalar=unchanged pointer=typed",flush=True)
+
+# P2.4: non-generic tessellation patch levels are real shared SPIR-V
+# variables with distinct Input (TES) and Output (TCS) storage. Generic
+# patches retain the existing index and 4-component layout unchanged.
+stage_header=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
+patch_emitter=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+assert "Id input_tess_level_outer{};" in stage_header
+assert "Id input_tess_level_inner{};" in stage_header
+assert "input_tess_level_outer = DefineInput(" in cas_owner
+assert "input_tess_level_inner = DefineInput(" in cas_owner
+for builtin in ("TessLevelOuter", "TessLevelInner"):
+    assert ("spv::BuiltIn::"+builtin) in cas_owner
+for patch in ("TessellationLodLeft", "TessellationLodTop", "TessellationLodRight",
+              "TessellationLodBottom", "TessellationLodInteriorU",
+              "TessellationLodInteriorV"):
+    assert "IR::Patch::"+patch in patch_emitter
+patch_get=patch_emitter.split("Id EmitGetPatch(",1)[1].split("void EmitSetPatch(",1)[0]
+assert "ctx.input_tess_level_outer" in patch_get
+assert "ctx.output_tess_level_outer" in patch_get
+assert "ctx.input_tess_level_inner" in patch_get
+assert "ctx.output_tess_level_inner" in patch_get
+assert "if (!ValidId(variable))" in patch_get
+assert "Non-generic patch load" not in patch_get
+assert "IR::GenericPatchIndex(patch)" in patch_get
+print("P2_4_TESS_PATCH_REAL_INPUT_OUTPUT_ABI_PASS slots=4+2 generic=preserved",flush=True)
+
+# P2.4: the indexed GenericN physical output writes must select the actual
+# per-component OpVariable when transform feedback partitions a location.
+# Keep TCS with a separate invocation coordinate fail-closed until that
+# function ABI can represent a per-invocation store.
+index_store=cas_owner.split("void EmitContext::DefineAttributeMemAccess(",1)[1].split(
+    "void EmitContext::DefineWriteStorageCasLoopFunction(",1)[0]
+assert 'component - output.first_element' in index_store
+assert 'output_generics[index][0].num_components != 4' not in index_store
+assert 'elements[0].num_components == 4' in index_store
+assert 'OpSwitch(masked_index, merge_label, component_values, component_labels)' in index_store
+assert 'Indexed TCS transform feedback store' not in index_store
+assert 'Invalid transform feedback component' in index_store
+assert 'OpAccessChain(output_f32, output.id, vertex, local_component)' in index_store
+assert 'OpAccessChain(output_f32, elements[0].id, vertex, masked_index)' in index_store
+assert 'OpAccessChain(output_f32, output_position, vertex, masked_index)' in index_store
+assert 'OpAccessChain(output_f32, clip_distances, vertex, fixed_index)' in index_store
+assert 'const Id func_type_store{is_array ? TypeFunction(void_id, U32[1], F32[1], U32[1])' in index_store
+assert 'stage == Stage::TessellationControl ||' in index_store
+assert 'stage == Stage::TessellationEval' in index_store
+assert 'const Id vertex{is_array ? OpFunctionParameter(U32[1]) : Id{}}' in index_store
+patch_set=patch_emitter.split('void EmitSetAttributeIndexed(',1)[1].split('Id EmitGetPatch(',1)[0]
+assert 'ctx.stage == Stage::TessellationControl' in patch_set
+assert 'ctx.indexed_store_func, offset, value, vertex' in patch_set
+assert 'ctx.indexed_store_func, offset, value);' in patch_set
+print("P2_4_SPLIT_XFB_INDEXED_STORE_ABI_PASS scalar_vector=4 tcs=explicit_vertex tes=load_abi",flush=True)
+
+
 cpm=ROOT/"vendor/sources/eden-cpm"
 sources=(
     "shader_recompiler/backend/spirv/spirv_emit_context.cpp",
     "shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     "shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp",
     "video_core/ns2_shader_spirv_compile.cpp",
 )
@@ -111,6 +182,7 @@ includes=[
     native_root,
     ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
     ROOT/"vendor/encore-active/ns2-runtime/hle",
+    ROOT/"vendor/encore-active/eden-shader/src",
     ROOT/"vendor/sources/eden/src",
     ROOT/"vendor/sources/eden/src/dynarmic/src",
     cpm/"fmt/12.1.0/include",

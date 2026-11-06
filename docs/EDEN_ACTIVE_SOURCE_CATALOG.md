@@ -386,6 +386,7 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc` | U94 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h` | U95 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
+| `eden-core/src/video_core/buffer_cache/buffer_cache_base.h` | R437 |
 <!-- POST_F07_MAINTAINED_OWNER_END -->
 
 ### P1.3 — décodeur vidéo H.264/VP8/VP9 natif commun (06/11/2026)

@@ -86,6 +86,15 @@ if(PS5_NATIVE)
     file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache")
     configure_file("${EDEN_MAINTAINED_BUFFER_PAGES}"
         "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache.h" COPYONLY)
+    # The reviewed R437 body adds an explicit GPU-write tick policy. Select
+    # its matching template declarations, not the pinned pre-R437 ABI.
+    set(EDEN_MAINTAINED_BUFFER_BASE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h")
+    if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_BASE}")
+        message(FATAL_ERROR "Missing matching native R437 BufferCache base declarations")
+    endif()
+    configure_file("${EDEN_MAINTAINED_BUFFER_BASE}"
+        "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache_base.h" COPYONLY)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")
 endif()
 # The texture-cache small-vector Boost version dependency is a complete
@@ -1946,16 +1955,25 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     foreach(eden_wait64_owner IN ITEMS
             "hle/kernel/k_address_arbiter.cpp"
             "hle/kernel/svc/svc_address_arbiter.cpp")
-        list(FIND eden_wait64_sources "${eden_wait64_owner}" eden_wait64_index)
+        # The PS5 guest-threading CMake module has already promoted its
+        # reviewed 32-bit HLE source. Replace THAT exact source with the
+        # combined Wait64 + validity/overflow owner, never add two owners.
+        set(eden_wait64_selected_source "${eden_wait64_owner}")
+        list(FIND eden_wait64_sources "${eden_wait64_selected_source}" eden_wait64_index)
+        if(eden_wait64_index LESS 0 AND PS5_NATIVE)
+            set(eden_wait64_selected_source
+                "${PORT_ROOT}/vendor/encore-active/eden-threading/src/core/${eden_wait64_owner}")
+            list(FIND eden_wait64_sources "${eden_wait64_selected_source}" eden_wait64_index)
+        endif()
         if(eden_wait64_index LESS 0)
-            message(FATAL_ERROR "Pinned address arbiter owner changed: ${eden_wait64_owner}")
+            message(FATAL_ERROR "Missing unified address arbiter owner: ${eden_wait64_owner}")
         endif()
         set(eden_wait64_replacement
             "${EDEN_NS2_WAIT64_ROOT}/core/${eden_wait64_owner}")
         if(NOT EXISTS "${eden_wait64_replacement}")
             message(FATAL_ERROR "Reviewed address arbiter source missing: ${eden_wait64_replacement}")
         endif()
-        list(REMOVE_ITEM eden_wait64_sources "${eden_wait64_owner}")
+        list(REMOVE_ITEM eden_wait64_sources "${eden_wait64_selected_source}")
         list(APPEND eden_wait64_sources "${eden_wait64_replacement}")
     endforeach()
     set_property(TARGET core PROPERTY SOURCES "${eden_wait64_sources}")
@@ -2397,6 +2415,7 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
             lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
+            native_stage_buffer.h
             program_address_map.h capture.h program_capture.h translation_cache.h
             maxwell_environment.h ir_bridge.h)
         if(NOT EXISTS
@@ -2486,7 +2505,12 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/spirv_emit_context.cpp")
     set(EDEN_NS2_QMD_CBUF_DIRECT_SPIRV
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp")
-    if(NOT EXISTS "${EDEN_NS2_QMD_CBUF_SPIRV}" OR
+    # Real SPIR-V descriptor arrays must have the same variable type that
+    # the shared image emitter indexes, including storage texel buffers.
+    set(EDEN_NS2_SPIRV_IMAGE_ARRAY
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/emit_spirv_image.cpp")
+    if(NOT EXISTS "${EDEN_NS2_SPIRV_IMAGE_ARRAY}" OR
+       NOT EXISTS "${EDEN_NS2_QMD_CBUF_SPIRV}" OR
        NOT EXISTS "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}" OR
        NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_indirect_cbuf.h" OR
        NOT EXISTS "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/native_global_atomic_binding.h")
@@ -2509,6 +2533,15 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     endif()
     list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_context_get_set.cpp")
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}")
+    # Exactly one shared SPIR-V image emitter; remove the pinned owner
+    # rather than adding a second translation unit or per-title shader.
+    list(FIND eden_ns2_shader_sources
+        "backend/spirv/emit_spirv_image.cpp" eden_ns2_image_source_idx)
+    if(eden_ns2_image_source_idx LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V image emitter owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")
+    list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns2_shader_sources}")
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
@@ -2568,3 +2601,72 @@ endif()
 
 # Shared NUP content loader, metadata and AoC owners for the regular build.
 include("${CMAKE_CURRENT_LIST_DIR}/nup_v1_runtime.cmake")
+
+# P2.4 Native Task/Mesh shaders: maintained compiler units and ABI headers.
+# Shared shader ABI for NS1/NS2: no alternate emulator mode and no runtime
+# patch generation. Existing Maxwell paths retain their legacy behavior.
+if(EDEN_SHARED_NS2_SPIRV_COMPILER)
+    set(EDEN_NATIVE_TASK_MESH_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src")
+    set(EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include")
+    foreach(eden_mesh_header IN ITEMS
+        shader_recompiler/backend/glasm/emit_glasm_instructions.h
+        shader_recompiler/backend/glsl/emit_glsl_instructions.h
+        shader_recompiler/backend/spirv/emit_spirv_instructions.h
+        shader_recompiler/backend/spirv/spirv_emit_context.h
+        shader_recompiler/environment.h
+        shader_recompiler/frontend/ir/ir_emitter.h
+        shader_recompiler/frontend/ir/opcodes.h
+        shader_recompiler/frontend/ir/opcodes.inc
+        shader_recompiler/frontend/ir/program.h
+        shader_recompiler/frontend/maxwell/maxwell.inc
+        shader_recompiler/runtime_info.h
+        shader_recompiler/shader_info.h
+        shader_recompiler/stage.h
+        )
+        if(NOT EXISTS "${EDEN_NATIVE_TASK_MESH_ROOT}/${eden_mesh_header}")
+            message(FATAL_ERROR "Missing maintained Task/Mesh shader header: ${eden_mesh_header}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}/video_core/vulkan_common/vulkan_device.h")
+        message(FATAL_ERROR "Missing native Task/Mesh Vulkan feature ABI header")
+    endif()
+    set(eden_mesh_source_paths
+        backend/spirv/emit_spirv.cpp
+        backend/spirv/emit_spirv_special.cpp
+        frontend/ir/ir_emitter.cpp
+        frontend/ir/microinstruction.cpp
+        frontend/ir/opcodes.cpp
+        frontend/maxwell/structured_control_flow.cpp
+        frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp
+        frontend/maxwell/translate_program.cpp
+        ir_opt/collect_shader_info_pass.cpp
+    )
+    if(ENABLE_OPENGL)
+        list(APPEND eden_mesh_source_paths
+            backend/glasm/emit_glasm.cpp
+            backend/glasm/emit_glasm_not_implemented.cpp
+            backend/glasm/glasm_emit_context.cpp
+            backend/glsl/emit_glsl_not_implemented.cpp
+            backend/glsl/glsl_emit_context.cpp
+        )
+    endif()
+    get_target_property(eden_mesh_shader_target_sources shader_recompiler SOURCES)
+    foreach(eden_mesh_relative IN LISTS eden_mesh_source_paths)
+        list(FIND eden_mesh_shader_target_sources "${eden_mesh_relative}" eden_mesh_source_idx)
+        if(eden_mesh_source_idx LESS 0)
+            message(FATAL_ERROR "Pinned Task/Mesh shader owner changed: ${eden_mesh_relative}")
+        endif()
+        list(REMOVE_ITEM eden_mesh_shader_target_sources "${eden_mesh_relative}")
+        list(APPEND eden_mesh_shader_target_sources
+            "${EDEN_NATIVE_TASK_MESH_ROOT}/shader_recompiler/${eden_mesh_relative}")
+    endforeach()
+    list(APPEND eden_mesh_shader_target_sources
+        "${EDEN_NATIVE_TASK_MESH_ROOT}/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_mesh_shader_target_sources}")
+    target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${EDEN_NATIVE_TASK_MESH_ROOT}" "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
+endif()

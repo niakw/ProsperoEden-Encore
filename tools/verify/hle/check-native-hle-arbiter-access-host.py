@@ -12,7 +12,8 @@ import tempfile
 
 root = Path(__file__).resolve().parents[3]
 pinned_path = root / "vendor/sources/eden/src/core/hle/kernel/k_address_arbiter.cpp"
-active_path = root / "vendor/encore-active/eden-threading/src/core/hle/kernel/k_address_arbiter.cpp"
+threading_path = root / "vendor/encore-active/eden-threading/src/core/hle/kernel/k_address_arbiter.cpp"
+active_path = root / "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_address_arbiter.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 module = (root / "vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
@@ -157,7 +158,28 @@ wrap_replacements = [
 for old, new, count in wrap_replacements:
     assert expected.count(old) == count, "pinned arithmetic contract drift"
     expected = expected.replace(old, new)
-assert active == expected, "native arbiter differs from pinned + three guards"
+threading = threading_path.read_text()
+# The host-only threading variant has the same source guards and reviewed
+# arithmetic fixes. The unified native owner adds the separate Wait64
+# implementation without changing these common helper bodies.
+assert real_helpers(threading) == real_helpers(expected), (
+    "HLE threading access/overflow guards differ from pinned oracle")
+assert real_helpers(active) == real_helpers(expected), (
+    "Unified Wait64 owner lost native address-access/overflow guards")
+assert "Result KAddressArbiter::WaitIfEqual(uint64_t addr, s64 value, s64 timeout, bool is_64_bit)" in active
+wait64 = active.split(
+    "Result KAddressArbiter::WaitIfEqual(uint64_t addr, s64 value, s64 timeout, bool is_64_bit)", 1
+)[1]
+for required in (
+    "memory.IsValidVirtualAddressRange(addr, sizeof(s64))",
+    "static_cast<s64>(memory.Read64(addr))",
+    "ReadFromUser(system.Kernel(), std::addressof(low_word), addr)",
+    "if (value != user_value)",
+):
+    assert required in wait64, ("Unified Wait64 semantic guard missing", required)
+assert "set(EDEN_SHARED_NS2_WAIT64 ON)" in cmake
+assert "eden_wait64_selected_source" in cmake
+assert "list(REMOVE_ITEM eden_wait64_sources" in cmake
 with tempfile.TemporaryDirectory(prefix="encore-arbiter-access-") as td:
     temp = Path(td)
     for name, content, fixed in (("pinned", pinned, False), ("native", active, True)):

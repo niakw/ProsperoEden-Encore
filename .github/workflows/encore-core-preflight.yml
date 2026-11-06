@@ -625,6 +625,7 @@ jobs:
           python3 -B tools/ns2/check_native_gpu_channel_allocation_host.py
           python3 -B tools/ns2/check_native_gpu_cache_allocation_host.py
           python3 -B tools/ns2/check_ampere_scalar_alu_sources_host.py
+          python3 -B tools/ns2/check_native_stage_buffer_host.py
           python3 -B tools/ns2/check_shared_shader_nested_epilogue_host.py
           python3 -B tools/check-gpu-physical-copy-bounds-host.py
           python3 -B tools/check-gpu-physical-copy-cpp-host.py

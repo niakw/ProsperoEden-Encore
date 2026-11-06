@@ -14,7 +14,11 @@ graphics = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.c
 texture = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 start = graphics.index("struct GraphicsDescriptorScratch {")
-end = graphics.index("\nDescriptorLayoutBuilder MakeBuilder", start)
+# The Task/Mesh Vulkan stage helper follows the scratch allocator. Keep the
+# existing scratch-only host fixture independent of Vulkan types while
+# still requiring the complete helper and original MakeBuilder in source.
+end = graphics.index("\nVkShaderStageFlagBits StageFlag(", start)
+assert graphics.index("\nDescriptorLayoutBuilder MakeBuilder", end) > end
 actual_scratch = graphics[start:end]
 assert "thread_local GraphicsDescriptorScratch graphics_descriptor_scratch;" in actual_scratch
 assert "thread_local GraphicsDescriptorScratch graphics_descriptor_nested_scratch;" in actual_scratch

@@ -39,7 +39,12 @@ assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")'
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake_vulkan
 assert '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in cmake_vulkan
 assert "NativeQmdTextureTables" in native
-assert "kepler_compute.regs" in native
+# Native channel cache stores a pointer. Never regress to the old
+# source-incompatible dot operator or pass a nullable pointer as a reference.
+assert "if (!kepler_compute) return false;" in native
+assert native.count("kepler_compute->regs") == 5
+assert native.count("*kepler_compute, *gpu_memory") == 6
+assert "kepler_compute.regs" not in native
 assert "launch.linked_tsc" in native
 assert "if (native_images.size() + native_texels.size() !=" in native
 assert "typed_descriptors->size())" in native

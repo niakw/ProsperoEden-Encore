@@ -10,6 +10,14 @@ add_test(NAME test_fsr31_spirv_abi_parser
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test-fsr31-spirv-abi.py")
 # If the pinned vendor submodule is populated (normal CI checkout),
 # check actual model hashes, three independent CNN graphs and labels.
+# RDNA2 1x1 neural projection is one Vulkan compute primitive, not DLSS:
+# validate that no FP8 WMMA/cooperative matrix instruction leaked into SPIR-V.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fp8_proj_rdna2.comp")
+    add_test(NAME test_rdna2_nr_spirv_baseline
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-nr-spv.py"
+            --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/anime4k_3d.cpp")
     add_test(NAME test_a4k_three_neural_profiles
         COMMAND "${Python3_EXECUTABLE}"
@@ -77,6 +85,7 @@ eden_r08_test(test_fsr31_temporal_contract)
 eden_r08_test(test_fsr31_native_resource_contract)
 eden_r08_test(test_msaa_force_policy)
 eden_r08_test(test_fsr31_vram_budget)
+eden_r08_test(test_rdna2_nr_projection_policy)
 eden_r08_test(test_fsr1_sharpness_policy)
 eden_r08_test(test_sgsr_sharpness_policy)
 eden_r08_test(test_fxaa_quality_select "${EDEN_H}/fxaa_quality_select.cpp")

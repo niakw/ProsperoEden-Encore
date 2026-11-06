@@ -93,6 +93,11 @@ temporel ouvert tant que depth/motion/jitter/projection ne sont pas
 fournis de manière générique par le GPU invité. Le MSAA forcé est
 raccordé en code, mais demande également qualification console.
 
+**Mise à jour du 06/11 : première primitive GEMM Vulkan compatible RDNA2
+intégrée en code, sans modèle ni sortie DLSS opérationnelle.** Voir
+[ENCORE_R09_RDNA2_NEURAL_VULKAN_PORT.md](ENCORE_R09_RDNA2_NEURAL_VULKAN_PORT.md)
+pour la progression vérifiable, les ABI et les autres familles de kernels.
+
 ## Évaluation RDNA2 HIP 7.2 et sources Vulkan (6 novembre 2026)
 
 L'utilisateur signale la release

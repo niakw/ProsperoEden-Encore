@@ -96,7 +96,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/msaa_color_shadow_pass.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_projection.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -156,6 +157,30 @@ add_dependencies(video_core eden-r09-anime4k-profiles eden-r09-anime4k-3d-shader
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     ${EDEN_R09_CNN_HEADERS} ${EDEN_R09_PROFILE_HEADERS})
+
+# R09: RDNA2-compatible base GEMM for a future verified neural graph.
+# This compiled primitive is NOT a DLSS menu/release option. It implements
+# one 1x1 projection with E4M3FN byte weights, FP32 compute and strict
+# descriptor/push ABI; unlike RDNA4 it requires no FP8/cooperative matrices.
+set(EDEN_R09_RDNA2_PROJ_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_fp8_proj_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_RDNA2_PROJ_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-nr-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_RDNA2_PROJ_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fp8_proj_rdna2.comp"
+        "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-nr-spv.py"
+    COMMENT "Compile and ABI-validate a portable RDNA2 neural 1x1 projection"
+    VERBATIM)
+add_custom_target(eden-r09-rdna2-nr-projection-spv
+    DEPENDS "${EDEN_R09_RDNA2_PROJ_HEADER}")
+add_dependencies(video_core eden-r09-rdna2-nr-projection-spv)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_projection.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_RDNA2_PROJ_HEADER}")
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

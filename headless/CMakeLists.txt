@@ -2621,6 +2621,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         shader_recompiler/frontend/ir/opcodes.inc
         shader_recompiler/frontend/ir/program.h
         shader_recompiler/frontend/maxwell/maxwell.inc
+        shader_recompiler/frontend/maxwell/opcodes.h
         shader_recompiler/runtime_info.h
         shader_recompiler/shader_info.h
         shader_recompiler/stage.h
@@ -2638,6 +2639,10 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         frontend/ir/ir_emitter.cpp
         frontend/ir/microinstruction.cpp
         frontend/ir/opcodes.cpp
+        # ISBE_nx2 adds a reviewed pseudo-opcode. The enum, decoder and
+        # name table MUST be built against the same maintained maxwell.inc.
+        frontend/maxwell/decode.cpp
+        frontend/maxwell/opcodes.cpp
         frontend/maxwell/structured_control_flow.cpp
         frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp
         frontend/maxwell/translate_program.cpp

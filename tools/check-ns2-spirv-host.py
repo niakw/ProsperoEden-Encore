@@ -71,6 +71,8 @@ def main():
         "frontend/ir/ir_emitter.cpp",
         "frontend/ir/microinstruction.cpp",
         "frontend/ir/opcodes.cpp",
+        "frontend/maxwell/decode.cpp",
+        "frontend/maxwell/opcodes.cpp",
         "frontend/maxwell/structured_control_flow.cpp",
         "frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp",
         "frontend/maxwell/translate_program.cpp",
@@ -82,6 +84,18 @@ def main():
         native_owners[name] = mesh_root / "shader_recompiler" / name
     if any(shaders.count(name) != 1 for name in native_owners):
         raise RuntimeError("pinned SPIR-V/Task/Mesh source owner changed")
+    # All three opcode owners must use the same table. An extra pseudo-opcode
+    # shifts subsequent enum values, so mixing old names or decoder is unsafe.
+    opcode_root = mesh_root / "shader_recompiler/frontend/maxwell"
+    opcode_table = (opcode_root / "maxwell.inc").read_text()
+    opcode_enum = (opcode_root / "opcodes.h").read_text()
+    opcode_decoder = (opcode_root / "decode.cpp").read_text()
+    opcode_names = (opcode_root / "opcodes.cpp").read_text()
+    if ("INST(ISBE_nx2" not in opcode_table or
+            '#include "maxwell.inc"' not in opcode_enum or
+            '#include "shader_recompiler/frontend/maxwell/maxwell.inc"' not in opcode_decoder or
+            '#include "shader_recompiler/frontend/maxwell/maxwell.inc"' not in opcode_names):
+        raise RuntimeError("mixed native Maxwell/NS2 opcode table ABI")
     extra_mesh = mesh_root / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp"
     if not extra_mesh.is_file():
         raise RuntimeError("missing actual SPIR-V mesh emitter")

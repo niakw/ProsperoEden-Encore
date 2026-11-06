@@ -119,6 +119,11 @@ jobs:
           merge-multiple: true
       - name: Reject mixed SHA, missing shards and skipped witness paths
         run: |
+          # An all-green witness manifest must also have the native Vulkan
+          # syntax gate green. The verifier runs after failures to report
+          # missing receipts, but must never publish a green result alone.
+          test "${{ needs['native-vulkan-syntax'].result }}" = success
+          test "${{ needs['host-qualify'].result }}" = success
           python3 -B tools/ns2/aggregate_p4_host_receipts.py --self-test
           python3 -B tools/ns2/aggregate_p4_host_receipts.py
       - name: Upload the verified pair receipt

@@ -400,7 +400,7 @@ physical = [p for p in physical_all
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
-            post_f07_video_decoder_owners]
+            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

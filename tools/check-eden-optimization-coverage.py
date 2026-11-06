@@ -644,7 +644,35 @@ assert not post_f07_ampere_semaphore_owners & research_owners
 assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_AMPERE_SEMAPHORE_ISOLATION_PASS", "owners=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners
+# Shared NS1/NS2 compiled targets use a native GPFIFO header, scheduler
+# header and scheduler source added after F07. Resolve only the exact
+# literal inventory set; never adjust the immutable 518-owner count.
+gp_fifo_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_native_gpfifo_owners"
+        for t in node.targets)
+]
+assert len(gp_fifo_nodes) == 1
+gp_fifo_paths = ast.literal_eval(gp_fifo_nodes[0])
+assert gp_fifo_paths == {
+    "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h",
+    "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp",
+    "ns2-runtime/gpu_dispatch/video_core/control/scheduler.h",
+}
+post_f07_native_gpfifo_owners = {
+    "vendor/encore-active/" + p for p in gp_fifo_paths
+}
+assert post_f07_native_gpfifo_owners <= all_owners
+assert not post_f07_native_gpfifo_owners & research_owners
+assert post_f07_native_gpfifo_owners.isdisjoint(post_f07_ampere_semaphore_owners)
+assert "EDEN_NS2_GPFIFO_SCHEDULER" in release_cmake
+assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
+print("ENCORE_POST_F07_NATIVE_GPFIFO_ISOLATION_PASS", "owners=3")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

@@ -535,6 +535,30 @@ assert (root / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_AMPERE_SEMAPHORE_OWNER_PASS",
       f"owners={len(post_f07_ampere_semaphore_owners)}")
 
+# P2.7: these three isolated native GPFIFO ownership files were added
+# after the frozen F07 source audit. The legacy NS1 DMA and scheduler
+# source remains immutable. Verify the production source selector rather
+# than quietly counting new NS2 files as historical F07 work.
+post_f07_native_gpfifo_owners = {
+    "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h",
+    "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp",
+    "ns2-runtime/gpu_dispatch/video_core/control/scheduler.h",
+}
+assert post_f07_native_gpfifo_owners <= set(physical_all), (
+    "Missing native GPFIFO suspend/resume owner",
+    sorted(post_f07_native_gpfifo_owners - set(physical_all)))
+assert not post_f07_native_gpfifo_owners.intersection(research_paths)
+native_gpfifo_cmake = (root / "headless/CMakeLists.txt").read_text()
+assert "EDEN_NS2_GPFIFO_SCHEDULER" in native_gpfifo_cmake
+assert 'list(REMOVE_ITEM eden_ns2_sched_sources "control/scheduler.cpp")' in native_gpfifo_cmake
+assert 'list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_SCHEDULER}")' in native_gpfifo_cmake
+native_dma_header = (active / "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h").read_text()
+assert "command_resume_offset" in native_dma_header
+assert "#ifdef PS5_NATIVE" not in native_dma_header
+assert "ResumePendingNative" in (
+    active / "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp").read_text()
+print("ENCORE_POST_F07_NATIVE_GPFIFO_OWNER_PASS", "owners=3")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -546,7 +570,8 @@ physical = [p for p in physical_all
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
-            post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners]
+            post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
+             post_f07_native_gpfifo_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

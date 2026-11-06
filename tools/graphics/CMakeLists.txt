@@ -356,3 +356,15 @@ if(EXISTS "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/r09_rdna2_nr/vit_qkv_no
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-qkv-norm-spv.py"
             --vendor "${EDEN_ROOT}/vendor")
 endif()
+
+# Import native ViT 32-head QKV matrices and FP32 temperatures from synthetic
+# NRMODEL1 fixture, including failure-atomic invalid tensors.
+add_executable(test_rdna2_nr_vit_qkv_weight_loader
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_qkv_weight_loader.cpp")
+target_include_directories(test_rdna2_nr_vit_qkv_weight_loader PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_vit_qkv_weight_loader PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_vit_qkv_weight_loader
+    COMMAND test_rdna2_nr_vit_qkv_weight_loader)

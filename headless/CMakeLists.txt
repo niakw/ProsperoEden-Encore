@@ -2397,6 +2397,7 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
             lower_to_maxwell.h lower_bridge.h register_pressure.h maxwell_image.h
+            native_stage_buffer.h
             program_address_map.h capture.h program_capture.h translation_cache.h
             maxwell_environment.h ir_bridge.h)
         if(NOT EXISTS

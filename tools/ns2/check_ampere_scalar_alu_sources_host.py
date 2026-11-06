@@ -20,6 +20,8 @@ assert 'uses_uniform_bank |= op == 0x4a4 || op == 0x2bf || op == 0xc07' in LOWER
 assert 'case 0x2bf: { // UPOPC:' in LOWER
 assert 'case 0x213: case 0x813: case 0xa13: case 0xc13:' in LOWER
 assert 'case 0x301: case 0x901: case 0xb01: case 0xd01:' in LOWER
+assert 'case 0x300: case 0x900: case 0xb00: case 0xd00:' in LOWER
+assert 'opcode == 0x900 ? 0 : insn.Bits(63, 1)' in LOWER
 assert 'case 0x309: case 0x909: case 0xb09: case 0xd09:' in LOWER
 assert 'opcode == 0x909 ? 0 : insn.Bits(63, 1)' in LOWER
 assert 'opcode == 0x4a4 ? 0x424' in LOWER

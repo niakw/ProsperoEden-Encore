@@ -426,6 +426,16 @@ L'accès global atomique via un SSBO dont la provenance n'est pas
 authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
 et les shaders complets restent à qualifier en P5.
 
+**P2.4 — FLO multi-sources (06/11, source/hôte) :**
+L'instruction de recherche du bit de tête `FLO` ajoute les formes immédiate
+32 bits (`0x900`) et CBUF (`0xb00`) aux variantes GPR et UR existantes.
+Le vrai lowerer conserve le mot signé complet, les bits de mode FLO et la
+lecture de banque CBUF vérifiée (0–17, offset aligné). Le bit 31 d'un
+littéral n'est pas le drapeau d'inversion de la forme registre.
+Tests d'admission ISA et de mots Maxwell, positifs et refus, dans la suite
+unifiée `check_ampere_scalar_alu_sources_host.py` Clang/GCC UBSan O0/O2.
+Pas d'adaptation par jeu ni de rendu PS5 prouvé ; P2.4 reste ouvert.
+
 **P2.4 — BREV/POPC multi-sources et IABS immédiat (06/11, source/hôte) :**
 Le lowerer commun traduit désormais les formes nouvelles `BREV` immédiat
 32 bits (`0x901`), CBUF (`0xb01`) et uniforme (`0xd01`), et `POPC`

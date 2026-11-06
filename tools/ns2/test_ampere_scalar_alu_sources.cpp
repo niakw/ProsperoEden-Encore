@@ -258,6 +258,39 @@ int main() {
     }
     Instruction invalid_abs{{(7U<<12)|0x813U|(5U<<16),0x80000000U,1,0x000fe200U}};
     Require(!Bridge(invalid_abs).Ready(),"IABS literal unknown mode fails before Maxwell emission");
+    // FLO shares one Maxwell leading-bit implementation, now also for
+    // literal and CBUF inputs. The sign bit of a literal is not an invert flag.
+    for (const u32 op : {0x300U,0x900U,0xb00U,0xd00U}) {
+        const u32 raw = op==0x300 ? 13U :
+                        op==0x900 ? 0x8000ffffU :
+                        op==0xb00 ? ((508U<<6)|(7U<<22)) : 17U;
+        const Instruction flo{{(7U<<12)|op|(5U<<16),raw,
+                               0x000e0000U | (op==0xd00?0x08000000U:0U),
+                               0x000fe200U}};
+        Require(Reviewed(flo),"FLO source form must be accepted by actual ISA");
+        const auto out=Bridge(flo);
+        Require(out.Ready(),out.reason.data());
+        const u32 expected=op==0x300?13U:op==0xd00?201U:251U;
+        bool found=false;
+        for(const u64 word:out.maxwell_instructions)
+            if((word&0xffff000000000000ULL)==0x5c30000000000000ULL &&
+                (word&255)==5 && ((word>>20)&255)==expected &&
+                ((word>>40)&1)==0) found=true;
+        Require(found,"FLO emits actual Maxwell leading-bit instruction");
+        if (op==0x900) {
+            bool has_imm=false;
+            for(const u64 word:out.maxwell_instructions)
+                if((word>>56)==0x01 && (word&255)==251 &&
+                   ((word>>20)&0xffffffffULL)==0x8000ffffULL) has_imm=true;
+            Require(has_imm,"FLO immediate sign bit remains source data");
+        }
+    }
+    const auto bad_flo=[](u32 offset,u32 bank){
+        return Instruction{{(7U<<12)|0xb00U|(5U<<16),
+                            (offset<<6)|(bank<<22),0x000e0000U,0x000fe200U}};
+    };
+    Require(!Bridge(bad_flo(3,7)).Ready(),"FLO CBUF refuses unaligned data");
+    Require(!Bridge(bad_flo(4,18)).Ready(),"FLO CBUF refuses disabled bank");
     // P2.4: native bit reversal and population count from GPR, 32-bit
     // literal, CBUF (byte addressed) and uniform register. These modes
     // share real Maxwell ALU opcodes, not per-game shader replacements.

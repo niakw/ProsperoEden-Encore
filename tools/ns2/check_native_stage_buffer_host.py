@@ -67,6 +67,9 @@ int main() {
     assert(!DecodeNativeStageBufferAccess(Stage(0x923, 1, 2, 0, 0x8000))); // output read
     assert(!DecodeNativeStageBufferAccess(Stage(0x923, 1, 2, 0, 0x0000))); // map read
     assert(!DecodeNativeStageBufferAccess(Stage(0x923, 1, 255, 0, 0x3000))); // PT/RZ sink read
+    assert(!DecodeNativeStageBufferAccess(Stage(0x923, 1, 2, 0, 0x3000))); // U8 input read unimplemented
+    assert(!DecodeNativeStageBufferAccess(Stage(0x923, 1, 2, 0, 0x7800))); // skew read not silently flattened
+    assert(!DecodeNativeStageBufferAccess(Stage(0x927, 1, 2, 0, 0xf800))); // skew write not silently flattened
     assert(!DecodeNativeStageBufferAccess(Stage(0x927, 1, 2, 0, 0x9000))); // region 1
     assert(!DecodeNativeStageBufferAccess(Stage(0x927, 1, 2, 0, 0xb400))); // reserved bit
     assert(!DecodeNativeStageBufferAccess(Stage(0x999, 1, 2, 0, 0xb800)));

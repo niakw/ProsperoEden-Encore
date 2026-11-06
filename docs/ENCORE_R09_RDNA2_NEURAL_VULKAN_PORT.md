@@ -71,14 +71,14 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 | attn.comp | Non porté |
 | vit_attn.comp | Non porté |
 | ffwd3_t.comp | Non porté |
-| decoder_upsample.comp | Non porté |
+| decoder_upsample.comp | Première variante 2× à 512 canaux, projection FP16 + skip FP8 + gain FP16, sortie E4M3FN ; validée sur hôte, sans graphe |
 | repack_tokens.comp | Primitive de permutation aller-retour RDNA2 intégrée en code et validée sur hôte ; pas encore de graphe de réseau |
 | upsample_view.comp | Primitive RDNA2 de changement de vue intégrée en code et validée sur hôte, grille complète seulement |
 | noise_field.comp | Port RDNA2 du générateur PCG/Box-Muller et empaquetage FP16 ; pas de graphe |
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
-**État vérifiable : trois primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
+**État vérifiable : cinq primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16 et décodeur ×2) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
 
 ## Nouveaux dépôts utiles, examinés le 6 novembre
 
@@ -119,6 +119,34 @@ canal à zéro, dans deux mots `uint32` empaquetant quatre FP16.
   Elle ne constitue pas une implémentation de l'attention, ni une
   preuve d'exécution DLSS PS5. Pas de poids NVIDIA intégrés.
 
-Le manifeste comporte toujours les familles `fswin_t`, `attn`,
-`vit_attn`, `ffwd3_t`, `decoder_upsample` non portées ; le
-bruit devient une quatrième primitive indépendante testée côté hôte.
+Les familles `fswin_t`, `attn`, `vit_attn`, `ffwd3_t` restent non
+portées. Le décodeur ×2 ajouté dans le lot suivant ne remplace pas
+les autres variantes du réseau ; chaque primitive reste indépendante.
+
+
+## Cinquième primitive — décodeur neuronal ×2 (06/11)
+
+Le shader `decoder_upsample_rdna2.comp` reproduit la variante scalaire
+MIT `decoder_upsample.comp` pour **512 canaux**, avec entrée projection
+FP16, entrée résiduelle E4M3FN, gain FP16 et sortie quantifiée E4M3FN.
+Les coordonnées utilisent les mêmes groupes de tokens 4×4 que l'amont.
+
+- Pas de dépendance `shaderFloat8`, matrices coopératives ou
+  `shaderFloat16` : lecture/arrondi FP16 via
+  `unpackHalf2x16` / `packHalf2x16`, décodage et quantification FP8
+  E4M3FN par calcul GLSL standard ; saturation à ±448.
+- Un thread traite **4 canaux contigus** et écrit un mot `uint32`
+  entier, évitant les courses de sous-octets. Dispatch 2D par pixel
+  et par groupe de 4 canaux (128 groupes Y).
+- Restriction vérifiée côté hôte : agrandissement **exactement ×2**,
+  dimensions alignées 8 en sortie, tailles correctes de **3 buffers**
+  distincts par contrat, sources skip/dst disjointes dans l'arène,
+  adresses 32 bits et budget de 256 Mio.
+- Wrapper Vulkan et branchement CMake natif compilables. Contrats
+  et tests de référence des adresses/quantification exécutés sur hôte,
+  validation SPIR-V/ABI exigée à la compilation.
+
+**Non encore qualifié** : différences de précision GPU (arrondis FP16,
+FP8 et fonctions mathématiques), coût GPU, modèles/poids, exécution de
+la chaîne entière, mesures sur PS5. Les couches d'attention et FFWD
+restent non portées ; aucun mode DLSS activé dans l'interface.

@@ -465,5 +465,60 @@ int main() {
     const auto inverted_word=find_word(inverted_result,high_opcode_mask,
                                        0x5c08000000000000ULL);
     Require(((inverted_word>>40)&1)==1,"POPC CBUF inversion preserved");
+    // Batch imported from Lichii nx2, exercised only after all forms are
+    // integrated: direct evidence from the real Ampere probe + Maxwell bridge.
+    // No title ID, simulated renderer or PS5-specific success conditions.
+    const std::array<Instruction,9> imported_isa{{
+        Instruction{{(7U<<12)|0xc3eU|(4U<<16)|(255U<<24),
+                     1U,0x080000ffU,0x000fe200U}},                 // uniform F2FP
+        Instruction{{(7U<<12)|0x243U|(4U<<16)|(255U<<24),
+                     2U,0x000004ffU,0x000fe200U}},                 // packed F2IP
+        Instruction{{(7U<<12)|0x593U|(6U<<16)|(8U<<24),
+                     7U|(3U<<29),0x001ee000U,0x000fe200U}},       // surface atomic
+        Instruction{{(7U<<12)|0xb9dU|(4U<<24),
+                     6U|(3U<<29),0x0010a900U,0x000fe200U}},       // byte surface store
+        Instruction{{(7U<<12)|0x367U|(8U<<16)|(2U<<24),
+                     4U|(1U<<27)|(1U<<28)|(1U<<29),
+                     255U|(3U<<8)|(7U<<17)|(1U<<23),0x000fe200U}},// bindless TLD
+        Instruction{{(7U<<12)|0xf6cU|(8U<<16)|(2U<<24),
+                     12U|(1U<<8)|(1U<<29),
+                     0x081e0000U|255U|(3U<<8),0x000fe200U}},      // uniform TXD
+        Instruction{{(7U<<12)|0x987U|(255U<<24),
+                     16U,0x0810083fU,0x000fe200U}},               // uniform addr ST
+        Instruction{{(7U<<12)|0x36aU|(8U<<16)|(2U<<24),
+                     6U|(1U<<27)|(1U<<29),255U|(1U<<8),
+                     0x000fe200U}},                               // register TMML
+        Instruction{{(7U<<12)|0xf69U|(8U<<16)|(2U<<24),
+                     255U|(1U<<8)|(1U<<29),
+                     255U|(1U<<8)|(1U<<27),0x000fe200U}},          // uniform TMML
+    }};
+    for (const auto& inst : imported_isa) {
+        Require(Reviewed(inst),"Lichii imported mode must pass real ISA/probe");
+        const auto result=Bridge(inst);
+        Require(result.Ready(),"Lichii imported mode must produce Maxwell instructions");
+        Require(!result.maxwell_instructions.empty(),"Lichii imported mode must emit code");
+    }
+    auto bad_surface_atomic=imported_isa[2];
+    bad_surface_atomic.words[2]|=9U<<23;
+    Require(!Bridge(bad_surface_atomic).Ready(),"surface atomic operation outside reviewed set refused");
+    auto bad_byte_store=imported_isa[3];
+    bad_byte_store.words[1]|=18U<<22;
+    Require(!Bridge(bad_byte_store).Ready(),"byte surface store unknown binding refused");
+    auto bad_texel_fetch=imported_isa[4];
+    bad_texel_fetch.words[2]&=~(15U<<8);
+    Require(!Bridge(bad_texel_fetch).Ready(),"bindless texel fetch empty mask refused");
+    auto bad_gradient=imported_isa[5];
+    bad_gradient.words[1]|=6U<<29;
+    Require(!Bridge(bad_gradient).Ready(),"uniform gradient unsupported dimension refused");
+    auto bad_uniform=imported_isa[0];
+    bad_uniform.words[1]=64U;
+    Require(!Bridge(bad_uniform).Ready(),"uniform float pack invalid UR refused");
+    auto bad_local=imported_isa[6];
+    bad_local.words[1]|=1U<<8;
+    Require(!Bridge(bad_local).Ready(),"local store misaligned address refused");
+    auto bad_lod=imported_isa[8];
+    bad_lod.words[1]=(bad_lod.words[1]&~(63U<<8))|(63U<<8);
+    Require(!Bridge(bad_lod).Ready(),"uniform texture handle outside range refused");
+    std::puts("P2_4_LICHII_GENERIC_ISA_BATCH_PASS");
     std::puts("P2_4_REAL_AMPERE_SCALAR_ALU_SOURCE_PASS");
 }

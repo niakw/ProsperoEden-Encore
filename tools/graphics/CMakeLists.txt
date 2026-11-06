@@ -173,6 +173,18 @@ eden_r08_test(test_rdna2_nr_fswin_plan)
 eden_r08_test(test_rdna2_nr_fswin_window_repack_policy)
 eden_r08_test(test_rdna2_nr_fswin_chain_layout_policy)
 eden_r08_test(test_rdna2_nr_native_plan_bridge)
+# R09: validate recovered full native graph structural manifests.
+add_executable(test_rdna2_nr_native_plan_corpus
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_native_plan_corpus.cpp")
+target_include_directories(test_rdna2_nr_native_plan_corpus PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_native_plan_corpus PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_native_plan_corpus
+    COMMAND test_rdna2_nr_native_plan_corpus
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
+    "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
 target_include_directories(test_rdna2_nr_native_plan_bridge PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
 eden_r08_test(test_rdna2_nr_fswin_raster_layout_policy)

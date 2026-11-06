@@ -593,3 +593,27 @@ n'enchaîne pas les couches du graphe global. Le nouveau
 chemin n'a pas encore produit de frame sur GPU PS5 ;
 la performance sera étudiée seulement après cette
 intégration complète.
+
+
+## Enchaînement de plusieurs couches FSwin compatibles
+
+NrRdna2FSwinLayerRuntime::LinkInputFrom enregistre une
+copie Vulkan TRANSFER de la sortie du bloc précédent vers
+l'entrée du suivant, avec barrières COMPUTE->TRANSFER
+et TRANSFER->COMPUTE. Les formats de tenseur doivent
+coïncider et les deux blocs partager le même scheduler.
+
+NrRdna2FSwinChain instancie plusieurs runtimes FSwin
+successifs à partir d'un paquet NRMODEL1 fourni par
+l'utilisateur et de préfixes de couches. Il ne permet
+que des couches de **mêmes canaux et mêmes fenêtres**
+pour ne pas déduire incorrectement une transition de
+résolution. Les ressources restent sur GPU entre passes.
+
+**Ce n'est pas encore le graphe complet du modèle** :
+les fenêtres décalées, les changements de résolution,
+les blocs ViT, les opérations pré/post image, les
+branches U-Net et le planificateur global restent
+à raccorder. L'implémentation n'a pas été exercée
+sur GPU PS5 ; on reporte la performance jusqu'à
+la fin de l'intégration fonctionnelle.

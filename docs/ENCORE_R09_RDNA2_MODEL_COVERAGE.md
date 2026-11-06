@@ -225,3 +225,38 @@ des quatre buffers skip, le raccord aux descripteurs du prologue
 `upsample`, les gains incomplets C≥64 et la traversée
 Split-Swin / ViT restent à implémenter. Ne pas compter cette
 classification comme une image NR calculée sur PS5.
+
+
+## Cache GPU propriétaire des quatre skips U-Net
+
+`NrRdna2UNetSkipCache` (vendor) alloue et conserve les
+**quatre rasters E4M3FN des branches de saut** avec VMA DeviceLocal,
+sans passer par le CPU. `Initialize()` reçoit la carte de saut
+issue du plan natif et les dimensions raster exactes dans l'ordre
+des consommateurs UPS. Le cache refuse toute géométrie ambiguë.
+
+Pour les deux corpus de référence, les tailles sont :
+
+| Provenance du skip | Format de sortie GPU | Taille |
+|---|---|---:|
+| C256 | 67 × 120 × 256 | 2 058 240 octets |
+| C128 | 135 × 240 × 128 | 4 147 200 octets |
+| C64 | 270 × 480 × 64 | 8 294 400 octets |
+| C32 | 540 × 960 × 32 | 16 588 800 octets |
+
+Le total est **31 088 640 octets** (< 128 Mio autorisés par le
+cache). `BindProducer(down_block,chain)` branche le raster de saut
+sur la sortie pré-downsample de la bonne chaîne, sous contrainte
+de même scheduler Vulkan. `ForUpsample(up_block)` retrouve le
+descripteur du skip par l'indice de bloc natif.
+
+**Important :** un buffer lié ne prouve pas que son écriture GPU
+est achevée. Le graphe global doit enregistrer tous les producteurs
+avant les consommateurs, conserver le cache et ses allocations tant
+que des commandes sont en vol et gérer leurs fences. Cette gestion
+des submissions reste nécessaire avant la validation d'un rendu NR.
+
+Test host `test_rdna2_nr_unet_skip_cache_policy.cpp` :
+quatre dimensions réelles, octets exacts, limite de capacité,
+erreurs de dimension, doublons de blocs et comptage incomplet,
+sur Original et Small. Le cache ne contient aucun code par jeu.

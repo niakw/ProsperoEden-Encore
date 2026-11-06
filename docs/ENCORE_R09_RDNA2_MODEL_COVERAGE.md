@@ -138,3 +138,30 @@ Couverture **structurelle, pas preuve GPU** : Original **40/152**
 Les 8 sections de chaque plan restent en cours d'assemblage ;
 `upsample`, transitions U-Net/skip, ViT, Split-Swin,
 pré/post-image et validation console sont encore à terminer.
+
+
+## Liaison GPU entre deux niveaux U-Net (DS → InputView)
+
+Le composant vendor `NrRdna2FSwinLevelLink` raccorde maintenant deux
+chaînes distinctes sur **le même scheduler Vulkan**. `Prepare()`
+vérifie les buffers et géométries, puis :
+1. Lie la sortie `ds` de la chaîne amont au raster E4M3FN externe.
+2. Lie ce raster à l'entrée GPU `inpview` du niveau suivant,
+   après contrôle de la résolution et de l'augmentation C→2C.
+3. `Record()` enregistre les deux chaînes dans cet ordre, sans
+   readback et avec les barrières compute existantes.
+
+Le contrat `CanFSwinLevelLink` exige les grilles explicites,
+un input-view non décalé, des dimensions `ceil(W/2)×ceil(H/2)`,
+des capacités réelles et un budget de 256 Mio par ressource.
+Exemple vérifié par les assertions hôte ajoutées :
+`540×960, C32, 68×120 fenêtres` → `270×480, C64, 34×60`.
+C64→128 et C128→256 sont également couverts.
+La transition C256→512 est rejetée car elle appartient
+au Split-Swin et ne relève pas de ce raccordement FSwin.
+
+Le buffer externe et les deux chaînes doivent vivre jusqu'à la
+fin de la soumission. L'échec d'une préparation n'entraîne pas
+de dispatch partiel ; l'appelant peut reconstruire les deux
+chaînes. La connexion du réseau complet avec skips/ViT/Split-Swin
+reste à faire. Aucune image PS5 ni mesure de performance annoncée.

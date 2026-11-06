@@ -187,6 +187,7 @@ eden_r08_test(test_rdna2_nr_fswin_chain_layout_policy)
 eden_r08_test(test_rdna2_nr_native_plan_bridge)
 eden_r08_test(test_rdna2_nr_fswin_output_view_policy)
 eden_r08_test(test_rdna2_nr_fswin_downsample_policy)
+eden_r08_test(test_rdna2_nr_fswin_level_link_policy)
 eden_r08_test(test_rdna2_nr_fswin_upsample_policy)
 target_include_directories(test_rdna2_nr_fswin_output_view_policy PRIVATE
     "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")

@@ -325,6 +325,16 @@ mais ne valide ni la liaison inter-stage GPU,
 ni les formes LEPC non reconnues, ni task/mesh
 ou le premier rendu NS2 PS5 (P2.4/P5 ouverts).
 
+**P2.4 — LEPC prédicat avec PC GMMU authentifié (06/11, source/hôte) :**
+Le lowerer prend maintenant en charge le LEPC sous P0–P6 ou !P0–!P6
+lorsque la capture fournit l'adresse native 64 bits du code invité.
+Les deux MOV Maxwell portent le **même prédicat** (inversion comprise)
+et conservent les deux GPR lorsque le prédicat est faux. Sans adresse
+GMMU prouvée, pour !PT ou un mode LEPC inconnu, le refus demeure.
+Le témoin `test_native_lepc_capture.cpp` vérifie les deux moitiés,
+les deux formes de prédication, la relocation et les refus. Preuve hôte
+uniquement : l'exécution PS5 et le premier framebuffer restent ouverts.
+
 **P2.4 — LEPC dynamique en Geometry avec provenance GMMU (05/11,
 source/hôte) :** l'adresse d'une instruction LEPC hors du prologue
 statique ne pouvait pas être reconstruite depuis les adresses

@@ -83,11 +83,38 @@ int main() {
     Require(!LowerToMaxwell(std::array{Nop,malformed,Exit},
                            {},false,{},codeA),
             "unknown LEPC offset mode must fail closed");
-    auto predicated=Lepc;
-    predicated.words[0]=(predicated.words[0]&~0xf000U)|(6U<<12);
-    Require(!LowerToMaxwell(std::array{Nop,predicated,Exit},
+    // Predicated LEPC writes the authenticated PC as TWO equally predicated
+    // Maxwell MOV instructions; a false predicate must preserve both GPRs.
+    for (const u32 execution : std::array{6U,14U}) {
+        auto predicated=Lepc;
+        predicated.words[0]=(predicated.words[0]&~0xf000U)|(execution<<12);
+        const std::array source{Nop,predicated,Exit};
+        const auto lowered=LowerToMaxwell(source,{},false,{},codeA);
+        Require(bool(lowered),"predicated LEPC needs authenticated GMMU PC");
+        const u32 pos=lowered.source_instruction_offsets[1];
+        Require(pos+2==lowered.source_instruction_offsets[2],
+                "predicated LEPC emits two Maxwell MOVs");
+        for (u32 word=0;word<2;++word) {
+            const u64 emitted=lowered.instructions[pos+word];
+            Require(((emitted>>16)&15U)==execution &&
+                    (emitted&255U)==4U+word &&
+                    EncodedImmediate(emitted)==
+                        static_cast<u32>(guest_pc_A>>(32*word)),
+                    "both halves retain source predicate and PC");
+        }
+        Require(!LowerToMaxwell(source),
+                "predicated LEPC without authenticated GMMU PC must refuse");
+        const auto relocated=LowerToMaxwell(source,{},false,{},codeB);
+        Require(bool(relocated) &&
+                relocated.instructions[relocated.source_instruction_offsets[1]+1]!=
+                    lowered.instructions[pos+1],
+                "predicated LEPC cannot reuse another guest code VA");
+    }
+    auto invalid_predicate=Lepc;
+    invalid_predicate.words[0]=(invalid_predicate.words[0]&~0xf000U)|(15U<<12);
+    Require(!LowerToMaxwell(std::array{Nop,invalid_predicate,Exit},
                            {},false,{},codeA),
-            "unreviewed predicated LEPC cannot return guessed PC");
+            "inverted PT is not a reviewed execution predicate");
     auto high=Lepc;
     high.words[0]=(high.words[0]&0xff00ffffU)|(252U<<16);
     Require(!LowerToMaxwell(std::array{Nop,high,Exit},

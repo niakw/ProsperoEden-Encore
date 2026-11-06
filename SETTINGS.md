@@ -14,8 +14,12 @@ A clean Encore configuration starts with:
 | Video preset | **Recommended** |
 | TV output | **1440p** |
 | Game resolution | **1.25x** |
-| Upscaling filter | **Bilinear** |
+| Upscaling filter | **FSR 1 (spatial)** |
 | FSR sharpness | **50%** |
+| Texture filtering (anisotropy) | **4x** |
+| Frame Generation | **Off (extra)** |
+| Neural Rendering | **Off (extra)** |
+| DLSS-NR intensity | **100% stored, inactive when NR is Off** |
 | Anti-aliasing | **FXAA** (Recommended) |
 | Refresh rate | **60 Hz** |
 | FPS overlay | **Off** |
@@ -32,7 +36,7 @@ A clean configuration starts on the authored **Recommended** tier. Selecting ano
 | Preset | Renderer | TV output | Game resolution | Filter | FSR sharpness | AA | Refresh |
 | --- | --- | --- | --- | --- | ---: | --- | --- |
 | **Minimum** | Vulkan | 1080p | 1x | Bilinear | 50% | None | 60 Hz |
-| **Recommended** | Vulkan | 1440p | 1.25x | Bilinear | 50% | **FXAA** | 60 Hz |
+| **Recommended** | Vulkan | 1440p | 1.25x | **FSR 1** | 50% | **FXAA** | 60 Hz |
 | **High** | Vulkan | 2160p | 1.5x | Bicubic | 50% | **FXAA** | 60 Hz |
 | **Ultra** | Vulkan | 2160p | 2x | Bilinear | 50% | None | 60 Hz |
 
@@ -72,8 +76,8 @@ Docked and Handheld modes can also change what the game itself chooses to render
 
 ### Upscaling filter
 
-- **Bilinear — default.** Lightest general-purpose scaler.
-- **AMD FSR.** Most useful when Game resolution is below the TV output.
+- **Bilinear.** Lightest general-purpose scaler, useful as a manual fallback or when using a Neural Rendering mode.
+- **AMD FSR 1 — Recommended default (spatial only).** Particularly useful when Game resolution is below TV output; this is not temporal FSR 3.1.
 - **Bicubic.** Sharper conventional scaling.
 - **Nearest.** Mainly useful for pixel-art or diagnostics.
 
@@ -91,7 +95,7 @@ Useful starting points:
 
 ### Anti-aliasing
 
-Available: **None, FXAA, SMAA**.
+In the regular UI: **None, FXAA, SMAA Ultra, FXAA+** (the last mode is Vulkan-only). MSAA 2x/4x/8x/16x values exist in the settings schema, but the native forced-sample path is not qualified as a selectable GPU option; a stored setting is not proof of working MSAA.
 
 - **None — fastest manual choice.**
 - **FXAA — Recommended preset.** Light smoothing with a small clarity trade-off.
@@ -102,7 +106,7 @@ Available: **None, FXAA, SMAA**.
 - **60 Hz — default/recommended.**
 - **120 Hz.** Requests a 120 Hz output mode when the display supports it.
 
-120 Hz does not turn a 30 FPS game into a 120 FPS game. Encore currently has **no verified frame-generation option**. For the separate research paths to improve *real* game FPS and investigate 30→60 **display** FPS via interpolation, see [Performance roadmap](docs/PERFORMANCE_ROADMAP.md). Synthetic FPS must never be presented as native game FPS.
+120 Hz does not turn a 30 FPS game into a 120 FPS game. Encore exposes optional frame-generation choices (MihawkGen, FSR 3 optical flow and LSFG with a user-supplied DLL), all **Off by default**. Selection does not mean a generated frame has been validated on PS5. For the separate research paths to improve *real* game FPS and investigate 30→60 **display** FPS via interpolation, see [Performance roadmap](docs/PERFORMANCE_ROADMAP.md). Synthetic FPS must never be presented as native game FPS.
 
 ### FPS overlay
 
@@ -115,6 +119,17 @@ Available: **None, FXAA, SMAA**.
 
 This is a game-side mode change, not merely a TV-output setting.
 
+## Neural Rendering and Frame Generation — optional extras
+
+Both features default to **Off**. Standard Minimum, Recommended, High and Ultra presets change the spatial/AA/resolution settings without silently enabling neural effects or synthetic frames.
+
+- **Neural Rendering choices:** Off, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original, and DLSS-NR Compact. The A4K family belongs to Neural Rendering, not Upscaling.
+- **DLSS-NR intensity:** 0–100% (stored default 100%). Editable only with Original or Compact. It remains saved when selecting A4K or Off; the source catalog does not yet contain measured per-title intensity recommendations.
+- **Composition guardrails:** Vulkan only; the currently supported policy requires Bilinear spatial scaling, no concurrent Frame Generation, and no forced MSAA. These conservative limitations must not be mistaken for permanent renderer capabilities.
+- **DLSS-NR runtime:** The two models can be selected and persisted, but the full native image graph is not yet proven to render a complete frame on PS5.
+
+The classic Encore and Switch-style visual themes must expose the same extras, including their per-game inherited values. No change to a video preset should turn either extra on without an explicit user action.
+
 ## Per-game video settings
 
 Library → Game settings can override the global configuration for one title:
@@ -126,6 +141,10 @@ Library → Game settings can override the global configuration for one title:
 - Upscaling filter
 - FSR sharpness
 - Anti-aliasing
+- Texture filtering (anisotropy)
+- Frame Generation (Off/explicit method)
+- Neural Rendering (Off/A4K/DLSS-NR)
+- DLSS-NR intensity (stored independently)
 - Refresh rate
 - Console mode
 

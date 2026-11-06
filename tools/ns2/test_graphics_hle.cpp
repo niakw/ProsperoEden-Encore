@@ -919,13 +919,29 @@ int main(){
             (*cpu_bgra)[4] == 512 && (*cpu_bgra)[6] == 0 &&
             (*cpu_bgra)[8] == 0 && !pools.CpuImageDescriptor(0x80000002u),
             "GSV 961 exposes only a live BGRA decoder image with exact stride/pitch");
+    // 1/4 = NV12, 2/5 = BGRA, 3/6 = RGBA across both codec modes.
+    for (const u32 code : {2U, 3U, 6U}) {
+        video[1] = code;
+        const auto alternate = CalculateNativeVideoImageLayout(video, 1);
+        require(alternate && !alternate->nv12 &&
+                alternate->cpu_kind == (code == 2 ? 9U : 8U) &&
+                alternate->row_bytes == 512,
+                "GSV handles standard BGRA and RGBA decoder preference codes");
+        NativeVideoPoolLedger one_format;
+        require(one_format.Add(123, 1, 22, alternate->total_bytes,
+                               video[2], *alternate) &&
+                one_format.CpuImageDescriptor(123) &&
+                (*one_format.CpuImageDescriptor(123))[0] == alternate->cpu_kind,
+                "GSV 961 accurately reports RGBA/BGRA image layout family");
+    }
+    video[1] = 5;
     require(!pools.Add(0x80000001u, 2, 20, 131072, video[2], *video_layout) &&
             !pools.Lookup(0x80000002u) &&
             pools.Remove(0x80000000u) && pools.ImageCount() == 0 &&
             !pools.Remove(0x80000000u),
             "GSV 911/912 reject overlapping and stale image pools");
     const NativeVideoImageLayout unaddressable{
-        0x1fffff000ULL, 0x1000U, 0xfffff000U, 0x100U, false, 0};
+        0x1fffff000ULL, 0x1000U, 0xfffff000U, 0x100U, false, 0, 9};
     require(!pools.Add(0x80000010u, 3, 20, 0x200000000ULL,
                        video[2], unaddressable),
             "GSV 428 refuses pool images with unrepresentable 32-bit offsets");
@@ -945,6 +961,17 @@ int main(){
             !pools.CpuImageDescriptor(0x80000020u) &&
             !pools.CpuImageDescriptor(0x80000021u),
             "GSV 961 refuses retired decoder-image IDs without fabricated descriptors");
+    video[1] = 4; // NV12 codec mode 2 uses the same two-plane layout.
+    const auto nv12_mode2 = CalculateNativeVideoImageLayout(video, 1);
+    require(nv12_mode2 && nv12_mode2->nv12 &&
+            nv12_mode2->cpu_kind == 10 &&
+            nv12_mode2->row_bytes == nv12->row_bytes &&
+            nv12_mode2->chroma_offset == nv12->chroma_offset,
+            "GSV video decoder NV12 mode 4 is a real two-plane layout");
+    video[1] = 7;
+    require(!CalculateNativeVideoImageLayout(video, 1),
+            "GSV video decoder refuses unknown output-image format codes");
+    video[1] = 1;
     video[2] = (63u << 16) | 126u; // odd width
     require(!CalculateNativeVideoImageLayout(video, 2),
             "GSV native NV12 rejects odd pixel dimensions");

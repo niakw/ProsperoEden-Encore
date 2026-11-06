@@ -11,6 +11,23 @@ for symbol in ("ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)"
                "IsNative(&dma_pusher.channel_state)",
                "pending acquire unsupported"):
     assert symbol in puller, symbol
+# Production P2.7 coherence: an acquire cannot compare a stale CPU word
+# while its release is still resident in the Vulkan buffer cache.
+native_acquire = puller.split("void Puller::ProcessNativeSemaphoreExecute(", 1)[1].split(
+    "void Puller::ProcessSemaphoreAcquire(", 1)[0]
+assert "GpuToCpuAddress(address, sizeof(u32))" in native_acquire
+assert 'Ampere SEM_EXECUTE: unmapped acquire address' in native_acquire
+assert native_acquire.count("VideoCommon::CacheType::BufferCache") == 2
+assert "MustFlushRegion(" in native_acquire
+assert "FlushRegion(" in native_acquire
+assert (native_acquire.index("ReleaseFences()") <
+        native_acquire.index("GpuToCpuAddress(") <
+        native_acquire.index("MustFlushRegion(") <
+        native_acquire.index("FlushRegion(") <
+        native_acquire.index("NativeSemaphore::AcquireReady(") <
+        native_acquire.index("memory_manager.Read<u32>(address)"))
+assert "ProcessSemaphoreRelease(dma_pusher);" in puller
+assert "ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument);" in puller
 code = r"""
 #include <cassert>
 #include <cstdint>

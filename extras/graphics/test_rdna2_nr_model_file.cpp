@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Integration test: file-backed NRMODEL1 index + tiled E4M3FN matrix.
+// Integration test: NRMODEL1 stores ROW-MAJOR E4M3FN model matrices.
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -38,7 +38,7 @@ int main(){
     for(char ch:name)pack.push_back(std::uint8_t(ch));
     u64(pack,256u);u64(pack,rows*cols);
     pack.resize(256u,0u);
-    pack.insert(pack.end(),tiled.begin(),tiled.end());
+    pack.insert(pack.end(),linear.begin(),linear.end());
     const auto path=std::filesystem::temp_directory_path()/
         ("eden_rdna2_modelpack_"+std::to_string(
           reinterpret_cast<std::uintptr_t>(pack.data()))+".bin");
@@ -50,25 +50,25 @@ int main(){
     assert(file.Find(name)&&file.Find(name)->size==rows*cols);
     assert(file.Find("../weights/matrix.bin")==nullptr);
     std::vector<std::uint8_t> data;
-    assert(file.LoadRaw(name,data)&&data==tiled);
-    assert(file.LoadRowMajor(name,rows,cols,data)&&data==linear);
+    assert(file.LoadRaw(name,data)&&data==linear);
+    assert(file.LoadModelMatrix(name,rows,cols,data)&&data==linear);
     NeuralWeightArena arena;
     NeuralWeightRange matrix{};
-    assert(arena.AppendTiled(file,name,rows,cols,matrix));
+    assert(arena.AppendModelMatrix(file,name,rows,cols,matrix));
     assert(matrix.offset_bytes==0u&&matrix.length_bytes==rows*cols);
     assert(arena.Bytes().size()==rows*cols);
     assert(std::equal(arena.Bytes().begin(),arena.Bytes().end(),linear.begin()));
     assert(arena.Find(name)!=nullptr);
-    assert(!arena.AppendTiled(file,name,rows,cols,matrix));
+    assert(!arena.AppendModelMatrix(file,name,rows,cols,matrix));
     assert(matrix.length_bytes==0u);
     NeuralWeightArena raw_arena;
     NeuralWeightRange raw{};
     assert(raw_arena.AppendRaw(file,name,raw));
     assert(raw.offset_bytes==0u&&raw.length_bytes==rows*cols);
-    assert(std::equal(raw_arena.Bytes().begin(),raw_arena.Bytes().end(),tiled.begin()));
+    assert(std::equal(raw_arena.Bytes().begin(),raw_arena.Bytes().end(),linear.begin()));
     raw_arena.Clear();
     assert(raw_arena.Bytes().empty()&&raw_arena.Find(name)==nullptr);
-    assert(!file.LoadRowMajor(name,rows,16u,data)&&data.empty());
+    assert(!file.LoadModelMatrix(name,rows,16u,data)&&data.empty());
     assert(!file.LoadRaw("notfound",data)&&data.empty());
     // Mutating the backing file's length invalidates a previously opened index.
     pack.pop_back();

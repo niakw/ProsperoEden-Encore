@@ -336,7 +336,7 @@ validée numériquement sur GPU avant intégration finale.
 
 ## Six passes FSwin — enregistrement ordonné côté renderer (06/11)
 
-Le nouveau wrapper NrRdna2FSwinGraph enregistre ces six passes
+Le nouveau wrapper NrRdna2FSwinGraph enregistre jusqu'à six passes
 via le scheduler Vulkan, avec une barrière compute→compute
 après chacune :
 
@@ -386,8 +386,9 @@ ce chargeur. Aucune activation automatique de DLSS.
 Le header vendor nr_rdna2_model_file.h complète l'index sécurisé :
 NeuralModelFile::Open lit uniquement un préfixe d'index limité,
 NeuralModelFile::LoadRaw charge à la demande le poids nommé en
-vérifiant l'étendue, et LoadRowMajor convertit une matrice E4M3FN
-tuilée 16×16 vers le format row-major de nos kernels RDNA2.
+vérifiant l'étendue, et LoadModelMatrix conserve une matrice E4M3FN
+**déjà row-major**, exactement comme dans NRMODEL1. LoadTiledMatrix
+ne convertit que des données explicitement tuilées.
 
 Le modèle doit être fourni **localement et légalement** : aucun
 poids NVIDIA n'est inclus ou distribué. Un chargement n'est pas
@@ -395,7 +396,7 @@ possible lorsque le paquet manque ou lorsque la taille de fichier
 a changé après l'indexation.
 
 Test d'intégration : génération d'un paquet temporaire NRMODEL1,
-conversion exacte d'une matrice synthétique 16×32, lecture du
+lecture exacte d'une matrice row-major synthétique 16×32,
 fichier, refus de matrices mal dimensionnées, chemins absents et
 troncature après ouverture. L'étape upload Vulkan, la vérification
 SHA-256 des poids et la connexion automatique au graphe restent à
@@ -407,8 +408,9 @@ implémenter.
 Le module vendor nr_rdna2_weight_arena.h associe au chargeur
 NRMODEL1 un espace contigu de poids lus à la demande et
 convertis, avec offsets alignés à 256 octets et budget 256 Mio.
-AppendTiled prépare les E4M3FN 16×16 au format row-major ;
-AppendRaw conserve les octets des constantes/poids non tuilés.
+AppendModelMatrix conserve les matrices NRMODEL1 row-major ;
+AppendTiled sert aux sources qui sont explicitement tuilées, et
+AppendRaw conserve les constantes et poids non matriciels.
 Les offsets/longueurs sont conservés en u32 pour la future
 création des buffers Vulkan. Les noms dupliqués sont rejetés.
 
@@ -417,3 +419,27 @@ contrôle des offsets et de l'absence de doublons, test RAW,
 remise à zéro. Le matériel PS5 ne reçoit encore aucun buffer ;
 cette arène est uniquement la préparation CPU. Le chargeur
 actif de modèle et les descripteurs GPU restent à finaliser.
+
+
+## Audit d'intégration : format réel des poids et FSwin C32
+
+La lecture du code amont MIT nr_graph.cpp montre que les fichiers
+NRMODEL1 contiennent les matrices E4M3FN **en lignes originales** :
+le host d'origine appelle tin::tile_blocked seulement après
+lecture, pour son propre stockage GPU. Pour notre chemin RDNA2
+row-major, cette transformation ne doit pas être appliquée.
+LoadModelMatrix et AppendModelMatrix assurent maintenant une
+lecture byte-identique et contrôlent la forme.
+
+Autre différence fonctionnelle importante : au niveau C=32,
+FSwin a une seule tête et **aucune couche middle**. Son
+contraction lit les 4C=128 canaux cachés directement
+après l'expansion. Pour C>=64 le middle groupé 128→32
+reste nécessaire. Le graph recorder saute donc le stage 1
+à C32 : cinq dispatchs au lieu de six.
+Les contrats, tailles, tests et documentation sont alignés.
+
+L'ordre des poids QKV amont reste [head, Q/K/V, 32, C],
+cohérent avec les accès du port FSwin QKV. Les conversions
+FP16 originales des biais/scales et les formats de pré/post
+image restent à valider sur des poids réels.

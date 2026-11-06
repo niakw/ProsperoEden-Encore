@@ -10,10 +10,12 @@ int main(){
         FSwinGraph p{};
         const auto heads=C/32u;
         for(std::uint32_t i=0;i<4u;++i){
-            const auto in=64u*(i==1u?4u*C:C);
-            const auto w=i==0u?4u*C*C:i==1u?C*128u:C*C;
+            const auto in=64u*(i==1u||(i==2u&&C==32u)?4u*C:C);
+            const auto w=i==0u?4u*C*C:
+                i==1u?C*128u:i==2u&&C==32u?4u*C*C:C*C;
             const auto out=64u*(i==0u?4u*C:C);
-            p.dense[i]={0,0,0,0,0,1,C,i};
+            p.dense[i]=(i==1u&&C==32u)?
+                FSwinDense{}:FSwinDense{0,0,0,0,0,1,C,i};
             p.dense_storage[i]={in,w,64u*C,4u*C,out};
         }
         const auto tensor=64u*C;
@@ -29,8 +31,14 @@ int main(){
         p.qkv.channels=C;
         p.attention.heads++;assert(!CanFSwinGraph(p));
         p.attention.heads=heads;
-        p.dense_storage[1].weight_bytes--;assert(!CanFSwinGraph(p));
-        p.dense_storage[1].weight_bytes++;
+        if(C==32u){
+            p.dense[1].windows=1u;assert(!CanFSwinGraph(p));
+            p.dense[1].windows=0u;
+        }else{
+            p.dense_storage[1].weight_bytes--;
+            assert(!CanFSwinGraph(p));
+            p.dense_storage[1].weight_bytes++;
+        }
         assert(CanFSwinGraph(p));
     }
 }

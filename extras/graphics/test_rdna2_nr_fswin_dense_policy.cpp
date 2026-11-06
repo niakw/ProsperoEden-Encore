@@ -9,10 +9,16 @@ int main(){
     for(std::uint32_t C:{32u,64u,128u,256u})
         for(std::uint32_t stage=0;stage<4;stage++){
             const FSwinDense p{0,0,0,0,0,1,C,stage};
-            const auto in=64u*(stage==1u?4u*C:C);
-            const auto wt=stage==0u?4u*C*C:stage==1u?C*128u:C*C;
+            const auto in=64u*(stage==1u||(stage==2u&&C==32u)?4u*C:C);
+            const auto wt=stage==0u?4u*C*C:
+                stage==1u?C*128u:
+                stage==2u&&C==32u?4u*C*C:C*C;
             const auto out=64u*(stage==0u?4u*C:C);
             const FSwinDenseStorage s{in,wt,C*64u,C*4u,out};
+            if(C==32u&&stage==1u){
+                assert(!CanFSwinDense(p,s));
+                continue;
+            }
             assert(CanFSwinDense(p,s));
             assert(FSwinDenseGridX(p)==(stage==0u?(C+63u)/64u:1u));
             assert(!CanFSwinDense(p,{in-1u,wt,C*64u,C*4u,out}));

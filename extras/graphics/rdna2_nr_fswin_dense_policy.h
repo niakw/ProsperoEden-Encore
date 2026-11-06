@@ -13,15 +13,18 @@ struct FSwinDenseStorage {
 [[nodiscard]] constexpr bool CanFSwinDense(
     const FSwinDense& p,const FSwinDenseStorage& s) noexcept {
     if(!p.windows||p.windows>256u||p.stage>3u||
+       (p.stage==1u&&p.channels==32u)||
        (p.channels!=32u&&p.channels!=64u&&
         p.channels!=128u&&p.channels!=256u))return false;
     if((p.x_base_bytes|p.w_base_bytes|
         p.residual_base_bytes|p.out_base_bytes)&3u)return false;
     const std::uint64_t C=p.channels;
     const std::uint64_t tokens=std::uint64_t(p.windows)*64u;
-    const std::uint64_t xbytes=tokens*(p.stage==1u?4u*C:C);
+    const std::uint64_t xbytes=tokens*(
+        p.stage==1u||(p.stage==2u&&C==32u)?4u*C:C);
     const std::uint64_t wbytes=p.stage==0u?4u*C*C:
-        p.stage==1u?C*128u:C*C;
+        p.stage==1u?C*128u:
+        (p.stage==2u&&C==32u)?4u*C*C:C*C;
     const std::uint64_t obytes=tokens*(p.stage==0u?4u*C:C);
     constexpr auto max=std::numeric_limits<std::uint32_t>::max();
     if(xbytes>(256ull<<20)||wbytes>(256ull<<20)||obytes>(256ull<<20))

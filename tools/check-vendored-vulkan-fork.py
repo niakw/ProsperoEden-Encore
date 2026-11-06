@@ -75,7 +75,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         raise RuntimeError('F07 allocator source parity failed (code %d):\n%s\n%s' % (
             oom_check.returncode, oom_check.stdout, oom_check.stderr))
     assert allocator not in actual, 'generated Vulkan port unexpectedly owns the allocator'
-    assert set(actual)==set(expected)-{helper, allocator, pool_policy, storage_layout}, (
+    # The native Task/Mesh device extension header is a genuine maintained
+    # header; require exact two-hunk parity with the pinned vendor snapshot.
+    native_mesh_device_header='include/video_core/vulkan_common/vulkan_device.h'
+    assert native_mesh_device_header not in actual
+    mesh_device = expected[native_mesh_device_header].read_text()
+    mesh_feature_line = "    FEATURE(EXT, MeshShader, MESH_SHADER, mesh_shader)                                             \\\n"
+    mesh_feature_method = "    /// Returns true if the device supports task and mesh shaders (VK_EXT_mesh_shader).\n    bool IsExtMeshShaderSupported() const {\n        return extensions.mesh_shader && features.mesh_shader.taskShader &&\n               features.mesh_shader.meshShader;\n    }\n\n"
+    assert mesh_device.count(mesh_feature_line) == mesh_device.count(mesh_feature_method) == 1
+    assert (mesh_device.replace(mesh_feature_line, '').replace(mesh_feature_method, '') ==
+            (upstream/'src/video_core/vulkan_common/vulkan_device.h').read_text()), (
+            "Native Task/Mesh device feature ABI source drift")
+    assert set(actual)==set(expected)-{helper, allocator, pool_policy, storage_layout,
+                                         native_mesh_device_header}, (
         f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')
     helper_file=expected[helper]
     assert subprocess.check_output(['git','hash-object',str(helper_file)],text=True).strip()==(

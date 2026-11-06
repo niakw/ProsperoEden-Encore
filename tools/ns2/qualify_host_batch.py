@@ -38,6 +38,7 @@ TESTS = {
     "nvdrv_smmu_reclaim": "tools/ns2/check_native_nvmap_smmu_reclaim_host.py",
     "nvdrv_pin_refcounts": "tools/ns2/check_native_nvmap_pin_refs_host.py",
     "nvdrv_pin_failure_propagation": "tools/ns2/check_nvdrv_pin_failure_propagation_host.py",
+    "native_video_decoder_backend": "tools/ns2/check_native_video_decoder_backend_host.py",
     "gp_fifo_preinit": "tools/ns2/check_native_gpfifo_preinit_host.py",
     "native_gpfifo_spans": "tools/ns2/check_native_gpfifo_command_spans_host.py",
     "native_gpfifo_fetch": "tools/ns2/check_native_gpu_fetch_admission_host.py",

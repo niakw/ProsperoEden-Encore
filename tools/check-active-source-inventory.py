@@ -352,6 +352,21 @@ assert "python3 -B tools/ns2/check_nvdrv_fd_session_owners_host.py" in (
     root / ".github/workflows/encore-core-preflight.yml").read_text()
 print("ENCORE_POST_F07_SHARED_NVDRV_OWNER_PASS", f"owners={len(post_f07_shared_nvdrv_owners)}")
 
+# Shared FFmpeg-backed native decoder added after the frozen 337-owner F07
+# catalogue; it is selected by the unified native engine, not experimental.
+post_f07_video_decoder_owners = {
+    "ns2-runtime/video_decoder/video_core/host1x/h264_packet.h",
+    "ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.h",
+    "ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp",
+}
+assert post_f07_video_decoder_owners <= set(physical_all), (
+    "Missing maintained native FFmpeg owner",
+    sorted(post_f07_video_decoder_owners - set(physical_all)))
+assert not post_f07_video_decoder_owners.intersection(research_paths)
+assert "EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT" in (
+    root / "headless/CMakeLists.txt").read_text()
+print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_OWNER_PASS", f"owners={len(post_f07_video_decoder_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -359,7 +374,8 @@ physical = [p for p in physical_all
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
-            post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners]
+            post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
+            post_f07_video_decoder_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

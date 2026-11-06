@@ -388,6 +388,17 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
 <!-- POST_F07_MAINTAINED_OWNER_END -->
 
+### P1.3 — décodeur vidéo H.264/VP8/VP9 natif commun (06/11/2026)
+
+Trois sources maintenues dans `vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x` :
+`nx2_video_decoder.{h,cpp}` et `h264_packet.h` (licence GPL-3.0, portage
+à partir d'Eden NX2/Lichii `nx2`). Sélectionnées via la cible `video_core`
+et les bibliothèques FFmpeg déjà intégrées pour le binaire natif partagé.
+Ce premier lot n'inclut **pas encore** le service IPC enfant ni la création
+de frames côté invité ; les capacités FFmpeg du moteur figé sont H.264,
+VP8 et VP9, AV1 refusé. Témoin `check_native_video_decoder_backend_host.py`.
+
+
 ### P1.3 — propriétaires NVDRV communs post-F07 (06/11/2026)
 
 Deux unités C++ complètes dans `vendor/encore-active/eden-core`, sélectionnées

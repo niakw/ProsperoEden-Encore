@@ -2293,6 +2293,29 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
 endif()
 
+# Shared NS1/NS2 host video decoder: the native NS2 codec path reuses the
+# already linked Eden FFmpeg video_core owner. No per-title backend selection.
+# Unsupported elementary streams fail at codec construction, never acknowledge
+# a decoded image when no decoder exists.
+if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
+    set(EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/video_decoder")
+    foreach(eden_native_video_codec_file
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/video_core/host1x/h264_packet.h"
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/video_core/host1x/nx2_video_decoder.h"
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/video_core/host1x/nx2_video_decoder.cpp")
+        if(NOT EXISTS "${eden_native_video_codec_file}")
+            message(FATAL_ERROR "Missing maintained NS2 video decoder owner: ${eden_native_video_codec_file}")
+        endif()
+    endforeach()
+    target_sources(video_core PRIVATE
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/video_core/host1x/nx2_video_decoder.cpp")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}")
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}")
+endif()
+
 # Unified native GraphicsSupervisor / SelfController IPC and VI2 cadence.
 # NS1 service behaviour remains selected by the guest's registered process.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)

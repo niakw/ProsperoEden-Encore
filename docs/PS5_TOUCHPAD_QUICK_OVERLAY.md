@@ -52,7 +52,13 @@ Graphics and pad assignments reuse `LoadGameSettings` and `SaveGameSettings`
 with the actual resolved game Title ID. The menu retains `-1` as an inherited
 setting and refuses invalid combinations through the existing JSON validator.
 On a rejected save, the editor restores the previous value and displays an
-error message. This draft intentionally does not hot-swap a Vulkan renderer,
+error message. Once a graphics or mapping edit is saved, the quick menu retains
+an **amber, French warning** (`RELANCER LE JEU REQUIS`) even after the menu is
+closed and reopened. The warning is about restarting the **game**, not the PS5
+or the emulator; current gameplay can continue safely. FPS visibility and
+detailed logging update immediately and do not trigger the restart banner.
+The displayed labels use ASCII French because the low-cost native bitmap font
+has no accented glyphs yet. This implementation intentionally does not hot-swap a Vulkan renderer,
 a framebuffer configuration or the HID mapping mid-guest-session.
 
 The FPS switch changes the existing **host-present HUD**, not a fictional
@@ -77,7 +83,7 @@ The branch is not approved for release until all of these are checked:
    close/reopen and all guest input neutralization cases work.
 3. Per-title override save/reload, invalid combinations and mapping swaps
    do not mutate NS1/NS2 defaults.
-4. Vulkan output with FPS off, FPS on, and frame generation composes exactly
+4. Vulkan output with FPS off, FPS on, a persistent restart banner, and frame generation composes exactly
    one overlay without guest pixels being changed.
 5. The panel remains legible on output modes, and the PS5 controller menus
    cannot accidentally select an in-game action.

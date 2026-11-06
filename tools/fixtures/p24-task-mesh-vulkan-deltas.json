@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "description": "Reviewed Task/Mesh Vulkan deltas; reverse each exact hunk to recover the unmodified pinned Encore fork. Not shader execution proof.",
+  "upstream_lic_hii": "zortos293/Lichii@02504aeb37cb3ee07dc421acc0570ad5ba25d53f",
+  "files": [
+    {
+      "path": "include/video_core/renderer_vulkan/vk_graphics_pipeline.h",
+      "pinned_blob_sha": "67d0db1228dd244aa9651b988f82419aa9d883b5",
+      "maintained_blob_sha": "f1392b19a672db71213c1ee94c2daaa385f54f5d",
+      "hunks": [
+        {
+          "before": "    bool UsesExtendedDynamicState() const noexcept {\n        return key.state.extended_dynamic_state != 0;\n    }\n    GraphicsPipeline& operator=(GraphicsPipeline&&) noexcept = delete;\n    GraphicsPipeline(GraphicsPipeline&&) noexcept = delete;\n",
+          "after": "    bool UsesExtendedDynamicState() const noexcept {\n        return key.state.extended_dynamic_state != 0;\n    }\n\n    /// Switch 2 task/mesh pipeline: drawn with vkCmdDrawMeshTasksEXT.\n    [[nodiscard]] bool IsMeshPipeline() const noexcept {\n        return stage_infos[0].is_task || stage_infos[0].is_mesh;\n    }\n    GraphicsPipeline& operator=(GraphicsPipeline&&) noexcept = delete;\n    GraphicsPipeline(GraphicsPipeline&&) noexcept = delete;\n"
+        }
+      ]
+    },
+    {
+      "path": "include/video_core/renderer_vulkan/vk_rasterizer.h",
+      "pinned_blob_sha": "b685651f469f03ef3e33886a41c656731e1e2a9c",
+      "maintained_blob_sha": "405dd6e39634149b9b9e0badf11245a37f541719",
+      "hunks": [
+        {
+          "before": "    boost::container::static_vector<VkSampler, MAX_TEXTURES> sampler_handles;\n\n    u32 draw_counter = 0;\n};\n\n} // namespace Vulkan",
+          "after": "    boost::container::static_vector<VkSampler, MAX_TEXTURES> sampler_handles;\n\n    u32 draw_counter = 0;\n    bool mesh_draw{}; ///< the draw being prepared uses a task/mesh pipeline\n};\n\n} // namespace Vulkan"
+        }
+      ]
+    },
+    {
+      "path": "include/video_core/vulkan_common/vulkan_wrapper.h",
+      "pinned_blob_sha": "e19dea7653de9a14d50c939579dab6f1b7c87058",
+      "maintained_blob_sha": "23ef2da73702570e60a463e1a47ea7e44f363c77",
+      "hunks": [
+        {
+          "before": "    PFN_vkCmdDrawIndirectCount vkCmdDrawIndirectCount{};\n    PFN_vkCmdDrawIndexedIndirectCount vkCmdDrawIndexedIndirectCount{};\n    PFN_vkCmdDrawIndirectByteCountEXT vkCmdDrawIndirectByteCountEXT{};\n    PFN_vkCmdEndConditionalRenderingEXT vkCmdEndConditionalRenderingEXT{};\n    PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT{};\n    PFN_vkCmdEndQuery vkCmdEndQuery{};",
+          "after": "    PFN_vkCmdDrawIndirectCount vkCmdDrawIndirectCount{};\n    PFN_vkCmdDrawIndexedIndirectCount vkCmdDrawIndexedIndirectCount{};\n    PFN_vkCmdDrawIndirectByteCountEXT vkCmdDrawIndirectByteCountEXT{};\n    PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT{};\n    PFN_vkCmdEndConditionalRenderingEXT vkCmdEndConditionalRenderingEXT{};\n    PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT{};\n    PFN_vkCmdEndQuery vkCmdEndQuery{};"
+        },
+        {
+          "before": "        dld->vkCmdDrawIndexedIndirect(handle, src_buffer, src_offset, draw_count, stride);\n    }\n\n    void DrawIndirectCount(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer count_buffer,\n                           VkDeviceSize count_offset, u32 draw_count, u32 stride) const noexcept {\n        dld->vkCmdDrawIndirectCount(handle, src_buffer, src_offset, count_buffer, count_offset,",
+          "after": "        dld->vkCmdDrawIndexedIndirect(handle, src_buffer, src_offset, draw_count, stride);\n    }\n\n    void DrawMeshTasksEXT(u32 group_count_x, u32 group_count_y, u32 group_count_z) const noexcept {\n        dld->vkCmdDrawMeshTasksEXT(handle, group_count_x, group_count_y, group_count_z);\n    }\n\n    void DrawIndirectCount(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer count_buffer,\n                           VkDeviceSize count_offset, u32 draw_count, u32 stride) const noexcept {\n        dld->vkCmdDrawIndirectCount(handle, src_buffer, src_offset, count_buffer, count_offset,"
+        }
+      ]
+    },
+    {
+      "path": "vk_graphics_pipeline_cost.cpp",
+      "pinned_blob_sha": "a3f7706acc4f2494aa9b79062595e4bab622d341",
+      "maintained_blob_sha": "f2a15f4af726a7a39c67e80772537c97a12245d0",
+      "hunks": [
+        {
+          "before": "    GraphicsDescriptorScratch* current{};\n};\n\nDescriptorLayoutBuilder MakeBuilder(const Device& device, std::span<const Shader::Info> infos) {\n    DescriptorLayoutBuilder builder{device};\n    for (size_t index = 0; index < infos.size(); ++index) {",
+          "after": "    GraphicsDescriptorScratch* current{};\n};\n\n// The stage of a program: task and mesh programs sit in the vertex and tessellation slots.\nVkShaderStageFlagBits StageFlag(const Shader::Info& info, VkShaderStageFlagBits slot_stage) {\n    if (info.is_task) {\n        return VK_SHADER_STAGE_TASK_BIT_EXT;\n    }\n    if (info.is_mesh) {\n        return VK_SHADER_STAGE_MESH_BIT_EXT;\n    }\n    return slot_stage;\n}\n\nDescriptorLayoutBuilder MakeBuilder(const Device& device, std::span<const Shader::Info> infos) {\n    DescriptorLayoutBuilder builder{device};\n    for (size_t index = 0; index < infos.size(); ++index) {"
+        },
+        {
+          "before": "            VK_SHADER_STAGE_GEOMETRY_BIT,\n            VK_SHADER_STAGE_FRAGMENT_BIT,\n        };\n        builder.Add(infos[index], stages.at(index));\n    }\n    return builder;\n}",
+          "after": "            VK_SHADER_STAGE_GEOMETRY_BIT,\n            VK_SHADER_STAGE_FRAGMENT_BIT,\n        };\n        builder.Add(infos[index], StageFlag(infos[index], stages.at(index)));\n    }\n    return builder;\n}"
+        },
+        {
+          "before": "        }\n    }\n\n    const VkPipelineDynamicStateCreateInfo dynamic_state_ci{\n        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,\n        .pNext = nullptr,",
+          "after": "        }\n    }\n\n    const bool is_mesh{IsMeshPipeline()};\n    if (is_mesh) {\n        // Mesh pipelines have no vertex input or input assembly.\n        dynamic_states.erase(std::remove_if(dynamic_states.begin(), dynamic_states.end(),\n                                            [](VkDynamicState state) {\n                                                return state == VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT ||\n                                                       state == VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT ||\n                                                       state == VK_DYNAMIC_STATE_VERTEX_INPUT_EXT ||\n                                                       state == VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE_EXT ||\n                                                       state == VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT;\n                                            }),\n                             dynamic_states.end());\n    }\n    const VkPipelineDynamicStateCreateInfo dynamic_state_ci{\n        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,\n        .pNext = nullptr,"
+        },
+        {
+          "before": "                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,\n                .pNext = nullptr,\n                .flags = 0,\n                .stage = MaxwellToVK::ShaderStage(Shader::StageFromIndex(stage)),\n                .module = *spv_modules[stage],\n                .pName = \"main\",\n                .pSpecializationInfo = nullptr,",
+          "after": "                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,\n                .pNext = nullptr,\n                .flags = 0,\n                .stage = StageFlag(stage_infos[stage],\n                                   MaxwellToVK::ShaderStage(Shader::StageFromIndex(stage))),\n                .module = *spv_modules[stage],\n                .pName = \"main\",\n                .pSpecializationInfo = nullptr,"
+        },
+        {
+          "before": "        .flags = flags | extra_flags,\n        .stageCount = static_cast<u32>(shader_stages.size()),\n        .pStages = shader_stages.data(),\n        .pVertexInputState = &vertex_input_ci,\n        .pInputAssemblyState = &input_assembly_ci,\n        .pTessellationState = &tessellation_ci,\n        .pViewportState = &viewport_ci,\n        .pRasterizationState = &rasterization_ci,\n        .pMultisampleState = &multisample_ci,",
+          "after": "        .flags = flags | extra_flags,\n        .stageCount = static_cast<u32>(shader_stages.size()),\n        .pStages = shader_stages.data(),\n        .pVertexInputState = is_mesh ? nullptr : &vertex_input_ci,\n        .pInputAssemblyState = is_mesh ? nullptr : &input_assembly_ci,\n        .pTessellationState = is_mesh ? nullptr : &tessellation_ci,\n        .pViewportState = &viewport_ci,\n        .pRasterizationState = &rasterization_ci,\n        .pMultisampleState = &multisample_ci,"
+        }
+      ]
+    },
+    {
+      "path": "vk_pipeline_cache_cost.cpp",
+      "pinned_blob_sha": "8d17c94337039f75342778b6ab842a4931b3667b",
+      "maintained_blob_sha": "9476fc6cca19961f8ce483120e5b984ef1243984",
+      "hunks": [
+        {
+          "before": "    } else {\n        info.previous_stage_stores.mask.set();\n    }\n    const Shader::Stage stage{program.stage};\n    const bool has_geometry{key.unique_hashes[4] != 0 && !programs[4].is_geometry_passthrough};\n    const bool gl_ndc{key.state.ndc_minus_one_to_one != 0};",
+          "after": "    } else {\n        info.previous_stage_stores.mask.set();\n    }\n    if (previous_program && previous_program->stage == Shader::Stage::Mesh) {\n        for (const u32 line : previous_program->mesh.primitive_lines) {\n            const auto attribute{static_cast<Shader::IR::Attribute>(line)};\n            if (Shader::IR::IsGeneric(attribute)) {\n                info.per_primitive_generics.set(Shader::IR::GenericAttributeIndex(attribute));\n            }\n        }\n    }\n    const Shader::Stage stage{program.stage};\n    const bool has_geometry{key.unique_hashes[4] != 0 && !programs[4].is_geometry_passthrough};\n    const bool gl_ndc{key.state.ndc_minus_one_to_one != 0};"
+        },
+        {
+          "before": "            return Shader::TessSpacing::Equal;\n        }();\n        break;\n    case Shader::Stage::Geometry:\n        if (program.output_topology == Shader::OutputTopology::PointList) {\n            info.fixed_state_point_size = point_size;",
+          "after": "            return Shader::TessSpacing::Equal;\n        }();\n        break;\n    case Shader::Stage::Mesh:\n        info.convert_depth_mode = gl_ndc;\n        break;\n    case Shader::Stage::Geometry:\n        if (program.output_topology == Shader::OutputTopology::PointList) {\n            info.fixed_state_point_size = point_size;"
+        },
+        {
+          "before": "                           Shader::Stage::TessellationEval) |\n        subgroup_stage_bit(VK_SHADER_STAGE_GEOMETRY_BIT, Shader::Stage::Geometry) |\n        subgroup_stage_bit(VK_SHADER_STAGE_FRAGMENT_BIT, Shader::Stage::Fragment) |\n        subgroup_stage_bit(VK_SHADER_STAGE_COMPUTE_BIT, Shader::Stage::Compute)};\n    profile = Shader::Profile{\n        .supported_spirv = device.SupportedSpirvVersion(),\n        .unified_descriptor_binding = true,",
+          "after": "                           Shader::Stage::TessellationEval) |\n        subgroup_stage_bit(VK_SHADER_STAGE_GEOMETRY_BIT, Shader::Stage::Geometry) |\n        subgroup_stage_bit(VK_SHADER_STAGE_FRAGMENT_BIT, Shader::Stage::Fragment) |\n        subgroup_stage_bit(VK_SHADER_STAGE_COMPUTE_BIT, Shader::Stage::Compute) |\n        subgroup_stage_bit(VK_SHADER_STAGE_TASK_BIT_EXT, Shader::Stage::Task) |\n        subgroup_stage_bit(VK_SHADER_STAGE_MESH_BIT_EXT, Shader::Stage::Mesh)};\n    profile = Shader::Profile{\n        .supported_spirv = device.SupportedSpirvVersion(),\n        .unified_descriptor_binding = true,"
+        }
+      ]
+    },
+    {
+      "path": "vulkan_device.cpp",
+      "pinned_blob_sha": "3999395b321af52a6a1aa2fc62b1d44fc984c6a2",
+      "maintained_blob_sha": "6fe24a0745a719b158f9119e918f6152c0f4c7fd",
+      "hunks": [
+        {
+          "before": "                               VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME);\n    }\n\n    // VK_KHR_shader_quad_control\n    extensions.shader_quad_control = features.shader_quad_control.shaderQuadControl;\n    RemoveExtensionFeatureIfUnsuitable(extensions.shader_quad_control, features.shader_quad_control,",
+          "after": "                               VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME);\n    }\n\n    // VK_EXT_mesh_shader: Switch 2 titles draw some geometry with task and mesh programs. Only\n    // the two stages are used; the multiview, shading rate and query features need more.\n    features.mesh_shader.multiviewMeshShader = VK_FALSE;\n    features.mesh_shader.primitiveFragmentShadingRateMeshShader = VK_FALSE;\n    features.mesh_shader.meshShaderQueries = VK_FALSE;\n    extensions.mesh_shader = features.mesh_shader.taskShader && features.mesh_shader.meshShader;\n    RemoveExtensionFeatureIfUnsuitable(extensions.mesh_shader, features.mesh_shader,\n                                       VK_EXT_MESH_SHADER_EXTENSION_NAME);\n\n    // VK_KHR_shader_quad_control\n    extensions.shader_quad_control = features.shader_quad_control.shaderQuadControl;\n    RemoveExtensionFeatureIfUnsuitable(extensions.shader_quad_control, features.shader_quad_control,"
+        }
+      ]
+    },
+    {
+      "path": "vulkan_rasterizer.cpp",
+      "pinned_blob_sha": "2c8c4a3fa2e6e142f612b8f68594aa2599f9f946",
+      "maintained_blob_sha": "d1e684181fb948d7b3d2d68d33389935c42bea2c",
+      "hunks": [
+        {
+          "before": "        }\n    }\n#endif\n#ifdef PS5_NATIVE\n    // Only reserve thread-local storage here. Cache descriptors and shader\n    // bindings are still read and validated under the paired cache locks.",
+          "after": "        }\n    }\n#endif\n    // Authenticate the final graphics pipeline AFTER descriptor preflight may\n    // have reselected it. Never dispatch mesh work without the host feature.\n    mesh_draw = pipeline->IsMeshPipeline();\n    if (mesh_draw && !device.IsExtMeshShaderSupported()) {\n        ::Eden::Performance::RecordGraphicsDrawDrop(\n            ::Eden::Performance::GraphicsDrawDrop::ConfigureRejected);\n        LOG_ERROR(Render_Vulkan, \"Task/Mesh draw rejected: VK_EXT_mesh_shader unavailable\");\n        return;\n    }\n#ifdef PS5_NATIVE\n    // Only reserve thread-local storage here. Cache descriptors and shader\n    // bindings are still read and validated under the paired cache locks."
+        },
+        {
+          "before": "                    ::Eden::Performance::GraphicsDrawDrop::WorkerPipelineFailed);\n                return;\n            }\n            if (draw_params.is_indexed) {\n                cmdbuf.DrawIndexed(draw_params.num_vertices, draw_params.num_instances,\n                                   draw_params.first_index, draw_params.base_vertex,",
+          "after": "                    ::Eden::Performance::GraphicsDrawDrop::WorkerPipelineFailed);\n                return;\n            }\n            if (pipeline->IsMeshPipeline()) {\n                // Native NVN draw vertex count represents task workgroups.\n                // Do not reinterpret this as a legacy vertex-index draw.\n                cmdbuf.DrawMeshTasksEXT(draw_params.num_vertices, 1, 1);\n                return;\n            }\n            if (draw_params.is_indexed) {\n                cmdbuf.DrawIndexed(draw_params.num_vertices, draw_params.num_instances,\n                                   draw_params.first_index, draw_params.base_vertex,"
+        },
+        {
+          "before": "    const auto& params = maxwell3d->draw_manager.indirect_state;\n    buffer_cache.SetDrawIndirect(&params);\n    PrepareDraw(params.is_indexed, [this, &params] {\n        const auto indirect_buffer = buffer_cache.GetDrawIndirectBuffer();\n        const auto& buffer = indirect_buffer.first;\n        const auto& offset = indirect_buffer.second;",
+          "after": "    const auto& params = maxwell3d->draw_manager.indirect_state;\n    buffer_cache.SetDrawIndirect(&params);\n    PrepareDraw(params.is_indexed, [this, &params] {\n        // A native mesh indirect command has a different buffer ABI.\n        // Reject it explicitly; invoking legacy DrawIndirect would use the\n        // wrong command format and could corrupt the render stream.\n        if (mesh_draw) {\n            ::Eden::Performance::RecordGraphicsDrawDrop(\n                ::Eden::Performance::GraphicsDrawDrop::ConfigureRejected);\n            LOG_ERROR(Render_Vulkan, \"Task/Mesh indirect draw unsupported\");\n            return;\n        }\n        const auto indirect_buffer = buffer_cache.GetDrawIndirectBuffer();\n        const auto& buffer = indirect_buffer.first;\n        const auto& offset = indirect_buffer.second;"
+        }
+      ]
+    },
+    {
+      "path": "vulkan_wrapper.cpp",
+      "pinned_blob_sha": "61e9a2e2f870357d2be34cc656cbcff1873d83d5",
+      "maintained_blob_sha": "a2be1657524527aead5ad8fdc2f69ef5e04aeddb",
+      "hunks": [
+        {
+          "before": "    X(vkCmdDrawIndirectCount);\n    X(vkCmdDrawIndexedIndirectCount);\n    X(vkCmdDrawIndirectByteCountEXT);\n    X(vkCmdEndConditionalRenderingEXT);\n    X(vkCmdEndQuery);\n    X(vkCmdEndRenderPass);",
+          "after": "    X(vkCmdDrawIndirectCount);\n    X(vkCmdDrawIndexedIndirectCount);\n    X(vkCmdDrawIndirectByteCountEXT);\n    X(vkCmdDrawMeshTasksEXT);\n    X(vkCmdEndConditionalRenderingEXT);\n    X(vkCmdEndQuery);\n    X(vkCmdEndRenderPass);"
+        }
+      ]
+    }
+  ]
+}

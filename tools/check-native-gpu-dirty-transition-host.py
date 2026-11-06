@@ -96,8 +96,18 @@ field_after = """    std::atomic<TransformAddress> current{};
     std::mutex guard;
     std::mutex gather_guard;
     std::vector<TransformAddress> back_buffer;"""
-assert expected.count(gather_before) == 1 and expected.count(field_before) == 1
-expected = expected.replace(gather_before, gather_after).replace(field_before, field_after)
+# The pinned Eden source now already carries gather serialization. Verify
+# that this protection is present and retain the maintained owner’s
+# semantically identical implementation while replaying the M09 changes.
+pinned_gather = """    void Gather(std::function<void(PAddr, size_t)>& callback) {
+        // Video decode/host1x flushes can gather off the GPU thread.
+        // A second gather must not swap or clear front_buffer while the
+        // first is still iterating callbacks. Keep the lock through clear().
+        std::scoped_lock gather_lock{gather_guard};
+        {"""
+assert expected.count(pinned_gather) == 1, "Pinned Gather source drift"
+assert expected.count(field_after) == 1, "Pinned Gather mutex missing"
+expected = expected.replace(pinned_gather, gather_after)
 assert maintained == expected
 assert 'set(EDEN_NATIVE_DIRTY_HEADER_ROOT' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake

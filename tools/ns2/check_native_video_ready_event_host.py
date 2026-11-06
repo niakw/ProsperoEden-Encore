@@ -26,6 +26,19 @@ assert 'system.CoreTiming().UnscheduleEvent(m_ready_timer)' in owner
 assert owner.index('m_ready->Detach();') < owner.index('m_context.CloseEvent(m_event)')
 assert 'm_ready->Set(m_started, m_pending.size() < MaxFrames);' in owner
 assert 'm_ready->Set(false, false);' in owner
+# A terminal guest Finalize must retire the CoreTiming periodic callback
+# immediately, before the original event handle can be cleared or closed.
+# Merely disabling readiness while leaving a 4ms loop alive leaks work for
+# as long as the finalized IPC object remains referenced.
+finalize = owner.split('void IGraphicsVideoDecoderSession::Finalize(', 1)[1].split(
+    '\nvoid IGraphicsVideoDecoderSession::GetEvent(', 1)[0]
+assert finalize.count('m_ready->Detach();') == 1
+assert finalize.count('system.CoreTiming().UnscheduleEvent(m_ready_timer);') == 1
+assert finalize.count('m_ready_timer.reset();') == 1
+assert finalize.index('m_ready->Set(false, false);') < finalize.index('m_ready->Detach();')
+assert finalize.index('m_ready->Detach();') < finalize.index('UnscheduleEvent(m_ready_timer)')
+assert finalize.index('m_ready_timer.reset();') < finalize.index('m_event->Clear(system.Kernel())')
+assert finalize.index('m_event->Clear(system.Kernel())') < finalize.index('m_finalized = true;')
 assert 'native_video_ready_state.h' in recipe
 assert 'm_ready->SetRoom(m_pending.size() < MaxFrames);' in owner
 fixture=r'''

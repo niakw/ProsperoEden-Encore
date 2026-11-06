@@ -405,7 +405,25 @@ physical = [p for p in physical_all
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
             post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
-            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners]
+            post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
+            post_f07_native_stage_buffer_owners]
+# P2.4: the maintained Ampere Task/Mesh stage-buffer decoder was introduced
+# after the frozen F07 337-source review. It is an active shader header, not
+# a historical optimization. Keep its exact owner and CMake selection guarded.
+post_f07_native_stage_buffer_owners = {
+    "ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_stage_buffer.h",
+}
+assert post_f07_native_stage_buffer_owners <= set(physical_all), (
+    "Missing native stage-buffer decoder owner",
+    sorted(post_f07_native_stage_buffer_owners - set(physical_all)))
+assert not post_f07_native_stage_buffer_owners.intersection(research_paths)
+stage_buffer_source = (active / next(iter(post_f07_native_stage_buffer_owners))).read_text()
+stage_lowerer = (active / "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h").read_text()
+assert "DecodeNativeStageBufferAccess(" in stage_buffer_source
+assert "DecodeNativeStageBufferAccess(insn)" in stage_lowerer
+assert "native_stage_buffer.h" in (root / "headless/CMakeLists.txt").read_text()
+print("ENCORE_POST_F07_STAGE_BUFFER_OWNER_PASS", f"owners={len(post_f07_native_stage_buffer_owners)}")
+
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

@@ -10,6 +10,12 @@ helper,reference,imm_old,imm_new,reg_old,reg_new=json.loads(r'''["\nnamespace {\
 assert pristine.count(imm_old)==1 and pristine.count(reg_old)==1
 expected='#include <atomic>\n#include <cstdio>\n'+helper+"\n"+reference+"\n"+pristine.replace(imm_old,imm_new).replace(reg_old,reg_new)
 assert actual==expected, "PRMT maintained shader is not the retired generated source"
+# The reviewed shared CAS translator now owns ATOM_cas. Retaining its
+# retired stub in the active native PRMT owner produces duplicate symbols
+# and silently diverges from the actual source-generation oracle.
+cas_owner=(root/"vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp").read_text()
+assert "void TranslatorVisitor::ATOM_cas(u64 insn)" in cas_owner
+assert "void TranslatorVisitor::ATOM_cas(u64)" not in actual
 assert "EdenGpuBoundedSample" in actual and "EdenPrmtIndexReference" in actual
 assert "static_assert(EdenPrmtIndexReference" in actual
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in module

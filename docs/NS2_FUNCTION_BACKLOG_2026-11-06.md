@@ -51,20 +51,21 @@
 | **Q01** | [`tools/ns2/qualify_host_batch.py`](../tools/ns2/qualify_host_batch.py) | **P4.1–P4.2 : ouvert.** Exécuter les suites complètes `--scope core --jobs 3`, négatifs GMMU/NVMap/texture/IPC/atomiques, JIT/NS1, CI GitHub même paire ; produire le reçu, corriger les rouges **avant** de compter le lot comme terminé. | Haute |
 | **Q02** | [Roadmap #15](https://github.com/niakw/ProsperoEden-Encore/issues/15), [matrice de sortie](P0_P4_EXIT_MATRIX_2026-11-06.md) | **P4.3 : ouvert.** Clôturer uniquement les catégories implémentées et qualifiées, associer commits/test/CI, écrire la décision d'entrée en P5. Aucun build console pendant P4. | Fin |
 
-## Charge restante estimative (pas un délai promis)
+## Pilotage accéléré avec ChatGPT : lots mesurables, pas journées humaines
 
-Il s'agit de **journées d'ingénierie active**, pour une personne habituée au dépôt, avec travail assisté par outils et tests en lots. Les plages couvrent la vérification des fonctions déjà présentes, l'implémentation **des chemins effectivement nécessaires**, les tests et les correctifs d'intégration. Elles **ne reposent sur aucune mesure de productivité observée** et ne garantissent ni date de fin ni jeu compatible. Plusieurs tâches peuvent être traitées en parallèle ; il ne faut pas additionner mécaniquement les délais calendaires.
+L'estimation humaine initiale de **17–46 journées** a été retirée : elle ne mesure pas les opérations menées par ChatGPT, qui peut analyser des sources, modifier plusieurs fonctions et lancer des suites en parallèle. Inversement, elle ne doit pas être remplacée par une promesse de livraison en quelques heures sans avoir identifié les opcodes et commandes réellement indispensables.
 
-| Lot | Charge indicative | Risque |
-|---|---:|---|
-| P0 + CI/provenance au SHA stabilisé | **1–3 j** | Échecs CI en cascade après modifications |
-| P1 — formats, mémoire, IPC GPU et régressions NS1 | **4–10 j** | Protocole incomplet, variantes de services non documentées |
-| P2.2c/P2.3 — CBUF, memory, buffers/image, barrières | **4–10 j** | Adressage et sémantique des shaders non connus |
-| P2.4/P2.7 — ISA 3D, stages, sémaphores | **6–18 j** | **Risque majeur** : Task/Mesh ou ISA supplémentaires réellement indispensables |
-| P4.1–P4.3 — recette finale hôte et décision | **2–5 j** | Tests/CI non déterministes, correctifs de régression |
-| **Ordre de grandeur P0–P4** | **17–46 journées d'ingénierie** | Peut dépasser ces bornes si Task/Mesh ou de grandes familles ISA manquent |
+| Lot ChatGPT | Contenu regroupé | Condition de fin (automatisable sur hôte) |
+|---|---|---|
+| **A — CI P0** | Réparer tous les échecs source/vendor/CI actuels en une série de correctifs de provenance et compilation | Toutes les CI obligatoires vertes sur une paire `main/vendor` |
+| **B — IPC P1** | Établir une matrice par commande de `ResultNotImplemented`, vérifier structures et provenance, corriger seulement les ABI nécessaires | Témoins positifs/négatifs et aucune commande obligatoire non couverte |
+| **C — mémoire P1/P2.3** | Tests transactions NVMap/GMMU/sparse, CBUF/SSBO dynamiques, ressources TIC/TSC, retour des atomiques | Scénarios hôte négatifs + shader SPIR-V valide ; refus explicites |
+| **D — GPU P2.4** | Audit couverture instruction par instruction, pipeline multi-stages et synchronisation GPFIFO | Couverture réelle des familles nécessaires ; aucun faux succès pour instructions inconnues |
+| **E — P4** | Lot `qualify_host_batch.py`, puis suites CI Linux réelles et rapports SHA | Recette complète sur SHA figé, décision P5 documentée |
 
-**Calendrier indicatif : plutôt des semaines que des heures.** Sous hypothèse favorable (peu de nouvelles sémantiques matérielles), environ **3–5 semaines** de travail soutenu pour une personne ; si des stages/opcodes complexes sont réellement nécessaires, **6–10 semaines ou davantage**. Ce n'est ni un engagement de livraison, ni une prévision de P5. La borne basse ne vaut que si les refus conditionnels peuvent être démontrés hors périmètre sans sacrifier le socle générique.
+**Estimation honnête propre au travail assisté par ChatGPT :** les lots A et E sont principalement des opérations automatisables et leur charge est mesurable par les durées des suites CI. Les lots B–D contiennent une inconnue de **fonctionnalités réelles à écrire** : ils ne se déduisent ni du nombre de fichiers, ni du nombre de tests, ni du débit de rédaction de ChatGPT. Il est possible de traiter plusieurs corrections en une seule intervention, mais pas de garantir la clôture complète de P0–P4 en quelques heures tant que les exigences Task/Mesh, GMMU et IPC ne sont pas qualifiées.
+
+**Accélération concrète :** lancer des contrôles indépendants en parallèle ; travailler par familles de fonctions ; publier le sous-module `vendor` puis le gitlink `main` ; supprimer les doublons déjà couverts et transférer **uniquement** la preuve console en P5. Ne jamais cocher une fonction absente pour tenir un délai.
 
 ## Ordre et règles de clôture
 

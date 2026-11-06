@@ -72,12 +72,20 @@ int main(){
     assert(!CanVitAttention(p,{1024,1024,1023,1024}));
     assert(!CanVitAttention(p,{1024,1024,1024,1023}));
     p.tokens=0;assert(!CanVitAttention(p,s));
-    p.tokens=2049;assert(!CanVitAttention(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
+    p.tokens=4097;assert(!CanVitAttention(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     p={1,0,0,0,1};assert(!CanVitAttention(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     p={0,0,0,UINT32_MAX-3u,1};
     assert(!CanVitAttention(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     p={0,0,0,0,2048};
     assert(CanVitAttention(p,{2097152,2097152,2097152,2097152}));
+    // Native Original and Compact 1080p plans produce 2560 ViT tokens.
+    p.tokens=2560;
+    assert(CanVitAttention(p,{2621440,2621440,2621440,2621440}));
+    assert(!CanVitAttention(p,{2621439,2621440,2621440,2621440}));
+    p.tokens=4096;
+    assert(CanVitAttention(p,{4194304,4194304,4194304,4194304}));
+    p.tokens=4097;
+    assert(!CanVitAttention(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
 
     std::array<std::array<uint8_t,32>,3> q{},k{},v{};
     // For two equal logits, the value 0.5 survives E4M3FN quantization.

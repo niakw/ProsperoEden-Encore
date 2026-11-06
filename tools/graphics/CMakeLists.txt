@@ -456,3 +456,17 @@ target_compile_options(test_rdna2_nr_split_final_head_weights PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_split_final_head_weights
     COMMAND test_rdna2_nr_split_final_head_weights)
+
+# Validate all native 16/4 Split-Swin blocks and their routed shifts from
+# the complete 152/76-row original/compact corpus (host-only, no GPU).
+add_executable(test_rdna2_nr_split_native_routes_policy
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_native_routes_policy.cpp")
+target_include_directories(test_rdna2_nr_split_native_routes_policy PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_native_routes_policy PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_native_routes_policy
+    COMMAND test_rdna2_nr_split_native_routes_policy
+        "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
+        "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")

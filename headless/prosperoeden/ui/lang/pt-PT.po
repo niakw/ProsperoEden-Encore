@@ -1354,10 +1354,6 @@ msgstr "A inicialização do comando da PS5 falhou."
 msgid "Public room service unavailable."
 msgstr "Serviço de salas indisponível."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Salas públicas (apenas leitura)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "DEFINIÇÕES RÁPIDAS"
@@ -1369,10 +1365,6 @@ msgstr "Definições rápidas"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Sair"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Lista de salas (apenas leitura)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM em falta na pasta de ficheiros de jogo"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM ausente na raiz de armazenamento"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Ainda não é possível entrar nas salas."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP ou XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (uma pasta por ID de título)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Salas públicas"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "A ligar à sala..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Ligado à sala"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Entre numa sala ou aloje uma sala LAN."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Sala indisponível."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Entrar"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Alojar / Sair"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Instalar"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Instalar a atualização verificada? Eden Encore será encerrado a seguir."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "A transferir e verificar a atualização PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Atualizações indisponíveis neste dispositivo."

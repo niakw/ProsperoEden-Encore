@@ -28,6 +28,9 @@ struct ReleaseAssessment {
     std::string package_name;
     std::string sha256;
     std::uint64_t package_bytes = 0;
+    // Never trust a URL from arbitrary release notes. This download path
+    // is reconstructed only after exact official-owner URL validation.
+    std::string package_path;
 };
 
 inline std::string BoundedNotes(const nlohmann::json& data) {
@@ -131,7 +134,7 @@ inline ReleaseAssessment AssessStableRelease(std::string_view response,
         const auto bytes = asset["size"].get<std::uint64_t>();
         if (bytes < (1u << 20) || bytes > (1ull << 30)) continue;
         const std::string expected =
-            "https://github.com/niakw/Prospero.Eden-Encore/releases/download/" +
+            "https://github.com/niakw/ProsperoEden-Encore/releases/download/" +
             tag + "/" + name;
         if (asset["browser_download_url"].get<std::string>() != expected)
             continue;
@@ -139,6 +142,8 @@ inline ReleaseAssessment AssessStableRelease(std::string_view response,
         result.package_name = name;
         result.sha256 = digest.substr(7);
         result.package_bytes = bytes;
+        result.package_path =
+            "/niakw/ProsperoEden-Encore/releases/download/" + tag + "/" + name;
         break;
     }
     return result;

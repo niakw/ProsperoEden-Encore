@@ -26,7 +26,7 @@ static nlohmann::json fixture(std::string tag = "encore-R2-abcdef12") {
                 {"size", 50000000u},
                 {"digest", digest()},
                 {"browser_download_url",
-                 "https://github.com/niakw/Prospero.Eden-Encore/releases/download/" +
+                 "https://github.com/niakw/ProsperoEden-Encore/releases/download/" +
                  tag + "/Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip"}
             }
         })}
@@ -52,6 +52,9 @@ int main() {
         assert(r.package_name == "Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip");
         assert(r.sha256.size() == 64);
         assert(r.package_bytes == 50000000u);
+        assert(r.package_path ==
+               "/niakw/ProsperoEden-Encore/releases/download/"
+               "encore-R2-abcdef12/Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip");
         assert(r.notes.find("Stable UI") != std::string::npos);
     }
     // Shape of the actual public R1 FTP release: trustworthy metadata,
@@ -60,7 +63,7 @@ int main() {
         auto copy = fixture("encore-R1-56293953");
         copy["assets"][0]["name"] = "Eden-Encore-56293953-FTP-PPSA99008.zip";
         copy["assets"][0]["browser_download_url"] =
-            "https://github.com/niakw/Prospero.Eden-Encore/releases/download/"
+            "https://github.com/niakw/ProsperoEden-Encore/releases/download/"
             "encore-R1-56293953/Eden-Encore-56293953-FTP-PPSA99008.zip";
         expect(copy, Status::current, "R1");
         expect(copy, Status::newer_package_candidate, "R0");
@@ -129,6 +132,15 @@ int main() {
         expect(copy, Status::newer_without_package);
     }
     {
+        // Releases migrated to the standalone repository; never accept
+        // a binary belonging to the historical fork.
+        auto copy = j;
+        copy["assets"][0]["browser_download_url"] =
+            "https://github.com/niakw/Prospero.Eden-Encore/releases/download/"
+            "encore-R2-abcdef12/Eden-Encore-R2-abcdef12-FTP-PPSA99008.zip";
+        expect(copy, Status::newer_without_package);
+    }
+    {
         auto copy = j;
         copy["assets"][0]["browser_download_url"] = "https://malicious.test/update.ffpfsc";
         expect(copy, Status::newer_without_package);
@@ -136,7 +148,7 @@ int main() {
     {
         auto copy = j;
         copy["assets"][0]["browser_download_url"] =
-            "https://github.com/niakw/Prospero.Eden-Encore/releases/download/"
+            "https://github.com/niakw/ProsperoEden-Encore/releases/download/"
             "encore-R1-old/PPSA99008-R2.ffpfsc";
         expect(copy, Status::newer_without_package);
     }

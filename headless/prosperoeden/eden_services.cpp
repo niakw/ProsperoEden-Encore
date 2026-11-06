@@ -25,8 +25,13 @@
 #include "radio_input.h"
 #include "settings_store.h"
 #include "version.h"
+#include "network/room.h"
+#include "network/network.h"
+#include "network/room_member.h"
+#include "enet/enet.h"
 #include "launcher_update_version.hpp"
 #include "launcher_update_release.hpp"
+#include "native_app_update.hpp"
 #include <string_view>
 
 #include <algorithm>
@@ -2455,7 +2460,7 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     // The checked URL is a constant; never derive a download address from
     // release notes, redirects or arbitrary GitHub API JSON.
     const auto response = Common::Net::MakeRequest(
-        "https://api.github.com", "/repos/niakw/Prospero.Eden-Encore/releases/latest");
+        "https://api.github.com", "/repos/niakw/ProsperoEden-Encore/releases/latest");
     if (!response || response->empty() || response->size() > 512u * 1024u) {
         report.state = Report::State::offline;
         report.summary = "GitHub Releases unavailable. The launcher stays usable offline.";
@@ -2464,6 +2469,10 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
     const auto result = Eden::EncoreUpdate::AssessStableRelease(*response, current);
     report.latest_version = result.latest_version;
     report.notes = result.notes;
+    report.package_name = result.package_name;
+    report.package_path = result.package_path;
+    report.package_sha256 = result.sha256;
+    report.package_bytes = result.package_bytes;
     switch (result.status) {
     case Eden::EncoreUpdate::ReleaseAssessment::Status::malformed:
         report.state = Report::State::incompatible;
@@ -2478,16 +2487,143 @@ static pe::ui::AppUpdateInfo QueryAppReleaseMetadata(const std::string& current)
         report.summary = "Stable " + result.latest_version +
             " exists, but no compatible PPSA99008 package is published.";
         break;
-    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_package_candidate:
-        report.state = Report::State::newer_uninstallable;
-        report.summary = "Stable " + result.latest_version +
-            " has a checksum-bound PS5 package; native installation is not qualified.";
+    case Eden::EncoreUpdate::ReleaseAssessment::Status::newer_package_candidate: {
+        // The updater may be advertised only if this app actually carries
+        // its separately built helper ELF, never on host/preview builds.
+        bool helper_ready = false;
+#ifdef PS5_NATIVE
+        std::error_code ec;
+        const auto status =
+            std::filesystem::symlink_status("/app0/self-updater.elf", ec);
+        if (!ec && std::filesystem::is_regular_file(status) &&
+            !std::filesystem::is_symlink(status)) {
+            const auto bytes =
+                std::filesystem::file_size("/app0/self-updater.elf", ec);
+            helper_ready = !ec && bytes >= 4096 && bytes <= (16u << 20);
+        }
+#endif
+        report.state = helper_ready ? Report::State::available
+                                    : Report::State::newer_uninstallable;
+        report.summary = helper_ready
+            ? "Stable PS5 update is available; installation requires confirmation."
+            : "Stable PS5 package exists but its native helper is unavailable.";
         break;
+    }
     }
     // Even a valid SHA-256 in a trusted release is only a candidate. An
     // independently audited installer, title-ID check, download verification,
     // restart and recovery proof are required before State::available is used.
     return report;
+}
+
+namespace {
+struct NativeRoomSession {
+    std::mutex mutex;
+    bool initialized = false;
+    bool hosting = false;
+
+    bool EnsureNetwork() {
+        if (initialized) return true;
+        // The active emulator may already own Network::Init. Reuse its
+        // RoomMember; a second call would replace the guest HLE bridge.
+        if (!Network::GetRoomMember().expired()) {
+            initialized = true;
+            return true;
+        }
+        initialized = Network::Init();
+        return initialized;
+    }
+};
+NativeRoomSession& RoomSession() {
+    // Intentionally process-lifetime: a detached network worker may still
+    // be running during launcher destruction. Never destroy the Room/ENet
+    // objects concurrently from a static global destructor.
+    static auto* session = new NativeRoomSession;
+    return *session;
+}
+
+Eden::Multiplayer::RoomActionResult RoomAction(
+    Eden::Multiplayer::RoomAction action, Eden::Multiplayer::PublicRoom room) {
+    using Eden::Multiplayer::RoomAction;
+    auto& session = RoomSession();
+    std::lock_guard lock(session.mutex);
+    if (action == RoomAction::Join &&
+        !Eden::Multiplayer::CanJoinPublicRoom(room))
+        return {false, "Room is incompatible, protected, full or unsafe."};
+    if (action != RoomAction::Leave && !session.EnsureNetwork())
+        return {false, "Network initialization failed."};
+    auto member = Network::GetRoomMember().lock();
+    auto host = Network::GetRoom().lock();
+    if (!member || !host)
+        return {action == RoomAction::Leave, "Network room is unavailable."};
+    if (action == RoomAction::Leave) {
+        if (member->IsConnected()) member->Leave();
+        if (host->GetState() == Network::Room::State::Open) host->Destroy();
+        session.hosting = false;
+        return {true, "Disconnected from room."};
+    }
+
+    // Preflight the native ENet socket: upstream Join asserts on failure
+    // to create its own client, which would otherwise crash the console.
+    ENetHost* probe = enet_host_create(nullptr, 1, Network::NumChannels, 0, 0);
+    if (!probe) return {false, "Network socket unavailable."};
+    enet_host_destroy(probe);
+
+    if (member->IsConnected()) member->Leave();
+    if (host->GetState() == Network::Room::State::Open) host->Destroy();
+    session.hosting = false;
+    const bool hosting = action == RoomAction::HostPrivate;
+    if (hosting &&
+        !host->Create("Eden Encore PS5", "", "", Network::DefaultRoomPort,
+                      "", 8))
+        return {false, "Could not host private room."};
+    session.hosting = hosting;
+    const std::string address = hosting ? "127.0.0.1" : room.address;
+    const auto port = hosting ? Network::DefaultRoomPort : room.port;
+    // Per-session nickname avoids recurring collisions without reading
+    // a PSN identity or transmitting any console identifier.
+    const auto timestamp = static_cast<unsigned long long>(
+        std::chrono::steady_clock::now().time_since_epoch().count());
+    const std::string nickname = "Encore-" + std::to_string(timestamp % 100000000ull);
+    member->Join(nickname, address.c_str(), port);
+
+    // Join establishes ENet first, then the room-version/password handshake
+    // completes on its dedicated event loop. Poll on this worker only.
+    for (int i = 0; i < 100; ++i) {
+        const auto state = member->GetState();
+        if (state == Network::RoomMember::State::Joined ||
+            state == Network::RoomMember::State::Moderator)
+            return {true, hosting ? "Private LAN room hosted." : "Connected to room."};
+        if (state == Network::RoomMember::State::Idle) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    if (member->IsConnected()) member->Leave();
+    if (hosting && host->GetState() == Network::Room::State::Open)
+        host->Destroy();
+    session.hosting = false;
+    return {false, "Room handshake failed or timed out."};
+}
+} // namespace
+
+std::function<Eden::Multiplayer::RoomActionResult()>
+EdenServices::detached_room_action_task(
+    Eden::Multiplayer::RoomAction action,
+    const Eden::Multiplayer::PublicRoom& room) {
+    return [action, room] { return RoomAction(action, room); };
+}
+
+bool EdenServices::room_connected() const {
+    auto member = Network::GetRoomMember().lock();
+    if (!member) return false;
+    const auto state = member->GetState();
+    return state == Network::RoomMember::State::Joined ||
+           state == Network::RoomMember::State::Moderator;
+}
+
+bool EdenServices::room_hosting() const {
+    auto& session = RoomSession();
+    std::lock_guard lock(session.mutex);
+    return session.hosting;
 }
 
 std::function<Eden::Multiplayer::RoomDirectory()>
@@ -2504,12 +2640,40 @@ EdenServices::detached_room_directory_task()
             return {{}, "Public room response exceeded the safe size limit."};
         // Protocol compatibility is not asserted before the LDN bridge is
         // connected to the pinned emulator network version.
-        return Eden::Multiplayer::ParseRoomDirectory(*response, 0);
+        // The actual linked Room/RoomMember and LDN HLE use this exact
+        // network protocol. Zero makes every real room appear incompatible.
+        return Eden::Multiplayer::ParseRoomDirectory(
+            *response, Network::network_version);
     };
 }
 
 pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {
     return QueryAppReleaseMetadata(current);
+}
+
+std::function<pe::ui::AppUpdateInstallResult()>
+EdenServices::detached_app_update_install_task(
+    const pe::ui::AppUpdateInfo& candidate) {
+    // The archived metadata is not sufficient by itself: re-query the same
+    // official stable release before downloading anything, rejecting changes.
+    return [candidate] {
+        const auto current = QueryAppReleaseMetadata(candidate.installed_version);
+        if (current.latest_version.empty() ||
+            current.latest_version != candidate.latest_version ||
+            current.package_name.empty() ||
+            current.package_name != candidate.package_name ||
+            current.package_path != candidate.package_path ||
+            current.package_bytes != candidate.package_bytes ||
+            current.package_sha256 != candidate.package_sha256)
+            return pe::ui::AppUpdateInstallResult{
+                false, "Release metadata changed. Run a new update check."};
+        const auto result = Eden::EncoreUpdate::InstallNativeApp({
+            candidate.installed_version, candidate.latest_version,
+            candidate.package_name, candidate.package_path,
+            candidate.package_sha256, candidate.package_bytes
+        });
+        return pe::ui::AppUpdateInstallResult{result.applying,result.message};
+    };
 }
 
 std::function<pe::ui::AppUpdateInfo()> EdenServices::detached_app_update_task(

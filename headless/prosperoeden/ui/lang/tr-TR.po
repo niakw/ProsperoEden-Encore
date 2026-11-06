@@ -1354,10 +1354,6 @@ msgstr "PS5 kontrol cihazı hazırlanamadı"
 msgid "Public room service unavailable."
 msgstr "Oda hizmetine ulaşılamıyor."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Herkese açık odalar (salt okunur)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "HIZLI AYARLAR"
@@ -1369,10 +1365,6 @@ msgstr "Hızlı ayarlar"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Çıkış"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Oda dizini (salt okunur)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM, oyun dosyaları klasöründe yok"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "Depolama kökünde ROM eksik"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Odalara katılma henüz kullanılamıyor."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP veya XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (her oyun kimliği için bir klasör)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Herkese açık odalar"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Odaya bağlanılıyor..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Odaya bağlandı"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Bir odaya katılın veya LAN odası oluşturun."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Oda kullanılamıyor."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Katıl"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Kur / Ayrıl"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Yükle"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Doğrulanmış güncelleme yüklensin mi? Eden Encore daha sonra kapanacak."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "PS5 güncellemesi indiriliyor ve doğrulanıyor..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Güncellemeler bu cihazda kullanılamıyor."

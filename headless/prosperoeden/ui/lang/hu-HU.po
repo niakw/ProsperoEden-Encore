@@ -1354,10 +1354,6 @@ msgstr "A PS5-vezérlő inicializálása sikertelen"
 msgid "Public room service unavailable."
 msgstr "A szobaszolgáltatás nem elérhető."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Nyilvános szobák (csak megtekintés)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "GYORSBEÁLLÍTÁSOK"
@@ -1369,10 +1365,6 @@ msgstr "Gyorsbeállítások"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Kilépés"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Szobalista (csak megtekintés)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "A ROM hiányzik a játékfájlok mappájából"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "A ROM hiányzik a tároló gyökérből"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "A szobákhoz csatlakozás még nem elérhető."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP vagy XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (játékazonosítónként egy mappa)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Nyilvános szobák"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Csatlakozás a szobához..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Csatlakozva a szobához"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Csatlakozz egy szobához, vagy hozz létre LAN-szobát."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "A szoba nem elérhető."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Csatlakozás"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Házigazda / Kilépés"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Telepítés"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Telepíti az ellenőrzött frissítést? Az Eden Encore ezután bezárul."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "A PS5-frissítés letöltése és ellenőrzése..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "A frissítések nem érhetők el ezen az eszközön."

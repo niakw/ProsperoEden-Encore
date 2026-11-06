@@ -1354,10 +1354,6 @@ msgstr "Inicializace ovladače PS5 se nezdařila"
 msgid "Public room service unavailable."
 msgstr "Služba místností není dostupná."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Veřejné místnosti (jen prohlížení)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "RYCHLÁ NASTAVENÍ"
@@ -1369,10 +1365,6 @@ msgstr "Rychlá nastavení"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Ukončit"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Seznam místností (jen prohlížení)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "Ve složce herních souborů chybí ROM"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "Chybí ROM v kořenovém adresáři úložiště"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Připojení k místnostem zatím není dostupné."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP nebo XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (složka pro každé ID titulu)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Veřejné místnosti"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Připojování k místnosti..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Připojeno k místnosti"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Připojte se k místnosti nebo hostujte místnost LAN."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Místnost není dostupná."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Připojit"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Hostovat / Opustit"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Instalovat"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Nainstalovat ověřenou aktualizaci? Eden Encore se poté ukončí."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Stahování a ověřování aktualizace PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Aktualizace nejsou na tomto zařízení dostupné."

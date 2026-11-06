@@ -1354,10 +1354,6 @@ msgstr "Inizializzazione del controller PS5 non riuscita."
 msgid "Public room service unavailable."
 msgstr "Servizio delle stanze non disponibile."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Stanze pubbliche (sola lettura)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "IMPOSTAZIONI RAPIDE"
@@ -1369,10 +1365,6 @@ msgstr "Impostazioni rapide"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Esci"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Elenco stanze (sola lettura)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM mancante nella cartella dei file di gioco"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM mancante dalla radice di archiviazione"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Non è ancora possibile entrare nelle stanze."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP o XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (una cartella per ID titolo)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Stanze pubbliche"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Connessione alla stanza..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Connesso alla stanza"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Unisciti a una stanza o ospita una stanza LAN."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Stanza non disponibile."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Entra"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Ospita / Esci"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Installa"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Installare l'aggiornamento verificato? Eden Encore si chiuderà dopo."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Download e verifica dell'aggiornamento PS5..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Aggiornamenti non disponibili su questo dispositivo."

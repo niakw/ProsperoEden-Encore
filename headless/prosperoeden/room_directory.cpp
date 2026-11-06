@@ -52,6 +52,15 @@ unsigned Number(const nlohmann::json& value, unsigned maximum) {
 }
 }
 
+bool CanJoinPublicRoom(const PublicRoom& room) {
+    if (!room.compatible || room.password || room.port == 0 ||
+        room.capacity == 0 || room.players >= room.capacity)
+        return false;
+    in_addr addr{};
+    return inet_pton(AF_INET, room.address.c_str(), &addr) == 1 &&
+           PublicAddress(addr);
+}
+
 RoomDirectory ParseRoomDirectory(std::string_view body, unsigned protocol) {
     RoomDirectory result;
     if (body.size() > MaxDirectoryBytes) return {{}, "The public room list is too large."};

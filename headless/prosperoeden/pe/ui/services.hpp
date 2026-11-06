@@ -144,7 +144,8 @@ struct Home
     std::string system_status;
 };
 
-// R21 is metadata-only until a verified PS5-native installer is available.
+// R21: official stable-release metadata, and explicit-consent installation
+// only when a verified candidate and independent native helper both exist.
 struct AppUpdateInfo {
     enum class State { not_checked, up_to_date, incompatible, newer_uninstallable, available, offline };
     State state = State::not_checked;
@@ -152,6 +153,16 @@ struct AppUpdateInfo {
     std::string latest_version;
     std::string summary;
     std::string notes; // bounded official release notes, never executable content
+    // Only populated by strict official release metadata validation. These
+    // fields are display/data, not permission to replace app files.
+    std::string package_name;
+    std::string package_path;
+    std::string package_sha256;
+    std::uint64_t package_bytes = 0;
+};
+struct AppUpdateInstallResult {
+    bool applying = false;
+    std::string message;
 };
 
 struct Preferences
@@ -193,7 +204,7 @@ struct Preferences
     int background_fit = 0; // 0 cover, 1 contain
     bool show_game_background = true; // preserve current hero background default
     std::string wallpaper_file; // validated basename, never arbitrary path
-    bool check_updates_on_start = false; // opt-in only
+    bool check_updates_on_start = true; // metadata-only; persisted opt-out honored
 };
 
 // One game's overrides; -1 uses Settings > Video.
@@ -335,8 +346,25 @@ class Services
         };
     }
 
+    // The user explicitly confirms an install after an official stable
+    // release check. The independent job never captures UI/Services.
+    virtual std::function<AppUpdateInstallResult()>
+    detached_app_update_install_task(const AppUpdateInfo&) {
+        return [] { return AppUpdateInstallResult{
+            false, "Native PS5 update installer unavailable."}; };
+    }
     // R14: separate, read-only public room discovery task. Worker MUST be
     // self-contained and must not capture a launcher or service object.
+    // Join/host/leave are explicit user actions, always performed on a
+    // worker. Tasks own their arguments: they never capture a UI or Services.
+    virtual std::function<Eden::Multiplayer::RoomActionResult()>
+    detached_room_action_task(Eden::Multiplayer::RoomAction,
+                              const Eden::Multiplayer::PublicRoom& = {}) {
+        return [] { return Eden::Multiplayer::RoomActionResult{
+            false, "Network room transport is unavailable."}; };
+    }
+    virtual bool room_connected() const { return false; }
+    virtual bool room_hosting() const { return false; }
     virtual std::function<Eden::Multiplayer::RoomDirectory()> detached_room_directory_task() {
         return [] {
             return Eden::Multiplayer::RoomDirectory{{},

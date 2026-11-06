@@ -1354,10 +1354,6 @@ msgstr "Initialisierung des PS5-Controllers fehlgeschlagen"
 msgid "Public room service unavailable."
 msgstr "Raumdienst ist nicht verfügbar."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Öffentliche Räume (nur Anzeige)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "SCHNELLEINSTELLUNGEN"
@@ -1369,10 +1365,6 @@ msgstr "Schnelleinstellungen"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Beenden"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Raumliste (nur Anzeige)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM fehlt im Spieldateien-Ordner"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM fehlt im Speicherstammverzeichnis"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Raumbeitritt ist noch nicht verfügbar."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP/XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (ein Ordner je Titel-ID)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Öffentliche Räume"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Verbindung zum Raum..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Mit Raum verbunden"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Einem Raum beitreten oder LAN-Raum hosten."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Raum nicht verfügbar."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Beitreten"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Hosten / Verlassen"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Installieren"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Verifiziertes Update installieren? Eden Encore wird danach geschlossen."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "PS5-Update wird heruntergeladen und überprüft..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Updates sind auf diesem Gerät nicht verfügbar."

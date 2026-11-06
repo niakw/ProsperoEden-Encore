@@ -6,7 +6,7 @@
 #include <nlohmann/json.hpp>
 using Eden::Multiplayer::ParseRoomDirectory;
 using nlohmann::json;
-static json room(std::string ip = "8.8.8.8", unsigned protocol = 7, unsigned players = 2) {
+static json room(std::string ip = "8.8.8.8", unsigned protocol = 1, unsigned players = 2) {
     json members = json::array();
     for(unsigned i=0;i<players;++i) members.push_back(json::object({{"name","friend"}}));
     return {{"name","Friends"}, {"preferredGameName","Racing"}, {"address",ip},
@@ -14,18 +14,35 @@ static json room(std::string ip = "8.8.8.8", unsigned protocol = 7, unsigned pla
             {"hasPassword",true}, {"netVersion",protocol}};
 }
 static auto parse(const json& rows) {
-    return ParseRoomDirectory(json{{"rooms",rows}}.dump(),7);
+    return ParseRoomDirectory(json{{"rooms",rows}}.dump(),1);
 }
 int main() {
     {
         auto result=parse(json::array({room()}));
         assert(result.error.empty() && result.rooms.size()==1 &&
                result.rooms[0].compatible && result.rooms[0].players==2);
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(result.rooms[0]));
+        auto open = result.rooms[0];
+        open.password = false;
+        assert(Eden::Multiplayer::CanJoinPublicRoom(open));
+        open.players = open.capacity;
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(open));
+        open.players = 0;
+        open.address = "127.0.0.1";
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(open));
+        open.address = "8.8.8.8";
+        open.compatible = false;
+        assert(!Eden::Multiplayer::CanJoinPublicRoom(open));
     }
     {
-        auto other=room("1.1.1.1",6,4);
+        auto zero=room("8.8.4.4",0,1);
+        auto result=parse(json::array({zero}));
+        assert(result.rooms.size()==1 && !result.rooms[0].compatible);
+    }
+    {
+        auto other=room("1.1.1.1",2,4);
         other["name"]="Other";
-        auto result=parse(json::array({other,room("8.8.8.8",7,2)}));
+        auto result=parse(json::array({other,room("8.8.8.8",1,2)}));
         assert(result.rooms.size()==2 && result.rooms[0].compatible &&
                !result.rooms[1].compatible);
     }
@@ -49,11 +66,11 @@ int main() {
         assert(result.rooms.size()==1 && result.rejected==1);
     }
     {
-        auto result=ParseRoomDirectory("{ malformed",7);
+        auto result=ParseRoomDirectory("{ malformed",1);
         assert(!result.error.empty() && result.rooms.empty());
     }
     {
-        auto result=ParseRoomDirectory(std::string(Eden::Multiplayer::MaxDirectoryBytes+1,'X'),7);
+        auto result=ParseRoomDirectory(std::string(Eden::Multiplayer::MaxDirectoryBytes+1,'X'),1);
         assert(result.rooms.empty() && !result.error.empty());
     }
     {

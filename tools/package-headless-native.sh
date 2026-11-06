@@ -151,6 +151,14 @@ make -s -C "$root/headless/elevation/helper" OUTPUT="$root/build/elevation/sandb
     PS5_PAYLOAD_SDK="${PS5_ELEVATION_SDK:-/opt/ps5-payload-sdk}"
 python3 "$root/headless/elevation/validate-helper.py" "$root/build/elevation/sandbox-elevator.elf"
 cp "$root/build/elevation/sandbox-elevator.elf" "$app/sandbox-elevator.elf"
+
+# R21: independent updater payload. The running app never replaces its own
+# files. The helper enforces target PPSA99008, ZIP bounds, SHA256, rollback
+# and waits until the app sandbox exits before applying.
+make -s -C "$root/headless/self_update_helper" OUTPUT="$root/build/self-update/self-updater.elf"     PS5_PAYLOAD_SDK="${PS5_ELEVATION_SDK:-/opt/ps5-payload-sdk}"
+test -s "$root/build/self-update/self-updater.elf"
+cp "$root/build/self-update/self-updater.elf" "$app/self-updater.elf"
+
 python3 - "$root" "$template" "$app" "${1:-}" <<'PY'
 import json, pathlib, runpy, shutil, sys
 root, template, app = map(pathlib.Path, sys.argv[1:4])

@@ -32,6 +32,8 @@ std::string LocalizedReleaseStatus(const AppUpdateInfo& info)
     switch (info.state) {
     case AppUpdateInfo::State::up_to_date:
         return pe::fill(tr("Already up to date: {0}"), {info.latest_version});
+    case AppUpdateInfo::State::available:
+        return std::string(tr("New Eden Encore release")) + ": " + info.latest_version;
     case AppUpdateInfo::State::newer_uninstallable:
         return pe::fill(tr("New Eden Encore release {0}; installation is not available yet."),
                         {info.latest_version});
@@ -272,12 +274,19 @@ void Launcher::close_modal()
 
 void Launcher::open_update_confirmation()
 {
-    // A forced check never runs on the input/render thread. Confirmation
-    // is separate from accepting any future native installation.
+    // No network work runs on the input/render thread. When a validated
+    // native helper and release are available, this confirmation explicitly
+    // authorizes installation; otherwise it authorizes a fresh check.
     if (confirmation_ != Confirmation::none || modal_ != Modal::none)
         return;
-    confirmation_ = Confirmation::app_update;
-    message_ = tr("Check for an Eden Encore update now?");
+    const bool can_install =
+        update_info_.state == AppUpdateInfo::State::available &&
+        !update_info_.package_path.empty() && update_info_.package_bytes > 0;
+    confirmation_ = can_install ? Confirmation::app_install
+                                : Confirmation::app_update;
+    message_ = can_install
+        ? tr(TR("Install the verified update? Eden Encore will close afterward."))
+        : tr("Check for an Eden Encore update now?");
     message_warning_ = false;
     message_age_ = 0.0f;
     cue(Cue::notify);
@@ -287,8 +296,9 @@ void Launcher::draw_update_button(Canvas &c, float x, float y,
                                   bool focused, bool paper) const
 {
     auto& l = c.list;
-    const bool checking = update_check_ &&
-        !update_check_->completed.load(std::memory_order_acquire);
+    const bool checking = update_install_ ||
+        (update_check_ &&
+         !update_check_->completed.load(std::memory_order_acquire));
     const bool current = !checking &&
         update_info_.state == AppUpdateInfo::State::up_to_date;
     const bool newer = !checking &&
@@ -344,6 +354,34 @@ void Launcher::start_app_update_check(bool manual)
         }
         // Results are written before the release-store and only read after
         // the UI thread observes the matching acquire-load.
+        state->completed.store(true, std::memory_order_release);
+    }).detach();
+}
+
+void Launcher::start_app_update_install()
+{
+    if (update_install_) return;
+    if (update_info_.state != AppUpdateInfo::State::available ||
+        update_info_.package_path.empty() || update_info_.package_bytes == 0) {
+        say(LocalizedReleaseStatus(update_info_), true);
+        return;
+    }
+    // Detached job owns immutable verified candidate data; the launcher
+    // cannot open a game while the helper is preparing a replacement.
+    auto task = services_.detached_app_update_install_task(update_info_);
+    if (!task) {
+        say(tr("Updates unavailable on this host."), true);
+        return;
+    }
+    auto state = std::make_shared<UpdateInstallState>();
+    update_install_ = state;
+    say(tr(TR("Downloading and verifying the PS5 update...")), false);
+    std::thread([state, task = std::move(task)]() mutable {
+        try {
+            state->result = task();
+        } catch (...) {
+            state->result = {false, "The update did not complete."};
+        }
         state->completed.store(true, std::memory_order_release);
     }).detach();
 }
@@ -530,15 +568,17 @@ void Launcher::press(Key key)
 {
     // Avoid opening/launching the placeholder while the initial native
     // Home snapshot is still being read in the background.
+    // Installation is a two-phase external helper transfer; never allow
+    // another button to launch a game while its ZIP is being staged.
+    if (update_install_) return;
     if (update_notice_visible_) {
-        // No installation is available: Cross/Circle are dismissal only.
-        // Never let this key press reach the underlying game or settings.
         if (key == Key::cross || key == Key::circle) {
+            const bool install = key == Key::cross &&
+                update_info_.state == AppUpdateInfo::State::available;
             update_notice_visible_ = false;
-            cue(Cue::back);
-        } else {
-            cue(Cue::error);
-        }
+            if (install) open_update_confirmation();
+            else cue(Cue::back);
+        } else cue(Cue::error);
         return;
     }
     if (!home_loaded_)
@@ -552,11 +592,14 @@ void Launcher::press(Key key)
     // through to the underlying screen while the dialog is visible.
     if (confirmation_ != Confirmation::none)
     {
-        if (confirmation_ == Confirmation::app_update) {
+        if (confirmation_ == Confirmation::app_update ||
+            confirmation_ == Confirmation::app_install) {
             if (key == Key::cross) {
+                const bool install = confirmation_ == Confirmation::app_install;
                 clear_confirmation();
                 message_.clear();
-                start_app_update_check(true);
+                if (install) start_app_update_install();
+                else start_app_update_check(true);
                 cue(Cue::saved);
             } else if (key == Key::circle) {
                 clear_confirmation();
@@ -702,6 +745,26 @@ void Launcher::update(float dt)
             std::max(0, static_cast<int>(room_directory_.rooms.size()) - 1));
         room_load_.reset();
     }
+    if (room_action_ && room_action_->completed.load(std::memory_order_acquire)) {
+        // All network I/O ran off-thread; the UI alone owns the notice.
+        say(room_action_->result.message, !room_action_->result.ok);
+        cue(room_action_->result.ok ? Cue::toggle : Cue::error);
+        room_action_.reset();
+    }
+    if (update_install_ &&
+        update_install_->completed.load(std::memory_order_acquire)) {
+        const auto result = update_install_->result;
+        update_install_.reset();
+        if (result.applying) {
+            // Independent helper has acknowledged the apply command.
+            // Normal app teardown frees /data/homebrew/PPSA99008 so it can
+            // atomically swap files, retaining the previous version.
+            done_ = true;
+        } else {
+            say(result.message.empty() ? "Update installation failed." :
+                result.message, true);
+        }
+    }
     if (update_check_ && update_check_->completed.load(std::memory_order_acquire)) {
         const bool was_manual = update_check_->manual;
         const bool recheck_manual = update_check_->recheck_manual;
@@ -721,15 +784,16 @@ void Launcher::update(float dt)
                 say(update_info_.summary,
                     update_info_.state != AppUpdateInfo::State::up_to_date);
             } else if (prefs_.check_updates_on_start &&
-                       update_info_.state == AppUpdateInfo::State::newer_uninstallable &&
+                       (update_info_.state == AppUpdateInfo::State::newer_uninstallable ||
+                        update_info_.state == AppUpdateInfo::State::available) &&
                        !update_info_.latest_version.empty() &&
                        process_notified_version_ != update_info_.latest_version) {
                 update_notice_pending_ = true;
             }
             update_check_manual_ = false;
         }
-        // A new release can be announced, but is never presented as
-        // installable until its native PS5 installation path is qualified.
+        // A candidate may be offered only with a bundled native helper.
+        // Explicit user confirmation precedes downloading and apply.
     }
 
     if (update_notice_pending_ && home_loaded_ && screen_ == Screen::home &&
@@ -1087,7 +1151,8 @@ void Launcher::draw_confirmation(Canvas &c)
         return;
 
     const char *title = tr("Settings");
-    if (confirmation_ == Confirmation::app_update)
+    if (confirmation_ == Confirmation::app_update ||
+        confirmation_ == Confirmation::app_install)
         title = tr("Application updates");
     if (confirmation_ == Confirmation::console_mode)
         title = tr("Console mode");
@@ -1141,9 +1206,13 @@ void Launcher::draw_update_notice(Canvas &c)
         text_block(c, update_info_.notes, panel.x + 52.0f,
                    baseline(panel.y + 263.0f, 25.0f, theme::kSmall),
                    theme::kSmall, 29.0f, sub, panel.w - 104.0f, 2, kShrink);
-    static constexpr Hint hints[] = {
+    static constexpr Hint install_hints[] = {
+        {Pad::cross, TR("Install")}, {Pad::circle, TR("Later")}};
+    static constexpr Hint browse_hints[] = {
         {Pad::cross, TR("Later")}, {Pad::circle, TR("Close")}};
-    draw_hints(c, hints, 2, panel.x + 52.0f, panel.y + panel.h - 55.0f,
+    draw_hints(c, update_info_.state == AppUpdateInfo::State::available
+                   ? install_hints : browse_hints,
+               2, panel.x + 52.0f, panel.y + panel.h - 55.0f,
                sub, panel.w - 104.0f);
 }
 

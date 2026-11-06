@@ -115,6 +115,7 @@ class Launcher
         shader_caches,
         console_mode,
         app_update,
+        app_install,
         exit_app,
     };
 
@@ -144,6 +145,7 @@ class Launcher
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
     void start_app_update_check(bool manual);
+    void start_app_update_install();
     void open_update_confirmation();
     void draw_update_button(Canvas &c, float x, float y, bool focused, bool paper) const;
     void draw_update_notice(Canvas &c);
@@ -258,6 +260,11 @@ class Launcher
     };
     // Shared with an independent worker that never captures the launcher.
     std::shared_ptr<UpdateCheckState> update_check_;
+    struct UpdateInstallState {
+        AppUpdateInstallResult result{};
+        std::atomic<bool> completed{false};
+    };
+    std::shared_ptr<UpdateInstallState> update_install_;
     // Shared within the process across game entry/return and language restarts.
     // Only the UI owner thread changes these pointers and flags.
     static std::shared_ptr<UpdateCheckState> process_update_check_;
@@ -286,6 +293,11 @@ class Launcher
         Eden::Multiplayer::RoomDirectory result{};
         std::atomic<bool> completed{false};
     };
+    struct RoomActionState {
+        Eden::Multiplayer::RoomActionResult result{};
+        std::atomic<bool> completed{false};
+    };
+    std::shared_ptr<RoomActionState> room_action_;
     std::shared_ptr<RoomLoadState> room_load_;
     Eden::Multiplayer::RoomDirectory room_directory_{};
     bool rooms_loaded_ = false;

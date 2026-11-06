@@ -1354,10 +1354,6 @@ msgstr "PS5-kontrolleren kunne ikke initialiseres"
 msgid "Public room service unavailable."
 msgstr "Romtjenesten er utilgjengelig."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Offentlige rom (kun visning)"
-
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "HURTIGINNSTILLINGER"
@@ -1369,10 +1365,6 @@ msgstr "Hurtiginnstillinger"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Avslutt"
-
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Romliste (kun visning)"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1480,10 +1472,6 @@ msgstr "ROM mangler i mappen med spillfiler"
 #: eden_services.cpp
 msgid "ROM missing from the storage root"
 msgstr "ROM mangler fra lagringsroten"
-
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Det er ennå ikke mulig å bli med i rom."
 
 #: pe/ui/settings.cpp
 msgid "ROOT"
@@ -1988,3 +1976,47 @@ msgstr "{0}/ (NSP eller XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (én mappe per tittel-ID)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms"
+msgstr "Offentlige rom"
+
+#: pe/ui/multiplayer.cpp
+msgid "Connecting to room..."
+msgstr "Kobler til rom..."
+
+#: pe/ui/multiplayer.cpp
+msgid "Connected to room"
+msgstr "Tilkoblet rom"
+
+#: pe/ui/multiplayer.cpp
+msgid "Choose a room to join or host a LAN room."
+msgstr "Bli med i et rom eller opprett et LAN-rom."
+
+#: pe/ui/multiplayer.cpp
+msgid "Room not available."
+msgstr "Rommet er utilgjengelig."
+
+#: pe/ui/multiplayer.cpp
+msgid "Join"
+msgstr "Bli med"
+
+#: pe/ui/multiplayer.cpp
+msgid "Host / Leave"
+msgstr "Vert / Forlat"
+
+#: pe/ui/launcher.cpp
+msgid "Install"
+msgstr "Installer"
+
+#: pe/ui/launcher.cpp
+msgid "Install the verified update? Eden Encore will close afterward."
+msgstr "Installere bekreftet oppdatering? Eden Encore lukkes deretter."
+
+#: pe/ui/launcher.cpp
+msgid "Downloading and verifying the PS5 update..."
+msgstr "Laster ned og verifiserer PS5-oppdateringen..."
+
+#: pe/ui/launcher.cpp
+msgid "Updates unavailable on this host."
+msgstr "Oppdateringer er ikke tilgjengelige på denne enheten."

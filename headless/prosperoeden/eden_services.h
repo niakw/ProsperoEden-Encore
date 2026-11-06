@@ -40,7 +40,14 @@ public:
     bool set_preferences(const pe::ui::Preferences& preferences) override;
     pe::ui::AppUpdateInfo check_app_update(const std::string& current) override;
     std::function<pe::ui::AppUpdateInfo()> detached_app_update_task(const std::string& current) override;
+    std::function<pe::ui::AppUpdateInstallResult()>
+    detached_app_update_install_task(const pe::ui::AppUpdateInfo& candidate) override;
     std::function<Eden::Multiplayer::RoomDirectory()> detached_room_directory_task() override;
+    std::function<Eden::Multiplayer::RoomActionResult()>
+    detached_room_action_task(Eden::Multiplayer::RoomAction action,
+                              const Eden::Multiplayer::PublicRoom& room) override;
+    bool room_connected() const override;
+    bool room_hosting() const override;
     std::vector<std::string> wallpapers() override;
     std::string wallpaper_path(const std::string& file) override;
     std::string daily_wallpaper() override;

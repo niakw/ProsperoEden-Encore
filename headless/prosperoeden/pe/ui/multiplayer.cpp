@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R14: read-only public room browser, adapted from upstream ProsperoEden.
-// Guest Local Wireless, room joining and player sockets stay DISABLED until
-// the independent network transport and HLE bridge are qualified.
+// R14: public room discovery plus user-initiated ENet join / private LAN host.
+// Transport is handled by the upstream network objects on a detached worker;
+// guest LDN packet flow and console behaviour still require PS5 validation.
 #include "pe/ui/launcher.hpp"
 
 #include <algorithm>
@@ -49,6 +49,32 @@ void Launcher::enter_multiplayer()
 
 void Launcher::press_multiplayer(Key key)
 {
+    const auto begin_action = [this](Eden::Multiplayer::RoomAction action,
+                                     Eden::Multiplayer::PublicRoom room = {}) {
+        if (room_action_) return;
+        auto task = services_.detached_room_action_task(action, room);
+        if (!task) {
+            say(tr(TR("Room not available.")), true);
+            cue(Cue::error);
+            return;
+        }
+        auto state = std::make_shared<RoomActionState>();
+        room_action_ = state;
+        std::thread([state, task = std::move(task)]() mutable {
+            try {
+                state->result = task();
+            } catch (...) {
+                state->result = {false, "Room not available."};
+            }
+            state->completed.store(true, std::memory_order_release);
+        }).detach();
+        say(tr(TR("Connecting to room...")), false);
+        cue(Cue::focus);
+    };
+    // No second operation while a join/host/leave worker is active.
+    // Circle still allows navigation away without destroying task state.
+    if (room_action_ && key != Key::circle)
+        return;
     switch (key) {
     case Key::circle:
         open(Screen::home, false);
@@ -68,10 +94,21 @@ void Launcher::press_multiplayer(Key key)
         cue(Cue::focus);
         return;
     case Key::cross:
-        // A room name is not proof of a working guest LDN bridge. No connection,
-        // password exchange or guest socket proxy is attempted here.
-        say(tr("Room joining is not available yet."), true);
+        if (rooms_loaded_ && !room_directory_.rooms.empty()) {
+            const auto& room = room_directory_.rooms[static_cast<std::size_t>(
+                std::clamp(room_selected_, 0, static_cast<int>(room_directory_.rooms.size()) - 1))];
+            if (Eden::Multiplayer::CanJoinPublicRoom(room)) {
+                begin_action(Eden::Multiplayer::RoomAction::Join, room);
+                return;
+            }
+        }
+        say(tr(TR("Room not available.")), true);
         cue(Cue::error);
+        return;
+    case Key::square:
+        begin_action(services_.room_connected()
+            ? Eden::Multiplayer::RoomAction::Leave
+            : Eden::Multiplayer::RoomAction::HostPrivate);
         return;
     default:
         return;
@@ -93,10 +130,12 @@ void Launcher::draw_multiplayer(Canvas &c)
     text_shrink(c, tr("Multiplayer"), 106.0f,
                 baseline(141.0f, 54.0f, theme::kHeading), theme::kHeading,
                 primary, 1590.0f);
-    text_shrink(c, tr("Public rooms (read-only)"), 112.0f,
+    text_shrink(c, tr(TR("Public rooms")), 112.0f,
                 baseline(213.0f, 35.0f, theme::kSmall), theme::kSmall,
                 secondary, 1540.0f);
-    text_shrink(c, tr("Room joining is not available yet."), 112.0f,
+    text_shrink(c, room_action_ ? tr(TR("Connecting to room...")) :
+                (services_.room_connected() ? tr(TR("Connected to room")) :
+                 tr(TR("Choose a room to join or host a LAN room."))), 112.0f,
                 baseline(256.0f, 34.0f, theme::kSmall), theme::kSmall,
                 secondary, 1540.0f);
 
@@ -149,12 +188,14 @@ void Launcher::draw_multiplayer(Canvas &c)
         }
     }
     if (paper)
-        draw_switch_footer(c, tr("Read-only room directory"));
+        draw_switch_footer(c, services_.room_connected()
+            ? tr("Host / Leave") : tr("Join"));
     else {
         static constexpr Hint hints[] = {
-            {Pad::updown, TR("Browse")}, {Pad::triangle, TR("Refresh")},
-            {Pad::circle, TR("Back")}};
-        draw_footer(c, hints, 3);
+            {Pad::updown, TR("Browse")}, {Pad::cross, TR("Join")},
+            {Pad::square, TR("Host / Leave")},
+            {Pad::triangle, TR("Refresh")}, {Pad::circle, TR("Back")}};
+        draw_footer(c, hints, 5);
     }
 }
 

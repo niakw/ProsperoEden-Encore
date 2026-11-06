@@ -131,7 +131,9 @@ struct Preferences {
     int background_fit = 0;
     bool show_game_background = true;
     std::string wallpaper_file;
-    bool check_updates_on_start = false;
+    // Auto-check metadata on first launcher start (never auto-install).
+    // Existing saved opt-out values remain unchanged.
+    bool check_updates_on_start = true;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -377,7 +379,8 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     if (accent >= 0 && accent <= 4) result.accent_color = accent;
     if (background >= 0 && background <= 5) result.background_style = background;
     result.check_updates_on_start = Settings::Bool(
-        document, Json::json_pointer("/app_updates/check_on_start"), false);
+        document, Json::json_pointer("/app_updates/check_on_start"),
+        result.check_updates_on_start);
     const int logo = Settings::Int(document, Json::json_pointer("/appearance/logo"), 0);
     const int strength = Settings::Int(document, Json::json_pointer("/appearance/glow_strength"), 100);
     const int overlay = Settings::Int(document, Json::json_pointer("/appearance/overlay"), 20);

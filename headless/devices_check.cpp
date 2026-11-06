@@ -140,6 +140,14 @@ void CheckPad() {
         consume(); CHECK(!pad.TakeReturnToMenu());
         sample.buttons = 0; consume();
 
+        // Without the quick menu (OpenGL or earlier menu/loading phases),
+        // a short touchpad tap still publishes the original guest Minus pulse.
+        sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
+        sample.buttons = 0; consume();
+        CHECK(pad.Engine().GetButton({}, 11));
+        for (int i = 0; i < 26; ++i) consume();
+        CHECK(none_pressed());
+
         // Touchpad+R1 no longer toggles an FPS shortcut. It is only a chord,
         // so its release cannot open Encore's quick menu.
         pad.EnableOverlay(true);

@@ -28,7 +28,7 @@ int main(){
     assert(rows[1].shift_x==-1&&rows[2].shift_y==0);
     const auto segments=ExtractNativeFSwinSegments(rows);
     assert(segments.size()==2u);
-    assert(segments[0].layers.size()==3u);
+    assert(segments[0].layers.size()==4u);
     assert(segments[1].layers.size()==2u);
     assert(segments[0].layers[0].weight_prefix==
         "unpacked/block15.layer0.layer");
@@ -36,6 +36,16 @@ int main(){
         "unpacked/block16.layer0.layer");
     assert(segments[0].layers[2].weight_prefix==
         "unpacked/block17.layer0.layer");
+    assert(segments[0].layers[3].weight_prefix==
+        "unpacked/block18.layer0.layer");
+    assert(segments[0].layers[3].view==NativeFSwinView::Downsample);
+    assert(NativeDownsampleFSwin(rows[3]));
+    auto bad_ds=rows[3];
+    bad_ds.output_channels=bad_ds.channels;
+    assert(!NativeDownsampleFSwin(bad_ds));
+    bad_ds=rows[3];
+    bad_ds.channels=512u;
+    assert(!NativeDownsampleFSwin(bad_ds));
     assert(segments[0].layers[0].view==NativeFSwinView::InputView);
     assert(segments[0].layers[1].view==NativeFSwinView::Plain);
     assert(segments[0].layers[2].view==NativeFSwinView::Plain);
@@ -51,7 +61,7 @@ int main(){
     assert(CanFSwinChainWindowLayouts(layouts,135u));
     assert(FSwinNeedsWindowRepack(layouts[0],layouts[1]));
     assert(!NativePlainFSwin(rows[0])); // input view
-    assert(!NativePlainFSwin(rows[3])); // downsample
+    assert(!NativePlainFSwin(rows[3])); // downsample is terminal only
     assert(!NativePlainFSwin(rows[6])); // split-Swin
     // Normal Full HD C32 grid is now accepted (120x68 windows).
     auto large=rows[1];

@@ -108,3 +108,33 @@ soumission GPU ; aucune étape n'essaie de récupérer directement les pixels
 RGB d'un jeu. Ce lien rend possible le raccord de la sortie de downsample
 vers un InputView de même dimension/canaux, sans constituer à lui seul
 l'orchestration U-Net ni une preuve de rendu PS5.
+
+
+## Étapes terminales FSwin `ds` — branche GPU raccordée
+
+Les quatre étapes `_ds_fp8` par variante conservent le corps FSwin
+ordinaire C canaux, suivi d'un pool 2×2 et de la projection apprise
+`[2C,C]`. Le plan natif les identifie maintenant comme un terminal
+spécifique, sans les confondre avec un FSwin classique.
+
+`NrRdna2FSwinDownsampleOutput` récupère la sortie GPU du corps
+FSwin, charge la matrice `resample.bin` fournie localement dans
+NRMODEL1, la transfère dans un buffer Vulkan persistant, lie les
+trois descripteurs et enregistre le shader de réduction.
+
+`NrRdna2FSwinChain::BindDownsampleOutput(model,destination,W,H)`
+exige un raster E4M3FN de sortie `ceil(W/2) × ceil(H/2) × 2C`.
+`ResultRaster()` expose sa description de buffer à l'orchestrateur,
+qui doit ordonner la passe et attendre sa fin avant consommation.
+Le niveau suivant peut en principe utiliser `BindRasterInput()`.
+
+**Sécurité** : `Record()` refuse une chaîne DS dont le modèle ou la
+destination n'a pas été correctement lié. `_ds` doit être terminal.
+Dimensions, limites GPU, matrices et alias de buffers sont vérifiés.
+Le raster ne constitue pas une image RGB.
+
+Couverture **structurelle, pas preuve GPU** : Original **40/152**
+(28 plain + 8 vues + 4 DS), Small **12/76** (8 vues + 4 DS).
+Les 8 sections de chaque plan restent en cours d'assemblage ;
+`upsample`, transitions U-Net/skip, ViT, Split-Swin,
+pré/post-image et validation console sont encore à terminer.

@@ -29,18 +29,20 @@ static void Check(const char* path,bool original){
     assert(c.fswin_input_view==4u && c.fswin_output_view==4u);
     assert(c.fswin_input_view_ready==4u &&
            c.fswin_output_view_ready==4u);
-    assert(c.CanonicalFSwinReady()==plain+8u);
+    assert(c.fswin_down_ready==4u);
+    assert(c.CanonicalFSwinReady()==plain+12u);
     assert(c.fswin_down==4u && c.fswin_up==4u);
     assert(c.fswin_unknown==0u && c.FSwinSpecial()==16u);
     assert(c.compatible_segments==8u);
-    assert(c.Uncovered()==total-plain-8u);
+    assert(c.Uncovered()==total-plain-12u);
     const auto segments=ExtractNativeFSwinSegments(rows);
     for(const auto& segment:segments){
         assert(!segment.layers.empty());
         for(std::size_t i=0;i<segment.layers.size();++i){
             const auto view=segment.layers[i].view;
             if(view==NativeFSwinView::InputView)assert(i==0u);
-            if(view==NativeFSwinView::OutputView)
+            if(view==NativeFSwinView::OutputView||
+               view==NativeFSwinView::Downsample)
                 assert(i+1u==segment.layers.size());
         }
     }

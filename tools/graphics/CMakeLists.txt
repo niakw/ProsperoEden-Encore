@@ -172,6 +172,9 @@ eden_r08_test(test_rdna2_nr_fswin_graph_policy)
 eden_r08_test(test_rdna2_nr_fswin_plan)
 eden_r08_test(test_rdna2_nr_fswin_window_repack_policy)
 eden_r08_test(test_rdna2_nr_fswin_chain_layout_policy)
+eden_r08_test(test_rdna2_nr_native_plan_bridge)
+target_include_directories(test_rdna2_nr_native_plan_bridge PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
 eden_r08_test(test_rdna2_nr_fswin_raster_layout_policy)
 eden_r08_test(test_rdna2_nr_fswin_raster_host)
 target_include_directories(test_rdna2_nr_fswin_raster_host PRIVATE

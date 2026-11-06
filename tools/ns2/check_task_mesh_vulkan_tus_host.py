@@ -102,6 +102,18 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         "inline int cpuset_getaffinity(int, int, int, size_t, cpuset_t*) { return -1; }\n"
         "#ifndef CPU_ISSET\n#define CPU_ISSET(cpu, mask) false\n#endif\n"
         "#endif\n")
+    # PS5_NATIVE builds compile the R437 maintained buffer-cache owner from a
+    # CMake-generated include overlay (headless/CMakeLists.txt). The source
+    # archive alone has a different template/BufferCacheRuntime interface.
+    # Recreate the exact tracked header overlay for the real syntax witness.
+    buffer_overlay = Path(scratch) / "buffer-pages/video_core/buffer_cache"
+    buffer_overlay.mkdir(parents=True)
+    maintained_buffer = ROOT / (
+        "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h"
+    )
+    assert maintained_buffer.is_file(), "R437 maintained BufferCache owner missing"
+    shutil.copyfile(maintained_buffer, buffer_overlay / "buffer_cache.h")
+    command += ["-I" + str(Path(scratch) / "buffer-pages")]
     command += ["-I" + str(Path(scratch))]
     if platform.system() == "Darwin":
         sdk = next((p for p in (
@@ -123,7 +135,7 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         result = subprocess.run(
             command + [str(ACTIVE / owner)], cwd=ROOT, env=env,
             capture_output=True, text=True, timeout=180)
-        return owner, result.returncode, result.stderr[-6000:]
+        return owner, result.returncode, result.stderr[-20000:]
     with ThreadPoolExecutor(max_workers=3) as pool:
         checked = list(pool.map(check, OWNERS))
     failures = []

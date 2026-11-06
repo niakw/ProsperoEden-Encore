@@ -564,3 +564,32 @@ Il manque toujours le pilotage automatique d'une
 couche par le renderer, le prétraitement image vers
 tokens FP8 et le plan global des blocs. Il n'y a
 encore aucune validation de frame DLSS sur console.
+
+
+## Exécution intégrée d'une couche FSwin
+
+NrRdna2FSwinLayerRuntime regroupe maintenant les opérations
+auparavant isolées :
+- MakeFSwinGraphPlan calcule les formes des buffers
+  et le plan des 5 passes (C32) ou 6 passes (C>=64).
+- PrepareFSwinLayerWeights lit les matrices et constantes
+  d'un NRMODEL1 fourni localement.
+- BindFSwinGraphWeights valide et affecte les offsets
+  de l'arène de poids aux passes.
+- NrRdna2GpuWeights copie la mémoire CPU vers un buffer VMA.
+- NrRdna2FSwinGpuTensors alloue les tenseurs GPU.
+- NrRdna2FSwinDescriptors relie les buffers aux pipelines.
+- UploadInput et Record permettent ensuite de soumettre
+  une couche FSwin complète sur le scheduler Vulkan.
+
+Le test de génération du plan couvrant C=32/64/128/256
+et 1/16/256 fenêtres est enregistré. Une version pure
+du générateur a été compilée et exécutée en test hôte.
+
+L'entrée acceptée reste un **tenseur E4M3FN déjà
+prétraité en fenêtres de 64 tokens**. Le code ne
+convertit pas encore une image source en ce tenseur et
+n'enchaîne pas les couches du graphe global. Le nouveau
+chemin n'a pas encore produit de frame sur GPU PS5 ;
+la performance sera étudiée seulement après cette
+intégration complète.

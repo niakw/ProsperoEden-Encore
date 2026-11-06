@@ -111,7 +111,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_graph.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_gpu_weights.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_descriptors.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_gpu_tensors.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_gpu_tensors.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_layer_runtime.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"

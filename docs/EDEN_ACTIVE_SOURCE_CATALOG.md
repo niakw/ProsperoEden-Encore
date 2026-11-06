@@ -539,3 +539,15 @@ est pleine ou si la session est arrêtée. À la destruction, le callback
 se détache avant `UnscheduleEvent`, puis le kernel event est fermé, sans
 référence suspendue vers la session. Contrôles C++ réels et tests hôte
 Clang/GCC O0/O2 `tools/ns2/check_native_video_ready_event_host.py`.
+
+#### P1.3 — éveil répétable du décodeur vidéo et fermeture sûre (06/11/2026)
+
+La session native utilise `native_video_ready_state.h`, un propriétaire de
+signal prêt auto-clear partagé avec son minuteur CoreTiming. La notification
+est reproduite toutes les 4 ms lorsque la session fonctionne et que la file
+d'entrée a de la capacité, sans succès factice de décodage. En fermeture,
+la notification est détachée sous mutex **avant** l'annulation du minuteur
+et la libération de l'objet KEvent, évitant le pointeur de callback périmé.
+Le vrai propriétaire C++ compile et les tests hôte
+`check_native_video_ready_event_host.py` Clang/GCC UBSan O0/O2 passent.
+Cela ne prouve pas la cadence de la console PS5.

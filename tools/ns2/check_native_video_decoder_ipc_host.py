@@ -30,6 +30,11 @@ assert 'GetObjectFromHandle<Kernel::KTransferMemory>' in source
 assert 'CreateMetadataSession(system, ctx, std::move(handler), &client)' in supervisor
 assert 'm_owner->OpenVideoDecoderChildSession(ctx)' in source
 assert 'm_context.CreateEvent("NS2VideoInputReady")' in source
+assert 'm_ready_timer = Core::Timing::CreateEvent(' in source
+assert 'ScheduleLoopingEvent(Interval, Interval, m_ready_timer)' in source
+assert 'm_ready->Detach();' in source
+assert 'UnscheduleEvent(m_ready_timer)' in source
+assert source.index('m_ready->Detach();') < source.index('m_context.CloseEvent(m_event)')
 assert 'rb.PushCopyObjects(ctx, m_event->GetReadableEvent());' in source
 assert '!compressed.empty() && !m_decoder->Decode(compressed, pts, decoded)' in source
 assert 'eos && !m_decoder->Drain(decoded)' in source
@@ -123,6 +128,7 @@ struct FakeDecoder {
  }
 };
 struct FakeEvent {u32 signals{};void Signal(int&){++signals;}};
+struct FakeReady {bool room{};unsigned pulse{};void SetRoom(bool r){room=r;}void Notify(){if(room)++pulse;}};
 namespace Tegra::Texture {
  inline unsigned swizzles{};
  std::size_t CalculateSize(bool, u32 bpp,u32 width,u32 height,u32,u32,u32){
@@ -152,6 +158,8 @@ struct IGraphicsVideoDecoderSession {
  std::set<u32> m_guest_owned;
  FakeEvent event;
  FakeEvent* m_event=&event;
+ FakeReady ready;
+ FakeReady* m_ready=&ready;
  u32 m_syncpoint{4};
  bool m_started{true};
  void Pump();

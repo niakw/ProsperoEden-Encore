@@ -55,4 +55,19 @@ hosts = "\n".join("constexpr std::array " + k + "{T,I,U};" for k in set(gate.PAS
 assert all(v == ["T", "I", "U"] for v in gate.expected_layouts(hosts).values())
 must_reject(lambda: gate.expected_layouts(hosts.replace("PREPARE_INPUTS{T,I,U}", "PREPARE_INPUTS{T,I,S}")), "invalid host layout")
 
-print("PASS FSR31 ABI parser rejects descriptor set/binding/storage/image/uniform drift")
+valid={0:"T",1:"I",2:"U",1000:"S",1001:"S"}
+gate.verify_bindings("synthetic", valid, ["T","I","U"])
+must_reject(lambda: gate.verify_bindings("synthetic",
+    {0:"T",2:"U",1000:"S",1001:"S"},["T","I","U"]),
+    "incomplete SPIR-V bindings")
+must_reject(lambda: gate.verify_bindings("synthetic",
+    {0:"T",1:"I",2:"U",1000:"S"},["T","I","U"]),
+    "incomplete SPIR-V bindings")
+must_reject(lambda: gate.verify_bindings("synthetic",
+    {**valid,3:"T"},["T","I","U"]),
+    "incomplete SPIR-V bindings")
+must_reject(lambda: gate.verify_bindings("synthetic",
+    {**valid,1:"T"},["T","I","U"]),
+    "SPIR-V T, C++ I")
+
+print("PASS FSR31 ABI parser rejects missing/extra/mistyped bindings and uniform drift")

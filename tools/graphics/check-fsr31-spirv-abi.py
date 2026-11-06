@@ -133,6 +133,21 @@ def verify_uniform_abi(shader: str, asm: str, offsets: dict[str,list[int]]) -> s
             raise ValueError(f"{shader}: {spirv} uniform offsets wrong; GPU={actual} CPU={expected}")
     return seen
 
+def verify_bindings(shader: str, gpu: dict[int, str], host: list[str]) -> None:
+    # Every host descriptor must exist in the actual SPIR-V; a missing shader
+    # binding could previously pass by only inspecting reflected entries.
+    required = set(range(len(host))) | {1000, 1001}
+    found = set(gpu)
+    if found != required:
+        missing = sorted(required - found)
+        extra = sorted(found - required)
+        raise ValueError(f"{shader}: incomplete SPIR-V bindings missing={missing} extra={extra}")
+    for binding, actual in gpu.items():
+        want = "S" if binding in (1000, 1001) else host[binding]
+        if actual != want:
+            raise ValueError(f"{shader}: binding {binding} SPIR-V {actual}, C++ {want}")
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--shader-dir",type=Path,required=True)
@@ -156,17 +171,7 @@ def main():
         current=parse_spirv_abi(asm)
         seen_uniforms.update(verify_uniform_abi(shader,asm,uniform_offsets))
         host=expected[layout]
-        for binding,actual in current.items():
-            if binding in (1000,1001):
-                want="S"
-            elif 0<=binding<len(host):
-                want=host[binding]
-            else:
-                raise ValueError(f"{shader}: out-of-range binding {binding}")
-            if actual!=want:
-                raise ValueError(f"{shader}: binding {binding} SPIR-V {actual}, C++ {want}")
-        if not any(k not in (1000,1001) for k in current):
-            raise ValueError(f"{shader}: no GPU resources")
+        verify_bindings(shader, current, host)
         all_bindings+=len(current)
         print(f"ABI_OK {shader} reflected={len(current)} host={len(host)}")
     if "cbFSR3UPSCALER_t" not in seen_uniforms or "cbSPD_t" not in seen_uniforms:

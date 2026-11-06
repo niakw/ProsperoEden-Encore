@@ -1,6 +1,6 @@
 # Eden Encore — R07 FSR 3.1 temporel et R24 MSAA : état technique
 
-**05/11/2026 — audit d'architecture et contrat C++ testé, sans build PS5 ni preuve console.**
+**06/11/2026 — backend Vulkan, garde-fous et sortie framebuffer vérifiés syntaxiquement ; aucun build PS5 complet ni preuve console.**
 
 ## FSR 3.1 temporel : moteur AMD natif compilable, entrée invité manquante
 
@@ -47,6 +47,26 @@ GPU hôte. Le test natif test_fsr31_native_resource_contract couvre ces
 cas. Cette vérification ne remplace pas le producteur GPU invité encore
 absent ni la validation console.
 
+
+Le pont natif possède maintenant `TryRecordToGuest` : sur un
+**framebuffer invité réellement validé** (une seule cible couleur
+1×, taille de sortie identique), il enchaîne les passes FSR 3.1,
+une copie via le blit Vulkan réel, puis la transition de l'image
+résultat de `SHADER_READ_ONLY_OPTIMAL` vers `GENERAL` afin de
+permettre la prochaine écriture compute. Il ne s'exécute pas sans
+producteur d'entrées invitées et ne remplace pas le chemin de
+présentation du jeu de manière automatique.
+
+Sur une réinitialisation temporelle, les dimensions de référence
+et le jitter précédent sont désormais synchronisés avec la frame
+courante, même lorsque les allocations Vulkan sont réutilisées.
+Le moteur bloque une tentative répétée après une défaillance
+d'allocation Vulkan récupérable (fallback sûr). Les erreurs
+`VK_ERROR_DEVICE_LOST` restent fatales : elles ne sont pas
+masquées par un choix d'upscaler.
+L'audit ABI contrôle aussi que **chaque** binding de shader,
+dont les deux samplers, est effectivement présent et typé ;
+les ressources manquantes ne peuvent plus passer silencieusement.
 
 Le pont natif exige couleur, profondeur reversed-Z, mouvement
 en pixels, vrai jitter, vraie projection du jeu, frames cohérentes,
@@ -143,6 +163,24 @@ Le seul masque global de samples ne suffit donc plus à autoriser 16×.
 L'extension `VK_EXT_multisampled_render_to_single_sampled` nécessite
 notamment un flag de création spécifique pour les images invitées 1×,
 et ne peut pas être activée aveuglément sur les textures existantes.
+
+Le composant shadow exige maintenant également la **vraie
+couleur de clear du GPU invité**, passée au render pass Vulkan :
+un clear complet n'implique pas un clear noir. Les erreurs de
+mémoire GPU sont distinguées des formats incompatibles ; une
+perte de périphérique Vulkan ne doit pas être déguisée en
+simple désactivation d'anti-aliasing.
+
+L'audit du pilote PS5 `encore-active/ps5-mesa` montre que la
+fonction `radv_msrtss_enabled` de l'extension
+`VK_EXT_multisampled_render_to_single_sampled` ne s'active
+que sur Android ou avec `RADV_EXPERIMENTAL_MSRTSS`.
+Par conséquent, cette extension **n'est pas adoptée** comme
+chemin général : elle n'est pas une solution de production
+disponible par défaut sur notre PS5. Le chemin à attachements
+MSAA séparés conserve ses propres exigences de sauvegarde/
+rechargement des contenus en cas de draws multiples et de
+lectures/écritures invitées.
 
 **Ce composant n'est pas appelé par le chemin des draws invités** : la
 sélection du pipeline rasterisationSamples, les clears, l'ordre des

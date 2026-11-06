@@ -71,8 +71,18 @@ jobs:
           fetch-depth: 1
       - name: Install host-only C++/Vulkan/video test dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends clang g++ libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev libfmt-dev libssl-dev libzstd-dev libx11-dev libxcb1-dev libxext-dev libxrandr-dev libwayland-dev
+          set -euo pipefail
+          # Hosted images can ship unrelated, intermittently failing external
+          # feeds. Only Ubuntu distribution packages are required here.
+          for source in /etc/apt/sources.list.d/*; do
+            if [ -f "$source" ] && grep -q 'packages.microsoft.com' "$source"; then
+              sudo mv "$source" "$source.disabled"
+            fi
+          done
+          # Bound mirror hangs and retry transient fetch faults instead of
+          # leaving one of four otherwise green shards stuck in apt forever.
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=25 -o Acquire::https::Timeout=25 update -qq
+          sudo apt-get install -y -o Acquire::Retries=3 -o Acquire::http::Timeout=25 -o Acquire::https::Timeout=25 --no-install-recommends clang g++ libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev libfmt-dev libssl-dev libzstd-dev libx11-dev libxcb1-dev libxext-dev libxrandr-dev libwayland-dev
       - name: Run SHA-pinned P0-P4 tests (parallel within shard)
         shell: bash
         run: |

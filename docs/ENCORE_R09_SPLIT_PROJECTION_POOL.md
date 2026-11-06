@@ -17,7 +17,7 @@ La disposition des fenêtres RDNA2 existante est `[window8×8][quadrant TL/TR/BL
 - Entrée valide : 60×33 pixels de 512 canaux, stockée dans 8×5 fenêtres de 8×8 (40 fenêtres et 2 560 tokens).
 - Sortie demi-résolution valide : 30×17 pixels.
 - Allocation 4×4 paddée : **32×20 = 640 tokens**.
-- Un consommateur comme `FinalHead` peut exiger un espace initialisé de **768 tokens** : les 128 tokens supplémentaires sont explicitement écrits à zéro si l'appelant indique `output_tokens=768`.
+- Le `FinalHead` natif 1080p, sur le chemin amont par défaut sans `--tiles-up` ni `--tiles-win`, demande **1 920 tokens** : les 1 280 tokens supplémentaires sont explicitement écrits à zéro si l'appelant indique `output_tokens=768`.
 
 ### Code et qualification
 
@@ -32,3 +32,8 @@ La disposition des fenêtres RDNA2 existante est `[window8×8][quadrant TL/TR/BL
 Il ne constitue pas encore une traversée des **65 opérations Split-Swin Original / 17 Compact**, car il manque l'ordonnancement multi-blocs, les relations inter-étages FSwin/U-Net, la synchronisation des fenêtres déplacées et la sortie renderer. Aucune compilation Vulkan ni exécution sur GPU/PS5 n'est prouvée par la présence des fichiers CMake. L'égalité numérique avec la capture amont doit être mesurée ; les détails de réduction et de conversion peuvent encore différer.
 
 Références MIT : `Overclockers/DLSSNR-AMD/linux/shaders/rdna4/gemm1x1.comp` (`NR_POOL`), `linux/src/core/nr_graph.cpp` (`CCSplitSwin16HProjPool`).
+
+
+### Correction de domaine (même journée)
+
+Les plans capturés peuvent afficher 2 560 tokens de fenêtres, alors que le `FinalHead` amont exécute par défaut sur les tuiles **tronquées** : `tiles_of(60)=15`, `tiles_of(33)=8` et `M=15×8×16=1 920`. La projection poolée écrit 640 tokens, puis le buffer doit contenir **1 280 tokens à zéro** pour garantir les lectures suivantes dans cette variante. Le commentaire historique de l'amont mentionnant «768 at 1080p» n'est pas cohérent avec cette géométrie courante ; on retient les expressions réellement exécutées dans `nr_graph.cpp`. Les autres résolutions se calculent depuis leurs dimensions, **jamais avec une constante 1 920 codée en dur**. Le contrat `output_tokens` reste paramétrique.

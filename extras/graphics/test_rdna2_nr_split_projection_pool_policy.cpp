@@ -20,16 +20,16 @@ static std::uint32_t DestinationToken(
            4u*(y%4u)+(x%4u);
 }
 int main(){
-    constexpr SplitProjectionPool p{60u,33u,8u,5u,0u,0u,0u,0u,768u};
+    constexpr SplitProjectionPool p{60u,33u,8u,5u,0u,0u,0u,0u,1920u};
     constexpr auto input=40ull*64u*512u;
     assert(SplitPoolWidth(p)==32u&&SplitPoolHeight(p)==20u);
     assert(SplitPoolLiveTokens(p)==640u);
-    assert(SplitPoolOutputTokens(p)==768u);
-    assert(CanSplitProjectionPool(p,{input*4u,input,1024u,768ull*512u}));
-    assert(!CanSplitProjectionPool(p,{input*4u-1u,input,1024u,768ull*512u}));
-    assert(!CanSplitProjectionPool(p,{input*4u,input-1u,1024u,768ull*512u}));
-    assert(!CanSplitProjectionPool(p,{input*4u,input,1023u,768ull*512u}));
-    assert(!CanSplitProjectionPool(p,{input*4u,input,1024u,768ull*512u-1u}));
+    assert(SplitPoolOutputTokens(p)==1920u);
+    assert(CanSplitProjectionPool(p,{input*4u,input,1024u,1920ull*512u}));
+    assert(!CanSplitProjectionPool(p,{input*4u-1u,input,1024u,1920ull*512u}));
+    assert(!CanSplitProjectionPool(p,{input*4u,input-1u,1024u,1920ull*512u}));
+    assert(!CanSplitProjectionPool(p,{input*4u,input,1023u,1920ull*512u}));
+    assert(!CanSplitProjectionPool(p,{input*4u,input,1024u,1920ull*512u-1u}));
     auto bad=p;bad.output_tokens=639u;
     assert(!CanSplitProjectionPool(bad,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     bad=p;bad.windows_x=7u;

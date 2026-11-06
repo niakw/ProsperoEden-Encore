@@ -12,15 +12,15 @@ int main(){
     assert(CanSplitBlock(p,caps));
     // A ProjPool output cannot be omitted by treating it as a plain Proj.
     // Native 1080p ProjPool: width 60, height 33, windows 8x5.
-    // The half-res side output is 32x20 (640 tokens), plus 128 zero
+    // The half-res side output is 32x20 (640 tokens), plus 1280 zero
     // tail tokens for the FinalHead that requests 768.
     auto pooled_caps=caps;
-    pooled_caps.pooled=768u*512u;
-    const SplitBlockPlan pooled{windows,true,60u,33u,8u,5u,768u};
+    pooled_caps.pooled=1920u*512u;
+    const SplitBlockPlan pooled{windows,true,60u,33u,8u,5u,1920u};
     assert(CanSplitBlock(pooled,pooled_caps));
-    pooled_caps.pooled=768u*512u-1u;
+    pooled_caps.pooled=1920u*512u-1u;
     assert(!CanSplitBlock(pooled,pooled_caps));
-    pooled_caps.pooled=768u*512u;
+    pooled_caps.pooled=1920u*512u;
     assert(!CanSplitBlock({windows,true,60u,33u,7u,5u,768u},pooled_caps));
     assert(!CanSplitBlock({windows,true,60u,33u,8u,5u,639u},pooled_caps));
     assert(!CanSplitBlock({windows,true,60u,33u,8u,5u,0u},

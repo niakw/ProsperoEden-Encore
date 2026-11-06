@@ -1,0 +1,52 @@
+name: Eden P0-P4 host qualification (sharded)
+
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/**'
+      - 'tools/**'
+      - '.github/workflows/p0-p4-host-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eden-p0-p4-host-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  host-qualify:
+    name: Host qualification shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - name: Checkout exact SHA and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install host-only C++/Vulkan/video test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends clang g++ libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev libfmt-dev libssl-dev libzstd-dev
+      - name: Run SHA-pinned P0-P4 tests (parallel within shard)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/ns2/qualify_host_batch.py --scope core --jobs 2 --shard '${{ matrix.shard }}/4'
+      - name: Preserve per-SHA host receipt, even for failed witnesses
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: p0-p4-host-${{ github.sha }}-shard-${{ matrix.shard }}
+          path: .build-local/p4-host-batch-*.json
+          if-no-files-found: warn
+          retention-days: 14

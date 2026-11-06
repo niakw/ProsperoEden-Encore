@@ -480,8 +480,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert len(set(marker_positions)) == 3 and min(marker_positions) >= 0
     marker_hashes = (
         'ca47d210fd98b7cb',
-        '43d2b6c4a8aa4c55',
-        '5caba22fce220533',
+        '8e8efdb203a6000c',
+        '06cb243b72e6d845',
     )
     pinned = []
     for start, digest in zip(marker_positions, marker_hashes):
@@ -505,8 +505,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert 'NativeGraphicsCbufBank(' in native_shader_reader
     assert 'required_bank == ~u32{0}' in native_shader_reader
     assert n3m.count('NativeGraphicsCbufBank(stage)') == 3
-    assert 'NativeGraphicsStageMaskSupported(configured_stages)' in pinned[1]
-    assert 'NativeGraphicsStageMaskSupported(keyed_stages)' in pinned[2]
+    assert 'NativeMeshGraphicsStageMaskSupported(' in pinned[1]
+    assert 'NativeMeshGraphicsStageMaskSupported(' in pinned[2]
     # P2.4: the Vulkan Task/Mesh changes are versioned as exact reversible
     # source deltas. Full-file equality remains mandatory after reversing ONLY
     # these checked hunks; do not substitute a trusted vendor copy as oracle.

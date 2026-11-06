@@ -1,6 +1,15 @@
 name: Eden P0-P4 host qualification (sharded)
 
 on:
+  # Production qualification follows main after PRs have been merged.
+  # No PS5 build or release is scheduled by this host-only matrix.
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'headless/**'
+      - 'tools/**'
+      - '.github/workflows/p0-p4-host-matrix.yml'
   pull_request:
     paths:
       - 'vendor'

@@ -295,7 +295,29 @@ original_m07 = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").r
 receipt = json.loads((root/"tools/fixtures/p24-task-mesh-vulkan-deltas.json").read_text())
 mesh_rasterizer = next(item for item in receipt["files"]
                        if item["path"] == "vulkan_rasterizer.cpp")
-m07_before_mesh = original_m07
+# Reverse only the separately reviewed KeplerCompute pointer ABI
+# correction before normalizing the historical Task/Mesh and DEV variants.
+# This is an exact proof against the original recorded maintained blob.
+native_begin = "bool RasterizerVulkan::DispatchNativeCompute("
+assert original_m07.count(native_begin) == 1
+native_start = original_m07.index(native_begin)
+native_end = original_m07.index("\nvoid RasterizerVulkan::", native_start)
+native_body = original_m07[native_start:native_end]
+null_guard = """    // ChannelStateCache binds a KeplerCompute pointer; only native process
+    // tickets authorize dereference, and the channel may be unbound.
+    if (!kepler_compute) return false;
+"""
+assert native_body.count(null_guard) == 1
+assert native_body.count("kepler_compute->regs") == 5
+assert native_body.count("*kepler_compute, *gpu_memory") == 6
+native_body = native_body.replace(null_guard, "").replace(
+    "kepler_compute->regs", "kepler_compute.regs").replace(
+    "*kepler_compute, *gpu_memory", "kepler_compute, *gpu_memory")
+m07_before_mesh = original_m07[:native_start] + native_body + original_m07[native_end:]
+reviewed_bytes = m07_before_mesh.encode("utf-8")
+reviewed_sha = hashlib.sha1(b"blob " + str(len(reviewed_bytes)).encode() + b"\0" + reviewed_bytes).hexdigest()
+assert reviewed_sha == mesh_rasterizer["maintained_blob_sha"], (
+    "M07 unreviewed KeplerCompute ABI change")
 for hunk in reversed(mesh_rasterizer["hunks"]):
     assert m07_before_mesh.count(hunk["after"]) == 1, "P2.4 native mesh hunk moved"
     m07_before_mesh = m07_before_mesh.replace(hunk["after"], hunk["before"])

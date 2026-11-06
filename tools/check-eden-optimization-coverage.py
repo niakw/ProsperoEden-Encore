@@ -552,7 +552,27 @@ assert not post_f07_task_mesh_owners & research_owners
 assert "EDEN_NATIVE_TASK_MESH_ROOT" in release_cmake
 print("ENCORE_P24_TASK_MESH_POST_F07_PASS", f"owners={len(post_f07_task_mesh_owners)}")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners
+# R437 is native-only source added after F07, not an extra reviewed
+# optimization owner. Reuse the source-inventory literal set, verify it
+# exists in the vendored tree, and keep the immutable 518-owner review.
+r437_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(t, ast.Name) and t.id == "post_f07_r437_buffer_base_owners"
+        for t in node.targets)
+]
+assert len(r437_nodes) == 1
+r437_paths = ast.literal_eval(r437_nodes[0])
+assert r437_paths == {"eden-core/src/video_core/buffer_cache/buffer_cache_base.h"}
+post_f07_r437_buffer_base_owners = {"vendor/encore-active/" + p for p in r437_paths}
+assert post_f07_r437_buffer_base_owners <= all_owners
+assert not post_f07_r437_buffer_base_owners & research_owners
+assert "set(EDEN_MAINTAINED_BUFFER_BASE" in release_cmake
+print("ENCORE_POST_F07_R437_F07_ISOLATION_PASS", "native_headers=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

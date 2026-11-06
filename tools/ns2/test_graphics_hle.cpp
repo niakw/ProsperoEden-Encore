@@ -914,6 +914,11 @@ int main(){
             second_video->size == 65536 &&
             second_video->packed_dimensions == video[2],
             "GSV 426/428 resolve image backing, offset, size and dimensions");
+    const auto cpu_bgra = pools.CpuImageDescriptor(0x80000001u);
+    require(cpu_bgra && (*cpu_bgra)[0] == 9 && (*cpu_bgra)[2] == 65536 &&
+            (*cpu_bgra)[4] == 512 && (*cpu_bgra)[6] == 0 &&
+            (*cpu_bgra)[8] == 0 && !pools.CpuImageDescriptor(0x80000002u),
+            "GSV 961 exposes only a live BGRA decoder image with exact stride/pitch");
     require(!pools.Add(0x80000001u, 2, 20, 131072, video[2], *video_layout) &&
             !pools.Lookup(0x80000002u) &&
             pools.Remove(0x80000000u) && pools.ImageCount() == 0 &&
@@ -929,6 +934,17 @@ int main(){
     require(nv12 && nv12->nv12 && nv12->image_bytes == 24576 &&
             nv12->total_bytes == 49152 && nv12->chroma_offset == 16384,
             "GSV native NV12 two-plane pitch/chroma layout");
+    require(pools.Add(0x80000020u, 2, 21, 49152, video[2], *nv12),
+            "GSV 911 accepts two real NV12 video images");
+    const auto cpu_nv12 = pools.CpuImageDescriptor(0x80000021u);
+    require(cpu_nv12 && (*cpu_nv12)[0] == 10 &&
+            (*cpu_nv12)[2] == 24576 && (*cpu_nv12)[4] == 256 &&
+            (*cpu_nv12)[6] == 40960 && (*cpu_nv12)[8] == 256,
+            "GSV 961 NV12 descriptor exposes both real pool-plane offsets");
+    require(pools.Remove(0x80000020u) &&
+            !pools.CpuImageDescriptor(0x80000020u) &&
+            !pools.CpuImageDescriptor(0x80000021u),
+            "GSV 961 refuses retired decoder-image IDs without fabricated descriptors");
     video[2] = (63u << 16) | 126u; // odd width
     require(!CalculateNativeVideoImageLayout(video, 2),
             "GSV native NV12 rejects odd pixel dimensions");

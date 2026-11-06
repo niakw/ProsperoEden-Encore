@@ -153,6 +153,7 @@ def main()->int:
 
     for command, method in (
         (911, "CreateVideoImagePool"), (912, "DestroyVideoImagePool"),
+        (961, "GetCpuVideoImageDescriptor"),
         (426, "MapVideoGpuImage"), (427, "UnmapVideoGpuImage"),
         (428, "QueryVideoGpuImage"),
     ):
@@ -165,6 +166,9 @@ def main()->int:
         'handle->Duplicate(true)',
         'nvmap.PinHandle(backing, false)',
         'm_video_pools.Lookup(packet[2])',
+        'm_video_pools.CpuImageDescriptor(packet[2])',
+        'IPC::ResponseBuilder rb{ctx, 34};',
+
         'FindRegisteredGpuAddressSpace(packet[4])',
         'as->MapNativeImage(image->backing, image->offset,',
         'it->second.address_space->UnmapNative4K(',

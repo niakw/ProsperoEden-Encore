@@ -29,6 +29,7 @@ void ReportInputThreadGpuLiveness();
 constexpr unsigned kPollsPerScan = 250;
 // Short touchpad click opens/closes Encore's overlay; a sustained hold
 // remains guest Minus when the overlay is closed. Chords never count as clicks.
+constexpr unsigned kSelectTapPolls = 25;
 constexpr unsigned kSelectHoldPolls = 60;
 // Eden's virtual gamepad numbers the right Joy-Con's SL and SR after its named buttons
 // (hid_core, emulated_controller.cpp: virtual_button_params).
@@ -408,7 +409,8 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         if (touch_button < 0) return;
         engine->SetButtonState(player, kGame[touch_button],
             !overlay_open.load(std::memory_order_relaxed) &&
-            !slot.guest_home.BlockChordButtons() && slot.select_held);
+            !slot.guest_home.BlockChordButtons() &&
+            (slot.select_held || slot.select_pulse > 0));
     };
     const auto axis = [this](u8 raw) { return stick_curve[raw]; };
     auto& last_buttons = slots[player].last_buttons;
@@ -446,30 +448,39 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         if (slot.guest_home.BlockChordButtons()) {
             mapped_buttons &= ~(kButtonTouchPad | kButtonOptions);
             slot.select_held = false;
+            slot.select_pulse = 0;
         }
         engine->SetButtonState(player, Button::ButtonHome,
             guest_home && !overlay_open.load(std::memory_order_relaxed));
-        // The touchpad on its own: see kSelectTapPolls.
+        // A short click opens Encore only in the Vulkan quick-menu session;
+        // the old guest Minus tap survives in OpenGL/legacy input sessions.
         const bool touch = (pressed & kButtonTouchPad) != 0;
         const bool touched = (last_buttons & kButtonTouchPad) != 0;
         if (touch && !touched) {
             slot.touch_chord = false;
             slot.touch_polls = 0;
+            slot.select_pulse = 0;
         }
         if (touch && (pressed & (kButtonL1 | kButtonR1 | kButtonOptions)) != 0) {
             slot.touch_chord = true;
             slot.select_held = false;
         }
         if (!touch && touched) {
-            if (player == 0 && usable && !slot.touch_chord && !slot.select_held &&
-                overlay_enabled.load(std::memory_order_acquire)) {
-                const bool opening = !overlay_open.load(std::memory_order_relaxed);
-                overlay_open.store(opening, std::memory_order_release);
-                overlay_actions.store(0, std::memory_order_release);
+            if (usable && !slot.touch_chord && !slot.select_held) {
+                if (player == 0 && overlay_enabled.load(std::memory_order_acquire)) {
+                    const bool opening = !overlay_open.load(std::memory_order_relaxed);
+                    overlay_open.store(opening, std::memory_order_release);
+                    overlay_actions.store(0, std::memory_order_release);
+                } else if (!overlay_open.load(std::memory_order_relaxed)) {
+                    slot.select_pulse = kSelectTapPolls + 1;
+                }
             }
             slot.select_held = false;
         }
-        if (!usable) slot.select_held = false;
+        if (!usable) {
+            slot.select_held = false;
+            slot.select_pulse = 0;
+        }
         const bool intercept_overlay = overlay_open.load(std::memory_order_acquire);
         if (player == 0 && intercept_overlay && usable) {
             const ButtonMask edges = pressed & ~last_buttons;
@@ -488,6 +499,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         if (intercept_overlay) {
             mapped_buttons = 0;
             slot.select_held = false;
+            slot.select_pulse = 0;
         }
 #ifdef EDEN_DEV_PROFILE
         // Diagnostic input trace only. Per-button fprintf in a shipping 4 ms
@@ -554,6 +566,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         (last_buttons & kButtonTouchPad) != 0 && !slot.touch_chord && !slot.select_held &&
         ++slot.touch_polls >= kSelectHoldPolls)
         slot.select_held = true;
+    if (slot.select_pulse > 0) --slot.select_pulse;
     set_touch(last_buttons);
 }
 }

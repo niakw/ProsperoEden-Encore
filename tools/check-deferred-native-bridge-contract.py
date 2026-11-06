@@ -5,6 +5,8 @@ Validates pinned anchors and CMake OFF parsing, not a native compilation or
 correct GPU execution; opt-in ON remains explicitly unqualified.
 """
 from pathlib import Path
+import json
+import hashlib
 import subprocess
 import tempfile
 
@@ -287,6 +289,19 @@ print("ENCORE_M06_MAINTAINED_MEMORY_SOURCE_PARITY_PASS")
 # the newer FIFO worker-bind latch. This is a deliberate integration variant,
 # not a reason to silently change the guest draw path.
 original_m07 = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+# M07 was created before the reviewed P2.4 Task/Mesh Vulkan deltas.
+# Reverse exactly the separately SHA-pinned mesh hunks to compare the
+# historical inactive variant; NEVER remove mesh functionality from shipping.
+receipt = json.loads((root/"tools/fixtures/p24-task-mesh-vulkan-deltas.json").read_text())
+mesh_rasterizer = next(item for item in receipt["files"]
+                       if item["path"] == "vulkan_rasterizer.cpp")
+m07_before_mesh = original_m07
+for hunk in reversed(mesh_rasterizer["hunks"]):
+    assert m07_before_mesh.count(hunk["after"]) == 1, "P2.4 native mesh hunk moved"
+    m07_before_mesh = m07_before_mesh.replace(hunk["after"], hunk["before"])
+m07_data = m07_before_mesh.encode("utf-8")
+m07_sha = hashlib.sha1(b"blob " + str(len(m07_data)).encode() + b"\0" + m07_data).hexdigest()
+assert m07_sha == mesh_rasterizer["pinned_blob_sha"], "M07 historical native baseline drift"
 m07_entry = "bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {"
 m07_buffer_lock = "        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);"
 assert original_m07.count(m07_entry) == original_m07.count(m07_buffer_lock) == 1
@@ -316,7 +331,7 @@ assert maintained_m07_text.count(m07_guest_draw_guard) == 4
 assert maintained_m07_text.count(m07_native_draw_guard) == 0
 expected_m07 = ('#include "gpu_deferred_replay.h"\n'
                 '#include "video_core/memory_manager.h"\n' +
-                original_m07.replace(m07_entry, m07_entry_with_guard).replace(
+                m07_before_mesh.replace(m07_entry, m07_entry_with_guard).replace(
                     m07_buffer_lock, m07_lock_with_fallback).replace(
                     m07_native_draw_guard, m07_guest_draw_guard))
 assert maintained_m07_text == expected_m07, "M07 maintained Vulkan variant parity drift"

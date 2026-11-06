@@ -332,3 +332,10 @@ Le contrat C++ hôte teste les tailles utiles ViT 2560×512/1024/4096, les déca
 `NrRdna2ProjectionQuantized` relie désormais **deux kernels Vulkan effectifs sur le même scheduler**, d'abord le GEMM 1×1 FP8→FP32, puis la quantification FP32→E4M3FN. Les transitions de visibilité sont enregistrées entre passes ; les quatre buffers doivent être des ressources STORAGE indépendantes et vivantes, liées aux deux descriptor sets fournis par l'orchestrateur. `PrepareQuantizedProjection` valide **toutes les tailles avant le premier dispatch** et refuse de produire une sortie partielle en cas de forme non prise en charge.
 
 Ce composant permet une transition tensorielle nécessaire aux projections Split-Swin/ViT, mais ne charge pas à lui seul les poids ni ne construit un modèle complet. Les projections FFN géantes dépassant le garde-fou `CanDispatch` restent bloquées ; il faudra les diviser en segments sûrs plutôt que supprimer la borne. Test de contrat host ajouté au CTest. Pas de métriques GPU PS5 ni de frame validé.
+
+
+### ViT FFN : découpes de projection par tokens sans débordement
+
+`BuildQuantizedProjectionBatches` et `NrRdna2ProjectionQuantized::RecordBatched` prennent désormais en charge le calcul large **2560 tokens × 4096 canaux × 1024 entrée** en segments de 1024/1024/512 tokens. Chaque segment reste sous le plafond de calcul du GEMM existant. Le tampon FP32 est réutilisé **après barrière Vulkan**, tandis que les segments E4M3FN s'écrivent à des offsets distincts dans une sortie continue. Le plan entier est validé avant tout dispatch ; le test hôte vérifie tailles, offsets, limites de scratch et rejets. Aucun code de matrice coopérative Nvidia requis.
+
+Ce chaînage est une brique réelle du FFN ViT, pas encore l'orchestrateur complet des cinq opérations par bloc ni une image PS5 validée.

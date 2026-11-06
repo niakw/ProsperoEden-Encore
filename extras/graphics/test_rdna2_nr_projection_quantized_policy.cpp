@@ -29,4 +29,40 @@ int main(){
     const Storage ample{2560u*1024u,4096u*1024u,
                         2560ull*4096u*4u,2560ull*4096u*4u};
     assert(!PrepareQuantizedProjection(huge,ample,2560ull*4096u,q));
+    // The same ViT FFN expansion is valid as three ordered 1024-token
+    // slices, using one 16-MiB FP32 transient and one contiguous FP8 output.
+    const Storage scratch{
+        2560ull*1024u,4096ull*1024u,
+        1024ull*4096u*4u,1024ull*4096u*4u};
+    QuantizedProjectionBatches batches{};
+    assert(BuildQuantizedProjectionBatches(
+        huge,scratch,2560ull*4096u,1024u,batches));
+    assert(batches.count==3u&&batches.total_tokens==2560u);
+    assert(batches.batches[0].gemm.tokens==1024u);
+    assert(batches.batches[1].gemm.tokens==1024u);
+    assert(batches.batches[2].gemm.tokens==512u);
+    assert(batches.batches[0].gemm.a_base_bytes==0u);
+    assert(batches.batches[1].gemm.a_base_bytes==1024u*1024u);
+    assert(batches.batches[2].gemm.a_base_bytes==2048u*1024u);
+    assert(batches.batches[0].prepared.quant.output_offset_bytes==0u);
+    assert(batches.batches[1].prepared.quant.output_offset_bytes==
+           1024u*4096u);
+    assert(batches.batches[2].prepared.quant.output_offset_bytes==
+           2048u*4096u);
+    assert(!BuildQuantizedProjectionBatches(
+        huge,scratch,2560ull*4096u-1u,1024u,batches));
+    assert(batches.count==0u);
+    assert(!BuildQuantizedProjectionBatches(
+        huge,scratch,2560ull*4096u,0u,batches));
+    assert(batches.count==0u);
+    assert(!BuildQuantizedProjectionBatches(
+        huge,scratch,2560ull*4096u,2560u,batches));
+    assert(batches.count==0u);
+    const Storage too_small{
+        scratch.activation_bytes,scratch.weight_bytes,
+        scratch.output_bytes-4u,scratch.free_transient_bytes};
+    assert(!BuildQuantizedProjectionBatches(
+        huge,too_small,2560ull*4096u,1024u,batches));
+    assert(batches.count==0u);
+
 }

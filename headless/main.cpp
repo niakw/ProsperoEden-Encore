@@ -2360,7 +2360,7 @@ int main(int argc, char** argv) {
                 Eden::QuickOverlay::Menu quick_menu(launch_title_id);
                 Eden::QuickOverlay::Reset();
 #ifdef EDEN_PS5_VULKAN
-                if (pad) pad->EnableOverlay(game);
+                if (pad) pad->EnableOverlay(game && backend == Eden::GraphicsBackend::Vulkan);
 #else
                 if (pad) pad->EnableOverlay(false);
 #endif

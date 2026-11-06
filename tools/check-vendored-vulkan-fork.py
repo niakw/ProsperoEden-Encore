@@ -2,6 +2,7 @@
 """Verify tracked native Vulkan C++ fork exactly matches validated R337 source generator."""
 from pathlib import Path
 import filecmp
+import json
 import hashlib
 import os
 import shutil
@@ -492,6 +493,39 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert n3m.count('NativeGraphicsCbufBank(stage)') == 3
     assert 'NativeGraphicsStageMaskSupported(configured_stages)' in pinned[1]
     assert 'NativeGraphicsStageMaskSupported(keyed_stages)' in pinned[2]
+    # P2.4: the Vulkan Task/Mesh changes are versioned as exact reversible
+    # source deltas. Full-file equality remains mandatory after reversing ONLY
+    # these checked hunks; do not substitute a trusted vendor copy as oracle.
+    p24 = json.loads((root/'tools/fixtures/p24-task-mesh-vulkan-deltas.json').read_text())
+    assert p24['schema_version'] == 1
+    p24_by_path = {entry['path']: entry for entry in p24['files']}
+    assert len(p24_by_path) == len(p24['files']) == 8
+    assert set(p24_by_path) == {
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h',
+        'include/video_core/renderer_vulkan/vk_rasterizer.h',
+        'include/video_core/vulkan_common/vulkan_wrapper.h',
+        'vk_graphics_pipeline_cost.cpp', 'vk_pipeline_cache_cost.cpp',
+        'vulkan_device.cpp', 'vulkan_rasterizer.cpp', 'vulkan_wrapper.cpp',
+    }
+    def git_blob_sha(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest()
+    def reverse_p24(name, text):
+        receipt=p24_by_path.get(name)
+        if receipt is None:
+            return text
+        assert git_blob_sha(text) == receipt['maintained_blob_sha'], (
+            'Task/Mesh maintained owner drift', name)
+        for hunk in reversed(receipt['hunks']):
+            assert text.count(hunk['after']) == 1, ('Task/Mesh delta hunk drift',name)
+            text=text.replace(hunk['after'],hunk['before'])
+        assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
+            'Task/Mesh source reverse parity failed', name)
+        return text
+    for name in p24_by_path:
+        assert name in expected and name in actual, ('missing Task/Mesh Vulkan source',name)
+        reverse_p24(name,expected[name].read_text())
+
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
     generated_n3m = actual[n56_name].read_text()
@@ -504,7 +538,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from pinned vendor')
     assert generated_n3m.count(native_compute_guard) == 1, (
         'Native Compute cache admission gate missing from generator')
-    assert generated_n3m == n3m, 'NS2 generated Vulkan source differs from pinned vendor'
+    assert generated_n3m == reverse_p24(n56_name, n3m), 'NS2 generated Vulkan source differs from P24-normalized vendor'
 
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA
@@ -607,6 +641,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         blit_path.write_text(baseline_blit)
         normalized_expected[blit_name] = blit_path
 
+    for name in p24_by_path:
+        baseline=reverse_p24(name, expected[name].read_text())
+        path=temp/'normalized-vendor-p24'/name
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(baseline)
+        normalized_expected[name]=path
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

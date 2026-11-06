@@ -535,12 +535,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         start_marker = 'bool RasterizerVulkan::DispatchNativeCompute('
         assert text.count(start_marker) == 1, 'Native QMD3 renderer ABI owner moved'
         start = text.index(start_marker)
-        finish = text.index('\\nvoid RasterizerVulkan::', start)
+        finish = text.index('\nvoid RasterizerVulkan::', start)
         part = text[start:finish]
         guard = (
-            '    // ChannelStateCache binds a KeplerCompute pointer; only native process\\n'
-            '    // tickets authorize dereference, and the channel may be unbound.\\n'
-            '    if (!kepler_compute) return false;\\n'
+            '    // ChannelStateCache binds a KeplerCompute pointer; only native process\n'
+            '    // tickets authorize dereference, and the channel may be unbound.\n'
+            '    if (!kepler_compute) return false;\n'
         )
         assert part.count(guard) == 1, 'Native compute null-guard drift'
         assert part.count('kepler_compute->regs') == 5, 'QMD3 registers ABI drift'

@@ -25,7 +25,17 @@ assert 'class Nx2VideoDecoder {' in header
 assert 'std::optional<NvdecCommon::VideoCodec> CodecFromMime(' in backend
 for codec in ('VideoCodec::VP9', 'VideoCodec::VP8', 'VideoCodec::H264'):
     assert codec in backend
-assert 'VideoCodec::AV1' not in backend, 'unsupported AV1 requires explicit refusal'
+# The separate raw FFmpeg path covers newer codecs without changing the
+# pinned NS1 hardware register enum or acknowledging absent host decoders.
+assert 'RawCodecFromMime(' in backend
+assert 'AV_CODEC_ID_AV1' in backend and 'AV_CODEC_ID_HEVC' in backend
+assert 'avcodec_find_decoder(*raw_id)' in backend
+assert 'if (!raw_codec)' in backend and 'avcodec_open2(' in backend
+assert 'avcodec_free_context(&raw_context)' in backend
+assert 'avcodec_receive_frame(raw_context, frame->GetFrame())' in backend
+assert 'status == AVERROR(EAGAIN)' in backend
+assert 'return impl->Receive(pictures);' in backend
+assert 'VideoCodec::AV1' not in backend, 'NS1 hardware enum must not be extended'
 assert 'if (!codec)' in backend
 assert 'if (impl->decoder->GetCodec() == nullptr)' in backend
 assert 'impl->open = impl->context->OpenContext(*impl->decoder);' in backend
@@ -42,10 +52,19 @@ source = r'''
 #include <cassert>
 #include <cstdint>
 #include <span>
+#include <optional>
+#include <string_view>
 #include "video_core/host1x/h264_packet.h"
+enum AVCodecID { AV_CODEC_ID_AV1, AV_CODEC_ID_HEVC };
+__REAL_NATIVE_CODEC_SELECTOR__
 int main() {
  using Tegra::Host1x::H264PacketConverter;
  H264PacketConverter parser;
+ assert(RawCodecFromMime("video/av01") == AV_CODEC_ID_AV1);
+ assert(RawCodecFromMime("video/av1") == AV_CODEC_ID_AV1);
+ for (auto mime : {"video/hevc", "video/h265", "video/hev1", "video/hvc1"})
+  assert(RawCodecFromMime(mime) == AV_CODEC_ID_HEVC);
+ assert(!RawCodecFromMime("video/vp9") && !RawCodecFromMime("video/unsupported"));
  std::array<u8, 12> mp4{0,0,0,2,0x65,0xaa,0,0,0,2,0x41,0xbb};
  parser.Convert(mp4);
  assert((mp4 == std::array<u8,12>{0,0,0,1,0x65,0xaa,0,0,0,1,0x41,0xbb}));
@@ -66,8 +85,16 @@ int main() {
  std::array<u8,6> one{0,0,0,2,0x65,0xaa};
  parser.Convert(one);
  assert(one[3] == 1);
+ // The exact same length-prefix conversion works for HEVC NAL units.
+ parser.Reset();
+ std::array<u8,7> hevc{0,0,0,3,0x26,0x01,0xff};
+ parser.Convert(hevc);
+ assert(hevc[3] == 1 && hevc[4] == 0x26 && hevc[5] == 0x01);
 }
 '''
+selector_start = backend.index('std::optional<AVCodecID> RawCodecFromMime(')
+selector_end = backend.index('\n}\n\n} // namespace', selector_start) + 2
+source = source.replace('__REAL_NATIVE_CODEC_SELECTOR__', backend[selector_start:selector_end])
 compilers = list(dict.fromkeys(filter(None, (shutil.which('clang++'), shutil.which('g++')))))
 assert compilers
 sdk = Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
@@ -88,5 +115,5 @@ with tempfile.TemporaryDirectory(prefix='eden-real-h264-frame-') as temp:
             assert built.returncode == 0, (cmd, built.stderr[-2600:])
             executed = subprocess.run([str(exe)], env=env, capture_output=True, text=True, timeout=20)
             assert executed.returncode == 0, (cmd, executed.stderr[-2600:])
-            print(Path(compiler).name, opt, 'P1_VIDEO_H264_REAL_CONVERTER_PASS', flush=True)
-print('P1_NATIVE_VIDEO_BACKEND_HOST_PASS codec=H264_VP8_VP9 AV1=refused renderer=ffmpeg frame_ownership=source_only')
+            print(Path(compiler).name, opt, 'P1_VIDEO_H264_HEVC_FRAMING_AND_CODEC_SELECTOR_PASS', flush=True)
+print('P1_NATIVE_VIDEO_BACKEND_HOST_PASS wrapped=H264_VP8_VP9 raw=AV1_HEVC codec_probe=fail_closed frame_ownership=source_only')

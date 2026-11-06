@@ -56,7 +56,9 @@ assert 'target_sources(core PRIVATE "${EDEN_SHARED_NATIVE_VIDEO_SESSION_SOURCE}"
 assert 'friend class IGraphicsVideoDecoderSession' in sh
 assert 'std::deque<PendingPicture> m_pending;' in header
 assert 'bool Nx2VideoDecoder::Render(' in backend
-assert 'if (!impl->context->SendPacket(packet)) {' in backend
+assert 'sent = impl->context->SendPacket(packet);' in backend
+assert 'avcodec_send_packet(impl->raw_context, packet.GetPacket())' in backend
+assert 'impl->pending_pts.erase(it);' in backend
 assert 'impl->pending_pts.erase(it);' in backend
 assert 'std::nullopt' in backend
 start='void IGraphicsVideoDecoderSession::Pump() {'

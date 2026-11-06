@@ -488,3 +488,13 @@ la ressource GSV est effectivement mappée au GPU (TIPC 426), via le swizzle
 partagé Eden. NV12 demeure pitch-linear ; le propriétaire revalide l'état
 des mappings sous verrou avant écriture. Test hôte :
 `tools/ns2/check_native_video_decoder_ipc_host.py`. Aucun test PS5.
+
+#### P1.3 — décodeurs AV1 et HEVC (06/11/2026)
+
+Le backend maintenu de `video_core/host1x/nx2_video_decoder.cpp` utilise
+FFmpeg pour sélectionner AV1 (av01/av1) et HEVC (hevc/h265/hev1/hvc1), sans
+modifier l'enum NVDEC du moteur NS1. Si la bibliothèque liée ne propose pas
+le codec demandé, l'initialisation échoue explicitement. Les flux HEVC
+length-prefixed utilisent le convertisseur Annex-B partagé. Validation hôte :
+compilation syntaxique du propriétaire et tests O0/O2 du sélecteur réel.
+Aucune preuve de lecture AV1/HEVC sur PS5.

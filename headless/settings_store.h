@@ -60,10 +60,11 @@ inline constexpr int kNativeResolution = 3;
 // Existing indices stable. SGSR options are native Vulkan only; Lanczos
 // uses the upstream window-adapt shader on Vulkan and OpenGL.
 inline constexpr const char* kUpscalingFilterKeys[] = {
-    "bilinear", "fsr", "bicubic", "nearest", "lanczos", "sgsr", "sgsr_edge"};
+    "bilinear", "fsr", "bicubic", "nearest", "lanczos", "sgsr", "sgsr_edge", "anime4k_3d"};
 // These are spatial display filters, NOT FSR 3 temporal reconstruction.
 inline constexpr const char* kUpscalingFilterLabels[] = {
-    "Bilinear", "FSR 1", "Bicubic", "Nearest", "Lanczos", "SGSR", "SGSR Edge"};
+    "Bilinear", "FSR 1", "Bicubic", "Nearest", "Lanczos", "SGSR", "SGSR Edge",
+    "Anime4K 3D CNN x2"};
 // Keep existing indices stable; index 3 is a new Vulkan-only shader.
 // Preserve all previously persisted AA indices 0-3. Real forced samples
 // extend the same global/per-game AA field; no parallel experimental control.

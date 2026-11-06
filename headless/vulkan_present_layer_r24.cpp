@@ -77,6 +77,11 @@ Layer::Layer(const Device& device, MemoryAllocator& memory_allocator_, Scheduler
         sr_filter.emplace<SGSR>(device, memory_allocator, image_count, output_size, false);
     } else if (filters.get_scaling_filter() == Settings::ScalingFilter::SgsrEdge) {
         sr_filter.emplace<SGSR>(device, memory_allocator, image_count, output_size, true);
+    } else if (filters.get_scaling_filter() == Settings::ScalingFilter::Anime4K3D) {
+        // Real MIT Anime4K v4 3D CNN four-pass native compute backend.
+        // No fake FSR3 timeline/history nor per-game shader hash.
+        sr_filter.emplace<Anime4K3D>(device, memory_allocator, scheduler, image_count,
+                                     output_size);
     }
 }
 
@@ -139,6 +144,14 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     } else if (auto* sgsr = std::get_if<SGSR>(&sr_filter)) {
         source_image_view = sgsr->Draw(device, scheduler, image_index, source_image, source_image_view, render_extent, crop_rect);
         crop_rect = {0, 0, 1, 1};
+    } else if (auto* a4k = std::get_if<Anime4K3D>(&sr_filter)) {
+        if (const auto output = a4k->Draw(image_index, source_image, source_image_view,
+                                          render_extent, crop_rect)) {
+            source_image_view = *output;
+            crop_rect = {0, 0, 1, 1};
+        }
+        // On incompatible crop/format/dimensions/budget, unchanged bilinear
+        // presentation samples the original guest image.
     }
 
     SetMatrixData(device, *out_push_constants, layout);

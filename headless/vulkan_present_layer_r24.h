@@ -14,6 +14,7 @@
 #include "video_core/vulkan_common/vulkan_wrapper.h"
 #include "video_core/renderer_vulkan/present/fsr.h"
 #include "video_core/renderer_vulkan/present/sgsr.h"
+#include "video_core/renderer_vulkan/present/anime4k3d.h"
 #include "video_core/renderer_vulkan/present/fxaa.h"
 #include "video_core/renderer_vulkan/present/smaa.h"
 
@@ -96,7 +97,7 @@ private:
     VkExtent2D anti_alias_extent{}; // actual source dimensions, not requested scaling
     bool fxaa_enhanced_setting{}; // actual SPIR-V variant used by FXAA
     std::variant<std::monostate, FXAA, SMAA> anti_alias{};
-    std::variant<std::monostate, SGSR, FSR> sr_filter{};
+    std::variant<std::monostate, SGSR, FSR, Anime4K3D> sr_filter{};
     std::vector<u64> resource_ticks{};
 };
 

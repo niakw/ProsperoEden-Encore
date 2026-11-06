@@ -1,4 +1,12 @@
 # Eden Encore — R09 Neural Rendering : sélection de moteur et limites PS5
+
+**Mise à jour du 06/11/2026 : un premier véritable CNN Anime4K 3D est
+désormais intégré dans la PR #24 et compilé sur hôte, sans qualification
+PS5. Cette ancienne synthèse comparative datée du 05/11 est complétée
+par [ENCORE_R09_ANIME4K_NEURAL_DLSS_IMPORT.md](ENCORE_R09_ANIME4K_NEURAL_DLSS_IMPORT.md),
+qui fait foi pour le nouvel état d'implémentation et le scénario DLL
+fournie par l'utilisateur.**
+
 **Audit externe vérifié le 05/11/2026** · dépôt fonctions / PR #24 · état : RECHERCHE
 
 ## Directive du 6 novembre 2026

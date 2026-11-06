@@ -95,7 +95,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_descriptor_pool.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
-    "${EDEN_AMD_FSR31_BACKEND_DIR}/msaa_color_shadow_pass.cpp")
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/msaa_color_shadow_pass.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp")
 set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.cpp"
@@ -107,6 +108,32 @@ set_property(SOURCE
     "${PROJECT_SOURCE_DIR}/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_descriptor_pool.h")
+
+# R09: genuine MIT Anime4K-v4 3D CNN x2 neural spatial super-resolution.
+# Source/weights and deterministic translator are pinned in vendor. All
+# four Vulkan compute stages are built and validated on HOST, never PS5.
+# This is separate from non-neural SGSR/FSR1 and from temporal FSR 3.1.
+set(EDEN_R09_CNN_DIR "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_anime4k_3d")
+set(EDEN_R09_CNN_HEADERS "")
+foreach(stage RANGE 0 3)
+    list(APPEND EDEN_R09_CNN_HEADERS
+        "${EDEN_FSR31_SHADER_DIR}/anime4k_3d_us_stage_${stage}_comp_spv.h")
+endforeach()
+add_custom_command(
+    OUTPUT ${EDEN_R09_CNN_HEADERS}
+    COMMAND "${Python3_EXECUTABLE}"
+        "${EDEN_R09_CNN_DIR}/compile_anime4k_3d.py"
+        --output "${EDEN_FSR31_SHADER_DIR}" --validate
+    DEPENDS
+        "${EDEN_R09_CNN_DIR}/Anime4K_3DGraphics_Upscale_x2_US.glsl"
+        "${EDEN_R09_CNN_DIR}/compile_anime4k_3d.py"
+    COMMENT "Build original Anime4K v4 3D CNN x2 MIT model as 4 Vulkan compute SPIR-V stages"
+    VERBATIM)
+add_custom_target(eden-r09-anime4k-3d-shaders DEPENDS ${EDEN_R09_CNN_HEADERS})
+add_dependencies(video_core eden-r09-anime4k-3d-shaders)
+set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/anime4k_3d.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    ${EDEN_R09_CNN_HEADERS})
 
 # R24: compile a distinct FXAA Quality shader on the HOST for SPIR-V 1.3.
 # The PS5 image contains only the compiled shader, no runtime compiler.

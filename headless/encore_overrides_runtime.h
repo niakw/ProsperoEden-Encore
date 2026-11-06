@@ -101,6 +101,7 @@ inline std::optional<VideoProfile> ParseProfile(const nlohmann::json& settings) 
     else if (*filter == "lanczos") p.filter = 4;
     else if (*filter == "sgsr") p.filter = 5;
     else if (*filter == "sgsr_edge") p.filter = 6;
+    else if (*filter == "anime4k_3d") p.filter = 7;
     else return std::nullopt;
 
     if (*fsr < 0 || *fsr > 100) return std::nullopt;
@@ -117,7 +118,8 @@ inline std::optional<VideoProfile> ParseProfile(const nlohmann::json& settings) 
     // A remote profile cannot claim SGSR/FXAA+ on OpenGL: that backend
     // would silently execute Bilinear/standard FXAA instead.
     if (p.renderer == 0 &&
-        (p.filter == 5 || p.filter == 6 || p.anti_aliasing >= 3))
+        (p.filter == 5 || p.filter == 6 || p.filter == 7 ||
+         p.anti_aliasing >= 3))
         return std::nullopt;
     if (*refresh == 60) p.refresh = 0;
     else if (*refresh == 120) p.refresh = 1;

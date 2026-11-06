@@ -480,3 +480,11 @@ retrait doit mettre à jour la liste et les liens du graphe.
 Tous les chemins actifs sont inventoriés ; seuls les deux en-têtes de correction d'avertissements possèdent un garde dédié sans ID historique dans le graphe. La prochaine étape est de
 prouver la sélection native, la parité des transformations et le comportement
 console des changements pertinents. Ne pas gonfler les résultats HOST.
+
+#### P1.3 — sortie décodée CPU/GPU (06/11/2026)
+
+La session vidéo adapte les images RGBA/BGRA au layout block-linear lorsque
+la ressource GSV est effectivement mappée au GPU (TIPC 426), via le swizzle
+partagé Eden. NV12 demeure pitch-linear ; le propriétaire revalide l'état
+des mappings sous verrou avant écriture. Test hôte :
+`tools/ns2/check_native_video_decoder_ipc_host.py`. Aucun test PS5.

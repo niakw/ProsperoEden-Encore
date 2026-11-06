@@ -34,6 +34,11 @@ assert 'rb.PushCopyObjects(ctx, m_event->GetReadableEvent());' in source
 assert 'if (!m_decoder->Decode(compressed, pts, decoded)' in source
 assert 'if (!m_decoder->Render(frame.picture,' in source
 assert 'm_owner->WriteVideoSurface(next.id, *target, pixels)' in source
+assert 'target->gpu_mapped && !target->layout.nv12' in source
+assert 'Tegra::Texture::CalculateSize(true, BytesPerPixel' in source
+assert 'Tegra::Texture::SwizzleTexture(tiled, pixels' in source
+assert 'gpu_mapped != expected.gpu_mapped' in supervisor
+assert 'entry.first.second == image_id && entry.second.references != 0;' in supervisor
 assert 'm_registered.contains(image)' in source
 assert 'm_guest_owned.contains(image)' in source
 assert 'if (m_creator || !m_started || m_finalized)' in source
@@ -85,15 +90,16 @@ struct FakeSyncpoints {
 };
 struct FakeHost {FakeSyncpoints sync;FakeSyncpoints& GetSyncpointManager(){return sync;}};
 struct FakeSystem {FakeHost host;FakeHost& Host1x(){return host;}int kernel{};int& Kernel(){return kernel;}};
-struct FakeLayout {std::size_t image_bytes{64};u32 row_bytes{16};u32 chroma_offset{};u32 cpu_kind{8};};
+struct FakeLayout {std::size_t image_bytes{64};u32 row_bytes{16};u32 chroma_offset{};u32 cpu_kind{8};bool nv12{};};
 struct FakeOwner {
- struct VideoSurface {FakeLayout layout{};u32 width{4};u32 height{4};};
- bool valid{true};bool writability{true};u32 writes{};std::vector<u8> last;
+ struct VideoSurface {FakeLayout layout{};u32 width{4};u32 height{4};bool gpu_mapped{};};
+ bool valid{true};bool writability{true};bool gpu{};bool nv12{};u32 writes{};std::vector<u8> last;
  std::optional<VideoSurface> LookupVideoSurface(u32)const{
-  if (!valid) return {};return VideoSurface{};
+  if (!valid) return {};
+  return VideoSurface{FakeLayout{64,16,0,nv12?10U:8U,nv12},4,4,gpu};
  }
- bool WriteVideoSurface(u32,const VideoSurface&,std::span<const u8> bytes){
-  if (!writability) return false;
+ bool WriteVideoSurface(u32,const VideoSurface& expected,std::span<const u8> bytes){
+  if (!writability || expected.gpu_mapped != gpu) return false;
   ++writes;last.assign(bytes.begin(),bytes.end());return true;
  }
 };
@@ -106,6 +112,18 @@ struct FakeDecoder {
  }
 };
 struct FakeEvent {u32 signals{};void Signal(int&){++signals;}};
+namespace Tegra::Texture {
+ inline unsigned swizzles{};
+ std::size_t CalculateSize(bool, u32 bpp,u32 width,u32 height,u32,u32,u32){
+  return std::size_t{bpp}*width*height;
+ }
+ void SwizzleTexture(std::span<u8> tiled,std::span<const u8> linear,u32,u32,u32,u32,u32,u32,
+                     u32=1){
+  ++swizzles;
+  assert(tiled.size()>=linear.size());
+  for(std::size_t i=0;i<linear.size();++i)tiled[i]=linear[i]^u8{0xff};
+ }
+}
 struct IGraphicsVideoDecoderSession {
  static constexpr u32 NoSyncpoint=~u32{0};
  static constexpr std::size_t MaxFrames=16;
@@ -170,6 +188,21 @@ int main(){
  assert(sync.values[4]==3 && run.m_owner->writes==3);
  run.m_started=true;run.m_decoder.reset();run.Pump();
  assert(sync.values[4]==3 && run.m_owner->writes==3);
+ // Restore the valid codec: real RGB GPU maps require the tiled handoff.
+ run.m_decoder=std::make_unique<FakeDecoder>();
+ run.Pump();
+ assert(sync.values[4]==4 && run.m_owner->writes==4);
+ run.m_owner->gpu=true;
+ run.m_available.push_back({14,{}});run.m_pending.push_back(Pic(888));
+ run.Pump();
+ assert(sync.values[4]==5 && run.m_owner->writes==5 &&
+        run.m_owner->last[0]==0x5a && Tegra::Texture::swizzles==1);
+ // NV12 is deliberately pitch-linear even when mapped by the GPU.
+ run.m_owner->nv12=true;
+ run.m_available.push_back({15,{}});run.m_pending.push_back(Pic(999));
+ run.Pump();
+ assert(sync.values[4]==6 && run.m_owner->writes==6 &&
+        run.m_owner->last[0]==0xa5 && Tegra::Texture::swizzles==1);
 }
 '''.replace('__ACTUAL_PUMP__',method)
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
@@ -189,4 +222,4 @@ with tempfile.TemporaryDirectory(prefix='eden-native-video-ipc-') as temp:
             got=subprocess.run([str(exe)],capture_output=True,text=True,env=env,timeout=15)
             assert got.returncode==0,(cmd,got.stderr[-2600:])
             print(Path(compiler).name,opt,'P1_NATIVE_VIDEO_REAL_PUMP_PASS',flush=True)
-print('P1_NATIVE_VIDEO_IPC_HOST_PASS actual_decoder=1 actual_guest_write=1 release_fence=held no_fake_frame=1')
+print('P1_NATIVE_VIDEO_IPC_HOST_PASS actual_decoder=1 actual_guest_write=1 release_fence=held no_fake_frame=1 rgb_gpu_tiling=1 nv12_pitch_linear=1')

@@ -2569,3 +2569,72 @@ endif()
 
 # Shared NUP content loader, metadata and AoC owners for the regular build.
 include("${CMAKE_CURRENT_LIST_DIR}/nup_v1_runtime.cmake")
+
+# P2.4 Native Task/Mesh shaders: maintained compiler units and ABI headers.
+# Shared shader ABI for NS1/NS2: no alternate emulator mode and no runtime
+# patch generation. Existing Maxwell paths retain their legacy behavior.
+if(EDEN_SHARED_NS2_SPIRV_COMPILER)
+    set(EDEN_NATIVE_TASK_MESH_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src")
+    set(EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include")
+    foreach(eden_mesh_header IN ITEMS
+        shader_recompiler/backend/glasm/emit_glasm_instructions.h
+        shader_recompiler/backend/glsl/emit_glsl_instructions.h
+        shader_recompiler/backend/spirv/emit_spirv_instructions.h
+        shader_recompiler/backend/spirv/spirv_emit_context.h
+        shader_recompiler/environment.h
+        shader_recompiler/frontend/ir/ir_emitter.h
+        shader_recompiler/frontend/ir/opcodes.h
+        shader_recompiler/frontend/ir/opcodes.inc
+        shader_recompiler/frontend/ir/program.h
+        shader_recompiler/frontend/maxwell/maxwell.inc
+        shader_recompiler/runtime_info.h
+        shader_recompiler/shader_info.h
+        shader_recompiler/stage.h
+        )
+        if(NOT EXISTS "${EDEN_NATIVE_TASK_MESH_ROOT}/${eden_mesh_header}")
+            message(FATAL_ERROR "Missing maintained Task/Mesh shader header: ${eden_mesh_header}")
+        endif()
+    endforeach()
+    if(NOT EXISTS "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}/video_core/vulkan_common/vulkan_device.h")
+        message(FATAL_ERROR "Missing native Task/Mesh Vulkan feature ABI header")
+    endif()
+    set(eden_mesh_source_paths
+        backend/spirv/emit_spirv.cpp
+        backend/spirv/emit_spirv_special.cpp
+        frontend/ir/ir_emitter.cpp
+        frontend/ir/microinstruction.cpp
+        frontend/ir/opcodes.cpp
+        frontend/maxwell/structured_control_flow.cpp
+        frontend/maxwell/translate/impl/internal_stage_buffer_entry_read.cpp
+        frontend/maxwell/translate_program.cpp
+        ir_opt/collect_shader_info_pass.cpp
+    )
+    if(ENABLE_OPENGL)
+        list(APPEND eden_mesh_source_paths
+            backend/glasm/emit_glasm.cpp
+            backend/glasm/emit_glasm_not_implemented.cpp
+            backend/glasm/glasm_emit_context.cpp
+            backend/glsl/emit_glsl_not_implemented.cpp
+            backend/glsl/glsl_emit_context.cpp
+        )
+    endif()
+    get_target_property(eden_mesh_shader_target_sources shader_recompiler SOURCES)
+    foreach(eden_mesh_relative IN LISTS eden_mesh_source_paths)
+        list(FIND eden_mesh_shader_target_sources "${eden_mesh_relative}" eden_mesh_source_idx)
+        if(eden_mesh_source_idx LESS 0)
+            message(FATAL_ERROR "Pinned Task/Mesh shader owner changed: ${eden_mesh_relative}")
+        endif()
+        list(REMOVE_ITEM eden_mesh_shader_target_sources "${eden_mesh_relative}")
+        list(APPEND eden_mesh_shader_target_sources
+            "${EDEN_NATIVE_TASK_MESH_ROOT}/shader_recompiler/${eden_mesh_relative}")
+    endforeach()
+    list(APPEND eden_mesh_shader_target_sources
+        "${EDEN_NATIVE_TASK_MESH_ROOT}/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_mesh_shader_target_sources}")
+    target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${EDEN_NATIVE_TASK_MESH_ROOT}" "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
+endif()

@@ -419,6 +419,13 @@ print("ENCORE_POST_F07_STAGE_BUFFER_OWNER_PASS", f"owners={len(post_f07_native_s
 # and cannot be called shipping until the full shader/Vulkan graph is selected
 # and the host compiler/spirv-val qualification passes.
 post_f07_task_mesh_source_owners = {
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_instructions.h",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_not_implemented.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/glasm_emit_context.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_instructions.h",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_not_implemented.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/glsl_emit_context.cpp",
     "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp",
     "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_instructions.h",
     "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
@@ -428,6 +435,8 @@ post_f07_task_mesh_source_owners = {
     "eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.cpp",
     "eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.h",
     "eden-shader/src/shader_recompiler/frontend/ir/microinstruction.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/opcodes.cpp",
+    "eden-shader/src/shader_recompiler/frontend/ir/opcodes.h",
     "eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc",
     "eden-shader/src/shader_recompiler/frontend/ir/program.h",
     "eden-shader/src/shader_recompiler/frontend/maxwell/maxwell.inc",
@@ -443,7 +452,8 @@ post_f07_task_mesh_source_owners = {
 assert post_f07_task_mesh_source_owners <= set(physical_all), (
     "Missing maintained Task/Mesh source", sorted(post_f07_task_mesh_source_owners - set(physical_all)))
 assert not post_f07_task_mesh_source_owners.intersection(research_paths)
-assert len(post_f07_task_mesh_source_owners) == 20
+assert len(post_f07_task_mesh_source_owners) == 29
+assert "EDEN_NATIVE_TASK_MESH_ROOT" in (root / "headless/CMakeLists.txt").read_text()
 print("ENCORE_P24_TASK_MESH_STAGED_SOURCE_PASS", f"owners={len(post_f07_task_mesh_source_owners)}")
 
 physical = [p for p in physical_all

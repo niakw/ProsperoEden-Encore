@@ -70,7 +70,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 | fswin_t.comp | Non porté |
 | attn.comp | Calcul du contexte d’attention 64×32 préprojeté RDNA2 ; QKV fusionnés manquants, famille **partielle** |
 | vit_attn.comp | Non porté |
-| ffwd3_t.comp | Non porté |
+| ffwd3_t.comp | Première variante groupée 512→64→256→64 en trois étapes FP8 ; port de calcul de base, non équivalent aux variantes tuilées de production |
 | decoder_upsample.comp | Première variante 2× à 512 canaux, projection FP16 + skip FP8 + gain FP16, sortie E4M3FN ; validée sur hôte, sans graphe |
 | repack_tokens.comp | Primitive de permutation aller-retour RDNA2 intégrée en code et validée sur hôte ; pas encore de graphe de réseau |
 | upsample_view.comp | Primitive RDNA2 de changement de vue intégrée en code et validée sur hôte, grille complète seulement |
@@ -78,7 +78,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
-**État vérifiable : sept primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté et projection QKV) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
+**État vérifiable : huit primitives GPU Vulkan RDNA2 (projection 1×1, permutation des tokens, conversion de vue agrandie, bruit FP16, décodeur ×2 et contexte d’attention 64×32 préprojeté, projection QKV et FFWD3 groupé) intégrées en source et compilées/validées sur hôte ; aucune frame DLSS exécutée sur PS5.** Les trois modes A4K libres précédemment intégrés restent indépendants et ne sont pas remplacés.
 
 ## Nouveaux dépôts utiles, examinés le 6 novembre
 
@@ -207,3 +207,31 @@ et ne reproduisent pas le kernel fusionné du réseau. Le regroupement
 des poids au format correct, les modèles, le graphe et la qualification
 des performances GPU PS5 sont non réalisés. Le coût scalaire de QKV
 peut rendre le rendu temps réel impraticable sans optimisation.
+
+
+## Huitième primitive — FFWD3 groupé RDNA2 (06/11)
+
+ffwd3_group_rdna2.comp adapte le graphe mathématique de la famille
+ffwd3_t.comp, en **un workgroup par token et groupe** :
+- 8 groupes indépendants, avec 64 canaux de sortie par groupe.
+- Étape 1 : projection FP8 512→64, accumulation FP32 et quantification.
+- Étape 2 : projection 64→256 et activation cubique issue de
+  swin_math.glsl, avec arrondis FP16 explicites et sortie FP8.
+- Étape 3 : projection 256→64 et quantification FP8.
+- Barrières entre les trois étapes ; mémoire locale des 64+256
+  sorties intermédiaires. Aucun usage des matrices coopératives
+  RDNA4 ni des extensions Vulkan FP8.
+- Entrée/sortie 512 canaux **row-major** ; trois buffers de poids
+  row-major distincts, incompatibles directement avec les poids
+  tuilés amont sans import/repack fiable.
+- Contrat d'allocation, offsets 32 bits, 5 bindings storage,
+  24 octets de constantes, dispatch (tokens,8,1).
+- Validation : SPIR-V Vulkan 1.1 et ABI, calcul CPU de référence
+  avec trois poids non nuls et vecteur clairsemé, tests des
+  limites et compilation syntaxique C++ du wrapper.
+
+La version RDNA2 **n'est pas** le kernel WMMA fusionné exact :
+les ordres d'opérations et arrondis ne sont pas tous équivalents,
+les poids/modèles ne sont pas importés, et aucune mesure PS5 ne
+démontre le temps réel. Il reste à porter fswin_t et vit_attn
+et à concevoir le planificateur complet avec passes synchronisées.

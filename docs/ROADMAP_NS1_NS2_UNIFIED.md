@@ -2,6 +2,7 @@
 
 **Mise à jour : 2026-11-06 · branche unique : `main`**
 
+> **Backlog de fonctions avec fichiers, états et charges estimatives : [NS2_FUNCTION_BACKLOG_2026-11-06.md](NS2_FUNCTION_BACKLOG_2026-11-06.md)**
 > **Matrice de clôture P0–P4 sans exigence console : [P0_P4_EXIT_MATRIX_2026-11-06.md](P0_P4_EXIT_MATRIX_2026-11-06.md)**
 > Les mentions historiques de tests PS5 dans P0–P4 n’en sont pas des critères de sortie : toute preuve console appartient uniquement à P5.
 > **Suivi vivant à cases cochables : [GitHub Issue #15 — ROADMAP](https://github.com/niakw/ProsperoEden-Encore/issues/15)**

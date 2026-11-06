@@ -34,6 +34,7 @@ MESH_STAGE_OWNERS = (
 # witness checked the pipeline but never parsed this stage-buffer lowering.
 MESH_SPIRV_OWNERS = (
     SHADER / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
+    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
 )
 
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
@@ -48,6 +49,12 @@ for owner in OWNERS:
 for path in MESH_STAGE_OWNERS + MESH_SPIRV_OWNERS:
     assert path.is_file(), path
 mesh_emit = MESH_SPIRV_OWNERS[0].read_text()
+mesh_context = MESH_SPIRV_OWNERS[1].read_text()
+assert "Invalid native Task/Mesh shader dimensions" in mesh_context
+assert "Native Mesh output region exceeds u32 indexing" in mesh_context
+assert "const u64 vertex_words" in mesh_context
+assert "const u64 map_bytes" in mesh_context
+assert "TypeArray(U32[1], Const((std::max)(mesh_info.payload_words, 1U)))" in mesh_context
 # Ensure invalid dimensions fail explicitly and guest out-of-bounds writes
 # cannot alias the final live primitive/payload byte.
 assert 'Mesh shader has zero workgroup threads' in mesh_emit
@@ -207,4 +214,4 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         else:
             print("P24_REAL_VULKAN_TASK_MESH_TU_PASS", owner, flush=True)
     assert not failures, ("P2.4 maintained Vulkan TU syntax failed", failures)
-print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=7 console=NOT_TESTED", flush=True)
+print("P24_REAL_VULKAN_TASK_MESH_HOST_ONLY_PASS count=8 console=NOT_TESTED", flush=True)

@@ -332,6 +332,24 @@ assert 'vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64'
     root/'headless/shared_a64_ldapr.cmake').read_text()
 print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=7")
 
+# P1.3 post-F07 live NVDRV owners. These two complete C++ translation
+# units are shipped by the single shared core; neither alters the original
+# 337-owner F07 performance audit nor replaces pinned sources in-place.
+post_f07_shared_nvdrv_owners = {
+    "eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp",
+    "eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp",
+}
+assert post_f07_shared_nvdrv_owners <= set(physical_all), (
+    "Missing complete maintained NVDRV NVMap owners",
+    sorted(post_f07_shared_nvdrv_owners - set(physical_all)))
+assert not post_f07_shared_nvdrv_owners.intersection(research_paths)
+nvmap_recipe = (root / "headless/CMakeLists.txt").read_text()
+assert "EDEN_MAINTAINED_NVDRV_NVMAP_CORE" in nvmap_recipe
+assert "EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE" in nvmap_recipe
+assert "python3 -B tools/ns2/check_nvdrv_fd_session_owners_host.py" in (
+    root / ".github/workflows/encore-core-preflight.yml").read_text()
+print("ENCORE_POST_F07_SHARED_NVDRV_OWNER_PASS", f"owners={len(post_f07_shared_nvdrv_owners)}")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -339,7 +357,7 @@ physical = [p for p in physical_all
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
-            post_f07_cpu6_ldapr_owners]
+            post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

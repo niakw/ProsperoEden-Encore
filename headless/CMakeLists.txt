@@ -816,6 +816,24 @@ get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources hle/service/nvdrv/core/container.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_CONTAINER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
+# A valid NVDRV FD and a live session are prerequisites for Map/Free/Pin.
+# Select complete maintained owners, preserving the PS5 NVMap rollback.
+set(EDEN_MAINTAINED_NVDRV_NVMAP_CORE
+    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp")
+set(EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE
+    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_NVMAP_CORE}" OR
+   NOT EXISTS "${EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE}")
+    message(FATAL_ERROR "Missing maintained NVDRV NVMap session owners")
+endif()
+get_target_property(core_sources core SOURCES)
+list(REMOVE_ITEM core_sources
+    hle/service/nvdrv/core/nvmap.cpp
+    hle/service/nvdrv/devices/nvmap.cpp)
+list(APPEND core_sources
+    "${EDEN_MAINTAINED_NVDRV_NVMAP_CORE}"
+    "${EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE}")
+set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Finalize alone leaves both event references and its owner process open.
 # Use the same paired close as the other HID event owners.
 # Maintained full-source HID event lifetime correction; immutable upstream preserved.

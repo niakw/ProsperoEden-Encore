@@ -388,6 +388,24 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
 <!-- POST_F07_MAINTAINED_OWNER_END -->
 
+### P1.3 — propriétaires NVDRV communs post-F07 (06/11/2026)
+
+Deux unités C++ complètes dans `vendor/encore-active/eden-core`, sélectionnées
+par `headless/CMakeLists.txt` dans le moteur commun :
+
+- `src/core/hle/service/nvdrv/core/nvmap.cpp` — vérifie la session lors du
+  pin/unmap ; refuse une session introuvable au lieu de la déréférencer.
+- `src/core/hle/service/nvdrv/devices/nvmap.cpp` — conserve le rollback
+  d'allocation PS5 N11 et rejette les FD absents/fermés avant `Alloc`/`Free`.
+
+Le propriétaire existant `src/core/hle/service/nvdrv/core/container.cpp`
+rejette également les identifiants invalides ou les sessions inactives. Ces
+sources ajoutées après la revue F07 ne modifient pas ses 337 entrées historiques.
+Témoin : `tools/ns2/check_nvdrv_fd_session_owners_host.py` (Clang/GCC O0/O2) ;
+compilation syntaxique hôte des trois vrais fichiers. Le pointeur `Session*`
+reste emprunté : aucune garantie de durée de vie concurrente ni essai console.
+
+
 ## Fichiers de build du snapshot de backports (hors sources C/C++)
 
 | Chemin | Rôle |

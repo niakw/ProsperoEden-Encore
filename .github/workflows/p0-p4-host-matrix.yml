@@ -87,3 +87,36 @@ jobs:
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
+
+  host-receipt:
+    name: Verify P4 host SHA and witness coverage
+    needs: [native-vulkan-syntax, host-qualify]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact engine and pinned vendor for receipt verification
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Collect the four independently generated host receipts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: p0-p4-host-${{ github.event.pull_request.head.sha || github.sha }}-shard-*
+          path: .build-local/host-receipts/
+          merge-multiple: true
+      - name: Reject mixed SHA, missing shards and skipped witness paths
+        run: |
+          python3 -B tools/ns2/aggregate_p4_host_receipts.py --self-test
+          python3 -B tools/ns2/aggregate_p4_host_receipts.py
+      - name: Upload the verified pair receipt
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: p0-p4-host-verified-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .build-local/p4-host-verified-*.json
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14

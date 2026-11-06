@@ -374,11 +374,60 @@ static void VerifyRealTaskMeshSpirv(const std::string& prefix) {
                     is_task ? "TASK" : "MESH", words.size());
     }
 }
+// Negative P2.4 ABI cases: an invalid Task/Mesh program must fail before
+// declaring a SPIR-V module, not clamp a zero-sized array or overflow a
+// workgroup allocation. Check the actual rejection reason, not any exception.
+static void VerifyTaskMeshInvalidDimensions() {
+    struct Case {
+        Shader::Stage stage;
+        u32 threads;
+        u32 payload;
+        u32 vertices;
+        u32 primitives;
+        const char* expected;
+    };
+    const std::array cases{
+        Case{Shader::Stage::Task, 1, 0, 0, 0, "Invalid native Task/Mesh shader dimensions"},
+        Case{Shader::Stage::Task, 1, 1, 0, 0, "Invalid native Task/Mesh shader dimensions"},
+        Case{Shader::Stage::Task, 0, 2, 0, 0, "Invalid native Task/Mesh shader dimensions"},
+        Case{Shader::Stage::Mesh, 0, 0, 3, 1, "Invalid native Task/Mesh shader dimensions"},
+        Case{Shader::Stage::Mesh, 1, 0, 0, 1, "Invalid native Task/Mesh shader dimensions"},
+        Case{Shader::Stage::Mesh, 1, 0, 3, 0, "Invalid native Task/Mesh shader dimensions"},
+        Case{Shader::Stage::Mesh, 1, 0, 3, 0xffffffffU,
+             "Native Mesh output region exceeds u32 indexing"},
+        Case{Shader::Stage::Mesh, 1, 0, 0xffffffffU, 1,
+             "Native Mesh output region exceeds u32 indexing"},
+    };
+    for (const Case& t : cases) {
+        Shader::IR::Program program{};
+        program.stage = t.stage;
+        program.workgroup_size = {t.threads, 1, 1};
+        program.mesh.payload_words = t.payload;
+        program.mesh.max_vertices = t.vertices;
+        program.mesh.max_primitives = t.primitives;
+        program.mesh.vertex_lines.push_back(
+            static_cast<u32>(Shader::IR::Attribute::PositionX));
+        Shader::Backend::Bindings bindings{};
+        Shader::Profile profile{};
+        profile.supported_spirv = 0x00010500;
+        bool expected_rejection{};
+        try {
+            (void)Shader::Backend::SPIRV::EmitSPIRV(
+                profile, Shader::RuntimeInfo{}, program, bindings);
+        } catch (const std::exception& exception) {
+            expected_rejection = std::string(exception.what()).find(t.expected)
+                                 != std::string::npos;
+        }
+        Require(expected_rejection, "native Task/Mesh invalid dimension not rejected");
+    }
+    std::puts("P2_4_REAL_TASK_MESH_NEGATIVE_DIMENSIONS_PASS count=8");
+}
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
     VerifyRealFloatCasSpirv(argv[1]);
     VerifyRealTaskMeshSpirv(argv[1]);
+    VerifyTaskMeshInvalidDimensions();
     std::array<u8,0x50> header{};
     constexpr u32 pred=7U<<12,exit_true=7U<<23;
     std::vector<u8> code;

@@ -70,6 +70,11 @@ assert method.index('if (!m_owner->WriteVideoSurface(') < method.index('syncpoin
 assert 'IsReadyGuest(next.release->id, next.release->value)' in method
 assert 'if (!m_decoder->Render(' in method
 assert 'VideoDecoderProtocol::MarkLastEos(m_pending, m_outputs)' in source
+assert 'VideoDecoderProtocol::IsWorkBufferOwned(memory.GetPointerUnsafe(),' in source
+assert 'VideoDecoderProtocol::IsValidWorkBufferSize(memory->GetSize())' in source
+assert 'm_work_buffer = std::move(memory);' in source
+assert 'm_work_buffer.Reset(nullptr);' in source
+assert 'Kernel::KScopedAutoObject<Kernel::KTransferMemory> m_work_buffer;' in header
 assert 'compressed.empty() && !eos' in source
 assert 'std::numeric_limits<s64>::max()' in source
 

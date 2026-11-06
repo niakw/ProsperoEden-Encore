@@ -508,3 +508,12 @@ FFmpeg. En l'absence de nouvelle image décodée, le marqueur EOS est appliqué
 encore dans la queue de sortie. Sans image réelle, la commande retourne une
 erreur, sans simuler un framebuffer ni signaler un fence imaginaire. Test hôte
 Clang/GCC O0/O2 : `tools/ns2/check_native_video_eos_host.py`.
+
+#### P1.3 — durée de vie du work buffer du décodeur (06/11/2026)
+
+La session `nn::codec::video` vérifie l'origine du KTransferMemory pour
+l'application liée au GraphicsSupervisor, son état initialisé et la taille
+alignée aux pages. Elle conserve une véritable référence kernel de COPY
+pendant toute la session jusqu'à Finalize (RAII), même après la fermeture
+du handle invité. Test de contrat hôte :
+`tools/ns2/check_native_video_work_buffer_host.py` Clang/GCC UBSan O0/O2.

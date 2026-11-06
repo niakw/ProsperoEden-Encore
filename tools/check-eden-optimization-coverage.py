@@ -479,8 +479,9 @@ post_f07_video_decoder_owners = {
     "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.h",
     "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp",
     "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/native_video_eos.h",
+    "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/native_video_work_buffer.h",
 }
-assert len(post_f07_video_decoder_owners) == 6
+assert len(post_f07_video_decoder_owners) == 7
 assert post_f07_video_decoder_owners <= all_owners, (
     "Missing post-F07 native decoder", sorted(post_f07_video_decoder_owners - all_owners))
 assert not post_f07_video_decoder_owners & (research_owners | hygiene_owners)

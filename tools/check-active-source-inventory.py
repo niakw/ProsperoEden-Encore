@@ -361,6 +361,7 @@ post_f07_video_decoder_owners = {
     "ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.h",
     "ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp",
     "ns2-runtime/video_decoder/core/hle/service/am/service/native_video_eos.h",
+    "ns2-runtime/video_decoder/core/hle/service/am/service/native_video_work_buffer.h",
 }
 assert post_f07_video_decoder_owners <= set(physical_all), (
     "Missing maintained native FFmpeg owner",

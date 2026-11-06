@@ -23,7 +23,7 @@ assert "slot.guest_home.BlockChordButtons()" in pad
 assert "mapped_buttons &= ~(kButtonTouchPad | kButtonOptions);" in pad
 assert "mapped_buttons &= ~(kButtonTouchPad | kButtonL1);" in pad
 assert "const auto& sample = usable ? raw : neutral;" in pad
-assert "slot.select_pulse" not in pad
+assert "slot.select_pulse = 0;" in pad
 assert "slot.select_held = false;" in pad
 assert "guest_home && !overlay_open.load(std::memory_order_relaxed)" in pad
 assert "Button::ButtonCapture," in pad
@@ -42,7 +42,8 @@ assert "MappedTo(active_mapping, pad_create) < 0;" in pad[capture_start:sample_l
 assert "create_is_capture && (mapped_buttons & kButtonCreate) != 0" in pad[sample_loop:]
 assert pad.count("MappedTo(active_mapping, pad_create)") == 1
 assert "create_free" not in pad
-assert "!overlay_open.load(std::memory_order_relaxed)" in pad and "slot.select_held" in pad
+assert "!overlay_open.load(std::memory_order_relaxed)" in pad
+assert "slot.select_held || slot.select_pulse > 0" in pad
 assert "if (touch && (pressed & (kButtonL1 | kButtonR1 | kButtonOptions)) != 0)" in pad
 assert "gameplay_chord" not in pad
 assert "kButtonOptions" in pad and "Button::ButtonPlus" in pad

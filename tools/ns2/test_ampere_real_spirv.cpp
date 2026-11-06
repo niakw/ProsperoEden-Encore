@@ -16,6 +16,7 @@
 #include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 #include "shader_recompiler/frontend/ampere/native_qmd_compute_environment.h"
 #include "shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+#include "shader_recompiler/frontend/ir/modifiers.h"
 #include "shader_recompiler/backend/spirv/emit_spirv.h"
 #include "shader_recompiler/object_pool.h"
 #include "video_core/ns2_shader_spirv_compile.h"
@@ -466,6 +467,20 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
         Shader::TextureBufferDescriptor descriptor{};
         descriptor.count = descriptor_count;
         program.info.texture_buffer_descriptors.push_back(descriptor);
+        if (descriptor_count == 2) {
+            // Verify an actual element-1 texel read in the real SPIR-V
+            // backend, not merely an unused declaration of OpTypeArray.
+            Shader::IR::TextureInstInfo info{};
+            info.raw = 0;
+            info.type = Shader::TextureType::Buffer;
+            info.descriptor_index = 0;
+            block.AppendNewInst(
+                Opcode::ImageFetch,
+                {Shader::IR::Value{u32{1}}, Shader::IR::Value{u32{4}},
+                 Shader::IR::Value{}, Shader::IR::Value{},
+                 Shader::IR::Value{}});
+            block.back().SetFlags(info);
+        }
         Shader::Profile profile{};
         profile.supported_spirv = 0x00010500;
         Shader::Backend::Bindings bindings{};
@@ -482,15 +497,21 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
         Require(!expect_reject && words.size() > 5 && words[0] == 0x07230203U,
                 "native texture-buffer descriptor array produced no SPIR-V");
         u32 arrays{};
+        u32 fetches{};
+        u32 address_chains{};
         for (std::size_t pos = 5; pos < words.size();) {
             const u32 encoded = words[pos];
             const u32 count = encoded >> 16;
             Require(count && count <= words.size() - pos,
                     "invalid real texture-buffer SPIR-V instruction stream");
             arrays += (encoded & 0xffffU) == static_cast<u32>(spv::Op::OpTypeArray);
+            fetches += (encoded & 0xffffU) == static_cast<u32>(spv::Op::OpImageFetch);
+            address_chains += (encoded & 0xffffU) == static_cast<u32>(spv::Op::OpAccessChain);
             pos += count;
         }
         Require(arrays >= 1, "missing SPIR-V OpTypeArray for texture buffers");
+        Require(fetches == 1 && address_chains >= 1,
+                "native texel fetch did not index a real descriptor array");
         const std::string file_name = prefix + "-texbuf-array.spv";
         std::ofstream output{file_name, std::ios::binary | std::ios::trunc};
         Require(bool(output), "cannot open descriptor array module");
@@ -500,7 +521,7 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
     };
     compile(2, false);
     compile(0, true);
-    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 zero_rejected=1");
+    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=1 zero_rejected=1");
 }
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Preflight one full four-step NON-POOLED native Split-Swin16H block.
+// Preflight native Split-Swin16H, optionally ProjPool + FinalHead.
 // FFWD3 -> FFWDProj(residual from input) -> QKV/attention ->
 // transpose head->token -> Proj(residual from FFWDProj).
-// Native ProjPool has a second output: fail closed until it is wired.
+// ProjPool's second output and FinalHead are explicit, never skipped.
 #pragma once
 #include "rdna2_nr_ffwd3_policy.h"
 #include "rdna2_nr_projection_policy.h"
+#include "rdna2_nr_projection_quantized_policy.h"
 #include "rdna2_nr_vit_epilogue_policy.h"
 #include "rdna2_nr_split_context_repack_policy.h"
 #include "rdna2_nr_split_projection_pool_policy.h"
@@ -18,12 +19,14 @@ struct SplitBlockPlan {
     std::uint32_t pool_width{},pool_height{};
     std::uint32_t pool_windows_x{},pool_windows_y{};
     std::uint32_t pool_output_tokens{};
+    std::uint32_t final_head_tokens{}; // optional 512->1024 projection
 };
 struct SplitBlockCapacity {
     std::uint64_t input{},ffwd{},ffwd_projected{},context_heads{};
     std::uint64_t context_tokens{},projected{};
     std::uint64_t query{},key{},value{},fp32_scratch{};
     std::uint64_t pooled{};
+    std::uint64_t final_fp32{},final_fp8{};
 };
 [[nodiscard]] constexpr bool CanSplitBlock(
     const SplitBlockPlan& p,const SplitBlockCapacity& c) noexcept {
@@ -41,6 +44,19 @@ struct SplitBlockCapacity {
         if(!CanSplitProjectionPool(secondary,{
               c.fp32_scratch,c.ffwd_projected,1024u,c.pooled}))
             return false;
+    }
+    if(p.final_head_tokens){
+        if(!p.has_pooled_projection||
+           p.final_head_tokens>SplitPoolOutputTokens({
+               p.pool_width,p.pool_height,p.pool_windows_x,p.pool_windows_y,
+               0u,0u,0u,0u,p.pool_output_tokens}))return false;
+        const Projection final{p.final_head_tokens,1024u,512u,
+                               512u,512u,0u,0u};
+        const Storage final_storage{
+            c.pooled,1024u*512u,c.final_fp32,c.final_fp32};
+        QuantizedProjectionPlan final_plan{};
+        if(!PrepareQuantizedProjection(
+              final,final_storage,c.final_fp8,final_plan))return false;
     }
     const std::uint32_t tokens=p.windows*64u;
     const auto rowbytes=std::uint64_t(tokens)*512u;

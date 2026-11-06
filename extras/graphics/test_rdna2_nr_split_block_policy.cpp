@@ -13,15 +13,32 @@ int main(){
     // A ProjPool output cannot be omitted by treating it as a plain Proj.
     // Native 1080p ProjPool: width 60, height 33, windows 8x5.
     // The half-res side output is 32x20 (640 tokens), plus 1280 zero
-    // tail tokens for the FinalHead that requests 768.
+    // tail tokens for the native default 1920-token FinalHead.
     auto pooled_caps=caps;
     pooled_caps.pooled=1920u*512u;
     const SplitBlockPlan pooled{windows,true,60u,33u,8u,5u,1920u};
     assert(CanSplitBlock(pooled,pooled_caps));
+    // The last NRMODEL1 layer (FinalHead, 512->1024) can be linked,
+    // provided distinct FP32 scratch and output buffers are allocated.
+    pooled_caps.final_fp32=1920ull*1024u*4u;
+    pooled_caps.final_fp8=1920ull*1024u;
+    const SplitBlockPlan with_final{
+        windows,true,60u,33u,8u,5u,1920u,1920u};
+    assert(CanSplitBlock(with_final,pooled_caps));
+    auto insufficient_final=pooled_caps;
+    insufficient_final.final_fp8--;
+    assert(!CanSplitBlock(with_final,insufficient_final));
+    insufficient_final=pooled_caps;
+    insufficient_final.final_fp32--;
+    assert(!CanSplitBlock(with_final,insufficient_final));
+    assert(!CanSplitBlock({
+        windows,false,0u,0u,0u,0u,0u,1920u},pooled_caps));
+    assert(!CanSplitBlock({
+        windows,true,60u,33u,8u,5u,1920u,2560u},pooled_caps));
     pooled_caps.pooled=1920u*512u-1u;
     assert(!CanSplitBlock(pooled,pooled_caps));
     pooled_caps.pooled=1920u*512u;
-    assert(!CanSplitBlock({windows,true,60u,33u,7u,5u,768u},pooled_caps));
+    assert(!CanSplitBlock({windows,true,60u,33u,7u,5u,1920u},pooled_caps));
     assert(!CanSplitBlock({windows,true,60u,33u,8u,5u,639u},pooled_caps));
     assert(!CanSplitBlock({windows,true,60u,33u,8u,5u,0u},
                           {fp8,fp8,fp8,fp8,fp8,fp8,fp8,fp8,fp8,

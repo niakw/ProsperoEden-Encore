@@ -25,3 +25,8 @@ Les modèles sont référencés via `unpacked-splitswin/blockN.layer{0,1,2,3}.la
 ## Extension native ProjPool publiée après cette étape
 
 Le refus originel de `ProjPool` est remplacé par une prise en charge **conditionnelle à la fourniture de la géométrie réelle et de la seconde sortie GPU**. La projection standard ne suffit toujours pas seule : `NrRdna2SplitProjectionPool` lit le GEMM FP32 et les coefficients FP16 pour produire le vrai second résultat half-precision→FP8, y compris padding/tail à zéro. Le plan continue de refuser les dimensions ou capacités manquantes. Voir `docs/ENCORE_R09_SPLIT_PROJECTION_POOL.md`. Les limitations historiques ci-dessus décrivent le lot initial, et non le périmètre courant du bloc.
+
+
+## Raccord du dernier étage FinalHead
+
+Pour le bloc terminal du modèle, le même `NrRdna2SplitSwinBlock` peut maintenant appeler directement la dernière couche `FinalHead` après la seconde sortie `ProjPool`. Le plan indique explicitement `final_head_tokens` (0 pour les blocs sans FinalHead), et le renderer fournit `final_fp32` + `final_output` non aliasants ; si ces ressources manquent, l'initialisation du bloc **échoue sans exécuter une chaîne partielle**. Le test hôte `test_rdna2_nr_split_block_policy` vérifie le contrat complet 60×33 et 1920 tokens, les buffers insuffisants, et le refus de `FinalHead` hors `ProjPool`. L'implémentation effectue les trois dernières dépendances GPU dans le même scheduler : projection résiduelle → pooling half-precision → GEMM 512→1024 et quantification E4M3FN. Les buffers restent externes et l'ensemble du graphe n'est pas encore terminé.

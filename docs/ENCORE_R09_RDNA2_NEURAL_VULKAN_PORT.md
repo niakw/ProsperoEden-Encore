@@ -74,7 +74,7 @@ Pas de dispatch depuis les jeux faute de modèle complet.
 | decoder_upsample.comp | Non porté |
 | repack_tokens.comp | Primitive de permutation aller-retour RDNA2 intégrée en code et validée sur hôte ; pas encore de graphe de réseau |
 | upsample_view.comp | Primitive RDNA2 de changement de vue intégrée en code et validée sur hôte, grille complète seulement |
-| noise_field.comp | Non porté |
+| noise_field.comp | Port RDNA2 du générateur PCG/Box-Muller et empaquetage FP16 ; pas de graphe |
 
 Le portage du graphe complet devra encore démontrer la validité des paramètres, la synchronisation des buffers GPU, les poids/modèles utilisables légalement et les entrées réelles couleur/profondeur/mouvement du jeu. Des centaines de calculs non matriciels par frame risquent de dépasser les budgets 30/60 FPS sur RDNA2. Seule une mesure sur la console peut trancher.
 
@@ -96,3 +96,29 @@ Le portage du graphe complet devra encore démontrer la validité des paramètre
 
 Aucun de ces deux dépôts ne rend disponible le graphe complet de
 Neural Rendering sur RDNA2/PS5. Ne pas ajouter de fausse option DLSS.
+
+
+## Quatrième primitive — champ de bruit pré-calculé RDNA2 (06/11)
+
+Le shader `noise_field_rdna2.comp` porte le flux de bruit PCG +
+Box–Muller MIT du pré-bloc `noise_field.comp` / `image_noise.glsl`.
+Il calcule **trois caractéristiques par pixel**, avec le quatrième
+canal à zéro, dans deux mots `uint32` empaquetant quatre FP16.
+
+- Vulkan 1.1 de base : `packHalf2x16` remplace la dépendance
+  `GL_EXT_shader_explicit_arithmetic_types_float16` du shader amont.
+- Contrat host : dimensions de grille paddées 8×8, borne mémoire
+  de 256 Mio, offsets en mots non débordants, amplitude finie,
+  tailles exactes du descripteur et limite de dispatch.
+- Wrapper C++ : pipeline, push constants 20 octets, enregistrement
+  hors renderpass avec barrière `compute -> compute`.
+- Précision : l'algorithme produit les mêmes échantillons théoriques ;
+  l'égalité bit-à-bit sur GPU RDNA2 *n'est pas prouvée*, notamment
+  à cause de l'implémentation des fonctions transcendantes.
+- **Aucun passage réseau** n'appelle cette primitive pour le moment.
+  Elle ne constitue pas une implémentation de l'attention, ni une
+  preuve d'exécution DLSS PS5. Pas de poids NVIDIA intégrés.
+
+Le manifeste comporte toujours les familles `fswin_t`, `attn`,
+`vit_attn`, `ffwd3_t`, `decoder_upsample` non portées ; le
+bruit devient une quatrième primitive indépendante testée côté hôte.

@@ -517,3 +517,25 @@ alignée aux pages. Elle conserve une véritable référence kernel de COPY
 pendant toute la session jusqu'à Finalize (RAII), même après la fermeture
 du handle invité. Test de contrat hôte :
 `tools/ns2/check_native_video_work_buffer_host.py` Clang/GCC UBSan O0/O2.
+
+#### P1.4 — correspondance du swizzle vidéo avec le vrai moteur Eden (06/11/2026)
+
+`tools/ns2/check_native_video_tiling_roundtrip_host.py` compile les véritables
+méthodes `SwizzleTexture`, `UnswizzleTexture` et `CalculateSize` à partir de
+`vendor/sources/eden/src/video_core/textures/decoders.cpp` (seul son
+include transitif GPU, sans rapport avec ces méthodes, est retiré dans la
+copie éphémère de test). La suite reconstruit 48 géométries, de 64×64 à
+1920×1080, pour vérifier les tailles de surface et l'intégrité exacte des
+pixels aller-retour. Clang/GCC O0/O2 UBSan : PASS sur Mac. Aucune preuve de
+texture affichée par le pilote GPU PS5.
+
+#### P1.3 — notification de disponibilité des entrées vidéo (06/11/2026)
+
+Le service `nx2:vdec` possède une source C++ `native_video_ready_state.h`
+maintenue dans `vendor`. Les clients auto-clear peuvent attendre de nouveau
+l'événement TIPC 3 tant que la file d'entrées est disponible : CoreTiming
+réémet un signal toutes les 4 ms. La notification est suspendue si la file
+est pleine ou si la session est arrêtée. À la destruction, le callback
+se détache avant `UnscheduleEvent`, puis le kernel event est fermé, sans
+référence suspendue vers la session. Contrôles C++ réels et tests hôte
+Clang/GCC O0/O2 `tools/ns2/check_native_video_ready_event_host.py`.

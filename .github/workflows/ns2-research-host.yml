@@ -61,10 +61,10 @@ jobs:
         run: |
           python3 -B tools/ns2/check_native_texture_readback_lock_host.py
           python3 -B tools/ns2/check_native_texture_readback_lock_host.py --deferred
-      - name: Host Boost headers
+      - name: Host Boost, Vulkan and native video FFmpeg headers
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libboost-dev libvulkan-dev
+          sudo apt-get install -y --no-install-recommends libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev
       - name: P2.3 validate real native SSBO write tracking only after final QMD/TIC admission
         run: python3 -B tools/ns2/check_native_compute_write_commit_host.py
       - name: P2.2b reject same-TIC GPU remaps before pinned Vulkan image dispatch

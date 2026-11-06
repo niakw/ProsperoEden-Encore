@@ -42,6 +42,8 @@ TESTS = {
     "native_video_decoder_ipc": "tools/ns2/check_native_video_decoder_ipc_host.py",
     "native_video_eos": "tools/ns2/check_native_video_eos_host.py",
     "native_video_work_buffer": "tools/ns2/check_native_video_work_buffer_host.py",
+    "native_video_ready_event": "tools/ns2/check_native_video_ready_event_host.py",
+    "native_video_rgb_tiling": "tools/ns2/check_native_video_tiling_roundtrip_host.py",
     "gp_fifo_preinit": "tools/ns2/check_native_gpfifo_preinit_host.py",
     "native_gpfifo_spans": "tools/ns2/check_native_gpfifo_command_spans_host.py",
     "native_gpfifo_fetch": "tools/ns2/check_native_gpu_fetch_admission_host.py",

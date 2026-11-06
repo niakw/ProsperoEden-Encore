@@ -1145,6 +1145,29 @@ checked_close = (
 )
 assert nvdrv_expected.count(original_close) == 1, "N07 pinned session close changed"
 nvdrv_expected = nvdrv_expected.replace(original_close, checked_close)
+# P1.3: GetSession guards malformed and closed guest FDs before returning a
+# borrowed process/session. Preserve byte-for-byte parity with the complete
+# maintained vendor owner instead of relaxing the frozen source comparison.
+original_get = (
+    "Session* Container::GetSession(SessionId session_id) {\n"
+    "    std::atomic_thread_fence(std::memory_order_acquire);\n"
+    "    return &impl->sessions[session_id.id];\n"
+    "}"
+)
+guarded_get = (
+    "Session* Container::GetSession(SessionId session_id) {\n"
+    "    // FD-derived IDs must not index past the deque or borrow closed sessions.\n"
+    "    // This is a lookup guard, not a lifetime lease across concurrent Close.\n"
+    "    std::atomic_thread_fence(std::memory_order_acquire);\n"
+    "    if (session_id.id >= impl->sessions.size()) {\n"
+    "        return nullptr;\n"
+    "    }\n"
+    "    auto& session = impl->sessions[session_id.id];\n"
+    "    return session.is_active && session.process ? &session : nullptr;\n"
+    "}"
+)
+assert nvdrv_expected.count(original_get) == 1, "N07 pinned session lookup changed"
+nvdrv_expected = nvdrv_expected.replace(original_get, guarded_get)
 assert (active / "eden-core/src" / nvdrv_rel).read_text() == nvdrv_expected
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_CONTAINER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_CONTAINER}")' in c

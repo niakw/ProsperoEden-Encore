@@ -110,6 +110,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_ffwd_layer.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_epilogue.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_attention_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_model_buffers.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_gpu_tensors.cpp"
@@ -413,6 +414,32 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_qkv_norm.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}")
+
+
+# R09: native RDNA2 ViT expansion and residual epilogues, portable Vulkan.
+set(EDEN_R09_VIT_EPILOGUE_HEADERS
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_activation_comp_spv.h"
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_residual_comp_spv.h")
+add_custom_command(
+    OUTPUT ${EDEN_R09_VIT_EPILOGUE_HEADERS}
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-vit-epilogues-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --output "${EDEN_FSR31_SHADER_DIR}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/vit_activation_rdna2.comp"
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/vit_residual_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-vit-epilogues-spv.py"
+    COMMENT "Compile and ABI-validate RDNA2 ViT activation and residual"
+    VERBATIM)
+add_custom_target(eden-r09-vit-epilogues-spv
+    DEPENDS ${EDEN_R09_VIT_EPILOGUE_HEADERS})
+add_dependencies(video_core eden-r09-vit-epilogues-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_epilogue.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_activation_comp_spv.h"
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_vit_residual_comp_spv.h")
 
 # R09 RDNA2 FSwin dense: shader SPIR-V Vulkan 1.1 ABI.
 set(EDEN_R09_RDNA2_FSWIN_DENSE_HEADER

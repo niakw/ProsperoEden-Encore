@@ -185,6 +185,7 @@ eden_r08_test(test_rdna2_nr_qkv_projection_policy)
 eden_r08_test(test_rdna2_nr_ffwd3_policy)
 eden_r08_test(test_rdna2_nr_vit_attention_policy)
 eden_r08_test(test_rdna2_nr_vit_qkv_norm_policy)
+eden_r08_test(test_rdna2_nr_vit_epilogue_policy)
 eden_r08_test(test_rdna2_nr_vit_qkv_batches_policy)
 eden_r08_test(test_rdna2_nr_vit_gpu_tensors_policy)
 eden_r08_test(test_rdna2_nr_fswin_dense_policy)
@@ -393,3 +394,8 @@ target_compile_options(test_rdna2_nr_split_ffwd_weights PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_split_ffwd_weights
     COMMAND test_rdna2_nr_split_ffwd_weights)
+
+add_test(NAME test_rdna2_nr_vit_epilogues_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-epilogues-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

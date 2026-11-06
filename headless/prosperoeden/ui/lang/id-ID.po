@@ -2020,3 +2020,13 @@ msgstr "Mengunduh dan memverifikasi pembaruan PS5..."
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "Pembaruan tidak tersedia pada perangkat ini."
+
+msgid "Enhanced smoothness"
+msgstr "Tampilan lebih mulus"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Pembuatan frame dapat memperhalus tampilan tanpa mempercepat game. Lossless Scaling memerlukan berkas DLL milik Anda sendiri."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

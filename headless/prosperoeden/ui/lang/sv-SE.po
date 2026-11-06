@@ -2020,3 +2020,13 @@ msgstr "Laddar ned och verifierar PS5-uppdateringen..."
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "Uppdateringar är inte tillgängliga på den här enheten."
+
+msgid "Enhanced smoothness"
+msgstr "Jämnare bild"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Bildgenerering kan ge jämnare visning utan att snabba upp spelet. Lossless Scaling kräver en egen DLL-fil."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

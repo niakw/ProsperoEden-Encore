@@ -17,6 +17,10 @@ inline std::atomic<int> output_width{1920};
 inline std::atomic<int> output_height{1080};
 // 60 or 120, set before a session's renderer starts.
 inline std::atomic<int> requested_hz{60};
+// Selected native Vulkan frame interpolation, 0=off, 1=MihawkGen,
+// 2=FSR3, 3=LSFG. Actual availability is determined by the renderer;
+// this is a preference, not a claim of hardware-generated frames.
+inline std::atomic<int> frame_generation_method{0};
 // What the renderer's output runs at, in millihertz (59940, 119880); 0 before it opened.
 inline std::atomic<int> output_millihertz{0};
 // The Vulkan driver's display code reads this when it opens the output (tools/patch-radv-wsi.py).

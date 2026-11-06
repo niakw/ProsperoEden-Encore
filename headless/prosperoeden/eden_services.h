@@ -38,6 +38,7 @@ public:
 
     pe::ui::Preferences preferences() override;
     bool set_preferences(const pe::ui::Preferences& preferences) override;
+    bool has_lossless_dll() const override;
     pe::ui::AppUpdateInfo check_app_update(const std::string& current) override;
     std::function<pe::ui::AppUpdateInfo()> detached_app_update_task(const std::string& current) override;
     std::function<pe::ui::AppUpdateInstallResult()>

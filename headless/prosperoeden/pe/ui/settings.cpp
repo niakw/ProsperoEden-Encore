@@ -20,6 +20,7 @@ namespace
 {
 
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
+constexpr const char* kFramegenInfo = TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL.");
 enum Category
 {
     kVideo,
@@ -52,6 +53,7 @@ enum VideoRow : int
     video_filter,
     video_fsr_sharpness,
     video_anti_aliasing,
+    video_frame_generation,
     video_refresh,
     video_overlay,
     kVideoRows,
@@ -594,6 +596,19 @@ void Launcher::press_dialog(Key key)
             prefs_.anti_aliasing = (prefs_.anti_aliasing + step + count) % count;
             RefreshVideoProfile(prefs_);
         }
+        else if (option_ == video_frame_generation)
+        {
+            // UI order: Off, MihawkGen, FSR3 optical flow, Lossless (DLL last).
+            // Save the selected method. The Vulkan renderer uses actual
+            // runtime capabilities; choosing a method never fabricates FPS.
+            const int next = (prefs_.frame_generation + step + 4) % 4;
+            if (next == 3 && !services_.has_lossless_dll()) {
+                say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
+                cue(Cue::error);
+                break;
+            }
+            prefs_.frame_generation = next;
+        }
         else if (option_ == video_refresh)
         {
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
@@ -800,6 +815,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Bilinear is the lightest default. AMD FSR is most useful when rendering below the TV output size."),
             TR("FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
+            kFramegenInfo,
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
             TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
         copy = tr(kAbout[std::clamp(option_, 0, kVideoRows - 1)]);
@@ -892,12 +908,15 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             pick(services_.filter_labels(), prefs_.filter),
             percent(prefs_.fsr_sharpness),
             pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing),
+            prefs_.frame_generation == 0 ? tr("Off") :
+                prefs_.frame_generation == 1 ? "MihawkGen" :
+                prefs_.frame_generation == 2 ? "FSR 3" : "LSFG",
             hertz(prefs_.refresh),
         };
         static constexpr const char *kNames[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"), TR("Game resolution"),
             TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-            TR("Refresh rate"), TR("FPS overlay")};
+            TR("Enhanced smoothness"), TR("Refresh rate"), TR("FPS overlay")};
         for (int row = first; row <= last; ++row)
         {
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));

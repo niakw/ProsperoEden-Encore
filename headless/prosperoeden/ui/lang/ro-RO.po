@@ -2020,3 +2020,13 @@ msgstr "Se descarcă și se verifică actualizarea PS5..."
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "Actualizările nu sunt disponibile pe acest dispozitiv."
+
+msgid "Enhanced smoothness"
+msgstr "Fluiditate îmbunătățită"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Generarea cadrelor poate face afișarea mai fluidă fără a accelera jocul. Lossless Scaling necesită propriul fișier DLL."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

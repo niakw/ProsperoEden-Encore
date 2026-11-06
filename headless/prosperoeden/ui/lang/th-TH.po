@@ -2020,3 +2020,13 @@ msgstr "กำลังดาวน์โหลดและตรวจสอบ
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "ไม่สามารถอัปเดตบนอุปกรณ์นี้ได้"
+
+msgid "Enhanced smoothness"
+msgstr "ภาพลื่นไหลขึ้น"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "การสร้างเฟรมช่วยให้ภาพลื่นไหลขึ้นโดยไม่เพิ่มความเร็วเกม Lossless Scaling ต้องใช้ไฟล์ DLL ของคุณเอง"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

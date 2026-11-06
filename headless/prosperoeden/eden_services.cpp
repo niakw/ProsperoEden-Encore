@@ -25,6 +25,7 @@
 #include "radio_input.h"
 #include "settings_store.h"
 #include "version.h"
+#include "lossless_user_file.h"
 #include "network/room.h"
 #include "network/network.h"
 #include "network/room_member.h"
@@ -2288,6 +2289,7 @@ pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     result.fsr_sharpness = saved.fsr_sharpness;
     result.anti_aliasing = saved.anti_aliasing;
     result.refresh = saved.refresh;
+    result.frame_generation = saved.frame_generation;
     result.performance_profile = saved.performance_profile;
     result.controller_layout = saved.controller_layout;
     result.own_mapping = saved.own_mapping;
@@ -2305,6 +2307,7 @@ bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameS
     value.fsr_sharpness = settings.fsr_sharpness;
     value.anti_aliasing = settings.anti_aliasing;
     value.refresh = settings.refresh;
+    value.frame_generation = settings.frame_generation;
     value.performance_profile = settings.performance_profile;
     value.controller_layout = settings.controller_layout;
     value.own_mapping = settings.own_mapping;
@@ -2324,7 +2327,10 @@ pe::ui::Preferences EdenServices::preferences() {
     result.renderer = saved.backend == Eden::GraphicsBackend::OpenGL ? 0 : 1;
     result.resolution = saved.resolution;
     result.filter = saved.upscaling_filter;
+    result.fsr_sharpness = saved.fsr_sharpness;
+    result.anti_aliasing = saved.anti_aliasing;
     result.refresh = saved.refresh;
+    result.frame_generation = saved.frame_generation;
     result.output = saved.output;
     result.performance_profile = saved.performance_profile;
     result.controller_layout = saved.controller_layout;
@@ -2367,6 +2373,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.fsr_sharpness = preferences.fsr_sharpness;
     value.anti_aliasing = preferences.anti_aliasing;
     value.refresh = preferences.refresh;
+    value.frame_generation = preferences.frame_generation;
     value.output = preferences.output;
     value.performance_profile = preferences.performance_profile;
     value.controller_layout = preferences.controller_layout;
@@ -2645,6 +2652,10 @@ EdenServices::detached_room_directory_task()
         return Eden::Multiplayer::ParseRoomDirectory(
             *response, Network::network_version);
     };
+}
+
+bool EdenServices::has_lossless_dll() const {
+    return Eden::Graphics::LosslessUserFileLooksValid(Eden::UserDir());
 }
 
 pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {

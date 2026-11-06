@@ -31,7 +31,6 @@ namespace
 {
 
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
-
 // The game settings dialog's rows, and the window that shows five of them (also the Mods list's).
 enum GameRow : int
 {
@@ -43,6 +42,7 @@ enum GameRow : int
     row_filter,
     row_fsr_sharpness,
     row_anti_aliasing,
+    row_frame_generation,
     row_refresh,
     row_controls,
     row_mods,
@@ -1839,6 +1839,26 @@ void Launcher::press_game(Key key)
     default:
         return;
     }
+    if (option_ == row_frame_generation)
+    {
+        GameSettings next = game_settings_;
+        // Default, Off, MihawkGen, FSR3 optical flow, LSFG (user DLL last).
+        // Runtime handles
+        // actual backend availability independently of the chosen mode.
+        const int step = key == Key::left ? -1 : 1;
+        next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
+        if (next.frame_generation == 3 && !services_.has_lossless_dll()) {
+            say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
+            cue(Cue::error);
+            return;
+        }
+        const bool saved = services_.set_game_settings(game.title_id, next);
+        if (saved) { game_settings_ = next; home_settings_cache_.erase(game.title_id); }
+        if (!saved)
+            say(tr("Could not save. Please try again."), true);
+        cue(saved ? Cue::toggle : Cue::error);
+        return;
+    }
     if (option_ == row_controls)
     {
         if (key == Key::cross) {
@@ -2081,6 +2101,13 @@ void Launcher::draw_game(Canvas &c, float open)
             fill(tr("Default ({0})"), {percentage(base_fsr)}),
         game_settings_.anti_aliasing >= 0 ? pick(anti_aliasing, game_settings_.anti_aliasing) :
             fill(tr("Default ({0})"), {pick(anti_aliasing, base_aa)}),
+        game_settings_.frame_generation < 0 ?
+            fill(tr("Default ({0})"), {prefs_.frame_generation == 0 ? tr("Off") :
+                prefs_.frame_generation == 1 ? "MihawkGen" :
+                prefs_.frame_generation == 2 ? "FSR 3" : "LSFG"}) :
+            game_settings_.frame_generation == 0 ? tr("Off") :
+            game_settings_.frame_generation == 1 ? "MihawkGen" :
+            game_settings_.frame_generation == 2 ? "FSR 3" : "LSFG",
         game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
             fill(tr("Default ({0})"), {hertz(base_refresh)}),
         game_settings_.own_mapping ?
@@ -2105,7 +2132,8 @@ void Launcher::draw_game(Canvas &c, float open)
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
         TR("Resolution"), TR("Upscaling filter"), TR("FSR sharpness"), TR("Anti-aliasing"),
-        TR("Refresh rate"), TR("Button mapping"), TR("Mods"), TR("Save data")};
+        TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                     kDialogWindow.h + 12.0f});

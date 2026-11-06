@@ -2101,6 +2101,16 @@ msgstr "{0}/ (NSP ou XCI)"
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (un dossier par ID de titre)"
 
+msgid "Enhanced smoothness"
+msgstr "Fluidité améliorée"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "La génération d’images peut améliorer la fluidité d’affichage sans accélérer le jeu. Lossless Scaling nécessite votre propre fichier DLL."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll manquant ou invalide. Placez votre fichier dans /data/prosperoeden/user/lossless/Lossless.dll."
+
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms"
 msgstr "Salons publics"

@@ -706,6 +706,10 @@ msgstr ""
 msgid "FPS overlay"
 msgstr ""
 
+#: pe/ui/settings.cpp
+msgid "Enhanced smoothness"
+msgstr ""
+
 #: settings_store.h
 msgid "French"
 msgstr ""
@@ -1065,6 +1069,10 @@ msgstr ""
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Menu sounds"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
 msgstr ""
 
 #: settings_store.h
@@ -1975,6 +1983,10 @@ msgstr ""
 #. {0} is the mods folder; inside it each game has a folder named after its ID (16 letters and digits).
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
+msgstr ""
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr ""
 
 #: pe/ui/multiplayer.cpp

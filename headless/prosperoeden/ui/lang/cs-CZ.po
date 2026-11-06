@@ -2020,3 +2020,13 @@ msgstr "Stahování a ověřování aktualizace PS5..."
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "Aktualizace nejsou na tomto zařízení dostupné."
+
+msgid "Enhanced smoothness"
+msgstr "Plynulejší obraz"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Generování snímků může zlepšit plynulost obrazu, nikoli rychlost hry. Lossless Scaling vyžaduje váš vlastní soubor DLL."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."

@@ -63,6 +63,10 @@ inline constexpr const char* kAntiAliasingLabels[] = {"None", "FXAA", "SMAA"};
 // Settings > Video: the refresh rate of the output while a game runs. 120 Hz is asked of the
 // display (display_refresh.h); one that cannot show it stays at 60 Hz.
 inline constexpr const char* kRefreshKeys[] = {"60", "120"};
+// UI preference order: Off -> MihawkGen -> AMD FSR3 optical flow ->
+// Lossless Scaling LAST because it requires the user's Lossless.dll.
+// Keep persisted indices stable across releases; do not reorder separately.
+inline constexpr const char* kFrameGenerationKeys[] = {"off", "mihawkgen", "fsr3", "lsfg"};
 inline constexpr int kRefreshHz[] = {60, 120};
 // Settings > Video: the size of the picture the app puts out, for the menu and for a game (its
 // frame after the upscaling filter). The console scales it to what the TV shows.
@@ -105,6 +109,7 @@ struct Preferences {
     int fsr_sharpness = EncoreOverrides::kGeneralProfiles[1].fsr_sharpness;
     int anti_aliasing = EncoreOverrides::kGeneralProfiles[1].anti_aliasing;
     int refresh = EncoreOverrides::kGeneralProfiles[1].refresh;
+    int frame_generation = 0; // Off, MihawkGen, FSR3, LSFG; method, not fake FPS
     int output = EncoreOverrides::kGeneralProfiles[1].output;
     int performance_profile = 1;         // 0 Minimum, 1 Recommended, 2 High, 3 Ultra, 4 Custom
     int controller_layout = 0;            // 0 PlayStation, 1 Switch; custom status is derived from mapping
@@ -343,6 +348,8 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
                                     kAntiAliasingKeys, int(std::size(kAntiAliasingKeys)), result.anti_aliasing);
     result.refresh = KeyIndex(Settings::String(document, Json::json_pointer("/video/refresh_rate")),
                               kRefreshKeys, int(std::size(kRefreshKeys)), result.refresh);
+    result.frame_generation = KeyIndex(Settings::String(document, Json::json_pointer("/video/frame_generation")),
+                                       kFrameGenerationKeys, int(std::size(kFrameGenerationKeys)), 0);
     result.output = KeyIndex(Settings::String(document, Json::json_pointer("/video/output_resolution")),
                              kOutputKeys, int(std::size(kOutputKeys)), result.output);
     // The profile label is derived from the actual settings. This migrates older three-profile
@@ -419,6 +426,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.fsr_sharpness < 0 || value.fsr_sharpness > 100 ||
         value.anti_aliasing < 0 || value.anti_aliasing >= int(std::size(kAntiAliasingKeys)) ||
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
+        value.frame_generation < 0 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
         value.performance_profile < 0 || value.performance_profile >= int(std::size(kPerformanceProfileKeys)) ||
         value.controller_layout < 0 || value.controller_layout >= int(std::size(kControllerLayoutKeys)) ||
@@ -436,6 +444,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["fsr_sharpness"] = value.fsr_sharpness;
     document["video"]["anti_aliasing"] = kAntiAliasingKeys[value.anti_aliasing];
     document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
+    document["video"]["frame_generation"] = kFrameGenerationKeys[value.frame_generation];
     document["video"]["output_resolution"] = kOutputKeys[value.output];
     document["video"]["performance_profile"] = kPerformanceProfileKeys[value.performance_profile];
     document["audio"]["volume"] = value.volume;
@@ -551,6 +560,7 @@ struct GameSettings {
     int fsr_sharpness = -1;     // 0-100; -1 follows global
     int anti_aliasing = -1;     // index into kAntiAliasingKeys
     int refresh = -1;           // index into kRefreshKeys
+    int frame_generation = -1; // -1 inherits global, 0=off, 1=MihawkGen, 2=FSR3, 3=LSFG
     int performance_profile = -1; // index into kPerformanceProfileKeys
     int controller_layout = -1; // -1 follows global, 0 PlayStation, 1 Switch
     bool own_mapping = false;
@@ -578,6 +588,8 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.fsr_sharpness = fsr_sharpness >= 0 && fsr_sharpness <= 100 ? fsr_sharpness : -1;
     result.anti_aliasing = KeyIndex(key("anti_aliasing"), kAntiAliasingKeys, int(std::size(kAntiAliasingKeys)), -1);
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
+    result.frame_generation = KeyIndex(key("frame_generation"), kFrameGenerationKeys,
+                                       int(std::size(kFrameGenerationKeys)), -1);
     result.performance_profile = PerformanceProfileIndex(key("performance_profile"), -1);
     const std::string saved_game_layout = key("controller_layout");
     if (saved_game_layout == "switch" || saved_game_layout == "nintendo")
@@ -617,6 +629,7 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.fsr_sharpness < -1 || value.fsr_sharpness > 100 ||
         value.anti_aliasing < -1 || value.anti_aliasing >= int(std::size(kAntiAliasingKeys)) ||
         value.refresh < -1 || value.refresh >= int(std::size(kRefreshKeys)) ||
+        value.frame_generation < -1 || value.frame_generation >= int(std::size(kFrameGenerationKeys)) ||
         value.performance_profile < -1 ||
         value.performance_profile >= int(std::size(kPerformanceProfileKeys)) ||
         value.controller_layout < -1 ||
@@ -640,6 +653,7 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     else game["fsr_sharpness"] = value.fsr_sharpness;
     store("anti_aliasing", value.anti_aliasing, kAntiAliasingKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
+    store("frame_generation", value.frame_generation, kFrameGenerationKeys);
     store("performance_profile", value.performance_profile, kPerformanceProfileKeys);
     store("controller_layout", value.controller_layout, kControllerLayoutKeys);
     if (value.own_mapping) {

@@ -111,6 +111,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_residual_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_context_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_swin_block.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_swin_run.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_projection_pool.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_final_head.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_vit_attention.cpp"

@@ -125,6 +125,17 @@ int main() {
           disabled.Stats().translations==2,
           "zero capacity disables retention but not correct translation");
 
+    // All shader admission owners must agree on the same 65536-word
+    // ceiling; a 4097-word shader is valid even with LRU enabled.
+    std::vector<u8> extended;
+    for (u32 index=0; index<4096; ++index) Emit(extended, pt|0x918);
+    Emit(extended, pt|0x94d, 0, exit_true);
+    NativeTranslationCache large{8*1024*1024, 2};
+    const auto large_image = large.GetOrTranslate(header, extended, 4);
+    const auto large_cached = large.GetOrTranslate(header, extended, 4);
+    Check(large_image.ValidForCompiler() && large_cached.Ready() &&
+          large.Stats().translations == 1 && large.Stats().hits == 1,
+          "4097-instruction shader is authentic and reusable by the real native cache");
     cache.Clear();
     Check(cache.Stats().entries==0 && cache.Stats().bytes==0,
           "session destruction/invalidation can discard all cached images");

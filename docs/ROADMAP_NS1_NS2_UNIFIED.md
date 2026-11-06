@@ -427,15 +427,24 @@ authentifiée reste **un manque P2.3 distinct** ; les GPU physiques PS5
 et les shaders complets restent à qualifier en P5.
 
 **P2.4 — plage complète de capture shader Ampere (06/11, source/hôte) :**
-Le bridge `LowerReviewedToMaxwell` n'a plus sa limite artificielle de 4096
-instructions : il utilise les **65536 instructions** déjà admises par le vrai
-`ProbeProgram` et `LowerToMaxwell`. La taille Maxwell reste bornée à 131072
-mots ; un dépassement échoue sans publier de shader incomplet. Le prologue
-NVN `StaticAtExitTarget` peut viser une instruction au-delà de 4096, mais
-seulement si elle appartient à la capture réelle, est alignée et reste dans
-la limite 65536. Le test de **4097 NOP/EXIT** passe le bridge réel ; 65537
-instructions et une destination ATEXIT hors de la capture sont refusées.
-Clang/GCC O1 PASS sur le vrai `test_ampere_lower_bridge.cpp`.
+Le plafond de **65536 instructions** du compilateur est maintenant commun
+au bridge `LowerReviewedToMaxwell`, au lecteur GMMU `CaptureNativeShader`,
+à la validation de `MaxwellShaderImage`, au cache de traductions et à
+l'authentification des branches indirectes CBUF. L'ancienne limite de 4096
+interdisait des shaders légitimes avant traduction. La taille Maxwell reste
+bornée à 131072 mots et le cache reste borné par son budget mémoire.
+La capture n'alloue que 4096 instructions initialement et grandit au besoin,
+sans réserver systématiquement 1 MiB pour les petits shaders. Les pages GMMU,
+les CBUF des BRX et les octets Compute sont toujours revalidés avant de publier
+l'image et avant le dispatch.
+Le prologue `StaticAtExitTarget` peut viser au-delà de 4096 uniquement si sa
+cible existe dans la capture et respecte l'alignement. Témoins du vrai moteur :
+`test_ampere_lower_bridge.cpp` (4097 acceptées, 65537 refusées),
+`test_ampere_gpu_capture.cpp` (4097 instructions Compute, replay jusqu'au
+dernier octet et refus sans EXIT à 65536) et
+`test_ampere_translation_cache.cpp` (entrée de 4097 instructions réutilisée
+sans fausse collision). **Apple Clang O1 : PASS** pour ces témoins ; la
+qualification GCC/Linux des derniers commits reste à établir en CI.
 **P2.4 reste ouvert** pour les opcodes/chemins task/mesh et LEPC non prouvés,
 et pour la validation GPU console. Aucune modification du compilateur NS1.
 

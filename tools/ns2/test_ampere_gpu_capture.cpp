@@ -663,14 +663,33 @@ int main() {
             unsupported.image.code.empty(),
             "unrecognized native opcodes fail closed after capture");
 
+    // P2.4: the *real GMMU capture* must admit a legal Compute shader
+    // crossing the former 4096-instruction clamp, reauthenticate its
+    // original bytes, and deliver a compiler-eligible Maxwell image.
     mem.data.resize(0x80);
-    for(u32 i=0;i<4096;++i) Push(mem.data,pred_true|0x918);
-    mem.mapped_bytes=mem.data.size();
-    auto unterminated=CaptureNativeGraphicsShader(mem.base,4,Read,&mem);
-    Require(unterminated.status==NativeCaptureStatus::NoTerminator &&
-            unterminated.captured_native_bytes==4096*16 &&
+    for (u32 index = 0; index < 4096; ++index)
+        Push(mem.data, pred_true | 0x918);
+    Push(mem.data, pred_true | 0x94d, 0, exit_true);
+    mem.mapped_bytes = mem.data.size();
+    const auto complete_4097 = CaptureNativeComputeShader(
+        mem.base + 0x80, Read, &mem);
+    Require(complete_4097.Ready() &&
+            complete_4097.captured_native_bytes == 4097 * 16 &&
+            complete_4097.image.ValidForCompiler() &&
+            complete_4097.ComputeSourceMatches(mem.base + 0x80, Read, &mem),
+            "4097-instruction real Compute shader traverses capture/image/SSBO source replay");
+    mem.data[0x80 + 4096 * 16] ^= 1U;
+    Require(!complete_4097.ComputeSourceMatches(mem.base + 0x80, Read, &mem),
+            "large Compute shader checks last instruction after translation");
+    mem.data.resize(0x80);
+    for (u32 index = 0; index < 65536; ++index)
+        Push(mem.data, pred_true | 0x918);
+    mem.mapped_bytes = mem.data.size();
+    const auto unterminated = CaptureNativeGraphicsShader(mem.base, 4, Read, &mem);
+    Require(unterminated.status == NativeCaptureStatus::NoTerminator &&
+            unterminated.captured_native_bytes == 65536 * 16 &&
             unterminated.image.code.empty(),
-            "bounded capture never invents a valid program without EXIT");
+            "full supported shader window without EXIT cannot fabricate a valid image");
     Require(CaptureNativeGraphicsShader(mem.base,4,nullptr,&mem).status==
                 NativeCaptureStatus::InvalidInput,
             "null memory reader must fail before any guest access");

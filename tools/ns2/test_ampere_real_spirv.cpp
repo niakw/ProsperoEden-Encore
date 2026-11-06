@@ -9,6 +9,7 @@
 #include <fstream>
 #include <memory>
 #include <string>
+#include <spirv/unified1/spirv.hpp>
 #include <vector>
 #define CANNOT_EXPLICITLY_INSTANTIATE
 #include "common/settings.h"
@@ -301,10 +302,83 @@ static void VerifyRealFloatCasSpirv(const std::string& prefix) {
         std::printf("P2_3_REAL_CAS_SPIRV_EMITTED %s %zu\n",label,words.size());
     }
 }
+// P2.4: emit real Task and Mesh EXT modules through the same maintained
+// IR -> SPIR-V backend as native NS2 graphics. Syntax-only tests cannot
+// prove OpEmitMeshTasksEXT or OpSetMeshOutputsEXT are present and valid.
+static void VerifyRealTaskMeshSpirv(const std::string& prefix) {
+    using Shader::IR::Opcode;
+    for (const auto stage : {Shader::Stage::Task, Shader::Stage::Mesh}) {
+        const bool is_task = stage == Shader::Stage::Task;
+        Shader::ObjectPool<Shader::IR::Inst> pool{16};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage = stage;
+        program.workgroup_size = {1, 1, 1};
+        program.mesh.payload_words = 2;
+        program.info.is_task = is_task;
+        program.info.is_mesh = !is_task;
+        program.info.uses_local_invocation_id = !is_task;
+        if (!is_task) {
+            program.mesh.max_vertices = 3;
+            program.mesh.max_primitives = 1;
+            program.mesh.topology = 4;
+            for (const auto component : {
+                    Shader::IR::Attribute::PositionX,
+                    Shader::IR::Attribute::PositionY,
+                    Shader::IR::Attribute::PositionZ,
+                    Shader::IR::Attribute::PositionW}) {
+                program.mesh.vertex_lines.push_back(static_cast<u32>(component));
+            }
+        }
+        program.blocks.push_back(&block);
+        block.AppendNewInst(Opcode::Prologue, {});
+        block.AppendNewInst(Opcode::Epilogue, {});
+        auto& node = program.syntax_list.emplace_back();
+        node.type = Shader::IR::AbstractSyntaxNode::Type::Block;
+        node.data.block = &block;
+        program.syntax_list.emplace_back().type =
+            Shader::IR::AbstractSyntaxNode::Type::Return;
+        Shader::Backend::Bindings bindings{};
+        Shader::Profile profile{};
+        profile.supported_spirv = 0x00010500;
+        std::vector<u32> words;
+        try {
+            words = Shader::Backend::SPIRV::EmitSPIRV(
+                profile, Shader::RuntimeInfo{}, program, bindings);
+        } catch (const std::exception& ex) {
+            std::fprintf(stderr, "Native %s SPIR-V: %s\n",
+                         is_task ? "Task" : "Mesh", ex.what());
+            Require(false, "real Task/Mesh SPIR-V emission threw");
+        }
+        Require(words.size() > 5 && words[0] == 0x07230203U,
+                "real Task/Mesh emission did not produce a SPIR-V module");
+        const u32 required_opcode = static_cast<u32>(is_task
+            ? spv::Op::OpEmitMeshTasksEXT : spv::Op::OpSetMeshOutputsEXT);
+        u32 found{};
+        for (std::size_t pos = 5; pos < words.size();) {
+            const u32 encoded = words[pos];
+            const u32 count = encoded >> 16;
+            Require(count && count <= words.size() - pos,
+                    "invalid instruction length in real Task/Mesh SPIR-V");
+            found += (encoded & 0xffffU) == required_opcode;
+            pos += count;
+        }
+        Require(found == 1, "native Task/Mesh terminal/output opcode missing");
+        const auto path = prefix + (is_task ? "-task.spv" : "-mesh.spv");
+        std::ofstream file{path, std::ios::binary | std::ios::trunc};
+        Require(bool(file), "cannot open Task/Mesh SPIR-V module output");
+        file.write(reinterpret_cast<const char*>(words.data()),
+                   static_cast<std::streamsize>(words.size() * sizeof(u32)));
+        Require(bool(file), "cannot write Task/Mesh SPIR-V module");
+        std::printf("P2_4_REAL_%s_SPIRV_EMITTED words=%zu\n",
+                    is_task ? "TASK" : "MESH", words.size());
+    }
+}
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
     VerifyRealFloatCasSpirv(argv[1]);
+    VerifyRealTaskMeshSpirv(argv[1]);
     std::array<u8,0x50> header{};
     constexpr u32 pred=7U<<12,exit_true=7U<<23;
     std::vector<u8> code;

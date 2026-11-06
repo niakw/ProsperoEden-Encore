@@ -167,6 +167,13 @@ def main():
         for env in ("spv1.5", "vulkan1.2"):
             run([validator, "--target-env", env, str(path)])
             print(f"P2_3_REAL_FLOAT_CAS_SPIRV_VALIDATED {kind} {env}",flush=True)
+    # P2.4: validate REAL EXT shader opcodes emitted from synthetic
+    # Task and Mesh IR, not just a C++ compile or the legacy VertexB module.
+    for stage in ("task", "mesh"):
+        path = OUT / f"synthetic-{stage}.spv"
+        for env in ("spv1.5", "vulkan1.2"):
+            run([validator, "--target-env", env, str(path)])
+            print(f"P2_4_REAL_{stage.upper()}_SPIRV_VALIDATED {env}", flush=True)
     module_test = OUT / "ns2-vulkan-modules"
     run([cxx, "-std=c++20", "-O2",
          str(ROOT / "tools/ns2/test_ampere_vulkan_module.cpp"),

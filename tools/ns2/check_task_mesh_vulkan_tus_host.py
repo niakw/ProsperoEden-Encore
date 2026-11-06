@@ -31,12 +31,24 @@ device = (ACTIVE / "include/video_core/vulkan_common/vulkan_device.h").read_text
 assert "IsExtMeshShaderSupported()" in device
 for owner in OWNERS:
     assert (ACTIVE / owner).is_file(), owner
+assert "virtual bool DispatchNativeCompute(" in (
+    ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
+).read_text()
+assert (
+    ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+).is_file()
 assert "DrawMeshTasksEXT(" in (ACTIVE / "vulkan_rasterizer.cpp").read_text()
 assert "StageFlag(const Shader::Info&" in (ACTIVE / "vk_graphics_pipeline_cost.cpp").read_text()
 
 includes = [
     ROOT / "headless",
     SHADER,
+    # CMake stages the reviewed PS5-native RasterizerInterface into
+    # PORT_BUILD_DIR/include; source-derived host syntax must select the same
+    # virtual ABI before the pinned (pre-NS2) interface, never strip override.
+    ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi",
+    # NVDRV process tickets are owned by the native HLE overlay, not nvdrv_gpu.
+    ROOT / "vendor/encore-active/ns2-runtime/hle",
     ACTIVE / "include",
     ROOT / "vendor/encore-active/ns2-astc/include",
     ROOT / "vendor/encore-active/ns2-helpers/include",

@@ -488,7 +488,7 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::game:
         // Complete per-game video overrides, button mapping and mods; save data in builds that
         // move saves.
-        return services_.save_transfer_available() ? 14 : 13;
+        return services_.save_transfer_available() ? 17 : 16;
     default:
         return 1;
     }

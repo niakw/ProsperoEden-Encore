@@ -9,12 +9,15 @@ int main(){
     char path[]="/tmp/eden-neural-settings-XXXXXX";
     const int fd=mkstemp(path);assert(fd>=0);close(fd);
     auto prefs=Eden::LoadPreferences(path);
-    assert(prefs.neural_model==0 && prefs.neural_strength==100);
+    assert(prefs.neural_mode==0&&prefs.neural_model==0&&prefs.neural_strength==100);
+    assert(prefs.frame_generation==0);
     const int filter=prefs.upscaling_filter;
     prefs.neural_model=1;prefs.neural_strength=55;
     assert(Eden::SavePreferences(prefs,path));
     prefs=Eden::LoadPreferences(path);
-    assert(prefs.neural_model==1&&prefs.neural_strength==55);
+    assert(prefs.neural_mode==0&&prefs.neural_model==1&&prefs.neural_strength==55);
+    prefs.neural_mode=1;assert(!Eden::SavePreferences(prefs,path));
+    prefs.neural_mode=0;
     assert(prefs.upscaling_filter==filter);
     prefs.neural_model=2;assert(!Eden::SavePreferences(prefs,path));
     prefs.neural_model=0;prefs.neural_strength=101;
@@ -23,7 +26,7 @@ int main(){
     assert(prefs.neural_model==1&&prefs.neural_strength==55);
     constexpr auto title=0x0100000000010000ull;
     auto game=Eden::LoadGameSettings(title,path);
-    assert(game.neural_model==-1&&game.neural_strength==-1);
+    assert(game.neural_mode==-1&&game.neural_model==-1&&game.neural_strength==-1);
     game.neural_model=0;game.neural_strength=0;
     assert(Eden::SaveGameSettings(title,game,path));
     game=Eden::LoadGameSettings(title,path);
@@ -33,6 +36,8 @@ int main(){
     game=Eden::LoadGameSettings(title,path);
     assert(game.neural_model==1&&game.neural_strength==100);
     game.neural_model=2;assert(!Eden::SaveGameSettings(title,game,path));
+    game.neural_model=1;game.neural_mode=1;assert(!Eden::SaveGameSettings(title,game,path));
+    game.neural_mode=-1;
     game.neural_model=-1;game.neural_strength=-1;
     assert(Eden::SaveGameSettings(title,game,path));
     game=Eden::LoadGameSettings(title,path);
@@ -41,7 +46,7 @@ int main(){
     {std::ofstream o(bad);o<<R"({"video":{"neural_model":"bogus","neural_strength":105},"games":{"0100000000010000":{"neural_model":"bad","neural_strength":-12}}})";}
     const auto defaults=Eden::LoadPreferences(bad);
     const auto inherited=Eden::LoadGameSettings(title,bad);
-    assert(defaults.neural_model==0&&defaults.neural_strength==100);
-    assert(inherited.neural_model==-1&&inherited.neural_strength==-1);
+    assert(defaults.neural_mode==0&&defaults.neural_model==0&&defaults.neural_strength==100);
+    assert(inherited.neural_mode==-1&&inherited.neural_model==-1&&inherited.neural_strength==-1);
     std::remove(bad.c_str());std::remove(path);
 }

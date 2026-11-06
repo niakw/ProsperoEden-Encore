@@ -188,6 +188,11 @@ eden_r08_test(test_rdna2_nr_native_plan_bridge)
 eden_r08_test(test_rdna2_nr_fswin_output_view_policy)
 eden_r08_test(test_rdna2_nr_fswin_downsample_policy)
 eden_r08_test(test_rdna2_nr_fswin_level_link_policy)
+add_executable(test_neural_video_policy
+    "${EDEN_ROOT}/tools/graphics/test_neural_video_policy.cpp")
+target_include_directories(test_neural_video_policy PRIVATE "${EDEN_ROOT}/headless")
+target_compile_options(test_neural_video_policy PRIVATE -Wall -Wextra -UNDEBUG)
+add_test(NAME test_neural_video_policy COMMAND test_neural_video_policy)
 add_executable(test_rdna2_nr_unet_skip_cache_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_unet_skip_cache_policy.cpp")
 target_include_directories(test_rdna2_nr_unet_skip_cache_policy PRIVATE

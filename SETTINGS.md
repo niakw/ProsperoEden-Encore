@@ -331,3 +331,26 @@ Tant qu'il n'existe pas de pipeline complet et d'image PS5
 validée, ces préférences restent **inertes dans le moteur**.
 Elles ne prétendent pas déclencher les kernels ni annoncer
 une compatibilité avec un jeu spécifique.
+
+### Neural Rendering and other graphics options
+
+**Neural Rendering (NR): Off by default. Frame generation: Off by default.**
+Both are extras, separate from the Minimum / Recommended / High / Ultra video presets.
+
+Neural Rendering is still incomplete on PS5. Its main option reads **Off — not available**.
+The active NR model and intensity controls are gray while NR is off; they cannot change the running image.
+
+In a game's settings, **NR preset model** and **NR preset intensity** are different:
+these can be saved now, even with NR off. The preset can inherit the global setting or
+select Original / Compact and 0–100% intensity. It will only matter after NR becomes usable.
+No per-game automatic intensity value is claimed as tested.
+
+The dynamic compatibility policy guards future combinations rather than silently resetting preferences:
+Vulkan is required; overlapping upscalers (FSR, SGSR, A4K) are not presumed composable;
+forced MSAA with NR is unverified; NR plus frame generation is not inherently impossible
+but is unverified on the PS5 port and therefore blocked until validation.
+The existing FSR sharpness, AA, output, refresh and FG choices are not overwritten by NR.
+
+Stored keys: video.neural_rendering = off, video.neural_model = original/small,
+video.neural_strength = 0..100. Per-game keys inherit global defaults when absent.
+Manually editing JSON cannot activate an unvalidated NR engine.

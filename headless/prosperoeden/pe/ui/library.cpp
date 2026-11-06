@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
+#include "neural_video_policy.h"
 #include "pe/ui/video_presets.hpp"
 #include "pe/ui/texture_quality.hpp"
 #include "pe/ui/video_guidance.hpp"
@@ -43,6 +44,9 @@ enum GameRow : int
     row_anti_aliasing,
     row_texture_filtering,
     row_frame_generation,
+    row_neural_status,
+    row_neural_model_preset,
+    row_neural_strength_preset,
     row_refresh,
     row_controls,
     row_mods,
@@ -1679,6 +1683,12 @@ void Launcher::press_game(Key key)
         // actual backend availability independently of the chosen mode.
         const int step = key == Key::left ? -1 : 1;
         next.frame_generation = (next.frame_generation + 1 + step + 5) % 5 - 1;
+        if (next.frame_generation > 0 &&
+            (next.neural_mode >= 0 ? next.neural_mode : prefs_.neural_mode) != 0) {
+            say(tr(TR("Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5.")), true);
+            cue(Cue::error);
+            return;
+        }
         if (next.frame_generation == 3 && !services_.has_lossless_dll()) {
             say(tr("Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."), true);
             cue(Cue::error);
@@ -1689,6 +1699,30 @@ void Launcher::press_game(Key key)
         if (!saved)
             say(tr("Could not save. Please try again."), true);
         cue(saved ? Cue::toggle : Cue::error);
+        return;
+    }
+    if (option_ == row_neural_status) {
+        say(tr(TR("Neural Rendering is OFF. Its RDNA2 backend is unfinished. Future per-game presets can be saved below.")), true);
+        cue(Cue::error);
+        return;
+    }
+    if (option_ == row_neural_model_preset ||
+        option_ == row_neural_strength_preset) {
+        GameSettings next=game_settings_;
+        const int delta=key==Key::left?-1:1;
+        if(option_==row_neural_model_preset) {
+            // -1 inherit, 0 Original, 1 Compact.
+            next.neural_model=(next.neural_model+1+delta+3)%3-1;
+        } else {
+            const int current=next.neural_strength<0?
+                prefs_.neural_strength:next.neural_strength;
+            next.neural_strength=std::clamp(current+delta*5,0,100);
+        }
+        const bool saved=services_.set_game_settings(game.title_id,next);
+        if(saved){game_settings_=next;home_settings_cache_.erase(game.title_id);}
+        say(saved ? tr("NR preset saved for this game; Neural Rendering remains OFF.") :
+                    tr("Could not save. Please try again."),!saved);
+        cue(saved?Cue::toggle:Cue::error);
         return;
     }
     if (option_ == row_controls)
@@ -1964,6 +1998,15 @@ void Launcher::draw_game(Canvas &c, float open)
             game_settings_.frame_generation == 0 ? tr("Off") :
             game_settings_.frame_generation == 1 ? "MihawkGen" :
             game_settings_.frame_generation == 2 ? "FSR 3" : "LSFG",
+        tr("Off — unavailable"),
+        game_settings_.neural_model < 0 ?
+            fill(tr("Preset: Default ({0})"),
+                 {prefs_.neural_model == 0 ? tr("Original") : tr("Compact")}) :
+            fill(tr("Preset: {0}"),
+                 {game_settings_.neural_model == 0 ? tr("Original") : tr("Compact")}),
+        game_settings_.neural_strength < 0 ?
+            fill(tr("Preset: Default ({0})"),{percentage(prefs_.neural_strength)}) :
+            fill(tr("Preset: {0}"),{percentage(game_settings_.neural_strength)}),
         game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
             fill(tr("Default ({0})"), {hertz(base_refresh)}),
         game_settings_.own_mapping ?
@@ -1988,7 +2031,9 @@ void Launcher::draw_game(Canvas &c, float open)
     static constexpr const char *kLabels[] = {
         TR("Console mode"), TR("Renderer"), TR("Video preset"), TR("TV output"),
         TR("Resolution"), TR("Upscaling"), TR("Sharpness"), TR("Anti-aliasing"),
-        TR("Texture filtering"), TR("Enhanced smoothness"), TR("Refresh rate"), TR("Button mapping"),
+        TR("Texture filtering"), TR("Enhanced smoothness"),
+        TR("Neural Rendering (NR)"), TR("NR preset model"),
+        TR("NR preset intensity"), TR("Refresh rate"), TR("Button mapping"),
         TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
@@ -2015,6 +2060,7 @@ void Launcher::draw_game(Canvas &c, float open)
         const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
                                              import_source_ != SaveSource::none;
         const bool inactive =
+            (row == row_neural_status && !Eden::NeuralVideo::kRuntimeValidated) ||
             (row == row_filter &&
              !UpscalingFilterSelectable(
                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
@@ -2094,7 +2140,10 @@ void Launcher::draw_game(Canvas &c, float open)
             TR("Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."),
             TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
             TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
-            TR("Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."),
+            TR("Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."),
+            TR("Neural Rendering is OFF. The RDNA2 engine is unfinished. Save future game-specific presets below, without activating NR."),
+            TR("Future NR model preset: Original (152 neural steps) or Compact (76). This choice remains inactive while NR is OFF."),
+            TR("Future NR intensity preset: 0–100 percent. This per-game value is saved even when NR is OFF, independently of FSR sharpness."),
             TR("60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."),
             TR("Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."),
         }};
@@ -2123,6 +2172,7 @@ void Launcher::draw_game(Canvas &c, float open)
                          EffectiveGameRenderer(game_settings_, prefs_, title_id)))
                 explanation = FramegenUnsupportedGuide();
             DrawVideoGuide(c, tr(kLabels[option_]), explanation,
+                (option_ == row_neural_status && !Eden::NeuralVideo::kRuntimeValidated) ||
                 (option_ == row_filter &&
                  !UpscalingFilterSelectable(filter,
                      EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||

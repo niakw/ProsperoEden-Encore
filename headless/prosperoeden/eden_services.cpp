@@ -2006,6 +2006,7 @@ pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     result.texture_anisotropy = saved.texture_anisotropy;
     result.refresh = saved.refresh;
     result.frame_generation = saved.frame_generation;
+    result.neural_mode = saved.neural_mode;
     result.neural_model = saved.neural_model;
     result.neural_strength = saved.neural_strength;
     result.performance_profile = saved.performance_profile;
@@ -2027,6 +2028,7 @@ bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameS
     value.texture_anisotropy = settings.texture_anisotropy;
     value.refresh = settings.refresh;
     value.frame_generation = settings.frame_generation;
+    value.neural_mode = settings.neural_mode;
     value.neural_model = settings.neural_model;
     value.neural_strength = settings.neural_strength;
     value.performance_profile = settings.performance_profile;
@@ -2053,6 +2055,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.texture_anisotropy = saved.texture_anisotropy;
     result.refresh = saved.refresh;
     result.frame_generation = saved.frame_generation;
+    result.neural_mode = saved.neural_mode;
     result.neural_model = saved.neural_model;
     result.neural_strength = saved.neural_strength;
     result.output = saved.output;
@@ -2099,6 +2102,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.texture_anisotropy = preferences.texture_anisotropy;
     value.refresh = preferences.refresh;
     value.frame_generation = preferences.frame_generation;
+    value.neural_mode = preferences.neural_mode;
     value.neural_model = preferences.neural_model;
     value.neural_strength = preferences.neural_strength;
     value.output = preferences.output;

@@ -104,7 +104,8 @@ pinned_gather = """    void Gather(std::function<void(PAddr, size_t)>& callback)
         // A second gather must not swap or clear front_buffer while the
         // first is still iterating callbacks. Keep the lock through clear().
         std::scoped_lock gather_lock{gather_guard};
-        {"""
+        {
+            std::scoped_lock lk(guard);"""
 assert expected.count(pinned_gather) == 1, "Pinned Gather source drift"
 assert expected.count(field_after) == 1, "Pinned Gather mutex missing"
 expected = expected.replace(pinned_gather, gather_after)

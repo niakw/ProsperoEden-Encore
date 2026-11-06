@@ -165,3 +165,33 @@ fin de la soumission. L'échec d'une préparation n'entraîne pas
 de dispatch partiel ; l'appelant peut reconstruire les deux
 chaînes. La connexion du réseau complet avec skips/ViT/Split-Swin
 reste à faire. Aucune image PS5 ni mesure de performance annoncée.
+
+
+## Préservation du skip U-Net au moment du downsample
+
+La chaîne FSwin terminée par `_ds` expose désormais **deux sorties
+GPU distinctes** lorsqu'elles sont liées explicitement :
+
+1. `BindDownsampleOutput()` : le raster réduit
+   `ceil(W/2) × ceil(H/2) × 2C` destiné à la résolution suivante.
+2. `BindSkipRasterOutput()` : le raster **avant réduction**
+   `W × H × C`, reconstitué depuis les fenêtres avec annulation du
+   décalage 4×4, pour le futur skip de l'upsample.
+
+`Record()` enregistre le shader de conversion du skip et celui de
+downsample **après** les couches FSwin. La source est la même, les
+destinations sont distinctes et leurs buffers appartiennent à
+l'appelant ; `ResultSkipRaster()` et `ResultRaster()` exposent les
+descripteurs qui pourront être conservés par le graphe U-Net.
+Aucun téléchargement CPU n'est requis.
+
+Les protections rejettent des buffers source/destination
+aliasés et toute sortie skip dont les dimensions ou le budget
+VRAM sont incompatibles. Les liens entre les indices de blocs
+du plan natif et la durée de vie du cache de skip restent à
+implémenter : **le cache et le scheduler U-Net complets ne sont
+pas encore construits**.
+
+Le port ne dispose toujours pas d'une preuve de première image
+Neural Rendering sur console. Aucun travail de performance n'a
+été engagé.

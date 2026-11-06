@@ -511,7 +511,21 @@ assert (ROOT / "tools/ns2/check_native_video_ready_event_host.py").is_file()
 print("ENCORE_POST_F07_NATIVE_VIDEO_CODEC_ISOLATION_PASS",
       f"new_shared_sources={len(post_f07_video_decoder_owners)}")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners
+# A new P2.4 active Ampere stage-buffer decoder was added after the
+# immutable F07 review. Keep it visible and explicitly unqualified for
+# optimization; never inflate or relabel the 518 reviewed owner count.
+post_f07_native_stage_buffer_owners = {
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_stage_buffer.h",
+}
+assert post_f07_native_stage_buffer_owners <= all_owners, (
+    "Missing active native stage-buffer owner",
+    sorted(post_f07_native_stage_buffer_owners - all_owners))
+assert not post_f07_native_stage_buffer_owners & research_owners
+assert "DecodeNativeStageBufferAccess(" in (
+    ROOT / next(iter(post_f07_native_stage_buffer_owners))).read_text()
+print("ENCORE_POST_F07_STAGE_BUFFER_ISOLATION_PASS", "new_p2_owners=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"

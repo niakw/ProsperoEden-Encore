@@ -32,3 +32,9 @@ Le test hôte `test_rdna2_nr_vit_qkv_weight_loader` génère un **modèle NRMODE
 Le chemin ViT n'exige plus un seul GEMM sur la totalité des tokens. `BuildVitQkvBatches` prévalide **toutes** les projections [T,3072] et normalisations avant le premier enregistrement Vulkan, puis exécute des lots successifs avec le **même** buffer FP32 temporaire. Chaque lot lit le décalage correspondant dans l'activation FP8 [T,1024] et écrit Q/K/V à des offsets disjoints ; l'attention globale attend les trois tenseurs **complets**.
 
 Le budget `kMaxProducts` et la taille réelle du temporaire déterminent la taille des lots (16 maximum, pas de débordement caché). Corpus 1080p de 2560 tokens : un lot si FP32 complet disponible. Exemple 4096 tokens : deux lots de 2048 avec un temporaire de 24 Mio. Tests `test_rdna2_nr_vit_qkv_batches_policy` : dimensions natives, 4096, offsets, capacités et rejet atomique d'un programme incomplet. Ce code permet une forme mémoire validée ; il n'atteste pas la rapidité ni la précision de l'exécution sur PS5.
+
+## Allocations Vulkan autonomes du sous-graphe ViT
+
+`NrRdna2VitGpuTensors` alloue via le VMA du moteur cinq buffers GPU : temporaire FP32 réutilisé pour la GEMM, Q, K, V et contexte final, avec limite de 512 Mio combinés et `maxStorageBufferRange` par buffer. `NrRdna2VitQkvSubgraph` raccorde l'entrée E4M3 déjà fournie par l'étape précédente sur GPU, les poids/32 températures importés de NRMODEL1, le plan de batches et l'attention. Il expose le buffer contexte sans recopie CPU.
+
+Le propriétaire du renderer doit garder en vie le buffer d'entrée et attendre la complétion du scheduler avant de libérer les ressources. Cette intégration ne connecte **pas encore** les autres couches ViT ni le pré/post-image ni le renderer PS5. Test hôte `test_rdna2_nr_vit_gpu_tensors_policy` ajouté ; compilation PS5/Vulkan non confirmée.

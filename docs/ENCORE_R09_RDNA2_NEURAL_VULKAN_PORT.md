@@ -358,3 +358,24 @@ bindings producteurs-consommateurs corrects. Le wrapper n'alloue
 pas encore les tenseurs et ne lit pas les conteneurs de modèles.
 Ce chemin constitue l'orchestration interne d'un bloc FSwin,
 pas le graph neural complet ni un mode DLSS actif.
+
+
+## Lecteur de paquets de modèle NRMODEL1
+
+Le fichier header partagé nr_rdna2_model_pack.h lit l'index
+du format documenté par pack_model.py (projet MIT DLSSNR-AMD) :
+8 octets NRMODEL1, compte u32, réservé u32, puis par entrée
+longueur de nom, nom relatif UTF-8, offset u64, taille u64.
+Les payloads sont alignés sur 256 octets.
+
+Le parseur accepte un **index partiel** fourni séparément de la
+taille totale du fichier. Il vérifie le magic, les bornes,
+les noms relatifs, les doublons, l'alignement, les chevauchements
+et le dépassement de capacité. Il n'ouvre aucun fichier arbitraire,
+ne charge pas les poids en mémoire, ne décompresse pas INT4 ou FP8,
+et ne distribue pas les poids NVIDIA.
+
+Test C++ dédié : paquet synthétique à deux matrices, corruption
+de l'en-tête, doublons, traversal, offsets non alignés et hors limites.
+Cette étape rend possible un futur chargeur réel, sans être déjà
+ce chargeur. Aucune activation automatique de DLSS.

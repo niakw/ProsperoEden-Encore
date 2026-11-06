@@ -12,9 +12,9 @@ def main():
     shader=(root/"r09_rdna2_nr/window_attention_rdna2.comp").read_text()
     def binding(block):
         match=re.search(
-            r"layout\\(set\\s*=\\s*0,\\s*binding\\s*=\\s*(\\d+),"
-            r"\\s*std430\\)\\s*(?:readonly|writeonly)\\s+buffer\\s+"
-            +block+r"\\b",shader)
+            r"layout\(set\s*=\s*0,\s*binding\s*=\s*(\d+),"
+            r"\s*std430\)\s*(?:readonly|writeonly)\s+buffer\s+"
+            +block+r"\b",shader)
         if match is None:
             raise AssertionError("Missing shader block: "+block)
         return int(match.group(1))
@@ -28,9 +28,9 @@ def main():
     assert "put(ready.attention,3u,b.weights);" in fswin
     assert "put(ready.attention,4u,b.context);" in fswin
     split=(root/"nr_rdna2_split_window_link.cpp").read_text()
-    pattern=(r"const std::array<VkDescriptorBufferInfo,11> infos\\s*\\{"
-             r"\\s*b.input,b.weights,b.scales,b.query,b.key,b.value,"
-             r"\\s*b.query,b.key,b.value,b.bias,b.context\\s*\\}")
+    pattern=(r"const std::array<VkDescriptorBufferInfo,11> infos\s*\{"
+             r"\s*b.input,b.weights,b.scales,b.query,b.key,b.value,"
+             r"\s*b.query,b.key,b.value,b.bias,b.context\s*\}")
     assert re.search(pattern,split), "Split-Swin descriptors swapped"
     assert "i<6u?i:i-6u" in split, "Split-Swin binding numbering changed"
     print("RDNA2 attention descriptors: Q/K/V 0/1/2, bias 3, result 4")

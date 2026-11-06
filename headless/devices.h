@@ -126,6 +126,7 @@ private:
         GuestSystemButtonRoute guest_home; // Touchpad+Options fallback; Sony PS reserved
         bool select_held = false;  // a long press: its mapped button stays down until release
         unsigned touch_polls = 0;  // polls the touchpad has been down
+        unsigned select_pulse = 0; // legacy guest Minus tap only when quick menu is unavailable
     };
     void Rescan();
     void OpenSlot(std::size_t player, int user);

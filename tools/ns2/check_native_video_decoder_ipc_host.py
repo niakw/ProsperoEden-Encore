@@ -31,7 +31,8 @@ assert 'CreateMetadataSession(system, ctx, std::move(handler), &client)' in supe
 assert 'm_owner->OpenVideoDecoderChildSession(ctx)' in source
 assert 'm_context.CreateEvent("NS2VideoInputReady")' in source
 assert 'rb.PushCopyObjects(ctx, m_event->GetReadableEvent());' in source
-assert 'if (!m_decoder->Decode(compressed, pts, decoded)' in source
+assert '!compressed.empty() && !m_decoder->Decode(compressed, pts, decoded)' in source
+assert 'eos && !m_decoder->Drain(decoded)' in source
 assert 'if (!m_decoder->Render(frame.picture,' in source
 assert 'm_owner->WriteVideoSurface(next.id, *target, pixels)' in source
 assert 'target->gpu_mapped && !target->layout.nv12' in source
@@ -68,6 +69,9 @@ method=source[source.index(start):source.index(end,source.index(start))]
 assert method.index('if (!m_owner->WriteVideoSurface(') < method.index('syncpoints.IncrementGuest(m_syncpoint)')
 assert 'IsReadyGuest(next.release->id, next.release->value)' in method
 assert 'if (!m_decoder->Render(' in method
+assert 'VideoDecoderProtocol::MarkLastEos(m_pending, m_outputs)' in source
+assert 'compressed.empty() && !eos' in source
+assert 'std::numeric_limits<s64>::max()' in source
 
 fixture=r'''
 #include <algorithm>

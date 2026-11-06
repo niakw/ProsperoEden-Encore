@@ -702,6 +702,7 @@ jobs:
           python3 -B tools/ns2/check_nvdrv_pin_failure_propagation_host.py
           python3 -B tools/ns2/check_native_video_decoder_backend_host.py
           python3 -B tools/ns2/check_native_video_decoder_ipc_host.py
+          python3 -B tools/ns2/check_native_video_eos_host.py
           python3 -B tools/check-heap-growth.py
           python3 -B tools/check-heap-growth-rollback-host.py
           python3 -B tools/check-heap-growth-diagnostics-host.py

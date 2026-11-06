@@ -498,3 +498,13 @@ le codec demandé, l'initialisation échoue explicitement. Les flux HEVC
 length-prefixed utilisent le convertisseur Annex-B partagé. Validation hôte :
 compilation syntaxique du propriétaire et tests O0/O2 du sélecteur réel.
 Aucune preuve de lecture AV1/HEVC sur PS5.
+
+#### P1.3 — fin de flux vidéo (06/11/2026)
+
+`native_video_eos.h` fait partie du propriétaire IPC natif. L'entrée 109/400
+accepte maintenant un paquet EOS sans données compressées et appelle le drain
+FFmpeg. En l'absence de nouvelle image décodée, le marqueur EOS est appliqué
+à la dernière image réelle en attente, ou à la dernière image déjà écrite mais
+encore dans la queue de sortie. Sans image réelle, la commande retourne une
+erreur, sans simuler un framebuffer ni signaler un fence imaginaire. Test hôte
+Clang/GCC O0/O2 : `tools/ns2/check_native_video_eos_host.py`.

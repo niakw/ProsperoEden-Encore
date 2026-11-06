@@ -28,7 +28,7 @@ public:
         if (visible) {
             tab = 0;
             selected = 0;
-            notice = "SETTINGS FOR THIS GAME";
+            notice = restart_required ? "MODIFS ENREGISTREES" : "REGLAGES DE CE JEU";
         }
         Rebuild();
     }
@@ -74,6 +74,8 @@ private:
     GameSettings game{};
     Preferences prefs{};
     bool visible{};
+    // Kept across close/reopen: saved renderer/HID edits are not live.
+    bool restart_required{};
     int tab{};
     int selected{};
     std::string notice;
@@ -122,17 +124,17 @@ private:
     std::string Row(int row) const {
         if (tab == 0) {
             switch (row) {
-            case 0: return "RESUME GAME";
-            case 1: return prefs.hud ? "FPS DISPLAY ON" : "FPS DISPLAY OFF";
-            case 2: return prefs.detailed_logging ? "DETAILED LOGS ON" : "DETAILED LOGS OFF";
-            case 3: return "RETURN TO LIBRARY";
+            case 0: return "REPRENDRE LE JEU";
+            case 1: return prefs.hud ? "AFFICHAGE FPS OUI" : "AFFICHAGE FPS NON";
+            case 2: return prefs.detailed_logging ? "LOGS DETAILLES OUI" : "LOGS DETAILLES NON";
+            case 3: return "RETOUR BIBLIOTHEQUE";
             }
         } else if (tab == 1) return GraphicsRow(row);
         else if (tab == 2) return MappingRow(row);
         else if (tab == 3) {
             switch (row) {
-            case 0: return prefs.hud ? "FPS DISPLAY ON" : "FPS DISPLAY OFF";
-            case 1: return prefs.detailed_logging ? "DETAILED LOGS ON" : "DETAILED LOGS OFF";
+            case 0: return prefs.hud ? "AFFICHAGE FPS OUI" : "AFFICHAGE FPS NON";
+            case 1: return prefs.detailed_logging ? "LOGS DETAILLES OUI" : "LOGS DETAILLES NON";
             case 2: return "FPS = HOST PRESENT";
             case 3: {
                 char text[25]{};
@@ -146,7 +148,8 @@ private:
     }
     bool PersistGame(const GameSettings& old) {
         if (SaveGameSettings(title_id, game)) {
-            notice = "APPLIES ON NEXT LAUNCH";
+            restart_required = true;
+            notice = "MODIFS ENREGISTREES";
             return true;
         }
         game = old;
@@ -238,20 +241,24 @@ private:
             dst.width = 680;
             dst.loading = mode;
         };
-        line("EDEN ENCORE QUICK MENU", kRow);
+        line("EDEN ENCORE  MENU", kRow);
         static constexpr const char* headings[] = {
-            "GAME  GRAPH  PAD  DEBUG", "GRAPHICS  L1 R1 TABS",
-            "CONTROLS  L1 R1 TABS", "DEBUG  L1 R1 TABS"};
+            "JEU   GRAPH  PAD  DIAG", "GRAPHISMES  L1 R1",
+            "MANETTE   L1 R1", "DIAGNOSTIC  L1 R1"};
         line(headings[tab], kRow);
-        line("TOUCHPAD TO CLOSE", kRow);
+        line("CLIC PAD POUR FERMER", kRow);
         const int start = std::clamp(selected - 3, 0, std::max(0, Count() - kVisibleRows));
         for (int index = 0; index < kVisibleRows; ++index) {
             const int item = start + index;
             line(item < Count() ? Row(item) : "",
                  item == selected ? kSelectedRow : kRow);
         }
-        line("UP DOWN  LEFT RIGHT", kRow);
+        line("HAUT BAS  GAUCHE DROITE", kRow);
         line(notice, kRow);
+        // A persistent, visually distinct banner when a per-title change
+        // needs a fresh game launch (never a full PS5/system restart).
+        line(restart_required ? "RELANCER LE JEU REQUIS" : "",
+             restart_required ? kWarningRow : kRow);
         Publish(result);
     }
 };

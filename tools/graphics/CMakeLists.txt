@@ -417,3 +417,15 @@ add_test(NAME test_rdna2_nr_split_context_repack_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-split-context-repack-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# One native, fully bound (non-pooled) Split-Swin16H block: CPU shape and
+# buffer-limit coverage before GPU command recording.
+add_executable(test_rdna2_nr_split_block_policy
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_block_policy.cpp")
+target_include_directories(test_rdna2_nr_split_block_policy PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_split_block_policy PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_split_block_policy
+    COMMAND test_rdna2_nr_split_block_policy)

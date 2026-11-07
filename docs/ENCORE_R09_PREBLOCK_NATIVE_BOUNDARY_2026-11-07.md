@@ -63,3 +63,24 @@ validation de l'ABI SPIR-V et du propriétaire C++ ; elle n'est
 conserver et exposer la publication brute FP16 de son dernier
 bloc FSwin (actuellement seule la publication FP8 est accessible).
 Aucune approximation FP8→pool ne sera introduite.
+
+## FSwin plein écran — allocation hôte préalable
+
+Le prébloc Original 1920×1080 utilise une grille 135×240 de fenêtres C32.
+Dans le FSwin six passes, les trois buffers Q/K/V étaient auparavant
+alloués simultanément au buffer d'expansion 4C : environ **696 Mio** de
+tenseurs internes pour ce niveau, contre un budget logiciel de **512 Mio**.
+Cela empêchait `NrRdna2FSwinGpuTensors::Initialize` de préparer ce niveau,
+indépendamment des poids ou du shader de pooling.
+
+La révision vendor réutilise les trois plages Q/K/V disjointes dans le
+buffer d'expansion **après** la contraction dense, quand celui-ci n'est
+plus lu. Le budget de ces tenseurs devient environ **506 Mio** à cette
+géométrie, sans changer les sorties ni les mathématiques du FSwin.
+Le test hôte `test_rdna2_nr_fswin_tensor_alias_policy` verrouille la
+capacité, l'alignement et le rejet des sous-plages non sûres.
+
+Cette correction n'est ni une mesure de consommation mémoire sur PS5
+ni une preuve d'image : la sortie brute FP16 avant quantification reste
+nécessaire pour le pooling, et les poids U-Net incomplets bloquent encore
+la chaîne complète. Aucune option utilisateur n'est activée.

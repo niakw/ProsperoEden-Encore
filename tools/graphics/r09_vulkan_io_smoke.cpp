@@ -244,6 +244,7 @@ static_assert(sizeof(InputPush)==16u&&sizeof(OutputPush)==16u);
 void Smoke(Context& c,const char* input_spv,const char* feature_spv,
            const char* lift_spv,const char* compose_spv,const char* output_spv,
            std::uint32_t screen_width,std::uint32_t screen_height){
+    // 4x3 and 80x45 also execute real C32-to-C16 postblock projection.
     // The 4x3 canary validates transpose; 1920x1080 additionally exercises
     // all 2,073,600 real native screen pixels and dispatch workgroups.
     if(!screen_width||!screen_height||
@@ -265,6 +266,8 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     const Buffer lifted=c.MakeBuffer((check_lift?pixels:1u)*32u,
                                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer lift_weights=c.MakeBuffer(1024u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    const Buffer raw_post=c.MakeBuffer((check_lift?pixels:1u)*64u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    const Buffer post_weights=c.MakeBuffer(1024u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer features=c.MakeBuffer(pixels*32u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer composed=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer readback=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
@@ -309,6 +312,27 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
         matrix[index/2u]|=0x3c00u<<((index&1u)*16u); // FP16 +1
     }
     vkUnmapMemory(c.device,lift_weights.memory);
+    if(check_lift){
+        // Controlled C32 FP16 RAW features for the real learned post shader.
+        Check(vkMapMemory(c.device,raw_post.memory,0u,pixels*64u,0u,&mapped),"map C32 RAW");
+        auto* raw=static_cast<std::uint32_t*>(mapped);
+        for(std::uint32_t pixel=0u;pixel<pixels;++pixel){
+            raw[pixel*16u+0u]=0xb0003000u;
+            raw[pixel*16u+1u]=0x00003400u;
+            for(std::uint32_t channel=2u;channel<16u;++channel)
+                raw[pixel*16u+channel]=0u;
+        }
+        vkUnmapMemory(c.device,raw_post.memory);
+        Check(vkMapMemory(c.device,post_weights.memory,0u,1024u,0u,&mapped),
+              "map post matrix");
+        std::memset(mapped,0,1024u);
+        auto* matrix=static_cast<std::uint32_t*>(mapped);
+        for(std::uint32_t channel=0u;channel<4u;++channel){
+            const auto index=channel*32u+channel;
+            matrix[index/2u]|=0x3c00u<<((index&1u)*16u);
+        }
+        vkUnmapMemory(c.device,post_weights.memory);
+    }
     const VkSamplerCreateInfo sample{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,nullptr,0u,
         VK_FILTER_NEAREST,VK_FILTER_NEAREST,VK_SAMPLER_MIPMAP_MODE_NEAREST,
         VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
@@ -343,23 +367,27 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     const auto input_set=make_set(input_bindings,2u);
     const auto feature_set=make_set(feature_bindings,2u);
     const auto lift_set=make_set(lift_bindings,3u);
+    const auto post_set=make_set(lift_bindings,3u);
     const auto compose_set=make_set(compose_bindings,3u);
     const auto output_set=make_set(output_bindings,2u);
     const VkDescriptorPoolSize pools[]{
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1u},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,10u},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,13u},
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1u}};
     const VkDescriptorPoolCreateInfo pool_ci{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        nullptr,0u,5u,3u,pools};
+        nullptr,0u,6u,3u,pools};
     Check(vkCreateDescriptorPool(c.device,&pool_ci,nullptr,&c.descriptors),"descriptor pool");
-    const VkDescriptorSetLayout layouts[]{input_set,compose_set,output_set,feature_set,lift_set};
+    const VkDescriptorSetLayout layouts[]{input_set,compose_set,output_set,feature_set,lift_set,post_set};
     const VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,c.descriptors,5u,layouts};
-    VkDescriptorSet sets[5]{};
+        nullptr,c.descriptors,6u,layouts};
+    VkDescriptorSet sets[6]{};
     Check(vkAllocateDescriptorSets(c.device,&allocate,sets),"allocate sets");
     const VkDescriptorBufferInfo proxy_info{native.handle,0u,rgba32_bytes};
     const VkDescriptorBufferInfo encoded_info{encoded.handle,0u,pixels*32u};
     const VkDescriptorBufferInfo lift_weight_info{lift_weights.handle,0u,1024u};
+    const VkDescriptorBufferInfo raw_post_info{raw_post.handle,0u,
+        (check_lift?pixels:1u)*64u};
+    const VkDescriptorBufferInfo post_weights_info{post_weights.handle,0u,1024u};
     const VkDescriptorBufferInfo lifted_info{lifted.handle,0u,
         (check_lift?pixels:1u)*32u};
     const VkDescriptorBufferInfo head_info{features.handle,0u,pixels*32u};
@@ -390,12 +418,20 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
         {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[4],1u,0u,1u,
          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&lift_weight_info,nullptr},
         {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[4],2u,0u,1u,
-         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&lifted_info,nullptr}};
-    vkUpdateDescriptorSets(c.device,12u,writes,0u,nullptr);
-    VkPipelineLayout input_layout{},compose_layout{},output_layout{},feature_layout{},lift_layout{};
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&lifted_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[5],0u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&raw_post_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[5],1u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&post_weights_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[5],2u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&head_info,nullptr}};
+    vkUpdateDescriptorSets(c.device,15u,writes,0u,nullptr);
+    VkPipelineLayout input_layout{},compose_layout{},output_layout{},feature_layout{},lift_layout{},post_layout{};
     const VkPipeline in_pipeline=c.Pipeline(c.Shader(input_spv),input_set,input_layout);
     const VkPipeline feature_pipeline=c.Pipeline(c.Shader(feature_spv),feature_set,feature_layout,48u);
-    const VkPipeline lift_pipeline=c.Pipeline(c.Shader(lift_spv),lift_set,lift_layout,12u);
+    const VkShaderModule projection_shader=c.Shader(lift_spv);
+    const VkPipeline lift_pipeline=c.Pipeline(projection_shader,lift_set,lift_layout,12u);
+    const VkPipeline post_pipeline=c.Pipeline(projection_shader,post_set,post_layout,12u);
     const VkPipeline compose_pipeline=c.Pipeline(
         c.Shader(compose_spv),compose_set,compose_layout);
     const VkPipeline out_pipeline=c.Pipeline(c.Shader(output_spv),output_set,output_layout);
@@ -460,6 +496,18 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
         vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                              VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
                              1u,&compute_between,0u,nullptr,0u,nullptr);
+        // The same real learned GLSL projector, RAW C32 FP16 to C16 FP16.
+        // On small rasters the compositor consumes GPU-produced features.
+        vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,post_pipeline);
+        vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
+                                post_layout,0u,1u,&sets[5],0u,nullptr);
+        const LiftPush post_params{native_width,native_height,2u};
+        vkCmdPushConstants(c.command,post_layout,VK_SHADER_STAGE_COMPUTE_BIT,
+                           0u,sizeof(post_params),&post_params);
+        vkCmdDispatch(c.command,(native_width+63u)/64u,native_height,1u);
+        vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
+                             1u,&compute_between,0u,nullptr,0u,nullptr);
     }
     vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,compose_pipeline);
     vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
@@ -511,6 +559,14 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
         vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                              VK_PIPELINE_STAGE_HOST_BIT,0u,0u,nullptr,
                              1u,&lift_to_host,0u,nullptr);
+        const VkBufferMemoryBarrier head_to_host{
+            VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,nullptr,
+            VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_HOST_READ_BIT,
+            VK_QUEUE_FAMILY_IGNORED,VK_QUEUE_FAMILY_IGNORED,
+            features.handle,0u,pixels*32u};
+        vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                             VK_PIPELINE_STAGE_HOST_BIT,0u,0u,nullptr,
+                             1u,&head_to_host,0u,nullptr);
     }
     Check(vkEndCommandBuffer(c.command),"end command buffer");
     const VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO,nullptr,
@@ -579,6 +635,25 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
             }
         }
         vkUnmapMemory(c.device,lifted.memory);
+        Check(vkMapMemory(c.device,features.memory,0u,pixels*32u,0u,&mapped),
+              "map GPU C16 post head");
+        const auto* words=static_cast<const std::uint32_t*>(mapped);
+        const float exact[4]{0.125f,-0.125f,0.25f,0.f};
+        for(std::uint32_t pixel=0u;pixel<pixels;++pixel)
+            for(std::uint32_t channel=0u;channel<16u;++channel){
+                const auto word=words[pixel*8u+channel/2u];
+                const auto half=static_cast<std::uint16_t>(
+                    (channel&1u)?word>>16u:word&0xffffu);
+                const float actual=DecodeHalf(half);
+                const float expected_head=channel<4u?exact[channel]:0.f;
+                if(!std::isfinite(actual)||actual!=expected_head)
+                    throw std::runtime_error(
+                        "GPU C32-to-C16 learned post-projection mismatch at pixel "+
+                        std::to_string(pixel)+"/"+std::to_string(channel));
+            }
+        vkUnmapMemory(c.device,features.memory);
+        std::cout<<"R09_VULKAN_GPU_LEARNED_POST_PROJECTION_PASS "
+                 <<screen_width<<"x"<<screen_height<<"\n";
         std::cout<<"R09_VULKAN_GPU_LEARNED_LIFT_ONEHOT_PASS "
                  <<screen_width<<"x"<<screen_height<<"\n";
     }

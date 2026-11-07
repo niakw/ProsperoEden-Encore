@@ -27,7 +27,8 @@ template<std::size_t N>
 static void MakeIndexOnlyPack(const std::filesystem::path& path,
     const std::array<std::string_view,N>& manifest,
     std::string_view optional={},bool omit_last=false,
-    bool bad_input_lift=false,bool bad_output_project=false){
+    bool bad_input_lift=false,bool bad_output_project=false,
+    bool valid_learned_upsamples=false,bool bad_learned_gain=false){
     const std::size_t n=N-(omit_last?1u:0u)+(!optional.empty()?1u:0u);
     std::vector<std::string_view> names(manifest.begin(),
                                         manifest.begin()+N-(omit_last?1u:0u));
@@ -48,7 +49,26 @@ static void MakeIndexOnlyPack(const std::filesystem::path& path,
         const bool post=name==
             "unpacked-postblock/block70.layer0.layer.out_project.bin"||
             name=="unpacked-postblock/block30.layer0.layer.out_project.bin";
-        const std::uint64_t bytes=(pre||post)?1024u:2u;
+        std::uint64_t bytes=(pre||post)?1024u:2u;
+        // These are only zero-filled, shape-correct FAKE regions. They
+        // test descriptor admission and must never be used for inference.
+        if(valid_learned_upsamples){
+            const std::array<std::uint32_t,4u> up_blocks=
+                N==599u?std::array<std::uint32_t,4u>{66u,62u,56u,48u}:
+                        std::array<std::uint32_t,4u>{28u,26u,24u,22u};
+            for(std::size_t i=0u;i<4u;++i){
+                const auto channels=32u<<i;
+                const std::string prefix="unpacked/block"+
+                    std::to_string(up_blocks[i])+".layer0.layer";
+                if(name==prefix+".resample.bin")
+                    bytes=std::uint64_t(channels)*2u*channels;
+                if(name==prefix+".upsample_gain.bin")
+                    bytes=2u*(channels==32u?channels:channels-16u)-
+                        (bad_learned_gain&&i==2u?2u:0u);
+                if(channels>=64u&&name==prefix+".residual_scale.bin")
+                    bytes=2u*(channels+16u);
+            }
+        }
         const std::uint64_t declared=
             (pre&&bad_input_lift)||(post&&bad_output_project)?
             1022u:bytes;
@@ -89,6 +109,16 @@ static void Check(const std::array<std::string_view,N>& names,
     // must NEVER pass the stricter GPU-admission gain preflight.
     assert(!ValidateR09LearnedUpsampleInputs(out));
     assert(out.down_segments[0]!=out.up_segments[0]);
+    // A shape-complete fake pack exercises all four real loader contracts
+    // without pretending any of its zero-filled values are learned weights.
+    MakeIndexOnlyPack(file,names,{},false,false,false,true);
+    assert(PreflightR09Session(file.string(),good,1920u,1080u,
+                               1920u,1080u,out));
+    assert(ValidateR09LearnedUpsampleInputs(out));
+    MakeIndexOnlyPack(file,names,{},false,false,false,true,true);
+    assert(PreflightR09Session(file.string(),good,1920u,1080u,
+                               1920u,1080u,out));
+    assert(!ValidateR09LearnedUpsampleInputs(out));
     // Correctly named manifest alone must not allocate GPU memory when
     // either learned FP16 image-boundary matrix has a bad byte length.
     MakeIndexOnlyPack(file,names,{},false,true,false);

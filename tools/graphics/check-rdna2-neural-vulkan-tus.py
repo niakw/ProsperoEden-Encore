@@ -182,12 +182,14 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     env=os.environ.copy()
     def check(name):
         source=(ROOT/"headless/vulkan_present_layer_r24.cpp"
-                if name=="__present_layer_r09__" else ACTIVE/name)
+                if name=="__present_layer_r09__" else
+                ROOT/"tools/graphics/r09_full_gpu_host.cpp"
+                if name=="__r09_full_gpu_host__" else ACTIVE/name)
         result=subprocess.run(cmd+[str(source)],
             cwd=ROOT,env=env,text=True,capture_output=True,timeout=150)
         return name,result.returncode,result.stderr[-10000:]
     with ThreadPoolExecutor(max_workers=2) as pool:
-        results=list(pool.map(check,(*FILES,"__present_layer_r09__")))
+        results=list(pool.map(check,(*FILES,"__present_layer_r09__","__r09_full_gpu_host__")))
     failures=[]
     for name,rc,diagnostics in results:
         if rc:

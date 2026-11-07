@@ -1674,12 +1674,26 @@ int main(int argc, char** argv) {
             // Keep the user's persisted MSAA choice for a later Vulkan
             // session, but never pass unsupported native sample modes into
             // the OpenGL presenter. No silent 16x MSAA claim on OpenGL.
-            const int active_aa = profile_renderer != 1 && anti_aliasing >= 4
-                                      ? 0 : anti_aliasing;
+            // DLSS-NR's first-frame pipeline consumes the unfiltered
+            // display image. FXAA/SMAA would otherwise be created before
+            // the neural pass, and the presenter's strict exclusive guard
+            // would silently skip DLSS-NR for the selected game.
+            // Keep the user's stored AA setting unchanged; this is only
+            // the effective setting for the current running title.
+            const bool dlss_active = neural_selectable &&
+                Eden::NeuralVideo::IsDlss(requested_nr);
+            const int active_aa = dlss_active ? 0 :
+                (profile_renderer != 1 && anti_aliasing >= 4
+                    ? 0 : anti_aliasing);
+            if (dlss_active && anti_aliasing != 0) {
+                Eden::Report("neural",
+                    "DLSS-NR uses exclusive rendering: FXAA/SMAA "
+                    "temporarily disabled for this game session");
+            }
             Settings::values.anti_aliasing.SetValue(
                 aa[std::clamp(active_aa, 0, int(std::size(aa)) - 1)]);
             Eden::Graphics::SetEnhancedFxaa(
-                anti_aliasing == 3 && profile_renderer == 1);
+                !dlss_active && anti_aliasing == 3 && profile_renderer == 1);
             // Real texture LOD sampler filtering (not image postprocessing).
             // A per-title override wins; otherwise retain the global choice.
             const int aniso_tier =

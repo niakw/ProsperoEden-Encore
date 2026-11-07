@@ -53,6 +53,7 @@
 #include "display_refresh.h"
 #include "lossless_user_file.h"
 #include "nr_dll_user_file.h"
+#include "nr_dll_launch_preflight.h"
 #include "frame_metrics.h"
 #include "log_pipe.h"
 #include "network_domain_rules.h"
@@ -1644,7 +1645,25 @@ int main(int argc, char** argv) {
             if(!dlss_file_available)
                 Eden::Report("neural",
                     "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll.");
-            const bool neural_selectable=dlss_file_available&&
+            // Import and preflight 141 MiB of private Original weights
+            // at game launch. Never deserialize a user DLL on the Vulkan
+            // presentation thread. Existing preferences are not overwritten
+            // when the resource or compatible model is absent.
+            bool dlss_model_ready=dlss_file_available;
+            if(dlss_model_ready&&Eden::NeuralVideo::IsDlss(requested_nr)&&
+               Eden::NeuralVideo::CanSelect(
+                   requested_nr,profile_renderer,selected_filter,
+                   requested_aa,requested_fg)) {
+                const auto admission=Eden::Graphics::PrepareR09UserModel(
+                    requested_nr,Eden::UserDir(),Eden::ConfigDir());
+                dlss_model_ready=admission.ready;
+                if(admission.reason)
+                    Eden::Report("neural",admission.reason);
+                if(admission.imported)
+                    Eden::Report("neural",
+                        "DLSS-NR Original: authenticated weights imported into private cache before game start");
+            }
+            const bool neural_selectable=dlss_model_ready&&
                 Eden::NeuralVideo::CanSelect(
                     requested_nr,profile_renderer,selected_filter,
                     requested_aa,requested_fg);

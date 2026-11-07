@@ -28,6 +28,8 @@ on:
       - 'headless/r09_native_plans.h'
       - 'headless/storage_paths.h'
       - 'headless/nr_dll_user_file.h'
+      - 'headless/nr_dll_launch_preflight.h'
+      - 'extras/graphics/test_nr_dll_launch_preflight.cpp'
       - 'headless/prosperoeden/pe/ui/settings.cpp'
       - 'headless/prosperoeden/pe/ui/library.cpp'
       - 'headless/prosperoeden/pe/ui/services.hpp'
@@ -96,6 +98,7 @@ jobs:
               test_nr_dll_model_import \
               test_neural_video_policy \
               test_nr_dll_user_file \
+              test_nr_dll_launch_preflight \
               test_rdna2_nr_fswin_tensor_alias_policy
             do
               source="extras/graphics/${unit}.cpp"

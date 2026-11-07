@@ -17,8 +17,6 @@
 #include "aa_source_extent.h"
 #include "nr_display_capture_policy.h"
 #include "neural_runtime_state.h"
-#include "nr_dll_model_import.h"
-#include "video_core/renderer_vulkan/nr_rdna2_model_manifest.h"
 #include "r09_native_plans.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
@@ -219,37 +217,10 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
             (original?"original.nrmodel":"compact.nrmodel");
         const std::string extracted=model_dir+
             (original?"dlssnr.bin":"dlssnr-small.bin");
-        // The user supplies ONLY nvngx_dlssnr.dll. On the first selected
-        // Original frame, import its authenticated WEIGHTS_HT data directly
-        // into a private NRMODEL1 cache. No Python, external extraction,
-        // second DLL, or bundled NVIDIA model. Missing Compact resources
-        // never inherit Original weights. The importer does not execute PE.
-        if(original&&!Eden::FileExists(configured)&&
-           !Eden::FileExists(extracted)){
-            const std::array<std::string,4> dll_locations{
-                // Same user-owned file convention as
-                // user/lossless/Lossless.dll. This is the documented
-                // primary path; older paths remain migration fallbacks.
-                Eden::UserDir()+"/dlssnr/nvngx_dlssnr.dll",
-                model_dir+"nvngx_dlssnr.dll",
-                Eden::ConfigDir()+"/nvngx_dlssnr.dll",
-                Eden::UserDir()+"/nvngx_dlssnr.dll"};
-            for(const auto& dll:dll_locations){
-                if(!Eden::FileExists(dll))continue;
-                const auto result=Eden::NRDllImport::ImportOriginal(
-                    dll,configured,Eden::Graphics::NeuralRDNA2::R09OriginalManifest);
-                if(!result.imported){
-                    LOG_WARNING(Render_Vulkan,
-                        "R09 user-owned DLL import refused: {}",result.reason);
-                    neural_model_failed=true;
-                }else{
-                    LOG_INFO(Render_Vulkan,
-                        "R09 imported 599 Original tensors from the user DLL "
-                        "into the private model cache");
-                }
-                break;
-            }
-        }
+        // R09 DLL import now runs at game admission in headless/main.cpp,
+        // before this render thread starts. NEVER deserialize or extract
+        // 141 MiB of NVIDIA weight data on a guest frame. Cached data is
+        // preflighted by the native model owner, otherwise fail closed.
         const std::string model_path=Eden::FileExists(configured)?
             configured:extracted;
         if(!Eden::FileExists(model_path)){

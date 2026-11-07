@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
+#include <utility>
 #include <vector>
 using namespace Eden::Graphics::NeuralRDNA2;
 static void Check(std::uint32_t W,std::uint32_t H){

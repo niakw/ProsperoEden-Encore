@@ -212,3 +212,11 @@ jobs:
             -o .build-r09-gpu/r09_vulkan_temporal_smoke
           .build-r09-gpu/r09_vulkan_temporal_smoke \
             .build-r09-gpu/temporal_compose.spv
+      - name: Preserve native R09 Vulkan before-and-after PNGs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r09-vulkan-before-after-real-gpu
+          path: .build-r09-gpu/r09_*.png
+          if-no-files-found: ignore
+          retention-days: 14

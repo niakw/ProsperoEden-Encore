@@ -44,7 +44,9 @@ assert "rounded_image(image.texture, fitted" in widgets
 # Shared focus affects *all* relevant interaction surfaces, including tiles,
 # buttons, menus and utility cards. Artwork underneath stays readable.
 assert "const bool artwork_plate = &style == &kTilePlate;" in widgets
-assert "if (!artwork_plate) {" in widgets
+# The actual code applies glow only on non-artwork plates AND
+# when the user's glow accessibility/appearance switch allows it.
+assert "if (!artwork_plate && look().glow && look().glow_strength > 0.0f) {" in widgets
 assert "Paint bloom BEFORE the opaque cover" in home
 assert "Only the luminous outline is above the game cover." in home
 assert "const float fill_strength = artwork_plate ? 0.06f : 0.82f;" in widgets

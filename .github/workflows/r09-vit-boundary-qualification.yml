@@ -69,6 +69,7 @@ jobs:
               test_rdna2_nr_hdr_proxy_policy \
               test_rdna2_nr_nohistory_present_policy \
               test_rdna2_nr_texture_proxy_policy \
+              test_nr_display_capture_policy \
               test_rdna2_nr_fswin_tensor_alias_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \

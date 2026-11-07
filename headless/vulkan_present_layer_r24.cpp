@@ -13,6 +13,7 @@
 #include <string>
 #include <variant>
 #include "aa_source_extent.h"
+#include "nr_display_capture_policy.h"
 #include "neural_runtime_state.h"
 #include "r09_native_plans.h"
 #include "storage_paths.h"
@@ -183,10 +184,20 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     }
     const bool nr_selected=filters.allow_game_neural_rendering&&
         Eden::NeuralVideo::IsDlss(selected.mode);
-    const bool nr_geometry=render_extent.width==1920u&&
-        render_extent.height==1080u&&!use_accelerated&&
-        crop_rect.left==0.0f&&crop_rect.top==0.0f&&
-        crop_rect.right==1.0f&&crop_rect.bottom==1.0f;
+    // Accelerated display can be the normal game path. The texture
+    // cache supplies a real sampled image view and its post-scaling
+    // dimensions. Only accept an exact 1080p physical view and full
+    // crop; unknown source formats still fail the session's format gate.
+    const bool nr_geometry=Eden::Graphics::CanR09CaptureDisplay({
+        .accelerated=use_accelerated,
+        .live_image=source_image!=VK_NULL_HANDLE&&
+                    source_image_view!=VK_NULL_HANDLE,
+        .native_width=texture_width,
+        .native_height=texture_height,
+        .sampled_width=render_extent.width,
+        .sampled_height=render_extent.height,
+        .crop_left=crop_rect.left,.crop_top=crop_rect.top,
+        .crop_right=crop_rect.right,.crop_bottom=crop_rect.bottom});
     const bool nr_exclusive=
         std::holds_alternative<std::monostate>(anti_alias)&&
         std::holds_alternative<std::monostate>(sr_filter);
@@ -225,7 +236,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                     Eden::NeuralPlans::Original:Eden::NeuralPlans::Compact;
                 if(!owner->Initialize(
                        model_path,plan,source_image_view,sampler,
-                       GetFormat(framebuffer),{framebuffer.width,framebuffer.height},
+                       GetFormat(framebuffer),render_extent,
                        *neural_views[image_index],
                        VK_FORMAT_R32G32B32A32_SFLOAT,{1920u,1080u},
                        1.0f,float(selected.strength)/100.0f)){

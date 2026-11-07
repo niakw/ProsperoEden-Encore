@@ -57,6 +57,7 @@ jobs:
               test_rdna2_nr_postblock_mix_weights \
               test_rdna2_nr_preblock_pool_policy \
               test_rdna2_nr_nohistory_compose_policy \
+              test_rdna2_nr_upsample_gain_reconstruction \
               test_rdna2_nr_hdr_proxy_policy \
               test_rdna2_nr_fswin_tensor_alias_policy
             do

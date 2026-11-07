@@ -45,6 +45,7 @@ FILES=(
     "nr_rdna2_unet_up_sequence.cpp",
     "nr_rdna2_core_feature_sequence.cpp",
     "nr_rdna2_frame_session.cpp",
+    "nr_rdna2_frame_readback.cpp",
     "nr_rdna2_nohistory_compose.cpp",
     "nr_rdna2_temporal_compose.cpp",
     "nr_rdna2_hdr_proxy.cpp",

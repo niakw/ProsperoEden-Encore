@@ -24,7 +24,7 @@ int main() {
         assert(Check(mode,1,0,1,0)==Reason::EngineIncomplete);
         assert(CanSelect(mode,1,0,1,0)); // UI selection != GPU proof
         assert(!RuntimeParametersEnabled(mode));
-        for(const int aa : {0,1,2,3}) {
+        for(int aa=0;aa<=3;++aa) {
             assert(CanSelect(mode,1,0,aa,0));
             assert(EffectiveAntiAliasing(aa,1,mode,true)==0);
         }

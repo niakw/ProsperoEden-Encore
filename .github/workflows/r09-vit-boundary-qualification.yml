@@ -16,6 +16,9 @@ on:
       - 'headless/vulkan.cmake'
       - 'headless/vulkan_present_layer_r24.cpp'
       - 'headless/vulkan_present_layer_r24.h'
+      - 'headless/main.cpp'
+      - 'headless/neural_video_policy.h'
+      - 'tools/graphics/test_neural_video_policy.cpp'
       - 'headless/neural_runtime_state.h'
       - 'headless/r09_native_plans.h'
       - 'headless/storage_paths.h'
@@ -74,11 +77,12 @@ jobs:
               test_rdna2_nr_nohistory_present_policy \
               test_rdna2_nr_texture_proxy_policy \
               test_nr_display_capture_policy \
+              test_neural_video_policy \
               test_rdna2_nr_fswin_tensor_alias_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
-                -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics \
+                -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics -Iheadless \
                 "extras/graphics/${unit}.cpp" \
                 -o ".build-r09-boundary/${unit}-$cxx"
               if [[ "$unit" == test_rdna2_nr_bottleneck_route_policy || \

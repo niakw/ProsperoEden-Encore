@@ -118,6 +118,10 @@ msgstr "Tous les logiciels"
 msgid "Already up to date: {0}"
 msgstr "Déjà à jour : {0}"
 
+#: settings_store.h
+msgid "AMD FSR"
+msgstr "AMD FSR"
+
 #: eden_services.cpp
 msgid "Another language"
 msgstr "Autre langue"
@@ -757,6 +761,18 @@ msgstr "Français"
 #: settings_store.h
 msgid "French (Canada)"
 msgstr "Français (Canada)"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "FSR sharpness"
+msgstr "Netteté FSR"
+
+#: pe/ui/settings.cpp
+msgid "FSR SHARPNESS"
+msgstr "NETTETÉ FSR"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
+msgstr "La netteté FSR agit uniquement avec AMD FSR. Réduisez-la si l’image paraît granuleuse ou trop accentuée."
 
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
@@ -1694,6 +1710,10 @@ msgstr "Simulation"
 msgid "Single Player"
 msgstr "Solo"
 
+#: settings_store.h
+msgid "SMAA"
+msgstr "SMAA"
+
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr "Options des logiciels : Triangle"
@@ -1906,6 +1926,14 @@ msgstr "Mises à jour de l'application Eden Encore, pas des jeux ni du firmware.
 msgid "UPDATES, DLC"
 msgstr "MISES À JOUR, DLC"
 
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Upscaling filter"
+msgstr "Filtre de mise à l'échelle"
+
+#: pe/ui/settings.cpp
+msgid "UPSCALING FILTER"
+msgstr "FILTRE DE MISE À L'ÉCHELLE"
+
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -2073,16 +2101,6 @@ msgstr "{0}/ (NSP ou XCI)"
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (un dossier par ID de titre)"
 
-msgid "Enhanced smoothness"
-msgstr "Fluidité améliorée"
-
-msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
-msgstr "La génération d’images peut améliorer la fluidité d’affichage sans accélérer le jeu. Lossless Scaling nécessite votre propre fichier DLL."
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
-msgstr "Lossless.dll manquant ou invalide. Placez votre fichier dans /data/prosperoeden/user/lossless/Lossless.dll."
-
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms"
 msgstr "Salons publics"
@@ -2126,6 +2144,32 @@ msgstr "Téléchargement et vérification de la mise à jour PS5..."
 #: pe/ui/launcher.cpp
 msgid "Updates unavailable on this host."
 msgstr "Mises à jour indisponibles sur cet appareil."
+
+msgid "Enhanced smoothness"
+msgstr "Fluidité améliorée"
+
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "La génération d’images peut améliorer la fluidité d’affichage sans accélérer le jeu. Lossless Scaling nécessite votre propre fichier DLL."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll manquant ou invalide. Placez votre fichier dans /data/prosperoeden/user/lossless/Lossless.dll."
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR : fichier nvngx_dlssnr.dll absent ou invalide. Placez votre fichier dans /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
+#: pe/ui/multiplayer.cpp
+msgid "Public rooms (read-only)"
+msgstr "Salons publics (consultation seule)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Read-only room directory"
+msgstr "Annuaire des salons (lecture seule)"
+
+#: pe/ui/multiplayer.cpp
+msgid "Room joining is not available yet."
+msgstr "La connexion aux salons n'est pas encore disponible."
 
 #: R10 graphics UX
 msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
@@ -2191,7 +2235,6 @@ msgstr "AMÉLIORATION"
 msgid "Upscaling"
 msgstr "Mise à l'échelle"
 
-
 #: R10 video menu
 msgid "FSR 1"
 msgstr "FSR 1"
@@ -2254,7 +2297,6 @@ msgstr "SGSR : mise à l'échelle spatiale Qualcomm à l'aide d'un shader Vulka
 #: R10 graphics UX
 msgid "Sharpness"
 msgstr "Netteté"
-
 
 #: R07 SGSR graphics
 msgid "Bicubic: sharper than bilinear, but may create bright edges. The sharpness slider does not apply."

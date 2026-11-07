@@ -45,6 +45,7 @@ FILES=(
     "nr_rdna2_core_feature_sequence.cpp",
     "nr_rdna2_nohistory_compose.cpp",
     "nr_rdna2_hdr_proxy.cpp",
+    "nr_rdna2_nohistory_present.cpp",
     "nr_rdna2_unet_upsample_link.cpp",
 )
 INCLUDES=[
@@ -96,6 +97,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "rdna2_nr_nohistory_compose_comp_spv.h"),
         ("test-rdna2-hdr-proxy-spv.py",
          "rdna2_nr_hdr_proxy_comp_spv.h"),
+        ("test-rdna2-nohistory-present-spv.py",
+         "rdna2_nr_nohistory_present_comp_spv.h"),
     ):
         subprocess.run([
             "python3",str(ROOT/"tools/graphics"/tool),

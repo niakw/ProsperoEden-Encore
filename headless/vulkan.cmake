@@ -161,6 +161,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_core_feature_sequence.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_compose.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_hdr_proxy.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_present.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample_output.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_upsample_link.cpp")
@@ -357,6 +358,29 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
+
+# R09: publish native transposed FP32 RGB to a sampled RGBA32F Vulkan
+# image, owned and synchronized by the embedding renderer.
+set(EDEN_R09_NOHISTORY_PRESENT_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_nohistory_present_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_NOHISTORY_PRESENT_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-nohistory-present-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_NOHISTORY_PRESENT_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/nohistory_present_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-nohistory-present-spv.py"
+    COMMENT "Compile and ABI-validate neural first-frame image publication"
+    VERBATIM)
+add_custom_target(eden-r09-nohistory-present-spv
+    DEPENDS "${EDEN_R09_NOHISTORY_PRESENT_HEADER}")
+add_dependencies(video_core eden-r09-nohistory-present-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_present.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_NOHISTORY_PRESENT_HEADER}")
 
 # R09: HDR linear RGBA32F -> verified sRGB proxy before neural features.
 set(EDEN_R09_HDR_PROXY_HEADER

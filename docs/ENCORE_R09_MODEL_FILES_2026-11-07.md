@@ -38,13 +38,38 @@ une deuxième DLL** à l'utilisateur pour contourner cette absence.
 
 ## État réel de l'implémentation
 
-Le code actuel `headless/vulkan_present_layer_r24.cpp`
-recherche encore des packs `NRMODEL1` préextraits dans le
-dossier `neural/` de la configuration ; il **ne sait pas encore
-consommer directement `nvngx_dlssnr.dll`**. Le test de
-prérequis CI Original/Compact, la reconstruction du pack, la gestion
-du cache utilisateur et les messages d'import sont **à intégrer
-dans l'application** avant de déclarer ce contrat livré.
+Le commit `2bfbeae` intègre **l'importeur natif**
+`headless/nr_dll_model_import.h`, raccordé à
+`Layer::ConfigureDraw` dans `headless/vulkan_present_layer_r24.cpp`.
+
+Si le jeu utilise Original et qu'aucun pack validé n'est encore présent,
+le présentateur recherche le **seul fichier** `nvngx_dlssnr.dll`
+dans les trois emplacements privés suivants (dans cet ordre) :
+
+1. `<ConfigDir>/neural/nvngx_dlssnr.dll`
+2. `<ConfigDir>/nvngx_dlssnr.dll`
+3. `<UserDir>/nvngx_dlssnr.dll`
+
+Il analyse les ressources du PE **sans exécuter la DLL**, vérifie
+le SHA-256 exact de `WEIGHTS_HT`, reconstruit tous les tenseurs,
+écrit un pack NRMODEL1 temporaire puis publie
+`<ConfigDir>/neural/original.nrmodel` dans le cache privé.
+Aucun script ou deuxième fichier n'est nécessaire à l'utilisateur.
+Le mode Compact ne reçoit jamais les poids Original par substitution.
+
+**Qualification hôte réelle, sur la DLL utilisateur (hors GitHub)** :
+les 599/599 noms ET empreintes SHA-256 de la sortie native
+correspondent aux 599 références publiques, dont 24 tensors bruts,
+400 Swin, 115 Split-Swin, 40 ViT, 9 prébloc et 11 postbloc.
+Le pack de sortie mesure environ 141 MiB et n'est **pas diffusé**.
+La CI publique compile l'importeur et teste le refus d'entrées
+non conformes sans distribuer aucune donnée NVIDIA.
+
+**Restes distincts** : l'interface graphique de sélection/import de
+DLL (les trois chemins ci-dessus étant le raccord moteur actuel),
+l'exécution Vulkan intégrale du modèle Original avec image numérique
+de référence, ainsi que le mode Compact lorsque ses propres poids
+sont réellement présents. Les tests console restent reportés.
 
 Le moteur utilise `NrRdna2FrameSession` avec les plans natifs
 Original (152 étapes) ou Compact (76) et précontrôle les matrices

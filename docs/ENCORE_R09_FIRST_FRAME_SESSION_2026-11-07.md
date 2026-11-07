@@ -91,9 +91,11 @@ sans intervention de l'utilisateur. Ne pas lui demander de
 `dlssnr.bin`, `compact.nrmodel`, de scripts Python ni d'une autre DLL.
 La DLL reçue contient `WEIGHTS_HT` et aucune ressource
 `WEIGHTS_CC_SMALL_FP8` : valider Original, signaler Compact
-indisponible plutôt que simuler ses poids. La gestion automatique
-des ressources de la DLL n'est **pas encore intégrée** à la
-présentation native ; le moteur exige encore un pack préalable.
+indisponible plutôt que simuler ses poids. L'import natif Original depuis cette DLL est désormais raccordé :
+le moteur crée automatiquement son propre cache `NRMODEL1`
+s'il n'existe pas déjà. Voir le commit `2bfbeae`.
+Cela ne certifie pas encore la fidélité d'une image calculée par
+le graphe complet sur GPU.
 Voir `ENCORE_R09_MODEL_FILES_2026-11-07.md`.
 
 ## Entrée requise pour la validation complète — DLL NVIDIA utilisateur

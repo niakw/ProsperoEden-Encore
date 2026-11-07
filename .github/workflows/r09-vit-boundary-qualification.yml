@@ -54,7 +54,8 @@ jobs:
               test_rdna2_nr_unet_bottleneck_link_policy \
               test_rdna2_nr_preblock_boundary_policy \
               test_rdna2_nr_postblock_mix_policy \
-              test_rdna2_nr_postblock_mix_weights
+              test_rdna2_nr_postblock_mix_weights \
+              test_rdna2_nr_preblock_pool_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
@@ -67,7 +68,8 @@ jobs:
                     "$unit" == test_rdna2_nr_unet_up_sequence_policy || \
                     "$unit" == test_rdna2_nr_unet_bottleneck_link_policy || \
                     "$unit" == test_rdna2_nr_preblock_boundary_policy || \
-                    "$unit" == test_rdna2_nr_postblock_mix_policy ]]; then
+                    "$unit" == test_rdna2_nr_postblock_mix_policy || \
+                    "$unit" == test_rdna2_nr_preblock_pool_policy ]]; then
                 UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/${unit}-$cxx" \
                   extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
                   extras/graphics/fixtures/r09_nr_small_1920x1080.txt
@@ -89,6 +91,7 @@ jobs:
             test-rdna2-image-feature-spv.py
             test-rdna2-proxy-features-spv.py
             test-rdna2-postblock-mix-spv.py
+            test-rdna2-preblock-pool-spv.py
           )
           for script in "${scripts[@]}"; do
             python3 -m py_compile "tools/graphics/$script"

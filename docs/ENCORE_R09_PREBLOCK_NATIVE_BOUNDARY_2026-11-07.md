@@ -46,3 +46,20 @@ donc volontairement séparé de la descente U-Net, sans raccourci
 de quantification ni activation utilisateur.
 
 Aucune optimisation de cadence ou build global PS5.
+
+## Réduction native FP16 2×2 implémentée en primitive Vulkan
+
+`NrRdna2PreblockPool` possède un shader `preblock_pool_rdna2.comp`
+qui calcule l'addition des quatre voisins FP16 avec arrondis FP16 à
+chaque addition, puis multiplication 0,25 et publication E4M3FN C32.
+Il exige la **sortie brute FP16 pleine résolution** de l'attention
+du prébloc ; la sortie C32 FP8 servant au skip ne peut pas être
+utilisée à sa place. À 1920×1080 logiques, le raster physique
+est 1080×1920 FP16 C32 et le résultat 540×960 FP8 C32.
+
+La primitive est déclarée au build natif et à la CI R09 hôte avec
+validation de l'ABI SPIR-V et du propriétaire C++ ; elle n'est
+**pas encore chaînée** à `NrRdna2PreblockRun` car celui-ci doit
+conserver et exposer la publication brute FP16 de son dernier
+bloc FSwin (actuellement seule la publication FP8 est accessible).
+Aucune approximation FP8→pool ne sera introduite.

@@ -26,6 +26,7 @@ FILES=(
     "nr_rdna2_postblock_mix.cpp",
     "nr_rdna2_postblock_run.cpp",
     "nr_rdna2_preblock_run.cpp",
+    "nr_rdna2_preblock_pool.cpp",
     "nr_rdna2_proxy_feature_stage.cpp",
     "nr_rdna2_proxy_lift_link.cpp",
     "nr_rdna2_proxy_fswin_link.cpp",
@@ -76,6 +77,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "rdna2_nr_image_feature_comp_spv.h"),
         ("test-rdna2-postblock-mix-spv.py",
          "rdna2_nr_postblock_mix_comp_spv.h"),
+        ("test-rdna2-preblock-pool-spv.py",
+         "rdna2_nr_preblock_pool_comp_spv.h"),
         ("test-rdna2-proxy-features-spv.py",
          "rdna2_nr_proxy_features_comp_spv.h"),
     ):

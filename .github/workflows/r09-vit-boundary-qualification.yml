@@ -48,7 +48,8 @@ jobs:
               test_rdna2_nr_image_feature_weights \
               test_rdna2_nr_proxy_feature_policy \
               test_rdna2_nr_proxy_lift_link_policy \
-              test_rdna2_nr_proxy_fswin_link_policy \\\n              test_rdna2_nr_unet_down_sequence_policy
+              test_rdna2_nr_proxy_fswin_link_policy \
+              test_rdna2_nr_unet_down_sequence_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
@@ -56,7 +57,8 @@ jobs:
                 "extras/graphics/${unit}.cpp" \
                 -o ".build-r09-boundary/${unit}-$cxx"
               if [[ "$unit" == test_rdna2_nr_bottleneck_route_policy || \
-                    "$unit" == test_rdna2_nr_vit_native_route_policy || \\\n                    "$unit" == test_rdna2_nr_unet_down_sequence_policy ]]; then
+                    "$unit" == test_rdna2_nr_vit_native_route_policy || \
+                    "$unit" == test_rdna2_nr_unet_down_sequence_policy ]]; then
                 UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/${unit}-$cxx" \
                   extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
                   extras/graphics/fixtures/r09_nr_small_1920x1080.txt

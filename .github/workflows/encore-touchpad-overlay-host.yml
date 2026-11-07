@@ -13,7 +13,7 @@ on:
       - 'headless/vulkan_window_adapt_r08.cpp'
       - 'tools/check-fc27-f06-native-pad-transition-host.py'
       - 'tools/check-ps5-autocontrol-context.py'
-      - 'tools/check-encore-ux.py'
+      - 'tools/check-overlay-touchpad-source.py'
       - '.github/workflows/encore-touchpad-overlay-host.yml'
   push:
     branches: [main, fix/overlay-pr28-postmerge]
@@ -43,5 +43,5 @@ jobs:
         run: python3 -B tools/check-fc27-f06-native-pad-transition-host.py
       - name: Validate immutable prelaunch controller mapping
         run: python3 -B tools/check-ps5-autocontrol-context.py
-      - name: Validate overlay and UI contracts
-        run: python3 -B tools/check-encore-ux.py
+      - name: Validate overlay and Vulkan compositor source contracts
+        run: python3 -B tools/check-overlay-touchpad-source.py

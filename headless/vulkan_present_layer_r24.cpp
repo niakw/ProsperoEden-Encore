@@ -226,7 +226,11 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
         // never inherit Original weights. The importer does not execute PE.
         if(original&&!Eden::FileExists(configured)&&
            !Eden::FileExists(extracted)){
-            const std::array<std::string,3> dll_locations{
+            const std::array<std::string,4> dll_locations{
+                // Same user-owned file convention as
+                // user/lossless/Lossless.dll. This is the documented
+                // primary path; older paths remain migration fallbacks.
+                Eden::UserDir()+"/dlssnr/nvngx_dlssnr.dll",
                 model_dir+"nvngx_dlssnr.dll",
                 Eden::ConfigDir()+"/nvngx_dlssnr.dll",
                 Eden::UserDir()+"/nvngx_dlssnr.dll"};

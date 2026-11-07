@@ -22,7 +22,8 @@ def validate(shader: Path, header: Path | None) -> None:
                        check=True, capture_output=True)
         asm=subprocess.check_output(["spirv-dis", str(spv)], text=True)
         assert "OpExecutionMode %main LocalSize 64 1 1" in asm
-        for name, binding in (("projection",0),("activations",1),("gains",2)):
+        for name, binding in (("projection",0),("skip_features",1),
+                              ("output_features",2),("gains",3)):
             assert re.search(rf"OpDecorate %{name} DescriptorSet 0\b", asm), name
             assert re.search(rf"OpDecorate %{name} Binding {binding}\b", asm), name
         for index in range(7):

@@ -180,6 +180,12 @@ eden_r08_test(test_rdna2_nr_token_repack_policy)
 eden_r08_test(test_rdna2_nr_upsample_view_policy)
 eden_r08_test(test_rdna2_nr_noise_field_policy)
 eden_r08_test(test_rdna2_nr_decoder_upsample_policy)
+eden_r08_test(test_rdna2_nr_decoder_projection_policy)
+add_test(NAME test_rdna2_nr_decoder_fp32_to_fp16_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-decoder-fp32-to-fp16-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")
+
 eden_r08_test(test_rdna2_nr_window_attention_policy)
 eden_r08_test(test_rdna2_nr_qkv_projection_policy)
 eden_r08_test(test_rdna2_nr_ffwd3_policy)
@@ -510,3 +516,15 @@ add_test(NAME test_rdna2_nr_vit_boundary_repack_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-boundary-repack-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# Learned native Original/Compact decoder: local NRMODEL1
+# [512,1024] FP8 matrix plus FP16[512] skip gains.
+add_executable(test_rdna2_nr_decoder_model_loader
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_decoder_model_loader.cpp")
+target_include_directories(test_rdna2_nr_decoder_model_loader PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_decoder_model_loader PRIVATE
+    -Wall -Wextra -UNDEBUG)
+add_test(NAME test_rdna2_nr_decoder_model_loader
+    COMMAND test_rdna2_nr_decoder_model_loader)

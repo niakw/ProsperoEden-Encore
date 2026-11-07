@@ -29,12 +29,13 @@ static std::uint32_t quant(float v) {
 }
 int main(){
     DecoderUpsample p{0,32768,65536,0,4,8,8};
-    DecoderStorage s{16384,98304,1024};
+    DecoderStorage s{16384,98304,131072,1024};
     assert(CanDecoderUpsample(p,s));
-    assert(!CanDecoderUpsample(p,{16383,98304,1024}));
-    assert(!CanDecoderUpsample(p,{16384,98303,1024}));
-    assert(!CanDecoderUpsample(p,{16384,98304,1023}));
-    p.dst_base_bytes=32768;
+    assert(!CanDecoderUpsample(p,{16383,98304,131072,1024}));
+    assert(!CanDecoderUpsample(p,{16384,98303,131072,1024}));
+    assert(!CanDecoderUpsample(p,{16384,98304,98303,1024}));
+    assert(!CanDecoderUpsample(p,{16384,98304,131072,1023}));
+    p.dst_base_bytes=131072;
     assert(!CanDecoderUpsample(p,s));
     p={0,32768,65536,0,4,8,8};
     p.output_width=12;
@@ -47,29 +48,31 @@ int main(){
     assert(!CanDecoderUpsample(p,s));
     p={0,32768,65536,0,4,8,8};
     p.gain_base_bytes=UINT32_MAX-3;
-    assert(!CanDecoderUpsample(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX}));
+    assert(!CanDecoderUpsample(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     p={0,0,0,0,1024,2048,2048};
-    assert(!CanDecoderUpsample(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX}));
+    assert(!CanDecoderUpsample(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     // Native 1080p decoder: upstream PushDecoderUps uses
     // IW=prev.H=33, OW=s.H=33, OH=s.W=60 (NOT OW=2*IW).
     // Both Original b39 and Compact b19 use this same shape.
-    constexpr DecoderUpsample native{0u,0u,2160u*512u,0u,
+    constexpr DecoderUpsample native{0u,0u,0u,0u,
                                      33u,33u,60u};
     constexpr std::uint64_t native_source=1152ull*512u*2u;
     constexpr std::uint64_t native_tile=2160ull*512u;
     static_assert(DecoderOutputTileTokens(native)==2160u);
     static_assert(DecoderInputTileTokens(native)==1152u);
     static_assert(CanDecoderUpsample(native,{
-        native_source,native_tile*2u,1024u}));
+        native_source,native_tile,native_tile,1024u}));
     assert(CanDecoderUpsample(native,{
-        native_source,native_tile*2u,1024u}));
+        native_source,native_tile,native_tile,1024u}));
     assert(!CanDecoderUpsample(native,{
-        native_source-1u,native_tile*2u,1024u}));
+        native_source-1u,native_tile,native_tile,1024u}));
     assert(!CanDecoderUpsample(native,{
-        native_source,native_tile*2u-1u,1024u}));
+        native_source,native_tile-1u,native_tile,1024u}));
+    assert(!CanDecoderUpsample(native,{
+        native_source,native_tile,native_tile-1u,1024u}));
     assert(!CanDecoderUpsample(
-        {0u,0u,2160u*512u,0u,16u,33u,60u},
-        {native_source,native_tile*2u,1024u}));
+        {0u,0u,0u,0u,16u,33u,60u},
+        {native_source,native_tile,native_tile,1024u}));
     // Exhaustively check that every live raster pixel occupies one unique
     // padded 4x4 token and its nearest source token is inside the budget.
     std::uint32_t live=0u,padded=0u;

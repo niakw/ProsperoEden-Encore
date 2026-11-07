@@ -10,7 +10,9 @@ struct DecoderUpsample {
     std::uint32_t input_width, output_width, output_height;
 };
 struct DecoderStorage {
-    std::uint64_t projected_bytes, activation_bytes, gain_bytes;
+    // Source projection, previous Split skip, destination, learned gains
+    // are four distinct GPU buffers (no aliasing or offset tricks).
+    std::uint64_t projected_bytes, skip_bytes, output_bytes, gain_bytes;
 };
 [[nodiscard]] constexpr std::uint64_t DecoderOutputTileTokens(
     const DecoderUpsample& p) noexcept {
@@ -50,14 +52,10 @@ struct DecoderStorage {
     const auto skip_end=std::uint64_t(p.skip_base_bytes)+act_bytes;
     const auto dst_end=std::uint64_t(p.dst_base_bytes)+act_bytes;
     const auto gain_end=std::uint64_t(p.gain_base_bytes)+gain_bytes;
-    if(src_end>s.projected_bytes||skip_end>s.activation_bytes||
-       dst_end>s.activation_bytes||gain_end>s.gain_bytes)return false;
+    if(src_end>s.projected_bytes||skip_end>s.skip_bytes||
+       dst_end>s.output_bytes||gain_end>s.gain_bytes)return false;
     if(src_end>kLimit||skip_end>kLimit||dst_end>kLimit||
        gain_end>kLimit)return false;
-    // Source skip and destination are two disjoint spans in the
-    // same activation arena. Do not permit a racy in-place GPU update.
-    if(std::uint64_t(p.skip_base_bytes)<dst_end &&
-       std::uint64_t(p.dst_base_bytes)<skip_end)return false;
     return (output_tiles+63u)/64u<=65535u;
 }
 } // namespace Eden::Graphics::NeuralRDNA2

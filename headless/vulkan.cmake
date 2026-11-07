@@ -102,6 +102,8 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_upsample_view.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_noise_field.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_fp32_to_fp16.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_native_decoder_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_window_link.cpp"
@@ -315,6 +317,29 @@ add_dependencies(video_core eden-r09-rdna2-nr-decoder-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_DECODER_HEADER}")
+
+# R09: learned native decoder [512,1024] uses a shared FP32->FP16
+# Vulkan 1.1 epilogue before the independent-buffer skip/upsample pass.
+set(EDEN_R09_DECODER_FP16_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_decoder_fp32_to_fp16_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_DECODER_FP16_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-decoder-fp32-to-fp16-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_DECODER_FP16_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/decoder_fp32_to_fp16_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-decoder-fp32-to-fp16-spv.py"
+    COMMENT "Compile and validate native decoder FP32->FP16 Vulkan compute"
+    VERBATIM)
+add_custom_target(eden-r09-decoder-fp16-spv
+    DEPENDS "${EDEN_R09_DECODER_FP16_HEADER}")
+add_dependencies(video_core eden-r09-decoder-fp16-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_fp32_to_fp16.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_DECODER_FP16_HEADER}")
 
 # R09 RDNA2: unfused 64-token x 32-channel attention/context pass.
 # Host already provides Q/K/V in normalized preprojected E4M3FN layout.

@@ -30,6 +30,8 @@ on:
       - 'headless/nr_dll_user_file.h'
       - 'headless/nr_dll_launch_preflight.h'
       - 'extras/graphics/test_nr_dll_launch_preflight.cpp'
+      - 'headless/nr_dll_tensor_digests.h'
+      - 'tools/graphics/test_r09_native_digest_inventory.py'
       - 'headless/prosperoeden/pe/ui/settings.cpp'
       - 'headless/prosperoeden/pe/ui/library.cpp'
       - 'headless/prosperoeden/pe/ui/services.hpp'
@@ -55,6 +57,7 @@ jobs:
       - name: Audit authentic Original/Compact reference inventories and NRMODEL1 verifier
         run: |
           python3 -B tools/graphics/r09_verify_model_pack.py --check-reference
+          python3 -B tools/graphics/test_r09_native_digest_inventory.py
           python3 -B tools/graphics/test_r09_verify_model_pack.py
       - name: Install host-only Vulkan 1.1 shader validators
         run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools spirv-tools

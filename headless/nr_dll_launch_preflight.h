@@ -5,9 +5,16 @@
 #include "neural_video_policy.h"
 #include "nr_dll_user_file.h"
 #include "nr_dll_model_import.h"
+#include "nr_dll_tensor_digests.h"
+#include "glyph_sha256.h"
 #include "video_core/renderer_vulkan/nr_rdna2_model_file.h"
 #include "video_core/renderer_vulkan/nr_rdna2_model_manifest.h"
 #include <array>
+#include <algorithm>
+#include <cstdint>
+#include <fstream>
+#include <span>
+#include <string_view>
 #include <filesystem>
 #include <string>
 #include <system_error>
@@ -18,6 +25,9 @@ struct R09LaunchModelResult {
     bool imported{};
     const char* reason{};
 };
+// A private cached pack can be tampered with after an authentic DLL import.
+// Read the COMPLETE learned tensor bytes and prove they match the public
+// Original/Compact SHA-256 references before the renderer allocates Vulkan.
 [[nodiscard]] inline bool R09UsableCachedPack(
     const std::filesystem::path& path,
     Eden::Graphics::NeuralRDNA2::R09ModelVariant variant) {
@@ -31,7 +41,44 @@ struct R09LaunchModelResult {
     const auto* output=model.Find(variant==NR::R09ModelVariant::Original?
         "unpacked-postblock/block70.layer0.layer.out_project.bin":
         "unpacked-postblock/block30.layer0.layer.out_project.bin");
-    return input&&output&&input->size==1024u&&output->size==1024u;
+    if(!input||!output||input->size!=1024u||output->size!=1024u)
+        return false;
+    const std::span<const std::string_view> names =
+        variant==NR::R09ModelVariant::Original?
+        std::span<const std::string_view>(NR::R09OriginalManifest):
+        std::span<const std::string_view>(NR::R09CompactManifest);
+    const std::span<const std::string_view> digests =
+        variant==NR::R09ModelVariant::Original?
+        std::span<const std::string_view>(NR::R09OriginalTensorDigests):
+        std::span<const std::string_view>(NR::R09CompactTensorDigests);
+    if(names.size()!=digests.size())return false;
+    std::ifstream file(path,std::ios::binary|std::ios::ate);
+    if(!file)return false;
+    const auto end=file.tellg();
+    if(end<0)return false;
+    const auto size=static_cast<std::uint64_t>(end);
+    std::array<char,65536> chunk{};
+    for(std::size_t i=0u;i<names.size();++i){
+        const auto* entry=model.Find(names[i]);
+        if(!entry||entry->size==0u||entry->offset>size||
+           entry->size>size-entry->offset)return false;
+        file.clear();
+        file.seekg(static_cast<std::streamoff>(entry->offset));
+        if(!file)return false;
+        std::uint64_t left=entry->size;
+        Eden::GlyphIntegrity::Sha256 digest;
+        while(left){
+            const auto count=static_cast<std::size_t>(
+                std::min(left,std::uint64_t(chunk.size())));
+            file.read(chunk.data(),static_cast<std::streamsize>(count));
+            if(!file||file.gcount()!=static_cast<std::streamsize>(count))
+                return false;
+            digest.Update(chunk.data(),count);
+            left-=count;
+        }
+        if(digest.FinishHex()!=digests[i])return false;
+    }
+    return true;
 }
 [[nodiscard]] inline R09LaunchModelResult PrepareR09UserModel(
     int mode,const std::filesystem::path& user,

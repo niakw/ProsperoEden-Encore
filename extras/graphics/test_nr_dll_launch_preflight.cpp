@@ -5,6 +5,9 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <vector>
+#include <string_view>
+#include <cstdint>
 namespace fs=std::filesystem;
 int main(){
     using Eden::Graphics::PrepareR09UserModel;
@@ -31,6 +34,52 @@ int main(){
         bad << "NRMODEL1";
     }
     assert(!PrepareR09UserModel(original,user,config).ready);
+    // An index with all 599 canonical names and correctly sized
+    // learned projections is NOT an authentic model. The exact tensor
+    // digest gate must reject it before any guest/Vulkan initialization.
+    {
+        namespace NR=Eden::Graphics::NeuralRDNA2;
+        auto& names=NR::R09OriginalManifest;
+        std::size_t index_size=16u;
+        for(const auto name:names)index_size+=4u+name.size()+16u;
+        auto align=[](std::uint64_t v){
+            return (v+255u)&~std::uint64_t(255u);
+        };
+        const auto put32=[](std::vector<unsigned char>& out,std::uint32_t n){
+            for(unsigned i=0;i<4;++i)out.push_back(
+                static_cast<unsigned char>(n>>(8*i)));
+        };
+        const auto put64=[](std::vector<unsigned char>& out,std::uint64_t n){
+            for(unsigned i=0;i<8;++i)out.push_back(
+                static_cast<unsigned char>(n>>(8*i)));
+        };
+        std::vector<unsigned char> image;
+        for(char c:std::string_view("NRMODEL1"))
+            image.push_back(static_cast<unsigned char>(c));
+        put32(image,static_cast<std::uint32_t>(names.size()));
+        put32(image,0u);
+        std::uint64_t cursor=align(index_size);
+        for(const auto name:names){
+            put32(image,static_cast<std::uint32_t>(name.size()));
+            for(char c:name)image.push_back(static_cast<unsigned char>(c));
+            const bool projection=name.ends_with("input_lift.bin")||
+                                  name.ends_with("out_project.bin");
+            const std::uint64_t size=projection?1024u:1u;
+            put64(image,cursor);
+            put64(image,size);
+            cursor=align(cursor+size);
+        }
+        assert(image.size()==index_size);
+        image.resize(static_cast<std::size_t>(cursor),0u);
+        std::ofstream fakepack(config/"neural/original.nrmodel",
+                               std::ios::binary|std::ios::trunc);
+        fakepack.write(reinterpret_cast<const char*>(image.data()),
+                       static_cast<std::streamsize>(image.size()));
+        fakepack.close();
+        assert(!Eden::Graphics::R09UsableCachedPack(
+                   config/"neural/original.nrmodel",
+                   NR::R09ModelVariant::Original));
+    }
     // A plausible MZ header passes the menu-level metadata sniff but
     // cannot pass the native PE/resource cryptographic importer.
     const auto dll=user/"dlssnr/nvngx_dlssnr.dll";

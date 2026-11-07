@@ -162,6 +162,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_compose.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_hdr_proxy.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_present.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_texture_proxy.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample_output.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_upsample_link.cpp")
@@ -358,6 +359,29 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
+
+# R09: real sampled guest VkImage -> normalized, transposed first-frame
+# feature input raster. Source format and lifetime are externally checked.
+set(EDEN_R09_TEXTURE_PROXY_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_texture_proxy_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_TEXTURE_PROXY_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-texture-proxy-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_TEXTURE_PROXY_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/texture_proxy_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-texture-proxy-spv.py"
+    COMMENT "Validate Vulkan 1.1 guest image neural proxy ABI"
+    VERBATIM)
+add_custom_target(eden-r09-texture-proxy-spv
+    DEPENDS "${EDEN_R09_TEXTURE_PROXY_HEADER}")
+add_dependencies(video_core eden-r09-texture-proxy-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_texture_proxy.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_TEXTURE_PROXY_HEADER}")
 
 # R09: publish native transposed FP32 RGB to a sampled RGBA32F Vulkan
 # image, owned and synchronized by the embedding renderer.

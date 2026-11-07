@@ -55,8 +55,8 @@ def validate_owned_stage(stage: Path) -> Path:
     if not stage.is_dir() or stage.resolve() != cache.resolve() / "source":
         raise RuntimeError("Unexpected or escaping Eden build directory")
     target = stage / RELATIVE
-    if target.is_symlink() or not target.is_file() or
-        not target.resolve().is_relative_to(stage.resolve()):
+    if (target.is_symlink() or not target.is_file() or
+        not target.resolve().is_relative_to(stage.resolve())):
         raise RuntimeError("Unsafe graphics enum destination")
     return target
 

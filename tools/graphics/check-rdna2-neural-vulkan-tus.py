@@ -138,6 +138,13 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     reviewed_settings=ROOT/"vendor/encore-active/eden-backports/src/common/settings.h"
     assert reviewed_settings.is_file()
     shutil.copyfile(reviewed_settings,enum_root/"common/settings.h")
+    # The same audited 83-file source baseline changes fence_manager.h:
+    # pristine upstream calls IsGPUFenceBehaviorStrict, absent in the
+    # reviewed GPU fence settings ABI. Never mix those revisions.
+    (enum_root/"video_core").mkdir(parents=True)
+    shutil.copyfile(
+        ROOT/"vendor/encore-active/eden-backports/src/video_core/fence_manager.h",
+        enum_root/"video_core/fence_manager.h")
     active_present=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/present.h"
     source_present=ROOT/"vendor/sources/eden/src/video_core/present.h"
     assert active_present.read_bytes()==source_present.read_bytes(),(

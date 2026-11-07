@@ -216,13 +216,17 @@ float HalfTruncated(float value){
 struct InputPush{std::uint32_t native_width,native_height;float paper_white;std::uint32_t color_mode;};
 struct OutputPush{std::uint32_t native_width,native_height,zero0,zero1;};
 static_assert(sizeof(InputPush)==16u&&sizeof(OutputPush)==16u);
-void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* output_spv){
-    // A non-square 4x3 image catches incorrect native 3x4 transpose.
-    constexpr std::uint32_t screen_width=4u,screen_height=3u;
-    constexpr std::uint32_t native_width=screen_height,native_height=screen_width;
-    constexpr std::uint32_t pixels=screen_width*screen_height;
-    constexpr VkDeviceSize rgba8_bytes=pixels*4u;
-    constexpr VkDeviceSize rgba32_bytes=pixels*16u;
+void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* output_spv,
+           std::uint32_t screen_width,std::uint32_t screen_height){
+    // The 4x3 canary validates transpose; 1920x1080 additionally exercises
+    // all 2,073,600 real native screen pixels and dispatch workgroups.
+    if(!screen_width||!screen_height||
+       std::uint64_t(screen_width)*screen_height>1920ull*1080ull)
+        throw std::runtime_error("Invalid smoke-test geometry");
+    const std::uint32_t native_width=screen_height,native_height=screen_width;
+    const std::uint32_t pixels=screen_width*screen_height;
+    const VkDeviceSize rgba8_bytes=VkDeviceSize(pixels)*4u;
+    const VkDeviceSize rgba32_bytes=VkDeviceSize(pixels)*16u;
     const Buffer staging=c.MakeBuffer(rgba8_bytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     const Buffer native=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer features=c.MakeBuffer(pixels*32u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
@@ -233,7 +237,7 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
     const Image output=c.MakeImage(screen_width,screen_height,VK_FORMAT_R32G32B32A32_SFLOAT,
                                    VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT|
                                    VK_IMAGE_USAGE_SAMPLED_BIT);
-    std::array<std::uint8_t,rgba8_bytes> expected{};
+    std::vector<std::uint8_t> expected(static_cast<std::size_t>(rgba8_bytes));
     for(std::uint32_t y=0;y<screen_height;++y)
         for(std::uint32_t x=0;x<screen_width;++x){
             const std::size_t i=(y*screen_width+x)*4u;
@@ -352,7 +356,8 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
     const InputPush ip{native_width,native_height,1.f,0u};
     vkCmdPushConstants(c.command,input_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(ip),&ip);
-    vkCmdDispatch(c.command,1u,1u,1u);
+    vkCmdDispatch(c.command,(native_width+7u)/8u,
+                  (native_height+7u)/8u,1u);
     const VkMemoryBarrier compute_between{VK_STRUCTURE_TYPE_MEMORY_BARRIER,
         nullptr,VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT};
     vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -364,7 +369,8 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
     const InputPush cp{native_width,native_height,0.65f,0u};
     vkCmdPushConstants(c.command,compose_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(cp),&cp);
-    vkCmdDispatch(c.command,1u,1u,1u);
+    vkCmdDispatch(c.command,(native_width+7u)/8u,
+                  (native_height+7u)/8u,1u);
     vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
                          1u,&compute_between,0u,nullptr,0u,nullptr);
@@ -374,7 +380,8 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
     const OutputPush op{native_width,native_height,0u,0u};
     vkCmdPushConstants(c.command,output_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(op),&op);
-    vkCmdDispatch(c.command,1u,1u,1u);
+    vkCmdDispatch(c.command,(screen_width+7u)/8u,
+                  (screen_height+7u)/8u,1u);
     auto out_to_copy=ImageBarrier(output.handle,VK_ACCESS_SHADER_WRITE_BIT,
                                   VK_ACCESS_TRANSFER_READ_BIT,
                                   VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
@@ -421,14 +428,18 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
 }
 } // namespace
 int main(int argc,char**argv){
-    if(argc!=4){
-        std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <compose.spv> <nohistory_present.spv>\n";
+    if(argc!=4&&argc!=6){
+        std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <compose.spv> <nohistory_present.spv> [width height]\n";
         return 2;
     }
     try{
         Context context;
         context.Initialize();
-        Smoke(context,argv[1],argv[2],argv[3]);
+        const std::uint32_t width=argc==6?static_cast<std::uint32_t>(
+            std::stoul(argv[4])):4u;
+        const std::uint32_t height=argc==6?static_cast<std::uint32_t>(
+            std::stoul(argv[5])):3u;
+        Smoke(context,argv[1],argv[2],argv[3],width,height);
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"R09_VULKAN_REAL_GPU_IO_FAIL: "<<e.what()<<"\n";

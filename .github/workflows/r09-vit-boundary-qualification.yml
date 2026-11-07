@@ -300,6 +300,29 @@ jobs:
             -o .build-r09-gpu/r09_vulkan_temporal_smoke
           .build-r09-gpu/r09_vulkan_temporal_smoke \
             .build-r09-gpu/temporal_compose.spv
+      - name: Package public Mesa Lavapipe ICD for a private user-model host check
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .build-r09-gpu/lavapipe-kit/include
+          driver="$(find /usr/lib -type f -name 'libvulkan_lvp.so' -print -quit)"
+          if [[ -z "$driver" ]]; then
+            driver="$(find /usr/lib -type l -name 'libvulkan_lvp.so' -print -quit)"
+          fi
+          test -n "$driver"
+          cp -L "$driver" .build-r09-gpu/lavapipe-kit/libvulkan_lvp.so
+          cp -a /usr/include/vulkan .build-r09-gpu/lavapipe-kit/include/
+          cp tools/graphics/r09_vulkan_fswin_smoke.cpp .build-r09-gpu/lavapipe-kit/
+          cp .build-r09-gpu/fswin_dense.spv .build-r09-gpu/lavapipe-kit/
+          ldd "$driver" > .build-r09-gpu/lavapipe-kit/lavapipe-dependencies.txt
+          printf '%s\n' 'Pure public-source Mesa ICD and test files; no user DLL or NVIDIA weights.'             > .build-r09-gpu/lavapipe-kit/README.txt
+          tar -C .build-r09-gpu -czf .build-r09-gpu/lavapipe-public-kit.tar.gz lavapipe-kit
+      - name: Preserve public-only Lavapipe host runtime
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r09-lavapipe-public-host-kit
+          path: .build-r09-gpu/lavapipe-public-kit.tar.gz
+          retention-days: 2
       - name: Preserve native R09 Vulkan before-and-after PNGs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -262,6 +262,7 @@ jobs:
             -o .build-r09-gpu/fswin_dense.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/fswin_dense.spv
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Iheadless \
             -Ivendor/encore-active/eden-vulkan/include \
             -Iextras/graphics \
             tools/graphics/r09_vulkan_fswin_smoke.cpp -lvulkan \
@@ -331,6 +332,10 @@ jobs:
           done
           cp tools/graphics/r09_vulkan_fswin_smoke.cpp .build-r09-gpu/lavapipe-kit/
           cp headless/nr_dll_model_import.h .build-r09-gpu/lavapipe-kit/
+          cp headless/nr_dll_launch_preflight.h .build-r09-gpu/lavapipe-kit/
+          cp headless/nr_dll_user_file.h .build-r09-gpu/lavapipe-kit/
+          cp headless/nr_dll_tensor_digests.h .build-r09-gpu/lavapipe-kit/
+          cp headless/neural_video_policy.h .build-r09-gpu/lavapipe-kit/
           cp headless/glyph_sha256.h .build-r09-gpu/lavapipe-kit/
           # Distribute ONLY public C++ headers, so the same smoke executable
           # may be reproduced locally with an authentic private user pack.

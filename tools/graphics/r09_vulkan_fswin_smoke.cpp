@@ -4,6 +4,7 @@
 // This intentionally does NOT execute a neural network or an emulator.
 #include <vulkan/vulkan.h>
 #include "video_core/renderer_vulkan/nr_rdna2_model_file.h"
+#include "nr_dll_launch_preflight.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -228,6 +229,14 @@ void SmokeFSwinDense(Context& c,const char* spirv,const char* private_model=null
     write(input,input_data.data(),fp8_bytes);
     std::array<std::uint8_t,channels*channels> matrix{};
     if(private_model){
+        // A file with the right tensor name and dimensions is not proof
+        // of learned weights. Authenticate ALL 599 public tensor SHA-256
+        // values before labeling this a genuine Original GPU test.
+        if(!Eden::Graphics::R09UsableCachedPack(
+               private_model,
+               Eden::Graphics::NeuralRDNA2::R09ModelVariant::Original))
+            throw std::runtime_error(
+                "R09 private Original pack failed 599/599 SHA-256 proofs");
         Eden::Graphics::NeuralRDNA2::NeuralModelFile model;
         std::vector<std::uint8_t> actual;
         if(!model.Open(private_model)||

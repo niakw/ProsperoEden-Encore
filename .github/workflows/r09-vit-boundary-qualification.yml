@@ -51,7 +51,8 @@ jobs:
               test_rdna2_nr_proxy_fswin_link_policy \
               test_rdna2_nr_unet_down_sequence_policy \
               test_rdna2_nr_unet_up_sequence_policy \
-              test_rdna2_nr_unet_bottleneck_link_policy
+              test_rdna2_nr_unet_bottleneck_link_policy \
+              test_rdna2_nr_preblock_boundary_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
@@ -62,7 +63,8 @@ jobs:
                     "$unit" == test_rdna2_nr_vit_native_route_policy || \
                     "$unit" == test_rdna2_nr_unet_down_sequence_policy || \
                     "$unit" == test_rdna2_nr_unet_up_sequence_policy || \
-                    "$unit" == test_rdna2_nr_unet_bottleneck_link_policy ]]; then
+                    "$unit" == test_rdna2_nr_unet_bottleneck_link_policy || \
+                    "$unit" == test_rdna2_nr_preblock_boundary_policy ]]; then
                 UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/${unit}-$cxx" \
                   extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
                   extras/graphics/fixtures/r09_nr_small_1920x1080.txt

@@ -85,6 +85,9 @@ static void Check(const std::array<std::string_view,N>& names,
     assert(out.graph.count==4u);
     assert(out.routes.run_count==2u);
     assert(out.vit_route.count==8u);
+    // An index-only synthetic model may exercise route parsing, but it
+    // must NEVER pass the stricter GPU-admission gain preflight.
+    assert(!ValidateR09LearnedUpsampleInputs(out));
     assert(out.down_segments[0]!=out.up_segments[0]);
     // Correctly named manifest alone must not allocate GPU memory when
     // either learned FP16 image-boundary matrix has a bad byte length.

@@ -42,6 +42,7 @@ FILES=(
     "nr_rdna2_unet_down_sequence.cpp",
     "nr_rdna2_unet_bottleneck_link.cpp",
     "nr_rdna2_unet_up_sequence.cpp",
+    "nr_rdna2_core_feature_sequence.cpp",
     "nr_rdna2_unet_upsample_link.cpp",
 )
 INCLUDES=[

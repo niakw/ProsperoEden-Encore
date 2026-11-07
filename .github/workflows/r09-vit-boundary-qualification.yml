@@ -46,7 +46,8 @@ jobs:
               test_rdna2_nr_decoder_model_loader \
               test_rdna2_nr_image_feature_policy \
               test_rdna2_nr_image_feature_weights \
-              test_rdna2_nr_proxy_feature_policy
+              test_rdna2_nr_proxy_feature_policy \
+              test_rdna2_nr_proxy_lift_link_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \

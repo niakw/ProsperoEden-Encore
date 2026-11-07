@@ -580,3 +580,7 @@ add_test(NAME test_rdna2_nr_proxy_feature_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-proxy-features-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# The pre-normalized first frame and learned local NRMODEL1 lift must use
+# one scheduler, one exact FP16[16] intermediate and a C32 output tensor.
+eden_r08_test(test_rdna2_nr_proxy_lift_link_policy)

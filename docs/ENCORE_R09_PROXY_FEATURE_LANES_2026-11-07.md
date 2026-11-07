@@ -30,3 +30,23 @@ réelle du jeu et son exposition, historique/profondeur/mouvement,
 le prébloc Swin+downsample, les gains U-Net C64/C128/C256,
 le réseau complet et le compositing postbloc. Aucune de ces étapes
 n'est remplacée par une approximation cachée.
+
+## Raccord GPU première image → input lift
+
+`NrRdna2ProxyLiftLink` ordonne désormais deux passes, sur **le même
+scheduler Vulkan** : proxy display-referred RGBA32F → FP16[16] →
+projection apprise `input_lift` → FP8[32]. Le moteur contrôle que
+les deux étages utilisent exactement **le même VkBuffer**, offset et
+étendue pour le tampon intermédiaire, que le lift soit de direction
+0 (pas la projection post-image), que les géométries soient égales,
+et que ni le buffer source ni la sortie C32 ne soient aliasés.
+Un échec partiel n'est pas relancé silencieusement.
+
+Le test de politique vérifie l'Original 1920×1080 et le padding
+1920×1152 (hors profil natif utilisé par nos fixtures), les formes
+fausses, les modes incorrects et la capacité. Le compile-check R09
+inclut ce nouveau vrai fichier C++.
+
+**Reste à raccorder** le FSwin du prébloc et son downsample, les
+niveaux U-Net, puis le postbloc et le compositing final. Ceci n'est
+pas un pipeline NR complet et ne doit pas apparaître comme activable.

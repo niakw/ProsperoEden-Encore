@@ -24,6 +24,7 @@ FILES=(
     "nr_rdna2_vit_run.cpp",
     "nr_rdna2_image_feature_stage.cpp",
     "nr_rdna2_proxy_feature_stage.cpp",
+    "nr_rdna2_proxy_lift_link.cpp",
 )
 INCLUDES=[
     ROOT/"extras/graphics",

@@ -108,6 +108,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_neural_bottleneck.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_image_feature_stage.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_feature_stage.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_lift_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_decoder_skip_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"

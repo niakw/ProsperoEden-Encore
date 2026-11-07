@@ -51,7 +51,7 @@ assert "Paint bloom BEFORE the opaque cover" in home
 assert "Only the luminous outline is above the game cover." in home
 assert "const float fill_strength = artwork_plate ? 0.06f : 0.82f;" in widgets
 assert "const float right_strength = artwork_plate ? 0.06f : 0.34f;" in widgets
-assert "theme::kSun.with_alpha(0.29f * amount * breathe)" in widgets
+assert "theme::kSun.with_alpha(0.29f * amount * breathe * look().glow_strength)" in widgets
 assert "theme::kFocusCore.with_alpha(0.95f * amount)" in widgets
 assert "list.hgradient_rect(r, 19.0f" in nav
 assert "list.image(c.textures.brand(), {56.0f" in nav

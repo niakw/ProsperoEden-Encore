@@ -142,6 +142,37 @@ opérations ni une image DLSS-NR finale comparée à NVIDIA. Aucun
 test PS5 ni build global n'a été effectué. Les poids, la DLL et les
 résultats de modèle restent privés.
 
+## Nouvelle qualification GPU avec de vrais poids Original (7 novembre)
+
+Banc de test mis à jour sur `main` : `tools/graphics/r09_vulkan_fswin_smoke.cpp`.
+En mode CI public, le test conserve sa matrice E4M3FN identité
+synthétique. En mode hôte privé, il accepte en second argument un
+**pack Original utilisateur** et charge la véritable matrice
+`unpacked-postblock/block70.layer0.layer.attn_out_proj.bin`.
+Aucune DLL ni donnée NVIDIA ne circule dans GitHub Actions.
+
+Exécution **locale** avec la DLL apportée par l'utilisateur, extraite
+vers un cache privé hors dépôt, sur le vrai shader
+`r09_rdna2_nr/fswin_dense_rdna2.comp` et Lavapipe LLVM 20 :
+
+- Matrice apprise 32×32 (1 024 octets FP8) du postbloc Original ;
+- 64 tokens d'entrée × 32 canaux, projection dense réelle ;
+- **2 048 sorties quantifiées FP8 identiques** à l'oracle CPU indépendant ;
+- **2 048 sorties brutes FP16 identiques** à l'oracle CPU indépendant ;
+- passage hôte `R09_AUTHENTIC_ORIGINAL_FSWIN_GPU_CPU_FP8_FP16_PASS`.
+
+Le comparateur CPU redécode les poids E4M3FN, effectue ses propres
+sommes `fma`, arrondit en FP16, puis quantifie le résultat.
+Le test ne se contente pas de recharger une sortie calculée par
+le GPU. Les valeurs du modèle demeurent exclusivement locales.
+
+**Portée exacte :** projection post-attention d'une couche FSwin
+avec de vrais poids ; cela ne qualifie **pas** l'enchaînement Vulkan
+des 152 instructions Original, les entrées temporelles du réseau,
+ni la fidélité d'une image complète par comparaison indépendante.
+Les PNG d'exemple précédents sont encore issus de poids synthétiques,
+et non d'un rendu DLSS Original authentique.
+
 ## Alerte d'installation manquante (même comportement que LSFG)
 
 Le menu global et la fiche vidéo par jeu affichent un message

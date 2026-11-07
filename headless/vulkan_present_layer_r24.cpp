@@ -8,8 +8,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <algorithm>
+#include <exception>
+#include <memory>
+#include <string>
 #include <variant>
 #include "aa_source_extent.h"
+#include "neural_runtime_state.h"
+#include "r09_native_plans.h"
+#include "storage_paths.h"
+#include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
+#include "common/logging/log.h"
 #include "fxaa_quality_select.h"
 #include "video_core/present.h"
 #include "video_core/renderer_vulkan/present/anti_alias_pass.h"
@@ -120,6 +128,10 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     // Finish any pending renderpass
     scheduler.RequestOutsideRenderPassOperationContext();
     scheduler.Wait(resource_ticks[image_index]);
+    // Each session may retain hundreds of Vulkan allocations/descriptors.
+    // Do not release them until the matching presentation tick retires.
+    if(image_index<neural_sessions.size())
+        neural_sessions[image_index].reset();
     SCOPE_EXIT {
         resource_ticks[image_index] = scheduler.CurrentTick();
     };
@@ -158,6 +170,104 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
         }
         // On incompatible crop/format/dimensions/budget, unchanged bilinear
         // presentation samples the original guest image.
+    }
+
+    // R09: the selected game's Original/Compact neural renderer is a
+    // separate final image stage, not A4K, FSR or frame generation.
+    // The native model plans presently exist for an exact 1920x1080
+    // source without crop. Other geometries preserve existing rendering.
+    const auto selected=Eden::NeuralRuntime::Current();
+    if(last_neural_mode!=selected.mode){
+        last_neural_mode=selected.mode;
+        neural_model_failed=false;
+    }
+    const bool nr_selected=filters.allow_game_neural_rendering&&
+        Eden::NeuralVideo::IsDlss(selected.mode);
+    const bool nr_geometry=render_extent.width==1920u&&
+        render_extent.height==1080u&&!use_accelerated&&
+        crop_rect.left==0.0f&&crop_rect.top==0.0f&&
+        crop_rect.right==1.0f&&crop_rect.bottom==1.0f;
+    const bool nr_exclusive=
+        std::holds_alternative<std::monostate>(anti_alias)&&
+        std::holds_alternative<std::monostate>(sr_filter);
+    if(nr_selected&&nr_geometry&&nr_exclusive&&
+       !neural_model_failed&&image_index<neural_sessions.size()&&
+       image_index<neural_images.size()&&image_index<neural_views.size()) {
+        const bool original=selected.mode==Eden::NeuralVideo::kDlssOriginal;
+        const std::string model_path=Eden::ConfigDir()+
+            (original?"/neural/original.nrmodel":"/neural/compact.nrmodel");
+        if(!Eden::FileExists(model_path)){
+            LOG_WARNING(Render_Vulkan,
+                "R09 DLSS-NR model pack not installed: {}",model_path);
+            neural_model_failed=true;
+        }else {
+            try {
+                // Allocated on the same Vulkan device, on the exact slot
+                // whose previous GPU tick was waited for above.
+                neural_images[image_index]=CreateWrappedImage(
+                    memory_allocator,{1920u,1080u},
+                    VK_FORMAT_R32G32B32A32_SFLOAT);
+                neural_views[image_index]=CreateWrappedImageView(
+                    device,neural_images[image_index],
+                    VK_FORMAT_R32G32B32A32_SFLOAT);
+                auto owner=std::make_unique<NrRdna2FrameSession>(
+                    device,memory_allocator,scheduler);
+                const auto plan=original?
+                    Eden::NeuralPlans::Original:Eden::NeuralPlans::Compact;
+                if(!owner->Initialize(
+                       model_path,plan,source_image_view,sampler,
+                       GetFormat(framebuffer),{framebuffer.width,framebuffer.height},
+                       *neural_views[image_index],
+                       VK_FORMAT_R32G32B32A32_SFLOAT,{1920u,1080u},
+                       1.0f,float(selected.strength)/100.0f)){
+                    LOG_WARNING(Render_Vulkan,
+                        "R09 DLSS-NR model/session preflight rejected: {}",
+                        original?"Original":"Compact");
+                    neural_model_failed=true;
+                }else {
+                    const VkImage target=*neural_images[image_index];
+                    // Fresh RGBA32F storage image. The native shader's
+                    // descriptor expects GENERAL; never sample before
+                    // its compute-write -> fragment-read barrier.
+                    scheduler.RequestOutsideRenderPassOperationContext();
+                    scheduler.Record([target](vk::CommandBuffer cmd){
+                        const VkImageMemoryBarrier image{
+                            .sType=VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                            .pNext=nullptr,.srcAccessMask=0u,
+                            .dstAccessMask=VK_ACCESS_SHADER_WRITE_BIT,
+                            .oldLayout=VK_IMAGE_LAYOUT_UNDEFINED,
+                            .newLayout=VK_IMAGE_LAYOUT_GENERAL,
+                            .srcQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                            .dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                            .image=target,
+                            .subresourceRange={
+                                .aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+                                .baseMipLevel=0u,.levelCount=1u,
+                                .baseArrayLayer=0u,.layerCount=1u}};
+                        cmd.PipelineBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,image);
+                    });
+                    // Keep the owner live even after a failed Record:
+                    // that failure may already have enqueued GPU work.
+                    neural_sessions[image_index]=std::move(owner);
+                    if(neural_sessions[image_index]->Record()&&
+                       neural_sessions[image_index]->ResultView()==
+                           *neural_views[image_index]){
+                        source_image_view=*neural_views[image_index];
+                        crop_rect={0,0,1,1};
+                    }else {
+                        LOG_WARNING(Render_Vulkan,
+                            "R09 DLSS-NR neural graph dispatch refused; "
+                            "retaining the original guest image");
+                        neural_model_failed=true;
+                    }
+                }
+            }catch(const std::exception& error){
+                LOG_WARNING(Render_Vulkan,
+                    "R09 DLSS-NR session failed safely: {}",error.what());
+                neural_model_failed=true;
+            }
+        }
     }
 
     SetMatrixData(device, *out_push_constants, layout);
@@ -204,6 +314,9 @@ void Layer::CreateRawImages(const Device& device, const Tegra::FramebufferConfig
 #endif
     raw_images.resize(image_count);
     raw_image_views.resize(image_count);
+    neural_sessions.resize(image_count);
+    neural_images.resize(image_count);
+    neural_views.resize(image_count);
 
     for (size_t i = 0; i < image_count; ++i) {
         raw_images[i] =
@@ -326,6 +439,10 @@ void Layer::ReleaseRawImages() {
         scheduler.Wait(tick);
     }
 #endif
+    neural_sessions.clear();
+    neural_views.clear();
+    neural_images.clear();
+    neural_model_failed=false;
     raw_image_views.clear();
     raw_images.clear();
     buffer.reset();

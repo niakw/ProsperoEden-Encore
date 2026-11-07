@@ -22,6 +22,9 @@ on:
       - 'headless/neural_video_policy.h'
       - 'tools/graphics/test_neural_video_policy.cpp'
       - 'headless/neural_runtime_state.h'
+      - 'headless/nr_dll_model_import.h'
+      - 'headless/glyph_sha256.h'
+      - 'extras/graphics/test_nr_dll_model_import.cpp'
       - 'headless/r09_native_plans.h'
       - 'headless/storage_paths.h'
       - 'vendor'
@@ -83,6 +86,7 @@ jobs:
               test_rdna2_nr_nohistory_present_policy \
               test_rdna2_nr_texture_proxy_policy \
               test_nr_display_capture_policy \
+              test_nr_dll_model_import \
               test_neural_video_policy \
               test_rdna2_nr_fswin_tensor_alias_policy
             do

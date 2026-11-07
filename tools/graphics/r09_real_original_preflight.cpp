@@ -37,6 +37,12 @@ int main(int argc, char** argv) {
         std::cerr << "R09_REAL_ORIGINAL_PREFLIGHT_GRAPH_MISMATCH\n";
         return 67;
     }
+    // Do not describe the index/graph as GPU-ready until all four
+    // genuine upsample matrices and recovered learned gain vectors load.
+    if (!NR::ValidateR09LearnedUpsampleInputs(ready)) {
+        std::cerr << "R09_REAL_ORIGINAL_LEARNED_UPSAMPLE_PREFLIGHT_REJECTED\\n";
+        return 68;
+    }
     std::cout << "R09_REAL_ORIGINAL_CPU_GRAPH_PREFLIGHT_PASS "
               << ready.model.Entries().size() << " tensors, "
               << ready.graph.count << " UNet depths, "

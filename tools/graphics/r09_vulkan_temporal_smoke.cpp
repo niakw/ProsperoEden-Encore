@@ -242,15 +242,23 @@ void Smoke(Context& c,const char* shader_path,std::uint32_t valid){
     Check(vkMapMemory(c.device,motion.memory,0,rgba_bytes,0,&data),"map motion");
     rgba=static_cast<float*>(data);
     for(std::uint32_t p=0;p<pixels;++p){
-        rgba[p*4u+0u]=0.f; rgba[p*4u+1u]=0.f;
-        rgba[p*4u+2u]=1.f; rgba[p*4u+3u]=0.f;
+        // A genuine +1 pixel current->previous UV translation, not a
+        // zero-motion shortcut. One selected pixel also has invalid
+        // per-pixel motion evidence to test independent rejection.
+        rgba[p*4u+0u]=1.f/float(width);
+        rgba[p*4u+1u]=0.f;
+        rgba[p*4u+2u]=(p==1u)?0.f:1.f;
+        rgba[p*4u+3u]=0.f;
     }
     vkUnmapMemory(c.device,motion.memory);
     Check(vkMapMemory(c.device,previous.memory,0,rgba_bytes,0,&data),"map prior");
     rgba=static_cast<float*>(data);
     for(std::uint32_t p=0;p<pixels;++p){
-        rgba[p*4u+0u]=0.5f; rgba[p*4u+1u]=0.5f;
-        rgba[p*4u+2u]=0.5f; rgba[p*4u+3u]=1.f;
+        const float x=float(p%width),y=float(p/width);
+        rgba[p*4u+0u]=0.3f+0.02f*x;
+        rgba[p*4u+1u]=0.25f+0.03f*y;
+        rgba[p*4u+2u]=0.5f+0.01f*(x+y);
+        rgba[p*4u+3u]=1.f;
     }
     vkUnmapMemory(c.device,previous.memory);
     const std::array<VkDescriptorSetLayoutBinding,6> bindings{{
@@ -330,8 +338,16 @@ void Smoke(Context& c,const char* shader_path,std::uint32_t valid){
     const auto* actual=static_cast<const float*>(result_map);
     const auto* actual_next=static_cast<const float*>(history_map);
     const std::array<float,3> delta{0.125f,-0.125f,0.25f};
-    const float history_weight=valid?0.375f:0.f;
     for(std::uint32_t p=0u;p<pixels;++p){
+        const std::uint32_t x=p%width,y=p/width;
+        // The last column reprojects outside UV [0,1) and the second
+        // pixel has motion.z=0: neither is allowed to use old history.
+        const bool use_history=valid&&x+1u<width&&p!=1u;
+        const float history_weight=use_history?0.375f:0.f;
+        const std::array<float,3> expected_previous{
+            0.3f+0.02f*float(x+1u),
+            0.25f+0.03f*float(y),
+            0.5f+0.01f*float(x+1u+y)};
         const std::array<float,3> base{
             0.1f+float(p)*0.025f,
             0.4f+float(p)*0.017f,
@@ -340,7 +356,8 @@ void Smoke(Context& c,const char* shader_path,std::uint32_t valid){
             const auto index=p*4u+ch;
             const float full=ch<3u?TruncateHalf(
                 std::clamp(base[ch]+delta[ch]*0.25f,0.f,1.f)*
-                    (1.0f-history_weight)+0.5f*history_weight):1.f;
+                    (1.0f-history_weight)+
+                    expected_previous[ch]*history_weight):1.f;
             const float wanted=ch<3u?full:0.8f;
             if(!std::isfinite(actual[index])||
                !std::isfinite(actual_next[index])||

@@ -1,48 +1,75 @@
-name: R09 ViT boundary host and SPIR-V ABI
+name: R09 neural Vulkan host / SPIR-V ABI
 on:
   push:
-    branches: [feat/r09-rdna2-vit-boundary-wiring]
-  pull_request:
+    branches: [main]
     paths:
-      - 'extras/graphics/rdna2_nr_vit_native_route_policy.h'
-      - 'extras/graphics/test_rdna2_nr_vit_boundary_repack_policy.cpp'
-      - 'tools/graphics/test-rdna2-vit-boundary-repack-spv.py'
+      - '.github/workflows/r09-vit-boundary-qualification.yml'
+      - 'extras/graphics/rdna2_nr_*'
+      - 'extras/graphics/test_rdna2_nr_*'
+      - 'extras/graphics/fixtures/r09_nr_*'
+      - 'tools/graphics/test-rdna2-*'
       - 'headless/vulkan.cmake'
       - 'vendor'
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: r09-neural-host-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  r09-boundary:
+  neural-boundaries:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
         with:
           submodules: recursive
           fetch-depth: 1
-      - name: Install only portable SPIR-V validation tools
+      - name: Install host-only Vulkan 1.1 shader validators
         run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools spirv-tools
-      - name: Compile and run positive/negative policy tests with Clang and GCC
+      - name: Compile and execute host graph boundary tests under UBSan
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p .build-r09-boundary
           for cxx in clang++ g++; do
-            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/eden-vulkan/include \
-              extras/graphics/test_rdna2_nr_vit_boundary_repack_policy.cpp \
-              -o ".build-r09-boundary/policy-$cxx"
-            UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/policy-$cxx"
-            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics \
-              extras/graphics/test_rdna2_nr_vit_native_route_policy.cpp \
-              -o ".build-r09-boundary/route-$cxx"
-            UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/route-$cxx" \
-              extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
-              extras/graphics/fixtures/r09_nr_small_1920x1080.txt
+            for unit in \
+              test_rdna2_nr_vit_boundary_repack_policy \
+              test_rdna2_nr_decoder_tile_to_linear_policy \
+              test_rdna2_nr_decoder_projection_policy \
+              test_rdna2_nr_decoder_upsample_policy \
+              test_rdna2_nr_split_decoder_skip_repack_policy \
+              test_rdna2_nr_bottleneck_route_policy \
+              test_rdna2_nr_vit_native_route_policy \
+              test_rdna2_nr_decoder_model_loader
+            do
+              "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+                -fsanitize=undefined -fno-sanitize-recover=all \
+                -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics \
+                "extras/graphics/${unit}.cpp" \
+                -o ".build-r09-boundary/${unit}-$cxx"
+              if [[ "$unit" == test_rdna2_nr_bottleneck_route_policy || \
+                    "$unit" == test_rdna2_nr_vit_native_route_policy ]]; then
+                UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/${unit}-$cxx" \
+                  extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
+                  extras/graphics/fixtures/r09_nr_small_1920x1080.txt
+              else
+                UBSAN_OPTIONS=halt_on_error=1 ".build-r09-boundary/${unit}-$cxx"
+              fi
+            done
           done
-      - name: Verify 7-field Vulkan 1.1 descriptor/push ABI and generate shader header
+      - name: Compile and verify Vulkan 1.1 RDNA2 compute shader ABIs
+        shell: bash
         run: |
-          python3 -m py_compile tools/graphics/test-rdna2-vit-boundary-repack-spv.py
-          python3 tools/graphics/test-rdna2-vit-boundary-repack-spv.py \
-            --vendor vendor --header .build-r09-boundary/rdna2_nr_vit_boundary_repack_comp_spv.h
-          test -s .build-r09-boundary/rdna2_nr_vit_boundary_repack_comp_spv.h
+          set -euo pipefail
+          scripts=(
+            test-rdna2-vit-boundary-repack-spv.py
+            test-rdna2-decoder-tile-linear-spv.py
+            test-rdna2-decoder-fp32-to-fp16-spv.py
+            test-rdna2-decoder-spv.py
+            test-rdna2-split-decoder-skip-spv.py
+          )
+          for script in "${scripts[@]}"; do
+            python3 -m py_compile "tools/graphics/$script"
+            python3 "tools/graphics/$script" --vendor vendor
+          done

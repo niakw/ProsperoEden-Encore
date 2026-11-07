@@ -9,6 +9,7 @@ on:
       - 'extras/graphics/fixtures/r09_nr_*'
       - 'tools/graphics/test-rdna2-*'
       - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
+      - 'tools/graphics/r09_vulkan_io_smoke.cpp'
       - 'tools/graphics/test-rdna2-proxy-features-spv.py'
       - 'headless/vulkan.cmake'
       - 'vendor'
@@ -122,3 +123,36 @@ jobs:
         run: sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends glslang-tools spirv-tools libavcodec-dev libavutil-dev libswscale-dev
       - name: Syntax-check R09 maintained Vulkan C++ without PS5 build
         run: python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
+
+  neural-gpu-io:
+    name: Real Vulkan GPU I/O smoke (Lavapipe, no PS5)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          submodules: recursive
+          fetch-depth: 1
+      - name: Install software Vulkan ICD and native headers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends libvulkan-dev mesa-vulkan-drivers glslang-tools spirv-tools
+      - name: Run native image sampling and RGBA32F publication on Vulkan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .build-r09-gpu
+          test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            vendor/encore-active/eden-vulkan/r09_rdna2_nr/texture_proxy_rdna2.comp \
+            -o .build-r09-gpu/texture_proxy.spv
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            vendor/encore-active/eden-vulkan/r09_rdna2_nr/nohistory_present_rdna2.comp \
+            -o .build-r09-gpu/nohistory_present.spv
+          spirv-val --target-env vulkan1.1 .build-r09-gpu/texture_proxy.spv
+          spirv-val --target-env vulkan1.1 .build-r09-gpu/nohistory_present.spv
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            tools/graphics/r09_vulkan_io_smoke.cpp -lvulkan \
+            -o .build-r09-gpu/r09_vulkan_io_smoke
+          .build-r09-gpu/r09_vulkan_io_smoke \
+            .build-r09-gpu/texture_proxy.spv \
+            .build-r09-gpu/nohistory_present.spv

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "rdna2_nr_vit_native_route_policy.h"
+#include "rdna2_nr_split_native_routes_policy.h"
+#include "rdna2_nr_vit_boundary_repack_policy.h"
 #include <cassert>
 #include <cstdint>
 #include <fstream>
@@ -17,6 +19,30 @@ void Check(const char* file,bool original){
     NativeVitRoute route{};
     assert(BuildNativeVitRoute(rows,route)==NativeVitRouteError::Ok);
     assert(route.count==8u&&route.tokens==2560u);
+    // Both 1080p model tables spell W=60,H=33, but FinalHead writes
+    // 33 raster columns x 60 rows (upstream p.W=s.H, p.rows=s.W).
+    assert(route.raster_width==33u&&route.raster_height==60u);
+    const VitBoundaryRepack into_vit{
+        route.raster_width,route.raster_height,1024u,
+        route.tokens,0u,0u,0u};
+    const VitBoundaryRepack into_decoder{
+        route.raster_width,route.raster_height,1024u,
+        route.tokens,1u,0u,0u};
+    assert(VitTiledTokenCount(into_vit)==2160u);
+    assert(CanVitBoundaryRepack(into_vit,{
+        2160ull*1024u,2560ull*1024u}));
+    assert(CanVitBoundaryRepack(into_decoder,{
+        2560ull*1024u,2160ull*1024u}));
+    NativeSplitRoutes split{};
+    assert(BuildNativeSplitRoutes(rows,split)==SplitNativeRoutesError::Ok);
+    const auto& terminal=split.blocks[split.runs[0].start+
+                                  split.runs[0].count-1u];
+    assert(terminal.block==route.input_split_block);
+    assert(terminal.plan.has_pooled_projection);
+    assert(terminal.plan.pool_width==route.raster_width);
+    assert(terminal.plan.pool_height==route.raster_height);
+    assert(terminal.raster_width==route.raster_width);
+    assert(terminal.raster_height==route.raster_height);
     assert(route.input_split_block==(original?30u:10u));
     assert(route.decoder_block==(original?39u:19u));
     assert(route.blocks[0].block==(original?31u:11u));

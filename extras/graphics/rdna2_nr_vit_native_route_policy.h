@@ -50,8 +50,16 @@ struct NativeVitRoute {
             if(first.width<=0||first.height<=0||
                static_cast<std::uint64_t>(first.width)*first.height>staged.tokens)
                 return NativeVitRouteError::InvalidShape;
-            staged.raster_width=static_cast<std::uint32_t>(first.width);
-            staged.raster_height=static_cast<std::uint32_t>(first.height);
+            // Native plan W/H refer to launch axes. FinalHead's actual
+            // 4x4-tiled raster (p.W=s.H, p.rows=s.W) is transposed.
+            // Never infer it from the 2160-token buffer size: both
+            // orientations have the same size but incompatible token order.
+            if(first.width!=rows[i-1u].width||
+               first.height!=rows[i-1u].height||
+               first.tokens!=rows[i-1u].tokens)
+                return NativeVitRouteError::InvalidShape;
+            staged.raster_width=static_cast<std::uint32_t>(first.height);
+            staged.raster_height=static_cast<std::uint32_t>(first.width);
         } else if(first.block!=staged.blocks[staged.count-1u].block+1u||
                   first.input0!=static_cast<std::int32_t>(
                       staged.blocks[staged.count-1u].block))

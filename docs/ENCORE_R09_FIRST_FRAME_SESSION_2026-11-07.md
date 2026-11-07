@@ -44,7 +44,36 @@ refusée sans dispatch libère l'image provisoire.
 
 La CI hôte R09 couvre le code C++ maintenu et le présentateur,
 les contrats du graphe, les ABI SPIR-V et un vrai aller-retour
-texture→composition→image sur Vulkan Lavapipe.
+texture→composition→image sur Vulkan Lavapipe. Elle exécute aussi le
+shader **réel** d'entrée 16 canaux FP16 avec comparaison GPU/CPU au pixel
+sur un raster complet 1920×1080, puis la projection apprise FP16→FP8
+avec une matrice de contrôle one-hot sur les rasters 4×3 et 80×45.
+La tête de sortie utilisée par la validation de composition reste
+synthétique ; ces tests ne prouvent pas l'inférence du modèle entier.
+
+Le vérificateur hôte `tools/graphics/r09_verify_model_pack.py` apporte
+un deuxième verrou indépendant : les empreintes publiques de **599**
+tenseurs Original / **255** Compact sont conservées dans
+`tools/graphics/r09_weights_{original,compact}.sha256`. La CI en
+contrôle les noms contre le manifest C++, puis exerce le vérificateur
+sur des paquets synthétiques valides, corrompus et incomplets.
+
+Pour un paquet **réellement extrait et détenu par l'utilisateur** :
+
+```sh
+python3 tools/graphics/r09_verify_model_pack.py --check-reference
+python3 tools/graphics/r09_verify_model_pack.py --variant original --model /chemin/vers/dlssnr.bin
+python3 tools/graphics/r09_verify_model_pack.py --variant compact --model /chemin/vers/dlssnr-small.bin
+```
+
+Un statut `R09_*_AUTHENTIC_PACK_SHA256_PASS` prouve seulement
+l'intégrité de ce paquet vis-à-vis des empreintes référencées ;
+il ne prouve pas l'exécution GPU ni la fidélité des images produites.
+**Aucun poids NVIDIA n'est embarqué ni publié.** Les références sont
+les inventaires SHA-256 publics du dépôt
+`Overclockers/DLSSNR-AMD`, répertoire `linux/package/model-tools`.
+Ce vérificateur est un outil hôte distinct : l'émulateur ne l'exécute
+pas automatiquement à chaque frame.
 
 **Ce qui manque pour déclarer la base DLSS-NR fonctionnelle** :
 une exécution GPU de la **totalité** des modèles Original et Compact

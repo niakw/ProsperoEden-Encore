@@ -335,6 +335,7 @@ jobs:
       - name: Pinned Vulkan source reproduction
         run: |
           set -euo pipefail
+          python3 -B tools/stage-ps5-graphics-enums.py --self-test
           python3 -B tools/check-vendored-vulkan-fork.py
           python3 -B tools/check-ps5-radv-64bit-arithmetic-host.py
       # A CMake-selected native override must have exactly one graph owner

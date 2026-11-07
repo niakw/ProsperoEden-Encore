@@ -51,6 +51,9 @@ python3 -B tools/install-eden-header-hygiene.py "$eden" --check
 step "R352 fence-safe NVNflinger layer/display cleanup (versioned complete source)"
 python3 -B tools/install-vendored-surface-lifecycle.py "$eden"
 python3 -B tools/check-nvnflinger-dequeue-wakeup.py "$eden"
+step "Reviewed PS5 graphics enums on build-cache copy (original Eden untouched)"
+python3 -B tools/stage-ps5-graphics-enums.py "$eden"
+python3 -B tools/stage-ps5-graphics-enums.py "$eden" --check
 
 # Optional: seed Eden's package cache from another checkout's (CI reuses a development cache).
 if [[ -n ${EDEN_CPM_CACHE_SEED:-} && ! -d $eden/.cache/cpm ]]; then

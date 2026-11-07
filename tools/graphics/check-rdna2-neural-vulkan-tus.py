@@ -124,13 +124,13 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
             output.append("    "+", ".join(
                 f"0x{word:08x}u" for word in words[offset:offset+8])+",")
         output.append("};")
-        header.write_text("\\n".join(output)+"\\n",encoding="utf-8")
+        header.write_text("\n".join(output)+"\n",encoding="utf-8")
     # Independent completeness check: do not accept unknown or renamed
     # #include <video_core/host_shaders/> references during host compilation.
     for name in FILES:
         contents=(ACTIVE/name).read_text(encoding="utf-8")
         for include in re.findall(
-                r'#include\\s+["<]video_core/host_shaders/([^">]+)[">]',
+                r'#include\s+["<]video_core/host_shaders/([^">]+)[">]',
                 contents):
             assert (shader_headers/include).is_file(), (
                 "R09 required compiled shader missing",name,include)

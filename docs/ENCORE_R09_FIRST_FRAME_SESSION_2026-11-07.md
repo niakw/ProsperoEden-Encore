@@ -24,14 +24,37 @@ dispatch n'est fait pendant `Initialize`. `Record` est à usage
 unique : le renderer doit conserver les ressources jusqu'au tick
 GPU complété, surtout après un échec partiel.
 
-Cette classe est une **tentative d'assemblage du réseau en source**.
-Le passage de compilation Clang doit confirmer son intégration ;
-l'exécution modèle réelle sur GPU n'est pas démontrée sans un
-véritable pack utilisateur. La copie vers le présentateur
-`Layer::ConfigureDraw`, la gestion multi-frame (l'objet étant
-single-use), la conservation des historiques et les données de
-mouvement sont encore **à intégrer**. Ne pas activer le réglage
-DLSS-NR par défaut ni qualifier la fonctionnalité de terminée
-avant ces preuves.
+## Raccord réel au renderer (7 novembre, `main`)
 
-Pas de build PS5 global, branche ou PR.
+Le chemin `headless/vulkan_present_layer_r24.cpp::Layer::ConfigureDraw`
+est désormais intégré : il charge un modèle utilisateur choisi
+explicitement (`original.nrmodel`/`compact.nrmodel` ou les noms
+issus de l'extracteur), utilise le plan natif correspondant, prépare une
+image Vulkan RGBA32F dédiée, appelle `NrRdna2FrameSession::Record`,
+puis présente le résultat **uniquement si** le réseau a accepté son
+enregistrement. En cas de refus, l'image originale du jeu est conservée.
+
+L'admission est actuellement limitée à une source effective **1920×1080**,
+sans recadrage, AA ni autre upscaler simultané. Le rendu accéléré est
+admis selon le contrat de capture ; la fidélité du format et des guides
+neuronaux du jeu reste à établir. Les textures et propriétaires GPU
+vivent jusqu'à la retraite du tick associé à leur slot. En particulier,
+la vue de sortie est détruite avant son image, et une initialisation
+refusée sans dispatch libère l'image provisoire.
+
+La CI hôte R09 couvre le code C++ maintenu et le présentateur,
+les contrats du graphe, les ABI SPIR-V et un vrai aller-retour
+texture→composition→image sur Vulkan Lavapipe.
+
+**Ce qui manque pour déclarer la base DLSS-NR fonctionnelle** :
+une exécution GPU de la **totalité** des modèles Original et Compact
+avec de vrais poids légalement fournis, la lecture et comparaison
+numérique de leurs images à une référence indépendante, ainsi que la
+validation de la sémantique des entrées 16 canaux. Le test Vulkan
+actuel de composition isolée ne démontre pas cette inférence.
+Le chemin source est conçu pour une première image sans historique ;
+la persistance multi-frame, les vecteurs de mouvement et l'historique
+temporel complet restent hors de la base validée. Aucun test PS5
+utilisateur ni build global PS5 demandé. DLSS-NR reste **OFF par défaut**.
+
+Le chantier R09 et la roadmap moteur P0–P4 (issue #15) sont distincts.

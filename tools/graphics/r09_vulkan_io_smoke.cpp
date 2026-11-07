@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -197,6 +198,21 @@ VkImageMemoryBarrier ImageBarrier(VkImage image,VkAccessFlags from,VkAccessFlags
         image,{VK_IMAGE_ASPECT_COLOR_BIT,0u,1u,0u,1u}};
     return b;
 }
+// Independent CPU oracle for the shader's round-toward-zero FP16 output.
+float HalfTruncated(float value){
+    value=std::clamp(value,0.0f,1.0f);
+    const std::uint32_t bits=std::bit_cast<std::uint32_t>(value);
+    const std::uint32_t exponent=(bits>>23u)&255u;
+    const std::uint32_t mantissa=bits&0x7fffffu;
+    const int e=int(exponent)-112;
+    std::uint32_t half=0u;
+    if(e>0)half=(std::uint32_t(e)<<10u)|(mantissa>>13u);
+    else if(e>=-10)half=(mantissa|0x800000u)>>std::uint32_t(14-e);
+    const int he=int((half>>10u)&31u);
+    const std::uint32_t hm=half&1023u;
+    return he==0?std::ldexp(float(hm),-24):
+                 std::ldexp(1.0f+float(hm)/1024.f,he-15);
+}
 struct InputPush{std::uint32_t native_width,native_height;float paper_white;std::uint32_t color_mode;};
 struct OutputPush{std::uint32_t native_width,native_height,zero0,zero1;};
 static_assert(sizeof(InputPush)==16u&&sizeof(OutputPush)==16u);
@@ -345,7 +361,7 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
     vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,compose_pipeline);
     vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
                             compose_layout,0u,1u,&sets[1],0u,nullptr);
-    const InputPush cp{native_width,native_height,1.f,0u};
+    const InputPush cp{native_width,native_height,0.65f,0u};
     vkCmdPushConstants(c.command,compose_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(cp),&cp);
     vkCmdDispatch(c.command,1u,1u,1u);
@@ -385,8 +401,11 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
             for(std::uint32_t ch=0;ch<4u;++ch){
                 const std::size_t i=(y*screen_width+x)*4u+ch;
                 const float correction[4]{0.03125f,-0.03125f,0.0625f,0.0f};
-                const float wanted=std::clamp(
-                    float(expected[i])/255.f+correction[ch],0.0f,1.0f);
+                const float base=float(expected[i])/255.f;
+                const float neural=std::clamp(
+                    base+correction[ch],0.0f,1.0f);
+                const float wanted=ch==3u?base:HalfTruncated(
+                    std::clamp(base+0.65f*(neural-base),0.0f,1.0f));
                 if(!std::isfinite(rgba[i])||std::fabs(rgba[i]-wanted)>0.00005f){
                     const float actual=rgba[i];
                     vkUnmapMemory(c.device,readback.memory);

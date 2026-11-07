@@ -27,6 +27,10 @@ FILES=(
     "nr_rdna2_proxy_lift_link.cpp",
     "nr_rdna2_proxy_fswin_link.cpp",
     "nr_rdna2_fswin_chain.cpp",
+    "nr_rdna2_fswin_level_link.cpp",
+    "nr_rdna2_unet_skip_cache.cpp",
+    "nr_rdna2_unet_down_sequence.cpp",
+    "nr_rdna2_unet_upsample_link.cpp",
 )
 INCLUDES=[
     ROOT/"extras/graphics",

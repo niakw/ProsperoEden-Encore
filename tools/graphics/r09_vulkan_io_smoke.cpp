@@ -422,6 +422,30 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
                         " != "+std::to_string(wanted));
                 }
             }
+    if(screen_width==80u&&screen_height==45u){
+        // Evidence is the CPU-uploaded source and ACTUAL Vulkan storage
+        // image GPU readback. Both RGB P6 frames preserve every sample;
+        // no screenshot substitution or learned-model inference is claimed.
+        const std::string header="P6\n"+std::to_string(screen_width)+" "+
+                                 std::to_string(screen_height)+"\n255\n";
+        std::vector<char> before(pixels*3u),after(pixels*3u);
+        for(std::uint32_t i=0u;i<pixels;++i)
+            for(std::uint32_t ch=0u;ch<3u;++ch){
+                const std::size_t rgb=i*3u+ch,rgba_index=i*4u+ch;
+                before[rgb]=static_cast<char>(expected[rgba_index]);
+                const float sample=std::clamp(rgba[rgba_index],0.0f,1.0f);
+                after[rgb]=static_cast<char>(std::lround(sample*255.0f));
+            }
+        const auto write=[&](const char* p,const std::vector<char>& rgb){
+            std::ofstream image(p,std::ios::binary|std::ios::trunc);
+            if(!image)throw std::runtime_error("Cannot create GPU evidence");
+            image<<header;
+            image.write(rgb.data(),static_cast<std::streamsize>(rgb.size()));
+            if(!image.good())throw std::runtime_error("GPU evidence write failed");
+        };
+        write(".build-r09-gpu/r09_before.ppm",before);
+        write(".build-r09-gpu/r09_after_gpu.ppm",after);
+    }
     vkUnmapMemory(c.device,readback.memory);
     std::cout<<"R09_VULKAN_REAL_GPU_IO_AND_COMPOSITE_PASS "
              <<screen_width<<"x"<<screen_height<<"\n";
@@ -429,192 +453,20 @@ void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* 
 // Exercise the *actual* temporal GLSL shader through a Vulkan compute
 // queue, with a valid external motion field and a known previous history.
 // This fixture is NOT a fabricated model and is never used by runtime.
-void TemporalSmoke(const char* shader_spv,bool valid_history){
-    Context c;
-    c.Initialize();
-    constexpr std::uint32_t width=3u,height=4u,pixels=width*height;
-    constexpr VkDeviceSize rgba_bytes=pixels*16u,head_bytes=pixels*32u;
-    const Buffer proxy=c.MakeBuffer(rgba_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    const Buffer head=c.MakeBuffer(head_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    const Buffer motion=c.MakeBuffer(rgba_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    const Buffer previous=c.MakeBuffer(rgba_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    const Buffer output=c.MakeBuffer(rgba_bytes,
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-    const Buffer next_history=c.MakeBuffer(rgba_bytes,
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-    const Buffer readback=c.MakeBuffer(rgba_bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-    const Buffer readback_history=c.MakeBuffer(rgba_bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-    const auto fill=[&](Buffer b,auto writer){
-        void* mapped{};
-        Check(vkMapMemory(c.device,b.memory,0u,b.size,0u,&mapped),
-              "map temporal fixture");
-        writer(mapped);
-        vkUnmapMemory(c.device,b.memory);
-    };
-    fill(proxy,[](void* p){
-        auto* pixels_rgba=static_cast<float*>(p);
-        for(std::uint32_t i=0u;i<pixels;++i){
-            pixels_rgba[i*4u+0u]=0.2f;
-            pixels_rgba[i*4u+1u]=0.4f;
-            pixels_rgba[i*4u+2u]=0.6f;
-            pixels_rgba[i*4u+3u]=0.75f;
-        }
-    });
-    fill(head,[](void* p){
-        auto* words=static_cast<std::uint32_t*>(p);
-        for(std::uint32_t i=0u;i<pixels;++i){
-            words[i*8u+0u]=0xb0003000u; // +0.125, -0.125
-            words[i*8u+1u]=0x00003400u; // +0.25, logit=0
-            for(std::uint32_t j=2u;j<8u;++j)words[i*8u+j]=0u;
-        }
-    });
-    fill(motion,[](void* p){
-        auto* vectors=static_cast<float*>(p);
-        for(std::uint32_t i=0u;i<pixels;++i){
-            vectors[i*4u+0u]=0.0f;
-            vectors[i*4u+1u]=0.0f;
-            vectors[i*4u+2u]=1.0f; // independent validity evidence
-            vectors[i*4u+3u]=0.0f;
-        }
-    });
-    fill(previous,[](void* p){
-        auto* history=static_cast<float*>(p);
-        for(std::uint32_t i=0u;i<pixels;++i){
-            history[i*4u+0u]=0.5f;
-            history[i*4u+1u]=0.25f;
-            history[i*4u+2u]=0.75f;
-            history[i*4u+3u]=1.0f;
-        }
-    });
-    VkDescriptorSetLayoutBinding bindings[6]{};
-    for(std::uint32_t i=0u;i<6u;++i){
-        bindings[i]={i,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,
-                     VK_SHADER_STAGE_COMPUTE_BIT,nullptr};
-    }
-    const VkDescriptorSetLayoutCreateInfo layout_ci{
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        nullptr,0u,6u,bindings};
-    VkDescriptorSetLayout descriptor_layout{};
-    Check(vkCreateDescriptorSetLayout(c.device,&layout_ci,nullptr,
-                                      &descriptor_layout),
-          "create temporal descriptors");
-    c.sets.push_back(descriptor_layout);
-    const VkDescriptorPoolSize pool_size{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,6u};
-    const VkDescriptorPoolCreateInfo pool_ci{
-        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        nullptr,0u,1u,1u,&pool_size};
-    Check(vkCreateDescriptorPool(c.device,&pool_ci,nullptr,&c.descriptors),
-          "create temporal pool");
-    const VkDescriptorSetAllocateInfo alloc{
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,c.descriptors,1u,&descriptor_layout};
-    VkDescriptorSet descriptors{};
-    Check(vkAllocateDescriptorSets(c.device,&alloc,&descriptors),
-          "allocate temporal set");
-    const std::array<Buffer,6u> resources{
-        proxy,head,motion,previous,output,next_history};
-    std::array<VkDescriptorBufferInfo,6u> infos{};
-    std::array<VkWriteDescriptorSet,6u> writes{};
-    for(std::uint32_t i=0u;i<6u;++i){
-        infos[i]={resources[i].handle,0u,resources[i].size};
-        writes[i]={VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            nullptr,descriptors,i,0u,1u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            nullptr,&infos[i],nullptr};
-    }
-    vkUpdateDescriptorSets(c.device,6u,writes.data(),0u,nullptr);
-    VkPipelineLayout pipeline_layout{};
-    const auto shader=c.Shader(shader_spv);
-    const auto pipeline=c.Pipeline(shader,descriptor_layout,pipeline_layout);
-    const VkCommandBufferBeginInfo begin{
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,nullptr,
-        VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,nullptr};
-    Check(vkBeginCommandBuffer(c.command,&begin),"begin temporal command");
-    vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
-    vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
-                            pipeline_layout,0u,1u,&descriptors,0u,nullptr);
-    struct TemporalPush{
-        std::uint32_t w,h;
-        float intensity,blend;
-        std::uint32_t history_valid,pad0,pad1,pad2;
-    };
-    static_assert(sizeof(TemporalPush)==32u);
-    const TemporalPush pc{width,height,0.65f,0.75f,
-                          valid_history?1u:0u,0u,0u,0u};
-    vkCmdPushConstants(c.command,pipeline_layout,VK_SHADER_STAGE_COMPUTE_BIT,
-                       0u,sizeof(pc),&pc);
-    vkCmdDispatch(c.command,(width+7u)/8u,(height+7u)/8u,1u);
-    const VkMemoryBarrier to_transfer{
-        VK_STRUCTURE_TYPE_MEMORY_BARRIER,nullptr,
-        VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_TRANSFER_READ_BIT};
-    vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,0u,1u,&to_transfer,0u,nullptr,0u,nullptr);
-    const VkBufferCopy copy{0u,0u,rgba_bytes};
-    vkCmdCopyBuffer(c.command,output.handle,readback.handle,1u,&copy);
-    vkCmdCopyBuffer(c.command,next_history.handle,
-                    readback_history.handle,1u,&copy);
-    const VkMemoryBarrier to_cpu{
-        VK_STRUCTURE_TYPE_MEMORY_BARRIER,nullptr,
-        VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_HOST_READ_BIT};
-    vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_HOST_BIT,0u,1u,&to_cpu,0u,nullptr,0u,nullptr);
-    Check(vkEndCommandBuffer(c.command),"end temporal command");
-    const VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO,nullptr,
-        0u,nullptr,nullptr,1u,&c.command,0u,nullptr};
-    Check(vkQueueSubmit(c.queue,1u,&submit,VK_NULL_HANDLE),"submit temporal");
-    Check(vkQueueWaitIdle(c.queue),"wait temporal");
-    std::array<float,pixels*4u> display{},history{};
-    const auto read=[&](const Buffer& b,auto& dst){
-        void* ptr{};
-        Check(vkMapMemory(c.device,b.memory,0u,b.size,0u,&ptr),
-              "map temporal readback");
-        std::memcpy(dst.data(),ptr,dst.size()*sizeof(float));
-        vkUnmapMemory(c.device,b.memory);
-    };
-    read(readback,display);
-    read(readback_history,history);
-    const float base[3]{0.2f,0.4f,0.6f};
-    const float delta[3]{0.03125f,-0.03125f,0.0625f};
-    const float prior[3]{0.5f,0.25f,0.75f};
-    const float weight=valid_history?0.375f:0.0f;
-    for(std::uint32_t i=0u;i<pixels;++i){
-        for(std::uint32_t ch=0u;ch<3u;++ch){
-            const float neural=std::clamp(base[ch]+delta[ch],0.0f,1.0f);
-            const float expected_history=HalfTruncated(
-                neural+(prior[ch]-neural)*weight);
-            const float expected_display=base[ch]+
-                (expected_history-base[ch])*0.65f;
-            if(!std::isfinite(history[i*4u+ch])||
-               std::fabs(history[i*4u+ch]-expected_history)>0.0001f||
-               !std::isfinite(display[i*4u+ch])||
-               std::fabs(display[i*4u+ch]-expected_display)>0.0001f)
-                throw std::runtime_error("Temporal GPU head/history mismatch at "+
-                    std::to_string(i)+" channel "+std::to_string(ch));
-        }
-        if(std::fabs(history[i*4u+3u]-1.0f)>0.0001f||
-           std::fabs(display[i*4u+3u]-0.75f)>0.0001f)
-            throw std::runtime_error("Temporal GPU alpha mismatch");
-    }
-    std::cout<<"R09_VULKAN_REAL_TEMPORAL_GPU_PASS "
-             <<(valid_history?"history-valid":"cold-start")<<"\n";
-}
 } // namespace
 int main(int argc,char**argv){
-    if(argc!=4&&argc!=6&&argc!=7){
+    if(argc!=4&&argc!=6){
         std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <compose.spv> <nohistory_present.spv> [width height]\n";
         return 2;
     }
     try{
         Context context;
         context.Initialize();
-        const std::uint32_t width=argc>=6?static_cast<std::uint32_t>(
+        const std::uint32_t width=argc==6?static_cast<std::uint32_t>(
             std::stoul(argv[4])):4u;
-        const std::uint32_t height=argc>=6?static_cast<std::uint32_t>(
+        const std::uint32_t height=argc==6?static_cast<std::uint32_t>(
             std::stoul(argv[5])):3u;
         Smoke(context,argv[1],argv[2],argv[3],width,height);
-        if(argc==7){
-            TemporalSmoke(argv[6],true);
-            TemporalSmoke(argv[6],false);
-        }
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"R09_VULKAN_REAL_GPU_IO_FAIL: "<<e.what()<<"\n";

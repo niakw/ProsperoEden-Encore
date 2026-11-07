@@ -6,8 +6,10 @@
 
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <variant>
+#include <vector>
 
 #include "common/math_util.h"
 #include "video_core/host1x/gpu_device_memory_manager.h"
@@ -41,6 +43,7 @@ namespace Vulkan {
 class AntiAliasPass;
 class Device;
 class MemoryAllocator;
+class NrRdna2FrameSession;
 struct PresentPushConstants;
 class RasterizerVulkan;
 class Scheduler;
@@ -99,6 +102,14 @@ private:
     std::variant<std::monostate, FXAA, SMAA> anti_alias{};
     std::variant<std::monostate, SGSR, FSR, Anime4K3D> sr_filter{};
     std::vector<u64> resource_ticks{};
+    // Each model session is single-use. On a slot's next presentation,
+    // scheduler.Wait(resource_ticks[slot]) retires its GPU commands before
+    // releasing these owners and the corresponding sampled VkImage.
+    std::vector<std::unique_ptr<NrRdna2FrameSession>> neural_sessions{};
+    std::vector<vk::Image> neural_images{};
+    std::vector<vk::ImageView> neural_views{};
+    int last_neural_mode{};
+    bool neural_model_failed{};
 };
 
 } // namespace Vulkan

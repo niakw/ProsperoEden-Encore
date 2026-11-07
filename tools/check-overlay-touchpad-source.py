@@ -41,8 +41,14 @@ assert vulkan.count("DrawQuickOverlay(cmdbuf,") == 2
 assert "Eden::QuickOverlay::Snapshot()" in vulkan
 assert "hud_pipeline ? *hud_pipeline : VK_NULL_HANDLE" in vulkan
 assert "hud_layout ? *hud_layout : VK_NULL_HANDLE" in vulkan
-assert "kWarningRow = 0xfffffff4u;" in quick
-assert "warning_row = text.loading == 0xfffffff4u;" in shader
+assert "kWarningRow=kStyleTag|4u;" in read("headless/in_game_overlay_style.h")
+assert "bool warning_row = quick && kind == 4u;" in shader
+assert "result.style = StyleId(prefs.color_palette,prefs.accent_color," in menu
+assert "dst.loading = StyledMode(mode,result.style);" in menu
+assert "StyledMode(" in vulkan
+assert "menuAccent(uint palette,uint accent)" in shader
+assert "menuPanel(uint palette)" in shader
+assert "prefs = LoadPreferences();" in menu
 
 # Settings are saved for this title; only FPS and detailed logs update live.
 assert "SaveGameSettings(title_id, game)" in menu

@@ -258,3 +258,15 @@ temporel complet restent hors de la base validée. Aucun test PS5
 utilisateur ni build global PS5 demandé. DLSS-NR reste **OFF par défaut**.
 
 Le chantier R09 et la roadmap moteur P0–P4 (issue #15) sont distincts.
+
+## Qualification hôte finale R09 du 7 novembre 2026
+
+Exécution GitHub Actions [R09 #42418863603](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42418863603), sur moteur `7b2e5fc69ab7c620ae0069adb12b7d5f10bea3af` et gitlink vendor `4b441ed6338222c587364e736e2fc204f6667af2` : **3 jobs / 3 réussis**.
+
+- `neural-boundaries` : inventaires publics Original 599/599 et Compact 255/255, couverture de propriétaires du graphe natif Original 152/152 et Compact 76/76, tests hôte UBSan, validation SPIR-V, compilation de l'outil autonome de prévalidation CPU.
+- `neural-syntax` : 34 propriétaires C++ Vulkan natifs qualifiés par Clang, y compris `nr_rdna2_frame_session.cpp`, `nr_rdna2_core_feature_sequence.cpp` et le raccord présentateur.
+- `neural-gpu-io` : calcul Vulkan réellement exécuté avec ICD Mesa Lavapipe, FSwin Dense3 E4M3FN/FP16 avec oracle synthétique, texture/proxy/projection/composition/lecture GPU jusqu'à 1920×1080, et composition temporelle testée avec historique invalide puis valide. Les images avant/après issues de ce job sont **des fixtures**, pas une comparaison de qualité DLSS-NR.
+
+**Qualification obtenue : code hôte et chemins Vulkan ciblés.** La couverture de 152/152 opérations est une vérification des propriétaires et contrats de graphe, **pas** la preuve d'une exécution GPU séquentielle de 152 opérations. Le préflight CPU compilé et exécuté ici l'a été avec l'option `--help`; aucun poids NVIDIA authentique n'a été transmis à cette CI. Le banc intégral autonome avec le pack utilisateur privé et la lecture numérique d'une image de sortie Original n'a **pas** été exécuté dans cette qualification. Il reste donc impropre d'affirmer « DLSS-NR Original complet validé » ou de fermer un critère d'acceptation qui exige l'inférence de bout en bout.
+
+Décision : conserver la base R09 qualifiée hôte, différer l'optimisation et les tests PS5 conformément au périmètre, ne pas exposer DLL/poids dans GitHub. Toute réouverture de validation fonctionnelle devra exiger les vraies matrices, une exécution Vulkan de bout en bout et une image lue/comparée à un oracle indépendant.

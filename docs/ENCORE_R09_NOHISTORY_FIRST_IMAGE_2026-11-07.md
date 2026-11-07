@@ -1,5 +1,14 @@
 # R09 — première sortie couleur sans historique, 7 novembre 2026
 
+> **Actualisation du 7 novembre 2026 :** l'ordonnanceur dispose
+> maintenant d'un chemin strict pour prélever une vraie texture Vulkan
+> du jeu, produire le proxy natif, et publier la première image vers un
+> `VkImageView` RGBA32F échantillonnable. Voir
+> [entrée VkImage](ENCORE_R09_GUEST_IMAGE_INPUT_2026-11-07.md) et
+> [sortie VkImage](ENCORE_R09_FIRST_FRAME_IMAGE_PUBLICATION_2026-11-07.md).
+> L'intégration automatique au présentateur et la session modèle
+> complète sont toujours **non validées**.
+
 ## Travaux intégrés en source
 
 Le GPU Vulkan RDNA2 peut désormais composer une image **RGBA32F normalisée**

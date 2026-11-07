@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     // Do not describe the index/graph as GPU-ready until all four
     // genuine upsample matrices and recovered learned gain vectors load.
     if (!NR::ValidateR09LearnedUpsampleInputs(ready)) {
-        std::cerr << "R09_REAL_ORIGINAL_LEARNED_UPSAMPLE_PREFLIGHT_REJECTED\\n";
+        std::cerr << "R09_REAL_ORIGINAL_LEARNED_UPSAMPLE_PREFLIGHT_REJECTED\n";
         return 68;
     }
     std::cout << "R09_REAL_ORIGINAL_CPU_GRAPH_PREFLIGHT_PASS "
@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
               << ready.graph.count << " UNet depths, "
               << ready.routes.run_count << " Split runs, "
               << ready.vit_route.count << " ViT blocks\n";
+    std::cout << "R09_REAL_ORIGINAL_LEARNED_UPSAMPLE_PREFLIGHT_PASS\n";
     std::cout << "This is CPU-only. No Vulkan dispatch or final image is proven.\n";
     return 0;
 }

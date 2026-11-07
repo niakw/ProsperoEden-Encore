@@ -104,6 +104,7 @@ using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 constexpr int kRightSL = 20;
 constexpr int kRightSR = 21;
+constexpr unsigned kSelectTapPolls = 25;
 constexpr unsigned kSelectHoldPolls = 60;
 namespace NativeLogs { inline bool Detailed() { return false; } }
 namespace InputCommon {

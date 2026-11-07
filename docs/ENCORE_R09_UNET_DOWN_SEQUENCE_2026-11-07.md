@@ -14,3 +14,23 @@ Trois `NrRdna2FSwinLevelLink` préparent les transitions intermédiaires. `NrRdn
 **Non intégré :** prébloc Swin + premier downsample 1920×1080 → C32 960×540 (raster canonique 540×960), connexion C512 → Split-Swin / ViT, reconstruction U-Net ascendante, gains de modèle, postbloc, compositing couleur et présentateur. Pas de chargement automatique des poids ni de rendu console. Cette étape ne rend aucun DLSS-NR activable par défaut.
 
 **Validation attendue :** GCC/Clang+UBSan du contrat pur et compilation syntaxique Clang des propriétaires C++ réels (sans SDK PS5). Ce résultat ne peut pas remplacer P5.
+
+## Pont GPU prébloc natif → descente U-Net (R09)
+
+Le résultat du nouveau pooling prébloc est maintenant raccordable au
+premier niveau C32 U-Net **avant** tout enregistrement de commande.
+`NrRdna2PreblockRun::PreparedHalfC32` expose seulement la *description*
+du buffer préparé FP8 540×960 C32 ; il ne prétend pas que le GPU a fini
+le travail. `NrRdna2UNetDownSequence::PreparedInput` expose la description
+exacte de son entrée liée, séparément de la sortie C512 finale.
+
+`NrRdna2PreblockRun::RecordWithDownSequence` exige la même identité de
+scheduler, **le même VkBuffer, offset et étendue** et les deux propriétaires
+préparés, puis enregistre une fois l'ordre prébloc→pool→descente U-Net.
+Les quatre skips GPU et le C512 de sortie restent sous la responsabilité
+des propriétaires précédents. Rejouer un enregistrement partiellement
+échoué est interdit.
+
+Ce pont ne fournit pas les gains manquants des trois niveaux larges,
+ni l'inférence Split-Swin/ViT/decoder, ni la source HDR, le compositing
+ou les frames PS5. Il ne faut pas le confondre avec un DLSS-NR complet.

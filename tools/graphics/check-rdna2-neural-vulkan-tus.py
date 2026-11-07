@@ -132,6 +132,12 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     (enum_root/"common").mkdir(parents=True)
     (enum_root/"common/settings_enums.h").write_text(
         graphics_enums,encoding="utf-8")
+    # The 83-source PS5 backport stages settings.h *together* with its
+    # audited settings_enums.h. Mixing the old Enum (Accurate) with
+    # pristine new settings.h (Strict) is an invalid hybrid ABI.
+    reviewed_settings=ROOT/"vendor/encore-active/eden-backports/src/common/settings.h"
+    assert reviewed_settings.is_file()
+    shutil.copyfile(reviewed_settings,enum_root/"common/settings.h")
     active_present=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/present.h"
     source_present=ROOT/"vendor/sources/eden/src/video_core/present.h"
     assert active_present.read_bytes()==source_present.read_bytes(),(

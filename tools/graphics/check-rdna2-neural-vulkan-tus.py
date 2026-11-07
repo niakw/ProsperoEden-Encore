@@ -112,6 +112,13 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
             "--vendor",str(ROOT/"vendor"),
             "--header",str(shader_headers/header)
         ],check=True,cwd=ROOT)
+    # Match production's versioned presentation Layer overlay exactly,
+    # otherwise the host syntax check would use the pristine upstream
+    # class and miss integration errors in the live PS5 renderer.
+    present_layer=temp/"present-overlay/video_core/renderer_vulkan/present"
+    present_layer.mkdir(parents=True)
+    shutil.copyfile(ROOT/"headless/vulkan_present_layer_r24.h",
+                    present_layer/"layer.h")
     # The maintained BufferCache template is the one the production CMake
     # stages. The pristine Eden header would be the wrong ABI.
     cache=temp/"buffer-pages/video_core/buffer_cache"
@@ -130,16 +137,19 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     cmd=[compiler,"-std=c++20","-O0","-fsyntax-only",
          "-DPS5_NATIVE=1","-DFMT_HEADER_ONLY",
          "-Wno-unused-parameter",
-         "-I"+str(inc),"-I"+str(temp/"buffer-pages"),
+         "-I"+str(inc),"-I"+str(temp/"present-overlay"),
+         "-I"+str(temp/"buffer-pages"),
          "-I"+str(temp),
          *["-I"+str(p) for p in INCLUDES]]
     env=os.environ.copy()
     def check(name):
-        result=subprocess.run(cmd+[str(ACTIVE/name)],
+        source=(ROOT/"headless/vulkan_present_layer_r24.cpp"
+                if name=="__present_layer_r09__" else ACTIVE/name)
+        result=subprocess.run(cmd+[str(source)],
             cwd=ROOT,env=env,text=True,capture_output=True,timeout=150)
         return name,result.returncode,result.stderr[-10000:]
     with ThreadPoolExecutor(max_workers=2) as pool:
-        results=list(pool.map(check,FILES))
+        results=list(pool.map(check,(*FILES,"__present_layer_r09__")))
     failures=[]
     for name,rc,diagnostics in results:
         if rc:

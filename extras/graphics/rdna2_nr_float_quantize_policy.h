@@ -26,7 +26,7 @@ struct FloatQuantizeStorage {
         (std::uint64_t(p.input_offset_floats)+p.elements)*4u;
     const std::uint64_t output_end=
         std::uint64_t(p.output_offset_bytes)+p.elements;
-    const std::uint64_t words=p.elements/4u;
+    const std::uint64_t words=p.elements/kElementsPerInvocation;
     const std::uint64_t groups=(words+kInvocations-1u)/kInvocations;
     return groups>0u&&groups<=kMaxGroups&&
            input_end<=kMaxStorage&&output_end<=kMaxStorage&&

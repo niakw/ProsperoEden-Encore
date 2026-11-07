@@ -36,3 +36,14 @@ après échec partiel. Le résultat GPU n'est déclaré qu'après enregistrement
 Ce lot ne change pas les valeurs par défaut : **DLSS-NR OFF**, FrameGen OFF.
 L'issue #15 suit séparément P0-P4 du moteur NS1/NS2 ; elle ne sert pas
 de checklist de complétion DLSS. Aucun build console requis à cette étape.
+
+## Entrée HDR externe (R09)
+Le module `NrRdna2HDRProxy` relie désormais un buffer externe RGBA32F
+linéaire à la création du proxy sRGB en appliquant le facteur paper-white,
+l'épaule de hautes lumières et le transfert sRGB. Les vérifications hôte
+refusent dimensions, capacités, tailles, poids de référence et géométries
+invalides. L'orchestrateur vérifie que le même buffer est consommé par le
+prétraitement 16 canaux et par le compositeur RGB. Le GPU enregistre l'ordre
+HDR → proxy → prébloc → réseau → composition, uniquement sans historique.
+La capture image du renderer, la sémantique des guides NS1/NS2, le chargement
+des poids complets et la présentation PS5 ne sont pas validés.

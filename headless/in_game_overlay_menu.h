@@ -26,6 +26,8 @@ public:
     void Show(bool next) {
         visible = next;
         if (visible) {
+            // Refresh appearance only when the user opens the menu.
+            prefs = LoadPreferences();
             tab = 0;
             selected = 0;
             notice = restart_required ? "MODIFS ENREGISTREES" : "REGLAGES DE CE JEU";
@@ -234,12 +236,14 @@ private:
             Publish(result);
             return;
         }
+        result.style = StyleId(prefs.color_palette,prefs.accent_color,
+                               prefs.high_contrast,prefs.ui_theme==1);
         const auto line = [&](std::string_view value, std::uint32_t mode) {
             if (result.count >= kMaxRows) return;
             auto& dst = result.rows[result.count++];
             dst.glyphs = HudText(value.substr(0, 24));
             dst.width = 680;
-            dst.loading = mode;
+            dst.loading = StyledMode(mode,result.style);
         };
         line("EDEN ENCORE  MENU", kRow);
         static constexpr const char* headings[] = {

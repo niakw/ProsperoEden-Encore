@@ -48,7 +48,8 @@ static void DrawQuickOverlay(vk::CommandBuffer cmdbuf,
     backdrop.width = extent.height;
     backdrop.x = extent.width;
     backdrop.y = extent.height;
-    backdrop.loading = Eden::QuickOverlay::kBackdrop;
+    backdrop.loading = Eden::QuickOverlay::StyledMode(
+        Eden::QuickOverlay::kBackdrop,quick.style);
     draw(VkRect2D{{0, 0}, extent}, backdrop);
 
     const std::uint32_t x = extent.width * 56u / 100u;

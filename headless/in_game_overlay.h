@@ -9,6 +9,7 @@
 #include <mutex>
 #include <utility>
 #include "hud.h"
+#include "in_game_overlay_style.h"
 
 namespace Eden::QuickOverlay {
 enum Action : std::uint32_t {
@@ -17,15 +18,12 @@ enum Action : std::uint32_t {
     select = 1u << 4, back = 1u << 5,
     previous_tab = 1u << 6, next_tab = 1u << 7,
 };
-inline constexpr std::uint32_t kBackdrop = 0xfffffff1u;
-inline constexpr std::uint32_t kRow = 0xfffffff2u;
-inline constexpr std::uint32_t kSelectedRow = 0xfffffff3u;
-inline constexpr std::uint32_t kWarningRow = 0xfffffff4u;
 inline constexpr std::size_t kMaxRows = 14;
 struct Frame {
     std::array<HudSnapshot, kMaxRows> rows{};
     std::uint32_t count{};
     bool visible{};
+    std::uint32_t style{}; // immutable frame appearance; no GPU preferences I/O
 };
 inline std::mutex frame_mutex;
 inline Frame published_frame{};

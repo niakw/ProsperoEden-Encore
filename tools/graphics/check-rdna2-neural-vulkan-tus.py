@@ -43,6 +43,7 @@ FILES=(
     "nr_rdna2_unet_bottleneck_link.cpp",
     "nr_rdna2_unet_up_sequence.cpp",
     "nr_rdna2_core_feature_sequence.cpp",
+    "nr_rdna2_nohistory_compose.cpp",
     "nr_rdna2_unet_upsample_link.cpp",
 )
 INCLUDES=[
@@ -90,6 +91,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "rdna2_nr_fswin_dense_comp_spv.h"),
         ("test-rdna2-proxy-features-spv.py",
          "rdna2_nr_proxy_features_comp_spv.h"),
+        ("test-rdna2-nohistory-compose-spv.py",
+         "rdna2_nr_nohistory_compose_comp_spv.h"),
     ):
         subprocess.run([
             "python3",str(ROOT/"tools/graphics"/tool),

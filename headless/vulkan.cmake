@@ -159,6 +159,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_bottleneck_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_up_sequence.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_core_feature_sequence.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_compose.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_fswin_upsample_output.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_upsample_link.cpp")
@@ -355,6 +356,29 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
+
+# R09: first-frame-only RGB residual output from the learned post-head.
+# No HDR, temporal history, source capture or presentation is implied.
+set(EDEN_R09_NR_NOHISTORY_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_nohistory_compose_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_NR_NOHISTORY_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-nohistory-compose-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_NR_NOHISTORY_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/nohistory_compose_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-nohistory-compose-spv.py"
+    COMMENT "Compile and validate R09 learned RGB residual no-history compositor"
+    VERBATIM)
+add_custom_target(eden-r09-nohistory-image-spv
+    DEPENDS "${EDEN_R09_NR_NOHISTORY_HEADER}")
+add_dependencies(video_core eden-r09-nohistory-image-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_compose.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_NR_NOHISTORY_HEADER}")
 
 # R09 no-history 16-channel neural proxy from pre-normalized RGBA32F.
 set(EDEN_R09_PROXY_FEATURE_HEADER

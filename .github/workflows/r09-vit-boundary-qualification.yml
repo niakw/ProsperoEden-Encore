@@ -56,6 +56,7 @@ jobs:
               test_rdna2_nr_postblock_mix_policy \
               test_rdna2_nr_postblock_mix_weights \
               test_rdna2_nr_preblock_pool_policy \
+              test_rdna2_nr_nohistory_compose_policy \
               test_rdna2_nr_fswin_tensor_alias_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
@@ -93,6 +94,7 @@ jobs:
             test-rdna2-proxy-features-spv.py
             test-rdna2-postblock-mix-spv.py
             test-rdna2-preblock-pool-spv.py
+            test-rdna2-nohistory-compose-spv.py
             test-rdna2-fswin-dense-spv.py
           )
           for script in "${scripts[@]}"; do

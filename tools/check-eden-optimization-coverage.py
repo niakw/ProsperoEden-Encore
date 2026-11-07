@@ -694,7 +694,25 @@ assert all((ROOT / path).is_file() for path in post_f07_feature_stack_owners)
 print("ENCORE_POST_F07_FEATURE_STACK_ISOLATION_PASS",
       "new_sources=209", "historical_F07=518", "console_not_qualified=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners
+# R09 Original/Compact and in-game touchpad overlay were merged after
+# both the immutable 518-owner F07 audit AND the 209-source feature-stack
+# inventory. These 61 exact sources are NOT retroactively F07-optimized.
+late=json.loads((ROOT/"docs/ENCORE_POST_F07_R09_OVERLAY_OWNERS.json").read_text())
+assert late["schema_version"]==1
+assert late["historical_f07_reviewed_owners"]==518
+assert late["post_f07_new_unqualified_owners"]==61
+assert late["ps5_console_qualified"] is False
+assert late["dlss_nr_complete_inference_validated"] is False
+assert late["paths"]==sorted(set(late["paths"]))
+post_f07_r09_overlay_owners=set(late["paths"])
+assert len(post_f07_r09_overlay_owners)==61
+assert post_f07_r09_overlay_owners<=all_owners, sorted(post_f07_r09_overlay_owners-all_owners)
+assert not post_f07_r09_overlay_owners&(research_owners|post_f07_feature_stack_owners)
+assert all((ROOT/p).is_file() for p in post_f07_r09_overlay_owners)
+print("ENCORE_R09_OVERLAY_POST_F07_OWNER_ISOLATION_PASS",
+      "new_sources=61 historical_owners=518 console_not_qualified=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

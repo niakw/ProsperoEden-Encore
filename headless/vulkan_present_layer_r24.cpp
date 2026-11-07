@@ -17,7 +17,7 @@
 #include "r09_native_plans.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
-#include "common/logging/log.h"
+#include "common/logging.h"
 #include "fxaa_quality_select.h"
 #include "video_core/present.h"
 #include "video_core/renderer_vulkan/present/anti_alias_pass.h"

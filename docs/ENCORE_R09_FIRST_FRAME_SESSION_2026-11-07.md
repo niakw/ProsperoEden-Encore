@@ -147,8 +147,11 @@ résultats de modèle restent privés.
 Banc de test mis à jour sur `main` : `tools/graphics/r09_vulkan_fswin_smoke.cpp`.
 En mode CI public, le test conserve sa matrice E4M3FN identité
 synthétique. En mode hôte privé, il accepte en second argument un
-**pack Original utilisateur** et charge la véritable matrice
+**pack Original utilisateur**, vérifie au préalable **599/599
+empreintes SHA-256 publiques**, puis charge la véritable matrice
 `unpacked-postblock/block70.layer0.layer.attn_out_proj.bin`.
+Tout pack contenant une matrice plausible mais des poids inventés
+est rejeté avant le calcul GPU (`b752a8b`).
 Aucune DLL ni donnée NVIDIA ne circule dans GitHub Actions.
 
 Exécution **locale** avec la DLL apportée par l'utilisateur, extraite

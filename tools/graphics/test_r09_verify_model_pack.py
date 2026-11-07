@@ -81,8 +81,8 @@ class VerifyModelPack(unittest.TestCase):
         self.path.write_bytes(self.bytes + bytes(240))
         verify_model(self.path, self.policy)
         # A larger but authentic tensor changes the pack's total length.
-        extended = [(self.entries[0][0], bytes(range(18))),
-                    self.entries[1]]
+        extended = [self.entries[0],
+                    (self.entries[1][0], bytes(range(18)))]
         extended_bytes = model_bytes(extended)
         self.assertNotEqual(len(self.bytes), len(extended_bytes))
         digest = {name: hashlib.sha256(raw).hexdigest()

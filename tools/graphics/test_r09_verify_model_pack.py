@@ -15,13 +15,16 @@ def model_bytes(entries):
     start = 16 + sum(4 + len(name.encode()) + 16 for name, _ in entries)
     offset = (start + 255) & ~255
     blobs = []
+    payload_end = offset
     for name, raw in entries:
         encoded = name.encode()
         header += struct.pack("<I", len(encoded)) + encoded
         header += struct.pack("<QQ", offset, len(raw))
         blobs.append((offset, raw))
-        offset = (offset + len(raw) + 255) & ~255
-    full = bytearray(max(offset, len(header)))
+        payload_end = offset + len(raw)
+        offset = (payload_end + 255) & ~255
+    # Match the upstream packer's real EOF, not the next aligned offset.
+    full = bytearray(max(payload_end, len(header)))
     full[:len(header)] = header
     for position, raw in blobs:
         full[position:position+len(raw)] = raw
@@ -38,7 +41,7 @@ class VerifyModelPack(unittest.TestCase):
         ]
         self.bytes = model_bytes(self.entries)
         self.policy = ModelPolicy(
-            len(self.entries), len(self.bytes),
+            len(self.entries),
             {name: hashlib.sha256(data).hexdigest() for name, data in self.entries})
         self.path.write_bytes(self.bytes)
 
@@ -63,7 +66,7 @@ class VerifyModelPack(unittest.TestCase):
         damaged = bytearray(self.bytes)
         damaged[8:12] = struct.pack("<I", 3)
         self.reject(damaged)
-        self.reject(self.bytes, ModelPolicy(255, len(self.bytes), self.policy.hashes))
+        self.reject(self.bytes, ModelPolicy(255, self.policy.hashes))
 
     def test_index_alias_and_truncation(self):
         damaged = bytearray(self.bytes)
@@ -73,13 +76,27 @@ class VerifyModelPack(unittest.TestCase):
         self.reject(damaged)
         self.reject(self.bytes[:-1])
 
+    def test_packer_total_size_not_fixed(self):
+        # Padding does not alter the expected model tensors.
+        self.path.write_bytes(self.bytes + bytes(240))
+        verify_model(self.path, self.policy)
+        # A larger but authentic tensor changes the pack's total length.
+        extended = [(self.entries[0][0], bytes(range(18))),
+                    self.entries[1]]
+        extended_bytes = model_bytes(extended)
+        self.assertNotEqual(len(self.bytes), len(extended_bytes))
+        digest = {name: hashlib.sha256(raw).hexdigest()
+                  for name, raw in extended}
+        self.path.write_bytes(extended_bytes)
+        verify_model(self.path, ModelPolicy(2, digest))
+
     def test_wrong_inventory_and_wrong_digest(self):
         wrong = dict(self.policy.hashes)
         wrong[self.entries[0][0]] = "0" * 64
-        self.reject(self.bytes, ModelPolicy(2, len(self.bytes), wrong))
+        self.reject(self.bytes, ModelPolicy(2, wrong))
         wrong = dict(self.policy.hashes)
         wrong.pop(self.entries[0][0])
-        self.reject(self.bytes, ModelPolicy(2, len(self.bytes), wrong))
+        self.reject(self.bytes, ModelPolicy(2, wrong))
 
     def test_canonical_public_metadata(self):
         check_reference_manifest()

@@ -19,8 +19,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE = {
-    "original": (599, 147756560, "r09_weights_original.sha256", "R09OriginalManifest"),
-    "compact": (255, 113917248, "r09_weights_compact.sha256", "R09CompactManifest"),
+    "original": (599, "r09_weights_original.sha256", "R09OriginalManifest"),
+    "compact": (255, "r09_weights_compact.sha256", "R09CompactManifest"),
 }
 
 
@@ -31,7 +31,6 @@ class ModelRejected(ValueError):
 @dataclass(frozen=True)
 class ModelPolicy:
     count: int
-    file_bytes: int
     hashes: dict[str, str]
 
 
@@ -48,17 +47,17 @@ def load_hashes(path: Path) -> dict[str, str]:
 
 
 def policy_for(variant: str) -> ModelPolicy:
-    count, length, name, _ = REFERENCE[variant]
+    count, name, _ = REFERENCE[variant]
     hashes = load_hashes(Path(__file__).with_name(name))
     if len(hashes) != count:
         raise ModelRejected(f"{variant}: expected {count} distinct reference hashes")
-    return ModelPolicy(count, length, hashes)
+    return ModelPolicy(count, hashes)
 
 
 def check_reference_manifest() -> None:
     manifest = ROOT / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h"
     text = manifest.read_text(encoding="utf-8")
-    for variant, (count, _, _, symbol) in REFERENCE.items():
+    for variant, (count, _, symbol) in REFERENCE.items():
         block = re.search(
             rf"\b{symbol}\s*=\s*\{{(.*?)\}};", text, flags=re.DOTALL)
         if block is None:
@@ -88,9 +87,15 @@ def read_exact(file, size: int) -> bytes:
 def verify_model(path: Path, policy: ModelPolicy) -> None:
     if not path.is_file():
         raise ModelRejected("model pack not found")
-    if path.stat().st_size != policy.file_bytes:
-        raise ModelRejected(f"unexpected model pack size (wanted {policy.file_bytes})")
     with path.open("rb") as file:
+        # Use the length of the same descriptor that supplies the bytes.
+        # pack_model.py aligns each payload offset, but does NOT specify
+        # a canonical total length. Hardcoded guessed sizes reject genuine
+        # packs despite every tensor matching the official SHA-256 list.
+        file_bytes = file.seek(0, 2)
+        file.seek(0)
+        if file_bytes < 16:
+            raise ModelRejected("model pack shorter than NRMODEL1 header")
         if read_exact(file, 8) != b"NRMODEL1":
             raise ModelRejected("invalid NRMODEL1 magic")
         count, reserved = struct.unpack("<II", read_exact(file, 8))
@@ -116,10 +121,13 @@ def verify_model(path: Path, policy: ModelPolicy) -> None:
         if seen != policy.hashes.keys():
             raise ModelRejected("incomplete canonical tensor inventory")
         ordered = sorted(entries, key=lambda e: e[1])
+        if first_payload > file_bytes:
+            raise ModelRejected("model index exceeds file length")
         previous_end = first_payload
         for name, offset, length in ordered:
             if (offset % 256 != 0 or length == 0 or length > (256 << 20) or
-                    offset < previous_end or length > policy.file_bytes - offset):
+                    offset < previous_end or offset > file_bytes or
+                    length > file_bytes - offset):
                 raise ModelRejected(f"overlapping, out-of-range or misaligned tensor: {name}")
             previous_end = offset + length
         # The index has been checked completely before any content digest.
@@ -152,7 +160,7 @@ def main() -> int:
         policy = policy_for(args.variant)
         verify_model(args.model, policy)
         print(f"R09_{args.variant.upper()}_AUTHENTIC_PACK_SHA256_PASS "
-              f"{policy.count}/{policy.count} files, {policy.file_bytes} bytes")
+              f"{policy.count}/{policy.count} files, {args.model.stat().st_size} bytes")
         return 0
     except (ModelRejected, OSError) as error:
         print(f"R09_AUTHENTIC_PACK_REJECTED: {error}", file=sys.stderr)

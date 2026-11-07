@@ -1989,6 +1989,10 @@ msgstr ""
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr ""
 
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr ""
+
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms"
 msgstr ""

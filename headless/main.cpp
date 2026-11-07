@@ -52,6 +52,7 @@
 #include "diagnostics.h"
 #include "display_refresh.h"
 #include "lossless_user_file.h"
+#include "nr_dll_user_file.h"
 #include "frame_metrics.h"
 #include "log_pipe.h"
 #include "network_domain_rules.h"
@@ -1632,9 +1633,21 @@ int main(int argc, char** argv) {
             const int requested_fg=safe_launch?0:
                 (game_video.frame_generation>=0?
                     game_video.frame_generation:launch_preferences.frame_generation);
-            const bool neural_selectable=Eden::NeuralVideo::CanSelect(
-                requested_nr,profile_renderer,selected_filter,
-                requested_aa,requested_fg);
+            // An already saved DLSS-NR preference may outlive its DLL.
+            // As for LSFG, never activate it if that user file disappears.
+            // Keep the stored preference, but report the missing file
+            // and fall back to the normal renderer for this session.
+            const bool dlss_file_available=
+                !Eden::NeuralVideo::IsDlss(requested_nr)||
+                Eden::Graphics::DlssNrUserFileLooksValid(
+                    Eden::UserDir(),Eden::ConfigDir());
+            if(!dlss_file_available)
+                Eden::Report("neural",
+                    "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll.");
+            const bool neural_selectable=dlss_file_available&&
+                Eden::NeuralVideo::CanSelect(
+                    requested_nr,profile_renderer,selected_filter,
+                    requested_aa,requested_fg);
             const int mapped_filter=neural_selectable &&
                 Eden::NeuralVideo::IsA4k(requested_nr)
                 ? Eden::NeuralVideo::InternalA4kFilter(requested_nr)

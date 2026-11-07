@@ -36,6 +36,33 @@ ressource Compact n'existe pas dans la DLL fournie, il est signalé
 indisponible (sélection persistante conservée). **Ne pas demander
 une deuxième DLL** à l'utilisateur pour contourner cette absence.
 
+## Alerte utilisateur lorsque la DLL manque
+
+Dans **Paramètres > Vidéo > Neural Rendering** (réglage global),
+et dans le réglage **Neural Rendering de chaque jeu**, choisir
+**DLSS-NR Original** ou **DLSS-NR Compact** déclenche le même contrôle
+préliminaire que le choix **LSFG** pour `Lossless.dll` : présence d'un
+fichier `nvngx_dlssnr.dll` régulier et plausible (PE `MZ`, taille
+bornée), au chemin utilisateur conseillé ou dans les anciens chemins
+de migration. Le contrôle reste local et n'exécute jamais le DLL.
+
+**Si le fichier manque ou paraît invalide**, une notification d'erreur
+s'affiche dans l'interface avec son emplacement exact :
+
+> DLSS-NR : fichier nvngx_dlssnr.dll absent ou invalide. Placez votre fichier dans /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll.
+
+La sélection est **refusée sans écraser le réglage précédent** ;
+les modes Off et A4K ne sont pas concernés. Si la DLL est supprimée
+après qu'une préférence DLSS-NR a déjà été enregistrée, le lancement
+signale l'absence dans les diagnostics et désactive le DLSS-NR pour
+cette session, sans modifier le réglage sauvegardé.
+
+Le contrôle de présence est distinct de la vérification de tous les
+poids dans l'importeur natif. Une DLL présente mais dont la ressource
+`WEIGHTS_HT` est corrompue sera rejetée par l'importeur. Une DLL
+ne contenant que Original ne rend **pas** Compact fonctionnel :
+aucun poids Compact ne sera inventé ni substitué.
+
 ## État réel de l'implémentation
 
 Le commit `2bfbeae` intègre **l'importeur natif**

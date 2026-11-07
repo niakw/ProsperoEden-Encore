@@ -82,6 +82,18 @@ qui prouvent l'intégrité. Les tests comprennent le dernier
 tenseur de taille variable, la fin de fichier tronquée, l'inventaire
 incomplet et le fichier comportant du bourrage final.
 
+## Alerte d'installation manquante (même comportement que LSFG)
+
+Le menu global et la fiche vidéo par jeu affichent un message
+d'erreur quand un mode DLSS-NR est sélectionné sans la DLL personnelle
+`/data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll`.
+Ils conservent la préférence précédente. Les contrôles de
+compatibilité Vulkan/AA/upscaling restent indépendants. Un DLSS
+précédemment configuré ne s'active pas silencieusement lors
+d'un lancement si la DLL a été supprimée : les diagnostics
+signalent le manque et le renderer normal prend le relais.
+Cf. `ENCORE_R09_MODEL_FILES_2026-11-07.md`.
+
 ## Contrat utilisateur prioritaire — une seule DLL, zéro extraction manuelle
 
 La seule entrée à demander à l'utilisateur est **`nvngx_dlssnr.dll`**.

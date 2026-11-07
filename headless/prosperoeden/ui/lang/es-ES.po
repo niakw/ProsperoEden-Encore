@@ -2031,6 +2031,10 @@ msgstr "La generación de fotogramas puede mejorar la fluidez visual sin acelera
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Falta Lossless.dll o no es válido. Coloca tu archivo en /data/prosperoeden/user/lossless/Lossless.dll."
 
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: falta nvngx_dlssnr.dll o no es válido. Coloca tu archivo en /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms (read-only)"
 msgstr "Salas públicas (solo lectura)"

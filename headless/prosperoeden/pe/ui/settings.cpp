@@ -653,6 +653,12 @@ void Launcher::press_dialog(Key key)
                     return;
                 }
             }
+            if(Eden::NeuralVideo::IsDlss(next)&&
+               !services_.has_dlssnr_dll()){
+                say(tr("DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."),true);
+                cue(Cue::error);
+                return;
+            }
             prefs_.neural_mode=next;
         }
         else if (option_ == video_neural_strength)

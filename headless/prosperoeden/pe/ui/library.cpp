@@ -1908,6 +1908,15 @@ void Launcher::press_game(Key key)
                 return;
             }
         }
+        // Mirror the existing LSFG modal warning, for both Original and
+        // Compact and for an inherited global NR mode (Default).
+        // Do not persist a selection that cannot load its private DLL.
+        if(Eden::NeuralVideo::IsDlss(active)&&
+           !services_.has_dlssnr_dll()){
+            say(tr("DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."),true);
+            cue(Cue::error);
+            return;
+        }
         const bool saved=services_.set_game_settings(game.title_id,next);
         if(saved){game_settings_=next;home_settings_cache_.erase(game.title_id);}
         say(saved?tr("Neural Rendering saved for this game."):

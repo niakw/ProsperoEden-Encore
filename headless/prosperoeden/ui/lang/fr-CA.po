@@ -2151,6 +2151,10 @@ msgstr "La génération d’images peut améliorer la fluidité d’affichage sa
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll manquant ou invalide. Placez votre fichier dans /data/prosperoeden/user/lossless/Lossless.dll."
 
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR : fichier nvngx_dlssnr.dll manquant ou invalide. Placez votre fichier dans /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms (read-only)"
 msgstr "Salons publics (lecture seule)"

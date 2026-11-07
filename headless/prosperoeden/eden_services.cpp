@@ -28,6 +28,7 @@
 #include "settings_store.h"
 #include "version.h"
 #include "lossless_user_file.h"
+#include "nr_dll_user_file.h"
 #include "network/room.h"
 #include "network/network.h"
 #include "network/room_member.h"
@@ -2798,6 +2799,11 @@ EdenServices::detached_room_directory_task()
 
 bool EdenServices::has_lossless_dll() const {
     return Eden::Graphics::LosslessUserFileLooksValid(Eden::UserDir());
+}
+
+bool EdenServices::has_dlssnr_dll() const {
+    return Eden::Graphics::DlssNrUserFileLooksValid(
+        Eden::UserDir(), Eden::ConfigDir());
 }
 
 pe::ui::AppUpdateInfo EdenServices::check_app_update(const std::string& current) {

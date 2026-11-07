@@ -72,3 +72,12 @@ des deux nouveaux propriétaires C++ intégrés au workflow R09 ;
 et poids de prébloc étendus, liaisons U-Net, postbloc, compositing,
 exécution intégrale et mesure GPU/PS5. Le raccord ne doit pas rendre
 DLSS-NR activable par défaut.
+
+### Ordonnancement avec les niveaux U-Net
+
+Le raccord propose aussi `RecordEntryOnly()` : on peut enregistrer
+le proxy et la projection C32 **sans** exécuter deux fois le premier
+FSwin, puis confier ce segment au propriétaire d'arête U-Net
+(`NrRdna2FSwinLevelLink` ou `NrRdna2UNetSkipCache`).
+Les deux modes d'enregistrement sont mutuellement exclusifs et à usage
+unique. Le raccord complet du réseau demeure non qualifié.

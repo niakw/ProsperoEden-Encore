@@ -573,3 +573,10 @@ add_test(NAME test_rdna2_nr_image_feature_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-image-feature-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# No-history proxy RGBA32F -> sixteen FP16 channels (model entry primitive).
+eden_r08_test(test_rdna2_nr_proxy_feature_policy)
+add_test(NAME test_rdna2_nr_proxy_feature_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-proxy-features-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

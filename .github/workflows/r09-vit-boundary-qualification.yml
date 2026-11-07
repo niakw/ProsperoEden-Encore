@@ -9,6 +9,7 @@ on:
       - 'extras/graphics/fixtures/r09_nr_*'
       - 'tools/graphics/test-rdna2-*'
       - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
+      - 'tools/graphics/test-rdna2-proxy-features-spv.py'
       - 'headless/vulkan.cmake'
       - 'vendor'
   workflow_dispatch:
@@ -44,7 +45,8 @@ jobs:
               test_rdna2_nr_vit_native_route_policy \
               test_rdna2_nr_decoder_model_loader \
               test_rdna2_nr_image_feature_policy \
-              test_rdna2_nr_image_feature_weights
+              test_rdna2_nr_image_feature_weights \
+              test_rdna2_nr_proxy_feature_policy
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
@@ -72,6 +74,7 @@ jobs:
             test-rdna2-decoder-spv.py
             test-rdna2-split-decoder-skip-spv.py
             test-rdna2-image-feature-spv.py
+            test-rdna2-proxy-features-spv.py
           )
           for script in "${scripts[@]}"; do
             python3 -m py_compile "tools/graphics/$script"

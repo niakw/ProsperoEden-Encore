@@ -107,6 +107,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_neural_bottleneck.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_image_feature_stage.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_feature_stage.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_decoder_skip_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
@@ -344,6 +345,28 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
+
+# R09 no-history 16-channel neural proxy from pre-normalized RGBA32F.
+set(EDEN_R09_PROXY_FEATURE_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_proxy_features_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_PROXY_FEATURE_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-proxy-features-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_PROXY_FEATURE_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/proxy_features_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-proxy-features-spv.py"
+    COMMENT "Validate Vulkan 1.1 first-frame neural proxy feature shader"
+    VERBATIM)
+add_custom_target(eden-r09-proxy-feature-spv
+    DEPENDS "${EDEN_R09_PROXY_FEATURE_HEADER}")
+add_dependencies(video_core eden-r09-proxy-feature-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_feature_stage.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_PROXY_FEATURE_HEADER}")
 
 # R09 learned pre/post **feature** matrices (not an RGB/depth adapter).
 # The model-provided [32,16] and [16,32] matrices remain external.

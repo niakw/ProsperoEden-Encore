@@ -23,6 +23,7 @@ FILES=(
     "nr_rdna2_split_swin_run.cpp",
     "nr_rdna2_vit_run.cpp",
     "nr_rdna2_image_feature_stage.cpp",
+    "nr_rdna2_proxy_feature_stage.cpp",
 )
 INCLUDES=[
     ROOT/"extras/graphics",
@@ -61,6 +62,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "rdna2_nr_decoder_fp32_to_fp16_comp_spv.h"),
         ("test-rdna2-image-feature-spv.py",
          "rdna2_nr_image_feature_comp_spv.h"),
+        ("test-rdna2-proxy-features-spv.py",
+         "rdna2_nr_proxy_features_comp_spv.h"),
     ):
         subprocess.run([
             "python3",str(ROOT/"tools/graphics"/tool),

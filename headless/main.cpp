@@ -44,6 +44,7 @@
 #include "in_game_overlay_menu.h"
 #include "encore_overrides_generated.h"
 #include "neural_video_policy.h"
+#include "neural_runtime_state.h"
 #include "encore_overrides_runtime.h"
 #include "fxaa_quality_select.h"
 #include "encore_performance_policy.h"
@@ -1639,12 +1640,20 @@ int main(int argc, char** argv) {
                 ? Eden::NeuralVideo::InternalA4kFilter(requested_nr)
                 : (selected_filter>=5&&profile_renderer==0?0:selected_filter);
             Settings::values.scaling_filter.SetValue(filters[mapped_filter]);
-            // DLSS-NR selection persists without faking an A4K result.
-            // Image execution needs the completed GPU graph and present path.
+            // The renderer receives ONLY a selected DLSS model. A4K is
+            // still handled by its independent native Vulkan filter.
+            // Model-pack validation remains fail closed inside R09.
+            const int requested_nr_strength=safe_launch?65:
+                (game_video.neural_strength>=0?
+                    game_video.neural_strength:launch_preferences.neural_strength);
+            Eden::NeuralRuntime::Configure(
+                neural_selectable&&Eden::NeuralVideo::IsDlss(requested_nr)
+                    ? requested_nr:Eden::NeuralVideo::kOff,
+                requested_nr_strength);
             if(neural_selectable&&Eden::NeuralVideo::IsDlss(requested_nr))
                 Eden::Report("neural",requested_nr==Eden::NeuralVideo::kDlssOriginal
-                    ? "DLSS-NR Original selected (image graph not yet attached)"
-                    : "DLSS-NR Compact selected (image graph not yet attached)");
+                    ? "DLSS-NR Original: loading validated Vulkan image session"
+                    : "DLSS-NR Compact: loading validated Vulkan image session");
             const int fsr_sharpness = safe_launch ? 50 :
                 (game_video.fsr_sharpness >= 0 ? game_video.fsr_sharpness : profile_fsr);
             const int anti_aliasing = safe_launch ? 0 :

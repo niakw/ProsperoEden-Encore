@@ -1,5 +1,15 @@
 # R09 — gains FSwin upsample : frontière des 16 coefficients (06/11/2026)
 
+> **Actualisation du 7 novembre 2026 : reconstruction de la frontière intégrée.**
+> Le chargement R09 réassemble désormais C64/C128/C256 en prenant les 16
+> premiers coefficients du gain à la fin de `residual_scale`, puis les C−16
+> suivants de `upsample_gain`. Les C valeurs résiduelles précédentes restent
+> séparées. Ce découpage est corroboré par une implémentation Vulkan indépendante,
+> mais n'est **pas** une preuve de parité GPU d'une vraie image. Voir
+> [l'audit actualisé](ENCORE_R09_UNET_GAIN_RECOVERY_2026-11-07.md).
+> Les paragraphes ci-dessous décrivent le diagnostic **historique du 6/11**
+> précédant l'intégration et ne représentent plus l'état courant du loader.
+
 État : **problème de reconstruction de région**, pas démonstration que les 16 coefficients sont absents du modèle. Aucun déblocage artificiel dans l'inférence.
 
 ## Éléments vérifiés dans l'amont MIT

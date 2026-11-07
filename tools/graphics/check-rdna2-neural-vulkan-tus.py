@@ -11,48 +11,21 @@ import shutil
 import subprocess
 import tempfile
 import runpy
+import re
+import struct
 
 ROOT=Path(__file__).resolve().parents[2]
 ACTIVE=ROOT/"vendor/encore-active/eden-vulkan"
 SHADER=ROOT/"vendor/encore-active/eden-shader/src"
 CPM=ROOT/"vendor/sources/eden-cpm"
-FILES=(
-    "nr_rdna2_decoder_tile_to_linear.cpp",
-    "nr_rdna2_decoder_fp32_to_fp16.cpp",
-    "nr_rdna2_native_decoder_link.cpp",
-    "nr_rdna2_neural_bottleneck.cpp",
-    "nr_rdna2_split_swin_run.cpp",
-    "nr_rdna2_vit_run.cpp",
-    "nr_rdna2_image_feature_stage.cpp",
-    "nr_rdna2_postblock_mix.cpp",
-    "nr_rdna2_postblock_run.cpp",
-    "nr_rdna2_preblock_run.cpp",
-    "nr_rdna2_preblock_pool.cpp",
-    "nr_rdna2_proxy_feature_stage.cpp",
-    "nr_rdna2_proxy_lift_link.cpp",
-    "nr_rdna2_proxy_fswin_link.cpp",
-    "nr_rdna2_fswin_dense.cpp",
-    "nr_rdna2_fswin_graph.cpp",
-    "nr_rdna2_fswin_descriptors.cpp",
-    "nr_rdna2_fswin_layer_runtime.cpp",
-    "nr_rdna2_fswin_gpu_tensors.cpp",
-    "nr_rdna2_fswin_output_view.cpp",
-    "nr_rdna2_fswin_chain.cpp",
-    "nr_rdna2_fswin_level_link.cpp",
-    "nr_rdna2_unet_skip_cache.cpp",
-    "nr_rdna2_unet_down_sequence.cpp",
-    "nr_rdna2_unet_bottleneck_link.cpp",
-    "nr_rdna2_unet_up_sequence.cpp",
-    "nr_rdna2_core_feature_sequence.cpp",
-    "nr_rdna2_frame_session.cpp",
-    "nr_rdna2_frame_readback.cpp",
-    "nr_rdna2_nohistory_compose.cpp",
-    "nr_rdna2_temporal_compose.cpp",
-    "nr_rdna2_hdr_proxy.cpp",
-    "nr_rdna2_nohistory_present.cpp",
-    "nr_rdna2_texture_proxy.cpp",
-    "nr_rdna2_unet_upsample_link.cpp",
-)
+# Compile every maintained R09 Vulkan C++ owner, not a hand-selected
+# subset that can silently miss a renderer/graph/weight source.
+FILES=tuple(sorted(p.name for p in ACTIVE.glob("nr_rdna2_*.cpp")))
+REQUIRED={"nr_rdna2_frame_session.cpp","nr_rdna2_frame_readback.cpp",
+          "nr_rdna2_core_feature_sequence.cpp","nr_rdna2_fswin_upsample.cpp",
+          "nr_rdna2_split_swin_block.cpp","nr_rdna2_vit_block.cpp"}
+assert len(FILES)>=73 and REQUIRED.issubset(FILES), (
+    "R09 whole-graph C++ owner source inventory incomplete", len(FILES))
 INCLUDES=[
     ROOT/"extras/graphics",
     ROOT/"headless",
@@ -114,6 +87,55 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
             "--vendor",str(ROOT/"vendor"),
             "--header",str(shader_headers/header)
         ],check=True,cwd=ROOT)
+    # The full R09 host runner must build every neural operator. Generate
+    # real, validated Vulkan-1.1 SPIR-V for all maintained production shaders.
+    # The 12 explicit ABI generators above remain authoritative for their
+    # respective headers. Missing sources and duplicate shader symbols fail.
+    neural_shader_root=ACTIVE/"r09_rdna2_nr"
+    shaders=sorted(neural_shader_root.glob("*_rdna2.comp"))
+    assert len(shaders)>=35, ("R09 production shader inventory incomplete",
+                             len(shaders))
+    symbols=set()
+    for shader in shaders:
+        stem=shader.name.removesuffix("_rdna2.comp")
+        # The production FFWD3 shader file has a group suffix, but the
+        # compiled ABI published to C++ has always been named FFWD3.
+        public_name="ffwd3" if stem=="ffwd3_group" else stem
+        symbol="RDNA2_NR_"+public_name.upper()+"_COMP_SPV"
+        assert symbol not in symbols, ("duplicate R09 shader ABI",symbol)
+        symbols.add(symbol)
+        header=shader_headers/("rdna2_nr_"+public_name+"_comp_spv.h")
+        if header.is_file():
+            continue
+        spv=temp/(public_name+".spv")
+        subprocess.run([
+            "glslangValidator","-V","--target-env","vulkan1.1",
+            "-S","comp","-o",str(spv),str(shader)
+        ],check=True,cwd=ROOT,stdout=subprocess.DEVNULL)
+        subprocess.run(["spirv-val","--target-env","vulkan1.1",
+                        str(spv)],check=True,cwd=ROOT)
+        raw=spv.read_bytes()
+        assert raw and len(raw)%4==0, ("bad R09 SPIR-V",shader)
+        words=struct.unpack("<"+"I"*(len(raw)//4),raw)
+        output=["// SPDX-License-Identifier: MIT","#pragma once",
+                "#include <array>","#include <cstdint>",
+                f"inline constexpr std::array<std::uint32_t, {len(words)}> {symbol} = {{"]
+        for offset in range(0,len(words),8):
+            output.append("    "+", ".join(
+                f"0x{word:08x}u" for word in words[offset:offset+8])+",")
+        output.append("};")
+        header.write_text("\\n".join(output)+"\\n",encoding="utf-8")
+    # Independent completeness check: do not accept unknown or renamed
+    # #include <video_core/host_shaders/> references during host compilation.
+    for name in FILES:
+        contents=(ACTIVE/name).read_text(encoding="utf-8")
+        for include in re.findall(
+                r'#include\\s+["<]video_core/host_shaders/([^">]+)[">]',
+                contents):
+            assert (shader_headers/include).is_file(), (
+                "R09 required compiled shader missing",name,include)
+    print("R09_WHOLE_GRAPH_REAL_SPIRV_PASS shaders="+str(len(shaders)),
+          "owners="+str(len(FILES)),flush=True)
     # Match production's versioned presentation Layer overlay exactly,
     # otherwise the host syntax check would use the pristine upstream
     # class and miss integration errors in the live PS5 renderer.

@@ -26,6 +26,8 @@ on:
       - 'headless/nr_dll_model_import.h'
       - 'headless/glyph_sha256.h'
       - 'extras/graphics/test_nr_dll_model_import.cpp'
+      - 'extras/graphics/test_rdna2_nr_split_ffwd_weights.cpp'
+      - 'extras/graphics/test_rdna2_nr_vit_qkv_weight_loader.cpp'
       - 'headless/r09_native_plans.h'
       - 'headless/storage_paths.h'
       - 'headless/nr_dll_user_file.h'
@@ -77,6 +79,8 @@ jobs:
               test_rdna2_nr_bottleneck_route_policy \
               test_rdna2_nr_vit_native_route_policy \
               test_rdna2_nr_decoder_model_loader \
+              test_rdna2_nr_split_ffwd_weights \
+              test_rdna2_nr_vit_qkv_weight_loader \
               test_rdna2_nr_image_feature_policy \
               test_rdna2_nr_image_feature_weights \
               test_rdna2_nr_proxy_feature_policy \

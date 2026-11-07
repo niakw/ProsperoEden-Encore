@@ -104,6 +104,44 @@ indépendante. Les captures R09 existantes proviennent d'une chaîne
 de test avec poids de contrôle et ne doivent pas être présentées
 comme « avant / après DLSS Original ».
 
+## Blocage réel de lecture des poids corrigé — inventory brut (7 novembre)
+
+**Vérifié avec le pack Original de l'utilisateur, gardé hors GitHub.**
+Le préflight CPU natif du plan 152 lignes passe (599 tenseurs,
+4 profondeurs U-Net, 2 séquences Split-Swin, 8 blocs ViT).
+
+Une erreur de chargement empêchait pourtant le vrai modèle de dépasser
+l'initialisation GPU : les chargeurs Split-Swin FFWD et ViT QKV
+demandaient des fichiers canonicalisés absents de ce format
+`NRMODEL1`. Les poids sont conservés sous forme de 24 enregistrements
+bruts `inventory/weights/`. Auparavant, les deux chargeurs refusaient
+effectivement les données authentiques (retours `false` reproduits
+hors console).
+
+Le vendor `69fa7c3` reconstitue ces matrices **depuis leurs données
+réelles**, sans coefficient inventé et sans DLL exécutée :
+
+- 16 blocs Split-Swin FFWD : deux fragments FP8 512×512 par bloc ;
+- 8 blocs ViT QKV : en-tête FP32 réel + trois matrices FP8 1024×1024
+  entrelacées, avec désentrelacement exact ;
+- conservation du chargement canonique antérieur et refus strict des
+  paquets partiels, mal formés ou contenant des FP8 non finis.
+
+**Qualification CPU avec vrais poids : 16/16 Split FFWD, 8/8 ViT QKV,
+44/44 FSwin et 4/4 transitions montantes réussis.**
+Le parcours des autres chargeurs Split, ViT, projection, pré/postbloc
+passe également (108 étapes de staging supplémentaires testées).
+Un test Vulkan Lavapipe local a exécuté la véritable projection
+apprise du prébloc (64 tokens × 32 canaux) avec **2 048 résultats FP16
+identiques à un oracle CPU indépendant**.
+
+Cela lève deux refus déterministes de l'ancien moteur et ajoute une
+première preuve GPU utilisant des poids authentiques.
+**Ce n'est toujours pas** une inférence de bout en bout des 152
+opérations ni une image DLSS-NR finale comparée à NVIDIA. Aucun
+test PS5 ni build global n'a été effectué. Les poids, la DLL et les
+résultats de modèle restent privés.
+
 ## Alerte d'installation manquante (même comportement que LSFG)
 
 Le menu global et la fiche vidéo par jeu affichent un message

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Synthetic NRMODEL1 ViT QKV importer: no NVIDIA/model weights bundled.
 #include "video_core/renderer_vulkan/nr_rdna2_vit_qkv_weight_loader.h"
+#include "video_core/renderer_vulkan/nr_rdna2_split_ffwd_weight_loader.h"
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cassert>
@@ -131,5 +133,62 @@ int main(){
     assert(!PrepareViTQkvModelWeights(
         model,"unpacked/block31.layer2.layer",output));
     assert(output.row_major_qkv.empty());
+    // Real Original packs store 16 FFWD pairs and eight ViT QKV groups
+    // as raw inventory records. Exercise BOTH native fallbacks with a
+    // synthetic, non-proprietary 2-record NRMODEL1 pack.
+    auto raw_head=fixture[0].content;
+    std::vector<std::uint8_t> raw_qkv(128u+3u*1024u*1024u);
+    std::copy(raw_head.begin(),raw_head.end(),raw_qkv.begin());
+    for(std::uint32_t tile=0;tile<1024u;++tile)
+        for(std::uint32_t part=0;part<3u;++part){
+            const std::uint8_t value=part==0u?0x38u:
+                                     part==1u?0x40u:0x48u;
+            std::fill_n(raw_qkv.begin()+128u+
+                (3u*tile+part)*1024u,1024u,value);
+        }
+    // Probe a non-uniform K/row placement in the original interleaving.
+    constexpr std::uint32_t row=5u,k=37u,which=1u;
+    const std::uint32_t b=(k&1u)|(((k>>1u)&1u)<<4u)|
+        (((k>>2u)&1u)<<5u)|(((k>>3u)&1u)<<1u)|
+        (((k>>4u)&1u)<<2u)|((row&1u)<<6u)|
+        (((row>>1u)&1u)<<7u)|(((row>>2u)&1u)<<8u)|
+        (((row>>3u)&1u)<<3u)|(((row>>4u)&1u)<<9u);
+    const std::uint32_t tile=(row>>5u)|((k>>5u)<<5u);
+    raw_qkv[128u+(3u*tile+which)*1024u+b]=0x18u;
+    std::vector<Entry> inventory{
+        {"inventory/weights/block23.layer0.layer.bin",
+            std::vector<std::uint8_t>(524288u,0x80u)},
+        {"inventory/weights/block31.layer2.layer.bin",
+            std::move(raw_qkv)}};
+    write(inventory);
+    assert(model.Open(name.string()));
+    SplitFFWDWeights split{};
+    assert(PrepareSplitFFWDWeights(
+        model,"unpacked-splitswin/block23.layer0.layer",split));
+    assert(split.w1.size()==262144u&&split.w2.size()==131072u&&
+           split.w3.size()==131072u);
+    assert(split.w1[0u]==0x80u&&split.w2[0u]==0x80u);
+    assert(PrepareViTQkvModelWeights(
+        model,"unpacked-vit/block31.layer2.layer",output));
+    assert(output.row_major_qkv.size()==3u*1024u*1024u);
+    assert(output.row_major_qkv[0u]==0x38u);
+    assert(output.row_major_qkv[1024u*1024u]==0x40u);
+    assert(output.row_major_qkv[2u*1024u*1024u]==0x48u);
+    assert(output.row_major_qkv[
+        (std::size_t(which)*1024u+row)*1024u+k]==0x18u);
+    assert(output.temperatures[31u]==1.f+31.f/64.f);
+    // Partially unpacked, truncated, or unsafe inventory is rejected.
+    auto damaged=inventory;
+    damaged[0u].content.pop_back();
+    write(damaged);
+    assert(model.Open(name.string()));
+    assert(!PrepareSplitFFWDWeights(
+        model,"unpacked-splitswin/block23.layer0.layer",split));
+    damaged=inventory;
+    damaged[1u].content.pop_back();
+    write(damaged);
+    assert(model.Open(name.string()));
+    assert(!PrepareViTQkvModelWeights(
+        model,"unpacked-vit/block31.layer2.layer",output));
     std::filesystem::remove(name);
 }

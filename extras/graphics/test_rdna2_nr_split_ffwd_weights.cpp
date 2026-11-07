@@ -38,6 +38,17 @@ int main() {
     assert(roundtrip==original_a);
     assert(SplitFFCanonicalToFragment(can_b,roundtrip));
     assert(roundtrip==original_b);
+    // The authentic DLL pack stores the source in fragment order.
+    // Check the new inverse used by raw-inventory fallback byte for byte.
+    std::vector<std::uint8_t> direct;
+    assert(SplitFFFragmentToCanonical(original_a,direct));
+    assert(direct==can_a);
+    assert(SplitFFFragmentToCanonical(original_b,direct));
+    assert(direct==can_b);
+    assert(!SplitFFFragmentToCanonical(
+        std::span<const std::uint8_t>{original_a.data(),
+                                       original_a.size()-1u},direct));
+    assert(direct.empty());
     assert(!SplitFFCanonicalToFragment(
         std::span<const std::uint8_t>{can_a.data(),can_a.size()-1u},
         roundtrip));

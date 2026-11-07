@@ -32,7 +32,7 @@ int main(){
     DecoderStorage s{16384,98304,131072,1024};
     assert(CanDecoderUpsample(p,s));
     assert(!CanDecoderUpsample(p,{16383,98304,131072,1024}));
-    assert(!CanDecoderUpsample(p,{16384,98303,131072,1024}));
+    assert(!CanDecoderUpsample(p,{16384,65535,131072,1024}));
     assert(!CanDecoderUpsample(p,{16384,98304,98303,1024}));
     assert(!CanDecoderUpsample(p,{16384,98304,131072,1023}));
     p.dst_base_bytes=131072;

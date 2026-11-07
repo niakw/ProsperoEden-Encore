@@ -62,6 +62,7 @@ jobs:
           python3 -B tools/graphics/r09_verify_model_pack.py --check-reference
           python3 -B tools/graphics/test_r09_native_digest_inventory.py
           python3 -B tools/graphics/test_r09_verify_model_pack.py
+          python3 -B tools/graphics/test_r09_full_gpu_evidence.py
       - name: Install host-only Vulkan 1.1 shader validators
         run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools spirv-tools
       - name: Compile and execute host graph boundary tests under UBSan

@@ -93,13 +93,17 @@ struct R09LaunchModelResult {
     const auto dir=config/"neural";
     const auto cache=dir/(original?"original.nrmodel":"compact.nrmodel");
     const auto legacy=dir/(original?"dlssnr.bin":"dlssnr-small.bin");
+    // A cached pack is an implementation detail, not a second user input.
+    // If the user's DLL was removed after a successful import, disable
+    // neural rendering for this launch even when the cache remains valid.
+    // Check this BEFORE considering either current or legacy cache paths.
+    if(!DlssNrUserFileLooksValid(user,config))
+        return {false,false,"DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."};
     // Never accept an unverified file only because a matching filename
     // exists; cache missing/invalid must remain fail-closed.
     if(R09UsableCachedPack(cache,variant)||
        R09UsableCachedPack(legacy,variant))
         return {true,false,nullptr};
-    if(!DlssNrUserFileLooksValid(user,config))
-        return {false,false,"DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."};
     // The user DLL available in this project contains authentic Original
     // only; never silently substitute its tensors for Compact.
     if(!original)

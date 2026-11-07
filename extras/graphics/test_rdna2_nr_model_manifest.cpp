@@ -32,6 +32,19 @@ static void CheckManifest(const std::array<std::string_view,N>& manifest,
         entries.push_back({std::string(name),256u,2u});
     entries[entries.size()/2u].size=0u;
     assert(!ValidateR09ModelManifest(entries,expected_variant));
+    entries[entries.size()/2u].size=2u;
+    const auto temporal_name=expected_variant==R09ModelVariant::Original?
+        R09OriginalTemporalScale:R09CompactTemporalScale;
+    entries.push_back({std::string(temporal_name),256u,2u});
+    assert(ValidateR09ModelManifest(entries,expected_variant));
+    entries.back().size=4u;
+    assert(!ValidateR09ModelManifest(entries,expected_variant));
+    entries.back().size=2u;
+    entries.back().name="unpacked-postblock/foreign.blend_scale.bin";
+    assert(!ValidateR09ModelManifest(entries,expected_variant));
+    entries.back().name=std::string(temporal_name);
+    entries.push_back({std::string(temporal_name),512u,2u});
+    assert(!ValidateR09ModelManifest(entries,expected_variant));
 }
 int main(){
     static_assert(R09OriginalManifest.size()==599u);

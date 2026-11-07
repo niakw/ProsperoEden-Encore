@@ -27,3 +27,19 @@ Ce contrôle ne remplace **pas** la vérification des poids,
 les chargements matriciels, l'exécution de tous les shaders ni
 la validation numérique d'une image sur GPU. Aucune DLL/aucun
 modèle propriétaire n'est embarqué.
+
+## Extension strictement facultative du mode temporel
+
+Le modèle Original/Compact canonique fonctionne **sans** tenseur
+`blend_scale`, car les listes publiques amont ne l'incluent pas.
+Une extraction indépendante et vérifiée peut ajouter exactement :
+
+- Original : `unpacked-postblock/block70.layer0.layer.blend_scale.bin`
+- Compact : `unpacked-postblock/block30.layer0.layer.blend_scale.bin`
+
+Il doit s'agir d'un unique scalaire **FP16 sur deux octets**.
+L'inventaire refuse les autres extensions, doublons et tailles erronées.
+Le chargeur temporel valide ensuite sa vraie valeur [0,1], finie,
+avant tout dispatch. Aucun scalaire n'est synthétisé lorsque l'entrée
+est absente. Le mode première frame reste autonome et utilisable avec
+l'inventaire canonique.

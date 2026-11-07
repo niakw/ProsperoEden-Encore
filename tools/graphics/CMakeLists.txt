@@ -556,3 +556,20 @@ add_test(NAME test_rdna2_nr_bottleneck_route_policy
     COMMAND test_rdna2_nr_bottleneck_route_policy
         "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
         "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
+
+# Imported pre/post matrix weights are local NRMODEL1, never shipped;
+# this stage handles 16-feature tensors, not raw game RGB/HDR.
+eden_r08_test(test_rdna2_nr_image_feature_policy)
+add_executable(test_rdna2_nr_image_feature_weights
+    "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_image_feature_weights.cpp")
+target_include_directories(test_rdna2_nr_image_feature_weights PRIVATE
+    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/extras/graphics")
+target_compile_options(test_rdna2_nr_image_feature_weights PRIVATE
+    -Wall -Wextra -Werror -UNDEBUG)
+add_test(NAME test_rdna2_nr_image_feature_weights
+    COMMAND test_rdna2_nr_image_feature_weights)
+add_test(NAME test_rdna2_nr_image_feature_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-image-feature-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

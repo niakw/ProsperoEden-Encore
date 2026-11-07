@@ -41,7 +41,9 @@ jobs:
               test_rdna2_nr_split_decoder_skip_repack_policy \
               test_rdna2_nr_bottleneck_route_policy \
               test_rdna2_nr_vit_native_route_policy \
-              test_rdna2_nr_decoder_model_loader
+              test_rdna2_nr_decoder_model_loader \
+              test_rdna2_nr_image_feature_policy \
+              test_rdna2_nr_image_feature_weights
             do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
@@ -68,6 +70,7 @@ jobs:
             test-rdna2-decoder-fp32-to-fp16-spv.py
             test-rdna2-decoder-spv.py
             test-rdna2-split-decoder-skip-spv.py
+            test-rdna2-image-feature-spv.py
           )
           for script in "${scripts[@]}"; do
             python3 -m py_compile "tools/graphics/$script"

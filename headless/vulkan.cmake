@@ -106,6 +106,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_native_decoder_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_neural_bottleneck.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_image_feature_stage.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_decoder_skip_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
@@ -343,6 +344,29 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
+
+# R09 learned pre/post **feature** matrices (not an RGB/depth adapter).
+# The model-provided [32,16] and [16,32] matrices remain external.
+set(EDEN_R09_IMAGE_FEATURE_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_image_feature_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_IMAGE_FEATURE_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-image-feature-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_IMAGE_FEATURE_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/image_feature_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-image-feature-spv.py"
+    COMMENT "Compile and validate RDNA2 learned pre/post feature matrices"
+    VERBATIM)
+add_custom_target(eden-r09-image-feature-spv
+    DEPENDS "${EDEN_R09_IMAGE_FEATURE_HEADER}")
+add_dependencies(video_core eden-r09-image-feature-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_image_feature_stage.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_IMAGE_FEATURE_HEADER}")
 
 # R09: learned native decoder [512,1024] uses a shared FP32->FP16
 # Vulkan 1.1 epilogue before the independent-buffer skip/upsample pass.

@@ -30,6 +30,7 @@ FILES=(
     "nr_rdna2_fswin_level_link.cpp",
     "nr_rdna2_unet_skip_cache.cpp",
     "nr_rdna2_unet_down_sequence.cpp",
+    "nr_rdna2_unet_bottleneck_link.cpp",
     "nr_rdna2_unet_up_sequence.cpp",
     "nr_rdna2_unet_upsample_link.cpp",
 )

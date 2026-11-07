@@ -99,15 +99,16 @@ struct R09LaunchModelResult {
     // Check this BEFORE considering either current or legacy cache paths.
     if(!DlssNrUserFileLooksValid(user,config))
         return {false,false,"DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."};
+    // Compact has no importer for this one-DLL contract yet. An old
+    // authenticated Compact cache alone does not prove that the currently
+    // installed user DLL contains the Compact resource.
+    if(!original)
+        return {false,false,"DLSS-NR Compact: compatible Compact weights are unavailable in the installed DLL; Original remains selectable."};
     // Never accept an unverified file only because a matching filename
     // exists; cache missing/invalid must remain fail-closed.
     if(R09UsableCachedPack(cache,variant)||
        R09UsableCachedPack(legacy,variant))
         return {true,false,nullptr};
-    // The user DLL available in this project contains authentic Original
-    // only; never silently substitute its tensors for Compact.
-    if(!original)
-        return {false,false,"DLSS-NR Compact: compatible Compact weights are unavailable in the installed DLL; Original remains selectable."};
     const std::array<fs::path,4> candidates{
         user/kDlssNrRelative,
         config/"neural/nvngx_dlssnr.dll",

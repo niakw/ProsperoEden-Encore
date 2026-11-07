@@ -197,7 +197,9 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
         .sampled_width=render_extent.width,
         .sampled_height=render_extent.height,
         .crop_left=crop_rect.left,.crop_top=crop_rect.top,
-        .crop_right=crop_rect.right,.crop_bottom=crop_rect.bottom});
+        .crop_right=crop_rect.right,.crop_bottom=crop_rect.bottom,
+        .single_sample=!use_accelerated||
+            texture_info->sample_count==VK_SAMPLE_COUNT_1_BIT});
     const bool nr_exclusive=
         std::holds_alternative<std::monostate>(anti_alias)&&
         std::holds_alternative<std::monostate>(sr_filter);

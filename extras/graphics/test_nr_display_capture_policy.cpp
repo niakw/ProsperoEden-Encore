@@ -28,4 +28,6 @@ int main(){
     assert(!CanR09CaptureDisplay(bad));
     bad=gpu;bad.crop_right=0.0f;
     assert(!CanR09CaptureDisplay(bad));
+    bad=gpu;bad.single_sample=false;
+    assert(!CanR09CaptureDisplay(bad));
 }

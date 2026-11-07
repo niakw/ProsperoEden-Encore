@@ -10,11 +10,13 @@ struct NRDisplayCapture {
     std::uint32_t native_width{},native_height{};
     std::uint32_t sampled_width{},sampled_height{};
     float crop_left{},crop_top{},crop_right{},crop_bottom{};
+    bool single_sample{true};
 };
 [[nodiscard]] constexpr bool CanR09CaptureDisplay(
     NRDisplayCapture s) noexcept {
     constexpr std::uint32_t model_width=1920u,model_height=1080u;
-    if(!s.live_image||!s.native_width||!s.native_height||
+    if(!s.live_image||!s.single_sample||
+       !s.native_width||!s.native_height||
        s.native_width>16384u||s.native_height>16384u||
        s.sampled_width!=model_width||s.sampled_height!=model_height||
        s.crop_left!=0.0f||s.crop_top!=0.0f||

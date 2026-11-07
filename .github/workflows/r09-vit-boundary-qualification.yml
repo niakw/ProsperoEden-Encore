@@ -12,6 +12,11 @@ on:
       - 'tools/graphics/r09_vulkan_io_smoke.cpp'
       - 'tools/graphics/test-rdna2-proxy-features-spv.py'
       - 'headless/vulkan.cmake'
+      - 'headless/vulkan_present_layer_r24.cpp'
+      - 'headless/vulkan_present_layer_r24.h'
+      - 'headless/neural_runtime_state.h'
+      - 'headless/r09_native_plans.h'
+      - 'headless/storage_paths.h'
       - 'vendor'
   workflow_dispatch:
 permissions:

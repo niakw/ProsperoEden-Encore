@@ -159,6 +159,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_bottleneck_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_up_sequence.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_core_feature_sequence.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_frame_session.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_compose.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_temporal_compose.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_hdr_proxy.cpp"

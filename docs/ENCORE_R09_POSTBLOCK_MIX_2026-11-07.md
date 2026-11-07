@@ -16,3 +16,7 @@ du prébloc, sortie Swin finale, projection vers les caractéristiques de
 sortie, compositing HDR, rendu PS5. Rien n'est activé par défaut.
 Aucun poids incomplet n'est complété par des zéros ou gains inventés.
 Les gains U-Net C64/C128/C256 manquants restent bloquants.
+
+Les dimensions logiques du plan sont transposées dans le raster GPU :
+entrée basse 540×960, sortie/skip 1080×1920 pour le plan 1920×1080.
+Le contrôle hôte valide cette convention sans permuter les octets.

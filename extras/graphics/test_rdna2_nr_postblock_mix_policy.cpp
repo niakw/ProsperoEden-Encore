@@ -12,7 +12,7 @@ static void Check(const char* path){
                              std::istreambuf_iterator<char>{}};
     std::vector<NativePlanStep> rows;
     assert(ParseNativePlan(source,rows)==NativePlanError::Ok);
-    const PostblockMixShape s{rows[0].width,rows[0].height};
+    const PostblockMixShape s{rows[0].height,rows[0].width};
     const auto full=std::uint64_t(s.width)*s.height*32u;
     assert(CanNativePostblockMixBoundary(rows,s));
     assert(CanPostblockMix(s,{full/4u,full,128u,full}));

@@ -324,6 +324,10 @@ jobs:
             fi
           done
           cp tools/graphics/r09_vulkan_fswin_smoke.cpp .build-r09-gpu/lavapipe-kit/
+          cp headless/nr_dll_model_import.h .build-r09-gpu/lavapipe-kit/
+          cp headless/glyph_sha256.h .build-r09-gpu/lavapipe-kit/
+          cp vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h \
+            .build-r09-gpu/lavapipe-kit/
           cp .build-r09-gpu/fswin_dense.spv .build-r09-gpu/lavapipe-kit/
           ldd "$driver" > .build-r09-gpu/lavapipe-kit/lavapipe-dependencies.txt
           printf '%s\n' 'Pure public-source Mesa ICD and test files; no user DLL or NVIDIA weights.'             > .build-r09-gpu/lavapipe-kit/README.txt

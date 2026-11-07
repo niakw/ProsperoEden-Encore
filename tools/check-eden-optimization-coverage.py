@@ -696,6 +696,17 @@ print("ENCORE_POST_F07_FEATURE_STACK_ISOLATION_PASS",
 
 owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
+# Source audit diagnostic: never amend the frozen 518-source baseline
+# without first identifying exact post-F07 source additions by name.
+historical_handled={
+    "headless/jit_memory_policy.h" if e["path"]=="headless/experimental_performance.h"
+    else e["path"] for e in STATE["handled_paths"]
+}
+if len(owners)!=518:
+    print("F07_UNCLASSIFIED_SOURCE_OWNERS_JSON="+json.dumps(
+        sorted(owners-historical_handled),separators=(",",":")),flush=True)
+    print("F07_HISTORIC_OWNER_MISSING_JSON="+json.dumps(
+        sorted(historical_handled-owners),separators=(",",":")),flush=True)
 assert len(owners)==518, ("F07 reviewed shipping source owner drift",len(owners))
 assert "headless/ns2_title_catalog.h" in owners, "new NS2 title owner unaccounted for"
 print("NS2_F07_TRIAGE_ISOLATION_PASS", f"unreviewed_research_sources={len(research_owners)}",

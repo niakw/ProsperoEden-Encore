@@ -58,6 +58,7 @@ jobs:
               test_rdna2_nr_unet_down_sequence_policy \
               test_rdna2_nr_unet_up_sequence_policy \
               test_rdna2_nr_unet_bottleneck_link_policy \
+              test_rdna2_nr_full_graph_owner_coverage \
               test_rdna2_nr_preblock_boundary_policy \
               test_rdna2_nr_postblock_mix_policy \
               test_rdna2_nr_postblock_mix_weights \
@@ -80,6 +81,7 @@ jobs:
                     "$unit" == test_rdna2_nr_unet_down_sequence_policy || \
                     "$unit" == test_rdna2_nr_unet_up_sequence_policy || \
                     "$unit" == test_rdna2_nr_unet_bottleneck_link_policy || \
+                    "$unit" == test_rdna2_nr_full_graph_owner_coverage || \
                     "$unit" == test_rdna2_nr_preblock_boundary_policy || \
                     "$unit" == test_rdna2_nr_postblock_mix_policy || \
                     "$unit" == test_rdna2_nr_preblock_pool_policy ]]; then

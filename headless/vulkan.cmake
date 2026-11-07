@@ -160,6 +160,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_unet_up_sequence.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_core_feature_sequence.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_compose.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_temporal_compose.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_hdr_proxy.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_nohistory_present.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_texture_proxy.cpp"
@@ -427,6 +428,28 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_hdr_proxy.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_HDR_PROXY_HEADER}")
+
+# R09 learned four-channel head and real temporal-history blending.
+set(EDEN_R09_TEMPORAL_COMPOSE_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_temporal_compose_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_TEMPORAL_COMPOSE_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-temporal-compose-spv.py"
+        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --header "${EDEN_R09_TEMPORAL_COMPOSE_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/temporal_compose_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-temporal-compose-spv.py"
+    COMMENT "Validate R09 neural learned temporal history shader"
+    VERBATIM)
+add_custom_target(eden-r09-temporal-compose-spv
+    DEPENDS "${EDEN_R09_TEMPORAL_COMPOSE_HEADER}")
+add_dependencies(video_core eden-r09-temporal-compose-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_temporal_compose.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_TEMPORAL_COMPOSE_HEADER}")
 
 # R09: first-frame-only RGB residual output from the learned post-head.
 # No HDR, temporal history, source capture or presentation is implied.

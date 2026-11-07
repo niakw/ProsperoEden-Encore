@@ -33,6 +33,8 @@ on:
       - 'tools/check-fc27-f06-native-pad-transition-host.py'
       - 'tools/check-ps5-autocontrol-context.py'
       - 'tools/check-encore-ux.py'
+      - 'tools/overlay-style-check.cpp'
+      - 'tools/check-overlay-touchpad-source.py'
       - '.github/workflows/encore-touchpad-overlay-host.yml'
 permissions:
   contents: read

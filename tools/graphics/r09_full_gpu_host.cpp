@@ -3,6 +3,7 @@
 // Needs a host build linked to the maintained Eden video_core Vulkan runtime.
 // NEVER use a synthetic fixture as the authentic test's input or output.
 #include "r09_native_plans.h"
+#include "nr_dll_launch_preflight.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_readback.h"
 #include "video_core/renderer_vulkan/present/util.h"
@@ -73,6 +74,12 @@ void Run(const std::filesystem::path& model_path,
          const std::filesystem::path& output_path) {
     if (!std::filesystem::is_regular_file(model_path)) {
         throw std::runtime_error("R09_HOST_AUTHENTIC_MODEL_MISSING");
+    }
+    // The shipping importer checks all 599 public learned-tensor digests.
+    // Never accept a syntactically valid synthetic NRMODEL1 as Original.
+    if (!Eden::Graphics::R09UsableCachedPack(
+            model_path, Eden::Graphics::NeuralRDNA2::R09ModelVariant::Original)) {
+        throw std::runtime_error("R09_HOST_AUTHENTIC_599_TENSOR_SHA256_REJECTED");
     }
     // Check real capture bytes before spending Vulkan memory. No generated
     // color bars or fixture mode is supported in this program.

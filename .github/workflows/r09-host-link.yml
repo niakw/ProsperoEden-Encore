@@ -66,6 +66,20 @@ jobs:
           set -e
           cat .build-r09-linked/usage.txt
           test "$rc" -eq 64
+          printf 'not-an-authentic-nrmodel' > .build-r09-linked/invalid.nrmodel
+          set +e
+          .build-r09-linked/r09-full-gpu-host \
+            .build-r09-linked/invalid.nrmodel \
+            .build-r09-linked/nonexistent.rgba8 \
+            .build-r09-linked/should-not-exist.rgba32f \
+            >.build-r09-linked/rejection.txt 2>&1
+          rejected=$?
+          set -e
+          cat .build-r09-linked/rejection.txt
+          test "$rejected" -eq 70
+          grep -q R09_HOST_AUTHENTIC_599_TENSOR_SHA256_REJECTED \
+            .build-r09-linked/rejection.txt
+          test ! -e .build-r09-linked/should-not-exist.rgba32f
           test ! -e .build-r09-linked/original.nrmodel
           echo "R09_NATIVE_HOST_BINARY_LINK_AND_LAUNCH_PASS"
       - name: Upload public-only executable (never a model)

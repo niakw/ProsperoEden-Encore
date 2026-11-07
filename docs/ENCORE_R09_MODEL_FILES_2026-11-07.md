@@ -44,11 +44,17 @@ Le commit `2bfbeae` intègre **l'importeur natif**
 
 Si le jeu utilise Original et qu'aucun pack validé n'est encore présent,
 le présentateur recherche le **seul fichier** `nvngx_dlssnr.dll`
-dans les trois emplacements privés suivants (dans cet ordre) :
+dans les emplacements privés suivants (dans cet ordre) :
 
-1. `<ConfigDir>/neural/nvngx_dlssnr.dll`
-2. `<ConfigDir>/nvngx_dlssnr.dll`
-3. `<UserDir>/nvngx_dlssnr.dll`
+1. **Chemin utilisateur recommandé** : `/data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll`
+   (ou `<UserDir>/dlssnr/nvngx_dlssnr.dll` en mode sandbox).
+2. Compatibilité anciens dépôts : `<ConfigDir>/neural/nvngx_dlssnr.dll`.
+3. Compatibilité anciens dépôts : `<ConfigDir>/nvngx_dlssnr.dll`.
+4. Compatibilité anciens dépôts : `<UserDir>/nvngx_dlssnr.dll`.
+
+Le dossier `user/dlssnr/` suit exactement la convention du dossier
+`user/lossless/` pour `Lossless.dll`. Il n'y a qu'une DLL à fournir ;
+les autres chemins sont des fallbacks de migration et non des fichiers à installer.
 
 Il analyse les ressources du PE **sans exécuter la DLL**, vérifie
 le SHA-256 exact de `WEIGHTS_HT`, reconstruit tous les tenseurs,

@@ -202,7 +202,7 @@ struct DensePush {
     std::uint32_t output_bytes,windows,channels,stage;
 };
 static_assert(sizeof(DensePush)==32u);
-void SmokeFSwinDense(Context& c,const char* spirv,const char* private_model=nullptr){
+void SmokeFSwinDense(Context& c,const char* spirv,const char* private_model=nullptr,bool preblock=false){
     constexpr std::uint32_t channels=32u,tokens=64u,half=2u;
     constexpr VkDeviceSize fp8_bytes=tokens*channels;
     constexpr VkDeviceSize raw_bytes=fp8_bytes*half;
@@ -241,7 +241,8 @@ void SmokeFSwinDense(Context& c,const char* spirv,const char* private_model=null
         std::vector<std::uint8_t> actual;
         if(!model.Open(private_model)||
            !model.LoadRaw(
-               "unpacked-postblock/block70.layer0.layer.attn_out_proj.bin",
+               preblock?"unpacked-preblock/block0.layer0.layer.attn_out_proj.bin":
+                       "unpacked-postblock/block70.layer0.layer.attn_out_proj.bin",
                actual)||actual.size()!=matrix.size())
             throw std::runtime_error(
                 "R09 authentic postblock projection tensor not available");
@@ -406,15 +407,17 @@ void SmokeFSwinDense(Context& c,const char* spirv,const char* private_model=null
 }
 } // namespace
 int main(int argc,char**argv) {
-    if(argc!=2&&argc!=3){
+    if(argc!=2&&argc!=3&&argc!=4){
         std::cerr<<"usage: r09_vulkan_fswin_smoke <fswin_dense.spv> "
-                    "[private_original.nrmodel]\n";
+                    "[private_original.nrmodel] [--preblock]\n";
         return 2;
     }
     try{
         Context context;
         context.Initialize();
-        SmokeFSwinDense(context,argv[1],argc==3?argv[2]:nullptr);
+        if(argc==4&&std::string(argv[3])!="--preblock")
+            throw std::runtime_error("unknown matrix selector");
+        SmokeFSwinDense(context,argv[1],argc>=3?argv[2]:nullptr,argc==4);
         return 0;
     }catch(const std::exception& error){
         std::cerr<<"R09_VULKAN_REAL_FSWIN_DENSE3_FAIL "

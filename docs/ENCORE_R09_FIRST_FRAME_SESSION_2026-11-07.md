@@ -46,10 +46,16 @@ La CI hôte R09 couvre le code C++ maintenu et le présentateur,
 les contrats du graphe, les ABI SPIR-V et un vrai aller-retour
 texture→composition→image sur Vulkan Lavapipe. Elle exécute aussi le
 shader **réel** d'entrée 16 canaux FP16 avec comparaison GPU/CPU au pixel
-sur un raster complet 1920×1080, puis la projection apprise FP16→FP8
-avec une matrice de contrôle one-hot sur les rasters 4×3 et 80×45.
-La tête de sortie utilisée par la validation de composition reste
-synthétique ; ces tests ne prouvent pas l'inférence du modèle entier.
+sur un raster complet 1920×1080, puis deux projections **réellement
+exécutées sur Vulkan** avec des matrices one-hot de contrôle sur les
+rasters 4×3 et 80×45 : entrée FP16 C16→FP8 C32 et sortie brute
+FP16 C32→FP16 C16. Sur ces petits rasters, le composeur consomme bien
+la **sortie GPU du shader de projection C16**, pas un faux résultat
+prérempli. Sur le raster complet 1080p, seule la tête de contrôle
+synthétique est utilisée afin de garder le test de lecture de 2 073 600
+pixels raisonnable. Cela ne démontre PAS l'inférence du réseau entier :
+les blocs FSwin, Split-Swin et ViT ne sont toujours pas traversés
+avec des poids authentiques pendant ce test.
 
 Le vérificateur hôte `tools/graphics/r09_verify_model_pack.py` apporte
 un deuxième verrou indépendant : les empreintes publiques de **599**
@@ -57,6 +63,12 @@ tenseurs Original / **255** Compact sont conservées dans
 `tools/graphics/r09_weights_{original,compact}.sha256`. La CI en
 contrôle les noms contre le manifest C++, puis exerce le vérificateur
 sur des paquets synthétiques valides, corrompus et incomplets.
+L'outil n'impose **aucune taille totale inventée** au fichier :
+l'extracteur amont aligne les offsets de tenseurs à 256 octets,
+mais ce sont les noms, les bornes et les empreintes individuelles
+qui prouvent l'intégrité. Les tests comprennent le dernier
+tenseur de taille variable, la fin de fichier tronquée, l'inventaire
+incomplet et le fichier comportant du bourrage final.
 
 Pour un paquet **réellement extrait et détenu par l'utilisateur** :
 

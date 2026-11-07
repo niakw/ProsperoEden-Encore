@@ -80,10 +80,14 @@ jobs:
               test_neural_video_policy \
               test_rdna2_nr_fswin_tensor_alias_policy
             do
+              source="extras/graphics/${unit}.cpp"
+              if [[ "$unit" == test_neural_video_policy ]]; then
+                source="tools/graphics/${unit}.cpp"
+              fi
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics -Iheadless \
-                "extras/graphics/${unit}.cpp" \
+                "$source" \
                 -o ".build-r09-boundary/${unit}-$cxx"
               if [[ "$unit" == test_rdna2_nr_bottleneck_route_policy || \
                     "$unit" == test_rdna2_nr_vit_native_route_policy || \

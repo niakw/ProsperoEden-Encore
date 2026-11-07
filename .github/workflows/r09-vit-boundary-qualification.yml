@@ -262,6 +262,8 @@ jobs:
             -o .build-r09-gpu/fswin_dense.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/fswin_dense.spv
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Ivendor/encore-active/eden-vulkan/include \
+            -Iextras/graphics \
             tools/graphics/r09_vulkan_fswin_smoke.cpp -lvulkan \
             -o .build-r09-gpu/r09_vulkan_fswin_smoke
           .build-r09-gpu/r09_vulkan_fswin_smoke \
@@ -330,8 +332,13 @@ jobs:
           cp tools/graphics/r09_vulkan_fswin_smoke.cpp .build-r09-gpu/lavapipe-kit/
           cp headless/nr_dll_model_import.h .build-r09-gpu/lavapipe-kit/
           cp headless/glyph_sha256.h .build-r09-gpu/lavapipe-kit/
-          cp vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h \
-            .build-r09-gpu/lavapipe-kit/
+          # Distribute ONLY public C++ headers, so the same smoke executable
+          # may be reproduced locally with an authentic private user pack.
+          # No DLL or NVIDIA weight tensor is ever uploaded.
+          mkdir -p .build-r09-gpu/lavapipe-kit/video_core/renderer_vulkan
+          cp vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_{manifest,pack,file}.h \
+             vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_tile_layout.h \
+             .build-r09-gpu/lavapipe-kit/video_core/renderer_vulkan/
           cp .build-r09-gpu/fswin_dense.spv .build-r09-gpu/lavapipe-kit/
           ldd "$driver" > .build-r09-gpu/lavapipe-kit/lavapipe-dependencies.txt
           printf '%s\n' 'Pure public-source Mesa ICD and test files; no user DLL or NVIDIA weights.'             > .build-r09-gpu/lavapipe-kit/README.txt

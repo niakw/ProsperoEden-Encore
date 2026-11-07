@@ -3,6 +3,7 @@
 // genuine Vulkan compute queue, including barriers and pixel readback.
 // This intentionally does NOT execute a neural network or an emulator.
 #include <vulkan/vulkan.h>
+#include "video_core/renderer_vulkan/nr_rdna2_model_file.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -200,7 +201,7 @@ struct DensePush {
     std::uint32_t output_bytes,windows,channels,stage;
 };
 static_assert(sizeof(DensePush)==32u);
-void SmokeFSwinDense(Context& c,const char* spirv){
+void SmokeFSwinDense(Context& c,const char* spirv,const char* private_model=nullptr){
     constexpr std::uint32_t channels=32u,tokens=64u,half=2u;
     constexpr VkDeviceSize fp8_bytes=tokens*channels;
     constexpr VkDeviceSize raw_bytes=fp8_bytes*half;
@@ -226,8 +227,20 @@ void SmokeFSwinDense(Context& c,const char* spirv){
             input_data[t*channels+ch]=e4[(t+ch)%e4.size()];
     write(input,input_data.data(),fp8_bytes);
     std::array<std::uint8_t,channels*channels> matrix{};
-    for(std::uint32_t ch=0u;ch<channels;++ch)
-        matrix[ch*channels+ch]=0x38u; // E4M3FN +1
+    if(private_model){
+        Eden::Graphics::NeuralRDNA2::NeuralModelFile model;
+        std::vector<std::uint8_t> actual;
+        if(!model.Open(private_model)||
+           !model.LoadRaw(
+               "unpacked-postblock/block70.layer0.layer.attn_out_proj.bin",
+               actual)||actual.size()!=matrix.size())
+            throw std::runtime_error(
+                "R09 authentic postblock projection tensor not available");
+        std::copy(actual.begin(),actual.end(),matrix.begin());
+    }else{
+        for(std::uint32_t ch=0u;ch<channels;++ch)
+            matrix[ch*channels+ch]=0x38u; // E4M3FN +1 fixture
+    }
     write(weights,matrix.data(),matrix.size());
     std::array<std::uint8_t,fp8_bytes> zeros{};
     write(residual,zeros.data(),zeros.size());
@@ -314,11 +327,56 @@ void SmokeFSwinDense(Context& c,const char* spirv){
     Check(vkMapMemory(c.device,quant.memory,0u,fp8_bytes,0u,&mapped),
           "map FSwin E4M3FN output");
     const auto* e4_result=static_cast<const std::uint8_t*>(mapped);
+    // Independent scalar CPU reference: actual row-major E4M3FN learned
+    // weights, exact fma accumulation and FP16-round before re-quantization.
+    // This path takes the user's PRIVATE NRMODEL1 pack; CI requires none.
+    std::array<std::uint8_t,fp8_bytes> expected_fp8{};
+    std::array<std::uint16_t,fp8_bytes> expected_fp16{};
+    if(private_model){
+        const auto decode=[](std::uint8_t raw){
+            const int exponent=(raw>>3u)&15, mantissa=raw&7;
+            if(exponent==15&&mantissa==7)
+                throw std::runtime_error("non-finite authentic E4M3FN");
+            const float sign=(raw&128u)?-1.0f:1.0f;
+            return exponent==0?sign*std::ldexp(float(mantissa),-9):
+                sign*std::ldexp(float(8+mantissa),exponent-10);
+        };
+        const auto encode=[](float x){
+            const unsigned sign=std::signbit(x)?128u:0u;
+            const float a=std::min(std::abs(x),448.0f);
+            if(a<0.015625f){
+                const unsigned m=unsigned(std::nearbyint(a*512.0f));
+                return std::uint8_t(sign|(m>=8u?8u:m));
+            }
+            int e=int(std::floor(std::log2(a)));
+            unsigned m=unsigned(std::nearbyint(
+                (a/std::ldexp(1.0f,e)-1.0f)*8.0f));
+            if(m==8u){++e;m=0u;}
+            const unsigned exp=unsigned(e+7);
+            if(exp>15u||(exp==15u&&m>6u))
+                return std::uint8_t(sign|126u);
+            return std::uint8_t(sign|(exp<<3u)|m);
+        };
+        for(std::uint32_t t=0u;t<tokens;++t)
+            for(std::uint32_t ch=0u;ch<channels;++ch){
+                float acc=0.0f;
+                for(std::uint32_t k=0u;k<channels;++k)
+                    acc=std::fma(
+                        decode(input_data[t*channels+k]),
+                        decode(matrix[ch*channels+k]),acc);
+                const _Float16 rounded=static_cast<_Float16>(acc);
+                std::uint16_t bits{};
+                std::memcpy(&bits,&rounded,sizeof(bits));
+                expected_fp16[t*channels+ch]=bits;
+                expected_fp8[t*channels+ch]=encode(float(rounded));
+            }
+    }
     for(std::uint32_t t=0u;t<tokens;++t)
         for(std::uint32_t ch=0u;ch<channels;++ch)
-            if(e4_result[t*channels+ch]!=e4[(t+ch)%e4.size()])
+            if(e4_result[t*channels+ch]!=(private_model?
+                   expected_fp8[t*channels+ch]:e4[(t+ch)%e4.size()]))
                 throw std::runtime_error(
-                    "FSwin learned identity E4M3FN mismatch at token "+
+                    "FSwin E4M3FN numeric mismatch at token "+
                     std::to_string(t)+" channel "+std::to_string(ch));
     vkUnmapMemory(c.device,quant.memory);
     Check(vkMapMemory(c.device,raw.memory,0u,raw_bytes,0u,&mapped),
@@ -326,24 +384,28 @@ void SmokeFSwinDense(Context& c,const char* spirv){
     const auto* raw_result=static_cast<const std::uint16_t*>(mapped);
     for(std::uint32_t t=0u;t<tokens;++t)
         for(std::uint32_t ch=0u;ch<channels;++ch)
-            if(raw_result[t*channels+ch]!=f16[(t+ch)%f16.size()])
+            if(raw_result[t*channels+ch]!=(private_model?
+                   expected_fp16[t*channels+ch]:f16[(t+ch)%f16.size()]))
                 throw std::runtime_error(
-                    "FSwin learned identity FP16 RAW mismatch at token "+
+                    "FSwin FP16 numeric mismatch at token "+
                     std::to_string(t)+" channel "+std::to_string(ch));
     vkUnmapMemory(c.device,raw.memory);
-    std::cout<<"R09_VULKAN_REAL_FSWIN_DENSE3_FP8_AND_RAW_FP16_PASS "
+    std::cout<<(private_model?
+             "R09_AUTHENTIC_ORIGINAL_FSWIN_GPU_CPU_FP8_FP16_PASS ":
+             "R09_VULKAN_REAL_FSWIN_DENSE3_FP8_AND_RAW_FP16_PASS ")
              <<tokens<<" tokens x "<<channels<<" channels\n";
 }
 } // namespace
 int main(int argc,char**argv) {
-    if(argc!=2){
-        std::cerr<<"usage: r09_vulkan_fswin_smoke <fswin_dense.spv>\n";
+    if(argc!=2&&argc!=3){
+        std::cerr<<"usage: r09_vulkan_fswin_smoke <fswin_dense.spv> "
+                    "[private_original.nrmodel]\n";
         return 2;
     }
     try{
         Context context;
         context.Initialize();
-        SmokeFSwinDense(context,argv[1]);
+        SmokeFSwinDense(context,argv[1],argc==3?argv[2]:nullptr);
         return 0;
     }catch(const std::exception& error){
         std::cerr<<"R09_VULKAN_REAL_FSWIN_DENSE3_FAIL "

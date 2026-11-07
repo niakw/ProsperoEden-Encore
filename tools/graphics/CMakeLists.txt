@@ -528,3 +528,11 @@ target_compile_options(test_rdna2_nr_decoder_model_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_decoder_model_loader
     COMMAND test_rdna2_nr_decoder_model_loader)
+
+# GPU-native 8x8-window FP8[512] skip -> 4x4 token / 16x16 channel
+# decoder layout; exhaustive host oracle incl 180 padded 1080p tokens.
+eden_r08_test(test_rdna2_nr_split_decoder_skip_repack_policy)
+add_test(NAME test_rdna2_nr_split_decoder_skip_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-split-decoder-skip-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

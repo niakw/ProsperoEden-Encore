@@ -10,9 +10,9 @@ Le `CCDecInputUpsample` de la source MIT `Overclockers/DLSSNR-AMD` utilise, au n
 - Les bornes hôte couvrent la source FP16 tuilée, l'entrée skip et la sortie E4M3FN **avec padding**, les gains, les offsets 32 bits, les limites de 256 Mio et les risques de recouvrement du même buffer.
 - Le test C++ couvre les deux géométries, les buffers tronqués et énumère les **2160 indices GPU** du cas natif pour prouver leur unicité et leurs accès source bornés.
 
-Le fichier shader reste **Vulkan 1.1 / RDNA2**, avec les mêmes trois bindings storage et sept valeurs push. Le SPIR-V est généré et validé par le script préexistant `tools/graphics/test-rdna2-decoder-spv.py`, auquel le test hôte est déjà lié dans CTest.
+Le fichier shader reste **Vulkan 1.1 / RDNA2**, avec quatre bindings storage (skip et destination séparés) et sept valeurs push. Le SPIR-V est généré et validé par le script préexistant `tools/graphics/test-rdna2-decoder-spv.py`, auquel le test hôte est déjà lié dans CTest.
 
-**Limite honnête :** il s'agit de la primitive décodeur compatible avec les données natives, pas encore du raccord complet du GEMM appris 1024→512, du skip extérieur ni du rendu PS5. Les résultats CI, la parité numérique avec la capture de référence et la première image restent à démontrer.
+**Limite honnête :** le décodeur est désormais couplé au GEMM appris et au skip via les passages décrits ci-dessous, mais pas encore intégré au réseau global ni validé par une image PS5. Les résultats CI, la parité numérique avec la capture de référence et la première image restent à démontrer.
 
 ## Lot complémentaire — décodeur appris, entrée et sortie séparées
 
@@ -43,11 +43,29 @@ Les trois nouveaux contrôles couvrent les tokens 1980/2160, les batches
 et offsets, le shader SPIR-V, les tailles des buffers, le modèle synthétique
 NRMODEL1 et les refus des gains non finis et poids invalides.
 
-**Raccord encore ouvert :** le `ProjPool` de la branche skip du premier
-Split-Swin écrit actuellement un tensor FP8 de disposition token-major.
-Le décodeur attend `at(token,channel)` (bloc de 16 tokens × 16 canaux) :
-ce skip doit donc encore être *repacké* explicitement avant de fournir
-`tiled_split_skip`. L'interface du nouveau décodeur enregistre ce
-contrat, elle ne prétend pas que l'ensemble du réseau est déjà câblé.
-Il reste également les transitions FSwin/U-Net, pré/post et renderer.
-Pas de preuve PS5, pas de build PS5 complet.
+## Raccord réel du skip Split-Swin vers le décodeur
+
+La passe GPU `NrRdna2SplitDecoderSkipRepack` a été ajoutée au vendor et
+appelée directement par `NrRdna2NativeDecoderLink::Record()` **avant le
+décodeur**. Elle accepte la sortie FP8 primaire de `ProjPool` (40 fenêtres
+8×8 × 512 canaux), recompose le raster 33×60 et écrit les 2160 tokens
+du skip au format `at(token,channel)` utilisé dans le décodeur :
+tuiles spatiales 4×4 et sous-blocs de 16 tokens × 16 canaux.
+
+La version native **33×60** lit jusqu'au token source 2508,
+écrit le dernier token valide 2156 et **initialise à zéro les 180 tokens
+de padding**, sans aliasing entre les buffers. Le test C++ valide
+chaque index et chaque mot de 4 canaux pour 33×60 et cinq dimensions
+de régression ; l'ABI SPIR-V conserve **2 buffers, 5 constantes push,
+Vulkan 1.1**.
+
+Le décodeur accepte désormais deux entrées distinctes
+`source_split_skip_windows` et `tiled_split_skip` ; il détient
+la passe GPU de repacking et enchaîne ensuite projection
+1024→512, quantification FP16 et upsampling appris.
+
+**Reste ouvert :** l'orchestrateur complet 152/76 couches, la tenue des
+skips U-Net à tous les niveaux, les adaptateurs pré/post image et le
+raccord au renderer. Les tests SPIR-V/C++ sont ajoutés mais
+**aucune CI verte ni image PS5 n'est encore revendiquée**.
+Aucun build complet PS5 avant P5.

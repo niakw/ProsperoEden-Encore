@@ -104,6 +104,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_fp32_to_fp16.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_native_decoder_link.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_decoder_skip_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_window_link.cpp"
@@ -340,6 +341,29 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_fp32_to_fp16.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_DECODER_FP16_HEADER}")
+
+# R09 native Split-Swin ProjPool primary tensor -> decoder tile/channel
+# ABI. Both layouts are model-owned and require an exact GPU conversion.
+set(EDEN_R09_SPLIT_DECODER_SKIP_REPACK_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_split_decoder_skip_repack_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_SPLIT_DECODER_SKIP_REPACK_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-split-decoder-skip-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_SPLIT_DECODER_SKIP_REPACK_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/split_decoder_skip_repack_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-split-decoder-skip-spv.py"
+    COMMENT "Compile and validate Split-Swin native decoder skip layout"
+    VERBATIM)
+add_custom_target(eden-r09-split-decoder-skip-spv
+    DEPENDS "${EDEN_R09_SPLIT_DECODER_SKIP_REPACK_HEADER}")
+add_dependencies(video_core eden-r09-split-decoder-skip-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_decoder_skip_repack.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_SPLIT_DECODER_SKIP_REPACK_HEADER}")
 
 # R09 RDNA2: unfused 64-token x 32-channel attention/context pass.
 # Host already provides Q/K/V in normalized preprojected E4M3FN layout.

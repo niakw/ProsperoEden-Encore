@@ -9,6 +9,14 @@ int main(){
     static_assert(CanImageFeatureStage({1920u,1080u,0u},native));
     static_assert(CanImageFeatureStage({1920u,1080u,1u},native));
     static_assert(!CanImageFeatureStage({1920u,1080u,2u},native));
+    constexpr ImageFeatureCapacity raw_native{
+        1920ull*1080u*64u,1024u,1920ull*1080u*32u};
+    static_assert(CanImageFeatureStage({1920u,1080u,2u},raw_native));
+    static_assert(!CanImageFeatureStage({1920u,1080u,3u},raw_native));
+    static_assert(!CanImageFeatureStage({1920u,1080u,2u},{
+        raw_native.input_bytes-1u,1024u,raw_native.output_bytes}));
+    static_assert(!CanImageFeatureStage({1920u,1080u,2u},{
+        raw_native.input_bytes,1024u,raw_native.output_bytes-1u}));
     assert(!CanImageFeatureStage({1920u,1080u,0u},{
         native.input_bytes-1u,1024u,native.output_bytes}));
     assert(!CanImageFeatureStage({1920u,1080u,0u},{

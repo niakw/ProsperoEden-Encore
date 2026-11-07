@@ -36,3 +36,20 @@ Record après une tentative. L'instance est non réutilisable après échec.
 Il s'agit d'une **sortie de 16 caractéristiques FP16**, pas encore d'un
 RGB final. La parité du corps Swin fusionné et du résiduel FP16 devra être
 comparée aux captures de référence ; aucun rendu PS5 validé.
+
+## Projection postbloc sans quantification FP8 intermédiaire
+
+Le vendor inclut désormais un chemin explicite
+`NrRdna2PostblockRun::PrepareWithRawProjection` qui conserve l'ancien
+`Prepare` FP8 pour compatibilité. Le dernier FSwin C32 produit aussi un
+raster **FP16[32] brut** avant quantification (passe dense-3 raw) ; la
+projection apprise `out_project` [16,32] lit directement ces 64 octets par
+pixel, puis émet FP16[16]. Le nouveau mode `ImageFeatureShape.direction=2`
+contrôle séparément sa capacité (entrée double, sortie inchangée) et
+les mêmes poids locaux. Les six ressources externes sont distinctes,
+et le même scheduler ordonne la passe raw et le projecteur.
+
+Ce raccord lève une perte FP8 artificielle à l'extrémité de la chaîne,
+mais n'établit ni la parité FP16 sur un vrai modèle, ni la signification
+des 16 sorties, ni le compositing RGB/HDR et temporel. Tests hôte
+C++/SPIR-V requis ; aucune présentation PS5 ou activation automatique.

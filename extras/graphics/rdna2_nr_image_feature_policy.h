@@ -14,15 +14,17 @@ struct ImageFeatureCapacity {
     const ImageFeatureShape& p,
     const ImageFeatureCapacity& buffers) noexcept {
     if(!p.width||!p.height||p.width>8192u||p.height>8192u||
-       p.direction>1u)return false;
+       p.direction>2u)return false;
     constexpr std::uint64_t kLimit=256ull<<20;
     const auto pixels=std::uint64_t(p.width)*p.height;
-    const auto bytes=pixels*32u;
-    // 16 prepared FP16 inputs or 32 FP8 inputs, both exactly 32 B.
-    // 32 FP8 outputs or 16 projected FP16 outputs, both exactly 32 B.
-    return bytes>0u&&bytes<=kLimit&&
-           buffers.input_bytes>=bytes&&
-           buffers.output_bytes>=bytes&&
+    const auto output_bytes=pixels*32u;
+    // Stage 2 reads the pre-quantization FSwin result as FP16[32].
+    // Stage 0/1 inputs are 32 bytes/pixel, stage 2 is 64 bytes/pixel.
+    const auto input_bytes=pixels*(p.direction==2u?64u:32u);
+    return input_bytes>0u&&input_bytes<=kLimit&&
+           output_bytes<=kLimit&&
+           buffers.input_bytes>=input_bytes&&
+           buffers.output_bytes>=output_bytes&&
            buffers.weights_bytes>=1024u&&
            buffers.weights_bytes<=kLimit&&
            (std::uint64_t(p.width)+63u)/64u<=65535u&&

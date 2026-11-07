@@ -207,6 +207,18 @@ jobs:
             -o .build-r09-gpu/temporal_compose.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/temporal_compose.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/nohistory_present.spv
+          # Execute actual FSwin final learned C32 scalar GEMM both as
+          # packed E4M3FN and pre-quantization FP16 RAW, with an independent
+          # identity-matrix CPU oracle. No extracted/proprietary weights.
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_dense_rdna2.comp \
+            -o .build-r09-gpu/fswin_dense.spv
+          spirv-val --target-env vulkan1.1 .build-r09-gpu/fswin_dense.spv
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            tools/graphics/r09_vulkan_fswin_smoke.cpp -lvulkan \
+            -o .build-r09-gpu/r09_vulkan_fswin_smoke
+          .build-r09-gpu/r09_vulkan_fswin_smoke \
+            .build-r09-gpu/fswin_dense.spv
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
             tools/graphics/r09_vulkan_io_smoke.cpp -lvulkan \
             -o .build-r09-gpu/r09_vulkan_io_smoke

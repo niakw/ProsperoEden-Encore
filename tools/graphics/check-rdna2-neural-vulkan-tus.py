@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import runpy
 
 ROOT=Path(__file__).resolve().parents[2]
 ACTIVE=ROOT/"vendor/encore-active/eden-vulkan"
@@ -119,6 +120,22 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     present_layer.mkdir(parents=True)
     shutil.copyfile(ROOT/"headless/vulkan_present_layer_r24.h",
                     present_layer/"layer.h")
+    shutil.copyfile(ROOT/"headless/vulkan_fxaa_r24.h",
+                    present_layer/"fxaa.h")
+    # Match the exact PS5 graphics enums and display/app-capture flags.
+    # The shipping stage verifies BOTH source and audited backport hashes.
+    enum_tools=runpy.run_path(str(ROOT/"tools/stage-ps5-graphics-enums.py"))
+    _, approved=enum_tools["approved_bytes"]()
+    graphics_enums=enum_tools["extend_graphics_enums"](
+        approved.decode("utf-8"))
+    enum_root=temp/"graphics-enums"
+    (enum_root/"common").mkdir(parents=True)
+    (enum_root/"common/settings_enums.h").write_text(
+        graphics_enums,encoding="utf-8")
+    active_present=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/present.h"
+    source_present=ROOT/"vendor/sources/eden/src/video_core/present.h"
+    assert active_present.read_bytes()==source_present.read_bytes(),(
+        "R09 actual build present.h differs from Eden PresentFilters source")
     # The maintained BufferCache template is the one the production CMake
     # stages. The pristine Eden header would be the wrong ABI.
     cache=temp/"buffer-pages/video_core/buffer_cache"
@@ -138,6 +155,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "-DPS5_NATIVE=1","-DFMT_HEADER_ONLY",
          "-Wno-unused-parameter",
          "-I"+str(inc),"-I"+str(temp/"present-overlay"),
+         "-I"+str(enum_root),
          "-I"+str(temp/"buffer-pages"),
          "-I"+str(temp),
          *["-I"+str(p) for p in INCLUDES]]

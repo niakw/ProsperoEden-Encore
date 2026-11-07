@@ -104,6 +104,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_fp32_to_fp16.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_native_decoder_link.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_split_decoder_skip_repack.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_window_attention.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_qkv_projection.cpp"
@@ -318,6 +319,29 @@ add_dependencies(video_core eden-r09-rdna2-nr-decoder-spv)
 set_property(SOURCE "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_upsample.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_RDNA2_DECODER_HEADER}")
+
+# R09 native geometry bridge: convert ViT 4x4 C1024 FP8 tiles to
+# raster-major GEMM tokens. Required for 33x60, Original + Compact.
+set(EDEN_R09_DECODER_TILE_LINEAR_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_decoder_tile_linear_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-decoder-tile-linear-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/decoder_tile_linear_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-decoder-tile-linear-spv.py"
+    COMMENT "Compile and ABI-validate native ViT->GEMM tiled raster conversion"
+    VERBATIM)
+add_custom_target(eden-r09-decoder-tile-linear-spv
+    DEPENDS "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
+add_dependencies(video_core eden-r09-decoder-tile-linear-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_DECODER_TILE_LINEAR_HEADER}")
 
 # R09: learned native decoder [512,1024] uses a shared FP32->FP16
 # Vulkan 1.1 epilogue before the independent-buffer skip/upsample pass.

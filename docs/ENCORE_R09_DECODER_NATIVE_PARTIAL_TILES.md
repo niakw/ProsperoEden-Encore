@@ -69,3 +69,30 @@ skips U-Net à tous les niveaux, les adaptateurs pré/post image et le
 raccord au renderer. Les tests SPIR-V/C++ sont ajoutés mais
 **aucune CI verte ni image PS5 n'est encore revendiquée**.
 Aucun build complet PS5 avant P5.
+
+## Correction structurante : disposition d'entrée ViT et de sortie FP16
+
+Le GEMM partagé `NrRdna2Projection` lit l'activation FP8 en **raster
+linéaire [pixel][C1024]**. Or `NrRdna2VitRun` délivre la sortie décodeur
+en **4×4 tuiles [token][C1024]**. Jusqu'à présent, la couche décodeur
+réutilisait le même `VkDescriptorBufferInfo` sans conversion : toutes
+les lignes GEMM après la première tuile mélangeaient des pixels.
+
+Désormais, `NrRdna2DecoderTileToLinear` effectue l'ordonnancement
+**2160 tokens en tuiles (1980 actifs)** → **1980 lignes GEMM** sur GPU.
+Les lots 1024 + 956 utilisent ce buffer linéaire **distinct** du ViT.
+L'épilogue FP32→FP16 a aussi été modifié : chaque paire de canaux
+est réécrite dans le **vrai token tuilé 4×4** plutôt que dans le
+buffer raster. L'upsampling lit donc `it=token(x/2,y/2,33)`
+dans une projection FP16 de **2160 positions réservées**.
+
+Le contrat hôte vérifie la capacité de chaque buffer, l'absence d'accès
+sur les 180 tokens hors raster lors du GEMM, la non-réutilisation du
+même offset pendant les lots successifs, et les indices des pixels de
+bord. Les espaces de stockage ne sont jamais supposés interchangeables.
+Les parties utiles de la projection sont toutes écrites; le padding
+FP16 n'est pas lu par la passe upsample.
+
+**Attention :** l'exécution du réseau entier n'est toujours pas prouvée.
+Le composant est une frontière GPU primitive, non un orchestrateur
+reliant les 152/76 opérations, ni une validation console.

@@ -26,7 +26,7 @@ def run(shader:Path,header:Path|None)->None:
         for name,binding in (("source",0),("destination",1)):
             assert re.search(rf"OpDecorate %{name} DescriptorSet 0\b",assembly),name
             assert re.search(rf"OpDecorate %{name} Binding {binding}\b",assembly),name
-        for j in range(3):
+        for j in range(5):
             assert re.search(rf"OpMemberDecorate %Params {j} Offset {j*4}\b",
                              assembly),j
         assert re.findall(r"OpCapability ([A-Za-z0-9_]+)",assembly)==["Shader"]

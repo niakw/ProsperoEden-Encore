@@ -536,3 +536,10 @@ add_test(NAME test_rdna2_nr_split_decoder_skip_spirv_abi
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-split-decoder-skip-spv.py"
         --vendor "${EDEN_ROOT}/vendor")
+
+# Decoder's 4x4 tiled C1024 E4M3FN input must be raster-major before GEMM.
+eden_r08_test(test_rdna2_nr_decoder_tile_to_linear_policy)
+add_test(NAME test_rdna2_nr_decoder_tile_linear_spirv_abi
+    COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-decoder-tile-linear-spv.py"
+        --vendor "${EDEN_ROOT}/vendor")

@@ -8,8 +8,16 @@
 #include <cstdint>
 #include <limits>
 namespace Eden::Graphics::NeuralRDNA2 {
+[[nodiscard]] constexpr std::uint64_t DecoderTileTokens(
+    std::uint32_t width,std::uint32_t height) noexcept {
+    return ((std::uint64_t(width)+3u)/4u)*
+           ((std::uint64_t(height)+3u)/4u)*16u;
+}
 struct DecoderFp32ToFp16 {
+    // Each batch reads contiguous FP32 tokens but scatters FP16 output
+    // into padded 4x4 spatial tiles. No raster/tile alias is permitted.
     std::uint32_t elements{},input_offset_floats{},output_offset_halfwords{};
+    std::uint32_t width{},height{};
 };
 struct DecoderFp32ToFp16Storage {
     std::uint64_t input_bytes{},output_bytes{};
@@ -17,22 +25,28 @@ struct DecoderFp32ToFp16Storage {
 [[nodiscard]] constexpr bool CanDecoderFp32ToFp16(
     const DecoderFp32ToFp16& p,
     const DecoderFp32ToFp16Storage& b) noexcept {
-    if(!p.elements||(p.elements&1u)||
-       (p.input_offset_floats&1u)||(p.output_offset_halfwords&1u))
+    constexpr std::uint64_t kChannels=512u;
+    if(!p.elements||(p.elements%kChannels)||
+       (p.input_offset_floats&1u)||
+       (p.output_offset_halfwords%kChannels)||
+       !p.width||!p.height||
+       p.width>4096u||p.height>4096u)return false;
+    const auto pixels=std::uint64_t(p.width)*p.height;
+    const auto first=std::uint64_t(p.output_offset_halfwords)/kChannels;
+    const auto count=std::uint64_t(p.elements)/kChannels;
+    if(!count||pixels>4096u||first>=pixels||count>pixels-first)
         return false;
-    const auto input_end=(std::uint64_t(p.input_offset_floats)+p.elements)*4u;
-    const auto output_end=(std::uint64_t(p.output_offset_halfwords)+p.elements)*2u;
+    const auto input_end=(std::uint64_t(p.input_offset_floats)+
+                          p.elements)*4u;
+    const auto output_end=DecoderTileTokens(p.width,p.height)*
+                          kChannels*2u;
+    constexpr std::uint64_t kLimit=256ull<<20;
     return input_end<=b.input_bytes&&output_end<=b.output_bytes&&
-           input_end<=(256ull<<20)&&output_end<=(256ull<<20)&&
+           input_end<=kLimit&&output_end<=kLimit&&
            (std::uint64_t(p.elements)+255u)/256u<=65535u;
 }
-[[nodiscard]] constexpr std::uint64_t DecoderTileTokens(
-    std::uint32_t width,std::uint32_t height) noexcept {
-    return ((std::uint64_t(width)+3u)/4u)*
-           ((std::uint64_t(height)+3u)/4u)*16u;
-}
 struct DecoderProjectionCapacity {
-    std::uint64_t tiled_input{},weights{},fp32_scratch{},fp16_projected{};
+    std::uint64_t linear_input{},weights{},fp32_scratch{},fp16_projected{};
 };
 struct DecoderProjectionBatch {
     Projection projection{};
@@ -55,9 +69,9 @@ struct DecoderProjectionBatches {
     const auto pixels=std::uint64_t(width)*height;
     const auto tiled_tokens=DecoderTileTokens(width,height);
     if(pixels>4096u||tiled_tokens>4096u||
-       buffers.tiled_input<tiled_tokens*inner||
+       buffers.linear_input<pixels*inner||
        buffers.weights<channels*inner||
-       buffers.fp16_projected<pixels*channels*2u)
+       buffers.fp16_projected<tiled_tokens*channels*2u)
         return false;
     const auto per_batch=std::min<std::uint64_t>({
         std::uint64_t(1024u),pixels,
@@ -75,9 +89,9 @@ struct DecoderProjectionBatches {
         DecoderProjectionBatch slice{
             .projection={take,channels,inner,inner,inner,
                          done*inner,0u},
-            .storage={buffers.tiled_input,buffers.weights,
+            .storage={buffers.linear_input,buffers.weights,
                       buffers.fp32_scratch,buffers.fp32_scratch},
-            .convert={take*channels,0u,done*channels},
+            .convert={take*channels,0u,done*channels,width,height},
             .conversion_storage={buffers.fp32_scratch,
                                  buffers.fp16_projected}};
         if(!CanDispatch(slice.projection,slice.storage)||
@@ -107,6 +121,7 @@ struct DecoderProjectionBatches {
            b.convert.elements!=b.projection.tokens*512u||
            b.convert.input_offset_floats!=0u||
            b.convert.output_offset_halfwords!=done*512u||
+           b.convert.width!=plan.width||b.convert.height!=plan.height||
            !CanDispatch(b.projection,b.storage)||
            !CanDecoderFp32ToFp16(b.convert,b.conversion_storage))
             return false;

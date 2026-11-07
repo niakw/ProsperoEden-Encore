@@ -224,9 +224,33 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
             try {
                 // Allocated on the same Vulkan device, on the exact slot
                 // whose previous GPU tick was waited for above.
-                neural_images[image_index]=CreateWrappedImage(
-                    memory_allocator,{1920u,1080u},
-                    VK_FORMAT_R32G32B32A32_SFLOAT);
+                // Retire the previous slot's image view BEFORE its
+                // underlying image. The GPU tick was waited above, but
+                // destroying the image while a VkImageView still exists
+                // violates Vulkan object lifetime rules.
+                neural_views[image_index].reset();
+                neural_images[image_index].reset();
+                // The neural output is a compute storage image sampled by
+                // the presenter, never a render-pass color attachment.
+                // Do not require COLOR_ATTACHMENT support on RGBA32F.
+                const VkImageCreateInfo neural_output_ci{
+                    .sType=VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+                    .pNext=nullptr,.flags=0u,
+                    .imageType=VK_IMAGE_TYPE_2D,
+                    .format=VK_FORMAT_R32G32B32A32_SFLOAT,
+                    .extent={1920u,1080u,1u},
+                    .mipLevels=1u,.arrayLayers=1u,
+                    .samples=VK_SAMPLE_COUNT_1_BIT,
+                    .tiling=VK_IMAGE_TILING_OPTIMAL,
+                    .usage=VK_IMAGE_USAGE_STORAGE_BIT|
+                           VK_IMAGE_USAGE_SAMPLED_BIT,
+                    .sharingMode=VK_SHARING_MODE_EXCLUSIVE,
+                    .queueFamilyIndexCount=0u,
+                    .pQueueFamilyIndices=nullptr,
+                    .initialLayout=VK_IMAGE_LAYOUT_UNDEFINED,
+                };
+                neural_images[image_index]=
+                    memory_allocator.CreateImage(neural_output_ci);
                 neural_views[image_index]=CreateWrappedImageView(
                     device,neural_images[image_index],
                     VK_FORMAT_R32G32B32A32_SFLOAT);

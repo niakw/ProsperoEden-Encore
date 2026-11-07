@@ -96,3 +96,26 @@ FP16 n'est pas lu par la passe upsample.
 **Attention :** l'exécution du réseau entier n'est toujours pas prouvée.
 Le composant est une frontière GPU primitive, non un orchestrateur
 reliant les 152/76 opérations, ni une validation console.
+
+## Goulot GPU Split → ViT → décodeur → Split relié
+
+Le vendor contient désormais `NrRdna2NeuralBottleneck` : il relie
+le premier parcours Split-Swin (sortie FinalHead + skip ProjPool),
+les huit blocs ViT, le décodeur FP8 appris, puis le second Split-Swin.
+Le lien exige sur le même Scheduler Vulkan une identité exacte de
+quatre buffers : `Split0.FinalHead == ViT.input`,
+`Split0.ProjPoolPrimary == Decoder.skip`,
+`ViT.decoderTiles == Decoder.input`, puis
+`Decoder.output == Split1.input`. Les deux plans 152/76 doivent
+conserver leurs indices de blocs, leurs dimensions et le même ordre.
+
+L'enregistrement de ce goulot est limité à une seule soumission :
+un échec ne permet pas de relancer une séquence GPU partielle.
+Le test `test_rdna2_nr_bottleneck_route_policy` vérifie les deux
+corpus et plusieurs corruptions de dépendance.
+
+**Reste bloquant pour le réseau complet :** les quatre niveaux U-Net
+et leurs transitions, les gains UPS C64/C128/C256 sans parité
+d'extraction prouvée, les adaptateurs pré/post image avec colorimétrie,
+et la présentation Vulkan. Pas de qualification console ni preuve
+de frame DLSS-NR à ce stade.

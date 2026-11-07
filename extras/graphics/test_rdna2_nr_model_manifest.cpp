@@ -22,7 +22,8 @@ static void CheckManifest(const std::array<std::string_view,N>& manifest,
     assert(ValidateR09ModelManifest(entries,expected_variant));
     entries.pop_back();
     assert(!ValidateR09ModelManifest(entries,expected_variant));
-    entries.emplace_back(std::string(manifest.front()),256u,2u);
+    // Replace the omitted name with another already present name.
+    entries.emplace_back(std::string(manifest.back()),256u,2u);
     assert(!ValidateR09ModelManifest(entries,expected_variant));
     entries.front().name="unpacked/unknown-tensor.bin";
     assert(!ValidateR09ModelManifest(entries,expected_variant));

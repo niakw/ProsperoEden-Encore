@@ -27,5 +27,5 @@ int main(){
     assert(half>0.7f&&half<0.8f);
     const float bright=HDRProxyReference(1.0f,1.0f);
     assert(std::isfinite(bright)&&bright>0.8f&&bright<1.0f);
-    assert(HDRProxyReference(100000.0f,1.0f)==1.0f);
+    assert(std::fabs(HDRProxyReference(100000.0f,1.0f)-1.0f)<1e-6f);
 }

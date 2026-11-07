@@ -58,6 +58,7 @@ jobs:
               test_rdna2_nr_postblock_mix_weights \
               test_rdna2_nr_preblock_pool_policy \
               test_rdna2_nr_nohistory_compose_policy \
+              test_rdna2_nr_temporal_compose_policy \
               test_rdna2_nr_upsample_gain_reconstruction \
               test_rdna2_nr_hdr_proxy_policy \
               test_rdna2_nr_nohistory_present_policy \
@@ -100,6 +101,7 @@ jobs:
             test-rdna2-postblock-mix-spv.py
             test-rdna2-preblock-pool-spv.py
             test-rdna2-nohistory-compose-spv.py
+            test-rdna2-temporal-compose-spv.py
             test-rdna2-hdr-proxy-spv.py
             test-rdna2-nohistory-present-spv.py
             test-rdna2-texture-proxy-spv.py

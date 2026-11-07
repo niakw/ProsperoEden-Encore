@@ -39,13 +39,12 @@ static void FakePack(const std::filesystem::path& file,
     Write64(bytes,at+8u,payload_size);
     bytes[256u]=static_cast<std::uint8_t>(coefficient);
     bytes[257u]=static_cast<std::uint8_t>(coefficient>>8u);
-    const std::ofstream output(file,std::ios::binary);
-    // The stream's lifetime is intentionally bounded by the function.
-    // Ensure the pack is closed before NeuralModelFile::Open.
-    const_cast<std::ofstream&>(output).write(
+    std::ofstream output(file,std::ios::binary);
+    output.write(
         reinterpret_cast<const char*>(bytes.data()),
         static_cast<std::streamsize>(bytes.size()));
     assert(output.good());
+    output.close();
 }
 int main(){
     constexpr NRTemporalComposeShape shape{80u,60u,0.65f,0.75f,1u,0u,0u,0u};

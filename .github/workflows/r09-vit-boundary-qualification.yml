@@ -10,6 +10,7 @@ on:
       - 'tools/graphics/test-rdna2-*'
       - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
       - 'tools/graphics/r09_vulkan_io_smoke.cpp'
+      - 'tools/graphics/r09_export_evidence.py'
       - 'tools/graphics/r09_vulkan_temporal_smoke.cpp'
       - 'tools/graphics/test-rdna2-proxy-features-spv.py'
       - 'headless/vulkan.cmake'

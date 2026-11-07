@@ -215,12 +215,21 @@ float HalfTruncated(float value){
                  std::ldexp(1.0f+float(hm)/1024.f,he-15);
 }
 // Production proxy feature shader's exact 12-word push constant ABI.
+struct LiftPush{std::uint32_t width,height,direction;};
+static_assert(sizeof(LiftPush)==12u);
 struct FeaturePush {
     std::uint32_t full_width,full_height,valid_width,valid_height;
     std::uint32_t source_width,source_height,seed;
     float auto_mask,local_tone,local_structure,skin_structure,style;
 };
 static_assert(sizeof(FeaturePush)==48u);
+float DecodeFp8(std::uint8_t v){
+    const float sign=(v&0x80u)?-1.f:1.f;
+    const unsigned exp=(v>>3u)&15u,m=v&7u;
+    if(exp==15u&&m==7u)return std::numeric_limits<float>::quiet_NaN();
+    return sign*(exp==0u?std::ldexp(float(m),-9):
+                std::ldexp(float(8u+m),int(exp)-10));
+}
 float DecodeHalf(std::uint16_t v) {
     const float sign=(v&0x8000u)?-1.f:1.f;
     const int exponent=int((v>>10u)&31u);
@@ -233,7 +242,7 @@ struct InputPush{std::uint32_t native_width,native_height;float paper_white;std:
 struct OutputPush{std::uint32_t native_width,native_height,zero0,zero1;};
 static_assert(sizeof(InputPush)==16u&&sizeof(OutputPush)==16u);
 void Smoke(Context& c,const char* input_spv,const char* feature_spv,
-           const char* compose_spv,const char* output_spv,
+           const char* lift_spv,const char* compose_spv,const char* output_spv,
            std::uint32_t screen_width,std::uint32_t screen_height){
     // The 4x3 canary validates transpose; 1920x1080 additionally exercises
     // all 2,073,600 real native screen pixels and dispatch workgroups.
@@ -249,6 +258,13 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     // Actual first-frame 16-lane feature shader output, distinct from the
     // synthetic final learned head used to test the output compositor.
     const Buffer encoded=c.MakeBuffer(pixels*32u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    // The model-matrix GPU smoke is only run for small test rasters.
+    // A billion FP16 multiply-adds under Lavapipe at 1080p would be a
+    // performance benchmark, not a useful correctness test.
+    const bool check_lift=pixels<=3600u;
+    const Buffer lifted=c.MakeBuffer((check_lift?pixels:1u)*32u,
+                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    const Buffer lift_weights=c.MakeBuffer(1024u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer features=c.MakeBuffer(pixels*32u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer composed=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer readback=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
@@ -282,6 +298,17 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
             head[p*8u+lane]=0u;
     }
     vkUnmapMemory(c.device,features.memory);
+    Check(vkMapMemory(c.device,lift_weights.memory,0u,1024u,0u,&mapped),
+          "map synthetic lift matrix");
+    std::memset(mapped,0,1024u);
+    auto* matrix=static_cast<std::uint32_t*>(mapped);
+    for(std::uint32_t channel=0u;channel<32u;++channel){
+        const std::uint32_t in=channel<16u?4u+channel%3u:
+                                   (channel&1u?13u:3u);
+        const std::uint32_t index=channel*16u+in;
+        matrix[index/2u]|=0x3c00u<<((index&1u)*16u); // FP16 +1
+    }
+    vkUnmapMemory(c.device,lift_weights.memory);
     const VkSamplerCreateInfo sample{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,nullptr,0u,
         VK_FILTER_NEAREST,VK_FILTER_NEAREST,VK_SAMPLER_MIPMAP_MODE_NEAREST,
         VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
@@ -294,6 +321,10 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     const VkDescriptorSetLayoutBinding feature_bindings[]{
         {0u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {1u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
+    const VkDescriptorSetLayoutBinding lift_bindings[]{
+        {0u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {1u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {2u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
     const VkDescriptorSetLayoutBinding compose_bindings[]{
         {0u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {1u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
@@ -311,22 +342,26 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     };
     const auto input_set=make_set(input_bindings,2u);
     const auto feature_set=make_set(feature_bindings,2u);
+    const auto lift_set=make_set(lift_bindings,3u);
     const auto compose_set=make_set(compose_bindings,3u);
     const auto output_set=make_set(output_bindings,2u);
     const VkDescriptorPoolSize pools[]{
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1u},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,7u},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,10u},
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1u}};
     const VkDescriptorPoolCreateInfo pool_ci{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        nullptr,0u,4u,3u,pools};
+        nullptr,0u,5u,3u,pools};
     Check(vkCreateDescriptorPool(c.device,&pool_ci,nullptr,&c.descriptors),"descriptor pool");
-    const VkDescriptorSetLayout layouts[]{input_set,compose_set,output_set,feature_set};
+    const VkDescriptorSetLayout layouts[]{input_set,compose_set,output_set,feature_set,lift_set};
     const VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,c.descriptors,4u,layouts};
-    VkDescriptorSet sets[4]{};
+        nullptr,c.descriptors,5u,layouts};
+    VkDescriptorSet sets[5]{};
     Check(vkAllocateDescriptorSets(c.device,&allocate,sets),"allocate sets");
     const VkDescriptorBufferInfo proxy_info{native.handle,0u,rgba32_bytes};
     const VkDescriptorBufferInfo encoded_info{encoded.handle,0u,pixels*32u};
+    const VkDescriptorBufferInfo lift_weight_info{lift_weights.handle,0u,1024u};
+    const VkDescriptorBufferInfo lifted_info{lifted.handle,0u,
+        (check_lift?pixels:1u)*32u};
     const VkDescriptorBufferInfo head_info{features.handle,0u,pixels*32u};
     const VkDescriptorBufferInfo color_info{composed.handle,0u,rgba32_bytes};
     const VkDescriptorImageInfo scene_info{c.sampler,scene.view,VK_IMAGE_LAYOUT_GENERAL};
@@ -349,11 +384,18 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
         {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[3],0u,0u,1u,
          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&proxy_info,nullptr},
         {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[3],1u,0u,1u,
-         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&encoded_info,nullptr}};
-    vkUpdateDescriptorSets(c.device,9u,writes,0u,nullptr);
-    VkPipelineLayout input_layout{},compose_layout{},output_layout{},feature_layout{};
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&encoded_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[4],0u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&encoded_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[4],1u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&lift_weight_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[4],2u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&lifted_info,nullptr}};
+    vkUpdateDescriptorSets(c.device,12u,writes,0u,nullptr);
+    VkPipelineLayout input_layout{},compose_layout{},output_layout{},feature_layout{},lift_layout{};
     const VkPipeline in_pipeline=c.Pipeline(c.Shader(input_spv),input_set,input_layout);
     const VkPipeline feature_pipeline=c.Pipeline(c.Shader(feature_spv),feature_set,feature_layout,48u);
+    const VkPipeline lift_pipeline=c.Pipeline(c.Shader(lift_spv),lift_set,lift_layout,12u);
     const VkPipeline compose_pipeline=c.Pipeline(
         c.Shader(compose_spv),compose_set,compose_layout);
     const VkPipeline out_pipeline=c.Pipeline(c.Shader(output_spv),output_set,output_layout);
@@ -407,6 +449,18 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
                          1u,&compute_between,0u,nullptr,0u,nullptr);
+    if(check_lift){
+        vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,lift_pipeline);
+        vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
+                                lift_layout,0u,1u,&sets[4],0u,nullptr);
+        const LiftPush lp{native_width,native_height,0u};
+        vkCmdPushConstants(c.command,lift_layout,VK_SHADER_STAGE_COMPUTE_BIT,
+                           0u,sizeof(lp),&lp);
+        vkCmdDispatch(c.command,(native_width+63u)/64u,native_height,1u);
+        vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
+                             1u,&compute_between,0u,nullptr,0u,nullptr);
+    }
     vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,compose_pipeline);
     vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
                             compose_layout,0u,1u,&sets[1],0u,nullptr);
@@ -448,6 +502,16 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
     vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                          VK_PIPELINE_STAGE_HOST_BIT,0u,0u,nullptr,
                          1u,&features_to_host,0u,nullptr);
+    if(check_lift){
+        const VkBufferMemoryBarrier lift_to_host{
+            VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,nullptr,
+            VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_HOST_READ_BIT,
+            VK_QUEUE_FAMILY_IGNORED,VK_QUEUE_FAMILY_IGNORED,
+            lifted.handle,0u,pixels*32u};
+        vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                             VK_PIPELINE_STAGE_HOST_BIT,0u,0u,nullptr,
+                             1u,&lift_to_host,0u,nullptr);
+    }
     Check(vkEndCommandBuffer(c.command),"end command buffer");
     const VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO,nullptr,
         0u,nullptr,nullptr,1u,&c.command,0u,nullptr};
@@ -490,6 +554,34 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
         }
     }
     vkUnmapMemory(c.device,encoded.memory);
+    if(check_lift){
+        Check(vkMapMemory(c.device,lifted.memory,0u,pixels*32u,0u,&mapped),
+              "map real GPU FP16-to-FP8 projection");
+        const auto* fp8=static_cast<const std::uint32_t*>(mapped);
+        for(std::uint32_t y=0u;y<native_height;++y){
+            for(std::uint32_t x=0u;x<native_width;++x){
+                const auto pixel=y*native_width+x;
+                const auto physical=(x*screen_width+y)*4u;
+                for(std::uint32_t channel=0u;channel<32u;++channel){
+                    const std::uint32_t packed=fp8[pixel*8u+channel/4u];
+                    const auto bits=static_cast<std::uint8_t>(
+                        packed>>((channel%4u)*8u));
+                    const float actual=DecodeFp8(bits);
+                    const float wanted=channel<16u?
+                        (float(expected[physical+channel%3u])/255.f-0.5f)*0.125f:
+                        (channel&1u?-1.f:1.f);
+                    if(!std::isfinite(actual)||std::fabs(actual-wanted)>0.006f)
+                        throw std::runtime_error(
+                            "GPU learned FP16->FP8 projection mismatch at "+
+                            std::to_string(x)+","+std::to_string(y)+
+                            " channel "+std::to_string(channel));
+                }
+            }
+        }
+        vkUnmapMemory(c.device,lifted.memory);
+        std::cout<<"R09_VULKAN_GPU_LEARNED_LIFT_ONEHOT_PASS "
+                 <<screen_width<<"x"<<screen_height<<"\n";
+    }
     std::cout<<"R09_VULKAN_REAL_GPU_16LANE_INPUT_FEATURES_PASS "
              <<screen_width<<"x"<<screen_height<<"\n";
     Check(vkMapMemory(c.device,readback.memory,0u,rgba32_bytes,0u,&mapped),"map readback");
@@ -546,18 +638,18 @@ void Smoke(Context& c,const char* input_spv,const char* feature_spv,
 // This fixture is NOT a fabricated model and is never used by runtime.
 } // namespace
 int main(int argc,char**argv){
-    if(argc!=5&&argc!=7){
-        std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <proxy_features.spv> <compose.spv> <nohistory_present.spv> [width height]\n";
+    if(argc!=6&&argc!=8){
+        std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <proxy_features.spv> <image_feature.spv> <compose.spv> <nohistory_present.spv> [width height]\n";
         return 2;
     }
     try{
         Context context;
         context.Initialize();
-        const std::uint32_t width=argc==7?static_cast<std::uint32_t>(
-            std::stoul(argv[5])):4u;
-        const std::uint32_t height=argc==7?static_cast<std::uint32_t>(
-            std::stoul(argv[6])):3u;
-        Smoke(context,argv[1],argv[2],argv[3],argv[4],width,height);
+        const std::uint32_t width=argc==8?static_cast<std::uint32_t>(
+            std::stoul(argv[6])):4u;
+        const std::uint32_t height=argc==8?static_cast<std::uint32_t>(
+            std::stoul(argv[7])):3u;
+        Smoke(context,argv[1],argv[2],argv[3],argv[4],argv[5],width,height);
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"R09_VULKAN_REAL_GPU_IO_FAIL: "<<e.what()<<"\n";

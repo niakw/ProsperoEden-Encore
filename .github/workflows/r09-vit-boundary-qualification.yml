@@ -181,6 +181,13 @@ jobs:
             vendor/encore-active/eden-vulkan/r09_rdna2_nr/proxy_features_rdna2.comp \
             -o .build-r09-gpu/proxy_features.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/proxy_features.spv
+          # The actual learned 16->32 feature projection is exercised on
+          # tiny matrices with synthetic one-hot FP16 weights, not as a
+          # substitute for an authentic Original/Compact inference.
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            vendor/encore-active/eden-vulkan/r09_rdna2_nr/image_feature_rdna2.comp \
+            -o .build-r09-gpu/image_feature.spv
+          spirv-val --target-env vulkan1.1 .build-r09-gpu/image_feature.spv
           glslangValidator -V --target-env vulkan1.1 -S comp \
             vendor/encore-active/eden-vulkan/r09_rdna2_nr/nohistory_compose_rdna2.comp \
             -o .build-r09-gpu/nohistory_compose.spv
@@ -200,12 +207,14 @@ jobs:
           .build-r09-gpu/r09_vulkan_io_smoke \
             .build-r09-gpu/texture_proxy.spv \
             .build-r09-gpu/proxy_features.spv \
+            .build-r09-gpu/image_feature.spv \
             .build-r09-gpu/nohistory_compose.spv \
             .build-r09-gpu/nohistory_present.spv
           # Export this smaller non-square real-GPU readback as before/after.
           .build-r09-gpu/r09_vulkan_io_smoke \
             .build-r09-gpu/texture_proxy.spv \
             .build-r09-gpu/proxy_features.spv \
+            .build-r09-gpu/image_feature.spv \
             .build-r09-gpu/nohistory_compose.spv \
             .build-r09-gpu/nohistory_present.spv \
             80 45
@@ -215,6 +224,7 @@ jobs:
           .build-r09-gpu/r09_vulkan_io_smoke \
             .build-r09-gpu/texture_proxy.spv \
             .build-r09-gpu/proxy_features.spv \
+            .build-r09-gpu/image_feature.spv \
             .build-r09-gpu/nohistory_compose.spv \
             .build-r09-gpu/nohistory_present.spv \
             1920 1080

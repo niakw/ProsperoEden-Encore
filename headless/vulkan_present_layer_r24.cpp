@@ -11,6 +11,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <stdexcept>
 #include <variant>
 #include "aa_source_extent.h"
 #include "nr_display_capture_policy.h"
@@ -253,9 +254,22 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                 };
                 neural_images[image_index]=
                     memory_allocator.CreateImage(neural_output_ci);
+                // Native output allocations are not guaranteed to succeed,
+                // particularly with the guest game's VRAM already in use.
+                // Never dereference a missing Vulkan image or hand a null
+                // view to an owner. The surrounding catch restores the
+                // original game frame and retires slot resources normally.
+                if (!neural_images[image_index]) {
+                    throw std::runtime_error(
+                        "R09 RGBA32F neural output image allocation failed");
+                }
                 neural_views[image_index]=CreateWrappedImageView(
                     device,neural_images[image_index],
                     VK_FORMAT_R32G32B32A32_SFLOAT);
+                if (!neural_views[image_index]) {
+                    throw std::runtime_error(
+                        "R09 RGBA32F neural output image view creation failed");
+                }
                 auto owner=std::make_unique<NrRdna2FrameSession>(
                     device,memory_allocator,scheduler);
                 const auto plan=original?

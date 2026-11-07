@@ -122,6 +122,12 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
                     present_layer/"layer.h")
     shutil.copyfile(ROOT/"headless/vulkan_fxaa_r24.h",
                     present_layer/"fxaa.h")
+    # The active PS5 build also stages vk_blit_screen.h, which carries
+    # the actual accelerated VkImageView sampled_format for R09.
+    # Without this overlay Clang silently includes pristine Eden's
+    # FramebufferTextureInfo and misses the production header ABI.
+    shutil.copyfile(ROOT/"headless/vk_blit_screen_r08.h",
+                    present_layer.parent/"vk_blit_screen.h")
     # Match the exact PS5 graphics enums and display/app-capture flags.
     # The shipping stage verifies BOTH source and audited backport hashes.
     enum_tools=runpy.run_path(str(ROOT/"tools/stage-ps5-graphics-enums.py"))

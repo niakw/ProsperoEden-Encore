@@ -246,11 +246,34 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                     neural_model_failed=true;
                 }else {
                     const VkImage target=*neural_images[image_index];
-                    // Fresh RGBA32F storage image. The native shader's
-                    // descriptor expects GENERAL; never sample before
-                    // its compute-write -> fragment-read barrier.
+                    const VkImage guest_source=source_image;
+                    // The live renderer may have written the accelerated
+                    // guest surface as a color target, by transfer, or with
+                    // compute before this present call. The existing
+                    // presentation path samples GENERAL; order all prior
+                    // writes before the new neural compute texture sample.
+                    // This is required for the real game image, not just
+                    // the host's pre-filled test texture.
                     scheduler.RequestOutsideRenderPassOperationContext();
-                    scheduler.Record([target](vk::CommandBuffer cmd){
+                    scheduler.Record([target,guest_source](vk::CommandBuffer cmd){
+                        const VkImageMemoryBarrier guest{
+                            .sType=VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                            .pNext=nullptr,
+                            .srcAccessMask=VK_ACCESS_MEMORY_WRITE_BIT,
+                            .dstAccessMask=VK_ACCESS_SHADER_READ_BIT,
+                            .oldLayout=VK_IMAGE_LAYOUT_GENERAL,
+                            .newLayout=VK_IMAGE_LAYOUT_GENERAL,
+                            .srcQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                            .dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                            .image=guest_source,
+                            .subresourceRange={
+                                .aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+                                .baseMipLevel=0u,.levelCount=1u,
+                                .baseArrayLayer=0u,.layerCount=1u}};
+                        cmd.PipelineBarrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,guest);
+                        // Fresh RGBA32F storage image. Never sample it
+                        // before the neural compute-write barrier.
                         const VkImageMemoryBarrier image{
                             .sType=VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
                             .pNext=nullptr,.srcAccessMask=0u,

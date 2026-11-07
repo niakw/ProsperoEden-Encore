@@ -16,10 +16,10 @@ set(_r09_shader_include "${CMAKE_BINARY_DIR}/r09-host-generated")
 # Derive the linked owner set from the shipping PS5 native source list.
 # Do NOT invent a synthetic 73rd source: split_to_vit_bridge is not linked.
 file(STRINGS "${ENCORE_R09_ROOT}/headless/vulkan.cmake"
-    _r09_cpp_lines REGEX "nr_rdna2_[a-z0-9_]+\\\\.cpp")
+    _r09_cpp_lines REGEX "nr_rdna2_[a-z0-9_]+[.]cpp")
 set(_r09_cpp "")
 foreach(_r09_line IN LISTS _r09_cpp_lines)
-    string(REGEX MATCH "nr_rdna2_[a-z0-9_]+\\\\.cpp" _r09_name "${_r09_line}")
+    string(REGEX MATCH "nr_rdna2_[a-z0-9_]+[.]cpp" _r09_name "${_r09_line}")
     if(_r09_name)
         list(APPEND _r09_cpp "${_r09_active}/${_r09_name}")
     endif()

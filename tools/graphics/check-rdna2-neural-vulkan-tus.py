@@ -23,7 +23,7 @@ CPM=ROOT/"vendor/sources/eden-cpm"
 # Authoritative production list: do not count abandoned experimental
 # sources as linked neural operators.
 SHIPPING_CPP=(ROOT/"headless/vulkan.cmake").read_text(encoding="utf-8")
-FILES=tuple(sorted(set(re.findall(r"nr_rdna2_[a-z0-9_]+\\.cpp", SHIPPING_CPP))))
+FILES=tuple(sorted(set(re.findall(r"nr_rdna2_[a-z0-9_]+[.]cpp", SHIPPING_CPP))))
 REQUIRED={"nr_rdna2_frame_session.cpp","nr_rdna2_frame_readback.cpp",
           "nr_rdna2_core_feature_sequence.cpp","nr_rdna2_fswin_upsample.cpp",
           "nr_rdna2_split_swin_block.cpp","nr_rdna2_vit_block.cpp"}

@@ -218,5 +218,6 @@ jobs:
         with:
           name: r09-vulkan-before-after-real-gpu
           path: .build-r09-gpu/r09_*.png
-          if-no-files-found: ignore
+          include-hidden-files: true
+          if-no-files-found: warn
           retention-days: 14

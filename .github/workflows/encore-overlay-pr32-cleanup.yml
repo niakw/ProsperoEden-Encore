@@ -1,0 +1,35 @@
+name: One-shot cleanup of merged Encore overlay branches
+on:
+  pull_request:
+    types: [closed]
+permissions:
+  contents: read
+jobs:
+  remove-merged-overlay-branches:
+    if: ${{ github.event.pull_request.number == 32 && github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'fix/overlay-pr28-postmerge' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR32_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Remove only the two verified, merged overlay refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for branch in feat/dualsense-touchpad-encore-overlay fix/overlay-pr28-postmerge; do
+            if [[ "$branch" == feat/* ]]; then
+              expected=5c1a0dfe4f97cbc83b04d390a17a9e9660a5752d
+            else
+              expected="$PR32_HEAD"
+            fi
+            current="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${branch}" --jq '.object.sha')"
+            if [[ "$current" != "$expected" ]]; then
+              echo "Ref moved; refusing to delete $branch ($current != $expected)" >&2
+              exit 1
+            fi
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${branch}"
+            echo "Deleted $branch at $expected"
+          done

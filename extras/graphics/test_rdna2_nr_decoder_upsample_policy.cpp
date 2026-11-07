@@ -7,7 +7,7 @@
 #include "rdna2_nr_decoder_upsample_policy.h"
 using namespace Eden::Graphics::NeuralRDNA2;
 static std::uint32_t token(std::uint32_t x,std::uint32_t y,std::uint32_t w){
-    return ((y/4)*(w/4)+x/4)*16+(y%4)*4+x%4;
+    return ((y/4)*((w+3)/4)+x/4)*16+(y%4)*4+x%4;
 }
 static std::uint32_t at(std::uint32_t t,std::uint32_t c){
     return ((t/16)*32+c/16)*256+(t%16)*16+c%16;
@@ -50,6 +50,40 @@ int main(){
     assert(!CanDecoderUpsample(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX}));
     p={0,0,0,0,1024,2048,2048};
     assert(!CanDecoderUpsample(p,{UINT64_MAX,UINT64_MAX,UINT64_MAX}));
+    // Native 1080p decoder: upstream PushDecoderUps uses
+    // IW=prev.H=33, OW=s.H=33, OH=s.W=60 (NOT OW=2*IW).
+    // Both Original b39 and Compact b19 use this same shape.
+    constexpr DecoderUpsample native{0u,0u,2160u*512u,0u,
+                                     33u,33u,60u};
+    constexpr std::uint64_t native_source=1152ull*512u*2u;
+    constexpr std::uint64_t native_tile=2160ull*512u;
+    static_assert(DecoderOutputTileTokens(native)==2160u);
+    static_assert(DecoderInputTileTokens(native)==1152u);
+    static_assert(CanDecoderUpsample(native,{
+        native_source,native_tile*2u,1024u}));
+    assert(CanDecoderUpsample(native,{
+        native_source,native_tile*2u,1024u}));
+    assert(!CanDecoderUpsample(native,{
+        native_source-1u,native_tile*2u,1024u}));
+    assert(!CanDecoderUpsample(native,{
+        native_source,native_tile*2u-1u,1024u}));
+    assert(!CanDecoderUpsample(
+        {0u,0u,2160u*512u,0u,16u,33u,60u},
+        {native_source,native_tile*2u,1024u}));
+    // Exhaustively check that every live raster pixel occupies one unique
+    // padded 4x4 token and its nearest source token is inside the budget.
+    std::uint32_t live=0u,padded=0u;
+    for(std::uint32_t t=0u;t<2160u;++t) {
+        const auto tile=t/16u,local=t%16u;
+        const auto x=(tile%9u)*4u+local%4u;
+        const auto y=(tile/9u)*4u+local/4u;
+        if(x>=33u||y>=60u){++padded;continue;}
+        assert(token(x,y,33u)==t);
+        assert(token(x/2u,y/2u,33u)<1152u);
+        ++live;
+    }
+    assert(live==33u*60u&&padded==2160u-33u*60u);
+    assert(token(32u,59u,33u)==2156u);
     // Four output pixels map to one 2x source pixel, never cross a 4x4 tile.
     assert(token(0,0,8)==0u);
     assert(token(1,0,8)==1u);

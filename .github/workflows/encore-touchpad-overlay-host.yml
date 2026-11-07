@@ -1,0 +1,47 @@
+name: Encore touchpad overlay qualification (host only)
+on:
+  pull_request:
+    paths:
+      - 'headless/in_game_overlay*.h'
+      - 'headless/pad.cpp'
+      - 'headless/devices.h'
+      - 'headless/devices_check.cpp'
+      - 'headless/main.cpp'
+      - 'headless/graphics.cpp'
+      - 'headless/hud.h'
+      - 'headless/vulkan_hud.frag'
+      - 'headless/vulkan_window_adapt_r08.cpp'
+      - 'tools/check-fc27-f06-native-pad-transition-host.py'
+      - 'tools/check-ps5-autocontrol-context.py'
+      - 'tools/check-encore-ux.py'
+      - '.github/workflows/encore-touchpad-overlay-host.yml'
+  push:
+    branches: [main, fix/overlay-pr28-postmerge]
+    paths:
+      - 'headless/in_game_overlay*.h'
+      - 'headless/pad.cpp'
+      - 'headless/devices.h'
+      - 'headless/devices_check.cpp'
+      - 'headless/main.cpp'
+      - 'headless/graphics.cpp'
+      - 'headless/hud.h'
+      - 'headless/vulkan_hud.frag'
+      - 'headless/vulkan_window_adapt_r08.cpp'
+      - 'tools/check-fc27-f06-native-pad-transition-host.py'
+      - 'tools/check-ps5-autocontrol-context.py'
+      - 'tools/check-encore-ux.py'
+      - '.github/workflows/encore-touchpad-overlay-host.yml'
+permissions:
+  contents: read
+jobs:
+  touchpad-overlay-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate extracted DualSense input against guest controls
+        run: python3 -B tools/check-fc27-f06-native-pad-transition-host.py
+      - name: Validate immutable prelaunch controller mapping
+        run: python3 -B tools/check-ps5-autocontrol-context.py
+      - name: Validate overlay and UI contracts
+        run: python3 -B tools/check-encore-ux.py

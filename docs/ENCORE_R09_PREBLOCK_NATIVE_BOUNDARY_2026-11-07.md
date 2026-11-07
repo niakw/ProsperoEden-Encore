@@ -25,3 +25,24 @@ encore être portées, puis comparées sur GPU.
 Le chemin RDNA2 complet reste désactivé tant que prébloc, gains
 U-Net manquants, postbloc, compositing et présentation PS5 ne sont
 pas qualifiés. Aucun build console lancé.
+
+## Prébloc appris — exécution du corps, sans réduction encore
+
+Le vendor fournit désormais `NrRdna2PreblockRun` : il lit les poids
+d'un modèle NRMODEL1 local, projette les 16 caractéristiques FP16 en
+C32 E4M3FN avec la matrice réellement apprise, exécute le vrai bloc
+FSwin C32 du prébloc (fenêtres 8×8, GPU Vulkan) et exporte sa sortie
+pleine résolution comme futur skip `block0`. Les trois buffers
+GPU doivent être distincts, avec le même scheduler et un plan
+Original/Compact strict. Aucune étape n'est enregistrée si
+l'initialisation échoue.
+
+Ce composant reçoit des **caractéristiques déjà préparées**, pas
+directement une texture du jeu. Le pooling natif 2×2 sur **sortie
+brute FP16**, nécessaire pour alimenter le premier niveau U-Net C32,
+n'est pas implémenté. Le raster C32 E4M3FN exporté n'est pas un
+substitut numériquement fidèle à cette sortie brute. Le raccord reste
+donc volontairement séparé de la descente U-Net, sans raccourci
+de quantification ni activation utilisateur.
+
+Aucune optimisation de cadence ou build global PS5.

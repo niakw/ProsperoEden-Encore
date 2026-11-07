@@ -107,6 +107,7 @@ list(APPEND video_sources
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_decoder_tile_to_linear.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_neural_bottleneck.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_image_feature_stage.cpp"
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_postblock_mix.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_feature_stage.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_lift_link.cpp"
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_proxy_fswin_link.cpp"
@@ -395,6 +396,28 @@ set_property(SOURCE
     "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_image_feature_stage.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_R09_IMAGE_FEATURE_HEADER}")
+
+# R09: learned postblock C32 2x main/skip mixer.
+set(EDEN_R09_POSTBLOCK_MIX_HEADER
+    "${EDEN_FSR31_SHADER_DIR}/rdna2_nr_postblock_mix_comp_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_R09_POSTBLOCK_MIX_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-postblock-mix-spv.py"
+        --vendor "${PORT_ROOT}/vendor"
+        --header "${EDEN_R09_POSTBLOCK_MIX_HEADER}"
+    DEPENDS
+        "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/postblock_mix_rdna2.comp"
+        "${PORT_ROOT}/tools/graphics/test-rdna2-postblock-mix-spv.py"
+    COMMENT "Compile RDNA2 native learned postblock main/skip mixer"
+    VERBATIM)
+add_custom_target(eden-r09-postblock-mix-spv
+    DEPENDS "${EDEN_R09_POSTBLOCK_MIX_HEADER}")
+add_dependencies(video_core eden-r09-postblock-mix-spv)
+set_property(SOURCE
+    "${EDEN_AMD_FSR31_BACKEND_DIR}/nr_rdna2_postblock_mix.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_R09_POSTBLOCK_MIX_HEADER}")
 
 # R09: learned native decoder [512,1024] uses a shared FP32->FP16
 # Vulkan 1.1 epilogue before the independent-buffer skip/upsample pass.

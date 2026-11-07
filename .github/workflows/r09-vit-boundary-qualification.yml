@@ -10,6 +10,7 @@ on:
       - 'tools/graphics/test-rdna2-*'
       - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
       - 'tools/graphics/r09_vulkan_io_smoke.cpp'
+      - 'tools/graphics/r09_vulkan_temporal_smoke.cpp'
       - 'tools/graphics/test-rdna2-proxy-features-spv.py'
       - 'headless/vulkan.cmake'
       - 'headless/vulkan_present_layer_r24.cpp'
@@ -178,3 +179,14 @@ jobs:
             .build-r09-gpu/texture_proxy.spv \
             .build-r09-gpu/nohistory_compose.spv \
             .build-r09-gpu/nohistory_present.spv
+          # Validate the fourth learned FP16 channel and actual next-history
+          # on the same Vulkan compute stack, twice: history reset/valid.
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            vendor/encore-active/eden-vulkan/r09_rdna2_nr/temporal_compose_rdna2.comp \
+            -o .build-r09-gpu/temporal_compose.spv
+          spirv-val --target-env vulkan1.1 .build-r09-gpu/temporal_compose.spv
+          g++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            tools/graphics/r09_vulkan_temporal_smoke.cpp -lvulkan \
+            -o .build-r09-gpu/r09_vulkan_temporal_smoke
+          .build-r09-gpu/r09_vulkan_temporal_smoke \
+            .build-r09-gpu/temporal_compose.spv

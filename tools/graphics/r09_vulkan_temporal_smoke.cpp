@@ -189,16 +189,6 @@ struct Context {
         return result;
     }
 };
-VkImageMemoryBarrier ImageBarrier(VkImage image,VkAccessFlags from,VkAccessFlags to,
-                                  VkImageLayout old_layout,VkImageLayout new_layout){
-    VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,nullptr,
-        from,to,old_layout,new_layout,VK_QUEUE_FAMILY_IGNORED,VK_QUEUE_FAMILY_IGNORED,
-        image,{VK_IMAGE_ASPECT_COLOR_BIT,0u,1u,0u,1u}};
-    return b;
-}
-struct InputPush{std::uint32_t native_width,native_height;float paper_white;std::uint32_t color_mode;};
-struct OutputPush{std::uint32_t native_width,native_height,zero0,zero1;};
-static_assert(sizeof(InputPush)==16u&&sizeof(OutputPush)==16u);
 
 struct TemporalPush {
     std::uint32_t width,height;

@@ -60,3 +60,13 @@ Testing/
 *.dSYM/
 coverage/
 .coverage
+
+# Private DLSS-NR user model and NVIDIA DLL; never publish to a repository.
+*.nrmodel
+**/nvngx_dlssnr.dll
+**/nvngx_dlssnr.dll.zip
+**/dlssnr.bin
+**/dlssnr-small.bin
+**/r09_full_gpu_evidence.json
+**/r09_gpu_output.rgba32f
+**/r09_reference.rgba32f

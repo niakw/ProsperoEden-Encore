@@ -44,6 +44,9 @@ struct Frame;
 struct FramebufferTextureInfo {
     VkImage image{};
     VkImageView image_view{};
+    // Actual Vulkan view format, as resolved by the renderer's cache.
+    // A guest framebuffer format alone is insufficient for neural input.
+    VkFormat sampled_format{VK_FORMAT_UNDEFINED};
     u32 width{};
     u32 height{};
     u32 scaled_width{};

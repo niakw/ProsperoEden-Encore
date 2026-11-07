@@ -260,7 +260,9 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                     Eden::NeuralPlans::Original:Eden::NeuralPlans::Compact;
                 if(!owner->Initialize(
                        model_path,plan,source_image_view,sampler,
-                       GetFormat(framebuffer),render_extent,
+                       texture_info ? texture_info->sampled_format
+                                    : GetFormat(framebuffer),
+                       render_extent,
                        *neural_views[image_index],
                        VK_FORMAT_R32G32B32A32_SFLOAT,{1920u,1080u},
                        1.0f,float(selected.strength)/100.0f)){

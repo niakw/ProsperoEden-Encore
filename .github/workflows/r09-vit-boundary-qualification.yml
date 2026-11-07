@@ -93,6 +93,7 @@ jobs:
             test-rdna2-proxy-features-spv.py
             test-rdna2-postblock-mix-spv.py
             test-rdna2-preblock-pool-spv.py
+            test-rdna2-fswin-dense-spv.py
           )
           for script in "${scripts[@]}"; do
             python3 -m py_compile "tools/graphics/$script"

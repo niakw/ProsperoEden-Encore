@@ -84,3 +84,23 @@ Cette correction n'est ni une mesure de consommation mémoire sur PS5
 ni une preuve d'image : la sortie brute FP16 avant quantification reste
 nécessaire pour le pooling, et les poids U-Net incomplets bloquent encore
 la chaîne complète. Aucune option utilisateur n'est activée.
+
+## P1 — raccord FP16 natif du prébloc (lot suivant)
+
+Le vendor fournit maintenant une passe optionnelle `FSwin Dense stage 4`
+réutilisant les **mêmes matrices, résidu et gains** que le dernier dense-3
+C32. Elle conserve le résultat **avant** encodage E4M3FN dans un raster
+FP16 brut (32 canaux × 2 octets), en parallèle du skip FP8. La sortie
+brute est remise en raster depuis les fenêtres sans modifier ses octets.
+
+`NrRdna2PreblockRun::PrepareWithPool` compose, dans le même scheduler :
+la projection image [32,16], le FSwin prébloc, les deux publications
+FP8/FP16, puis `NrRdna2PreblockPool` 2×2 en arrondissant en FP16 avant
+la conversion E4M3FN. Il expose `ResultHalfC32` seulement après un
+`Record()` réussi. Le chemin legacy `Prepare` reste explicitement
+limité à la caractéristique/skip sans pooling pour compatibilité.
+
+Les entrées restent **16 caractéristiques déjà préparées** : ni texture
+HDR du jeu, ni poids U-Net intermédiaires, ni sortie présentable ne sont
+fournis par ce correctif. La qualification hôte compiler/SPIR-V doit
+réussir avant toute affirmation d'exécution GPU ; aucune activation PS5.

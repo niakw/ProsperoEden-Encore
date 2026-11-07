@@ -3,6 +3,7 @@
 // genuine Vulkan compute queue, including barriers and pixel readback.
 // This intentionally does NOT execute a neural network or an emulator.
 #include <vulkan/vulkan.h>
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -199,7 +200,7 @@ VkImageMemoryBarrier ImageBarrier(VkImage image,VkAccessFlags from,VkAccessFlags
 struct InputPush{std::uint32_t native_width,native_height;float paper_white;std::uint32_t color_mode;};
 struct OutputPush{std::uint32_t native_width,native_height,zero0,zero1;};
 static_assert(sizeof(InputPush)==16u&&sizeof(OutputPush)==16u);
-void Smoke(Context& c,const char* input_spv,const char* output_spv){
+void Smoke(Context& c,const char* input_spv,const char* compose_spv,const char* output_spv){
     // A non-square 4x3 image catches incorrect native 3x4 transpose.
     constexpr std::uint32_t screen_width=4u,screen_height=3u;
     constexpr std::uint32_t native_width=screen_height,native_height=screen_width;
@@ -208,6 +209,8 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
     constexpr VkDeviceSize rgba32_bytes=pixels*16u;
     const Buffer staging=c.MakeBuffer(rgba8_bytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     const Buffer native=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    const Buffer features=c.MakeBuffer(pixels*32u,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    const Buffer composed=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     const Buffer readback=c.MakeBuffer(rgba32_bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     const Image scene=c.MakeImage(screen_width,screen_height,VK_FORMAT_R8G8B8A8_UNORM,
                                   VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT);
@@ -227,6 +230,18 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
     Check(vkMapMemory(c.device,staging.memory,0u,rgba8_bytes,0u,&mapped),"map staging");
     std::memcpy(mapped,expected.data(),expected.size());
     vkUnmapMemory(c.device,staging.memory);
+    Check(vkMapMemory(c.device,features.memory,0u,pixels*32u,0u,&mapped),
+          "map learned head fixture");
+    // Model head's live FP16 lanes: (+0.125,-0.125,+0.25,logit 0).
+    // The remaining 12 padded lanes are zero, never claimed as RGB.
+    auto* head=static_cast<std::uint32_t*>(mapped);
+    for(std::uint32_t p=0u;p<pixels;++p){
+        head[p*8u+0u]=0xb0003000u;
+        head[p*8u+1u]=0x00003400u;
+        for(std::uint32_t lane=2u;lane<8u;++lane)
+            head[p*8u+lane]=0u;
+    }
+    vkUnmapMemory(c.device,features.memory);
     const VkSamplerCreateInfo sample{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,nullptr,0u,
         VK_FILTER_NEAREST,VK_FILTER_NEAREST,VK_SAMPLER_MIPMAP_MODE_NEAREST,
         VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
@@ -236,31 +251,39 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
     const VkDescriptorSetLayoutBinding input_bindings[]{
         {0u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {1u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
+    const VkDescriptorSetLayoutBinding compose_bindings[]{
+        {0u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {1u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
+        {2u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
     const VkDescriptorSetLayoutBinding output_bindings[]{
         {0u,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {1u,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1u,VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
-    auto make_set=[&](const VkDescriptorSetLayoutBinding* bs){
+    auto make_set=[&](const VkDescriptorSetLayoutBinding* bs,std::uint32_t count){
         VkDescriptorSetLayoutCreateInfo ci{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            nullptr,0u,2u,bs};
+            nullptr,0u,count,bs};
         VkDescriptorSetLayout l{};
         Check(vkCreateDescriptorSetLayout(c.device,&ci,nullptr,&l),"create set layout");
         c.sets.push_back(l);
         return l;
     };
-    const auto input_set=make_set(input_bindings),output_set=make_set(output_bindings);
+    const auto input_set=make_set(input_bindings,2u);
+    const auto compose_set=make_set(compose_bindings,3u);
+    const auto output_set=make_set(output_bindings,2u);
     const VkDescriptorPoolSize pools[]{
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1u},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,2u},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,5u},
         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1u}};
     const VkDescriptorPoolCreateInfo pool_ci{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        nullptr,0u,2u,3u,pools};
+        nullptr,0u,3u,3u,pools};
     Check(vkCreateDescriptorPool(c.device,&pool_ci,nullptr,&c.descriptors),"descriptor pool");
-    const VkDescriptorSetLayout layouts[]{input_set,output_set};
+    const VkDescriptorSetLayout layouts[]{input_set,compose_set,output_set};
     const VkDescriptorSetAllocateInfo allocate{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        nullptr,c.descriptors,2u,layouts};
-    VkDescriptorSet sets[2]{};
+        nullptr,c.descriptors,3u,layouts};
+    VkDescriptorSet sets[3]{};
     Check(vkAllocateDescriptorSets(c.device,&allocate,sets),"allocate sets");
     const VkDescriptorBufferInfo proxy_info{native.handle,0u,rgba32_bytes};
+    const VkDescriptorBufferInfo head_info{features.handle,0u,pixels*32u};
+    const VkDescriptorBufferInfo color_info{composed.handle,0u,rgba32_bytes};
     const VkDescriptorImageInfo scene_info{c.sampler,scene.view,VK_IMAGE_LAYOUT_GENERAL};
     const VkDescriptorImageInfo output_info{VK_NULL_HANDLE,output.view,VK_IMAGE_LAYOUT_GENERAL};
     const VkWriteDescriptorSet writes[]{
@@ -271,10 +294,18 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
         {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[1],0u,0u,1u,
          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&proxy_info,nullptr},
         {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[1],1u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&head_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[1],2u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&color_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[2],0u,0u,1u,
+         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,nullptr,&color_info,nullptr},
+        {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,nullptr,sets[2],1u,0u,1u,
          VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,&output_info,nullptr,nullptr}};
-    vkUpdateDescriptorSets(c.device,4u,writes,0u,nullptr);
-    VkPipelineLayout input_layout{},output_layout{};
+    vkUpdateDescriptorSets(c.device,7u,writes,0u,nullptr);
+    VkPipelineLayout input_layout{},compose_layout{},output_layout{};
     const VkPipeline in_pipeline=c.Pipeline(c.Shader(input_spv),input_set,input_layout);
+    const VkPipeline compose_pipeline=c.Pipeline(
+        c.Shader(compose_spv),compose_set,compose_layout);
     const VkPipeline out_pipeline=c.Pipeline(c.Shader(output_spv),output_set,output_layout);
     const VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,nullptr,
                                          VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,nullptr};
@@ -311,9 +342,19 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
     vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
                          1u,&compute_between,0u,nullptr,0u,nullptr);
+    vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,compose_pipeline);
+    vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
+                            compose_layout,0u,1u,&sets[1],0u,nullptr);
+    const InputPush cp{native_width,native_height,1.f,0u};
+    vkCmdPushConstants(c.command,compose_layout,VK_SHADER_STAGE_COMPUTE_BIT,
+                       0u,sizeof(cp),&cp);
+    vkCmdDispatch(c.command,1u,1u,1u);
+    vkCmdPipelineBarrier(c.command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0u,
+                         1u,&compute_between,0u,nullptr,0u,nullptr);
     vkCmdBindPipeline(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,out_pipeline);
     vkCmdBindDescriptorSets(c.command,VK_PIPELINE_BIND_POINT_COMPUTE,
-                            output_layout,0u,1u,&sets[1],0u,nullptr);
+                            output_layout,0u,1u,&sets[2],0u,nullptr);
     const OutputPush op{native_width,native_height,0u,0u};
     vkCmdPushConstants(c.command,output_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(op),&op);
@@ -343,7 +384,9 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
         for(std::uint32_t x=0;x<screen_width;++x)
             for(std::uint32_t ch=0;ch<4u;++ch){
                 const std::size_t i=(y*screen_width+x)*4u+ch;
-                const float wanted=float(expected[i])/255.f;
+                const float correction[4]{0.03125f,-0.03125f,0.0625f,0.0f};
+                const float wanted=std::clamp(
+                    float(expected[i])/255.f+correction[ch],0.0f,1.0f);
                 if(!std::isfinite(rgba[i])||std::fabs(rgba[i]-wanted)>0.00005f){
                     const float actual=rgba[i];
                     vkUnmapMemory(c.device,readback.memory);
@@ -354,15 +397,19 @@ void Smoke(Context& c,const char* input_spv,const char* output_spv){
                 }
             }
     vkUnmapMemory(c.device,readback.memory);
-    std::cout<<"R09_VULKAN_REAL_GPU_IO_PASS "<<screen_width<<"x"<<screen_height<<"\n";
+    std::cout<<"R09_VULKAN_REAL_GPU_IO_AND_COMPOSITE_PASS "
+             <<screen_width<<"x"<<screen_height<<"\n";
 }
 } // namespace
 int main(int argc,char**argv){
-    if(argc!=3){std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <nohistory_present.spv>\n";return 2;}
+    if(argc!=4){
+        std::cerr<<"usage: r09_vulkan_io_smoke <texture_proxy.spv> <compose.spv> <nohistory_present.spv>\n";
+        return 2;
+    }
     try{
         Context context;
         context.Initialize();
-        Smoke(context,argv[1],argv[2]);
+        Smoke(context,argv[1],argv[2],argv[3]);
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"R09_VULKAN_REAL_GPU_IO_FAIL: "<<e.what()<<"\n";

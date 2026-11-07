@@ -53,9 +53,21 @@ FP16 C32→FP16 C16. Sur ces petits rasters, le composeur consomme bien
 la **sortie GPU du shader de projection C16**, pas un faux résultat
 prérempli. Sur le raster complet 1080p, seule la tête de contrôle
 synthétique est utilisée afin de garder le test de lecture de 2 073 600
-pixels raisonnable. Cela ne démontre PAS l'inférence du réseau entier :
-les blocs FSwin, Split-Swin et ViT ne sont toujours pas traversés
-avec des poids authentiques pendant ce test.
+pixels raisonnable. Un banc GPU supplémentaire
+(`tools/graphics/r09_vulkan_fswin_smoke.cpp`) exécute également le
+**vrai shader FSwin Dense3 C32**, sur 64 tokens x 32 canaux, dans ses
+deux sorties E4M3FN et RAW FP16, avec une matrice identité contrôlée et
+une comparaison octet-à-octet des 2 048 valeurs. Le test passe sur
+Vulkan Lavapipe (CI R09 #42400649979). Ce sont des tests numériques
+réels du shader FSwin, pas uniquement des vérifications SPIR-V.
+
+Le présentateur refuse maintenant une allocation absente de l'image
+RGBA32F ou de sa VkImageView avant toute initialisation de session,
+avec retour conservateur à l'image originale du jeu.
+
+**Cela ne démontre PAS l'inférence du réseau entier** : les blocs
+FSwin, Split-Swin et ViT n'ont toujours pas été parcourus de bout en
+bout avec des poids authentiques et un oracle d'image indépendant.
 
 Le vérificateur hôte `tools/graphics/r09_verify_model_pack.py` apporte
 un deuxième verrou indépendant : les empreintes publiques de **599**

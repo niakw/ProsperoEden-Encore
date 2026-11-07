@@ -31,9 +31,9 @@ static void Check(const char* path){
         graph,split,vit,required,required,required-1u));
     auto g=graph;g.count=3u;
     assert(!CanNativeUNetBottleneckLink(g,split,vit,required,required,required));
-    g=graph;g.edges[3].down_block++;
+    g=graph;for(auto& edge:g.edges)if(edge.channels==256u)++edge.down_block;
     assert(!CanNativeUNetBottleneckLink(g,split,vit,required,required,required));
-    g=graph;g.edges[3].up_input_block++;
+    g=graph;for(auto& edge:g.edges)if(edge.channels==256u)++edge.up_input_block;
     assert(!CanNativeUNetBottleneckLink(g,split,vit,required,required,required));
     auto s=split;
     s.blocks[s.runs[0].start].raster_width++;

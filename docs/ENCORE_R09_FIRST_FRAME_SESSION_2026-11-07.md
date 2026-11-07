@@ -82,6 +82,31 @@ qui prouvent l'intégrité. Les tests comprennent le dernier
 tenseur de taille variable, la fin de fichier tronquée, l'inventaire
 incomplet et le fichier comportant du bourrage final.
 
+## Entrée requise pour la validation complète — DLL NVIDIA utilisateur
+
+L'extracteur public `Overclockers/DLSSNR-AMD/linux/package/model-tools/extract_model.sh`
+lit les ressources du PE Windows **sans charger ni exécuter la DLL** et
+ne produit les modèles `NRMODEL1` que lorsque ses poids correspondent
+à toutes les empreintes SHA-256 publiées.
+
+- `nvngx_dlssnr.dll` **310.9.16.0**, SHA-256 complet du DLL
+  `2bc19bc09a7b89dd44f73e2ac0108fcc586e2154bdd0830f242f4f040e28789f` :
+  produit Original `dlssnr.bin` **et** Compact `dlssnr-small.bin`.
+- `nvngx_dlssnr.dll` **310.8.0.0**, SHA-256 complet du DLL
+  `e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e` :
+  produit **Original uniquement**.
+
+Une DLL de nom ou de version identique mais de SHA différent n'est pas
+automatiquement réputée authentique. Ne jamais la charger ni ignorer
+les refus de l'extracteur. Conserver les DLL et poids hors des dépôts
+publics et des artifacts GitHub Actions.
+
+Après extraction dans un environnement hôte isolé, contrôler chacun
+des packs avec les commandes ci-dessous. L'intégrité et l'inférence
+sont deux preuves distinctes : ne pas déclarer le moteur terminé
+sans exécution du graphe entier et sortie numérique indépendante.
+Aucune manipulation de la console PS5 n'est requise pour ce lot.
+
 Pour un paquet **réellement extrait et détenu par l'utilisateur** :
 
 ```sh

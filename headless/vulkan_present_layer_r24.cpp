@@ -194,11 +194,20 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
        !neural_model_failed&&image_index<neural_sessions.size()&&
        image_index<neural_images.size()&&image_index<neural_views.size()) {
         const bool original=selected.mode==Eden::NeuralVideo::kDlssOriginal;
-        const std::string model_path=Eden::ConfigDir()+
-            (original?"/neural/original.nrmodel":"/neural/compact.nrmodel");
+        // Accept the exact upstream NRMODEL1 package filenames from the
+        // MIT extractor, without requiring users to rename the output.
+        // Never scan arbitrary paths or substitute a different model.
+        const std::string model_dir=Eden::ConfigDir()+"/neural/";
+        const std::string configured=model_dir+
+            (original?"original.nrmodel":"compact.nrmodel");
+        const std::string extracted=model_dir+
+            (original?"dlssnr.bin":"dlssnr-small.bin");
+        const std::string model_path=Eden::FileExists(configured)?
+            configured:extracted;
         if(!Eden::FileExists(model_path)){
             LOG_WARNING(Render_Vulkan,
-                "R09 DLSS-NR model pack not installed: {}",model_path);
+                "R09 DLSS-NR model pack not installed; checked {} and {}",
+                configured,extracted);
             neural_model_failed=true;
         }else {
             try {

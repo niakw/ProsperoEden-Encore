@@ -35,7 +35,7 @@ jobs:
             liblz4-dev libzstd-dev libusb-1.0-0-dev libasound2-dev \
             libunwind-dev
           python3 -m venv .build-r09-cmake-venv
-          .build-r09-cmake-venv/bin/pip install --disable-pip-version-check cmake==3.31.8
+          .build-r09-cmake-venv/bin/pip install --disable-pip-version-check cmake==3.31.10
           echo "$GITHUB_WORKSPACE/.build-r09-cmake-venv/bin" >> "$GITHUB_PATH"
       - name: Configure pinned Eden Linux runtime with R09 owner injection
         shell: bash

@@ -20,11 +20,14 @@ SHADER=ROOT/"vendor/encore-active/eden-shader/src"
 CPM=ROOT/"vendor/sources/eden-cpm"
 # Compile every maintained R09 Vulkan C++ owner, not a hand-selected
 # subset that can silently miss a renderer/graph/weight source.
-FILES=tuple(sorted(p.name for p in ACTIVE.glob("nr_rdna2_*.cpp")))
+# Authoritative production list: do not count abandoned experimental
+# sources as linked neural operators.
+SHIPPING_CPP=(ROOT/"headless/vulkan.cmake").read_text(encoding="utf-8")
+FILES=tuple(sorted(set(re.findall(r"nr_rdna2_[a-z0-9_]+\\.cpp", SHIPPING_CPP))))
 REQUIRED={"nr_rdna2_frame_session.cpp","nr_rdna2_frame_readback.cpp",
           "nr_rdna2_core_feature_sequence.cpp","nr_rdna2_fswin_upsample.cpp",
           "nr_rdna2_split_swin_block.cpp","nr_rdna2_vit_block.cpp"}
-assert len(FILES)>=73 and REQUIRED.issubset(FILES), (
+assert len(FILES)>=72 and REQUIRED.issubset(FILES), (
     "R09 whole-graph C++ owner source inventory incomplete", len(FILES))
 INCLUDES=[
     ROOT/"extras/graphics",

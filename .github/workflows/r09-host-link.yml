@@ -1,0 +1,76 @@
+name: R09 full Vulkan host binary link (public-only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/graphics/r09_generate_host_spirv.py'
+      - 'tools/graphics/r09_host_project_hook.cmake'
+      - 'tools/graphics/r09_host_link_after.cmake'
+      - 'tools/graphics/r09_full_gpu_host.cpp'
+      - '.github/workflows/r09-host-link.yml'
+      - 'vendor'
+
+permissions:
+  contents: read
+
+jobs:
+  r09-real-host-link:
+    name: Build and link real native R09 GPU executable on Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          submodules: recursive
+      - name: Install actual host compiler, Vulkan and upstream Eden dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang ninja-build pkg-config glslang-tools spirv-tools \
+            libvulkan-dev mesa-vulkan-drivers \
+            libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev \
+            libswresample-dev libswscale-dev libssl-dev libopus-dev \
+            liblz4-dev libzstd-dev libusb-1.0-0-dev libasound2-dev \
+            libunwind-dev
+          python3 -m venv .build-r09-cmake-venv
+          .build-r09-cmake-venv/bin/pip install --disable-pip-version-check cmake==3.31.8
+          echo "$GITHUB_WORKSPACE/.build-r09-cmake-venv/bin" >> "$GITHUB_PATH"
+      - name: Configure pinned Eden Linux runtime with R09 owner injection
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p vendor/sources/eden/.cache
+          if [[ ! -e vendor/sources/eden/.cache/cpm ]]; then
+            ln -s "$GITHUB_WORKSPACE/vendor/sources/eden-cpm" vendor/sources/eden/.cache/cpm
+          fi
+          cmake -S vendor/sources/eden -B .build-r09-linked -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_COMPILER=clang -DENABLE_QT=OFF \
+            -DENABLE_OPENGL=OFF -DYUZU_CMD=OFF \
+            -DENABLE_WEB_SERVICE=OFF -DENABLE_WERROR=OFF \
+            -DYUZU_USE_EXTERNAL_FFMPEG=OFF -DENABLE_LSFG=OFF \
+            -DENCORE_R09_ROOT="$GITHUB_WORKSPACE" \
+            -DCMAKE_PROJECT_INCLUDE="$GITHUB_WORKSPACE/tools/graphics/r09_host_project_hook.cmake"
+      - name: Compile and fully link genuine R09 full GPU binary
+        run: cmake --build .build-r09-linked --target r09-full-gpu-host --parallel 2
+      - name: Binary starts and rejects absent private input (no fabricated inference)
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          .build-r09-linked/r09-full-gpu-host >.build-r09-linked/usage.txt 2>&1
+          rc=$?
+          set -e
+          cat .build-r09-linked/usage.txt
+          test "$rc" -eq 64
+          test ! -e .build-r09-linked/original.nrmodel
+          echo "R09_NATIVE_HOST_BINARY_LINK_AND_LAUNCH_PASS"
+      - name: Upload public-only executable (never a model)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r09-public-host-vulkan-runner
+          path: .build-r09-linked/r09-full-gpu-host
+          if-no-files-found: error
+          retention-days: 7

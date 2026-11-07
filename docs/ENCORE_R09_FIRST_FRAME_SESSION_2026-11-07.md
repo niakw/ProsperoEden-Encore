@@ -82,6 +82,20 @@ qui prouvent l'intégrité. Les tests comprennent le dernier
 tenseur de taille variable, la fin de fichier tronquée, l'inventaire
 incomplet et le fichier comportant du bourrage final.
 
+## Contrat utilisateur prioritaire — une seule DLL, zéro extraction manuelle
+
+La seule entrée à demander à l'utilisateur est **`nvngx_dlssnr.dll`**.
+Eden Encore doit détecter et importer localement les ressources de
+cette DLL, vérifier les tenseurs et maintenir les packs internes
+sans intervention de l'utilisateur. Ne pas lui demander de
+`dlssnr.bin`, `compact.nrmodel`, de scripts Python ni d'une autre DLL.
+La DLL reçue contient `WEIGHTS_HT` et aucune ressource
+`WEIGHTS_CC_SMALL_FP8` : valider Original, signaler Compact
+indisponible plutôt que simuler ses poids. La gestion automatique
+des ressources de la DLL n'est **pas encore intégrée** à la
+présentation native ; le moteur exige encore un pack préalable.
+Voir `ENCORE_R09_MODEL_FILES_2026-11-07.md`.
+
 ## Entrée requise pour la validation complète — DLL NVIDIA utilisateur
 
 L'extracteur public `Overclockers/DLSSNR-AMD/linux/package/model-tools/extract_model.sh`

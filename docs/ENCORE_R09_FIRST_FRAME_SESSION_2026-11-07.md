@@ -82,6 +82,28 @@ qui prouvent l'intégrité. Les tests comprennent le dernier
 tenseur de taille variable, la fin de fichier tronquée, l'inventaire
 incomplet et le fichier comportant du bourrage final.
 
+## Admission native précoce et intégrité du cache (7 novembre)
+
+Le raccord `headless/nr_dll_launch_preflight.h` effectue la
+conversion de la DLL personnelle, si nécessaire, **au lancement du
+jeu et avant tout rendu Vulkan**. Le présentateur ne décompresse
+plus la DLL pendant `ConfigureDraw`, ce qui élimine les interruptions
+de rendu dues à la lecture de 165 Mo de PE et l'écriture du pack.
+
+La réutilisation de `original.nrmodel` est autorisée seulement
+après vérification des 599 empreintes SHA-256 publiques de ses
+tenseurs. Le contrôle symétrique Compact inclut 255 empreintes,
+mais la DLL utilisateur examinée ne contient pas les poids Compact.
+Un cache synthétique avec 599 noms et tailles valides mais des
+octets de poids incorrects doit être rejeté. Les fichiers privés
+et les poids ne sont pas publiés dans la CI.
+
+**Non qualifié** : l'exécution de la totalité des 152 opérations
+Original sur GPU avec une image de sortie comparée à une référence
+indépendante. Les captures R09 existantes proviennent d'une chaîne
+de test avec poids de contrôle et ne doivent pas être présentées
+comme « avant / après DLSS Original ».
+
 ## Alerte d'installation manquante (même comportement que LSFG)
 
 Le menu global et la fiche vidéo par jeu affichent un message

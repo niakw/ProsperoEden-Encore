@@ -69,9 +69,12 @@ Le commit `2bfbeae` intègre **l'importeur natif**
 `headless/nr_dll_model_import.h`, raccordé à
 `Layer::ConfigureDraw` dans `headless/vulkan_present_layer_r24.cpp`.
 
-Si le jeu utilise Original et qu'aucun pack validé n'est encore présent,
-le présentateur recherche le **seul fichier** `nvngx_dlssnr.dll`
-dans les emplacements privés suivants (dans cet ordre) :
+À l'admission du jeu, **avant la création du rendu Vulkan**,
+`headless/main.cpp` appelle `PrepareR09UserModel`. Pour Original,
+le moteur réutilise uniquement un cache dont les **599 empreintes
+SHA-256** concordent avec les empreintes publiques. Si le cache
+est absent ou altéré, il recherche le **seul fichier**
+`nvngx_dlssnr.dll` dans les emplacements privés suivants (dans cet ordre) :
 
 1. **Chemin utilisateur recommandé** : `/data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll`
    (ou `<UserDir>/dlssnr/nvngx_dlssnr.dll` en mode sandbox).
@@ -83,10 +86,16 @@ Le dossier `user/dlssnr/` suit exactement la convention du dossier
 `user/lossless/` pour `Lossless.dll`. Il n'y a qu'une DLL à fournir ;
 les autres chemins sont des fallbacks de migration et non des fichiers à installer.
 
-Il analyse les ressources du PE **sans exécuter la DLL**, vérifie
-le SHA-256 exact de `WEIGHTS_HT`, reconstruit tous les tenseurs,
-écrit un pack NRMODEL1 temporaire puis publie
+L'importeur analyse les ressources du PE **sans exécuter la DLL**,
+vérifie le SHA-256 exact de `WEIGHTS_HT`, reconstruit tous les
+tenseurs, écrit un pack NRMODEL1 temporaire puis publie
 `<ConfigDir>/neural/original.nrmodel` dans le cache privé.
+**Chaque tenseur du cache est ensuite relu et vérifié** contre les
+599 empreintes de référence avant l'initialisation GPU. Le vérificateur
+contrôle aussi les 255 empreintes Compact si un véritable pack
+Compact est disponible. En cas de refus, le jeu revient au rendu normal
+sans modifier le paramètre DLSS enregistré. Plus aucune extraction
+n'est effectuée sur la thread de présentation d'une image.
 Aucun script ou deuxième fichier n'est nécessaire à l'utilisateur.
 Le mode Compact ne reçoit jamais les poids Original par substitution.
 

@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+namespace vk = Vulkan::vk;
 namespace {
 constexpr std::uint32_t kWidth = 1920u;
 constexpr std::uint32_t kHeight = 1080u;

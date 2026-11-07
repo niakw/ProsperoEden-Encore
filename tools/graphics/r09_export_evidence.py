@@ -24,11 +24,13 @@ def png_from_gpu_ppm(name):
     def chunk(tag,payload):
         return (struct.pack(">I",len(payload))+tag+payload+
                 struct.pack(">I",zlib.crc32(tag+payload)&0xffffffff))
-    png=(b"\x89PNG\\r\n\x1a\n"+
+    png=(b"\x89PNG\r\n\x1a\n"+
          chunk(b"IHDR",struct.pack(">IIBBBBB",W,H,8,2,0,0,0))+
          chunk(b"IDAT",zlib.compress(scanlines,9))+
          chunk(b"IEND",b""))
     out=BASE/(name.replace(".ppm",".png"))
+    if not png.startswith(bytes.fromhex("89504e470d0a1a0a")):
+        raise ValueError("PNG signature invalid")
     out.write_bytes(png)
     return out,png
 

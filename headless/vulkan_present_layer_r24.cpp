@@ -288,8 +288,10 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                        VK_FORMAT_R32G32B32A32_SFLOAT,{1920u,1080u},
                        1.0f,float(selected.strength)/100.0f)){
                     LOG_WARNING(Render_Vulkan,
-                        "R09 DLSS-NR model/session preflight rejected: {}",
-                        original?"Original":"Compact");
+                        "R09 DLSS-NR model/session preflight rejected: {} "
+                        "phase={} (no neural commands recorded)",
+                        original?"Original":"Compact",
+                        owner->LastInitializePhaseName());
                     neural_model_failed=true;
                     // Initialize guarantees zero queued GPU commands. All
                     // provisional stage owners have already unwound, so
@@ -347,15 +349,20 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                     // Keep the owner live even after a failed Record:
                     // that failure may already have enqueued GPU work.
                     neural_sessions[image_index]=std::move(owner);
-                    if(neural_sessions[image_index]->Record()&&
+                    const bool r09_recorded=neural_sessions[image_index]->Record();
+                    if(r09_recorded&&
                        neural_sessions[image_index]->ResultView()==
                            *neural_views[image_index]){
                         source_image_view=*neural_views[image_index];
                         crop_rect={0,0,1,1};
                     }else {
                         LOG_WARNING(Render_Vulkan,
-                            "R09 DLSS-NR neural graph dispatch refused; "
-                            "retaining the original guest image");
+                            "R09 DLSS-NR graph not accepted: phase={} "
+                            "queued_scheduler_callbacks={} "
+                            "(enqueue only, NOT GPU completion); "
+                            "retaining the original guest image",
+                            neural_sessions[image_index]->LastRecordPhaseName(),
+                            neural_sessions[image_index]->EnqueuedSchedulerCallbacks());
                         neural_model_failed=true;
                     }
                 }

@@ -268,6 +268,13 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                         "R09 DLSS-NR model/session preflight rejected: {}",
                         original?"Original":"Compact");
                     neural_model_failed=true;
+                    // Initialize guarantees zero queued GPU commands. All
+                    // provisional stage owners have already unwound, so
+                    // return this unused output view/image immediately.
+                    // Record failures take a different path below: those
+                    // owners MUST survive until the scheduler tick retires.
+                    neural_views[image_index].reset();
+                    neural_images[image_index].reset();
                 }else {
                     const VkImage target=*neural_images[image_index];
                     const VkImage guest_source=source_image;

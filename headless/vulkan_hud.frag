@@ -5,22 +5,54 @@ layout(push_constant) uniform Text { uint glyphs[24]; uint width; uint x; uint y
 layout(location = 0) out vec4 color;
 #include "loading_wordmark.glsl"
 #include "loading_scene.glsl"
+// Matches pe::ui::theme::apply_palette: 4 palettes × 5 accents.
+vec3 color24(uint rgb) {
+    return vec3(float((rgb>>16u)&255u),float((rgb>>8u)&255u),
+                float(rgb&255u))/255.0;
+}
+vec3 menuAccent(uint palette,uint accent) {
+    const uint normal[5]=uint[5](0u,0x347fc4u,0x278b70u,0xb17724u,0xc04f72u);
+    const uint bright[5]=uint[5](0u,0x9ccbf7u,0x8bd9b5u,0xf7cc87u,0xf5a6c4u);
+    if(accent>0u&&accent<5u)
+        return color24(palette==3u?normal[accent]:bright[accent]);
+    if(palette==0u)return color24(0xff70e4u);
+    if(palette==1u)return color24(0x8ab8ecu);
+    if(palette==2u)return color24(0xffffffu);
+    return color24(0x135eaau);
+}
+vec3 menuPanel(uint palette) {
+    if(palette==1u)return color24(0x171b22u);
+    if(palette==2u)return color24(0x16171bu);
+    if(palette==3u)return color24(0xffffffu);
+    return color24(0x120f1cu);
+}
 void main() {
     // High sentinel values describe a native quick-menu primitive, NOT
     // milliseconds of the loading scene. No texture or guest frame readback.
-    if (text.loading == 0xfffffff1u) {
-        vec2 uv = gl_FragCoord.xy / max(vec2(text.x, text.y), vec2(1.0));
-        float panel = step(0.53, uv.x) * (1.0 - step(0.985, uv.x)) *
-                      step(0.055, uv.y) * (1.0 - step(0.945, uv.y));
-        vec3 backdrop = vec3(0.018, 0.012, 0.029);
-        vec3 purple = mix(vec3(0.068, 0.032, 0.13),
-                          vec3(0.22, 0.092, 0.35), clamp(uv.y, 0.0, 1.0));
-        color = vec4(mix(backdrop, purple, panel), mix(0.60, 0.91, panel));
+    // Menu-only bit tag. The normal FPS HUD and loading-time path
+    // keep their previous push-constant contract.
+    bool quick = (text.loading & 0xfff00000u) == 0xff100000u;
+    uint kind = text.loading & 15u;
+    uint style = (text.loading >> 8u) & 63u;
+    uint palette = style % 4u;
+    uint accent = (style / 4u) % 5u;
+    bool contrast = style >= 20u;
+    bool light = palette == 3u;
+    vec3 highlight = menuAccent(palette,accent);
+    vec3 surface = menuPanel(palette);
+    if (quick && kind == 1u) {
+        vec2 uv = gl_FragCoord.xy / max(vec2(text.x,text.y),vec2(1.0));
+        float panel = step(0.53,uv.x) * (1.0-step(0.985,uv.x)) *
+                      step(0.055,uv.y) * (1.0-step(0.945,uv.y));
+        vec3 backdrop = light ? color24(0x1a2938u) : color24(0x04040au);
+        vec3 panel_rgb = mix(surface,highlight,
+                             (palette==0u?0.20:0.10)*clamp(uv.y,0.0,1.0));
+        color = vec4(mix(backdrop,panel_rgb,panel),
+                     mix(contrast?0.75:0.60,contrast?0.98:0.91,panel));
         return;
     }
-    bool warning_row = text.loading == 0xfffffff4u;
-    bool menu_row = text.loading == 0xfffffff2u ||
-                    text.loading == 0xfffffff3u || warning_row;
+    bool warning_row = quick && kind == 4u;
+    bool menu_row = quick && (kind == 2u || kind == 3u || warning_row);
     if (text.loading != 0u && !menu_row) {
         // The loading screen: x and y carry the picture's size, loading the milliseconds since
         // it began (plus one). Vulkan counts rows from the top.
@@ -51,12 +83,15 @@ void main() {
             ink = ((glyphs[i] >> uint((4 - cell.y) * 3 + 2 - x)) & 1u) != 0u;
     }
     if (menu_row) {
-        bool selected = text.loading == 0xfffffff3u;
+        bool selected = kind == 3u;
+        vec3 row_rgb = mix(surface,highlight,
+                           selected?(light?0.24:0.36):(light?0.04:0.08));
+        float alpha = selected?(contrast?0.98:0.84):
+                               (contrast?0.87:0.48);
+        vec3 menu_ink = light ? color24(0x16202cu) : color24(0xf4f2f8u);
         color = warning_row
-            ? (ink ? vec4(1.0, 0.83, 0.41, 1.0) : vec4(0.30, 0.17, 0.05, 0.78))
-            : (ink ? vec4(0.98, 0.96, 1.0, 1.0)
-                   : selected ? vec4(0.37, 0.17, 0.60, 0.80)
-                              : vec4(0.12, 0.065, 0.22, 0.34));
+            ? (ink ? vec4(1.0,0.83,0.41,1.0) : vec4(0.30,0.17,0.05,0.84))
+            : (ink ? vec4(menu_ink,1.0) : vec4(row_rgb,alpha));
         return;
     }
     color = ink ? vec4(0.9, 0.95, 1.0, 1.0) : vec4(0.025, 0.04, 0.075, 0.5);

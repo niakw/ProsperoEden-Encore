@@ -26,7 +26,8 @@ static void Put64(std::vector<std::uint8_t>& bytes,std::uint64_t v){
 template<std::size_t N>
 static void MakeIndexOnlyPack(const std::filesystem::path& path,
     const std::array<std::string_view,N>& manifest,
-    std::string_view optional={},bool omit_last=false){
+    std::string_view optional={},bool omit_last=false,
+    bool bad_input_lift=false,bool bad_output_project=false){
     const std::size_t n=N-(omit_last?1u:0u)+(!optional.empty()?1u:0u);
     std::vector<std::string_view> names(manifest.begin(),
                                         manifest.begin()+N-(omit_last?1u:0u));
@@ -42,9 +43,18 @@ static void MakeIndexOnlyPack(const std::filesystem::path& path,
         Put32(index,static_cast<std::uint32_t>(name.size()));
         for(const auto c:name)
             index.push_back(static_cast<std::uint8_t>(c));
+        const bool pre=name==
+            "unpacked-preblock/block0.layer0.layer.input_lift.bin";
+        const bool post=name==
+            "unpacked-postblock/block70.layer0.layer.out_project.bin"||
+            name=="unpacked-postblock/block30.layer0.layer.out_project.bin";
+        const std::uint64_t bytes=(pre||post)?1024u:2u;
+        const std::uint64_t declared=
+            (pre&&bad_input_lift)||(post&&bad_output_project)?
+            1022u:bytes;
         Put64(index,cursor);
-        Put64(index,2u);
-        cursor+=256u;
+        Put64(index,declared);
+        cursor+=(declared+255u)&~std::uint64_t(255u);
     }
     std::vector<std::uint8_t> full(static_cast<std::size_t>(cursor));
     assert(index.size()<=full.size());
@@ -76,6 +86,17 @@ static void Check(const std::array<std::string_view,N>& names,
     assert(out.routes.run_count==2u);
     assert(out.vit_route.count==8u);
     assert(out.down_segments[0]!=out.up_segments[0]);
+    // Correctly named manifest alone must not allocate GPU memory when
+    // either learned FP16 image-boundary matrix has a bad byte length.
+    MakeIndexOnlyPack(file,names,{},false,true,false);
+    assert(!PreflightR09Session(file.string(),good,1920u,1080u,
+                                1920u,1080u,out));
+    assert(!out.model.IsOpen());
+    MakeIndexOnlyPack(file,names,{},false,false,true);
+    assert(!PreflightR09Session(file.string(),good,1920u,1080u,
+                                1920u,1080u,out));
+    assert(!out.model.IsOpen());
+    MakeIndexOnlyPack(file,names);
     assert(!PreflightR09Session(file.string(),bad,1920u,1080u,
                                 1920u,1080u,out));
     assert(!out.model.IsOpen());

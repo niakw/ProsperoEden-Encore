@@ -1,5 +1,14 @@
 # Eden Encore R09 — montée U-Net (7 novembre 2026)
 
+> **Actualisation du 7 novembre 2026 :** les gains FP16 C64/C128/C256
+> ont désormais un chemin de reconstruction exact en source depuis les
+> deux régions du modèle. La remontée peut être **préparée avant** tout
+> enregistrement GPU, puis les quatre skips sont vérifiés comme réellement
+> enregistrés au moment du `Record`. Voir
+> [gains](ENCORE_R09_UNET_GAIN_RECOVERY_2026-11-07.md) et
+> [préparation](ENCORE_R09_PREPARE_BEFORE_GPU_2026-11-07.md).
+> Cela ne prouve pas l'inférence numérique sur un GPU.
+
 **Implémentation source, qualification hôte à établir ; aucun rendu PS5 déclaré.**
 
 `NrRdna2UNetUpSequence` construit quatre étapes apprises `NrRdna2UNetUpsampleLink`, enchaînées par quatre `NrRdna2FSwinChain`, depuis un raster FP8 C512 fourni par un bottleneck distinct jusqu'au raster final FP8 C32 (pas une image RGBA).

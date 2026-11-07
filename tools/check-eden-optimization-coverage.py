@@ -911,6 +911,10 @@ assert len(pending_code)==len(launcher_pending)+len(pending_code-launcher_pendin
 # current contract path and a real file entry in the written source review.
 # A source reviewed as not needing a patch remains valid only for the
 # identical Git blob. A changed header must trigger a fresh optimization triage.
+# Collect every changed historic reviewed blob in one run, instead of
+# discovering the next drift only after a multi-minute CI cycle. A drift is
+# still a HARD failure until individually reviewed; no baseline is rewritten.
+reviewed_blob_drifts=[]
 for e in entries:
     if not e.get("reviewed_source_git_blob"):
         continue
@@ -925,7 +929,15 @@ for e in entries:
               'current_blob='+changed)
         continue
     actual=subprocess.check_output(["git","hash-object",e["path"]],cwd=ROOT,text=True).strip()
-    assert actual==e["reviewed_source_git_blob"],("source changed: repeat optimization review",e["path"])
+    if actual!=e["reviewed_source_git_blob"]:
+        reviewed_blob_drifts.append({
+            "path":e["path"],"expected":e["reviewed_source_git_blob"],
+            "actual":actual,"prior_disposition":e["disposition"]})
+if reviewed_blob_drifts:
+    print("ENCORE_REVIEWED_BLOB_DRIFTS_JSON="+json.dumps(
+        reviewed_blob_drifts,separators=(",",":")),flush=True)
+assert not reviewed_blob_drifts, ("source changed: repeat optimization review",
+                                 len(reviewed_blob_drifts))
 for e in entries:
     if not e.get("source_review_document"):
         continue

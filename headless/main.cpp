@@ -1682,9 +1682,8 @@ int main(int argc, char** argv) {
             // the effective setting for the current running title.
             const bool dlss_active = neural_selectable &&
                 Eden::NeuralVideo::IsDlss(requested_nr);
-            const int active_aa = dlss_active ? 0 :
-                (profile_renderer != 1 && anti_aliasing >= 4
-                    ? 0 : anti_aliasing);
+            const int active_aa=Eden::NeuralVideo::EffectiveAntiAliasing(
+                anti_aliasing,profile_renderer,requested_nr,neural_selectable);
             if (dlss_active && anti_aliasing != 0) {
                 Eden::Report("neural",
                     "DLSS-NR uses exclusive rendering: FXAA/SMAA "

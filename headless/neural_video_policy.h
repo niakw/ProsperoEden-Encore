@@ -58,6 +58,13 @@ enum class Reason {
     int mode,int renderer,int filter,int aa,int fg) noexcept {
     return CheckSelectable(mode,renderer,filter,aa,fg)==Reason::Available;
 }
+// Only an explicitly selected DLSS-NR model suppresses screen-space AA.
+// Return the effective per-session value, without editing saved preferences.
+[[nodiscard]] constexpr int EffectiveAntiAliasing(
+    int requested,int renderer,int neural_mode,bool neural_selectable) noexcept {
+    if(neural_selectable&&IsDlss(neural_mode))return 0;
+    return renderer!=1&&requested>=4?0:requested;
+}
 [[nodiscard]] constexpr bool CanEnable(
     int renderer,int filter,int aa,int fg,
     bool validated=kRuntimeValidated) noexcept {

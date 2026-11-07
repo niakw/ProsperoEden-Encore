@@ -24,7 +24,16 @@ int main() {
         assert(Check(mode,1,0,1,0)==Reason::EngineIncomplete);
         assert(CanSelect(mode,1,0,1,0)); // UI selection != GPU proof
         assert(!RuntimeParametersEnabled(mode));
+        for(const int aa : {0,1,2,3}) {
+            assert(CanSelect(mode,1,0,aa,0));
+            assert(EffectiveAntiAliasing(aa,1,mode,true)==0);
+        }
+        // A rejected model must never unexpectedly change the AA policy.
+        assert(EffectiveAntiAliasing(1,1,mode,false)==1);
     }
+    assert(EffectiveAntiAliasing(1,1,kOff,false)==1);
+    assert(EffectiveAntiAliasing(3,1,kA4kDetail,true)==3);
+    assert(EffectiveAntiAliasing(5,0,kOff,false)==0);
     assert(DlssModelIndex(kDlssOriginal)==0&&DlssModelIndex(kDlssCompact)==1);
     assert(!CanEnable(1,0,1,0));
     assert(FramegenMethodSelectable(0,1,kDlssOriginal,false));

@@ -20,3 +20,19 @@ Les gains U-Net C64/C128/C256 manquants restent bloquants.
 Les dimensions logiques du plan sont transposées dans le raster GPU :
 entrée basse 540×960, sortie/skip 1080×1920 pour le plan 1920×1080.
 Le contrôle hôte valide cette convention sans permuter les octets.
+
+## Nouveau chaînage GPU du postbloc
+`NrRdna2PostblockRun` crée maintenant, à partir d'un NRMODEL1
+local et du plan complet, une chaîne préparable et enregistrable :
+1. mélange C32 appris (remontée demi-résolution + skip plein raster) ;
+2. bloc FSwin C32 pleine résolution, avec les poids appris
+   `unpacked-postblock/block70` ou `block30` et repack des fenêtres ;
+3. projection finale FP16 [16,32] par shader Vulkan existant.
+
+Les étapes partagent un seul scheduler Vulkan. Tous les buffers doivent être
+distincts, et chaque propriétaire refuse l'absence de poids ou un nouveau
+Record après une tentative. L'instance est non réutilisable après échec.
+
+Il s'agit d'une **sortie de 16 caractéristiques FP16**, pas encore d'un
+RGB final. La parité du corps Swin fusionné et du résiduel FP16 devra être
+comparée aux captures de référence ; aucun rendu PS5 validé.

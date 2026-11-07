@@ -68,12 +68,12 @@ jobs:
         run: python3 -B tools/check-codeql-allocator-pairs-host.py
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # pinned v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
           config-file: ./.github/codeql/codeql-config.yml
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # pinned v4
         with:
           category: /language:${{ matrix.language }}/setup:advanced

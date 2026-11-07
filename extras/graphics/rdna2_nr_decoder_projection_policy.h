@@ -59,9 +59,9 @@ struct DecoderProjectionBatches {
        buffers.weights<channels*inner||
        buffers.fp16_projected<pixels*channels*2u)
         return false;
-    const auto per_batch=std::min({
+    const auto per_batch=std::min<std::uint64_t>({
         std::uint64_t(1024u),pixels,
-        buffers.fp32_scratch/(channels*4ull),
+        buffers.fp32_scratch/(std::uint64_t(channels)*4u),
         kMaxProducts/(std::uint64_t(channels)*inner)});
     if(per_batch==0u||pixels>per_batch*16u)return false;
     DecoderProjectionBatches plan{};

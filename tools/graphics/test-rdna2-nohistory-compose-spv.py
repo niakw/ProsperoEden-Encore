@@ -24,10 +24,10 @@ def check(shader:Path,header:Path|None)->None:
         asm=subprocess.check_output(["spirv-dis",str(spv)],text=True)
         assert "OpExecutionMode %main LocalSize 8 8 1" in asm
         for name,b in (("proxy",0),("features",1),("output_color",2)):
-            assert re.search(rf"OpDecorate %{name} DescriptorSet 0\\b",asm),name
-            assert re.search(rf"OpDecorate %{name} Binding {b}\\b",asm),name
+            assert re.search(rf"OpDecorate %{name} DescriptorSet 0\b",asm),name
+            assert re.search(rf"OpDecorate %{name} Binding {b}\b",asm),name
         for i in range(4):
-            assert re.search(rf"OpMemberDecorate %Params {i} Offset {i*4}\\b",asm),i
+            assert re.search(rf"OpMemberDecorate %Params {i} Offset {i*4}\b",asm),i
         assert re.findall(r"OpCapability ([A-Za-z0-9_]+)",asm)==["Shader"]
         if header:
             data=spv.read_bytes()

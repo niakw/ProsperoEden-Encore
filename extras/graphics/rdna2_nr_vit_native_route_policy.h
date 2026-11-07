@@ -65,8 +65,8 @@ struct NativeVitRoute {
                       staged.blocks[staged.count-1u].block))
             return NativeVitRouteError::InvalidSource;
         if(first.tokens!=staged.tokens||
-           first.width!=static_cast<std::int32_t>(staged.raster_height)||
-           first.height!=static_cast<std::int32_t>(staged.raster_width))
+           first.width!=staged.raster_height||
+           first.height!=staged.raster_width)
             return NativeVitRouteError::InvalidShape;
         for(std::uint32_t j=0u;j<5u;++j){
             const auto& s=rows[i+j];

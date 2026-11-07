@@ -312,6 +312,17 @@ jobs:
           test -n "$driver"
           cp -L "$driver" .build-r09-gpu/lavapipe-kit/libvulkan_lvp.so
           cp -a /usr/include/vulkan .build-r09-gpu/lavapipe-kit/include/
+          cp -a /usr/include/vk_video .build-r09-gpu/lavapipe-kit/include/
+          mkdir -p .build-r09-gpu/lavapipe-kit/deps
+          # A standalone host must use the precise public LLVM and ICU
+          # ABI versions required by this Mesa ICD; never copy user data.
+          for lib in /lib/x86_64-linux-gnu/libLLVM.so.20.1 \
+                     /lib/x86_64-linux-gnu/libicuuc.so.74 \
+                     /lib/x86_64-linux-gnu/libicudata.so.74; do
+            if [[ -f "$lib" ]]; then
+              cp -L "$lib" .build-r09-gpu/lavapipe-kit/deps/
+            fi
+          done
           cp tools/graphics/r09_vulkan_fswin_smoke.cpp .build-r09-gpu/lavapipe-kit/
           cp .build-r09-gpu/fswin_dense.spv .build-r09-gpu/lavapipe-kit/
           ldd "$driver" > .build-r09-gpu/lavapipe-kit/lavapipe-dependencies.txt

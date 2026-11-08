@@ -153,11 +153,18 @@ for module, changes in edits.items():
         # checking this immutable historical F07 texture-source fingerprint.
         from ns2.native_astc_vendor_parity import (
             strip_p22_runtime_cpp, strip_p25_reinterpret,
+            strip_post_n73_msaa_framebuffer_source,
         )
         # Preserve P2.5 depth/stencil and disjoint copy-buffer protections
         # in both generator and production. Undo only the individually
         # hash-pinned additions for this *historical* texture SHA witness.
-        historical_current = strip_p25_reinterpret(strip_p22_runtime_cpp(current))
+        # Exact post-N73 native colour-attachment capture is a separate
+        # production owner. Reverse its fixed bytes for this historic
+        # deferred-copy oracle; the N57/N73 normalizer still verifies
+        # the real owner against its immutable source hashes.
+        historical_current = strip_p25_reinterpret(
+            strip_p22_runtime_cpp(
+                strip_post_n73_msaa_framebuffer_source(current)))
         research_blob = hashlib.sha1(
             b'blob ' + str(len(historical_current.encode())).encode() + b'\0' +
             historical_current.encode()

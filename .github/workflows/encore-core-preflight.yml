@@ -22,6 +22,7 @@ on:
       # N24 native source ownership and the 328-file active catalogue are
       # executable audit inputs, not decorative documentation.
       - 'docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json'
+      - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
       # The source-coverage gate compares audited paths against this review table.
       - 'docs/FC27_F07_CROSS_SYSTEM_OPTIMIZATION_AUDIT_2026-10-26.md'
       - 'docs/EDEN_CORE_AUDIT_DEPENDENCIES.md'

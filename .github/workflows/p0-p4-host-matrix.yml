@@ -9,12 +9,14 @@ on:
       - 'vendor'
       - 'headless/**'
       - 'tools/**'
+      - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
       - '.github/workflows/p0-p4-host-matrix.yml'
   pull_request:
     paths:
       - 'vendor'
       - 'headless/**'
       - 'tools/**'
+      - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
       - '.github/workflows/p0-p4-host-matrix.yml'
   workflow_dispatch:
 

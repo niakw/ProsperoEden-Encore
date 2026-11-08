@@ -174,8 +174,23 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         graphics_enums, encoding="utf-8")
     reviewed_settings = (
         ROOT / "vendor/encore-active/eden-backports/src/common/settings.h")
-    assert reviewed_settings.is_file()
-    shutil.copyfile(reviewed_settings, graphics_stage / "settings.h")
+    reviewed_settings_impl = (
+        ROOT / "vendor/encore-active/eden-backports/src/common/settings.cpp")
+    assert reviewed_settings.is_file() and reviewed_settings_impl.is_file()
+    # Use the SAME audited, non-persistent cache overlay that the real
+    # native prepare-build script installs. The upstream fence_manager.h
+    # requires Strict; a prior witness compiled with the older three-mode
+    # backport header and failed before reaching the Vulkan translation unit.
+    (graphics_stage / "settings.h").write_text(
+        graphics_tools["extend_fence_header"](
+            reviewed_settings.read_text(encoding="utf-8")), encoding="utf-8")
+    (graphics_stage / "settings.cpp").write_text(
+        graphics_tools["extend_fence_implementation"](
+            reviewed_settings_impl.read_text(encoding="utf-8")), encoding="utf-8")
+    assert "bool IsGPUFenceBehaviorStrict();" in (
+        graphics_stage / "settings.h").read_text()
+    assert "bool IsGPUFenceBehaviorStrict() {" in (
+        graphics_stage / "settings.cpp").read_text()
     command.insert(command.index("-I" + str(includes[0])),
                    "-I" + str(graphics_stage.parent))
     # PS5_NATIVE builds compile the R437 maintained buffer-cache owner from a

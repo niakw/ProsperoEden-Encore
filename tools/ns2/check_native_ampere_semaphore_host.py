@@ -12,6 +12,19 @@ for symbol in ("ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)"
                "pending_native_acquire = PendingNativeAcquire",
                "ResumeNativeAcquire(DmaPusher& dma_pusher)"):
     assert symbol in puller, symbol
+# Puller G10: only real supported methods can reach normal native queue
+# completion. Unknown/missing methods must fail closed for an authenticated
+# native GPFIFO, while Maxwell/NS1 keeps its original diagnostic behavior.
+method_owner = puller.split(
+    "void Puller::CallPullerMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {",
+    1)[1].split("// Research-only native Ampere 3D MME.", 1)[0]
+assert method_owner.count("reject_unsupported_native();") == 5
+assert "Native GPFIFO puller method unsupported" in method_owner
+assert "#ifdef PS5_NATIVE" in method_owner
+for name in ("NonStallInterrupt", "MemOpA", "MemOpC", "MemOpD", "Yield"):
+    assert "BufferMethods::" + name in method_owner
+assert "ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument);" in method_owner
+assert "ProcessSemaphoreAcquire(dma_pusher);" in method_owner
 # Production P2.7 coherence: initial compare and scheduler retry share the
 # same cache-flushing GMMU read, not an out-of-date CPU-side value.
 reader = puller.split("static u32 ReadCoherentNativeSemaphore(", 1)[1].split(

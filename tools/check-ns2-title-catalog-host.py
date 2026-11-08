@@ -37,7 +37,11 @@ assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services
 assert 'IsSafeExtractedDirectory(parent)' in services
 assert 'icon_' in services and 'std::memcmp(signature,' in services
 assert 'IsSafeExtractedDirectory(ancestor)' in services
-assert 'WriteJpegTga(best, staged, true)' in services
+# The shared CDN artwork encoder was migrated to bounded WebP output.
+# Verify the current encode + atomic publish path, not the obsolete TGA name.
+assert 'WriteJpegWebP(best, staged, true)' in services
+assert 'WebPGetInfo(compressed, length, &checked_w, &checked_h)' in services
+assert 'std::rename(staged.c_str(), destination.c_str())' in services
 assert 'std::rename(staged.c_str(), destination.c_str())' in services
 assert 'FetchKnownNs2Front' not in services
 assert 'front_host' not in header and 'front_path' not in header

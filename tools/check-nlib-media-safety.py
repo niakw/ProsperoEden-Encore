@@ -9,11 +9,15 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 services = (root / "headless/prosperoeden/eden_services.cpp").read_text()
 library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
-source = services[services.index("bool WriteJpegTga("):services.index("std::string NlibPlayersPath(")]
+source = services[services.index("bool WriteJpegWebP("):services.index("std::string NlibPlayersPath(")]
 assert "stbi_info_from_memory" in source
 assert source.index("stbi_info_from_memory") < source.index("stbi_load_from_memory")
 assert "encoded.size() > (16u << 20)" in source
-assert "width > 4096 || height > 2160" in source
+assert "width > 4096 || height > 4096" in source
+assert "(!tall_case && height > 2160)" in source
+assert "std::scoped_lock codec_lock(ArtworkCodecMutex());" in source
+assert "WebPEncodeRGBA(pixels, w, h, w * 4, 80.0f, &compressed)" in source
+assert "WebPGetInfo(compressed, length, &checked_w, &checked_h)" in source
 assert "3840u * 2160u" in source
 section = services[services.index("NlibEnrichment EnsureNlibEnrichment("):
                    services.index("std::uintmax_t TreeBytes(")]

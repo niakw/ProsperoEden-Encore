@@ -175,6 +175,7 @@ constexpr u32 ResultBusy=8U;
 }
 constexpr u32 ResultSuccess=0U;
 constexpr u32 NoData=0x1c286fU;
+constexpr u32 MaxSyncpoints=192U; // Same native video owner limit as source.
 namespace IPC {
 struct ResponseBuilder {
  HLERequestContext& ctx;

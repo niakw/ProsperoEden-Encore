@@ -21,7 +21,7 @@ Le nouveau header partagé `vendor/encore-active/eden-vulkan/include/video_core/
 
 `test_rdna2_nr_native_plan_bridge.cpp` vérifie plusieurs lignes représentatives des plans amont, les exclusions de familles incompatibles, deux segments FSwin extraits, les décalages, les préfixes de poids, le rejet des très grandes grilles, la rétrocompatibilité du format à 19 colonnes et les refus de parsing malformé/dépendance invalide/ordre invalide.
 
-Statut de validation : **test C++ inscrit au CTest**, pas de succès de CI attribué tant que la nouvelle branche n'a pas été compilée. La cible PS5 et les FPS restent non testés. 
+Statut de validation : **test C++ inscrit au CTest**, pas de succès de CI attribué tant que la nouvelle branche n'a pas été compilée. La cible PS5 et les FPS restent non testés.
 
 ## Suivi fonctionnel avant optimisation
 

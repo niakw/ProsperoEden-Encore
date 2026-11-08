@@ -4,17 +4,31 @@ Source : `tools/graphics/r09_full_gpu_host.cpp`.
 
 ## Chaîne implémentée
 
-Le programme doit lire un modèle utilisateur NRMODEL1 Original, vérifier les
-**599 empreintes SHA-256 des vrais tenseurs**, puis lire une capture RGBA8
-1920×1080 (8 294 400 octets). Il prépare les objets Eden `Device`,
+Le programme accepte directement **la seule DLL utilisateur `nvngx_dlssnr.dll`** :
+l'importeur natif la traite comme des données (sans exécuter le PE), crée
+un pack NRMODEL1 dans un répertoire temporaire privé (0700) et le supprime
+au terme du programme, succès comme échec. Un pack NRMODEL1 déjà importé
+reste accepté pour diagnostic interne. Dans les deux cas, les **599 empreintes
+SHA-256 des vrais tenseurs** doivent être vérifiées avant Vulkan.
+
+Le banc lit ensuite une capture RGBA8 1920×1080 (8 294 400 octets).
+Il prépare les objets Eden `Device`,
 `MemoryAllocator` et `Scheduler`, téléverse la capture sur Vulkan,
 initialise `NrRdna2FrameSession` avec le plan Original de 152 lignes,
 enregistre les étapes neuronales, attend le GPU et tente de produire
 un readback RGBA32F de 33 177 600 octets.
 
+Avant publication, le résultat RGB du readback doit avoir la taille
+correcte, contenir uniquement des flottants finis et ne pas être
+quasi constant. Cela n'est **ni une preuve de qualité ni une référence
+indépendante**, et cela ne prouve pas les 152 étapes.
+
 L'exécution complète **n'a pas encore été démontrée** sur un modèle
 authentique dans la session hôte courante. Le code source, sa compilation
 et une inférence effectivement terminée sont trois preuves distinctes.
+Les nouveaux changements hôte restent non qualifiés par recompilation ;
+l'ancien binaire publié ne les inclut pas. Pas de relance du build long
+sans nouvelle autorisation.
 
 ## Qualification des sources et liaison Linux
 

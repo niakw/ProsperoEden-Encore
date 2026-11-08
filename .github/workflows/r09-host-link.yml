@@ -77,8 +77,8 @@ jobs:
               if line.startswith("CMakeFiles/r09-full-gpu-host.dir/")
               and ".o:" in line
           })
-          if len(host_targets) != 1:
-              raise SystemExit("R09_HOST_ENTRYPOINT_OBJECT_INVENTORY_INVALID="
+          if len(host_targets) != 3:
+              raise SystemExit("R09_HOST_ENTRYPOINT_VMA_PLAYTIME_OBJECT_INVENTORY_INVALID="
                                + str(len(host_targets)))
           subprocess.run(["ninja", "-C", ".build-r09-linked",
                           "-j", "2", *host_targets], check=True)

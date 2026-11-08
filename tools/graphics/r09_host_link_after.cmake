@@ -86,8 +86,14 @@ target_include_directories(video_core BEFORE PRIVATE
     "${_r09_active}/include"
     "${ENCORE_R09_ROOT}/headless"
     "${ENCORE_R09_ROOT}/extras/graphics")
+# Host-only concrete implementations missing from the upstream video's
+# header-only GPUOpen::VulkanMemoryAllocator linkage and standalone no-UI
+# executable. Compile the real Vulkan Memory Allocator implementation exactly
+# once and reuse pinned Eden's real PlayTimeManager source (no stubs).
 add_executable(r09-full-gpu-host
-    "${ENCORE_R09_ROOT}/tools/graphics/r09_full_gpu_host.cpp")
+    "${ENCORE_R09_ROOT}/tools/graphics/r09_full_gpu_host.cpp"
+    "${ENCORE_R09_ROOT}/tools/graphics/r09_host_vma_impl.cpp"
+    "${_r09_vendor}/sources/eden/src/frontend_common/play_time_manager.cpp")
 target_compile_features(r09-full-gpu-host PRIVATE cxx_std_20)
 target_include_directories(r09-full-gpu-host BEFORE PRIVATE
     "${_r09_compat}"

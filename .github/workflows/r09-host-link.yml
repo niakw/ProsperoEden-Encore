@@ -1,11 +1,15 @@
 name: R09 full Vulkan host binary link (public-only)
 
-# The user explicitly requested no further expensive full-Eden link reruns
-# while upstream warnings are being corrected. Preserve the last successful
-# linked binary evidence; keep this expensive regression manual only.
-# The faster R09 Vulkan/SPIR-V qualification still runs on vendor changes.
+# Full native Linux host links stay manual by default. One deliberately
+# named relink request file is the *only* accepted push trigger, so normal
+# Vulkan/NS2/PS5 development cannot launch another 1600-object build.
+# Never upload the user's NVIDIA DLL, neural model, capture or weights.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/graphics/r09-host-link-request.txt'
 
 permissions:
   contents: read
@@ -99,6 +103,26 @@ jobs:
           PY
       - name: Compile and fully link genuine R09 full GPU binary
         run: cmake --build .build-r09-linked --target r09-full-gpu-host --parallel 2
+      - name: Verify linked scheduler null-query-cache guard and record public provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp').read_text()
+          beginning=s.index('void Scheduler::EndPendingOperations()')
+          end=s.index('void Scheduler::EndRenderPass()', beginning)
+          body=s[beginning:end]
+          assert 'if (query_cache)' in body
+          assert 'query_cache->CounterClose(VideoCommon::QueryType::ZPassPixelCount64)' in body
+          print('R09_STANDALONE_SCHEDULER_NULL_QUERY_CACHE_SOURCE_GUARD_PASS')
+          PY
+          sha256sum .build-r09-linked/bin/r09-full-gpu-host | tee \
+            .build-r09-linked/R09_HOST_BINARY_SHA256.txt
+          printf 'engine=%s\nvendor=%s\n' \
+            "$GITHUB_SHA" "$(git -C vendor rev-parse HEAD)" \
+            | tee .build-r09-linked/R09_HOST_PROVENANCE.txt
+          echo "R09_HOST_BINARY_SHA256=$(sha256sum .build-r09-linked/bin/r09-full-gpu-host | cut -d' ' -f1)"
       - name: Binary starts and rejects absent private input (no fabricated inference)
         shell: bash
         run: |
@@ -130,6 +154,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: r09-public-host-vulkan-runner
-          path: .build-r09-linked/bin/r09-full-gpu-host
+          path: |
+            .build-r09-linked/bin/r09-full-gpu-host
+            .build-r09-linked/R09_HOST_BINARY_SHA256.txt
+            .build-r09-linked/R09_HOST_PROVENANCE.txt
           if-no-files-found: error
           retention-days: 7

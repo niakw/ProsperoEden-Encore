@@ -28,6 +28,24 @@ def main():
         rows, module["WORKFLOW"].read_text(), module["CATALOG"].read_text())
     tracked = set(subprocess.check_output(
         ["git", "ls-files", "-z"], cwd=ROOT).decode().split("\0")) - {""}
+    # Git's index records submodules as mode 160000 and a commit ID.
+    # Never open a gitlink as a regular file: when the submodule checkout
+    # exists, its path is a directory. Record its exact commit separately.
+    def indexed_gitlinks(worktree: Path, prefix: str = "") -> dict[str, str]:
+        entries = subprocess.check_output(
+            ["git", "ls-files", "--stage", "-z"], cwd=worktree
+        ).decode().split("\0")
+        result = {}
+        for entry in entries:
+            if not entry:
+                continue
+            meta, path = entry.split("\t", 1)
+            mode, sha, stage = meta.split()
+            if mode == "160000":
+                assert stage == "0" and len(sha) == 40
+                result[prefix + path] = sha
+        return result
+    gitlinks = indexed_gitlinks(ROOT)
     # The parent index records a submodule as the `vendor` gitlink, not
     # each source file. Expand the pinned submodule index so the inventory
     # retains the original vendor/encore-active ownership and file hashes.
@@ -37,6 +55,8 @@ def main():
         ).decode().split("\0")
         tracked.remove("vendor")  # gitlink is a directory, not a hashable file
         tracked.update("vendor/" + path for path in vendor_paths if path)
+        gitlinks.update(indexed_gitlinks(ROOT / "vendor", "vendor/"))
+    tracked.difference_update(gitlinks)
     local = set(subprocess.check_output(
         ["git", "ls-files", "--others", "--exclude-standard", "-z"],
         cwd=ROOT).decode().split("\0")) - {""}
@@ -70,9 +90,16 @@ def main():
     # visible too. Immutable upstream sources/packs have separate integrity
     # gates; do not imply an Encore semantic review of those dependencies.
     supporting = []
-    for path in sorted((tracked | local) - {row["path"] for row in files}):
+    for path in sorted((tracked | local | set(gitlinks)) - {row["path"] for row in files}):
+        if path in gitlinks:
+            supporting.append({
+                "path": path, "sha256": None, "git_state": "gitlink",
+                "gitlink_commit": gitlinks[path],
+            })
+            continue
         if path.startswith(("vendor/sources/", "vendor/objects/")):
             continue
+        assert (ROOT / path).is_file(), ("Non-file in Git worklist", path)
         supporting.append({
             "path": path,
             "sha256": hashlib.sha256((ROOT / path).read_bytes()).hexdigest(),

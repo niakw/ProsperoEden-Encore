@@ -2150,3 +2150,170 @@ msgstr "SCHÄRFE"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Durch die Texturfilterung werden Straßen, Böden und Wände aus einem Winkel betrachtet schärfer dargestellt. Beginnen Sie mit 4x; 8x/16x nutzen mehr GPU-Bandbreite. Im Gegensatz zur Bildschärfe wird nicht das gesamte Bild geschärft."
+
+
+# Neural Rendering and Frame Generation, machine-assisted translation; human language review pending.
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: nvngx_dlssnr.dll fehlt oder ist ungültig. Legen Sie Ihre eigene Datei unter /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll ab."
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "Schalten Sie zuerst Neural Rendering aus. NR und Frame Generation sind auf PS5 nicht gemeinsam validiert."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "Neural Rendering für dieses Spiel gespeichert."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "DLSS-NR-Intensität für dieses Spiel gespeichert."
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "Voreinstellung: Standard ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "Voreinstellung: {0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "Frame-Generierung"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "Neuronales Rendering"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "DLSS-NR-Intensität"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "Frame-Generierung ist standardmäßig AUS. Sie glättet die Darstellung, beschleunigt aber das Spiel nicht. Die Kombination mit NR ist auf PS5 ungeprüft."
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "Direkte Auswahl: Standard, Aus, A4K Verbesserte Details, A4K Weiches Bild, A4K Bereinigtes Bild, DLSS-NR Original und DLSS-NR Compact."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "Die DLSS-NR-Intensität (0 bis 100 %) gilt nur für die beiden DLSS-NR-Modi. Spielspezifische Werte bleiben auch bei Deaktivierung gespeichert."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering: Aus, A4K Verbesserte Details, A4K Weiches Bild, A4K Bereinigtes Bild, DLSS-NR Original oder DLSS-NR Compact. Immer nur ein Verfahren."
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "DLSS-NR-Intensität: 0 bis 100 %. Bei allen drei A4K-Modi und ausgeschaltetem NR inaktiv; der Wert bleibt gespeichert."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K – Verbesserte Details: Neuronales Netz zur Verbesserung von Kanten und 3D-Details. Benötigt Vulkan und zweifache Vergrößerung."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K – Weiches Bild: Sanfte Wiederherstellung vor der Detailverbesserung. Hilfreich bei zu harten Kanten; höhere GPU-Last."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K – Bereinigtes Bild: Neuronale Rekonstruktion mit Rauschminderung. Hilfreich bei Körnung oder Artefakten; zweifache Vergrößerung."
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "Diese Verarbeitung erfordert Vulkan. Wählen Sie Vulkan oder eine andere Skalierungsmethode, um den automatischen Rückfall auf Bilinear zu vermeiden."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K – Verbesserte Details"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K – Weiches Bild"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K – Bereinigtes Bild"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR – Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR – Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "Aus"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K Verbesserte Details: Bildverarbeitung mit Schwerpunkt auf klaren Konturen. Es kann nur ein NR-Verfahren ausgewählt werden."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K Weiches Bild: Bildverarbeitung mit Schwerpunkt auf weicher Darstellung und stabilen Konturen."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K Bereinigtes Bild: Bildverarbeitung zur Reduzierung sichtbarer Störungen und des Bildrauschens."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original: Vollständiges neuronales Netz. Die Intensität ist pro Spiel einstellbar. Die vollständige PS5-Ausgabe muss noch validiert werden."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact: Kleineres neuronales Netz. Die Intensität ist pro Spiel einstellbar. Die vollständige PS5-Ausgabe muss noch validiert werden."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "Neural Rendering ist standardmäßig deaktiviert. Wählen Sie direkt einen der drei A4K- oder einen der beiden DLSS-NR-Modi."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "Die Intensität gilt nur für DLSS-NR Original/Compact. Bei A4K oder Aus ist sie inaktiv; der gespeicherte Wert bleibt erhalten."
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "DLSS-NR-Intensität von 0 bis 100 %. Diese Einstellung ändert weder FSR-Schärfe noch Kantenglättung oder Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "Dieses Neural Rendering benötigt Vulkan; OpenGL wird nicht unterstützt."
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "Wählen Sie für dieses Neural Rendering unter Upscaling die Option Bilinear. Kombinationen mit anderen Methoden sind auf PS5 noch nicht validiert."
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "Erzwungenes MSAA ist mit Neural Rendering noch nicht validiert. Verwenden Sie Kein, FXAA oder SMAA."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "Neural Rendering und Frame Generation sind zusammen noch nicht validiert. Deaktivieren Sie Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "Dieses Verfahren ist noch nicht an die vollständige Spielausgabe angebunden."
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+

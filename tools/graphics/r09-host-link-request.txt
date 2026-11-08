@@ -1,0 +1,12 @@
+R09 HOST RELINK REQUEST — 2026-11-08
+Purpose: replace the last public Linux x86_64 r09-full-gpu-host binary,
+which demonstrably SIGSEGVs during Vulkan::UploadImage ->
+Scheduler::Finish -> EndPendingOperations ->
+QueryCacheBase::CounterClose with null query cache in GDB.
+Required vendor gitlink: 0f47339c219087801bb75075a7bcc862b39f5bfd
+Required vendor fix: guard CounterClose when guest query cache is absent.
+Only rebuild the public Linux-native host binary. No PS5 build, no console,
+no private NVIDIA DLL, no user model, no capture or weights on GitHub.
+Emit binary SHA-256 + engine/vendor SHA and do NOT claim authentic
+152 GPU operators or NVIDIA-quality final image until local inference.
+This file is a single explicit one-shot GitHub Actions push trigger.

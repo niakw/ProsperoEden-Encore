@@ -208,12 +208,29 @@ def main()->int:
         'nvmap.PinHandle(request->parent, false)',
         'nvmap.UnpinHandle(request->parent)',
         'nvmap.FreeHandle(request->parent, true)',
-        'm_native_parents.emplace(request->child, request->parent)',
+        'm_native_parents.try_emplace(',
         'm_native_parents.find(packet[2])',
-        'BindNativeMemoryBacking(request->child,',
+        'result = BindNativeMemoryBacking(',
         'for (const auto& [child, parent] : m_native_parents)',
     ):
         assert snippet in text, "Missing real parent GSV 423 lifecycle: " + snippet
+    parent_bind = text.split('void IGraphicsSupervisor::BindNativeGpuMemory(', 1)[1].split(
+        'std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>', 1)[0]
+    # A 423 child that has already been bound must never depend on a
+    # subsequent fallible map allocation to remember its parent NVMap pin.
+    assert (parent_bind.index('m_native_parents.try_emplace(') <
+            parent_bind.index('parent->Duplicate(true)') <
+            parent_bind.index('nvmap.PinHandle(request->parent, false)') <
+            parent_bind.index('result = BindNativeMemoryBacking('))
+    assert 'm_native_parents.erase(staged_parent);' in parent_bind
+    assert 'catch (const std::bad_alloc&)' in parent_bind
+    backing = text.split('Result IGraphicsSupervisor::BindNativeMemoryBacking(', 1)[1].split(
+        'void IGraphicsSupervisor::BindNativeMemory(', 1)[0]
+    # First-use NVDRV session creation can allocate; it must finish
+    # before KPageTable::LockForMapDeviceAddressSpace side effects.
+    assert backing.index('OpenSession(m_process).id') < backing.index(
+        'LockForMapDeviceAddressSpace(')
+    assert 'catch (const std::bad_alloc&)' in backing
 
     for command in (314,315):
         assert '{'+str(command)+', &IGraphicsSupervisor::ConfigureNativeWindowImagePool' in text

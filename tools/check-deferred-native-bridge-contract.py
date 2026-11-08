@@ -300,7 +300,7 @@ msaa_owner = next(item for item in post_msaa_receipt["files"]
                   if item["path"] == "vulkan_rasterizer.cpp")
 def m07_git_blob(text):
     data = text.encode("utf-8")
-    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\\0" + data).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 assert m07_git_blob(original_m07) == msaa_owner["post_change_raw_blob_sha"], (
     "M07 unreviewed post-P24 MSAA rasterizer source")
 m07_premesh_source = original_m07

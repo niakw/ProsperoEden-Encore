@@ -177,7 +177,7 @@ def self_test() -> None:
     assert updated_h.count("bool IsGPUFenceBehaviorStrict();") == 1
     assert updated_h.count("GpuFenceBehavior::Strict,") == 1
     assert updated_cpp.count("bool IsGPUFenceBehaviorStrict() {") == 1
-    assert "GpuFenceBehavior::Strict" in extended
+    assert "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate, Strict);" in extended
     for source, extend in ((updated_h, extend_fence_header),
                            (updated_cpp, extend_fence_implementation)):
         try:

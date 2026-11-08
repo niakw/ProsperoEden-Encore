@@ -102,9 +102,6 @@ msgstr "Усе програмне забезпечення"
 msgid "Already up to date: {0}"
 msgstr "Остання Версія: {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
 
 #: eden_services.cpp
 msgid "Another language"
@@ -714,17 +711,8 @@ msgstr "Французька"
 msgid "French (Canada)"
 msgstr "Французька (Канада)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Різкість FSR"
 
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "РІЗКІСТЬ FSR"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Чіткість FSR змінює відновлення деталей лише тоді, коли вибрано AMD FSR. Знизьте його, якщо зображення виглядає зернистим або надмірно чітким."
 
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
@@ -1598,9 +1586,6 @@ msgstr "Перевірку налаштування не пройдено. Пе�
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "Показує живий FPS під час гри. Вимкнено — чистіше для звичайного використання; Touchpad + R1 перемикає його в будь-який час."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
 
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
@@ -1806,13 +1791,7 @@ msgstr "Eden Encore · Оновлення (Гра/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "ОНОВЛЕННЯ, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Фільтр"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "ФІЛЬТР"
 
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
@@ -2021,8 +2000,6 @@ msgstr "Завантаження та перевірка оновлення PS5.
 msgid "Updates unavailable on this host."
 msgstr "Оновлення недоступні на цьому пристрої."
 
-msgid "Enhanced smoothness"
-msgstr "Покращена плавність"
 
 msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
 msgstr "Генерація кадрів може зробити зображення плавнішим, не прискорюючи гру. Для Lossless Scaling потрібен власний DLL-файл."
@@ -2031,17 +2008,8 @@ msgstr "Генерація кадрів може зробити зображен
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Публічні кімнати (лише перегляд)"
 
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Список кімнат (лише перегляд)"
 
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Підключення до кімнат поки недоступне."
 
 #: R10 graphics UX
 msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
@@ -2158,9 +2126,6 @@ msgstr "SGSR Edge: розширений Qualcomm, орієнтований на 
 msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
 msgstr "Різкість країв SGSR: 0% вимикає додаткову інтенсивність країв, 50% збалансовано, 100% найсильніше. Зменште ореоли, якщо потрібно."
 
-#: R10 graphics UX
-msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
-msgstr "SGSR потребує Vulkan. OpenGL мовчки використовуватиме Bilinear; виберіть Vulkan або інший висококласний метод."
 
 #: R10 graphics UX
 msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."

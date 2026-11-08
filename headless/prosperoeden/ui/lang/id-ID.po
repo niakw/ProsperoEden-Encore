@@ -102,9 +102,6 @@ msgstr "Semua Perangkat Lunak"
 msgid "Already up to date: {0}"
 msgstr "Terbaru Versi: {0}"
 
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
 
 #: eden_services.cpp
 msgid "Another language"
@@ -714,17 +711,8 @@ msgstr "Prancis"
 msgid "French (Canada)"
 msgstr "Prancis (Kanada)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "Ketajaman FSR"
 
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "KETAJAMAN FSR"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "Ketajaman FSR mengubah pemulihan detail hanya ketika AMD FSR dipilih. Turunkan jika gambar terlihat berbintik atau terlalu tajam."
 
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
@@ -1598,9 +1586,6 @@ msgstr "Validasi penyiapan gagal. Periksa apakah file firmware dan kunci dapat d
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "Menampilkan FPS langsung saat bermain. Mati lebih bersih untuk penggunaan normal; Touchpad + R1 mengaktifkannya kapan saja."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
 
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
@@ -1806,13 +1791,7 @@ msgstr "Eden Encore · Pembaruan (Game/firmware: -)"
 msgid "UPDATES, DLC"
 msgstr "PEMBARUAN, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Filter upscaling"
 
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "FILTER UPSCALING"
 
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
@@ -2021,8 +2000,6 @@ msgstr "Mengunduh dan memverifikasi pembaruan PS5..."
 msgid "Updates unavailable on this host."
 msgstr "Pembaruan tidak tersedia pada perangkat ini."
 
-msgid "Enhanced smoothness"
-msgstr "Tampilan lebih mulus"
 
 msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
 msgstr "Pembuatan frame dapat memperhalus tampilan tanpa mempercepat game. Lossless Scaling memerlukan berkas DLL milik Anda sendiri."
@@ -2031,17 +2008,8 @@ msgstr "Pembuatan frame dapat memperhalus tampilan tanpa mempercepat game. Lossl
 msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Ruang publik (hanya lihat)"
 
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Daftar ruang (hanya lihat)"
 
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Bergabung ke ruang belum tersedia."
 
 #: R10 graphics UX
 msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
@@ -2158,9 +2126,6 @@ msgstr "SGSR Edge: Qualcomm kelas atas yang diarahkan ke tepi dengan shader Vulk
 msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
 msgstr "Ketajaman tepi SGSR: 0% menonaktifkan intensitas tepi ekstra, 50% seimbang, 100% terkuat. Kurangi lingkaran cahaya jika diperlukan."
 
-#: R10 graphics UX
-msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
-msgstr "SGSR membutuhkan Vulkan. OpenGL akan menggunakan Bilinear secara diam-diam; pilih Vulkan atau metode kelas atas lainnya."
 
 #: R10 graphics UX
 msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."

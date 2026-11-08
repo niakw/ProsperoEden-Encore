@@ -230,3 +230,35 @@ aucune inférence.
 
 Les fichiers locaux (capture, modèle, référence, résultat) doivent rester
 privés. Ne jamais les committer dans les dépôts publics.
+
+## Mise à jour du 8 novembre — exécution réelle sous Lavapipe
+
+Le nouveau binaire Linux authentiquement lié a été produit par le run
+[`42488585951`](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42488585951).
+Le journal privé utilisateur `r09_full_network(3).log` montre maintenant
+`R09_PRIVATE_ORIGINAL_599_SHA256_PASS`, l'ouverture de l'ICD Lavapipe,
+puis `R09_AUTHENTIC_152_GRAPH_EXECUTION_ATTEMPT`. Cette étape franchit
+le téléversement d'image qui provoquait auparavant le crash du scheduler.
+
+**Premier refus effectivement observé :**
+`R09_HOST_ORIGINAL_INIT_REJECTED phase=preblock_and_texture`. Le réseau
+n'a pas été exécuté : « execution attempt » ne démontre aucun des 152
+dispatchs, ni une image DLSS-NR authentique.
+
+Le même journal affiche
+`EDEN_VULKAN_MEMORY integrated=0 heaps=1 local=4100476928 initial_usage=552566784 device_access=3587917312 capacity=0`.
+Le champ `capacity` est alimenté par une sonde de mémoire libre
+**facultative** dans `vulkan_device.cpp`; zéro ne démontre donc **pas**
+une allocation GPU impossible ou un manque de VRAM. La phase combinée
+précédente pouvait masquer aussi bien un refus de buffer qu'un refus de
+descripteur image ou un contrôle des poids appris.
+
+Le vendor `8ef5009141386185ae84a9972e6947a33ecb0c94` et le gitlink
+moteur `7ff299abd25291a8cb007e185935f785c00029ee` isolent désormais
+les six allocations et les étapes texture, features, FSwIN, lift et pooling
+dans `LastInitializePhaseName()`. Ces modifications ne modifient ni
+l'ordre des commandes ni les poids et n'ont **pas encore** été confirmées
+par une nouvelle exécution privée. Il faut une nouvelle liaison Linux
+avec ce gitlink avant de réutiliser le kit Mac ; le binaire antérieur
+reste incapable d'indiquer ces phases fines. Aucun nouveau build global
+PS5 n'est requis pour ce diagnostic.

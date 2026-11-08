@@ -14,15 +14,18 @@ TOOL = ROOT / "tools/graphics/r09_verify_full_gpu_evidence.py"
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
-def run(folder, name, payload, expected_reason=None):
+def run(folder, name, payload, expected_reason=None, reference=None):
     e = folder / "evidence.json"
     e.write_text(json.dumps(payload), encoding="utf-8")
+    command = [sys.executable, str(TOOL), "--evidence", str(e),
+               "--model", str(folder / "model.nrmodel"),
+               "--plan", str(folder / "plan.txt"),
+               "--input", str(folder / "input.rgba8"),
+               "--output", str(folder / "output.rgba32f")]
+    if reference is not None:
+        command.extend(("--reference", str(reference)))
     p = subprocess.run(
-        [sys.executable, str(TOOL), "--evidence", str(e),
-         "--model", str(folder / "model.nrmodel"),
-         "--plan", str(folder / "plan.txt"),
-         "--input", str(folder / "input.rgba8"),
-         "--output", str(folder / "output.rgba32f")],
+        command,
         capture_output=True, text=True, check=False)
     assert p.returncode == 20, (name, p.stdout, p.stderr)
     assert "R09_FULL_GPU_152_AND_REFERENCE_IMAGE_PASS" not in p.stdout
@@ -68,6 +71,12 @@ def main():
         run(root, "empty-evidence", {})
         run(root, "fake-readback", base,
             "Original 599-tensor SHA-256 authenticity failed")
+        wrong_capture = dict(base, source_image_sha256="f" * 64)
+        run(root, "unverified-capture-hash", wrong_capture,
+            "capture SHA-256 differs from actual input bytes")
+        run(root, "self-reference-output", base,
+            "self-reference cannot prove independent output",
+            reference=root / "output.rgba32f")
         fixture = dict(base, input_is_real_capture=False)
         run(root, "fixture-refused", fixture)
         truncated = dict(base, operations=base["operations"][:-1])

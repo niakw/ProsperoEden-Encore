@@ -3,7 +3,10 @@
 
 Never patch vendor/sources/eden: its SHA-256 is an immutable input to the
 83-source backport manifest, not an editable header. Preserve upstream enum
-ordinals by appending the eight Encore-only enum values after stock entries.
+ordinals by appending Encore-only values after stock entries. Restore the
+upstream Strict GPU-fence setting/handler consistently across the native
+settings enum, declaration and implementation without editing the pinned
+backport originals.
 """
 from __future__ import annotations
 import argparse
@@ -19,7 +22,48 @@ RELATIVE = Path("src/common/settings_enums.h")
 REPLACEMENTS = (
     ("ENUM(ScalingFilter, NearestNeighbor, Bilinear, Bicubic, Gaussian, Lanczos, ScaleForce, Fsr, Area, ZeroTangent, BSpline, Mitchell, Spline1, Mmpx, Sgsr, SgsrEdge);", "ENUM(ScalingFilter, NearestNeighbor, Bilinear, Bicubic, Gaussian, Lanczos, ScaleForce, Fsr, Area, ZeroTangent, BSpline, Mitchell, Spline1, Mmpx, Sgsr, SgsrEdge, Anime4K3D, Anime4KSoft, Anime4KDenoise);"),
     ("ENUM(AntiAliasing, None, Fxaa, Smaa);", "ENUM(AntiAliasing, None, Fxaa, Smaa, FxaaPlus, Msaa2, Msaa4, Msaa8, Msaa16);"),
+    ("ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate);", "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate, Strict);"),
 )
+
+FENCE_HEADER = Path("src/common/settings.h")
+FENCE_IMPL = Path("src/common/settings.cpp")
+
+
+def exact_replace(text: str, before: str, after: str, what: str) -> str:
+    if text.count(before) != 1 or after in text:
+        raise RuntimeError("Unexpected reviewed PS5 fence ABI: " + what)
+    return text.replace(before, after)
+
+
+def extend_fence_header(text: str) -> str:
+    text = exact_replace(
+        text,
+        "GpuFenceBehavior::Accurate,\n                                                                 \"gpu_fence_behavior\"",
+        "GpuFenceBehavior::Strict,\n                                                                 \"gpu_fence_behavior\"",
+        "maximum supported fence behavior",
+    )
+    return exact_replace(
+        text,
+        "bool IsGPUFenceBehaviorAccurate();\n",
+        "bool IsGPUFenceBehaviorAccurate();\nbool IsGPUFenceBehaviorStrict();\n",
+        "fence strict declaration",
+    )
+
+
+def extend_fence_implementation(text: str) -> str:
+    marker = (
+        "bool IsGPUFenceBehaviorAccurate() {\n"
+        "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Accurate;\n"
+        "}\n"
+    )
+    return exact_replace(
+        text, marker,
+        marker + (
+            "\nbool IsGPUFenceBehaviorStrict() {\n"
+            "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Strict;\n"
+            "}\n"
+        ), "real fence strict implementation")
+
 
 def sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
@@ -62,26 +106,51 @@ def validate_owned_stage(stage: Path) -> Path:
 
 def apply(stage: Path, check_only: bool = False) -> str:
     _, approved = approved_bytes()
-    expected = extend_graphics_enums(approved.decode("utf-8")).encode("utf-8")
-    target = validate_owned_stage(stage)
-    current = target.read_bytes()
-    if current == expected:
+    _ = validate_owned_stage(stage)
+    targets = (
+        (RELATIVE, approved, extend_graphics_enums(approved.decode("utf-8")).encode("utf-8")),
+        (FENCE_HEADER,
+         (ROOT / "vendor/encore-active/eden-backports" / FENCE_HEADER).read_bytes(),
+         None),
+        (FENCE_IMPL,
+         (ROOT / "vendor/encore-active/eden-backports" / FENCE_IMPL).read_bytes(),
+         None),
+    )
+    targets = list(targets)
+    targets[1] = (targets[1][0], targets[1][1],
+                  extend_fence_header(targets[1][1].decode("utf-8")).encode("utf-8"))
+    targets[2] = (targets[2][0], targets[2][1],
+                  extend_fence_implementation(targets[2][1].decode("utf-8")).encode("utf-8"))
+    # Inspect every target before writing any, so an unfamiliar build-cache
+    # change cannot partially install or bypass the reviewed source variant.
+    pending = []
+    for relative, original, expected in targets:
+        dest = stage / relative
+        if dest.is_symlink() or not dest.is_file() or not (
+                dest.resolve().is_relative_to(stage.resolve())):
+            raise RuntimeError("Unsafe PS5 fence/graphics owner: " + str(relative))
+        current = dest.read_bytes()
+        if current == expected:
+            continue
+        if current != original:
+            raise RuntimeError("Unreviewed PS5 staged graphics/fence source: " + str(relative))
+        pending.append((dest, original, expected))
+    if not pending:
         return "already-applied"
-    if current != approved:
-        raise RuntimeError("Unknown graphics enum build source; refusing replacement")
     if check_only:
-        raise RuntimeError("PS5 graphics enum overlay not yet installed")
-    tmp = target.with_name(target.name + ".encore-" + str(os.getpid()))
-    if tmp.exists() or tmp.is_symlink():
-        raise RuntimeError("Unexpected staged graphics enum temporary file")
-    try:
-        tmp.write_bytes(expected)
-        shutil.copymode(target, tmp)
-        if target.read_bytes() != approved:
-            raise RuntimeError("Graphics enum source changed during staging")
-        tmp.replace(target)
-    finally:
-        tmp.unlink(missing_ok=True)
+        raise RuntimeError("PS5 graphics/fence overlay not yet installed")
+    for dest, original, expected in pending:
+        tmp = dest.with_name(dest.name + ".encore-" + str(os.getpid()))
+        if tmp.exists() or tmp.is_symlink():
+            raise RuntimeError("Unexpected PS5 staged graphics temporary file")
+        try:
+            tmp.write_bytes(expected)
+            shutil.copymode(dest, tmp)
+            if dest.read_bytes() != original:
+                raise RuntimeError("PS5 staged graphics source changed during installation")
+            tmp.replace(dest)
+        finally:
+            tmp.unlink(missing_ok=True)
     return "installed"
 
 def self_test() -> None:
@@ -92,6 +161,23 @@ def self_test() -> None:
     assert all(extended.count(before) == 0 for before,_ in REPLACEMENTS)
     assert extended.count("ENUM(ScalingFilter,") == 1
     assert extended.count("ENUM(AntiAliasing,") == 1
+    assert extended.count("ENUM(GpuFenceBehavior,") == 1
+    fence_h = (ROOT / "vendor/encore-active/eden-backports" / FENCE_HEADER).read_text()
+    fence_cpp = (ROOT / "vendor/encore-active/eden-backports" / FENCE_IMPL).read_text()
+    updated_h = extend_fence_header(fence_h)
+    updated_cpp = extend_fence_implementation(fence_cpp)
+    assert updated_h.count("bool IsGPUFenceBehaviorStrict();") == 1
+    assert updated_h.count("GpuFenceBehavior::Strict,") == 1
+    assert updated_cpp.count("bool IsGPUFenceBehaviorStrict() {") == 1
+    assert "GpuFenceBehavior::Strict" in extended
+    for source, extend in ((updated_h, extend_fence_header),
+                           (updated_cpp, extend_fence_implementation)):
+        try:
+            extend(source)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("Already-patched fence owner accepted")
     assert sha256(approved) == SHIPPING_BACKPORT_SHA256
     try:
         extend_graphics_enums(extended)

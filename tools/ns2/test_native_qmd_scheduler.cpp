@@ -290,6 +290,16 @@ int main() {
         assert(launch->constant_buffers[0].gpu_address==0x512340000ULL);
         assert(launch->constant_buffers[0].size==64);
         assert(!launch->constant_buffers[1].enabled);
+        // Real QMD3 inactive banks may retain stale control/address words.
+        // Those banks never enter descriptor binding, but enabling one must
+        // restore the strict high-bit validation before any GPU access.
+        d[35] |= 1U << 17;
+        const auto dormant = Tegra::DecodeNativeComputeLaunch(d);
+        assert(dormant && !dormant->constant_buffers[1].enabled);
+        d[20] |= 1U << 1;
+        assert(!Tegra::DecodeNativeComputeLaunch(d));
+        d[20] &= ~(1U << 1);
+        d[35] &= ~(1U << 17);
         // Native shader and only enabled constant-buffer ranges must be
         // mapped BEFORE any future Vulkan pipeline/resource submission.
         unsigned mapped_queries=0;

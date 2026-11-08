@@ -21,16 +21,16 @@ operations, nor an independently validated NVIDIA-quality image.
 Requires: macOS, Docker (running), gh CLI (authenticated), python3.
 EOF
 }
-if [[ "\${1:-}" == "--help" || "\${1:-}" == "-h" ]]; then usage; exit 0; fi
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then usage; exit 0; fi
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "R09_MAC_HOST_REQUIRED: this wrapper is intended for macOS." >&2
   exit 64
 fi
 if [[ $# -gt 2 ]]; then usage >&2; exit 64; fi
 
-repo="$(cd -- "$(dirname -- "\${BASH_SOURCE[0]}")/../.." && pwd -P)"
-dll_input="\${1:-$HOME/Downloads/nvngx_dlssnr.dll.zip}"
-capture_input="\${2:-}"
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+dll_input="${1:-$HOME/Downloads/nvngx_dlssnr.dll.zip}"
+capture_input="${2:-}"
 github_repo="niakw/ProsperoEden-Encore"
 linked_run=42465459699
 binary_sha256="7f41403249b594ea6ad9d3a00127384845bab3f0940e6ae275c87a8877e6fbe5"
@@ -204,7 +204,7 @@ docker run --rm --init --platform linux/amd64 \
       --after-png /private/r09_after_unverified_gpu.png
     echo "R09_GPU_READBACK_PRODUCED_NOT_YET_INDEPENDENTLY_VERIFIED"
   ' 2>&1 | tee "$work/r09_full_network.log"
-status=\${PIPESTATUS[0]}
+status=${PIPESTATUS[0]}
 set -e
 echo "R09_FULL_NETWORK_EXIT_CODE=$status"
 echo "R09_FULL_NETWORK_LOG=$work/r09_full_network.log"

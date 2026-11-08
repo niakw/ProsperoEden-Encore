@@ -163,19 +163,31 @@ if ! docker image inspect "$image" >/dev/null 2>&1; then
   echo "R09_DOCKER_DIAGNOSTIC_CONTEXT=$(docker context show)" >&2
   exit 73
 fi
-image_arch="$(docker image inspect --format '{{.Architecture}}' "$image")"
-if [[ "$image_arch" != "amd64" ]]; then
-  echo "R09_DOCKER_IMAGE_ARCH_MISMATCH=$image_arch (expected amd64)" >&2
+# A local Docker image tag can point to a multi-platform manifest.
+# An unqualified 'docker image inspect' may report the Mac's default arm64
+# variant even when the explicit linux/amd64 variant exists. Check the
+# architecture that docker run actually selects instead.
+default_arch="$(docker image inspect --format '{{.Architecture}}' "$image")"
+echo "R09_DOCKER_INSPECT_DEFAULT_ARCH=$default_arch (not an amd64 proof)"
+image_id="$(docker image inspect --format '{{.Id}}' "$image")"
+echo "R09_DOCKER_IMAGE_LOADED=$image_id"
+# Never pull or substitute a registry image: use the loaded linux/amd64
+# variant and prove it with Ubuntu's actual dpkg architecture in-container.
+set +e
+selected_arch="$(docker run --pull never --rm --platform linux/amd64 \
+  --entrypoint /usr/bin/dpkg "$image" --print-architecture)"
+arch_rc=$?
+set -e
+if [[ "$arch_rc" -ne 0 ]]; then
+  echo "R09_DOCKER_AMD64_VARIANT_OR_EMULATION_UNAVAILABLE" >&2
+  echo "Check Docker Desktop Rosetta/x86_64 emulation or Colima QEMU configuration." >&2
+  exit 75
+fi
+if [[ "$selected_arch" != "amd64" ]]; then
+  echo "R09_DOCKER_RUNTIME_ARCH_MISMATCH=$selected_arch (expected amd64)" >&2
   exit 74
 fi
-image_id="$(docker image inspect --format '{{.Id}}' "$image")"
-echo "R09_DOCKER_IMAGE_READY=$image_id arch=$image_arch"
-# Never silently pull an unrelated image with the same tag.
-docker run --pull never --rm --platform linux/amd64 \
-  --entrypoint /bin/true "$image" || {
-  echo "R09_DOCKER_AMD64_EMULATION_UNAVAILABLE" >&2
-  exit 75
-}
+echo "R09_DOCKER_IMAGE_READY=$image_id arch=$selected_arch"
 
 memory="$(docker info --format '{{.MemTotal}}' 2>/dev/null || echo 0)"
 if [[ "$memory" =~ ^[0-9]+$ ]] && (( memory > 0 && memory < 5368709120 )); then

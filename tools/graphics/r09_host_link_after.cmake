@@ -44,16 +44,23 @@ if(NOT _r09_shader_rc EQUAL 0)
 endif()
 message(STATUS "${_r09_shader_out}")
 
-# Linux uses the pinned Eden Shader::Info (5 stages, no Task/Mesh fields).
-# The PS5-maintained vk_graphics_pipeline.h expects the separate Task/Mesh
-# shader backport and therefore MUST NOT shadow Linux upstream pipeline
-# declarations. Copy only the exact pristine upstream header into an include
-# precedence overlay. PS5 source selection is completely untouched.
+# The host compiles pristine Eden Vulkan implementation .cpp files.
+# PS5-maintained fork headers alter these ABIs for console presentation,
+# Task/Mesh shaders and GPU cache ticks. Do not mix those declarations with
+# unmodified Linux implementations. Select exact pinned Linux headers only
+# in this opt-in host target; no PS5 source/header is modified.
 set(_r09_compat "${CMAKE_BINARY_DIR}/r09-host-compat")
-file(MAKE_DIRECTORY "${_r09_compat}/video_core/renderer_vulkan")
-configure_file(
-    "${_r09_vendor}/sources/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h"
-    "${_r09_compat}/video_core/renderer_vulkan/vk_graphics_pipeline.h" COPYONLY)
+foreach(_r09_header IN ITEMS
+    video_core/renderer_vulkan/vk_graphics_pipeline.h
+    video_core/renderer_vulkan/vk_buffer_cache.h
+    video_core/renderer_vulkan/vk_blit_screen.h
+    video_core/renderer_vulkan/present/window_adapt_pass.h)
+    get_filename_component(_r09_header_dir "${_r09_header}" DIRECTORY)
+    file(MAKE_DIRECTORY "${_r09_compat}/${_r09_header_dir}")
+    configure_file(
+        "${_r09_vendor}/sources/eden/src/${_r09_header}"
+        "${_r09_compat}/${_r09_header}" COPYONLY)
+endforeach()
 
 # The scheduler/device/allocator are ABI-coupled with maintained neural
 # owners. Remove the three pristine implementations, never compile duplicates.

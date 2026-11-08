@@ -8,16 +8,23 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 script = root / "tools/ci/diagnose-image-repro.py"
 make_dist = (root / "tools/ci/make-dist.py").read_text()
-assert "tools/ci/diagnose-image-repro.py" in make_dist
-assert "if repro_digest != image_digest:" in make_dist
-assert "raise SystemExit(f'FFPFSC reproducibility check failed:" in make_dist
-assert "image.replace(repro)" in make_dist
-assert "str(app), str(image)], check=True)" in make_dist
-assert "image.unlink(missing_ok=True)" in make_dist
-assert "repro.replace(image)" in make_dist
-assert make_dist.index("image.replace(repro)") < make_dist.index(
-    "repro_digest = hashlib.sha256(image.read_bytes()).hexdigest()") < make_dist.index(
-    "repro.replace(image)")
+# The shipping format changed: the normal release produces deterministic
+# ZIP + FTP ZIP and SHA256SUMS; FFPFSC is explicitly developer-only.
+# Do NOT restore an obsolete two-build image parity loop to production just
+# to satisfy this test. The binary diff tool itself is still exercised below.
+assert "image_only = args[:1] == ['--image-only']" in make_dist
+assert "if image_only:" in make_dist
+assert "tools/ci/package-image.sh" in make_dist
+assert "sys.exit(0)" in make_dist
+assert "FFPFSC is an explicit --image-only developer command" in make_dist
+assert "ftp_archive = dist / release_info['zip']" in make_dist
+assert "with zipfile.ZipFile(ftp_archive" in make_dist
+assert "ftp_digest = hashlib.sha256(ftp_archive.read_bytes()).hexdigest()" in make_dist
+assert "'SHA256SUMS'" in make_dist
+assert make_dist.index("if image_only:") < make_dist.index(
+    "shutil.rmtree(dist, ignore_errors=True)")
+assert make_dist.index("ftp_digest = hashlib.sha256(") < make_dist.index(
+    "(dist / 'SHA256SUMS').write_text(")
 
 with tempfile.TemporaryDirectory(prefix="encore-pfs-diff-") as tmp:
     left = Path(tmp) / "a.ffpfsc"

@@ -19,8 +19,8 @@
 
 ### 1. neural-upstream — haute priorité
 
-Source : https://github.com/matiasLombo/neural-upstream  
-Notes et limites : https://github.com/matiasLombo/neural-upstream/blob/main/FINDINGS.md  
+Source : https://github.com/matiasLombo/neural-upstream
+Notes et limites : https://github.com/matiasLombo/neural-upstream/blob/main/FINDINGS.md
 Licence du code propre au dépôt : MIT.
 
 Idée principale : déplacer le Neural Rendering à la **résolution interne du jeu**, puis confier la reconstruction à l'upscaler déjà présent. L'effet est normalement évalué à la résolution de sortie ; réduire l'aire de calcul peut donc supprimer une grande partie des multiplications et accès mémoire. Le dépôt utilise une implémentation Windows/NGX/D3D12, **non directement portable à Prospero/Vulkan**.
@@ -34,9 +34,9 @@ Idée principale : déplacer le Neural Rendering à la **résolution interne du 
 
 ### 2. optimizer-fps-dlss5 — haute priorité
 
-Source : https://github.com/BeliyG3/optimizer-fps-dlss5  
-Limitations : https://github.com/BeliyG3/optimizer-fps-dlss5/blob/main/docs/LIMITATIONS.md  
-Checklist de port : https://github.com/BeliyG3/optimizer-fps-dlss5/blob/main/docs/PORTING_CHECKLIST.md  
+Source : https://github.com/BeliyG3/optimizer-fps-dlss5
+Limitations : https://github.com/BeliyG3/optimizer-fps-dlss5/blob/main/docs/LIMITATIONS.md
+Checklist de port : https://github.com/BeliyG3/optimizer-fps-dlss5/blob/main/docs/PORTING_CHECKLIST.md
 Licence du code propre au dépôt : MIT.
 
 Idées algorithmiques :
@@ -49,8 +49,8 @@ Le produit actuel exige ReShade, D3D12, un consommateur NR NVIDIA et un runtime 
 
 ### 3. NVIDIA-RTX/RTXNTC — recherche distincte, priorité moindre
 
-Source : https://github.com/NVIDIA-RTX/RTXNTC  
-README et documentation : https://github.com/NVIDIA-RTX/RTXNTC  
+Source : https://github.com/NVIDIA-RTX/RTXNTC
+README et documentation : https://github.com/NVIDIA-RTX/RTXNTC
 Licence : **NVIDIA RTX SDKs LICENSE**, spécifique/restrictive ; analyse juridique de chaque composant avant réutilisation.
 
 NTC vise principalement **la compression des matériaux/textures PBR**, avec données latentes et petit décodeur neuronal. Il ne remplace pas un moteur DLSS Neural Rendering et **ne réduit pas directement ses FLOPs**. Deux modes documentés sont pertinents à comparer :

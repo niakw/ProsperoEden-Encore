@@ -2150,3 +2150,169 @@ msgstr "銳利度"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "紋理過濾可以銳化從某個角度觀看的道路、地板和牆壁。從 4 倍開始； 8x/16x 使用更多 GPU 頻寬。與影像清晰度不同，它不會銳化整個影像。"
+
+# Machine-assisted translations; human review and console font QA pending.
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR：缺少 nvngx_dlssnr.dll 或檔案無效。請將你自己的檔案放在 /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll。"
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "請先關閉 Neural Rendering。NR 與影格生成尚未在 PS5 上驗證可同時使用。"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "已為此遊戲儲存 Neural Rendering。"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "已為此遊戲儲存 DLSS-NR 強度。"
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "預設：預設值 ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "預設：{0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "影格生成"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "神經渲染"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "DLSS-NR 強度"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "影格生成預設關閉。它可讓顯示更流暢，但不會加快遊戲運行。與 NR 同時使用尚未在 PS5 上驗證。"
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "直接選擇：預設、關閉、A4K 強化細節、A4K 柔和畫面、A4K 淨化畫面、DLSS-NR Original 和 DLSS-NR Compact。"
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "DLSS-NR 強度（0 至 100%）僅適用於兩種 DLSS-NR 模式。關閉後仍保留各遊戲的設定值。"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering：關閉、A4K 強化細節、A4K 柔和畫面、A4K 淨化畫面、DLSS-NR Original 或 DLSS-NR Compact。一次只能啟用一種引擎。"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "DLSS-NR 強度：0 至 100%。使用三種 A4K 模式或關閉 NR 時不生效；設定值仍會保留。"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K — 強化細節：神經網路改善邊緣和 3D 細節。需要 Vulkan 和 2 倍放大。"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K — 柔和畫面：增強細節前先柔和修復。適用於邊緣過硬的畫面；GPU 負載較高。"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K — 淨化畫面：神經重建並降低雜訊。適用於顆粒感或偽影；需 2 倍放大。"
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "此處理需要 Vulkan。請選擇 Vulkan 或其他放大方式，以免自動退回雙線性縮放。"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K — 強化細節"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K — 柔和畫面"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K — 淨化畫面"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR — Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR — Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "關閉"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K 強化細節：優先提升輪廓清晰度的影像處理。只能選擇一種 NR 引擎。"
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K 柔和畫面：優先提供柔和影像與穩定輪廓的處理。"
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K 淨化畫面：減少視覺干擾與影像雜訊的處理。"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original：完整神經網路。可針對各遊戲調整強度。PS5 上的完整渲染仍待驗證。"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact：精簡神經網路。可針對各遊戲調整強度。PS5 上的完整渲染仍待驗證。"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "Neural Rendering 預設關閉。請直接選擇三種 A4K 或兩種 DLSS-NR 模式之一。"
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "強度只適用於 DLSS-NR Original/Compact。使用 A4K 或關閉時不生效；已儲存的數值會保留。"
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "DLSS-NR 強度為 0 至 100%。此設定不會改變 FSR 銳利度、反鋸齒或 Frame Generation。"
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "此 Neural Rendering 需要 Vulkan；與 OpenGL 不相容。"
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "對此 Neural Rendering，請在 Upscaling 中選擇 Bilinear：與其他縮放方法的組合尚未在 PS5 上驗證。"
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "強制 MSAA 尚未與 Neural Rendering 一同驗證。請使用無、FXAA 或 SMAA。"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "Neural Rendering 與 Frame Generation 尚未驗證可同時使用。請關閉 Frame Generation。"
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "此引擎尚未連接至遊戲的完整渲染流程。"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+

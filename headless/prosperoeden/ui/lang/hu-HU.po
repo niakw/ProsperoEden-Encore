@@ -2150,3 +2150,169 @@ msgstr "ÉLESSÉG"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "A textúra szűrése ferdén nézve élesíti az utakat, padlókat és falakat. Kezdje 4x; 8x/16x nagyobb GPU sávszélességet használ. A képélességgel ellentétben nem élesíti a teljes képet."
+
+# Machine-assisted translations; human review and native typography QA pending.
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: a nvngx_dlssnr.dll hiányzik vagy érvénytelen. Tedd a saját fájlodat ide: /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "Előbb kapcsold ki a Neural Rendering módot. Az NR és a képkockagenerálás együtt még nincs ellenőrizve PS5-ön."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "Neural Rendering mentve ehhez a játékhoz."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "DLSS-NR intenzitás mentve ehhez a játékhoz."
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "Előbeállítás: Alapértelmezett ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "Előbeállítás: {0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "Képkockagenerálás"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "Neurális megjelenítés"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "DLSS-NR intenzitás"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "A képkockagenerálás alapból KI van kapcsolva. Simább megjelenítést ad, de nem gyorsítja a játékot. NR-rel együtt még nem ellenőrizték PS5-ön."
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "Közvetlen választás: Alapértelmezett, Ki, A4K Részletesebb kép, A4K Lágyabb kép, A4K Tisztább kép, DLSS-NR Original és DLSS-NR Compact."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "A DLSS-NR intenzitás (0–100%) csak a két DLSS-NR módra vonatkozik. A játékonkénti értékek kikapcsolás után is megmaradnak."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering: Ki, A4K Részletesebb kép, A4K Lágyabb kép, A4K Tisztább kép, DLSS-NR Original vagy DLSS-NR Compact. Egyszerre csak egy motor."
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "DLSS-NR intenzitás: 0–100%. Mindhárom A4K módban és kikapcsolt NR mellett inaktív; a mentett érték megmarad."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K – Részletesebb kép: neurális hálózat az élek és 3D-részletek javítására. Vulkan és 2× nagyítás szükséges."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K – Lágyabb kép: finom helyreállítás a részletek javítása előtt. Túl éles szélekhez hasznos; nagyobb GPU-terhelés."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K – Tisztább kép: neurális képhelyreállítás zajszűréssel. Szemcsézettség és képhibák esetén hasznos; 2× nagyítás."
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "Ez a feldolgozás Vulkant igényel. Válassz Vulkant vagy más nagyítást, hogy elkerüld az automatikus bilineáris visszaállást."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K – Részletesebb kép"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K – Lágyabb kép"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K – Tisztább kép"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR – Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR – Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "Ki"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K Részletesebb kép: az élek élességére összpontosító képfeldolgozás. Egyszerre csak egy NR-motor választható."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K Lágyabb kép: lágyabb képre és stabil kontúrokra összpontosító feldolgozás."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K Tisztább kép: a vizuális hibák és képzaj csökkentésére szolgáló feldolgozás."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original: teljes neurális hálózat. Játékonként állítható intenzitás. A teljes PS5-megjelenítés még ellenőrzésre vár."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact: kisebb neurális hálózat. Játékonként állítható intenzitás. A teljes PS5-megjelenítés még ellenőrzésre vár."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "A Neural Rendering alapból ki van kapcsolva. Válassz közvetlenül egyet a három A4K vagy két DLSS-NR mód közül."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "Az intenzitás csak a DLSS-NR Original/Compact módokra vonatkozik. A4K vagy Ki módban inaktív; a mentett érték megmarad."
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "DLSS-NR intenzitás 0–100%. Nem módosítja az FSR élességét, az élsimítást vagy a Frame Generationt."
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "Ez a Neural Rendering Vulkant igényel; OpenGL-lel nem kompatibilis."
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "Ehhez a Neural Renderinghez az Upscaling menüben válaszd a Bilinear módot; más módszerekkel együtt még nincs ellenőrizve PS5-ön."
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "A kényszerített MSAA-t még nem ellenőrizték Neural Renderinggel. Használd a Nincs, FXAA vagy SMAA módot."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "A Neural Rendering és Frame Generation együtt még nincs ellenőrizve. Kapcsold ki a Frame Generationt."
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "Ez a motor még nincs csatlakoztatva a játék teljes képfeldolgozásához."
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+

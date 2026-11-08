@@ -2150,3 +2150,169 @@ msgstr "ĐỘ SẮC"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Lọc kết cấu làm sắc nét đường, sàn và tường khi nhìn ở một góc. Bắt đầu ở mức 4x; 8x/16x sử dụng nhiều băng thông GPU hơn. Không giống như độ sắc nét của hình ảnh, nó không làm sắc nét toàn bộ bức ảnh."
+
+# Machine-assisted translations; human review and console font QA pending.
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: thiếu tệp nvngx_dlssnr.dll hoặc tệp không hợp lệ. Hãy đặt tệp của bạn tại /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "Hãy tắt Neural Rendering trước. NR và tạo khung hình chưa được xác nhận hoạt động cùng nhau trên PS5."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "Đã lưu Neural Rendering cho trò chơi này."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "Đã lưu cường độ DLSS-NR cho trò chơi này."
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "Cài đặt sẵn: Mặc định ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "Cài đặt sẵn: {0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "Tạo khung hình"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "Kết xuất thần kinh"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "Cường độ DLSS-NR"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "Tạo khung hình mặc định TẮT. Nó giúp hình ảnh mượt hơn nhưng không làm trò chơi chạy nhanh hơn. Chưa xác minh dùng cùng NR trên PS5."
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "Chọn trực tiếp: Mặc định, Tắt, A4K Tăng chi tiết, A4K Làm mềm ảnh, A4K Làm sạch ảnh, DLSS-NR Original và DLSS-NR Compact."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "Cường độ DLSS-NR (0–100%) chỉ áp dụng cho hai chế độ DLSS-NR. Giá trị theo trò chơi vẫn được lưu sau khi tắt."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering: Tắt, A4K Tăng chi tiết, A4K Làm mềm ảnh, A4K Làm sạch ảnh, DLSS-NR Original hoặc DLSS-NR Compact. Chỉ một bộ xử lý cùng lúc."
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "Cường độ DLSS-NR: 0–100%. Không hoạt động với ba chế độ A4K hoặc khi tắt NR; vẫn giữ giá trị đã lưu."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K – Tăng chi tiết: mạng thần kinh tăng độ rõ cạnh và chi tiết 3D. Cần Vulkan và phóng to 2×."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K – Làm mềm ảnh: phục hồi nhẹ trước khi tăng chi tiết. Hữu ích khi cạnh quá gắt; tốn GPU hơn."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K – Làm sạch ảnh: tái tạo bằng mạng thần kinh có khử nhiễu. Hữu ích khi ảnh nhiễu hoặc có lỗi; phóng to 2×."
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "Xử lý này cần Vulkan. Chọn Vulkan hoặc kiểu phóng to khác để tránh tự động quay về Bilinear."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K – Tăng chi tiết"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K – Làm mềm ảnh"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K – Làm sạch ảnh"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR – Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR – Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "Tắt"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K Tăng chi tiết: xử lý ảnh ưu tiên đường viền rõ. Chỉ được chọn một bộ xử lý NR."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K Làm mềm ảnh: xử lý ảnh ưu tiên độ mềm và đường viền ổn định."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K Làm sạch ảnh: xử lý ảnh nhằm giảm nhiễu và lỗi hình ảnh."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original: mạng thần kinh đầy đủ. Có thể chỉnh cường độ theo trò chơi. Kết xuất đầy đủ trên PS5 chưa được xác nhận."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact: mạng thần kinh nhỏ hơn. Có thể chỉnh cường độ theo trò chơi. Kết xuất đầy đủ trên PS5 chưa được xác nhận."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "Neural Rendering mặc định tắt. Chọn trực tiếp một trong ba chế độ A4K hoặc hai chế độ DLSS-NR."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "Cường độ chỉ dành cho DLSS-NR Original/Compact. Không hoạt động khi dùng A4K hoặc Tắt; vẫn giữ giá trị đã lưu."
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "Cường độ DLSS-NR 0–100%. Không ảnh hưởng độ sắc nét FSR, khử răng cưa hay Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "Neural Rendering này cần Vulkan; OpenGL không tương thích."
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "Với Neural Rendering này, chọn Bilinear ở Upscaling: việc kết hợp với phương pháp khác chưa được xác nhận trên PS5."
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "MSAA ép buộc chưa được xác nhận với Neural Rendering. Hãy dùng Không, FXAA hoặc SMAA."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "Neural Rendering và Frame Generation chưa được xác nhận hoạt động cùng nhau. Hãy tắt Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "Bộ xử lý này chưa kết nối với quá trình kết xuất toàn bộ trò chơi."
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+

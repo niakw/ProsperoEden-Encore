@@ -2150,3 +2150,169 @@ msgstr "ΕΥΤΥΧΙΑ"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Το φιλτράρισμα υφής ακονίζει δρόμους, δάπεδα και τοίχους υπό γωνία. Ξεκινήστε από 4x. 8x/16x χρησιμοποιούν περισσότερο εύρος ζώνης GPU. Σε αντίθεση με την ευκρίνεια της εικόνας, δεν βελτιώνει την ευκρίνεια ολόκληρης της εικόνας."
+
+# Machine-assisted translations; human review and native typography QA pending.
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: το nvngx_dlssnr.dll λείπει ή δεν είναι έγκυρο. Βάλτε το δικό σας αρχείο στο /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "Απενεργοποιήστε πρώτα το Neural Rendering. Το NR και η δημιουργία καρέ δεν έχουν επαληθευτεί μαζί στο PS5."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "Το Neural Rendering αποθηκεύτηκε για αυτό το παιχνίδι."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "Η ένταση DLSS-NR αποθηκεύτηκε για αυτό το παιχνίδι."
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "Προεπιλογή: Προεπιλεγμένο ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "Προεπιλογή: {0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "Δημιουργία καρέ"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "Νευρωνική απόδοση"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "Ένταση DLSS-NR"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "Η δημιουργία καρέ είναι ΑΝΕΝΕΡΓΗ από προεπιλογή. Κάνει την προβολή ομαλότερη, αλλά δεν επιταχύνει το παιχνίδι. Ο συνδυασμός με NR δεν έχει δοκιμαστεί στο PS5."
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "Άμεση επιλογή: Προεπιλογή, Ανενεργό, A4K Βελτιωμένες λεπτομέρειες, A4K Απαλή εικόνα, A4K Καθαρή εικόνα, DLSS-NR Original και DLSS-NR Compact."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "Η ένταση DLSS-NR (0–100 %) αφορά μόνο τα δύο DLSS-NR. Οι τιμές ανά παιχνίδι διατηρούνται ακόμη και μετά την απενεργοποίηση."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering: Ανενεργό, A4K Βελτιωμένες λεπτομέρειες, A4K Απαλή εικόνα, A4K Καθαρή εικόνα, DLSS-NR Original ή DLSS-NR Compact. Ένας κινητήρας κάθε φορά."
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "Ένταση DLSS-NR: 0–100 %. Ανενεργή στα τρία A4K και όταν το NR είναι κλειστό· η τιμή διατηρείται."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K – Βελτιωμένες λεπτομέρειες: νευρωνικό δίκτυο που βελτιώνει άκρα και λεπτομέρειες 3D. Απαιτεί Vulkan και μεγέθυνση 2×."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K – Απαλή εικόνα: ήπια αποκατάσταση πριν από τη βελτίωση λεπτομερειών. Βοηθά στις πολύ έντονες ακμές· αυξάνει το φορτίο GPU."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K – Καθαρή εικόνα: νευρωνική ανακατασκευή με μείωση θορύβου. Χρήσιμη για κόκκο και τεχνουργήματα· μεγέθυνση 2×."
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "Η λειτουργία απαιτεί Vulkan. Επιλέξτε Vulkan ή άλλη μέθοδο μεγέθυνσης για να αποφύγετε αυτόματη επιστροφή στη διγραμμική μέθοδο."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K – Βελτιωμένες λεπτομέρειες"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K – Απαλή εικόνα"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K – Καθαρή εικόνα"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR – Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR – Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "Ανενεργό"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K Βελτιωμένες λεπτομέρειες: επεξεργασία για πιο καθαρά περιγράμματα. Μόνο ένας κινητήρας NR μπορεί να επιλεγεί."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K Απαλή εικόνα: επεξεργασία για ήπια εμφάνιση και σταθερά περιγράμματα."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K Καθαρή εικόνα: επεξεργασία για μείωση οπτικών παρεμβολών και θορύβου."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original: πλήρες νευρωνικό δίκτυο. Η ένταση ρυθμίζεται ανά παιχνίδι. Η πλήρης απόδοση στο PS5 εκκρεμεί να επαληθευτεί."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact: μικρότερο νευρωνικό δίκτυο. Η ένταση ρυθμίζεται ανά παιχνίδι. Η πλήρης απόδοση στο PS5 εκκρεμεί να επαληθευτεί."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "Το Neural Rendering είναι κλειστό από προεπιλογή. Επιλέξτε ένα από τα τρία A4K ή τα δύο DLSS-NR."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "Η ένταση αφορά μόνο DLSS-NR Original/Compact. Είναι ανενεργή στο A4K ή στο Ανενεργό· η αποθηκευμένη τιμή διατηρείται."
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "Ένταση DLSS-NR από 0 έως 100 %. Δεν αλλάζει την ευκρίνεια FSR, την εξομάλυνση ακμών ή το Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "Το Neural Rendering απαιτεί Vulkan· το OpenGL δεν είναι συμβατό."
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "Για αυτό το Neural Rendering επιλέξτε Bilinear στο Upscaling: ο συνδυασμός με άλλες μεθόδους δεν έχει επαληθευτεί στο PS5."
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "Το εξαναγκασμένο MSAA δεν έχει επαληθευτεί με Neural Rendering. Χρησιμοποιήστε Κανένα, FXAA ή SMAA."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "Neural Rendering και Frame Generation δεν έχουν επαληθευτεί μαζί. Απενεργοποιήστε το Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "Αυτός ο κινητήρας δεν έχει ακόμη συνδεθεί με την πλήρη απόδοση του παιχνιδιού."
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+

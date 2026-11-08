@@ -2150,3 +2150,169 @@ msgstr "KEAJAIBAN"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Pemfilteran tekstur mempertajam jalan, lantai, dan dinding jika dilihat dari sudut tertentu. Mulai dari 4x; 8x/16x menggunakan lebih banyak bandwidth GPU. Berbeda dengan ketajaman gambar, ini tidak mempertajam keseluruhan gambar."
+
+# Machine-assisted translations; human review and console font QA pending.
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: nvngx_dlssnr.dll tidak ada atau tidak valid. Letakkan berkas milik Anda di /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "Matikan Neural Rendering terlebih dahulu. NR dan pembuatan frame belum divalidasi bersamaan di PS5."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "Neural Rendering disimpan untuk game ini."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "Intensitas DLSS-NR disimpan untuk game ini."
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "Preset: Default ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "Preset: {0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "Pembuatan frame"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "Rendering neural"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "Intensitas DLSS-NR"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "Pembuatan frame NONAKTIF secara default. Tampilan menjadi lebih halus, tetapi game tidak lebih cepat. Penggunaan bersamaan dengan NR belum diuji di PS5."
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "Pilihan langsung: Default, Mati, A4K Detail ditingkatkan, A4K Gambar diperhalus, A4K Gambar dibersihkan, DLSS-NR Original, dan DLSS-NR Compact."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "Intensitas DLSS-NR (0–100%) hanya berlaku untuk dua mode DLSS-NR. Nilai per game tetap tersimpan setelah dinonaktifkan."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering: Mati, A4K Detail ditingkatkan, A4K Gambar diperhalus, A4K Gambar dibersihkan, DLSS-NR Original atau DLSS-NR Compact. Hanya satu mesin dalam satu waktu."
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "Intensitas DLSS-NR: 0–100%. Tidak aktif untuk tiga mode A4K dan saat NR mati; nilainya tetap disimpan."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K – Detail ditingkatkan: jaringan neural untuk memperjelas tepi dan detail 3D. Memerlukan Vulkan dan pembesaran 2×."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K – Gambar diperhalus: pemulihan lembut sebelum peningkatan detail. Berguna jika tepi terlalu tajam; beban GPU lebih tinggi."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K – Gambar dibersihkan: rekonstruksi neural dengan pengurangan noise. Berguna untuk bintik atau artefak; pembesaran 2×."
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "Pemrosesan ini memerlukan Vulkan. Pilih Vulkan atau pembesaran lain untuk menghindari pengembalian otomatis ke Bilinear."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K – Detail ditingkatkan"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K – Gambar diperhalus"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K – Gambar dibersihkan"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR – Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR – Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "Mati"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K Detail ditingkatkan: pemrosesan yang mengutamakan ketajaman kontur. Hanya satu mesin NR yang bisa dipilih."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K Gambar diperhalus: pemrosesan yang mengutamakan gambar lembut dan kontur stabil."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K Gambar dibersihkan: pemrosesan untuk mengurangi noise dan artefak visual."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original: jaringan neural lengkap. Intensitas dapat diatur per game. Rendering penuh di PS5 masih perlu divalidasi."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact: jaringan neural lebih kecil. Intensitas dapat diatur per game. Rendering penuh di PS5 masih perlu divalidasi."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "Neural Rendering dinonaktifkan secara default. Pilih salah satu dari tiga mode A4K atau dua mode DLSS-NR."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "Intensitas hanya berlaku untuk DLSS-NR Original/Compact. Tidak aktif saat A4K atau Mati; nilai tersimpan tetap ada."
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "Intensitas DLSS-NR 0–100%. Tidak mengubah ketajaman FSR, antialiasing, atau Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "Neural Rendering ini memerlukan Vulkan; OpenGL tidak didukung."
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "Untuk Neural Rendering ini pilih Bilinear di Upscaling: kombinasi dengan metode lain belum divalidasi di PS5."
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "MSAA yang dipaksakan belum divalidasi dengan Neural Rendering. Gunakan Tidak ada, FXAA, atau SMAA."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "Neural Rendering dan Frame Generation belum divalidasi bersamaan. Matikan Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "Mesin ini belum terhubung dengan rendering penuh game."
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+

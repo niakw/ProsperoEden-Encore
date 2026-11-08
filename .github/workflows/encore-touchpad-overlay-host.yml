@@ -55,7 +55,7 @@ jobs:
           c++ -std=c++20 -O2 -Wall -Wextra -Werror -pedantic \
             -Iheadless tools/overlay-style-check.cpp -o /tmp/overlay-style-check
           /tmp/overlay-style-check
-      - name: Validate quick-menu fragment GLSL without PS5 build
+      - name: Validate quick-menu fragment GLSL in host-only mode
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends glslang-tools spirv-tools

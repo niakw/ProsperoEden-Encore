@@ -25,7 +25,9 @@ python3 -B "$root/tools/deps.py" fetch harfbuzz
 harfbuzz=$(python3 -B "$root/tools/deps.py" path harfbuzz)
 harfbuzz=${harfbuzz%/harfbuzz.cc}
 
-sources=("$source_dir"/host/*.cpp "$source_dir"/pe/core/*.cpp "$source_dir"/pe/gfx/*.cpp "$source_dir"/pe/ui/*.cpp)
+# Compile the real public-room admission validator used by the launcher.
+# Without this source the UI preview linked against an undefined symbol.
+sources=("$source_dir"/host/*.cpp "$source_dir"/pe/core/*.cpp "$source_dir"/pe/gfx/*.cpp "$source_dir"/pe/ui/*.cpp "$source_dir"/room_directory.cpp)
 objects=()
 pids=()
 # A two-worker render-only build is intentionally much lighter than PS5 CI.

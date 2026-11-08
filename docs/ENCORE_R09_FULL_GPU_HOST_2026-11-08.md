@@ -117,6 +117,41 @@ Même une sortie RGBA32F correcte ne démontre pas à elle seule 152
 opérations calculées ni une qualité DLSS-NR : il manque encore la
 trace GPU instrumentée et la comparaison à une référence indépendante.
 
+## Diagnostic après SIGSEGV (139) sur Colima
+
+Ne jamais appeler un `Segmentation fault` du moteur hôte « échec de
+l'opérateur 152 » : le programme peut avoir planté **avant la création
+de l'instance Vulkan ou le premier dispatch**. La trace simple ne
+contient pas les frames CPU nécessaires à une correction ciblée.
+
+Un outil privé réutilise le dossier et les binaires du précédent essai,
+la capture RGBA8 déjà préparée, et compile uniquement une image Linux
+de diagnostic avec GDB si elle n'est pas présente. Il ne retélécharge pas
+d'artefact GitHub et ne reconstruit **pas Eden** :
+
+```bash
+cd /tmp/eden-encore-fix
+git pull --ff-only origin main
+DOCKER_CONTEXT=colima-r09 \
+  bash tools/graphics/r09_debug_existing_mac.sh \
+    "$HOME/.cache/eden-encore-r09-private/full-network-H9tHXJUY" \
+    "$HOME/Downloads/nvngx_dlssnr.dll.zip"
+```
+
+La DLL est extraite de nouveau **localement** pour la seule analyse ; les
+599 tenseurs sont revérifiés, puis GDB exécute le **même** hôte avec la
+**même** capture. Le conteneur reçoit la capacité limitée
+`SYS_PTRACE` requise pour déboguer son propre processus ; aucune
+option `--privileged` ni désactivation globale de seccomp.
+
+Le rapport `r09_gdb_backtrace.log` est créé dans l'ancien dossier
+`full-network-H9tHXJUY`. Partager ce **journal de pile** seulement,
+pas les fichiers `.dll`, `.nrmodel`, `.rgba8`, `.rgba32f` ni les
+captures privées. Le script efface de nouveau le modèle/DLL temporaire
+à la sortie. Si le crash est dû au moteur ou au pilote, la pile indiquera
+le premier symbole fautif ; il faudra distinguer cette panne des
+limitations QEMU/Lavapipe.
+
 ## Qualification des sources et liaison Linux
 
 - `R09 neural Vulkan host / SPIR-V ABI` : qualification hôte des **72**

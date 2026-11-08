@@ -35,10 +35,10 @@ initial=draw.index("guest_descriptor_queue.PreflightGuestDraw(")
 retry=draw.index("for (unsigned preflight = 0; preflight != 2; ++preflight)")
 retry_exact=draw.index("guest_descriptor_queue.PreflightExactGuestDraw(",retry)
 reuse=draw.index("descriptor_buffer_ring.PreflightFrameReuse(",retry_exact)
-reuse_refresh=draw.index("pipeline = pipeline_cache.CurrentGraphicsPipeline();",reuse)
+reuse_refresh=draw.index("pipeline = select_pipeline();",reuse)
 reuse_preflight=draw.index("guest_descriptor_queue.PreflightExactGuestDraw(",reuse_refresh)
 cap=draw.index("descriptor_buffer_ring.PreflightCapacity(",reuse_preflight)
-reselection=draw.index("pipeline = pipeline_cache.CurrentGraphicsPipeline();",cap)
+reselection=draw.index("pipeline = select_pipeline();",cap)
 late=draw.index("guest_descriptor_queue.PreflightExactGuestDraw(",reselection)
 cache_lock=draw.index("std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")
 # Both GPU ring drains must reselect shaders and revalidate *exact* positive
@@ -50,11 +50,16 @@ assert draw.count("pipeline->HasDescriptorEntries()")>=4
 assert "gpu_memory->FlushCaching();" in draw[reuse:reuse_refresh]
 for section in (draw[reuse_preflight:cap],draw[late:cache_lock]):
     assert "gpu_memory->FlushCaching();" in section
-    assert "pipeline = pipeline_cache.CurrentGraphicsPipeline();" in section
+    assert "pipeline = select_pipeline();" in section
     assert "GraphicsDrawDrop::NoPipeline" in section
 # Guard the bounded second preflight after a pipeline may have changed again.
+# Reselect through the real MSAA-aware pipeline policy after every drain;
+# checking only CurrentGraphicsPipeline() misses native forced-MSAA draws.
+assert "pipeline_cache.CurrentGraphicsPipelineForMsaa(native_samples)" in draw
+assert "return pipeline_cache.CurrentGraphicsPipeline();" in draw
+assert draw.count("pipeline = select_pipeline();")>=4
 assert "preflight != 2" in draw[retry:reuse]
-assert "pipeline = pipeline_cache.CurrentGraphicsPipeline();" in draw[retry_exact:reuse]
+assert "pipeline = select_pipeline();" in draw[retry_exact:reuse]
 assert "check-ps5-late-descriptor-preflight-host.py" in workflow
 
 cpp=r"""

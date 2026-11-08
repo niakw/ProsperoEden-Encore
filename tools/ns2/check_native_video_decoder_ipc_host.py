@@ -47,7 +47,12 @@ assert 'gpu_mapped != expected.gpu_mapped' in supervisor
 assert 'entry.first.second == image_id && entry.second.references != 0;' in supervisor
 assert 'm_registered.contains(image)' in source
 assert 'm_guest_owned.contains(image)' in source
-assert 'if (m_creator || !m_started || m_finalized)' in source
+# Check the real SubmitInput state gate, including the required live codec.
+# The earlier literal was from before the decoder's IsOpen admission was added.
+submit = source.split('void IGraphicsVideoDecoderSession::SubmitInput(', 1)[1].split(
+    '\nvoid IGraphicsVideoDecoderSession::GetOutputInfo(', 1)[0]
+assert 'm_creator || !m_started || m_finalized || !m_decoder ||' in submit
+assert '!m_decoder->IsOpen()' in submit
 assert 'm_syncpoint = id;' in source
 assert 'GetGuestSyncpointValue(id)' in source
 assert 'm_bootstrap.GpuContextReady()' in supervisor

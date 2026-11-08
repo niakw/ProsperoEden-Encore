@@ -70,8 +70,14 @@ assert 'CaptureGraphicsTicket(maxwell3d).has_value()' in stage_owner
 assert 'Shader::Stage::Task : Shader::Stage::Mesh' in stage_owner
 assert 'IsShaderConfigEnabled(Maxwell::ShaderType::TessellationInit)' in stage_owner
 env_owner = MESH_STAGE_OWNERS[1].read_text()
-assert 'mesh_registers = source.MeshRegisters();' in env_owner
-assert 'mesh_primitive_header = source.MeshPrimitiveHeader();' in env_owner
+# Task/Mesh registers and primitive-output headers are authenticated by
+# native capture/pipeline owners, NOT the common NS1 Shader::Environment ABI.
+# The old witness required removed nonexistent virtual accessors and failed
+# before syntax-checking the actual Vulkan translation units.
+assert 'mesh_registers = source.MeshRegisters();' not in env_owner
+assert 'mesh_primitive_header = source.MeshPrimitiveHeader();' not in env_owner
+assert 'image.native_stage != static_cast<u32>(source->ShaderStage())' in env_owner
+assert 'MatchesCapturedHeader(*source, image)' in env_owner
 capture_owner = MESH_STAGE_OWNERS[2].read_text()
 assert 'NativeMeshSlotCbufBank(shader_stage, has_task)' in capture_owner
 assert 'NativeMeshRegisterPipelineKey(' in capture_owner

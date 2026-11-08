@@ -36,6 +36,58 @@ Les nouveaux changements hôte restent non qualifiés par recompilation ;
 l'ancien binaire publié ne les inclut pas. Pas de relance du build long
 sans nouvelle autorisation.
 
+## Tentative du réseau complet depuis un Mac Apple Silicon
+
+Un nouveau lanceur **différent du kit de fixtures**, `tools/graphics/r09_run_full_network_mac.sh`,
+tente l'exécution de `r09-full-gpu-host` en Linux x86-64 émulé par
+Docker. Il nécessite `gh` authentifié, Docker lancé et Python 3 sur
+macOS. Il **ne compile pas l'ensemble d'Eden** et n'emploie pas la
+console PS5.
+
+```bash
+cd /tmp/eden-encore-fix
+git switch main
+git pull --ff-only origin main
+git submodule update --init --recursive
+gh auth status
+docker info >/dev/null
+bash tools/graphics/r09_run_full_network_mac.sh \
+  "$HOME/Downloads/nvngx_dlssnr.dll.zip" \
+  "$HOME/Downloads/une-vraie-capture.png"
+```
+
+Sans second argument, le lanceur réalise une capture de l'écran Mac.
+Elle permet un essai technique du pipeline mais **ne constitue pas une
+capture de jeu ou une référence de qualité NVIDIA**. Un fichier RGBA8
+1920x1080 peut être donné directement comme deuxième argument.
+
+Le lanceur télécharge l'**ancien binaire lié** du workflow
+[42465459699](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42465459699),
+puis authentifie la DLL localement et crée un NRMODEL1 privé en
+mémoire/disque local, compatible avec cet exécutable. Les extensions
+récentes du code hôte ne sont **pas** incorporées dans l'ancien binaire.
+La réussite de la compilation C++ sur GitHub n'est pas la preuve de son
+exécution. La date d'expiration de cet artefact public est le
+**15 novembre 2026** ; à son expiration il faudra publier un nouvel
+exécutable public via la CI manuelle, pas transmettre les poids NVIDIA.
+
+La compilation de l'image Docker peut installer plusieurs bibliothèques
+Linux, mais **aucune reconstruction complète d'Eden n'est lancée**.
+Sur un Mac M1 de 8 Go, l'émulation amd64 et le pipeline 1080p peuvent
+épuiser la mémoire ou être très lents ; un refus mémoire ou Vulkan doit
+être rapporté, pas interprété comme une validation.
+
+Sorties privées locales : `~/.cache/eden-encore-r09-private/full-network-*/`,
+dont `r09_full_network.log`. En cas de succès de l'exécuteur, des
+aperçus `r09_before_real.png` et `r09_after_unverified_gpu.png`
+sont générés. Le modèle et la copie de la DLL sont supprimés à la fin.
+**Seul le journal** est nécessaire au diagnostic, jamais la DLL, le
+modèle ou la capture personnelle.
+
+Même une sortie RGBA32F correcte ne démontre pas à elle seule 152
+opérations calculées ni une qualité DLSS-NR : il manque encore la
+trace GPU instrumentée et la comparaison à une référence indépendante.
+
 ## Qualification des sources et liaison Linux
 
 - `R09 neural Vulkan host / SPIR-V ABI` : qualification hôte des **72**

@@ -84,6 +84,11 @@ assert 'm_work_buffer.Reset(nullptr);' in source
 assert 'Kernel::KScopedAutoObject<Kernel::KTransferMemory> m_work_buffer;' in header
 assert 'compressed.empty() && !eos' in source
 assert 'std::numeric_limits<s64>::max()' in source
+output_start='void IGraphicsVideoDecoderSession::GetOutputInfo(HLERequestContext& ctx) {'
+output_end='\n} // namespace Service::AM'
+assert source.count(output_start)==source.count(output_end)==1
+output_method=source[source.index(output_start):source.index(output_end,source.index(output_start))]
+assert '(!m_started && m_outputs.empty())' in output_method
 
 fixture=r'''
 #include <algorithm>
@@ -91,6 +96,7 @@ fixture=r'''
 #include <cassert>
 #include <cstdint>
 #include <deque>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <set>
@@ -144,6 +150,18 @@ namespace Tegra::Texture {
   for(std::size_t i=0;i<linear.size();++i)tiled[i]=linear[i]^u8{0xff};
  }
 }
+struct HLERequestContext {std::vector<u32> response;};
+namespace Kernel {constexpr u32 ResultInvalidState=5U;}
+constexpr u32 ResultSuccess=0U;
+constexpr u32 NoData=0x1c286fU;
+namespace IPC {
+struct ResponseBuilder {
+ HLERequestContext& ctx;
+ ResponseBuilder(HLERequestContext& context,int):ctx(context){ctx.response.clear();}
+ void Push(u32 value){ctx.response.push_back(value);}
+ template<class T> void PushRaw(T value){ctx.response.push_back(static_cast<u32>(value));}
+};
+}
 struct IGraphicsVideoDecoderSession {
  static constexpr u32 NoSyncpoint=~u32{0};
  static constexpr std::size_t MaxFrames=16;
@@ -166,9 +184,14 @@ struct IGraphicsVideoDecoderSession {
  FakeReady* m_ready=&ready;
  u32 m_syncpoint{4};
  bool m_started{true};
+ bool m_creator{};
+ bool m_finalized{};
  void Pump();
+ void GetOutputInfo(HLERequestContext&);
+ void Acknowledge(HLERequestContext& ctx,u32 result){ctx.response={result};}
 };
 __ACTUAL_PUMP__
+__ACTUAL_OUTPUT__
 static IGraphicsVideoDecoderSession::PendingPicture Pic(u64 pts,bool eos=false){
  return {{4,4,pts,std::make_shared<int>(5)},eos};
 }
@@ -258,8 +281,22 @@ int main(){
  assert(run.m_outputs.back().image==21 && run.m_pending.empty() &&
         run.m_available.empty() && !run.m_registered.contains(20) &&
         run.m_registered.contains(21));
+ // Stop does not invalidate a frame ALREADY published to the output FIFO.
+ // Drain its real metadata before the caller unregisters the image pool.
+ HLERequestContext ctx;
+ run.m_outputs.clear();
+ run.m_started=false;
+ run.GetOutputInfo(ctx);
+ assert(ctx.response.size()==1 && ctx.response[0]==Kernel::ResultInvalidState);
+ run.m_outputs.push_back({23,4,4,901,true});
+ run.GetOutputInfo(ctx);
+ assert(run.m_outputs.empty() && ctx.response.size()==17 &&
+        ctx.response[0]==ResultSuccess && ctx.response[1]==23 &&
+        ctx.response[7]==901000U && ctx.response[9]==1U);
+ run.GetOutputInfo(ctx);
+ assert(ctx.response.size()==1 && ctx.response[0]==Kernel::ResultInvalidState);
 }
-'''.replace('__ACTUAL_PUMP__',method)
+'''.replace('__ACTUAL_PUMP__',method).replace('__ACTUAL_OUTPUT__',output_method)
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
 assert compilers
 env=os.environ.copy()

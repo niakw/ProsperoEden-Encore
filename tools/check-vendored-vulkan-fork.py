@@ -844,6 +844,55 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     print("ENCORE_POST_GENERATOR_REVIEWED_SOURCE_PARITY",
           "headers=2", "native_texture_capture_statements=6",
           "current_vulkan_source_preserved=1", flush=True)
+    # The maintained native MSAA path superseded three historical
+    # generator owners. Reconstruct the CI-observed exact source delta
+    # instead of weakening parity or rewriting the old generation oracle.
+    # BOTH input (original generated) and output (current normalized vendor)
+    # must have independently pinned SHA256 from the same real CI run.
+    # This recognizes a reviewed post-generator integration layer; it does
+    # not claim that the old generator directly emits the new implementation.
+    resolve_receipt = json.loads(
+        (root / 'tools/fixtures/p04-post-generator-native-resolve-parity.json').read_text())
+    assert resolve_receipt['schema_version'] == 1
+    assert resolve_receipt['source_vendor_gitlink'] == post['source_vendor_gitlink']
+    resolve_paths = {x['path'] for x in resolve_receipt['files']}
+    assert resolve_paths == {
+        'include/video_core/renderer_vulkan/vk_rasterizer.h',
+        'include/video_core/renderer_vulkan/vk_scheduler.h',
+        'vulkan_scheduler.cpp',
+    }
+    resolve_hunks = 0
+    for entry in resolve_receipt['files']:
+        name = entry['path']
+        generated_text = normalized_generated[name].read_text()
+        shipping_text = normalized_expected.get(name, expected[name]).read_text()
+        digest = lambda x: hashlib.sha256(x.encode('utf-8')).hexdigest()
+        assert digest(generated_text) == entry['generated_sha256'], (
+            'Unreviewed Vulkan historical generator drift', name)
+        assert digest(shipping_text) == entry['normalized_maintained_sha256'], (
+            'Unreviewed Vulkan maintained scheduler/MSAA source drift', name)
+        normalized = generated_text
+        assert 1 <= len(entry['hunks']) <= 4
+        for patch in entry['hunks']:
+            assert patch['before'] != patch['after']
+            assert patch['before'] and patch['after']
+            assert normalized.count(patch['before']) == 1, (
+                'Native MSAA generator reconstruction anchor drift', name)
+            normalized = normalized.replace(patch['before'], patch['after'], 1)
+            resolve_hunks += 1
+        assert digest(normalized) == entry['normalized_maintained_sha256'], (
+            'Native MSAA reconstruction changed a non-reviewed byte', name)
+        assert normalized == shipping_text, (
+            'Vulkan generated/native resolve source mismatch', name)
+        out = temp/'normalized-generator-post-native-resolve'/name
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(normalized)
+        normalized_generated[name] = out
+    print('ENCORE_NATIVE_MSAA_GENERATOR_RECONSTRUCTION_PASS',
+          f'owners={len(resolve_paths)}',
+          f'exact_hunks={resolve_hunks}',
+          'source_sha256_pinned=1',
+          'historical_generator_unchanged=1', flush=True)
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

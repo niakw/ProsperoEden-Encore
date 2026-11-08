@@ -2422,3 +2422,40 @@ msgstr "MSAA 8x"
 #: pe/ui/settings.cpp
 msgid "MSAA 16x"
 msgstr "MSAA 16x"
+
+# Obsolete gettext entries: retained for translator history only; never active at runtime.
+#~ msgid "AMD FSR"
+#~ msgstr "AMD FSR"
+
+#~ msgid "FSR sharpness"
+#~ msgstr "Netteté FSR"
+
+#~ msgid "FSR SHARPNESS"
+#~ msgstr "NETTETÉ FSR"
+
+#~ msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
+#~ msgstr "La netteté FSR agit uniquement avec AMD FSR. Réduisez-la si l’image paraît granuleuse ou trop accentuée."
+
+#~ msgid "SMAA"
+#~ msgstr "SMAA"
+
+#~ msgid "Upscaling filter"
+#~ msgstr "Filtre de mise à l'échelle"
+
+#~ msgid "UPSCALING FILTER"
+#~ msgstr "FILTRE DE MISE À L'ÉCHELLE"
+
+#~ msgid "Enhanced smoothness"
+#~ msgstr "Fluidité améliorée"
+
+#~ msgid "Public rooms (read-only)"
+#~ msgstr "Salons publics (consultation seule)"
+
+#~ msgid "Read-only room directory"
+#~ msgstr "Annuaire des salons (lecture seule)"
+
+#~ msgid "Room joining is not available yet."
+#~ msgstr "La connexion aux salons n'est pas encore disponible."
+
+#~ msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+#~ msgstr "SGSR a besoin de Vulkan. OpenGL utiliserait silencieusement Bilinéaire ; sélectionnez Vulkan ou une autre méthode haut de gamme."

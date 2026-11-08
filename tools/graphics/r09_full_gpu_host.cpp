@@ -6,6 +6,11 @@
 #include "nr_dll_launch_preflight.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_readback.h"
+// The Linux Vulkan header includes X11/X.h, whose Success macro must not
+// replace Eden's enum Service::Nvidia::NvResult::Success further below.
+#ifdef Success
+#undef Success
+#endif
 #include "video_core/renderer_vulkan/present/util.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"
 #include "video_core/renderer_vulkan/vk_state_tracker.h"

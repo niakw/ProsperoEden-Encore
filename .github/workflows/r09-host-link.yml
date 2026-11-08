@@ -68,6 +68,21 @@ jobs:
           listing = subprocess.check_output(
               ["ninja", "-C", ".build-r09-linked", "-t", "targets", "all"],
               text=True)
+          # Compile the actual Linux executable translation unit FIRST.
+          # Previously its X11 Success macro collision surfaced only after
+          # compiling ~1,350 Eden dependencies. This fast gate is not syntax-only.
+          host_targets = sorted({
+              line.split(": ", 1)[0]
+              for line in listing.splitlines()
+              if line.startswith("CMakeFiles/r09-full-gpu-host.dir/")
+              and ".o:" in line
+          })
+          if len(host_targets) != 1:
+              raise SystemExit("R09_HOST_ENTRYPOINT_OBJECT_INVENTORY_INVALID="
+                               + str(len(host_targets)))
+          subprocess.run(["ninja", "-C", ".build-r09-linked",
+                          "-j", "2", *host_targets], check=True)
+          print("R09_LINUX_HOST_ENTRYPOINT_CPP_PASS", flush=True)
           targets = sorted({
               line.split(": ", 1)[0]
               for line in listing.splitlines()

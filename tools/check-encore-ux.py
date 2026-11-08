@@ -269,7 +269,7 @@ assert 'gfx::mix(theme::kAccentTeal, theme::kTitle, f)' in home
 assert 'constexpr float card_h = 214.0f' in home
 assert '551.0f, card_w, card_h' in home
 assert 'constexpr float utility_w = (1800.0f - utility_gap * 3.0f) / 4.0f' in home
-assert 'std::array<tween::Spring, 23> home_springs_' in launcher_h
+assert 'std::array<tween::Spring, 24> home_springs_' in launcher_h
 assert 'const bool quick_open' in home
 assert 'begin_band(0, -16.0f);' in home[home.index('// Header must be composited AFTER'):]
 assert 'fake CPU' not in home and 'Storage' in home

@@ -301,7 +301,30 @@ void pictures(Stage &s)
     {
         s.restart(false);
         s.wait(2.0f);
-        s.press({Key::up, Key::cross});
+        // A virtual frame is not a completed async Home read. The old
+        // Up/Cross sequence could be dropped before home_loaded_, leaving
+        // all seven "Library" captures on the Home screen.
+        const auto await_ready = [&](auto ready) {
+            for (int attempt = 0; attempt < 160; ++attempt) {
+                if (ready()) return true;
+                s.render();
+                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                s.launcher->update(1.0f / 60.0f);
+            }
+            return ready();
+        };
+        if (!await_ready([&] { return s.launcher->preview_home_ready(); })) {
+            std::fprintf(stderr, "library-preview: Home never became ready\\n");
+            s.ok = false;
+            return;
+        }
+        // R1 is a real controller tab shortcut independent of Home focus.
+        s.press({Key::r1});
+        if (!await_ready([&] { return s.launcher->preview_library_ready(11); })) {
+            std::fprintf(stderr, "library-preview: Library never became ready\\n");
+            s.ok = false;
+            return;
+        }
         s.wait(1.0f);
         // Fixture games are alphabetically sorted. BOTW's real flat scans
         // are on the eleventh title (index 10), not on Moss & Lantern.

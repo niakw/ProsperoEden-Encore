@@ -6,11 +6,15 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 src=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-b=src.index("    GraphicsPipeline* pipeline{pipeline_cache.CurrentGraphicsPipeline()};")
+b=src.index("    const auto select_pipeline = [&]() -> GraphicsPipeline* {")
 e=src.index("#ifdef PS5_NATIVE\n    // Waiting on an eight-frame-old",b)
 selected=src[b:e]
 assert "pipeline->HasDescriptorEntries()" in selected
-assert selected.count("pipeline_cache.CurrentGraphicsPipeline()") == 3
+assert selected.count("select_pipeline()") == 3
+assert selected.count("pipeline_cache.CurrentGraphicsPipelineForMsaa(native_samples)") == 1
+assert selected.count("pipeline_cache.CurrentGraphicsPipeline()") == 1
+assert "native_samples = VK_SAMPLE_COUNT_1_BIT;" in selected
+assert "native_msaa_clear.reset();" in selected
 assert "guest_descriptor_queue.PreflightGuestDraw(" in selected
 assert "if (preflight == 0 && !initial_descriptor_drain) break;" in selected
 assert "guest_descriptor_queue.PreflightExactGuestDraw(" in selected
@@ -27,11 +31,17 @@ assert "bool HasDescriptorEntries() const noexcept" in oracle
 fixture=r"""
 #include <cassert>
 #include <cstddef>
+#include <optional>
 namespace Eden::Performance {
 enum class GraphicsDrawDrop { NoPipeline };
 inline unsigned dropped = 0;
 void RecordGraphicsDrawDrop(GraphicsDrawDrop) { ++dropped; }
 }
+using VkSampleCountFlagBits = unsigned;
+constexpr VkSampleCountFlagBits VK_SAMPLE_COUNT_1_BIT = 1;
+constexpr VkSampleCountFlagBits VK_SAMPLE_COUNT_2_BIT = 2;
+constexpr VkSampleCountFlagBits VK_SAMPLE_COUNT_4_BIT = 4;
+struct NativeMsaaClear {};
 struct GraphicsPipeline {
     std::size_t entries{};
     bool HasDescriptorEntries() const noexcept { return entries != 0; }
@@ -42,7 +52,14 @@ struct GraphicsPipeline {
 struct PipelineCache {
     GraphicsPipeline* selected{};
     GraphicsPipeline* after_drain{};
+    GraphicsPipeline* forced{};
     unsigned selects{};
+    unsigned forced_selects{};
+    GraphicsPipeline* CurrentGraphicsPipelineForMsaa(VkSampleCountFlagBits samples) {
+        assert(samples != VK_SAMPLE_COUNT_1_BIT);
+        ++forced_selects;
+        return forced;
+    }
     GraphicsPipeline* CurrentGraphicsPipeline() {
         ++selects;
         return selects == 1 || !after_drain ? selected : after_drain;
@@ -85,6 +102,8 @@ struct Rasterizer {
     DescriptorQueue guest_descriptor_queue;
     GpuMemory memory;
     GpuMemory* gpu_memory = &memory;
+    VkSampleCountFlagBits native_samples = VK_SAMPLE_COUNT_1_BIT;
+    std::optional<NativeMsaaClear> native_msaa_clear{};
     void Test() {
 """ + selected + r"""
     }
@@ -124,6 +143,29 @@ int main() {
     assert(unchanged.guest_descriptor_queue.checks == 1);
     assert(unchanged.guest_descriptor_queue.exact_checks == 0);
     assert(unchanged.scheduler.waits == 0 && unchanged.pipeline_cache.selects == 1);
+    // A native MSAA draw must use its exact-sample shader, never the
+    // ordinary guest shader pipeline or hidden sample-register mutation.
+    Rasterizer forced;
+    forced.pipeline_cache.selected = nullptr;
+    forced.pipeline_cache.forced = &textured;
+    forced.native_samples = VK_SAMPLE_COUNT_4_BIT;
+    forced.native_msaa_clear.emplace();
+    forced.Test();
+    assert(forced.pipeline_cache.forced_selects == 1);
+    assert(forced.pipeline_cache.selects == 0);
+    assert(forced.native_samples == VK_SAMPLE_COUNT_4_BIT);
+    assert(forced.native_msaa_clear.has_value());
+    // An unavailable native variant must abandon the transient clear
+    // and return to the ordinary NS1/NS2 shader selection.
+    Rasterizer fallback;
+    fallback.pipeline_cache.selected = &textured;
+    fallback.native_samples = VK_SAMPLE_COUNT_2_BIT;
+    fallback.native_msaa_clear.emplace();
+    fallback.Test();
+    assert(fallback.pipeline_cache.forced_selects == 1);
+    assert(fallback.pipeline_cache.selects == 1);
+    assert(fallback.native_samples == VK_SAMPLE_COUNT_1_BIT);
+    assert(!fallback.native_msaa_clear.has_value());
 }
 """
 with tempfile.TemporaryDirectory(prefix="encore-preflight-pipeline-") as d:

@@ -604,7 +604,13 @@ assert post_f07_r09_vendor_owners <= set(physical_all), (
     sorted(post_f07_r09_vendor_owners - set(physical_all)))
 assert not post_f07_r09_vendor_owners & (
     set(research_paths) | post_f07_feature_vendor_owners)
-assert len([p for p in r09_receipt["paths"] if p.startswith("headless/")]) == 9
+post_f07_r09_headless_owners = {
+    p for p in r09_receipt["paths"] if p.startswith("headless/")
+}
+assert len(post_f07_r09_headless_owners) == 9
+assert all((root / p).is_file() for p in post_f07_r09_headless_owners), (
+    "Missing reviewed R09 local header owner")
+assert post_f07_r09_headless_owners.isdisjoint(post_f07_feature_headless_owners)
 print("ENCORE_R09_POST_F07_VENDOR_CATALOG_PASS",
       "vendor=58", "headless=9", "historical_F07_unchanged=1")
 
@@ -874,8 +880,11 @@ headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
-    and p.relative_to(root).as_posix() not in post_f07_feature_headless_owners
+    and p.relative_to(root).as_posix() not in (
+        post_f07_feature_headless_owners | post_f07_r09_headless_owners)
 )
+print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
+      "historical_headless_catalog_preserved=193")
 headless_rows = []
 for entry in headless_doc.split(headless_start, 1)[1].split(headless_end, 1)[0].splitlines():
     if not entry.startswith("| `headless/"):

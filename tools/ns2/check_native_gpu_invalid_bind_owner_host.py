@@ -42,6 +42,7 @@ using u32 = std::uint32_t;
 static unsigned rejected{};
 #define HW_GPU 0
 #define LOG_DEBUG(...) ((void)0)
+#define LOG_ERROR(...) ((void)0)
 #define UNIMPLEMENTED_MSG(...) (++rejected)
 struct Engine {};
 namespace Tegra {

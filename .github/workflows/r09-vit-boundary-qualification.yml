@@ -15,6 +15,7 @@ on:
       - 'tools/graphics/r09_*'
       - 'tools/graphics/r09_real_original_preflight.cpp'
       - 'tools/graphics/test_r09_verify_model_pack.py'
+      - 'tools/graphics/test_r09_full_gpu_evidence.py'
       - 'tools/graphics/test-rdna2-proxy-features-spv.py'
       - 'headless/vulkan.cmake'
       - 'headless/vulkan_present_layer_r24.cpp'

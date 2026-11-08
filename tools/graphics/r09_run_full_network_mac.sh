@@ -32,9 +32,28 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 dll_input="${1:-$HOME/Downloads/nvngx_dlssnr.dll.zip}"
 capture_input="${2:-}"
 github_repo="niakw/ProsperoEden-Encore"
-linked_run=42465459699
-binary_sha256="7f41403249b594ea6ad9d3a00127384845bab3f0940e6ae275c87a8877e6fbe5"
+# The only previously linked public binary predates the guest-query-cache
+# fix, and reproducibly SIGSEGVs on its first UploadImage->Scheduler::Finish.
+# Pin BOTH the GitHub workflow run and SHA of a freshly relinked binary.
+# Do not spend hours rebuilding Docker or unpacking a 165 MB private DLL for
+# the known-broken artifact.
+linked_run="${R09_HOST_LINKED_RUN_ID:-42465459699}"
+binary_sha256="${R09_HOST_LINKED_SHA256:-7f41403249b594ea6ad9d3a00127384845bab3f0940e6ae275c87a8877e6fbe5}"
 image="eden-r09-original-host:ubuntu2404-amd64"
+
+if [[ "$linked_run" == "42465459699" ]]; then
+  echo "R09_HOST_RELINK_REQUIRED: run 42465459699 contains the confirmed" >&2
+  echo "null QueryCache dereference at the first Vulkan image upload." >&2
+  echo "Source corrected in vendor 0f47339; engine gitlink 5390307." >&2
+  echo "Wait for an explicitly qualified, freshly linked public host binary." >&2
+  echo "Then supply R09_HOST_LINKED_RUN_ID and R09_HOST_LINKED_SHA256." >&2
+  exit 78
+fi
+if [[ ! "$linked_run" =~ ^[0-9]+$ ||
+      ! "$binary_sha256" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "R09_HOST_RELINK_INPUT_INVALID: require numeric run ID + exact binary SHA-256" >&2
+  exit 78
+fi
 
 for tool in docker gh python3 shasum; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -175,8 +194,9 @@ fi
 cp "$binary" "$work/bin/r09-full-gpu-host"
 chmod 700 "$work/bin/r09-full-gpu-host"
 echo "R09_PINNED_PUBLIC_BINARY_SHA256_PASS=$actual_sha256"
-echo "R09_PINNED_PUBLIC_BINARY=engine_756e80c_vendor_dfd6f3f"
-echo "R09_WARNING: this host binary predates the direct-DLL and exclusive-readback patches."
+echo "R09_PINNED_PUBLIC_BINARY_RUN=$linked_run"
+echo "R09_PINNED_PUBLIC_BINARY_SHA256=$actual_sha256"
+echo "R09_HOST_BINARY_EXECUTION_REQUIRES_INDEPENDENT_FULL_NETWORK_VALIDATION"
 echo "R09_DOCKER_BUILD=public_dependencies_only (no proprietary input in image)"
 echo "R09_DOCKER_CONTEXT=$(docker context show)"
 # A Docker Buildx container builder does not automatically publish its image

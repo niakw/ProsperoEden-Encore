@@ -86,6 +86,7 @@ echo "R09_DEBUG_REUSING_CAPTURE_AND_LINKED_EXECUTABLE=$work"
 echo "R09_DEBUG_NO_MODEL_OR_DLL_UPLOADED"
 set +e
 docker run --pull never --rm --init --platform linux/amd64 \
+  --cap-add SYS_PTRACE \
   --mount "type=bind,source=$work,target=/private" \
   -e LP_NUM_THREADS=2 -e GALLIUM_NUM_THREADS=2 \
   "$debug_image" bash -euo pipefail -c '

@@ -156,7 +156,15 @@ def apply(stage: Path, check_only: bool = False) -> str:
 def self_test() -> None:
     source, approved = approved_bytes()
     extended = extend_graphics_enums(approved.decode("utf-8"))
-    assert not any(new in source.decode("utf-8") for _,new in REPLACEMENTS)
+    # Strict already exists in the PINNED upstream Eden enum. The old
+    # 83-source backport omitted it, while upstream fence_manager.h still
+    # calls its real predicate. Only Encore's scaling/AA extras must be
+    # absent from original upstream; Strict must be present there.
+    upstream_enums = source.decode("utf-8")
+    assert not any(after in upstream_enums for before, after in REPLACEMENTS
+                   if "GpuFenceBehavior" not in before)
+    assert "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate, Strict);" in upstream_enums
+    assert "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate);" in approved.decode("utf-8")
     assert all(extended.count(after) == 1 for _,after in REPLACEMENTS)
     assert all(extended.count(before) == 0 for before,_ in REPLACEMENTS)
     assert extended.count("ENUM(ScalingFilter,") == 1

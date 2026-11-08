@@ -54,7 +54,13 @@ assert "const float right_strength = artwork_plate ? 0.06f : 0.34f;" in widgets
 assert "theme::kSun.with_alpha(0.29f * amount * breathe * look().glow_strength)" in widgets
 assert "theme::kFocusCore.with_alpha(0.95f * amount)" in widgets
 assert "list.hgradient_rect(r, 19.0f" in nav
-assert "list.image(c.textures.brand(), {56.0f" in nav
+# The TV header now selects a user-configured logo palette/variant, rather
+# than always drawing the old single brand texture. Preserve its 110px
+# geometry and ensure we render the chosen nonzero texture only.
+assert "const int auto_logo = prefs_.color_palette == 1 ? 1 :" in nav
+assert "prefs_.logo_choice == 0 ? auto_logo" in nav
+assert "if (const auto texture = c.textures.logo(logo); texture != 0)" in nav
+assert "list.image(texture, {56.0f, 17.0f, 110.0f, 110.0f}" in nav
 assert "Color::rgb(0xbb59ff)" in theme
 assert "Color::rgb(0xff70e4)" in theme
 

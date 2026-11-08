@@ -218,6 +218,19 @@ int main(){
     require(gpuMap && gpuMap->flags==0x1004 &&
             gpuMap->destination_pages==0x10 && gpuMap->source_pages==4,
             "GPU request maps to 4-KiB sparse ioctl entry");
+    // The SAME 40-byte TIPC 216 request has no flags field. A 64K page
+    // format comes from the previously registered region, not the packet.
+    auto gm64=gm;
+    gm64.address=0x20000;gm64.size=0x10000;gm64.source_offset=0x30000;
+    const auto gpuMap64=DecodeGpuSparseMap(gm64,16);
+    require(gpuMap64 && gpuMap64->flags==0x2004 &&
+            gpuMap64->destination_pages==2 && gpuMap64->source_pages==3 &&
+            gpuMap64->pages==1, "64K native sparse remap encodes true page units");
+    require(!DecodeGpuSparseMap(gm64,17),
+            "native sparse 216 rejects unsupported page size");
+    gm64.source_offset=0x31000;
+    require(!DecodeGpuSparseMap(gm64,16),
+            "64K sparse 216 rejects physical offsets aligned only to 4K");
     gm.address=0x10001;
     require(!DecodeGpuSparseMap(gm),"reject unaligned sparse destination");
     gm.address=0x10000;gm.read_only=1;
@@ -763,6 +776,10 @@ int main(){
             sparse64.CommitPrepared(pending64) == WP::LedgerStatus::Success &&
             pending64.empty() && sparse64.Count() == 1,
             "64K page-granular VA reservation is staged and committed once");
+    require(sparse64.SparsePageShift(9, 0x10000, 0x10000).value_or(0)==16 &&
+            !sparse64.SparsePageShift(9, 0x11000, 0x1000).has_value() &&
+            !sparse64.SparsePageShift(10, 0x10000, 0x10000).has_value(),
+            "216 derives page shift only from exact admitted native sparse ownership");
     require(sparse64.ContainsSparse(9, 0x10000, 0x10000, 16) &&
             sparse64.ContainsSparse(9, 0x20000, 0x10000, 16) &&
             !sparse64.ContainsSparse(9, 0x11000, 0x1000, 12) &&

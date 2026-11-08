@@ -1,7 +1,7 @@
 # Eden Encore — Roadmap collaborative par familles de fonctions (état du 5 novembre 2026)
 
-**Source de vérité du laboratoire fonctionnalités :** `feat/graphics-network-achievements`.  
-**Branche console distincte :** `dev/ps5-sparse-jit` ; F01–F06 ont des contrats hôte, **F07 reste ouvert jusqu'à preuve sur console**.  
+**Source de vérité du laboratoire fonctionnalités :** `feat/graphics-network-achievements`.
+**Branche console distincte :** `dev/ps5-sparse-jit` ; F01–F06 ont des contrats hôte, **F07 reste ouvert jusqu'à preuve sur console**.
 **Règle de séparation :** aucun merge ni activation expérimentale implicite sur la branche console. R00 avait fusionné historiquement la PR #18 ; l'écart entre les **HEAD actuels** doit être revérifié avant chaque import. Les nombres/SHAs des journaux anciens sont des **photos datées**, non des résultats CI actuels.
 
 **Lecture :** les identifiants R00–R23 restent stables, R24 ajoute le chantier d'anti-aliasing perceptible et R25 la personnalisation des thèmes du launcher ; **leur ordre dans le document suit désormais la famille fonctionnelle et ses checks globaux**, pas le numéro ni l'ordre des demandes. La section A est le point de départ obligatoire. Chaque jalon est inscrit une seule fois dans les tableaux de suivi ; le détail technique, les historiques et les références restent sous sa famille.

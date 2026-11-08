@@ -47,12 +47,13 @@
     {
       "path": "headless/encore_overrides_runtime.h",
       "historical_reviewed_git_blob": "911b3b2c87b7c1edecc633e683f312934ddf902a",
-      "post_snapshot_git_blob": "1891a14f778b97771b33b42ef1d78a67a3b4009d",
+      "post_snapshot_git_blob": "6104972031bb56437bc6b06f1340c693e5e7061e",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "new Vulkan-only scaler and antialias profile conversion guards",
       "review_kind": "integrity_workflow",
       "required_source_fragment": "anime4k_denoise",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-08: explicit parentheses around shared Vulkan-only spatial filter range (5–9), preserving the previous Boolean result and AMD FSR 1 ID=1. Clang -Wlogical-op-parentheses/-Werror warned on historical expression; no behavior or F07 historical SHA was changed. Verify with check-glyph-overrides-runtime.py, native source-audit CI."
     },
     {
       "path": "headless/graphics.cpp",

@@ -140,6 +140,15 @@ assert "ctx.output_tess_level_inner" in patch_get
 assert "if (!ValidId(variable))" in patch_get
 assert "Non-generic patch load" not in patch_get
 assert "IR::GenericPatchIndex(patch)" in patch_get
+# Reject invalid stage or undeclared generic slots before creating SPIR-V
+# access chains. TCS patch output is never writable from TES/other stages.
+assert patch_get.index('if (!control && !evaluation)') < patch_get.index('if (IR::IsGeneric(patch))')
+assert 'index >= ctx.patches.size() || !ValidId(ctx.patches.at(index))' in patch_get
+assert 'const Id type{control ? ctx.output_f32 : ctx.input_f32}' in patch_get
+patch_write=patch_emitter.split('void EmitSetPatch(',1)[1].split('void EmitSetFragColor(',1)[0]
+assert patch_write.index('if (ctx.stage != Stage::TessellationControl)') < patch_write.index('if (IR::IsGeneric(patch))')
+assert 'index >= ctx.patches.size() || !ValidId(ctx.patches.at(index))' in patch_write
+assert 'Tessellation patch write outside control stage' in patch_write
 print("P2_4_TESS_PATCH_REAL_INPUT_OUTPUT_ABI_PASS slots=4+2 generic=preserved",flush=True)
 
 # P2.4: the indexed GenericN physical output writes must select the actual

@@ -69,10 +69,24 @@ jobs:
         run: |
           set -euo pipefail
           bash -n tools/graphics/r09_run_full_network_mac.sh
+          # Exercise exactly the staged source layout used by Colima: the
+          # macOS checkout may be under /tmp (not shared with a Linux VM).
+          stage="$(mktemp -d)"
+          trap 'rm -rf "$stage"' EXIT
+          mkdir -p "$stage/headless" "$stage/extras/graphics" \
+            "$stage/tools/graphics" \
+            "$stage/vendor/encore-active/eden-vulkan/include"
+          cp headless/*.h "$stage/headless/"
+          cp extras/graphics/*.h "$stage/extras/graphics/"
+          cp -R vendor/encore-active/eden-vulkan/include/. \
+            "$stage/vendor/encore-active/eden-vulkan/include/"
+          cp tools/graphics/r09_private_model_import.cpp \
+            tools/graphics/r09_authentic_preview_png.py \
+            "$stage/tools/graphics/"
           g++ -std=c++20 -O0 -Wall -Wextra -Werror \
-            -Iheadless -Iextras/graphics \
-            -Ivendor/encore-active/eden-vulkan/include \
-            tools/graphics/r09_private_model_import.cpp \
+            -I"$stage/headless" -I"$stage/extras/graphics" \
+            -I"$stage/vendor/encore-active/eden-vulkan/include" \
+            "$stage/tools/graphics/r09_private_model_import.cpp" \
             -o /tmp/r09-private-import-public
           set +e
           /tmp/r09-private-import-public \

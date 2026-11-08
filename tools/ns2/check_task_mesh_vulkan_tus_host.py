@@ -97,6 +97,7 @@ assert "StageFlag(const Shader::Info&" in (ACTIVE / "vk_graphics_pipeline_cost.c
 
 includes = [
     ROOT / "headless",
+    ROOT / "vendor/encore-active/eden-header-hygiene/include",
     ROOT / "extras/graphics",
     SHADER,
     # Native Maxwell/Ampere shader captures share this single reviewed

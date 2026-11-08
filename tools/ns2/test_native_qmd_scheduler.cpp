@@ -724,6 +724,31 @@ int main() {
         assert(f.signal(0xb0000,3)=="unsupported QMD release format");
         assert(f.released.empty());
     }
+    // P2.3: filling the real process scheduler with unresolved QMDs must
+    // refuse the LAST dependent-state reservation before dispatching the
+    // parent or publishing any of its release semaphores. The old scheduler
+    // accepted the parent, then failed to allocate the dependent and lost
+    // the wakeup forever.
+    {
+        Fixture f;
+        for (Address i = 0; i < 4095; ++i) {
+            const Address blocked = 0x10000000ULL + (i << 8);
+            assert(f.signal(blocked, 7).empty());
+        }
+        constexpr Address parent = 0x70000000ULL;
+        constexpr Address child = 0x71000000ULL;
+        auto qmd = EmptyGrid();
+        qmd[12] = qmd[13] = qmd[14] = 1;
+        qmd[15] = static_cast<std::uint32_t>(child >> 8);
+        qmd[16] = 1 | (4U << 1);
+        SetRelease(qmd, 24, 0x7200, 31);
+        f.descriptors[parent] = qmd;
+        assert(f.signal(parent, 3) == "QMD cache limit");
+        assert(f.dispatched == 0 && f.released.empty());
+        // A second attempt cannot complete the parent with a lost child.
+        assert(f.signal(parent, 2) == "QMD cache limit");
+        assert(f.dispatched == 0 && f.released.empty());
+    }
     // A dependent QMD decremented from a preceding completion is scheduled
     // only on receipt of the matching second-channel launch.
     {

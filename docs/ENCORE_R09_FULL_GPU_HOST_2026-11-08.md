@@ -56,6 +56,35 @@ bash tools/graphics/r09_run_full_network_mac.sh \
   "$HOME/Downloads/une-vraie-capture.png"
 ```
 
+**Colima Apple Silicon** : une VM `aarch64/arm64` avec
+l'ancien constructeur Docker ignore parfois `--platform linux/amd64` :
+elle construit une image Ubuntu ARM64, qui ne peut pas charger notre
+exécutable Linux x86-64. L'architecture du conteneur est **nécessairement
+amd64**, pas seulement celle demandée au constructeur.
+
+Ne pas supprimer le profil Colima existant. Créer à la place une VM
+x86-64 QEMU dans un profil séparé :
+
+```bash
+# Facultatif mais conseillé sur un Mac M1 à 8 Go : arrête le Colima
+# habituel si ses conteneurs ne servent pas, pour libérer la mémoire.
+colima stop default
+colima start r09 --arch x86_64 --vm-type qemu \
+  --cpu 2 --memory 5 --disk 30 --activate=false
+DOCKER_CONTEXT=colima-r09 bash tools/graphics/r09_run_full_network_mac.sh \
+  "$HOME/Downloads/nvngx_dlssnr.dll.zip" \
+  "r2_f0e3f8c4-e731-49bc-af9e-715676f73e14.jpg"
+```
+
+`colima stop default` interrompt ses conteneurs mais ne supprime
+aucune image ni donnée ; ne le faire que si l'arrêt est acceptable.
+Le profil `r09` conserve des conteneurs et volumes séparés.
+Le lanceur refuse maintenant très tôt les VM Colima ARM64 et évite de
+recompiler/retélécharger inutilement pour aboutir à un mauvais format.
+Les fichiers C++ publics sont copiés de `/tmp` vers l'espace privé
+`$HOME/.cache`, car une nouvelle VM Colima peut ne pas monter
+`/tmp/eden-encore-fix` depuis macOS.
+
 Sans second argument, le lanceur réalise une capture de l'écran Mac.
 Elle permet un essai technique du pipeline mais **ne constitue pas une
 capture de jeu ou une référence de qualité NVIDIA**. Un fichier RGBA8

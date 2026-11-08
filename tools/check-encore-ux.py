@@ -31,7 +31,7 @@ generated=read('headless/encore_overrides_generated.h')
 
 # One TV shell everywhere.
 assert 'void Launcher::draw_top_nav' in launcher
-for call in ('draw_top_nav(c, 0','draw_top_nav(c, 1','draw_top_nav(c, 3'):
+for call in ('draw_top_nav(c, 0','draw_top_nav(c, 1','draw_top_nav(c, 4'):
     assert call in home+library+settings, call
 assert 'list.hgradient_rect(r, 19.0f' in launcher
 assert 'theme::kFocusBlue.with_alpha(0.96f)' in launcher

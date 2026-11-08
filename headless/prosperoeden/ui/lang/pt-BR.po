@@ -2316,4 +2316,3 @@ msgstr "MSAA 8x"
 #: pe/ui/settings.cpp
 msgid "MSAA 16x"
 msgstr "MSAA 16x"
-

@@ -112,8 +112,9 @@ struct FakeLayout {std::size_t image_bytes{64};u32 row_bytes{16};u32 chroma_offs
 struct FakeOwner {
  struct VideoSurface {FakeLayout layout{};u32 width{4};u32 height{4};bool gpu_mapped{};};
  bool valid{true};bool writability{true};bool gpu{};bool nv12{};u32 writes{};std::vector<u8> last;
- std::optional<VideoSurface> LookupVideoSurface(u32)const{
-  if (!valid) return {};
+ std::set<u32> retired;
+ std::optional<VideoSurface> LookupVideoSurface(u32 id)const{
+  if (!valid || retired.contains(id)) return {};
   return VideoSurface{FakeLayout{64,16,0,nv12?10U:8U,nv12},4,4,gpu};
  }
  bool WriteVideoSurface(u32,const VideoSurface& expected,std::span<const u8> bytes){
@@ -158,6 +159,7 @@ struct IGraphicsVideoDecoderSession {
  std::deque<AvailableImage> m_available;
  std::deque<Output> m_outputs;
  std::set<u32> m_guest_owned;
+ std::set<u32> m_registered;
  FakeEvent event;
  FakeEvent* m_event=&event;
  FakeReady ready;
@@ -182,11 +184,14 @@ int main(){
  assert(run.m_guest_owned.contains(10) && run.m_available.empty() && run.m_pending.empty());
  // The decoder must never signal a fence if the target was destroyed.
  run.m_owner->valid=false;
+ run.m_registered.insert(11);
  run.m_pending.push_back(Pic(444));run.m_available.push_back({11,{}});
  run.Pump();
  assert(sync.values[4]==1 && run.m_owner->writes==1 && run.m_outputs.size()==1);
- assert(run.m_pending.size()==1 && run.m_available.size()==1);
+ assert(run.m_pending.size()==1 && run.m_available.empty() &&
+        !run.m_registered.contains(11));
  run.m_owner->valid=true;run.m_decoder->renderrunnable=false;
+ run.m_registered.insert(18);run.m_available.push_back({18,{}});
  run.Pump();
  assert(sync.values[4]==1 && run.m_owner->writes==1);
  run.m_decoder->renderrunnable=true;run.m_owner->writability=false;
@@ -241,6 +246,18 @@ int main(){
  run.Pump();
  assert(sync.values[4]==8 && run.m_owner->writes==8 &&
         run.m_owner->last[0]==0xa5 && Tegra::Texture::swizzles==1);
+ // An invalidated pool must not strand the next ready surface or release a
+ // fake fence. Execute the actual maintained Pump against two queue entries:
+ // first destroyed, second valid, same queued decoded frame.
+ run.m_owner->retired.insert(20);
+ run.m_registered.insert(20);run.m_registered.insert(21);
+ run.m_available.push_back({20,{}});run.m_available.push_back({21,{}});
+ run.m_pending.push_back(Pic(1000));
+ run.Pump();
+ assert(sync.values[4]==9 && run.m_owner->writes==9);
+ assert(run.m_outputs.back().image==21 && run.m_pending.empty() &&
+        run.m_available.empty() && !run.m_registered.contains(20) &&
+        run.m_registered.contains(21));
 }
 '''.replace('__ACTUAL_PUMP__',method)
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))

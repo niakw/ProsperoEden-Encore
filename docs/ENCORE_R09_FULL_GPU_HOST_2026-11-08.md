@@ -119,10 +119,36 @@ trace GPU instrumentée et la comparaison à une référence indépendante.
 
 ## Diagnostic après SIGSEGV (139) sur Colima
 
-Ne jamais appeler un `Segmentation fault` du moteur hôte « échec de
-l'opérateur 152 » : le programme peut avoir planté **avant la création
-de l'instance Vulkan ou le premier dispatch**. La trace simple ne
-contient pas les frames CPU nécessaires à une correction ciblée.
+Le GDB du 8 novembre 2026 a **localisé le premier crash** dans
+`VideoCommon::QueryCacheBase<Vulkan::QueryCacheParams>::CounterClose`
+avec un objet `this` nul (`rdi=0`). La pile mène de
+`Vulkan::Scheduler::EndPendingOperations` à `Scheduler::Finish`, puis
+`UploadImage` : le crash intervient pendant le téléversement de
+l'image d'entrée, **avant toute opération DLSS-NR**.
+
+Cause confirmée dans le code source : le scheduler autonome R09 n'installe
+aucun `QueryCache` de rendu de jeux, alors que `EndPendingOperations`
+déréférençait toujours ce pointeur. Le vendor a été corrigé sur
+`main` (`0f47339c2190`) par un garde de présence du cache ; le
+gitlink du moteur a été synchronisé (`5390307c8412`).
+Le parcours normal avec `QueryCache` conserve exactement son appel de
+fermeture de compteur. **Ce correctif source n'est pas encore qualifié
+par la liaison et l'exécution d'un nouveau binaire Linux.**
+
+Le binaire du workflow `42465459699` reste **défectueux et
+incompatible avec la correction** ; ses succès de build et ses tests
+d'arguments invalides ne prouvent pas la réussite de `UploadImage`.
+Le lanceur Mac rejette désormais cet artefact AVANT l'import privé de
+165 Mo. Pour l'utiliser après une nouvelle liaison autorisée,
+renseigner explicitement les deux valeurs vérifiées
+`R09_HOST_LINKED_RUN_ID` (workflow GitHub) et
+`R09_HOST_LINKED_SHA256` (SHA-256 du binaire extrait).
+Ne jamais substituer une ancienne version juste pour dépasser le garde.
+
+Le journal GDB privé actuel constitue la preuve de la panne initiale.
+Une nouvelle exécution authentique reste requise pour confirmer que ce
+correctif permet la soumission Vulkan, puis vérifier chaque opération
+et la sortie RGBA32F contre une référence indépendante.
 
 Un outil privé réutilise le dossier et les binaires du précédent essai,
 la capture RGBA8 déjà préparée, et compile uniquement une image Linux

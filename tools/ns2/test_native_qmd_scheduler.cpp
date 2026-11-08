@@ -518,6 +518,46 @@ int main() {
         assert(f.signal(0x90000, 3).empty());
         assert(f.released.size() == 1 && std::get<0>(f.released[0]) == 0x8300);
     }
+    // P2.3: a rejected over-decrement must not become a persistent negative
+    // count. A later positive PCAS update cannot authorize an early release.
+    {
+        Fixture f;
+        constexpr Address address = 0x40500;
+        auto qmd = EmptyGrid(1);
+        SetRelease(qmd, 24, 0x4500, 23);
+        f.descriptors[address] = qmd;
+        assert(f.signal(address, 3).empty());
+        assert(f.released.empty());
+        assert(f.signal(address, 7U | (1U << 14)) == "QMD dependency underflow");
+        assert(f.released.empty());
+        assert(f.signal(address, 12).empty());
+        assert(f.released.empty()); // still waiting for TWO real decrements
+        assert(f.signal(address, 7).empty());
+        assert(f.released.empty());
+        assert(f.signal(address, 7).empty());
+        assert(f.released.size() == 1 &&
+               std::get<0>(f.released[0]) == 0x4500);
+    }
+    // Cross-channel decrements may arrive before the descriptor is loaded.
+    // If the initial declared count is too small, preserve those deferred
+    // signals for a corrected/reloaded descriptor instead of silently
+    // consuming them on the rejected load.
+    {
+        Fixture f;
+        constexpr Address address = 0x40600;
+        auto qmd = EmptyGrid(1);
+        SetRelease(qmd, 24, 0x4600, 24);
+        f.descriptors[address] = qmd;
+        assert(f.signal(address, 7).empty());
+        assert(f.signal(address, 7).empty());
+        assert(f.signal(address, 3) == "QMD dependency underflow");
+        assert(f.released.empty());
+        f.descriptors[address] = EmptyGrid(2);
+        SetRelease(f.descriptors[address], 24, 0x4600, 24);
+        assert(f.signal(address, 3).empty());
+        assert(f.released.size() == 1 &&
+               std::get<0>(f.released[0]) == 0x4600);
+    }
     // A compute queue may decrement another channel's QMD after its launch
     // record arrives. An early decrement must be retained for the same title.
     {

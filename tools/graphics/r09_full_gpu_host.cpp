@@ -2,6 +2,9 @@
 // Linux host entrypoint for authentic, user-owned DLSS-NR Original model.
 // Needs a host build linked to the maintained Eden video_core Vulkan runtime.
 // NEVER use a synthetic fixture as the authentic test's input or output.
+// Eden's NvResult declares Success/BadValue, both global X11 macros.
+// Parse that upstream enum before the Vulkan platform headers import X.h.
+#include "core/hle/service/nvdrv/nvdata.h"
 #include "r09_native_plans.h"
 #include "nr_dll_launch_preflight.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
@@ -10,6 +13,9 @@
 // replace Eden's enum Service::Nvidia::NvResult::Success further below.
 #ifdef Success
 #undef Success
+#endif
+#ifdef BadValue
+#undef BadValue
 #endif
 #include "video_core/renderer_vulkan/present/util.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"

@@ -46,9 +46,33 @@ core_ui = {
     "Done", "Custom", "Controllers", "Quit", "Preset", "Open settings",
 }
 assert core_ui <= marked, "essential UI source markers disappeared"
+# AMD FSR remains a shipping spatial-upscale mode (filter ID 1), NOT
+# a neural-rendering variant. Removing old "AMD FSR" / "FSR SHARPNESS"
+# msgids from an inactive translation key set must NEVER remove the
+# FSR 1 label, its EASU/RCAS help, or the shared sharpness control.
+settings_filter = (root / "headless/settings_store.h").read_text()
+assert 'kUpscalingFilterLabels[] = {\\n    "Bilinear", "FSR 1",' in settings_filter, (
+    "AMD FSR 1 filter removed or persistent enum index changed")
+presets = (root / "headless/prosperoeden/pe/ui/video_presets.hpp").read_text()
+assert "return filter == 1 || filter == 5 || filter == 6;" in presets, (
+    "FSR 1 sharpness support removed")
+fsr_keys = {
+    "FSR 1",
+    "Sharpness",
+    "SHARPNESS",
+    "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution.",
+    "Bilinear is the lightest default. AMD FSR is most useful when rendering below the TV output size.",
+    "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos.",
+}
+assert fsr_keys <= marked, "Active AMD FSR 1 translation/help keys disappeared"
 total_missing = 0
 for catalog in catalogs:
     translations = read_po(catalog)
+    missing_fsr = sorted(k for k in fsr_keys if not translations.get(k))
+    assert not missing_fsr, (f"{catalog.name}: active FSR 1 text missing "
+                            f"after stale-key removal: {missing_fsr}")
+    assert translations["FSR 1"] == "FSR 1", (
+        f"{catalog.name}: AMD FSR 1 product name changed")
     stale = set(translations) - marked - module["DYNAMIC_LIBRARY_GENRES"]
     missing = {key for key in marked if not translations.get(key)}
     missing_resolutions = [label for label in resolution_labels if not translations.get(label)]

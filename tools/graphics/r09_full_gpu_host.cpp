@@ -25,6 +25,10 @@
 #include "video_core/vulkan_common/vulkan_library.h"
 #include "video_core/vulkan_common/vulkan_memory_allocator.h"
 #include <cstdint>
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <limits>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -206,6 +210,27 @@ void Run(const std::filesystem::path& original_model_or_dll,
     constexpr std::uint64_t output_size = kInputBytes * sizeof(float);
     if (evidence.rgba32f_le.size() != output_size) {
         throw std::runtime_error("R09_HOST_RGBA32F_SIZE_MISMATCH");
+    }
+    // A successful queue fence is not sufficient proof of a neural image.
+    // Reject NaNs/infinities and a constant RGB readback before publishing
+    // bytes; alpha cannot hide a completely degenerate color result.
+    float min_rgb = std::numeric_limits<float>::infinity();
+    float max_rgb = -std::numeric_limits<float>::infinity();
+    for (std::size_t byte = 0u; byte < evidence.rgba32f_le.size();
+         byte += sizeof(float)) {
+        float value{};
+        std::memcpy(&value, evidence.rgba32f_le.data() + byte,
+                    sizeof(value));
+        if (!std::isfinite(value)) {
+            throw std::runtime_error("R09_HOST_RGBA32F_NONFINITE");
+        }
+        if ((byte / sizeof(float)) % 4u != 3u) {
+            min_rgb = std::min(min_rgb, value);
+            max_rgb = std::max(max_rgb, value);
+        }
+    }
+    if (!(max_rgb - min_rgb > 0.001f)) {
+        throw std::runtime_error("R09_HOST_RGBA32F_DEGENERATE_RGB");
     }
     std::ofstream output{output_path, std::ios::binary | std::ios::trunc};
     if (!output) throw std::runtime_error("R09_HOST_CANNOT_WRITE_OUTPUT");

@@ -18,7 +18,11 @@ main = (ROOT / "headless/main.cpp").read_text()
 cmake = (ROOT / "headless/vulkan.cmake").read_text()
 for name,src in [("renderer",render),("presenter",present),("performance",perf),("app",main)]:
     assert '#include "frame_metrics.h"' in src, name
-assert 'target_include_directories(video_core PRIVATE "${PORT_BUILD_DIR}" "${EDEN_PORT_DIR}")' in cmake
+# Native includes now share one multiline CMake target call with GPU and
+# feature include roots. Check the actual selected roots and their order;
+# do not require the obsolete, shorter CMake formatting.
+assert 'target_include_directories(video_core PRIVATE\n    "${PORT_BUILD_DIR}" "${EDEN_PORT_DIR}"' in cmake
+assert '"${PORT_ROOT}/extras/graphics"' in cmake
 assert '"${PORT_BUILD_DIR}/vulkan_renderer.cpp"' in cmake
 assert '"${PORT_BUILD_DIR}/vulkan_present_manager.cpp"' in cmake
 composite = render.split("void RendererVulkan::Composite(", 1)[1].split("\nvoid RendererVulkan::PresentLoading()",1)[0]

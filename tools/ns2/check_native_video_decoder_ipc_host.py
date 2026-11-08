@@ -89,6 +89,12 @@ output_end='\n} // namespace Service::AM'
 assert source.count(output_start)==source.count(output_end)==1
 output_method=source[source.index(output_start):source.index(output_end,source.index(output_start))]
 assert '(!m_started && m_outputs.empty())' in output_method
+release_start='void IGraphicsVideoDecoderSession::ReleaseBuffer(HLERequestContext& ctx) {'
+release_end='\nvoid IGraphicsVideoDecoderSession::UnregisterBuffer('
+assert source.count(release_start)==source.count(release_end)==1
+release_method=source[source.index(release_start):source.index(release_end,source.index(release_start))]
+assert 'm_outputs.begin(), m_outputs.end()' in release_method
+assert release_method.index('m_outputs.begin()') < release_method.index('ReserveFence()')
 
 fixture=r'''
 #include <algorithm>
@@ -98,6 +104,7 @@ fixture=r'''
 #include <deque>
 #include <limits>
 #include <memory>
+#include <new>
 #include <optional>
 #include <set>
 #include <span>
@@ -150,8 +157,17 @@ namespace Tegra::Texture {
   for(std::size_t i=0;i<linear.size();++i)tiled[i]=linear[i]^u8{0xff};
  }
 }
-struct HLERequestContext {std::vector<u32> response;};
-namespace Kernel {constexpr u32 ResultInvalidState=5U;}
+struct HLERequestContext {
+ std::vector<u32> response;
+ std::array<u32,8> command{};
+ const u32* CommandBuffer()const{return command.data();}
+};
+namespace Kernel {
+constexpr u32 ResultInvalidState=5U;
+constexpr u32 ResultInvalidHandle=6U;
+constexpr u32 ResultOutOfResource=7U;
+constexpr u32 ResultBusy=8U;
+}
 constexpr u32 ResultSuccess=0U;
 constexpr u32 NoData=0x1c286fU;
 namespace IPC {
@@ -183,15 +199,21 @@ struct IGraphicsVideoDecoderSession {
  FakeReady ready;
  FakeReady* m_ready=&ready;
  u32 m_syncpoint{4};
+ u32 m_reserved_value{};
  bool m_started{true};
  bool m_creator{};
  bool m_finalized{};
  void Pump();
  void GetOutputInfo(HLERequestContext&);
+ void ReleaseBuffer(HLERequestContext&);
+ std::optional<std::array<u32,4>> ReserveFence(){
+  return std::array<u32,4>{~m_syncpoint,0U,++m_reserved_value,0U};
+ }
  void Acknowledge(HLERequestContext& ctx,u32 result){ctx.response={result};}
 };
 __ACTUAL_PUMP__
 __ACTUAL_OUTPUT__
+__ACTUAL_RELEASE__
 static IGraphicsVideoDecoderSession::PendingPicture Pic(u64 pts,bool eos=false){
  return {{4,4,pts,std::make_shared<int>(5)},eos};
 }
@@ -289,14 +311,30 @@ int main(){
  run.GetOutputInfo(ctx);
  assert(ctx.response.size()==1 && ctx.response[0]==Kernel::ResultInvalidState);
  run.m_outputs.push_back({23,4,4,901,true});
+ run.m_guest_owned.insert(23);
+ run.m_registered.insert(23);
+ HLERequestContext release;
+ release.command[2]=23;
+ // ~0 == NoSyncpoint and zero value: no external release fence.
+ release.command[4]=0;
+ release.command[6]=0;
+ run.ReleaseBuffer(release);
+ assert(release.response.size()==1 && release.response[0]==Kernel::ResultBusy &&
+        run.m_guest_owned.contains(23) && run.m_available.empty() &&
+        run.m_reserved_value==0);
  run.GetOutputInfo(ctx);
  assert(run.m_outputs.empty() && ctx.response.size()==17 &&
         ctx.response[0]==ResultSuccess && ctx.response[1]==23 &&
         ctx.response[7]==901000U && ctx.response[9]==1U);
+ run.ReleaseBuffer(release);
+ assert(release.response.size()==5 && release.response[0]==ResultSuccess &&
+        !run.m_guest_owned.contains(23) &&
+        run.m_available.size()==1 && run.m_available.front().id==23 &&
+        run.m_reserved_value==1);
  run.GetOutputInfo(ctx);
  assert(ctx.response.size()==1 && ctx.response[0]==Kernel::ResultInvalidState);
 }
-'''.replace('__ACTUAL_PUMP__',method).replace('__ACTUAL_OUTPUT__',output_method)
+'''.replace('__ACTUAL_PUMP__',method).replace('__ACTUAL_OUTPUT__',output_method).replace('__ACTUAL_RELEASE__',release_method)
 compilers=list(dict.fromkeys(filter(None,(shutil.which('clang++'),shutil.which('g++')))))
 assert compilers
 env=os.environ.copy()

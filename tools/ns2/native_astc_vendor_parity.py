@@ -123,11 +123,62 @@ def strip_p25_reinterpret(text: str) -> str:
         '        cmdbuf.CopyBufferToImage(copy_buffer, dst_image, VK_IMAGE_LAYOUT_GENERAL, vk_out_copies);')
     return text
 
+def strip_post_n73_msaa_attachment_header(text: str) -> str:
+    """Reverse only the newer exact native MSAA guest-attachment identity API.
+
+    This source was extended after N57/N73 to allow strict full-colour clear
+    admission in the single common Vulkan rasterizer. Match its ENTIRE
+    reviewed raw blob before removing any bytes; old N57/N73 SHAs remain
+    immutable and still must match after their own independent reversal.
+    """
+    assert git_blob(text.encode()) == "0ac78498630e8d2f4b8c363741ae1f8180cd5b11", (
+        "Unreviewed post-N73 ASTC framebuffer header drift")
+    text = once(text, (
+        "    // The maintained Vulkan framebuffer owner records exact guest attachment\n"
+        "    // handles during CreateFramebuffer. Expose the same bounded, immutable\n"
+        "    // attachment identity here even when the NS2 ASTC overlay is selected.\n"
+        "    [[nodiscard]] VkImage ColorAttachmentImage(u32 rt) const noexcept {\n"
+        "        return rt < NUM_RT ? color_attachment_images[rt] : VK_NULL_HANDLE;\n"
+        "    }\n"
+        "    [[nodiscard]] VkImageView ColorAttachmentView(u32 rt) const noexcept {\n"
+        "        return rt < NUM_RT ? color_attachment_views[rt] : VK_NULL_HANDLE;\n"
+        "    }\n"
+        "    [[nodiscard]] VkImageSubresourceRange ColorAttachmentRange(u32 rt) const noexcept {\n"
+        "        return rt < NUM_RT ? color_attachment_ranges[rt] : VkImageSubresourceRange{};\n"
+        "    }\n\n"
+    ), "")
+    text = once(text, (
+        "    std::array<VkImage, NUM_RT> color_attachment_images{};\n"
+        "    std::array<VkImageView, NUM_RT> color_attachment_views{};\n"
+        "    std::array<VkImageSubresourceRange, NUM_RT> color_attachment_ranges{};\n"
+    ), "")
+    return text
+
+
+def strip_post_n73_msaa_framebuffer_source(text: str) -> str:
+    """Undo only post-N73 guest colour identity captures from the real TU.
+
+    The native Framebuffer owner must still record each attachment, but its
+    historical N57/N73 normalization must not silently absorb these additions.
+    """
+    text = once(text, (
+        "    color_attachment_images.fill(VK_NULL_HANDLE);\n"
+        "    color_attachment_views.fill(VK_NULL_HANDLE);\n"
+        "    color_attachment_ranges.fill(VkImageSubresourceRange{});\n"
+    ), "")
+    text = once(text, (
+        "        color_attachment_images[index] = color_buffer->ImageHandle();\n"
+        "        color_attachment_views[index] = color_buffer->RenderTarget();\n"
+        "        color_attachment_ranges[index] = MakeSubresourceRange(color_buffer);\n"
+    ), "")
+    return text
+
+
 def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
         if name == "vk_texture_cache.h":
-            n73 = path.read_text()
+            n73 = strip_post_n73_msaa_attachment_header(path.read_text())
             n73 = strip_p22_native_gpu_pins(n73)
             n73 = strip_p22_runtime_header(n73)
             before = "    void Finish();\n"
@@ -157,6 +208,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
         if name == "vk_texture_cache_cost.cpp":
+            text = strip_post_n73_msaa_framebuffer_source(text)
             text = strip_p25_reinterpret(strip_p22_runtime_cpp(text))
         if name == "vk_texture_cache_cost.cpp":
             # N73 is an additive native runtime probe. Strip its exact source

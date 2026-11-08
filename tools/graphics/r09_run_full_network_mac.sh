@@ -32,26 +32,25 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 dll_input="${1:-$HOME/Downloads/nvngx_dlssnr.dll.zip}"
 capture_input="${2:-}"
 github_repo="niakw/ProsperoEden-Encore"
-# The only previously linked public binary predates the guest-query-cache
-# fix, and reproducibly SIGSEGVs on its first UploadImage->Scheduler::Finish.
-# Pin BOTH the GitHub workflow run and SHA of a freshly relinked binary.
-# Do not spend hours rebuilding Docker or unpacking a 165 MB private DLL for
-# the known-broken artifact.
-linked_run="${R09_HOST_LINKED_RUN_ID:-42465459699}"
-binary_sha256="${R09_HOST_LINKED_SHA256:-7f41403249b594ea6ad9d3a00127384845bab3f0940e6ae275c87a8877e6fbe5}"
+# The previous artifact 42465459699 was GDB-confirmed to dereference
+# a null query cache before the first Vulkan dispatch. Refuse it forever.
+# The default points to the ONE corrected, vendor-pinned public host link.
+# Its exact binary SHA is included in the same GitHub Actions artifact
+# together with engine/vendor commits; no user weights ever enter GitHub.
+linked_run="${R09_HOST_LINKED_RUN_ID:-42488585951}"
+expected_engine="${R09_HOST_EXPECTED_ENGINE_SHA:-27e782902a06659691d857a1df0e802abd1dbef4}"
+expected_vendor="0f47339c219087801bb75075a7bcc862b39f5bfd"
+required_binary_sha="${R09_HOST_LINKED_SHA256:-}"
 image="eden-r09-original-host:ubuntu2404-amd64"
 
 if [[ "$linked_run" == "42465459699" ]]; then
-  echo "R09_HOST_RELINK_REQUIRED: run 42465459699 contains the confirmed" >&2
-  echo "null QueryCache dereference at the first Vulkan image upload." >&2
-  echo "Source corrected in vendor 0f47339; engine gitlink 5390307." >&2
-  echo "Wait for an explicitly qualified, freshly linked public host binary." >&2
-  echo "Then supply R09_HOST_LINKED_RUN_ID and R09_HOST_LINKED_SHA256." >&2
+  echo "R09_HOST_OBSOLETE_CRASHING_BINARY_REJECTED" >&2
   exit 78
 fi
 if [[ ! "$linked_run" =~ ^[0-9]+$ ||
-      ! "$binary_sha256" =~ ^[0-9a-f]{64}$ ]]; then
-  echo "R09_HOST_RELINK_INPUT_INVALID: require numeric run ID + exact binary SHA-256" >&2
+      ! "$expected_engine" =~ ^[0-9a-f]{40}$ ||
+      ( -n "$required_binary_sha" && ! "$required_binary_sha" =~ ^[0-9a-f]{64}$ ) ]]; then
+  echo "R09_HOST_RELINK_INPUT_INVALID: use pinned run and valid SHA inputs" >&2
   exit 78
 fi
 
@@ -90,6 +89,21 @@ gh auth status --hostname github.com >/dev/null 2>&1 || {
   echo "R09_MAC_GH_NOT_AUTHENTICATED: run gh auth login first." >&2
   exit 67
 }
+# Fail before copying the private 165 MB NVIDIA DLL or rebuilding the
+# emulated Linux image if the public host link is not complete/successful.
+echo "R09_CHECKING_PINNED_PUBLIC_LINK_RUN=$linked_run"
+run_status="$(gh run view "$linked_run" -R "$github_repo" --json status --jq '.status')"
+run_conclusion="$(gh run view "$linked_run" -R "$github_repo" --json conclusion --jq '.conclusion')"
+run_engine="$(gh run view "$linked_run" -R "$github_repo" --json headSha --jq '.headSha')"
+if [[ "$run_status" != completed || "$run_conclusion" != success ]]; then
+  echo "R09_HOST_CORRECTED_LINK_NOT_SUCCESSFUL: $run_status / $run_conclusion" >&2
+  echo "R09_LINK_URL=https://github.com/$github_repo/actions/runs/$linked_run" >&2
+  exit 79
+fi
+if [[ "$run_engine" != "$expected_engine" ]]; then
+  echo "R09_HOST_SOURCE_PROVENANCE_MISMATCH=$run_engine" >&2
+  exit 80
+fi
 if [[ ! -f "$repo/headless/nr_dll_model_import.h" ||
       ! -f "$repo/tools/graphics/r09_private_model_import.cpp" ||
       ! -f "$repo/vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h" ]]; then
@@ -186,6 +200,26 @@ if [[ -z "$binary" ]]; then
   echo "R09_MAC_ARTIFACT_MISSING_OR_EXPIRED" >&2
   exit 71
 fi
+manifest="$work/download/R09_HOST_BINARY_SHA256.txt"
+provenance="$work/download/R09_HOST_PROVENANCE.txt"
+if [[ ! -f "$manifest" || ! -f "$provenance" ]]; then
+  echo "R09_HOST_SIGNED_SOURCE_PROVENANCE_MANIFEST_MISSING" >&2
+  exit 72
+fi
+if ! grep -Fxq "engine=$expected_engine" "$provenance" ||
+   ! grep -Fxq "vendor=$expected_vendor" "$provenance"; then
+  echo "R09_HOST_ENGINE_OR_VENDOR_PROVENANCE_MISMATCH" >&2
+  exit 72
+fi
+binary_sha256="$(awk 'NR==1 {print $1}' "$manifest")"
+if [[ ! "$binary_sha256" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "R09_HOST_INVALID_BINARY_SHA256_MANIFEST" >&2
+  exit 72
+fi
+if [[ -n "$required_binary_sha" && "$binary_sha256" != "$required_binary_sha" ]]; then
+  echo "R09_HOST_EXPLICIT_BINARY_SHA256_MISMATCH" >&2
+  exit 72
+fi
 actual_sha256="$(shasum -a 256 "$binary" | awk '{print $1}')"
 if [[ "$actual_sha256" != "$binary_sha256" ]]; then
   echo "R09_MAC_BINARY_SHA256_MISMATCH=$actual_sha256" >&2
@@ -197,19 +231,21 @@ echo "R09_PINNED_PUBLIC_BINARY_SHA256_PASS=$actual_sha256"
 echo "R09_PINNED_PUBLIC_BINARY_RUN=$linked_run"
 echo "R09_PINNED_PUBLIC_BINARY_SHA256=$actual_sha256"
 echo "R09_HOST_BINARY_EXECUTION_REQUIRES_INDEPENDENT_FULL_NETWORK_VALIDATION"
-echo "R09_DOCKER_BUILD=public_dependencies_only (no proprietary input in image)"
 echo "R09_DOCKER_CONTEXT=$(docker context show)"
-# A Docker Buildx container builder does not automatically publish its image
-# into the local daemon. Without --load, the following docker run can attempt
-# a registry pull even though the build was tagged successfully.
-if docker buildx version >/dev/null 2>&1; then
-  docker buildx build --load --platform linux/amd64 \
-    -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
-    -t "$image" "$work/docker-context"
+if docker image inspect "$image" >/dev/null 2>&1; then
+  echo "R09_DOCKER_RUNTIME_REUSED_EXISTING_IMAGE=$image"
 else
-  DOCKER_BUILDKIT=0 docker build --platform linux/amd64 \
-    -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
-    -t "$image" "$work/docker-context"
+  echo "R09_DOCKER_BUILD=public_dependencies_only (no proprietary input in image)"
+  # Buildx needs --load to install the image into the selected daemon.
+  if docker buildx version >/dev/null 2>&1; then
+    docker buildx build --load --platform linux/amd64 \
+      -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
+      -t "$image" "$work/docker-context"
+  else
+    DOCKER_BUILDKIT=0 docker build --platform linux/amd64 \
+      -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
+      -t "$image" "$work/docker-context"
+  fi
 fi
 if ! docker image inspect "$image" >/dev/null 2>&1; then
   echo "R09_DOCKER_IMAGE_NOT_LOADED_IN_LOCAL_DAEMON" >&2

@@ -207,6 +207,47 @@ static void CheckNativeQmdIndirectCbufIR() {
 // and submit it to the production SPIR-V emitter, not a handwritten SPV.
 // Every one of the seven existing float CAS paths must emit valid Vulkan
 // modules, not merely compile the emitter's C++ owner.
+// P2.3: drive the real SPIR-V emitter through a malformed native IR bank.
+// A QMD3 has eight CBUFs; shared NS1's larger uniform table is not an
+// excuse to access a non-existent guest bank or index an invalid array slot.
+static void VerifyNativeCbufBankRefusal() {
+    for (const u32 bank : {8U, 255U}) {
+        Shader::ObjectPool<Shader::IR::Inst> pool{8};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage = Shader::Stage::Compute;
+        program.workgroup_size = {1, 1, 1};
+        program.blocks.push_back(&block);
+        program.info.constant_buffer_mask = 1;
+        program.info.constant_buffer_descriptors.push_back({0, 1});
+        program.info.constant_buffer_used_sizes[0] = 4;
+        block.AppendNewInst(Shader::IR::Opcode::GetCbufU32,
+                            {Shader::IR::Value{bank}, Shader::IR::Value{u32{0}}});
+        auto& node = program.syntax_list.emplace_back();
+        node.type = Shader::IR::AbstractSyntaxNode::Type::Block;
+        node.data.block = &block;
+        program.syntax_list.emplace_back().type =
+            Shader::IR::AbstractSyntaxNode::Type::Return;
+        Shader::Backend::Bindings bindings{};
+        Shader::Profile profile{};
+        profile.supported_spirv = 0x00010500;
+        bool rejected = false;
+        {
+            NativeSpirvCbufBoundsScope native;
+            try {
+                (void)Shader::Backend::SPIRV::EmitSPIRV(
+                    profile, Shader::RuntimeInfo{}, program, bindings);
+            } catch (const std::exception& error) {
+                rejected = std::string{error.what()}.find(
+                    "Native QMD3 CBUF bank") != std::string::npos;
+            }
+        }
+        Require(rejected, "real SPIR-V emitter accepted an invalid QMD3 bank");
+        Require(!NativeSpirvCbufBoundsActive(),
+                "native CBUF rejection leaked into the NS1 compiler");
+    }
+}
+
 static void VerifyRealFloatCasSpirv(const std::string& prefix) {
     using Shader::IR::Opcode;
     using Shader::IR::Value;
@@ -633,6 +674,7 @@ static void VerifyRealTessPatchSpirv(const std::string& prefix) {
 int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
+    VerifyNativeCbufBankRefusal();
     VerifyRealFloatCasSpirv(argv[1]);
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();

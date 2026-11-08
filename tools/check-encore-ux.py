@@ -60,7 +60,10 @@ assert 'for (const char* prefix : {"0x", "0X", ""})' in services
 assert 'avatar128.dds' in services and 'avatar.png' in services
 assert 'load_avatar_dds(resolved, image)' in services
 assert 'localized_clock(services_.clock(), services_.language_region(prefs_.language))' in launcher
-assert 'list.image(c.textures.brand(), {56.0f, 17.0f, 110.0f, 110.0f}' in launcher
+assert 'const int auto_logo = prefs_.color_palette == 1 ? 1 :' in launcher
+assert 'prefs_.logo_choice == 0 ? auto_logo' in launcher
+assert 'if (const auto texture = c.textures.logo(logo); texture != 0)' in launcher
+assert 'list.image(texture, {56.0f, 17.0f, 110.0f, 110.0f}' in launcher
 
 # Home composition and controller-first navigation.
 assert 'kHomeRecentMax = 7' in home
@@ -73,7 +76,10 @@ assert 'utility[static_cast<std::size_t>((position + delta + 4) % 4)]' in home
 # Regression: the connected-controller icons must not overlap the hero metadata chips.
 assert '410.0f, 72.0f, 50.0f' in home
 assert 'const Rect players_chip{552.0f, 406.0f, 210.0f, 36.0f}' in home
-assert 'list.image(c.textures.brand(), {56.0f, 17.0f, 110.0f, 110.0f}' in launcher
+assert 'const int auto_logo = prefs_.color_palette == 1 ? 1 :' in launcher
+assert 'prefs_.logo_choice == 0 ? auto_logo' in launcher
+assert 'if (const auto texture = c.textures.logo(logo); texture != 0)' in launcher
+assert 'list.image(texture, {56.0f, 17.0f, 110.0f, 110.0f}' in launcher
 assert 'Color::rgb(0xbb59ff)' in read('headless/prosperoeden/pe/ui/theme.hpp')
 # Regression: do not remove the only width-measure helper while rearranging the hero.
 assert 'text_width(c, chips[i], 18.0f)' in home

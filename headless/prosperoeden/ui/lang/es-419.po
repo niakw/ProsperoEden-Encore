@@ -2299,6 +2299,10 @@ msgstr "MSAA 8x"
 msgid "MSAA 16x"
 msgstr "MSAA 16x"
 
+#: pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: falta nvngx_dlssnr.dll o no es válido. Coloca tu archivo en /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+
 # Obsolete gettext entries: retained for translator history only; never active at runtime.
 #~ msgid "AMD FSR"
 #~ msgstr "AMD FSR"

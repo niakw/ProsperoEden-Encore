@@ -64,6 +64,28 @@ jobs:
           python3 -B tools/graphics/test_r09_native_digest_inventory.py
           python3 -B tools/graphics/test_r09_verify_model_pack.py
           python3 -B tools/graphics/test_r09_full_gpu_evidence.py
+      - name: Mac full-network wrapper and native private importer (public-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n tools/graphics/r09_run_full_network_mac.sh
+          g++ -std=c++20 -O0 -Wall -Wextra -Werror \
+            -Iheadless -Iextras/graphics \
+            -Ivendor/encore-active/eden-vulkan/include \
+            tools/graphics/r09_private_model_import.cpp \
+            -o /tmp/r09-private-import-public
+          set +e
+          /tmp/r09-private-import-public \
+            /nonexistent/user-only-nvngx_dlssnr.dll \
+            /tmp/r09-private-import-must-not-write.nrmodel \
+            > /tmp/r09-import-negative.log 2>&1
+          rc=$?
+          set -e
+          test "$rc" -eq 65
+          test ! -e /tmp/r09-private-import-must-not-write.nrmodel
+          grep -q R09_PRIVATE_IMPORT_INPUT_OR_OUTPUT_REJECTED \
+            /tmp/r09-import-negative.log
+          echo R09_MAC_WRAPPER_AND_PRIVATE_IMPORT_COMPILE_PASS
       - name: Install host-only Vulkan 1.1 shader validators
         run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools spirv-tools
       - name: Compile and execute host graph boundary tests under UBSan

@@ -28,7 +28,7 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
 fi
 if [[ $# -gt 2 ]]; then usage >&2; exit 64; fi
 
-repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 dll_input="${1:-$HOME/Downloads/nvngx_dlssnr.dll.zip}"
 capture_input="${2:-}"
 github_repo="niakw/ProsperoEden-Encore"
@@ -118,7 +118,7 @@ if [[ -n "$capture_input" ]]; then
   fi
 else
   echo "R09_MAC_CAPTURE=local_mac_screen (NOT a game-render reference)"
-  screencapture -x "$work/capture-source.image"
+  screencapture -x -t png "$work/capture-source.image"
   [[ -s "$work/capture-source.image" ]] || {
     echo "R09_MAC_SCREEN_CAPTURE_FAILED: specify a real screenshot file." >&2
     exit 70

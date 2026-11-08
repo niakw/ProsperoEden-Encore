@@ -2,6 +2,9 @@
 # No proprietary model data, game capture, or executable is copied in image.
 # Ubuntu 24.04 amd64 matches the architecture of the linked R09 artifact.
 FROM ubuntu:24.04
+# Fail the image build if a builder silently chooses the Mac arm64 rootfs.
+# The linked R09 host requires x86_64 glibc, Vulkan ICD and C++ headers.
+RUN test "$(dpkg --print-architecture)" = amd64
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
     ca-certificates g++ python3 ffmpeg \

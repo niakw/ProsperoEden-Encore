@@ -52,7 +52,10 @@ assert "list.push_transform(1.65f, r.x + 41.0f, r.y + r.h * 0.5f" in home
 
 # Approved layout, but with the actual Eden Encore brand, not the mock-up's
 # provisional cyan flower. The logo's real pixels come from assets/icon0.png.
-assert 'list.image(c.textures.brand(), {56.0f, 17.0f, 110.0f, 110.0f}' in nav
+assert 'const int auto_logo = prefs_.color_palette == 1 ? 1 :' in nav
+assert 'prefs_.logo_choice == 0 ? auto_logo' in nav
+assert 'if (const auto texture = c.textures.logo(logo); texture != 0)' in nav
+assert 'list.image(texture, {56.0f, 17.0f, 110.0f, 110.0f}' in nav
 assert 'text(c, "EDEN", 175.0f' in nav
 assert 'text(c, "ENCORE", 176.0f' in nav
 assert 'text(c, "eden", 145.0f' not in nav

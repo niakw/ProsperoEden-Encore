@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import os
 import platform
+import runpy
 import shutil
 import subprocess
 import tempfile
@@ -96,6 +97,7 @@ assert "StageFlag(const Shader::Info&" in (ACTIVE / "vk_graphics_pipeline_cost.c
 
 includes = [
     ROOT / "headless",
+    ROOT / "extras/graphics",
     SHADER,
     # Native Maxwell/Ampere shader captures share this single reviewed
     # frontend root with the real renderer and pipeline-cache TUs.
@@ -156,6 +158,25 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
         "inline int cpuset_getaffinity(int, int, int, size_t, cpuset_t*) { return -1; }\n"
         "#ifndef CPU_ISSET\n#define CPU_ISSET(cpu, mask) false\n#endif\n"
         "#endif\n")
+    # The PS5 renderer uses the *reviewed* 83-source settings.h and a
+    # separately staged graphics-enum extension (Msaa2/4/8/16), not
+    # pristine Eden Settings::AntiAliasing. This is the identical audited
+    # overlay used by headless/CMakeLists.txt for the actual native build.
+    graphics_stage = Path(scratch) / "graphics-enums/common"
+    graphics_stage.mkdir(parents=True)
+    graphics_tools = runpy.run_path(
+        str(ROOT / "tools/stage-ps5-graphics-enums.py"))
+    _, reviewed = graphics_tools["approved_bytes"]()
+    graphics_enums = graphics_tools["extend_graphics_enums"](
+        reviewed.decode("utf-8"))
+    (graphics_stage / "settings_enums.h").write_text(
+        graphics_enums, encoding="utf-8")
+    reviewed_settings = (
+        ROOT / "vendor/encore-active/eden-backports/src/common/settings.h")
+    assert reviewed_settings.is_file()
+    shutil.copyfile(reviewed_settings, graphics_stage / "settings.h")
+    command.insert(command.index("-I" + str(includes[0])),
+                   "-I" + str(graphics_stage.parent))
     # PS5_NATIVE builds compile the R437 maintained buffer-cache owner from a
     # CMake-generated include overlay (headless/CMakeLists.txt). The source
     # archive alone has a different template/BufferCacheRuntime interface.

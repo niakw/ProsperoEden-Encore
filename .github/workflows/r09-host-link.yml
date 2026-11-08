@@ -108,15 +108,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -x .build-r09-linked/bin/r09-full-gpu-host
           set +e
-          .build-r09-linked/r09-full-gpu-host >.build-r09-linked/usage.txt 2>&1
+          .build-r09-linked/bin/r09-full-gpu-host >.build-r09-linked/usage.txt 2>&1
           rc=$?
           set -e
           cat .build-r09-linked/usage.txt
           test "$rc" -eq 64
           printf 'not-an-authentic-nrmodel' > .build-r09-linked/invalid.nrmodel
           set +e
-          .build-r09-linked/r09-full-gpu-host \
+          .build-r09-linked/bin/r09-full-gpu-host \
             .build-r09-linked/invalid.nrmodel \
             .build-r09-linked/nonexistent.rgba8 \
             .build-r09-linked/should-not-exist.rgba32f \
@@ -134,6 +135,6 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: r09-public-host-vulkan-runner
-          path: .build-r09-linked/r09-full-gpu-host
+          path: .build-r09-linked/bin/r09-full-gpu-host
           if-no-files-found: error
           retention-days: 7

@@ -69,6 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n tools/graphics/r09_run_full_network_mac.sh
+          bash -n tools/graphics/r09_debug_existing_mac.sh
           # Exercise exactly the staged source layout used by Colima: the
           # macOS checkout may be under /tmp (not shared with a Linux VM).
           stage="$(mktemp -d)"

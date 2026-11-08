@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-08",
+  "historical_f07_source_snapshots_preserved": true,
+  "description": "Separate strict post-F07 source delta register. The original 518-owner F07 audit and original reviewed Git blobs remain immutable. A changed file is admitted only at its separately pinned current SHA and with its exact new source contract. This is source-change classification, not post-change optimization benchmark, translated catalog completeness, GPU execution, guest progress, or PS5 validation. CI still independently enforces active feature host checks.",
+  "files": [
+    {
+      "path": "headless/devices_check.cpp",
+      "historical_reviewed_git_blob": "c9a8b4e737e6b2238cab90de06e4ddaf5cd48aef",
+      "post_snapshot_git_blob": "365b5aa849cdd1ded01c198a1bfb9f73c20196b6",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "input/overlay witness: short-click menu and guest Minus fallback",
+      "review_kind": "host_source_input",
+      "required_source_fragment": "OverlayVisible()",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/devices.h",
+      "historical_reviewed_git_blob": "edb7d13b125e554bd91c7c259fcfafcf91db984b",
+      "post_snapshot_git_blob": "3e597ba6596d71eed516d37b89cd4e457817bcbe",
+      "original_disposition": "code_changed_in_batch",
+      "source_scope": "DualSense quick overlay state and game-button fallback",
+      "review_kind": "host_source_input",
+      "required_source_fragment": "void EnableOverlay(bool enabled)",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/display_refresh.h",
+      "historical_reviewed_git_blob": "79aa191d75bbdb0d042d3178d629f02641e9b12c",
+      "post_snapshot_git_blob": "f24eb5641097e323a32bff3d6b27339070c29c07",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "frame generation method is an atomic user preference, not GPU proof",
+      "review_kind": "source_contract",
+      "required_source_fragment": "frame_generation_method{0}",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/encore_overrides_generated.h",
+      "historical_reviewed_git_blob": "cae342ba4185d3e3110e1756c45b017646ca0f59",
+      "post_snapshot_git_blob": "cbf936b6ff6ab3454055ca3ee2888eb691eb0a6c",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "468 title-profile generated dataset, separate published database revision",
+      "review_kind": "integrity_workflow",
+      "required_source_fragment": "kDatabaseRevision = 7",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/encore_overrides_runtime.h",
+      "historical_reviewed_git_blob": "911b3b2c87b7c1edecc633e683f312934ddf902a",
+      "post_snapshot_git_blob": "1891a14f778b97771b33b42ef1d78a67a3b4009d",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "new Vulkan-only scaler and antialias profile conversion guards",
+      "review_kind": "integrity_workflow",
+      "required_source_fragment": "anime4k_denoise",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/graphics.cpp",
+      "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
+      "post_snapshot_git_blob": "9eacdcbde5025e30f42124848eaafdf6afd6edaf",
+      "original_disposition": "code_changed_in_batch",
+      "source_scope": "HUD enable state uses atomic release and explicit setter",
+      "review_kind": "source_contract",
+      "required_source_fragment": "void SetHudEnabled(bool enabled)",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/hud.h",
+      "historical_reviewed_git_blob": "29100690d62e2c3981ad6cca3e94e616acd80396",
+      "post_snapshot_git_blob": "a506f5dca7efc289f47a172a353bff4f04d9f4e4",
+      "original_disposition": "code_changed_in_batch",
+      "source_scope": "compact capitalized HUD title glyph map",
+      "review_kind": "source_contract",
+      "required_source_fragment": "case 'B': return 0x6bae",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/eden_services.cpp",
+      "historical_reviewed_git_blob": "6c5d76341ef2c97b7db7fff23545ee21333037da",
+      "post_snapshot_git_blob": "d446bbeb7a848f74305b6677581f8917d941fd26",
+      "original_disposition": "new_source_issue_corrected",
+      "source_scope": "WebP artwork, user-owned DLL warnings, multiplayer and update service boundaries; not speed-qualified",
+      "review_kind": "host_source_service",
+      "required_source_fragment": "#include <webp/decode.h>",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/eden_services.h",
+      "historical_reviewed_git_blob": "b47c4b8a09e5288ebfe841266d57228abbbc4af7",
+      "post_snapshot_git_blob": "fab284339e42ba0397cfacb52fc9c096cc01a511",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "app update and optional user-owned DLSSNR interfaces",
+      "review_kind": "source_interface",
+      "required_source_fragment": "has_dlssnr_dll() const override",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/fr_fr_embedded.h",
+      "historical_reviewed_git_blob": "7ebe8df590bf6f7e371f7982ff75e1eb4f2255f6",
+      "post_snapshot_git_blob": "3b12563c39c37f28b283b71da4bf8a426029c8d1",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "embedded French text synchronized with current on-disk locale; not typography or all-languages proof",
+      "review_kind": "locale_source",
+      "required_source_fragment": "msgid \"Neural Rendering\"",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/host/fake_services.cpp",
+      "historical_reviewed_git_blob": "4720968bd02accaacf904ea298279ef9d4a740f6",
+      "post_snapshot_git_blob": "c34eb6b2bfefbf2f0c01e05b8f100fecfb672594",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "host preview settings expanded to actual neural and AA options",
+      "review_kind": "host_preview_mock",
+      "required_source_fragment": "A4K — Détails améliorés",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/home.cpp",
+      "historical_reviewed_git_blob": "a40fd7f010aa77ec58222ec002a94fd9c3947995",
+      "post_snapshot_git_blob": "d71859178869c858e1dae6b5b6d3b1e1112d8a51",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "new stable update-navigation target without renumbering existing controls",
+      "review_kind": "host_source_ui",
+      "required_source_fragment": "kHomeNavUpdate",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/launcher.cpp",
+      "historical_reviewed_git_blob": "f42459d21a8257dfea32f8a92657b571027618a2",
+      "post_snapshot_git_blob": "3cd506609f5ffc40ab8c8b39e3c99d141fba11d5",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "asynchronous release-update state and update-in-UI presentation",
+      "review_kind": "host_source_ui",
+      "required_source_fragment": "UpdateCheckState",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/launcher.hpp",
+      "historical_reviewed_git_blob": "b2c81fda94c172cee2b7edbe69bc128a0f09a061",
+      "post_snapshot_git_blob": "20f4c8a4da6177b7015de3ccd497ded591870d51",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "update and multiplayer screen state declarations",
+      "review_kind": "source_interface",
+      "required_source_fragment": "start_app_update_check(bool manual)",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/services.hpp",
+      "historical_reviewed_git_blob": "3d26738cbf0f8a3804d4147a147d433573861f84",
+      "post_snapshot_git_blob": "34201bfd35aeadd920f2935ab3da5f342228d14d",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "bounded release update contract, external metadata and transport separation",
+      "review_kind": "source_interface",
+      "required_source_fragment": "struct AppUpdateInfo",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/settings.cpp",
+      "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
+      "post_snapshot_git_blob": "2aed005fa4f77a0dace58f14fba727c13ffca6cc",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "explanatory NR/FG controls and four-row settings dialogue",
+      "review_kind": "host_source_ui",
+      "required_source_fragment": "kFramegenInfo",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",
+      "historical_reviewed_git_blob": "996adb5c2d93dc2ef8c223658744486ba5f446ac",
+      "post_snapshot_git_blob": "b1bdac5751631d76d88694ac8eb373f4ed62b0b1",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Switch-style contextual video help and update shortcut",
+      "review_kind": "host_source_ui",
+      "required_source_fragment": "switch_video_help(",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/theme.hpp",
+      "historical_reviewed_git_blob": "fc7b378ab519a454068a8802c3f871aee63411d7",
+      "post_snapshot_git_blob": "2b9ea5d8fad9d27f4cf55d7d65487082517556d6",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "user-selected accent token overrides and mutable resolved theme palette",
+      "review_kind": "source_interface",
+      "required_source_fragment": "inline Color kBase",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/video_presets.hpp",
+      "historical_reviewed_git_blob": "05a735ec7b059c92aecdb32a08a7f1e9061d31c0",
+      "post_snapshot_git_blob": "ba5f730a989ecd30897f475c9644539df43cb694",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "new UI-only ranked spatial filter selection; not empirical image superiority",
+      "review_kind": "source_contract",
+      "required_source_fragment": "kUpscalingQualityOrder",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/widgets.cpp",
+      "historical_reviewed_git_blob": "7b50467e172a985590a590027615868c2c8036f3",
+      "post_snapshot_git_blob": "ea8b1c582919a89db6041f316308b255840b0592",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "theme-resolved plates, new image/gradient backgrounds and animation gate",
+      "review_kind": "host_source_ui",
+      "required_source_fragment": "list.gradient_rect(",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/widgets.hpp",
+      "historical_reviewed_git_blob": "1b31fd1a9e3917792ed69a2a27499aa55e704fd9",
+      "post_snapshot_git_blob": "7300858e140fa31000611a51a2be95e0031b389c",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "mutable theme plates re-resolved as user theme changes",
+      "review_kind": "source_interface",
+      "required_source_fragment": "void resolve_theme_plates();",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/version.h",
+      "historical_reviewed_git_blob": "6b0dd31b2266917627b53e3e657d7d406f90e2f5",
+      "post_snapshot_git_blob": "e36e804e38a9ddfb7cfc4e057f66aaa066dada90",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "host builds no longer claim R1; native builds require release injected version",
+      "review_kind": "source_contract",
+      "required_source_fragment": "kAppVersion = \"Unversioned\"",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/settings_store.h",
+      "historical_reviewed_git_blob": "e8760e571f5a13d1e73d36ba57476c7a3f593899",
+      "post_snapshot_git_blob": "16c222fcbae07e1bda6692b2b974078a1d91937f",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "persistent filter/AA enums extended without renumbering and per-title NR/FG state",
+      "review_kind": "source_contract",
+      "required_source_fragment": "kUpscalingFilterLabels[]",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    }
+  ]
+}

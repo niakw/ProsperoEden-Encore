@@ -35,6 +35,7 @@ for path in (".github/workflows/encore-core-fast-gate.yml",
 
 cpp=r"""
 #include <cassert>
+#include <cstdint>
 #include <initializer_list>
 #include <new>
 #include <stdexcept>
@@ -63,6 +64,7 @@ struct Scheduler {
     bool renderpass_active{true};
     unsigned invalidations{};
     unsigned dispatches{};
+    std::uint64_t recorded_command_serial{};
     void DispatchWork() {
         if (throw_dispatch) throw std::bad_alloc{};
         ++dispatches;
@@ -81,6 +83,7 @@ int main() {
         Scheduler normal;
         normal.RecordWithUploadBuffer(cmd);
         assert(normal.storage.recorded==1 && normal.invalidations==0);
+        assert(normal.recorded_command_serial==1);
         assert(normal.pipeline_memo && normal.descriptor_memo);
     }
     {
@@ -89,6 +92,7 @@ int main() {
         rollover.RecordWithUploadBuffer(cmd);
         assert(rollover.dispatches==1 && rollover.storage.recorded==1);
         assert(rollover.invalidations==0);
+        assert(rollover.recorded_command_serial==1);
     }
     {
         // First and second record refuse: native must throw, clear pipeline
@@ -99,6 +103,7 @@ int main() {
         try { denied_twice.RecordWithUploadBuffer(cmd); }
         catch(const std::bad_alloc&) { failed=true; }
         assert(denied_twice.dispatches==1 && denied_twice.storage.recorded==0);
+        assert(denied_twice.recorded_command_serial==1);
 #ifdef PS5_NATIVE
         assert(failed && denied_twice.invalidations==1);
         assert(!denied_twice.pipeline_memo && !denied_twice.descriptor_memo);
@@ -109,6 +114,7 @@ int main() {
         denied_twice.storage.refuse_always=false;
         denied_twice.RecordWithUploadBuffer(cmd);
         assert(denied_twice.storage.recorded==1);
+        assert(denied_twice.recorded_command_serial==2);
     }
     for (bool fail_record : {true,false}) {
         Scheduler denied;
@@ -119,6 +125,7 @@ int main() {
         try { denied.RecordWithUploadBuffer(cmd); }
         catch(const std::bad_alloc&) { failed=true; }
         assert(failed && denied.storage.recorded==0);
+        assert(denied.recorded_command_serial==1);
 #ifdef PS5_NATIVE
         assert(denied.invalidations==1);
         assert(!denied.pipeline_memo && !denied.rescaling_memo && !denied.descriptor_memo);
@@ -132,6 +139,7 @@ int main() {
         denied.throw_dispatch=false;
         denied.RecordWithUploadBuffer(cmd);
         assert(denied.storage.recorded==1);
+        assert(denied.recorded_command_serial==2);
     }
 }
 """

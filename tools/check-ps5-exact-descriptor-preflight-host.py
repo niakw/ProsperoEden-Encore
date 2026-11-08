@@ -107,9 +107,23 @@ def branches(source):
 
 gl, cl = loop(graphics), loop(compute)
 gb, cb = branches(graphics), branches(compute)
+# The native pipeline has a new bounded MSAA reselector. The original
+# generator predates it; require exact source parity after replacing ONLY
+# that call-site. The real GPU code and the extracted host test keep the
+# maintained reselector and its fallback.
+graphics_prepare = native[native.index("void RasterizerVulkan::PrepareDraw("):
+                          native.index("void RasterizerVulkan::DispatchCompute(")]
+assert graphics_prepare.count("const auto select_pipeline = [&]() -> GraphicsPipeline* {") == 1
+selector = graphics_prepare.split("const auto select_pipeline = [&]() -> GraphicsPipeline* {", 1)[1].split("\n    };", 1)[0]
+for token in ("CurrentGraphicsPipelineForMsaa(native_samples)",
+              "native_samples = VK_SAMPLE_COUNT_1_BIT;",
+              "native_msaa_clear.reset();",
+              "return pipeline_cache.CurrentGraphicsPipeline();"):
+    assert token in selector, ("Native MSAA reselection lost guarded fallback", token)
 for block in [gl, *gb]:
-    # Graphics generation inserts multiline C++ literally.
-    assert block in generator, "Graphics native source drifted from generator"
+    assert block.count("select_pipeline()") == 1
+    historical = block.replace("select_pipeline()", "pipeline_cache.CurrentGraphicsPipeline()")
+    assert historical in generator, "Unreviewed graphics descriptor preflight drift"
 for block in [cl, *cb]:
     # Compute generator uses escaped newline strings in replace clauses.
     assert block.replace("\n", r"\n") in generator, "Compute native source drifted from generator"
@@ -171,6 +185,7 @@ struct Rig {
     GpuMemory memory;
     GpuMemory* gpu_memory{&memory};
     Cache pipeline_cache;
+    Pipeline* select_pipeline() { return pipeline_cache.CurrentGraphicsPipeline(); }
     explicit Rig(std::size_t descriptors, std::size_t used,
                  bool switch_to_empty = false) {
         assert(used < Queue::frame_payload_size);

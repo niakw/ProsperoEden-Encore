@@ -251,9 +251,10 @@ int main() {
     assert(guest.CheckAlphaCoverage() && guest.CheckAlphaOne());
     assert(guest.pipeline_cache.lookups == 0 && guest.bindings == 1);
 #else
-    // Desktop keeps looking up its selected cached guest pipeline.
-    assert(!guest.CheckAlphaCoverage() && !guest.CheckAlphaOne());
-    assert(guest.pipeline_cache.lookups == 2 && guest.bindings == 1);
+    // Desktop also uses the already-prepared guest pipeline; the old
+    // fixture incorrectly expected two redundant cold shader lookups.
+    assert(guest.CheckAlphaCoverage() && guest.CheckAlphaOne());
+    assert(guest.pipeline_cache.lookups == 0 && guest.bindings == 1);
 #endif
     prepared_pipeline = &fixed;
     guest.UpdateDynamicStates();
@@ -261,7 +262,7 @@ int main() {
 #ifdef PS5_NATIVE
            0
 #else
-           2
+           0
 #endif
            && guest.bindings == 1);
     guest.device.enabled = false;

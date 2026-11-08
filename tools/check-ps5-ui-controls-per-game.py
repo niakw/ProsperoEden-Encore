@@ -29,13 +29,13 @@ assert "SetAdaptivePlayStation(" not in inputs
 assert "adaptive_playstation" not in inputs
 assert "mapping_context" not in inputs
 
-# Triangle game settings: ten editable rows before Mods. Seven hints
-# previously indexed through row_controls (9) caused an OOB read.
+# Triangle game settings: fourteen editable rows before Mods. Seven hints
+# previously indexed through row_controls (13) caused an OOB read.
 import re
 rows = library.split("enum GameRow : int", 1)[1].split("};", 1)[0]
 editable = re.findall(r"^\s*(row_\w+),", rows, flags=re.MULTILINE)
 editable = editable[:editable.index("row_mods")]
-assert len(editable) == 10 and editable[-1] == "row_controls"
+assert len(editable) == 14 and editable[-1] == "row_controls"
 help_text = library.split("kGameAbout = {{", 1)[1].split("}};", 1)[0]
 assert len(re.findall(r'TR\("', help_text)) == len(editable)
 assert "kGameAbout.size() == static_cast<std::size_t>(row_mods)" in library

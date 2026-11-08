@@ -117,6 +117,16 @@
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
     },
     {
+      "path": "headless/prosperoeden/host/preview_main.cpp",
+      "historical_reviewed_git_blob": "67bcd16c23c8cb0f6546e9cb9a061dccbbf777ce",
+      "post_snapshot_git_blob": "5976e0b1ba54509b3c5e59dc840c6133d3e261f4",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Host-only OpenGL preview waits for actual asynchronous Home and Library readiness, then navigates via real R1 tab and preserves strict artwork zoom and pixel checks; no console or performance proof.",
+      "review_kind": "host_preview_mock",
+      "required_source_fragment": "library-preview: Library never became ready",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
       "path": "headless/prosperoeden/pe/ui/home.cpp",
       "historical_reviewed_git_blob": "a40fd7f010aa77ec58222ec002a94fd9c3947995",
       "post_snapshot_git_blob": "d71859178869c858e1dae6b5b6d3b1e1112d8a51",

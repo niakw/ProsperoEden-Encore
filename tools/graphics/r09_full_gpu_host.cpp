@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
+#include <span>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -237,10 +238,20 @@ void Run(const std::filesystem::path& original_model_or_dll,
     output.write(reinterpret_cast<const char*>(evidence.rgba32f_le.data()),
                  static_cast<std::streamsize>(evidence.rgba32f_le.size()));
     if (!output) throw std::runtime_error("R09_HOST_OUTPUT_WRITE_FAILED");
+    // Bind the actual bytes, not just claimed dimensions, into the host log.
+    // These digests permit an offline verifier to identify the exact capture
+    // and GPU readback without ever publishing NVIDIA model tensors.
+    Eden::GlyphIntegrity::Sha256 input_hash;
+    input_hash.Update(source_pixels.data(), source_pixels.size());
+    Eden::GlyphIntegrity::Sha256 output_hash;
+    output_hash.Update(evidence.rgba32f_le.data(),
+                       evidence.rgba32f_le.size());
     std::cout << "R09_HOST_REAL_FRAME_VULKAN_READBACK "
               << evidence.rgba32f_le.size()
               << " bytes; scheduler_callbacks="
               << evidence.enqueued_callbacks << "\n"
+              << "R09_HOST_CAPTURE_SHA256=" << input_hash.FinishHex() << "\n"
+              << "R09_HOST_GPU_READBACK_SHA256=" << output_hash.FinishHex() << "\n"
               << "NOT_A_VERIFIED_152_OPERATION_TRACE_OR_INDEPENDENT_ORACLE\n";
 }
 } // namespace

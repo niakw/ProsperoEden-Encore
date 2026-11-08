@@ -604,8 +604,28 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
                 'Task/Mesh source reverse parity failed', name)
         return text
+    # A post-P24 Vulkan revision may legitimately change several owners
+    # together (e.g. forced MSAA). Report every exact changed maintained
+    # source before refusing; do not update a P24 receipt or skip equality
+    # just to hide the first failing SHA.
+    maintained_drifts = []
+    for name, receipt in p24_by_path.items():
+        assert name in expected and name in actual, (
+            'missing Task/Mesh Vulkan source', name)
+        normalized = reverse_native_kepler_pointer_abi(
+            name, expected[name].read_text(), verify_hash=False)
+        current_sha = git_blob_sha(normalized)
+        if current_sha != receipt['maintained_blob_sha']:
+            maintained_drifts.append({
+                'path': name,
+                'reviewed_sha': receipt['maintained_blob_sha'],
+                'current_sha': current_sha,
+            })
+    if maintained_drifts:
+        print("ENCORE_P24_MAINTAINED_SOURCE_DRIFTS_JSON=" +
+              json.dumps(maintained_drifts, separators=(',', ':')),
+              flush=True)
     for name in p24_by_path:
-        assert name in expected and name in actual, ('missing Task/Mesh Vulkan source',name)
         reverse_p24(name,expected[name].read_text())
 
     # The generator owns the guarded NS2 blocks as well as NS1; every byte

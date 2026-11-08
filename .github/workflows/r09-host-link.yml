@@ -1,16 +1,11 @@
 name: R09 full Vulkan host binary link (public-only)
 
+# The user explicitly requested no further expensive full-Eden link reruns
+# while upstream warnings are being corrected. Preserve the last successful
+# linked binary evidence; keep this expensive regression manual only.
+# The faster R09 Vulkan/SPIR-V qualification still runs on vendor changes.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'tools/graphics/r09_generate_host_spirv.py'
-      - 'tools/graphics/r09_host_project_hook.cmake'
-      - 'tools/graphics/r09_host_link_after.cmake'
-      - 'tools/graphics/r09_full_gpu_host.cpp'
-      - '.github/workflows/r09-host-link.yml'
-      - 'vendor'
 
 permissions:
   contents: read

@@ -786,8 +786,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # forcing repeated CI runs to diagnose a single byte of drift.
         from difflib import unified_diff
         from itertools import islice
-        for name in mismatches[:5]:
+        for name in mismatches:
             generated, versioned = normalized_generated[name], normalized_expected.get(name, expected[name])
+            # Print BOTH exact bytes' SHA for every failing owner. Without this,
+            # the earlier first-five display hid the scheduler and HUD drift,
+            # forcing multiple long CI cycles to identify a known mismatch.
+            print("VULKAN_ORACLE_OWNER_SHA",
+                  name,
+                  "generated_sha256=" + hashlib.sha256(generated.read_bytes()).hexdigest(),
+                  "maintained_normalized_sha256=" + hashlib.sha256(versioned.read_bytes()).hexdigest(),
+                  flush=True)
             if not name.endswith(('.cpp', '.h', '.py', '.cmake')):
                 print(f'VULKAN_ORACLE_BINARY_DIFF {name} SHA256={hashlib.sha256(generated.read_bytes()).hexdigest()} '
                       f'active_SHA256={hashlib.sha256(versioned.read_bytes()).hexdigest()}', flush=True)

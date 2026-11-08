@@ -24,6 +24,13 @@ assert 'system.GPU().WaitForIdle();' in policy
 assert method.index('WaitForIdle();') < method.index('as->ReleaseNativeSparse4K(')
 assert method.index('WaitForIdle();') < method.index('as->UnmapNative4K(')
 assert method.index('WaitForIdle();') < method.index('nvmap.FreeHandle(id, false)')
+# The actual worker destructor must let the final shared GPU AS / process
+# registry owner release its resources before closing the worker's last
+# KProcess reference. Member destruction after ~IGpuWorker's body is too late.
+destructor = source.split('IGpuWorker::~IGpuWorker() {',1)[1].split(
+    '\nResult IGpuWorker::BackGpuOnlyRegion(',1)[0]
+assert destructor.index('m_shared.reset();') < destructor.index('m_process->Close(kernel);')
+assert destructor.index('nvmap.FreeHandle(id, false)') < destructor.index('m_shared.reset();')
 cpp=r'''
 #include <cassert>
 #include <map>

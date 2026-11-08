@@ -72,7 +72,9 @@ end='\nvoid IGraphicsVideoDecoderSession::SubmitInput('
 assert source.count(start)==source.count(end)==1
 method=source[source.index(start):source.index(end,source.index(start))]
 assert method.index('if (!m_owner->WriteVideoSurface(') < method.index('syncpoints.IncrementGuest(m_syncpoint)')
-assert 'IsReadyGuest(next.release->id, next.release->value)' in method
+assert 'IsReadyGuest(image.release->id, image.release->value)' in method
+assert 'std::find_if(m_available.begin(), m_available.end()' in method
+assert 'm_available.erase(ready);' in method
 assert 'if (!m_decoder->Render(' in method
 assert 'VideoDecoderProtocol::MarkLastEos(m_pending, m_outputs)' in source
 assert 'VideoDecoderProtocol::IsWorkBufferOwned(memory.GetPointerUnsafe(),' in source

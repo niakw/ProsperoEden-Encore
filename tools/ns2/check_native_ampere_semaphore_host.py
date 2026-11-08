@@ -25,6 +25,17 @@ for name in ("NonStallInterrupt", "MemOpA", "MemOpC", "MemOpD", "Yield"):
     assert "BufferMethods::" + name in method_owner
 assert "ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument);" in method_owner
 assert "ProcessSemaphoreAcquire(dma_pusher);" in method_owner
+# A native FENCE_ACTION acquire without a real syncpoint wait must never be
+# reported as completed: ReleaseFences() only flushes outstanding writes.
+# Keep the legacy Maxwell/NS1 fallback and genuine increment unchanged.
+fence_owner = puller.split(
+    "void Puller::ProcessFenceActionMethod(DmaPusher& dma_pusher) {", 1)[1].split(
+    "void Puller::ProcessSemaphoreTriggerMethod(", 1)[0]
+assert 'Native GPFIFO FENCE_ACTION acquire unsupported' in fence_owner
+assert 'Native GPFIFO FENCE_ACTION operation unsupported' in fence_owner
+assert fence_owner.index('Native GPFIFO FENCE_ACTION acquire unsupported') < fence_owner.index(
+    'dma_pusher.rasterizer->ReleaseFences();')
+assert 'dma_pusher.rasterizer->SignalSyncPoint(regs.fence_action.syncpoint_id);' in fence_owner
 # Production P2.7 coherence: initial compare and scheduler retry share the
 # same cache-flushing GMMU read, not an out-of-date CPU-side value.
 reader = puller.split("static u32 ReadCoherentNativeSemaphore(", 1)[1].split(

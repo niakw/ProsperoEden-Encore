@@ -29,7 +29,7 @@ assert home.index("const Rect hero{") < home.index("draw_top_nav(c, 0, header_fo
 
 # Seven real recent games maximum, consistently sized for TV.
 assert "kHomeRecentMax = 7" in home
-assert "std::array<tween::Spring, 23> home_springs_" in controller
+# Added home spring controls have a 24-slot owner; keep the actual layout fixed.\nassert "std::array<tween::Spring, 24> home_springs_" in controller
 assert "if (home.recents.size() == 7) break" in service
 assert "const std::string& art = !recent.cover.empty() ? recent.cover" in home
 assert "constexpr float available = 1770.0f" in home

@@ -46,8 +46,10 @@ jobs:
             ln -s "$GITHUB_WORKSPACE/vendor/sources/eden-cpm" vendor/sources/eden/.cache/cpm
           fi
           cmake -S vendor/sources/eden -B .build-r09-linked -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_C_COMPILER=clang -DENABLE_QT=OFF \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_C_COMPILER=gcc -DENABLE_QT=OFF \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
+            -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
             -DENABLE_OPENGL=OFF -DYUZU_CMD=OFF \
             -DSDL_UNIX_CONSOLE_BUILD=ON \
             -DENABLE_WEB_SERVICE=OFF -DENABLE_WERROR=OFF \

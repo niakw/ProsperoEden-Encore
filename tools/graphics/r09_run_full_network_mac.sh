@@ -145,9 +145,37 @@ echo "R09_PINNED_PUBLIC_BINARY_SHA256_PASS=$actual_sha256"
 echo "R09_PINNED_PUBLIC_BINARY=engine_756e80c_vendor_dfd6f3f"
 echo "R09_WARNING: this host binary predates the direct-DLL and exclusive-readback patches."
 echo "R09_DOCKER_BUILD=public_dependencies_only (no proprietary input in image)"
-docker build --platform linux/amd64 \
-  -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
-  -t "$image" "$work/docker-context"
+echo "R09_DOCKER_CONTEXT=$(docker context show)"
+# A Docker Buildx container builder does not automatically publish its image
+# into the local daemon. Without --load, the following docker run can attempt
+# a registry pull even though the build was tagged successfully.
+if docker buildx version >/dev/null 2>&1; then
+  docker buildx build --load --platform linux/amd64 \
+    -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
+    -t "$image" "$work/docker-context"
+else
+  DOCKER_BUILDKIT=0 docker build --platform linux/amd64 \
+    -f "$repo/tools/graphics/Dockerfile.r09-full-host" \
+    -t "$image" "$work/docker-context"
+fi
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+  echo "R09_DOCKER_IMAGE_NOT_LOADED_IN_LOCAL_DAEMON" >&2
+  echo "R09_DOCKER_DIAGNOSTIC_CONTEXT=$(docker context show)" >&2
+  exit 73
+fi
+image_arch="$(docker image inspect --format '{{.Architecture}}' "$image")"
+if [[ "$image_arch" != "amd64" ]]; then
+  echo "R09_DOCKER_IMAGE_ARCH_MISMATCH=$image_arch (expected amd64)" >&2
+  exit 74
+fi
+image_id="$(docker image inspect --format '{{.Id}}' "$image")"
+echo "R09_DOCKER_IMAGE_READY=$image_id arch=$image_arch"
+# Never silently pull an unrelated image with the same tag.
+docker run --pull never --rm --platform linux/amd64 \
+  --entrypoint /bin/true "$image" || {
+  echo "R09_DOCKER_AMD64_EMULATION_UNAVAILABLE" >&2
+  exit 75
+}
 
 memory="$(docker info --format '{{.MemTotal}}' 2>/dev/null || echo 0)"
 if [[ "$memory" =~ ^[0-9]+$ ]] && (( memory > 0 && memory < 5368709120 )); then
@@ -156,7 +184,7 @@ fi
 
 echo "R09_FULL_NETWORK_ATTEMPT_START"
 set +e
-docker run --rm --init --platform linux/amd64 \
+docker run --pull never --rm --init --platform linux/amd64 \
   --mount "type=bind,source=$repo,target=/repo,readonly" \
   --mount "type=bind,source=$work,target=/private" \
   -e "R09_CAPTURE_IS_RAW=$capture_is_raw" \

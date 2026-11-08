@@ -117,9 +117,28 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                        .replace(mesh_feature_method, '')
                        .replace(sparse_delta, '') == pinned_device), (
         "Native Task/Mesh + sparse residency ABI owner drift")
-    assert set(actual)==set(expected)-{helper, allocator, pool_policy, storage_layout,
-                                         native_mesh_device_header}, (
-        f'missing: {set(actual)-set(expected)}, extras: {set(expected)-set(actual)}')
+    # The immutable upstream generator owns the historic Vulkan ports, not
+    # post-generator R09 neural shaders/owners, FSR31 and native additions.
+    # Pin the *exact* 238-path additive inventory rather than ignoring
+    # unexpected extras or pretending they were generated from Eden upstream.
+    additive_manifest = root / 'tools/vendor-vulkan-native-additions.txt'
+    approved_native_additions = {
+        row.strip()
+        for row in additive_manifest.read_text(encoding='utf-8').splitlines()
+        if row.strip() and not row.lstrip().startswith('#')
+    }
+    assert len(approved_native_additions) == 238, (
+        'Reviewed native additive inventory count changed',
+        len(approved_native_additions))
+    assert not set(actual) - set(expected), (
+        'Generator emitted a Vulkan file absent from the active vendor',
+        sorted(set(actual) - set(expected)))
+    unexpected_additions = set(expected) - set(actual)
+    assert unexpected_additions == approved_native_additions, (
+        'Vulkan active native additive inventory drift',
+        'unreviewed:', sorted(unexpected_additions - approved_native_additions),
+        'missing:', sorted(approved_native_additions - unexpected_additions))
+    # Byte-for-byte parity of every generated owner remains mandatory below.
     helper_file=expected[helper]
     assert subprocess.check_output(['git','hash-object',str(helper_file)],text=True).strip()==(
         '16749faa8c0f1047de0485af53ff2de65d66be7d'), 'upstream wait primitive drift'

@@ -180,7 +180,7 @@ def main()->int:
         'IPC::ResponseBuilder rb{ctx, 34};',
 
         'FindRegisteredGpuAddressSpace(packet[4])',
-        'as->MapNativeImage(image->backing, image->offset,',
+        'as->MapNativeImage(',
         'it->second.address_space->UnmapNative4K(',
         'm_video_mappings.erase(it)',
         'it->second.address_space == as',
@@ -190,6 +190,15 @@ def main()->int:
         'for (const auto& [key, mapping] : m_video_mappings)',
     ):
         assert snippet in text, "Missing real NS2 video pool/GMMU ownership: " + snippet
+    video_map = text.split('void IGraphicsSupervisor::MapVideoGpuImage(', 1)[1].split(
+        'void IGraphicsSupervisor::UnmapVideoGpuImage(', 1)[0]
+    # A pre-allocated owner is required before MapNativeImage can acquire
+    # a real VA and pin. Never turn a failed map into a guest-visible ID.
+    assert (video_map.index('m_video_mappings.try_emplace(') <
+            video_map.index('as->MapNativeImage(') <
+            video_map.index('staged->second.address = address;'))
+    assert 'm_video_mappings.erase(staged);' in video_map
+    assert 'catch (const std::bad_alloc&)' in video_map
 
     assert '{423, &IGraphicsSupervisor::BindNativeGpuMemory' in text
     for snippet in (

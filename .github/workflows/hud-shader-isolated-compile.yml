@@ -1,0 +1,38 @@
+name: Vulkan HUD shader — isolated SPIR-V rebuild (short)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'headless/vulkan_hud.frag'
+      - 'headless/loading_wordmark.glsl'
+      - 'headless/loading_scene.glsl'
+      - '.github/workflows/hud-shader-isolated-compile.yml'
+permissions:
+  contents: read
+jobs:
+  compile-hud-shader:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install glslang and SPIR-V validator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends glslang-tools spirv-tools
+      - name: Build shader from real source, validate bytecode, and record provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          glslangValidator -V --target-env vulkan1.1 -S frag -Iheadless -o vulkan_hud.frag.spv headless/vulkan_hud.frag
+          spirv-val --target-env vulkan1.1 vulkan_hud.frag.spv
+          sha256sum headless/vulkan_hud.frag vulkan_hud.frag.spv
+          echo HUD_SPV_BASE64_BEGIN
+          base64 -w0 vulkan_hud.frag.spv
+          echo
+          echo HUD_SPV_BASE64_END
+      - uses: actions/upload-artifact@v4
+        with:
+          name: current-hud-spv-vulkan1.1
+          path: vulkan_hud.frag.spv
+          retention-days: 7

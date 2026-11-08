@@ -696,21 +696,34 @@ print("ENCORE_POST_F07_FEATURE_STACK_ISOLATION_PASS",
 
 # R09 Original/Compact and in-game touchpad overlay were merged after
 # both the immutable 518-owner F07 audit AND the 209-source feature-stack
-# inventory. These 61 exact sources are NOT retroactively F07-optimized.
+# inventory. These 67 exact sources are NOT retroactively F07-optimized.
 late=json.loads((ROOT/"docs/ENCORE_POST_F07_R09_OVERLAY_OWNERS.json").read_text())
 assert late["schema_version"]==1
 assert late["historical_f07_reviewed_owners"]==518
-assert late["post_f07_new_unqualified_owners"]==61
+assert late["post_f07_new_unqualified_owners"]==67
 assert late["ps5_console_qualified"] is False
 assert late["dlss_nr_complete_inference_validated"] is False
 assert late["paths"]==sorted(set(late["paths"]))
 post_f07_r09_overlay_owners=set(late["paths"])
-assert len(post_f07_r09_overlay_owners)==61
+assert len(post_f07_r09_overlay_owners)==67
 assert post_f07_r09_overlay_owners<=all_owners, sorted(post_f07_r09_overlay_owners-all_owners)
 assert not post_f07_r09_overlay_owners&(research_owners|post_f07_feature_stack_owners)
 assert all((ROOT/p).is_file() for p in post_f07_r09_overlay_owners)
+# These exact post-audit owners were discovered from real CI's
+# F07_UNCLASSIFIED_SOURCE_OWNERS_JSON. Do not reclassify historical F07
+# sources or hide future additions behind a dynamic owner count.
+r09_private_and_readback = {
+    "headless/nr_dll_launch_preflight.h",
+    "headless/nr_dll_model_import.h",
+    "headless/nr_dll_tensor_digests.h",
+    "headless/nr_dll_user_file.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_frame_readback.h",
+    "vendor/encore-active/eden-vulkan/nr_rdna2_frame_readback.cpp",
+}
+assert r09_private_and_readback <= post_f07_r09_overlay_owners
+assert not r09_private_and_readback & (research_owners | post_f07_feature_stack_owners)
 print("ENCORE_R09_OVERLAY_POST_F07_OWNER_ISOLATION_PASS",
-      "new_sources=61 historical_owners=518 console_not_qualified=1")
+      "new_sources=67 historical_owners=518 console_not_qualified=1")
 
 owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")

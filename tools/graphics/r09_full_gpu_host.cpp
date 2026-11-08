@@ -35,6 +35,8 @@
 #include <iostream>
 #include <iterator>
 #include <stdlib.h> // Linux mkdtemp: private 0700 model extraction directory
+#include <fcntl.h>  // O_EXCL: never overwrite the user's DLL or source capture
+#include <unistd.h> // close, write, unlink
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -233,11 +235,39 @@ void Run(const std::filesystem::path& original_model_or_dll,
     if (!(max_rgb - min_rgb > 0.001f)) {
         throw std::runtime_error("R09_HOST_RGBA32F_DEGENERATE_RGB");
     }
-    std::ofstream output{output_path, std::ios::binary | std::ios::trunc};
-    if (!output) throw std::runtime_error("R09_HOST_CANNOT_WRITE_OUTPUT");
-    output.write(reinterpret_cast<const char*>(evidence.rgba32f_le.data()),
-                 static_cast<std::streamsize>(evidence.rgba32f_le.size()));
-    if (!output) throw std::runtime_error("R09_HOST_OUTPUT_WRITE_FAILED");
+    // An accidental OUTPUT=DLL or OUTPUT=CAPTURE must never truncate the
+    // only genuine model/capture. Open exclusively (0600) rather than using
+    // std::ofstream(trunc), including against symlinks and existing outputs.
+    const int fd = ::open(output_path.c_str(),
+                          O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+    if (fd < 0) throw std::runtime_error("R09_HOST_OUTPUT_EXISTS_OR_UNWRITABLE");
+    struct ExclusiveOutput {
+        int fd;
+        std::filesystem::path path;
+        bool complete{};
+        ~ExclusiveOutput() {
+            if (fd >= 0) ::close(fd);
+            if (!complete) ::unlink(path.c_str());
+        }
+    } output{fd, output_path};
+    std::size_t written = 0u;
+    while (written < evidence.rgba32f_le.size()) {
+        const auto left = evidence.rgba32f_le.size() - written;
+        const auto requested = std::min(left, static_cast<std::size_t>(1u << 20));
+        const auto done = ::write(output.fd, evidence.rgba32f_le.data() +
+                                             written, requested);
+        if (done <= 0) throw std::runtime_error("R09_HOST_OUTPUT_WRITE_FAILED");
+        written += static_cast<std::size_t>(done);
+    }
+    if (::fsync(output.fd) != 0) {
+        throw std::runtime_error("R09_HOST_OUTPUT_FLUSH_FAILED");
+    }
+    if (::close(output.fd) != 0) {
+        output.fd = -1;
+        throw std::runtime_error("R09_HOST_OUTPUT_CLOSE_FAILED");
+    }
+    output.fd = -1;
+    output.complete = true;
     // Bind the actual bytes, not just claimed dimensions, into the host log.
     // These digests permit an offline verifier to identify the exact capture
     // and GPU readback without ever publishing NVIDIA model tensors.

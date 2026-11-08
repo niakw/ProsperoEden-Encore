@@ -29,6 +29,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <stdlib.h> // Linux mkdtemp: private 0700 model extraction directory
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -39,6 +40,44 @@ constexpr std::uint32_t kWidth = 1920u;
 constexpr std::uint32_t kHeight = 1080u;
 constexpr VkExtent2D kExtent{kWidth, kHeight};
 constexpr std::uint64_t kInputBytes = std::uint64_t(kWidth) * kHeight * 4u;
+
+// The public runner may consume the user's ONE original NVIDIA DLL directly.
+// Import as DATA (never execute a Windows DLL), authenticate the 599 learned
+// tensors, and delete the extracted ~141 MiB pack on every exit path.
+struct PrivateModelCache {
+    std::filesystem::path directory{};
+    ~PrivateModelCache() {
+        if (!directory.empty()) {
+            std::error_code ignored;
+            std::filesystem::remove_all(directory, ignored);
+        }
+    }
+};
+
+std::filesystem::path ResolvePrivateOriginal(
+    const std::filesystem::path& input, PrivateModelCache& cache) {
+    if (input.extension() != ".dll") return input;
+    std::error_code ec;
+    const auto status = std::filesystem::symlink_status(input, ec);
+    if (ec || !std::filesystem::is_regular_file(status) ||
+        std::filesystem::is_symlink(status)) {
+        throw std::runtime_error("R09_HOST_PRIVATE_DLL_NOT_REGULAR");
+    }
+    auto pattern = (std::filesystem::temp_directory_path() /
+                    "eden-r09-original-XXXXXX").string();
+    char* directory = ::mkdtemp(pattern.data());
+    if (!directory) {
+        throw std::runtime_error("R09_HOST_PRIVATE_MODEL_DIRECTORY_FAILED");
+    }
+    cache.directory = directory;
+    const auto model = cache.directory / "original.nrmodel";
+    const auto imported = Eden::NRDllImport::ImportOriginal(
+        input, model, Eden::Graphics::NeuralRDNA2::R09OriginalManifest);
+    if (!imported.imported) {
+        throw std::runtime_error("R09_HOST_PRIVATE_DLL_ORIGINAL_IMPORT_REJECTED");
+    }
+    return model;
+}
 
 std::vector<std::uint8_t> ReadRawRgba8(const std::filesystem::path& path) {
     if (!std::filesystem::is_regular_file(path) ||
@@ -80,9 +119,12 @@ vk::Image MakeImage(Vulkan::MemoryAllocator& allocator, VkFormat format,
     return result;
 }
 
-void Run(const std::filesystem::path& model_path,
+void Run(const std::filesystem::path& original_model_or_dll,
          const std::filesystem::path& input_path,
          const std::filesystem::path& output_path) {
+    PrivateModelCache private_cache{};
+    const auto model_path = ResolvePrivateOriginal(
+        original_model_or_dll, private_cache);
     if (!std::filesystem::is_regular_file(model_path)) {
         throw std::runtime_error("R09_HOST_AUTHENTIC_MODEL_MISSING");
     }
@@ -94,6 +136,9 @@ void Run(const std::filesystem::path& model_path,
     }
     // Check real capture bytes before spending Vulkan memory. No generated
     // color bars or fixture mode is supported in this program.
+    if (!private_cache.directory.empty()) {
+        std::cout << "R09_HOST_AUTHENTIC_DLL_IMPORT_AND_599_HASH_PASS\n";
+    }
     const auto source_pixels = ReadRawRgba8(input_path);
     auto library = Vulkan::OpenLibrary();
     vk::InstanceDispatch dispatch{};
@@ -177,7 +222,7 @@ void Run(const std::filesystem::path& model_path,
 
 int main(int argc, char** argv) {
     if (argc != 4) {
-        std::cerr << "Usage: r09_full_gpu_host ORIGINAL.nrmodel "
+        std::cerr << "Usage: r09_full_gpu_host ORIGINAL.nrmodel|nvngx_dlssnr.dll "
                   << "CAPTURE_1920x1080.rgba8 OUTPUT.rgba32f\n";
         return 64;
     }

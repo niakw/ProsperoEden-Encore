@@ -142,14 +142,15 @@ int main() {
     }
     Require(!BuildMaxwellShaderImage(header,native,compute,{},codeA).Ready(),
             "Compute must not fabricate a graphics shader header/LEPC PC");
-    // Task=VertexA+1 and Mesh=VertexA+2 are now authenticated graphics
-    // stages. Never reject Task as "unknown" merely because its ABI ID is 7.
-    // The first stage *after* Mesh is truly unsupported and must fail closed.
-    static_assert(static_cast<u32>(Shader::Stage::Task) ==
-                  static_cast<u32>(Shader::Stage::VertexA) + 1U);
-    static_assert(static_cast<u32>(Shader::Stage::Mesh) ==
-                  static_cast<u32>(Shader::Stage::Task) + 1U);
-    constexpr u32 unknown_stage = static_cast<u32>(Shader::Stage::Mesh) + 1U;
+    // The common NS1 Stage enum ends at VertexA. Native Task/Mesh use
+    // the reviewed appended 7/8 wire IDs, without changing the NS1 enum.
+    // Check their actual lowering as well as the first unknown stage (9).
+    constexpr u32 task_stage = static_cast<u32>(Shader::Stage::VertexA) + 1U;
+    constexpr u32 mesh_stage = task_stage + 1U;
+    constexpr u32 unknown_stage = mesh_stage + 1U;
+    Require(BuildMaxwellShaderImage(header,native,task_stage,{},codeA).ValidForCompiler() &&
+            BuildMaxwellShaderImage(header,native,mesh_stage,{},codeA).ValidForCompiler(),
+            "native task/mesh wire IDs preserve LEPC authenticated guest PC");
     Require(!BuildMaxwellShaderImage(header,native,unknown_stage,{},codeA).Ready(),
             "unknown stage cannot opt into untrusted graphics source PC");
     Require(!without_pc.Ready() &&

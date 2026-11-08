@@ -44,6 +44,17 @@ if(NOT _r09_shader_rc EQUAL 0)
 endif()
 message(STATUS "${_r09_shader_out}")
 
+# Linux uses the pinned Eden Shader::Info (5 stages, no Task/Mesh fields).
+# The PS5-maintained vk_graphics_pipeline.h expects the separate Task/Mesh
+# shader backport and therefore MUST NOT shadow Linux upstream pipeline
+# declarations. Copy only the exact pristine upstream header into an include
+# precedence overlay. PS5 source selection is completely untouched.
+set(_r09_compat "${CMAKE_BINARY_DIR}/r09-host-compat")
+file(MAKE_DIRECTORY "${_r09_compat}/video_core/renderer_vulkan")
+configure_file(
+    "${_r09_vendor}/sources/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h"
+    "${_r09_compat}/video_core/renderer_vulkan/vk_graphics_pipeline.h" COPYONLY)
+
 # The scheduler/device/allocator are ABI-coupled with maintained neural
 # owners. Remove the three pristine implementations, never compile duplicates.
 get_target_property(_r09_video_sources video_core SOURCES)
@@ -63,6 +74,7 @@ target_sources(video_core PRIVATE ${_r09_cpp}
     "${_r09_active}/vulkan_device.cpp"
     "${_r09_active}/vulkan_memory_allocator.cpp")
 target_include_directories(video_core BEFORE PRIVATE
+    "${_r09_compat}"
     "${_r09_shader_include}"
     "${_r09_active}/include"
     "${ENCORE_R09_ROOT}/headless"
@@ -71,6 +83,7 @@ add_executable(r09-full-gpu-host
     "${ENCORE_R09_ROOT}/tools/graphics/r09_full_gpu_host.cpp")
 target_compile_features(r09-full-gpu-host PRIVATE cxx_std_20)
 target_include_directories(r09-full-gpu-host BEFORE PRIVATE
+    "${_r09_compat}"
     "${_r09_shader_include}"
     "${_r09_active}/include"
     "${ENCORE_R09_ROOT}/headless"

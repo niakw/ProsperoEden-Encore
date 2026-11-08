@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+# No proprietary model data, game capture, or executable is copied in image.
+# Ubuntu 24.04 amd64 matches the architecture of the linked R09 artifact.
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+    ca-certificates g++ python3 ffmpeg \
+    libvulkan1 mesa-vulkan-drivers \
+    libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev \
+    libswresample-dev libswscale-dev libssl-dev libopus-dev \
+    liblz4-dev libzstd-dev libusb-1.0-0-dev libasound2-dev \
+    libunwind-dev libx11-dev libxcb1-dev libxext-dev libxrandr-dev \
+    libxrender-dev libxfixes-dev libxi-dev libxkbcommon-dev \
+    libwayland-dev libsdl2-dev \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /repo
+CMD ["/bin/bash"]

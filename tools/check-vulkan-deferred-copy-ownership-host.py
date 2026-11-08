@@ -299,6 +299,10 @@ RECORD
     CommandChunk* chunk = &chunks[0];
     unsigned switches = 0;
     unsigned invalidations = 0;
+    // The maintained native scheduler increments its command epoch before
+    // each FIFO recording attempt, including one rejected at rollover.
+    // This fixture includes the actual extracted RecordWithUploadBuffer.
+    u64 recorded_command_serial = 0;
     // The extracted RecordWithUploadBuffer calls the real scheduler's
     // InvalidateState on rejected enqueue; expose the observable reset here.
     void InvalidateState() { ++invalidations; }
@@ -329,6 +333,7 @@ void RejectedSecondRecord() {
         rejected = true;
     }
     assert(rejected && scheduler.invalidations == 1 && scheduler.switches == 1);
+    assert(scheduler.recorded_command_serial == 1);
     // Neither rejected command was constructed: reset the synthetic test
     // offsets, then prove the next real record is successfully executed.
     scheduler.chunks[0].command_offset = 0;
@@ -341,6 +346,7 @@ void RejectedSecondRecord() {
     scheduler.Drain(observed);
     assert(observed == Digest(std::array<u64, 1>{73}));
     assert(scheduler.invalidations == 1);
+    assert(scheduler.recorded_command_serial == 2);
 }
 CASES
 int main() {
@@ -387,6 +393,7 @@ void {label}_{index}() {{
     scheduler.Record([](vk::CommandBuffer cmdbuf) {{ const std::array<u64, 1> value{{91}}; cmdbuf.Check(value); }});
     scheduler.Drain(observed);
     assert(observed == Digest(std::array<u64, 1>{{91}}));
+    assert(scheduler.recorded_command_serial == 2);
     std::printf("DEFERRED_COPY site={index} mode={label} capture_allocations=%u\\n", copies_allocated);
 }}
 ''')

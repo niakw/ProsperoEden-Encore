@@ -236,7 +236,7 @@ jobs:
           fetch-depth: 1
       - name: Install host-only Vulkan shader and FFmpeg declarations
         run: sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends glslang-tools spirv-tools libavcodec-dev libavutil-dev libswscale-dev
-      - name: Syntax-check R09 maintained Vulkan C++ without PS5 build
+      - name: Syntax-check R09 maintained Vulkan C++ on host
         run: python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
 
   neural-gpu-io:
@@ -346,7 +346,7 @@ jobs:
             -o .build-r09-gpu/r09_vulkan_temporal_smoke
           .build-r09-gpu/r09_vulkan_temporal_smoke \
             .build-r09-gpu/temporal_compose.spv
-      - name: Package public Mesa Lavapipe ICD for a private user-model host check
+      - name: Package public software Vulkan ICD for local private-model host check
         shell: bash
         run: |
           set -euo pipefail

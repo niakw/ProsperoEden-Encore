@@ -18,6 +18,12 @@ initialise `NrRdna2FrameSession` avec le plan Original de 152 lignes,
 enregistre les étapes neuronales, attend le GPU et tente de produire
 un readback RGBA32F de 33 177 600 octets.
 
+Le chemin de sortie GPU est ouvert en accès privé (0600) et avec
+création exclusive : il ne peut pas écraser un résultat existant, la
+DLL NVIDIA ou la capture source. Un échec d'écriture ou de synchronisation
+supprime le fichier de résultat incomplet. Utiliser un nouveau nom de
+sortie à chaque essai.
+
 Avant publication, le résultat RGB du readback doit avoir la taille
 correcte, contenir uniquement des flottants finis et ne pas être
 quasi constant. Cela n'est **ni une preuve de qualité ni une référence

@@ -750,6 +750,38 @@ int main(){
             !containedSparse.ContainsSparse(9, 0x8000, 0x1000),
             "released sparse reservation cannot be remapped");
 
+    // H03: 64-KiB guest sparse granularity is backed by sixteen native
+    // 4-KiB GMMU entries, but every 216 remap must honor the original
+    // page shift. Test the production MappingLedger, not a duplicate model.
+    WP::MappingLedger sparse64;
+    WP::MappingLedger::Pending pending64;
+    require(sparse64.CanReserveSparse(9, 1, 0x10000, 0x20000, 16) ==
+                WP::LedgerStatus::Success &&
+            sparse64.PrepareSparse(9, 1, 0x10000, 0x20000, pending64, 16) ==
+                WP::LedgerStatus::Success &&
+            pending64.size() == 1 &&
+            sparse64.CommitPrepared(pending64) == WP::LedgerStatus::Success &&
+            pending64.empty() && sparse64.Count() == 1,
+            "64K page-granular VA reservation is staged and committed once");
+    require(sparse64.ContainsSparse(9, 0x10000, 0x10000, 16) &&
+            sparse64.ContainsSparse(9, 0x20000, 0x10000, 16) &&
+            !sparse64.ContainsSparse(9, 0x11000, 0x1000, 12) &&
+            !sparse64.ContainsSparse(9, 0x10000, 0x1000, 16) &&
+            !sparse64.ContainsSparse(9, 0x11000, 0x10000, 16) &&
+            !sparse64.ContainsSparse(9, 0x10000, 0x10000, 12),
+            "64K sparse owners reject partial, misaligned and mixed-page remaps");
+    require(sparse64.CanReserveSparse(10, 2, 0x11000, 0x10000, 16) ==
+                WP::LedgerStatus::Invalid &&
+            sparse64.CanReserveSparse(10, 2, 0x10000, 0x11000, 16) ==
+                WP::LedgerStatus::Invalid &&
+            sparse64.CanReserveSparse(10, 2, 0x10000, 0x10000, 17) ==
+                WP::LedgerStatus::Invalid,
+            "64K range alignment is enforced and unknown page shifts are refused");
+    require(sparse64.RecordReleasedSparse(9, 0x10000, 0x20000) ==
+                WP::LedgerStatus::Success &&
+            !sparse64.ContainsSparse(9, 0x10000, 0x10000, 16),
+            "64K sparse release retires exact granularity ownership");
+
     WP::MappingLedger bounded;
     auto fill=*map;fill.size=0x1000;
     for (std::size_t i=0;i<WP::MaxMappings;++i) {

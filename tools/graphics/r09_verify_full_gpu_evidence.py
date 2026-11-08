@@ -14,6 +14,8 @@ from pathlib import Path
 import re
 import sys
 
+from r09_verify_model_pack import ModelRejected, policy_for, verify_model
+
 class Reject(Exception):
     pass
 
@@ -59,6 +61,15 @@ def verify(args):
         ("output_sha256", args.output),
     ):
         require(obj.get(key) == sha256(path), "bad " + key)
+    # An arbitrary model SHA embedded in the evidence is not authenticity.
+    # Independently verify every actual learned tensor against the 599 public
+    # Original digests BEFORE accepting any GPU trace or framebuffer claim.
+    # No private weights are ever bundled into this verifier.
+    try:
+        verify_model(args.model, policy_for("original"))
+    except ModelRejected as error:
+        raise Reject("Original 599-tensor SHA-256 authenticity failed: "
+                     + str(error)) from error
     require(obj.get("gpu_device") and obj.get("gpu_driver"),
             "missing Vulkan device/driver")
     require(obj.get("scheduler_record_succeeded") is True,

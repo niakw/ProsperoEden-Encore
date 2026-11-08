@@ -133,7 +133,11 @@ int main() {
     bind(static_cast<u32>(EngineID::MAXWELL_B));
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
     bind(0xdead);
-    assert(dma.subchannels[2] == nullptr && rejected==1);
+#ifdef PS5_NATIVE
+    assert(dma.subchannels[2] == nullptr && rejected==0 && native_faults==1);
+#else
+    assert(dma.subchannels[2] == nullptr && rejected==1 && native_faults==0);
+#endif
     bind(static_cast<u32>(EngineID::KEPLER_COMPUTE_B));
     assert(dma.subchannels[2] == &dma.channel_state.payload->kepler_compute);
     bind(0xc797);

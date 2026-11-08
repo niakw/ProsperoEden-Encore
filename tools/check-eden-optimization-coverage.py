@@ -946,11 +946,46 @@ for e in entries:
         reviewed_blob_drifts.append({
             "path":e["path"],"expected":e["reviewed_source_git_blob"],
             "actual":actual,"prior_disposition":e["disposition"]})
-if reviewed_blob_drifts:
-    print("ENCORE_REVIEWED_BLOB_DRIFTS_JSON="+json.dumps(
-        reviewed_blob_drifts,separators=(",",":")),flush=True)
-assert not reviewed_blob_drifts, ("source changed: repeat optimization review",
-                                 len(reviewed_blob_drifts))
+# F07's historical source snapshot is IMMUTABLE. UI, graphics,
+# settings, profile and network changes landed later, and the 23 real
+# owner changes cannot legitimately be compared to their October blobs.
+# A separate, exact per-file source-change register pins both versions
+# and the changed code contract. Nothing is counted as a new performance
+# or gameplay qualification because an SHA is known.
+post_f07 = json.loads(
+    (ROOT/"docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json").read_text())
+assert post_f07['schema_version'] == 1
+assert post_f07['historical_f07_source_snapshots_preserved'] is True
+post_entries = post_f07['files']
+assert len(post_entries) == 23
+post_index = {item['path']: item for item in post_entries}
+assert len(post_index) == len(post_entries)
+drift_index = {item['path']: item for item in reviewed_blob_drifts}
+assert set(drift_index) == set(post_index), (
+    "Unregistered or obsolete post-F07 source delta",
+    sorted(set(drift_index) ^ set(post_index)))
+for path, item in post_index.items():
+    drift = drift_index[path]
+    assert item['historical_reviewed_git_blob'] == drift['expected'], (
+        "F07 immutable prior source SHA changed", path)
+    assert item['post_snapshot_git_blob'] == drift['actual'], (
+        "Unreviewed post-F07 source SHA change", path)
+    assert item['original_disposition'] == drift['prior_disposition']
+    assert item['post_snapshot_git_blob'] != item['historical_reviewed_git_blob']
+    assert item['classification'] == (
+        'post_snapshot_source_delta_only_not_performance_or_console_proof')
+    assert item['review_kind'] in {
+        'host_source_input','source_contract','integrity_workflow',
+        'host_source_service','source_interface','locale_source',
+        'host_preview_mock','host_source_ui'}
+    assert len(item['source_scope']) >= 32
+    fragment = item['required_source_fragment']
+    assert fragment and fragment in (ROOT/path).read_text(), (
+        "Post-F07 new source contract lost", path)
+print("ENCORE_POST_F07_SOURCE_DELTA_INTEGRITY_PASS",
+      "historical_f07_blobs_unchanged=23",
+      f"independently_pinned_changes={len(post_entries)}",
+      "performance_and_console_qualification=NOT_CLAIMED",flush=True)
 for e in entries:
     if not e.get("source_review_document"):
         continue

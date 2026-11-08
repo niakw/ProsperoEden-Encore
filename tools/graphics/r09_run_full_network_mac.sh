@@ -47,6 +47,26 @@ docker info >/dev/null 2>&1 || {
   echo "R09_MAC_DOCKER_NOT_RUNNING: start Docker Desktop or Colima." >&2
   exit 66
 }
+# A Linux ARM64 Colima VM with the legacy builder silently ignores the
+# requested amd64 image target. An x86_64 *VM* is required to use the
+# linked R09 Linux binary reliably; never damage/change the default VM.
+docker_context="$(docker context show)"
+docker_server_arch="$(docker info --format '{{.Architecture}}' 2>/dev/null || true)"
+echo "R09_DOCKER_CONTEXT=$docker_context server_arch=$docker_server_arch"
+case "$docker_context" in
+  colima*)
+    case "$docker_server_arch" in
+      x86_64|amd64) ;;
+      *)
+        echo "R09_COLIMA_X86_64_VM_REQUIRED: active Colima VM is $docker_server_arch" >&2
+        echo "Create a separate profile: colima start r09 --arch x86_64 --vm-type qemu --cpu 2 --memory 5 --disk 30 --activate=false" >&2
+        echo "Then run with: DOCKER_CONTEXT=colima-r09 bash tools/graphics/r09_run_full_network_mac.sh <DLL.zip> <capture.jpg>" >&2
+        echo "Existing Colima data is not changed. On 8 GB Macs, stop the other VM if safe." >&2
+        exit 76
+        ;;
+    esac
+    ;;
+esac
 gh auth status --hostname github.com >/dev/null 2>&1 || {
   echo "R09_MAC_GH_NOT_AUTHENTICATED: run gh auth login first." >&2
   exit 67
@@ -68,6 +88,19 @@ chmod 700 "$base"
 work="$(mktemp -d "$base/full-network-XXXXXXXX")"
 chmod 700 "$work"
 mkdir -p "$work/download" "$work/bin" "$work/docker-context"
+# Colima normally mounts the home directory, NOT a source checkout in /tmp.
+# Stage ONLY the public headers and two tools in our private HOME workspace,
+# avoiding empty container mounts or accidental uploads of user data.
+mkdir -p "$work/public/headless" "$work/public/extras/graphics" \
+  "$work/public/tools/graphics" \
+  "$work/public/vendor/encore-active/eden-vulkan/include"
+cp "$repo/headless/"*.h "$work/public/headless/"
+cp "$repo/extras/graphics/"*.h "$work/public/extras/graphics/"
+cp -R "$repo/vendor/encore-active/eden-vulkan/include/." \
+  "$work/public/vendor/encore-active/eden-vulkan/include/"
+cp "$repo/tools/graphics/r09_private_model_import.cpp" \
+  "$repo/tools/graphics/r09_authentic_preview_png.py" \
+  "$work/public/tools/graphics/"
 cleanup() {
   # Only the public runner, logs, previews and capture are retained.
   rm -f "$work/nvngx_dlssnr.dll" "$work/original.nrmodel" \
@@ -197,7 +230,7 @@ fi
 echo "R09_FULL_NETWORK_ATTEMPT_START"
 set +e
 docker run --pull never --rm --init --platform linux/amd64 \
-  --mount "type=bind,source=$repo,target=/repo,readonly" \
+  --mount "type=bind,source=$work/public,target=/repo,readonly" \
   --mount "type=bind,source=$work,target=/private" \
   -e "R09_CAPTURE_IS_RAW=$capture_is_raw" \
   -e LP_NUM_THREADS=2 -e GALLIUM_NUM_THREADS=2 \

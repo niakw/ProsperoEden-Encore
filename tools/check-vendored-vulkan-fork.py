@@ -556,6 +556,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'vk_graphics_pipeline_cost.cpp', 'vk_pipeline_cache_cost.cpp',
         'vulkan_device.cpp', 'vulkan_rasterizer.cpp', 'vulkan_wrapper.cpp',
     }
+    # Later native MSAA work is a separate, EXACT reversible source layer.
+    # Preserve all eight original P24 snapshots and their pinned SHA proofs.
+    # The new record contains the real maintained vendor raw blobs and
+    # context-anchored reverse patches, never an opportunistic hash restamp.
+    post = json.loads((root/'tools/fixtures/p24-post-msaa-reversible-deltas.json').read_text())
+    assert post['schema_version'] == 1
+    assert post['source_vendor_gitlink'] == '8ef5009141386185ae84a9972e6947a33ecb0c94'
+    post_by_path = {entry['path']: entry for entry in post['files']}
+    assert len(post_by_path) == len(post['files']) == 7
+    assert set(post_by_path) == set(p24_by_path) - {'vulkan_device.cpp'}
+    for name, entry in post_by_path.items():
+        assert entry['pre_change_maintained_blob_sha'] == p24_by_path[name]['maintained_blob_sha']
+        assert len(entry['reverse_hunks']) in range(1, 15)
+        for hunk in entry['reverse_hunks']:
+            assert hunk['after'] and hunk['before'] and hunk['after'] != hunk['before']
     def git_blob_sha(text):
         data=text.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
@@ -593,10 +608,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         receipt=p24_by_path.get(name)
         if receipt is None:
             return text
-        text = reverse_native_kepler_pointer_abi(name, text, verify_hash)
+        later=post_by_path.get(name)
+        if later and verify_hash:
+            assert git_blob_sha(text) == later['post_change_raw_blob_sha'], (
+                'Post-P24 reviewed Vulkan raw source drift', name)
+        # Keep the separate native KeplerCompute pointer ABI proof. Its
+        # normalization happens before reversing the later MSAA additions.
+        text = reverse_native_kepler_pointer_abi(name, text, verify_hash=False)
+        if later:
+            for hunk in reversed(later['reverse_hunks']):
+                assert text.count(hunk['after']) == 1, (
+                    'Post-P24 MSAA reverse hunk drift', name)
+                text=text.replace(hunk['after'],hunk['before'])
         if verify_hash:
             assert git_blob_sha(text) == receipt['maintained_blob_sha'], (
-                'Task/Mesh maintained owner drift', name)
+                'Task/Mesh maintained owner drift after MSAA reversal', name)
         for hunk in reversed(receipt['hunks']):
             assert text.count(hunk['after']) == 1, ('Task/Mesh delta hunk drift',name)
             text=text.replace(hunk['after'],hunk['before'])
@@ -604,29 +630,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
                 'Task/Mesh source reverse parity failed', name)
         return text
-    # A post-P24 Vulkan revision may legitimately change several owners
-    # together (e.g. forced MSAA). Report every exact changed maintained
-    # source before refusing; do not update a P24 receipt or skip equality
-    # just to hide the first failing SHA.
-    maintained_drifts = []
-    for name, receipt in p24_by_path.items():
+    # Verify EVERY owner and show precise refusals without weakening the
+    # historical SHA or accepting a changed vendor submodule by coincidence.
+    maintained_errors = []
+    for name in p24_by_path:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
-        normalized = reverse_native_kepler_pointer_abi(
-            name, expected[name].read_text(), verify_hash=False)
-        current_sha = git_blob_sha(normalized)
-        if current_sha != receipt['maintained_blob_sha']:
-            maintained_drifts.append({
-                'path': name,
-                'reviewed_sha': receipt['maintained_blob_sha'],
-                'current_sha': current_sha,
-            })
-    if maintained_drifts:
+        try:
+            reverse_p24(name, expected[name].read_text())
+        except AssertionError as exc:
+            maintained_errors.append({'path': name, 'error': str(exc)})
+    if maintained_errors:
         print("ENCORE_P24_MAINTAINED_SOURCE_DRIFTS_JSON=" +
-              json.dumps(maintained_drifts, separators=(',', ':')),
+              json.dumps(maintained_errors, separators=(',', ':')),
               flush=True)
-    for name in p24_by_path:
-        reverse_p24(name,expected[name].read_text())
+    assert not maintained_errors, ("P24 post-MSAA reversible source drift", maintained_errors)
+    print("ENCORE_P24_POST_MSAA_REVERSIBLE_PASS",
+          "vulkan_owners=7",
+          f"checked_hunks={sum(len(row['reverse_hunks']) for row in post['files'])}",
+          "historic_p24_sha_preserved=1")
 
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.

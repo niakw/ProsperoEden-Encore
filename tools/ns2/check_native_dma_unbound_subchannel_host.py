@@ -22,6 +22,7 @@ cpp = r'''
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 using u32 = std::uint32_t;
@@ -30,6 +31,16 @@ static unsigned errors{};
 #define HW_GPU 0
 #define LOG_ERROR(...) (++errors)
 namespace Core { struct System {}; }
+namespace Service::Nvidia::Devices {
+struct NativeGpuChannelRegistry {
+    bool native{};
+    static NativeGpuChannelRegistry& Instance() {
+        static NativeGpuChannelRegistry registry;
+        return registry;
+    }
+    bool IsNative(const void*) const { return native; }
+};
+}
 class DmaPusher;
 namespace Engines {
 struct Puller {
@@ -62,6 +73,7 @@ public:
     Core::System system{};
     Engines::Puller puller{};
     std::array<Engine*,8> subchannels{};
+    u32 channel_state{};
     void CallMethod(u32 argument);
     void CallMultiMethod(const u32* start, u32 num_methods);
 };
@@ -78,6 +90,19 @@ int main() {
     dma.CallMethod(words[0]);
     dma.CallMultiMethod(words, 2);
     assert(errors == 2 && dma.puller.calls == 0 && dma.puller.multi_calls == 0);
+#ifdef PS5_NATIVE
+    // The ACTUAL native method owners must RETIRE the bad GPFIFO, not
+    // merely log a missing bound engine and let a guest fence complete.
+    auto& native=Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+    native.native=true;
+    unsigned retired{};
+    try { dma.CallMethod(words[0]); }
+    catch (const std::runtime_error&) { ++retired; }
+    try { dma.CallMultiMethod(words,2); }
+    catch (const std::runtime_error&) { ++retired; }
+    assert(retired==2 && errors==4);
+    native.native=false; // same source still preserves the Maxwell path.
+#endif
     Engine engine;
     dma.subchannels[7] = &engine;
     dma.CallMethod(words[0]);
@@ -91,7 +116,13 @@ int main() {
     dma.dma_state.method = 0x20;
     dma.CallMethod(words[0]);
     dma.CallMultiMethod(words, 2);
-    assert(dma.puller.calls == 1 && dma.puller.multi_calls == 1 && errors == 2);
+#ifdef PS5_NATIVE
+    constexpr unsigned expected_errors=4;
+#else
+    constexpr unsigned expected_errors=2;
+#endif
+    assert(dma.puller.calls == 1 && dma.puller.multi_calls == 1 &&
+           errors == expected_errors);
     std::puts("P2_7_DMA_UNBOUND_GUEST_METHOD_GUARD_PASS");
 }
 '''
@@ -104,6 +135,7 @@ def source_methods(name: str) -> str:
     methods = START + methods
     assert methods.count('if (!subchannel) {') == 2, name
     assert methods.count('LOG_ERROR(HW_GPU,') == 2, name
+    assert methods.count('throw std::runtime_error("Native GPFIFO method on unbound subchannel")') == 2, name
     assert methods.count('subchannel->ConsumeSink(system);') == 2, name
     return methods
 
@@ -124,19 +156,23 @@ def main() -> None:
         test_src.write_text(cpp.replace('__REAL_METHODS__', normal))
         for compiler in dict.fromkeys(compilers):
             for opt in (0, 2):
-                exe = Path(temp) / f'test-{Path(compiler).name}-{opt}'
-                build = subprocess.run(
-                    [compiler, '-std=c++20', f'-O{opt}', '-Wall', '-Wextra',
-                     '-Werror', '-fsanitize=undefined', '-fno-sanitize-recover=all',
-                     str(test_src), '-o', str(exe)],
-                    capture_output=True, text=True, env=env, timeout=45)
-                assert build.returncode == 0, build.stderr[-2800:]
-                run = subprocess.run([str(exe)], capture_output=True,
-                                     text=True, env=env, timeout=15)
-                assert run.returncode == 0, run.stderr[-2800:]
-                assert 'P2_7_DMA_UNBOUND_GUEST_METHOD_GUARD_PASS' in run.stdout
-                print('P2_7_DMA_UNBOUND_GUARD_HOST_PASS', Path(compiler).name,
-                      'O'+str(opt), 'real_methods=2 variants=2', flush=True)
+                for ps5 in (False, True):
+                    exe = Path(temp) / f'test-{Path(compiler).name}-{opt}-{int(ps5)}'
+                    cmd = [compiler, '-std=c++20', f'-O{opt}', '-Wall', '-Wextra',
+                           '-Werror', '-fsanitize=undefined', '-fno-sanitize-recover=all']
+                    if ps5:
+                        cmd.append('-DPS5_NATIVE=1')
+                    cmd.extend((str(test_src), '-o', str(exe)))
+                    build = subprocess.run(cmd, capture_output=True, text=True,
+                                           env=env, timeout=45)
+                    assert build.returncode == 0, build.stderr[-2800:]
+                    run = subprocess.run([str(exe)], capture_output=True,
+                                         text=True, env=env, timeout=15)
+                    assert run.returncode == 0, run.stderr[-2800:]
+                    assert 'P2_7_DMA_UNBOUND_GUEST_METHOD_GUARD_PASS' in run.stdout
+                    print('P2_7_DMA_UNBOUND_GUARD_HOST_PASS', Path(compiler).name,
+                          'O'+str(opt), 'PS5_NATIVE' if ps5 else 'NS1',
+                          'real_methods=2 variants=2', flush=True)
 
 
 if __name__ == '__main__':

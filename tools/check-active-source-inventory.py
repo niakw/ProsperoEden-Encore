@@ -582,6 +582,32 @@ assert all(p.startswith("headless/") and (root / p).is_file()
 print("ENCORE_MERGED_FEATURE_STACK_POST_F07_PASS",
       "headless=54", "vendor=155", "historical_F07_unchanged=1")
 
+# The R09 GPU owners and private DLL loader arrived after the immutable
+# historical 337-source F07 audit. The separate versioned manifest has
+# nine headless owners and exactly 58 new vendor owners.
+r09_receipt = json.loads(
+    (root / "docs/ENCORE_POST_F07_R09_OVERLAY_OWNERS.json").read_text())
+assert r09_receipt["schema_version"] == 1
+assert r09_receipt["historical_f07_reviewed_owners"] == 518
+assert r09_receipt["post_f07_new_unqualified_owners"] == 67
+assert r09_receipt["ps5_console_qualified"] is False
+assert r09_receipt["dlss_nr_complete_inference_validated"] is False
+assert r09_receipt["paths"] == sorted(set(r09_receipt["paths"]))
+post_f07_r09_vendor_owners = {
+    path.removeprefix("vendor/encore-active/")
+    for path in r09_receipt["paths"]
+    if path.startswith("vendor/encore-active/")
+}
+assert len(post_f07_r09_vendor_owners) == 58
+assert post_f07_r09_vendor_owners <= set(physical_all), (
+    "Missing maintained R09 GPU source owner",
+    sorted(post_f07_r09_vendor_owners - set(physical_all)))
+assert not post_f07_r09_vendor_owners & (
+    set(research_paths) | post_f07_feature_vendor_owners)
+assert len([p for p in r09_receipt["paths"] if p.startswith("headless/")]) == 9
+print("ENCORE_R09_POST_F07_VENDOR_CATALOG_PASS",
+      "vendor=58", "headless=9", "historical_F07_unchanged=1")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -594,7 +620,8 @@ physical = [p for p in physical_all
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
-             post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners]
+             post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
+             post_f07_r09_vendor_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

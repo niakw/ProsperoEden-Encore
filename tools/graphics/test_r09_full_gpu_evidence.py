@@ -21,6 +21,7 @@ def run(folder, name, payload, expected_reason=None):
         [sys.executable, str(TOOL), "--evidence", str(e),
          "--model", str(folder / "model.nrmodel"),
          "--plan", str(folder / "plan.txt"),
+         "--input", str(folder / "input.rgba8"),
          "--output", str(folder / "output.rgba32f")],
         capture_output=True, text=True, check=False)
     assert p.returncode == 20, (name, p.stdout, p.stderr)
@@ -36,6 +37,10 @@ def main():
         rows = [f"{n} 0 1 1920 1080 placeholder" for n in range(152)]
         (root / "plan.txt").write_text("\n".join(rows) + "\n")
         (root / "output.rgba32f").write_bytes(b"\0" * 16)
+        # Negative test inputs must exist so the verifier can bind hashes
+        # to bytes without claiming that this is a real game capture.
+        with (root / "input.rgba8").open("wb") as source:
+            source.truncate(1920 * 1080 * 4)
         base = {
             "schema": "EDEN_R09_FULL_GPU_V1",
             "source": "NrRdna2FrameSession",
@@ -52,7 +57,7 @@ def main():
             "queue_submitted": True,
             "fence_wait_succeeded": True,
             "input_is_real_capture": True,
-            "source_image_sha256": "f" * 64,
+            "source_image_sha256": sha(root / "input.rgba8"),
             "width": 1920, "height": 1080,
             "operations": [
                 {"ordinal": n, "native_plan_row": row,

@@ -55,12 +55,24 @@ def verify(args):
         ("readback", "vkCmdCopyImageToBuffer_after_completed_fence"),
     ):
         require(obj.get(name) == expected, "unexpected " + name)
+    # Verify the actual original capture, not a self-reported input hash.
+    # A claimed capture in JSON alone is not provenance evidence.
+    require(args.input.is_file() and args.input.stat().st_size == 1920 * 1080 * 4,
+            "missing or wrongly sized 1920x1080 RGBA8 capture")
+    require(obj.get("source_image_sha256") == sha256(args.input),
+            "capture SHA-256 differs from actual input bytes")
     for key, path in (
         ("model_sha256", args.model),
         ("plan_sha256", args.plan),
         ("output_sha256", args.output),
     ):
         require(obj.get(key) == sha256(path), "bad " + key)
+    if args.reference is not None:
+        require(args.reference.is_file(), "reference image missing")
+        require(not args.reference.samefile(args.output),
+                "self-reference cannot prove independent output")
+        require(sha256(args.reference) != obj["output_sha256"],
+                "bit-identical reference cannot establish independence")
     # An arbitrary model SHA embedded in the evidence is not authenticity.
     # Independently verify every actual learned tensor against the 599 public
     # Original digests BEFORE accepting any GPU trace or framebuffer claim.
@@ -119,7 +131,7 @@ def verify(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for field in ("evidence", "model", "plan", "output"):
+    for field in ("evidence", "model", "plan", "input", "output"):
         parser.add_argument("--" + field, required=True, type=Path)
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--maximum-error", type=float, default=1e-3)

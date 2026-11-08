@@ -58,6 +58,35 @@ jobs:
             -DYUZU_USE_EXTERNAL_FFMPEG=OFF -DENABLE_LSFG=OFF \
             -DENCORE_R09_ROOT="$GITHUB_WORKSPACE" \
             -DCMAKE_PROJECT_INCLUDE="$GITHUB_WORKSPACE/tools/graphics/r09_host_project_hook.cmake"
+      - name: Precompile native Vulkan and R09 operator objects before full Eden link
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          listing = subprocess.check_output(
+              ["ninja", "-C", ".build-r09-linked", "-t", "targets", "all"],
+              text=True)
+          targets = sorted({
+              line.split(": ", 1)[0]
+              for line in listing.splitlines()
+              if line.startswith("src/video_core/CMakeFiles/video_core.dir/")
+              and ".o:" in line
+              and ("/renderer_vulkan/" in line
+                   or "/vulkan_common/" in line
+                   or "nr_rdna2_" in line)
+          })
+          if len(targets) < 50:
+              raise SystemExit("R09_VULKAN_NATIVE_OBJECT_INVENTORY_INCOMPLETE="
+                               + str(len(targets)))
+          print("R09_LINUX_VULKAN_OBJECTS_SELECTED", len(targets), flush=True)
+          # -k 0 gathers independent, real compilation errors in ONE run,
+          # rather than retrying a 1600-object full link for each failure.
+          subprocess.run(["ninja", "-C", ".build-r09-linked",
+                          "-j", "2", "-k", "0", *targets], check=True)
+          print("R09_LINUX_VULKAN_OBJECTS_COMPILED", len(targets), flush=True)
+          PY
       - name: Compile and fully link genuine R09 full GPU binary
         run: cmake --build .build-r09-linked --target r09-full-gpu-host --parallel 2
       - name: Binary starts and rejects absent private input (no fabricated inference)

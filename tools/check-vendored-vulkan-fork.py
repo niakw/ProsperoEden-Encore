@@ -779,6 +779,71 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         path.parent.mkdir(parents=True,exist_ok=True)
         path.write_text(baseline)
         normalized_expected[name]=path
+    # Distinguish maintained SOURCE evolution from the historical test
+    # generator: the R09 present-source ABI now carries exact Vulkan
+    # sampled-format/sample-count metadata, while an older GPU pipeline
+    # header changed only the native MSAA selector documentation and its
+    # argument name. Pin the REAL vendor raw Git blobs BEFORE reversing
+    # these two changes. Keep the generated artifact itself immutable.
+    # The actual NS1/NS2 renderer uses the newer maintained headers.
+    post_generator_headers = {
+        "include/video_core/renderer_vulkan/vk_blit_screen.h": (
+            "dae3449987b134683664d94b5bc13c72724700c2",
+            [(
+                "    // The sampled native image's exact view format and sample count are\n"
+                "    // needed for strict neural LDR/HDR and MSAA source admission.\n"
+                "    VkFormat sampled_format{VK_FORMAT_UNDEFINED};\n"
+                "    VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};\n",
+                "",
+            )],
+        ),
+        "include/video_core/renderer_vulkan/vk_pipeline_cache.h": (
+            "343383c7b5ed55f181cee9d840e6b59fae0409d0",
+            [(
+                "    // Shared 1x/2x/4x/8x/16x selector. The default NS1 path calls this\n"
+                "    // with VK_SAMPLE_COUNT_1_BIT; PS5-native retains authenticated GMMU\n"
+                "    // shader capture and the strict forced-MSAA admission path.\n"
+                "    [[nodiscard]] GraphicsPipeline* CurrentGraphicsPipelineForMsaa(\n"
+                "        VkSampleCountFlagBits requested_samples);\n",
+                "    // Creates/selects a distinct native MSAA variant without modifying guest\n"
+                "    // registers, image sample counts, or the ordinary 1x pipeline cache key.\n"
+                "    // Caller must prove a clear, single colour RT, no depth/aliasing.\n"
+                "    [[nodiscard]] GraphicsPipeline* CurrentGraphicsPipelineForMsaa(\n"
+                "        VkSampleCountFlagBits samples);\n",
+            )],
+        ),
+    }
+    for name, (raw_sha, edits) in post_generator_headers.items():
+        raw = expected[name].read_text()
+        assert git_blob_sha(raw) == raw_sha, (
+            "Unexpected shipping Vulkan ABI header; no historical normalization", name)
+        normalized = raw
+        for added, former in edits:
+            assert normalized.count(added) == 1, (
+                "Reviewed Vulkan ABI header delta moved or duplicated", name)
+            normalized = normalized.replace(added, former)
+        output = temp/'normalized-vendor-post-generator-headers'/name
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(normalized)
+        normalized_expected[name] = output
+    # N73's strict source normalizer already reverses the SIX native guest
+    # colour-attachment capture statements in the maintained texture TU.
+    # The historic generator emits these exact statements; reverse them
+    # there too, rather than misreporting an otherwise equal texture owner.
+    # The real production TU and its N57/N73 SHA receipts are untouched.
+    from ns2.native_astc_vendor_parity import strip_post_n73_msaa_framebuffer_source
+    tex_name = 'vk_texture_cache_cost.cpp'
+    generated_texture = normalized_generated[tex_name].read_text()
+    baseline_texture = strip_post_n73_msaa_framebuffer_source(generated_texture)
+    assert baseline_texture != generated_texture, (
+        "Historical generator has unexpectedly lost native MSAA capture")
+    tex_output = temp/'normalized-generated-post-n73'/tex_name
+    tex_output.parent.mkdir(parents=True, exist_ok=True)
+    tex_output.write_text(baseline_texture)
+    normalized_generated[tex_name] = tex_output
+    print("ENCORE_POST_GENERATOR_REVIEWED_SOURCE_PARITY",
+          "headers=2", "native_texture_capture_statements=6",
+          "current_vulkan_source_preserved=1", flush=True)
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

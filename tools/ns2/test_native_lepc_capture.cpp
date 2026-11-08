@@ -142,7 +142,15 @@ int main() {
     }
     Require(!BuildMaxwellShaderImage(header,native,compute,{},codeA).Ready(),
             "Compute must not fabricate a graphics shader header/LEPC PC");
-    Require(!BuildMaxwellShaderImage(header,native,7U,{},codeA).Ready(),
+    // Task=VertexA+1 and Mesh=VertexA+2 are now authenticated graphics
+    // stages. Never reject Task as "unknown" merely because its ABI ID is 7.
+    // The first stage *after* Mesh is truly unsupported and must fail closed.
+    static_assert(static_cast<u32>(Shader::Stage::Task) ==
+                  static_cast<u32>(Shader::Stage::VertexA) + 1U);
+    static_assert(static_cast<u32>(Shader::Stage::Mesh) ==
+                  static_cast<u32>(Shader::Stage::Task) + 1U);
+    constexpr u32 unknown_stage = static_cast<u32>(Shader::Stage::Mesh) + 1U;
+    Require(!BuildMaxwellShaderImage(header,native,unknown_stage,{},codeA).Ready(),
             "unknown stage cannot opt into untrusted graphics source PC");
     Require(!without_pc.Ready() &&
             direct_image_A.ValidForCompiler() &&

@@ -23,6 +23,9 @@ method=START+source.split(START,1)[1].split(END,1)[0]
 assert method.count('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,')==1
 assert method.count('retire_native_3d();')==3
 assert method.count('retire_native_compute();')==3
+assert 'throw std::runtime_error("Native GPFIFO SET_OBJECT class unsupported")' in method
+assert method.index('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,') < method.index(
+    'throw std::runtime_error("Native GPFIFO SET_OBJECT class unsupported")')
 for path in (DMA,DMA_DEV):
     text=path.read_text()
     assert text.count('if (!subchannel) {')==2, 'Unbound native class requires safe shared DMA'
@@ -34,6 +37,7 @@ cpp=r'''
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <stdexcept>
 using u32 = std::uint32_t;
 static unsigned rejected{};
 #define HW_GPU 0
@@ -117,8 +121,13 @@ int main() {
     Engines::Puller puller;
     DmaPusher dma;
     auto& registry=Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+    unsigned native_faults{};
     const auto bind=[&](u32 klass) {
-        puller.ProcessBindMethod(dma, {0,klass,2,0});
+        try {
+            puller.ProcessBindMethod(dma, {0,klass,2,0});
+        } catch (const std::runtime_error&) {
+            ++native_faults;
+        }
     };
     // Existing ordinary GPU binding; native rejected class revokes pointer.
     bind(static_cast<u32>(EngineID::MAXWELL_B));
@@ -141,6 +150,12 @@ int main() {
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_dma);
     bind(0xfff1);
     assert(dma.subchannels[2] == nullptr);
+#ifdef PS5_NATIVE
+    assert(native_faults==4 &&
+           "native SET_OBJECT unsupported class must fault before queue completion");
+#else
+    assert(native_faults==0);
+#endif
     // Invalid class and forbidden Ampere bind must not alter old NS1 behavior.
     registry.native=false;
     bind(static_cast<u32>(EngineID::MAXWELL_B));
@@ -149,6 +164,9 @@ int main() {
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
     bind(0xc797);
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
+#ifdef PS5_NATIVE
+    assert(native_faults==4 && "NS1 must not inherit native fatal binding policy");
+#endif
     // An invalid owner/failed native 3D bind must not disturb current owner.
     registry.native=true;
     registry.allow_graphics=false;

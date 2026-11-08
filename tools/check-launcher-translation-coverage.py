@@ -51,7 +51,7 @@ assert core_ui <= marked, "essential UI source markers disappeared"
 # msgids from an inactive translation key set must NEVER remove the
 # FSR 1 label, its EASU/RCAS help, or the shared sharpness control.
 settings_filter = (root / "headless/settings_store.h").read_text()
-assert 'kUpscalingFilterLabels[] = {\\n    "Bilinear", "FSR 1",' in settings_filter, (
+assert re.search(r'kUpscalingFilterLabels\[\]\s*=\s*\{\s*"Bilinear",\s*"FSR 1",', settings_filter), (
     "AMD FSR 1 filter removed or persistent enum index changed")
 presets = (root / "headless/prosperoeden/pe/ui/video_presets.hpp").read_text()
 assert "return filter == 1 || filter == 5 || filter == 6;" in presets, (

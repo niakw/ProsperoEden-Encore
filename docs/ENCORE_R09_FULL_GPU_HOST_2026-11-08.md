@@ -90,15 +90,19 @@ Elle permet un essai technique du pipeline mais **ne constitue pas une
 capture de jeu ou une référence de qualité NVIDIA**. Un fichier RGBA8
 1920x1080 peut être donné directement comme deuxième argument.
 
-Le lanceur télécharge l'**ancien binaire lié** du workflow
-[42465459699](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42465459699),
-puis authentifie la DLL localement et crée un NRMODEL1 privé en
-mémoire/disque local, compatible avec cet exécutable. Les extensions
-récentes du code hôte ne sont **pas** incorporées dans l'ancien binaire.
-La réussite de la compilation C++ sur GitHub n'est pas la preuve de son
-exécution. La date d'expiration de cet artefact public est le
-**15 novembre 2026** ; à son expiration il faudra publier un nouvel
-exécutable public via la CI manuelle, pas transmettre les poids NVIDIA.
+**État actuel : ne pas relancer le test complet sans nouvel exécutable.**
+L'ancienne liaison publique du workflow
+[42465459699](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42465459699)
+a reproduit sous GDB un crash de cache de requêtes nul, **avant
+Vulkan GPU**. Le correctif est intégré aux deux `main`, mais pas
+au binaire publié. Le lanceur refuse expressément cet artefact
+obsolète avant tout téléchargement du binaire, import privé ou build
+Docker. Les commandes ci-dessus ne deviennent exploitables qu'après
+publication d'une **nouvelle** liaison Linux publique avec le vendor
+corrigé ; le lancement nécessitera alors les variables
+`R09_HOST_LINKED_RUN_ID` et `R09_HOST_LINKED_SHA256` vérifiées.
+La compilation syntaxique GitHub ne suffit pas.
+Aucune DLL NVIDIA et aucun poids ne doivent être transmis à CI.
 
 La compilation de l'image Docker peut installer plusieurs bibliothèques
 Linux, mais **aucune reconstruction complète d'Eden n'est lancée**.

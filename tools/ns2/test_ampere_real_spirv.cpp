@@ -209,9 +209,9 @@ static void CheckNativeQmdIndirectCbufIR() {
 // modules, not merely compile the emitter's C++ owner.
 // P2.3: drive the real SPIR-V emitter through a malformed native IR bank.
 // A QMD3 has eight CBUFs; shared NS1's larger uniform table is not an
-// excuse to access a non-existent guest bank or index an invalid array slot.
+// excuse to access a missing reflected bank or an invalid array slot.
 static void VerifyNativeCbufBankRefusal() {
-    for (const u32 bank : {8U, 255U}) {
+    for (const u32 bank : {7U, 8U, 255U}) {
         Shader::ObjectPool<Shader::IR::Inst> pool{8};
         Shader::IR::Block block{pool};
         Shader::IR::Program program{};

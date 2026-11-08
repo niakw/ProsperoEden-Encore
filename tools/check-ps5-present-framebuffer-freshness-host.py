@@ -229,6 +229,9 @@ guard = "if (info.image == VK_NULL_HANDLE || info.image_view == VK_NULL_HANDLE)"
 assert guard in display_method
 assert display_method.index(guard) < display_method.index("query_cache.NotifySegment(false);")
 assert "F07 C04 accelerated framebuffer rejects missing Vulkan handles" in generator
+assert "info.sample_count = image_view->Samples();" in display_method
+assert "info.sampled_format = MaxwellToVK::SurfaceFormat(" in display_method
+assert "if (info.sampled_format == VK_FORMAT_UNDEFINED)" in display_method
 mock = r"""
 #include <cassert>
 #include <cstdint>
@@ -240,20 +243,37 @@ using DAddr = std::uint64_t;
 using u32 = std::uint32_t;
 using VkImage = std::uint64_t;
 using VkImageView = std::uint64_t;
+using VkFormat = std::uint32_t;
+using VkSampleCountFlagBits = std::uint32_t;
+constexpr VkFormat VK_FORMAT_UNDEFINED = 0;
+constexpr VkSampleCountFlagBits VK_SAMPLE_COUNT_1_BIT = 1;
+enum class FormatType { Optimal };
+struct MockDevice {};
+namespace MaxwellToVK {
+struct SurfaceResult { VkFormat format; };
+inline SurfaceResult SurfaceFormat(const MockDevice&, FormatType, bool, VkFormat source) {
+    return {source};
+}
+}
 #define VK_NULL_HANDLE 0
 namespace Shader { enum class TextureType { Color2D }; }
 namespace Tegra { struct FramebufferConfig {}; }
 struct FramebufferTextureInfo {
     VkImage image{};
     VkImageView image_view{};
+    VkFormat sampled_format{VK_FORMAT_UNDEFINED};
+    VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};
     u32 width{}, height{}, scaled_width{}, scaled_height{};
 };
 struct ImageView {
     VkImage image{};
     VkImageView view{};
+    VkFormat format{37};
+    VkSampleCountFlagBits sample_count{4};
     struct {u32 width{50},height{25};} size;
     VkImage ImageHandle() const {return image;}
     VkImageView Handle(Shader::TextureType) const {return view;}
+    VkSampleCountFlagBits Samples() const {return sample_count;}
 };
 struct Cache {
     std::mutex mutex;
@@ -267,6 +287,7 @@ struct Query {unsigned notices{};void NotifySegment(bool x) {assert(!x);++notice
 struct Resolution{u32 ScaleUp(u32 x) const{return x*2;}};
 namespace Settings {struct Values{Resolution resolution_info;};inline Values values{};}
 struct RasterizerVulkan {
+    MockDevice device{};
     GpuMemory* gpu_memory{};
     Cache texture_cache;
     Query query_cache;
@@ -306,7 +327,13 @@ int main(){
     assert(ok->width==50 && ok->height==25 &&
            ok->scaled_width==100 && ok->scaled_height==50);
 #ifdef PS5_NATIVE
+    assert(ok->sampled_format==37 && ok->sample_count==4);
     assert(raster.query_cache.notices==1 && memory.flush==4);
+    // A view with no renderable optimal VkFormat must not be promoted
+    // to the present queue despite its nonnull image and view handles.
+    source.format = VK_FORMAT_UNDEFINED;
+    auto missing_format = raster.AccelerateDisplay(config,1234,0);
+    assert(!missing_format && raster.query_cache.notices==1 && memory.flush==5);
 #else
     assert(raster.query_cache.notices==3 && memory.flush==0);
 #endif

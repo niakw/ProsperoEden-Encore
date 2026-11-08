@@ -19,6 +19,17 @@ assert method.index(start)<method.index('nvmap.CreateHandle(size, handle)')
 assert method.index(start)<method.index('LockForMapDeviceAddressSpace(')
 assert method.index(start)<method.index('m_memory.push_back(id);')
 assert 'm_memory.push_back(id);' in method
+# P1.2: lock may succeed while classifying the pages as I/O rather than
+# normal guest RAM. Verify the actual maintained worker rejects that case
+# before allocating NVMap backing and rolls back both resource owners.
+locked = method.index('const Result locked = page_table.LockForMapDeviceAddressSpace(')
+io_guard = method.index('    if (is_io) {', locked)
+native_alloc = method.index('const auto allocated = handle->Alloc(')
+assert locked < io_guard < native_alloc < method.index('m_memory.push_back(id);')
+io_rollback = method[io_guard:native_alloc]
+assert 'page_table.UnlockForDeviceAddressSpace(begin, size)' in io_rollback
+assert 'nvmap.FreeHandle(handle->id, false)' in io_rollback
+assert 'Kernel::ResultNotImplemented' in io_rollback
 cpp=r'''
 #include <cassert>
 #include <cstdint>

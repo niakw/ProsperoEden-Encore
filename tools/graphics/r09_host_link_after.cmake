@@ -62,6 +62,27 @@ foreach(_r09_header IN ITEMS
         "${_r09_compat}/${_r09_header}" COPYONLY)
 endforeach()
 
+# Reduce known compiler-warning floods only in the R09 Linux host build.
+# Never edit the SHA-pinned Eden upstream directory or the native PS5 headers.
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}"
+        "${ENCORE_R09_ROOT}/tools/graphics/r09_prepare_host_warning_overlays.py"
+        "${_r09_vendor}/sources/eden/src" "${_r09_compat}"
+    RESULT_VARIABLE _r09_warning_patch_rc
+    OUTPUT_VARIABLE _r09_warning_patch_out ERROR_VARIABLE _r09_warning_patch_err)
+if(NOT _r09_warning_patch_rc EQUAL 0)
+    message(FATAL_ERROR
+        "R09 host-only warning overlay refused: ${_r09_warning_patch_out} ${_r09_warning_patch_err}")
+endif()
+message(STATUS "${_r09_warning_patch_out}")
+foreach(_r09_target IN ITEMS
+        common core video_core audio_core frontend_common
+        hid_core input_common shader_recompiler)
+    if(TARGET ${_r09_target})
+        target_include_directories(${_r09_target} BEFORE PRIVATE "${_r09_compat}")
+    endif()
+endforeach()
+
 # The scheduler/device/allocator are ABI-coupled with maintained neural
 # owners. Remove the three pristine implementations, never compile duplicates.
 get_target_property(_r09_video_sources video_core SOURCES)

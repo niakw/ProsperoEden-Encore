@@ -11,13 +11,13 @@
 
 ## Warning inventory from successful GitHub host link log
 
-A total of **903 compiler warnings**, plus one shader warning and a final Node.js action deprecation warning (counting warning-bearing log lines as recorded, with script warnings varying by format). Most occurrences are repeated includes of the same pinned source headers.
+Across the successful run, **903 warning-bearing log lines** were recorded, including the shader-tool warning and an Actions Node.js deprecation warning. Most occurrences are repeated includes of the same pinned source headers.
 
-| Count | Warning origin | Status after targeted source patch |
+| Count | Warning origin | Status / treatment |
 | ---: | --- | --- |
-| 594 | `common/page_table.h`: `-Winvalid-constexpr` on `std::atomic` operations | Removed incorrect `constexpr` from `Store`, `MarkRasterizerCached`, `MarkDebug`. Atomic behavior unchanged; not yet recompiled under the latest vendor. |
-| 293 | `core/hle/kernel/k_address_arbiter.h`: `-Wswitch` for ABI tag 3 | Moved the existing `WaitIfEqual64` ABI dispatch before `switch`, with identical value and call; upstream enum untouched. Not yet recompiled. |
-| 1 | `video_core/macro.h`: `[[nodiscard]]` on a `void` setter | Removed invalid attribute. Not yet recompiled. |
+| 594 | `common/page_table.h`: `-Winvalid-constexpr` on `std::atomic` operations | Host-only overlay removes invalid `constexpr` on three atomic writers; pristine vendored Eden remains unchanged. Reduction not yet recompilation-verified. |
+| 293 | `core/hle/kernel/k_address_arbiter.h`: `-Wswitch` for ABI tag 3 | Host-only overlay decodes ABI tag 3 before the `switch`, preserving the native call without modifying pinned `svc_types.h`. Not yet recompiled. |
+| 1 | `video_core/macro.h`: `[[nodiscard]]` on a `void` setter | Host-only overlay removes invalid attribute; pinned source unmodified. Not yet recompiled. |
 | 5 | Dynarmic: unused parameters | Existing third-party code; no behavior-changing edits without dedicated tests. |
 | 3 | Dynarmic: excessive stack usage | Needs stack-budget/performance investigation, not a no-op patch. |
 | 3 | GCC/libstdc++ `std::variant`: maybe-uninitialized in cheat VM | Investigate initialization and compiler sensitivity; do not suppress or claim fixed. |
@@ -27,7 +27,7 @@ A total of **903 compiler warnings**, plus one shader warning and a final Node.j
 | 1 | Actions Node.js 20 deprecation | Existing pinned checkout and upload-artifact actions; requires reviewed version updates. |
 
 **Do not treat warning count reduction as proven until another build actually runs.**
-The three first fixes address the sources of **888 repeated warning occurrences**. An exact new count is unavailable because **no long full-Eden build was launched** after this vendor change.
+The three host-only overlays target the sources of **888 repeated warning occurrences**. An exact new count is unavailable because **no long full-Eden build has been launched** after these modifications. Upstream sources remain pristine, as required by the integrity gates.
 
 ## Workflow policy
 
@@ -40,3 +40,17 @@ Do not mask warnings globally or reclassify the original build as a DLSS-NR
 full-network execution.
 
 No NVIDIA DLL, extracted model or private capture is stored on GitHub.
+
+## Native HUD shader integrity discovered by the post-commit gates
+
+The 2026-11-07 palette-aware GLSL had a source hash newer than the baked
+Vulkan HUD fragment bytecode. A short isolated glslang/Vulkan 1.1 build
+[#42468523352](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42468523352)
+compiled and validated the real shader. The new validated SPIR-V is pinned
+in the vendor, without rebuilding PS5 or the full Eden runtime.
+
+- GLSL SHA-256: `3f5287326b7554164449f5f849f46aae3d2f69ff3a0b4c5c822055bd1877c6d6`
+- SPIR-V SHA-256: `029a4bb7c594cc3beadefc731a67768e9f80987ae10a2cb20a5a197a8ebea10b`
+- SPIR-V size: 58,092 bytes; compiled with `glslangValidator -V --target-env vulkan1.1`, validated by `spirv-val`.
+- The strict native generator now checks **both** source and compiled bytecode digests.
+- The original 72-source neural Vulkan host checks continue separately; no 152-operation authentic GPU inference has been established.

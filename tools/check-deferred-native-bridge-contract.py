@@ -289,6 +289,25 @@ print("ENCORE_M06_MAINTAINED_MEMORY_SOURCE_PARITY_PASS")
 # the newer FIFO worker-bind latch. This is a deliberate integration variant,
 # not a reason to silently change the guest draw path.
 original_m07 = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+# M07 was pinned before native MSAA. This later, independently reviewed
+# Vulkan overlay is exactly reversible; first match the currently SELECTED
+# vendor source blob, then revert its complete, context-anchored hunks.
+# The original historical Task/Mesh SHA checks below remain unchanged.
+post_msaa_receipt = json.loads(
+    (root / "tools/fixtures/p24-post-msaa-reversible-deltas.json").read_text())
+assert post_msaa_receipt["schema_version"] == 1
+msaa_owner = next(item for item in post_msaa_receipt["files"]
+                  if item["path"] == "vulkan_rasterizer.cpp")
+def m07_git_blob(text):
+    data = text.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\\0" + data).hexdigest()
+assert m07_git_blob(original_m07) == msaa_owner["post_change_raw_blob_sha"], (
+    "M07 unreviewed post-P24 MSAA rasterizer source")
+m07_premesh_source = original_m07
+# Post-P24 MSAA spans were recorded AFTER the native KeplerCompute pointer
+# change. The pointer guard belongs to the separate, older ABI receipt.
+# Normalize the pointer ABI FIRST, matching the same order as the
+# strict Vulkan fork parity check.
 # M07 was created before the reviewed P2.4 Task/Mesh Vulkan deltas.
 # Reverse exactly the separately SHA-pinned mesh hunks to compare the
 # historical inactive variant; NEVER remove mesh functionality from shipping.
@@ -314,6 +333,10 @@ native_body = native_body.replace(null_guard, "").replace(
     "kepler_compute->regs", "kepler_compute.regs").replace(
     "*kepler_compute, *gpu_memory", "kepler_compute, *gpu_memory")
 m07_before_mesh = original_m07[:native_start] + native_body + original_m07[native_end:]
+for hunk in reversed(msaa_owner["reverse_hunks"]):
+    assert m07_before_mesh.count(hunk["after"]) == 1, (
+        "M07 post-P24 MSAA reversible owner drift")
+    m07_before_mesh = m07_before_mesh.replace(hunk["after"], hunk["before"])
 reviewed_bytes = m07_before_mesh.encode("utf-8")
 reviewed_sha = hashlib.sha1(b"blob " + str(len(reviewed_bytes)).encode() + b"\0" + reviewed_bytes).hexdigest()
 assert reviewed_sha == mesh_rasterizer["maintained_blob_sha"], (

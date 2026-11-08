@@ -794,14 +794,25 @@ print("ENCORE_SHADER_SURFACE_SOURCE_OWNER_PASS sources=3")
 # are versioned sources selected into the disposable build tree by the Vulkan
 # recipe. Exact source ownership is not a successful native GPU execution.
 native_vk_sources = (
-    "vulkan_device.cpp", "vulkan_memory_allocator.cpp", "vulkan_query_cache.cpp", "vulkan_blit_screen.cpp",
+    "vulkan_device.cpp", "vulkan_memory_allocator.cpp", "vulkan_query_cache.cpp",
     "vulkan_window_adapt_pass.cpp", "vulkan_wrapper.cpp",
 )
 for unit in native_vk_sources:
     rel = "eden-vulkan/" + unit
     assert rel in graph and (active / rel).is_file(), ("uncatalogued Vulkan unit", rel)
     assert '"${PORT_BUILD_DIR}/' + unit + '"' in vulkan_recipe, ("source selection lost", unit)
-print("ENCORE_VULKAN_DEVICE_PRESENT_OWNER_PASS", f"sources={len(native_vk_sources)}")
+# The blit unit is a reviewed vendor reference but the ACTUAL PS5-native
+# CMake selects the R08 adapter, not the vendor copy. Do not falsely claim
+# the vendor .cpp is compiled: verify the explicit build selection and
+# the adapter's real source before counting this presentation owner.
+blit_ref = "eden-vulkan/vulkan_blit_screen.cpp"
+assert blit_ref in graph and (active / blit_ref).is_file()
+assert '"${EDEN_PORT_DIR}/vulkan_blit_screen_r08.cpp"' in vulkan_recipe
+assert (root / "headless/vulkan_blit_screen_r08.cpp").is_file()
+assert '"${PORT_BUILD_DIR}/vulkan_blit_screen.cpp"' not in vulkan_recipe
+print("ENCORE_VULKAN_DEVICE_PRESENT_OWNER_PASS",
+      f"maintained_selected={len(native_vk_sources)}",
+      "ps5_blit_adapter=1", "vendor_blit_reference_not_selected=1")
 
 # Vulkan headers are shipped as an ABI-consistent set with the selected
 # maintained translation units; do not let include-root owners disappear.

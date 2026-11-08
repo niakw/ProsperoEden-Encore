@@ -60,8 +60,17 @@ assert 'const std::span<u8> mapped_data = data ? std::span<u8>{data, ci.size}' i
 assert 'GetSizeInBytes(framebuffer) * image_count' in original
 assert 'static_cast<std::size_t>(framebuffer.stride)' in original
 assert 'mapped_span.subspan(image_offset, linear_size)' in original
-assert 'renderer_vulkan/present/layer.cpp' in (root/'headless/vulkan.cmake').read_text()
-assert '"${PORT_BUILD_DIR}/vulkan_present_layer.cpp"' in (root/'headless/vulkan.cmake').read_text()
+# R342 replaced the transient generated layer with the maintained native
+# source. Verify the actual CMake owner, and execute that exact source below.
+cmake = (root/'headless/vulkan.cmake').read_text()
+assert 'renderer_vulkan/present/layer.cpp' in cmake
+assert '"${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"' in cmake
+native_present = (root/'headless/vulkan_present_layer_r24.cpp').read_text()
+native_refresh = refresh(native_present)
+assert 'buffer.Mapped().size() == CalculateBufferSize(framebuffer)' in native_refresh
+assert 'scheduler.Wait(*last_tick)' in native_refresh
+assert 'CreateStagingBuffer(device, framebuffer);' in native_refresh
+assert 'anti_alias.emplace<std::monostate>();' in native_refresh
 
 prefix=r'''
 #include <algorithm>
@@ -162,5 +171,6 @@ def run(label, function, expected_success):
         else:
             assert result.returncode!=0, (label,'original unexpectedly passed')
             print(label+': EXPECTED FAILURE, reused undersized stale buffer on stride increase')
-run('R330 corrected',refresh(updated),True)
+run('R330 maintained native source',native_refresh,True)
+run('R330 reconstructed legacy adapter',refresh(updated),True)
 run('Pinned original',refresh(original),False)

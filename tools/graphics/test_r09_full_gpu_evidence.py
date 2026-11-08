@@ -14,7 +14,7 @@ TOOL = ROOT / "tools/graphics/r09_verify_full_gpu_evidence.py"
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
-def run(folder, name, payload):
+def run(folder, name, payload, expected_reason=None):
     e = folder / "evidence.json"
     e.write_text(json.dumps(payload), encoding="utf-8")
     p = subprocess.run(
@@ -25,6 +25,8 @@ def run(folder, name, payload):
         capture_output=True, text=True, check=False)
     assert p.returncode == 20, (name, p.stdout, p.stderr)
     assert "R09_FULL_GPU_152_AND_REFERENCE_IMAGE_PASS" not in p.stdout
+    if expected_reason is not None:
+        assert expected_reason in p.stderr, (name, p.stdout, p.stderr)
     print("R09_FULL_GPU_EVIDENCE_NEGATIVE_PASS", name)
 
 def main():
@@ -59,7 +61,8 @@ def main():
                 for n, row in enumerate(rows)],
         }
         run(root, "empty-evidence", {})
-        run(root, "fake-readback", base)
+        run(root, "fake-readback", base,
+            "Original 599-tensor SHA-256 authenticity failed")
         fixture = dict(base, input_is_real_capture=False)
         run(root, "fixture-refused", fixture)
         truncated = dict(base, operations=base["operations"][:-1])

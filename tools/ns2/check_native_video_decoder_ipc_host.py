@@ -201,26 +201,43 @@ int main(){
  sync.values[9]=3;
  run.Pump();
  assert(sync.values[4]==3 && run.m_owner->writes==3 && run.m_outputs.back().eos);
+ // P1.3: a stalled fence may block its OWN image, never a later ready
+ // surface. The old FIFO-front Pump failed to produce image 17 here.
+ run.m_pending.push_back(Pic(600));
+ run.m_available.push_back({16,IGraphicsVideoDecoderSession::ReleaseFence{9,5}});
+ run.m_available.push_back({17,{}});
+ run.Pump();
+ assert(sync.values[4]==4 && run.m_owner->writes==4);
+ assert(run.m_outputs.back().image==17 &&
+        run.m_available.size()==1 && run.m_available.front().id==16 &&
+        !run.m_pending.size());
+ run.m_pending.push_back(Pic(601));
+ run.Pump();
+ assert(sync.values[4]==4 && run.m_pending.size()==1);
+ sync.values[9]=5;
+ run.Pump();
+ assert(sync.values[4]==5 && run.m_owner->writes==5 &&
+        run.m_outputs.back().image==16 && run.m_available.empty());
  // An unstarted or unconfigured decoder cannot emit a guest frame.
  run.m_pending.push_back(Pic(777));run.m_available.push_back({13,{}});
  run.m_started=false;run.Pump();
- assert(sync.values[4]==3 && run.m_owner->writes==3);
+ assert(sync.values[4]==5 && run.m_owner->writes==5);
  run.m_started=true;run.m_decoder.reset();run.Pump();
- assert(sync.values[4]==3 && run.m_owner->writes==3);
+ assert(sync.values[4]==5 && run.m_owner->writes==5);
  // Restore the valid codec: real RGB GPU maps require the tiled handoff.
  run.m_decoder=std::make_unique<FakeDecoder>();
  run.Pump();
- assert(sync.values[4]==4 && run.m_owner->writes==4);
+ assert(sync.values[4]==6 && run.m_owner->writes==6);
  run.m_owner->gpu=true;
  run.m_available.push_back({14,{}});run.m_pending.push_back(Pic(888));
  run.Pump();
- assert(sync.values[4]==5 && run.m_owner->writes==5 &&
+ assert(sync.values[4]==7 && run.m_owner->writes==7 &&
         run.m_owner->last[0]==0x5a && Tegra::Texture::swizzles==1);
  // NV12 is deliberately pitch-linear even when mapped by the GPU.
  run.m_owner->nv12=true;
  run.m_available.push_back({15,{}});run.m_pending.push_back(Pic(999));
  run.Pump();
- assert(sync.values[4]==6 && run.m_owner->writes==6 &&
+ assert(sync.values[4]==8 && run.m_owner->writes==8 &&
         run.m_owner->last[0]==0xa5 && Tegra::Texture::swizzles==1);
 }
 '''.replace('__ACTUAL_PUMP__',method)

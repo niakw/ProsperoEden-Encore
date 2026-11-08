@@ -22,8 +22,16 @@ mark = """    if (shader_notify) {
     }
 """
 guard_begin = ctor.index("    bool build_handed_off = false;")
-guard_end = ctor.index("    for (size_t stage = 0;", guard_begin)
+# A new forced-MSAA renderpass admission follows this RAII block in
+# production. Extract ONLY the bounded SCOPE_EXIT guard into the mock.
+# Treat the actual new renderpass owner as a separate positive source
+# contract: the worker still must never race its creation.
+guard_end = ctor.index("    };\n", guard_begin) + len("    };\n")
 guard = ctor[guard_begin:guard_end]
+renderpass_setup = ctor[guard_end:ctor.index("    for (size_t stage = 0;", guard_end)]
+assert renderpass_setup.count("if (key.state.forced_color_resolve)") == 1
+assert "native_render_pass = render_pass_cache.Get(MakeRenderPassKey(key.state, device));" in renderpass_setup
+assert ctor.index("native_render_pass = render_pass_cache.Get(") < ctor.index("    for (size_t stage = 0;")
 assert ctor.count(mark) == 1
 assert "SCOPE_EXIT {" in guard
 assert "if (!build_handed_off && shader_notify)" in guard

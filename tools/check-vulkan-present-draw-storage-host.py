@@ -96,6 +96,7 @@ RECORD
     CommandChunk* chunk=&chunks[0];
     unsigned switches{};
     unsigned invalidations{};
+    u64 recorded_command_serial{};
     // The production RecordWithUploadBuffer reset hook is part of the
     // extracted scheduler, even though this fixture tests accepted draws.
     void InvalidateState() { ++invalidations; }
@@ -164,6 +165,11 @@ int main() {
         std::vector<Event> old_events,new_events;
         old_scheduler.Drain(old_events);new_scheduler.Drain(new_events);
         assert(old_scheduler.switches==1 && new_scheduler.switches==1);
+        // Extracted Scheduler records one command-stream serial per actual
+        // enqueue attempt, including rollover. Native MSAA must not silently
+        // drop this owner epoch even in this presenter-only fixture.
+        assert(old_scheduler.recorded_command_serial > 0);
+        assert(new_scheduler.recorded_command_serial > 0);
         // Every scheduled draw was accepted: no false state invalidation.
         assert(old_scheduler.invalidations==0 && new_scheduler.invalidations==0);
         if(hud!=2) {

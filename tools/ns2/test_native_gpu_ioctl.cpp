@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Strict synthetic NVDRV reply fixtures. Tests the exact helper used by
-// the experimental nvhost_ctrl_gpu.cpp owner; no physical NVIDIA GPU needed.
+// the experimental nvhost_ctrl_gpu.cpp owner; no physical host GPU needed.
 #include <array>
 #include <cassert>
 #include <cstring>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verify a user-supplied NRMODEL1 against pinned upstream per-tensor SHA-256.
 
-Only public hashes are distributed here, never NVIDIA model weights.
+Only public hashes are distributed here, never proprietary learned weights.
 No GPU or PS5 build is performed. Any missing, corrupted, substituted,
 truncated, overlapping or misnamed tensor fails closed.
 """

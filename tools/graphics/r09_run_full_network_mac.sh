@@ -14,10 +14,10 @@ Usage:
     "$HOME/Downloads/real-game-screenshot.png"
 
 Second argument optional: if omitted, capture the Mac screen locally.
-The user file must be a Windows NVIDIA DLL or ZIP containing it.
+The user file must be the supported Windows model DLL or a ZIP containing it.
 This script executes the real full-network ENTRYPOINT (not the old R09
 partial fixture runner). A finished readback is not proof of 152 correct
-operations, nor an independently validated NVIDIA-quality image.
+operations, nor an independently validated reference-quality image.
 Requires: macOS, Docker (running), gh CLI (authenticated), python3.
 EOF
 }
@@ -89,7 +89,7 @@ gh auth status --hostname github.com >/dev/null 2>&1 || {
   echo "R09_MAC_GH_NOT_AUTHENTICATED: run gh auth login first." >&2
   exit 67
 }
-# Fail before copying the private 165 MB NVIDIA DLL or rebuilding the
+# Fail before copying the private large model DLL or rebuilding the
 # emulated Linux image if the public host link is not complete/successful.
 echo "R09_CHECKING_PINNED_PUBLIC_LINK_RUN=$linked_run"
 run_status="$(gh run view "$linked_run" -R "$github_repo" --json status --jq '.status')"
@@ -155,7 +155,7 @@ if zipfile.is_zipfile(src):
                  if not i.is_dir()
                  and pathlib.PurePosixPath(i.filename).name.lower() == "nvngx_dlssnr.dll"]
         if len(files) != 1 or files[0].file_size > 200_000_000:
-            raise SystemExit("R09_PRIVATE_ZIP_REQUIRES_ONE_BOUNDED_NVIDIA_DLL")
+            raise SystemExit("R09_PRIVATE_ZIP_REQUIRES_ONE_BOUNDED_MODEL_DLL")
         with archive.open(files[0]) as incoming, dst.open("xb") as out:
             shutil.copyfileobj(incoming, out)
 else:

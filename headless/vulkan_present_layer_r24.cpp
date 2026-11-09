@@ -219,7 +219,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
             (original?"dlssnr.bin":"dlssnr-small.bin");
         // R09 DLL import now runs at game admission in headless/main.cpp,
         // before this render thread starts. NEVER deserialize or extract
-        // 141 MiB of NVIDIA weight data on a guest frame. Cached data is
+        // a large proprietary model payload on a guest frame. Cached data is
         // preflighted by the native model owner, otherwise fail closed.
         const std::string model_path=Eden::FileExists(configured)?
             configured:extracted;

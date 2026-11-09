@@ -4,6 +4,11 @@ on:
     branches: [main]
     paths:
       - 'docs/i18n/**'
+      - 'docs/PS5_SYSTEM_LANGUAGE_POLICY.md'
+      - 'headless/prosperoeden/ui/lang/**'
+      - 'tools/check-english-regional-variants.py'
+      - 'tools/launcher/launcher.pot'
+      - 'headless/prosperoeden/pe/core/strings.cpp'
       - 'LANGUAGES.md'
       - 'README.md'
       - 'INSTALL.md'
@@ -17,7 +22,7 @@ permissions:
   contents: read
 jobs:
   user-guide-coverage:
-    name: Check 31 official PS5 choices and 29 localized manuals (no build)
+    name: Check 31 PS5 catalogs (including English variants) and 29 translated manuals
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -36,8 +41,13 @@ jobs:
             SUPPORT.md
             ACCESSIBILITY.md
             headless/prosperoeden/ui/lang
+            headless/prosperoeden/pe/core/strings.cpp
+            tools/check-english-regional-variants.py
+            tools/launcher
             assets
             LICENSE
             LICENSES
       - name: Validate available languages, localized safety guidance and links
         run: python3 -B docs/i18n/check_user_docs.py
+      - name: Validate separate US and UK English catalog spellings
+        run: python3 -B tools/check-english-regional-variants.py

@@ -11,6 +11,7 @@ frontend = (root / 'headless/prosperoeden/frontend.cpp').read_text()
 browse = (root / 'headless/prosperoeden/pe/ui/browse.cpp').read_text()
 services = (root / 'headless/prosperoeden/eden_services.cpp').read_text()
 launcher = (root / 'headless/prosperoeden/pe/ui/launcher.hpp').read_text()
+fake_services = (root / 'headless/prosperoeden/host/fake_services.cpp').read_text()
 lang_dir = root / 'headless/prosperoeden/ui/lang'
 
 quoted = lambda body: re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', body)
@@ -26,12 +27,24 @@ assert system_tags[2] == 'fr-FR', f'PS5 French must map to fr-FR, got {system_ta
 
 keys = array('kLanguageKeys', settings)
 catalogs = array('kLanguageCatalogTags', settings)
+labels = array('kLanguageLabels', settings)
+
+def numeric_array(name: str, text: str):
+    match = re.search(rf'{re.escape(name)}[^=]*=\s*\{{(.*?)\}};', text, re.S)
+    assert match, f'missing {name}'
+    return [int(x) for x in re.findall(r'\b\d+\b', match.group(1))]
+
+guest_languages = numeric_array('kLanguageSettings', settings)
+regions = numeric_array('kLanguageRegions', settings)
 assert len(keys) == len(catalogs) >= 18
 assert keys[2] == 'fr' and catalogs[2] == 'fr-FR', (keys[2], catalogs[2])
 
 po = sorted(lang_dir.glob('*.po'))
 assert len(po) == 29, f'expected 29 official PS5 launcher catalogs, got {len(po)}'
 assert len(keys) == len(catalogs) == len(system_tags) == 31, 'official PS5 language choice count changed'
+assert len(labels) == len(guest_languages) == len(regions) == 31, 'PS5 language presentation and guest mappings differ'
+assert guest_languages[18:] == [1] * 13, 'PS5 UI-only locales must retain safe English guest fallback'
+assert all(0 <= region <= 6 for region in regions), 'invalid guest region index'
 assert set(catalogs) == set(system_tags), 'launcher choices must match the PS5 system language tags exactly'
 assert set(catalogs) - {'en-US', 'en-GB'} == {p.stem for p in po}, 'selected locale missing its PO catalog'
 assert len(set(catalogs)) == len(catalogs), 'duplicate catalog selector'
@@ -53,6 +66,7 @@ assert 'EDEN_LANGUAGE launcher-restart=1' in frontend, 'language restart is not 
 assert 'Requested launcher catalog unavailable:' in frontend, 'missing catalog is not reported'
 assert 'restart_requested_ = true;' in browse, 'Settings > Language does not request live launcher reload'
 assert 'bool restart_requested() const' in launcher, 'launcher restart contract missing'
+assert 'language < static_cast<int>(std::size(kLanguageRegions))' in fake_services, 'host preview still limits PS5 languages to 18'
 assert 'static const std::vector<std::string> labels = Labels' not in services, 'translated labels survive a launcher restart'
 assert 'return language_labels_;' in services and 'return resolution_labels_;' in services, 'translated labels are not per-service caches'
 

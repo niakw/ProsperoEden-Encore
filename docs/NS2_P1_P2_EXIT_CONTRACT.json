@@ -191,11 +191,20 @@
         "tools/ns2/check_native_spirv_xfb_partition_host.py",
         "tools/check-ns2-spirv-host.py"
       ],
-      "positive": "Required transform-feedback output partitions produce the right stage-specific SPIR-V.",
-      "negative": "Invalid partitions and write masks do not write beyond the declared stream.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Real split XFB VertexB SPIR-V, dual environment spirv-val and real Fragment stage refusal are now in mandatory validation; awaiting same-SHA run and final stream/patch compatibility evidence.",
+      "positive": "Reviewed split VertexB XFB partitions write four real generic components to two disjoint vec2 SPIR-V output streams, validated under SPIR-V 1.5 and Vulkan 1.2.",
+      "negative": "Overlapping or out-of-bounds XFB byte partitions, invalid varying counts and unsupported Fragment XFB stage reject before unsafe output or module publication.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "spirv-val"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_spirv_xfb_partition_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

@@ -338,37 +338,24 @@ Still internal or not exposed include examples such as:
 The goal is **complete practical PS5 tuning**, not a one-for-one copy of every Windows engineering switch. Additional Eden controls should be exposed only when they have a real PS5 use case and a safe default.
 
 
-## Neural Rendering et composition d'image
+## Neural Rendering and image composition
 
-Le Neural Rendering constitue un moteur distinct du filtre d'upscaling.
-Les **six choix directs** du menu sont :
+Neural Rendering is a **separate image-processing engine**, not another spatial upscaling filter. The six directly selectable modes are:
 `off`, `a4k_detail`, `a4k_soft`, `a4k_denoise`,
-`dlss_nr_original` et `dlss_nr_compact`.
+`dlss_nr_original`, and `dlss_nr_compact`.
 
-Les trois A4K utilisent les shaders Vulkan existants correspondant
-aux anciens identifiants internes 7/8/9, mais **ne figurent plus
-dans la liste des upscalers**. Le DLSS-NR Original/Compact conserve
-le calcul et les paramètres propres au réseau neuronal RDNA2.
-L'intensité DLSS-NR (0–100 %) est visible mais non modifiable
-tant qu'aucun des deux DLSS-NR n'est sélectionné.
+The three A4K modes use their existing Vulkan shaders (formerly identified internally as 7/8/9), but no longer appear in the upscaling-filter list. Original and Compact neural modes have separate RDNA2 model-processing paths. Their 0–100% intensity setting is visible, but cannot be edited unless one of those two modes is selected.
 
-- NR : `off` par défaut, y compris après installation.
-- Frame Generation : `off` par défaut, indépendant.
-- Upscaling : filtre spatial distinct, sans modes A4K.
-- AA : None/FXAA/SMAA ; composition avec MSAA forcé bloquée
-  tant qu'elle n'est pas prouvée pour NR sur PS5.
-- NR et Frame Generation ensemble : non validés, donc refusés.
-- Vulkan requis pour A4K et DLSS-NR sélectionnés.
-- Le modèle et l'intensité ne constituent pas un profil de performance
-  ni une preuve d'image DLSS-NR déjà rendue sur PS5.
+- **Neural Rendering:** `off` by default, including on a new installation.
+- **Frame Generation:** independently `off` by default.
+- **Upscaling:** a separate spatial filter; it does not include the A4K modes.
+- **Anti-aliasing:** None/FXAA/SMAA are distinct; forced MSAA composition is not enabled for Neural Rendering without physical-console proof.
+- **Neural Rendering + Frame Generation:** the combined mode is not validated and is therefore rejected.
+- **Renderer:** selecting an A4K or learned-model mode requires Vulkan.
+- **Evidence boundary:** selecting a model or intensity is not a performance preset and does not demonstrate that an authentic neural image has already been rendered on PS5.
 
-JSON des préférences réelles : `video.neural_rendering` (une des
-six clés) et `video.neural_strength` (0–100).
-Même syntaxe pour `games.<TITLE_ID>` ;
-l'absence de clé par jeu hérite du global.
-Les anciens filtres `anime4k_3d`, `anime4k_soft`,
-`anime4k_denoise` sont migrés vers les trois nouveaux modes NR.
-La valeur héritée `neural_rendering:rdna2` est migrée selon
-l'ancien champ `neural_model`.
+The real preference keys are `video.neural_rendering` (one of the six modes) and `video.neural_strength` (0–100). Per-game overrides use the same keys under `games.<TITLE_ID>`; missing per-game keys inherit the global settings.
 
-Voir `docs/ENCORE_R09_NEURAL_RENDERING_UI_OVERRIDES.md`.
+Legacy filters `anime4k_3d`, `anime4k_soft`, and `anime4k_denoise` migrate to the corresponding Neural Rendering modes. The older `neural_rendering:rdna2` value is migrated according to the previous `neural_model` field.
+
+See [Neural Rendering UI and override behavior](docs/ENCORE_R09_NEURAL_RENDERING_UI_OVERRIDES.md).

@@ -1482,7 +1482,10 @@ GameLanguage LanguageFor(const std::string& path, uint64_t title_id, int choice)
     GameLanguage result{tr(Eden::kLanguageLabels[choice < 18 ? choice : 0]), {}};
     if (used == chosen) return result;
     result.label = tr("Another language");
-    for (std::size_t i = 0; i < std::size(Eden::kLanguageSettings); ++i)
+    // Only the legacy 18 selectors have distinct, supported guest-language enums.
+    // The 13 new PS5 interface locales all map to English; scanning those as
+    // guest-language names would falsely label an English game "Vietnamese".
+    for (std::size_t i = 0; i < 18; ++i)
         if (Eden::kLanguageSettings[i] == used) result.label = tr(Eden::kLanguageLabels[i]);
     result.note = fill(tr("{0} not available"), {tr(Eden::kLanguageLabels[choice])});
     return result;

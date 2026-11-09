@@ -397,7 +397,8 @@ void Launcher::draw_settings(Canvas &c)
                      update_info_.summary}};
         break;
     case kLanguage:
-        about = tr("The language games use when they offer it.");
+        about = prefs_.language < 18 ? tr("The language games use when they offer it.")
+                                     : tr("Choose your preferred language");
         lines = {{tr("LANGUAGE"), pick(services_.language_labels(), prefs_.language)},
                  {tr("REGION"), services_.language_region(prefs_.language)}};
         break;

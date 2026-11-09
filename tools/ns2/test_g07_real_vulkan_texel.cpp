@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
     native_qmd.storage_buffers.push_back({0x10000U, 64U, true, true});
     VkDescriptorBufferInfo storage{};
     unsigned bound_count{}, rollback_count{};
-    const auto mapped = [](std::uint64_t va, std::uint32_t bytes) {
+    const auto qmd_mapped = [](std::uint64_t va, std::uint32_t bytes) {
         return va == 0x10000U && bytes == 64U;
     };
     const auto missing_map = [](std::uint64_t, std::uint32_t) {
@@ -290,7 +290,7 @@ int main(int argc, char** argv) {
         storage = {};
     };
     Check(!native_qmd.StageVulkanBufferBindings(
-              mapped, unused_uniform, bind_storage, rollback),
+              qmd_mapped, unused_uniform, bind_storage, rollback),
           "image-mode QMD3 staged without pinned image descriptors");
     Check(bound_count == 0 && rollback_count == 0,
           "unapproved image binding side effect");
@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
           "unmapped buffer published a descriptor");
     native_qmd.storage_buffers[0].known_size = false;
     Check(!native_qmd.StageVulkanBufferBindings(
-              mapped, unused_uniform, bind_storage, rollback, true),
+              qmd_mapped, unused_uniform, bind_storage, rollback, true),
           "unknown-size QMD3 storage accepted");
     native_qmd.storage_buffers[0].known_size = true;
     const auto refuse_storage = [](std::uint32_t, std::uint64_t,
@@ -309,12 +309,12 @@ int main(int argc, char** argv) {
         return false;
     };
     Check(!native_qmd.StageVulkanBufferBindings(
-              mapped, unused_uniform, refuse_storage, rollback, true),
+              qmd_mapped, unused_uniform, refuse_storage, rollback, true),
           "missing Vulkan SSBO handle staged");
     Check(rollback_count == 1 && storage.buffer == VK_NULL_HANDLE,
           "failed storage bind did not roll back exactly once");
     Check(native_qmd.StageVulkanBufferBindings(
-              mapped, unused_uniform, bind_storage, rollback, true),
+              qmd_mapped, unused_uniform, bind_storage, rollback, true),
           "real QMD3 image-mode SSBO staging");
     Check(bound_count == 1 && storage.buffer == buffer &&
               storage.range == 64 && rollback_count == 1,

@@ -36,6 +36,8 @@ def numeric_array(name: str, text: str):
 
 guest_languages = numeric_array('kLanguageSettings', settings)
 regions = numeric_array('kLanguageRegions', settings)
+preview_labels = array('kLanguageLabels', fake_services)
+preview_regions = numeric_array('kLanguageRegions', fake_services)
 assert len(keys) == len(catalogs) >= 18
 assert keys[2] == 'fr' and catalogs[2] == 'fr-FR', (keys[2], catalogs[2])
 
@@ -43,6 +45,8 @@ po = sorted(lang_dir.glob('*.po'))
 assert len(po) == 29, f'expected 29 official PS5 launcher catalogs, got {len(po)}'
 assert len(keys) == len(catalogs) == len(system_tags) == 31, 'official PS5 language choice count changed'
 assert len(labels) == len(guest_languages) == len(regions) == 31, 'PS5 language presentation and guest mappings differ'
+assert preview_labels == labels, 'host preview must expose exactly the same 31 PS5 labels as the native launcher'
+assert preview_regions == regions, 'host preview regions have drifted from the native launcher'
 assert guest_languages[18:] == [1] * 13, 'PS5 UI-only locales must retain safe English guest fallback'
 assert all(0 <= region <= 6 for region in regions), 'invalid guest region index'
 assert set(catalogs) == set(system_tags), 'launcher choices must match the PS5 system language tags exactly'

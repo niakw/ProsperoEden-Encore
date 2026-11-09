@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **설정:** [설정](SETTINGS.ko-KR.md) · [문제 해결](TROUBLESHOOTING.ko-KR.md) · [지원](SUPPORT.ko-KR.md) · [접근성](ACCESSIBILITY.ko-KR.md) · [Languages](../../LANGUAGES.md)
+>
+> 마지막으로 실제 컴파일된 공개 PS5 패키지는 2026년 10월 15일 버전입니다. 10월 30일 공개판은 복사본입니다. 새 사전 출시 초안에는 실행 파일이나 검증된 2세대 콘솔 게임 호환성이 포함되지 않습니다.
+
 # Prospero.Eden Encore — 기존 버전에서 이전하기 (한국어)
 
 [← 한국어](README.ko.md) · [영어 전체 설치 안내](../../INSTALL.md) · [모든 언어](../../LANGUAGES.md)

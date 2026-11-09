@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **設定:** [設定](SETTINGS.ja-JP.md) · [トラブルシューティング](TROUBLESHOOTING.ja-JP.md) · [サポート](SUPPORT.ja-JP.md) · [アクセシビリティ](ACCESSIBILITY.ja-JP.md) · [Languages](../../LANGUAGES.md)
+>
+> 実際にコンパイルされた最後の公開 PS5 パッケージは 2026 年 10 月 15 日版です。10 月 30 日の公開は同じパッケージの複製です。新しいプレリリースの下書きには実行バイナリも第二世代ゲームの実機動作保証もありません。
+
 # Prospero.Eden Encore — 元の版からの移行と更新 (日本語)
 
 [← 日本語](README.ja.md) · [英語の完全なインストールガイド](../../INSTALL.md) · [すべての言語](../../LANGUAGES.md)

@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Instellingen:** [Instellingen](SETTINGS.nl-NL.md) · [Problemen oplossen](TROUBLESHOOTING.nl-NL.md) · [Ondersteuning](SUPPORT.nl-NL.md) · [Toegankelijkheid](ACCESSIBILITY.nl-NL.md) · [Languages](../../LANGUAGES.md)
+>
+> Het laatste werkelijk gecompileerde openbare PS5-pakket dateert van 15 oktober 2026. De publicatie van 30 oktober was een kopie. Het nieuwe prereleaseconcept bevat geen uitvoerbare bestanden en geen bevestigde ondersteuning voor games van de tweede generatie op de console.
+
 # Prospero.Eden Encore — Overstappen vanaf het oorspronkelijke project (Nederlands)
 
 [← Nederlands](README.nl.md) · [Volledige Engelse installatiehandleiding](../../INSTALL.md) · [Alle talen](../../LANGUAGES.md)

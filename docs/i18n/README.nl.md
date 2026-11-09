@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Instellingen:** [Instellingen](SETTINGS.nl-NL.md) · [Problemen oplossen](TROUBLESHOOTING.nl-NL.md) · [Ondersteuning](SUPPORT.nl-NL.md) · [Toegankelijkheid](ACCESSIBILITY.nl-NL.md) · [Languages](../../LANGUAGES.md)
+>
+> Het laatste werkelijk gecompileerde openbare PS5-pakket dateert van 15 oktober 2026. De publicatie van 30 oktober was een kopie. Het nieuwe prereleaseconcept bevat geen uitvoerbare bestanden en geen bevestigde ondersteuning voor games van de tweede generatie op de console.
+
 <table width="100%">
   <tr><td align="center">
     <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="../../README.md">English</a> &nbsp; · &nbsp; <a href="../../README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>

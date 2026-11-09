@@ -1477,8 +1477,8 @@ struct GameLanguage {
 GameLanguage LanguageFor(const std::string& path, uint64_t title_id, int choice) {
     const int chosen = Eden::kLanguageSettings[choice];
     const int used = eden_game_language(path.c_str(), Eden::AssetsPath("keys").c_str(), title_id, chosen);
-    // Additional launcher-only languages use a supported English guest fallback.
-    // Do not falsely describe a game's actual language as Hindi/Bengali/etc.
+    // The 13 additional official PS5 interface locales use a supported English
+    // guest-language fallback. Never label the game's language as the chosen UI locale.
     GameLanguage result{tr(Eden::kLanguageLabels[choice < 18 ? choice : 0]), {}};
     if (used == chosen) return result;
     result.label = tr("Another language");

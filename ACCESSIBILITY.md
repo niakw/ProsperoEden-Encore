@@ -1,6 +1,6 @@
 # Accessibility — Eden Encore
 
-> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
+> **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 Eden Encore is designed to be used with a controller on a television. Accessibility is part of the native launcher, not a claim that every emulated Nintendo Switch game is accessible or that the PS5 system's accessibility services automatically work inside Encore.

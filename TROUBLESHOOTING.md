@@ -1,6 +1,6 @@
 # Troubleshooting — Prospero.Eden Encore
 
-> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
+> **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 [← Main README](README.md) · [Installation / upgrading](INSTALL.md) · [Languages](LANGUAGES.md) · [Support](SUPPORT.md)
@@ -40,7 +40,7 @@ Encore and the original native ProsperoEden **share application ID `PPSA99008`**
 
 ## Launcher stays in English
 
-The **language menu must offer exactly 31 official PS5 system language/region choices**, backed by **29** `ui/lang/*.po` translation catalogs. All official choices are selectable. If a new build exposes more or fewer choices, this is a regression against the [Sony console-language reference](https://www.playstation.com/fr-fr/legal/language-support/).
+The **language menu must offer exactly 31 official PS5 system language/region choices**, backed by **31** `ui/lang/*.po` translation catalogs. All official choices are selectable. If a new build exposes more or fewer choices, this is a regression against the [Sony console-language reference](https://www.playstation.com/fr-fr/legal/language-support/).
 
 Select **Settings → Language**. If the selected language is ignored after a manual FTP upgrade, reinstall the **entire application directory including `ui/lang/`**, and follow [the old-development-language-override checks](INSTALL.md#if-encore-is-set-to-french-but-the-launcher-stays-in-english). Do not remove unknown files blindly.
 

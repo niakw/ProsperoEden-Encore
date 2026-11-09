@@ -1,5 +1,5 @@
 <a id="encore"></a>
-> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
+> **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 <table width="100%">
   <tr><td align="center">
@@ -159,7 +159,7 @@ Changing to external storage changes the **root**, not the subdirectory layout. 
 | **Video profiles** | **Minimum → Recommended → High → Ultra**; Custom after manual adjustment |
 | **Safe Launch** | Conservative OpenGL, 1× internal resolution, 1080p, bilinear, handheld, 60 Hz and mods off for that run only |
 | **Controls** | Native launcher mapping profiles, vibration and deadzones |
-| **Languages** | Exactly **31 PS5 system language/region choices**, backed by 29 locale catalogs; no extra language options beyond Sony's official list |
+| **Languages** | Exactly **31 PS5 system language/region choices**, backed by 31 locale catalogs, including US and UK English; no extra language options beyond Sony's official list |
 | **Visual tuning** | Resolution, filters, upscaling, sharpening and anti-aliasing options |
 
 Safe Launch does **not** erase saves or permanently overwrite preferences. **Game-specific action binding** is distinct from the launcher's physical controller mapping, and is not yet fully proven for the main match test.
@@ -334,7 +334,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 - Added/extended animated **3D game-case** launch artwork with authentic front/back scans where present, and native reconstruction from available art for missing sides.
 - Introduced/refined **Minimum / Recommended / High / Ultra / Custom** per-title video presets, override rules, manual graphics options and recovery-oriented **Safe Launch** for a single session.
 - Added launch-time settings for internal resolution, Vulkan/OpenGL, filtering, sharpening and AA, with conservative memory constraints rather than unqualified 4× promises.
-- Aligned the native launcher with the **31 official PS5 system language/region selections** and 29 maintained translation catalogs and improved complex/bidirectional text layout, fallback fonts, wrapping and glyph drawing.
+- Aligned the native launcher with the **31 official PS5 system language/region selections** and 31 maintained translation catalogs and improved complex/bidirectional text layout, fallback fonts, wrapping and glyph drawing.
 - Tuned font fitting, font scratch reuse, audio ring copy behavior, controller navigation, scene transitions and costly UI/media work.
 - Added/reviewed PS5-profile-avatar **read-only, async** retrieval paths; availability on every real console remains unverified.
 - Investigated PlayStation in-game glyph assets, per-game mods and physical button mapping; **universal PlayStation glyph replacement is not implemented**.

@@ -1,6 +1,6 @@
 # Installing Prospero.Eden Encore
 
-> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
+> **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 **First time here?** [Four-step start](README.md#start-here--install-in-four-steps) · [31 official PS5 language/region options](LANGUAGES.md) · [Français](docs/i18n/INSTALL.fr-FR.md) · [Español](docs/i18n/INSTALL.es-ES.md) · [Troubleshooting](TROUBLESHOOTING.md).
@@ -470,7 +470,7 @@ feature is described in the [separate collaborative roadmap](https://github.com/
 
 ## If Encore is set to French but the launcher stays in English
 
-The launcher source and installer require **29 official PS5 language catalog files** under `PPSA99008/ui/lang/`, including `fr-FR.po`. On a PS5 set to French, the first setup selects French automatically; changing **Settings → Language** later now rebuilds the launcher immediately so its catalog, fonts and cached labels switch together.
+The launcher source and installer require **31 official PS5 language catalog files** under `PPSA99008/ui/lang/`, including `fr-FR.po`. On a PS5 set to French, the first setup selects French automatically; changing **Settings → Language** later now rebuilds the launcher immediately so its catalog, fonts and cached labels switch together.
 
 Release builds also ignore the old development-only `language.txt` override. That prevents a stale test file from forcing `en-US` after an update.
 
@@ -478,7 +478,7 @@ For an older/manual FTP installation that stays English:
 
 1. reinstall the **complete** `PPSA99008` folder, including nested `ui/lang/`;
 2. remove any old test-only `language.txt` from the application folder if one was left by a development build;
-3. prefer `make install PS5_HOST=<address>` — the installer checks all 29 official PS5 language catalogues by SHA-256 after copying;
+3. prefer `make install PS5_HOST=<address>` — the installer checks all 31 official PS5 language catalogues by SHA-256 after copying;
 4. inspect `/data/prosperoeden/logs/stderr.log`: a healthy French launcher reports a line containing `EDEN_LANGUAGE ... tag=fr-FR catalog=fr-FR texts=...`.
 
 ---

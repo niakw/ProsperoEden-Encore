@@ -1,6 +1,6 @@
 # Support
 
-> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
+> **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 ## Supported target
@@ -20,7 +20,7 @@ Please check:
 4. [docs/FORK_NOTES.md](docs/FORK_NOTES.md) for technical limitations and validation history.
 5. The launcher's **Diagnostics** screen for filesystem mode, free space, cache and logs.
 6. **Safe Launch** if one title no longer starts after changing settings.
-7. [INSTALL.md](INSTALL.md) if the PS5/Encore language is French but the launcher still appears in English; a complete install must include all 29 official PS5 `ui/lang/*.po` catalogs. Language-menu choices must match exactly the 31 Sony system selections.
+7. [INSTALL.md](INSTALL.md) if the PS5/Encore language is French but the launcher still appears in English; a complete install must include all 31 official PS5 `ui/lang/*.po` catalogs. Language-menu choices must match exactly the 31 Sony system selections.
 
 Useful reports include the Encore version/commit, PS5 firmware, renderer, relevant settings, exact
 steps, and sanitized logs.

@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Settings guide
 
-> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
+> **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 This guide explains the settings exposed by Encore on PS5, their defaults, and practical starting profiles.
@@ -194,7 +194,7 @@ Encore controls the emulated input mapping and its own PlayStation-style UI glyp
 
 ## Language
 
-The launcher exposes **exactly 31 official PS5 system language/region choices** and **29 translation catalogs** (English US/UK are separate system choices). This is a deliberate compatibility policy: **no extra launcher languages** beyond the [Sony PS5 system language list](https://www.playstation.com/fr-fr/legal/language-support/). All 31 are selectable; the historical first 18 keep their saved indices. See [LANGUAGES.md](LANGUAGES.md) for the full matrix and the [strict PS5 language policy](docs/PS5_SYSTEM_LANGUAGE_POLICY.md) for the authoritative 31-entry allowlist.
+The launcher exposes **exactly 31 official PS5 system language/region choices** and **31 translation catalogs** (including distinct English US/UK spelling variants). This is a deliberate compatibility policy: **no extra launcher languages** beyond the [Sony PS5 system language list](https://www.playstation.com/fr-fr/legal/language-support/). All 31 are selectable; the historical first 18 keep their saved indices. See [LANGUAGES.md](LANGUAGES.md) for the full matrix and the [strict PS5 language policy](docs/PS5_SYSTEM_LANGUAGE_POLICY.md) for the authoritative 31-entry allowlist.
 
 Settings → Language primarily selects the launcher interface. Only the original 18 selections map directly to a supported guest language.
 

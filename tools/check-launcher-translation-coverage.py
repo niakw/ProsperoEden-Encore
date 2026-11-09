@@ -82,7 +82,9 @@ for catalog in catalogs:
     if stale:
         raise AssertionError(f"{catalog.name}: {len(stale)} stale msgid entries, examples={sorted(stale)[:5]}")
     assert not missing, f"{catalog.name}: {len(missing)} untranslated strings"
-    total_missing += len(missing)\n    english_fallbacks = sum(1 for key in marked if translations.get(key) == key)\n    total_english_fallbacks += english_fallbacks
+    total_missing += len(missing)
+    english_fallbacks = sum(1 for key in marked if translations.get(key) == key)
+    total_english_fallbacks += english_fallbacks
     print(f"LOCALE_COVERAGE {catalog.stem} active={len(marked)} "
           f"populated={len(marked)-len(missing)} english_fallbacks={english_fallbacks} missing={len(missing)} stale=0")
 print(f"LOCALE_COVERAGE_SUMMARY languages={len(catalogs)} active_texts={len(marked)} "

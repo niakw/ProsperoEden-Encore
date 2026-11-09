@@ -1,5 +1,5 @@
 <a id="encore"></a>
-> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+> **29 fully localized sets of user guides; 41 application catalogs and 43 launcher language/region choices:** [Language directory](LANGUAGES.md). Twelve new Indian-language catalogs are provisional (many English fallback strings), and native console fonts remain unverified.
 
 <table width="100%">
   <tr><td align="center">
@@ -157,7 +157,7 @@ Changing to external storage changes the **root**, not the subdirectory layout. 
 | **Video profiles** | **Minimum → Recommended → High → Ultra**; Custom after manual adjustment |
 | **Safe Launch** | Conservative OpenGL, 1× internal resolution, 1080p, bilinear, handheld, 60 Hz and mods off for that run only |
 | **Controls** | Native launcher mapping profiles, vibration and deadzones |
-| **Languages** | Launcher catalogs for **29 languages**, including complex-script text shaping |
+| **Languages** | **43 launcher choices** (41 catalogs plus English US/UK); 12 new Indian catalog translations are provisional, with English fallbacks and no verified console Indic fonts |
 | **Visual tuning** | Resolution, filters, upscaling, sharpening and anti-aliasing options |
 
 Safe Launch does **not** erase saves or permanently overwrite preferences. **Game-specific action binding** is distinct from the launcher's physical controller mapping, and is not yet fully proven for the main match test.
@@ -332,7 +332,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 - Added/extended animated **3D game-case** launch artwork with authentic front/back scans where present, and native reconstruction from available art for missing sides.
 - Introduced/refined **Minimum / Recommended / High / Ultra / Custom** per-title video presets, override rules, manual graphics options and recovery-oriented **Safe Launch** for a single session.
 - Added launch-time settings for internal resolution, Vulkan/OpenGL, filtering, sharpening and AA, with conservative memory constraints rather than unqualified 4× promises.
-- Expanded launcher catalogs to **29 languages** and improved complex/bidirectional text layout, fallback fonts, wrapping and glyph drawing.
+- Expanded launcher catalogs to **41 non-English/region catalog locales** (12 Indian provisional) with 43 launcher selections and improved complex/bidirectional text layout, fallback fonts, wrapping and glyph drawing.
 - Tuned font fitting, font scratch reuse, audio ring copy behavior, controller navigation, scene transitions and costly UI/media work.
 - Added/reviewed PS5-profile-avatar **read-only, async** retrieval paths; availability on every real console remains unverified.
 - Investigated PlayStation in-game glyph assets, per-game mods and physical button mapping; **universal PlayStation glyph replacement is not implemented**.

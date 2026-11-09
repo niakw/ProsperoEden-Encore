@@ -66,7 +66,11 @@ def main()->int:
     gpu_session=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
     gpu_notify=gpu_session.split('void IGpuSession::GetNotificationEvent(HLERequestContext& ctx) {',1)[1].split('IGpuSession::ResolveOpenedAddressSpace',1)[0]
     assert 'IPC::ResponseBuilder rb{ctx, 2, 1, 0};' in gpu_notify
-    assert 'rb.PushCopyObjects(ctx, *readable);' in gpu_notify
+    assert 'ctx.AddCopyObject(readable);' in gpu_notify
+    assert gpu_notify.index('ctx.AddCopyObject(readable);') < gpu_notify.index(
+        'IPC::ResponseBuilder rb{ctx, 2, 1, 0};')
+    assert 'catch (const std::bad_alloc&)' in gpu_notify
+    assert 'result = Kernel::ResultOutOfResource;' in gpu_notify
     assert 'AddMoveObject' not in gpu_notify
     assert 'readable->Open(kernel)' not in gpu_notify
     # NX2 VI2 has an empty request-group acknowledgement only for 51.

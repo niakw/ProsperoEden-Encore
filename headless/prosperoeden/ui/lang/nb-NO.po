@@ -334,10 +334,6 @@ msgstr "Tema · Logo · Bakgrunn · Glød (Spill: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Velg én rot for nøkler, fastvare, spill, oppdateringer og mods"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Velg språket spillene bruker"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Velg · grensesnitt. programvare / Styring — uendret."

@@ -1,45 +1,58 @@
-# Languages — Prospero.Eden Encore
+# Eden Encore — Languages and user documentation
 
-[← English README](README.md) · [English full installation guide](INSTALL.md)
+[← English README](README.md) · [Install](INSTALL.md) · [Settings](SETTINGS.md) · [Troubleshooting](TROUBLESHOOTING.md) · [Support](SUPPORT.md) · [Accessibility](ACCESSIBILITY.md)
 
-All localized README pages and their installation guides are grouped under [`docs/i18n/`](docs/i18n/) to keep the repository root readable. **Only `README.md` remains at the top level.**
+**Documentation available for all 29 application translation catalogs.** The native launcher currently offers **18 language/region selections representing 13 languages** (English US/UK share the English pages); 13 extra catalog languages have readable documentation but are **not yet directly selectable** in the launcher. A catalog's presence is not proof that every application string has been professionally translated or verified in the interface.
 
-The launcher supports **18 language/region selections in 13 distinct languages**. The codes in the table are the exact selector keys in `headless/settings_store.h::kLanguageKeys` (they can differ from catalog filenames; e.g. `fr` selects the `fr-FR` catalog). **English (US) is the default.**
+The full original English references remain the most detailed. The localized guides give the practical installation, settings, safety, support and accessibility essentials, and link back to the full English material.
 
-English appears first. Other languages are broadly ordered by worldwide speaking audience, with regional variants grouped together. This is not an exact speaker-count ranking or a ranking of Encore players.
+| Language | Catalog | Launcher menu | Overview | Installation | Settings | Help | Support | Accessibility |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| English (US / UK) | `en-US / en-GB` | Yes (2 choices) | [README](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
+| العربية | `ar` | Catalog only | [README](docs/i18n/README.ar.md) | [Install](docs/i18n/INSTALL.ar.md) | [Settings](docs/i18n/SETTINGS.ar.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.ar.md) | [Support](docs/i18n/SUPPORT.ar.md) | [Accessibility](docs/i18n/ACCESSIBILITY.ar.md) |
+| Čeština | `cs-CZ` | Catalog only | [README](docs/i18n/README.cs-CZ.md) | [Install](docs/i18n/INSTALL.cs-CZ.md) | [Settings](docs/i18n/SETTINGS.cs-CZ.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.cs-CZ.md) | [Support](docs/i18n/SUPPORT.cs-CZ.md) | [Accessibility](docs/i18n/ACCESSIBILITY.cs-CZ.md) |
+| Dansk | `da-DK` | Catalog only | [README](docs/i18n/README.da-DK.md) | [Install](docs/i18n/INSTALL.da-DK.md) | [Settings](docs/i18n/SETTINGS.da-DK.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.da-DK.md) | [Support](docs/i18n/SUPPORT.da-DK.md) | [Accessibility](docs/i18n/ACCESSIBILITY.da-DK.md) |
+| Deutsch | `de-DE` | Yes | [README](docs/i18n/README.de.md) | [Install](docs/i18n/INSTALL.de.md) | [Settings](docs/i18n/SETTINGS.de-DE.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.de-DE.md) | [Support](docs/i18n/SUPPORT.de-DE.md) | [Accessibility](docs/i18n/ACCESSIBILITY.de-DE.md) |
+| Ελληνικά | `el-GR` | Catalog only | [README](docs/i18n/README.el-GR.md) | [Install](docs/i18n/INSTALL.el-GR.md) | [Settings](docs/i18n/SETTINGS.el-GR.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.el-GR.md) | [Support](docs/i18n/SUPPORT.el-GR.md) | [Accessibility](docs/i18n/ACCESSIBILITY.el-GR.md) |
+| Español (Latinoamérica) | `es-419` | Yes | [README](docs/i18n/README.es-419.md) | [Install](docs/i18n/INSTALL.es-419.md) | [Settings](docs/i18n/SETTINGS.es-419.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.es-419.md) | [Support](docs/i18n/SUPPORT.es-419.md) | [Accessibility](docs/i18n/ACCESSIBILITY.es-419.md) |
+| Español (España) | `es-ES` | Yes | [README](docs/i18n/README.es.md) | [Install](docs/i18n/INSTALL.es-ES.md) | [Settings](docs/i18n/SETTINGS.es-ES.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.es-ES.md) | [Support](docs/i18n/SUPPORT.es-ES.md) | [Accessibility](docs/i18n/ACCESSIBILITY.es-ES.md) |
+| Suomi | `fi-FI` | Catalog only | [README](docs/i18n/README.fi-FI.md) | [Install](docs/i18n/INSTALL.fi-FI.md) | [Settings](docs/i18n/SETTINGS.fi-FI.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.fi-FI.md) | [Support](docs/i18n/SUPPORT.fi-FI.md) | [Accessibility](docs/i18n/ACCESSIBILITY.fi-FI.md) |
+| Français (Canada) | `fr-CA` | Yes | [README](docs/i18n/README.fr-CA.md) | [Install](docs/i18n/INSTALL.fr-CA.md) | [Settings](docs/i18n/SETTINGS.fr-CA.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.fr-CA.md) | [Support](docs/i18n/SUPPORT.fr-CA.md) | [Accessibility](docs/i18n/ACCESSIBILITY.fr-CA.md) |
+| Français (France) | `fr-FR` | Yes | [README](docs/i18n/README.fr.md) | [Install](docs/i18n/INSTALL.fr-FR.md) | [Settings](docs/i18n/SETTINGS.fr-FR.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.fr-FR.md) | [Support](docs/i18n/SUPPORT.fr-FR.md) | [Accessibility](docs/i18n/ACCESSIBILITY.fr-FR.md) |
+| Magyar | `hu-HU` | Catalog only | [README](docs/i18n/README.hu-HU.md) | [Install](docs/i18n/INSTALL.hu-HU.md) | [Settings](docs/i18n/SETTINGS.hu-HU.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.hu-HU.md) | [Support](docs/i18n/SUPPORT.hu-HU.md) | [Accessibility](docs/i18n/ACCESSIBILITY.hu-HU.md) |
+| Bahasa Indonesia | `id-ID` | Catalog only | [README](docs/i18n/README.id-ID.md) | [Install](docs/i18n/INSTALL.id-ID.md) | [Settings](docs/i18n/SETTINGS.id-ID.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.id-ID.md) | [Support](docs/i18n/SUPPORT.id-ID.md) | [Accessibility](docs/i18n/ACCESSIBILITY.id-ID.md) |
+| Italiano | `it-IT` | Yes | [README](docs/i18n/README.it.md) | [Install](docs/i18n/INSTALL.it.md) | [Settings](docs/i18n/SETTINGS.it-IT.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.it-IT.md) | [Support](docs/i18n/SUPPORT.it-IT.md) | [Accessibility](docs/i18n/ACCESSIBILITY.it-IT.md) |
+| 日本語 | `ja-JP` | Yes | [README](docs/i18n/README.ja.md) | [Install](docs/i18n/INSTALL.ja.md) | [Settings](docs/i18n/SETTINGS.ja-JP.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.ja-JP.md) | [Support](docs/i18n/SUPPORT.ja-JP.md) | [Accessibility](docs/i18n/ACCESSIBILITY.ja-JP.md) |
+| 한국어 | `ko-KR` | Yes | [README](docs/i18n/README.ko.md) | [Install](docs/i18n/INSTALL.ko.md) | [Settings](docs/i18n/SETTINGS.ko-KR.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.ko-KR.md) | [Support](docs/i18n/SUPPORT.ko-KR.md) | [Accessibility](docs/i18n/ACCESSIBILITY.ko-KR.md) |
+| Norsk bokmål | `nb-NO` | Catalog only | [README](docs/i18n/README.nb-NO.md) | [Install](docs/i18n/INSTALL.nb-NO.md) | [Settings](docs/i18n/SETTINGS.nb-NO.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.nb-NO.md) | [Support](docs/i18n/SUPPORT.nb-NO.md) | [Accessibility](docs/i18n/ACCESSIBILITY.nb-NO.md) |
+| Nederlands | `nl-NL` | Yes | [README](docs/i18n/README.nl.md) | [Install](docs/i18n/INSTALL.nl.md) | [Settings](docs/i18n/SETTINGS.nl-NL.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.nl-NL.md) | [Support](docs/i18n/SUPPORT.nl-NL.md) | [Accessibility](docs/i18n/ACCESSIBILITY.nl-NL.md) |
+| Polski | `pl-PL` | Yes | [README](docs/i18n/README.pl.md) | [Install](docs/i18n/INSTALL.pl.md) | [Settings](docs/i18n/SETTINGS.pl-PL.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.pl-PL.md) | [Support](docs/i18n/SUPPORT.pl-PL.md) | [Accessibility](docs/i18n/ACCESSIBILITY.pl-PL.md) |
+| Português (Brasil) | `pt-BR` | Yes | [README](docs/i18n/README.pt-BR.md) | [Install](docs/i18n/INSTALL.pt-BR.md) | [Settings](docs/i18n/SETTINGS.pt-BR.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.pt-BR.md) | [Support](docs/i18n/SUPPORT.pt-BR.md) | [Accessibility](docs/i18n/ACCESSIBILITY.pt-BR.md) |
+| Português (Portugal) | `pt-PT` | Yes | [README](docs/i18n/README.pt-PT.md) | [Install](docs/i18n/INSTALL.pt-PT.md) | [Settings](docs/i18n/SETTINGS.pt-PT.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.pt-PT.md) | [Support](docs/i18n/SUPPORT.pt-PT.md) | [Accessibility](docs/i18n/ACCESSIBILITY.pt-PT.md) |
+| Română | `ro-RO` | Catalog only | [README](docs/i18n/README.ro-RO.md) | [Install](docs/i18n/INSTALL.ro-RO.md) | [Settings](docs/i18n/SETTINGS.ro-RO.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.ro-RO.md) | [Support](docs/i18n/SUPPORT.ro-RO.md) | [Accessibility](docs/i18n/ACCESSIBILITY.ro-RO.md) |
+| Русский | `ru-RU` | Yes | [README](docs/i18n/README.ru.md) | [Install](docs/i18n/INSTALL.ru.md) | [Settings](docs/i18n/SETTINGS.ru-RU.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.ru-RU.md) | [Support](docs/i18n/SUPPORT.ru-RU.md) | [Accessibility](docs/i18n/ACCESSIBILITY.ru-RU.md) |
+| Svenska | `sv-SE` | Catalog only | [README](docs/i18n/README.sv-SE.md) | [Install](docs/i18n/INSTALL.sv-SE.md) | [Settings](docs/i18n/SETTINGS.sv-SE.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.sv-SE.md) | [Support](docs/i18n/SUPPORT.sv-SE.md) | [Accessibility](docs/i18n/ACCESSIBILITY.sv-SE.md) |
+| ไทย | `th-TH` | Yes | [README](docs/i18n/README.th.md) | [Install](docs/i18n/INSTALL.th.md) | [Settings](docs/i18n/SETTINGS.th-TH.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.th-TH.md) | [Support](docs/i18n/SUPPORT.th-TH.md) | [Accessibility](docs/i18n/ACCESSIBILITY.th-TH.md) |
+| Türkçe | `tr-TR` | Catalog only | [README](docs/i18n/README.tr-TR.md) | [Install](docs/i18n/INSTALL.tr-TR.md) | [Settings](docs/i18n/SETTINGS.tr-TR.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.tr-TR.md) | [Support](docs/i18n/SUPPORT.tr-TR.md) | [Accessibility](docs/i18n/ACCESSIBILITY.tr-TR.md) |
+| Українська | `uk-UA` | Catalog only | [README](docs/i18n/README.uk-UA.md) | [Install](docs/i18n/INSTALL.uk-UA.md) | [Settings](docs/i18n/SETTINGS.uk-UA.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.uk-UA.md) | [Support](docs/i18n/SUPPORT.uk-UA.md) | [Accessibility](docs/i18n/ACCESSIBILITY.uk-UA.md) |
+| Tiếng Việt | `vi-VN` | Catalog only | [README](docs/i18n/README.vi-VN.md) | [Install](docs/i18n/INSTALL.vi-VN.md) | [Settings](docs/i18n/SETTINGS.vi-VN.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.vi-VN.md) | [Support](docs/i18n/SUPPORT.vi-VN.md) | [Accessibility](docs/i18n/ACCESSIBILITY.vi-VN.md) |
+| 简体中文 | `zh-Hans` | Yes | [README](docs/i18n/README.zh-Hans.md) | [Install](docs/i18n/INSTALL.zh-Hans.md) | [Settings](docs/i18n/SETTINGS.zh-Hans.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.zh-Hans.md) | [Support](docs/i18n/SUPPORT.zh-Hans.md) | [Accessibility](docs/i18n/ACCESSIBILITY.zh-Hans.md) |
+| 繁體中文 | `zh-Hant` | Yes | [README](docs/i18n/README.zh-Hant.md) | [Install](docs/i18n/INSTALL.zh-Hant.md) | [Settings](docs/i18n/SETTINGS.zh-Hant.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.zh-Hant.md) | [Support](docs/i18n/SUPPORT.zh-Hant.md) | [Accessibility](docs/i18n/ACCESSIBILITY.zh-Hant.md) |
 
-| Language option in the launcher | README and FAQ | Installation and upgrading |
-| --- | --- | --- |
-| English (US) (`en-US`) | [Read](README.md) | [Install](INSTALL.md) |
-| English (UK) (`en-GB`) | [Read](README.md) | [Install](INSTALL.md) |
-| 简体中文 (`zh-Hans`) | [Read](docs/i18n/README.zh-Hans.md) | [Install](docs/i18n/INSTALL.zh-Hans.md) |
-| 繁體中文 (`zh-Hant`) | [Read](docs/i18n/README.zh-Hant.md) | [Install](docs/i18n/INSTALL.zh-Hant.md) |
-| Español (Latinoamérica) (`es-419`) | [Read](docs/i18n/README.es-419.md) | [Install](docs/i18n/INSTALL.es-419.md) |
-| Español (España) (`es`) | [Read](docs/i18n/README.es.md) | [Install](docs/i18n/INSTALL.es-ES.md) |
-| Français (France) (`fr`) | [Read](docs/i18n/README.fr.md) | [Install](docs/i18n/INSTALL.fr-FR.md) |
-| Français (Canada) (`fr-CA`) | [Read](docs/i18n/README.fr-CA.md) | [Install](docs/i18n/INSTALL.fr-CA.md) |
-| Português (Brasil) (`pt-BR`) | [Read](docs/i18n/README.pt-BR.md) | [Install](docs/i18n/INSTALL.pt-BR.md) |
-| Português (Portugal) (`pt`) | [Read](docs/i18n/README.pt-PT.md) | [Install](docs/i18n/INSTALL.pt-PT.md) |
-| Русский (`ru`) | [Read](docs/i18n/README.ru.md) | [Install](docs/i18n/INSTALL.ru.md) |
-| Deutsch (`de`) | [Read](docs/i18n/README.de.md) | [Install](docs/i18n/INSTALL.de.md) |
-| 日本語 (`ja`) | [Read](docs/i18n/README.ja.md) | [Install](docs/i18n/INSTALL.ja.md) |
-| 한국어 (`ko`) | [Read](docs/i18n/README.ko.md) | [Install](docs/i18n/INSTALL.ko.md) |
-| Italiano (`it`) | [Read](docs/i18n/README.it.md) | [Install](docs/i18n/INSTALL.it.md) |
-| ไทย (`th`) | [Read](docs/i18n/README.th.md) | [Install](docs/i18n/INSTALL.th.md) |
-| Polski (`pl`) | [Read](docs/i18n/README.pl.md) | [Install](docs/i18n/INSTALL.pl.md) |
-| Nederlands (`nl`) | [Read](docs/i18n/README.nl.md) | [Install](docs/i18n/INSTALL.nl.md) |
+## Choosing a launcher language
 
-## How languages work
+Open **Settings → Language**. Only 18 menu choices exist; the table explicitly separates exposed choices from the 13 translation catalogs currently without direct menu options. You can still read the documentation in each available language. Region selectors may share a base language and fall back to English if translations are missing.
 
-- **18 selectable entries are not 29 selectable languages.** A complete application package contains **29** `PPSA99008/ui/lang/*.po` catalogs, including translations for languages which the current menu does not expose.
-- Both English regions share the English README. French, Spanish, Portuguese and Chinese regions/scripts have their own language paths where useful.
-- The existing full English, French and Spanish READMEs are preserved. Other translations are shorter user-friendly introductions; the English pages remain the complete technical reference.
-- Change the UI language under **Settings → Language**. A game may not provide the chosen language. Missing or incomplete translations may show English text.
-- If the launcher stays English unexpectedly, verify the **complete** `ui/lang/` folder was installed; see [Troubleshooting](TROUBLESHOOTING.md).
-- **13.60 is the only PS5 firmware actually tested with Encore.** Older versions may work but have not been qualified, and there is no established minimum firmware. Do not update a console just because 13.60 is mentioned.
+The 29 catalog source files are at `headless/prosperoeden/ui/lang/*.po`. A complete deployed application must include its `PPSA99008/ui/lang/` payload. Do not infer a released package's translation coverage from newer source code alone.
 
-## Improve a translation
+## Release and data safety
 
-For an incorrect string, missing text or clipped menu, [open an issue](https://github.com/niakw/ProsperoEden-Encore/issues) with the language code, affected screen, release/commit and a suggested correction. Do not share console keys, private saves or identifying details.
+The last genuine native PS5 release was compiled **15 October 2026** ([R1 FTP](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953)); its 30 October appearance in this repository was a mirror, not a new build. The R2 prerelease is a **private draft with no downloadable application**. The only hardware-qualified firmware recorded is **13.60**, not a recommended update target.
 
-[Support](SUPPORT.md) · [Credits](README.md#credits) · [Licenses](THIRD_PARTY_NOTICES.md).
+**Never delete `/data/prosperoeden/`** to fix an installation: it can hold personal game saves, settings, user-owned keys and firmware. Back up the storage root and any external storage before replacing `PPSA99008/`.
+
+## Translation feedback
+
+[Report a translation or accessibility issue](https://github.com/niakw/ProsperoEden-Encore/issues) with the language code, page, wrong text, desired correction and exact version. Do not attach private keys, saved games or personal information.
+
+These pages are localized guidance, not an assertion of end-to-end human proofreading for every language. Technical roadmap, contributor audit and native validation documents are intentionally maintained in their original working language.

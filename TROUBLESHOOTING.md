@@ -1,5 +1,8 @@
 # Troubleshooting — Prospero.Eden Encore
 
+> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+
+
 [← Main README](README.md) · [Installation / upgrading](INSTALL.md) · [Languages](LANGUAGES.md) · [Support](SUPPORT.md)
 
 This is a practical guide to common problems, not a compatibility guarantee. Encore has been tested on a PS5 running **firmware 13.60 only**. Earlier firmware might work but is not qualified; no minimum firmware is established.

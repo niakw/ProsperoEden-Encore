@@ -1,5 +1,8 @@
 # Accessibility — Eden Encore
 
+> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+
+
 Eden Encore is designed to be used with a controller on a television. Accessibility is part of the native launcher, not a claim that every emulated Nintendo Switch game is accessible or that the PS5 system's accessibility services automatically work inside Encore.
 
 This page describes **features present in the current source**, how to use them, and limitations that still need verification. It is not a WCAG certification or a guarantee of successful use with any specific assistive technology.

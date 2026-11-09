@@ -1,5 +1,8 @@
 # Prospero.Eden Encore — Settings guide
 
+> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+
+
 This guide explains the settings exposed by Encore on PS5, their defaults, and practical starting profiles.
 
 > **Important:** TV output and Game resolution are different. TV output is the final image sent to the display. Game resolution is the internal Switch render scale before scaling.

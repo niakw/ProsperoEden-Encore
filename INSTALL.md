@@ -1,5 +1,8 @@
 # Installing Prospero.Eden Encore
 
+> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+
+
 **First time here?** [Four-step start](README.md#start-here--install-in-four-steps) · [18 language/region options](LANGUAGES.md) · [Français](docs/i18n/INSTALL.fr-FR.md) · [Español](docs/i18n/INSTALL.es-ES.md) · [Troubleshooting](TROUBLESHOOTING.md).
 
 This is the **full English installation reference** for ZIP/FTP, FFPFSC/ShadowMountPlus and safe migration from the original native ProsperoEden.

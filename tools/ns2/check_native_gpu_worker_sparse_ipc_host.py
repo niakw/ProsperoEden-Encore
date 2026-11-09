@@ -137,13 +137,13 @@ namespace GW=GpuWorkerProtocol;
 inline void TraceNs2WorkerResult(unsigned,u32){}
 template<class T> void TraceNs2GpuRegion214(const u32*,const T&,u32,bool){}
 inline void TraceNs2GpuSparse216(u64,u64,u64,u32){}
-struct GPU {
+struct FakeGPU {
     unsigned waits{};
     void WaitForIdle() {++waits;}
 };
 struct System {
-    GPU gpu{};
-    GPU& GPU() {return gpu;}
+    FakeGPU gpu{};
+    FakeGPU& GPU() {return gpu;}
 };
 struct Shared {
     std::mutex mutex{};

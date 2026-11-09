@@ -138,13 +138,14 @@
         "tools/ns2/check_native_gpu_fd_identity_host.py",
         "tools/ns2/check_native_gpu_device_ipc_host.py",
         "tools/ns2/check_native_gpu_unknown_tipc_host.py",
-        "tools/ns2/check_native_gpu_create_as_host.py"
+        "tools/ns2/check_native_gpu_create_as_host.py",
+        "tools/ns2/check_native_gpu_request_worker_host.py"
       ],
       "positive": "Required GPU session and worker commands produce exact response words, rights and owned handles.",
       "negative": "Unknown commands, stale FD and unauthorized process cannot produce success or mutate mappings.",
       "status": "open",
       "evidence": {},
-      "blocker": "H06 host matrix now executes CreateAddressSpace transaction/FD rollback, notification range/COPY, device creation, VA partitions, worker-move refcounts, stale/foreign identity and unknown command refusal. Worker 101/102 and 211-216 guest packet/rights integration still lacks a complete real-owner acceptance matrix.",
+      "blocker": "GPU-session TIPC 11,12,21,22,33,41,42,202,203 and unknown routing now have individually extracted executed-owner admissions, including FD and kernel ownership. An integrated positive/negative worker 101/102 and 211-216 IPC command/rights acceptance matrix remains open.",
       "excluded_forms": []
     },
     {

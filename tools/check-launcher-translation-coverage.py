@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Report exact active translations, reject obsolete catalog entries.
 
-All 29 current catalogs must have full active-key coverage. Recent non-primary
+All 41 catalogs must have non-empty active-key entries; 12 Indian locales are provisional,\nwith explicit English fallbacks until translations and fonts have been reviewed. Recent non-primary
 locale texts include provisional machine-assisted translations: coverage and
 placeholder checks do NOT replace human review or on-console typography QA.
 """
@@ -13,7 +13,7 @@ module = runpy.run_path(str(root / "tools/launcher/strings.py"))
 marked = set(module["marked_text"]())
 read_po = module["parse_po"]
 catalogs = sorted((root / "headless/prosperoeden/ui/lang").glob("*.po"))
-assert len(catalogs) == 29, f"catalog count changed: {len(catalogs)}"
+assert len(catalogs) == 41, f"catalog count changed: {len(catalogs)}"
 # Category strings arrive from external metadata at runtime; they are not
 # automatically captured by tr("literal") extraction. Guard both French
 # regional catalogs, including genres that previously fell back to English.
@@ -65,7 +65,7 @@ fsr_keys = {
     "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos.",
 }
 assert fsr_keys <= marked, "Active AMD FSR 1 translation/help keys disappeared"
-total_missing = 0
+total_missing = 0\ntotal_english_fallbacks = 0
 for catalog in catalogs:
     translations = read_po(catalog)
     missing_fsr = sorted(k for k in fsr_keys if not translations.get(k))
@@ -82,8 +82,8 @@ for catalog in catalogs:
     if stale:
         raise AssertionError(f"{catalog.name}: {len(stale)} stale msgid entries, examples={sorted(stale)[:5]}")
     assert not missing, f"{catalog.name}: {len(missing)} untranslated strings"
-    total_missing += len(missing)
+    total_missing += len(missing)\n    english_fallbacks = sum(1 for key in marked if translations.get(key) == key)\n    total_english_fallbacks += english_fallbacks
     print(f"LOCALE_COVERAGE {catalog.stem} active={len(marked)} "
-          f"translated={len(marked)-len(missing)} missing={len(missing)} stale=0")
+          f"populated={len(marked)-len(missing)} english_fallbacks={english_fallbacks} missing={len(missing)} stale=0")
 print(f"LOCALE_COVERAGE_SUMMARY languages={len(catalogs)} active_texts={len(marked)} "
-      f"missing_translations={total_missing} (all active translations present; human review outstanding)")
+      f"missing_entries={total_missing} english_fallbacks={total_english_fallbacks} (English fallback is NOT native translation; human review outstanding)")

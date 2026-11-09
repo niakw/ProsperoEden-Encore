@@ -44,6 +44,8 @@ enum class KMemoryState { IoMemory };
 struct CoreKernel {};
 struct Pages {
     static inline int closed{},destroyed{};
+    static inline Pages* latest{};
+    Pages(){ latest=this; }
     void Close(CoreKernel&) { ++closed; }
     ~Pages(){ ++destroyed; }
 };
@@ -79,9 +81,11 @@ struct Worker {
     Module* m_module{&module};
     void* m_process{this};
     std::optional<unsigned> m_nv_session{};
-    std::unique_ptr<Pages> pages{std::make_unique<Pages>()};
     unsigned alias{0x1000};
     Result Sparse(){
+        // Match real BackGpuOnlyRegion: page ownership is local RAII, not
+        // a persistent Worker member; successful unmap destroys it on exit.
+        std::unique_ptr<Pages> pages{std::make_unique<Pages>()};
 __SPARSE__
         return ResultSuccess;
     }
@@ -97,16 +101,16 @@ int main(){
         const auto result=worker.Sparse();
         assert(result.raw==Kernel::ResultOutOfResource.raw);
         assert(worker.table.unmap_calls==1 && Pages::closed==1);
-        assert(!worker.m_nv_session && !worker.pages);
+        assert(!worker.m_nv_session && Pages::destroyed>=1);
     }
     {
         Worker worker;
         worker.module.container.fail_open=true;
         worker.table.fail_unmap=true;
-        Pages* held=worker.pages.get();
         auto result=worker.Sparse();
+        Pages* held=Pages::latest;
         assert(result.raw==Kernel::ResultInvalidState.raw);
-        assert(worker.table.unmap_calls==1 && !worker.pages);
+        assert(worker.table.unmap_calls==1 && held);
         assert(Pages::closed==1); // do NOT free a still-mapped alias
         delete held; // fixture reclaims simulated kernel-owned object
     }

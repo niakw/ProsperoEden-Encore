@@ -35,7 +35,12 @@ assert 'ScheduleLoopingEvent(Interval, Interval, m_ready_timer)' in source
 assert 'm_ready->Detach();' in source
 assert 'UnscheduleEvent(m_ready_timer)' in source
 assert source.index('m_ready->Detach();') < source.index('m_context.CloseEvent(m_event)')
-assert 'rb.PushCopyObjects(ctx, m_event->GetReadableEvent());' in source
+assert 'ctx.AddCopyObject(&m_event->GetReadableEvent());' in source
+get_event=source.split('void IGraphicsVideoDecoderSession::GetEvent(',1)[1].split(
+    '\nvoid IGraphicsVideoDecoderSession::EnsureSyncpoint(',1)[0]
+assert get_event.index('ctx.AddCopyObject(') < get_event.index(
+    'IPC::ResponseBuilder rb{ctx, 2, 1, 0};')
+assert 'catch (const std::bad_alloc&)' in get_event
 assert '!compressed.empty() && !m_decoder->Decode(compressed, pts, decoded)' in source
 assert 'eos && !m_decoder->Drain(decoded)' in source
 assert 'if (!m_decoder->Render(frame.picture,' in source

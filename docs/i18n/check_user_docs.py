@@ -70,7 +70,7 @@ index = ROOT / "LANGUAGES.md"
 index_text = index.read_text(encoding="utf-8")
 local_links(index, index_text)
 check("29 application translation catalogs" in index_text, "language index count missing")
-check("31 official PS5 language/region selections" in index_text, "launcher selection count missing")
+check("31 official PS5 system language/region selections" in index_text, "launcher selection count missing")
 
 for loc in locales:
     code, native = loc["code"], loc["native"]

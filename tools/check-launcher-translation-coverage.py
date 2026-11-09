@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Report exact active translations, reject obsolete catalog entries.
 
-All 41 catalogs must have non-empty active-key entries; 12 Indian locales are provisional,\nwith explicit English fallbacks until translations and fonts have been reviewed. Recent non-primary
+All 29 official PS5 interface catalogs must have full active-key coverage. Recent non-primary
 locale texts include provisional machine-assisted translations: coverage and
 placeholder checks do NOT replace human review or on-console typography QA.
 """
@@ -13,7 +13,7 @@ module = runpy.run_path(str(root / "tools/launcher/strings.py"))
 marked = set(module["marked_text"]())
 read_po = module["parse_po"]
 catalogs = sorted((root / "headless/prosperoeden/ui/lang").glob("*.po"))
-assert len(catalogs) == 41, f"catalog count changed: {len(catalogs)}"
+assert len(catalogs) == 29, f"catalog count changed: {len(catalogs)}"
 # Category strings arrive from external metadata at runtime; they are not
 # automatically captured by tr("literal") extraction. Guard both French
 # regional catalogs, including genres that previously fell back to English.

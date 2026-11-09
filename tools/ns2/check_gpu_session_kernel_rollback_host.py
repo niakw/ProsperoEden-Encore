@@ -38,6 +38,8 @@ assert method.count('SCOPE_EXIT {') == 1
 assert method.index('SCOPE_EXIT {') < method.index('server.RegisterSession(')
 assert method.count('session->GetClientSession().Close(kernel);') == 1
 assert method.count('session->GetServerSession().Close(kernel);') == 1
+assert 'catch (const std::bad_alloc&)' in method
+assert 'return Kernel::ResultOutOfResource;' in method
 assert method.index('transferred_to_server = true') > method.index('server.RegisterSession(')
 assert method.index('transferred_to_server = true') < method.index('*out_client =')
 # Only the real SDK owner function is under test; no copied rewrite of it.
@@ -196,20 +198,19 @@ int main() {
         assert(call(k, &result).raw == Kernel::ResultOutOfResource.raw);
         assert(!result && !k.latest && k.quota == 0);
     }
-    // Allocation of ServerManager::Session throws after Initialize/Commit.
-    // The REAL extracted SCOPE_EXIT must close BOTH endpoints and quota.
+    // RegisterSession allocates after Initialize/Commit: a real host OOM
+    // must be translated to a TIPC resource error, with BOTH kernel
+    // endpoints and the committed session quota rolled back by SCOPE_EXIT.
     {
         Kernel::KernelCore k; k.fail_register_alloc = true;
         Kernel::KClientSession* result{};
-        bool failed{};
-        try { (void)call(k, &result); }
-        catch (const std::bad_alloc&) { failed = true; }
-        assert(failed && !result && k.latest && !k.accepted_server);
+        assert(call(k, &result).raw == Kernel::ResultOutOfResource.raw);
+        assert(!result && k.latest && !k.accepted_server);
         assert(k.closed_client == 1 && k.closed_server == 1 && k.quota == 0);
         assert(!k.latest->client_open && !k.latest->server_open);
         reset(k);
     }
-    // An error Result must also roll back without guest-visible handles.
+    // A normal error Result must also roll back without guest-visible handles.
     {
         Kernel::KernelCore k; k.fail_register_result = true;
         Kernel::KClientSession* result{};
@@ -255,5 +256,5 @@ with tempfile.TemporaryDirectory(prefix="eden-gpu-kernel-rollback-") as temporar
             run = subprocess.run([str(exe)], capture_output=True, text=True, timeout=20)
             assert run.returncode == 0, run.stderr[-2500:]
             print("H06_KERNEL_SESSION_ROLLBACK_PASS", Path(compiler).name, opt,
-                  "real_owner=1 oom_before_session=1 host_register_oom=1"
+                  "real_owner=1 oom_before_session=1 host_register_oom=error_reply"
                   " kernel_quota_rollback=1 success_transfer=1", flush=True)

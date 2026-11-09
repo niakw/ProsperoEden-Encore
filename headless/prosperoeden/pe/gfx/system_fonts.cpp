@@ -46,15 +46,6 @@ enum class Script : std::uint8_t
     chinese,
     thai,
     arabic,
-    devanagari,
-    bengali,
-    gurmukhi,
-    gujarati,
-    odia,
-    tamil,
-    telugu,
-    kannada,
-    malayalam,
 };
 
 struct Group
@@ -69,18 +60,7 @@ constexpr Group kJapanese{Script::japanese, {"SSTJpPro-Regular.otf", "SIE-RDC-Pr
 constexpr Group kKorean{Script::korean, {"YoonGothicProSIE760.otf", "SCEPS4Yoongd-Medium.otf", nullptr}};
 constexpr Group kChinese{Script::chinese, {"DFHEI5-SONY.ttf", nullptr, nullptr}};
 constexpr Group kThai{Script::thai, {"SSTThai-Medium.otf", "SSTThai-Roman.otf", nullptr}};
-constexpr Group kArabic{Script::arabic, {"SSTArabic-Medium.otf", "SSTArabic-Roman.otf", "NotoNaskhArabicUI-Regular.ttf"}};
-// Optional, openly licensed Noto Sans UI fonts can be staged in ui/fonts/locale/.
-// PS5's base firmware does not establish that any Indic glyph is available.
-constexpr Group kDevanagari{Script::devanagari, {"NotoSansDevanagariUI-Regular.ttf", "NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari[wdth,wght].ttf"}};
-constexpr Group kBengali{Script::bengali, {"NotoSansBengaliUI-Regular.ttf", "NotoSansBengali-Regular.ttf", "NotoSansBengali[wdth,wght].ttf"}};
-constexpr Group kGurmukhi{Script::gurmukhi, {"NotoSansGurmukhiUI-Regular.ttf", "NotoSansGurmukhi-Regular.ttf", "NotoSansGurmukhi[wdth,wght].ttf"}};
-constexpr Group kGujarati{Script::gujarati, {"NotoSansGujaratiUI-Regular.ttf", "NotoSansGujarati-Regular.ttf", "NotoSansGujarati[wdth,wght].ttf"}};
-constexpr Group kOdia{Script::odia, {"NotoSansOriyaUI-Regular.ttf", "NotoSansOriya-Regular.ttf", "NotoSansOriya[wdth,wght].ttf"}};
-constexpr Group kTamil{Script::tamil, {"NotoSansTamilUI-Regular.ttf", "NotoSansTamil-Regular.ttf", "NotoSansTamil[wdth,wght].ttf"}};
-constexpr Group kTelugu{Script::telugu, {"NotoSansTeluguUI-Regular.ttf", "NotoSansTelugu-Regular.ttf", "NotoSansTelugu[wdth,wght].ttf"}};
-constexpr Group kKannada{Script::kannada, {"NotoSansKannadaUI-Regular.ttf", "NotoSansKannada-Regular.ttf", "NotoSansKannada[wdth,wght].ttf"}};
-constexpr Group kMalayalam{Script::malayalam, {"NotoSansMalayalamUI-Regular.ttf", "NotoSansMalayalam-Regular.ttf", "NotoSansMalayalam[wdth,wght].ttf"}};
+constexpr Group kArabic{Script::arabic, {"SSTArabic-Medium.otf", "SSTArabic-Roman.otf", nullptr}};
 
 // A character only one of the fonts should draw, whatever their order.
 Script own_script(char32_t c)
@@ -88,15 +68,6 @@ Script own_script(char32_t c)
     if ((c >= 0x0600 && c <= 0x06ff) || (c >= 0x0750 && c <= 0x077f) || (c >= 0xfb50 && c <= 0xfdff) ||
         (c >= 0xfe70 && c <= 0xfeff))
         return Script::arabic;
-    if (c >= 0x0900 && c <= 0x097f) return Script::devanagari;
-    if (c >= 0x0980 && c <= 0x09ff) return Script::bengali;
-    if (c >= 0x0a00 && c <= 0x0a7f) return Script::gurmukhi;
-    if (c >= 0x0a80 && c <= 0x0aff) return Script::gujarati;
-    if (c >= 0x0b00 && c <= 0x0b7f) return Script::odia;
-    if (c >= 0x0b80 && c <= 0x0bff) return Script::tamil;
-    if (c >= 0x0c00 && c <= 0x0c7f) return Script::telugu;
-    if (c >= 0x0c80 && c <= 0x0cff) return Script::kannada;
-    if (c >= 0x0d00 && c <= 0x0d7f) return Script::malayalam;
     if (c >= 0x0e00 && c <= 0x0e7f)
         return Script::thai;
     if ((c >= 0xac00 && c <= 0xd7a3) || (c >= 0x1100 && c <= 0x11ff) || (c >= 0x3130 && c <= 0x318f))
@@ -231,26 +202,8 @@ std::vector<std::string> system_font_files(std::string_view folder, std::string_
         order = {&kChinese, &kLatin, &kJapanese, &kKorean, &kThai, &kArabic};
     else if (prefix == "th")
         order = {&kThai, &kLatin, &kJapanese, &kChinese, &kKorean, &kArabic};
-    else if (prefix == "ar" || prefix == "ur")
+    else if (prefix == "ar")
         order = {&kArabic, &kLatin, &kJapanese, &kChinese, &kKorean, &kThai};
-    else if (prefix == "hi" || prefix == "mr")
-        order = {&kDevanagari, &kLatin};
-    else if (prefix == "bn" || prefix == "as")
-        order = {&kBengali, &kLatin};
-    else if (prefix == "pa")
-        order = {&kGurmukhi, &kLatin};
-    else if (prefix == "gu")
-        order = {&kGujarati, &kLatin};
-    else if (prefix == "or")
-        order = {&kOdia, &kLatin};
-    else if (prefix == "ta")
-        order = {&kTamil, &kLatin};
-    else if (prefix == "te")
-        order = {&kTelugu, &kLatin};
-    else if (prefix == "kn")
-        order = {&kKannada, &kLatin};
-    else if (prefix == "ml")
-        order = {&kMalayalam, &kLatin};
     else
         order = {&kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
     std::vector<std::string> files;
@@ -312,9 +265,7 @@ void SystemFonts::set(std::vector<std::string> files, std::string_view language)
             break;
         auto face = std::make_unique<Face>();
         const std::string name = path.substr(path.find_last_of('/') + 1);
-        for (const Group *group : {&kJapanese, &kKorean, &kChinese, &kThai, &kArabic,
-                                   &kDevanagari, &kBengali, &kGurmukhi, &kGujarati,
-                                   &kOdia, &kTamil, &kTelugu, &kKannada, &kMalayalam})
+        for (const Group *group : {&kJapanese, &kKorean, &kChinese, &kThai, &kArabic})
             for (const char *file : group->files)
                 if (file != nullptr && name == file)
                     face->script = group->script;

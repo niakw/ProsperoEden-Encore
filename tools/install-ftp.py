@@ -86,8 +86,8 @@ def main(argv):
         language_files = [p for p in files if p.relative_to(app).as_posix().startswith('ui/lang/') and p.suffix == '.po']
         if language_files and not any(p.name == 'fr-FR.po' for p in language_files):
             sys.exit('Package has language catalogs but fr-FR.po is missing')
-        if len(language_files) != 29:
-            sys.exit(f'Package must contain all 29 official PS5 launcher catalogs, found {len(language_files)}')
+        if len(language_files) != 31:
+            sys.exit(f'Package must contain all 31 official PS5 launcher catalogs, found {len(language_files)}')
         # Size alone can miss a stale same-length catalog. These files are small enough to verify
         # byte identity after FTP, which makes a partial/stale language install impossible to miss.
         for local in language_files:

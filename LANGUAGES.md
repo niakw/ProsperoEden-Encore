@@ -2,13 +2,13 @@
 
 [← English README](README.md) · [Install](INSTALL.md) · [Settings](SETTINGS.md) · [Troubleshooting](TROUBLESHOOTING.md) · [Support](SUPPORT.md) · [Accessibility](ACCESSIBILITY.md)
 
-**The launcher offers exactly 31 official PS5 system language/region selections, corresponding to 29 application translation catalogs** (English US and UK share one language but have separate system choices). This deliberately mirrors Sony's [official PS5 console language list](https://www.playstation.com/fr-fr/legal/language-support/) **without adding any extra launcher languages**. All 31 PS5 choices are directly selectable; the 29 catalog locales have six localized user guides each. Catalog presence does not certify that every string has been independently proofread or visually tested on PS5.
+**The launcher offers exactly 31 official PS5 system language/region selections, with 31 application translation catalogs** (including distinct English US and UK variants). This deliberately mirrors Sony's [official PS5 console language list](https://www.playstation.com/fr-fr/legal/language-support/) **without adding any extra launcher languages**. All 31 PS5 choices are directly selectable; the 29 non-English locales have six localized user guides each. The two English catalogs share the full English reference manuals. Catalog presence does not certify that every string has been independently proofread or visually tested on PS5.
 
 The fixed, auditable [31-choice PS5 system-language policy](docs/PS5_SYSTEM_LANGUAGE_POLICY.md) lists every allowed selection and forbids any additional launcher languages. The full original English references remain the most detailed. The localized guides give the practical installation, settings, safety, support and accessibility essentials, and link back to the full English material.
 
 | Language | Catalog | Launcher menu | Overview | Installation | Settings | Help | Support | Accessibility |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| English (US / UK) | `en-US / en-GB` | Yes (2 choices) | [README](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
+| English (US / UK, distinct spellings) | `en-US.po / en-GB.po` | Yes (2 choices) | [README](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
 | العربية | `ar` | Yes | [README](docs/i18n/README.ar.md) | [Install](docs/i18n/INSTALL.ar.md) | [Settings](docs/i18n/SETTINGS.ar.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.ar.md) | [Support](docs/i18n/SUPPORT.ar.md) | [Accessibility](docs/i18n/ACCESSIBILITY.ar.md) |
 | Čeština | `cs-CZ` | Yes | [README](docs/i18n/README.cs-CZ.md) | [Install](docs/i18n/INSTALL.cs-CZ.md) | [Settings](docs/i18n/SETTINGS.cs-CZ.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.cs-CZ.md) | [Support](docs/i18n/SUPPORT.cs-CZ.md) | [Accessibility](docs/i18n/ACCESSIBILITY.cs-CZ.md) |
 | Dansk | `da-DK` | Yes | [README](docs/i18n/README.da-DK.md) | [Install](docs/i18n/INSTALL.da-DK.md) | [Settings](docs/i18n/SETTINGS.da-DK.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.da-DK.md) | [Support](docs/i18n/SUPPORT.da-DK.md) | [Accessibility](docs/i18n/ACCESSIBILITY.da-DK.md) |
@@ -43,7 +43,7 @@ The fixed, auditable [31-choice PS5 system-language policy](docs/PS5_SYSTEM_LANG
 
 Open **Settings → Language**. The selectable set is **exactly the 31 entries in the official PS5 system-language table**, with no additional launcher languages. The original 18 entries keep their existing indices for saved-setting compatibility; the remaining 13 official PS5 choices are appended. Some console interface languages have no equivalent game-language enum: in those cases the game receives a supported English guest-language fallback rather than an invented guest language. This policy applies to the menu only; it does not claim all games support every PS5 interface language.
 
-The 29 catalog source files are at `headless/prosperoeden/ui/lang/*.po`. A complete deployed application must include its `PPSA99008/ui/lang/` payload. Do not infer a released package's translation coverage from newer source code alone.
+The 31 catalog source files are at `headless/prosperoeden/ui/lang/*.po`. English US retains the source text; English UK uses British spelling such as Colour and Customise. A complete deployed application must include its `PPSA99008/ui/lang/` payload. Do not infer a released package's translation coverage from newer source code alone.
 
 ## Release and data safety
 

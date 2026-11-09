@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check docs for all 29 official PS5 launcher catalogs (31 region/language choices)."""
+"""Check 29 non-English translated manuals alongside 31 official PS5 catalogs."""
 from pathlib import Path
 import json
 
@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 catalogs = sorted(p.stem for p in (ROOT/"headless/prosperoeden/ui/lang").glob("*.po"))
 data = json.loads((ROOT/"docs/i18n/USER_DOC_TRANSLATIONS.json").read_text(encoding="utf-8"))
 locales = {x["code"]:x for x in data["locales"]}
-assert len(locales) == 29 and len(catalogs) == 29 and set(locales) == set(catalogs)
+assert len(locales) == 29 and len(catalogs) == 31
+assert set(locales) == set(catalogs) - {"en-US", "en-GB"}, "English variants use shared source manuals"
 short = {k:k.split("-")[0] for k in ("de-DE","it-IT","ja-JP","ko-KR","nl-NL","pl-PL","ru-RU","th-TH")}
 read_short = {**short, "es-ES":"es", "fr-FR":"fr"}
 index = (ROOT/"LANGUAGES.md").read_text(encoding="utf-8")

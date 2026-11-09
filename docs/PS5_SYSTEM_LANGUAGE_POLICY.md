@@ -40,13 +40,13 @@
 | 30 | Ukrainian | `uk-UA` |
 | 31 | Vietnamese | `vi-VN` |
 
-There are **31 launcher choices, 29 application `.po` catalogs**: English (US) and English (UK) are distinct system selections that share English UI text. All 29 catalog tags are documented in [LANGUAGES.md](../LANGUAGES.md), with 174 user-facing localized guide pages.
+There are **31 launcher choices and 31 application `.po` catalogs**. English (US) and English (UK) have separate `en-US.po` and `en-GB.po` catalogs: US keeps the source spelling, while UK uses regional forms such as Colour and Customise. All 31 catalog tags are documented in [LANGUAGES.md](../LANGUAGES.md); the 29 non-English locales retain 174 translated user-facing guide pages.
 
 ## Contract for code, documentation and releases
 
 - `third_party/ps5_system_language.hpp` represents the 31 PS5 system language tags and is the reference mapping.
 - `headless/settings_store.h` must expose that **exact tag set**, with **no additional entries**. Its first 18 saved preference indices stay stable; the 13 previously hidden Sony entries are appended.
-- `headless/prosperoeden/ui/lang/*.po` must contain exactly the 29 non-English catalog tags, all part of Sony's official list. Do not include Filipino, Indian languages, or any other additional launcher selectors unless Sony adds them to the console UI list.
+- `headless/prosperoeden/ui/lang/*.po` must contain exactly the 31 catalog tags, one per official PS5 selector, including both English regional variants. Do not include Filipino, Indian languages, or any other additional launcher selectors unless Sony adds them to the console UI list.
 - UI language preference and game-language preference are not synonymous: the guest emulator supports fewer game-language enums. The original 18 mappings are preserved; the 13 additional console interface choices use supported English guest-language fallback.
 - Source/test gates: `tools/check-language-runtime.py` compares the complete set, `tools/check-launcher-translation-coverage.py` checks catalog coverage, `tools/check-user-doc-locales.py` and `docs/i18n/check_user_docs.py` check documentation, `tools/ci/check-staged-app.py` and `tools/install-ftp.py` verify packaged/deployed catalogs.
 - Update this list **only when Sony changes its documented PS5 system-language options**, and then update code, catalogs, localizations, packaging and tests in one coherent change.

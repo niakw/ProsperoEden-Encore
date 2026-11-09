@@ -302,6 +302,286 @@
       "access": "큰 글씨, 높은 대비, 움직임 줄이기 옵션은 접근성 메뉴에서 각각 켤 수 있으며 기본적으로 모두 꺼져 있습니다. 런처의 접근성이 모든 게임 내부의 접근성을 보장하지는 않습니다.",
       "safety": "/data/prosperoeden/ 폴더를 삭제하지 마세요. 설정, 저장 데이터, 키가 들어 있을 수 있습니다. 외부 저장소도 백업하세요.",
       "limits": "마지막으로 실제 컴파일된 공개 PS5 패키지는 2026년 10월 15일 버전입니다. 10월 30일 공개판은 복사본입니다. 새 사전 출시 초안에는 실행 파일이나 검증된 2세대 콘솔 게임 호환성이 포함되지 않습니다."
+    },
+    {
+      "code": "nb-NO",
+      "native": "Norsk bokmål",
+      "head": [
+        "Oversikt",
+        "Installasjon og oppdatering",
+        "Innstillinger",
+        "Feilsøking",
+        "Brukerstøtte",
+        "Tilgjengelighet"
+      ],
+      "intro": "Eden Encore er et uoffisielt fellesskapsprosjekt for PS5 med felles kildekode for spill fra første og andre generasjon. Grensesnittet er laget for TV og håndkontroll. Beståtte kildekode- eller vertstester bekrefter ikke at et spill fungerer på konsollen.",
+      "install": "Last ned en faktisk utgitt pakke fra Releases og ta sikkerhetskopi av app og data først. Ved ZIP/FTP kopierer du hele PPSA99008-mappen til /data/homebrew/PPSA99008/. Ikke bland ZIP/FTP med FFPFSC/ShadowMountPlus, og kontroller SHA-256 der det finnes.",
+      "settings": "Anbefalt startprofil bruker Vulkan, TV-utgang 1440p, intern spillskalering 1.25x, romlig FSR 1 med skarphet 50 %, FXAA og 60 Hz. TV-oppløsning er ikke det samme som intern spilloppløsning. Bildegenerering øker ikke hastigheten på selve spilsimuleringen.",
+      "trouble": "Hvis appen ikke starter, kontroller eboot.bin, sce_sys og ui/lang. Mangler spillene, sjekk roms i den valgte lagringsroten. Hvis menyen fortsatt er engelsk, kontroller oversettelsesfilene. Safe Launch tilbakestiller bare ett spills innstillinger uten å slette lagringer.",
+      "support": "Oppgi Encore-versjon, PS5-firmware, fremgangsmåte for å gjenskape feilen, relevante innstillinger og anonymiserte logger i GitHub Issues. Del aldri nøkler, lagringsfiler eller personopplysninger.",
+      "access": "Større tekst, høy kontrast og redusert bevegelse kan slås på hver for seg under Tilgjengelighet; alle er av som standard. Tilgjengelighet i startmenyen garanterer ikke tilgjengelighet i hvert spill.",
+      "safety": "Slett aldri /data/prosperoeden/; mappen kan inneholde lagringer, innstillinger og nøkler. Ta også kopi av ekstern lagring.",
+      "limits": "Siste offentlig kompilerte PS5-pakke er fra 15. oktober 2026. Publiseringen 30. oktober var en kopi. Det nye utkastet har ingen binærfiler eller verifiserte spill fra andre generasjon på konsollen."
+    },
+    {
+      "code": "nl-NL",
+      "native": "Nederlands",
+      "head": [
+        "Overzicht",
+        "Installatie en updates",
+        "Instellingen",
+        "Problemen oplossen",
+        "Ondersteuning",
+        "Toegankelijkheid"
+      ],
+      "intro": "Eden Encore is een onofficieel communityproject voor PS5 met gedeelde code voor games van de eerste en tweede generatie. De interface is gemaakt voor tv en controller. Geslaagde broncode- en hosttests bewijzen niet dat een game op de console werkt.",
+      "install": "Download een daadwerkelijk gepubliceerde release en maak eerst een back-up van de toepassing en je gegevens. Kopieer bij ZIP/FTP de volledige map PPSA99008 naar /data/homebrew/PPSA99008/. Meng ZIP/FTP niet met FFPFSC/ShadowMountPlus en controleer SHA-256 als die beschikbaar is.",
+      "settings": "Het aanbevolen beginprofiel gebruikt Vulkan, tv-uitvoer 1440p, interne gameschaal 1.25x, ruimtelijke FSR 1 met 50% scherpte, FXAA en 60 Hz. Tv-uitvoer is niet hetzelfde als de interne spelresolutie. Framegeneratie verhoogt de simulatiesnelheid van de game niet.",
+      "trouble": "Start de app niet, controleer dan eboot.bin, sce_sys en ui/lang. Ontbrekende games? Controleer roms onder de gekozen opslaglocatie. Blijft de interface Engels, controleer de vertaalbestanden. Met Safe Launch herstel je instellingen voor één game zonder savegames te verwijderen.",
+      "support": "Vermeld bij GitHub Issues de Encore-versie, PS5-firmware, exacte reproductiestappen, relevante instellingen en geanonimiseerde logboeken. Deel nooit sleutels, savegames of privégegevens.",
+      "access": "Grotere tekst, hoog contrast en minder beweging zijn afzonderlijk beschikbaar onder Toegankelijkheid en standaard uitgeschakeld. Een toegankelijke launcher garandeert niet dat alle games toegankelijk zijn.",
+      "safety": "Verwijder /data/prosperoeden/ nooit: deze map kan saves, instellingen en sleutels bevatten. Maak ook een back-up van externe opslag.",
+      "limits": "Het laatste werkelijk gecompileerde openbare PS5-pakket dateert van 15 oktober 2026. De publicatie van 30 oktober was een kopie. Het nieuwe prereleaseconcept bevat geen uitvoerbare bestanden en geen bevestigde ondersteuning voor games van de tweede generatie op de console."
+    },
+    {
+      "code": "pl-PL",
+      "native": "Polski",
+      "head": [
+        "Przegląd",
+        "Instalacja i aktualizacja",
+        "Ustawienia",
+        "Rozwiązywanie problemów",
+        "Pomoc",
+        "Ułatwienia dostępu"
+      ],
+      "intro": "Eden Encore to nieoficjalny projekt społecznościowy na PS5, rozwijający wspólny silnik dla gier pierwszej i drugiej generacji. Interfejs jest przeznaczony do telewizora i kontrolera. Pozytywne testy kodu i środowiska hosta nie dowodzą działania gier na konsoli.",
+      "install": "Pobierz faktycznie opublikowany pakiet ze strony Releases i wcześniej wykonaj kopię programu oraz danych. Przy ZIP/FTP skopiuj cały folder PPSA99008 do /data/homebrew/PPSA99008/. Nie łącz ZIP/FTP z FFPFSC/ShadowMountPlus; sprawdź SHA-256, jeśli podano sumę.",
+      "settings": "Zalecany profil początkowy to Vulkan, wyjście TV 1440p, wewnętrzna skala gry 1.25x, przestrzenne FSR 1 z ostrością 50%, FXAA i 60 Hz. Rozdzielczość TV i wewnętrzna rozdzielczość gry to różne ustawienia. Generowanie klatek nie przyspiesza symulacji gry.",
+      "trouble": "Jeśli program nie uruchamia się, sprawdź eboot.bin, sce_sys i ui/lang. Jeśli nie widać gier, sprawdź roms w wybranym katalogu danych. Gdy menu pozostaje po angielsku, sprawdź pliki tłumaczeń. Safe Launch przywraca ustawienia konkretnej gry bez kasowania zapisów.",
+      "support": "Zgłoszenie w GitHub Issues powinno zawierać wersję Encore, firmware PS5, kroki odtworzenia błędu, istotne ustawienia i oczyszczone logi. Nie publikuj kluczy, zapisów gry ani danych osobowych.",
+      "access": "Powiększony tekst, wysoki kontrast i ograniczenie animacji można włączyć osobno w ustawieniach dostępności; domyślnie są wyłączone. Dostępny interfejs nie gwarantuje dostępności wszystkich gier.",
+      "safety": "Nigdy nie usuwaj /data/prosperoeden/: może zawierać zapisy, ustawienia i klucze. Zabezpiecz też zewnętrzne nośniki.",
+      "limits": "Ostatnia rzeczywiście skompilowana publiczna paczka PS5 pochodzi z 15 października 2026 r. Publikacja 30 października była kopią. Nowy szkic prerelease nie zawiera plików wykonywalnych ani potwierdzonej obsługi gier drugiej generacji na konsoli."
+    },
+    {
+      "code": "pt-BR",
+      "native": "Português (Brasil)",
+      "head": [
+        "Visão geral",
+        "Instalação e atualização",
+        "Configurações",
+        "Solução de problemas",
+        "Suporte",
+        "Acessibilidade"
+      ],
+      "intro": "Eden Encore é um projeto comunitário não oficial para PS5, com componentes compartilhados para jogos de primeira e segunda geração. A interface é feita para TV e controle. Testes de código e do ambiente hospedeiro não comprovam que um jogo funciona no console.",
+      "install": "Baixe um pacote efetivamente publicado em Releases e faça backup do aplicativo e dos dados primeiro. Em ZIP/FTP, copie a pasta PPSA99008 inteira para /data/homebrew/PPSA99008/. Não misture ZIP/FTP com FFPFSC/ShadowMountPlus e confira SHA-256 quando disponível.",
+      "settings": "O perfil recomendado usa Vulkan, saída de TV 1440p, escala interna de jogo 1.25x, FSR 1 espacial com nitidez 50%, FXAA e 60 Hz. A saída da TV é diferente da resolução interna do jogo. A geração de quadros não aumenta a velocidade de simulação do jogo.",
+      "trouble": "Se o aplicativo não iniciar, confira eboot.bin, sce_sys e ui/lang. Caso os jogos sumam, verifique roms na raiz de armazenamento selecionada. Se o menu continuar em inglês, confira os arquivos de idioma. Safe Launch restaura as configurações de um jogo sem apagar os saves.",
+      "support": "Abra uma GitHub Issue informando versão do Encore, firmware PS5, passos para reproduzir, configurações relevantes e logs sem informações pessoais. Nunca publique chaves, saves ou dados privados.",
+      "access": "Texto ampliado, alto contraste e movimento reduzido podem ser ativados separadamente em Acessibilidade; todos começam desligados. A acessibilidade do iniciador não garante a acessibilidade de cada jogo.",
+      "safety": "Nunca apague /data/prosperoeden/: a pasta pode conter saves, configurações e chaves. Salve também uma cópia do armazenamento externo.",
+      "limits": "O último pacote PS5 público realmente compilado é de 15 de outubro de 2026; a publicação de 30 de outubro foi uma cópia. O novo rascunho de pré-lançamento não possui binários nem jogos de segunda geração validados no console."
+    },
+    {
+      "code": "pt-PT",
+      "native": "Português (Portugal)",
+      "head": [
+        "Visão geral",
+        "Instalação e actualização",
+        "Definições",
+        "Resolução de problemas",
+        "Apoio",
+        "Acessibilidade"
+      ],
+      "intro": "Eden Encore é um projecto comunitário não oficial para PS5, com componentes partilhados para jogos da primeira e segunda geração. A interface foi concebida para televisão e comando. Testes ao código ou no sistema anfitrião não demonstram que um jogo funciona na consola.",
+      "install": "Descarrega um pacote efectivamente publicado em Releases e guarda primeiro uma cópia da aplicação e dos dados. Em ZIP/FTP, copia toda a pasta PPSA99008 para /data/homebrew/PPSA99008/. Não mistures ZIP/FTP com FFPFSC/ShadowMountPlus; verifica SHA-256 quando disponibilizado.",
+      "settings": "O perfil recomendado utiliza Vulkan, saída de TV a 1440p, escala interna de jogo 1.25x, FSR 1 espacial com nitidez de 50%, FXAA e 60 Hz. A saída da televisão difere da resolução interna do jogo. A geração de fotogramas não aumenta a velocidade de simulação do jogo.",
+      "trouble": "Se a aplicação não arrancar, verifica eboot.bin, sce_sys e ui/lang. Se não aparecerem jogos, confirma roms na raiz de armazenamento seleccionada. Se o menu permanecer em inglês, verifica os catálogos de tradução. Safe Launch repõe as definições de um jogo sem eliminar gravações.",
+      "support": "Num GitHub Issue indica a versão do Encore, firmware PS5, passos para reproduzir, definições pertinentes e registos anonimizados. Nunca publiques chaves, gravações ou dados pessoais.",
+      "access": "Texto maior, contraste elevado e redução de movimento podem ser activados separadamente em Acessibilidade e estão desligados por defeito. A acessibilidade do lançador não garante acessibilidade em todos os jogos.",
+      "safety": "Nunca apagues /data/prosperoeden/: pode conter gravações, definições e chaves. Guarda também uma cópia do armazenamento externo.",
+      "limits": "O último pacote PS5 público efectivamente compilado é de 15 de outubro de 2026. A publicação de 30 de outubro foi uma cópia. O novo rascunho de pré-lançamento não inclui binários nem compatibilidade da segunda geração validada na consola."
+    },
+    {
+      "code": "ro-RO",
+      "native": "Română",
+      "head": [
+        "Prezentare generală",
+        "Instalare și actualizare",
+        "Setări",
+        "Depanare",
+        "Asistență",
+        "Accesibilitate"
+      ],
+      "intro": "Eden Encore este un proiect comunitar neoficial pentru PS5, cu un motor comun pentru jocurile din prima și a doua generație. Interfața este concepută pentru televizor și controler. Testele reușite ale codului sau pe gazdă nu dovedesc că un joc funcționează pe consolă.",
+      "install": "Descarcă un pachet publicat efectiv din Releases și fă mai întâi copii de siguranță ale aplicației și datelor. Pentru ZIP/FTP, copiază întregul director PPSA99008 în /data/homebrew/PPSA99008/. Nu combina ZIP/FTP cu FFPFSC/ShadowMountPlus și verifică SHA-256 dacă este disponibil.",
+      "settings": "Profilul recomandat folosește Vulkan, ieșire TV 1440p, scară internă 1.25x, FSR 1 spațial cu claritate 50%, FXAA și 60 Hz. Rezoluția ieșirii TV nu este aceeași cu rezoluția internă a jocului. Generarea cadrelor nu mărește viteza simulării jocului.",
+      "trouble": "Dacă aplicația nu pornește, verifică eboot.bin, sce_sys și ui/lang. Dacă lipsesc jocuri, verifică roms în rădăcina de stocare selectată. Dacă meniul rămâne în engleză, verifică fișierele de traducere. Safe Launch restabilește setările unui joc fără ștergerea salvărilor.",
+      "support": "În GitHub Issues include versiunea Encore, firmware-ul PS5, pașii de reproducere, setările relevante și jurnale fără informații personale. Nu publica niciodată chei, salvări sau date private.",
+      "access": "Textul mărit, contrastul ridicat și mișcarea redusă pot fi activate separat din Accesibilitate și sunt dezactivate implicit. Accesibilitatea lansatorului nu garantează accesibilitatea fiecărui joc.",
+      "safety": "Nu șterge niciodată /data/prosperoeden/: poate conține salvări, setări și chei. Copiază și datele din stocarea externă.",
+      "limits": "Ultimul pachet public PS5 compilat efectiv datează din 15 octombrie 2026. Publicarea din 30 octombrie a fost o copie. Noul proiect de prerelease nu conține binare sau compatibilitate confirmată pentru jocurile de generația a doua pe consolă."
+    },
+    {
+      "code": "ru-RU",
+      "native": "Русский",
+      "head": [
+        "Обзор",
+        "Установка и обновление",
+        "Настройки",
+        "Решение проблем",
+        "Поддержка",
+        "Доступность"
+      ],
+      "intro": "Eden Encore — неофициальный проект сообщества для PS5 с общими компонентами для игр первого и второго поколения. Интерфейс рассчитан на телевизор и геймпад. Успешные тесты кода и хостовой среды не доказывают, что игра работает на консоли.",
+      "install": "Загружайте только действительно опубликованный пакет из Releases и заранее сохраняйте копии приложения и данных. Для ZIP/FTP целиком скопируйте папку PPSA99008 в /data/homebrew/PPSA99008/. Не смешивайте ZIP/FTP с FFPFSC/ShadowMountPlus; проверяйте SHA-256, если контрольная сумма доступна.",
+      "settings": "Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.",
+      "trouble": "Если приложение не запускается, проверьте eboot.bin, sce_sys и ui/lang. Если игры не отображаются, проверьте roms в выбранном корне хранения. Если меню остаётся английским, проверьте файлы переводов. Safe Launch восстанавливает настройки отдельной игры без удаления сохранений.",
+      "support": "В GitHub Issues укажите версию Encore, прошивку PS5, шаги воспроизведения, связанные настройки и очищенные от личных данных журналы. Не публикуйте ключи, сохранения и конфиденциальную информацию.",
+      "access": "Увеличенный текст, повышенная контрастность и уменьшение движения включаются независимо в настройках доступности и изначально отключены. Доступность оболочки не гарантирует доступность каждой игры.",
+      "safety": "Никогда не удаляйте /data/prosperoeden/: там могут находиться сохранения, настройки и ключи. Сделайте резервную копию внешнего хранилища.",
+      "limits": "Последняя действительно собранная публичная версия PS5 датирована 15 октября 2026 года; публикация 30 октября была её копией. Новый черновик предварительного выпуска не содержит бинарных файлов или подтверждённой совместимости игр второго поколения на консоли."
+    },
+    {
+      "code": "sv-SE",
+      "native": "Svenska",
+      "head": [
+        "Översikt",
+        "Installation och uppdatering",
+        "Inställningar",
+        "Felsökning",
+        "Support",
+        "Tillgänglighet"
+      ],
+      "intro": "Eden Encore är ett inofficiellt PS5-projekt från communityn med gemensam kod för spel från första och andra generationen. Gränssnittet är gjort för tv och handkontroll. Godkända källkods- eller värddatortester bevisar inte att ett spel fungerar på konsolen.",
+      "install": "Hämta ett faktiskt publicerat paket från Releases och säkerhetskopiera först appen och dina data. Vid ZIP/FTP kopierar du hela mappen PPSA99008 till /data/homebrew/PPSA99008/. Blanda inte ZIP/FTP med FFPFSC/ShadowMountPlus och kontrollera SHA-256 om en summa finns.",
+      "settings": "Rekommenderad startprofil är Vulkan, tv-utmatning 1440p, intern spelskala 1.25x, rumslig FSR 1 med 50 % skärpa, FXAA och 60 Hz. Tv-utmatningen är inte samma sak som spelets interna upplösning. Bildgenerering ökar inte spelets simuleringshastighet.",
+      "trouble": "Om appen inte startar kontrollerar du eboot.bin, sce_sys och ui/lang. Om spel saknas, kontrollera roms i vald lagringsrot. Om menyerna fortsätter vara på engelska, kontrollera språkfilerna. Safe Launch återställer inställningar för ett spel utan att ta bort sparfiler.",
+      "support": "Ange Encore-version, PS5-firmware, exakta steg, relevanta inställningar och avidentifierade loggar i GitHub Issues. Publicera aldrig nycklar, sparfiler eller personuppgifter.",
+      "access": "Större text, hög kontrast och minskad rörelse kan aktiveras var för sig under Tillgänglighet; de är avstängda som standard. En tillgänglig startmeny garanterar inte tillgänglighet inne i spelen.",
+      "safety": "Radera aldrig /data/prosperoeden/: där kan finnas sparfiler, inställningar och nycklar. Säkerhetskopiera även extern lagring.",
+      "limits": "Det senaste offentligt kompilerade PS5-paketet är från 15 oktober 2026. Publiceringen den 30 oktober var en kopia. Det nya utkastet innehåller inga binärer eller verifierade spel från andra generationen på konsolen."
+    },
+    {
+      "code": "th-TH",
+      "native": "ไทย",
+      "head": [
+        "ภาพรวม",
+        "การติดตั้งและอัปเดต",
+        "การตั้งค่า",
+        "แก้ไขปัญหา",
+        "การสนับสนุน",
+        "การช่วยการเข้าถึง"
+      ],
+      "intro": "Eden Encore เป็นโครงการชุมชนที่ไม่เป็นทางการสำหรับ PS5 ใช้โค้ดร่วมกันเพื่อพัฒนาเกมผู้เยือนรุ่นแรกและรุ่นที่สอง หน้าตาออกแบบมาเพื่อทีวีและจอย การทดสอบซอร์สโค้ดหรือเครื่องโฮสต์ผ่านไม่ได้หมายความว่าเกมเล่นได้จริงบนเครื่องคอนโซล",
+      "install": "ดาวน์โหลดแพ็กเกจที่เผยแพร่จริงจาก Releases และสำรองแอปกับข้อมูลก่อน สำหรับ ZIP/FTP ให้คัดลอกโฟลเดอร์ PPSA99008 ทั้งหมดไปยัง /data/homebrew/PPSA99008/ อย่าผสมการติดตั้ง ZIP/FTP กับ FFPFSC/ShadowMountPlus และตรวจสอบ SHA-256 หากมี",
+      "settings": "ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น",
+      "trouble": "หากแอปเปิดไม่ได้ให้ตรวจสอบ eboot.bin, sce_sys และ ui/lang หากไม่พบเกมให้ตรวจสอบ roms ในรากพื้นที่จัดเก็บที่เลือก หากเมนูยังเป็นอังกฤษให้ตรวจสอบไฟล์ภาษา Safe Launch คืนค่าตั้งค่ารายเกมโดยไม่ลบเซฟ",
+      "support": "เมื่อรายงานปัญหาใน GitHub Issues โปรดระบุเวอร์ชัน Encore, เฟิร์มแวร์ PS5, ขั้นตอนทำซ้ำ, การตั้งค่าที่เกี่ยวข้อง และล็อกที่ลบข้อมูลส่วนตัวแล้ว ห้ามเผยแพร่คีย์ ไฟล์เซฟ หรือข้อมูลส่วนตัว",
+      "access": "สามารถเปิดข้อความขนาดใหญ่ คอนทราสต์สูง และลดการเคลื่อนไหวแยกกันในเมนูการช่วยการเข้าถึง โดยค่าเริ่มต้นปิดทั้งหมด การใช้หน้าตาแอปได้ไม่ได้หมายความว่าเกมทุกเกมเข้าถึงได้",
+      "safety": "ห้ามลบ /data/prosperoeden/ เพราะอาจมีเซฟ การตั้งค่า และคีย์ ควรสำรองพื้นที่จัดเก็บภายนอกด้วย",
+      "limits": "แพ็กเกจ PS5 สาธารณะที่คอมไพล์จริงล่าสุดคือวันที่ 15 ตุลาคม 2026 การเผยแพร่วันที่ 30 ตุลาคมเป็นเพียงสำเนา ฉบับร่างพรีรีลีสใหม่ไม่มีไฟล์ไบนารีหรือเกมรุ่นที่สองที่ยืนยันว่าเล่นบนคอนโซลได้"
+    },
+    {
+      "code": "tr-TR",
+      "native": "Türkçe",
+      "head": [
+        "Genel bakış",
+        "Kurulum ve güncelleme",
+        "Ayarlar",
+        "Sorun giderme",
+        "Destek",
+        "Erişilebilirlik"
+      ],
+      "intro": "Eden Encore, birinci ve ikinci nesil konuk oyunlar için ortak motor geliştiren, PS5'e yönelik resmî olmayan bir topluluk projesidir. Arayüz televizyon ve kontrolcü için tasarlanmıştır. Kaynak kodu ve ana sistem testlerinin başarılı olması oyunların konsolda çalıştığını kanıtlamaz.",
+      "install": "Gerçekten yayımlanmış paketi Releases sayfasından indirin ve önce uygulama ile verilerinizi yedekleyin. ZIP/FTP için PPSA99008 klasörünün tamamını /data/homebrew/PPSA99008/ dizinine kopyalayın. ZIP/FTP ile FFPFSC/ShadowMountPlus yöntemlerini karıştırmayın; varsa SHA-256 doğrulaması yapın.",
+      "settings": "Önerilen başlangıç profili Vulkan, 1440p TV çıkışı, 1.25x iç oyun ölçeği, %50 keskinlikte uzamsal FSR 1, FXAA ve 60 Hz kullanır. TV çıkışı oyun içi çözünürlükten ayrıdır. Kare üretimi oyunun simülasyon hızını artırmaz.",
+      "trouble": "Uygulama açılmıyorsa eboot.bin, sce_sys ve ui/lang dosyalarını kontrol edin. Oyunlar görünmüyorsa seçili depolama kökündeki roms klasörünü kontrol edin. Menü İngilizce kalıyorsa çeviri dosyalarını doğrulayın. Safe Launch oyun kayıtlarını silmeden yalnızca ilgili oyunun ayarlarını geri alır.",
+      "support": "GitHub Issues üzerinde Encore sürümü, PS5 yazılımı, hatayı yeniden oluşturma adımları, ilgili ayarlar ve kişisel bilgileri temizlenmiş günlüklerle rapor verin. Anahtarları, kayıt dosyalarını veya özel bilgileri yayımlamayın.",
+      "access": "Büyük metin, yüksek karşıtlık ve azaltılmış hareket seçenekleri Erişilebilirlik altında ayrı ayrı açılır; varsayılan olarak kapalıdır. Başlatıcı erişilebilirliği her oyunun erişilebilir olduğu anlamına gelmez.",
+      "safety": "/data/prosperoeden/ klasörünü asla silmeyin; kayıtları, ayarları ve anahtarları içerebilir. Harici depolamayı da yedekleyin.",
+      "limits": "Gerçekten derlenmiş son herkese açık PS5 paketi 15 Ekim 2026 tarihlidir; 30 Ekim yayını bir kopyadır. Yeni ön sürüm taslağı ikili dosya ya da konsolda doğrulanmış ikinci nesil oyun desteği içermez."
+    },
+    {
+      "code": "uk-UA",
+      "native": "Українська",
+      "head": [
+        "Огляд",
+        "Встановлення й оновлення",
+        "Налаштування",
+        "Усунення несправностей",
+        "Підтримка",
+        "Доступність"
+      ],
+      "intro": "Eden Encore — неофіційний спільнотний проєкт для PS5 зі спільними компонентами для ігор першого та другого покоління. Інтерфейс створено для телевізора й контролера. Успішні тести коду або хостового середовища не доводять, що гра працює на консолі.",
+      "install": "Завантажуйте справді опублікований пакет із Releases і спершу створіть резервні копії програми та даних. Для ZIP/FTP повністю скопіюйте теку PPSA99008 у /data/homebrew/PPSA99008/. Не змішуйте ZIP/FTP з FFPFSC/ShadowMountPlus; перевіряйте SHA-256, якщо вона надана.",
+      "settings": "Рекомендований профіль: Vulkan, виведення на телевізор 1440p, внутрішній масштаб гри 1.25x, просторовий FSR 1 із різкістю 50%, FXAA та 60 Hz. Роздільна здатність ТВ відрізняється від внутрішнього рендерингу гри. Генерація кадрів не прискорює симуляцію гри.",
+      "trouble": "Якщо програма не запускається, перевірте eboot.bin, sce_sys і ui/lang. Якщо ігри відсутні, перевірте roms у вибраному корені сховища. Якщо меню залишається англійським, перевірте переклади. Safe Launch відновлює налаштування окремої гри без видалення збережень.",
+      "support": "У GitHub Issues зазначте версію Encore, прошивку PS5, послідовність дій, потрібні налаштування та очищені від приватних даних журнали. Не публікуйте ключі, збереження чи особисті відомості.",
+      "access": "Збільшений текст, високу контрастність і зменшення руху можна вмикати окремо в налаштуваннях доступності; за замовчуванням вони вимкнені. Доступність оболонки не гарантує доступності кожної гри.",
+      "safety": "Ніколи не видаляйте /data/prosperoeden/: там можуть зберігатися ігри, налаштування та ключі. Резервуйте також зовнішнє сховище.",
+      "limits": "Останній справді скомпільований публічний пакет PS5 датований 15 жовтня 2026 року. Публікація 30 жовтня була копією. Новий чернетковий попередній випуск не містить бінарних файлів чи підтвердженої підтримки ігор другого покоління на консолі."
+    },
+    {
+      "code": "vi-VN",
+      "native": "Tiếng Việt",
+      "head": [
+        "Tổng quan",
+        "Cài đặt và cập nhật",
+        "Thiết lập",
+        "Khắc phục sự cố",
+        "Hỗ trợ",
+        "Khả năng tiếp cận"
+      ],
+      "intro": "Eden Encore là dự án cộng đồng không chính thức cho PS5, phát triển công cụ chung cho trò chơi thế hệ thứ nhất và thứ hai. Giao diện được thiết kế cho TV và tay cầm. Vượt qua kiểm thử mã nguồn hay máy chủ không chứng minh trò chơi chạy được trên máy console.",
+      "install": "Tải gói thực sự đã phát hành từ Releases và sao lưu ứng dụng cùng dữ liệu trước. Với ZIP/FTP, chép toàn bộ thư mục PPSA99008 vào /data/homebrew/PPSA99008/. Không trộn ZIP/FTP với FFPFSC/ShadowMountPlus; kiểm tra SHA-256 nếu có.",
+      "settings": "Hồ sơ đề xuất sử dụng Vulkan, đầu ra TV 1440p, độ phân giải game nội bộ 1.25x, FSR 1 không gian với độ nét 50%, FXAA và 60 Hz. Đầu ra TV không đồng nghĩa với độ phân giải render của trò chơi. Tạo khung hình không tăng tốc độ mô phỏng game.",
+      "trouble": "Nếu ứng dụng không mở, kiểm tra eboot.bin, sce_sys và ui/lang. Nếu game không xuất hiện, kiểm tra roms ở thư mục lưu trữ gốc đã chọn. Nếu giao diện vẫn là tiếng Anh, kiểm tra tệp dịch. Safe Launch có thể khôi phục thiết lập riêng của game mà không xóa bản lưu.",
+      "support": "Trong GitHub Issues, cung cấp phiên bản Encore, firmware PS5, các bước tái hiện, thiết lập liên quan và nhật ký đã loại bỏ thông tin cá nhân. Tuyệt đối không công khai khóa, dữ liệu lưu game hay thông tin riêng tư.",
+      "access": "Chữ lớn, độ tương phản cao và giảm chuyển động là các tùy chọn độc lập trong Khả năng tiếp cận và đều tắt theo mặc định. Giao diện dễ sử dụng không bảo đảm mọi trò chơi đều hỗ trợ tiếp cận.",
+      "safety": "Không bao giờ xóa /data/prosperoeden/ vì có thể chứa bản lưu, thiết lập và khóa. Hãy sao lưu cả ổ lưu trữ ngoài.",
+      "limits": "Gói PS5 công khai cuối cùng thực sự được biên dịch ngày 15 tháng 10 năm 2026. Bản đăng ngày 30 tháng 10 chỉ là bản sao. Bản nháp phát hành mới không có tệp nhị phân hay trò chơi thế hệ thứ hai được xác nhận chạy trên console."
+    },
+    {
+      "code": "zh-Hans",
+      "native": "简体中文",
+      "head": [
+        "概览",
+        "安装与更新",
+        "设置",
+        "问题排查",
+        "支持",
+        "无障碍"
+      ],
+      "intro": "Eden Encore 是一个面向 PS5 的非官方社区项目，正在开发共用的第一代和第二代游戏引擎。界面针对电视和手柄设计。源码或主机环境测试通过，并不代表游戏已经能在真实主机上运行。",
+      "install": "仅从 Releases 下载真正发布的安装包，并先备份应用和数据。ZIP/FTP 方式需要将完整 PPSA99008 文件夹复制到 /data/homebrew/PPSA99008/。不要混用 ZIP/FTP 与 FFPFSC/ShadowMountPlus；有 SHA-256 校验值时请核对。",
+      "settings": "推荐初始配置为 Vulkan、1440p 电视输出、1.25x 游戏内部渲染倍率、空间 FSR 1（锐度 50%）、FXAA 和 60 Hz。电视输出分辨率与游戏内部渲染分辨率不同。帧生成并不会提高游戏的实际模拟速度。",
+      "trouble": "若应用无法启动，请检查 eboot.bin、sce_sys 与 ui/lang。若游戏列表为空，请检查所选存储根目录下的 roms。若菜单仍为英语，请检查翻译文件。Safe Launch 可在不删除存档的情况下重置单个游戏设置。",
+      "support": "在 GitHub Issues 中提供 Encore 版本、PS5 固件、复现步骤、相关设置以及脱敏日志。请勿公开密钥、游戏存档或个人资料。",
+      "access": "放大文字、高对比度、减少动态效果可在无障碍设置中分别开启，默认全部关闭。启动器可用并不代表每款游戏内部都具备无障碍功能。",
+      "safety": "切勿删除 /data/prosperoeden/，其中可能包含存档、设置和密钥。也请备份外部存储。",
+      "limits": "上一份真正编译并公开发布的 PS5 安装包日期为 2026 年 10 月 15 日；10 月 30 日发布的是相同文件的副本。新的预发布草稿不含可执行文件，也不表示第二代游戏已在主机上验证。"
+    },
+    {
+      "code": "zh-Hant",
+      "native": "繁體中文",
+      "head": [
+        "概覽",
+        "安裝與更新",
+        "設定",
+        "問題排除",
+        "支援",
+        "無障礙"
+      ],
+      "intro": "Eden Encore 是面向 PS5 的非官方社群專案，正在開發第一代與第二代遊戲共用的核心。介面針對電視與控制器設計。原始碼或主機端測試通過，並不表示遊戲已在實體主機上正常執行。",
+      "install": "只從 Releases 下載真正已發布的安裝包，並先備份應用程式及資料。ZIP/FTP 方式應將完整的 PPSA99008 資料夾複製至 /data/homebrew/PPSA99008/。請勿混用 ZIP/FTP 與 FFPFSC/ShadowMountPlus；若提供 SHA-256，請先核對。",
+      "settings": "建議的初始設定為 Vulkan、1440p 電視輸出、1.25x 遊戲內部渲染倍率、空間 FSR 1（銳利度 50%）、FXAA 與 60 Hz。電視輸出解析度不同於遊戲內部渲染解析度。影格生成不會提升遊戲本身的模擬速度。",
+      "trouble": "無法啟動時，請確認 eboot.bin、sce_sys 與 ui/lang。若沒有列出遊戲，請檢查所選儲存根目錄的 roms。若選單仍顯示英文，請確認翻譯檔。Safe Launch 可在不刪除存檔的情況下重設單一遊戲設定。",
+      "support": "在 GitHub Issues 中提供 Encore 版本、PS5 韌體版本、重現步驟、相關設定及去識別化日誌。請勿公開金鑰、遊戲存檔或個人資料。",
+      "access": "放大文字、高對比及減少動態效果可於無障礙設定中分別啟用，預設全部關閉。啟動器容易操作不代表每款遊戲內部都支援無障礙功能。",
+      "safety": "切勿刪除 /data/prosperoeden/，其中可能存放設定、存檔與金鑰。請同時備份外部儲存空間。",
+      "limits": "最後一份真正完成編譯並公開的 PS5 安裝包日期為 2026 年 10 月 15 日；10 月 30 日發布的是相同內容的副本。新的預發布草稿沒有執行檔，也不代表第二代遊戲已通過主機驗證。"
     }
   ]
 }

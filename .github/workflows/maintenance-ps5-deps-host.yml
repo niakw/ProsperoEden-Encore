@@ -65,3 +65,26 @@ jobs:
             -DWEBP_BUILD_DWEBP=OFF -DWEBP_BUILD_EXTRAS=OFF \
             -DWEBP_BUILD_ANIM_UTILS=OFF -DWEBP_BUILD_WEBPINFO=OFF
           cmake --build /tmp/encore-webp --target webp -j 2
+      - name: Real WebP 1.6 encode/decode, alpha and truncated-data regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_IMAGE'
+          from pathlib import Path
+          header=bytearray(18)
+          header[2]=2
+          header[12]=2
+          header[14]=2
+          header[16]=32
+          header[17]=0x28
+          pixels=bytes([2,3,250,255,5,200,10,128,100,12,24,0,48,96,144,200])
+          Path("/tmp/encore-webp-fixture.tga").write_bytes(header+pixels)
+          PY_IMAGE
+          test "$(find /tmp/encore-webp -name '*.a' -type f | wc -l)" -ge 1
+          c++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Ivendor/encore-active/libwebp/src \
+            tools/launcher/test-webp-cover-codec.cpp \
+            -Wl,--start-group $(find /tmp/encore-webp -name '*.a' -type f | sort) \
+            -Wl,--end-group -pthread -lm -o /tmp/encore-webp-host-codec
+          /tmp/encore-webp-host-codec /tmp/encore-webp-fixture.tga
+

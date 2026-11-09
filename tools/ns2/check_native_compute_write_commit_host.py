@@ -66,6 +66,7 @@ CPP=r'''
 #include <utility>
 #include <vector>
 #include "shader_recompiler/frontend/ampere/native_qmd_compute_environment.h"
+#include "video_core/surface.h"
 #ifndef VK_NULL_HANDLE
 #define VK_NULL_HANDLE 0
 #endif
@@ -77,9 +78,6 @@ bool NativeLayoutsReady(bool pipeline, bool pipeline_layout,
                         bool descriptor_set_layout, std::size_t num_descriptor_entries) {
 __LAYOUT_GUARD__
     return true;
-}
-namespace VideoCore::Surface {
-enum class PixelFormat { Invalid, RGBA8 };
 }
 struct MockImage {
     u64 view{1};
@@ -128,7 +126,7 @@ struct MockTexel {
     u64 guest_gpu_address;
     u32 guest_bytes;
     bool is_written;
-    VideoCore::Surface::PixelFormat format{VideoCore::Surface::PixelFormat::RGBA8};
+    VideoCore::Surface::PixelFormat format{VideoCore::Surface::PixelFormat::A8B8G8R8_UNORM};
     bool storage{};
 };
 bool NativeTexelBindingsReady(const std::vector<MockTexel>& texels,
@@ -186,7 +184,7 @@ int main() {
     assert(NativeTexelBindingsReady(checked_texels,1));
     checked_texels[0].format=VideoCore::Surface::PixelFormat::Invalid;
     assert(!NativeTexelBindingsReady(checked_texels,1));
-    checked_texels[0].format=VideoCore::Surface::PixelFormat::RGBA8;
+    checked_texels[0].format=VideoCore::Surface::PixelFormat::A8B8G8R8_UNORM;
     checked_texels[1].storage=false;
     assert(!NativeTexelBindingsReady(checked_texels,1));
     checked_texels[1].storage=true;

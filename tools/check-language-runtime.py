@@ -30,7 +30,7 @@ assert len(keys) == len(catalogs) >= 18
 assert keys[2] == 'fr' and catalogs[2] == 'fr-FR', (keys[2], catalogs[2])
 
 po = sorted(lang_dir.glob('*.po'))
-assert len(po) == 29, f'expected 29 launcher catalogs, got {len(po)}'
+assert len(po) == 41, f'expected 41 launcher catalogs, got {len(po)}'\nassert len(keys) == len(catalogs) == 43, 'two English selectors plus forty-one PO catalogs required'\nassert set(catalogs) - {'en-US', 'en-GB'} == {p.stem for p in po}, 'selected locale missing its PO catalog'\nassert len(set(catalogs)) == len(catalogs), 'duplicate catalog selector'\nassert keys[18:31] == catalogs[18:31], 'original thirteen hidden catalogs must be selectable'\nassert all(k == c for k, c in zip(keys[31:], catalogs[31:])), 'Indic catalog paths mismatched'
 fr = lang_dir / 'fr-FR.po'
 assert fr.is_file() and fr.stat().st_size > 1000, 'complete fr-FR catalog missing'
 
@@ -51,4 +51,4 @@ assert 'bool restart_requested() const' in launcher, 'launcher restart contract 
 assert 'static const std::vector<std::string> labels = Labels' not in services, 'translated labels survive a launcher restart'
 assert 'return language_labels_;' in services and 'return resolution_labels_;' in services, 'translated labels are not per-service caches'
 
-print('Language runtime contract PASS (PS5 French -> fr-FR, release override safe, live reload, 29 catalogs)')
+print('Language runtime contract PASS (PS5 French -> fr-FR, release override safe, live reload, 41 catalogs, 43 selector choices)')

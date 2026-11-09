@@ -101,12 +101,13 @@
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "historical_reviewed_git_blob": "6c5d76341ef2c97b7db7fff23545ee21333037da",
-      "post_snapshot_git_blob": "d446bbeb7a848f74305b6677581f8917d941fd26",
+      "post_snapshot_git_blob": "f0345910da1ce47086eeeb72eb36d8639e080438",
       "original_disposition": "new_source_issue_corrected",
-      "source_scope": "WebP artwork, user-owned DLL warnings, multiplayer and update service boundaries; not speed-qualified",
+      "source_scope": "WebP/app services and explicit UI-only locale fallback avoiding fabricated guest-language names",
       "review_kind": "host_source_service",
       "required_source_fragment": "#include <webp/decode.h>",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: Host service translates 31 launcher preferences but only first 18 map to guest enums; later 13 use explicit supported English game-language fallback. Reviewed two value/loop edits; no PS5 or guest-language correctness proof."
     },
     {
       "path": "headless/prosperoeden/eden_services.h",
@@ -121,23 +122,24 @@
     {
       "path": "headless/prosperoeden/fr_fr_embedded.h",
       "historical_reviewed_git_blob": "7ebe8df590bf6f7e371f7982ff75e1eb4f2255f6",
-      "post_snapshot_git_blob": "40d16623f1650a55728e92c4336af191d118867f",
+      "post_snapshot_git_blob": "9caedc5e1691f2cc9907dd6bbf396e5c70057435",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "embedded French text synchronized with current on-disk locale; not typography or all-languages proof",
       "review_kind": "locale_source",
       "required_source_fragment": "msgid \"Neural Rendering\"",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-08: archived 12 inactive fr-FR gettext translations (#~ msgid/msgstr) as historical translator memory, preserving active AMD FSR 1/EASU/RCAS labels and strict literal French embedded catalog parity. This is a translation-history update only; historic F07 and hardware/functional proof unchanged."
+      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof."
     },
     {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "historical_reviewed_git_blob": "4720968bd02accaacf904ea298279ef9d4a740f6",
-      "post_snapshot_git_blob": "c34eb6b2bfefbf2f0c01e05b8f100fecfb672594",
+      "post_snapshot_git_blob": "1cdfab87e2cf8283f1ee90d60a6cc36a344186f0",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "host preview settings expanded to actual neural and AA options",
       "review_kind": "host_preview_mock",
       "required_source_fragment": "A4K — Détails améliorés",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: Host preview expands 18 locale labels/region mappings to the 31 PS5 interface choices while preserving existing 18-region indices. Host preview only, not console/guest language execution."
     },
     {
       "path": "headless/prosperoeden/host/preview_main.cpp",
@@ -148,6 +150,17 @@
       "review_kind": "host_preview_mock",
       "required_source_fragment": "library-preview: Library never became ready",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/ui/browse.cpp",
+      "historical_reviewed_git_blob": "1f48fc883e2930704275b16e9333e33b1793d517",
+      "post_snapshot_git_blob": "7e40f78fe3a96efbcc612dd89f1d611cdb698a52",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Language browser explanatory text distinguishes 18 guest-language selections from 13 PS5 UI-only choices",
+      "review_kind": "host_source_ui",
+      "required_source_fragment": "language_.selected < 18",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: compared exact 523-line F07 source blob with 527-line current source. Ten changed lines: one neutral language header and conditional explanatory text for original 18 guest-language mappings versus 13 UI-only locales. Folder storage browsing, key handling and execution paths remain byte-identical; no runtime or console proof claimed."
     },
     {
       "path": "headless/prosperoeden/pe/ui/home.cpp",
@@ -192,22 +205,24 @@
     {
       "path": "headless/prosperoeden/pe/ui/settings.cpp",
       "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
-      "post_snapshot_git_blob": "2aed005fa4f77a0dace58f14fba727c13ffca6cc",
+      "post_snapshot_git_blob": "b005b1b1bd0a5c6c7d46d4640649cfd7442808fe",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "explanatory NR/FG controls and four-row settings dialogue",
       "review_kind": "host_source_ui",
       "required_source_fragment": "kFramegenInfo",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: Single settings explanatory string now distinguishes original 18 game-language selectors from 13 additional UI-only selections. No input or settings mutation changed in this hunk."
     },
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",
       "historical_reviewed_git_blob": "996adb5c2d93dc2ef8c223658744486ba5f446ac",
-      "post_snapshot_git_blob": "b1bdac5751631d76d88694ac8eb373f4ed62b0b1",
+      "post_snapshot_git_blob": "185873da65dfff9db2fa484dfefaac58b915d677",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "Switch-style contextual video help and update shortcut",
       "review_kind": "host_source_ui",
       "required_source_fragment": "switch_video_help(",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: Only selector description changes to Choose your preferred language; screen navigation and guest configuration remain byte-identical in reviewed diff."
     },
     {
       "path": "headless/prosperoeden/pe/ui/theme.hpp",
@@ -284,12 +299,13 @@
     {
       "path": "headless/settings_store.h",
       "historical_reviewed_git_blob": "e8760e571f5a13d1e73d36ba57476c7a3f593899",
-      "post_snapshot_git_blob": "16c222fcbae07e1bda6692b2b974078a1d91937f",
+      "post_snapshot_git_blob": "f2fd2d734e90c2e27ae3cf5e58d837d9ec21814c",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "persistent filter/AA enums extended without renumbering and per-title NR/FG state",
+      "source_scope": "31 PS5 launcher UI language choices, first 18 persisted guest mappings, 13 safe English fallback region mappings",
       "review_kind": "source_contract",
       "required_source_fragment": "kUpscalingFilterLabels[]",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: Reviewed 31 official PS5 interface locales with first 18 existing persisted indices retained, 13 appended aliases to supported English guest-language and documented regions. This changes guest fallback semantics only for newly selectable UI locales; no console proof."
     }
   ]
 }

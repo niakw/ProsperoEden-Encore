@@ -4,7 +4,7 @@
 
 **The launcher offers exactly 31 official PS5 system language/region selections, corresponding to 29 application translation catalogs** (English US and UK share one language but have separate system choices). This deliberately mirrors Sony's [official PS5 console language list](https://www.playstation.com/fr-fr/legal/language-support/) **without adding any extra launcher languages**. All 31 PS5 choices are directly selectable; the 29 catalog locales have six localized user guides each. Catalog presence does not certify that every string has been independently proofread or visually tested on PS5.
 
-The full original English references remain the most detailed. The localized guides give the practical installation, settings, safety, support and accessibility essentials, and link back to the full English material.
+The fixed, auditable [31-choice PS5 system-language policy](docs/PS5_SYSTEM_LANGUAGE_POLICY.md) lists every allowed selection and forbids any additional launcher languages. The full original English references remain the most detailed. The localized guides give the practical installation, settings, safety, support and accessibility essentials, and link back to the full English material.
 
 | Language | Catalog | Launcher menu | Overview | Installation | Settings | Help | Support | Accessibility |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

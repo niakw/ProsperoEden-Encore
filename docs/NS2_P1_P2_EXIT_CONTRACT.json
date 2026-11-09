@@ -291,9 +291,18 @@
       ],
       "positive": "U32 CAS and global memory operations generate spec-valid SPIR-V with correct atomic results.",
       "negative": "Unsupported atomic operands or address space do not silently lower.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "The native global CAS emits real U32/U32x2 packed CBUF views requiring Vulkan 1.2 uniformBufferStandardLayout, now explicitly checked in spirv-val and enabled on the host physical GPU. Validate full old/final-word global CAS readback on the current paired SHA before crediting.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_qmd_atomic_span_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

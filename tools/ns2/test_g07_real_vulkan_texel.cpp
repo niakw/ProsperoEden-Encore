@@ -2,6 +2,7 @@
 // G07: dispatch the actual native SPIR-V image-buffer/SSBO shader on host Vulkan.
 // This is a real GPU-backed proof, not a PS5 guest frame or TIC/TSC binding.
 #include <vulkan/vulkan.h>
+#include "shader_recompiler/frontend/ampere/native_qmd_compute_environment.h"
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -255,10 +256,70 @@ int main(int argc, char** argv) {
     VkDescriptorSet set = VK_NULL_HANDLE;
     Check(vkAllocateDescriptorSets(device, &sai, &set) == VK_SUCCESS,
           "allocate set");
+    // Exercise the production QMD3 descriptor transaction BEFORE the
+    // actual Vulkan descriptor update and vkCmdDispatch. These are the
+    // maintained NativeQmdResourcePlan staging callbacks, not a duplicate
+    // host-side buffer indexing algorithm.
+    Shader::Ampere::NativeQmdResourcePlan native_qmd{};
+    native_qmd.requires_tic_tsc = true;
+    native_qmd.storage_buffers.push_back({0x10000U, 64U, true, true});
     VkDescriptorBufferInfo storage{};
-    storage.buffer = buffer;
-    storage.offset = 0;
-    storage.range = 64;
+    unsigned bound_count{}, rollback_count{};
+    const auto mapped = [](std::uint64_t va, std::uint32_t bytes) {
+        return va == 0x10000U && bytes == 64U;
+    };
+    const auto missing_map = [](std::uint64_t, std::uint32_t) {
+        return false;
+    };
+    const auto unused_uniform = [](std::uint32_t, std::uint32_t,
+                                   std::uint64_t, std::uint32_t) {
+        return false;
+    };
+    const auto bind_storage = [&](std::uint32_t index, std::uint64_t va,
+                                  std::uint32_t bytes, bool writable) {
+        Check(index == 0 && va == 0x10000U && bytes == 64U && writable,
+              "QMD3 SSBO descriptor order/rights");
+        storage.buffer = buffer;
+        storage.offset = 0;
+        storage.range = bytes;
+        ++bound_count;
+        return true;
+    };
+    const auto rollback = [&] {
+        ++rollback_count;
+        storage = {};
+    };
+    Check(!native_qmd.StageVulkanBufferBindings(
+              mapped, unused_uniform, bind_storage, rollback),
+          "image-mode QMD3 staged without pinned image descriptors");
+    Check(bound_count == 0 && rollback_count == 0,
+          "unapproved image binding side effect");
+    Check(!native_qmd.StageVulkanBufferBindings(
+              missing_map, unused_uniform, bind_storage, rollback, true),
+          "missing GMMU backing staged into Vulkan");
+    Check(bound_count == 0 && rollback_count == 0,
+          "unmapped buffer published a descriptor");
+    native_qmd.storage_buffers[0].known_size = false;
+    Check(!native_qmd.StageVulkanBufferBindings(
+              mapped, unused_uniform, bind_storage, rollback, true),
+          "unknown-size QMD3 storage accepted");
+    native_qmd.storage_buffers[0].known_size = true;
+    const auto refuse_storage = [](std::uint32_t, std::uint64_t,
+                                   std::uint32_t, bool) {
+        return false;
+    };
+    Check(!native_qmd.StageVulkanBufferBindings(
+              mapped, unused_uniform, refuse_storage, rollback, true),
+          "missing Vulkan SSBO handle staged");
+    Check(rollback_count == 1 && storage.buffer == VK_NULL_HANDLE,
+          "failed storage bind did not roll back exactly once");
+    Check(native_qmd.StageVulkanBufferBindings(
+              mapped, unused_uniform, bind_storage, rollback, true),
+          "real QMD3 image-mode SSBO staging");
+    Check(bound_count == 1 && storage.buffer == buffer &&
+              storage.range == 64 && rollback_count == 1,
+          "QMD3 staging did not reach the Vulkan descriptor");
+
     std::array<VkWriteDescriptorSet, 3> writes{};
     for (auto& write : writes) {
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -370,5 +431,5 @@ int main(int argc, char** argv) {
     vkDestroyDescriptorSetLayout(device, set_layout, nullptr);
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
-    std::puts("G07_REAL_NATIVE_VULKAN_TIC_TSC_SSBO_PASS texel=2 sampled_2d=1 dispatch=1 fence=1 ssbo_write=3");
+    std::puts("G07_REAL_NATIVE_VULKAN_TIC_TSC_SSBO_PASS texel=2 sampled_2d=1 dispatch=1 fence=1 ssbo_write=3 qmd_staged=1 missing_mapping=refused missing_storage=refused rollback=once");
 }

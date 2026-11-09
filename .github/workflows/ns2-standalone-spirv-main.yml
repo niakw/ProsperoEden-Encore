@@ -11,6 +11,7 @@ on:
       - '.github/workflows/ns2-research-spirv.yml'
       - 'tools/ns2/test_ampere_real_spirv.cpp'
       - 'tools/ns2/test_ampere_vulkan_module.cpp'
+      - 'tools/ns2/test_g07_real_vulkan_texel.cpp'
       - 'tools/check-ns2-spirv-host.py'
       # A final P1/P2 sign-off changes its frozen contract, not the
       # vendor source. Still produce same-SHA SPIR-V evidence once.

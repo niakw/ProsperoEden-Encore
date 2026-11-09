@@ -203,7 +203,11 @@ def main():
         run([validator, "--target-env", env, str(g07_module)])
         print(f"G07_NATIVE_TEXEL_SSBO_SPIRV_VALIDATED {env}", flush=True)
     g07_exe = OUT / "ns2-g07-vulkan"
-    run([cxx, "-std=c++20", "-O2",
+    run([cxx, "-std=c++20", "-O2", "-DFMT_HEADER_ONLY",
+         "-I" + str(ROOT / "vendor/sources/fmt/include"),
+         "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/ampere"),
+         "-I" + str(ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch"),
+         "-I" + str(ROOT / "vendor/sources/eden/src"),
          str(ROOT / "tools/ns2/test_g07_real_vulkan_texel.cpp"),
          "-o", str(g07_exe), "-lvulkan"])
     print(run([str(g07_exe), str(g07_module)]).stdout, end="")

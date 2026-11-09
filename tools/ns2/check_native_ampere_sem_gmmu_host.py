@@ -63,16 +63,17 @@ struct DmaPusher {
     MemoryManager memory_manager{};
     Rasterizer* rasterizer{};
 };
-static u32 ReadCoherentNativeSemaphore(DmaPusher& pusher, GPUVAddr addr) {
+struct CoherentNativeSemaphoreValue {u32 value; GPUVAddr cpu_address;};
+static CoherentNativeSemaphoreValue ReadCoherentNativeSemaphore(DmaPusher& pusher, GPUVAddr addr) {
     if(!pusher.memory_manager.IsFullyMappedRange(addr,sizeof(u32)))
         throw std::runtime_error("coherent read not mapped");
-    return pusher.memory_manager.word;
+    return {pusher.memory_manager.word, 0x9000};
 }
 struct Puller {
     struct Regs {
         std::array<u32,64> reg_array{};
     } regs;
-    struct PendingNativeAcquire { GPUVAddr address; u32 value; u32 operation; };
+    struct PendingNativeAcquire { GPUVAddr address; u32 value; u32 operation; GPUVAddr cpu_address; };
     std::optional<PendingNativeAcquire> pending_native_acquire{};
     void ProcessNativeSemaphoreExecute(DmaPusher&,u32);
 };
@@ -110,7 +111,8 @@ int main() {
     owner.ProcessNativeSemaphoreExecute(pusher,2);
     assert(rasterizer.releases==2 && owner.pending_native_acquire);
     assert(owner.pending_native_acquire->operation==2 &&
-           owner.pending_native_acquire->address==0x1000);
+           owner.pending_native_acquire->address==0x1000 &&
+           owner.pending_native_acquire->cpu_address==0x9000);
     owner.pending_native_acquire.reset();
     const auto flushed_before_invalid = rasterizer.releases;
     assert(rejected(6));

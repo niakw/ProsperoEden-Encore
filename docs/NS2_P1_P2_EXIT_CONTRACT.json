@@ -413,7 +413,8 @@
         "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",
         "tools/ns2/check_native_dma_unbound_subchannel_host.py",
         "tools/ns2/check_native_gpu_channel_reuse_host.py",
-        "tools/ns2/check_native_ampere_sem_gmmu_host.py"
+        "tools/ns2/check_native_ampere_sem_gmmu_host.py",
+        "tools/ns2/check_native_ampere_sem_linked_host.py"
       ],
       "positive": "True semaphore acquire/resume and multi-channel ordering publish guest completion only after execution.",
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",

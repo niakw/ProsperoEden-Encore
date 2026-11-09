@@ -45,7 +45,7 @@ assert fence_owner.index('Native GPFIFO FENCE_ACTION acquire unsupported') < fen
 assert 'dma_pusher.rasterizer->SignalSyncPoint(regs.fence_action.syncpoint_id);' in fence_owner
 # Production P2.7 coherence: initial compare and scheduler retry share the
 # same cache-flushing GMMU read, not an out-of-date CPU-side value.
-reader = puller.split("static u32 ReadCoherentNativeSemaphore(", 1)[1].split(
+reader = puller.split("static CoherentNativeSemaphoreValue ReadCoherentNativeSemaphore(", 1)[1].split(
     "// Called only by the native GPFIFO scheduler", 1)[0]
 native_acquire = puller.split("void Puller::ProcessNativeSemaphoreExecute(", 1)[1].split(
     "void Puller::ProcessSemaphoreAcquire(", 1)[0]
@@ -56,6 +56,12 @@ assert 'Ampere SEM_EXECUTE: unmapped acquire address' in reader
 assert reader.count("VideoCommon::CacheType::BufferCache") == 2
 assert reader.index("MustFlushRegion(") < reader.index("rasterizer->FlushRegion(")
 assert reader.index("rasterizer->FlushRegion(") < reader.index("memory_manager.Read<u32>(address)")
+assert reader.index("memory_manager.Read<u32>(address)") < reader.index(
+    "Ampere SEM_EXECUTE: acquire page remapped during read")
+assert "observed.cpu_address != pending.cpu_address" in native_resume
+assert "parked acquire backing remapped" in native_resume
+assert "pending_native_acquire = PendingNativeAcquire{" in native_acquire
+assert "observed.cpu_address" in native_acquire
 assert "ReadCoherentNativeSemaphore(dma_pusher, address)" in native_acquire
 assert "ReadCoherentNativeSemaphore(dma_pusher, pending.address)" in native_resume
 assert "pending_native_acquire.reset();" in native_resume

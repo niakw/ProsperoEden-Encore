@@ -25,6 +25,7 @@ TESTS = {
     "native_gpu_owners_syntax": "tools/ns2/check_native_gpu_boot_source_tus_host.py",
     "qmd_state_allocation": "tools/ns2/check_native_qmd_allocation_host.py",
     "gpu_registration_alloc": "tools/ns2/check_native_gpu_registration_alloc_host.py",
+    "gpu_kernel_session_rollback": "tools/ns2/check_gpu_session_kernel_rollback_host.py",
     "gpu_channel_alloc_owner": "tools/ns2/check_native_gpu_channel_allocation_host.py",
     "gpu_shader_cache_alloc": "tools/ns2/check_native_gpu_cache_allocation_host.py",
     "shared_ampere": "tools/ns2/check_shared_ampere_source_host.py",

@@ -334,10 +334,6 @@ msgstr "ธีม · โลโก้ · พื้นหลัง · แสงเ
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "เลือกหนึ่งรูทสำหรับคีย์ เฟิร์มแวร์ เกม อัปเดต และม็อด"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "เลือก​ภาษา​ที่​เกม​ใช้"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "เลือก · หน้าจอ. ซอฟต์แวร์ / การควบคุม — ไม่เปลี่ยนแปลง."

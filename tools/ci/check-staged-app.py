@@ -88,7 +88,7 @@ assert (app / "sce_sys/icon0.png").read_bytes() == (root / "assets/icon0.png").r
 assert (app / "sce_sys/icon0.dds").read_bytes() == (root / "assets/icon0.dds").read_bytes()
 source_lang = sorted((source_ui / "lang").glob("*.po"))
 staged_lang = sorted((app / "ui/lang").glob("*.po"))
-assert len(source_lang) == 41, f"expected 41 launcher catalogs, got {len(source_lang)}"
+assert len(source_lang) == 29, f"expected 29 PS5 launcher catalogs, got {len(source_lang)}"
 assert [p.name for p in staged_lang] == [p.name for p in source_lang], "launcher catalog inventory differs"
 assert any(p.name == "fr-FR.po" for p in staged_lang), "fr-FR launcher catalog missing"
 for source in source_lang:

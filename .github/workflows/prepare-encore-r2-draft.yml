@@ -26,29 +26,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # GitHub gives an unpublished draft a temporary "untagged-..." URL.
-          # Looking it up by tag returns 404 until publication: select the ID
-          # from the authenticated release collection instead.
-          existing_id="$(gh api "repos/$GH_REPO/releases?per_page=100" \
-            --jq '.[] | select(.tag_name == "encore-R2-preview-20261109") | .id' | head -n 1)"
-          if [[ -z "$existing_id" ]]; then
-            gh release create "$RELEASE_TAG" --target "$RELEASE_TARGET_SHA" \
-              --title 'Eden Encore R2 Preview — post-R1 development (draft)' \
-              --notes-file docs/releases/ENCORE_R2_DRAFT_2026-11-09.md \
-              --draft --prerelease
-            existing_id="$(gh api "repos/$GH_REPO/releases?per_page=100" \
-              --jq '.[] | select(.tag_name == "encore-R2-preview-20261109") | .id' | head -n 1)"
-          fi
-          test -n "$existing_id"
-          status="$(gh api "repos/$GH_REPO/releases/$existing_id" --jq '.draft')"
-          if [[ "$status" != "true" ]]; then
-            echo "::error::Refusing to touch an already-published release"
-            exit 1
-          fi
-          gh api -X PATCH "repos/$GH_REPO/releases/$existing_id" \
+          # Draft releases have temporary "untagged-..." URLs; the stable
+          # release ID is the only unambiguous way to update and verify them.
+          release_id=438869174
+          result="$(gh api "repos/$GH_REPO/releases/$release_id")"
+          printf '%s' "$result" | jq -e '.draft == true and .prerelease == true and (.assets | length) == 0' >/dev/null
+          gh api -X PATCH "repos/$GH_REPO/releases/$release_id" \
+            -f tag_name="$RELEASE_TAG" -f target_commitish="$RELEASE_TARGET_SHA" \
             -f name='Eden Encore R2 Preview — post-R1 development (draft)' \
             -f body="$(cat docs/releases/ENCORE_R2_DRAFT_2026-11-09.md)" \
             -F draft=true -F prerelease=true >/dev/null
-          result="$(gh api "repos/$GH_REPO/releases/$existing_id")"
-          printf '%s' "$result" | jq -e '.draft == true and .prerelease == true and (.assets | length) == 0 and .tag_name == "encore-R2-preview-20261109"' >/dev/null
-          printf '%s' "$result" | jq '{id, tag_name, draft, prerelease, assets_count:(.assets|length), html_url}'
+          result="$(gh api "repos/$GH_REPO/releases/$release_id")"
+          printf '%s' "$result" | jq -e '.id == 438869174 and .draft == true and .prerelease == true and (.assets | length) == 0' >/dev/null
+          printf '%s' "$result" | jq '{id, tag_name, target_commitish, draft, prerelease, assets_count:(.assets|length), html_url}'

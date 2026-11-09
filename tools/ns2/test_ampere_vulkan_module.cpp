@@ -28,8 +28,157 @@ static std::vector<uint32_t> ReadSpirv(const char* file) {
     Require(bool(stream)&&words[0]==0x07230203U,"invalid SPIR-V payload");
     return words;
 }
+// G06: dispatch the actual emitted U32 CAS shader against a coherent
+// storage buffer and require both the original atomic return value and the
+// final memory word. The shader is emitted from maintained native IR.
+static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
+                              uint32_t family,VkQueue queue,const char* path) {
+    const auto code=ReadSpirv(path);
+    uint32_t cas_count=0;
+    for(std::size_t i=5;i<code.size();) {
+        const uint32_t n=code[i]>>16;
+        Require(n>0 && n<=code.size()-i,"malformed emitted G06 SPIR-V");
+        cas_count+=(code[i]&0xffffU)==230U; // OpAtomicCompareExchange
+        i+=n;
+    }
+    Require(cas_count>=1,"G06 actual emitter omitted U32 CAS");
+    VkDescriptorSetLayoutBinding binding{};
+    binding.binding=0;binding.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    binding.descriptorCount=1;binding.stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
+    VkDescriptorSetLayoutCreateInfo dli{};
+    dli.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    dli.bindingCount=1;dli.pBindings=&binding;
+    VkDescriptorSetLayout dsl=VK_NULL_HANDLE;
+    Require(vkCreateDescriptorSetLayout(device,&dli,nullptr,&dsl)==VK_SUCCESS,"CAS set layout");
+    VkPipelineLayoutCreateInfo pli{};
+    pli.sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pli.setLayoutCount=1;pli.pSetLayouts=&dsl;
+    VkPipelineLayout layout=VK_NULL_HANDLE;
+    Require(vkCreatePipelineLayout(device,&pli,nullptr,&layout)==VK_SUCCESS,"CAS pipeline layout");
+    VkShaderModuleCreateInfo smi{};
+    smi.sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    smi.codeSize=code.size()*sizeof(uint32_t);smi.pCode=code.data();
+    VkShaderModule shader=VK_NULL_HANDLE;
+    Require(vkCreateShaderModule(device,&smi,nullptr,&shader)==VK_SUCCESS,"CAS shader module");
+    VkPipelineShaderStageCreateInfo stage{};
+    stage.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stage.stage=VK_SHADER_STAGE_COMPUTE_BIT;stage.module=shader;stage.pName="main";
+    VkComputePipelineCreateInfo pci{};
+    pci.sType=VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    pci.stage=stage;pci.layout=layout;
+    VkPipeline pipeline=VK_NULL_HANDLE;
+    Require(vkCreateComputePipelines(device,VK_NULL_HANDLE,1,&pci,nullptr,&pipeline)==VK_SUCCESS,
+            "real G06 compute CAS pipeline");
+    VkBufferCreateInfo bi{};
+    bi.sType=VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bi.size=64;bi.usage=VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    bi.sharingMode=VK_SHARING_MODE_EXCLUSIVE;
+    VkBuffer buffer=VK_NULL_HANDLE;
+    Require(vkCreateBuffer(device,&bi,nullptr,&buffer)==VK_SUCCESS,"CAS SSBO");
+    VkMemoryRequirements memreq{};
+    vkGetBufferMemoryRequirements(device,buffer,&memreq);
+    VkPhysicalDeviceMemoryProperties props{};
+    vkGetPhysicalDeviceMemoryProperties(gpu,&props);
+    uint32_t type=props.memoryTypeCount;
+    for(uint32_t i=0;i<props.memoryTypeCount;++i) {
+        const auto bits=props.memoryTypes[i].propertyFlags;
+        if((memreq.memoryTypeBits&(1U<<i)) &&
+           (bits&(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) ==
+               (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+            type=i;break;
+        }
+    }
+    Require(type<props.memoryTypeCount,"coherent CAS SSBO memory unavailable");
+    VkMemoryAllocateInfo mai{};
+    mai.sType=VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    mai.allocationSize=memreq.size;mai.memoryTypeIndex=type;
+    VkDeviceMemory memory=VK_NULL_HANDLE;
+    Require(vkAllocateMemory(device,&mai,nullptr,&memory)==VK_SUCCESS,"CAS device memory");
+    Require(vkBindBufferMemory(device,buffer,memory,0)==VK_SUCCESS,"CAS SSBO bind");
+    void* mapped=nullptr;
+    Require(vkMapMemory(device,memory,0,64,0,&mapped)==VK_SUCCESS,"CAS SSBO map");
+    auto* values=static_cast<uint32_t*>(mapped);
+    VkDescriptorPoolSize poolSize{};
+    poolSize.type=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;poolSize.descriptorCount=1;
+    VkDescriptorPoolCreateInfo dpci{};
+    dpci.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    dpci.maxSets=1;dpci.poolSizeCount=1;dpci.pPoolSizes=&poolSize;
+    VkDescriptorPool pool=VK_NULL_HANDLE;
+    Require(vkCreateDescriptorPool(device,&dpci,nullptr,&pool)==VK_SUCCESS,"CAS descriptor pool");
+    VkDescriptorSetAllocateInfo alloc{};
+    alloc.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc.descriptorPool=pool;alloc.descriptorSetCount=1;alloc.pSetLayouts=&dsl;
+    VkDescriptorSet set=VK_NULL_HANDLE;
+    Require(vkAllocateDescriptorSets(device,&alloc,&set)==VK_SUCCESS,"CAS descriptor set");
+    VkDescriptorBufferInfo dbi{};
+    dbi.buffer=buffer;dbi.offset=0;dbi.range=64;
+    VkWriteDescriptorSet write{};
+    write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet=set;write.dstBinding=0;write.descriptorCount=1;
+    write.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;write.pBufferInfo=&dbi;
+    vkUpdateDescriptorSets(device,1,&write,0,nullptr);
+    VkCommandPoolCreateInfo cpi{};
+    cpi.sType=VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    cpi.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    cpi.queueFamilyIndex=family;
+    VkCommandPool commandPool=VK_NULL_HANDLE;
+    Require(vkCreateCommandPool(device,&cpi,nullptr,&commandPool)==VK_SUCCESS,"CAS command pool");
+    VkCommandBufferAllocateInfo cbi{};
+    cbi.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cbi.commandPool=commandPool;cbi.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    cbi.commandBufferCount=1;
+    VkCommandBuffer command=VK_NULL_HANDLE;
+    Require(vkAllocateCommandBuffers(device,&cbi,&command)==VK_SUCCESS,"CAS command buffer");
+    VkFenceCreateInfo fi{};
+    fi.sType=VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    VkFence fence=VK_NULL_HANDLE;
+    Require(vkCreateFence(device,&fi,nullptr,&fence)==VK_SUCCESS,"CAS fence");
+    for(uint32_t original : {7U,6U}) {
+        for(uint32_t i=0;i<16;++i)values[i]=0;
+        values[1]=original;values[2]=0xdeadbeefU;
+        VkCommandBufferBeginInfo begin{};
+        begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        Require(vkBeginCommandBuffer(command,&begin)==VK_SUCCESS,"CAS begin");
+        vkCmdBindPipeline(command,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
+        vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_COMPUTE,
+                                layout,0,1,&set,0,nullptr);
+        vkCmdDispatch(command,1,1,1);
+        VkMemoryBarrier barrier{};
+        barrier.sType=VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT;
+        barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
+        vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                             VK_PIPELINE_STAGE_HOST_BIT,0,1,&barrier,0,nullptr,0,nullptr);
+        Require(vkEndCommandBuffer(command)==VK_SUCCESS,"CAS end");
+        VkSubmitInfo submit{};
+        submit.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit.commandBufferCount=1;submit.pCommandBuffers=&command;
+        Require(vkQueueSubmit(queue,1,&submit,fence)==VK_SUCCESS,"CAS submit");
+        Require(vkWaitForFences(device,1,&fence,VK_TRUE,10000000000ULL)==VK_SUCCESS,
+                "CAS GPU completion fence");
+        Require(values[1]==(original==7U?9U:6U),"CAS final SSBO word differs");
+        Require(values[2]==original,"CAS returned old SSBO value differs");
+        Require(vkResetFences(device,1,&fence)==VK_SUCCESS,"CAS fence reset");
+        Require(vkResetCommandBuffer(command,0)==VK_SUCCESS,"CAS command reset");
+    }
+    vkDeviceWaitIdle(device);
+    vkDestroyFence(device,fence,nullptr);
+    vkFreeCommandBuffers(device,commandPool,1,&command);
+    vkDestroyCommandPool(device,commandPool,nullptr);
+    vkDestroyDescriptorPool(device,pool,nullptr);
+    vkUnmapMemory(device,memory);
+    vkDestroyBuffer(device,buffer,nullptr);
+    vkFreeMemory(device,memory,nullptr);
+    vkDestroyPipeline(device,pipeline,nullptr);
+    vkDestroyShaderModule(device,shader,nullptr);
+    vkDestroyPipelineLayout(device,layout,nullptr);
+    vkDestroyDescriptorSetLayout(device,dsl,nullptr);
+    std::puts("G06_REAL_VULKAN_CAS_WRITEBACK_PASS success=9 old=7 failure=6 old=6");
+}
+
 int main(int argc,char** argv) {
-    Require(argc==6,"expected direct, dispatcher, Fragment, merged and Compute modules");
+    Require(argc==7,"expected direct, dispatcher, Fragment, merged, Compute and real CAS modules");
     VkApplicationInfo application{};
     application.sType=VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application.pApplicationName="NS2 synthetic shader module smoke test";
@@ -100,7 +249,7 @@ int main(int argc,char** argv) {
     VkPipelineLayout layout=VK_NULL_HANDLE;
     Require(vkCreatePipelineLayout(device,&layout_info,nullptr,&layout)==VK_SUCCESS,
             "synthetic shader pipeline layout creation failed");
-    for (int i=1;i<argc-1;++i) {
+    for (int i=1;i<argc-2;++i) {
         auto code=ReadSpirv(argv[i]);
         VkShaderModuleCreateInfo module_info{};
         module_info.sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -426,6 +575,7 @@ int main(int argc,char** argv) {
     vkDestroyPipeline(device,compute_pipeline,nullptr);
     vkDestroyShaderModule(device,compute_module,nullptr);
     std::puts("NS2 synthetic Ampere Compute Vulkan dispatch: PASS (host only; no QMD3 resources)");
+    VerifyRealHostCas(device,selected,queue,compute_queue,argv[6]);
 
     vkDestroyPipelineLayout(device,layout,nullptr);
     vkDestroyRenderPass(device,render_pass,nullptr);

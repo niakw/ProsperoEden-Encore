@@ -306,6 +306,11 @@ static void VerifyRealFloatCasSpirv(const std::string& prefix) {
         if (opcode == Opcode::StorageAtomicCompareExchange32) {
             block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},
                                         Value{u32{7}}, value});
+            // Export the actual atomic return value through a second SSBO
+            // word: host Vulkan will verify both the old and final values.
+            const Value previous{&block.back()};
+            block.AppendNewInst(Opcode::WriteStorage32,
+                                {Value{u32{0}},Value{u32{8}},previous});
         } else {
             block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},value});
         }

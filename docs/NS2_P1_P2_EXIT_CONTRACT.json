@@ -267,13 +267,14 @@
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_atomic_span.h",
       "validators": [
         "tools/ns2/check_native_qmd_atomic_span_host.py",
-        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
+        "tools/check-ns2-spirv-host.py"
       ],
       "positive": "U32 CAS and global memory operations generate spec-valid SPIR-V with correct atomic results.",
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "Generate and spirv-val a real U32 CAS/global-memory shader and validate unsupported memory addressing refusal.",
+      "blocker": "New authentic emitted U32 CAS SPIR-V now runs through Vulkan SSBO dispatch with old value + final word assertions and explicit fence; pending host result. Global address-space unsupported instruction forms still require bounded executed refusal.",
       "excluded_forms": []
     },
     {

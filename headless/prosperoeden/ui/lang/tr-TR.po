@@ -334,10 +334,6 @@ msgstr "Tema · Logo · Arka plan · Parıltı (Oyun: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Anahtarlar, donanım yazılımı, oyunlar, güncellemeler ve modlar için tek bir kök seçin"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Oyunların kullanacağı dili seçin"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Seç · arayüz. yazılımlar / Kontroller — değişmedi."

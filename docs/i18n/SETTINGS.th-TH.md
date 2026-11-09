@@ -1,22 +1,22 @@
 # Eden Encore — การตั้งค่า · ไทย
 
-[ภาพรวม](README.th.md) · [การติดตั้งและอัปเดต](INSTALL.th-TH.md) · [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [Languages](../../LANGUAGES.md)
+[ภาพรวม](README.th.md) · [การติดตั้งและอัปเดต](INSTALL.th.md) · [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [All languages](../../LANGUAGES.md)
 
 ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น
 
-## Vulkan · 1440p · 1.25x · FSR 1
+## Vulkan / FSR 1 — การตั้งค่า
 
-| Video preset | Renderer | TV output | Game resolution | Upscaling | Sharpening | AA | Refresh |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Minimum | Vulkan | 1080p | 1x | Bilinear | — | None | 60 Hz |
-| Recommended | Vulkan | 1440p | 1.25x | FSR 1 | 50% | FXAA | 60 Hz |
-| High | Vulkan | 2160p | 1.5x | Bicubic | 50% | FXAA | 60 Hz |
+The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in ไทย. 
 
-**Neural Rendering: Off · Frame Generation: Off.** ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น
+| `Minimum` | `Recommended` | `High` |
+| --- | --- | --- |
+| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
-## Controller · Touchpad · Language
+ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น
 
-`Touchpad` (short press) opens the Encore in-game quick settings overlay; the central PS system button is reserved by the console. FPS, mapping, graphics and logs are grouped in that overlay. Settings that cannot be changed during an active game require a game restart. Choose `Settings → Language` in the launcher; some catalog languages are not exposed as a menu option.
+## การตั้งค่า · Touchpad
+
+แตะ Touchpad สั้น ๆ เพื่อเปิดการตั้งค่าด่วนของ Encore ระหว่างเล่นเกม ปุ่มระบบตรงกลางสงวนไว้สำหรับคอนโซล เมนูนี้มีกราฟิก การกำหนดปุ่ม FPS และการวินิจฉัย การเปลี่ยนบางอย่างต้องเริ่มเกมใหม่ เลือกภาษาที่ Settings → Language แต่ไม่ใช่ทุกภาษาของไฟล์แปลที่มีให้เลือกในเมนู
 
 ## การช่วยการเข้าถึง
 
@@ -26,10 +26,14 @@
 
 หากแอปเปิดไม่ได้ให้ตรวจสอบ eboot.bin, sce_sys และ ui/lang หากไม่พบเกมให้ตรวจสอบ roms ในรากพื้นที่จัดเก็บที่เลือก หากเมนูยังเป็นอังกฤษให้ตรวจสอบไฟล์ภาษา Safe Launch คืนค่าตั้งค่ารายเกมโดยไม่ลบเซฟ
 
+## การสนับสนุน
+
+เมื่อรายงานปัญหาใน GitHub Issues โปรดระบุเวอร์ชัน Encore, เฟิร์มแวร์ PS5, ขั้นตอนทำซ้ำ, การตั้งค่าที่เกี่ยวข้อง และล็อกที่ลบข้อมูลส่วนตัวแล้ว ห้ามเผยแพร่คีย์ ไฟล์เซฟ หรือข้อมูลส่วนตัว
+
 ห้ามลบ /data/prosperoeden/ เพราะอาจมีเซฟ การตั้งค่า และคีย์ ควรสำรองพื้นที่จัดเก็บภายนอกด้วย
 
 ---
 
 แพ็กเกจ PS5 สาธารณะที่คอมไพล์จริงล่าสุดคือวันที่ 15 ตุลาคม 2026 การเผยแพร่วันที่ 30 ตุลาคมเป็นเพียงสำเนา ฉบับร่างพรีรีลีสใหม่ไม่มีไฟล์ไบนารีหรือเกมรุ่นที่สองที่ยืนยันว่าเล่นบนคอนโซลได้
 
-[Detailed English settings reference](../../SETTINGS.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.th.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,22 +1,22 @@
 # Eden Encore — الإعدادات · العربية
 
-[نظرة عامة](README.ar.md) · [التثبيت والتحديث](INSTALL.ar.md) · [الإعدادات](SETTINGS.ar.md) · [حل المشكلات](TROUBLESHOOTING.ar.md) · [الدعم](SUPPORT.ar.md) · [إمكانية الوصول](ACCESSIBILITY.ar.md) · [Languages](../../LANGUAGES.md)
+[نظرة عامة](README.ar.md) · [التثبيت والتحديث](INSTALL.ar.md) · [الإعدادات](SETTINGS.ar.md) · [حل المشكلات](TROUBLESHOOTING.ar.md) · [الدعم](SUPPORT.ar.md) · [إمكانية الوصول](ACCESSIBILITY.ar.md) · [All languages](../../LANGUAGES.md)
 
 تبدأ الإعدادات الموصى بها بمحرك Vulkan ودقة إخراج 1440p ومقياس لعب 1.25x وFSR 1 بحدة 50% وFXAA وتحديث 60 Hz. يختلف إخراج التلفاز عن دقة اللعبة الداخلية. لا تفترض أن تحسين الصورة أو توليد الإطارات يزيد سرعة محاكاة اللعبة.
 
-## Vulkan · 1440p · 1.25x · FSR 1
+## Vulkan / FSR 1 — الإعدادات
 
-| Video preset | Renderer | TV output | Game resolution | Upscaling | Sharpening | AA | Refresh |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Minimum | Vulkan | 1080p | 1x | Bilinear | — | None | 60 Hz |
-| Recommended | Vulkan | 1440p | 1.25x | FSR 1 | 50% | FXAA | 60 Hz |
-| High | Vulkan | 2160p | 1.5x | Bicubic | 50% | FXAA | 60 Hz |
+The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in العربية. 
 
-**Neural Rendering: Off · Frame Generation: Off.** تبدأ الإعدادات الموصى بها بمحرك Vulkan ودقة إخراج 1440p ومقياس لعب 1.25x وFSR 1 بحدة 50% وFXAA وتحديث 60 Hz. يختلف إخراج التلفاز عن دقة اللعبة الداخلية. لا تفترض أن تحسين الصورة أو توليد الإطارات يزيد سرعة محاكاة اللعبة.
+| `Minimum` | `Recommended` | `High` |
+| --- | --- | --- |
+| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
-## Controller · Touchpad · Language
+تبدأ الإعدادات الموصى بها بمحرك Vulkan ودقة إخراج 1440p ومقياس لعب 1.25x وFSR 1 بحدة 50% وFXAA وتحديث 60 Hz. يختلف إخراج التلفاز عن دقة اللعبة الداخلية. لا تفترض أن تحسين الصورة أو توليد الإطارات يزيد سرعة محاكاة اللعبة.
 
-`Touchpad` (short press) opens the Encore in-game quick settings overlay; the central PS system button is reserved by the console. FPS, mapping, graphics and logs are grouped in that overlay. Settings that cannot be changed during an active game require a game restart. Choose `Settings → Language` in the launcher; some catalog languages are not exposed as a menu option.
+## الإعدادات · Touchpad
+
+اضغط ضغطة قصيرة على لوحة اللمس (Touchpad) لفتح إعدادات Encore السريعة أثناء اللعب. زر النظام المركزي محجوز للمنصة، وليس اختصارًا للقائمة. يمكن الوصول إلى الرسوميات وتعيين الأزرار وعداد FPS والسجلات من القائمة. قد تتطلب بعض التغييرات إعادة تشغيل اللعبة. اختيار اللغة موجود في Settings → Language، لكن ليست جميع لغات ملفات الترجمة متاحة في القائمة.
 
 ## إمكانية الوصول
 
@@ -26,10 +26,14 @@
 
 إذا لم يبدأ التطبيق، تحقق من وجود eboot.bin وsce_sys وui/lang في المجلد الصحيح. إذا اختفت الألعاب، تحقق من مجلد roms تحت جذر التخزين المحدد. إذا بقيت اللغة الإنجليزية، تحقق من ملفات الترجمة. استخدم التشغيل الآمن لإعادة ضبط إعدادات لعبة واحدة دون حذف الحفظ.
 
+## الدعم
+
+عند الإبلاغ عن مشكلة، أرفق رقم إصدار Encore ونسخة النظام والخطوات اللازمة لإعادة المشكلة والإعدادات والسجلات المنقحة. استخدم صفحة Issues الرسمية ولا تنشر مفاتيح أو ملفات حفظ أو بيانات شخصية.
+
 لا تحذف /data/prosperoeden/؛ فقد يحتوي إعداداتك وملفات الحفظ والمفاتيح. احتفظ بنسخة من بيانات التخزين الخارجي أيضاً.
 
 ---
 
 آخر إصدار PS5 مُجمّع علناً يعود إلى 15 أكتوبر 2026؛ إصدار 30 أكتوبر مجرد نسخة من الحزمة نفسها. لا تتضمن المسودة الجديدة ملفات تشغيل، ولم يُتحقق بعد من ألعاب الجيل الثاني على الجهاز.
 
-[Detailed English settings reference](../../SETTINGS.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.ar.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

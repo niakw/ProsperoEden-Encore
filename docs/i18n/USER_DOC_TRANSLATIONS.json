@@ -22,7 +22,8 @@
       "access": "تتيح الواجهة تكبير النص والتباين العالي وتقليل الحركة من إعدادات إمكانية الوصول، وهي خيارات منفصلة ومعطلة افتراضياً. يعتمد التنقل على التركيز المرئي ووحدة التحكم، ولا يعني ذلك دعم أدوات المساعدة داخل جميع الألعاب.",
       "safety": "لا تحذف /data/prosperoeden/؛ فقد يحتوي إعداداتك وملفات الحفظ والمفاتيح. احتفظ بنسخة من بيانات التخزين الخارجي أيضاً.",
       "limits": "آخر إصدار PS5 مُجمّع علناً يعود إلى 15 أكتوبر 2026؛ إصدار 30 أكتوبر مجرد نسخة من الحزمة نفسها. لا تتضمن المسودة الجديدة ملفات تشغيل، ولم يُتحقق بعد من ألعاب الجيل الثاني على الجهاز.",
-      "quick": "يؤدي الضغط القصير على لوحة اللمس إلى فتح قائمة Encore أثناء اللعب (الرسوميات والأزرار وFPS والسجلات). زر النظام المركزي محجوز؛ وقد تتطلب بعض التغييرات إعادة تشغيل اللعبة."
+      "quick": "يؤدي الضغط القصير على لوحة اللمس إلى فتح قائمة Encore أثناء اللعب (الرسوميات والأزرار وFPS والسجلات). زر النظام المركزي محجوز؛ وقد تتطلب بعض التغييرات إعادة تشغيل اللعبة.",
+      "controls": "اضغط ضغطة قصيرة على لوحة اللمس (Touchpad) لفتح إعدادات Encore السريعة أثناء اللعب. زر النظام المركزي محجوز للمنصة، وليس اختصارًا للقائمة. يمكن الوصول إلى الرسوميات وتعيين الأزرار وعداد FPS والسجلات من القائمة. قد تتطلب بعض التغييرات إعادة تشغيل اللعبة. اختيار اللغة موجود في Settings → Language، لكن ليست جميع لغات ملفات الترجمة متاحة في القائمة."
     },
     {
       "code": "cs-CZ",
@@ -43,7 +44,8 @@
       "access": "V nastavení přístupnosti lze samostatně zapnout větší text, vysoký kontrast a omezení animací; standardně jsou vypnuté. Ovládání nabídky používá viditelné zvýraznění. Nezaručuje to přístupnost obsahu jednotlivých her.",
       "safety": "Nikdy nemažte /data/prosperoeden/: může obsahovat nastavení, uložené hry a vaše klíče. Zálohujte i případné externí úložiště.",
       "limits": "Poslední veřejně sestavený balíček PS5 pochází z 15. října 2026. Vydání z 30. října je jeho kopie. Nový koncept vydání neobsahuje binární soubory ani ověřenou podporu her druhé generace na konzoli.",
-      "quick": "Krátký stisk touchpadu otevře nabídku Encore ve hře (grafika, mapování tlačítek, FPS a logy). Prostřední systémové tlačítko je vyhrazené; některé změny vyžadují restart hry."
+      "quick": "Krátký stisk touchpadu otevře nabídku Encore ve hře (grafika, mapování tlačítek, FPS a logy). Prostřední systémové tlačítko je vyhrazené; některé změny vyžadují restart hry.",
+      "controls": "Krátkým stiskem dotykové plochy Touchpad otevřete rychlé nastavení Encore během hry. Centrální systémové tlačítko zůstává vyhrazené konzoli. Nabídka obsahuje grafiku, mapování tlačítek, FPS a diagnostiku. Některé změny vyžadují restart hry. Jazyk se vybírá v Settings → Language; ne všechny jazyky katalogů jsou v nabídce."
     },
     {
       "code": "da-DK",
@@ -64,7 +66,8 @@
       "access": "Større tekst, høj kontrast og reduceret bevægelse kan slås til enkeltvis under Tilgængelighed; alle er slået fra som standard. Launcherens fokuserede kontrol betyder ikke automatisk tilgængelighed inde i hvert spil.",
       "safety": "Slet aldrig /data/prosperoeden/; mappen kan indeholde gemte spil, indstillinger og nøgler. Lav også en kopi af eventuel ekstern lagerplads.",
       "limits": "Den seneste offentligt kompilerede PS5-pakke er fra 15. oktober 2026. Udgivelsen den 30. oktober var en kopi. Det nye udkast indeholder ingen binære filer eller verificerede spil fra anden generation på konsollen.",
-      "quick": "Et kort tryk på touchpad åbner Encore-menuen i spillet (grafik, knapper, FPS og logning). Den centrale systemknap er reserveret; enkelte ændringer kræver genstart af spillet."
+      "quick": "Et kort tryk på touchpad åbner Encore-menuen i spillet (grafik, knapper, FPS og logning). Den centrale systemknap er reserveret; enkelte ændringer kræver genstart af spillet.",
+      "controls": "Et kort tryk på Touchpad åbner Encores hurtigindstillinger under spillet. Den centrale systemknap er reserveret til konsollen. Her findes grafik, knapopsætning, FPS og diagnostik. Nogle ændringer kræver genstart af spillet. Sprog vælges under Settings → Language; ikke alle oversættelseskataloger kan vælges i menuen."
     },
     {
       "code": "de-DE",
@@ -85,7 +88,8 @@
       "access": "Größere Schrift, hoher Kontrast und reduzierte Bewegung lassen sich unter Barrierefreiheit unabhängig aktivieren; standardmäßig sind sie aus. Sichtbare Fokusnavigation im Launcher garantiert keine Barrierefreiheit innerhalb der Spiele.",
       "safety": "Lösche /data/prosperoeden/ niemals: Dort können Spielstände, Einstellungen und eigene Schlüssel liegen. Sichere auch externe Speicherpfade.",
       "limits": "Die letzte tatsächlich kompilierte öffentliche PS5-Version stammt vom 15. Oktober 2026. Die Veröffentlichung vom 30. Oktober ist eine Kopie. Der neue Entwurf enthält weder Binärdateien noch bestätigte Spiele der zweiten Generation auf PS5.",
-      "quick": "Ein kurzer Druck auf das Touchpad öffnet das Encore-Spielmenü für Grafik, Tastenbelegung, FPS und Protokolle. Die mittlere Systemtaste bleibt reserviert; manche Änderungen erfordern einen Neustart des Spiels."
+      "quick": "Ein kurzer Druck auf das Touchpad öffnet das Encore-Spielmenü für Grafik, Tastenbelegung, FPS und Protokolle. Die mittlere Systemtaste bleibt reserviert; manche Änderungen erfordern einen Neustart des Spiels.",
+      "controls": "Ein kurzer Druck auf das Touchpad öffnet die Encore-Schnelleinstellungen im Spiel; die zentrale Systemtaste bleibt der Konsole vorbehalten. Dort finden sich Grafik, Tastenbelegung, FPS und Diagnoseprotokolle. Manche Änderungen erfordern einen Neustart des Spiels. Die Sprache lässt sich unter Settings → Language wählen; nicht jede vorhandene Übersetzung ist im Menü auswählbar."
     },
     {
       "code": "el-GR",
@@ -106,7 +110,8 @@
       "access": "Το μεγαλύτερο κείμενο, η υψηλή αντίθεση και η μειωμένη κίνηση ενεργοποιούνται ανεξάρτητα στις ρυθμίσεις προσβασιμότητας και είναι απενεργοποιημένα από προεπιλογή. Η πλοήγηση του μενού δεν εγγυάται προσβασιμότητα κάθε παιχνιδιού.",
       "safety": "Μη διαγράφετε το /data/prosperoeden/: μπορεί να περιέχει αποθηκεύσεις, ρυθμίσεις και κλειδιά. Κρατήστε αντίγραφο και της εξωτερικής αποθήκευσης.",
       "limits": "Η τελευταία δημόσια μεταγλώττιση PS5 έγινε στις 15 Οκτωβρίου 2026. Η έκδοση της 30ής Οκτωβρίου ήταν αντίγραφο. Το νέο προσχέδιο δεν περιέχει εκτελέσιμα αρχεία ούτε επαληθευμένη συμβατότητα δεύτερης γενιάς.",
-      "quick": "Ένα σύντομο πάτημα στο touchpad ανοίγει το μενού Encore μέσα στο παιχνίδι (γραφικά, πλήκτρα, FPS και καταγραφές). Το κεντρικό πλήκτρο συστήματος παραμένει δεσμευμένο· ορισμένες αλλαγές απαιτούν επανεκκίνηση."
+      "quick": "Ένα σύντομο πάτημα στο touchpad ανοίγει το μενού Encore μέσα στο παιχνίδι (γραφικά, πλήκτρα, FPS και καταγραφές). Το κεντρικό πλήκτρο συστήματος παραμένει δεσμευμένο· ορισμένες αλλαγές απαιτούν επανεκκίνηση.",
+      "controls": "Ένα σύντομο πάτημα στο Touchpad ανοίγει τις γρήγορες ρυθμίσεις του Encore μέσα στο παιχνίδι. Το κεντρικό πλήκτρο συστήματος παραμένει δεσμευμένο για την κονσόλα. Εκεί βρίσκονται γραφικά, αντιστοίχιση πλήκτρων, FPS και διαγνωστικά. Κάποιες αλλαγές απαιτούν επανεκκίνηση του παιχνιδιού. Η γλώσσα αλλάζει από Settings → Language· δεν εμφανίζονται όλες οι μεταφράσεις στο μενού."
     },
     {
       "code": "es-419",
@@ -127,7 +132,8 @@
       "access": "Texto más grande, alto contraste y movimiento reducido se activan por separado en Accesibilidad y están apagados inicialmente. La navegación con foco visible no garantiza accesibilidad dentro de todos los juegos.",
       "safety": "Nunca borres /data/prosperoeden/: puede contener partidas guardadas, ajustes y claves. Respalda también el almacenamiento externo.",
       "limits": "La última compilación pública auténtica de PS5 es del 15 de octubre de 2026; la publicación del 30 de octubre fue una copia. El nuevo borrador no tiene binarios ni juegos de segunda generación verificados en consola.",
-      "quick": "Una pulsación corta del panel táctil abre el menú Encore durante el juego (gráficos, controles, FPS y registros). El botón central del sistema sigue reservado; algunos cambios requieren reiniciar el juego."
+      "quick": "Una pulsación corta del panel táctil abre el menú Encore durante el juego (gráficos, controles, FPS y registros). El botón central del sistema sigue reservado; algunos cambios requieren reiniciar el juego.",
+      "controls": "Una pulsación corta del panel táctil (Touchpad) abre los ajustes rápidos de Encore durante el juego; el botón central del sistema pertenece a la consola. Ahí están las opciones gráficas, asignación de botones, FPS y diagnósticos. Algunos cambios requieren reiniciar el juego. El idioma se elige en Settings → Language; no todos los idiomas de los catálogos aparecen en el menú."
     },
     {
       "code": "es-ES",
@@ -148,7 +154,8 @@
       "access": "Texto más grande, contraste alto y movimiento reducido se activan de forma independiente en Accesibilidad y están desactivados inicialmente. La navegación del lanzador no garantiza la accesibilidad del contenido de cada juego.",
       "safety": "No borres nunca /data/prosperoeden/: puede contener partidas guardadas, ajustes y claves. Haz también copia del almacenamiento externo.",
       "limits": "La última compilación pública auténtica para PS5 data del 15 de octubre de 2026; la publicación del 30 de octubre fue una copia. El nuevo borrador no incluye binarios ni compatibilidad de segunda generación comprobada en consola.",
-      "quick": "Una pulsación corta del panel táctil abre el menú de Encore durante la partida (gráficos, asignación de botones, FPS y registros). El botón central del sistema permanece reservado; algunos cambios exigen reiniciar el juego."
+      "quick": "Una pulsación corta del panel táctil abre el menú de Encore durante la partida (gráficos, asignación de botones, FPS y registros). El botón central del sistema permanece reservado; algunos cambios exigen reiniciar el juego.",
+      "controls": "Una pulsación breve del panel táctil (Touchpad) abre los ajustes rápidos de Encore durante el juego. El botón central del sistema está reservado a la consola. Allí se encuentran gráficos, asignación de botones, FPS y diagnósticos. Algunos cambios requieren reiniciar el juego. El idioma se selecciona en Settings → Language; no todas las traducciones están disponibles en el selector."
     },
     {
       "code": "fi-FI",
@@ -169,7 +176,8 @@
       "access": "Suurempi teksti, suuri kontrasti ja liikkeen vähentäminen voi ottaa käyttöön erikseen saavutettavuusasetuksista; oletuksena ne ovat pois päältä. Käynnistimen käytettävyys ei takaa yksittäisten pelien saavutettavuutta.",
       "safety": "Älä poista /data/prosperoeden/-kansiota: se voi sisältää tallennuksia, asetuksia ja avaimia. Varmuuskopioi myös ulkoinen tallennustila.",
       "limits": "Viimeisin oikeasti käännetty julkinen PS5-paketti on 15. lokakuuta 2026. Lokakuun 30. päivän julkaisu oli kopio. Uusi luonnos ei sisällä binääritiedostoja eikä varmennettua toisen sukupolven pelikokemusta konsolilla.",
-      "quick": "Kosketuslevyn lyhyt painallus avaa pelin aikaisen Encore-valikon (grafiikka, näppäinkartta, FPS ja lokit). Keskimmäinen järjestelmäpainike on varattu konsolille; osa asetuksista vaatii pelin uudelleenkäynnistyksen."
+      "quick": "Kosketuslevyn lyhyt painallus avaa pelin aikaisen Encore-valikon (grafiikka, näppäinkartta, FPS ja lokit). Keskimmäinen järjestelmäpainike on varattu konsolille; osa asetuksista vaatii pelin uudelleenkäynnistyksen.",
+      "controls": "Touchpadin lyhyt painallus avaa Encoren pika-asetukset pelin aikana. Konsolin keskimmäinen järjestelmäpainike on varattu järjestelmälle. Valikossa on grafiikka-, näppäinmääritys-, FPS- ja diagnostiikka-asetuksia. Osa muutoksista vaatii pelin uudelleenkäynnistyksen. Kieli valitaan kohdasta Settings → Language; kaikkia luettelokieliä ei voi valita valikosta."
     },
     {
       "code": "fr-CA",
@@ -190,7 +198,8 @@
       "access": "L’agrandissement du texte, le contraste élevé et la réduction des mouvements peuvent être activés séparément dans Accessibilité; ils sont désactivés par défaut. L’accessibilité du lanceur ne garantit pas celle de chaque jeu.",
       "safety": "Ne supprimez jamais /data/prosperoeden/ : ce dossier peut contenir des sauvegardes, paramètres et clés. Sauvegardez aussi les données externes.",
       "limits": "La dernière compilation publique authentique PS5 date du 15 octobre 2026; celle publiée le 30 octobre était une copie. La nouvelle préversion en brouillon ne contient aucun binaire ni jeu de deuxième génération validé sur console.",
-      "quick": "Un appui bref sur le pavé tactile ouvre le menu Encore pendant le jeu (graphismes, manette, FPS et journaux). Le bouton central du système reste réservé; certains réglages exigent un redémarrage du jeu."
+      "quick": "Un appui bref sur le pavé tactile ouvre le menu Encore pendant le jeu (graphismes, manette, FPS et journaux). Le bouton central du système reste réservé; certains réglages exigent un redémarrage du jeu.",
+      "controls": "Un appui bref sur le pavé tactile (Touchpad) ouvre les paramètres rapides d’Encore en jeu; le bouton central du système demeure réservé à la console. On y retrouve les graphismes, l’affectation des boutons, les FPS et les diagnostics. Certains changements exigent de relancer le jeu. La langue se règle dans Settings → Language; toutes les langues des catalogues ne sont pas proposées."
     },
     {
       "code": "fr-FR",
@@ -211,7 +220,8 @@
       "access": "Les options Texte agrandi, Contraste élevé et Réduire les animations sont indépendantes et désactivées par défaut. Elles concernent le lanceur et ne garantissent pas l’accessibilité des jeux exécutés.",
       "safety": "Ne supprime jamais /data/prosperoeden/ : ce dossier peut contenir tes sauvegardes, paramètres et clés. Sauvegarde aussi le stockage externe.",
       "limits": "Le dernier paquet PS5 réellement compilé et publié date du 15 octobre 2026. La publication du 30 octobre en était une copie. Le brouillon de prérelease ne contient aucun binaire ni compatibilité Switch 2 confirmée sur console.",
-      "quick": "Un appui court sur le pavé tactile ouvre le menu Encore en jeu (graphismes, manette, FPS et journaux). Le bouton système central reste réservé ; certains réglages exigent de relancer le jeu."
+      "quick": "Un appui court sur le pavé tactile ouvre le menu Encore en jeu (graphismes, manette, FPS et journaux). Le bouton système central reste réservé ; certains réglages exigent de relancer le jeu.",
+      "controls": "Un appui court sur le pavé tactile (Touchpad) ouvre les réglages rapides d’Encore en jeu. Le bouton système central reste réservé à la console. Ce menu regroupe graphismes, mapping manette, FPS et diagnostics. Certains changements nécessitent de relancer le jeu. La langue se choisit dans Settings → Language ; toutes les langues des catalogues ne sont pas proposées dans le menu."
     },
     {
       "code": "hu-HU",
@@ -232,7 +242,8 @@
       "access": "A nagyobb szöveg, nagy kontraszt és csökkentett mozgás külön kapcsolható be az akadálymentességi menüben, alapállapotban ki vannak kapcsolva. A menü akadálymentessége nem garantálja az egyes játékok akadálymentességét.",
       "safety": "Soha ne töröld a /data/prosperoeden/ mappát: mentések, beállítások és kulcsok lehetnek benne. A külső tárhelyet is mentsd.",
       "limits": "Az utolsó ténylegesen lefordított nyilvános PS5-csomag 2026. október 15-i. Az október 30-i kiadás másolat volt. Az új előzetes vázlat nem tartalmaz binárisokat vagy bizonyított második generációs konzolos kompatibilitást.",
-      "quick": "Az érintőpad rövid megnyomásával megnyílik az Encore játékon belüli menüje (grafika, gombkiosztás, FPS és naplók). A központi rendszergomb fenntartott; egyes módosítások újraindítást igényelnek."
+      "quick": "Az érintőpad rövid megnyomásával megnyílik az Encore játékon belüli menüje (grafika, gombkiosztás, FPS és naplók). A központi rendszergomb fenntartott; egyes módosítások újraindítást igényelnek.",
+      "controls": "A Touchpad rövid megnyomásával játék közben megnyitható az Encore gyorsbeállítási menüje. A központi rendszergomb a konzolé. Itt találhatók a grafikai, gombkiosztási, FPS- és diagnosztikai lehetőségek. Egyes változtatásokhoz újra kell indítani a játékot. A nyelv a Settings → Language alatt választható, de nem minden fordítás szerepel a menüben."
     },
     {
       "code": "id-ID",
@@ -253,7 +264,8 @@
       "access": "Teks lebih besar, kontras tinggi, dan gerakan berkurang dapat diaktifkan secara terpisah di Aksesibilitas; semuanya nonaktif secara bawaan. Kemudahan navigasi peluncur tidak menjamin aksesibilitas di setiap gim.",
       "safety": "Jangan pernah menghapus /data/prosperoeden/ karena dapat berisi simpanan, pengaturan, dan kunci. Cadangkan juga penyimpanan eksternal.",
       "limits": "Paket PS5 publik terakhir yang benar-benar dikompilasi bertanggal 15 Oktober 2026. Rilis 30 Oktober hanyalah salinan. Draf prarilis baru tidak menyediakan binari atau kompatibilitas gim generasi kedua yang telah dibuktikan di konsol.",
-      "quick": "Tekan singkat panel sentuh untuk membuka menu Encore saat bermain (grafis, pemetaan tombol, FPS, dan log). Tombol sistem tengah tetap dicadangkan; beberapa perubahan memerlukan memulai ulang gim."
+      "quick": "Tekan singkat panel sentuh untuk membuka menu Encore saat bermain (grafis, pemetaan tombol, FPS, dan log). Tombol sistem tengah tetap dicadangkan; beberapa perubahan memerlukan memulai ulang gim.",
+      "controls": "Tekan Touchpad sebentar untuk membuka pengaturan cepat Encore saat bermain; tombol sistem tengah tetap dipakai konsol. Menu tersebut menyediakan grafis, pemetaan tombol, FPS, dan diagnostik. Sebagian perubahan memerlukan memulai ulang gim. Bahasa dipilih melalui Settings → Language; tidak semua bahasa katalog tersedia sebagai pilihan menu."
     },
     {
       "code": "it-IT",
@@ -274,7 +286,8 @@
       "access": "Testo ingrandito, contrasto elevato e movimento ridotto si attivano separatamente nelle opzioni Accessibilità e sono disattivati all'inizio. La navigazione accessibile del launcher non certifica l'accessibilità di tutti i giochi.",
       "safety": "Non cancellare mai /data/prosperoeden/: potrebbe contenere salvataggi, impostazioni e chiavi. Fai un backup anche dello spazio di archiviazione esterno.",
       "limits": "L'ultimo pacchetto PS5 pubblicamente compilato risale al 15 ottobre 2026. La pubblicazione del 30 ottobre era una copia. La nuova bozza non contiene file binari né una compatibilità di seconda generazione verificata sulla console.",
-      "quick": "Una breve pressione del touchpad apre il menu Encore in gioco (grafica, mappatura tasti, FPS e registri). Il tasto centrale di sistema resta riservato; alcune modifiche richiedono di riavviare il gioco."
+      "quick": "Una breve pressione del touchpad apre il menu Encore in gioco (grafica, mappatura tasti, FPS e registri). Il tasto centrale di sistema resta riservato; alcune modifiche richiedono di riavviare il gioco.",
+      "controls": "Una breve pressione del Touchpad apre le impostazioni rapide di Encore durante il gioco; il tasto centrale di sistema resta riservato alla console. Il menu include grafica, mappatura dei pulsanti, FPS e diagnostica. Alcune modifiche richiedono il riavvio del gioco. La lingua si seleziona in Settings → Language; non tutte le lingue dei cataloghi sono selezionabili."
     },
     {
       "code": "ja-JP",
@@ -295,7 +308,8 @@
       "access": "大きい文字、高コントラスト、動きの軽減はアクセシビリティ設定で個別に有効にできます。初期状態はすべてオフです。ランチャーで操作できることは、すべてのゲームのアクセシビリティを保証しません。",
       "safety": "/data/prosperoeden/ を削除しないでください。設定、セーブデータ、鍵が保存されている可能性があります。外部ストレージもバックアップしてください。",
       "limits": "実際にコンパイルされた最後の公開 PS5 パッケージは 2026 年 10 月 15 日版です。10 月 30 日の公開は同じパッケージの複製です。新しいプレリリースの下書きには実行バイナリも第二世代ゲームの実機動作保証もありません。",
-      "quick": "タッチパッドを短く押すと、ゲーム中の Encore メニュー（画質、ボタン割り当て、FPS、ログ）が開きます。中央のシステムボタンは使用しません。一部の変更にはゲームの再起動が必要です。"
+      "quick": "タッチパッドを短く押すと、ゲーム中の Encore メニュー（画質、ボタン割り当て、FPS、ログ）が開きます。中央のシステムボタンは使用しません。一部の変更にはゲームの再起動が必要です。",
+      "controls": "ゲーム中に Touchpad を短く押すと Encore のクイック設定を開けます。中央のシステムボタンは本体専用で、このメニューには使用しません。グラフィック、ボタン割り当て、FPS、診断情報を確認できます。変更内容によってはゲームの再起動が必要です。言語は Settings → Language から選択しますが、すべての翻訳言語がメニューにあるわけではありません。"
     },
     {
       "code": "ko-KR",
@@ -316,7 +330,8 @@
       "access": "큰 글씨, 높은 대비, 움직임 줄이기 옵션은 접근성 메뉴에서 각각 켤 수 있으며 기본적으로 모두 꺼져 있습니다. 런처의 접근성이 모든 게임 내부의 접근성을 보장하지는 않습니다.",
       "safety": "/data/prosperoeden/ 폴더를 삭제하지 마세요. 설정, 저장 데이터, 키가 들어 있을 수 있습니다. 외부 저장소도 백업하세요.",
       "limits": "마지막으로 실제 컴파일된 공개 PS5 패키지는 2026년 10월 15일 버전입니다. 10월 30일 공개판은 복사본입니다. 새 사전 출시 초안에는 실행 파일이나 검증된 2세대 콘솔 게임 호환성이 포함되지 않습니다.",
-      "quick": "터치패드를 짧게 누르면 게임 내 Encore 메뉴(그래픽, 버튼 매핑, FPS, 로그)가 열립니다. 중앙 시스템 버튼은 콘솔 전용이며 일부 변경 사항은 게임을 다시 시작해야 적용됩니다."
+      "quick": "터치패드를 짧게 누르면 게임 내 Encore 메뉴(그래픽, 버튼 매핑, FPS, 로그)가 열립니다. 중앙 시스템 버튼은 콘솔 전용이며 일부 변경 사항은 게임을 다시 시작해야 적용됩니다.",
+      "controls": "게임 중 Touchpad를 짧게 누르면 Encore 빠른 설정 메뉴가 열립니다. 중앙 시스템 버튼은 콘솔 전용입니다. 그래픽, 버튼 매핑, FPS, 진단 정보를 이 메뉴에서 확인할 수 있습니다. 일부 설정 변경은 게임을 다시 시작해야 적용됩니다. 언어는 Settings → Language에서 고르며 모든 번역 언어가 선택 목록에 표시되지는 않습니다."
     },
     {
       "code": "nb-NO",
@@ -337,7 +352,8 @@
       "access": "Større tekst, høy kontrast og redusert bevegelse kan slås på hver for seg under Tilgjengelighet; alle er av som standard. Tilgjengelighet i startmenyen garanterer ikke tilgjengelighet i hvert spill.",
       "safety": "Slett aldri /data/prosperoeden/; mappen kan inneholde lagringer, innstillinger og nøkler. Ta også kopi av ekstern lagring.",
       "limits": "Siste offentlig kompilerte PS5-pakke er fra 15. oktober 2026. Publiseringen 30. oktober var en kopi. Det nye utkastet har ingen binærfiler eller verifiserte spill fra andre generasjon på konsollen.",
-      "quick": "Et kort trykk på styreflaten åpner Encore-menyen i spillet (grafikk, knappetilordning, FPS og logger). Den midtre systemknappen er reservert; noen endringer krever omstart av spillet."
+      "quick": "Et kort trykk på styreflaten åpner Encore-menyen i spillet (grafikk, knappetilordning, FPS og logger). Den midtre systemknappen er reservert; noen endringer krever omstart av spillet.",
+      "controls": "Et kort trykk på Touchpad åpner hurtiginnstillingene i Encore under spill. Den sentrale systemknappen er reservert for konsollen. Menyen samler grafikk, knappetilordning, FPS og diagnostikk. Enkelte endringer krever omstart av spillet. Språket velges under Settings → Language; ikke alle katalogspråk finnes i menyen."
     },
     {
       "code": "nl-NL",
@@ -358,7 +374,8 @@
       "access": "Grotere tekst, hoog contrast en minder beweging zijn afzonderlijk beschikbaar onder Toegankelijkheid en standaard uitgeschakeld. Een toegankelijke launcher garandeert niet dat alle games toegankelijk zijn.",
       "safety": "Verwijder /data/prosperoeden/ nooit: deze map kan saves, instellingen en sleutels bevatten. Maak ook een back-up van externe opslag.",
       "limits": "Het laatste werkelijk gecompileerde openbare PS5-pakket dateert van 15 oktober 2026. De publicatie van 30 oktober was een kopie. Het nieuwe prereleaseconcept bevat geen uitvoerbare bestanden en geen bevestigde ondersteuning voor games van de tweede generatie op de console.",
-      "quick": "Een korte druk op het touchpad opent het Encore-menu in de game (grafische opties, knoppen, FPS en logboeken). De middelste systeemknop blijft gereserveerd; sommige wijzigingen vereisen een herstart."
+      "quick": "Een korte druk op het touchpad opent het Encore-menu in de game (grafische opties, knoppen, FPS en logboeken). De middelste systeemknop blijft gereserveerd; sommige wijzigingen vereisen een herstart.",
+      "controls": "Druk kort op het Touchpad om de snelle instellingen van Encore tijdens het spelen te openen. De centrale systeemknop blijft voor de console gereserveerd. Het menu biedt grafische opties, knoptoewijzing, FPS en diagnostiek. Voor sommige wijzigingen moet het spel opnieuw worden gestart. Kies de taal via Settings → Language; niet alle vertaalcatalogi zijn selecteerbaar."
     },
     {
       "code": "pl-PL",
@@ -379,7 +396,8 @@
       "access": "Powiększony tekst, wysoki kontrast i ograniczenie animacji można włączyć osobno w ustawieniach dostępności; domyślnie są wyłączone. Dostępny interfejs nie gwarantuje dostępności wszystkich gier.",
       "safety": "Nigdy nie usuwaj /data/prosperoeden/: może zawierać zapisy, ustawienia i klucze. Zabezpiecz też zewnętrzne nośniki.",
       "limits": "Ostatnia rzeczywiście skompilowana publiczna paczka PS5 pochodzi z 15 października 2026 r. Publikacja 30 października była kopią. Nowy szkic prerelease nie zawiera plików wykonywalnych ani potwierdzonej obsługi gier drugiej generacji na konsoli.",
-      "quick": "Krótkie naciśnięcie panelu dotykowego otwiera menu Encore w grze (grafika, mapowanie przycisków, FPS i logi). Środkowy przycisk systemowy pozostaje zarezerwowany; niektóre zmiany wymagają ponownego uruchomienia gry."
+      "quick": "Krótkie naciśnięcie panelu dotykowego otwiera menu Encore w grze (grafika, mapowanie przycisków, FPS i logi). Środkowy przycisk systemowy pozostaje zarezerwowany; niektóre zmiany wymagają ponownego uruchomienia gry.",
+      "controls": "Krótkie naciśnięcie panelu Touchpad otwiera szybkie ustawienia Encore podczas gry. Środkowy przycisk systemowy pozostaje zarezerwowany dla konsoli. Menu zawiera grafikę, mapowanie przycisków, FPS i diagnostykę. Niektóre zmiany wymagają ponownego uruchomienia gry. Język wybiera się w Settings → Language; nie wszystkie języki katalogów są widoczne w menu."
     },
     {
       "code": "pt-BR",
@@ -400,7 +418,8 @@
       "access": "Texto ampliado, alto contraste e movimento reduzido podem ser ativados separadamente em Acessibilidade; todos começam desligados. A acessibilidade do iniciador não garante a acessibilidade de cada jogo.",
       "safety": "Nunca apague /data/prosperoeden/: a pasta pode conter saves, configurações e chaves. Salve também uma cópia do armazenamento externo.",
       "limits": "O último pacote PS5 público realmente compilado é de 15 de outubro de 2026; a publicação de 30 de outubro foi uma cópia. O novo rascunho de pré-lançamento não possui binários nem jogos de segunda geração validados no console.",
-      "quick": "Um toque curto no touchpad abre o menu Encore durante o jogo (gráficos, mapeamento dos botões, FPS e logs). O botão central do sistema permanece reservado; algumas alterações exigem reiniciar o jogo."
+      "quick": "Um toque curto no touchpad abre o menu Encore durante o jogo (gráficos, mapeamento dos botões, FPS e logs). O botão central do sistema permanece reservado; algumas alterações exigem reiniciar o jogo.",
+      "controls": "Um toque curto no Touchpad abre os ajustes rápidos do Encore durante o jogo; o botão central de sistema permanece reservado ao console. O menu reúne gráficos, mapeamento de botões, FPS e diagnósticos. Algumas alterações exigem reiniciar o jogo. O idioma é selecionado em Settings → Language; nem todos os catálogos aparecem na lista."
     },
     {
       "code": "pt-PT",
@@ -421,7 +440,8 @@
       "access": "Texto maior, contraste elevado e redução de movimento podem ser activados separadamente em Acessibilidade e estão desligados por defeito. A acessibilidade do lançador não garante acessibilidade em todos os jogos.",
       "safety": "Nunca apagues /data/prosperoeden/: pode conter gravações, definições e chaves. Guarda também uma cópia do armazenamento externo.",
       "limits": "O último pacote PS5 público efectivamente compilado é de 15 de outubro de 2026. A publicação de 30 de outubro foi uma cópia. O novo rascunho de pré-lançamento não inclui binários nem compatibilidade da segunda geração validada na consola.",
-      "quick": "Um toque breve no touchpad abre o menu Encore durante o jogo (gráficos, mapeamento de botões, FPS e registos). O botão central do sistema continua reservado; algumas alterações exigem reiniciar o jogo."
+      "quick": "Um toque breve no touchpad abre o menu Encore durante o jogo (gráficos, mapeamento de botões, FPS e registos). O botão central do sistema continua reservado; algumas alterações exigem reiniciar o jogo.",
+      "controls": "Um toque breve no Touchpad abre as definições rápidas do Encore durante o jogo. O botão central de sistema continua reservado à consola. O menu inclui gráficos, mapeamento de botões, FPS e diagnósticos. Algumas alterações exigem reiniciar o jogo. O idioma é escolhido em Settings → Language; nem todos os catálogos estão disponíveis no seletor."
     },
     {
       "code": "ro-RO",
@@ -442,7 +462,8 @@
       "access": "Textul mărit, contrastul ridicat și mișcarea redusă pot fi activate separat din Accesibilitate și sunt dezactivate implicit. Accesibilitatea lansatorului nu garantează accesibilitatea fiecărui joc.",
       "safety": "Nu șterge niciodată /data/prosperoeden/: poate conține salvări, setări și chei. Copiază și datele din stocarea externă.",
       "limits": "Ultimul pachet public PS5 compilat efectiv datează din 15 octombrie 2026. Publicarea din 30 octombrie a fost o copie. Noul proiect de prerelease nu conține binare sau compatibilitate confirmată pentru jocurile de generația a doua pe consolă.",
-      "quick": "O apăsare scurtă a touchpadului deschide meniul Encore în joc (grafică, maparea butoanelor, FPS și jurnale). Butonul central al sistemului rămâne rezervat; unele modificări cer repornirea jocului."
+      "quick": "O apăsare scurtă a touchpadului deschide meniul Encore în joc (grafică, maparea butoanelor, FPS și jurnale). Butonul central al sistemului rămâne rezervat; unele modificări cer repornirea jocului.",
+      "controls": "O apăsare scurtă pe Touchpad deschide setările rapide Encore în timpul jocului. Butonul central de sistem rămâne rezervat consolei. Meniul include grafică, configurarea butoanelor, FPS și diagnosticare. Unele modificări necesită repornirea jocului. Limba se alege din Settings → Language; nu toate limbile din cataloage apar în meniu."
     },
     {
       "code": "ru-RU",
@@ -463,7 +484,8 @@
       "access": "Увеличенный текст, повышенная контрастность и уменьшение движения включаются независимо в настройках доступности и изначально отключены. Доступность оболочки не гарантирует доступность каждой игры.",
       "safety": "Никогда не удаляйте /data/prosperoeden/: там могут находиться сохранения, настройки и ключи. Сделайте резервную копию внешнего хранилища.",
       "limits": "Последняя действительно собранная публичная версия PS5 датирована 15 октября 2026 года; публикация 30 октября была её копией. Новый черновик предварительного выпуска не содержит бинарных файлов или подтверждённой совместимости игр второго поколения на консоли.",
-      "quick": "Короткое нажатие сенсорной панели открывает меню Encore в игре (графика, кнопки, FPS и журналы). Центральная системная кнопка остаётся зарезервированной; некоторые изменения требуют перезапуска игры."
+      "quick": "Короткое нажатие сенсорной панели открывает меню Encore в игре (графика, кнопки, FPS и журналы). Центральная системная кнопка остаётся зарезервированной; некоторые изменения требуют перезапуска игры.",
+      "controls": "Короткое нажатие на Touchpad открывает быстрые настройки Encore во время игры. Центральная системная кнопка зарезервирована для консоли. В меню доступны графика, назначение кнопок, FPS и диагностика. Некоторые изменения требуют перезапуска игры. Язык выбирается в Settings → Language; не все языки каталогов доступны в списке."
     },
     {
       "code": "sv-SE",
@@ -484,7 +506,8 @@
       "access": "Större text, hög kontrast och minskad rörelse kan aktiveras var för sig under Tillgänglighet; de är avstängda som standard. En tillgänglig startmeny garanterar inte tillgänglighet inne i spelen.",
       "safety": "Radera aldrig /data/prosperoeden/: där kan finnas sparfiler, inställningar och nycklar. Säkerhetskopiera även extern lagring.",
       "limits": "Det senaste offentligt kompilerade PS5-paketet är från 15 oktober 2026. Publiceringen den 30 oktober var en kopia. Det nya utkastet innehåller inga binärer eller verifierade spel från andra generationen på konsolen.",
-      "quick": "Ett kort tryck på styrplattan öppnar Encore-menyn i spelet (grafik, knappmappning, FPS och loggar). Den centrala systemknappen är reserverad; vissa ändringar kräver att spelet startas om."
+      "quick": "Ett kort tryck på styrplattan öppnar Encore-menyn i spelet (grafik, knappmappning, FPS och loggar). Den centrala systemknappen är reserverad; vissa ändringar kräver att spelet startas om.",
+      "controls": "Ett kort tryck på Touchpad öppnar Encores snabbinställningar under spelet. Den centrala systemknappen är reserverad för konsolen. Menyn samlar grafik, knappmappning, FPS och diagnostik. Vissa ändringar kräver att spelet startas om. Språk väljs under Settings → Language; inte alla katalogspråk kan väljas i menyn."
     },
     {
       "code": "th-TH",
@@ -505,7 +528,8 @@
       "access": "สามารถเปิดข้อความขนาดใหญ่ คอนทราสต์สูง และลดการเคลื่อนไหวแยกกันในเมนูการช่วยการเข้าถึง โดยค่าเริ่มต้นปิดทั้งหมด การใช้หน้าตาแอปได้ไม่ได้หมายความว่าเกมทุกเกมเข้าถึงได้",
       "safety": "ห้ามลบ /data/prosperoeden/ เพราะอาจมีเซฟ การตั้งค่า และคีย์ ควรสำรองพื้นที่จัดเก็บภายนอกด้วย",
       "limits": "แพ็กเกจ PS5 สาธารณะที่คอมไพล์จริงล่าสุดคือวันที่ 15 ตุลาคม 2026 การเผยแพร่วันที่ 30 ตุลาคมเป็นเพียงสำเนา ฉบับร่างพรีรีลีสใหม่ไม่มีไฟล์ไบนารีหรือเกมรุ่นที่สองที่ยืนยันว่าเล่นบนคอนโซลได้",
-      "quick": "กดทัชแพดสั้น ๆ เพื่อเปิดเมนู Encore ระหว่างเล่น (ภาพ การแมปปุ่ม FPS และบันทึก) ปุ่มระบบตรงกลางสงวนไว้สำหรับเครื่อง บางการตั้งค่าต้องเริ่มเกมใหม่"
+      "quick": "กดทัชแพดสั้น ๆ เพื่อเปิดเมนู Encore ระหว่างเล่น (ภาพ การแมปปุ่ม FPS และบันทึก) ปุ่มระบบตรงกลางสงวนไว้สำหรับเครื่อง บางการตั้งค่าต้องเริ่มเกมใหม่",
+      "controls": "แตะ Touchpad สั้น ๆ เพื่อเปิดการตั้งค่าด่วนของ Encore ระหว่างเล่นเกม ปุ่มระบบตรงกลางสงวนไว้สำหรับคอนโซล เมนูนี้มีกราฟิก การกำหนดปุ่ม FPS และการวินิจฉัย การเปลี่ยนบางอย่างต้องเริ่มเกมใหม่ เลือกภาษาที่ Settings → Language แต่ไม่ใช่ทุกภาษาของไฟล์แปลที่มีให้เลือกในเมนู"
     },
     {
       "code": "tr-TR",
@@ -526,7 +550,8 @@
       "access": "Büyük metin, yüksek karşıtlık ve azaltılmış hareket seçenekleri Erişilebilirlik altında ayrı ayrı açılır; varsayılan olarak kapalıdır. Başlatıcı erişilebilirliği her oyunun erişilebilir olduğu anlamına gelmez.",
       "safety": "/data/prosperoeden/ klasörünü asla silmeyin; kayıtları, ayarları ve anahtarları içerebilir. Harici depolamayı da yedekleyin.",
       "limits": "Gerçekten derlenmiş son herkese açık PS5 paketi 15 Ekim 2026 tarihlidir; 30 Ekim yayını bir kopyadır. Yeni ön sürüm taslağı ikili dosya ya da konsolda doğrulanmış ikinci nesil oyun desteği içermez.",
-      "quick": "Dokunmatik yüzeye kısa basmak oyun içi Encore menüsünü (grafik, tuş eşleme, FPS ve günlükler) açar. Orta sistem düğmesi konsola ayrılmıştır; bazı değişiklikler oyunun yeniden başlatılmasını gerektirir."
+      "quick": "Dokunmatik yüzeye kısa basmak oyun içi Encore menüsünü (grafik, tuş eşleme, FPS ve günlükler) açar. Orta sistem düğmesi konsola ayrılmıştır; bazı değişiklikler oyunun yeniden başlatılmasını gerektirir.",
+      "controls": "Oyun sırasında Touchpad'e kısa basmak Encore hızlı ayarlarını açar; ortadaki sistem düğmesi konsola ayrılmıştır. Menüde grafik, tuş eşlemesi, FPS ve tanılama bulunur. Bazı değişiklikler oyunun yeniden başlatılmasını gerektirir. Dil Settings → Language bölümünden seçilir; tüm çeviri dilleri menüde görünmez."
     },
     {
       "code": "uk-UA",
@@ -547,7 +572,8 @@
       "access": "Збільшений текст, високу контрастність і зменшення руху можна вмикати окремо в налаштуваннях доступності; за замовчуванням вони вимкнені. Доступність оболонки не гарантує доступності кожної гри.",
       "safety": "Ніколи не видаляйте /data/prosperoeden/: там можуть зберігатися ігри, налаштування та ключі. Резервуйте також зовнішнє сховище.",
       "limits": "Останній справді скомпільований публічний пакет PS5 датований 15 жовтня 2026 року. Публікація 30 жовтня була копією. Новий чернетковий попередній випуск не містить бінарних файлів чи підтвердженої підтримки ігор другого покоління на консолі.",
-      "quick": "Коротке натискання сенсорної панелі відкриває меню Encore у грі (графіка, кнопки, FPS і журнали). Центральну системну кнопку зарезервовано для консолі; деякі зміни потребують перезапуску гри."
+      "quick": "Коротке натискання сенсорної панелі відкриває меню Encore у грі (графіка, кнопки, FPS і журнали). Центральну системну кнопку зарезервовано для консолі; деякі зміни потребують перезапуску гри.",
+      "controls": "Коротке натискання Touchpad відкриває швидкі налаштування Encore під час гри. Центральна системна кнопка залишається за консоллю. У меню доступні графіка, призначення кнопок, FPS і діагностика. Для деяких змін потрібен перезапуск гри. Мова вибирається в Settings → Language; не всі мови каталогів є в меню."
     },
     {
       "code": "vi-VN",
@@ -568,7 +594,8 @@
       "access": "Chữ lớn, độ tương phản cao và giảm chuyển động là các tùy chọn độc lập trong Khả năng tiếp cận và đều tắt theo mặc định. Giao diện dễ sử dụng không bảo đảm mọi trò chơi đều hỗ trợ tiếp cận.",
       "safety": "Không bao giờ xóa /data/prosperoeden/ vì có thể chứa bản lưu, thiết lập và khóa. Hãy sao lưu cả ổ lưu trữ ngoài.",
       "limits": "Gói PS5 công khai cuối cùng thực sự được biên dịch ngày 15 tháng 10 năm 2026. Bản đăng ngày 30 tháng 10 chỉ là bản sao. Bản nháp phát hành mới không có tệp nhị phân hay trò chơi thế hệ thứ hai được xác nhận chạy trên console.",
-      "quick": "Nhấn nhanh bàn cảm ứng để mở menu Encore trong game (đồ họa, ánh xạ nút, FPS và nhật ký). Nút hệ thống ở giữa được giữ riêng cho máy; một số thay đổi cần khởi động lại trò chơi."
+      "quick": "Nhấn nhanh bàn cảm ứng để mở menu Encore trong game (đồ họa, ánh xạ nút, FPS và nhật ký). Nút hệ thống ở giữa được giữ riêng cho máy; một số thay đổi cần khởi động lại trò chơi.",
+      "controls": "Nhấn nhanh Touchpad để mở cài đặt nhanh Encore khi đang chơi; nút hệ thống ở giữa dành riêng cho máy chơi game. Menu gồm đồ họa, gán nút, FPS và chẩn đoán. Một số thay đổi cần khởi động lại trò chơi. Chọn ngôn ngữ trong Settings → Language; không phải mọi ngôn ngữ của danh mục đều xuất hiện trong menu."
     },
     {
       "code": "zh-Hans",
@@ -589,7 +616,8 @@
       "access": "放大文字、高对比度、减少动态效果可在无障碍设置中分别开启，默认全部关闭。启动器可用并不代表每款游戏内部都具备无障碍功能。",
       "safety": "切勿删除 /data/prosperoeden/，其中可能包含存档、设置和密钥。也请备份外部存储。",
       "limits": "上一份真正编译并公开发布的 PS5 安装包日期为 2026 年 10 月 15 日；10 月 30 日发布的是相同文件的副本。新的预发布草稿不含可执行文件，也不表示第二代游戏已在主机上验证。",
-      "quick": "短按触摸板可打开游戏内 Encore 快捷菜单（画质、按键映射、FPS 和日志）。中央系统按钮保留给主机；部分设置需要重启游戏才能生效。"
+      "quick": "短按触摸板可打开游戏内 Encore 快捷菜单（画质、按键映射、FPS 和日志）。中央系统按钮保留给主机；部分设置需要重启游戏才能生效。",
+      "controls": "游戏中短按 Touchpad 可打开 Encore 快速设置；中央系统按钮保留给主机使用。该菜单包含图形设置、按键映射、FPS 和诊断信息。部分修改需要重启游戏。语言在 Settings → Language 中选择，但不是所有翻译目录语言都能从菜单选取。"
     },
     {
       "code": "zh-Hant",
@@ -610,7 +638,8 @@
       "access": "放大文字、高對比及減少動態效果可於無障礙設定中分別啟用，預設全部關閉。啟動器容易操作不代表每款遊戲內部都支援無障礙功能。",
       "safety": "切勿刪除 /data/prosperoeden/，其中可能存放設定、存檔與金鑰。請同時備份外部儲存空間。",
       "limits": "最後一份真正完成編譯並公開的 PS5 安裝包日期為 2026 年 10 月 15 日；10 月 30 日發布的是相同內容的副本。新的預發布草稿沒有執行檔，也不代表第二代遊戲已通過主機驗證。",
-      "quick": "短按觸控板可開啟遊戲中的 Encore 快速選單（畫質、按鍵配置、FPS 與日誌）。中央系統按鈕保留給主機；部分設定需要重新啟動遊戲才會生效。"
+      "quick": "短按觸控板可開啟遊戲中的 Encore 快速選單（畫質、按鍵配置、FPS 與日誌）。中央系統按鈕保留給主機；部分設定需要重新啟動遊戲才會生效。",
+      "controls": "遊戲中短按 Touchpad 可開啟 Encore 快速設定；中央系統按鈕保留給主機使用。選單包含圖形、按鍵對應、FPS 與診斷資訊。部分設定變更需要重新啟動遊戲。語言可從 Settings → Language 選擇，但不是所有翻譯目錄語言都可在選單中選取。"
     }
   ]
 }

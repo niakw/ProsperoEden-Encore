@@ -1,22 +1,22 @@
 # Eden Encore — Ajustes · Español (España)
 
-[Información general](README.es.md) · [Instalación y actualización](INSTALL.es-ES.md) · [Ajustes](SETTINGS.es-ES.md) · [Solución de problemas](TROUBLESHOOTING.es-ES.md) · [Asistencia](SUPPORT.es-ES.md) · [Accesibilidad](ACCESSIBILITY.es-ES.md) · [Languages](../../LANGUAGES.md)
+[Información general](README.es.md) · [Instalación y actualización](INSTALL.es.md) · [Ajustes](SETTINGS.es-ES.md) · [Solución de problemas](TROUBLESHOOTING.es-ES.md) · [Asistencia](SUPPORT.es-ES.md) · [Accesibilidad](ACCESSIBILITY.es-ES.md) · [All languages](../../LANGUAGES.md)
 
 El perfil recomendado utiliza Vulkan, salida 1440p, resolución interna 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor es distinta de la resolución interna del juego. La generación de fotogramas no acelera la simulación del juego.
 
-## Vulkan · 1440p · 1.25x · FSR 1
+## Vulkan / FSR 1 — Ajustes
 
-| Video preset | Renderer | TV output | Game resolution | Upscaling | Sharpening | AA | Refresh |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Minimum | Vulkan | 1080p | 1x | Bilinear | — | None | 60 Hz |
-| Recommended | Vulkan | 1440p | 1.25x | FSR 1 | 50% | FXAA | 60 Hz |
-| High | Vulkan | 2160p | 1.5x | Bicubic | 50% | FXAA | 60 Hz |
+The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Español (España). 
 
-**Neural Rendering: Off · Frame Generation: Off.** El perfil recomendado utiliza Vulkan, salida 1440p, resolución interna 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor es distinta de la resolución interna del juego. La generación de fotogramas no acelera la simulación del juego.
+| `Minimum` | `Recommended` | `High` |
+| --- | --- | --- |
+| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
-## Controller · Touchpad · Language
+El perfil recomendado utiliza Vulkan, salida 1440p, resolución interna 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor es distinta de la resolución interna del juego. La generación de fotogramas no acelera la simulación del juego.
 
-`Touchpad` (short press) opens the Encore in-game quick settings overlay; the central PS system button is reserved by the console. FPS, mapping, graphics and logs are grouped in that overlay. Settings that cannot be changed during an active game require a game restart. Choose `Settings → Language` in the launcher; some catalog languages are not exposed as a menu option.
+## Ajustes · Touchpad
+
+Una pulsación breve del panel táctil (Touchpad) abre los ajustes rápidos de Encore durante el juego. El botón central del sistema está reservado a la consola. Allí se encuentran gráficos, asignación de botones, FPS y diagnósticos. Algunos cambios requieren reiniciar el juego. El idioma se selecciona en Settings → Language; no todas las traducciones están disponibles en el selector.
 
 ## Accesibilidad
 
@@ -26,10 +26,14 @@ Texto más grande, contraste alto y movimiento reducido se activan de forma inde
 
 Si la aplicación no arranca, comprueba eboot.bin, sce_sys y ui/lang. Si faltan juegos, verifica roms dentro de la raíz de almacenamiento seleccionada. Si la interfaz sigue en inglés, revisa los catálogos de traducción. Safe Launch restaura ajustes de un juego sin borrar las partidas.
 
+## Asistencia
+
+En GitHub Issues indica la versión de Encore, el firmware de PS5, los pasos de reproducción, los ajustes relacionados y registros anonimizados. No publiques claves, partidas guardadas ni información personal.
+
 No borres nunca /data/prosperoeden/: puede contener partidas guardadas, ajustes y claves. Haz también copia del almacenamiento externo.
 
 ---
 
 La última compilación pública auténtica para PS5 data del 15 de octubre de 2026; la publicación del 30 de octubre fue una copia. El nuevo borrador no incluye binarios ni compatibilidad de segunda generación comprobada en consola.
 
-[Detailed English settings reference](../../SETTINGS.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.es.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

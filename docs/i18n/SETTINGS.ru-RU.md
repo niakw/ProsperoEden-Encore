@@ -1,22 +1,22 @@
 # Eden Encore — Настройки · Русский
 
-[Обзор](README.ru.md) · [Установка и обновление](INSTALL.ru-RU.md) · [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [Languages](../../LANGUAGES.md)
+[Обзор](README.ru.md) · [Установка и обновление](INSTALL.ru.md) · [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [All languages](../../LANGUAGES.md)
 
 Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.
 
-## Vulkan · 1440p · 1.25x · FSR 1
+## Vulkan / FSR 1 — Настройки
 
-| Video preset | Renderer | TV output | Game resolution | Upscaling | Sharpening | AA | Refresh |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Minimum | Vulkan | 1080p | 1x | Bilinear | — | None | 60 Hz |
-| Recommended | Vulkan | 1440p | 1.25x | FSR 1 | 50% | FXAA | 60 Hz |
-| High | Vulkan | 2160p | 1.5x | Bicubic | 50% | FXAA | 60 Hz |
+The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Русский. 
 
-**Neural Rendering: Off · Frame Generation: Off.** Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.
+| `Minimum` | `Recommended` | `High` |
+| --- | --- | --- |
+| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
-## Controller · Touchpad · Language
+Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.
 
-`Touchpad` (short press) opens the Encore in-game quick settings overlay; the central PS system button is reserved by the console. FPS, mapping, graphics and logs are grouped in that overlay. Settings that cannot be changed during an active game require a game restart. Choose `Settings → Language` in the launcher; some catalog languages are not exposed as a menu option.
+## Настройки · Touchpad
+
+Короткое нажатие на Touchpad открывает быстрые настройки Encore во время игры. Центральная системная кнопка зарезервирована для консоли. В меню доступны графика, назначение кнопок, FPS и диагностика. Некоторые изменения требуют перезапуска игры. Язык выбирается в Settings → Language; не все языки каталогов доступны в списке.
 
 ## Доступность
 
@@ -26,10 +26,14 @@
 
 Если приложение не запускается, проверьте eboot.bin, sce_sys и ui/lang. Если игры не отображаются, проверьте roms в выбранном корне хранения. Если меню остаётся английским, проверьте файлы переводов. Safe Launch восстанавливает настройки отдельной игры без удаления сохранений.
 
+## Поддержка
+
+В GitHub Issues укажите версию Encore, прошивку PS5, шаги воспроизведения, связанные настройки и очищенные от личных данных журналы. Не публикуйте ключи, сохранения и конфиденциальную информацию.
+
 Никогда не удаляйте /data/prosperoeden/: там могут находиться сохранения, настройки и ключи. Сделайте резервную копию внешнего хранилища.
 
 ---
 
 Последняя действительно собранная публичная версия PS5 датирована 15 октября 2026 года; публикация 30 октября была её копией. Новый черновик предварительного выпуска не содержит бинарных файлов или подтверждённой совместимости игр второго поколения на консоли.
 
-[Detailed English settings reference](../../SETTINGS.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.ru.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,22 +1,22 @@
 # Eden Encore — Nastavení · Čeština
 
-[Přehled](README.cs-CZ.md) · [Instalace a aktualizace](INSTALL.cs-CZ.md) · [Nastavení](SETTINGS.cs-CZ.md) · [Řešení problémů](TROUBLESHOOTING.cs-CZ.md) · [Podpora](SUPPORT.cs-CZ.md) · [Přístupnost](ACCESSIBILITY.cs-CZ.md) · [Languages](../../LANGUAGES.md)
+[Přehled](README.cs-CZ.md) · [Instalace a aktualizace](INSTALL.cs-CZ.md) · [Nastavení](SETTINGS.cs-CZ.md) · [Řešení problémů](TROUBLESHOOTING.cs-CZ.md) · [Podpora](SUPPORT.cs-CZ.md) · [Přístupnost](ACCESSIBILITY.cs-CZ.md) · [All languages](../../LANGUAGES.md)
 
 Doporučené výchozí nastavení používá Vulkan, výstup 1440p, interní měřítko 1.25x, prostorové FSR 1 s ostrostí 50 %, FXAA a 60 Hz. Rozlišení televizního výstupu a vykreslovací rozlišení hry jsou rozdílné. Generování snímků nemění rychlost emulované hry.
 
-## Vulkan · 1440p · 1.25x · FSR 1
+## Vulkan / FSR 1 — Nastavení
 
-| Video preset | Renderer | TV output | Game resolution | Upscaling | Sharpening | AA | Refresh |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Minimum | Vulkan | 1080p | 1x | Bilinear | — | None | 60 Hz |
-| Recommended | Vulkan | 1440p | 1.25x | FSR 1 | 50% | FXAA | 60 Hz |
-| High | Vulkan | 2160p | 1.5x | Bicubic | 50% | FXAA | 60 Hz |
+The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Čeština. 
 
-**Neural Rendering: Off · Frame Generation: Off.** Doporučené výchozí nastavení používá Vulkan, výstup 1440p, interní měřítko 1.25x, prostorové FSR 1 s ostrostí 50 %, FXAA a 60 Hz. Rozlišení televizního výstupu a vykreslovací rozlišení hry jsou rozdílné. Generování snímků nemění rychlost emulované hry.
+| `Minimum` | `Recommended` | `High` |
+| --- | --- | --- |
+| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
-## Controller · Touchpad · Language
+Doporučené výchozí nastavení používá Vulkan, výstup 1440p, interní měřítko 1.25x, prostorové FSR 1 s ostrostí 50 %, FXAA a 60 Hz. Rozlišení televizního výstupu a vykreslovací rozlišení hry jsou rozdílné. Generování snímků nemění rychlost emulované hry.
 
-`Touchpad` (short press) opens the Encore in-game quick settings overlay; the central PS system button is reserved by the console. FPS, mapping, graphics and logs are grouped in that overlay. Settings that cannot be changed during an active game require a game restart. Choose `Settings → Language` in the launcher; some catalog languages are not exposed as a menu option.
+## Nastavení · Touchpad
+
+Krátkým stiskem dotykové plochy Touchpad otevřete rychlé nastavení Encore během hry. Centrální systémové tlačítko zůstává vyhrazené konzoli. Nabídka obsahuje grafiku, mapování tlačítek, FPS a diagnostiku. Některé změny vyžadují restart hry. Jazyk se vybírá v Settings → Language; ne všechny jazyky katalogů jsou v nabídce.
 
 ## Přístupnost
 
@@ -26,10 +26,14 @@ V nastavení přístupnosti lze samostatně zapnout větší text, vysoký kontr
 
 Pokud aplikace nenaběhne, ověřte eboot.bin, sce_sys a ui/lang ve správné složce. Chybějící hry hledejte v roms pod vybraným úložištěm. Pokud nabídky zůstávají anglické, zkontrolujte soubory překladů. Safe Launch obnoví nastavení problematické hry bez smazání uložených pozic.
 
+## Podpora
+
+Při hlášení chyby uveďte verzi Encore, firmware PS5, přesný postup, příslušná nastavení a anonymizované logy. Využijte oficiální GitHub Issues; nikdy nezveřejňujte klíče, soukromé soubory ani uložené hry.
+
 Nikdy nemažte /data/prosperoeden/: může obsahovat nastavení, uložené hry a vaše klíče. Zálohujte i případné externí úložiště.
 
 ---
 
 Poslední veřejně sestavený balíček PS5 pochází z 15. října 2026. Vydání z 30. října je jeho kopie. Nový koncept vydání neobsahuje binární soubory ani ověřenou podporu her druhé generace na konzoli.
 
-[Detailed English settings reference](../../SETTINGS.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.cs-CZ.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

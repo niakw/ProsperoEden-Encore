@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Paramètres:** [Paramètres](SETTINGS.fr-CA.md) · [Dépannage](TROUBLESHOOTING.fr-CA.md) · [Assistance](SUPPORT.fr-CA.md) · [Accessibilité](ACCESSIBILITY.fr-CA.md) · [Languages](../../LANGUAGES.md)
+>
+> La dernière compilation publique authentique PS5 date du 15 octobre 2026; celle publiée le 30 octobre était une copie. La nouvelle préversion en brouillon ne contient aucun binaire ni jeu de deuxième génération validé sur console.
+
 # Prospero.Eden Encore — Migration depuis le projet d’origine (Français (Canada))
 
 [← Français (Canada)](README.fr-CA.md) · [Guide complet en anglais](../../INSTALL.md) · [Toutes les langues](../../LANGUAGES.md)

@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Paramètres:** [Paramètres](SETTINGS.fr-CA.md) · [Dépannage](TROUBLESHOOTING.fr-CA.md) · [Assistance](SUPPORT.fr-CA.md) · [Accessibilité](ACCESSIBILITY.fr-CA.md) · [Languages](../../LANGUAGES.md)
+>
+> La dernière compilation publique authentique PS5 date du 15 octobre 2026; celle publiée le 30 octobre était une copie. La nouvelle préversion en brouillon ne contient aucun binaire ni jeu de deuxième génération validé sur console.
+
 <table width="100%">
   <tr><td align="center">
     <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="../../README.md">English</a> &nbsp; · &nbsp; <a href="../../README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <strong>Français CA</strong> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>

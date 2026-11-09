@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Paramètres:** [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [Languages](../../LANGUAGES.md)
+>
+> Le dernier paquet PS5 réellement compilé et publié date du 15 octobre 2026. La publication du 30 octobre en était une copie. Le brouillon de prérelease ne contient aucun binaire ni compatibilité Switch 2 confirmée sur console.
+
 # Installer et mettre à jour Encore — Français
 
 [← README français](README.fr.md) · [Toutes les langues](../../LANGUAGES.md) · [Installation détaillée (anglais)](../../INSTALL.md)

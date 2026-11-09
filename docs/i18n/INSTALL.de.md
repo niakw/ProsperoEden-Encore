@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Einstellungen:** [Einstellungen](SETTINGS.de-DE.md) · [Fehlerbehebung](TROUBLESHOOTING.de-DE.md) · [Support](SUPPORT.de-DE.md) · [Barrierefreiheit](ACCESSIBILITY.de-DE.md) · [Languages](../../LANGUAGES.md)
+>
+> Die letzte tatsächlich kompilierte öffentliche PS5-Version stammt vom 15. Oktober 2026. Die Veröffentlichung vom 30. Oktober ist eine Kopie. Der neue Entwurf enthält weder Binärdateien noch bestätigte Spiele der zweiten Generation auf PS5.
+
 # Prospero.Eden Encore — Wechsel vom Originalprojekt (Deutsch)
 
 [← Deutsch](README.de.md) · [Vollständige Installationsanleitung (Englisch)](../../INSTALL.md) · [Alle Sprachen](../../LANGUAGES.md)

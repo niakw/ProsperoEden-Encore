@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Ajustes:** [Ajustes](SETTINGS.es-ES.md) · [Solución de problemas](TROUBLESHOOTING.es-ES.md) · [Asistencia](SUPPORT.es-ES.md) · [Accesibilidad](ACCESSIBILITY.es-ES.md) · [Languages](../../LANGUAGES.md)
+>
+> La última compilación pública auténtica para PS5 data del 15 de octubre de 2026; la publicación del 30 de octubre fue una copia. El nuevo borrador no incluye binarios ni compatibilidad de segunda generación comprobada en consola.
+
 # Instalar y actualizar Encore — Español (España)
 
 [← README en español](README.es.md) · [Todos los idiomas](../../LANGUAGES.md) · [Instalación completa (inglés)](../../INSTALL.md)

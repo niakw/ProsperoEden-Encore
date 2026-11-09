@@ -7,6 +7,7 @@ on:
       - 'vendor'
       - 'tools/ns2/check_native_exefs_missing_directory_host.py'
       - 'tools/ns2/check_native_nso_arguments_host.py'
+      - 'tools/ns2/check_native_nso_patch_extent_host.py'
       - 'tools/ns2/check_native_spirv_descriptor_array_bounds_host.py'
       - 'tools/ns2/check_native_video_real_ffmpeg_frame_host.py'
       - '.github/workflows/ns2-h01-h05-focused-host.yml'
@@ -36,6 +37,7 @@ jobs:
           fetch-depth: 1
       - run: python3 -B tools/ns2/check_native_exefs_missing_directory_host.py
       - run: python3 -B tools/ns2/check_native_nso_arguments_host.py
+      - run: python3 -B tools/ns2/check_native_nso_patch_extent_host.py
 
   video-pixels-and-pump:
     name: H05 genuine FFmpeg pixels + maintained Pump ownership

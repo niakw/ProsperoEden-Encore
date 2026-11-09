@@ -25,7 +25,8 @@
         "tools/ns2/test_process_run_source.py",
         "tools/ns2/check_native_process_handoff_transaction_host.py",
         "tools/ns2/check_native_exefs_missing_directory_host.py",
-        "tools/ns2/check_native_nso_arguments_host.py"
+        "tools/ns2/check_native_nso_arguments_host.py",
+        "tools/ns2/check_native_nso_patch_extent_host.py"
       ],
       "positive": "Valid NPDM, content and executable produce a correctly bounded KProcess handoff.",
       "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",

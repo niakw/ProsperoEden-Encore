@@ -32,6 +32,7 @@ TESTS = {
     "process_handoff_transaction": "tools/ns2/check_native_process_handoff_transaction_host.py",
     "exefs_missing_directory": "tools/ns2/check_native_exefs_missing_directory_host.py",
     "native_nso_args_bound": "tools/ns2/check_native_nso_arguments_host.py",
+    "native_nso_patch_extent": "tools/ns2/check_native_nso_patch_extent_host.py",
     "gpu_kernel_session_rollback": "tools/ns2/check_gpu_session_kernel_rollback_host.py",
     "gpu_ipc_event_partition_oom": "tools/ns2/check_native_gpu_session_ipc_oom_host.py",
     "gpu_fd_process_identity": "tools/ns2/check_native_gpu_fd_identity_host.py",

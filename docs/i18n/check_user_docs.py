@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate 29 fully documented launcher locales and 12 provisional Indian PO locales.
+"""Validate user guides for 29 official PS5 launcher catalogs.
 
 This is a documentation/path check, not a native compiler, linguistic
 certification, hardware test, or replacement for P0-P4 exit proofs.
@@ -63,14 +63,14 @@ locales = seed["locales"]
 codes = {x["code"] for x in locales}
 catalog_codes = {p.stem for p in CATALOGS.glob("*.po")}
 check(len(locales) == len(codes) == 29, "expected 29 unique documentation locales")
-check(codes <= catalog_codes and len(catalog_codes) == 41,
+check(codes == catalog_codes and len(catalog_codes) == 29,
       f"documentation vs PO locale difference: {sorted(codes ^ catalog_codes)}")
 
 index = ROOT / "LANGUAGES.md"
 index_text = index.read_text(encoding="utf-8")
 local_links(index, index_text)
-check("41 application translation catalogs" in index_text, "language index count missing")
-check("43 language/region selections" in index_text, "launcher selection count missing")
+check("29 application translation catalogs" in index_text, "language index count missing")
+check("31 official PS5 language/region selections" in index_text, "launcher selection count missing")
 
 for loc in locales:
     code, native = loc["code"], loc["native"]

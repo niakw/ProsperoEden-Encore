@@ -19,6 +19,14 @@ configure=PIPELINE.split('bool ComputePipeline::ConfigureNative(',1)[1].split(
     '\n#endif',1)[0]
 assert 'ObtainBufferOperation::MarkAsWritten' not in configure
 assert 'Do not mark any guest SSBO written yet.' in configure
+# Extract the shipping native ConfigureNative layout guard verbatim. A
+# missing VkPipeline/VkPipelineLayout or required VkDescriptorSetLayout must
+# abort BEFORE descriptor reservation and guest write tracking.
+LAYOUT_START='        if (!pipeline || !pipeline_layout ||'
+assert configure.count(LAYOUT_START) == 1
+layout_guard = LAYOUT_START + configure.split(LAYOUT_START,1)[1].split(
+    '            return false;',1)[0] + '            return false;'
+assert configure.index(layout_guard) < configure.index('struct BoundBuffer')
 ANCHOR='        // Deferred GPU write tracking is a commit, not descriptor staging.\n'
 END='        const auto dim = launch.grid;'
 blocks=[]
@@ -38,6 +46,7 @@ assert 'if (!staged_buffer_mappings.Matches(' in blocks[0]
 assert 'ValidateGpuBufferMappings(' not in blocks[0]
 CPP=r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -51,6 +60,11 @@ CPP=r'''
 namespace VideoCommon {
 enum class ObtainBufferSynchronize { NoSynchronize };
 enum class ObtainBufferOperation { DoNothing, MarkAsWritten };
+}
+bool NativeLayoutsReady(bool pipeline, bool pipeline_layout,
+                        bool descriptor_set_layout, std::size_t num_descriptor_entries) {
+__LAYOUT_GUARD__
+    return true;
 }
 struct MockGpuMemory {
     bool refuse{};
@@ -107,6 +121,11 @@ __COMMIT__
     }
 };
 int main() {
+    assert(!NativeLayoutsReady(false,true,true,1));
+    assert(!NativeLayoutsReady(true,false,true,1));
+    assert(!NativeLayoutsReady(true,true,false,1));
+    assert(NativeLayoutsReady(true,true,false,0)); // no descriptor shader
+    assert(NativeLayoutsReady(true,true,true,1));
     MockRasterizer renderer;
     auto& plan=*renderer.resources;
     using Shader::Ampere::NativeQmdStorageBinding;
@@ -176,7 +195,7 @@ int main() {
     assert(renderer.Commit());
     assert(renderer.buffer_cache.writes.size()==2);
 }
-'''.replace('__COMMIT__',blocks[0])
+'''.replace('__COMMIT__',blocks[0]).replace('__LAYOUT_GUARD__',layout_guard)
 boost_caches=sorted((Path.home()/'.cache').glob(
     'ps5-eden-*/source/.cache/cpm/boost/boost-*/libs'))
 includes=[ROOT/'vendor/sources/fmt/include',
@@ -207,4 +226,5 @@ with tempfile.TemporaryDirectory(prefix='encore-write-commit-') as temp:
             assert run.returncode==0,(cxx,run.stderr[-3500:])
             print('P2_3_NATIVE_STORAGE_COMMIT_AFTER_SNAPSHOT_PASS',Path(cxx).name,
                   f'O{opt}', 'mappings=full', 'physical_remap=refused', 'interior_page=refused',
+                  'missing_layout=refused',
                   'writes=known', 'owners=2',flush=True)

@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""H01: execute the actual maintained ExeFS loader's early admission body.
+
+A standalone NSO without a containing directory, missing main.npdm and a
+failed layered update must fail before metadata, KProcess or guest memory.
+This is a bounded entry proof; complete NPDM/NSO/KProcess remains open.
+"""
+from pathlib import Path
+import os
+import shutil
+import subprocess
+import tempfile
+
+ROOT=Path(__file__).resolve().parents[2]
+OWNER=ROOT/"vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp"
+code=OWNER.read_text()
+start="AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirectory::Load("
+end="\n    const ResultStatus result = metadata.Load(npdm);"
+assert code.count(start)==code.count(end)==1
+actual=start+code.split(start,1)[1].split(end,1)[0]
+assert "if (!dir)" in actual and actual.count("if (!dir)")>=2
+assert "return {ResultStatus::ErrorNullFile, {}};" in actual
+assert "return {ResultStatus::ErrorMissingNPDM, {}};" in actual
+assert actual.index("if (!dir)") < actual.index('dir->GetFile("main.npdm")')
+assert actual.rindex("if (!dir)") < actual.rindex('dir->GetFile("main.npdm")')
+# Only the genuine source segment is under test: return before deeper
+# metadata/NSO code, whose separate owner-linked tests remain required.
+actual+="\n    return {ResultStatus::Success, {}};\n}\n"
+fixture=r"""
+#include <cassert>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string_view>
+#include <utility>
+using u64=std::uint64_t;
+namespace Kernel {struct KProcess {};}
+namespace Core {
+struct System {
+    int value{};
+    int& GetFileSystemController(){return value;}
+    int& GetContentProvider(){return value;}
+};
+}
+namespace FileSys {
+struct VfsDir;
+using VirtualDir=std::shared_ptr<VfsDir>;
+struct VfsFile {
+    VirtualDir parent{};
+    VirtualDir GetContainingDirectory() const {return parent;}
+};
+using VirtualFile=std::shared_ptr<VfsFile>;
+struct VfsDir {
+    VirtualFile npdm{};
+    VirtualFile GetFile(std::string_view name) const {
+        assert(name=="main.npdm");
+        return npdm;
+    }
+};
+struct PatchManager {
+    static inline bool fail_patch{};
+    PatchManager(u64,int&,int&){}
+    VirtualDir PatchExeFS(VirtualDir dir) {
+        return fail_patch ? VirtualDir{} : std::move(dir);
+    }
+};
+}
+namespace Loader {
+enum class ResultStatus {
+    Success,ErrorAlreadyLoaded,ErrorNullFile,ErrorMissingNPDM
+};
+struct Meta {
+    u64 GetTitleID() const {return 42;}
+};
+class AppLoader_DeconstructedRomDirectory {
+public:
+    using LoadResult=std::pair<ResultStatus,std::optional<int>>;
+    bool is_loaded{};
+    FileSys::VirtualFile file{};
+    FileSys::VirtualDir dir{};
+    bool override_update{};
+    Meta metadata{};
+    LoadResult Load(Kernel::KProcess&,Core::System&);
+};
+__REAL_ENTRY__
+}
+int main(){
+    Core::System system;
+    Kernel::KProcess process;
+    using Loader::AppLoader_DeconstructedRomDirectory;
+    using Loader::ResultStatus;
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        assert(l.Load(process,system).first==ResultStatus::ErrorNullFile);
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.file=std::make_shared<FileSys::VfsFile>();
+        assert(l.Load(process,system).first==ResultStatus::ErrorNullFile);
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.dir=std::make_shared<FileSys::VfsDir>();
+        assert(l.Load(process,system).first==ResultStatus::ErrorMissingNPDM);
+    }
+    auto good=std::make_shared<FileSys::VfsDir>();
+    good->npdm=std::make_shared<FileSys::VfsFile>();
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.dir=good;
+        assert(l.Load(process,system).first==ResultStatus::Success);
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.file=std::make_shared<FileSys::VfsFile>();
+        l.file->parent=good;
+        assert(l.Load(process,system).first==ResultStatus::Success);
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.dir=good;l.override_update=true;
+        FileSys::PatchManager::fail_patch=true;
+        assert(l.Load(process,system).first==ResultStatus::ErrorMissingNPDM);
+        FileSys::PatchManager::fail_patch=false;
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.dir=good;l.override_update=true;
+        assert(l.Load(process,system).first==ResultStatus::Success);
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.is_loaded=true;
+        assert(l.Load(process,system).first==ResultStatus::ErrorAlreadyLoaded);
+    }
+}
+""".replace("__REAL_ENTRY__",actual)
+compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
+assert compilers
+with tempfile.TemporaryDirectory(prefix="eden-h01-exefs-entry-") as tmp:
+    cpp=Path(tmp)/"entry.cpp";cpp.write_text(fixture)
+    for cc in compilers:
+        for opt in ("-O0","-O2"):
+            exe=Path(tmp)/(Path(cc).name+opt)
+            command=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                     "-fsanitize=undefined","-fno-sanitize-recover=all",
+                     str(cpp),"-o",str(exe)]
+            built=subprocess.run(command,capture_output=True,text=True,timeout=60,
+                                 env=os.environ.copy())
+            assert built.returncode==0,(cc,built.stderr[-4500:])
+            tested=subprocess.run([str(exe)],capture_output=True,text=True,timeout=20)
+            assert tested.returncode==0,(cc,tested.stderr[-4500:])
+            print("H01_REAL_EXEFS_DIR_ADMISSION_PASS",Path(cc).name,opt,
+                  "null_parent=refused missing_npdm=refused failed_update=refused"
+                  " base=accepted patched=accepted",flush=True)

@@ -44,7 +44,7 @@ En stockage externe, la structure reste identique sous la racine choisie. Les je
 
 ## Dépannage
 
-- **Toujours en anglais** : choisir Settings → Language et vérifier les **29 catalogues** dans `PPSA99008/ui/lang/`. Le menu propose **18 choix de langue/région**, correspondant à 13 langues.
+- **Toujours en anglais** : choisir Settings → Language et vérifier les **29 catalogues** dans `PPSA99008/ui/lang/`. Le menu propose **exactement les 31 choix officiels de langue/région système PS5**, ni plus ni moins, selon la [liste Sony](https://www.playstation.com/fr-fr/legal/language-support/).
 - **Bibliothèque vide** : vérifier la racine active et le dossier `roms/`.
 - **Configuration incomplète** : vérifier les dossiers `keys/` et `firmware/` avec des fichiers légalement obtenus.
 - **Jeu devenu instable après modification des réglages** : essayer **Safe Launch**, sans supprimer les sauvegardes.

@@ -334,10 +334,6 @@ msgstr "Temă · Logo · Fundal · Strălucire (Joc: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Alegeți o singură rădăcină pentru chei, firmware, jocuri, actualizări și modificări"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Alege limba folosită de jocuri"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Alege · interfață. aplicații / Comenzi — neschimbate."

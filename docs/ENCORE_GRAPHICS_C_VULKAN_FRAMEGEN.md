@@ -1,3 +1,5 @@
+> **Dependency migration (10 November 2026, non-shipping maintenance branch):** Earlier external MihawkGen and FSR3 Optical Flow gitlinks were replaced by exact tracked upstream trees inside the sole vendor repository. Historical submodule references below describe earlier checkpoints and must not be interpreted as current wiring. Native PS5 testing remains separate.
+
 # C / R08 — Vulkan frame generation (état vérifiable)
 
 Branche : `feat/encore-c-vulkan-framegen`. Ne pas fusionner `main` ni modifier le vendor pour de simples contrats.

@@ -121,7 +121,8 @@
         "tools/ns2/check_native_video_decoder_ipc_host.py",
         "tools/ns2/check_native_video_eos_host.py",
         "tools/ns2/check_native_video_ready_event_oom_host.py",
-        "tools/ns2/check_native_video_real_ffmpeg_frame_host.py"
+        "tools/ns2/check_native_video_real_ffmpeg_frame_host.py",
+        "tools/ns2/check_native_video_packet_bounds_host.py"
       ],
       "positive": "Valid stream, frame ownership and EOS advance output only after actual decoded pixels.",
       "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",

@@ -117,11 +117,224 @@ def expected_dma_unified(source):
     assert source.count('#ifdef PS5_NATIVE\n            // Ignoring an unbound engine') == 2
     return source
 
+
+# G10 reviewed native GPFIFO acquire/replay delta on the *shipping* normal
+# owner only. DEV is a retained exact backport + diagnostics and MUST NOT
+# inherit the experimental native scheduler. This table contains exact source
+# hunks relative to expected_dma_unified() and rejects every unreviewed
+# source change. It is NOT a synthetic execution witness.
+G10_NATIVE_GPFIFO_REPLAY_HUNKS = [
+  {
+    "at": 41,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "    if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().IsNative(",
+      "            &channel_state)) {",
+      "        dma_pushbuffer_subindex = 0; // Preserve exact NS1 submission behavior.",
+      "    }",
+      "#else"
+    ]
+  },
+  {
+    "at": 42,
+    "removed": [],
+    "added": [
+      "#endif"
+    ]
+  },
+  {
+    "at": 56,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "    // The unresolved comparison stops this GPU channel without blocking the",
+      "    // worker, which can process releases from other channels in the meantime.",
+      "    if (!ResumeNativeAcquire()) {",
+      "        return false;",
+      "    }",
+      "#endif"
+    ]
+  },
+  {
+    "at": 65,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "        command_resume_offset = 0;",
+      "#endif"
+    ]
+  },
+  {
+    "at": 69,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "        if (command_resume_offset > prefetch_size) {",
+      "            throw std::runtime_error(\"Native GPFIFO prefetch resume cursor invalid\");",
+      "        }",
+      "        const auto commands = std::span<const CommandHeader>{",
+      "            command_list.prefetch_command_list.data(), prefetch_size};",
+      "        ProcessCommands(commands.subspan(command_resume_offset));",
+      "        if (HasPendingNativeAcquire()) {",
+      "            return false;",
+      "        }",
+      "        command_resume_offset = 0;",
+      "#else"
+    ]
+  },
+  {
+    "at": 70,
+    "removed": [],
+    "added": [
+      "#endif"
+    ]
+  },
+  {
+    "at": 148,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "            if (command_resume_offset > headers.size()) {",
+      "                throw std::runtime_error(\"Native GPFIFO entry shortened during acquire\");",
+      "            }",
+      "            ProcessCommands(std::span<const CommandHeader>{",
+      "                headers.data(), headers.size()}.subspan(command_resume_offset));",
+      "#else"
+    ]
+  },
+  {
+    "at": 149,
+    "removed": [],
+    "added": [
+      "#endif"
+    ]
+  },
+  {
+    "at": 151,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "            if (command_resume_offset > headers.size()) {",
+      "                throw std::runtime_error(\"Native GPFIFO entry shortened during acquire\");",
+      "            }",
+      "            ProcessCommands(std::span<const CommandHeader>{",
+      "                headers.data(), headers.size()}.subspan(command_resume_offset));",
+      "#else"
+    ]
+  },
+  {
+    "at": 152,
+    "removed": [],
+    "added": [
+      "#endif"
+    ]
+  },
+  {
+    "at": 155,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "    if (HasPendingNativeAcquire()) {",
+      "        // Keep both the queue entry and its method state; completing the",
+      "        // entry now would wrongly acknowledge unexecuted guest commands.",
+      "        return false;",
+      "    }",
+      "    command_resume_offset = 0;",
+      "#endif"
+    ]
+  },
+  {
+    "at": 186,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "    const size_t offset_before = command_resume_offset;",
+      "#endif"
+    ]
+  },
+  {
+    "at": 190,
+    "removed": [
+      "            dma_state.dma_word_offset = u32(index * sizeof(u32));",
+      "            const u32 max_write = u32(std::min<std::size_t>(index + dma_state.method_count, commands.size()) - index);"
+    ],
+    "added": [
+      "            dma_state.dma_word_offset = u32(",
+      "#ifdef PS5_NATIVE",
+      "                offset_before +",
+      "#endif",
+      "                index) * sizeof(u32);",
+      "            u32 max_write = u32(std::min<std::size_t>(",
+      "                index + dma_state.method_count, commands.size()) - index);",
+      "#ifdef PS5_NATIVE",
+      "            // No puller batching across a native SEM_EXECUTE: it may park",
+      "            // the channel after its first word.",
+      "            if (dma_state.method < non_puller_methods &&",
+      "                Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().IsNative(",
+      "                    &channel_state)) {",
+      "                max_write = 1;",
+      "            }",
+      "#endif"
+    ]
+  },
+  {
+    "at": 198,
+    "removed": [
+      "            dma_state.dma_word_offset = u32(index * sizeof(u32));"
+    ],
+    "added": [
+      "            dma_state.dma_word_offset = u32(",
+      "#ifdef PS5_NATIVE",
+      "                offset_before +",
+      "#endif",
+      "                index) * sizeof(u32);"
+    ]
+  },
+  {
+    "at": 237,
+    "removed": [],
+    "added": [
+      "#ifdef PS5_NATIVE",
+      "        if (HasPendingNativeAcquire()) {",
+      "            // All words through the semaphore were consumed, but nothing",
+      "            // following it; begin exactly at this word after release.",
+      "            command_resume_offset = offset_before + index;",
+      "            return;",
+      "        }",
+      "#endif"
+    ]
+  }
+]
+
+def apply_reviewed_native_gpfifo_replay(source):
+    lines = source.split("\n")
+    rebuilt = []
+    cursor = 0
+    for hunk in G10_NATIVE_GPFIFO_REPLAY_HUNKS:
+        start = hunk["at"]
+        before = hunk["removed"]
+        after = hunk["added"]
+        assert cursor <= start <= len(lines), ("non-monotonic G10 source hunk", start)
+        assert lines[start:start+len(before)] == before, (
+            "reviewed native DMA source hunk drift", start)
+        rebuilt.extend(lines[cursor:start])
+        rebuilt.extend(after)
+        cursor = start+len(before)
+    rebuilt.extend(lines[cursor:])
+    owner = "\n".join(rebuilt)
+    assert owner.count("HasPendingNativeAcquire()") >= 2
+    assert "ResumeNativeAcquire()" in owner
+    assert "Native GPFIFO prefetch resume cursor invalid" in owner
+    assert "Native GPFIFO entry shortened during acquire" in owner
+    assert owner.count('throw std::runtime_error("Native GPFIFO method on unbound subchannel")') == 2
+    return owner
+
 for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
     for dev in (False, True):
         path = name + ("_dev" if dev else "") + ".cpp"
         base = expected(kind, dev)
-        expected_owner = expected_dma_unified(base) if kind == "dma" else base
+        expected_owner = (apply_reviewed_native_gpfifo_replay(expected_dma_unified(base)) if not dev else expected_dma_unified(base)) if kind == "dma" else base
         assert (ACTIVE / path).read_text() == expected_owner, path
 assert "foreach(unit dma_pusher engines/puller)" not in CMAKE
 assert 'write_derived("${PORT_BUILD_DIR}/${unit_name}.cpp" "${command_source}")' not in CMAKE

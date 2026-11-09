@@ -21,7 +21,7 @@ assert owner.count("Transform-feedback varying count exceeds backing")==1
 assert owner.count("Invalid transform-feedback component partition")==1
 assert owner.count("Invalid transform-feedback byte stride/offset")==1
 stage_owner=source.split("void EmitContext::DefineOutputs(",1)[1].split(
-    "\\nvoid EmitContext::",1)[0]
+    "\nvoid EmitContext::",1)[0]
 assert "Transform feedback on unsupported shader stage" in stage_owner
 assert stage_owner.index("stage != Stage::TessellationEval") < stage_owner.index(
     "if (stage == Stage::Task || stage == Stage::Mesh)")

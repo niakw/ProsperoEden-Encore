@@ -66,7 +66,8 @@
       "validators": [
         "tools/check-ns2-graphics-hle-host.py",
         "tools/ns2/check_gpu_worker_staged_ledger_host.py",
-        "tools/ns2/check_native_worker_session_oom_host.py"
+        "tools/ns2/check_native_worker_session_oom_host.py",
+        "tools/ns2/check_native_worker_nvmap_rollback_host.py"
       ],
       "positive": "Real 214 region and 216 remap preserve 4K/64K granularity from authenticated reservation.",
       "negative": "Unknown page shift, partial 64K remap and wrong address-space owner are refused.",

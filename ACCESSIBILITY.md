@@ -1,6 +1,6 @@
 # Accessibility — Eden Encore
 
-> **29 fully localized sets of user guides; 41 application catalogs and 43 launcher language/region choices:** [Language directory](LANGUAGES.md). Twelve new Indian-language catalogs are provisional (many English fallback strings), and native console fonts remain unverified.
+> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 Eden Encore is designed to be used with a controller on a television. Accessibility is part of the native launcher, not a claim that every emulated Nintendo Switch game is accessible or that the PS5 system's accessibility services automatically work inside Encore.
@@ -31,7 +31,7 @@ For mapping details, see [SETTINGS.md](SETTINGS.md#controls).
 
 ## Language and readable information
 
-- The launcher has translated catalogs and font support; **Settings → Language** changes the launcher's selection and the language preference presented to games.
+- The launcher offers **exactly the 31 official PS5 system language/region selections** and no additional languages. This follows [Sony's published list](https://www.playstation.com/fr-fr/legal/language-support/); **Settings → Language** changes the launcher's selection. The game-language enum is narrower and falls back safely where necessary.
 - On first configuration the launcher derives its language choice from the PS5 system language. Installed language catalogs and fallback fonts must be present for the full experience.
 - Text labels accompany many icons and controls. The focus treatment and language selection help orientation, but cannot guarantee that every label fits, every translation is complete, or every icon is self-explanatory.
 - A game's subtitles, captions, font size, color settings and language availability belong to **that game**, unless Encore explicitly offers a separate feature for them.

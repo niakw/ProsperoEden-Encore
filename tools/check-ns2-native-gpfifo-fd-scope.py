@@ -63,6 +63,17 @@ assert submit.index("if (native && !native_plan) return NvResult::BadParameter;"
     "system.GPU().InitChannel(")
 assert submit.index("if (!opened || opened->process != native_owner)") < submit.index(
     "system.GPU().InitChannel(")
+# G10 native preflight must reject an unresolved wait before any GPU
+# channel mutation or syncpoint reservation; the native puller deliberately
+# refuses FENCE_ACTION Acquire until it has a real nonblocking scheduler.
+native_wait_guard = ("if (native && flags.fence_wait.Value() &&\n"
+                     "        !syncpoint_manager.IsFenceSignalled(params.fence)) {\n"
+                     "        return NvResult::NotImplemented;\n"
+                     "    }")
+assert native_wait_guard in submit
+assert submit.index(native_wait_guard) < submit.index("system.GPU().InitChannel(")
+assert submit.index(native_wait_guard) < submit.index("IncrementSyncpointMaxExt(")
+assert "Native GPFIFO FENCE_ACTION acquire unsupported" in native_puller
 assert submit.index("system.GPU().InitChannel(") < submit.index(
     "NativeGpuChannelRegistry::Instance().Bind(")
 assert submit.index("NativeGpuChannelRegistry::Instance().Bind(") < submit.index(

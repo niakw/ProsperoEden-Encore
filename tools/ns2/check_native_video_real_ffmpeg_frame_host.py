@@ -14,6 +14,10 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 OWNER=ROOT/"vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp"
 SERVICE=ROOT/"vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp"
+SYNC_OWNER=ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
+SYNC_HEADER=ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h"
+assert "void SyncpointManager::IncrementGuest(" in SYNC_OWNER.read_text()
+assert "bool IsReadyGuest(u32 syncpoint_id, u32 expected_value) const" in SYNC_HEADER.read_text()
 original=OWNER.read_text()
 begin="bool Nx2VideoDecoder::Render("
 end="\n}\n\n} // namespace Tegra::Host1x"
@@ -43,6 +47,7 @@ cpp=r"""
 #include <memory>
 #include <span>
 #include <vector>
+#include "video_core/host1x/syncpoint_manager.h"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/pixdesc.h>
@@ -139,18 +144,7 @@ std::size_t CalculateSize(bool,u32,u32,u32,u32,u32,u32) {return 0;}
 void SwizzleTexture(std::vector<u8>&,const std::vector<u8>&,u32,u32,u32,u32,u32,u32) {}
 }
 namespace Service::AM {
-struct GuestSyncpoints {
-    u32 released{};
-    u32 increments{};
-    bool IsReadyGuest(u32 id,u32 value) const {
-        assert(id==7);
-        return value<=released;
-    }
-    void IncrementGuest(u32 id) {
-        assert(id==5);
-        ++increments;
-    }
-};
+using GuestSyncpoints=Tegra::Host1x::SyncpointManager;
 struct FakeHost1x {
     GuestSyncpoints sync;
     GuestSyncpoints& GetSyncpointManager(){return sync;}
@@ -274,17 +268,18 @@ int main(){
     session.m_available.push_back({9,{{7,10}}}); // ready only at fence 10
     session.Pump();
     assert(session.m_outputs.empty() && session.m_pending.size()==1);
-    assert(session.system.host.sync.increments==0 &&
+    assert(session.system.host.sync.GetGuestSyncpointValue(5)==0 &&
            session.m_owner->written==0);
-    session.system.host.sync.released=10;
+    for(u32 i=0;i<10;++i) session.system.host.sync.IncrementGuest(7);
+    assert(session.system.host.sync.GetGuestSyncpointValue(7)==10);
     session.m_owner->fail_write=true;
     session.Pump();
     assert(session.m_outputs.empty() && session.m_pending.size()==1 &&
            session.m_guest_owned.empty());
-    assert(session.m_owner->written==0 && session.system.host.sync.increments==0);
+    assert(session.m_owner->written==0 && session.system.host.sync.GetGuestSyncpointValue(5)==0);
     session.m_owner->fail_write=false;
     session.Pump();
-    assert(session.m_owner->written==1 && session.system.host.sync.increments==1);
+    assert(session.m_owner->written==1 && session.system.host.sync.GetGuestSyncpointValue(5)==1);
     assert(session.m_outputs.size()==1 && session.m_outputs.front().image==9 &&
            session.m_outputs.front().pts==123 && session.m_outputs.front().eos);
     assert(session.m_pending.empty() && session.m_guest_owned.contains(9));
@@ -300,24 +295,25 @@ int main(){
        }
     // An impossible guest image is retired without fabricating an output.
     session.m_pending.push_back({picture,false});
-    session.system.host.sync.released=99;
+    for(u32 i=10;i<99;++i) session.system.host.sync.IncrementGuest(7);
+    assert(session.system.host.sync.GetGuestSyncpointValue(7)==99);
     session.Pump();
     assert(session.m_outputs.size()==1 && session.m_pending.size()==1);
-    assert(session.system.host.sync.increments==1 &&
+    assert(session.system.host.sync.GetGuestSyncpointValue(5)==1 &&
            session.m_available.empty());
     // A bad stride cannot write or acknowledge a pending guest frame.
     session.m_owner->surface->layout.row_bytes=14;
     session.m_available.push_back({9,std::nullopt});
     session.Pump();
     assert(session.m_pending.size()==1 && session.m_outputs.size()==1 &&
-           session.system.host.sync.increments==1);
+           session.system.host.sync.GetGuestSyncpointValue(5)==1);
     session.m_owner->surface->layout.row_bytes=16;
     session.Pump();
     assert(session.m_pending.empty() && session.m_outputs.size()==2 &&
-           session.system.host.sync.increments==2 && session.m_owner->written==2);
+           session.system.host.sync.GetGuestSyncpointValue(5)==2 && session.m_owner->written==2);
     std::puts("H05_REAL_FFMPEG_PUMP_OWNER_PASS decoded_nv12=exact "
               "blocked_release=held no_head_of_line=1 failed_write=rolled_back "
-              "guest_syncpoint_after_write=1 invalid_stride=no_completion "
+              "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
               "dead_image=retired true_ipc_vulkan_fence=not_exercised");
 }
 """.replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump)
@@ -332,8 +328,10 @@ with tempfile.TemporaryDirectory(prefix="eden-h05-ffmpeg-pixels-") as temp:
             exe=Path(temp)/(Path(cc).name+opt)
             cmd=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                  "-Wno-unused-variable","-fsanitize=undefined",
-                 "-fno-sanitize-recover=all",str(src),"-o",str(exe),
-                 "-lavcodec","-lavutil","-lswscale"]
+                 "-fno-sanitize-recover=all",
+                 "-I"+str(ROOT/"vendor/sources/eden/src"),
+                 str(src),str(SYNC_OWNER),"-o",str(exe),
+                 "-pthread","-lavcodec","-lavutil","-lswscale"]
             built=subprocess.run(cmd,text=True,capture_output=True,
                                  timeout=75,env=os.environ.copy())
             assert built.returncode==0,(cc,built.stderr[-5000:])

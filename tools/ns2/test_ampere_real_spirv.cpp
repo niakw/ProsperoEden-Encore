@@ -775,6 +775,10 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     Shader::TextureBufferDescriptor texel{};
     texel.count = 2;
     program.info.texture_buffer_descriptors.push_back(texel);
+    Shader::TextureDescriptor sampled{};
+    sampled.type = Shader::TextureType::Color2D;
+    sampled.count = 1;
+    program.info.texture_descriptors.push_back(sampled);
     program.info.storage_buffers_descriptors.push_back({0, 0, 1, true});
     program.info.used_storage_buffer_types = Shader::IR::Type::U32;
     Shader::IR::TextureInstInfo image{};
@@ -798,6 +802,25 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     block.AppendNewInst(Opcode::IAdd32,
                         {Value{u32{0}}, Value{u32{1}}});
     fetch_and_commit(Value{&block.back()}, 8, 4);
+    // The real 2D sampled-image path reads TIC/TSC as a combined
+    // sampler+view descriptor. Fetch pixel (1,0) at integer LOD 0 and
+    // publish its red channel in the same actual SSBO commit.
+    block.AppendNewInst(Opcode::CompositeConstructU32x2,
+                        {Value{u32{1}}, Value{u32{0}}});
+    const Value pixel_coords{&block.back()};
+    block.AppendNewInst(Opcode::ImageFetch,
+        {Value{u32{0}}, pixel_coords, Value{}, Value{u32{0}}, Value{}});
+    Shader::IR::TextureInstInfo sampled_info{};
+    sampled_info.raw = static_cast<u32>(Shader::TextureType::Color2D) << 16;
+    block.back().SetFlags(sampled_info);
+    const Value sampled_pixel{&block.back()};
+    block.AppendNewInst(Opcode::CompositeExtractF32x4,
+                        {sampled_pixel, Value{u32{0}}});
+    const Value sampled_red{&block.back()};
+    block.AppendNewInst(Opcode::BitCastU32F32, {sampled_red});
+    const Value sampled_bits{&block.back()};
+    block.AppendNewInst(Opcode::WriteStorage32,
+                        {Value{u32{0}}, Value{u32{8}}, sampled_bits});
     Shader::Profile profile{};
     profile.supported_spirv = 0x00010500;
     profile.unified_descriptor_binding = true;
@@ -817,9 +840,9 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
         descriptor_chains += op == static_cast<u32>(spv::Op::OpAccessChain);
         at += n;
     }
-    Require(image_fetches == 2 && storage_writes >= 2 &&
+    Require(image_fetches == 3 && storage_writes >= 3 &&
             descriptor_chains >= 2,
-            "G07 real source failed to fetch and commit two image-buffer elements");
+            "G07 real source failed to commit texel and sampled 2D image resources");
     const auto file_name = prefix + "-g07-texel-ssbo.spv";
     std::ofstream file{file_name, std::ios::binary | std::ios::trunc};
     Require(bool(file), "cannot open G07 real SPIR-V output");

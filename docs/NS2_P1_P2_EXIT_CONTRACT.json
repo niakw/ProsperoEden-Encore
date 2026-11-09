@@ -336,7 +336,7 @@
       "negative": "Invalid backing, image kind or busy resources cannot dispatch or commit writes.",
       "status": "open",
       "evidence": {},
-      "blocker": "Native arrayed texel image reads and GPU SSBO writeback now have a real SPIR-V/Vulkan-fence witness pending qualification. Full TIC/TSC sampled and storage images with actual QMD3 descriptor selection/commit still need GPU proof.",
+      "blocker": "Real 2D TIC/TSC sampled image plus 2 texel descriptors now feed 3 SSBO writes through actual SPIR-V/Vulkan dispatch/fence, pending same-SHA validation. Production QMD3 descriptor staging/write-commit and absence-of-resource negative cases must still be cross-qualified.",
       "excluded_forms": []
     },
     {

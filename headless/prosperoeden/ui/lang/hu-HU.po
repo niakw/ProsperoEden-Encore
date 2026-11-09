@@ -334,10 +334,6 @@ msgstr "Téma · Logó · Háttér · Ragyogás (Játék: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Válasszon egy gyökeret a kulcsokhoz, firmware-hez, játékokhoz, frissítésekhez és modokhoz"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Válaszd ki a játékok nyelvét"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Válassz · felület. szoftverek / Irányítás — változatlan."

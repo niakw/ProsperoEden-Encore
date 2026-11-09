@@ -369,13 +369,14 @@
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h",
       "validators": [
         "tools/ns2/check_task_mesh_vulkan_tus_host.py",
-        "tools/ns2/check_native_graphics_cbuf_bounds_host.py"
+        "tools/ns2/check_native_graphics_cbuf_bounds_host.py",
+        "tools/check-ns2-spirv-host.py"
       ],
       "positive": "Required Task+Mesh and Mesh-only stages create valid SPIR-V and a linkable Vulkan pipeline.",
       "negative": "Invalid stage combinations, Geometry header or oversized CBUF are rejected.",
       "status": "open",
       "evidence": {},
-      "blocker": "Show real Task/Mesh and Mesh-only SPIR-V output linked into usable Vulkan pipeline, not only C++ syntax.",
+      "blocker": "Real native Task+Mesh and Mesh-only EXT graphics pipeline creation probe is wired to the SPIR-V host runner, but this must execute successfully on a VK_EXT_mesh_shader-capable device before the positive G09 contract can close.",
       "excluded_forms": []
     },
     {

@@ -207,6 +207,16 @@ def main():
          str(ROOT / "tools/ns2/test_g07_real_vulkan_texel.cpp"),
          "-o", str(g07_exe), "-lvulkan"])
     print(run([str(g07_exe), str(g07_module)]).stdout, end="")
+    # G09: require real native EXT Task/Mesh graphics pipeline creation,
+    # if (and only if) the host Vulkan device supports the extension.
+    # An unavailable feature is recorded explicitly and never counted as proof.
+    g09_exe = OUT / "ns2-g09-mesh-pipeline"
+    run([cxx, "-std=c++20", "-O2",
+         str(ROOT / "tools/ns2/test_g09_native_mesh_pipeline.cpp"),
+         "-o", str(g09_exe), "-lvulkan"])
+    print(run([str(g09_exe),
+               str(OUT / "synthetic-task.spv"),
+               str(OUT / "synthetic-mesh.spv")]).stdout, end="")
     # G02: the actual emitted VertexB split XFB module must pass the
     # SPIR-V 1.5 and Vulkan 1.2 structural/resource validation rules.
     # The emitted OpStores, component splits and two guest byte offsets are

@@ -47,6 +47,7 @@ fixture=r"""
 #include "core/hle/service/am/service/gpu_memory_registration.h"
 #include "core/hle/service/am/service/gpu_worker_protocol.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
+#define LOG_ERROR(...) ((void)0)
 using u32=std::uint32_t;
 using u64=std::uint64_t;
 using u8=std::uint8_t;

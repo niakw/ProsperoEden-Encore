@@ -112,7 +112,11 @@ int main() {
     assert(owner.pending_native_acquire->operation==2 &&
            owner.pending_native_acquire->address==0x1000);
     owner.pending_native_acquire.reset();
+    const auto flushed_before_invalid = rasterizer.releases;
     assert(rejected(6));
+    assert(rejected(7));
+    // A rejected native control may not submit queued writes/guest fences.
+    assert(rasterizer.releases == flushed_before_invalid);
     assert(!owner.pending_native_acquire && rasterizer.queries==1);
     assert(pusher.memory_manager.admission_checks>=6);
 }

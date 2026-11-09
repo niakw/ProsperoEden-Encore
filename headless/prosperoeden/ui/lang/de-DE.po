@@ -334,10 +334,6 @@ msgstr "Design · Logo · Hintergrund · Leuchten (Spiel: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Wählen Sie einen Root für Schlüssel, Firmware, Spiele, Updates und Mods"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Wähle die Sprache für deine Spiele"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Wähle · Oberfläche. Software / Steuerung — unverändert."

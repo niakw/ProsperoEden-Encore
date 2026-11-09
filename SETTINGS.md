@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Settings guide
 
-> **29 fully localized sets of user guides; 41 application catalogs and 43 launcher language/region choices:** [Language directory](LANGUAGES.md). Twelve new Indian-language catalogs are provisional (many English fallback strings), and native console fonts remain unverified.
+> **Exactly the 31 official PS5 system language/region choices; 29 launcher translation catalogs:** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 
 This guide explains the settings exposed by Encore on PS5, their defaults, and practical starting profiles.
@@ -194,11 +194,11 @@ Encore controls the emulated input mapping and its own PlayStation-style UI glyp
 
 ## Language
 
-The launcher source exposes **43 language/region choices**: the original 18 entries are preserved, the 13 previously hidden catalogs are now selectable, and 12 provisional Indian-language options have been added. There are **41 catalog files** in current source. See [LANGUAGES.md](LANGUAGES.md) for the precise catalog, documentation and font limitations.
+The launcher exposes **exactly 31 official PS5 system language/region choices** and **29 translation catalogs** (English US/UK are separate system choices). This is a deliberate compatibility policy: **no extra launcher languages** beyond the [Sony PS5 system language list](https://www.playstation.com/fr-fr/legal/language-support/). All 31 are selectable; the historical first 18 keep their saved indices. See [LANGUAGES.md](LANGUAGES.md) for the full matrix.
 
 Settings → Language primarily selects the launcher interface. Only the original 18 selections map directly to a supported guest language.
 
-On first setup, Encore seeds the preference from the PS5 system language. Changing it rebuilds the launcher immediately with the selected catalog/fonts. The original 18 selections preserve their guest language/region mappings; the 25 additional selections use an English guest-language fallback because these locales are not supported by the emulator's existing game-language enum. A game can still ignore the requested language when unsupported.
+On first setup, Encore seeds the preference from the PS5 system language. Changing it rebuilds the launcher immediately with the selected catalog/fonts. The original 18 selections preserve their guest language/region mappings; the 13 newly selectable PS5 system-language entries use an English guest-language fallback because these locales are not supported by the emulator's existing game-language enum. A game can still ignore the requested language when unsupported.
 
 ## Audio
 

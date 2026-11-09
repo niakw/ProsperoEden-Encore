@@ -135,13 +135,14 @@
         "tools/ns2/check_gpu_worker_staged_ledger_host.py",
         "tools/ns2/check_native_gpu_session_ipc_oom_host.py",
         "tools/ns2/check_native_gpu_acquire_worker_oom_host.py",
-        "tools/ns2/check_native_gpu_fd_identity_host.py"
+        "tools/ns2/check_native_gpu_fd_identity_host.py",
+        "tools/ns2/check_native_gpu_device_ipc_host.py"
       ],
       "positive": "Required GPU session and worker commands produce exact response words, rights and owned handles.",
       "negative": "Unknown commands, stale FD and unauthorized process cannot produce success or mutate mappings.",
       "status": "open",
       "evidence": {},
-      "blocker": "Event-copy, VA partition, worker-move IPC and FD identity have extracted real-owner witnesses; new recycled-FD/cross-process evidence requires CI qualification. Full TIPC command/response/rights matrix remains open.",
+      "blocker": "Executed-owner witnesses now cover notification range, event COPY rights, GPU device create/destroy, VA partitions, worker move IPC and original FD/process identity; complete worker 211-216 command/handle and unknown-command matrix still needs evidence.",
       "excluded_forms": []
     },
     {

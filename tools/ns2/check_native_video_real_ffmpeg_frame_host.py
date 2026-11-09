@@ -24,6 +24,10 @@ assert "m_decoder->Render(frame.picture," in service
 assert service.index("m_owner->WriteVideoSurface(next.id, *target, pixels)") < service.index(
     "syncpoints.IncrementGuest(m_syncpoint);")
 assert "if (!m_decoder->Render(frame.picture," in service
+pump_start="void IGraphicsVideoDecoderSession::Pump() {"
+pump_end="\nvoid IGraphicsVideoDecoderSession::SubmitInput("
+assert service.count(pump_start)==service.count(pump_end)==1
+pump=pump_start+service.split(pump_start,1)[1].split(pump_end,1)[0]
 
 cpp=r"""
 #include <algorithm>
@@ -32,7 +36,10 @@ cpp=r"""
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <deque>
 #include <limits>
+#include <optional>
+#include <set>
 #include <memory>
 #include <span>
 #include <vector>
@@ -123,6 +130,92 @@ AVFrame* CodecRoundTrip() {
     avcodec_free_context(&dec);
     return output;
 }
+
+namespace Tegra::Texture {
+// The RGB block-linear branch has a separate true round-trip witness.
+// This test exercises a real decoded FFmpeg NV12 image through guest
+// ownership, readiness and publication, without claiming GPU tiling.
+std::size_t CalculateSize(bool,u32,u32,u32,u32,u32,u32) {return 0;}
+void SwizzleTexture(std::vector<u8>&,const std::vector<u8>&,u32,u32,u32,u32,u32,u32) {}
+}
+namespace Service::AM {
+struct GuestSyncpoints {
+    u32 released{};
+    u32 increments{};
+    bool IsReadyGuest(u32 id,u32 value) const {
+        assert(id==7);
+        return value<=released;
+    }
+    void IncrementGuest(u32 id) {
+        assert(id==5);
+        ++increments;
+    }
+};
+struct FakeHost1x {
+    GuestSyncpoints sync;
+    GuestSyncpoints& GetSyncpointManager(){return sync;}
+};
+struct FakeSystem {
+    FakeHost1x host{};
+    FakeHost1x& Host1x(){return host;}
+};
+struct FakeSurface {
+    struct Layout {
+        std::size_t image_bytes{384};
+        u32 cpu_kind{10};
+        u32 row_bytes{16};
+        u64 chroma_offset{256};
+        bool nv12{true};
+    } layout;
+    u32 width{16},height{16};
+    bool gpu_mapped{};
+};
+struct FakeOwner {
+    bool fail_write{};
+    unsigned written{};
+    std::vector<u8> last_pixels;
+    std::shared_ptr<FakeSurface> surface=std::make_shared<FakeSurface>();
+    std::shared_ptr<FakeSurface> LookupVideoSurface(u32 id) {
+        return id==9 ? surface : nullptr;
+    }
+    bool WriteVideoSurface(u32 id,const FakeSurface&,
+                           const std::vector<u8>& pixels) {
+        assert(id==9 && pixels.size()==384);
+        if(fail_write) return false;
+        ++written;last_pixels=pixels;
+        return true;
+    }
+};
+struct FakeReady {
+    bool room{};
+    unsigned notifications{};
+    void SetRoom(bool v){room=v;}
+    void Notify(){++notifications;}
+};
+class IGraphicsVideoDecoderSession {
+public:
+    static constexpr u32 NoSyncpoint=~u32{0};
+    static constexpr std::size_t MaxFrames=16,MaxOutputs=128;
+    struct ReleaseFence{u32 id{},value{};};
+    struct AvailableImage{u32 id{};std::optional<ReleaseFence> release;};
+    struct PendingPicture{Tegra::Host1x::Nx2Picture picture;bool eos{};};
+    struct Output{u32 image{},width{},height{};u64 pts{};bool eos{};};
+    FakeSystem system;
+    std::shared_ptr<FakeOwner> m_owner=std::make_shared<FakeOwner>();
+    std::shared_ptr<FakeReady> m_ready=std::make_shared<FakeReady>();
+    std::unique_ptr<Tegra::Host1x::Nx2VideoDecoder> m_decoder{
+        std::make_unique<Tegra::Host1x::Nx2VideoDecoder>()};
+    std::deque<PendingPicture> m_pending;
+    std::deque<AvailableImage> m_available;
+    std::deque<Output> m_outputs;
+    std::set<u32> m_registered,m_guest_owned;
+    u32 m_syncpoint{5};
+    bool m_started{true};
+    void Pump();
+};
+__REAL_PUMP__
+} // namespace Service::AM
+
 int main(){
     using namespace Tegra::Host1x;
     auto frame=std::make_shared<FFmpeg::Frame>(CodecRoundTrip());
@@ -170,8 +263,64 @@ int main(){
     std::puts("H05_REAL_FFMPEG_DECODED_FRAME_RENDER_PASS "
               "codec=MPEG4 pixels=FFmpeg decoded NV12=exact RGBA=converted "
               "oob_pitch_offset_size=refused guest_fence=not_exercised");
+    // The ACTUAL maintained AM session Pump() runs against real decoded
+    // pixels. The syncpoint service below is a deterministic mock:
+    // this witnesses the production publication ORDER, not guest Vulkan.
+    using Service::AM::IGraphicsVideoDecoderSession;
+    IGraphicsVideoDecoderSession session;
+    session.m_registered.insert(9);
+    session.m_pending.push_back({picture,true});
+    session.m_available.push_back({8,{{7,99}}}); // blocked older image
+    session.m_available.push_back({9,{{7,10}}}); // ready only at fence 10
+    session.Pump();
+    assert(session.m_outputs.empty() && session.m_pending.size()==1);
+    assert(session.system.host.sync.increments==0 &&
+           session.m_owner->written==0);
+    session.system.host.sync.released=10;
+    session.m_owner->fail_write=true;
+    session.Pump();
+    assert(session.m_outputs.empty() && session.m_pending.size()==1 &&
+           session.m_guest_owned.empty());
+    assert(session.m_owner->written==0 && session.system.host.sync.increments==0);
+    session.m_owner->fail_write=false;
+    session.Pump();
+    assert(session.m_owner->written==1 && session.system.host.sync.increments==1);
+    assert(session.m_outputs.size()==1 && session.m_outputs.front().image==9 &&
+           session.m_outputs.front().pts==123 && session.m_outputs.front().eos);
+    assert(session.m_pending.empty() && session.m_guest_owned.contains(9));
+    assert(session.m_available.size()==1 && session.m_available.front().id==8);
+    assert(session.m_owner->last_pixels.size()==size);
+    for(int y=0;y<16;++y)
+       for(int x=0;x<16;++x)
+          assert(session.m_owner->last_pixels[y*16+x]==f->data[0][y*f->linesize[0]+x]);
+    for(int y=0;y<8;++y)
+       for(int x=0;x<8;++x) {
+          assert(session.m_owner->last_pixels[luma+y*16+2*x]==f->data[1][y*f->linesize[1]+x]);
+          assert(session.m_owner->last_pixels[luma+y*16+2*x+1]==f->data[2][y*f->linesize[2]+x]);
+       }
+    // An impossible guest image is retired without fabricating an output.
+    session.m_pending.push_back({picture,false});
+    session.system.host.sync.released=99;
+    session.Pump();
+    assert(session.m_outputs.size()==1 && session.m_pending.size()==1);
+    assert(session.system.host.sync.increments==1 &&
+           session.m_available.empty());
+    // A bad stride cannot write or acknowledge a pending guest frame.
+    session.m_owner->surface->layout.row_bytes=14;
+    session.m_available.push_back({9,std::nullopt});
+    session.Pump();
+    assert(session.m_pending.size()==1 && session.m_outputs.size()==1 &&
+           session.system.host.sync.increments==1);
+    session.m_owner->surface->layout.row_bytes=16;
+    session.Pump();
+    assert(session.m_pending.empty() && session.m_outputs.size()==2 &&
+           session.system.host.sync.increments==2 && session.m_owner->written==2);
+    std::puts("H05_REAL_FFMPEG_PUMP_OWNER_PASS decoded_nv12=exact "
+              "blocked_release=held no_head_of_line=1 failed_write=rolled_back "
+              "guest_syncpoint_after_write=1 invalid_stride=no_completion "
+              "dead_image=retired true_ipc_vulkan_fence=not_exercised");
 }
-""".replace("__REAL_OWNER__",real)
+""".replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump)
 compilers=list(dict.fromkeys(x for x in
     (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"C++20 compiler required"

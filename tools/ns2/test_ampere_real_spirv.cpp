@@ -256,7 +256,7 @@ static void VerifyNativeCbufBankRefusal() {
 // This is the genuine native SPIR-V emitter, not a modeled helper.
 static void VerifyRealGlobalCasInvalidDescriptors() {
     const auto reject=[](u32 count, bool used, u32 cbuf_index,
-                         const char* expected) {
+                         const char* expected, u32 cbuf_offset=0x100U) {
         Shader::ObjectPool<Shader::IR::Inst> pool{8};
         Shader::IR::Block block{pool};
         Shader::IR::Program program{};
@@ -279,7 +279,7 @@ static void VerifyRealGlobalCasInvalidDescriptors() {
         info.nvn_buffer_used[0]=used;
         for(u32 i=0;i<count;++i)
             info.storage_buffers_descriptors.push_back(
-                {.cbuf_index=cbuf_index,.cbuf_offset=0x100U,
+                {.cbuf_index=cbuf_index,.cbuf_offset=cbuf_offset,
                  .count=1,.is_written=true});
         Shader::Backend::Bindings bindings{};
         Shader::Profile profile{};
@@ -302,8 +302,11 @@ static void VerifyRealGlobalCasInvalidDescriptors() {
     reject(17,false,0,"Native global memory SSBO selector exceeds routing mask");
     reject(1,true,18,"Global memory SSBO CBUF index out of range");
     reject(1,true,0,"Native global memory SSBO CBUF not bound");
+    reject(1,true,0,"Native global memory SSBO CBUF offset outside buffer",0xfff8U);
+    reject(1,true,0,"Native global memory SSBO CBUF offset outside buffer",0x102U);
     std::puts("G06_REAL_GLOBAL_CAS_DESCRIPTOR_REFUSAL_PASS "
-              "mask_overflow=1 cbuf_out_of_range=1 missing_cbuf=1");
+              "mask_overflow=1 cbuf_out_of_range=1 missing_cbuf=1 "
+              "cbuf_extent_overflow=1 cbuf_unaligned=1");
 }
 
 // G06 positive: emit actual guest U64 global-CAS address routing through

@@ -293,7 +293,7 @@
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "The actual native 64-bit global address CAS now has both source-emitted SPIR-V validity and mandatory host Vulkan old/final SSBO readback tests, plus explicit missing-CBUF/selector-overflow rejections. Await same-SHA host execution before assigning positive/negative exit evidence.",
+      "blocker": "Authentic native global CAS compiler now checks a maximum 16-entry descriptor selector, CBUF slot, alignment and 64 KiB offset bounds. Real global Vulkan SSBO old/final-word readback is staged alongside existing U32 storage-CAS proof; positive same-SHA execution remains pending.",
       "excluded_forms": []
     },
     {

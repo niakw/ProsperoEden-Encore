@@ -185,13 +185,14 @@
       "title": "Transform-feedback outputs",
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
       "validators": [
-        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
+        "tools/ns2/check_native_spirv_xfb_partition_host.py"
       ],
       "positive": "Required transform-feedback output partitions produce the right stage-specific SPIR-V.",
       "negative": "Invalid partitions and write masks do not write beyond the declared stream.",
       "status": "open",
       "evidence": {},
-      "blocker": "Exercise stage-specific transform-feedback writes with real SPIR-V output plus negative component partition cases.",
+      "blocker": "Native SPIR-V transform-feedback varying count and component partitions now fail closed with extracted-owner Clang/GCC conformance. Real stage-specific SPIR-V outputs, stream writes and interleaved stride correctness still require qualification.",
       "excluded_forms": []
     },
     {

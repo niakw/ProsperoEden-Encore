@@ -32,6 +32,10 @@ fixture=r"""
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
+#include <atomic>
+#include <chrono>
+#include <thread>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
@@ -73,11 +77,15 @@ public:
     void Push(GPU&, s32, CommandList&&);
     void ResumePendingNative(GPU&);
     void DeclareChannel(std::shared_ptr<ChannelState>);
-    bool HasPendingNativeChannels() const noexcept { return !pending_native_channels.empty(); }
+    bool HasPendingNativeChannels() const noexcept {
+        const std::scoped_lock lock(pending_guard);
+        return !pending_native_channels.empty();
+    }
 private:
     std::unordered_map<s32,std::shared_ptr<ChannelState>> channels;
     std::vector<std::shared_ptr<ChannelState>> pending_native_channels;
-    std::mutex scheduling_guard;
+    std::shared_mutex scheduling_guard;
+    mutable std::mutex pending_guard;
 };
 __REAL_OWNER__
 }
@@ -158,6 +166,30 @@ int main() {
     scheduler.ResumePendingNative(gpu);
     assert(aw.dispatches>=2 && bw.dispatches>=2);
     assert(!aw.pending && !bw.pending && !scheduler.HasPendingNativeChannels());
+
+    // A service thread must never swap a live channel epoch while a GPU
+    // worker is inside the original native DispatchCalls owner.
+    auto in_flight=channel(35), replacement=channel(35);
+    scheduler.DeclareChannel(in_flight);
+    std::atomic<bool> entered{false}, allowed{false}, swapped{false};
+    in_flight->payload->dma_pusher.after_dispatch=[&] {
+        entered.store(true);
+        while (!allowed.load()) std::this_thread::yield();
+    };
+    std::thread worker([&] { scheduler.Push(gpu,35,CommandList{}); });
+    while (!entered.load()) std::this_thread::yield();
+    std::thread registrar([&] {
+        scheduler.DeclareChannel(replacement);
+        swapped.store(true);
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds{12});
+    assert(!swapped.load()); // Exclusive epoch lease still blocked.
+    allowed.store(true);
+    worker.join();
+    registrar.join();
+    assert(swapped.load());
+    scheduler.Push(gpu,35,CommandList{});
+    assert(replacement->payload->dma_pusher.dispatches==1);
 }
 """.replace("__REAL_OWNER__",push+"\n"+resume+"\n"+declare)
 
@@ -171,7 +203,7 @@ with tempfile.TemporaryDirectory(prefix="eden-g10-scheduler-reuse-") as d:
             exe=Path(d)/(Path(compiler).name+opt)
             command=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                      "-fsanitize=undefined","-fno-sanitize-recover=all",
-                     str(src),"-o",str(exe)]
+                     str(src),"-pthread","-o",str(exe)]
             built=subprocess.run(command,capture_output=True,text=True,
                                  timeout=60,env=os.environ.copy())
             assert built.returncode==0,built.stderr[-4500:]
@@ -179,4 +211,4 @@ with tempfile.TemporaryDirectory(prefix="eden-g10-scheduler-reuse-") as d:
             assert ran.returncode==0,ran.stderr[-4500:]
             print("G10_NATIVE_SCHEDULER_OWNER_REUSE_PASS",Path(compiler).name,opt,
                   "stale_wait_retired=1 same_owner_preserved=1"
-                  " unknown_owner_rejected=1 two_channel_replay=1",flush=True)
+                  " unknown_owner_rejected=1 two_channel_replay=1 epoch_concurrency=1",flush=True)

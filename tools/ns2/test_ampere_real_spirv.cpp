@@ -249,6 +249,62 @@ static void VerifyNativeCbufBankRefusal() {
     }
 }
 
+// G06: source-executed negative proof for actual native global CAS routing.
+// An SSBO selector beyond the historical 16-bit route mask, a physical
+// CBUF index beyond the 18 bank array, and a missing declared CBUF must
+// reject before an OpAccessChain can reference an invalid descriptor.
+// This is the genuine native SPIR-V emitter, not a modeled helper.
+static void VerifyRealGlobalCasInvalidDescriptors() {
+    const auto reject=[](u32 count, bool used, u32 cbuf_index,
+                         const char* expected) {
+        Shader::ObjectPool<Shader::IR::Inst> pool{8};
+        Shader::IR::Block block{pool};
+        Shader::IR::Program program{};
+        program.stage=Shader::Stage::Compute;
+        program.workgroup_size={1,1,1};
+        program.blocks.push_back(&block);
+        block.AppendNewInst(Shader::IR::Opcode::GlobalAtomicCompareExchange32,
+                            {Shader::IR::Value{u64{0x100004}},
+                             Shader::IR::Value{u32{7}},
+                             Shader::IR::Value{u32{9}}});
+        auto& node=program.syntax_list.emplace_back();
+        node.type=Shader::IR::AbstractSyntaxNode::Type::Block;
+        node.data.block=&block;
+        program.syntax_list.emplace_back().type=
+            Shader::IR::AbstractSyntaxNode::Type::Return;
+        auto& info=program.info;
+        info.uses_global_memory=true;
+        info.used_storage_buffer_types=Shader::IR::Type::U32;
+        info.nvn_buffer_used[0]=used;
+        for(u32 i=0;i<count;++i)
+            info.storage_buffers_descriptors.push_back(
+                {.cbuf_index=cbuf_index,.cbuf_offset=0x100U,
+                 .count=1,.is_written=true});
+        Shader::Backend::Bindings bindings{};
+        Shader::Profile profile{};
+        profile.supported_spirv=0x00010500;
+        profile.support_int64=true;
+        profile.support_descriptor_aliasing=true;
+        profile.min_ssbo_alignment=64;
+        const Shader::Ampere::NativeSpirvCbufBoundsScope scope{};
+        bool rejected=false;
+        try {
+            (void)Shader::Backend::SPIRV::EmitSPIRV(
+                profile,Shader::RuntimeInfo{},program,bindings);
+        } catch(const std::exception& ex) {
+            rejected=std::string(ex.what()).find(expected)!=std::string::npos;
+            if(!rejected)
+                std::fprintf(stderr,"G06 unexpected global CAS refusal: %s\n",ex.what());
+        }
+        Require(rejected,"real global CAS missing descriptor did not fail closed");
+    };
+    reject(17,false,0,"Native global memory SSBO selector exceeds routing mask");
+    reject(1,true,18,"Global memory SSBO CBUF index out of range");
+    reject(1,true,0,"Native global memory SSBO CBUF not bound");
+    std::puts("G06_REAL_GLOBAL_CAS_DESCRIPTOR_REFUSAL_PASS "
+              "mask_overflow=1 cbuf_out_of_range=1 missing_cbuf=1");
+}
+
 static void VerifyRealFloatCasSpirv(const std::string& prefix) {
     using Shader::IR::Opcode;
     using Shader::IR::Value;
@@ -811,6 +867,7 @@ int main(int argc,char** argv) {
     Require(argc==2,"missing output prefix");
     CheckNativeQmdIndirectCbufIR();
     VerifyNativeCbufBankRefusal();
+    VerifyRealGlobalCasInvalidDescriptors();
     VerifyRealFloatCasSpirv(argv[1]);
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();

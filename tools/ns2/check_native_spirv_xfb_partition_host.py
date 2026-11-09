@@ -19,6 +19,8 @@ body=source.split(marker,1)[1].split("\n}\n",1)[0]
 owner=marker+body+"\n}"
 assert owner.count("Transform-feedback varying count exceeds backing")==1
 assert owner.count("Invalid transform-feedback component partition")==1
+assert owner.count("Invalid transform-feedback byte stride/offset")==1
+assert owner.index("num_components > (xfb_varying->stride - xfb_varying->offset)") < owner.index("ctx.F32[num_components]")
 assert owner.index("num_components > remainder") < owner.index("ctx.F32[num_components]")
 assert owner.index("xfb_count > ctx.runtime_info.xfb_varyings.size()") < owner.index("while (element < 4)")
 fixture=r"""
@@ -124,6 +126,24 @@ int main(){
         assert(c.output_generics[0][2].id.value==0);
         assert(c.output_generics[0][3].id.value==0);
     }
+    // Byte offsets, alignment and complete vertex-stride coverage are
+    // properties of the guest's real interleaved stream, not just SPIR-V
+    // vector component counts.
+    for(const TransformFeedbackVarying bad : {
+        TransformFeedbackVarying{0,8,8,2,0}, // 8+8 exceeds stride
+        TransformFeedbackVarying{0,16,2,1,0}, // misaligned offset
+        TransformFeedbackVarying{0,14,0,1,0}, // misaligned stride
+        TransformFeedbackVarying{0,0,0,1,0},  // no space for any byte
+        TransformFeedbackVarying{0,4,0xfffffffcu,1,0} // huge offset
+    }) {
+        EmitContext c;
+        c.runtime_info.xfb_count=1;
+        c.runtime_info.xfb_varyings[0]=bad;
+        bool rejected{};
+        try{DefineGenericOutput(c,0,std::nullopt);}
+        catch(const NotImplementedException&){rejected=true;}
+        assert(rejected && c.outputs==0 && c.decorations==0);
+    }
 }
 """.replace("__REAL_OWNER__",owner)
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
@@ -142,4 +162,4 @@ with tempfile.TemporaryDirectory(prefix="encore-g02-xfb-owner-") as temp:
             assert run.returncode==0,run.stderr[-5000:]
             print("G02_NATIVE_TRANSFORM_FEEDBACK_PARTITION_PASS",Path(cc).name,opt,
                   "full_vector=1 partitioned_2x2=1 invalid_count_rejected=1"
-                  " overrun_rejected=1 partial_partition_rejected=1",flush=True)
+                  " overrun_rejected=1 partial_partition_rejected=1 xfb_byte_range=checked",flush=True)

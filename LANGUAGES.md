@@ -2,7 +2,7 @@
 
 [← English README](README.md) · [Install](INSTALL.md) · [Settings](SETTINGS.md) · [Troubleshooting](TROUBLESHOOTING.md) · [Support](SUPPORT.md) · [Accessibility](ACCESSIBILITY.md)
 
-**41 application translation catalogs and 43 language/region selections** (including English US and UK). All 29 previously documented catalog locales are now directly selectable in the native launcher; the other **12 provisional Indian** catalog locales have a small set of translated UI labels and explicit English fallback for the remaining strings. The original six user guides remain localized for the first 29 catalogs; the 12 new locales link to the complete English guides until their own manuals are translated. Catalog presence does **not** certify linguistic completeness, native script-font support, or PS5 rendering.
+**The launcher offers exactly 31 official PS5 system language/region selections, corresponding to 29 application translation catalogs** (English US and UK share one language but have separate system choices). This deliberately mirrors Sony's [official PS5 console language list](https://www.playstation.com/fr-fr/legal/language-support/) **without adding any extra launcher languages**. All 31 PS5 choices are directly selectable; the 29 catalog locales have six localized user guides each. Catalog presence does not certify that every string has been independently proofread or visually tested on PS5.
 
 The full original English references remain the most detailed. The localized guides give the practical installation, settings, safety, support and accessibility essentials, and link back to the full English material.
 
@@ -39,28 +39,11 @@ The full original English references remain the most detailed. The localized gui
 | 简体中文 | `zh-Hans` | Yes | [README](docs/i18n/README.zh-Hans.md) | [Install](docs/i18n/INSTALL.zh-Hans.md) | [Settings](docs/i18n/SETTINGS.zh-Hans.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.zh-Hans.md) | [Support](docs/i18n/SUPPORT.zh-Hans.md) | [Accessibility](docs/i18n/ACCESSIBILITY.zh-Hans.md) |
 | 繁體中文 | `zh-Hant` | Yes | [README](docs/i18n/README.zh-Hant.md) | [Install](docs/i18n/INSTALL.zh-Hant.md) | [Settings](docs/i18n/SETTINGS.zh-Hant.md) | [Troubleshooting](docs/i18n/TROUBLESHOOTING.zh-Hant.md) | [Support](docs/i18n/SUPPORT.zh-Hant.md) | [Accessibility](docs/i18n/ACCESSIBILITY.zh-Hant.md) |
 
-## Indian languages — provisional catalog coverage
-
-These 12 catalog choices cover Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Punjabi, Odia, Urdu and Assamese. A few common interface labels are localized, but most application strings deliberately use English until reliable translation review. Console fonts for Indic scripts are **not confirmed**, so an unsupported script causes the launcher to reject that catalog and display English instead of missing glyphs. Games do not have equivalent language enums; these selections retain a safe English guest-language fallback.
-
-| हिन्दी | `hi-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| বাংলা | `bn-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| मराठी | `mr-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| తెలుగు | `te-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| தமிழ் | `ta-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| ગુજરાતી | `gu-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| ಕನ್ನಡ | `kn-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| മലയാളം | `ml-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| ਪੰਜਾਬੀ | `pa-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| ଓଡ଼ିଆ | `or-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| اردو | `ur-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-| অসমীয়া | `as-IN` | Provisional (English fallback) | [English guide](README.md) | [Install](INSTALL.md) | [Settings](SETTINGS.md) | [Troubleshooting](TROUBLESHOOTING.md) | [Support](SUPPORT.md) | [Accessibility](ACCESSIBILITY.md) |
-
 ## Choosing a launcher language
 
-Open **Settings → Language**. All 41 catalog locales are selectable, alongside two English variants (43 language/region selections total). The original 18 positions remain unchanged to preserve existing settings. For any of the 25 additional choices, games use a supported English guest language while the launcher attempts the selected UI catalog; the exact fallback is recorded in the application logs.
+Open **Settings → Language**. The selectable set is **exactly the 31 entries in the official PS5 system-language table**, with no additional launcher languages. The original 18 entries keep their existing indices for saved-setting compatibility; the remaining 13 official PS5 choices are appended. Some console interface languages have no equivalent game-language enum: in those cases the game receives a supported English guest-language fallback rather than an invented guest language. This policy applies to the menu only; it does not claim all games support every PS5 interface language.
 
-The 41 catalog source files are at `headless/prosperoeden/ui/lang/*.po`. A complete deployed application must include its `PPSA99008/ui/lang/` payload. Do not infer a released package's translation coverage from newer source code alone.
+The 29 catalog source files are at `headless/prosperoeden/ui/lang/*.po`. A complete deployed application must include its `PPSA99008/ui/lang/` payload. Do not infer a released package's translation coverage from newer source code alone.
 
 ## Release and data safety
 

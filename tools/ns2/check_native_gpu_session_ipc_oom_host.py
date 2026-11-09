@@ -121,6 +121,9 @@ struct Module {
         if(malformed_mode==2) {regions[0].offset=~u64{0}-3;regions[0].pages=2;} // overflow
         if(malformed_mode==3) regions[0].offset=0x30000; // reversed bounds
         if(malformed_mode==4) regions[0].pages=256; // first extent beyond second
+        if(malformed_mode==5) {regions[0].offset=0x1f000;regions[0].pages=2;} // overlaps second region
+        if(malformed_mode==6) regions[1].pages=0; // missing second extent
+        if(malformed_mode==7) {regions[1].offset=~u64{0}-3;regions[1].pages=2;} // second overflow
         std::memcpy(output.data()+16,regions.data(),sizeof(regions));
         return NvResult::Success;
     }
@@ -231,7 +234,7 @@ int main(){
         s.m_module->fail_ioctl=false;
     }
     // Reject malformed NVDRV region metadata before publishing ANY guest VA.
-    for (int mode=1; mode<=4; ++mode) {
+    for (int mode=1; mode<=7; ++mode) {
         s.m_module->malformed_mode=mode;
         auto req=cmd(203,9);
         s.GetAddressSpacePartition(req);

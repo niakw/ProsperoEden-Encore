@@ -308,13 +308,14 @@
       "validators": [
         "tools/ns2/check_native_ampere_semaphore_host.py",
         "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",
-        "tools/ns2/check_native_dma_unbound_subchannel_host.py"
+        "tools/ns2/check_native_dma_unbound_subchannel_host.py",
+        "tools/ns2/check_native_gpu_channel_reuse_host.py"
       ],
       "positive": "True semaphore acquire/resume and multi-channel ordering publish guest completion only after execution.",
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Prove multi-channel parked acquire/replay and guest fence ordering with native invalid-command rollback.",
+      "blocker": "Native channel bind-ID recycling now fails closed and retires stale parked waits with extracted-owner Clang/GCC witness. Full multi-channel guest semaphore, GPFIFO completion/fence ordering and native invalid-method rollback still need authenticated host execution.",
       "excluded_forms": []
     }
   ]

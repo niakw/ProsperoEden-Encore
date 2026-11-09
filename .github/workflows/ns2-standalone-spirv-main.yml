@@ -12,6 +12,10 @@ on:
       - 'tools/ns2/test_ampere_real_spirv.cpp'
       - 'tools/ns2/test_ampere_vulkan_module.cpp'
       - 'tools/check-ns2-spirv-host.py'
+      # A final P1/P2 sign-off changes its frozen contract, not the
+      # vendor source. Still produce same-SHA SPIR-V evidence once.
+      - 'docs/NS2_P1_P2_EXIT_CONTRACT.json'
+      - '.github/workflows/ns2-p1-p2-exit.yml'
   workflow_dispatch:
 
 permissions:

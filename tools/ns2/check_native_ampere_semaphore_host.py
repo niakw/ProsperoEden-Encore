@@ -18,7 +18,14 @@ for symbol in ("ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)"
 method_owner = puller.split(
     "void Puller::CallPullerMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {",
     1)[1].split("// Research-only native Ampere 3D MME.", 1)[0]
-assert method_owner.count("reject_unsupported_native();") == 5
+assert method_owner.count("reject_unsupported_native();") == 6
+# Legacy Maxwell 0x7 would return after one failed acquire and could report
+# native GPFIFO completion. The real Ampere command uses SEM_EXECUTE at 0x1b.
+legacy = method_owner.split("case BufferMethods::SemaphoreOperation: {", 1)[1].split(
+    "case BufferMethods::NonStallInterrupt:", 1)[0]
+assert legacy.index("reject_unsupported_native();") < legacy.index(
+    "ProcessSemaphoreTriggerMethod(dma_pusher);")
+assert "ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument);" in method_owner
 assert "Native GPFIFO puller method unsupported" in method_owner
 assert "#ifdef PS5_NATIVE" in method_owner
 for name in ("NonStallInterrupt", "MemOpA", "MemOpC", "MemOpD", "Yield"):

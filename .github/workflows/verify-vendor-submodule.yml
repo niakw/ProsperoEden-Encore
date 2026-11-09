@@ -7,6 +7,10 @@ on:
       - 'tools/check-vendor-submodule.sh'
       - 'tools/check-vendored-vulkan-fork.py'
       - '.github/workflows/verify-vendor-submodule.yml'
+      # Final host-exit sign-off needs fresh pinned-vendor provenance
+      # at the exact engine SHA even when the vendor gitlink is unchanged.
+      - 'docs/NS2_P1_P2_EXIT_CONTRACT.json'
+      - '.github/workflows/ns2-p1-p2-exit.yml'
   pull_request:
     paths:
       - 'vendor'

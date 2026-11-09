@@ -24,6 +24,10 @@ assert "return {ResultStatus::ErrorMissingNPDM, {}};" in actual
 assert actual.index("if (!dir)") < actual.index('dir->GetFile("main.npdm")')
 assert actual.rindex("if (!dir)") < actual.rindex('dir->GetFile("main.npdm")')
 assert "metadata.Load(npdm)" in actual and "metadata.Reload(npdm)" in actual
+assert 'if (metadata.IsSwitch2() && !dir->GetFile("main"))' in actual
+assert 'return {ResultStatus::ErrorLoadingNSO, {}};' in actual
+assert actual.index('if (metadata.IsSwitch2() && !dir->GetFile("main"))') > actual.index(
+    'metadata.Reload(npdm)')
 assert "dir = patch_manager.PatchExeFS(dir);" in actual
 # The actual file and directory constructors must also refuse bad parents
 # before attempting metadata/icon access; Load alone cannot protect them.
@@ -68,8 +72,9 @@ struct VfsFile {
 };
 using VirtualFile=std::shared_ptr<VfsFile>;
 struct VfsDir {
-    VirtualFile npdm{};
+    VirtualFile npdm{},executable{};
     VirtualFile GetFile(std::string_view name) const {
+        if (name=="main") return executable;
         assert(name=="main.npdm");
         return npdm;
     }
@@ -84,9 +89,11 @@ struct PatchManager {
 }
 namespace Loader {
 enum class ResultStatus {
-    Success,ErrorAlreadyLoaded,ErrorNullFile,ErrorMissingNPDM
+    Success,ErrorAlreadyLoaded,ErrorNullFile,ErrorMissingNPDM,ErrorLoadingNSO
 };
 struct Meta {
+    bool switch2{true};
+    bool IsSwitch2() const {return switch2;}
     u64 GetTitleID() const {return 42;}
     ResultStatus Load(FileSys::VirtualFile npdm) const {
         return npdm ? ResultStatus::Success : ResultStatus::ErrorMissingNPDM;
@@ -105,6 +112,7 @@ public:
     Meta metadata{};
     LoadResult Load(Kernel::KProcess&,Core::System&);
 };
+#define LOG_ERROR(...) ((void)0)
 __REAL_ENTRY__
 }
 int main(){
@@ -128,6 +136,22 @@ int main(){
     }
     auto good=std::make_shared<FileSys::VfsDir>();
     good->npdm=std::make_shared<FileSys::VfsFile>();
+    good->executable=std::make_shared<FileSys::VfsFile>();
+    // Native NS2 may not boot an NPDM-only application, even with
+    // other auxiliary modules. NS1/Maxwell keeps its legacy admission.
+    auto npdm_only=std::make_shared<FileSys::VfsDir>();
+    npdm_only->npdm=good->npdm;
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.dir=npdm_only;
+        assert(l.Load(process,system).first==ResultStatus::ErrorLoadingNSO);
+    }
+    {
+        AppLoader_DeconstructedRomDirectory l;
+        l.dir=npdm_only;
+        l.metadata.switch2=false;
+        assert(l.Load(process,system).first==ResultStatus::Success);
+    }
     {
         AppLoader_DeconstructedRomDirectory l;
         l.dir=good;
@@ -176,4 +200,5 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-exefs-entry-") as tmp:
             assert tested.returncode==0,(cc,tested.stderr[-4500:])
             print("H01_REAL_EXEFS_DIR_ADMISSION_PASS",Path(cc).name,opt,
                   "null_parent=refused missing_npdm=refused failed_update=refused"
-                  " base=accepted patched=accepted",flush=True)
+                  " base=accepted patched=accepted"
+                  " native_missing_main=refused ns1_unaffected=1",flush=True)

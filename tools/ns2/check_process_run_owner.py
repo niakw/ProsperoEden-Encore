@@ -17,13 +17,59 @@ def once(src,old,new):
     return src.replace(old,new)
 
 current=SRC.read_text()
-# H01 introduced two independently executed transaction guards in the
-# same maintained Process owner. Reconstruct the immutable pre-H01 N52
-# source exactly before auditing N52's original Switch 1 baseline.
-# Neither the historical byte hash nor any other owner line is rebaselined.
-assert blob(current)=="d2e06b2992d2745940f0c0640b747aae18074986", (
-    "H01+N52 exact native process owner changed without review")
-pre_h01=once(current,
+# H01 has three additional native-only guards in Process::Initialize /
+# Finalize. Unwind them IN REVERSE without touching any other owner byte.
+# The immutable historical H01 and N52 digests below remain unchanged.
+reviewed=once(current,
+    '''    SCOPE_EXIT {
+        process->Close(m_system.Kernel());
+    };
+#ifdef EDEN_NS2_PROCESS_RUN_GUARD
+    // The NS2 loader may register its SVC trace before Initialize has
+    // published the KProcess. Roll it back on every rejected handoff,
+    // including missing NPDM parameters or a later allocation failure.
+    // This guard runs before the KProcess reference is closed.
+    bool process_committed = false;
+    SCOPE_EXIT {
+        if (!process_committed) {
+            Eden::NS2::SvcTrace::Unregister(process->GetProcessId());
+        }
+    };
+#endif
+
+    // Insert process modules into memory.''',
+    '''    SCOPE_EXIT {
+        process->Close(m_system.Kernel());
+    };
+
+    // Insert process modules into memory.''')
+reviewed=once(reviewed,
+    '''    m_process = process;
+    m_process->Open(m_system.Kernel());
+#ifdef EDEN_NS2_PROCESS_RUN_GUARD
+    process_committed = true;
+#endif
+
+    // We succeeded.''',
+    '''    m_process = process;
+    m_process->Open(m_system.Kernel());
+
+    // We succeeded.''')
+reviewed=once(reviewed,
+    '''    if (m_process) {
+#ifdef EDEN_NS2_PROCESS_RUN_GUARD
+        // Do not retain a stale NS2 trace after process teardown.
+        if (Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire) ==
+            m_process->GetProcessId()) {
+            Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());
+        }
+#endif
+        m_process->Close(m_system.Kernel());''',
+    '''    if (m_process) {
+        m_process->Close(m_system.Kernel());''')
+assert blob(reviewed)=="d2e06b2992d2745940f0c0640b747aae18074986", (
+    "H01 rollback normalized to immutable original owner")
+pre_h01=once(reviewed,
     '''    auto* const process = Kernel::KProcess::Create(m_system.Kernel());
     // The slab allocator can fail before an ExeFS/NSO handoff exists.
     // Never register or dereference a null kernel process on that path.
@@ -71,4 +117,4 @@ assert 'if(EDEN_SHARED_NS2_EXEFS)' in CMAKE and 'EDEN_NS2_EXEFS_EXPERIMENTAL' no
 assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE
 assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE
 assert 'headless/ns2/overrides/core/hle/service/os/process.cpp' not in CMAKE
-print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS H01_guarded_transaction=1 historical_ns1_hash_unchanged=1")
+print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS H01_guarded_transaction=1 H01_trace_rollback=1 historical_ns1_hash_unchanged=1")

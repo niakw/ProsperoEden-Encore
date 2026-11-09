@@ -21,6 +21,9 @@ assert source.count(start)==source.count(end)==1
 owner=source.split(start,1)[1].split(end,1)[0]
 body="    if (patched || full_image) {"+owner
 assert owner.count("pi_header = pm->PatchNSO(pi_header, name);")==1
+assert owner.count("if (module_start >= codeset.memory.size())")==1
+assert owner.index("if (module_start >= codeset.memory.size())") < owner.index(
+    "std::span<u8> patchable_section(")
 assert owner.count("if (pi_header.size() != sizeof(NSOHeader) + patchable_section.size())")==1
 assert owner.index("if (pi_header.size() !=") < owner.index("std::copy(pi_header.begin()")
 assert "return std::nullopt;" in owner
@@ -84,13 +87,23 @@ int main(){
     // byte; ensure zero-length payload cannot cause pointer overrun.
     CodeSet empty{std::vector<u8>{}};
     pm.change=PatchManager::Change::Unchanged;
-    assert(TestRealOwner(&pm,empty,hdr,true,false,0,name));
+    assert(!TestRealOwner(&pm,empty,hdr,true,false,0,name));
     pm.change=PatchManager::Change::Expand;
     assert(!TestRealOwner(&pm,empty,hdr,true,false,0,name));
     assert(empty.memory.empty());
+    // Valid smallest section retains bytes; rejecting layout past the end
+    // must occur before any pointer arithmetic or mutation.
+    CodeSet one{std::vector<u8>{0x34}};
+    pm.change=PatchManager::Change::Unchanged;
+    assert(TestRealOwner(&pm,one,hdr,true,false,0,name));
+    assert(one.memory[0]==0x34);
+    assert(!TestRealOwner(&pm,one,hdr,true,false,1,name));
+    assert(!TestRealOwner(&pm,one,hdr,true,false,2,name));
+    assert(one.memory[0]==0x34);
     std::puts("H01_REAL_NSO_PATCH_EXTENT_PASS in_place=1"
               " oversized=refused truncated=refused"
-              " no_patch=1 zero_size=guarded guest_bytes_preserved=1");
+              " no_patch=1 empty_section=refused invalid_start=refused"
+              " guest_bytes_preserved=1");
 }
 """.replace("__OWNER__",body)
 compilers=list(dict.fromkeys(c for c in

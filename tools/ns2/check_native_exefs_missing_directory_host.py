@@ -15,7 +15,7 @@ ROOT=Path(__file__).resolve().parents[2]
 OWNER=ROOT/"vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp"
 code=OWNER.read_text()
 start="AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRomDirectory::Load("
-end="\n#ifdef EDEN_NS2_GUEST_COUNTER"
+end="\n#ifdef EDEN_NS2_GUEST_COUNTER\n    // This is the real KProcess loader"
 assert code.count(start)==code.count(end)==1
 actual=start+code.split(start,1)[1].split(end,1)[0]
 assert "if (!dir)" in actual and actual.count("if (!dir)")>=2

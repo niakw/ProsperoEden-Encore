@@ -51,7 +51,7 @@ struct KEvent {
     void Signal(KernelCore&) {++signals;}
 };
 }
-namespace Nvidia {
+namespace Service::Nvidia {
 using DeviceFD=int;
 enum class NvResult {Success,InvalidState,InsufficientMemory};
 namespace Devices {
@@ -133,14 +133,14 @@ int main() {
     assert(w.m_shared->address_spaces.Add(7)==Service::AM::GpuSessionProtocol::Status::Success);
     assert(w.m_mappings.RecordSparse(7,1,0x20000,0x2000)==LedgerStatus::Success);
     auto& as=*w.m_shared->as;
-    as.next=Nvidia::NvResult::InsufficientMemory;
+    as.next=Service::Nvidia::NvResult::InsufficientMemory;
     auto oom=packet();
     w.DestroySparseRegion(oom);
     assert(oom.words==2 && oom.reply.size()==1);
     assert(oom.reply[0]==Kernel::ResultOutOfResource.raw);
     assert(w.m_mappings.CanReleaseSparse(7,0x20000,0x2000)==LedgerStatus::Success);
     assert(as.releases==1 && e.signals==0 && w.system.gpu.waits==1);
-    as.next=Nvidia::NvResult::Success;
+    as.next=Service::Nvidia::NvResult::Success;
     auto retry=packet();
     w.DestroySparseRegion(retry);
     assert(retry.reply[0]==0 && as.releases==2 && e.signals==1);

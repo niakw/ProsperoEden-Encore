@@ -151,6 +151,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-exefs-entry-") as tmp:
         for opt in ("-O0","-O2"):
             exe=Path(tmp)/(Path(cc).name+opt)
             command=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                     "-Wno-unused-parameter",
                      "-fsanitize=undefined","-fno-sanitize-recover=all",
                      str(cpp),"-o",str(exe)]
             built=subprocess.run(command,capture_output=True,text=True,timeout=60,

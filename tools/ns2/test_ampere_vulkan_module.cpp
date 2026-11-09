@@ -42,22 +42,21 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
         i+=n;
     }
     Require(cas_count>=1,"G06 actual emitter omitted U32 CAS");
-    // Native global pointers reconstruct the SSBO physical base and size
-    // from uniform CBUF[0] (binding 0). The target storage descriptor lives
-    // at binding 1. A direct StorageAtomic CAS uses only binding 0.
-    VkDescriptorSetLayoutBinding bindings[2]{};
-    bindings[0].binding=0;
-    bindings[0].descriptorType=global ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER :
-                                        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    bindings[0].descriptorCount=1;
-    bindings[0].stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
-    bindings[1].binding=1;
-    bindings[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    bindings[1].descriptorCount=1;
-    bindings[1].stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
+    // Native global address routing requires two typed UBO views (u32
+    // and u32x2) at bindings 0..1, plus three typed SSBO views (u32,
+    // u32x2, u32x4) at 2..4. All five reflect the ACTUAL emitter with
+    // unified_descriptor_binding and native bounds scope enabled.
+    VkDescriptorSetLayoutBinding bindings[5]{};
+    for(uint32_t i=0;i<(global?5U:1U);++i) {
+        bindings[i].binding=i;
+        bindings[i].descriptorType=global && i<2 ?
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        bindings[i].descriptorCount=1;
+        bindings[i].stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
+    }
     VkDescriptorSetLayoutCreateInfo dli{};
     dli.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dli.bindingCount=global?2:1;dli.pBindings=bindings;
+    dli.bindingCount=global?5:1;dli.pBindings=bindings;
     VkDescriptorSetLayout dsl=VK_NULL_HANDLE;
     Require(vkCreateDescriptorSetLayout(device,&dli,nullptr,&dsl)==VK_SUCCESS,"CAS set layout");
     VkPipelineLayoutCreateInfo pli{};
@@ -113,9 +112,9 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     VkDescriptorPoolSize poolSizes[2]{};
     poolSizes[0].type=global?VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSizes[0].descriptorCount=1;
+    poolSizes[0].descriptorCount=global?2:1;
     poolSizes[1].type=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSizes[1].descriptorCount=1;
+    poolSizes[1].descriptorCount=3;
     VkDescriptorPoolCreateInfo dpci{};
     dpci.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     dpci.maxSets=1;dpci.poolSizeCount=global?2:1;dpci.pPoolSizes=poolSizes;
@@ -130,17 +129,16 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     storageInfo.buffer=buffer;storageInfo.offset=0;storageInfo.range=64;
     VkDescriptorBufferInfo uniformInfo{};
     uniformInfo.buffer=buffer;uniformInfo.offset=0;uniformInfo.range=65536;
-    VkWriteDescriptorSet writes[2]{};
-    writes[0].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[0].dstSet=set;writes[0].dstBinding=0;writes[0].descriptorCount=1;
-    writes[0].descriptorType=global?VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                                   VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    writes[0].pBufferInfo=global?&uniformInfo:&storageInfo;
-    writes[1].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[1].dstSet=set;writes[1].dstBinding=1;writes[1].descriptorCount=1;
-    writes[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    writes[1].pBufferInfo=&storageInfo;
-    vkUpdateDescriptorSets(device,global?2:1,writes,0,nullptr);
+    VkWriteDescriptorSet writes[5]{};
+    for(uint32_t i=0;i<(global?5U:1U);++i) {
+        writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[i].dstSet=set;
+        writes[i].dstBinding=i;
+        writes[i].descriptorCount=1;
+        writes[i].descriptorType=bindings[i].descriptorType;
+        writes[i].pBufferInfo=global && i<2 ? &uniformInfo : &storageInfo;
+    }
+    vkUpdateDescriptorSets(device,global?5:1,writes,0,nullptr);
     VkCommandPoolCreateInfo cpi{};
     cpi.sType=VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     cpi.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;

@@ -348,6 +348,9 @@ static void VerifyRealGlobalCasSpirv(const std::string& prefix) {
     profile.supported_spirv=0x00010500;
     profile.support_int64=true;
     profile.support_descriptor_aliasing=true;
+    // The live Vulkan backend allocates a unified set for CBUF and SSBO
+    // representations. Keep the real fixture's bindings non-overlapping.
+    profile.unified_descriptor_binding=true;
     profile.min_ssbo_alignment=64;
     Shader::Backend::Bindings bindings{};
     std::vector<u32> words;

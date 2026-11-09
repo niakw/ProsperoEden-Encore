@@ -293,7 +293,7 @@
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "Authentic native global CAS compiler now checks a maximum 16-entry descriptor selector, CBUF slot, alignment and 64 KiB offset bounds. Real global Vulkan SSBO old/final-word readback is staged alongside existing U32 storage-CAS proof; positive same-SHA execution remains pending.",
+      "blocker": "Native G06 global-memory helpers now define their actual CBUF u32/u32x2 and SSBO u32/u32x2/u32x4 types; the source-emitted global CAS is checked against the five actual Vulkan binding descriptors. Await green SPIR-V and host GPU old/final readback before assigning exit evidence.",
       "excluded_forms": []
     },
     {

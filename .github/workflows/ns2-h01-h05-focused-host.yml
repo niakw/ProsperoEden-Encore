@@ -1,0 +1,52 @@
+name: NS2 H01/H05 focused owner host qualification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'tools/ns2/check_native_exefs_missing_directory_host.py'
+      - 'tools/ns2/check_native_video_real_ffmpeg_frame_host.py'
+      - '.github/workflows/ns2-h01-h05-focused-host.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# The ordinary NS2 research workflow cancels on every new source SHA. This
+# focused, real-owner witness finishes independently at its EXACT pinned SHA.
+# It is not P5/PS5 or end-to-end guest hardware qualification.
+concurrency:
+  group: ns2-h01-h05-owner-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  exefs-owner:
+    name: H01 real ExeFS null/patch admission C++ owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - run: python3 -B tools/ns2/check_native_exefs_missing_directory_host.py
+
+  video-pixels-and-pump:
+    name: H05 genuine FFmpeg pixels + maintained Pump ownership
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - name: FFmpeg runtime and compiler headers
+        run: |
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=25 update -qq
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends libavcodec-dev libavutil-dev libswscale-dev
+      - run: python3 -B tools/ns2/check_native_video_real_ffmpeg_frame_host.py

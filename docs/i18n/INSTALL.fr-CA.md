@@ -2,6 +2,8 @@
 
 [← Français (Canada)](README.fr-CA.md) · [Guide complet en anglais](../../INSTALL.md) · [Toutes les langues](../../LANGUAGES.md)
 
+**Dernière release PS5 réellement compilée :** [R1 du 15 octobre 2026](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), avec l'archive FTP `Eden-Encore-56293953-FTP-PPSA99008.zip` et son `SHA256SUMS`. La version recopiée le 30 octobre n'est pas une nouvelle compilation, et les changements récents de `main` ne sont pas intégrés à ce binaire. [Audit](../../docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
+
 ## Bien démarrer
 
 1. Téléchargez l’archive complète dans Encore Releases et vérifiez son empreinte.

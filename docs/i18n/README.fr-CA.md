@@ -39,6 +39,8 @@
 
 [Migration depuis le projet d’origine](INSTALL.fr-CA.md) · [Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases) · [Support](../../SUPPORT.md)
 
+**Dernière compilation PS5 publiée :** [R1 du 15 octobre 2026](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) (source `56293953`, tag `f037a78`). La version du 30 octobre est une copie sans recompilation ; le travail plus récent sur `main` reste non qualifié sur PS5. [Historique et workflows](../../docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
+
 ## Migration depuis le projet d’origine
 
 Encore et ProsperoEden natif partagent le même identifiant PPSA99008 : ils ne s’installent pas indépendamment. Remplacez les fichiers de l’application au complet, sans supprimer les sauvegardes, préférences, jeux ou clés dans /data/prosperoeden. Sauvegardez tout ancien dossier assets/ avant la migration.
@@ -57,7 +59,7 @@ Le code en développement prend en charge les conteneurs NSP/XCI et expérimente
 <a id="faq"></a>
 ## Questions fréquentes
 
-La Switch 2 relève d’une branche de recherche distincte et n’est pas compatible avec la version PS5 actuelle. La génération de trames et les mises à jour automatiques sont prévues, pas encore livrées.
+Les composants communs NS1/NS2 sont maintenant développés sur **`main`**, mais sont absents de la **dernière archive PS5 R1 publiée** et ne démontrent encore aucune image invitée NS2 sur console. La génération de trames et les mises à jour automatiques ne sont pas validées en version publiée.
 
 Si l’interface demeure en anglais, choisissez Settings → Language et vérifiez l’installation complète de ui/lang/.
 

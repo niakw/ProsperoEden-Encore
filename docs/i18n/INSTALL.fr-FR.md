@@ -4,6 +4,8 @@
 
 **Firmware PS5 testé avec Encore : 13.60 uniquement.** Les versions antérieures pourraient fonctionner, mais ne sont pas validées. Aucun minimum n'est établi ; ce guide n'est pas une invitation à mettre à jour la console.
 
+**Référence historique à télécharger :** la vraie [R1 FTP du 15 octobre 2026](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) contient `Eden-Encore-56293953-FTP-PPSA99008.zip` et `SHA256SUMS`. L'importation de la release sur le nouveau dépôt le 30 octobre n'a **pas** recompilé l'application. Les fonctions ajoutées depuis à `main` ne sont pas dans cette archive. [Audit des builds](../../docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
+
 ## Installer en quatre étapes
 
 1. Télécharger un paquet **complet** des [Releases Encore](https://github.com/niakw/ProsperoEden-Encore/releases), en vérifiant les informations de version et les empreintes fournies. Un build CI vert n'est pas une preuve de jouabilité.

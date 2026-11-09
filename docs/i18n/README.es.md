@@ -89,7 +89,7 @@ No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la 
 ## 🗺️ Roadmaps, ramas de investigación y actualizaciones
 
 - **[Roadmap completa de funcionalidades R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** de la [rama de desarrollo independiente](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements): FSR, generación de frames, AA, temas, biblioteca, red, trofeos y **actualizador de la aplicación R21**. **Una especificación o prototipo no equivale a una función publicada.**
-- **[Rama de investigación Nintendo Switch 2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility)** y su [informe técnico](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md): experimentos con carga, CPU/IR y shaders NSW2; **no incluidos en la release PS5 actual**.
+- **[Roadmap unificada NS1/NS2](../../docs/ROADMAP_NS1_NS2_UNIFIED.md)**: el cargador, la CPU, los servicios HLE y el GPU compartidos se desarrollan ya en **`main`**. La [antigua rama de investigación](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) es un antecedente histórico; **ninguno de estos cambios posteriores figura en el paquete nativo R1 publicado**.
 - **[Seguimiento de estabilidad y optimización PS5/F07](../../docs/FC27_F07_MASTER_TRACKER.md)**: la rama main es la referencia de desarrollo del motor PS5.
 - **Las actualizaciones del ProsperoEden nativo se revisan individualmente, sin sincronización automática.** Encore parte de **ProsperoEden v1.000.040** ([base técnica](../../docs/FORK_NOTES.md)) y selecciona correcciones compatibles mediante [auditorías upstream](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). **El actualizador integrado R21 está previsto, no disponible.**
 
@@ -193,6 +193,8 @@ El trabajo PS5 final se consolida en **<code>main</code>**. La investigación NS
 [Prevalidación](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Paquetes nativos](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain).
 
 **Una CI verde nunca debe presentarse como prueba de estabilidad en juegos reales.**
+
+**Última compilación PS5 publicada:** [R1 del 15 de octubre de 2026](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), declarada desde el código `56293953`. El tag histórico apunta a `f037a78`; la copia del 30 de octubre en el repositorio actual **no fue recompilada**. Los cambios posteriores en `main` requieren una compilación nueva y pruebas en consola. [Auditoría de versiones y workflows](../../docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
 
 ---
 
@@ -329,7 +331,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 <details>
 <summary><strong>• « ¿Permite jugar a la Switch 2? »</strong></summary>
 
-- **No en la release PS5 actual.** La [rama de investigación NSW2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) y su [informe de viabilidad](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) documentan el trabajo separado.
+- **No en el último paquete nativo R1 de PS5.** El trabajo NS1/NS2 ya se desarrolla en el código común de **`main`** y tiene [criterios de validación host](../../docs/ROADMAP_NS1_NS2_UNIFIED.md), pero no se ha demostrado el primer fotograma real de un juego NS2 en la consola.
 - Trabajar con NSO homebrew, CPU Dynarmic y shaders nuevos **no equivale a ejecutar juegos comerciales de Switch 2**.
 - No prometemos Mario Kart World a 30 FPS ni una matriz de juegos Switch 2 estable. La prioridad sigue siendo optimizar Switch 1 en PS5.
 

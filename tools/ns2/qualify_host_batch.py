@@ -52,6 +52,7 @@ TESTS = {
     "nvdrv_smmu_reclaim": "tools/ns2/check_native_nvmap_smmu_reclaim_host.py",
     "nvdrv_pin_refcounts": "tools/ns2/check_native_nvmap_pin_refs_host.py",
     "nvdrv_pin_failure_propagation": "tools/ns2/check_nvdrv_pin_failure_propagation_host.py",
+    "native_vi2_output_ipc": "tools/ns2/check_native_vi2_output_ipc_host.py",
     "native_video_decoder_backend": "tools/ns2/check_native_video_decoder_backend_host.py",
     "native_video_decoder_ipc": "tools/ns2/check_native_video_decoder_ipc_host.py",
     "native_video_eos": "tools/ns2/check_native_video_eos_host.py",

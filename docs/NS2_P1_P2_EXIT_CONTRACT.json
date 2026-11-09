@@ -76,13 +76,23 @@
       "owner": "vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
       "validators": [
         "tools/ns2/check_native_vi2_oom_host.py",
-        "tools/ns2/check_native_vi2_vsync_oom_host.py"
+        "tools/ns2/check_native_vi2_vsync_oom_host.py",
+        "tools/ns2/check_native_vi2_output_ipc_host.py"
       ],
       "positive": "VI2 surface/handle and max-resolution response match live service state.",
       "negative": "Invalid client, retired handles and OOM cannot create fake display or signal.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Verify VI2 client encoding 0x14, max-resolution query and exact returned handle and event permissions.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/ns2/check_native_vi2_output_ipc_host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_vi2_output_ipc_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

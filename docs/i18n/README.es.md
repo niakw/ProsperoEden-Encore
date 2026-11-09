@@ -61,7 +61,7 @@
 3. Sigue [la guía de instalación en español](INSTALL.es-ES.md) para ZIP/FTP o FFPFSC/ShadowMountPlus. Copia **todo** `PPSA99008/`, incluida `ui/lang/`, no solo `eboot.bin`.
 4. Comprueba **Settings → Storage / Language**, la biblioteca y los guardados. Si algo falla, consulta [solución de problemas (EN)](../../TROUBLESHOOTING.md).
 
-**Solo se ha probado el firmware 13.60 en consola.** No se ha verificado ningún firmware mínimo anterior; no actualices tu PS5 por este motivo. [18 opciones de idioma](../../LANGUAGES.md).
+**Solo se ha probado el firmware 13.60 en consola.** No se ha verificado ningún firmware mínimo anterior; no actualices tu PS5 por este motivo. [31 idiomas/regiones oficiales de PS5](../../LANGUAGES.md).
 
 ---
 
@@ -144,7 +144,7 @@ El almacenamiento externo modifica la **raíz** de los datos, no la estructura d
 | **Perfiles gráficos** | **Mínimo → Recomendado → Alto → Ultra → Personalizado**. |
 | **Safe Launch** | Durante **una sola sesión**: OpenGL, escala 1×, 1080p, filtrado bilineal, modo portátil, 60 Hz y mods desactivados. |
 | **DualSense** | Navegación, asignaciones físicas, vibración y zonas muertas; la configuración interna de cada juego es un mecanismo separado. |
-| **Idiomas** | Catálogos de la interfaz para **29 idiomas**, incluidos sistemas de escritura complejos. |
+| **Idiomas** | **31 opciones oficiales de idioma/región de PS5**, con **29 catálogos**; no se añaden idiomas fuera de la lista oficial de Sony. |
 | **Accesibilidad** | Opciones y limitaciones documentadas de contraste, tamaño del texto y reducción del movimiento. |
 
 Safe Launch **no borra las partidas guardadas ni sobrescribe permanentemente los ajustes**. Los iconos de botones que dibuja un juego Switch no se convierten automáticamente en iconos de PlayStation.

@@ -22,7 +22,7 @@ def extract(start, stop):
 helpers=extract("std::optional<NvdecCommon::VideoCodec> CodecFromMime(", "\n} // namespace\n\nbool IsH264Stream(")
 real=extract("struct Nx2VideoDecoder::Impl {", "\n} // namespace Tegra::Host1x")
 for check in ("bool Nx2VideoDecoder::Decode(", "bool Nx2VideoDecoder::Drain(",
-              "bool Nx2VideoDecoder::Render(", "avcodec_receive_frame(", 
+              "bool Nx2VideoDecoder::Render(", "avcodec_receive_frame(",
               "avcodec_send_packet(", "IsSafeNativeVideoPacketInput(",
               "pending_pts.merge(staged_pts)", "sws_getCachedContext("):
     assert check in real,check

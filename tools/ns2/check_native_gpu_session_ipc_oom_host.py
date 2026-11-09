@@ -179,7 +179,7 @@ int main(){
         assert(req.reply[0]==0 && req.copy_count==1 && context.calls==2);
     }
     auto& slots=s.m_shared->address_spaces;
-    assert(slots.Add(9)==GP::Status::Success);
+    assert(slots.Add(9)==Service::AM::GP::Status::Success);
     {
         auto req=cmd(203,10);
         s.GetAddressSpacePartition(req);
@@ -202,7 +202,7 @@ int main(){
         s.GetAddressSpacePartition(req);
         assert(req.words==20 && req.reply.size()==10);
         assert(req.reply[0]==Kernel::ResultOutOfResource.raw);
-        for(unsigned i=1;i<req.reply.size();++i)assert(req.reply[i]==0);
+        for(std::size_t i=1;i<req.reply.size();++i)assert(req.reply[i]==0);
         s.m_module->fail_oom=false;
     }
     {
@@ -210,7 +210,7 @@ int main(){
         auto req=cmd(203,9);
         s.GetAddressSpacePartition(req);
         assert(req.reply[0]==Kernel::ResultInvalidState.raw);
-        for(unsigned i=1;i<req.reply.size();++i)assert(req.reply[i]==0);
+        for(std::size_t i=1;i<req.reply.size();++i)assert(req.reply[i]==0);
         s.m_module->fail_ioctl=false;
     }
     {

@@ -274,6 +274,7 @@ static void VerifyRealGlobalCasInvalidDescriptors() {
             Shader::IR::AbstractSyntaxNode::Type::Return;
         auto& info=program.info;
         info.uses_global_memory=true;
+        info.uses_int64=true;
         info.used_storage_buffer_types=Shader::IR::Type::U32;
         info.nvn_buffer_used[0]=used;
         for(u32 i=0;i<count;++i)
@@ -330,6 +331,7 @@ static void VerifyRealGlobalCasSpirv(const std::string& prefix) {
         Shader::IR::AbstractSyntaxNode::Type::Return;
     auto& info=program.info;
     info.uses_global_memory=true;
+    info.uses_int64=true;
     info.stores_global_memory=true;
     info.used_storage_buffer_types=Shader::IR::Type::U32;
     info.used_constant_buffer_types=

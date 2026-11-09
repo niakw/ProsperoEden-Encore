@@ -365,10 +365,6 @@ msgstr "Choisissez un thème, un logo, un fond et des effets de halo. Les jeux r
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Choisissez une racine unique pour les clés, le firmware, les jeux, les mises à jour et les mods"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Choisissez la langue utilisée par les jeux"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Choisissez l'interface sans modifier les jeux ni les commandes."

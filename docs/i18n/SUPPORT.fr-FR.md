@@ -1,6 +1,6 @@
 # Eden Encore — Assistance · Français (France)
 
-[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
+[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr-FR.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
 
 Dans GitHub Issues, indique la version Encore, le firmware PS5, les étapes précises, les réglages concernés et des logs anonymisés. Ne publie jamais tes clés, sauvegardes ou données personnelles.
 
@@ -20,4 +20,4 @@ Ne supprime jamais /data/prosperoeden/ : ce dossier peut contenir tes sauvegarde
 
 Le dernier paquet PS5 réellement compilé et publié date du 15 octobre 2026. La publication du 30 octobre en était une copie. Le brouillon de prérelease ne contient aucun binaire ni compatibilité Switch 2 confirmée sur console.
 
-[English](../../SUPPORT.md) · [Installation et mise à jour](INSTALL.fr.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SUPPORT.md) · [Installation et mise à jour](INSTALL.fr-FR.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

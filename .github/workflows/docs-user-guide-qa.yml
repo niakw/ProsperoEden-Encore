@@ -36,5 +36,8 @@ jobs:
             SUPPORT.md
             ACCESSIBILITY.md
             headless/prosperoeden/ui/lang
+            assets
+            LICENSE
+            LICENSES
       - name: Validate available languages, localized safety guidance and links
         run: python3 -B docs/i18n/check_user_docs.py

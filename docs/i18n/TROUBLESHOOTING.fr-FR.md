@@ -1,6 +1,6 @@
 # Eden Encore — Dépannage · Français (France)
 
-[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
+[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr-FR.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
 
 Si l’application ne démarre pas, vérifie eboot.bin, sce_sys et ui/lang. Si des jeux manquent, contrôle roms dans la racine de stockage sélectionnée. Si l’interface reste en anglais, vérifie les catalogues de traduction. Safe Launch restaure les paramètres d’un jeu sans supprimer les sauvegardes.
 
@@ -30,4 +30,4 @@ Ne supprime jamais /data/prosperoeden/ : ce dossier peut contenir tes sauvegarde
 
 Le dernier paquet PS5 réellement compilé et publié date du 15 octobre 2026. La publication du 30 octobre en était une copie. Le brouillon de prérelease ne contient aucun binaire ni compatibilité Switch 2 confirmée sur console.
 
-[English](../../TROUBLESHOOTING.md) · [Installation et mise à jour](INSTALL.fr.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../TROUBLESHOOTING.md) · [Installation et mise à jour](INSTALL.fr-FR.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -54,7 +54,7 @@ def local_links(page: Path, text: str) -> None:
         if not target:
             continue
         expected = (page.parent / target).resolve()
-        check(expected.is_relative_to(ROOT) and expected.is_file(),
+        check(expected.is_relative_to(ROOT) and expected.exists(),
               f"{page.relative_to(ROOT)}: invalid local link {original}")
 
 

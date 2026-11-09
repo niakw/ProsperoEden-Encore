@@ -1,6 +1,6 @@
 # Eden Encore — Accessibilité · Français (France)
 
-[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
+[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr-FR.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
 
 Les options Texte agrandi, Contraste élevé et Réduire les animations sont indépendantes et désactivées par défaut. Elles concernent le lanceur et ne garantissent pas l’accessibilité des jeux exécutés.
 
@@ -24,4 +24,4 @@ Ne supprime jamais /data/prosperoeden/ : ce dossier peut contenir tes sauvegarde
 
 Le dernier paquet PS5 réellement compilé et publié date du 15 octobre 2026. La publication du 30 octobre en était une copie. Le brouillon de prérelease ne contient aucun binaire ni compatibilité Switch 2 confirmée sur console.
 
-[English](../../ACCESSIBILITY.md) · [Installation et mise à jour](INSTALL.fr.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [Installation et mise à jour](INSTALL.fr-FR.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

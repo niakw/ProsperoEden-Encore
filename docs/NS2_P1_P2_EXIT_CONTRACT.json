@@ -203,13 +203,23 @@
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
-        "tools/ns2/check_native_spirv_patch_output_host.py"
+        "tools/ns2/check_native_spirv_patch_output_host.py",
+        "tools/check-ns2-spirv-host.py"
       ],
       "positive": "Required patch reads and writes emit validated SPIR-V for supported tess stages.",
       "negative": "Non-generic or undeclared patch variables outside stage are explicitly rejected.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Native tessellation write emitter rejects undeclared inner/outer/generic patch outputs with source-extracted C++ owner witness. Emitted TCS/TES SPIR-V positive modules and invalid-stage execution remain to qualify.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "spirv-val"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_spirv_patch_output_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

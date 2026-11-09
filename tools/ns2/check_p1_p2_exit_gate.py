@@ -43,8 +43,16 @@ def active_witnesses() -> str:
     # by the maintained host batch or a live CI workflow.
     batch = (ROOT / "tools/ns2/qualify_host_batch.py").read_text()
     research = (ROOT / ".github/workflows/ns2-research-host.yml").read_text()
-    # Only these two required host suites are admitted as evidence.
-    return batch + "\n" + research
+    # The mandatory standalone SPIR-V workflow calls the maintained
+    # reusable runner, which executes the ACTUAL C++ emitter and spirv-val.
+    # Previously this real positive proof was ignored simply because it
+    # lived outside the other two required host suites.
+    standalone = (ROOT / ".github/workflows/ns2-standalone-spirv-main.yml").read_text()
+    spirv_runner = (ROOT / ".github/workflows/ns2-research-spirv.yml").read_text()
+    if ("uses: ./.github/workflows/ns2-research-spirv.yml" not in standalone or
+            "python3 tools/check-ns2-spirv-host.py" not in spirv_runner):
+        raise ValueError("required standalone SPIR-V real-emitter witness disconnected")
+    return batch + "\n" + research + "\n" + spirv_runner
 
 
 def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:

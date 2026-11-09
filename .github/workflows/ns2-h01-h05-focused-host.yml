@@ -12,6 +12,7 @@ on:
       - 'tools/ns2/check_native_spirv_descriptor_array_bounds_host.py'
       - 'tools/ns2/check_native_video_real_ffmpeg_frame_host.py'
       - 'tools/ns2/check_native_video_packet_bounds_host.py'
+      - 'tools/ns2/check_native_video_real_hevc_eos_host.py'
       - '.github/workflows/ns2-h01-h05-focused-host.yml'
   workflow_dispatch:
 
@@ -60,6 +61,7 @@ jobs:
           sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends libavcodec-dev libavutil-dev libswscale-dev
       - run: python3 -B tools/ns2/check_native_video_packet_bounds_host.py
       - run: python3 -B tools/ns2/check_native_video_real_ffmpeg_frame_host.py
+      - run: python3 -B tools/ns2/check_native_video_real_hevc_eos_host.py
 
   g01-descriptor-owner:
     name: G01 real SPIR-V singleton and descriptor array owner

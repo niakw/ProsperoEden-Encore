@@ -22,13 +22,14 @@
       "owner": "vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp",
       "validators": [
         "tools/ns2/check_process_run_owner.py",
-        "tools/ns2/test_process_run_source.py"
+        "tools/ns2/test_process_run_source.py",
+        "tools/ns2/check_native_process_handoff_transaction_host.py"
       ],
       "positive": "Valid NPDM, content and executable produce a correctly bounded KProcess handoff.",
       "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",
       "status": "open",
       "evidence": {},
-      "blocker": "Finish and execute real loader admission for ExeFS/NPDM/NSO and malformed updates/DLC without publishing a partial KProcess.",
+      "blocker": "Guarded process creation and optional loader parameters now have real-owner host witness; full ExeFS/NPDM/NSO admission, malformed updates/DLC and partial KProcess rollback still require separate owner proofs.",
       "excluded_forms": []
     },
     {

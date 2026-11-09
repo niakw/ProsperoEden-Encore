@@ -105,6 +105,7 @@ struct nvhost_as_gpu {
 }
 struct Module {
     bool fail_oom{}, fail_ioctl{};
+    int malformed_mode{}; // injected NVDRV protocol replies, not synthetic owners
     unsigned calls{};
     NvResult Ioctl1(DeviceFD fd,Ioctl command,std::span<const u8> input,
                     std::span<u8> output) {
@@ -116,6 +117,10 @@ struct Module {
         std::array<Devices::nvhost_as_gpu::VaRegion,2> regions{{
             {0x10000,4096,0,2},{0x20000,4096,0,2}
         }};
+        if(malformed_mode==1) regions[0].pages=0; // missing first extent
+        if(malformed_mode==2) {regions[0].offset=~u64{0}-3;regions[0].pages=2;} // overflow
+        if(malformed_mode==3) regions[0].offset=0x30000; // reversed bounds
+        if(malformed_mode==4) regions[0].pages=256; // first extent beyond second
         std::memcpy(output.data()+16,regions.data(),sizeof(regions));
         return NvResult::Success;
     }
@@ -225,6 +230,16 @@ int main(){
         for(std::size_t i=1;i<req.reply.size();++i)assert(req.reply[i]==0);
         s.m_module->fail_ioctl=false;
     }
+    // Reject malformed NVDRV region metadata before publishing ANY guest VA.
+    for (int mode=1; mode<=4; ++mode) {
+        s.m_module->malformed_mode=mode;
+        auto req=cmd(203,9);
+        s.GetAddressSpacePartition(req);
+        assert(req.words==20 && req.reply.size()==10);
+        assert(req.reply[0]==Kernel::ResultInvalidState.raw);
+        for(std::size_t i=1;i<req.reply.size();++i)assert(req.reply[i]==0);
+    }
+    s.m_module->malformed_mode=0;
     {
         auto req=cmd(203,9);
         s.GetAddressSpacePartition(req);

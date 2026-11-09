@@ -62,7 +62,7 @@ struct VfsDir {
 struct PatchManager {
     static inline bool fail_patch{};
     PatchManager(u64,int&,int&){}
-    VirtualDir PatchExeFS(VirtualDir dir) {
+    VirtualDir PatchExeFS(VirtualDir dir) const {
         return fail_patch ? VirtualDir{} : std::move(dir);
     }
 };

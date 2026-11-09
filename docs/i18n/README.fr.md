@@ -50,7 +50,7 @@
 3. Suivre [le guide d’installation français](INSTALL.fr-FR.md) pour ZIP/FTP ou FFPFSC/ShadowMountPlus. Copier **tout** `PPSA99008/` et `ui/lang/`, jamais uniquement `eboot.bin`.
 4. Contrôler **Settings → Storage / Language**, la bibliothèque et les sauvegardes. En cas de souci, consulter le [dépannage (EN)](../../TROUBLESHOOTING.md).
 
-**Seul le firmware 13.60 a été testé sur console.** Aucun minimum antérieur n’est qualifié ; ce n’est pas un conseil de mise à jour. [18 choix linguistiques](../../LANGUAGES.md).
+**Seul le firmware 13.60 a été testé sur console.** Aucun minimum antérieur n’est qualifié ; ce n’est pas un conseil de mise à jour. [Catalogues de langue](../../LANGUAGES.md).
 
 ---
 
@@ -93,7 +93,7 @@ Encore est un dépôt communautaire indépendant, issu d'un fork historique, et 
 ## 🗺️ Roadmaps, branche fonctionnalités et mises à jour
 
 - **[Roadmap collaborative complète R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** sur la [branche de développement des fonctionnalités](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements) : FSR, génération de frames, AA, thèmes, interface, réseau, trophées, contenus et **mise à jour intégrée R21**. **Une spécification ou un prototype n’est pas une fonction déjà livrée.**
-- **[Branche expérimentale Switch 2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility)** avec son [rapport technique](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) : chargeurs, CPU/IR et shaders NSW2, **sans intégration au paquet PS5 actuel**.
+- **[Roadmap commune NS1/NS2](../../docs/ROADMAP_NS1_NS2_UNIFIED.md)** : les composants partagés de chargement, HLE, CPU et GPU sont maintenant développés sur **`main`** avec validations hôte P1/P2. L'[ancienne branche de recherche](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) est historique ; ces changements ne figurent **pas** dans la dernière archive native R1 publiée.
 - **[Priorités PS5/F07 sur main](../../docs/FC27_F07_MASTER_TRACKER.md)** : référence actuelle des optimisations et de la stabilité du moteur PS5.
 - **Les mises à jour du projet natif ProsperoEden ne sont pas synchronisées automatiquement.** Encore part de **ProsperoEden v1.000.040** ([base documentée](../../docs/FORK_NOTES.md)) et reprend individuellement les correctifs utiles après audits ([registre d’écarts](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md)). **L’updater Encore R21 est prévu, mais n’est pas encore livré.**
 
@@ -192,7 +192,9 @@ Sur le dernier match intégral archivé (`2efd8b3c`), nous avons mesuré **858 i
 2. **Compilation native :** vérifie les exécutables et le contenu réel de l'archive téléchargeable.
 3. **Console :** valide ensuite le lancement, la réactivité, la qualité d'image, les commandes et la progression du jeu.
 
-[Tests du code](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Paquets natifs](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain)
+[Tests du code](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Paquets natifs](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain) · [Audit de la R1 et des workflows](../../docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md)
+
+**Dernière véritable compilation PS5 publiée :** [R1 du 15 octobre 2026](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), issue de la [CI native #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232) et déclarant le SHA source `56293953`. Son tag Git pointe sur `f037a78` ; la republication du 30 octobre dans le nouveau dépôt n'a **pas** recompilé la console. Les changements NS1/NS2, overlay et rendu neuronal sur `main` sont postérieurs à cette archive et restent non qualifiés sur PS5. Une modification ordinaire de `main` laisse le build natif `skipped`, sauf déclenchement volontaire.
 
 Ne pas confondre une CI verte avec une version stable ou des performances validées sur la console.
 
@@ -316,7 +318,7 @@ L'inventaire ci-dessous regroupe les modifications et optimisations **effectivem
 **9. Expérimentations et roadmap — ne pas confondre avec les fonctions livrées**
 - **Frame generation :** retour prévu dans une solution plus maîtrisée, après stabilisation de la cadence et du rendu ; pas actuellement certifiée dans une release.
 - **FSR spatial/temporel, interpolation, 60/120 Hz, AA x2/x4 :** évolutions souhaitées ou étudiées, sans garantie de compatibilité générale.
-- **Switch 2 / NSW2 :** recherche isolée sur une **branche dédiée**, nouveaux chemins de chargement, NSO homebrew, CPU/IR/Dynarmic, shaders/GPU ; **pas intégrée à la release PS5**.
+- **Switch 2 / NSW2 :** les composants de chargement, HLE, CPU et GPU sont désormais intégrés au **code source de `main`**, mais **pas à la dernière archive native PS5 R1**. Leur validation hôte continue ; aucune première image NS2 rendue sur PS5 ni compatibilité de jeux stable n'est démontrée.
 - **JIT partagé, compilation anticipée, traitements GPU différés :** prototypes ou études désactivés lorsque la sûreté et les dépendances ne sont pas démontrées.
 - **Glyphes PlayStation en jeu, avatar, contrôles persistants en match et 60 FPS par titre :** chantiers distincts, sans promesse de prise en charge universelle.
 - Détails : [roadmap](../../docs/PERFORMANCE_ROADMAP.md) · [branches de recherche](../../docs/DEVELOPMENT_BRANCH_POLICY.md) · [pipeline des glyphes](../../docs/PS_GLYPH_INPUT_PIPELINE.md).

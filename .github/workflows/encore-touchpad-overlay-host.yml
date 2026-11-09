@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Validate extracted DualSense input against guest controls
+      - name: Validate extracted controller touchpad input against guest controls
         run: python3 -B tools/check-fc27-f06-native-pad-transition-host.py
       - name: Validate immutable prelaunch controller mapping
         run: python3 -B tools/check-ps5-autocontrol-context.py

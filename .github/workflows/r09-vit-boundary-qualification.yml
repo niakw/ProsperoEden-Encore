@@ -1,4 +1,4 @@
-name: R09 neural Vulkan host / SPIR-V ABI
+name: Encore R09 - Host neural pipeline and SPIR-V checks
 on:
   push:
     branches: [main]
@@ -58,13 +58,13 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
-      - name: Audit authentic Original/Compact reference inventories and NRMODEL1 verifier
+      - name: Verify neural reference inventories and model manifest parser
         run: |
           python3 -B tools/graphics/r09_verify_model_pack.py --check-reference
           python3 -B tools/graphics/test_r09_native_digest_inventory.py
           python3 -B tools/graphics/test_r09_verify_model_pack.py
           python3 -B tools/graphics/test_r09_full_gpu_evidence.py
-      - name: Mac full-network wrapper and native private importer (public-only)
+      - name: Check local neural importer without private model inputs
         shell: bash
         run: |
           set -euo pipefail
@@ -186,7 +186,7 @@ jobs:
             -o .build-r09-boundary/r09_real_original_preflight
           .build-r09-boundary/r09_real_original_preflight --help
           # Public-source-only bundle for an offline host check using the
-          # user's authentic private pack. NEVER upload DLSS-NR DLL or weights.
+          # user's private pack. NEVER upload proprietary DLLs or learned weights.
           tar -czf .build-r09-boundary/r09_cpu_preflight_source_kit.tar.gz \
             tools/graphics/r09_real_original_preflight.cpp \
             extras/graphics/*.h \
@@ -240,7 +240,7 @@ jobs:
         run: python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
 
   neural-gpu-io:
-    name: Real Vulkan GPU I/O smoke (Lavapipe, no PS5)
+    name: Vulkan image input/output smoke (software driver, host only)
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
@@ -378,14 +378,14 @@ jobs:
           cp headless/glyph_sha256.h .build-r09-gpu/lavapipe-kit/
           # Distribute ONLY public C++ headers, so the same smoke executable
           # may be reproduced locally with an authentic private user pack.
-          # No DLL or NVIDIA weight tensor is ever uploaded.
+          # No private binary or learned weight tensor is ever uploaded.
           mkdir -p .build-r09-gpu/lavapipe-kit/video_core/renderer_vulkan
           cp vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_{manifest,pack,file}.h \
              vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_tile_layout.h \
              .build-r09-gpu/lavapipe-kit/video_core/renderer_vulkan/
           cp .build-r09-gpu/fswin_dense.spv .build-r09-gpu/lavapipe-kit/
           ldd "$driver" > .build-r09-gpu/lavapipe-kit/lavapipe-dependencies.txt
-          printf '%s\n' 'Pure public-source Mesa ICD and test files; no user DLL or NVIDIA weights.'             > .build-r09-gpu/lavapipe-kit/README.txt
+          printf '%s\n' 'Public Vulkan software driver and tests; no private binaries or model weights.'             > .build-r09-gpu/lavapipe-kit/README.txt
           tar -C .build-r09-gpu -czf .build-r09-gpu/lavapipe-public-kit.tar.gz lavapipe-kit
       - name: Preserve public-only Lavapipe host runtime
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -393,7 +393,7 @@ jobs:
           name: r09-lavapipe-public-host-kit
           path: .build-r09-gpu/lavapipe-public-kit.tar.gz
           retention-days: 2
-      - name: Preserve native R09 Vulkan before-and-after PNGs
+      - name: Upload host image samples (not full-network inference proof)
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

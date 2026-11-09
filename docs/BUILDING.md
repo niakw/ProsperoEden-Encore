@@ -259,13 +259,16 @@ python3 tools/symbolize-crash.py crash-YYYYMMDD-HHMMSS.txt \
 
 ## GitHub release workflow
 
+**Historical binary provenance:** the last published PS5 FTP R1 was built from source `56293953` and published on **15 October 2026** in the [original repository](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) (native [run #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232)). The R1 tag points to `f037a78`, while the release manifest names `56293953` as the binary source; a mirrored release on 30 October is not a rebuild. See [post-R1 and workflow audit](RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
+
+
 The authoritative workflow is:
 
 ```text
 .github/workflows/build-040-zbic.yml
 ```
 
-It runs on pushes to `fix/0.40-zbic-13.60` and can also be dispatched manually. WIP branches do not trigger the shipping build.
+It is registered on `main`, but **ordinary pushes run no native compilation**: the build job requires a deliberate `[full-build]` commit marker, a specifically allowed verified stage-resume marker, or `workflow_dispatch`. The workflow entry can appear as **skipped** after a normal `main` push; that is not a native build. The job may reuse a previously compiled stage when deliberately resumed, which is packaging verification rather than a fresh compile.
 
 The build job:
 
@@ -289,8 +292,10 @@ late packaging/upload failure and avoids paying for another full native compile.
 
 The publish job receives `contents: write` only after the build succeeds. Publication occurs when:
 
-- a push commit message contains `[release]`; or
-- a manual workflow dispatch sets `publish=true`.
+- a `main` push both starts a successful native build using `[full-build]` and requests publication using `[release]`; or
+- a successful deliberate manual `workflow_dispatch` sets `publish=true`.
+
+`[release]` **alone** does not bypass the native build job's explicit gating; no new R1-style publication follows from an ordinary docs/source push.
 
 Before publishing it checks `SHA256SUMS` against the ZIP and FFPFSC image. It then creates an
 immutable tag of the form:

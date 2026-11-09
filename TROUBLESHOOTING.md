@@ -55,7 +55,7 @@ A successful build or host regression test **does not prove stable PS5 frame tim
 
 The emulator's controller profile cannot universally replace **button graphics drawn inside a game**. Try the PlayStation, Switch or per-title Custom profiles before reporting a mapping bug.
 
-**Switch 2:** compatibility research is isolated in a separate branch; it is not included in the current PS5 release. Frame generation and automatic updates appear on the roadmap but are not available as verified shipped features.
+**Switch 2:** common NS1/NS2 source work has moved onto `main`, with finite host exit gates, but these later changes are **not** in the published October 2026 R1 PS5 FTP binary. No guest-rendered NS2 PS5 frame is confirmed. Frame generation and automatic updates are not verified as shipped features. See [release and workflow evidence](docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
 
 ## Reporting an issue
 

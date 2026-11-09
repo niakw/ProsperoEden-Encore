@@ -14,7 +14,7 @@ The old fork retains its discussions and GitHub stars, which cannot be transferr
 - **Four development branches:** `dev/ps5-sparse-jit`, `feat/graphics-network-achievements`, `fix/ps5-launcher-avatar-recovery`, `research/ns2-ps5-compatibility`.
 - The default `main` branch is a **fast-forward alias of the active `dev/ps5-sparse-jit`** source, primarily for the GitHub landing page and normal repository search. It is not a separate engine-release mode. Future F07 edits happen on dev; advance main only with a verified fast-forward and never force-push.
 - **Six historical tags** have been copied with their original names.
-- **Two GitHub Releases** (`encore-R1-56293953`, `encore-test-56293953`) and their four assets were copied without native compilation or binary rebuilding. The uploaded assets have SHA-256 values matching the original releases byte-for-byte.
+- **Two GitHub Releases** (`encore-R1-56293953`, `encore-test-56293953`) and their four assets were copied without native compilation or binary rebuilding. The uploaded assets have SHA-256 values matching the original releases byte-for-byte. The actual R1 native FTP release was **originally published 15 October 2026**, referencing build source `5629395324ff65c98b50c44f35f2142a4a92654a` and native run `38752177232`; its historical tag resolves to `f037a78f88c0097d2031996390d7816b11e45479`. The 30 October publication in the standalone repository is only a mirror, not a second PS5 build.
 - The `vendor` gitlink remains `8c354e6714558c3c88f7ca98d23551168cb680ea` on the engine branch; branch-specific snapshots remain in the vendor repository.
 
 ### Exact tree verification

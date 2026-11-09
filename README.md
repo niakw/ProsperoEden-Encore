@@ -103,7 +103,7 @@ Encore is **not** an official upstream release or a promise that every newer ups
 ## 🗺️ Roadmaps and upstream updates
 
 - **[Full R00–R25 feature roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** on the [isolated feature-development branch](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements): graphics, FSR, frame generation, advanced AA, themes, network, trophies, library and the R21 application updater. **Planned or experimental does not mean shipped.**
-- **[Nintendo Switch 2 research branch](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility)** and its [technical report](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md): isolated loader, CPU/IR and shader research; **not part of the PS5 release**.
+- **[Unified NS1/NS2 roadmap](docs/ROADMAP_NS1_NS2_UNIFIED.md)**: common engine owners are now present on `main` and subject to finite P1/P2 host-exit contracts. The [older research branch](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) is historical context; **the last published R1 native PS5 binary contains none of these later mainline changes**.
 - **[PS5 stability and F07 tracker](docs/FC27_F07_MASTER_TRACKER.md)**: the main branch remains the source of truth for current PS5 engine work.
 - **Upstream native updates are selective, not automatic.** The traceable Encore baseline is **ProsperoEden v1.000.040** ([fork notes](docs/FORK_NOTES.md)). New ProsperoEden/Eden changes are evaluated and adapted individually, with [upstream audits](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). The **R21 Encore in-app updater is planned, not currently shipped**.
 
@@ -209,6 +209,14 @@ See [Architecture](docs/PS5_NATIVE_ARCHITECTURE.md), [Performance roadmap](docs/
 [Source preflight](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/encore-core-preflight.yml?query=branch%3Amain) · [Native build artifacts](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/build-040-zbic.yml?query=branch%3Amain) · [Build guide](docs/BUILDING.md)
 
 Download an artifact from a **successful run matching the commit you want to test**, not a previous green build. Passing CI alone does not make a release.
+
+### Native release baseline and post-R1 source development (9 November 2026)
+
+The **last verified published native PS5 FTP binary** is [Encore R1 in the historical repository](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), **published 15 October 2026** from an already successful [native build run #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232). Its release notes identify source **`5629395324ff65c98b50c44f35f2142a4a92654a`**; its historical Git tag points to **`f037a78f88c0097d2031996390d7816b11e45479`**. Those two references must not be conflated. The independent repository **mirrored the unchanged R1 assets on 30 October 2026**; that was **not** a fresh native compile. The FTP archive is `Eden-Encore-56293953-FTP-PPSA99008.zip`.
+
+Current `main` has since evolved: common NS1/NS2 loader and firmware/key discovery, compressed-content and NUP work, HLE/IPC/memory and Ampere-to-Vulkan research, GPU synchronization, launcher/controller-overlay changes, spatial upscaling options (including preserved FSR 1), and optional R09 neural processing. These are **source/integration or host-validation states**, not features guaranteed in that October binary. In particular, a model manifest, host-linked executable, synthetic frame, software Vulkan image or passed SPIR-V check is **not** a complete authentic neural inference or a PS5-rendered result.
+
+**Workflow semantics:** ordinary `main` pushes skip the native build; deliberate `workflow_dispatch` or an explicit `[full-build]` marker is required. Source preflight, Core fast gate, NS2 research guards, the 17-contract P1/P2 exit check, the P0–P4 host matrix and R09 host tests have **different scopes**. A `skipped` build, green host shard or uploaded public test kit cannot be presented as a new PS5 build. [Read the step-by-step workflow and post-R1 inventory](docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md).
 
 ## Changes in Encore R1
 
@@ -344,7 +352,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 **9. Planned or experimental work — not part of a verified PS5 release**
 - **Frame generation:** native frame pacing/stability first; future exploration of temporal upscaling, frame interpolation and optional frame generation. Do not treat these as available now.
 - **FSR/AA/120 Hz:** deeper spatial/temporal upscaling, image quality, x2/x4 AA and higher refresh are design/research targets, subject to title and memory limits.
-- **Switch 2 / NSW2:** a **separate research branch** explores loaders, newer CPU/shader formats, homebrew NSO/IR/Dynarmic paths and GPU adaptations. It is **not merged into the PS5 release**, and no stable Switch 2 game compatibility is claimed.
+- **Switch 2 / NSW2:** shared NS1/NS2 loader, HLE, CPU and GPU code is under active development on **`main`**, using host-gated owners and the P0–P4 roadmap. These changes **postdate the last published PS5 R1 package**; no first guest-rendered NS2 PS5 frame or stable game compatibility has been demonstrated.
 - **Cross-core JIT, speculative compilation, deferred GPU paths:** preserved as research/disabled experiments where concurrency or correctness proof is missing.
 - **In-game PS button glyph replacement, avatar reliability, per-game input persistence and game-specific 60 FPS unlocks:** active investigation, not universal shipping promises.
 - References: [performance roadmap](docs/PERFORMANCE_ROADMAP.md), [branch policy](docs/DEVELOPMENT_BRANCH_POLICY.md), [glyph research](docs/PS_GLYPH_INPUT_PIPELINE.md).

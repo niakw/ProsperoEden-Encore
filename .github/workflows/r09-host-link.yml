@@ -1,9 +1,9 @@
-name: R09 full Vulkan host binary link (public-only)
+name: Encore R09 - Linux Vulkan executable (public inputs)
 
 # Full native Linux host links stay manual by default. One deliberately
 # named relink request file is the *only* accepted push trigger, so normal
 # Vulkan/NS2/PS5 development cannot launch another 1600-object build.
-# Never upload the user's NVIDIA DLL, neural model, capture or weights.
+# Never upload user-supplied proprietary binaries, models, captures or weights.
 on:
   workflow_dispatch:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   r09-real-host-link:
-    name: Build and link real native R09 GPU executable on Linux
+    name: Build Linux Vulkan R09 executable (no private model)
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:

@@ -273,13 +273,13 @@ This is the recommended installation method.
 
 ### 1. Download
 
-Download:
+For the **historical, actually published 15 October 2026 R1 FTP release**, download:
 
 ```text
-Prospero.Eden-Encore-R1.zip
+Eden-Encore-56293953-FTP-PPSA99008.zip
 ```
 
-The Release also includes `SHA256SUMS`.
+This asset and its matching `SHA256SUMS` are available at [the original R1 release](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953). The copy in the standalone repository was mirrored on 30 October **without recompilation**. Future releases may use different filenames; always inspect the specific release's asset list and checksum.
 
 ### 2. Extract the title
 
@@ -315,15 +315,7 @@ Actions cache, not a duplicate downloadable `staged-app` artifact. Historical
 runs may still display `Prospero.Eden-Encore-staged-app`; these are not
 separate emulator versions and should never be installed.
 
-For a **manual FTP install**, the release also provides:
-
-```text
-Prospero.Eden-Encore-R1-FTP.zip
-```
-
-This contains only the runtime `PPSA99008/` tree. The complete legal bundle remains in the
-normal release ZIP/FFPFSC, while ShadowMount-only `ui/lang/*.txt` companions are omitted from
-the FTP variant because the canonical `.po` catalogs are sufficient for an ordinary folder install.
+For a **manual FTP install**, use the FTP-ready `PPSA99008/` archive actually attached to the selected release. The historical R1 FTP archive is `Eden-Encore-56293953-FTP-PPSA99008.zip`. Do not assume that an additional `Prospero.Eden-Encore-R1-FTP.zip`, full distribution bundle or FFPFSC image exists: the 15 October R1 release contains only the FTP ZIP and `SHA256SUMS`.
 
 **FileZilla:** force **Transfer > Transfer type > Binary** before copying to a PS5 FTP server.
 Some PS5 FTP servers reject ASCII `STOR`, while FileZilla's Auto mode may classify text-like
@@ -433,8 +425,8 @@ Compare the downloaded files with `SHA256SUMS`.
 On macOS or Linux:
 
 ```bash
-shasum -a 256 Prospero.Eden-Encore-R1.zip
-shasum -a 256 Prospero.Eden-Encore-R1.ffpfsc
+shasum -a 256 Eden-Encore-56293953-FTP-PPSA99008.zip
+# For any other release, use its actual downloaded asset filename.
 ```
 
 ---

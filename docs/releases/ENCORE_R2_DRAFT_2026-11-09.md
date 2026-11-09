@@ -4,7 +4,7 @@
 
 **Référence du dernier binaire public :** [Eden Encore R1 FTP du 15 octobre 2026](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) · source binaire `5629395324ff65c98b50c44f35f2142a4a92654a` · [CI native #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232) · commit historique du tag `f037a78`. La publication du 30 octobre dans le [dépôt actuel](https://github.com/niakw/ProsperoEden-Encore) est une **copie sans recompilation**.
 
-**Candidate source documentée :** moteur `94602df5b6b510c2e1c37978d359452ad51ec968` · sous-module vendor `e933d8838604224eca32aa175340efb9e6cd9742`. Ce n'est **pas** un identifiant de build PS5.
+**Candidate source documentée :** moteur `7baca525c8939ca9eb960895b5770dc5a034a6ea` · sous-module vendor `e933d8838604224eca32aa175340efb9e6cd9742`. Ce n'est **pas** un identifiant de build PS5.
 
 ## Ce qui change depuis la R1
 
@@ -69,7 +69,7 @@
 | **P2** GPU, Compute, SPIR-V et compatibilité des chemins communs | **Terminé dans le périmètre de développement de la candidate** |
 | **P3** lanceur, contrôles et ergonomie | **Terminé côté développement** |
 | **P4** contrôles et qualification hôte | **Terminé côté développement** ; l'état opposable dépend du reçu final et du couple SHA exact |
-| **P5** compilation, installation, vrais jeux et validation PS5 | **Pas couvert par ce brouillon**, à qualifier avant livraison d'un nouvel APK/ZIP/FTP/FFPFSC |
+| **P5** compilation, installation, vrais jeux et validation PS5 | **Pas couvert par ce brouillon**, à qualifier avant livraison d'un nouvel ZIP/FTP/FFPFSC |
 
 **Important :** « terminé » ci-dessus reflète la consigne éditoriale de préparation de cette prérelease. Le tracker technique [#15](https://github.com/niakw/ProsperoEden-Encore/issues/15) et les [critères de sortie](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/P0_P4_EXIT_MATRIX_2026-11-06.md) restent les sources de preuve : **ne pas transformer cette rédaction en attestation automatique du validateur `--enforce`**.
 
@@ -78,7 +78,7 @@
 - Firmware console matériellement testé jusqu'ici : **13.60**. Aucune nouvelle qualification 13.60 pour cette candidate source ; autres firmwares non certifiés.
 - Switch 1 : préserver les comportements historiquement testés, sans déduire de la CI que les problèmes de gels/HUD et les régressions sont résolus sur appareil.
 - Switch 2 : pas de première image invitée réelle confirmée pour Mario Kart World ou Donkey Kong Bananza sur PS5 ; ne pas annoncer de liste de jeux jouables.
-- R09, interpolation, rendu neurale et optimisations avancées : intégration ou vérification hôte ne signifie pas disponibilité fonctionnelle dans le binaire du 15 octobre.
+- R09, interpolation, rendu neuronal et optimisations avancées : intégration ou vérification hôte ne signifie pas disponibilité fonctionnelle dans le binaire du 15 octobre.
 - **Aucun fichier joint.** Cette entrée est une prérelease **draft**, à conserver privée jusqu'à la compilation volontaire P5, contrôle du ZIP/ELF/symboles et tests console.
 - L'ancienne R1 reste le dernier paquet FTP public identifié : [version originale](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953). Les utilisateurs ne doivent pas remplacer leur installation par de simples artefacts source/hôte.
 

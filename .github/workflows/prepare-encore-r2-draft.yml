@@ -21,7 +21,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TARGET_SHA: '94602df5b6b510c2e1c37978d359452ad51ec968'
+          RELEASE_TARGET_SHA: '7baca525c8939ca9eb960895b5770dc5a034a6ea'
           RELEASE_TAG: 'encore-R2-preview-20261109'
         shell: bash
         run: |

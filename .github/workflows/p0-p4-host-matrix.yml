@@ -8,7 +8,15 @@ on:
     paths:
       - 'vendor'
       - 'headless/**'
+      # Pure language/catalog edits have a dedicated i18n gate. They do not
+      # change the GPU/NS2 source owners, and running full native shards
+      # for every locale commit can indefinitely queue genuine H/G tests.
+      - '!headless/prosperoeden/ui/lang/**'
+      - '!headless/prosperoeden/fr_fr_embedded.h'
       - 'tools/**'
+      - '!tools/launcher/launcher.pot'
+      - '!tools/launcher/strings.py'
+      - '!tools/check-language-runtime.py'
       - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
       # A release sign-off changes its finite acceptance contract without
       # changing executable source. Requalify at the exact resulting SHA.
@@ -19,7 +27,15 @@ on:
     paths:
       - 'vendor'
       - 'headless/**'
+      # Pure language/catalog edits have a dedicated i18n gate. They do not
+      # change the GPU/NS2 source owners, and running full native shards
+      # for every locale commit can indefinitely queue genuine H/G tests.
+      - '!headless/prosperoeden/ui/lang/**'
+      - '!headless/prosperoeden/fr_fr_embedded.h'
       - 'tools/**'
+      - '!tools/launcher/launcher.pot'
+      - '!tools/launcher/strings.py'
+      - '!tools/check-language-runtime.py'
       - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
       - '.github/workflows/p0-p4-host-matrix.yml'
   workflow_dispatch:

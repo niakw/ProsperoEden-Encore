@@ -12,11 +12,19 @@ on:
       - 'vendor/encore-active/**'
       - 'vendor/sources/eden/**'
       - 'headless/**'
+      # Pure language/catalog edits have a dedicated i18n gate. They do not
+      # change the GPU/NS2 source owners, and running full native shards
+      # for every locale commit can indefinitely queue genuine H/G tests.
+      - '!headless/prosperoeden/ui/lang/**'
+      - '!headless/prosperoeden/fr_fr_embedded.h'
       - 'src/host_memory.cpp'
       - 'src/memory_pages.cpp'
       - 'src/jit*.cpp'
       - 'src/*_performance.cpp'
       - 'tools/**'
+      - '!tools/launcher/launcher.pot'
+      - '!tools/launcher/strings.py'
+      - '!tools/check-language-runtime.py'
       # Review manifests are executable source-ownership contracts. Re-run
       # their actual checks when a reviewed Git blob gets a new stamp.
       # N24 native source ownership and the 328-file active catalogue are

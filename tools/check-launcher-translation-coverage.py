@@ -65,7 +65,8 @@ fsr_keys = {
     "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos.",
 }
 assert fsr_keys <= marked, "Active AMD FSR 1 translation/help keys disappeared"
-total_missing = 0\ntotal_english_fallbacks = 0
+total_missing = 0
+total_english_fallbacks = 0
 for catalog in catalogs:
     translations = read_po(catalog)
     missing_fsr = sorted(k for k in fsr_keys if not translations.get(k))

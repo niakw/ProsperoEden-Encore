@@ -15,9 +15,9 @@ namespace pe::gfx
 {
 
 // The launcher's own font (Montserrat, baked into an atlas) covers Latin and Cyrillic. Japanese,
-// Korean, Chinese, Greek, Thai and Arabic prefer the PS5 system font folder. Indic scripts
-// can use optional SIL-OFL fonts in ui/fonts/locale; their presence is not assumed. A font
-// is loaded only when a character needs it; an unavailable script falls back safely to English.
+// Korean, Chinese, Greek, Thai and Arabic come from the font files the PS5 system software
+// carries (/preinst/common/font): nothing is shipped with the app. A file is read the first time
+// one of its characters is needed.
 //
 // Shaping (which glyph a character becomes next to its neighbours, and where marks sit) is
 // HarfBuzz's; the outlines are turned into distance fields like those of the baked atlas.

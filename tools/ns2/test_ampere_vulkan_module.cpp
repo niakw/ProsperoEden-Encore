@@ -42,13 +42,13 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
         i+=n;
     }
     Require(cas_count>=1,"G06 actual emitter omitted U32 CAS");
-    // Native global address routing requires two typed UBO views (u32
-    // and u32x2) at bindings 0..1, plus three typed SSBO views (u32,
-    // u32x2, u32x4) at 2..4. All five reflect the ACTUAL emitter with
-    // unified_descriptor_binding and native bounds scope enabled.
+    // The live unified shader emitter assigns U32 and U32x2 CBUF
+    // views to bindings 0/1, reserves a binding after CBUF descriptors,
+    // then assigns the U32/U32x2/U32x4 SSBO views to bindings 3/4/5.
+    // The gap is intentional: mirror production binding advancement.
     VkDescriptorSetLayoutBinding bindings[5]{};
     for(uint32_t i=0;i<(global?5U:1U);++i) {
-        bindings[i].binding=i;
+        bindings[i].binding=global && i>=2 ? i+1 : i;
         bindings[i].descriptorType=global && i<2 ?
             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         bindings[i].descriptorCount=1;
@@ -133,7 +133,7 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     for(uint32_t i=0;i<(global?5U:1U);++i) {
         writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writes[i].dstSet=set;
-        writes[i].dstBinding=i;
+        writes[i].dstBinding=bindings[i].binding;
         writes[i].descriptorCount=1;
         writes[i].descriptorType=bindings[i].descriptorType;
         writes[i].pBufferInfo=global && i<2 ? &uniformInfo : &storageInfo;

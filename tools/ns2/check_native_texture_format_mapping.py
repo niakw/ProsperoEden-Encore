@@ -435,7 +435,15 @@ for path in (
     "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
 ):
     bridge = (vendor / path).read_text()
-    assert bridge.count("if (!resources->ValidateGpuBufferMappings(") == 2, path
+    # Initial TIC admission still requires contiguous full-span mappings.
+    # The final Vulkan write-commit is stricter: it must compare the EXACT
+    # pre-staging physical backing, not merely another mapped GPU VA.
+    assert bridge.count("if (!resources->ValidateGpuBufferMappings(") == 1, path
+    native = bridge.split("bool RasterizerVulkan::DispatchNativeCompute(", 1)[1].split(
+        "\\n#endif", 1)[0]
+    final_mapping = native.index("if (!staged_buffer_mappings.Matches(")
+    assert native.index("if (!current_after_staging ||") < final_mapping, path
+    assert final_mapping < native.index("ObtainBufferOperation::MarkAsWritten"), path
     assert "Shader::Ampere::NativeQmdContiguousGpuSpan(" in bridge, path
     assert "gpu_memory->GpuToCpuAddress(page)" in bridge, path
     assert "gpu_memory->IsFullyMappedRange(address, bytes)" not in bridge, path

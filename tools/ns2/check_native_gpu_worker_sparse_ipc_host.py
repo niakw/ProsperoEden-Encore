@@ -284,8 +284,7 @@ int main() {
     assert(good_back.reply[0]==0 && dense.backs==2);
     assert(dense.m_mappings.Count()==1 && ready.signals==1);
 }
-""".replace("__TRANSLATE__",translate).replace("__SPARSE__",sparse)
-   .replace("__REMAP__",remap)
+""".replace("__TRANSLATE__",translate).replace("__SPARSE__",sparse).replace("__REMAP__",remap)
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"Host C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-h06-worker214-216-") as directory:

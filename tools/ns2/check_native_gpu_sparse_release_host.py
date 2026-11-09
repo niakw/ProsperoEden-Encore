@@ -19,6 +19,10 @@ begin="void IGpuWorker::DestroySparseRegion("
 end="void IGpuWorker::ExecuteSparseMapRequests("
 assert owner.count(begin)==owner.count(end)==1
 method=begin+owner.split(begin,1)[1].split(end,1)[0]
+translate_begin="Result TranslateMappingStatus("
+translate_end="} // namespace\n\nvoid IGpuWorker::NormalMapGpuMemory4K("
+assert owner.count(translate_begin)==owner.count(translate_end)==1
+translate=translate_begin+owner.split(translate_begin,1)[1].split(translate_end,1)[0]
 for required in ("as->ReleaseNativeSparse4K(", "Nvidia::NvResult::InsufficientMemory",
                  "result = Kernel::ResultOutOfResource;",
                  "m_mappings.RecordReleasedSparse(",
@@ -26,6 +30,7 @@ for required in ("as->ReleaseNativeSparse4K(", "Nvidia::NvResult::InsufficientMe
     assert required in method,required
 
 fixture=r"""
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -119,6 +124,7 @@ struct IGpuWorker {
     }
     void DestroySparseRegion(HLERequestContext&);
 };
+__TRANSLATE__
 __REAL_OWNER__
 }
 static HLERequestContext packet(u32 notification=3) {
@@ -163,7 +169,7 @@ int main() {
     w.DestroySparseRegion(unknown);
     assert(unknown.reply[0]==Kernel::ResultNotFound.raw && as.releases==2);
 }
-""".replace("__REAL_OWNER__",method)
+""".replace("__TRANSLATE__",translate).replace("__REAL_OWNER__",method)
 
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"Host Clang/GCC C++20 required"

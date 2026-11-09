@@ -239,8 +239,7 @@ int main() {
     assert(as.unmap_calls==2 && event.signals==3);
     assert(w.system.gpu.idle_waits==4);
 }
-""".replace("__TRANSLATE__",translate).replace("__MAP__",mapping)
-   .replace("__MODIFY__",modify).replace("__UNMAP__",unmap)
+""".replace("__TRANSLATE__",translate).replace("__MAP__",mapping).replace("__MODIFY__",modify).replace("__UNMAP__",unmap)
 
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"Clang/GCC C++20 required"

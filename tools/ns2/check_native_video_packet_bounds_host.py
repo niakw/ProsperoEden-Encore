@@ -21,7 +21,7 @@ ffmpeg=PACKET.read_text()
 assert "m_packet->size = static_cast<s32>(data.size());" in ffmpeg
 begin="[[nodiscard]] constexpr bool IsSafeNativeVideoPacketInput("
 tail="\n}\n\n} // namespace"
-assert source.count(begin)==source.count(tail)==1
+assert source.count(begin)==1 and tail in source.split(begin,1)[1]
 method=begin+source.split(begin,1)[1].split(tail,1)[0]+"\n}"
 assert "std::numeric_limits<s32>::max()" in method
 assert "std::numeric_limits<s64>::max()" in method

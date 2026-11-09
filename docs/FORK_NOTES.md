@@ -203,7 +203,7 @@ Security fix:
 
 ## Language and accessibility
 
-- Launcher catalogs cover 29 PS5 language tags.
+- The launcher exposes **exactly the 31 official PS5 system language/region choices**, with **29 app catalogs**; it must never expose additional popular/world languages not on Sony's PS5 console list. Reference: [the immutable 31-choice policy](PS5_SYSTEM_LANGUAGE_POLICY.md) and [Sony's source list](https://www.playstation.com/fr-fr/legal/language-support/).
 - French (`fr-FR`) is treated as the strict complete catalog in release validation and every packaged catalog is byte-checked.
 - A language change rebuilds the launcher in-process so the catalog, system-font fallback and cached labels switch immediately.
 - Release builds ignore the development-only `language.txt` override, preventing stale test files from forcing English.

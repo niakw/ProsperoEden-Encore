@@ -285,13 +285,23 @@
       "title": "Ampere ISA and CFG lowering",
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h",
       "validators": [
-        "tools/ns2/check_ampere_scalar_alu_sources_host.py"
+        "tools/ns2/check_ampere_scalar_alu_sources_host.py",
+        "tools/ns2/check_native_ampere_cfg_host.py"
       ],
-      "positive": "Required reviewed instruction patterns preserve guest register and branch semantics.",
-      "negative": "Unknown ISA forms fail closed with instruction identity, never accepted as a no-op.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Bound required Ampere instruction families to real observed ISA patterns with positive CFG and fail-closed unknowns.",
+      "positive": "Reviewed Ampere scalar, uniform and BRX patterns produce concrete Maxwell operands and valid native-PC-to-Maxwell-CFG handoff.",
+      "negative": "Unreviewed operand bits, illegal source registers, invalid stage and unbounded branch forms are explicitly rejected before shader handoff.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/ns2/check_ampere_scalar_alu_sources_host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_ampere_cfg_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

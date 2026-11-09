@@ -79,6 +79,7 @@ TESTS = {
     "native_invalid_bind": "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",
     "kernel_wait64": "tools/ns2/check_shared_kernel_wait64_host.py",
     "ampere_scalar_alu": "tools/ns2/check_ampere_scalar_alu_sources_host.py",
+    "ampere_maxwell_cfg": "tools/ns2/check_native_ampere_cfg_host.py",
     "sparse_page_types": "tools/check-sparse-slot-reuse-host.py",
     "spirv_cbuf": "tools/ns2/check_native_spirv_cbuf_span_host.py",
     "sysmix_registry": "tools/ns2/check_native_sysmix_registry_host.py",

@@ -226,7 +226,9 @@ constexpr const char *kPerformanceProfileLabels[] = {"Minimum", "Recommended", "
 constexpr const char *kLanguageLabels[] = {
     "English (US)", "English (UK)", "French", "French (Canada)", "German", "Italian", "Spanish",
     "Spanish (Latin America)", "Portuguese", "Portuguese (Brazil)", "Dutch", "Russian", "Polish",
-    "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)", "Thai"};
+    "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)", "Thai",
+    "Arabic", "Czech", "Danish", "Greek", "Finnish", "Hungarian", "Indonesian",
+    "Norwegian (Bokmål)", "Romanian", "Swedish", "Turkish", "Ukrainian", "Vietnamese"};
 
 template <std::size_t N> std::vector<std::string> translated(const char *const (&labels)[N])
 {
@@ -235,7 +237,8 @@ template <std::size_t N> std::vector<std::string> translated(const char *const (
         out.emplace_back(tr(label));
     return out;
 }
-constexpr int kLanguageRegions[] = {1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 5, 4, 6, 1};
+constexpr int kLanguageRegions[] = {1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 5, 4, 6, 1,
+    1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 1};
 
 } // namespace
 

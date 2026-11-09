@@ -159,6 +159,9 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
                 "CAS GPU completion fence");
         Require(values[1]==(original==7U?9U:6U),"CAS final SSBO word differs");
         Require(values[2]==original,"CAS returned old SSBO value differs");
+        for(uint32_t other=0;other<16;++other)
+            if(other!=1 && other!=2)
+                Require(values[other]==0,"CAS corrupted an unrelated GPU storage word");
         Require(vkResetFences(device,1,&fence)==VK_SUCCESS,"CAS fence reset");
         Require(vkResetCommandBuffer(command,0)==VK_SUCCESS,"CAS command reset");
     }

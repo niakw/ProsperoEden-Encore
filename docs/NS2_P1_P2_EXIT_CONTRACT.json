@@ -261,13 +261,14 @@
       "title": "Ampere atomics and QMD SSBO range",
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h",
       "validators": [
-        "tools/ns2/check_native_qmd_atomic_span_host.py"
+        "tools/ns2/check_native_qmd_atomic_span_host.py",
+        "tools/check-ns2-spirv-host.py"
       ],
       "positive": "Atomic return values and writes match validated SSBO backing spans.",
       "negative": "Unbound, aliased or out-of-range global atomic access is rejected.",
       "status": "open",
       "evidence": {},
-      "blocker": "Check real QMD3 SSBO atomic side effects and returned values with invalid physical span rejection.",
+      "blocker": "Actual U32 CAS native IR is now checked by the same production QMD span collector against a 64-byte SSBO, including out-of-range, unaligned, unknown, and read-only negatives. The emitted shader's Vulkan atomic old/final words and bystander memory are validated; await same-SHA host completion.",
       "excluded_forms": []
     },
     {

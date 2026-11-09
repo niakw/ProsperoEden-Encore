@@ -16,6 +16,7 @@
 #include "shader_recompiler/frontend/ampere/renderer_spirv_bridge.h"
 #include "shader_recompiler/frontend/ampere/native_qmd_compute_environment.h"
 #include "shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+#include "shader_recompiler/frontend/ampere/native_atomic_span.h"
 #include "shader_recompiler/frontend/ir/modifiers.h"
 #include "shader_recompiler/backend/spirv/emit_spirv.h"
 #include "shader_recompiler/object_pool.h"
@@ -313,6 +314,41 @@ static void VerifyRealFloatCasSpirv(const std::string& prefix) {
                                 {Value{u32{0}},Value{u32{8}},previous});
         } else {
             block.AppendNewInst(opcode,{Value{u32{0}},Value{u32{4}},value});
+        }
+        if (opcode == Opcode::StorageAtomicCompareExchange32) {
+            // Use the SAME real IR later emitted into the Vulkan module.
+            // No detached mock offset: the production QMD3 span collector
+            // must prove binding 0 / byte 4 / width 4 before submission.
+            const auto spans=CollectNativeQmdAtomicSpans(program);
+            Require(spans && spans->size()==1 &&
+                    spans->front().binding==0 && spans->front().offset==4 &&
+                    spans->front().width==4,
+                    "G05 genuine CAS IR has no authenticated 4-byte span");
+            struct HostBinding {
+                bool known_size{},is_written{};
+                u64 gpu_address{},bytes{};
+            };
+            std::array<HostBinding,1> live{{{true,true,0x1000,64}}};
+            const std::span<const NativeAtomicSpan> exact{*spans};
+            Require(NativeQmdAtomicSpansFitBindings(exact,live),
+                    "G05 native span should fit the real 64-byte SSBO");
+            live[0].bytes=7;
+            Require(!NativeQmdAtomicSpansFitBindings(exact,live),
+                    "G05 short backing wrongly admits atomic");
+            live[0].bytes=64;
+            live[0].gpu_address=0x1002;
+            Require(!NativeQmdAtomicSpansFitBindings(exact,live),
+                    "G05 unaligned physical SSBO base wrongly admitted");
+            live[0].gpu_address=0x1000;
+            live[0].is_written=false;
+            Require(!NativeQmdAtomicSpansFitBindings(exact,live),
+                    "G05 read-only atomic SSBO wrongly admitted");
+            live[0].is_written=true;
+            live[0].known_size=false;
+            Require(!NativeQmdAtomicSpansFitBindings(exact,live),
+                    "G05 unknown backing span wrongly admitted");
+            std::puts("G05_REAL_IR_ATOMIC_LIVE_SPAN_PASS binding=0 offset=4 "
+                      "width=4 extent=64 invalid_size_alignment_rights=refused");
         }
         Shader::Backend::Bindings bindings{};
         Shader::Profile profile{};

@@ -41,12 +41,15 @@ namespace IR {
 enum class Type { U32, U64 };
 struct Value {
     bool immediate{}, empty{};
-    Type type{Type::U32};
+    ::Shader::Backend::SPIRV::IR::Type type{::Shader::Backend::SPIRV::IR::Type::U32};
     u32 word{};
     bool IsEmpty() const { return empty; }
     bool IsImmediate() const { return immediate; }
-    Type Type() const { return type; }
-    u32 U32() const { assert(immediate && type==Type::U32); return word; }
+    auto Type() const -> ::Shader::Backend::SPIRV::IR::Type { return type; }
+    u32 U32() const {
+        assert(immediate && type==::Shader::Backend::SPIRV::IR::Type::U32);
+        return word;
+    }
 };
 }
 struct EmitContext {

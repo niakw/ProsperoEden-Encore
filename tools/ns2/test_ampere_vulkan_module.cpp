@@ -258,8 +258,24 @@ int main(int argc,char** argv) {
     queue_info.queueFamilyIndex=queue;
     queue_info.queueCount=1;
     queue_info.pQueuePriorities=&priority;
+    // The inherited U32 and U32x2 CBUF declarations use packed
+    // scalar/vector arrays (stride 4/8). Vulkan 1.2 accepts this only
+    // when uniformBufferStandardLayout is enabled, so query and require
+    // the ACTUAL device feature instead of disguising an invalid module.
+    VkPhysicalDeviceVulkan12Features supported12{};
+    supported12.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    VkPhysicalDeviceFeatures2 supported{};
+    supported.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    supported.pNext=&supported12;
+    vkGetPhysicalDeviceFeatures2(selected,&supported);
+    Require(supported12.uniformBufferStandardLayout==VK_TRUE,
+            "real Vulkan device lacks uniformBufferStandardLayout for global CBUF");
+    VkPhysicalDeviceVulkan12Features enabled12{};
+    enabled12.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    enabled12.uniformBufferStandardLayout=VK_TRUE;
     VkDeviceCreateInfo device_info{};
     device_info.sType=VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    device_info.pNext=&enabled12;
     device_info.queueCreateInfoCount=1;
     device_info.pQueueCreateInfos=&queue_info;
     VkDevice device=VK_NULL_HANDLE;

@@ -177,9 +177,13 @@ def main():
     # G06: authentic native 64-bit global CAS router and CBUF/SSBO
     # addressing. Do not accept a header-only CAS conformance claim.
     for env in ("spv1.5", "vulkan1.2"):
-        run([validator, "--target-env", env,
+        # Packed legacy U32/U32x2 UBO views require the explicit Vulkan 1.2
+        # uniformBufferStandardLayout feature; the host Vulkan test must
+        # independently query and ENABLE this feature on the real device.
+        opts = ["--uniform-buffer-standard-layout"] if env == "vulkan1.2" else []
+        run([validator, "--target-env", env, *opts,
              str(OUT / "synthetic-global-cas.spv")])
-        print(f"G06_REAL_GLOBAL_CAS_SPIRV_VALIDATED {env}", flush=True)
+        print(f"G06_REAL_GLOBAL_CAS_SPIRV_VALIDATED {env} feature=standard_layout", flush=True)
     # P2.4: validate REAL EXT shader opcodes emitted from synthetic
     # Task and Mesh IR, not just a C++ compile or the legacy VertexB module.
     for stage in ("task", "mesh"):

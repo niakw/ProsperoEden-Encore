@@ -293,7 +293,7 @@
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "Native G06 global-memory helpers now define their actual CBUF u32/u32x2 and SSBO u32/u32x2/u32x4 types; the source-emitted global CAS is checked against the five actual Vulkan binding descriptors. Await green SPIR-V and host GPU old/final readback before assigning exit evidence.",
+      "blocker": "The native global CAS emits real U32/U32x2 packed CBUF views requiring Vulkan 1.2 uniformBufferStandardLayout, now explicitly checked in spirv-val and enabled on the host physical GPU. Validate full old/final-word global CAS readback on the current paired SHA before crediting.",
       "excluded_forms": []
     },
     {

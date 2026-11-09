@@ -626,15 +626,15 @@ static void VerifyRealTransformFeedbackSpirv(const std::string& prefix) {
         Require(count && count<=words.size()-i,"malformed G02 SPIR-V");
         if (op==static_cast<u32>(spv::Op::OpStore))++stores;
         if (op==static_cast<u32>(spv::Op::OpExecutionMode) && count>=3 &&
-            words[i+2]==static_cast<u32>(spv::ExecutionMode::Xfb))++xfb_mode;
+            words[i+2]==11U /* SPIR-V ExecutionMode Xfb */)++xfb_mode;
         if (op==static_cast<u32>(spv::Op::OpDecorate) && count>=4) {
             const auto decoration=words[i+2];
-            if(decoration==static_cast<u32>(spv::Decoration::XfbBuffer))++xfb_decorations;
-            if(decoration==static_cast<u32>(spv::Decoration::Offset)) {
+            if(decoration==36U /* SPIR-V Decoration XfbBuffer */)++xfb_decorations;
+            if(decoration==35U /* SPIR-V Decoration Offset */) {
                 offset0+=words[i+3]==0;
                 offset8+=words[i+3]==8;
             }
-            if(decoration==static_cast<u32>(spv::Decoration::Component))
+            if(decoration==31U /* SPIR-V Decoration Component */)
                 component2+=words[i+3]==2;
         }
         i+=count;

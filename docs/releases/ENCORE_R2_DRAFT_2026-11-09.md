@@ -4,7 +4,7 @@
 
 > **UNPUBLISHED DRAFT PRERELEASE — NO DOWNLOADABLE PS5 BUILD OR RELEASE ASSETS.** This is a proposed, source-level R2 changelog. It is intentionally based on the **last authentically compiled public R1 dated 15 October 2026**, not the 30 October repository mirror. Development milestones **P0–P4 are treated as completed for the scope of this proposed R2 prerelease**. The final exact-SHA host evidence is tracked independently; **P5 (native build, installation, console hardware testing and game validation) is not included or claimed here**.
 
-**Draft reference:** engine `0bdf2c4508bdc2a48d2abfb0e8cb8a1c41e3a818` · pinned vendor `6a9be6358798be528162b94a4559213c0c7c73c7` · source changes since the R1 compiled-source SHA `5629395324ff65c98b50c44f35f2142a4a92654a`.
+**Draft reference:** engine `1a52235c04a26d3886093d102c46baa23ee705bc` · pinned vendor `56db687283168be42b126ca738760047bd608d4c` · source changes since the R1 compiled-source SHA `5629395324ff65c98b50c44f35f2142a4a92654a`.
 
 **R1 provenance:** [Original 15 October release](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) · [native build run #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232) · original source `56293953...` · release tag points to a different historical metadata commit `f037a78...`. The [30 October release in this repository](https://github.com/niakw/ProsperoEden-Encore/releases/tag/encore-R1-56293953) contains the **same imported R1 package**, not a new native compilation.
 
@@ -284,6 +284,18 @@ For ZIP/FTP, extract the complete `PPSA99008/` folder and install it under `/dat
 - [Licenses and third-party notices](https://github.com/niakw/ProsperoEden-Encore/blob/main/THIRD_PARTY_NOTICES.md)
 
 **Eden Encore is an independent community project.** All upstream copyright, source attribution and license terms are retained. Trademark names used strictly to describe APIs, target platforms or compatibility do not imply endorsement or affiliation.
+
+
+## Verified documentation and vendor presentation qualification — 9 November 2026
+
+The documentation localization follow-up has been implemented on `main` **after the original draft notes were written**:
+
+- All **29 application catalog locales** now have six consumer-focused Markdown guides each: README/overview, installation and upgrading, settings, troubleshooting, support and accessibility (**174 localized pages**). These are practical native-language guides, **not** a claim that the longer English documentation has been translated line for line or independently proofread by 29 native speakers.
+- The language index distinguishes the **29 translation catalogs** from the **18 actual launcher language/region choices**. English remains the most detailed normative user reference.
+- The [user documentation and local-link validation workflow](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42618975742) **passed** for the documentation changes, checking catalog coverage, internal links, preservation of save-data warnings and key localized help. It does not test PS5 rendering or certify linguistic quality.
+- Invalid French/Spanish guide links and obsolete feature/research branch links in the main and translated READMEs have been corrected.
+- The [vendor maintained-source presentation audit](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42618761816) **passed**, scanning **775 active source-text files**. Commercial names were absent from the vendor's visible workflow titles and step labels. The audit recorded 100 branded references in comment-like lines of the maintained source; these are predominantly driver/ABI/format facts, namespace markers or required upstream attribution and were **not** blindly removed. Third-party snapshots remain unmodified.
+- The engine's `vendor` gitlink is pinned to the reviewed vendor revision above. Neither documentation qualification nor vendor presentation review is a substitute for P1/P2 functional exit receipts, a new native PS5 compilation or P5 hardware tests.
 
 ---
 

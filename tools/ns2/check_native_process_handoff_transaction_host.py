@@ -24,18 +24,26 @@ assert method.index("if (!load_parameters)") < method.index("AppendNewProcess(")
 assert "out_load_result = Loader::ResultStatus::ErrorNotInitialized;" in method
 assert "out_load_result = Loader::ResultStatus::ErrorUnableToParseKernelMetadata;" in method
 assert "SCOPE_EXIT {" in method
+assert "SvcTrace::Unregister(process->GetProcessId());" in method
+assert method.index("SvcTrace::Unregister(process->GetProcessId());") < method.index("m_process->Open(")
+assert "process_committed = true;" in method
+finalize=source.split("void Process::Finalize() {",1)[1].split("\nbool Process::Run()",1)[0]
+assert finalize.index("SvcTrace::Unregister(m_process->GetProcessId());") < finalize.index("m_process->Close(")
 
 harness = r"""
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <new>
 #include <optional>
 #include <utility>
+#include <stdexcept>
 #include "common/scope_exit.h"
 
 namespace Kernel {
 struct KProcess;
 struct KernelCore {
-    bool fail_create{};
+    bool fail_create{}, fail_append{};
     int creates{}, registers{}, closes{}, opens{}, appends{};
     KProcess* latest{};
     void AppendNewProcess(KProcess* p);
@@ -52,13 +60,25 @@ struct KProcess {
         assert(process && process->owner == &k);
         ++k.registers;
     }
+    std::uint64_t GetProcessId() const { return 81; }
     void Close(KernelCore& k) { assert(owner == &k); ++k.closes; }
     void Open(KernelCore& k) { assert(owner == &k); ++k.opens; }
 };
 inline void KernelCore::AppendNewProcess(KProcess* p) {
     assert(p && p->owner == this);
+    if(fail_append)throw std::bad_alloc{};
     ++appends;
 }
+}
+namespace Eden::NS2 {
+struct SvcTrace {
+    static inline std::uint64_t active_pid{};
+    static inline unsigned registered{}, unregistered{};
+    static void Register(std::uint64_t pid){ active_pid=pid; ++registered; }
+    static void Unregister(std::uint64_t pid){
+        if(active_pid==pid){ active_pid=0; ++unregistered; }
+    }
+};
 }
 namespace Core {
 struct System {
@@ -77,9 +97,12 @@ struct LoadParameters {
 struct AppLoader {
     ResultStatus status{};
     std::optional<LoadParameters> parameters{};
+    bool trace_register{}, throw_after_trace{};
     std::pair<ResultStatus, std::optional<LoadParameters>>
     Load(Kernel::KProcess& p, Core::System&) {
         assert(p.owner);
+        if(trace_register) Eden::NS2::SvcTrace::Register(p.GetProcessId());
+        if(throw_after_trace)throw std::bad_alloc{};
         return {status, parameters};
     }
 };
@@ -99,11 +122,15 @@ struct Process {
     }
     bool Initialize(Loader::AppLoader&, Loader::ResultStatus&);
 };
+#define EDEN_NS2_PROCESS_RUN_GUARD 1
 __REAL_OWNER__
 }
 static void dispose(Kernel::KernelCore& k) {
     delete k.latest;
     k.latest = nullptr;
+    Eden::NS2::SvcTrace::active_pid=0;
+    Eden::NS2::SvcTrace::registered=0;
+    Eden::NS2::SvcTrace::unregistered=0;
 }
 int main() {
     {
@@ -121,37 +148,54 @@ int main() {
         Kernel::KernelCore k;
         Core::System system{k};
         Service::Process process{system};
-        Loader::AppLoader loader{Loader::ResultStatus::ErrorLoadingNSO, std::nullopt};
+        Loader::AppLoader loader{Loader::ResultStatus::ErrorLoadingNSO, std::nullopt,true};
         auto result = Loader::ResultStatus::Success;
         assert(!process.Initialize(loader, result));
         assert(result == Loader::ResultStatus::ErrorLoadingNSO);
         assert(k.registers == 1 && k.closes == 1 && k.appends == 0);
         assert(k.opens == 0 && !process.m_process);
+        assert(Eden::NS2::SvcTrace::active_pid==0 && Eden::NS2::SvcTrace::unregistered==1);
         dispose(k);
     }
     {
         Kernel::KernelCore k;
         Core::System system{k};
         Service::Process process{system};
-        Loader::AppLoader loader{Loader::ResultStatus::Success, std::nullopt};
+        Loader::AppLoader loader{Loader::ResultStatus::Success, std::nullopt,true};
         auto result = Loader::ResultStatus::Success;
         assert(!process.Initialize(loader, result));
         assert(result == Loader::ResultStatus::ErrorUnableToParseKernelMetadata);
         assert(k.registers == 1 && k.closes == 1 && k.appends == 0);
         assert(k.opens == 0 && !process.m_process);
+        assert(Eden::NS2::SvcTrace::active_pid==0 && Eden::NS2::SvcTrace::unregistered==1);
+        dispose(k);
+    }
+    {
+        Kernel::KernelCore k; k.fail_append=true;
+        Core::System system{k};
+        Service::Process process{system};
+        Loader::AppLoader loader{Loader::ResultStatus::Success,Loader::LoadParameters{1,4096},true};
+        auto result=Loader::ResultStatus::Success;
+        bool failed=false;
+        try { (void)process.Initialize(loader,result); }
+        catch(const std::bad_alloc&){failed=true;}
+        assert(failed && k.registers==1 && k.closes==1 && k.opens==0 && k.appends==0);
+        assert(!process.m_process && Eden::NS2::SvcTrace::active_pid==0);
+        assert(Eden::NS2::SvcTrace::unregistered==1);
         dispose(k);
     }
     {
         Kernel::KernelCore k;
         Core::System system{k};
         Service::Process process{system};
-        Loader::AppLoader loader{Loader::ResultStatus::Success, Loader::LoadParameters{42, 0x8000}};
+        Loader::AppLoader loader{Loader::ResultStatus::Success, Loader::LoadParameters{42, 0x8000},true};
         auto result = Loader::ResultStatus::ErrorLoadingNSO;
         assert(process.Initialize(loader, result));
         assert(result == Loader::ResultStatus::Success);
         assert(k.registers == 1 && k.closes == 1 && k.appends == 1 && k.opens == 1);
         assert(process.m_process == k.latest && process.m_main_thread_priority == 42);
         assert(process.m_main_thread_stack_size == 0x8000 && !process.m_process_started);
+        assert(Eden::NS2::SvcTrace::active_pid==81 && Eden::NS2::SvcTrace::unregistered==0);
         dispose(k);
     }
 }
@@ -178,4 +222,5 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-process-owner-") as temp:
             assert run.returncode == 0, run.stderr[-4000:]
             print("H01_PROCESS_OWNER_HANDOFF_PASS", Path(compiler).name, opt,
                   "null_allocation=refused absent_npdm=refused"
-                  " malformed_load=refused valid_process=published", flush=True)
+                  " malformed_load=refused trace_rollback=1 append_oom_rollback=1"
+                  " valid_process=published ns1_macro_isolated=1", flush=True)

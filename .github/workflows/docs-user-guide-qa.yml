@@ -1,4 +1,4 @@
-name: Encore user guide locales (documentation only)
+name: Encore user guides and locale inventory (documentation only)
 on:
   push:
     branches: [main]
@@ -17,7 +17,7 @@ permissions:
   contents: read
 jobs:
   user-guide-coverage:
-    name: Check 29-language manuals and local links (no build)
+    name: Check 29 localized manuals plus 41 catalog locales (no build)
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

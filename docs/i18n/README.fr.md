@@ -344,7 +344,7 @@ Ce recensement présente **tous les grands périmètres de changements depuis le
 <details>
 <summary><strong>• « Permite jugar a la Switch 2? » — Est-ce compatible Nintendo Switch 2 ?</strong></summary>
 
-- **Non, pas dans la version PS5 actuelle.** La [branche de recherche NSW2](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) et son [rapport de faisabilité](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) détaillent les essais indépendants.
+- **Non, pas dans la version PS5 actuelle.** La [feuille de route NS1/NS2](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) et son [rapport de faisabilité](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) détaillent les essais indépendants.
 - Les chemins NSO homebrew, traduction CPU/IR et shaders en cours d'étude ne prouvent **aucune compatibilité stable avec les jeux commerciaux Switch 2**.
 - Aucun résultat 30 FPS sur Mario Kart World ou prise en charge générale d'un format Switch 2 n'est annoncé. L'optimisation Switch 1/PS5 reste prioritaire.
 

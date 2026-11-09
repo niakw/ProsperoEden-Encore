@@ -18,6 +18,10 @@ start="void IGpuSession::CreateAddressSpace("
 end="void IGpuSession::GetAddressSpacePartition("
 assert source.count(start)==source.count(end)==1
 owner=start+source.split(start,1)[1].split(end,1)[0]
+translate_start="static Result Translate(GP::Status status) {"
+translate_end="// Actual worker KSession"
+assert source.count(translate_start)==source.count(translate_end)==1
+translate=translate_start+source.split(translate_start,1)[1].split(translate_end,1)[0]
 for required in ("GP::IsCreateAddressSpace(command)", "OpenSession(m_process).id",
                  "m_module->Open(\"/dev/nvhost-as-gpu\"", "ioctl.raw = 0x40284109",
                  "m_module->Ioctl1(fd, ioctl, input, output)",
@@ -53,7 +57,7 @@ inline constexpr Result ResultSuccess{0};
 namespace Kernel {
 struct KProcess {int pid{};};
 inline constexpr Result ResultInvalidCombination{1},ResultInvalidState{2},
-    ResultOutOfResource{3};
+    ResultOutOfResource{3}, ResultNotFound{4}, ResultNotImplemented{5};
 }
 struct HLERequestContext {
     std::array<u32,3> packet{};
@@ -142,6 +146,7 @@ struct IGpuSession {
     Kernel::KProcess* m_process{};
     void CreateAddressSpace(HLERequestContext&);
 };
+__TRANSLATE__
 __OWNER__
 }
 struct Fixture {
@@ -243,7 +248,7 @@ int main() {
         assert(f.session.m_module->device_opens==0);
     }
 }
-""".replace("__OWNER__",owner)
+""".replace("__TRANSLATE__",translate).replace("__OWNER__",owner)
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"Host C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-h06-as-owner-") as tmp:

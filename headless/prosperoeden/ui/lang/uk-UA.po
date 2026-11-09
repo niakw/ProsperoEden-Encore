@@ -334,10 +334,6 @@ msgstr "Тема · Логотип · Тло · Світіння (Гра: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Виберіть один рут для ключів, прошивки, ігор, оновлень і модів"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Виберіть мову для ігор"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Вибрати · інтерфейс. програми / Керування — без змін."

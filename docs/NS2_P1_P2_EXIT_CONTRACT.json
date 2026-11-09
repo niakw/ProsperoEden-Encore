@@ -334,9 +334,24 @@
       ],
       "positive": "Authenticated descriptors, SSBO slots and images reach actual vkCmdDispatch with fence-safe writes.",
       "negative": "Invalid backing, image kind or busy resources cannot dispatch or commit writes.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Real 2D TIC/TSC sampled image plus 2 texel descriptors now feed 3 SSBO writes through actual SPIR-V/Vulkan dispatch/fence, pending same-SHA validation. Production QMD3 descriptor staging/write-commit and absence-of-resource negative cases must still be cross-qualified.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "real-owner-exec",
+          "run_id": 42675966265,
+          "engine_sha": "d40022b0346683dcac58313a8ff0600ecfdb6904",
+          "vendor_sha": "39a593fb9873f1c62098e41dce46554fc5c589d6"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_compute_write_commit_host.py",
+          "kind": "real-owner-exec",
+          "run_id": 42675966615,
+          "engine_sha": "d40022b0346683dcac58313a8ff0600ecfdb6904",
+          "vendor_sha": "39a593fb9873f1c62098e41dce46554fc5c589d6"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

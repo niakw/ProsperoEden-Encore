@@ -17,12 +17,13 @@
     {
       "path": "headless/devices.h",
       "historical_reviewed_git_blob": "edb7d13b125e554bd91c7c259fcfafcf91db984b",
-      "post_snapshot_git_blob": "3e597ba6596d71eed516d37b89cd4e457817bcbe",
+      "post_snapshot_git_blob": "274035c427532e0c0340a4d7187f99876a90af58",
       "original_disposition": "code_changed_in_batch",
       "source_scope": "DualSense quick overlay state and game-button fallback",
       "review_kind": "host_source_input",
       "required_source_fragment": "void EnableOverlay(bool enabled)",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: re-reviewed delta from 3e597ba: four owner comments only, replacing vendor-specific UI/controller terms with neutral words. Touchpad click, guest fallback, input edge counters and controller mapping code are byte-identical. No gameplay, input, performance or PS5 validation implied."
     },
     {
       "path": "headless/display_refresh.h",

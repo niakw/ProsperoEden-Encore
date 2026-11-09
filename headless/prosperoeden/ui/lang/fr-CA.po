@@ -2459,3 +2459,104 @@ msgstr "MSAA 16x"
 
 #~ msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
 #~ msgstr "SGSR a besoin de Vulkan. OpenGL utiliserait silencieusement Bilinéaire ; sélectionnez Vulkan ou une autre méthode haut de gamme."
+
+#: settings_store.h
+msgid "Arabic"
+msgstr "Arabe"
+
+#: settings_store.h
+msgid "Czech"
+msgstr "Tchèque"
+
+#: settings_store.h
+msgid "Danish"
+msgstr "Danois"
+
+#: settings_store.h
+msgid "Greek"
+msgstr "Grec"
+
+#: settings_store.h
+msgid "Finnish"
+msgstr "Finnois"
+
+#: settings_store.h
+msgid "Hungarian"
+msgstr "Hongrois"
+
+#: settings_store.h
+msgid "Indonesian"
+msgstr "Indonésien"
+
+#: settings_store.h
+msgid "Norwegian (Bokmål)"
+msgstr "Norvégien (bokmål)"
+
+#: settings_store.h
+msgid "Romanian"
+msgstr "Roumain"
+
+#: settings_store.h
+msgid "Swedish"
+msgstr "Suédois"
+
+#: settings_store.h
+msgid "Turkish"
+msgstr "Turc"
+
+#: settings_store.h
+msgid "Ukrainian"
+msgstr "Ukrainien"
+
+#: settings_store.h
+msgid "Vietnamese"
+msgstr "Vietnamien"
+
+#: settings_store.h
+msgid "Hindi (India)"
+msgstr "Hindi (Inde)"
+
+#: settings_store.h
+msgid "Bengali (India)"
+msgstr "Bengali (Inde)"
+
+#: settings_store.h
+msgid "Marathi (India)"
+msgstr "Marathi (Inde)"
+
+#: settings_store.h
+msgid "Telugu (India)"
+msgstr "Télougou (Inde)"
+
+#: settings_store.h
+msgid "Tamil (India)"
+msgstr "Tamoul (Inde)"
+
+#: settings_store.h
+msgid "Gujarati (India)"
+msgstr "Gujarati (Inde)"
+
+#: settings_store.h
+msgid "Kannada (India)"
+msgstr "Kannada (Inde)"
+
+#: settings_store.h
+msgid "Malayalam (India)"
+msgstr "Malayalam (Inde)"
+
+#: settings_store.h
+msgid "Punjabi (India)"
+msgstr "Pendjabi (Inde)"
+
+#: settings_store.h
+msgid "Odia (India)"
+msgstr "Odia (Inde)"
+
+#: settings_store.h
+msgid "Urdu (India)"
+msgstr "Ourdou (Inde)"
+
+#: settings_store.h
+msgid "Assamese (India)"
+msgstr "Assamais (Inde)"
+

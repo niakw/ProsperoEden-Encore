@@ -131,6 +131,17 @@
       "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof."
     },
     {
+      "path": "headless/prosperoeden/frontend.cpp",
+      "historical_reviewed_git_blob": "6dcd6bf28a868b40f5e44c508a908419f6b8f80f",
+      "post_snapshot_git_blob": "07347e90e4c19893e8b2fceb4aa97591af8617e1",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "review_kind": "host_source_ui",
+      "source_scope": "PS5 launcher language boot path now loads separate US and UK regional gettext catalogs with source fallback",
+      "required_source_fragment": "std::string tag = Eden::kLanguageCatalogTags[language];",
+      "review_note": "2026-11-09: Reviewed targeted PS5 launcher locale selection edits: source tag retained; gettext load applies both en-US/en-GB external catalogs and missing-catalog report. No game/renderer algorithm change or native console proof.",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "historical_reviewed_git_blob": "4720968bd02accaacf904ea298279ef9d4a740f6",
       "post_snapshot_git_blob": "1cdfab87e2cf8283f1ee90d60a6cc36a344186f0",
@@ -149,6 +160,28 @@
       "source_scope": "Host-only OpenGL preview waits for actual asynchronous Home and Library readiness, then navigates via real R1 tab and preserves strict artwork zoom and pixel checks; no console or performance proof.",
       "review_kind": "host_preview_mock",
       "required_source_fragment": "library-preview: Library never became ready",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/core/strings.cpp",
+      "historical_reviewed_git_blob": "2a1578e80c0949c8c376f412a88912f7514fc6b5",
+      "post_snapshot_git_blob": "81ae44492732987eeba42f37e9e0a2a3b67509ff",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "review_kind": "source_contract",
+      "source_scope": "Locale candidates for distinct English US and UK gettext catalogs, with conservative UK-to-US fallback",
+      "required_source_fragment": "return {\"en-GB\", \"en-US\"};",
+      "review_note": "2026-11-09: Review of native shared catalog candidate selection: en-US resolves to its explicit source-language file and en-GB prefers regional British strings then US English; other languages retain candidate flow. Not PS5 rendering or performance proof.",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/prosperoeden/pe/core/strings.hpp",
+      "historical_reviewed_git_blob": "3916b4a8366dc584a67f4820e94ce636b82add53",
+      "post_snapshot_git_blob": "e50970d8d776dead3bc49443ba972de465e6108c",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "review_kind": "source_interface",
+      "source_scope": "Document explicit US and UK language catalog selection in the existing gettext catalog interface",
+      "required_source_fragment": "English has distinct",
+      "review_note": "2026-11-09: Header comment documents two regional English catalog candidates and UK fallback, preserving Catalog API and ABI. No native runtime or performance proof.",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
     },
     {

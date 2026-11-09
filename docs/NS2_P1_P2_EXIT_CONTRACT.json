@@ -142,13 +142,14 @@
         "tools/ns2/check_native_gpu_request_worker_host.py",
         "tools/ns2/check_native_gpu_sparse_release_host.py",
         "tools/ns2/check_native_gpu_worker_mapping_ipc_host.py",
-        "tools/ns2/check_native_gpu_worker_memory_ipc_host.py"
+        "tools/ns2/check_native_gpu_worker_memory_ipc_host.py",
+        "tools/ns2/check_native_gpu_worker_sparse_ipc_host.py"
       ],
       "positive": "Required GPU session and worker commands produce exact response words, rights and owned handles.",
       "negative": "Unknown commands, stale FD and unauthorized process cannot produce success or mutate mappings.",
       "status": "open",
       "evidence": {},
-      "blocker": "GPU session 11/12/21/22/33/41/42/202/203 and worker 101/102/211-213/215 now have extracted real-owner IPC witnesses, including sparse release OOM retry. Worker 214/216 full resource/handle/rollback acceptance matrix and final cross-command consolidation remain open.",
+      "blocker": "All GPU-session/worker TIPC command owners now have extracted host witnesses, including integrated 214 sparse reserve → 216 physical remap and 215 teardown. Require green SHA-pinned qualification and consolidated complete response/rights/rollback matrix before declaring H06 proof_defined; no PS5 guest-frame claim.",
       "excluded_forms": []
     },
     {

@@ -40,6 +40,7 @@ TESTS = {
     "gpu_sparse_215_oom_retry": "tools/ns2/check_native_gpu_sparse_release_host.py",
     "gpu_worker_211_213_ipc": "tools/ns2/check_native_gpu_worker_mapping_ipc_host.py",
     "gpu_worker_101_102_ipc": "tools/ns2/check_native_gpu_worker_memory_ipc_host.py",
+    "gpu_worker_214_216_sparse": "tools/ns2/check_native_gpu_worker_sparse_ipc_host.py",
     "video_ready_event_oom": "tools/ns2/check_native_video_ready_event_oom_host.py",
     "gpu_acquire_worker_move_oom": "tools/ns2/check_native_gpu_acquire_worker_oom_host.py",
     "gpu_channel_alloc_owner": "tools/ns2/check_native_gpu_channel_allocation_host.py",

@@ -43,7 +43,7 @@ using u32=std::uint32_t;
 using u64=std::uint64_t;
 using GPUVAddr=u64;
 #define LOG_ERROR(...) ((void)0)
-constexpr int HW_GPU=1;
+[[maybe_unused]] constexpr int HW_GPU=1;
 namespace VideoCommon {
 enum class QueryType {Payload};
 enum class QueryPropertiesFlags {IsAFence,HasTimeout};

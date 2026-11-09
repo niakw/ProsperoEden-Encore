@@ -34,6 +34,7 @@ TESTS = {
     "gpu_ipc_event_partition_oom": "tools/ns2/check_native_gpu_session_ipc_oom_host.py",
     "gpu_fd_process_identity": "tools/ns2/check_native_gpu_fd_identity_host.py",
     "gpu_device_tipc_matrix": "tools/ns2/check_native_gpu_device_ipc_host.py",
+    "gpu_unknown_tipc_reject": "tools/ns2/check_native_gpu_unknown_tipc_host.py",
     "video_ready_event_oom": "tools/ns2/check_native_video_ready_event_oom_host.py",
     "gpu_acquire_worker_move_oom": "tools/ns2/check_native_gpu_acquire_worker_oom_host.py",
     "gpu_channel_alloc_owner": "tools/ns2/check_native_gpu_channel_allocation_host.py",

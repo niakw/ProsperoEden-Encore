@@ -34,6 +34,8 @@ for path in RENDERERS:
     chunk=code.split(ANCHOR,1)[1].split(END,1)[0]
     blocks.append(ANCHOR+chunk)
 assert blocks[0]==blocks[1], 'real/native and deferred write commits drifted'
+assert 'if (!staged_buffer_mappings.Matches(' in blocks[0]
+assert 'ValidateGpuBufferMappings(' not in blocks[0]
 CPP=r'''
 #include <cassert>
 #include <cstdint>
@@ -52,9 +54,10 @@ enum class ObtainBufferOperation { DoNothing, MarkAsWritten };
 }
 struct MockGpuMemory {
     bool refuse{};
+    bool moved{};
     std::optional<u64> GpuToCpuAddress(u64 address) {
         if(refuse && address>=0x20000 && address<0x21000) return {};
-        return address+0x4000000;
+        return address+0x4000000+(moved ? 0x1000000 : 0);
     }
 };
 struct MockBuffer {
@@ -86,8 +89,17 @@ struct MockRasterizer {
     std::vector<MockTexel> texels;
     std::unique_ptr<Shader::Ampere::NativeQmdResourcePlan> resources=
         std::make_unique<Shader::Ampere::NativeQmdResourcePlan>();
-    bool Commit() {
+    bool Commit(bool remap_after_staging=false) {
         const auto& native_texels=texels;
+        Shader::Ampere::NativeQmdPhysicalBufferSnapshot staged_buffer_mappings{};
+        if (!staged_buffer_mappings.Capture(
+                *resources, [this](u64 address) {
+                    return gpu_memory->GpuToCpuAddress(address);
+                }))
+            return false;
+        // Simulate a guest remapping otherwise fully contiguous VA pages
+        // after ConfigureNative staged buffers but before write-commit.
+        if (remap_after_staging) gpu_memory->moved=true;
 __COMMIT__
         return true;
     }
@@ -101,6 +113,11 @@ int main() {
     assert(renderer.Commit());
     assert(renderer.buffer_cache.writes.size()==1);
     assert(renderer.buffer_cache.writes[0].first==0x20000);
+    renderer.buffer_cache.writes.clear();
+    assert(!renderer.Commit(true));
+    assert(renderer.buffer_cache.writes.empty());
+    renderer.gpu_memory->moved=false;
+    assert(renderer.Commit());
     renderer.buffer_cache.writes.clear();
     // Mapping preflight runs to completion before any cache dirty marking.
     renderer.gpu_memory->refuse=true;
@@ -178,4 +195,5 @@ with tempfile.TemporaryDirectory(prefix='encore-write-commit-') as temp:
             run=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
             assert run.returncode==0,(cxx,run.stderr[-3500:])
             print('P2_3_NATIVE_STORAGE_COMMIT_AFTER_SNAPSHOT_PASS',Path(cxx).name,
-                  f'O{opt}', 'mappings=full', 'writes=known', 'owners=2',flush=True)
+                  f'O{opt}', 'mappings=full', 'physical_remap=refused',
+                  'writes=known', 'owners=2',flush=True)

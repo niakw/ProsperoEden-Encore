@@ -2515,54 +2515,5 @@ msgstr "Ukrainien"
 #: settings_store.h
 msgid "Vietnamese"
 msgstr "Vietnamien"
-
-#: settings_store.h
-msgid "Hindi (India)"
-msgstr "Hindi (Inde)"
-
-#: settings_store.h
-msgid "Bengali (India)"
-msgstr "Bengali (Inde)"
-
-#: settings_store.h
-msgid "Marathi (India)"
-msgstr "Marathi (Inde)"
-
-#: settings_store.h
-msgid "Telugu (India)"
-msgstr "Télougou (Inde)"
-
-#: settings_store.h
-msgid "Tamil (India)"
-msgstr "Tamoul (Inde)"
-
-#: settings_store.h
-msgid "Gujarati (India)"
-msgstr "Gujarati (Inde)"
-
-#: settings_store.h
-msgid "Kannada (India)"
-msgstr "Kannada (Inde)"
-
-#: settings_store.h
-msgid "Malayalam (India)"
-msgstr "Malayalam (Inde)"
-
-#: settings_store.h
-msgid "Punjabi (India)"
-msgstr "Pendjabi (Inde)"
-
-#: settings_store.h
-msgid "Odia (India)"
-msgstr "Odia (Inde)"
-
-#: settings_store.h
-msgid "Urdu (India)"
-msgstr "Ourdou (Inde)"
-
-#: settings_store.h
-msgid "Assamese (India)"
-msgstr "Assamais (Inde)"
-
 )FRPO";
 }

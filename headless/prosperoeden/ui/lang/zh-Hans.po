@@ -334,10 +334,6 @@ msgstr "主题 · 标志 · 背景 · 光晕 (游戏: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "为密钥、固件、游戏、更新和模组选择同一个根目录"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "选择游戏使用的语言"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "选择 · 界面. 软件 / 操作 — 保持不变."

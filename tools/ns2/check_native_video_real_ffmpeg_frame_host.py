@@ -42,6 +42,7 @@ cpp=r"""
 #include <cstring>
 #include <deque>
 #include <limits>
+#include <new>
 #include <optional>
 #include <set>
 #include <memory>
@@ -165,7 +166,7 @@ struct FakeSurface {
     bool gpu_mapped{};
 };
 struct FakeOwner {
-    bool fail_write{};
+    bool fail_write{}, throw_write{};
     unsigned written{};
     std::vector<u8> last_pixels;
     std::shared_ptr<FakeSurface> surface=std::make_shared<FakeSurface>();
@@ -175,6 +176,7 @@ struct FakeOwner {
     bool WriteVideoSurface(u32 id,const FakeSurface&,
                            const std::vector<u8>& pixels) {
         assert(id==9 && pixels.size()==384);
+        if(throw_write) throw std::bad_alloc{};
         if(fail_write) return false;
         ++written;last_pixels=pixels;
         return true;
@@ -278,6 +280,14 @@ int main(){
            session.m_guest_owned.empty());
     assert(session.m_owner->written==0 && session.system.host.sync.GetGuestSyncpointValue(5)==0);
     session.m_owner->fail_write=false;
+    // Exercise the ACTUAL maintained Pump through a late host allocation
+    // failure after metadata/guest ownership have already been staged.
+    session.m_owner->throw_write=true;
+    session.Pump();
+    assert(session.m_outputs.empty() && session.m_pending.size()==1 &&
+           session.m_guest_owned.empty() && session.m_available.size()==2);
+    assert(session.system.host.sync.GetGuestSyncpointValue(5)==0);
+    session.m_owner->throw_write=false;
     session.Pump();
     assert(session.m_owner->written==1 && session.system.host.sync.GetGuestSyncpointValue(5)==1);
     assert(session.m_outputs.size()==1 && session.m_outputs.front().image==9 &&
@@ -314,7 +324,7 @@ int main(){
     std::puts("H05_REAL_FFMPEG_PUMP_OWNER_PASS decoded_nv12=exact "
               "blocked_release=held no_head_of_line=1 failed_write=rolled_back "
               "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
-              "dead_image=retired true_ipc_vulkan_fence=not_exercised");
+              "dead_image=retired write_oom=rolled_back true_ipc_vulkan_fence=not_exercised");
 }
 """.replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump)
 compilers=list(dict.fromkeys(x for x in

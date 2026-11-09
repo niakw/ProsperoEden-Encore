@@ -270,6 +270,8 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         const bool input_ready = radio_input_init();
         if (!input_ready) Eden::Report("menu failure", "The controller could not be opened");
         pe::ui::Launcher launcher(services, textures, fonts, first_start);
+        if (Eden::LaunchHandoff::TakeMultiplayerRequest())
+            launcher.open_multiplayer_from_game();
         int menu_volume = launcher.menu_volume();
         mixer->set_bus_gain(pe::audio::Bus::ui, MenuGain(menu_volume));
         std::fprintf(stderr, "EDEN_LAUNCHER display=%dx%d sounds=%d audio=%d ready_ms=%lld\n", display.width(),

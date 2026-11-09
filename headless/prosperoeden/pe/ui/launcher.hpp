@@ -33,6 +33,8 @@ class Launcher
     Launcher &operator=(const Launcher &) = delete;
 
     void press(Key key);
+    // The game must have exited before the existing launcher room UI is shown.
+    void open_multiplayer_from_game() { enter_multiplayer(); }
     void update(float dt);
     void draw(gfx::DrawList &list);
 

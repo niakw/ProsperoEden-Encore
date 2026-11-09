@@ -306,6 +306,16 @@ for marker in re.findall(r'"(kHome[^\"]+)"', match.group(1)):
 # Native in-game quick overlay: only Vulkan game sessions own short touchpad clicks.
 quick=read('headless/in_game_overlay.h')
 quick_menu=read('headless/in_game_overlay_menu.h')
+handoff=read('headless/launch_handoff.hpp')
+launcher_frontend=read('headless/prosperoeden/frontend.cpp')
+launcher_header=read('headless/prosperoeden/pe/ui/launcher.hpp')
+assert 'Outcome::multiplayer' in quick_menu and 'multiplayer_confirm' in quick_menu
+assert 'SALON = FERMER LE JEU' in quick_menu
+assert 'QueueMultiplayer()' in handoff and 'TakeMultiplayerRequest()' in handoff
+assert 'Eden::LaunchHandoff::QueueMultiplayer();' in main
+assert 'Eden::LaunchHandoff::TakeMultiplayerRequest()' in launcher_frontend
+assert 'launcher.open_multiplayer_from_game()' in launcher_frontend
+assert 'void open_multiplayer_from_game() { enter_multiplayer(); }' in launcher_header
 quick_present=read('headless/vulkan_window_adapt_r08.cpp')
 quick_shader=read('headless/vulkan_hud.frag')
 assert 'game && backend == Eden::GraphicsBackend::Vulkan' in main

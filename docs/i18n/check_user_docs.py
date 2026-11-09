@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate user guides for 29 non-English locales among 31 PS5 catalogs.
+"""Validate documentation for all 31 official PS5 variants: 29 translated sets and two English regions.
 
 This is a documentation/path check, not a native compiler, linguistic
 certification, hardware test, or replacement for P0-P4 exit proofs.
@@ -71,6 +71,18 @@ index_text = index.read_text(encoding="utf-8")
 local_links(index, index_text)
 check("31 application translation catalogs" in index_text, "language index count missing")
 check("31 official PS5 system language/region selections" in index_text, "launcher selection count missing")
+rows = [r for r in index_text.splitlines() if r.startswith("| ") and "| Yes |" in r]
+check(len(rows) == 31, f"expected 31 variant rows, got {len(rows)}")
+check(len({r.split("|")[2].strip() for r in rows}) == 31, "duplicated locale row")
+for kind in TYPES:
+    uk = I18N / f"{kind}.en-GB.md"
+    check(uk.is_file(), f"missing UK guide: {uk.relative_to(ROOT)}")
+    if uk.is_file():
+        content = uk.read_text(encoding="utf-8")
+        check(len(content.strip()) >= 650, f"short UK guide: {uk.relative_to(ROOT)}")
+        check("../../LANGUAGES.md" in content, f"missing index: {uk.relative_to(ROOT)}")
+        check(f"{kind}.en-GB.md" in index_text, f"missing UK link: {uk.relative_to(ROOT)}")
+        local_links(uk, content)
 
 for loc in locales:
     code, native = loc["code"], loc["native"]
@@ -126,5 +138,5 @@ if errors:
         print("USER_DOC_LOCALE_FAIL", msg)
     raise SystemExit(f"{len(errors)} user-doc localization/links violations")
 print("ENCORE_USER_DOC_LOCALES_PASS",
-      f"locales={len(codes)} manuals={len(codes)*len(TYPES)}",
-      "references=6 coverage=verified link_scope=local no_ps5_build=1")
+      f"translated={len(codes)*len(TYPES)}",
+      "english_us=6 english_uk=6 documented=186 variants=31 link_scope=local no_ps5_build=1")

@@ -19,7 +19,7 @@ namespace Eden::QuickOverlay {
 // controller assignments are saved per title, and take effect at next launch.
 class Menu {
 public:
-    enum class Outcome { none, close, library };
+    enum class Outcome { none, close, library, multiplayer };
     explicit Menu(std::uint64_t title) :
         title_id(title), game(LoadGameSettings(title)), prefs(LoadPreferences()) {}
 
@@ -30,6 +30,7 @@ public:
             prefs = LoadPreferences();
             tab = 0;
             selected = 0;
+            multiplayer_confirm = false;
             notice = restart_required ? "MODIFS ENREGISTREES" : "REGLAGES DE CE JEU";
         }
         Rebuild();
@@ -42,15 +43,17 @@ public:
             return Outcome::close;
         }
         if (actions & previous_tab) {
-            tab = (tab + 3) % 4;
+            tab = (tab + 4) % 5;
+            multiplayer_confirm = false;
             selected = 0;
         }
         if (actions & next_tab) {
-            tab = (tab + 1) % 4;
+            tab = (tab + 1) % 5;
+            multiplayer_confirm = false;
             selected = 0;
         }
-        if (actions & up) selected = (selected + Count() - 1) % Count();
-        if (actions & down) selected = (selected + 1) % Count();
+        if (actions & up) { selected = (selected + Count() - 1) % Count(); multiplayer_confirm = false; }
+        if (actions & down) { selected = (selected + 1) % Count(); multiplayer_confirm = false; }
         const int direction = (actions & right) ? 1 : (actions & left) ? -1 : 0;
         if (tab == 0) {
             if (selected == 1 && (direction || (actions & select))) ToggleFps();
@@ -66,6 +69,13 @@ public:
         } else if (tab == 3) {
             if (selected == 0 && (direction || (actions & select))) ToggleFps();
             if (selected == 1 && (direction || (actions & select))) ToggleLogs();
+        } else if (tab == 4 && (actions & select)) {
+            if (selected == 1) { Show(false); return Outcome::close; }
+            if (selected == 0) {
+                if (multiplayer_confirm) { Show(false); return Outcome::multiplayer; }
+                multiplayer_confirm = true;
+                notice = "CONFIRMER : FERMER JEU";
+            }
         }
         Rebuild();
         return Outcome::none;
@@ -78,6 +88,7 @@ private:
     bool visible{};
     // Kept across close/reopen: saved renderer/HID edits are not live.
     bool restart_required{};
+    bool multiplayer_confirm{};
     int tab{};
     int selected{};
     std::string notice;
@@ -86,7 +97,7 @@ private:
     static constexpr int kVisibleRows = 8;
 
     int Count() const {
-        return tab == 0 ? 4 : tab == 1 ? kGraphicsRows : tab == 2 ? kMappingRows : 4;
+        return tab == 0 ? 4 : tab == 1 ? kGraphicsRows : tab == 2 ? kMappingRows : tab == 3 ? 4 : 2;
     }
     static std::string Name(const char* const* keys, int count, int index) {
         return index >= 0 && index < count ? keys[index] : "AUTO";
@@ -133,7 +144,9 @@ private:
             }
         } else if (tab == 1) return GraphicsRow(row);
         else if (tab == 2) return MappingRow(row);
-        else if (tab == 3) {
+        else if (tab == 4) {
+            return row == 0 ? "OUVRIR SALON MULTI" : "RESTER DANS LE JEU";
+        } else if (tab == 3) {
             switch (row) {
             case 0: return prefs.hud ? "AFFICHAGE FPS OUI" : "AFFICHAGE FPS NON";
             case 1: return prefs.detailed_logging ? "LOGS DETAILLES OUI" : "LOGS DETAILLES NON";
@@ -248,7 +261,7 @@ private:
         line("EDEN ENCORE  MENU", kRow);
         static constexpr const char* headings[] = {
             "JEU   GRAPH  PAD  DIAG", "GRAPHISMES  L1 R1",
-            "MANETTE   L1 R1", "DIAGNOSTIC  L1 R1"};
+            "MANETTE   L1 R1", "DIAGNOSTIC  L1 R1", "SALONS MULTI   L1 R1"};
         line(headings[tab], kRow);
         line("CLIC PAD POUR FERMER", kRow);
         const int start = std::clamp(selected - 3, 0, std::max(0, Count() - kVisibleRows));
@@ -258,7 +271,7 @@ private:
                  item == selected ? kSelectedRow : kRow);
         }
         line("HAUT BAS  GAUCHE DROITE", kRow);
-        line(notice, kRow);
+        line(tab == 4 && !multiplayer_confirm ? "SALON = FERMER LE JEU" : notice, kRow);
         // A persistent, visually distinct banner when a per-title change
         // needs a fresh game launch (never a full PS5/system restart).
         line(restart_required ? "RELANCER LE JEU REQUIS" : "",

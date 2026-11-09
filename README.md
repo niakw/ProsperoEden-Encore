@@ -3,7 +3,7 @@
 
 <table width="100%">
   <tr><td align="center">
-    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <strong>English</strong> &nbsp; · &nbsp; <strong>English UK</strong> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr.md">Français</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pt-BR.md">Português BR</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="docs/i18n/README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="docs/i18n/README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="docs/i18n/README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="docs/i18n/README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
+    <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="README.md"><strong>English US</strong></a> &nbsp; · &nbsp; <a href="docs/i18n/README.en-GB.md"><strong>English UK</strong></a> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="docs/i18n/README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr.md">Français</a> &nbsp; · &nbsp; <a href="docs/i18n/README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pt-BR.md">Português BR</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pt-PT.md">Português PT</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ru.md">Русский</a> &nbsp; · &nbsp; <a href="docs/i18n/README.de.md">Deutsch</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ja.md">日本語</a> &nbsp; · &nbsp; <a href="docs/i18n/README.ko.md">한국어</a> &nbsp; · &nbsp; <a href="docs/i18n/README.it.md">Italiano</a> &nbsp; · &nbsp; <a href="docs/i18n/README.th.md">ไทย</a> &nbsp; · &nbsp; <a href="docs/i18n/README.pl.md">Polski</a> &nbsp; · &nbsp; <a href="docs/i18n/README.nl.md">Nederlands</a> &nbsp; · &nbsp; <a href="LANGUAGES.md"><strong>All languages</strong></a>
   </td></tr>
 </table>
 
@@ -60,7 +60,7 @@
 3. Follow [the complete installation guide](INSTALL.md) for **ZIP/FTP or FFPFSC/ShadowMountPlus**. Copy the full `PPSA99008/` app tree, including `ui/lang/`, not only `eboot.bin`.
 4. Open Encore and check **Settings → Storage / Language**, game Library and existing saves. If anything fails, use [Troubleshooting](TROUBLESHOOTING.md).
 
-**Language policy:** [exactly 31 Sony PS5 system choices, no extra languages](docs/PS5_SYSTEM_LANGUAGE_POLICY.md).
+**Language policy:** [exactly 31 Sony PS5 system choices, no extra languages](docs/PS5_SYSTEM_LANGUAGE_POLICY.md). The [language portal](LANGUAGES.md) now lists 31 separate variants and guide paths, including distinct US/UK English.
 
 **Firmware 13.60 is the only console-tested target.** No earlier firmware minimum is verified, and this is not advice to update your PS5. [Choose any launcher language](LANGUAGES.md).
 
@@ -513,6 +513,7 @@ Eden and the individual licence details are documented in [THIRD_PARTY_NOTICES.m
 - [Encore overrides](https://github.com/niakw/encore-overrides) — **Authors / maintainers: `@niakw`** — companion database/source of the four general video tiers, title-specific overrides and the generated PlayStation Auto control profile.
 - [ghost-land/Nlib-API](https://github.com/ghost-land/Nlib-API) — **Authors / maintainers: ghost-land team (`@ghost-land`) and contributors** — runtime title metadata and rich launcher media source (icons, 1080p banners, screenshots and local-player metadata).
 - [kinnay/zbic](https://github.com/kinnay/zbic) — **Authors / maintainers: `@kinnay`; zstd source files from Atmosphère** — ZBIC/zstd NSO decompression support.
+- [NUP v1 format specification](https://github.com/a55uka/nup) — **Authors / maintainers: `@a55uka` and contributors** — NUP format reference used to review Encore's separately implemented read-only archive reader; upstream NUP software is not bundled.
 - [FFmpeg](https://github.com/FFmpeg/FFmpeg) — **Authors / maintainers: Fabrice Bellard (original creator), FFmpeg team and contributors** — H.264/VP8/VP9 decoding in the PS5 build.
 - [HarfBuzz](https://github.com/harfbuzz/harfbuzz) — **Authors / maintainers: Behdad Esfahbod, David Corbett, Khaled Hosny and HarfBuzz contributors** — shaping for Arabic, Thai and other complex scripts in the launcher.
 - [fmt](https://github.com/fmtlib/fmt) — **Authors / maintainers: Victor Zverovich (`@vitaut`) and contributors** — formatting headers used by build/runtime validation paths.
@@ -523,6 +524,11 @@ Eden and the individual licence details are documented in [THIRD_PARTY_NOTICES.m
 - [Xbyak](https://github.com/herumi/xbyak) — **Authors / maintainers: Mitsunari Shigeo (`@herumi`)** — x86/x64 JIT assembler used by Dynarmic/Eden and adapted by Encore's JIT allocator path.
 - [SPIRV-LLVM-Translator](https://github.com/KhronosGroup/SPIRV-LLVM-Translator) — **Authors / maintainers: Khronos Group and SPIRV-LLVM-Translator contributors** — macOS host-toolchain support for the graphics build.
 - [stb](https://github.com/nothings/stb) — **Authors / maintainers: Sean T. Barrett (`@nothings`) and authors of stb components** — launcher font baking/system-font loading support.
+
+### External artwork and upstream research acknowledgements
+
+- [LaunchBox](https://www.launchbox-app.com/) — public game metadata/retail-case index used for optional build-time lookup and remote cover art. Neither the complete catalogue nor proprietary cover images are included in Encore's distribution; artwork rights remain with their owners. [Technical provenance](docs/LAUNCH_CASE_ARTWORK.md).
+- [Eglantine `nx2` research](https://github.com/zortos293/Eglantine) — reviewed selectively in [the NS2/NUP audit](docs/NS2_EGLANTINE_NX2_NUP_REVIEW_2026-11-03.md). This acknowledgment is not a claim that its entire engine, binaries or experimental game-specific work is included or endorsed.
 
 ### PS5 input/audio research reused directly
 

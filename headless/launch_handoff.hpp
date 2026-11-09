@@ -2,6 +2,7 @@
 #pragma once
 // One temporary, title-scoped frame linking the native OpenGL jacket
 // animation to the PS5 Vulkan warm-up. No disk I/O and no guest GPU state.
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -18,6 +19,10 @@ struct Frame {
     std::vector<std::uint8_t> rgba;
 };
 
+// One-shot destination; never starts guest-thread networking or another compositor.
+inline std::atomic<bool> multiplayer_requested{false};
+inline void QueueMultiplayer() { multiplayer_requested.store(true, std::memory_order_release); }
+inline bool TakeMultiplayerRequest() { return multiplayer_requested.exchange(false, std::memory_order_acq_rel); }
 inline std::mutex frame_mutex;
 inline std::shared_ptr<const Frame> pending_frame;
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check 29 non-English translated manuals alongside 31 official PS5 catalogs."""
+"""Check 29 translated sets, six UK guides and six US references for 31 PS5 variants."""
 from pathlib import Path
 import json
 
@@ -8,7 +8,7 @@ catalogs = sorted(p.stem for p in (ROOT/"headless/prosperoeden/ui/lang").glob("*
 data = json.loads((ROOT/"docs/i18n/USER_DOC_TRANSLATIONS.json").read_text(encoding="utf-8"))
 locales = {x["code"]:x for x in data["locales"]}
 assert len(locales) == 29 and len(catalogs) == 31
-assert set(locales) == set(catalogs) - {"en-US", "en-GB"}, "English variants use shared source manuals"
+assert set(locales) == set(catalogs) - {"en-US", "en-GB"}, "Non-English catalog mismatch"
 short = {k:k.split("-")[0] for k in ("de-DE","it-IT","ja-JP","ko-KR","nl-NL","pl-PL","ru-RU","th-TH")}
 read_short = {**short, "es-ES":"es", "fr-FR":"fr"}
 index = (ROOT/"LANGUAGES.md").read_text(encoding="utf-8")
@@ -23,7 +23,14 @@ for code in locales:
         if prefix in ("SETTINGS","TROUBLESHOOTING","SUPPORT","ACCESSIBILITY"):
             assert "LANGUAGES.md" in content
     assert all(locales[code].get(k) for k in ("intro","install","settings","trouble","support","access","safety","limits"))
+for prefix in ("README","INSTALL","SETTINGS","TROUBLESHOOTING","SUPPORT","ACCESSIBILITY"):
+    uk = ROOT/"docs/i18n"/f"{prefix}.en-GB.md"
+    assert uk.is_file() and len(uk.read_text(encoding="utf-8")) >= 650
+    assert f"{prefix}.en-GB.md" in index
+    assert (ROOT/f"{prefix}.md").is_file()
+rows = [r for r in index.splitlines() if r.startswith("| ") and "| Yes |" in r]
+assert len(rows) == len({r.split("|")[2].strip() for r in rows}) == 31
 assert "31 official PS5 system language/region selections" in index
 assert "docs/PS5_SYSTEM_LANGUAGE_POLICY.md" in index
 assert "no additional launcher languages" in index
-print(f"ENCORE_USER_DOC_29_LOCALES_PASS locales={len(locales)} guides={6*len(locales)} menu_choices=31")
+print(f"ENCORE_USER_DOC_31_VARIANTS_PASS translated={6*len(locales)} en_us=6 en_gb=6 documented=186 variants=31")

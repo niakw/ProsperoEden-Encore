@@ -42,6 +42,7 @@
 #include <nlohmann/json.hpp>
 #include "devices.h"
 #include "in_game_overlay_menu.h"
+#include "launch_handoff.hpp"
 #include "encore_overrides_generated.h"
 #include "neural_video_policy.h"
 #include "neural_runtime_state.h"
@@ -2551,7 +2552,10 @@ int main(int argc, char** argv) {
                             if (result != Eden::QuickOverlay::Menu::Outcome::none) {
                                 pad->CloseOverlay();
                                 quick_menu_visible = false;
-                                if (result == Eden::QuickOverlay::Menu::Outcome::library) {
+                                if (result == Eden::QuickOverlay::Menu::Outcome::multiplayer)
+                                    Eden::LaunchHandoff::QueueMultiplayer();
+                                if (result == Eden::QuickOverlay::Menu::Outcome::library ||
+                                    result == Eden::QuickOverlay::Menu::Outcome::multiplayer) {
                                     std::lock_guard lock(completion->mutex);
                                     completion->return_to_menu = true;
                                     completion->wake.notify_one();

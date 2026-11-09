@@ -35,6 +35,7 @@ authors. Repository links provide provenance and full contributor histories.
 - [Encore overrides](https://github.com/niakw/encore-overrides) — `@niakw`.
 - [ghost-land/Nlib-API](https://github.com/ghost-land/Nlib-API) — ghost-land team (`@ghost-land`) and contributors.
 - [kinnay/zbic](https://github.com/kinnay/zbic) — `@kinnay`; zstd source files from Atmosphère.
+- [NUP v1 format specification](https://github.com/a55uka/nup) — `@a55uka` and contributors.
 - [FFmpeg](https://github.com/FFmpeg/FFmpeg) — Fabrice Bellard (original creator), FFmpeg team and contributors.
 - [HarfBuzz](https://github.com/harfbuzz/harfbuzz) — Behdad Esfahbod, David Corbett, Khaled Hosny and HarfBuzz contributors.
 - [fmt](https://github.com/fmtlib/fmt) — Victor Zverovich (`@vitaut`) and contributors.
@@ -49,6 +50,8 @@ authors. Repository links provide provenance and full contributor histories.
 - [ps5-audio-decoding-research](https://github.com/blackbearreloaded/ps5-audio-decoding-research) — BlackBearReloaded (`@blackbearreloaded`).
 
 ## Emulator and compression
+
+The [NUP v1 format specification](https://github.com/a55uka/nup) is attributed as a public format specification, not as a bundled executable. [Eglantine nx2 research](https://github.com/zortos293/Eglantine) informed comparative review; this statement neither claims wholesale inclusion nor endorsement.
 
 - **[ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden)** —
   GPL-3.0. Encore is derived from its PS5 port/fork and retains portions of its
@@ -128,6 +131,8 @@ files.** The selected license text is preserved as
   both upstream repositories are GPL-3.0.
 
 ## Runtime metadata and media
+
+- **[LaunchBox](https://www.launchbox-app.com/)** — third-party public game catalogue and optional front/back case-art lookup. The build creates a compact local index, but does not embed the full external catalogue or commercial cover scans. Downloaded images remain subject to their original ownership and applicable terms.
 
 - **[ghost-land/Nlib-API](https://github.com/ghost-land/Nlib-API)** — GPL-3.0.
   Encore queries its public NX endpoints at runtime for title metadata and

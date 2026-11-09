@@ -20,6 +20,9 @@ start="    // Both NS1 and NS2 use this fixed guest argument allocation."
 end="    // N3t: native NSO entry gate"
 assert owner.count(start)==owner.count(end)==1
 real=owner.split(start,1)[1].split(end,1)[0]
+# The prose marker begins inside a multi-line C++ comment; extract the
+# exact executable owner IF, not the continuation prose ("A hostile ...").
+real=real[real.index("    if (should_pass_arguments &&"):]
 assert "Settings::values.program_args.GetValue().size()" in real
 assert "NSO_ARGUMENT_DATA_ALLOCATION_SIZE - sizeof(NSOArgumentHeader)" in real
 assert real.index("if (should_pass_arguments &&") < real.index("return std::nullopt;")

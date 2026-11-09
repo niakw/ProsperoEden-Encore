@@ -4,7 +4,7 @@
 
 > **UNPUBLISHED DRAFT PRERELEASE — NO DOWNLOADABLE PS5 BUILD OR RELEASE ASSETS.** This is a proposed, source-level R2 changelog. It is intentionally based on the **last authentically compiled public R1 dated 15 October 2026**, not the 30 October repository mirror. Development milestones **P0–P4 are treated as completed for the scope of this proposed R2 prerelease**. The final exact-SHA host evidence is tracked independently; **P5 (native build, installation, console hardware testing and game validation) is not included or claimed here**.
 
-**Draft reference:** engine `0b1d6587bec608a9f8cf98944c2ecc121e4d0e7f` · pinned vendor `dba9a02931dc3de32e1059379904e2aefa34e912` · source changes since the R1 compiled-source SHA `5629395324ff65c98b50c44f35f2142a4a92654a`.
+**Draft reference:** engine `0bdf2c4508bdc2a48d2abfb0e8cb8a1c41e3a818` · pinned vendor `6a9be6358798be528162b94a4559213c0c7c73c7` · source changes since the R1 compiled-source SHA `5629395324ff65c98b50c44f35f2142a4a92654a`.
 
 **R1 provenance:** [Original 15 October release](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) · [native build run #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232) · original source `56293953...` · release tag points to a different historical metadata commit `f037a78...`. The [30 October release in this repository](https://github.com/niakw/ProsperoEden-Encore/releases/tag/encore-R1-56293953) contains the **same imported R1 package**, not a new native compilation.
 

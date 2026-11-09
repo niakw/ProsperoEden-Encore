@@ -607,17 +607,17 @@ static void VerifyRealTransformFeedbackSpirv(const std::string& prefix) {
     program.syntax_list.emplace_back().type=
         Shader::IR::AbstractSyntaxNode::Type::Return;
     Shader::RuntimeInfo runtime{};
-    runtime.xfb_count=4;
-    runtime.xfb_varyings[0].buffer=0;
-    runtime.xfb_varyings[0].stream=0;
-    runtime.xfb_varyings[0].stride=16;
-    runtime.xfb_varyings[0].offset=0;
-    runtime.xfb_varyings[0].components=2;
-    runtime.xfb_varyings[2].buffer=0;
-    runtime.xfb_varyings[2].stream=0;
-    runtime.xfb_varyings[2].stride=16;
-    runtime.xfb_varyings[2].offset=8;
-    runtime.xfb_varyings[2].components=2;
+    runtime.xfb_count=36;
+    runtime.xfb_varyings[32].buffer=0;
+    runtime.xfb_varyings[32].stream=0;
+    runtime.xfb_varyings[32].stride=16;
+    runtime.xfb_varyings[32].offset=0;
+    runtime.xfb_varyings[32].components=2;
+    runtime.xfb_varyings[34].buffer=0;
+    runtime.xfb_varyings[34].stream=0;
+    runtime.xfb_varyings[34].stride=16;
+    runtime.xfb_varyings[34].offset=8;
+    runtime.xfb_varyings[34].components=2;
     Shader::Profile profile{};
     profile.supported_spirv=0x00010500;
     Shader::Backend::Bindings bindings{};

@@ -18,6 +18,9 @@ assert source.count(marker)==1
 body=source.split(marker,1)[1].split("\n}\n",1)[0]
 owner=marker+body+"\n}"
 assert owner.count("Transform-feedback varying count exceeds backing")==1
+attribute_abi=(ROOT/"vendor/sources/eden/src/shader_recompiler/frontend/ir/attribute.h").read_text()
+assert "SRIR_ATTRIBUTE_ELEM(Generic0X, 32)" in attribute_abi, (
+    "actual guest generic attribute index changed; do not use a fake slot 0")
 assert owner.count("Invalid transform-feedback component partition")==1
 assert owner.count("Invalid transform-feedback byte stride/offset")==1
 stage_owner=source.split("void EmitContext::DefineOutputs(",1)[1].split(
@@ -40,7 +43,7 @@ fixture=r"""
 using u32=std::uint32_t;
 struct Id {u32 value{};};
 enum class Stage {VertexB,Geometry};
-namespace IR {enum class Attribute:u32 {Generic0X=0};}
+namespace IR {enum class Attribute:u32 {Generic0X=32};}
 namespace spv {
 enum class Decoration {Location,Component,XfbBuffer,XfbStride,Offset,Stream};
 }
@@ -88,9 +91,9 @@ int main(){
     }
     {
         EmitContext c;
-        c.runtime_info.xfb_count=4;
-        c.runtime_info.xfb_varyings[0]={0,16,0,2,1};
-        c.runtime_info.xfb_varyings[2]={0,16,8,2,1};
+        c.runtime_info.xfb_count=36;
+        c.runtime_info.xfb_varyings[32]={0,16,0,2,1};
+        c.runtime_info.xfb_varyings[34]={0,16,8,2,1};
         DefineGenericOutput(c,0,1);
         assert(c.outputs==2);
         for(u32 j=0;j<2;++j) {
@@ -112,8 +115,8 @@ int main(){
     }
     {
         EmitContext c;
-        c.runtime_info.xfb_count=1;
-        c.runtime_info.xfb_varyings[0]={0,16,0,5,0};
+        c.runtime_info.xfb_count=33;
+        c.runtime_info.xfb_varyings[32]={0,16,0,5,0};
         bool rejected{};
         try{DefineGenericOutput(c,0,std::nullopt);}
         catch(const NotImplementedException&){rejected=true;}
@@ -121,9 +124,9 @@ int main(){
     }
     {
         EmitContext c;
-        c.runtime_info.xfb_count=3;
-        c.runtime_info.xfb_varyings[0]={0,16,0,2,0};
-        c.runtime_info.xfb_varyings[2]={0,16,8,3,0};
+        c.runtime_info.xfb_count=35;
+        c.runtime_info.xfb_varyings[32]={0,16,0,2,0};
+        c.runtime_info.xfb_varyings[34]={0,16,8,3,0};
         bool rejected{};
         try{DefineGenericOutput(c,0,std::nullopt);}
         catch(const NotImplementedException&){rejected=true;}
@@ -142,8 +145,8 @@ int main(){
         TransformFeedbackVarying{0,4,0xfffffffcu,1,0} // huge offset
     }) {
         EmitContext c;
-        c.runtime_info.xfb_count=1;
-        c.runtime_info.xfb_varyings[0]=bad;
+        c.runtime_info.xfb_count=33;
+        c.runtime_info.xfb_varyings[32]=bad;
         bool rejected{};
         try{DefineGenericOutput(c,0,std::nullopt);}
         catch(const NotImplementedException&){rejected=true;}

@@ -22,6 +22,7 @@ for code in locales:
         if prefix in ("SETTINGS","TROUBLESHOOTING","SUPPORT","ACCESSIBILITY"):
             assert "LANGUAGES.md" in content
     assert all(locales[code].get(k) for k in ("intro","install","settings","trouble","support","access","safety","limits"))
-assert "31 official PS5 language/region selections" in index
+assert "31 official PS5 system language/region selections" in index
+assert "docs/PS5_SYSTEM_LANGUAGE_POLICY.md" in index
 assert "no additional launcher languages" in index
 print(f"ENCORE_USER_DOC_29_LOCALES_PASS locales={len(locales)} guides={6*len(locales)} menu_choices=31")

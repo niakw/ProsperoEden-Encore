@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Source-only R09 regression: Original user DLL admission is fail closed.
-// No proprietary NVIDIA bytes or console execution in this host test.
+// No proprietary model bytes or console execution in this host test.
 #include "nr_dll_launch_preflight.h"
 #include <cassert>
 #include <filesystem>

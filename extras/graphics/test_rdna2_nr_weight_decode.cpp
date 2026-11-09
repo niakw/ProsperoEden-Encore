@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Numerical unit tests for NVIDIA model half scalars and Swin bias layout.
+// Numerical unit tests for learned-model half scalars and Swin bias layout.
 #include <algorithm>
 #include <cassert>
 #include <cmath>

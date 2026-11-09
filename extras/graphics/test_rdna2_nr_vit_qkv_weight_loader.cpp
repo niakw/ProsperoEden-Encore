@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Synthetic NRMODEL1 ViT QKV importer: no NVIDIA/model weights bundled.
+// Synthetic NRMODEL1 ViT QKV importer; no proprietary weights bundled.
 #include "video_core/renderer_vulkan/nr_rdna2_vit_qkv_weight_loader.h"
 #include "video_core/renderer_vulkan/nr_rdna2_split_ffwd_weight_loader.h"
 #include <algorithm>

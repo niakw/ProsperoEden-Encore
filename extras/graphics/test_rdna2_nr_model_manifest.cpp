@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// R09 exact upstream manifest names, no NVIDIA proprietary weights.
+// R09 exact upstream manifest names; no proprietary learned weights.
 #include "video_core/renderer_vulkan/nr_rdna2_model_manifest.h"
 #include <algorithm>
 #include <cassert>

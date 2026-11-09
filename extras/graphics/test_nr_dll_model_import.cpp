@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Host-only, no PS5, DLL, NVIDIA weight bytes or external network dependency.
+// Host-only; no console, proprietary DLL, learned weights or network dependency.
 #include "nr_dll_model_import.h"
 #include <array>
 #include <cassert>

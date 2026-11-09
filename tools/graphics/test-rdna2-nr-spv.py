@@ -47,7 +47,7 @@ def validate(shader: Path, header: Path | None):
             words=struct.unpack("<"+"I"*(len(binary)//4),binary)
             lines=[
                 "// SPDX-License-Identifier: MIT",
-                "// Generated RDNA2 Vulkan fallback projection. No NVIDIA model.",
+                "// Generated RDNA2 Vulkan fallback projection. No proprietary model.",
                 "#pragma once",
                 "#include <array>",
                 "#include <cstdint>",

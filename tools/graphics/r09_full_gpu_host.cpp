@@ -48,7 +48,7 @@ constexpr std::uint32_t kHeight = 1080u;
 constexpr VkExtent2D kExtent{kWidth, kHeight};
 constexpr std::uint64_t kInputBytes = std::uint64_t(kWidth) * kHeight * 4u;
 
-// The public runner may consume the user's ONE original NVIDIA DLL directly.
+// The public runner may consume one user-supplied original model DLL directly.
 // Import as DATA (never execute a Windows DLL), authenticate the 599 learned
 // tensors, and delete the extracted ~141 MiB pack on every exit path.
 struct PrivateModelCache {
@@ -270,7 +270,7 @@ void Run(const std::filesystem::path& original_model_or_dll,
     output.complete = true;
     // Bind the actual bytes, not just claimed dimensions, into the host log.
     // These digests permit an offline verifier to identify the exact capture
-    // and GPU readback without ever publishing NVIDIA model tensors.
+    // and GPU readback without ever publishing proprietary model tensors.
     Eden::GlyphIntegrity::Sha256 input_hash;
     input_hash.Update(source_pixels.data(), source_pixels.size());
     Eden::GlyphIntegrity::Sha256 output_hash;

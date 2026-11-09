@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // User-private CPU import for the last linked R09 Linux host binary.
-// Reads the Windows NVIDIA DLL as data, never executes it, never emits weights.
+// Reads the user-supplied Windows model DLL as data; never executes code or emits weights.
 #include "nr_dll_launch_preflight.h"
 #include <filesystem>
 #include <iostream>

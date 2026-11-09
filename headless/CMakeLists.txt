@@ -1152,7 +1152,7 @@ if(EDEN_PS5_OPENGL)
     list(APPEND video_sources "${EDEN_MAINTAINED_GL_BUFFER_CACHE}")
     if(PS5_NATIVE)
         # PS5 permits reading an ended query while another query is active.
-        # Retain the upstream NVIDIA workaround on all other builds.
+        # Retain the upstream driver-specific workaround on all other builds.
         set(EDEN_MAINTAINED_GL_QUERY_CACHE
             "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_query_cache.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_GL_QUERY_CACHE}")

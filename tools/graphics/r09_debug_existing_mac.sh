@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
 # Reuse a previously prepared private R09 run. DO NOT rebuild Eden,
-# regenerate the screenshot, or upload user-owned NVIDIA bytes.
+# regenerate the screenshot, or upload user-owned model bytes.
 set -euo pipefail
 umask 077
 if [[ "$(uname -s)" != Darwin || $# -ne 2 ]]; then

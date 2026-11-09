@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // PS5-native frame generation capabilities; user preference is not proof of displayed frames.
-// Prevent a PC-only NVIDIA/DLSS option from being advertised as native PS5.
+// Prevent a desktop-only proprietary upscaler path from being advertised as native console support.
 #pragma once
 #include <cstdint>
 
@@ -36,7 +36,7 @@ struct GraphicsCapabilities {
 constexpr Availability QualifyFrameGeneration(
     FrameGeneration requested, const GraphicsCapabilities& caps) noexcept {
     if (requested == FrameGeneration::Off) return Availability::Disabled;
-    // Unsupported on the PS5 GPU through a native NVIDIA NGX/DLSS5 path.
+    // Unsupported on the console GPU without a native implementation of the desktop-only path.
     if (requested == FrameGeneration::DlssPcOnlyUnsupported)
         return Availability::Unsupported;
     if (!caps.native_vulkan || caps.game_fps < 30)

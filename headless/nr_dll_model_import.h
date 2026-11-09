@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Import user-owned nvngx_dlssnr.dll weights as a private NRMODEL1 pack.
 // The Windows PE is parsed as DATA. Its code is never loaded or executed.
-// NVIDIA's DLL and learned weights are NOT distributed by Eden Encore.
+// The proprietary DLL and learned weights are NOT distributed by Eden Encore.
 #pragma once
 #include "glyph_sha256.h"
 #include <algorithm>
@@ -140,7 +140,7 @@ struct Bytes {
     if(matches!=1u)
         throw BadModel("exactly one WEIGHTS_HT resource required");
     // Trust the model payload, not a fixed SHA of the entire DLL: Windows
-    // DLLs may differ while carrying the same exact NVIDIA weight resource.
+    // DLLs may differ while carrying the same exact learned-weight resource.
     constexpr auto expected=
         "836f445d06ecd2e59bb9f17b84b91c143396fd76ccda1c9dc7fe81d5edd548f4";
     GlyphIntegrity::Sha256 hash;

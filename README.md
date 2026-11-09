@@ -104,8 +104,8 @@ Encore is **not** an official upstream release or a promise that every newer ups
 
 ## 🗺️ Roadmaps and upstream updates
 
-- **[Full R00–R25 feature roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** on the [isolated feature-development branch](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements): graphics, FSR, frame generation, advanced AA, themes, network, trophies, library and the R21 application updater. **Planned or experimental does not mean shipped.**
-- **[Unified NS1/NS2 roadmap](docs/ROADMAP_NS1_NS2_UNIFIED.md)**: common engine owners are now present on `main` and subject to finite P1/P2 host-exit contracts. The [older research branch](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) is historical context; **the last published R1 native PS5 binary contains none of these later mainline changes**.
+- **[Full R00–R25 feature roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** in the [historical R00–R25 planning document](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md): graphics, FSR, frame generation, advanced AA, themes, network, trophies, library and the R21 application updater. **Planned or experimental does not mean shipped.**
+- **[Unified NS1/NS2 roadmap](docs/ROADMAP_NS1_NS2_UNIFIED.md)**: common engine owners are now present on `main` and subject to finite P1/P2 host-exit contracts. The [historical second-generation research](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) is historical context; **the last published R1 native PS5 binary contains none of these later mainline changes**.
 - **[PS5 stability and F07 tracker](docs/FC27_F07_MASTER_TRACKER.md)**: the main branch remains the source of truth for current PS5 engine work.
 - **Upstream native updates are selective, not automatic.** The traceable Encore baseline is **ProsperoEden v1.000.040** ([fork notes](docs/FORK_NOTES.md)). New ProsperoEden/Eden changes are evaluated and adapted individually, with [upstream audits](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). The **R21 Encore in-app updater is planned, not currently shipped**.
 
@@ -375,7 +375,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 <details>
 <summary><strong>• Can Encore play Nintendo Switch 2 games?</strong></summary>
 
-- **Not in the current PS5 release.** The [NSW2 research branch](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) and its [feasibility report](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) cover loading, shader/CPU compatibility and homebrew execution paths.
+- **Not in the current PS5 release.** The [second-generation research roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) and its [feasibility report](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) cover loading, shader/CPU compatibility and homebrew execution paths.
 - A successful source test or homebrew harness is **not** proof that a commercial Switch 2 title runs. No stable compatibility, 30 FPS Mario Kart World performance or supported Switch 2 game-file matrix is claimed.
 - The existing Switch 1 path remains the main development focus on PS5. Research: [branch policy](docs/DEVELOPMENT_BRANCH_POLICY.md).
 
@@ -460,7 +460,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 <summary><strong>• Does Encore automatically follow updates from the original native ProsperoEden? Is there a built-in updater?</strong></summary>
 
 - **No automatic upstream merges.** The original **ProsperoEden v1.000.040** is Encore’s documented baseline; subsequent native-port and Eden updates are reviewed and integrated selectively, preserving PS5 Vulkan/JIT compatibility and testing. A newer upstream release is **not necessarily part of Encore**.
-- **No built-in updater is available in the current shipping release.** Feature milestone **R21** describes manual checking, an optional startup check, verified Encore-release downloads, user confirmation and safe rollback; it is **a specification, not a released feature**. [Full roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
+- **No built-in updater is available in the current shipping release.** Feature milestone **R21** describes manual checking, an optional startup check, verified Encore-release downloads, user confirmation and safe rollback; it is **a specification, not a released feature**. [Full roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
 - For now, use **[Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)** and the [upgrade guide](INSTALL.md). **Do not overwrite Encore with an original ProsperoEden ZIP** merely because it has a higher version: application ID **PPSA99008** and storage paths can overlap, although code and migration behavior differ.
 - References: [original native ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden), [upstream gap audit](docs/UPSTREAM_GAP_REGISTER_2026-10-14.md), [native-version review](docs/UPSTREAM_PROSPEROEDEN_1001000_R428.md).
 

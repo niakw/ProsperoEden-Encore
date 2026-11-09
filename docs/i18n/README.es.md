@@ -30,7 +30,7 @@
     <td align="center"><a href="#compatibility"><strong>Compatibilidad</strong></a></td>
     <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
     <td align="center"><a href="../../TROUBLESHOOTING.md"><strong>Ayuda</strong></a></td>
-    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
   </tr>
 </table>
 
@@ -93,8 +93,8 @@ No. Desde el **4 de octubre de 2026** se han incorporado cambios en el JIT y la 
 
 ## 🗺️ Roadmaps, ramas de investigación y actualizaciones
 
-- **[Roadmap completa de funcionalidades R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** de la [rama de desarrollo independiente](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements): FSR, generación de frames, AA, temas, biblioteca, red, trofeos y **actualizador de la aplicación R21**. **Una especificación o prototipo no equivale a una función publicada.**
-- **[Roadmap unificada NS1/NS2](../../docs/ROADMAP_NS1_NS2_UNIFIED.md)**: el cargador, la CPU, los servicios HLE y el GPU compartidos se desarrollan ya en **`main`**. La [antigua rama de investigación](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) es un antecedente histórico; **ninguno de estos cambios posteriores figura en el paquete nativo R1 publicado**.
+- **[Roadmap completa de funcionalidades R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** del [documento histórico R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md): FSR, generación de frames, AA, temas, biblioteca, red, trofeos y **actualizador de la aplicación R21**. **Una especificación o prototipo no equivale a una función publicada.**
+- **[Roadmap unificada NS1/NS2](../../docs/ROADMAP_NS1_NS2_UNIFIED.md)**: el cargador, la CPU, los servicios HLE y el GPU compartidos se desarrollan ya en **`main`**. Las [investigaciones anteriores](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) es un antecedente histórico; **ninguno de estos cambios posteriores figura en el paquete nativo R1 publicado**.
 - **[Seguimiento de estabilidad y optimización PS5/F07](../../docs/FC27_F07_MASTER_TRACKER.md)**: la rama main es la referencia de desarrollo del motor PS5.
 - **Las actualizaciones del ProsperoEden nativo se revisan individualmente, sin sincronización automática.** Encore parte de **ProsperoEden v1.000.040** ([base técnica](../../docs/FORK_NOTES.md)) y selecciona correcciones compatibles mediante [auditorías upstream](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md). **El actualizador integrado R21 está previsto, no disponible.**
 
@@ -420,7 +420,7 @@ Esta es la relación de **todos los grandes campos de cambios y optimizaciones d
 <summary><strong>• ¿Encore recibe las actualizaciones del ProsperoEden nativo? ¿Se puede actualizar Encore desde la PS5?</strong></summary>
 
 - **No existe sincronización automática con el proyecto original.** La base documentada es **ProsperoEden v1.000.040**. Los cambios posteriores del port nativo y de Eden se comparan y se adaptan **selectivamente** tras comprobar dependencias, Vulkan, JIT/memoria y regresiones. Una característica de una versión nueva de ProsperoEden **no está necesariamente presente en Encore**.
-- **Aún no hay actualizador integrado de Encore.** El hito **R21** plantea búsqueda manual, comprobación opcional al iniciar, información de versiones, descarga verificada, instalación confirmada y posibilidad de recuperación. Es **una especificación, no una función ya publicada**. [Roadmap R21](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
+- **Aún no hay actualizador integrado de Encore.** El hito **R21** plantea búsqueda manual, comprobación opcional al iniciar, información de versiones, descarga verificada, instalación confirmada y posibilidad de recuperación. Es **una especificación, no una función ya publicada**. [Roadmap R21](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
 - Por ahora utiliza las **[Releases oficiales de Encore](https://github.com/niakw/ProsperoEden-Encore/releases)** y la [guía de actualización](../../INSTALL.md). **No sobrescribas Encore con el ZIP original de ProsperoEden** únicamente porque su versión sea más reciente: pueden compartir ID de aplicación **PPSA99008** y rutas de datos, pero no el código ni los procesos de migración.
 - [ProsperoEden original](https://github.com/blackbearreloaded/ProsperoEden) · [diferencias upstream](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md) · [auditoría de versión nativa](../../docs/UPSTREAM_PROSPEROEDEN_1001000_R428.md).
 

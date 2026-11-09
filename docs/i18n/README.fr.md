@@ -30,7 +30,7 @@
     <td align="center"><a href="#compatibility"><strong>Compatibilité</strong></a></td>
     <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
     <td align="center"><a href="../../TROUBLESHOOTING.md"><strong>Aide</strong></a></td>
-    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>Roadmap</strong></a></td>
   </tr>
 </table>
 
@@ -97,8 +97,8 @@ Encore est un dépôt communautaire indépendant, issu d'un fork historique, et 
 
 ## 🗺️ Roadmaps, branche fonctionnalités et mises à jour
 
-- **[Roadmap collaborative complète R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** sur la [branche de développement des fonctionnalités](https://github.com/niakw/ProsperoEden-Encore/tree/feat/graphics-network-achievements) : FSR, génération de frames, AA, thèmes, interface, réseau, trophées, contenus et **mise à jour intégrée R21**. **Une spécification ou un prototype n’est pas une fonction déjà livrée.**
-- **[Roadmap commune NS1/NS2](../../docs/ROADMAP_NS1_NS2_UNIFIED.md)** : les composants partagés de chargement, HLE, CPU et GPU sont maintenant développés sur **`main`** avec validations hôte P1/P2. L'[ancienne branche de recherche](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) est historique ; ces changements ne figurent **pas** dans la dernière archive native R1 publiée.
+- **[Roadmap collaborative complète R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md)** dans le [document historique R00–R25](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md) : FSR, génération de frames, AA, thèmes, interface, réseau, trophées, contenus et **mise à jour intégrée R21**. **Une spécification ou un prototype n’est pas une fonction déjà livrée.**
+- **[Roadmap commune NS1/NS2](../../docs/ROADMAP_NS1_NS2_UNIFIED.md)** : les composants partagés de chargement, HLE, CPU et GPU sont maintenant développés sur **`main`** avec validations hôte P1/P2. Les [recherches antérieures](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) est historique ; ces changements ne figurent **pas** dans la dernière archive native R1 publiée.
 - **[Priorités PS5/F07 sur main](../../docs/FC27_F07_MASTER_TRACKER.md)** : référence actuelle des optimisations et de la stabilité du moteur PS5.
 - **Les mises à jour du projet natif ProsperoEden ne sont pas synchronisées automatiquement.** Encore part de **ProsperoEden v1.000.040** ([base documentée](../../docs/FORK_NOTES.md)) et reprend individuellement les correctifs utiles après audits ([registre d’écarts](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md)). **L’updater Encore R21 est prévu, mais n’est pas encore livré.**
 
@@ -344,7 +344,7 @@ Ce recensement présente **tous les grands périmètres de changements depuis le
 <details>
 <summary><strong>• « Permite jugar a la Switch 2? » — Est-ce compatible Nintendo Switch 2 ?</strong></summary>
 
-- **Non, pas dans la version PS5 actuelle.** La [branche de recherche NSW2](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) et son [rapport de faisabilité](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-ps5-compatibility/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) détaillent les essais indépendants.
+- **Non, pas dans la version PS5 actuelle.** La [branche de recherche NSW2](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) et son [rapport de faisabilité](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/NS2_PS5_FEASIBILITY_2026-10-30.md) détaillent les essais indépendants.
 - Les chemins NSO homebrew, traduction CPU/IR et shaders en cours d'étude ne prouvent **aucune compatibilité stable avec les jeux commerciaux Switch 2**.
 - Aucun résultat 30 FPS sur Mario Kart World ou prise en charge générale d'un format Switch 2 n'est annoncé. L'optimisation Switch 1/PS5 reste prioritaire.
 
@@ -429,7 +429,7 @@ Ce recensement présente **tous les grands périmètres de changements depuis le
 <summary><strong>• Encore reçoit-il les mises à jour de ProsperoEden natif ? Peut-on mettre à jour Encore depuis la PS5 ?</strong></summary>
 
 - **Pas de synchronisation automatique de l’amont.** Notre base traçable est **ProsperoEden v1.000.040** ; les correctifs des nouvelles versions du port natif et du cœur Eden sont comparés puis intégrés **sélectivement**, sous contrôle des dépendances, de Vulkan, du JIT, de la mémoire et des régressions. Une nouveauté chez ProsperoEden n’est **pas automatiquement présente dans Encore**.
-- **Pas encore de fonction de mise à jour intégrée d’Encore.** Le jalon **R21** définit un contrôle manuel, une éventuelle recherche au lancement, l’affichage des versions, un téléchargement vérifié, une confirmation de l’installation et une récupération sûre. C’est **une spécification, pas une fonctionnalité livrée**. [Roadmap R21](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
+- **Pas encore de fonction de mise à jour intégrée d’Encore.** Le jalon **R21** définit un contrôle manuel, une éventuelle recherche au lancement, l’affichage des versions, un téléchargement vérifié, une confirmation de l’installation et une récupération sûre. C’est **une spécification, pas une fonctionnalité livrée**. [Roadmap R21](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md).
 - En attendant, utiliser les **[Releases d’Encore](https://github.com/niakw/ProsperoEden-Encore/releases)** et le [guide de migration](../../INSTALL.md). **Ne pas écraser Encore avec un ZIP ProsperoEden d’origine** uniquement parce que sa version est plus récente : les applications peuvent partager l’identifiant **PPSA99008** et des dossiers, sans partager le même code ni les mêmes migrations.
 - [Projet natif ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden) · [audit des écarts amont](../../docs/UPSTREAM_GAP_REGISTER_2026-10-14.md) · [comparaison d’une version native](../../docs/UPSTREAM_PROSPEROEDEN_1001000_R428.md).
 

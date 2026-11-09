@@ -19,7 +19,7 @@ owner=owner_path.read_text()
 def extract(begin, end):
     assert owner.count(begin)==owner.count(end)==1,(begin,end)
     return begin+owner.split(begin,1)[1].split(end,1)[0]
-event=extract("void IGpuSession::GetNotificationEvent(", "std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>")
+event=extract("void IGpuSession::GetNotificationEvent(", "std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>\nIGpuSession::ResolveOpenedAddressSpace(")
 partition=extract("void IGpuSession::GetAddressSpacePartition(", "void IGpuSession::CreateGraphicsDevice(")
 assert 'catch (const std::bad_alloc&)' in event
 assert "rb.PushCopyObjects(ctx, *readable);" in event

@@ -25,6 +25,8 @@ TESTS = {
     "native_gpu_owners_syntax": "tools/ns2/check_native_gpu_boot_source_tus_host.py",
     "qmd_state_allocation": "tools/ns2/check_native_qmd_allocation_host.py",
     "gpu_registration_alloc": "tools/ns2/check_native_gpu_registration_alloc_host.py",
+    "gpu_worker_session_oom": "tools/ns2/check_native_worker_session_oom_host.py",
+    "spirv_patch_output": "tools/ns2/check_native_spirv_patch_output_host.py",
     "process_handoff_transaction": "tools/ns2/check_native_process_handoff_transaction_host.py",
     "gpu_kernel_session_rollback": "tools/ns2/check_gpu_session_kernel_rollback_host.py",
     "gpu_ipc_event_partition_oom": "tools/ns2/check_native_gpu_session_ipc_oom_host.py",

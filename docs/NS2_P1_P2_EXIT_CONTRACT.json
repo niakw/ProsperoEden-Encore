@@ -65,7 +65,8 @@
       "owner": "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp",
       "validators": [
         "tools/check-ns2-graphics-hle-host.py",
-        "tools/ns2/check_gpu_worker_staged_ledger_host.py"
+        "tools/ns2/check_gpu_worker_staged_ledger_host.py",
+        "tools/ns2/check_native_worker_session_oom_host.py"
       ],
       "positive": "Real 214 region and 216 remap preserve 4K/64K granularity from authenticated reservation.",
       "negative": "Unknown page shift, partial 64K remap and wrong address-space owner are refused.",
@@ -198,13 +199,14 @@
       "title": "Tessellation patch attributes and stages",
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
       "validators": [
-        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
+        "tools/ns2/check_native_spirv_patch_output_host.py"
       ],
       "positive": "Required patch reads and writes emit validated SPIR-V for supported tess stages.",
       "negative": "Non-generic or undeclared patch variables outside stage are explicitly rejected.",
       "status": "open",
       "evidence": {},
-      "blocker": "Validate required tessellation patch attribute operations and reject non-generic undeclared/out-of-stage access.",
+      "blocker": "Native tessellation write emitter rejects undeclared inner/outer/generic patch outputs with source-extracted C++ owner witness. Emitted TCS/TES SPIR-V positive modules and invalid-stage execution remain to qualify.",
       "excluded_forms": []
     },
     {

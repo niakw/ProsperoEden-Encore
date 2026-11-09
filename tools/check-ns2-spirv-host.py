@@ -186,6 +186,14 @@ def main():
         run([validator, "--target-env", env,
              str(OUT / "synthetic-texbuf-array.spv")])
         print(f"P2_2C_REAL_TEXTURE_BUFFER_ARRAY_VALIDATED {env}", flush=True)
+    # G02: the actual emitted VertexB split XFB module must pass the
+    # SPIR-V 1.5 and Vulkan 1.2 structural/resource validation rules.
+    # The emitted OpStores, component splits and two guest byte offsets are
+    # verified by the C++ real-owner fixture above.
+    for env in ("spv1.5", "vulkan1.2"):
+        run([validator, "--target-env", env,
+             str(OUT / "synthetic-xfb-split.spv")])
+        print(f"P2_G02_REAL_XFB_SPIRV_VALIDATED {env}", flush=True)
     # G03: independently validate TCS output and TES input for all six
     # built-in tessellation patch levels, not merely C++ emitter symbols.
     for kind in ("tess-control", "tess-eval"):

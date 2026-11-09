@@ -578,6 +578,80 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
     compile(0, true);
     std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=2 dynamic_index=1 zero_rejected=1");
 }
+// G02: the ACTUAL SPIR-V backend must emit a fully split transform-feedback
+// output: two vec2 declarations at the same generic location, with disjoint
+// component decorations and byte ranges in one 16-byte guest stream.
+static void VerifyRealTransformFeedbackSpirv(const std::string& prefix) {
+    using Shader::IR::Opcode;
+    using Shader::IR::Value;
+    using Shader::IR::Attribute;
+    Shader::ObjectPool<Shader::IR::Inst> pool{16};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage=Shader::Stage::VertexB;
+    program.blocks.push_back(&block);
+    for (const auto attr : {Attribute::Generic0X, Attribute::Generic0Y,
+                            Attribute::Generic0Z, Attribute::Generic0W}) {
+        program.info.stores.Set(attr);
+        block.AppendNewInst(Opcode::SetAttribute,
+                            {Value{attr}, Value{f32{2.5f}}, Value{u32{0}}});
+    }
+    auto& node=program.syntax_list.emplace_back();
+    node.type=Shader::IR::AbstractSyntaxNode::Type::Block;
+    node.data.block=&block;
+    program.syntax_list.emplace_back().type=
+        Shader::IR::AbstractSyntaxNode::Type::Return;
+    Shader::RuntimeInfo runtime{};
+    runtime.xfb_count=4;
+    runtime.xfb_varyings[0].buffer=0;
+    runtime.xfb_varyings[0].stream=0;
+    runtime.xfb_varyings[0].stride=16;
+    runtime.xfb_varyings[0].offset=0;
+    runtime.xfb_varyings[0].components=2;
+    runtime.xfb_varyings[2].buffer=0;
+    runtime.xfb_varyings[2].stream=0;
+    runtime.xfb_varyings[2].stride=16;
+    runtime.xfb_varyings[2].offset=8;
+    runtime.xfb_varyings[2].components=2;
+    Shader::Profile profile{};
+    profile.supported_spirv=0x00010500;
+    Shader::Backend::Bindings bindings{};
+    const auto words=Shader::Backend::SPIRV::EmitSPIRV(
+        profile,runtime,program,bindings);
+    Require(words.size()>5 && words[0]==0x07230203U,
+            "real G02 transform-feedback emitter returned no SPIR-V");
+    u32 stores{},xfb_decorations{},offset0{},offset8{},component2{},xfb_mode{};
+    for (std::size_t i=5;i<words.size();) {
+        const u32 word=words[i],count=word>>16,op=word&0xffffU;
+        Require(count && count<=words.size()-i,"malformed G02 SPIR-V");
+        if (op==static_cast<u32>(spv::Op::OpStore))++stores;
+        if (op==static_cast<u32>(spv::Op::OpExecutionMode) && count>=3 &&
+            words[i+2]==static_cast<u32>(spv::ExecutionMode::Xfb))++xfb_mode;
+        if (op==static_cast<u32>(spv::Op::OpDecorate) && count>=4) {
+            const auto decoration=words[i+2];
+            if(decoration==static_cast<u32>(spv::Decoration::XfbBuffer))++xfb_decorations;
+            if(decoration==static_cast<u32>(spv::Decoration::Offset)) {
+                offset0+=words[i+3]==0;
+                offset8+=words[i+3]==8;
+            }
+            if(decoration==static_cast<u32>(spv::Decoration::Component))
+                component2+=words[i+3]==2;
+        }
+        i+=count;
+    }
+    Require(stores>=4 && xfb_decorations>=2 && offset0>=1 &&
+            offset8>=1 && component2>=1 && xfb_mode>=1,
+            "actual G02 XFB streams did not split/store four components");
+    const auto path=prefix+"-xfb-split.spv";
+    std::ofstream file{path,std::ios::binary|std::ios::trunc};
+    Require(bool(file),"unable to write real G02 transform-feedback SPIR-V");
+    file.write(reinterpret_cast<const char*>(words.data()),
+               static_cast<std::streamsize>(words.size()*sizeof(u32)));
+    Require(bool(file),"incomplete real G02 transform-feedback module");
+    std::printf("P2_G02_REAL_XFB_SPLIT_SPIRV_EMITTED words=%zu stores=%u\n",
+                words.size(),stores);
+}
+
 // P2.4/G03: exercise actual non-generic tessellation patch inputs/outputs.
 // The SPIR-V backend must not treat TessLevelOuter/Inner as generic location
 // attributes: they are built-in Patch variables on *different* stages.
@@ -679,6 +753,7 @@ int main(int argc,char** argv) {
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();
     VerifyRealTextureBufferArraySpirv(argv[1]);
+    VerifyRealTransformFeedbackSpirv(argv[1]);
     VerifyRealTessPatchSpirv(argv[1]);
     std::array<u8,0x50> header{};
     constexpr u32 pred=7U<<12,exit_true=7U<<23;

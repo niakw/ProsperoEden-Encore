@@ -56,6 +56,17 @@
       "review_note": "2026-11-08: explicit parentheses around shared Vulkan-only spatial filter range (5–9), preserving the previous Boolean result and AMD FSR 1 ID=1. Clang -Wlogical-op-parentheses/-Werror warned on historical expression; no behavior or F07 historical SHA was changed. Verify with check-glyph-overrides-runtime.py, native source-audit CI."
     },
     {
+      "path": "headless/glyph_overrides_runtime.h",
+      "historical_reviewed_git_blob": "ba2b853c21f62402b442bf3f69acd46eff0689f6",
+      "post_snapshot_git_blob": "1c48eb7e0d2d2f025821849980263471a0cbf7f5",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Source comment neutralizes unsupported-title native-art terminology; no glyph lookup or input behavior changed.",
+      "review_kind": "host_source_input",
+      "required_source_fragment": "Unsupported/unverified versions retain the game's native artwork.",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed."
+    },
+    {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
       "post_snapshot_git_blob": "9eacdcbde5025e30f42124848eaafdf6afd6edaf",
@@ -74,6 +85,17 @@
       "review_kind": "source_contract",
       "required_source_fragment": "case 'B': return 0x6bae",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/ns2_title_catalog.h",
+      "historical_reviewed_git_blob": "a3d339dda21870e7e1b730c56ada9e5a37e01957",
+      "post_snapshot_git_blob": "a4b0023e407ea5d4459358d09ad2d1d70bee3cc2",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Source comment renames guest-generation catalog without changing title IDs, metadata fallback or image lookup.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "Offline second-generation guest title identity fallback",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed."
     },
     {
       "path": "headless/prosperoeden/eden_services.cpp",
@@ -235,6 +257,28 @@
       "review_kind": "source_contract",
       "required_source_fragment": "kAppVersion = \"Unversioned\"",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+    },
+    {
+      "path": "headless/ps5_amd_topology_evidence.h",
+      "historical_reviewed_git_blob": "8c74efd83a6ec09c59055a6de63d6a8cb082a6e3",
+      "post_snapshot_git_blob": "b8bd5a9f244e562feeb0abd266b8e3b8eee1552b",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Source comment neutrally labels the pinned CPU query; no CPUID validation or SMT scheduling change.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "Pure validation of pinned console current-CPU query",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed."
+    },
+    {
+      "path": "headless/ps5_guest_system_button_route.h",
+      "historical_reviewed_git_blob": "44fe45a39d2bebb5b5a2ebc6a7dec811b9426a54",
+      "post_snapshot_git_blob": "24b874fea9e8941851efebfabd43fa38cb13ca55",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Source comment neutrally identifies the reserved system button; input suppression and routing are unchanged.",
+      "review_kind": "host_source_input",
+      "required_source_fragment": "The central console system button is reserved",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed."
     },
     {
       "path": "headless/settings_store.h",

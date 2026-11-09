@@ -957,7 +957,7 @@ post_f07 = json.loads(
 assert post_f07['schema_version'] == 1
 assert post_f07['historical_f07_source_snapshots_preserved'] is True
 post_entries = post_f07['files']
-assert len(post_entries) == 24
+assert len(post_entries) == 28
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
@@ -983,7 +983,7 @@ for path, item in post_index.items():
     assert fragment and fragment in (ROOT/path).read_text(), (
         "Post-F07 new source contract lost", path)
 print("ENCORE_POST_F07_SOURCE_DELTA_INTEGRITY_PASS",
-      "historical_f07_blobs_unchanged=24",
+      "historical_f07_snapshot=preserved",
       f"independently_pinned_changes={len(post_entries)}",
       "performance_and_console_qualification=NOT_CLAIMED",flush=True)
 for e in entries:

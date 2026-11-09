@@ -623,7 +623,7 @@ void Launcher::draw_switch_language(Canvas& c) {
     list.rounded_rect({90,153,1740,2},0,kGrey);
     const auto& labels=services_.language_labels();
     const int count=static_cast<int>(labels.size());
-    text_shrink(c,tr("Choose the language games use"),116,
+    text_shrink(c,tr("Choose your preferred language"),116,
                 baseline(174,62,23),23,kSubtle,1570);
     const Rect window{122,260,1676,648};
     list.push_clip(window);

@@ -334,10 +334,6 @@ msgstr "Thema · Logo · Achtergrond · Gloed (Spel: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Kies één root voor sleutels, firmware, games, updates en mods"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Kies de taal die games gebruiken"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Kies · interface. software / Besturing — ongewijzigd."

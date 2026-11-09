@@ -1,18 +1,14 @@
 # Eden Encore — Ρυθμίσεις · Ελληνικά
 
-[Επισκόπηση](README.el-GR.md) · [Εγκατάσταση και ενημέρωση](INSTALL.el-GR.md) · [Ρυθμίσεις](SETTINGS.el-GR.md) · [Αντιμετώπιση προβλημάτων](TROUBLESHOOTING.el-GR.md) · [Υποστήριξη](SUPPORT.el-GR.md) · [Προσβασιμότητα](ACCESSIBILITY.el-GR.md) · [All languages](../../LANGUAGES.md)
+[Επισκόπηση](README.el-GR.md) · [Εγκατάσταση και ενημέρωση](INSTALL.el-GR.md) · [Ρυθμίσεις](SETTINGS.el-GR.md) · [Αντιμετώπιση προβλημάτων](TROUBLESHOOTING.el-GR.md) · [Υποστήριξη](SUPPORT.el-GR.md) · [Προσβασιμότητα](ACCESSIBILITY.el-GR.md) · [🌐](../../LANGUAGES.md)
 
 Οι προτεινόμενες αρχικές ρυθμίσεις είναι Vulkan, έξοδος 1440p, εσωτερική ανάλυση 1.25x, FSR 1 με ευκρίνεια 50%, FXAA και 60 Hz. Η έξοδος της τηλεόρασης διαφέρει από την εσωτερική ανάλυση του παιχνιδιού. Η δημιουργία καρέ δεν επιταχύνει την ίδια την προσομοίωση.
 
 ## Vulkan / FSR 1 — Ρυθμίσεις
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Ελληνικά. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-Οι προτεινόμενες αρχικές ρυθμίσεις είναι Vulkan, έξοδος 1440p, εσωτερική ανάλυση 1.25x, FSR 1 με ευκρίνεια 50%, FXAA και 60 Hz. Η έξοδος της τηλεόρασης διαφέρει από την εσωτερική ανάλυση του παιχνιδιού. Η δημιουργία καρέ δεν επιταχύνει την ίδια την προσομοίωση.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Ρυθμίσεις · Touchpad
 
@@ -36,4 +32,4 @@ The following are **exact option names and numeric values** shown for comparison
 
 Η τελευταία δημόσια μεταγλώττιση PS5 έγινε στις 15 Οκτωβρίου 2026. Η έκδοση της 30ής Οκτωβρίου ήταν αντίγραφο. Το νέο προσχέδιο δεν περιέχει εκτελέσιμα αρχεία ούτε επαληθευμένη συμβατότητα δεύτερης γενιάς.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.el-GR.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Εγκατάσταση και ενημέρωση](INSTALL.el-GR.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

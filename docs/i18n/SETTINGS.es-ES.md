@@ -1,18 +1,14 @@
 # Eden Encore — Ajustes · Español (España)
 
-[Información general](README.es.md) · [Instalación y actualización](INSTALL.es.md) · [Ajustes](SETTINGS.es-ES.md) · [Solución de problemas](TROUBLESHOOTING.es-ES.md) · [Asistencia](SUPPORT.es-ES.md) · [Accesibilidad](ACCESSIBILITY.es-ES.md) · [All languages](../../LANGUAGES.md)
+[Información general](README.es.md) · [Instalación y actualización](INSTALL.es.md) · [Ajustes](SETTINGS.es-ES.md) · [Solución de problemas](TROUBLESHOOTING.es-ES.md) · [Asistencia](SUPPORT.es-ES.md) · [Accesibilidad](ACCESSIBILITY.es-ES.md) · [🌐](../../LANGUAGES.md)
 
 El perfil recomendado utiliza Vulkan, salida 1440p, resolución interna 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor es distinta de la resolución interna del juego. La generación de fotogramas no acelera la simulación del juego.
 
 ## Vulkan / FSR 1 — Ajustes
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Español (España). 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-El perfil recomendado utiliza Vulkan, salida 1440p, resolución interna 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor es distinta de la resolución interna del juego. La generación de fotogramas no acelera la simulación del juego.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Ajustes · Touchpad
 
@@ -36,4 +32,4 @@ No borres nunca /data/prosperoeden/: puede contener partidas guardadas, ajustes 
 
 La última compilación pública auténtica para PS5 data del 15 de octubre de 2026; la publicación del 30 de octubre fue una copia. El nuevo borrador no incluye binarios ni compatibilidad de segunda generación comprobada en consola.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.es.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Instalación y actualización](INSTALL.es.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

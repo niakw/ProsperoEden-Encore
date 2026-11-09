@@ -1,14 +1,18 @@
 # Eden Encore — Доступность · Русский
 
-[Обзор](README.ru.md) · [Установка и обновление](INSTALL.ru-RU.md) · [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [Languages](../../LANGUAGES.md)
+[Обзор](README.ru.md) · [Установка и обновление](INSTALL.ru.md) · [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [🌐](../../LANGUAGES.md)
 
 Увеличенный текст, повышенная контрастность и уменьшение движения включаются независимо в настройках доступности и изначально отключены. Доступность оболочки не гарантирует доступность каждой игры.
+
+## Настройки · Touchpad
+
+Короткое нажатие на Touchpad открывает быстрые настройки Encore во время игры. Центральная системная кнопка зарезервирована для консоли. В меню доступны графика, назначение кнопок, FPS и диагностика. Некоторые изменения требуют перезапуска игры. Язык выбирается в Settings → Language; не все языки каталогов доступны в списке.
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## Настройки
 
 Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## Поддержка
 
@@ -20,4 +24,4 @@ Controller navigation: use on-screen focus and navigation prompts. L1/R1 switche
 
 Последняя действительно собранная публичная версия PS5 датирована 15 октября 2026 года; публикация 30 октября была её копией. Новый черновик предварительного выпуска не содержит бинарных файлов или подтверждённой совместимости игр второго поколения на консоли.
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [Установка и обновление](INSTALL.ru.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

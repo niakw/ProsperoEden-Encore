@@ -1,18 +1,14 @@
 # Eden Encore — Setări · Română
 
-[Prezentare generală](README.ro-RO.md) · [Instalare și actualizare](INSTALL.ro-RO.md) · [Setări](SETTINGS.ro-RO.md) · [Depanare](TROUBLESHOOTING.ro-RO.md) · [Asistență](SUPPORT.ro-RO.md) · [Accesibilitate](ACCESSIBILITY.ro-RO.md) · [All languages](../../LANGUAGES.md)
+[Prezentare generală](README.ro-RO.md) · [Instalare și actualizare](INSTALL.ro-RO.md) · [Setări](SETTINGS.ro-RO.md) · [Depanare](TROUBLESHOOTING.ro-RO.md) · [Asistență](SUPPORT.ro-RO.md) · [Accesibilitate](ACCESSIBILITY.ro-RO.md) · [🌐](../../LANGUAGES.md)
 
 Profilul recomandat folosește Vulkan, ieșire TV 1440p, scară internă 1.25x, FSR 1 spațial cu claritate 50%, FXAA și 60 Hz. Rezoluția ieșirii TV nu este aceeași cu rezoluția internă a jocului. Generarea cadrelor nu mărește viteza simulării jocului.
 
 ## Vulkan / FSR 1 — Setări
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Română. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-Profilul recomandat folosește Vulkan, ieșire TV 1440p, scară internă 1.25x, FSR 1 spațial cu claritate 50%, FXAA și 60 Hz. Rezoluția ieșirii TV nu este aceeași cu rezoluția internă a jocului. Generarea cadrelor nu mărește viteza simulării jocului.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Setări · Touchpad
 
@@ -36,4 +32,4 @@ Nu șterge niciodată /data/prosperoeden/: poate conține salvări, setări și 
 
 Ultimul pachet public PS5 compilat efectiv datează din 15 octombrie 2026. Publicarea din 30 octombrie a fost o copie. Noul proiect de prerelease nu conține binare sau compatibilitate confirmată pentru jocurile de generația a doua pe consolă.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.ro-RO.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Instalare și actualizare](INSTALL.ro-RO.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

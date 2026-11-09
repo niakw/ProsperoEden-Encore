@@ -1,14 +1,18 @@
 # Eden Encore — Barrierefreiheit · Deutsch
 
-[Überblick](README.de.md) · [Installation und Update](INSTALL.de-DE.md) · [Einstellungen](SETTINGS.de-DE.md) · [Fehlerbehebung](TROUBLESHOOTING.de-DE.md) · [Support](SUPPORT.de-DE.md) · [Barrierefreiheit](ACCESSIBILITY.de-DE.md) · [Languages](../../LANGUAGES.md)
+[Überblick](README.de.md) · [Installation und Update](INSTALL.de.md) · [Einstellungen](SETTINGS.de-DE.md) · [Fehlerbehebung](TROUBLESHOOTING.de-DE.md) · [Support](SUPPORT.de-DE.md) · [Barrierefreiheit](ACCESSIBILITY.de-DE.md) · [🌐](../../LANGUAGES.md)
 
 Größere Schrift, hoher Kontrast und reduzierte Bewegung lassen sich unter Barrierefreiheit unabhängig aktivieren; standardmäßig sind sie aus. Sichtbare Fokusnavigation im Launcher garantiert keine Barrierefreiheit innerhalb der Spiele.
+
+## Einstellungen · Touchpad
+
+Ein kurzer Druck auf das Touchpad öffnet die Encore-Schnelleinstellungen im Spiel; die zentrale Systemtaste bleibt der Konsole vorbehalten. Dort finden sich Grafik, Tastenbelegung, FPS und Diagnoseprotokolle. Manche Änderungen erfordern einen Neustart des Spiels. Die Sprache lässt sich unter Settings → Language wählen; nicht jede vorhandene Übersetzung ist im Menü auswählbar.
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## Einstellungen
 
 Das empfohlene Ausgangsprofil nutzt Vulkan, 1440p-TV-Ausgabe, 1.25x interne Spielauflösung, räumliches FSR 1 bei 50 % Schärfe, FXAA und 60 Hz. TV-Ausgabe und Spielauflösung sind unterschiedliche Einstellungen. Frame Generation erhöht nicht die tatsächlich berechneten Spielbilder.
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## Support
 
@@ -20,4 +24,4 @@ Lösche /data/prosperoeden/ niemals: Dort können Spielstände, Einstellungen un
 
 Die letzte tatsächlich kompilierte öffentliche PS5-Version stammt vom 15. Oktober 2026. Die Veröffentlichung vom 30. Oktober ist eine Kopie. Der neue Entwurf enthält weder Binärdateien noch bestätigte Spiele der zweiten Generation auf PS5.
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [Installation und Update](INSTALL.de.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,14 +1,18 @@
 # Eden Encore — Aksesibilitas · Bahasa Indonesia
 
-[Ringkasan](README.id-ID.md) · [Pemasangan dan pembaruan](INSTALL.id-ID.md) · [Pengaturan](SETTINGS.id-ID.md) · [Pemecahan masalah](TROUBLESHOOTING.id-ID.md) · [Dukungan](SUPPORT.id-ID.md) · [Aksesibilitas](ACCESSIBILITY.id-ID.md) · [Languages](../../LANGUAGES.md)
+[Ringkasan](README.id-ID.md) · [Pemasangan dan pembaruan](INSTALL.id-ID.md) · [Pengaturan](SETTINGS.id-ID.md) · [Pemecahan masalah](TROUBLESHOOTING.id-ID.md) · [Dukungan](SUPPORT.id-ID.md) · [Aksesibilitas](ACCESSIBILITY.id-ID.md) · [🌐](../../LANGUAGES.md)
 
 Teks lebih besar, kontras tinggi, dan gerakan berkurang dapat diaktifkan secara terpisah di Aksesibilitas; semuanya nonaktif secara bawaan. Kemudahan navigasi peluncur tidak menjamin aksesibilitas di setiap gim.
+
+## Pengaturan · Touchpad
+
+Tekan Touchpad sebentar untuk membuka pengaturan cepat Encore saat bermain; tombol sistem tengah tetap dipakai konsol. Menu tersebut menyediakan grafis, pemetaan tombol, FPS, dan diagnostik. Sebagian perubahan memerlukan memulai ulang gim. Bahasa dipilih melalui Settings → Language; tidak semua bahasa katalog tersedia sebagai pilihan menu.
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## Pengaturan
 
 Profil awal yang disarankan memakai Vulkan, keluaran TV 1440p, skala render gim 1.25x, FSR 1 spasial dengan ketajaman 50%, FXAA, dan 60 Hz. Resolusi keluaran TV berbeda dari resolusi internal gim. Pembuatan bingkai tidak mempercepat simulasi gim.
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## Dukungan
 
@@ -20,4 +24,4 @@ Jangan pernah menghapus /data/prosperoeden/ karena dapat berisi simpanan, pengat
 
 Paket PS5 publik terakhir yang benar-benar dikompilasi bertanggal 15 Oktober 2026. Rilis 30 Oktober hanyalah salinan. Draf prarilis baru tidak menyediakan binari atau kompatibilitas gim generasi kedua yang telah dibuktikan di konsol.
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [Pemasangan dan pembaruan](INSTALL.id-ID.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

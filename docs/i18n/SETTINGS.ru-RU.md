@@ -1,18 +1,14 @@
 # Eden Encore — Настройки · Русский
 
-[Обзор](README.ru.md) · [Установка и обновление](INSTALL.ru.md) · [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [All languages](../../LANGUAGES.md)
+[Обзор](README.ru.md) · [Установка и обновление](INSTALL.ru.md) · [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [🌐](../../LANGUAGES.md)
 
 Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.
 
 ## Vulkan / FSR 1 — Настройки
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Русский. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-Рекомендуемый профиль: Vulkan, вывод на ТВ 1440p, внутренний масштаб игры 1.25x, пространственный FSR 1 с резкостью 50%, FXAA и 60 Hz. Разрешение вывода на ТВ отличается от внутреннего рендеринга игры. Генерация кадров не ускоряет саму симуляцию игры.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Настройки · Touchpad
 
@@ -36,4 +32,4 @@ The following are **exact option names and numeric values** shown for comparison
 
 Последняя действительно собранная публичная версия PS5 датирована 15 октября 2026 года; публикация 30 октября была её копией. Новый черновик предварительного выпуска не содержит бинарных файлов или подтверждённой совместимости игр второго поколения на консоли.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.ru.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Установка и обновление](INSTALL.ru.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,18 +1,14 @@
 # Eden Encore — Pengaturan · Bahasa Indonesia
 
-[Ringkasan](README.id-ID.md) · [Pemasangan dan pembaruan](INSTALL.id-ID.md) · [Pengaturan](SETTINGS.id-ID.md) · [Pemecahan masalah](TROUBLESHOOTING.id-ID.md) · [Dukungan](SUPPORT.id-ID.md) · [Aksesibilitas](ACCESSIBILITY.id-ID.md) · [All languages](../../LANGUAGES.md)
+[Ringkasan](README.id-ID.md) · [Pemasangan dan pembaruan](INSTALL.id-ID.md) · [Pengaturan](SETTINGS.id-ID.md) · [Pemecahan masalah](TROUBLESHOOTING.id-ID.md) · [Dukungan](SUPPORT.id-ID.md) · [Aksesibilitas](ACCESSIBILITY.id-ID.md) · [🌐](../../LANGUAGES.md)
 
 Profil awal yang disarankan memakai Vulkan, keluaran TV 1440p, skala render gim 1.25x, FSR 1 spasial dengan ketajaman 50%, FXAA, dan 60 Hz. Resolusi keluaran TV berbeda dari resolusi internal gim. Pembuatan bingkai tidak mempercepat simulasi gim.
 
 ## Vulkan / FSR 1 — Pengaturan
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Bahasa Indonesia. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-Profil awal yang disarankan memakai Vulkan, keluaran TV 1440p, skala render gim 1.25x, FSR 1 spasial dengan ketajaman 50%, FXAA, dan 60 Hz. Resolusi keluaran TV berbeda dari resolusi internal gim. Pembuatan bingkai tidak mempercepat simulasi gim.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Pengaturan · Touchpad
 
@@ -36,4 +32,4 @@ Jangan pernah menghapus /data/prosperoeden/ karena dapat berisi simpanan, pengat
 
 Paket PS5 publik terakhir yang benar-benar dikompilasi bertanggal 15 Oktober 2026. Rilis 30 Oktober hanyalah salinan. Draf prarilis baru tidak menyediakan binari atau kompatibilitas gim generasi kedua yang telah dibuktikan di konsol.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.id-ID.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Pemasangan dan pembaruan](INSTALL.id-ID.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

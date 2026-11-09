@@ -1,18 +1,14 @@
 # Eden Encore — 设置 · 简体中文
 
-[概览](README.zh-Hans.md) · [安装与更新](INSTALL.zh-Hans.md) · [设置](SETTINGS.zh-Hans.md) · [问题排查](TROUBLESHOOTING.zh-Hans.md) · [支持](SUPPORT.zh-Hans.md) · [无障碍](ACCESSIBILITY.zh-Hans.md) · [All languages](../../LANGUAGES.md)
+[概览](README.zh-Hans.md) · [安装与更新](INSTALL.zh-Hans.md) · [设置](SETTINGS.zh-Hans.md) · [问题排查](TROUBLESHOOTING.zh-Hans.md) · [支持](SUPPORT.zh-Hans.md) · [无障碍](ACCESSIBILITY.zh-Hans.md) · [🌐](../../LANGUAGES.md)
 
 推荐初始配置为 Vulkan、1440p 电视输出、1.25x 游戏内部渲染倍率、空间 FSR 1（锐度 50%）、FXAA 和 60 Hz。电视输出分辨率与游戏内部渲染分辨率不同。帧生成并不会提高游戏的实际模拟速度。
 
 ## Vulkan / FSR 1 — 设置
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in 简体中文. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-推荐初始配置为 Vulkan、1440p 电视输出、1.25x 游戏内部渲染倍率、空间 FSR 1（锐度 50%）、FXAA 和 60 Hz。电视输出分辨率与游戏内部渲染分辨率不同。帧生成并不会提高游戏的实际模拟速度。
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## 设置 · Touchpad
 
@@ -36,4 +32,4 @@ The following are **exact option names and numeric values** shown for comparison
 
 上一份真正编译并公开发布的 PS5 安装包日期为 2026 年 10 月 15 日；10 月 30 日发布的是相同文件的副本。新的预发布草稿不含可执行文件，也不表示第二代游戏已在主机上验证。
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.zh-Hans.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [安装与更新](INSTALL.zh-Hans.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

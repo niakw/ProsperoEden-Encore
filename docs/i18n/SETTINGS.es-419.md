@@ -1,18 +1,14 @@
 # Eden Encore — Configuración · Español (Latinoamérica)
 
-[Resumen](README.es-419.md) · [Instalación y actualización](INSTALL.es-419.md) · [Configuración](SETTINGS.es-419.md) · [Solución de problemas](TROUBLESHOOTING.es-419.md) · [Soporte](SUPPORT.es-419.md) · [Accesibilidad](ACCESSIBILITY.es-419.md) · [All languages](../../LANGUAGES.md)
+[Resumen](README.es-419.md) · [Instalación y actualización](INSTALL.es-419.md) · [Configuración](SETTINGS.es-419.md) · [Solución de problemas](TROUBLESHOOTING.es-419.md) · [Soporte](SUPPORT.es-419.md) · [Accesibilidad](ACCESSIBILITY.es-419.md) · [🌐](../../LANGUAGES.md)
 
 El perfil recomendado utiliza Vulkan, salida de TV 1440p, escala interna de juego 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor no es la resolución interna del juego. La generación de cuadros no aumenta por sí sola la simulación del juego.
 
 ## Vulkan / FSR 1 — Configuración
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Español (Latinoamérica). 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-El perfil recomendado utiliza Vulkan, salida de TV 1440p, escala interna de juego 1.25x, FSR 1 espacial con nitidez 50 %, FXAA y 60 Hz. La salida del televisor no es la resolución interna del juego. La generación de cuadros no aumenta por sí sola la simulación del juego.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Configuración · Touchpad
 
@@ -36,4 +32,4 @@ Nunca borres /data/prosperoeden/: puede contener partidas guardadas, ajustes y c
 
 La última compilación pública auténtica de PS5 es del 15 de octubre de 2026; la publicación del 30 de octubre fue una copia. El nuevo borrador no tiene binarios ni juegos de segunda generación verificados en consola.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.es-419.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Instalación y actualización](INSTALL.es-419.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,14 +1,18 @@
 # Eden Encore — アクセシビリティ · 日本語
 
-[概要](README.ja.md) · [インストールと更新](INSTALL.ja-JP.md) · [設定](SETTINGS.ja-JP.md) · [トラブルシューティング](TROUBLESHOOTING.ja-JP.md) · [サポート](SUPPORT.ja-JP.md) · [アクセシビリティ](ACCESSIBILITY.ja-JP.md) · [Languages](../../LANGUAGES.md)
+[概要](README.ja.md) · [インストールと更新](INSTALL.ja.md) · [設定](SETTINGS.ja-JP.md) · [トラブルシューティング](TROUBLESHOOTING.ja-JP.md) · [サポート](SUPPORT.ja-JP.md) · [アクセシビリティ](ACCESSIBILITY.ja-JP.md) · [🌐](../../LANGUAGES.md)
 
 大きい文字、高コントラスト、動きの軽減はアクセシビリティ設定で個別に有効にできます。初期状態はすべてオフです。ランチャーで操作できることは、すべてのゲームのアクセシビリティを保証しません。
+
+## 設定 · Touchpad
+
+ゲーム中に Touchpad を短く押すと Encore のクイック設定を開けます。中央のシステムボタンは本体専用で、このメニューには使用しません。グラフィック、ボタン割り当て、FPS、診断情報を確認できます。変更内容によってはゲームの再起動が必要です。言語は Settings → Language から選択しますが、すべての翻訳言語がメニューにあるわけではありません。
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## 設定
 
 推奨初期設定は Vulkan、テレビ出力 1440p、ゲーム内部倍率 1.25x、空間アップスケーリング FSR 1（シャープネス 50%）、FXAA、60 Hz です。テレビへの出力解像度とゲーム内部解像度は別です。フレーム生成はゲームの処理速度そのものを上げません。
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## サポート
 
@@ -20,4 +24,4 @@ GitHub Issues には Encore のバージョン、PS5 ファームウェア、再
 
 実際にコンパイルされた最後の公開 PS5 パッケージは 2026 年 10 月 15 日版です。10 月 30 日の公開は同じパッケージの複製です。新しいプレリリースの下書きには実行バイナリも第二世代ゲームの実機動作保証もありません。
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [インストールと更新](INSTALL.ja.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

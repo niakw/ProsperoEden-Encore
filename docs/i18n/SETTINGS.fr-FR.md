@@ -1,18 +1,14 @@
 # Eden Encore — Paramètres · Français (France)
 
-[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [All languages](../../LANGUAGES.md)
+[Présentation](README.fr.md) · [Installation et mise à jour](INSTALL.fr.md) · [Paramètres](SETTINGS.fr-FR.md) · [Dépannage](TROUBLESHOOTING.fr-FR.md) · [Assistance](SUPPORT.fr-FR.md) · [Accessibilité](ACCESSIBILITY.fr-FR.md) · [🌐](../../LANGUAGES.md)
 
 Le profil conseillé utilise Vulkan, une sortie TV 1440p, une résolution interne 1.25x, FSR 1 spatial avec 50 % de netteté, FXAA et 60 Hz. La sortie TV ne correspond pas à la résolution interne du jeu. La génération d’images ne change pas la vitesse de simulation du jeu.
 
 ## Vulkan / FSR 1 — Paramètres
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Français (France). 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-Le profil conseillé utilise Vulkan, une sortie TV 1440p, une résolution interne 1.25x, FSR 1 spatial avec 50 % de netteté, FXAA et 60 Hz. La sortie TV ne correspond pas à la résolution interne du jeu. La génération d’images ne change pas la vitesse de simulation du jeu.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Paramètres · Touchpad
 
@@ -36,4 +32,4 @@ Ne supprime jamais /data/prosperoeden/ : ce dossier peut contenir tes sauvegarde
 
 Le dernier paquet PS5 réellement compilé et publié date du 15 octobre 2026. La publication du 30 octobre en était une copie. Le brouillon de prérelease ne contient aucun binaire ni compatibilité Switch 2 confirmée sur console.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.fr.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Installation et mise à jour](INSTALL.fr.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,18 +1,14 @@
 # Eden Encore — Налаштування · Українська
 
-[Огляд](README.uk-UA.md) · [Встановлення й оновлення](INSTALL.uk-UA.md) · [Налаштування](SETTINGS.uk-UA.md) · [Усунення несправностей](TROUBLESHOOTING.uk-UA.md) · [Підтримка](SUPPORT.uk-UA.md) · [Доступність](ACCESSIBILITY.uk-UA.md) · [All languages](../../LANGUAGES.md)
+[Огляд](README.uk-UA.md) · [Встановлення й оновлення](INSTALL.uk-UA.md) · [Налаштування](SETTINGS.uk-UA.md) · [Усунення несправностей](TROUBLESHOOTING.uk-UA.md) · [Підтримка](SUPPORT.uk-UA.md) · [Доступність](ACCESSIBILITY.uk-UA.md) · [🌐](../../LANGUAGES.md)
 
 Рекомендований профіль: Vulkan, виведення на телевізор 1440p, внутрішній масштаб гри 1.25x, просторовий FSR 1 із різкістю 50%, FXAA та 60 Hz. Роздільна здатність ТВ відрізняється від внутрішнього рендерингу гри. Генерація кадрів не прискорює симуляцію гри.
 
 ## Vulkan / FSR 1 — Налаштування
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in Українська. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-Рекомендований профіль: Vulkan, виведення на телевізор 1440p, внутрішній масштаб гри 1.25x, просторовий FSR 1 із різкістю 50%, FXAA та 60 Hz. Роздільна здатність ТВ відрізняється від внутрішнього рендерингу гри. Генерація кадрів не прискорює симуляцію гри.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## Налаштування · Touchpad
 
@@ -36,4 +32,4 @@ The following are **exact option names and numeric values** shown for comparison
 
 Останній справді скомпільований публічний пакет PS5 датований 15 жовтня 2026 року. Публікація 30 жовтня була копією. Новий чернетковий попередній випуск не містить бінарних файлів чи підтвердженої підтримки ігор другого покоління на консолі.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.uk-UA.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [Встановлення й оновлення](INSTALL.uk-UA.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

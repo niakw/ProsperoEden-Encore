@@ -1,18 +1,14 @@
 # Eden Encore — 設定 · 日本語
 
-[概要](README.ja.md) · [インストールと更新](INSTALL.ja.md) · [設定](SETTINGS.ja-JP.md) · [トラブルシューティング](TROUBLESHOOTING.ja-JP.md) · [サポート](SUPPORT.ja-JP.md) · [アクセシビリティ](ACCESSIBILITY.ja-JP.md) · [All languages](../../LANGUAGES.md)
+[概要](README.ja.md) · [インストールと更新](INSTALL.ja.md) · [設定](SETTINGS.ja-JP.md) · [トラブルシューティング](TROUBLESHOOTING.ja-JP.md) · [サポート](SUPPORT.ja-JP.md) · [アクセシビリティ](ACCESSIBILITY.ja-JP.md) · [🌐](../../LANGUAGES.md)
 
 推奨初期設定は Vulkan、テレビ出力 1440p、ゲーム内部倍率 1.25x、空間アップスケーリング FSR 1（シャープネス 50%）、FXAA、60 Hz です。テレビへの出力解像度とゲーム内部解像度は別です。フレーム生成はゲームの処理速度そのものを上げません。
 
 ## Vulkan / FSR 1 — 設定
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in 日本語. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-推奨初期設定は Vulkan、テレビ出力 1440p、ゲーム内部倍率 1.25x、空間アップスケーリング FSR 1（シャープネス 50%）、FXAA、60 Hz です。テレビへの出力解像度とゲーム内部解像度は別です。フレーム生成はゲームの処理速度そのものを上げません。
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## 設定 · Touchpad
 
@@ -36,4 +32,4 @@ GitHub Issues には Encore のバージョン、PS5 ファームウェア、再
 
 実際にコンパイルされた最後の公開 PS5 パッケージは 2026 年 10 月 15 日版です。10 月 30 日の公開は同じパッケージの複製です。新しいプレリリースの下書きには実行バイナリも第二世代ゲームの実機動作保証もありません。
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.ja.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [インストールと更新](INSTALL.ja.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

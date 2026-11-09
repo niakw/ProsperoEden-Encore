@@ -1,14 +1,18 @@
 # Eden Encore — Khả năng tiếp cận · Tiếng Việt
 
-[Tổng quan](README.vi-VN.md) · [Cài đặt và cập nhật](INSTALL.vi-VN.md) · [Thiết lập](SETTINGS.vi-VN.md) · [Khắc phục sự cố](TROUBLESHOOTING.vi-VN.md) · [Hỗ trợ](SUPPORT.vi-VN.md) · [Khả năng tiếp cận](ACCESSIBILITY.vi-VN.md) · [Languages](../../LANGUAGES.md)
+[Tổng quan](README.vi-VN.md) · [Cài đặt và cập nhật](INSTALL.vi-VN.md) · [Thiết lập](SETTINGS.vi-VN.md) · [Khắc phục sự cố](TROUBLESHOOTING.vi-VN.md) · [Hỗ trợ](SUPPORT.vi-VN.md) · [Khả năng tiếp cận](ACCESSIBILITY.vi-VN.md) · [🌐](../../LANGUAGES.md)
 
 Chữ lớn, độ tương phản cao và giảm chuyển động là các tùy chọn độc lập trong Khả năng tiếp cận và đều tắt theo mặc định. Giao diện dễ sử dụng không bảo đảm mọi trò chơi đều hỗ trợ tiếp cận.
+
+## Thiết lập · Touchpad
+
+Nhấn nhanh Touchpad để mở cài đặt nhanh Encore khi đang chơi; nút hệ thống ở giữa dành riêng cho máy chơi game. Menu gồm đồ họa, gán nút, FPS và chẩn đoán. Một số thay đổi cần khởi động lại trò chơi. Chọn ngôn ngữ trong Settings → Language; không phải mọi ngôn ngữ của danh mục đều xuất hiện trong menu.
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## Thiết lập
 
 Hồ sơ đề xuất sử dụng Vulkan, đầu ra TV 1440p, độ phân giải game nội bộ 1.25x, FSR 1 không gian với độ nét 50%, FXAA và 60 Hz. Đầu ra TV không đồng nghĩa với độ phân giải render của trò chơi. Tạo khung hình không tăng tốc độ mô phỏng game.
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## Hỗ trợ
 
@@ -20,4 +24,4 @@ Không bao giờ xóa /data/prosperoeden/ vì có thể chứa bản lưu, thi�
 
 Gói PS5 công khai cuối cùng thực sự được biên dịch ngày 15 tháng 10 năm 2026. Bản đăng ngày 30 tháng 10 chỉ là bản sao. Bản nháp phát hành mới không có tệp nhị phân hay trò chơi thế hệ thứ hai được xác nhận chạy trên console.
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [Cài đặt và cập nhật](INSTALL.vi-VN.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

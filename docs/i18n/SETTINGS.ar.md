@@ -1,18 +1,14 @@
 # Eden Encore — الإعدادات · العربية
 
-[نظرة عامة](README.ar.md) · [التثبيت والتحديث](INSTALL.ar.md) · [الإعدادات](SETTINGS.ar.md) · [حل المشكلات](TROUBLESHOOTING.ar.md) · [الدعم](SUPPORT.ar.md) · [إمكانية الوصول](ACCESSIBILITY.ar.md) · [All languages](../../LANGUAGES.md)
+[نظرة عامة](README.ar.md) · [التثبيت والتحديث](INSTALL.ar.md) · [الإعدادات](SETTINGS.ar.md) · [حل المشكلات](TROUBLESHOOTING.ar.md) · [الدعم](SUPPORT.ar.md) · [إمكانية الوصول](ACCESSIBILITY.ar.md) · [🌐](../../LANGUAGES.md)
 
 تبدأ الإعدادات الموصى بها بمحرك Vulkan ودقة إخراج 1440p ومقياس لعب 1.25x وFSR 1 بحدة 50% وFXAA وتحديث 60 Hz. يختلف إخراج التلفاز عن دقة اللعبة الداخلية. لا تفترض أن تحسين الصورة أو توليد الإطارات يزيد سرعة محاكاة اللعبة.
 
 ## Vulkan / FSR 1 — الإعدادات
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in العربية. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-تبدأ الإعدادات الموصى بها بمحرك Vulkan ودقة إخراج 1440p ومقياس لعب 1.25x وFSR 1 بحدة 50% وFXAA وتحديث 60 Hz. يختلف إخراج التلفاز عن دقة اللعبة الداخلية. لا تفترض أن تحسين الصورة أو توليد الإطارات يزيد سرعة محاكاة اللعبة.
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## الإعدادات · Touchpad
 
@@ -36,4 +32,4 @@ The following are **exact option names and numeric values** shown for comparison
 
 آخر إصدار PS5 مُجمّع علناً يعود إلى 15 أكتوبر 2026؛ إصدار 30 أكتوبر مجرد نسخة من الحزمة نفسها. لا تتضمن المسودة الجديدة ملفات تشغيل، ولم يُتحقق بعد من ألعاب الجيل الثاني على الجهاز.
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.ar.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [التثبيت والتحديث](INSTALL.ar.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

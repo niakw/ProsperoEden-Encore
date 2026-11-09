@@ -1,14 +1,18 @@
 # Eden Encore — Accessibilità · Italiano
 
-[Panoramica](README.it.md) · [Installazione e aggiornamento](INSTALL.it-IT.md) · [Impostazioni](SETTINGS.it-IT.md) · [Risoluzione dei problemi](TROUBLESHOOTING.it-IT.md) · [Supporto](SUPPORT.it-IT.md) · [Accessibilità](ACCESSIBILITY.it-IT.md) · [Languages](../../LANGUAGES.md)
+[Panoramica](README.it.md) · [Installazione e aggiornamento](INSTALL.it.md) · [Impostazioni](SETTINGS.it-IT.md) · [Risoluzione dei problemi](TROUBLESHOOTING.it-IT.md) · [Supporto](SUPPORT.it-IT.md) · [Accessibilità](ACCESSIBILITY.it-IT.md) · [🌐](../../LANGUAGES.md)
 
 Testo ingrandito, contrasto elevato e movimento ridotto si attivano separatamente nelle opzioni Accessibilità e sono disattivati all'inizio. La navigazione accessibile del launcher non certifica l'accessibilità di tutti i giochi.
+
+## Impostazioni · Touchpad
+
+Una breve pressione del Touchpad apre le impostazioni rapide di Encore durante il gioco; il tasto centrale di sistema resta riservato alla console. Il menu include grafica, mappatura dei pulsanti, FPS e diagnostica. Alcune modifiche richiedono il riavvio del gioco. La lingua si seleziona in Settings → Language; non tutte le lingue dei cataloghi sono selezionabili.
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## Impostazioni
 
 Il profilo consigliato parte da Vulkan, uscita TV 1440p, scala interna 1.25x, FSR 1 spaziale con nitidezza 50%, FXAA e 60 Hz. L'uscita TV è distinta dalla risoluzione di rendering del gioco. La generazione di fotogrammi non accelera la simulazione del gioco.
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## Supporto
 
@@ -20,4 +24,4 @@ Non cancellare mai /data/prosperoeden/: potrebbe contenere salvataggi, impostazi
 
 L'ultimo pacchetto PS5 pubblicamente compilato risale al 15 ottobre 2026. La pubblicazione del 30 ottobre era una copia. La nuova bozza non contiene file binari né una compatibilità di seconda generazione verificata sulla console.
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [Installazione e aggiornamento](INSTALL.it.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

@@ -1,14 +1,18 @@
 # Eden Encore — إمكانية الوصول · العربية
 
-[نظرة عامة](README.ar.md) · [التثبيت والتحديث](INSTALL.ar.md) · [الإعدادات](SETTINGS.ar.md) · [حل المشكلات](TROUBLESHOOTING.ar.md) · [الدعم](SUPPORT.ar.md) · [إمكانية الوصول](ACCESSIBILITY.ar.md) · [Languages](../../LANGUAGES.md)
+[نظرة عامة](README.ar.md) · [التثبيت والتحديث](INSTALL.ar.md) · [الإعدادات](SETTINGS.ar.md) · [حل المشكلات](TROUBLESHOOTING.ar.md) · [الدعم](SUPPORT.ar.md) · [إمكانية الوصول](ACCESSIBILITY.ar.md) · [🌐](../../LANGUAGES.md)
 
 تتيح الواجهة تكبير النص والتباين العالي وتقليل الحركة من إعدادات إمكانية الوصول، وهي خيارات منفصلة ومعطلة افتراضياً. يعتمد التنقل على التركيز المرئي ووحدة التحكم، ولا يعني ذلك دعم أدوات المساعدة داخل جميع الألعاب.
+
+## الإعدادات · Touchpad
+
+اضغط ضغطة قصيرة على لوحة اللمس (Touchpad) لفتح إعدادات Encore السريعة أثناء اللعب. زر النظام المركزي محجوز للمنصة، وليس اختصارًا للقائمة. يمكن الوصول إلى الرسوميات وتعيين الأزرار وعداد FPS والسجلات من القائمة. قد تتطلب بعض التغييرات إعادة تشغيل اللعبة. اختيار اللغة موجود في Settings → Language، لكن ليست جميع لغات ملفات الترجمة متاحة في القائمة.
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## الإعدادات
 
 تبدأ الإعدادات الموصى بها بمحرك Vulkan ودقة إخراج 1440p ومقياس لعب 1.25x وFSR 1 بحدة 50% وFXAA وتحديث 60 Hz. يختلف إخراج التلفاز عن دقة اللعبة الداخلية. لا تفترض أن تحسين الصورة أو توليد الإطارات يزيد سرعة محاكاة اللعبة.
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## الدعم
 
@@ -20,4 +24,4 @@ Controller navigation: use on-screen focus and navigation prompts. L1/R1 switche
 
 آخر إصدار PS5 مُجمّع علناً يعود إلى 15 أكتوبر 2026؛ إصدار 30 أكتوبر مجرد نسخة من الحزمة نفسها. لا تتضمن المسودة الجديدة ملفات تشغيل، ولم يُتحقق بعد من ألعاب الجيل الثاني على الجهاز.
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [التثبيت والتحديث](INSTALL.ar.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

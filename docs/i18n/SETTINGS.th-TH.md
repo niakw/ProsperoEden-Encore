@@ -1,18 +1,14 @@
 # Eden Encore — การตั้งค่า · ไทย
 
-[ภาพรวม](README.th.md) · [การติดตั้งและอัปเดต](INSTALL.th.md) · [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [All languages](../../LANGUAGES.md)
+[ภาพรวม](README.th.md) · [การติดตั้งและอัปเดต](INSTALL.th.md) · [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [🌐](../../LANGUAGES.md)
 
 ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น
 
 ## Vulkan / FSR 1 — การตั้งค่า
 
-The following are **exact option names and numeric values** shown for comparison; descriptions and guidance remain in ไทย. 
-
 | `Minimum` | `Recommended` | `High` |
 | --- | --- | --- |
-| `Vulkan` · `TV 1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `TV 1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `TV 2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
-
-ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น
+| `Vulkan` · `1080p` · `1×` · `Bilinear` · `60 Hz` | `Vulkan` · `1440p` · `1.25×` · `FSR 1` · `FXAA` · `60 Hz` | `Vulkan` · `2160p` · `1.5×` · `Bicubic` · `FXAA` · `60 Hz` |
 
 ## การตั้งค่า · Touchpad
 
@@ -36,4 +32,4 @@ The following are **exact option names and numeric values** shown for comparison
 
 แพ็กเกจ PS5 สาธารณะที่คอมไพล์จริงล่าสุดคือวันที่ 15 ตุลาคม 2026 การเผยแพร่วันที่ 30 ตุลาคมเป็นเพียงสำเนา ฉบับร่างพรีรีลีสใหม่ไม่มีไฟล์ไบนารีหรือเกมรุ่นที่สองที่ยืนยันว่าเล่นบนคอนโซลได้
 
-[Detailed English settings and all available options](../../SETTINGS.md) · [Installation](./INSTALL.th.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../SETTINGS.md) · [การติดตั้งและอัปเดต](INSTALL.th.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

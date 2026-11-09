@@ -1,14 +1,18 @@
 # Eden Encore — การช่วยการเข้าถึง · ไทย
 
-[ภาพรวม](README.th.md) · [การติดตั้งและอัปเดต](INSTALL.th-TH.md) · [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [Languages](../../LANGUAGES.md)
+[ภาพรวม](README.th.md) · [การติดตั้งและอัปเดต](INSTALL.th.md) · [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [🌐](../../LANGUAGES.md)
 
 สามารถเปิดข้อความขนาดใหญ่ คอนทราสต์สูง และลดการเคลื่อนไหวแยกกันในเมนูการช่วยการเข้าถึง โดยค่าเริ่มต้นปิดทั้งหมด การใช้หน้าตาแอปได้ไม่ได้หมายความว่าเกมทุกเกมเข้าถึงได้
+
+## การตั้งค่า · Touchpad
+
+แตะ Touchpad สั้น ๆ เพื่อเปิดการตั้งค่าด่วนของ Encore ระหว่างเล่นเกม ปุ่มระบบตรงกลางสงวนไว้สำหรับคอนโซล เมนูนี้มีกราฟิก การกำหนดปุ่ม FPS และการวินิจฉัย การเปลี่ยนบางอย่างต้องเริ่มเกมใหม่ เลือกภาษาที่ Settings → Language แต่ไม่ใช่ทุกภาษาของไฟล์แปลที่มีให้เลือกในเมนู
+
+`L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 
 ## การตั้งค่า
 
 ค่าเริ่มต้นที่แนะนำคือ Vulkan, เอาต์พุตทีวี 1440p, ความละเอียดเกมภายใน 1.25x, FSR 1 แบบเชิงพื้นที่ ความคมชัด 50%, FXAA และ 60 Hz ความละเอียดทีวีกับความละเอียดที่เกมเรนเดอร์เป็นคนละค่า การสร้างเฟรมไม่ได้ทำให้การจำลองเกมเร็วขึ้น
-
-Controller navigation: use on-screen focus and navigation prompts. L1/R1 switches main launcher tabs where supported; face-button mapping is a separate per-game preference. Larger text, high contrast and reduced motion affect the launcher, not PS5 system accessibility or every guest game's content.
 
 ## การสนับสนุน
 
@@ -20,4 +24,4 @@ Controller navigation: use on-screen focus and navigation prompts. L1/R1 switche
 
 แพ็กเกจ PS5 สาธารณะที่คอมไพล์จริงล่าสุดคือวันที่ 15 ตุลาคม 2026 การเผยแพร่วันที่ 30 ตุลาคมเป็นเพียงสำเนา ฉบับร่างพรีรีลีสใหม่ไม่มีไฟล์ไบนารีหรือเกมรุ่นที่สองที่ยืนยันว่าเล่นบนคอนโซลได้
 
-[Detailed English accessibility reference](../../ACCESSIBILITY.md) · [English installation](../../INSTALL.md) · [Eden Encore Releases](https://github.com/niakw/ProsperoEden-Encore/releases)
+[English](../../ACCESSIBILITY.md) · [การติดตั้งและอัปเดต](INSTALL.th.md) · [Releases](https://github.com/niakw/ProsperoEden-Encore/releases)

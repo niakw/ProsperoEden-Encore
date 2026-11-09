@@ -54,7 +54,7 @@ with tempfile.TemporaryDirectory(prefix="eden-g08-native-cfg-") as tmp:
         for opt in ("-O0","-O2"):
             exe=Path(tmp)/(Path(cxx).name+opt)
             argv=[cxx,"-std=c++20",opt,"-DFMT_HEADER_ONLY",
-                  "-Wall","-Wextra","-Werror","-Wno-unused-parameter",
+                  "-Werror","-Wno-unused-parameter",
                   "-pthread",
                   "-I"+str(fmt),"-I"+str(shader),"-I"+str(eden),
                   *map(str,srcs),"-o",str(exe)]

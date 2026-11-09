@@ -45,6 +45,7 @@ TESTS = {
     "hle_ipc_timeout": "tools/verify/hle/check-native-hle-ipc-timeout-host.py",
     "hle_ipc_receive_index": "tools/verify/hle/check-native-hle-ipc-receive-index-host.py",
     "shared_spirv_compiler": "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
+    "spirv_descriptor_array_bounds": "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py",
     "atomic_qmd3": "tools/ns2/check_native_qmd_atomic_span_host.py",
     "cbuf_qmd3": "tools/ns2/check_native_qmd_direct_cbuf_host.py",
     "qmd32_real_staging": "tools/ns2/check_native_qmd_32_slots_host.py",

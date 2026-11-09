@@ -608,6 +608,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         receipt=p24_by_path.get(name)
         if receipt is None:
             return text
+        # G07 write-commit is an independently reviewed post-P24 production
+        # fix, not a historical Task/Mesh or MSAA source change. Reverse its
+        # one exact hunk before checking the IMMUTABLE old raw-blob receipt.
+        # Any unrelated edit still fails the original Git blob SHA check.
+        if name == 'vulkan_rasterizer.cpp':
+            before = "            if (!resources->ValidateGpuBufferMappings(\n                    [this](u64 address, u32 bytes) {\n                        return Shader::Ampere::NativeQmdContiguousGpuSpan(\n                            address, bytes, [this](u64 page) {\n                                return gpu_memory->GpuToCpuAddress(page);\n                            });\n                    }))\n                return false;"
+            after = "            // A VA can stay mapped while a guest remaps its physical pages.\n            // Recheck the exact pre-staging backing here, under the commit\n            // lock, not merely contiguous coverage. Matches also validates\n            // the full 49-bit span, so no second mapping walk is needed.\n            if (!staged_buffer_mappings.Matches(\n                    *resources, [this](u64 address) {\n                        return gpu_memory->GpuToCpuAddress(address);\n                    }))\n                return false;"
+            assert text.count(after) == 1, (
+                'G07 physical-backing write-commit reversible hunk drift', name)
+            text = text.replace(after, before, 1)
         later=post_by_path.get(name)
         if later and verify_hash:
             assert git_blob_sha(text) == later['post_change_raw_blob_sha'], (

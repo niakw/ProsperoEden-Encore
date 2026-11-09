@@ -25,6 +25,21 @@ assert actual.index("if (!dir)") < actual.index('dir->GetFile("main.npdm")')
 assert actual.rindex("if (!dir)") < actual.rindex('dir->GetFile("main.npdm")')
 assert "metadata.Load(npdm)" in actual and "metadata.Reload(npdm)" in actual
 assert "dir = patch_manager.PatchExeFS(dir);" in actual
+# The actual file and directory constructors must also refuse bad parents
+# before attempting metadata/icon access; Load alone cannot protect them.
+ctor_file=code.split(
+    "AppLoader_DeconstructedRomDirectory::AppLoader_DeconstructedRomDirectory(FileSys::VirtualFile",1
+)[1].split(
+    "AppLoader_DeconstructedRomDirectory::AppLoader_DeconstructedRomDirectory(\n    FileSys::VirtualDir",1
+)[0]
+assert "if (!file) return;" in ctor_file
+assert "if (!file_dir) return;" in ctor_file
+assert ctor_file.index("if (!file) return;") < ctor_file.index("file->GetContainingDirectory()")
+assert ctor_file.index("if (!file_dir) return;") < ctor_file.index('file_dir->GetFile("main.npdm")')
+ctor_dir=code.split(
+    "AppLoader_DeconstructedRomDirectory::AppLoader_DeconstructedRomDirectory(\n    FileSys::VirtualDir",1
+)[1].split("FileType AppLoader_DeconstructedRomDirectory::IdentifyType(",1)[0]
+assert "directory ? directory->GetFile(\"main\") : FileSys::VirtualFile{}" in ctor_dir
 # Only the genuine source segment is under test: return before deeper
 # metadata/NSO code, whose separate owner-linked tests remain required.
 actual+="\n    return {ResultStatus::Success, {}};\n}\n"

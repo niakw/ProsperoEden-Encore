@@ -21,6 +21,9 @@ assert source.count(start)==source.count(end)==1
 method=start+source.split(start,1)[1].split(end,1)[0]
 assert source.count("CheckedTextureArrayIndex(ctx, index, def.count)") == 5
 assert source.count("CheckSingletonTextureIndex(index, def.count);") == 5
+assert source.count("CheckedImageDescriptor(ctx.") == 7
+assert "ctx.textures.at(info.descriptor_index)" not in source
+assert 'throw LogicError("Missing reflected image/texture descriptor");' in method
 assert "if (count != 1)" in method
 assert 'Invalid singleton texture descriptor count' in method
 assert "void CheckSingletonTextureIndex(" in method
@@ -31,6 +34,7 @@ assert "index.Type() != IR::Type::U32" in method
 assert "return ctx.Def(index);" in method
 
 fixture=r"""
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <stdexcept>
@@ -66,6 +70,16 @@ __REAL_OWNER__
 int main() {
     using namespace Shader::Backend::SPIRV;
     EmitContext ctx;
+    const std::array<u32,3> textures{11,22,33};
+    assert(CheckedImageDescriptor(textures,0)==11);
+    assert(CheckedImageDescriptor(textures,2)==33);
+    bool missing=false;
+    try {(void)CheckedImageDescriptor(textures,3);} catch(const LogicError&){missing=true;}
+    assert(missing);
+    const std::array<u32,0> empty{};
+    missing=false;
+    try {(void)CheckedImageDescriptor(empty,0);} catch(const LogicError&){missing=true;}
+    assert(missing);
     auto good=[](u32 i) { return IR::Value{true,false,IR::Type::U32,i}; };
     auto dynamic=[](u32 i) { return IR::Value{false,false,IR::Type::U32,i}; };
     assert(CheckedTextureArrayIndex(ctx,good(0),4).value==100);
@@ -119,4 +133,4 @@ with tempfile.TemporaryDirectory(prefix="eden-g01-texel-index-") as d:
                   "valid=2 dynamic_preexisting=1 oob=2"
                   " invalid_type=2 empty=1 zero_count=1"
                   " singleton_invalid_imm=2 invalid_type=2 count_zero=2"
-                  " dynamic_unchecked=1",flush=True)
+                  " dynamic_unchecked=1 missing_descriptor=refused",flush=True)

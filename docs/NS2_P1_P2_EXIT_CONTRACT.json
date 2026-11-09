@@ -203,7 +203,7 @@
       "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
       "status": "open",
       "evidence": {},
-      "blocker": "Real native SPIR-V emitter now rejects malformed/out-of-range constant array indices with executed-owner Clang/GCC proof. Runtime dynamic descriptor index bounds, actual descriptor selection in generated spirv-val modules, and missing-descriptor errors remain to prove.",
+      "blocker": "Compile-time reflected descriptor index/count and missing-definition failures now have real-emitter source-owner C++ proofs. Runtime-variable array/singleton bounds and actual dynamically selected guest texture in validated SPIR-V/Vulkan execution remain unproven.",
       "excluded_forms": []
     },
     {

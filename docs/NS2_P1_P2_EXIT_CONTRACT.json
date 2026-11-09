@@ -37,13 +37,25 @@
       "owner": "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
       "validators": [
         "tools/ns2/check_native_nvdrv_allocation_range_host.py",
-        "tools/ns2/check_gpu_worker_staged_ledger_host.py"
+        "tools/ns2/check_gpu_worker_staged_ledger_host.py",
+        "tools/ns2/check_nvdrv_pin_failure_propagation_host.py",
+        "tools/ns2/check_native_nvmap_pin_refs_host.py",
+        "tools/ns2/check_native_dense_ledger_oom_host.py"
       ],
       "positive": "4K and sparse mappings publish only after committed VA and NVMap ownership.",
       "negative": "OOM, bad alignment, stale FD and remap overlap roll back without pins or PTE leaks.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Prove 49-bit GMMU/NVMap multi-step rollback, pinned allocation failure and sparse remap ownership on the actual driver.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/ns2/check_native_nvdrv_allocation_range_host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_nvdrv_pin_failure_propagation_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {
@@ -201,9 +213,18 @@
       ],
       "positive": "Guest physical banks and permitted dynamic offsets bind the exact original CBUF bytes.",
       "negative": "Divergent bank, bad extent and unbound CBUF are rejected before shader dispatch.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Exercise genuine QMD3 indirect CBUF bank/offset selection and reject divergent/unbound or oversized reads.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/ns2/check_native_qmd_direct_cbuf_host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_spirv_cbuf_span_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

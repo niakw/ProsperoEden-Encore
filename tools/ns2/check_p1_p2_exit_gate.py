@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "docs" / "NS2_P1_P2_EXIT_CONTRACT.json"
 EXPECTED = tuple(f"H{n:02}" for n in range(1, 8)) + tuple(
     f"G{n:02}" for n in range(1, 11))
-ALLOWED = {"open", "host_verified", "scope_excluded"}
+ALLOWED = {"open", "host_verified"}
 EXECUTED = {"real-owner-exec", "spirv-val", "real-owner-ipc"}
 REPO = "niakw/ProsperoEden-Encore"
 
@@ -48,7 +48,7 @@ def active_witnesses() -> str:
 
 def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:
     errors: list[str] = []
-    counts = {"open": 0, "host_verified": 0, "scope_excluded": 0}
+    counts = {"open": 0, "host_verified": 0, "excluded_forms": 0}
     if data.get("schema") != 1:
         errors.append("unsupported contract schema")
     items = data.get("items")
@@ -109,17 +109,32 @@ def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:
                         not isinstance(proof.get("run_id"), int) or
                         proof["run_id"] <= 0):
                     errors.append(f"{ident}: {key} needs real executed witness + run ID")
-        elif state == "scope_excluded":
-            # An optional SDK form may be intentionally rejected only with an
-            # ABI justification AND real rejection proof; never a silent pass.
-            if len(str(evidence.get("abi_reason", ""))) < 60:
-                errors.append(f"{ident}: exclusion needs explicit SDK/ABI rationale")
-            rejection = evidence.get("negative")
+        # Only a precise SDK form may be excluded within a required
+        # H/G contract. Excluding a complete row is never permitted.
+        excluded = item.get("excluded_forms", [])
+        if not isinstance(excluded, list):
+            errors.append(f"{ident}: excluded_forms must be an array")
+            excluded = []
+        for form in excluded:
+            if not isinstance(form, dict):
+                errors.append(f"{ident}: malformed excluded form")
+                continue
+            selector = form.get("selector")
+            if (not isinstance(selector, str) or
+                not re.fullmatch(r"[A-Za-z0-9_.:-]{3,64}", selector) or
+                selector.lower() in {"all", "any", "unknown", "other", "remaining"} or
+                selector == ident):
+                errors.append(f"{ident}: exclusion must identify one SDK form")
+            if len(str(form.get("abi_reason", ""))) < 60:
+                errors.append(f"{ident}: excluded form needs SDK/ABI justification")
+            rejection = form.get("negative")
             if not isinstance(rejection, dict) or (
-                    rejection.get("validator") not in checks or
-                    rejection.get("kind") not in EXECUTED or
-                    not isinstance(rejection.get("run_id"), int)):
-                errors.append(f"{ident}: exclusion needs executed native rejection")
+                rejection.get("validator") not in checks or
+                rejection.get("kind") not in EXECUTED or
+                not isinstance(rejection.get("run_id"), int) or
+                rejection.get("run_id", 0) <= 0):
+                errors.append(f"{ident}: excluded form needs executed refusal")
+        counts["excluded_forms"] += len(excluded)
     workflows = data.get("mandatory_workflows")
     required = {
         "Encore core fast gate",
@@ -173,12 +188,39 @@ def enforce_exit(data: dict) -> list[str]:
         errors.append("mandatory CI not green at exact SHA " + main[:12] +
                       ": " + ", ".join(missing))
     for item in data["items"]:
-        for key in (("positive", "negative") if item["status"] == "host_verified"
-                    else ("negative",)):
+        # Every mandatory H/G contract needs positive AND negative real
+        # execution; individual exclusions add their own native refusal.
+        for key in ("positive", "negative"):
             run_id = item["evidence"][key]["run_id"]
             if run_id not in success_ids:
                 errors.append(f"{item['id']} {key}: run {run_id} not green at this SHA")
+        for form in item.get("excluded_forms", []):
+            run_id = form["negative"]["run_id"]
+            if run_id not in success_ids:
+                errors.append(
+                    f"{item['id']} excluded {form['selector']}: run {run_id} not green")
     return errors
+
+
+def validate_fail_closed(data: dict) -> list[str]:
+    """Negative mutation check of the release gate itself (not GPU proof)."""
+    import copy
+    cases = []
+    missing = copy.deepcopy(data)
+    missing["items"][0]["validators"] = []
+    cases.append(("missing witness", missing))
+    excluded = copy.deepcopy(data)
+    excluded["items"][0]["status"] = "scope_excluded"
+    cases.append(("whole required gate excluded", excluded))
+    invented = copy.deepcopy(data)
+    invented["items"][0]["status"] = "host_verified"
+    invented["items"][0]["blocker"] = ""
+    cases.append(("fake positive/negative evidence", invented))
+    short = copy.deepcopy(data)
+    short["items"].pop()
+    cases.append(("missing H/G contract", short))
+    return [f"fail-closed mutation escaped: {name}" for name, candidate in cases
+            if not validate_manifest(candidate)[0]]
 
 
 def main() -> int:
@@ -191,15 +233,17 @@ def main() -> int:
     try:
         data = json.loads(MANIFEST.read_text())
         problems, counts = validate_manifest(data)
+        if not problems:
+            problems.extend(validate_fail_closed(data))
         if args.enforce and not problems:
             problems.extend(enforce_exit(data))
     except (OSError, ValueError, KeyError, TypeError) as exc:
         problems = [str(exc)]
-        counts = {"open": 0, "host_verified": 0, "scope_excluded": 0}
+        counts = {"open": 0, "host_verified": 0, "excluded_forms": 0}
     result = {"schema": 1, "goal": "P1_P2_HOST_EXIT",
               "total": 17,
               "verified": counts["host_verified"],
-              "explicit_exclusions": counts["scope_excluded"],
+              "explicit_excluded_forms": counts["excluded_forms"],
               "open": counts["open"],
               "exit_ready": args.enforce and not problems,
               "structural_audit": not args.enforce,
@@ -210,7 +254,7 @@ def main() -> int:
     else:
         print("P1_P2_EXIT_" + ("ENFORCE" if args.enforce else "AUDIT"),
               f"verified={result['verified']}/17",
-              f"excluded={result['explicit_exclusions']}/17",
+              f"optional_forms_excluded={result['explicit_excluded_forms']}",
               f"open={result['open']}/17",
               f"ready={result['exit_ready']}", flush=True)
         for error in problems:

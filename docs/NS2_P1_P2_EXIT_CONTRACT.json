@@ -13,8 +13,7 @@
   ],
   "statuses": [
     "open",
-    "host_verified",
-    "scope_excluded"
+    "host_verified"
   ],
   "items": [
     {
@@ -29,7 +28,8 @@
       "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "H02",
@@ -43,7 +43,8 @@
       "negative": "OOM, bad alignment, stale FD and remap overlap roll back without pins or PTE leaks.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "H03",
@@ -57,7 +58,8 @@
       "negative": "Unknown page shift, partial 64K remap and wrong address-space owner are refused.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "H04",
@@ -71,7 +73,8 @@
       "negative": "Invalid client, retired handles and OOM cannot create fake display or signal.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "H05",
@@ -85,7 +88,8 @@
       "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "H06",
@@ -99,7 +103,8 @@
       "negative": "Unknown commands, stale FD and unauthorized process cannot produce success or mutate mappings.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "H07",
@@ -113,7 +118,8 @@
       "negative": "NS2 native fail-closed paths do not throw or alter semantics on NS1 channels.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G01",
@@ -126,7 +132,8 @@
       "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G02",
@@ -139,7 +146,8 @@
       "negative": "Invalid partitions and write masks do not write beyond the declared stream.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G03",
@@ -152,7 +160,8 @@
       "negative": "Non-generic or undeclared patch variables outside stage are explicitly rejected.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G04",
@@ -166,7 +175,8 @@
       "negative": "Divergent bank, bad extent and unbound CBUF are rejected before shader dispatch.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G05",
@@ -179,7 +189,8 @@
       "negative": "Unbound, aliased or out-of-range global atomic access is rejected.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G06",
@@ -193,7 +204,8 @@
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G07",
@@ -207,7 +219,8 @@
       "negative": "Invalid backing, image kind or busy resources cannot dispatch or commit writes.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G08",
@@ -220,7 +233,8 @@
       "negative": "Unknown ISA forms fail closed with instruction identity, never accepted as a no-op.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G09",
@@ -234,7 +248,8 @@
       "negative": "Invalid stage combinations, Geometry header or oversized CBUF are rejected.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     },
     {
       "id": "G10",
@@ -249,7 +264,8 @@
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair.",
+      "excluded_forms": []
     }
   ]
 }

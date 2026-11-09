@@ -305,6 +305,78 @@ static void VerifyRealGlobalCasInvalidDescriptors() {
               "mask_overflow=1 cbuf_out_of_range=1 missing_cbuf=1");
 }
 
+// G06 positive: emit actual guest U64 global-CAS address routing through
+// authenticated CBUF address/extent and one 64-byte storage descriptor.
+// The shader is validated with SPIRV-Tools, then dispatched separately on
+// Vulkan; emitted code is never a hand-authored SPIR-V fixture.
+static void VerifyRealGlobalCasSpirv(const std::string& prefix) {
+    Shader::ObjectPool<Shader::IR::Inst> pool{12};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage=Shader::Stage::Compute;
+    program.workgroup_size={1,1,1};
+    program.blocks.push_back(&block);
+    block.AppendNewInst(Shader::IR::Opcode::GlobalAtomicCompareExchange32,
+                        {Shader::IR::Value{u64{0x100004}},
+                         Shader::IR::Value{u32{7}},
+                         Shader::IR::Value{u32{9}}});
+    const Shader::IR::Value old{&block.back()};
+    block.AppendNewInst(Shader::IR::Opcode::WriteStorage32,
+                        {Shader::IR::Value{u32{0}},Shader::IR::Value{u32{8}},old});
+    auto& node=program.syntax_list.emplace_back();
+    node.type=Shader::IR::AbstractSyntaxNode::Type::Block;
+    node.data.block=&block;
+    program.syntax_list.emplace_back().type=
+        Shader::IR::AbstractSyntaxNode::Type::Return;
+    auto& info=program.info;
+    info.uses_global_memory=true;
+    info.stores_global_memory=true;
+    info.used_storage_buffer_types=Shader::IR::Type::U32;
+    info.used_constant_buffer_types=
+        Shader::IR::Type::U32 | Shader::IR::Type::U32x2;
+    info.constant_buffer_descriptors.push_back({.index=0,.count=1});
+    info.constant_buffer_used_sizes[0]=0x110;
+    info.nvn_buffer_used[0]=true;
+    info.storage_buffers_descriptors.push_back(
+        {.cbuf_index=0,.cbuf_offset=0x100U,.count=1,.is_written=true});
+    Shader::Profile profile{};
+    profile.supported_spirv=0x00010500;
+    profile.support_int64=true;
+    profile.support_descriptor_aliasing=true;
+    profile.min_ssbo_alignment=64;
+    Shader::Backend::Bindings bindings{};
+    std::vector<u32> words;
+    try {
+        const Shader::Ampere::NativeSpirvCbufBoundsScope scope{};
+        words=Shader::Backend::SPIRV::EmitSPIRV(
+            profile,Shader::RuntimeInfo{},program,bindings);
+    } catch(const std::exception& ex) {
+        std::fprintf(stderr,"G06 native global CAS emitter failed: %s\n",ex.what());
+        Require(false,"positive authenticated global CAS did not emit SPIR-V");
+    }
+    Require(words.size()>5 && words[0]==0x07230203U,
+            "authenticated global CAS shader has no SPIR-V");
+    u32 atomic{},calls{},stores{};
+    for(std::size_t i=5;i<words.size();) {
+        const u32 op=words[i],count=op>>16;
+        Require(count && count<=words.size()-i,"malformed global CAS module");
+        atomic+=(op&0xffffU)==230U; // OpAtomicCompareExchange
+        calls+=(op&0xffffU)==57U; // OpFunctionCall
+        stores+=(op&0xffffU)==62U; // OpStore
+        i+=count;
+    }
+    Require(atomic>=1 && calls>=1 && stores>=1,
+            "global address route did not call genuine storage CAS/writeback");
+    const auto name=prefix+"-global-cas.spv";
+    std::ofstream file{name,std::ios::binary|std::ios::trunc};
+    Require(bool(file),"cannot create native global CAS SPIR-V");
+    file.write(reinterpret_cast<const char*>(words.data()),
+               static_cast<std::streamsize>(words.size()*sizeof(u32)));
+    Require(bool(file),"cannot save native global CAS SPIR-V");
+    std::printf("G06_REAL_GLOBAL_CAS_OWNER_SPIRV_EMITTED words=%zu atomic=%u call=%u\n",
+                words.size(),atomic,calls);
+}
+
 static void VerifyRealFloatCasSpirv(const std::string& prefix) {
     using Shader::IR::Opcode;
     using Shader::IR::Value;
@@ -868,6 +940,7 @@ int main(int argc,char** argv) {
     CheckNativeQmdIndirectCbufIR();
     VerifyNativeCbufBankRefusal();
     VerifyRealGlobalCasInvalidDescriptors();
+    VerifyRealGlobalCasSpirv(argv[1]);
     VerifyRealFloatCasSpirv(argv[1]);
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();

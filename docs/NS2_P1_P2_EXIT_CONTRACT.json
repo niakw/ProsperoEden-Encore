@@ -293,7 +293,7 @@
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "Real QMD U32 CAS has emitted SPIR-V, valid Vulkan dispatch, returned-old/final-word readback. The native global CAS emitter now rejects 16-slot selector overflow, invalid CBUF index and unbound CBUF with executed-owner negative cases. A positive authenticated global-CAS-to-SSBO route and guest-address results remain to qualify.",
+      "blocker": "Actual source-emitted U64 global-CAS routing SPIR-V and CBUF/SSBO negative guards now have mandatory spirv-val witnesses, alongside an executed Vulkan U32 storage-CAS old/final result. Full global-CAS Vulkan descriptor readback and additional address-space forms await qualification.",
       "excluded_forms": []
     },
     {

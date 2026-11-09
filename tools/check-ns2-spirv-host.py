@@ -174,6 +174,12 @@ def main():
         for env in ("spv1.5", "vulkan1.2"):
             run([validator, "--target-env", env, str(path)])
             print(f"P2_3_REAL_FLOAT_CAS_SPIRV_VALIDATED {kind} {env}",flush=True)
+    # G06: authentic native 64-bit global CAS router and CBUF/SSBO
+    # addressing. Do not accept a header-only CAS conformance claim.
+    for env in ("spv1.5", "vulkan1.2"):
+        run([validator, "--target-env", env,
+             str(OUT / "synthetic-global-cas.spv")])
+        print(f"G06_REAL_GLOBAL_CAS_SPIRV_VALIDATED {env}", flush=True)
     # P2.4: validate REAL EXT shader opcodes emitted from synthetic
     # Task and Mesh IR, not just a C++ compile or the legacy VertexB module.
     for stage in ("task", "mesh"):

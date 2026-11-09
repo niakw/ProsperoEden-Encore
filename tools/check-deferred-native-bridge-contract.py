@@ -389,8 +389,15 @@ expected_m07 = ('#include "gpu_deferred_replay.h"\n'
                     m07_native_draw_guard, m07_guest_draw_guard))
 # The inactive guest bridge must retain the SAME reviewed G07 write-commit
 # safety fix, not merely match the historical pre-G07 decoder snapshot.
+# The historical renderer has TWO independent mapped-span guards:
+# pre-stage admission and final write-commit. Replace ONLY the latter;
+# accidentally replacing initial admission would mask a real GMMU regression.
+assert expected_m07.count(g07_old_commit) == 2
+last_commit_guard = expected_m07.rfind(g07_old_commit)
+assert last_commit_guard > expected_m07.index("bool RasterizerVulkan::DispatchNativeCompute(")
+expected_m07 = (expected_m07[:last_commit_guard] + g07_new_commit +
+                expected_m07[last_commit_guard + len(g07_old_commit):])
 assert expected_m07.count(g07_old_commit) == 1
-expected_m07 = expected_m07.replace(g07_old_commit, g07_new_commit, 1)
 assert maintained_m07_text == expected_m07, "M07 maintained Vulkan variant parity drift"
 # The inactive deferred-write bridge shares the *entire* maintained rasterizer
 # except its two historic DEV write-interception substitutions. Keep the F07

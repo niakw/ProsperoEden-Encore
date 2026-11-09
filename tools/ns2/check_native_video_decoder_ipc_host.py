@@ -74,7 +74,18 @@ assert 'std::deque<PendingPicture> m_pending;' in header
 assert 'bool Nx2VideoDecoder::Render(' in backend
 assert 'sent = impl->context->SendPacket(packet);' in backend
 assert 'avcodec_send_packet(impl->raw_context, packet.GetPacket())' in backend
-assert 'impl->pending_pts.erase(it);' in backend
+# In FFmpeg EAGAIN the output PTS ledger is updated only after a
+# successful SendPacket. A failed send must NOT erase a previous frame's
+# equal timestamp: duplicate PTS values are legal.
+decode_body = backend.split('bool Nx2VideoDecoder::Decode(', 1)[1].split(
+    'bool Nx2VideoDecoder::Drain(', 1)[0]
+assert 'std::multiset<u64> staged_pts;' in decode_body
+assert 'staged_pts.insert(pts);' in decode_body
+assert 'if (!sent) return false;' in decode_body
+assert 'impl->pending_pts.merge(staged_pts);' in decode_body
+assert decode_body.index('if (!sent) return false;') < decode_body.index(
+    'impl->pending_pts.merge(staged_pts);')
+assert 'impl->pending_pts.erase(it);' not in decode_body
 assert 'impl->pending_pts.erase(it);' in backend
 assert 'std::nullopt' in backend
 start='void IGraphicsVideoDecoderSession::Pump() {'

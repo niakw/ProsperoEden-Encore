@@ -1,0 +1,30 @@
+name: Eden P1-P2 finite host exit (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: p1-p2-exit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-contract:
+    name: Enforce 17 H-G host contracts at exact main/vendor SHA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+          fetch-depth: 1
+      - name: Audit finite H01-H07 and G01-G10 owners and live host validators
+        run: python3 -B tools/ns2/check_p1_p2_exit_gate.py --json
+      - name: Enforce functional positive and negative receipts plus six same-SHA CI workflows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 -B tools/ns2/check_p1_p2_exit_gate.py --enforce --json

@@ -59,6 +59,9 @@ assert clear_src.count("gpu_memory->FlushCaching();")==2
 assert clear_src.index("if (!use_color && !use_depth && !use_stencil)") < clear_src.rindex("gpu_memory->FlushCaching();")
 assert "#ifndef PS5_NATIVE" in clear_src and "#ifdef PS5_NATIVE" in clear_src
 assert "    FlushWork();" in clear_src
+assert clear_src.count("native_msaa_clear.reset();") == 1
+assert clear_src.index("native_msaa_clear.reset();") < clear_src.index(
+    "if (!use_color && !use_depth && !use_stencil)")
 
 
 cpp = r"""
@@ -133,9 +136,14 @@ struct Regs {
 };
 struct Maxwell3D { Regs regs; };
 struct Memory { unsigned drains{}; void FlushCaching(){++drains;} };
+// Extracted Clear resets the maintained MSAA shadow before its masked-clear
+// early return. Keep that real operation in both modes instead of dropping
+// it from this source-executed witness.
+struct NativeMsaaClear { unsigned resets{}; void reset(){++resets;} };
 struct RasterizerVulkan {
     Maxwell3D* maxwell3d;
     Memory* gpu_memory;
+    NativeMsaaClear native_msaa_clear{};
     unsigned dispatches{};
     void FlushWork(){++dispatches;}
     void TestClear() {
@@ -148,6 +156,7 @@ int main() {
     RasterizerVulkan raster{&gpu,&memory};
     raster.TestClear();
     assert(raster.dispatches==1);
+    assert(raster.native_msaa_clear.resets==1);
 #ifdef PS5_NATIVE
     assert(memory.drains==0);
 #else
@@ -155,6 +164,7 @@ int main() {
 #endif
     gpu.regs.clear_surface.Z=true;
     raster.TestClear();
+    assert(raster.native_msaa_clear.resets==2);
     assert(raster.dispatches==2 && memory.drains==
 #ifdef PS5_NATIVE
            1

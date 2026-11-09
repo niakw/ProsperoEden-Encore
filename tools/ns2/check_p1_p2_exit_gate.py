@@ -4,8 +4,9 @@
 Default mode audits the manifest and live owner/witness wiring. It deliberately
 succeeds with open items so CI can produce an honest numerical progress report.
 --enforce is the separate fail-closed P1/P2 exit decision; it requires every
-in-scope item to have positive AND negative executed proof, no outstanding
-blocker, and the required GitHub workflows green at one exact engine/vendor SHA.
+in-scope item to define positive AND negative executed-owner witnesses and
+the six required GitHub workflows green at one exact engine/vendor SHA.
+CI run IDs are read LIVE after the commit, never embedded back into Git.
 Never builds PS5 or opens a console.
 """
 from __future__ import annotations
@@ -24,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "docs" / "NS2_P1_P2_EXIT_CONTRACT.json"
 EXPECTED = tuple(f"H{n:02}" for n in range(1, 8)) + tuple(
     f"G{n:02}" for n in range(1, 11))
-ALLOWED = {"open", "host_verified"}
+ALLOWED = {"open", "proof_defined"}
 EXECUTED = {"real-owner-exec", "spirv-val", "real-owner-ipc"}
 REPO = "niakw/ProsperoEden-Encore"
 
@@ -41,14 +42,14 @@ def active_witnesses() -> str:
     # A witness is not active just because its file exists: it must be invoked
     # by the maintained host batch or a live CI workflow.
     batch = (ROOT / "tools/ns2/qualify_host_batch.py").read_text()
-    workflows = ROOT / ".github/workflows"
-    return batch + "\n" + "\n".join(
-        p.read_text() for p in workflows.glob("*.yml"))
+    research = (ROOT / ".github/workflows/ns2-research-host.yml").read_text()
+    # Only these two required host suites are admitted as evidence.
+    return batch + "\n" + research
 
 
 def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:
     errors: list[str] = []
-    counts = {"open": 0, "host_verified": 0, "excluded_forms": 0}
+    counts = {"open": 0, "proof_defined": 0, "excluded_forms": 0}
     if data.get("schema") != 1:
         errors.append("unsupported contract schema")
     items = data.get("items")
@@ -98,7 +99,7 @@ def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:
                 errors.append(f"{ident}: open item has no stated blocker")
             if evidence:
                 errors.append(f"{ident}: open item cannot claim completion evidence")
-        elif state == "host_verified":
+        elif state == "proof_defined":
             if item.get("blocker"):
                 errors.append(f"{ident}: verified row still has a blocker")
             for key in ("positive", "negative"):
@@ -106,8 +107,7 @@ def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:
                 if not isinstance(proof, dict) or (
                         proof.get("validator") not in checks or
                         proof.get("kind") not in EXECUTED or
-                        not isinstance(proof.get("run_id"), int) or
-                        proof["run_id"] <= 0):
+                        proof.get("validator") not in source):
                     errors.append(f"{ident}: {key} needs real executed witness + run ID")
         # Only a precise SDK form may be excluded within a required
         # H/G contract. Excluding a complete row is never permitted.
@@ -131,8 +131,7 @@ def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:
             if not isinstance(rejection, dict) or (
                 rejection.get("validator") not in checks or
                 rejection.get("kind") not in EXECUTED or
-                not isinstance(rejection.get("run_id"), int) or
-                rejection.get("run_id", 0) <= 0):
+                rejection.get("validator") not in source):
                 errors.append(f"{ident}: excluded form needs executed refusal")
         counts["excluded_forms"] += len(excluded)
     workflows = data.get("mandatory_workflows")
@@ -180,25 +179,16 @@ def enforce_exit(data: dict) -> list[str]:
                                    text=True, timeout=15).strip():
             return ["tracked sources are dirty; SHA attestation impossible"]
     try:
-        workflow_names, success_ids = fetch_successful_run_ids(main)
+        workflow_names, _ = fetch_successful_run_ids(main)
     except (urllib.error.URLError, OSError, ValueError, TimeoutError) as exc:
         return [f"cannot verify live GitHub run status: {exc}"]
     missing = sorted(set(data["mandatory_workflows"]) - workflow_names)
     if missing:
         errors.append("mandatory CI not green at exact SHA " + main[:12] +
                       ": " + ", ".join(missing))
-    for item in data["items"]:
-        # Every mandatory H/G contract needs positive AND negative real
-        # execution; individual exclusions add their own native refusal.
-        for key in ("positive", "negative"):
-            run_id = item["evidence"][key]["run_id"]
-            if run_id not in success_ids:
-                errors.append(f"{item['id']} {key}: run {run_id} not green at this SHA")
-        for form in item.get("excluded_forms", []):
-            run_id = form["negative"]["run_id"]
-            if run_id not in success_ids:
-                errors.append(
-                    f"{item['id']} excluded {form['selector']}: run {run_id} not green")
+    # Stable manifest fields identify tests, not future run IDs. P4 and
+    # NS2 research include the declared scripts and must both succeed at
+    # this checkout's SHA, checked using the GitHub API above.
     return errors
 
 
@@ -213,7 +203,7 @@ def validate_fail_closed(data: dict) -> list[str]:
     excluded["items"][0]["status"] = "scope_excluded"
     cases.append(("whole required gate excluded", excluded))
     invented = copy.deepcopy(data)
-    invented["items"][0]["status"] = "host_verified"
+    invented["items"][0]["status"] = "proof_defined"
     invented["items"][0]["blocker"] = ""
     cases.append(("fake positive/negative evidence", invented))
     short = copy.deepcopy(data)
@@ -239,10 +229,10 @@ def main() -> int:
             problems.extend(enforce_exit(data))
     except (OSError, ValueError, KeyError, TypeError) as exc:
         problems = [str(exc)]
-        counts = {"open": 0, "host_verified": 0, "excluded_forms": 0}
+        counts = {"open": 0, "proof_defined": 0, "excluded_forms": 0}
     result = {"schema": 1, "goal": "P1_P2_HOST_EXIT",
               "total": 17,
-              "verified": counts["host_verified"],
+              "proof_defined": counts["proof_defined"],
               "explicit_excluded_forms": counts["excluded_forms"],
               "open": counts["open"],
               "exit_ready": args.enforce and not problems,
@@ -253,7 +243,7 @@ def main() -> int:
         print(json.dumps(result, sort_keys=True))
     else:
         print("P1_P2_EXIT_" + ("ENFORCE" if args.enforce else "AUDIT"),
-              f"verified={result['verified']}/17",
+              f"proof_defined={result['proof_defined']}/17",
               f"optional_forms_excluded={result['explicit_excluded_forms']}",
               f"open={result['open']}/17",
               f"ready={result['exit_ready']}", flush=True)

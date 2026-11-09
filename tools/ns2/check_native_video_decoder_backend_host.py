@@ -35,6 +35,17 @@ assert 'avcodec_free_context(&raw_context)' in backend
 assert 'avcodec_receive_frame(raw_context, frame->GetFrame())' in backend
 assert 'status == AVERROR(EAGAIN)' in backend
 assert 'return impl->Receive(pictures);' in backend
+# H05: the real FFmpeg owner must not publish unsent timestamps before an
+# EAGAIN receive or remove a legitimate duplicate PTS after a failed send.
+decode = backend.split('bool Nx2VideoDecoder::Decode(', 1)[1].split(
+    'bool Nx2VideoDecoder::Drain(', 1)[0]
+assert 'std::multiset<u64> pending_pts;' in backend
+assert 'std::multiset<u64> staged_pts;' in decode
+assert decode.index('staged_pts.insert(pts);') < decode.index('avcodec_send_packet(')
+assert decode.index('if (!impl->Receive(pictures)) return false;') < decode.index('if (!sent) return false;')
+assert decode.index('if (!sent) return false;') < decode.index('impl->pending_pts.merge(staged_pts);')
+assert decode.index('impl->pending_pts.merge(staged_pts);') < decode.index('return impl->Receive(pictures);')
+assert 'impl->pending_pts.insert(pts);' not in decode
 assert 'VideoCodec::AV1' not in backend, 'NS1 hardware enum must not be extended'
 assert 'if (!codec)' in backend
 assert 'if (impl->decoder->GetCodec() == nullptr)' in backend

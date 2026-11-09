@@ -22,7 +22,8 @@ def extract(begin, end):
 event=extract("void IGpuSession::GetNotificationEvent(", "std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>\nIGpuSession::ResolveOpenedAddressSpace(")
 partition=extract("void IGpuSession::GetAddressSpacePartition(", "void IGpuSession::CreateGraphicsDevice(")
 assert 'catch (const std::bad_alloc&)' in event
-assert "rb.PushCopyObjects(ctx, *readable);" in event
+assert "ctx.AddCopyObject(readable);" in event
+assert event.index("ctx.AddCopyObject(readable);") < event.index("IPC::ResponseBuilder rb{ctx, 2, 1, 0};")
 assert "IPC::ResponseBuilder rb{ctx, 2};" in event
 assert "ioctl_oom = true;" in partition
 assert "result = Kernel::ResultOutOfResource;" in partition
@@ -64,8 +65,14 @@ struct HLERequestContext {
     std::array<u32,3> packet{};
     u32 command{};
     std::vector<u64> reply{};
-    unsigned words{},copy_count{},move_count{};
+    unsigned words{},copy_count{},move_count{},response_copies{};
+    bool fail_copy{};
     const u32* CommandBuffer() const { return packet.data(); }
+    void AddCopyObject(Kernel::KReadableEvent* readable) {
+        assert(readable && readable->id==17);
+        if (fail_copy) throw std::bad_alloc{};
+        ++copy_count;
+    }
     u32 GetCommand() const { return command; }
 };
 namespace IPC {
@@ -75,15 +82,11 @@ struct ResponseBuilder {
                              unsigned moves=0):ctx(c) {
         ctx.words=words;
         ctx.reply.clear();
-        ctx.copy_count=0;
         ctx.move_count=0;
+        ctx.response_copies=copies;
         assert(copies<=1 && moves==0);
     }
     template<typename T> void Push(T value) { ctx.reply.push_back(u64(value)); }
-    void PushCopyObjects(HLERequestContext&,Kernel::KReadableEvent& e) {
-        assert(e.id==17);
-        ++ctx.copy_count;
-    }
 };
 }
 namespace Nvidia {
@@ -172,11 +175,20 @@ int main(){
         assert(req.reply[0]==Kernel::ResultOutOfResource.raw);
         assert(req.copy_count==0 && s.m_shared->events[3]==nullptr);
         context.fail_oom=false;
+        req.fail_copy=true;
+        s.GetNotificationEvent(req);
+        assert(req.reply.size()==1 &&
+               req.reply[0]==Kernel::ResultOutOfResource.raw);
+        assert(req.copy_count==0 && req.response_copies==0);
+        assert(s.m_shared->events[3]==&context.item && context.calls==2);
+        req.fail_copy=false;
         s.GetNotificationEvent(req);
         assert(req.reply.size()==1 && req.reply[0]==0 && req.copy_count==1);
-        assert(s.m_shared->events[3]==&context.item && context.calls==2);
+        assert(req.response_copies==1 && context.calls==2);
+        req.copy_count=0;
         s.GetNotificationEvent(req);
-        assert(req.reply[0]==0 && req.copy_count==1 && context.calls==2);
+        assert(req.reply[0]==0 && req.copy_count==1 &&
+               req.response_copies==1 && context.calls==2);
     }
     auto& slots=s.m_shared->address_spaces;
     assert(slots.Add(9)==Service::AM::GP::Status::Success);

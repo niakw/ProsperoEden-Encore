@@ -334,10 +334,6 @@ msgstr "Motiv · Logo · Pozadí · Záře (Hra: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Vyberte jeden kořen pro klíče, firmware, hry, aktualizace a mody"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Zvol jazyk, který hry používají"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Vyberte · rozhraní. software / Ovládání — beze změny."

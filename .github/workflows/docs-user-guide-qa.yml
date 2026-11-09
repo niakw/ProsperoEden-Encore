@@ -17,7 +17,7 @@ permissions:
   contents: read
 jobs:
   user-guide-coverage:
-    name: Check 29 localized manuals plus 41 catalog locales (no build)
+    name: Check 31 official PS5 choices and 29 localized manuals (no build)
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

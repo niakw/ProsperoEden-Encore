@@ -266,9 +266,18 @@
       ],
       "positive": "Atomic return values and writes match validated SSBO backing spans.",
       "negative": "Unbound, aliased or out-of-range global atomic access is rejected.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Actual U32 CAS native IR is now checked by the same production QMD span collector against a 64-byte SSBO, including out-of-range, unaligned, unknown, and read-only negatives. The emitted shader's Vulkan atomic old/final words and bystander memory are validated; await same-SHA host completion.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_qmd_atomic_span_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

@@ -24,7 +24,14 @@ assert 'm_memory.push_back(id);' in method
 # before allocating NVMap backing and rolls back both resource owners.
 locked = method.index('const Result locked = page_table.LockForMapDeviceAddressSpace(')
 io_guard = method.index('    if (is_io) {', locked)
-native_alloc = method.index('const auto allocated = handle->Alloc(')
+# The actual owner catches bad_alloc from native handle allocation
+# and shares the unlock+FreeHandle rollback. Find the real assignment.
+native_alloc = method.index('allocated = handle->Alloc(', io_guard)
+assert 'Nvidia::NvResult allocated = Nvidia::NvResult::InvalidState;' in method
+assert method.index('try {', io_guard) < native_alloc < method.index(
+    'if (allocated != Nvidia::NvResult::Success)', native_alloc)
+assert 'catch (const std::bad_alloc&)' in method[native_alloc:method.index(
+    'if (allocated != Nvidia::NvResult::Success)', native_alloc)]
 assert locked < io_guard < native_alloc < method.index('m_memory.push_back(id);')
 io_rollback = method[io_guard:native_alloc]
 assert 'page_table.UnlockForDeviceAddressSpace(begin, size)' in io_rollback

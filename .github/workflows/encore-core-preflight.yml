@@ -32,6 +32,10 @@ on:
       - 'docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md'
       - 'docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md'
       - '.github/workflows/encore-core-fast-gate.yml'
+      # A release sign-off changes its finite acceptance contract without
+      # changing executable source. Requalify at the exact resulting SHA.
+      - 'docs/NS2_P1_P2_EXIT_CONTRACT.json'
+      - '.github/workflows/ns2-p1-p2-exit.yml'
       - '.github/workflows/encore-core-preflight.yml'
       # Run all native witnesses when the paired security contract changes.
       - '.github/workflows/codeql-advanced.yml'

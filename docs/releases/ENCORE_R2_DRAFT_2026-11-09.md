@@ -18,7 +18,7 @@
 - **Launcher and controller improvements.** Updated library, covers and 3D packaging, per-game settings, language support, controller mapping, faster startup presentation and a **touchpad-triggered Encore quick overlay**.
 - **Graphics and image processing.** Preserved spatial FSR 1 (EASU/RCAS and sharpening), revised presentation/AA/scaling policies, optional frame-interpolation source work and a separate neural-rendering R09 development path.
 - **Reliability and tooling.** Memory ownership, HLE/IPC, video queues, shader/graphics synchronization, more useful diagnostics, hardened release provenance and bounded code/host verification.
-- **International user documentation.** Six user-facing document types available across **all 29 application catalog locales**. The launcher still exposes only 18 language/region choices representing 13 distinct languages.
+- **International user documentation.** Six user-facing document types available across **all 29 application catalog locales**. The launcher source now exposes **exactly all 31 official PS5 system language/region choices**, backed by 29 catalogs, with no non-PS5 additions.
 - **Clean GitHub presentation.** Neutral workflow/job/step titles and non-essential brand mentions in owned source comments; required technical API names, provenance and third-party license notices stay intact.
 
 ## 1. Unified engine and project architecture (P0)
@@ -199,7 +199,7 @@
 - Added practical **README, installation, settings, troubleshooting, support and accessibility guides for all 29 catalog locales** (174 localized pages in total).
 - Preserved the existing detailed French and Spanish README/installation pages rather than replacing them with shorter copies.
 - Added a single language directory linking every one of the six user-facing pages for each locale.
-- Made the distinction explicit: the **launcher offers 18 language/region choices (13 distinct languages)**, while additional catalogs and documentation exist for other languages.
+- Made the distinction explicit: the **launcher offers exactly 31 official PS5 system language/region choices**; every one of the 29 catalog locales is selectable, and no extra languages are provided.
 - Documented the selected storage root, keys/firmware ownership, safe migration, release packaging and recovery steps.
 - Documented larger launcher text, high contrast and reduced motion as separate optional settings, not guaranteed accessibility inside games.
 - Improved the README's version history, R1 source SHA, native-build restrictions and provenance explanation.
@@ -291,7 +291,7 @@ For ZIP/FTP, extract the complete `PPSA99008/` folder and install it under `/dat
 The documentation localization follow-up has been implemented on `main` **after the original draft notes were written**:
 
 - All **29 application catalog locales** now have six consumer-focused Markdown guides each: README/overview, installation and upgrading, settings, troubleshooting, support and accessibility (**174 localized pages**). These are practical native-language guides, **not** a claim that the longer English documentation has been translated line for line or independently proofread by 29 native speakers.
-- The language index distinguishes the **29 translation catalogs** from the **18 actual launcher language/region choices**. English remains the most detailed normative user reference.
+- The language index distinguishes the **29 translation catalogs** from the **31 exact PS5 system language/region choices**. English remains the most detailed normative user reference. The [strict Sony 31-choice policy](../PS5_SYSTEM_LANGUAGE_POLICY.md) excludes all languages not on Sony's official console menu.
 - The [user documentation and local-link validation workflow](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42618975742) **passed** for the documentation changes, checking catalog coverage, internal links, preservation of save-data warnings and key localized help. It does not test PS5 rendering or certify linguistic quality.
 - Invalid French/Spanish guide links and obsolete feature/research branch links in the main and translated READMEs have been corrected.
 - The [vendor maintained-source presentation audit](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42618761816) **passed**, scanning **775 active source-text files**. Commercial names were absent from the vendor's visible workflow titles and step labels. The audit recorded 100 branded references in comment-like lines of the maintained source; these are predominantly driver/ABI/format facts, namespace markers or required upstream attribution and were **not** blindly removed. Third-party snapshots remain unmodified.

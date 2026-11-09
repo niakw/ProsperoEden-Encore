@@ -2191,3 +2191,104 @@ msgstr ""
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr ""
+
+#: settings_store.h
+msgid "Arabic"
+msgstr ""
+
+#: settings_store.h
+msgid "Czech"
+msgstr ""
+
+#: settings_store.h
+msgid "Danish"
+msgstr ""
+
+#: settings_store.h
+msgid "Greek"
+msgstr ""
+
+#: settings_store.h
+msgid "Finnish"
+msgstr ""
+
+#: settings_store.h
+msgid "Hungarian"
+msgstr ""
+
+#: settings_store.h
+msgid "Indonesian"
+msgstr ""
+
+#: settings_store.h
+msgid "Norwegian (Bokmål)"
+msgstr ""
+
+#: settings_store.h
+msgid "Romanian"
+msgstr ""
+
+#: settings_store.h
+msgid "Swedish"
+msgstr ""
+
+#: settings_store.h
+msgid "Turkish"
+msgstr ""
+
+#: settings_store.h
+msgid "Ukrainian"
+msgstr ""
+
+#: settings_store.h
+msgid "Vietnamese"
+msgstr ""
+
+#: settings_store.h
+msgid "Hindi (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Bengali (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Marathi (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Telugu (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Tamil (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Gujarati (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Kannada (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Malayalam (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Punjabi (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Odia (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Urdu (India)"
+msgstr ""
+
+#: settings_store.h
+msgid "Assamese (India)"
+msgstr ""
+

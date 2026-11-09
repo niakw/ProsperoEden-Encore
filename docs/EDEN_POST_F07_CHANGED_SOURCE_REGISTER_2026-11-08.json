@@ -155,12 +155,13 @@
     {
       "path": "headless/prosperoeden/host/preview_main.cpp",
       "historical_reviewed_git_blob": "67bcd16c23c8cb0f6546e9cb9a061dccbbf777ce",
-      "post_snapshot_git_blob": "5976e0b1ba54509b3c5e59dc840c6133d3e261f4",
+      "post_snapshot_git_blob": "f1799dda121ec9fed3e3915b9199aec5c0b6dcc2",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "Host-only OpenGL preview waits for actual asynchronous Home and Library readiness, then navigates via real R1 tab and preserves strict artwork zoom and pixel checks; no console or performance proof.",
       "review_kind": "host_preview_mock",
       "required_source_fragment": "library-preview: Library never became ready",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-09: independently compared pinned 5976e0b with f1799dd: only strings_check() English-region catalog expectations changed (en-GB -> en-GB/en-US fallback, en-US -> en-US), matching the official locale path; Home/Library preview geometry, readiness and rendering code unchanged. No performance, gameplay or console proof implied."
     },
     {
       "path": "headless/prosperoeden/pe/core/strings.cpp",

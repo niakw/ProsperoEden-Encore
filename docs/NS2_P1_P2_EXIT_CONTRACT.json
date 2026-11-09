@@ -195,7 +195,7 @@
       "negative": "Invalid partitions and write masks do not write beyond the declared stream.",
       "status": "open",
       "evidence": {},
-      "blocker": "Actual split XFB VertexB IR/SPIR-V generation with two vec2 outputs, four stores, disjoint byte offsets and both spirv-val environments is now gated in the mandatory host workflow. Await green same-SHA evidence, plus complete stage/stream negative coverage.",
+      "blocker": "Real split XFB VertexB SPIR-V, dual environment spirv-val and real Fragment stage refusal are now in mandatory validation; awaiting same-SHA run and final stream/patch compatibility evidence.",
       "excluded_forms": []
     },
     {

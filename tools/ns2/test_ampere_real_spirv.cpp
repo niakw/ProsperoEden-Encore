@@ -648,7 +648,20 @@ static void VerifyRealTransformFeedbackSpirv(const std::string& prefix) {
     file.write(reinterpret_cast<const char*>(words.data()),
                static_cast<std::streamsize>(words.size()*sizeof(u32)));
     Require(bool(file),"incomplete real G02 transform-feedback module");
-    std::printf("P2_G02_REAL_XFB_SPLIT_SPIRV_EMITTED words=%zu stores=%u\n",
+    // An Xfb execution mode cannot belong to Fragment. The ACTUAL native
+    // emitter must reject the stage instead of exporting an invalid module.
+    program.stage=Shader::Stage::Fragment;
+    bool invalid_stage_refused{};
+    try {
+        (void)Shader::Backend::SPIRV::EmitSPIRV(
+            profile,runtime,program,bindings);
+    } catch (const std::exception& exception) {
+        invalid_stage_refused=std::string(exception.what()).find(
+            "Transform feedback on unsupported shader stage") != std::string::npos;
+    }
+    Require(invalid_stage_refused,
+            "native G02 Xfb Fragment stage silently accepted");
+    std::printf("P2_G02_REAL_XFB_SPLIT_SPIRV_EMITTED words=%zu stores=%u stage_refused=1\n",
                 words.size(),stores);
 }
 

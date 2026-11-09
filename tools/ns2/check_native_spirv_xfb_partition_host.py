@@ -20,6 +20,11 @@ owner=marker+body+"\n}"
 assert owner.count("Transform-feedback varying count exceeds backing")==1
 assert owner.count("Invalid transform-feedback component partition")==1
 assert owner.count("Invalid transform-feedback byte stride/offset")==1
+stage_owner=source.split("void EmitContext::DefineOutputs(",1)[1].split(
+    "\\nvoid EmitContext::",1)[0]
+assert "Transform feedback on unsupported shader stage" in stage_owner
+assert stage_owner.index("stage != Stage::TessellationEval") < stage_owner.index(
+    "if (stage == Stage::Task || stage == Stage::Mesh)")
 assert owner.index("num_components > (xfb_varying->stride - xfb_varying->offset)") < owner.index("ctx.F32[num_components]")
 assert owner.index("num_components > remainder") < owner.index("ctx.F32[num_components]")
 assert owner.index("xfb_count > ctx.runtime_info.xfb_varyings.size()") < owner.index("while (element < 4)")

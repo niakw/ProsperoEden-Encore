@@ -495,7 +495,8 @@ std::string FakeServices::language_region(int language)
 {
     static constexpr const char *kRegions[] = {"Japan", "USA", "Europe", "Australia",
                                                "China", "Korea", "Taiwan"};
-    return language >= 0 && language < 18 ? tr(kRegions[kLanguageRegions[language]]) : "";
+    return language >= 0 && language < static_cast<int>(std::size(kLanguageRegions))
+        ? tr(kRegions[kLanguageRegions[language]]) : "";
 }
 
 std::string FakeServices::setup_details()

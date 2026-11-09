@@ -301,9 +301,17 @@ msaa_owner = next(item for item in post_msaa_receipt["files"]
 def m07_git_blob(text):
     data = text.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
-assert m07_git_blob(original_m07) == msaa_owner["post_change_raw_blob_sha"], (
+# G07 is a separately reviewed post-MSAA write-commit transaction change.
+# Reverse exactly this one hunk for historical proof; never restamp the
+# P24/M07 receipt or allow unrelated vendor bytes to pass its old SHA.
+g07_old_commit = "            if (!resources->ValidateGpuBufferMappings(\n                    [this](u64 address, u32 bytes) {\n                        return Shader::Ampere::NativeQmdContiguousGpuSpan(\n                            address, bytes, [this](u64 page) {\n                                return gpu_memory->GpuToCpuAddress(page);\n                            });\n                    }))\n                return false;"
+g07_new_commit = "            // A VA can stay mapped while a guest remaps its physical pages.\n            // Recheck the exact pre-staging backing here, under the commit\n            // lock, not merely contiguous coverage. Matches also validates\n            // the full 49-bit span, so no second mapping walk is needed.\n            if (!staged_buffer_mappings.Matches(\n                    *resources, [this](u64 address) {\n                        return gpu_memory->GpuToCpuAddress(address);\n                    }))\n                return false;"
+assert original_m07.count(g07_new_commit) == 1, (
+    "M07 native G07 physical-remap hunk drift")
+historical_m07 = original_m07.replace(g07_new_commit, g07_old_commit, 1)
+assert m07_git_blob(historical_m07) == msaa_owner["post_change_raw_blob_sha"], (
     "M07 unreviewed post-P24 MSAA rasterizer source")
-m07_premesh_source = original_m07
+m07_premesh_source = historical_m07
 # Post-P24 MSAA spans were recorded AFTER the native KeplerCompute pointer
 # change. The pointer guard belongs to the separate, older ABI receipt.
 # Normalize the pointer ABI FIRST, matching the same order as the
@@ -318,10 +326,10 @@ mesh_rasterizer = next(item for item in receipt["files"]
 # correction before normalizing the historical Task/Mesh and DEV variants.
 # This is an exact proof against the original recorded maintained blob.
 native_begin = "bool RasterizerVulkan::DispatchNativeCompute("
-assert original_m07.count(native_begin) == 1
-native_start = original_m07.index(native_begin)
-native_end = original_m07.index("\nvoid RasterizerVulkan::", native_start)
-native_body = original_m07[native_start:native_end]
+assert historical_m07.count(native_begin) == 1
+native_start = historical_m07.index(native_begin)
+native_end = historical_m07.index("\nvoid RasterizerVulkan::", native_start)
+native_body = historical_m07[native_start:native_end]
 null_guard = """    // ChannelStateCache binds a KeplerCompute pointer; only native process
     // tickets authorize dereference, and the channel may be unbound.
     if (!kepler_compute) return false;
@@ -332,7 +340,7 @@ assert native_body.count("*kepler_compute, *gpu_memory") == 6
 native_body = native_body.replace(null_guard, "").replace(
     "kepler_compute->regs", "kepler_compute.regs").replace(
     "*kepler_compute, *gpu_memory", "kepler_compute, *gpu_memory")
-m07_before_mesh = original_m07[:native_start] + native_body + original_m07[native_end:]
+m07_before_mesh = historical_m07[:native_start] + native_body + historical_m07[native_end:]
 for hunk in reversed(msaa_owner["reverse_hunks"]):
     assert m07_before_mesh.count(hunk["after"]) == 1, (
         "M07 post-P24 MSAA reversible owner drift")
@@ -379,6 +387,10 @@ expected_m07 = ('#include "gpu_deferred_replay.h"\n'
                 m07_before_mesh.replace(m07_entry, m07_entry_with_guard).replace(
                     m07_buffer_lock, m07_lock_with_fallback).replace(
                     m07_native_draw_guard, m07_guest_draw_guard))
+# The inactive guest bridge must retain the SAME reviewed G07 write-commit
+# safety fix, not merely match the historical pre-G07 decoder snapshot.
+assert expected_m07.count(g07_old_commit) == 1
+expected_m07 = expected_m07.replace(g07_old_commit, g07_new_commit, 1)
 assert maintained_m07_text == expected_m07, "M07 maintained Vulkan variant parity drift"
 # The inactive deferred-write bridge shares the *entire* maintained rasterizer
 # except its two historic DEV write-interception substitutions. Keep the F07

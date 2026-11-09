@@ -424,9 +424,13 @@ void Launcher::draw_language(Canvas &c)
     line(378.0f, tr("REGION"), services_.language_region(language_.selected), theme::kLimePale);
     line(434.0f, tr("IN USE"), label_at(prefs_.language), theme::kValue);
     list.rounded_rect({1016.0f, 554.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
+    // The last 13 selections are official PS5 UI languages without native guest-language
+    // enum counterparts. Never tell those users the game will use that interface language.
     text_block(c,
-               tr("Games use this language when they offer it, and their own default otherwise. It "
-               "applies when a game starts."),
+               language_.selected < 18
+                   ? tr("Games use this language when they offer it, and their own default otherwise. It "
+                        "applies when a game starts.")
+                   : tr("Choose your preferred language"),
                1016.0f, baseline(578.0f, 34.0f, 22.0f), 22.0f, 34.0f, theme::kCopy, 748.0f, 3,
                kShrink);
     if (!message_.empty())

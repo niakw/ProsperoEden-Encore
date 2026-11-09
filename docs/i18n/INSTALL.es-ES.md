@@ -42,7 +42,7 @@ En un disco externo se utiliza la misma estructura bajo la raíz seleccionada. E
 
 ## Solución de problemas
 
-- **El menú sigue en inglés**: elige Settings → Language y verifica los **29 catálogos** de `PPSA99008/ui/lang/`. El selector ofrece **18 opciones regionales** de 13 idiomas.
+- **El menú sigue en inglés**: elige Settings → Language y verifica los **29 catálogos** de `PPSA99008/ui/lang/`. El selector ofrece **exactamente las 31 opciones de idioma/región del sistema PS5** publicadas por [Sony](https://www.playstation.com/fr-fr/legal/language-support/), sin idiomas adicionales.
 - **Biblioteca vacía**: comprueba la raíz elegida y la carpeta `roms/`.
 - **Configuración incompleta**: revisa `keys/` y `firmware/` con tus archivos adquiridos legalmente.
 - **Un juego deja de funcionar después de cambiar ajustes**: prueba **Safe Launch** sin borrar los guardados.

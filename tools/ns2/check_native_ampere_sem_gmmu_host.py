@@ -20,6 +20,13 @@ assert source.count(begin)==source.count(end)==1
 owner=begin+source.split(begin,1)[1].split(end,1)[0]
 assert "memory_manager.IsFullyMappedRange(address, sizeof(u32))" in owner
 assert owner.index("IsFullyMappedRange(")<owner.index("rasterizer->Query(")
+assert owner.index("GpuToCpuAddress(address, sizeof(u32))") < owner.index("rasterizer->Query(")
+assert "Ampere SEM_EXECUTE: release has no CPU backing" in owner
+query_cache=(ROOT/"vendor/sources/eden/src/video_core/query_cache/query_cache.h").read_text()
+report=query_cache.split("void QueryCacheBase<Traits>::CounterReport(",1)[1].split(
+    "void QueryCacheBase<Traits>::UnregisterPending(",1)[0]
+assert "auto cpu_addr_opt = gpu_memory->GpuToCpuAddress(addr);" in report
+assert "if (!cpu_addr_opt)" in report and "return;" in report
 assert owner.index("IsFullyMappedRange(")<owner.index("rasterizer->ReleaseFences()")
 fixture=r"""
 #include <array>
@@ -39,12 +46,17 @@ enum class QueryPropertiesFlags { IsAFence };
 }
 struct MemoryManager {
     bool mapped{true};
+    bool cpu_alias{true};
     u32 word{7};
     unsigned admission_checks{};
     bool IsFullyMappedRange(GPUVAddr address, std::size_t bytes) {
         ++admission_checks;
         assert(bytes==4);
         return mapped && address==0x1000;
+    }
+    std::optional<GPUVAddr> GpuToCpuAddress(GPUVAddr address,std::size_t bytes) {
+        return IsFullyMappedRange(address,bytes) && cpu_alias
+            ? std::optional<GPUVAddr>{0x9000} : std::nullopt;
     }
 };
 struct Rasterizer {
@@ -102,6 +114,10 @@ int main() {
     assert(rejected(1));
     assert(!owner.pending_native_acquire && rasterizer.queries==0);
     owner.regs.reg_array[0x17]=0x1000;
+    pusher.memory_manager.cpu_alias=false;
+    assert(rejected(1)); // GMMU resident, Vulkan query has no CPU backing
+    assert(rasterizer.queries==0 && rasterizer.releases==0);
+    pusher.memory_manager.cpu_alias=true;
     owner.ProcessNativeSemaphoreExecute(pusher,1);
     assert(rasterizer.queries==1 && rasterizer.last_address==0x1000);
     assert(rasterizer.last_payload==7 && !owner.pending_native_acquire);
@@ -139,4 +155,5 @@ with tempfile.TemporaryDirectory(prefix="eden-g10-real-gmmu-") as folder:
             run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)
             assert run.returncode==0,run.stderr[-5000:]
             print("G10_REAL_NATIVE_SEM_GMMU_ADMISSION_PASS",Path(cc).name,opt,
-                  "mapped_release=1 invalid_release=refused no_fake_fence=1",flush=True)
+                  "mapped_release=1 invalid_release=refused"
+                  " missing_cpu_alias=refused no_fake_fence=1",flush=True)

@@ -48,6 +48,7 @@ enum class CacheType {BufferCache};
 }
 struct MemoryManager {
     bool mapped{true};
+    bool cpu_alias{true};
     bool remap_during_read{};
     u64 cpu_address{0x9000};
     u32 word{2};
@@ -57,7 +58,7 @@ struct MemoryManager {
     }
     std::optional<u64> GpuToCpuAddress(GPUVAddr addr,std::size_t count) {
         ++gpu_lookups;
-        if(!IsFullyMappedRange(addr,count))return {};
+        if(!IsFullyMappedRange(addr,count) || !cpu_alias)return {};
         return cpu_address;
     }
     template<typename T> T Read(GPUVAddr addr) {
@@ -177,6 +178,10 @@ int main(){
         return false;
     };
     const int writes_before=gpu.queries, flush_before=gpu.releases;
+    memory.cpu_alias=false;
+    assert(invalid(1)); // Resident GMMU, no CPU view for QueryCache
+    assert(gpu.queries==writes_before && !channel_b.pending_native_acquire);
+    memory.cpu_alias=true;
     assert(invalid(6) && invalid(7));
     assert(gpu.queries==writes_before && gpu.releases==flush_before);
     memory.mapped=false;
@@ -184,7 +189,8 @@ int main(){
     assert(gpu.queries==writes_before && !channel_b.pending_native_acquire);
     std::puts("G10_REAL_PARKED_SEMAPHORE_OWNER_PASS channels=2 "
               "release_before_gpu_retire=not_completed resume_after_gpu_retire=1 "
-              "page_rebind=refused mid_read_rebind=refused invalid=refused "
+              "page_rebind=refused mid_read_rebind=refused cpu_alias_missing=refused"
+              " invalid=refused "
               "Vulkan_gpu_dispatch=not_exercised");
 }
 """.replace("__REAL_OWNER__",owner)

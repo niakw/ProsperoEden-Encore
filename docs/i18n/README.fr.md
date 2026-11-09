@@ -55,7 +55,7 @@
 3. Suivre [le guide d’installation français](INSTALL.fr-FR.md) pour ZIP/FTP ou FFPFSC/ShadowMountPlus. Copier **tout** `PPSA99008/` et `ui/lang/`, jamais uniquement `eboot.bin`.
 4. Contrôler **Settings → Storage / Language**, la bibliothèque et les sauvegardes. En cas de souci, consulter le [dépannage (EN)](../../TROUBLESHOOTING.md).
 
-**Le lanceur suit strictement les [31 langues système officielles PS5](../../docs/PS5_SYSTEM_LANGUAGE_POLICY.md), sans langues ajoutées hors liste.** 
+**Le lanceur suit strictement les [31 langues système officielles PS5](../../docs/PS5_SYSTEM_LANGUAGE_POLICY.md), sans langues ajoutées hors liste.**
 
 **Seul le firmware 13.60 a été testé sur console.** Aucun minimum antérieur n’est qualifié ; ce n’est pas un conseil de mise à jour. [Catalogues de langue](../../LANGUAGES.md).
 

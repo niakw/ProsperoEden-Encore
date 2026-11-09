@@ -60,7 +60,7 @@
 3. Follow [the complete installation guide](INSTALL.md) for **ZIP/FTP or FFPFSC/ShadowMountPlus**. Copy the full `PPSA99008/` app tree, including `ui/lang/`, not only `eboot.bin`.
 4. Open Encore and check **Settings → Storage / Language**, game Library and existing saves. If anything fails, use [Troubleshooting](TROUBLESHOOTING.md).
 
-**Language policy:** [exactly 31 Sony PS5 system choices, no extra languages](docs/PS5_SYSTEM_LANGUAGE_POLICY.md). 
+**Language policy:** [exactly 31 Sony PS5 system choices, no extra languages](docs/PS5_SYSTEM_LANGUAGE_POLICY.md).
 
 **Firmware 13.60 is the only console-tested target.** No earlier firmware minimum is verified, and this is not advice to update your PS5. [Choose any launcher language](LANGUAGES.md).
 

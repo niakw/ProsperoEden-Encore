@@ -178,7 +178,7 @@ contentVersion 01.000.041 may be identified as R1. Old release assets are
 not rewritten. Later missing or inconsistent attestations fail closed.
 No native update installation is activated by these metadata changes.
 
-**Language-selector scope (9 November 2026): the native launcher must expose only the exact 31 PS5 console-language choices**, no extras, with 29 catalogs. See [strict PS5 system-language policy](PS5_SYSTEM_LANGUAGE_POLICY.md) and [Sony's official list](https://www.playstation.com/fr-fr/legal/language-support/). 
+**Language-selector scope (9 November 2026): the native launcher must expose only the exact 31 PS5 console-language choices**, no extras, with 29 catalogs. See [strict PS5 system-language policy](PS5_SYSTEM_LANGUAGE_POLICY.md) and [Sony's official list](https://www.playstation.com/fr-fr/legal/language-support/).
 
 All **29 existing locale catalogs** now include the 466 active UI strings,
 including the R21 manual/automatic checking controls and R25 theme, logo,

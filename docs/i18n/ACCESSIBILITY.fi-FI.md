@@ -6,7 +6,7 @@ Suurempi teksti, suuri kontrasti ja liikkeen vähentäminen voi ottaa käyttöö
 
 ## Asetukset · Touchpad
 
-Touchpadin lyhyt painallus avaa Encoren pika-asetukset pelin aikana. Konsolin keskimmäinen järjestelmäpainike on varattu järjestelmälle. Valikossa on grafiikka-, näppäinmääritys-, FPS- ja diagnostiikka-asetuksia. Osa muutoksista vaatii pelin uudelleenkäynnistyksen. Kieli valitaan kohdasta Settings → Language; kaikkia luettelokieliä ei voi valita valikosta.
+Touchpadin lyhyt painallus avaa Encoren pika-asetukset pelin aikana. Konsolin keskimmäinen järjestelmäpainike on varattu järjestelmälle. Valikossa on grafiikka-, näppäinmääritys-, FPS- ja diagnostiikka-asetuksia. Osa muutoksista vaatii pelin uudelleenkäynnistyksen. Kieli valitaan kohdasta Settings → Language. Valikossa on täsmälleen 31 virallista PS5-järjestelmän kielivaihtoehtoa.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

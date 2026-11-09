@@ -6,7 +6,7 @@ Større tekst, høj kontrast og reduceret bevægelse kan slås til enkeltvis und
 
 ## Indstillinger · Touchpad
 
-Et kort tryk på Touchpad åbner Encores hurtigindstillinger under spillet. Den centrale systemknap er reserveret til konsollen. Her findes grafik, knapopsætning, FPS og diagnostik. Nogle ændringer kræver genstart af spillet. Sprog vælges under Settings → Language; ikke alle oversættelseskataloger kan vælges i menuen.
+Et kort tryk på Touchpad åbner Encores hurtigindstillinger under spillet. Den centrale systemknap er reserveret til konsollen. Her findes grafik, knapopsætning, FPS og diagnostik. Nogle ændringer kræver genstart af spillet. Sproget vælges under Settings → Language. Menuen indeholder præcis de 31 officielle sprogvalg for PS5-systemet.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

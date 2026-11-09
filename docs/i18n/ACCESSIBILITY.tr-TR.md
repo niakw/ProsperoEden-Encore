@@ -6,7 +6,7 @@ Büyük metin, yüksek karşıtlık ve azaltılmış hareket seçenekleri Erişi
 
 ## Ayarlar · Touchpad
 
-Oyun sırasında Touchpad'e kısa basmak Encore hızlı ayarlarını açar; ortadaki sistem düğmesi konsola ayrılmıştır. Menüde grafik, tuş eşlemesi, FPS ve tanılama bulunur. Bazı değişiklikler oyunun yeniden başlatılmasını gerektirir. Dil Settings → Language bölümünden seçilir; tüm çeviri dilleri menüde görünmez.
+Oyun sırasında Touchpad'e kısa basmak Encore hızlı ayarlarını açar; ortadaki sistem düğmesi konsola ayrılmıştır. Menüde grafik, tuş eşlemesi, FPS ve tanılama bulunur. Bazı değişiklikler oyunun yeniden başlatılmasını gerektirir. Dil, Settings → Language bölümünden seçilir. Menüde PS5 sisteminin tam olarak 31 resmî dil seçeneği bulunur.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

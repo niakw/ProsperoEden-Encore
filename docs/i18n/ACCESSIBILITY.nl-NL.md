@@ -6,7 +6,7 @@ Grotere tekst, hoog contrast en minder beweging zijn afzonderlijk beschikbaar on
 
 ## Instellingen · Touchpad
 
-Druk kort op het Touchpad om de snelle instellingen van Encore tijdens het spelen te openen. De centrale systeemknop blijft voor de console gereserveerd. Het menu biedt grafische opties, knoptoewijzing, FPS en diagnostiek. Voor sommige wijzigingen moet het spel opnieuw worden gestart. Kies de taal via Settings → Language; niet alle vertaalcatalogi zijn selecteerbaar.
+Druk kort op het Touchpad om de snelle instellingen van Encore tijdens het spelen te openen. De centrale systeemknop blijft voor de console gereserveerd. Het menu biedt grafische opties, knoptoewijzing, FPS en diagnostiek. Voor sommige wijzigingen moet het spel opnieuw worden gestart. De taal kies je via Settings → Language. Het menu bevat precies de 31 officiële taalopties van het PS5-systeem.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

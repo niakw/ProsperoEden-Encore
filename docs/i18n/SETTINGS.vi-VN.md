@@ -12,7 +12,7 @@ Hồ sơ đề xuất sử dụng Vulkan, đầu ra TV 1440p, độ phân giải
 
 ## Thiết lập · Touchpad
 
-Nhấn nhanh Touchpad để mở cài đặt nhanh Encore khi đang chơi; nút hệ thống ở giữa dành riêng cho máy chơi game. Menu gồm đồ họa, gán nút, FPS và chẩn đoán. Một số thay đổi cần khởi động lại trò chơi. Chọn ngôn ngữ trong Settings → Language; không phải mọi ngôn ngữ của danh mục đều xuất hiện trong menu.
+Nhấn nhanh Touchpad để mở cài đặt nhanh Encore khi đang chơi; nút hệ thống ở giữa dành riêng cho máy chơi game. Menu gồm đồ họa, gán nút, FPS và chẩn đoán. Một số thay đổi cần khởi động lại trò chơi. Chọn ngôn ngữ tại Settings → Language. Menu có đúng 31 tùy chọn ngôn ngữ hệ thống PS5 chính thức.
 
 ## Khả năng tiếp cận
 

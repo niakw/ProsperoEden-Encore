@@ -6,7 +6,7 @@ Les options Texte agrandi, Contraste élevé et Réduire les animations sont ind
 
 ## Paramètres · Touchpad
 
-Un appui court sur le pavé tactile (Touchpad) ouvre les réglages rapides d’Encore en jeu. Le bouton système central reste réservé à la console. Ce menu regroupe graphismes, mapping manette, FPS et diagnostics. Certains changements nécessitent de relancer le jeu. La langue se choisit dans Settings → Language ; toutes les langues des catalogues ne sont pas proposées dans le menu.
+Un appui court sur le pavé tactile (Touchpad) ouvre les réglages rapides d’Encore en jeu. Le bouton système central reste réservé à la console. Ce menu regroupe graphismes, mapping manette, FPS et diagnostics. Certains changements nécessitent de relancer le jeu. La langue se choisit dans Settings → Language. Le menu propose exactement les 31 choix officiels de langue du système PS5.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

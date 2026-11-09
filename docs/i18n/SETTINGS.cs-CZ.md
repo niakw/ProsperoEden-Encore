@@ -12,7 +12,7 @@ Doporučené výchozí nastavení používá Vulkan, výstup 1440p, interní mě
 
 ## Nastavení · Touchpad
 
-Krátkým stiskem dotykové plochy Touchpad otevřete rychlé nastavení Encore během hry. Centrální systémové tlačítko zůstává vyhrazené konzoli. Nabídka obsahuje grafiku, mapování tlačítek, FPS a diagnostiku. Některé změny vyžadují restart hry. Jazyk se vybírá v Settings → Language; ne všechny jazyky katalogů jsou v nabídce.
+Krátkým stiskem dotykové plochy Touchpad otevřete rychlé nastavení Encore během hry. Centrální systémové tlačítko zůstává vyhrazené konzoli. Nabídka obsahuje grafiku, mapování tlačítek, FPS a diagnostiku. Některé změny vyžadují restart hry. Jazyk rozhraní se volí v Settings → Language. Nabídka obsahuje přesně 31 oficiálních možností jazyka systému PS5.
 
 ## Přístupnost
 

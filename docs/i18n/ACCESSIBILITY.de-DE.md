@@ -6,7 +6,7 @@ Größere Schrift, hoher Kontrast und reduzierte Bewegung lassen sich unter Barr
 
 ## Einstellungen · Touchpad
 
-Ein kurzer Druck auf das Touchpad öffnet die Encore-Schnelleinstellungen im Spiel; die zentrale Systemtaste bleibt der Konsole vorbehalten. Dort finden sich Grafik, Tastenbelegung, FPS und Diagnoseprotokolle. Manche Änderungen erfordern einen Neustart des Spiels. Die Sprache lässt sich unter Settings → Language wählen; nicht jede vorhandene Übersetzung ist im Menü auswählbar.
+Ein kurzer Druck auf das Touchpad öffnet die Encore-Schnelleinstellungen im Spiel; die zentrale Systemtaste bleibt der Konsole vorbehalten. Dort finden sich Grafik, Tastenbelegung, FPS und Diagnoseprotokolle. Manche Änderungen erfordern einen Neustart des Spiels. Die Sprache wird unter Settings → Language gewählt. Das Menü enthält genau die 31 offiziellen PS5-Systemsprachoptionen.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

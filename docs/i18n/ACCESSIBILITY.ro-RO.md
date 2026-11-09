@@ -6,7 +6,7 @@ Textul mărit, contrastul ridicat și mișcarea redusă pot fi activate separat 
 
 ## Setări · Touchpad
 
-O apăsare scurtă pe Touchpad deschide setările rapide Encore în timpul jocului. Butonul central de sistem rămâne rezervat consolei. Meniul include grafică, configurarea butoanelor, FPS și diagnosticare. Unele modificări necesită repornirea jocului. Limba se alege din Settings → Language; nu toate limbile din cataloage apar în meniu.
+O apăsare scurtă pe Touchpad deschide setările rapide Encore în timpul jocului. Butonul central de sistem rămâne rezervat consolei. Meniul include grafică, configurarea butoanelor, FPS și diagnosticare. Unele modificări necesită repornirea jocului. Limba se alege din Settings → Language. Meniul conține exact cele 31 de opțiuni oficiale de limbă ale sistemului PS5.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

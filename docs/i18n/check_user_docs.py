@@ -74,6 +74,8 @@ check("31 official PS5 system language/region selections" in index_text, "launch
 
 for loc in locales:
     code, native = loc["code"], loc["native"]
+    check("31" in loc["controls"] and "PS5" in loc["controls"],
+          f"{code}: the localized controls guide must state the exact 31 official PS5 choices")
     for kind in TYPES:
         p = I18N / filename(kind, code)
         if not p.is_file():

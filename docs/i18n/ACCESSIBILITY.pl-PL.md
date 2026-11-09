@@ -6,7 +6,7 @@ Powiększony tekst, wysoki kontrast i ograniczenie animacji można włączyć os
 
 ## Ustawienia · Touchpad
 
-Krótkie naciśnięcie panelu Touchpad otwiera szybkie ustawienia Encore podczas gry. Środkowy przycisk systemowy pozostaje zarezerwowany dla konsoli. Menu zawiera grafikę, mapowanie przycisków, FPS i diagnostykę. Niektóre zmiany wymagają ponownego uruchomienia gry. Język wybiera się w Settings → Language; nie wszystkie języki katalogów są widoczne w menu.
+Krótkie naciśnięcie panelu Touchpad otwiera szybkie ustawienia Encore podczas gry. Środkowy przycisk systemowy pozostaje zarezerwowany dla konsoli. Menu zawiera grafikę, mapowanie przycisków, FPS i diagnostykę. Niektóre zmiany wymagają ponownego uruchomienia gry. Język wybiera się w Settings → Language. Menu zawiera dokładnie 31 oficjalnych opcji języka systemowego PS5.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

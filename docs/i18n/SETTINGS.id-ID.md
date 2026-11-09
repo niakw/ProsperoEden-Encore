@@ -12,7 +12,7 @@ Profil awal yang disarankan memakai Vulkan, keluaran TV 1440p, skala render gim 
 
 ## Pengaturan · Touchpad
 
-Tekan Touchpad sebentar untuk membuka pengaturan cepat Encore saat bermain; tombol sistem tengah tetap dipakai konsol. Menu tersebut menyediakan grafis, pemetaan tombol, FPS, dan diagnostik. Sebagian perubahan memerlukan memulai ulang gim. Bahasa dipilih melalui Settings → Language; tidak semua bahasa katalog tersedia sebagai pilihan menu.
+Tekan Touchpad sebentar untuk membuka pengaturan cepat Encore saat bermain; tombol sistem tengah tetap dipakai konsol. Menu tersebut menyediakan grafis, pemetaan tombol, FPS, dan diagnostik. Sebagian perubahan memerlukan memulai ulang gim. Bahasa dipilih di Settings → Language. Menu ini memuat tepat 31 pilihan bahasa sistem PS5 resmi.
 
 ## Aksesibilitas
 

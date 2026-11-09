@@ -6,7 +6,7 @@ L’agrandissement du texte, le contraste élevé et la réduction des mouvement
 
 ## Paramètres · Touchpad
 
-Un appui bref sur le pavé tactile (Touchpad) ouvre les paramètres rapides d’Encore en jeu; le bouton central du système demeure réservé à la console. On y retrouve les graphismes, l’affectation des boutons, les FPS et les diagnostics. Certains changements exigent de relancer le jeu. La langue se règle dans Settings → Language; toutes les langues des catalogues ne sont pas proposées.
+Un appui bref sur le pavé tactile (Touchpad) ouvre les paramètres rapides d’Encore en jeu; le bouton central du système demeure réservé à la console. On y retrouve les graphismes, l’affectation des boutons, les FPS et les diagnostics. Certains changements exigent de relancer le jeu. La langue se choisit dans Settings → Language. Le menu propose exactement les 31 choix officiels de langue du système PS5.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

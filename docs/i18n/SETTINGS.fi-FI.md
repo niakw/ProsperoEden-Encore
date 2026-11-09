@@ -12,7 +12,7 @@ Suositeltu aloitusprofiili on Vulkan, TV-ulostulo 1440p, pelin sisäinen tarkkuu
 
 ## Asetukset · Touchpad
 
-Touchpadin lyhyt painallus avaa Encoren pika-asetukset pelin aikana. Konsolin keskimmäinen järjestelmäpainike on varattu järjestelmälle. Valikossa on grafiikka-, näppäinmääritys-, FPS- ja diagnostiikka-asetuksia. Osa muutoksista vaatii pelin uudelleenkäynnistyksen. Kieli valitaan kohdasta Settings → Language; kaikkia luettelokieliä ei voi valita valikosta.
+Touchpadin lyhyt painallus avaa Encoren pika-asetukset pelin aikana. Konsolin keskimmäinen järjestelmäpainike on varattu järjestelmälle. Valikossa on grafiikka-, näppäinmääritys-, FPS- ja diagnostiikka-asetuksia. Osa muutoksista vaatii pelin uudelleenkäynnistyksen. Kieli valitaan kohdasta Settings → Language. Valikossa on täsmälleen 31 virallista PS5-järjestelmän kielivaihtoehtoa.
 
 ## Saavutettavuus
 

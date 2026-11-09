@@ -12,7 +12,7 @@ Das empfohlene Ausgangsprofil nutzt Vulkan, 1440p-TV-Ausgabe, 1.25x interne Spie
 
 ## Einstellungen · Touchpad
 
-Ein kurzer Druck auf das Touchpad öffnet die Encore-Schnelleinstellungen im Spiel; die zentrale Systemtaste bleibt der Konsole vorbehalten. Dort finden sich Grafik, Tastenbelegung, FPS und Diagnoseprotokolle. Manche Änderungen erfordern einen Neustart des Spiels. Die Sprache lässt sich unter Settings → Language wählen; nicht jede vorhandene Übersetzung ist im Menü auswählbar.
+Ein kurzer Druck auf das Touchpad öffnet die Encore-Schnelleinstellungen im Spiel; die zentrale Systemtaste bleibt der Konsole vorbehalten. Dort finden sich Grafik, Tastenbelegung, FPS und Diagnoseprotokolle. Manche Änderungen erfordern einen Neustart des Spiels. Die Sprache wird unter Settings → Language gewählt. Das Menü enthält genau die 31 offiziellen PS5-Systemsprachoptionen.
 
 ## Barrierefreiheit
 

@@ -12,7 +12,7 @@ Anbefalt startprofil bruker Vulkan, TV-utgang 1440p, intern spillskalering 1.25x
 
 ## Innstillinger · Touchpad
 
-Et kort trykk på Touchpad åpner hurtiginnstillingene i Encore under spill. Den sentrale systemknappen er reservert for konsollen. Menyen samler grafikk, knappetilordning, FPS og diagnostikk. Enkelte endringer krever omstart av spillet. Språket velges under Settings → Language; ikke alle katalogspråk finnes i menyen.
+Et kort trykk på Touchpad åpner hurtiginnstillingene i Encore under spill. Den sentrale systemknappen er reservert for konsollen. Menyen samler grafikk, knappetilordning, FPS og diagnostikk. Enkelte endringer krever omstart av spillet. Språk velges under Settings → Language. Menyen inneholder nøyaktig de 31 offisielle PS5-systemspråkvalgene.
 
 ## Tilgjengelighet
 

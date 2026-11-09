@@ -6,7 +6,7 @@
 
 ## 设置 · Touchpad
 
-游戏中短按 Touchpad 可打开 Encore 快速设置；中央系统按钮保留给主机使用。该菜单包含图形设置、按键映射、FPS 和诊断信息。部分修改需要重启游戏。语言在 Settings → Language 中选择，但不是所有翻译目录语言都能从菜单选取。
+游戏中短按 Touchpad 可打开 Encore 快速设置；中央系统按钮保留给主机使用。该菜单包含图形设置、按键映射、FPS 和诊断信息。部分修改需要重启游戏。语言可在 Settings → Language 中选择。菜单仅提供 PS5 官方的 31 项系统语言选项。
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

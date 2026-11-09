@@ -12,7 +12,7 @@ Az ajánlott kezdőprofil Vulkan renderelést, 1440p tévékimenetet, 1.25x bels
 
 ## Beállítások · Touchpad
 
-A Touchpad rövid megnyomásával játék közben megnyitható az Encore gyorsbeállítási menüje. A központi rendszergomb a konzolé. Itt találhatók a grafikai, gombkiosztási, FPS- és diagnosztikai lehetőségek. Egyes változtatásokhoz újra kell indítani a játékot. A nyelv a Settings → Language alatt választható, de nem minden fordítás szerepel a menüben.
+A Touchpad rövid megnyomásával játék közben megnyitható az Encore gyorsbeállítási menüje. A központi rendszergomb a konzolé. Itt találhatók a grafikai, gombkiosztási, FPS- és diagnosztikai lehetőségek. Egyes változtatásokhoz újra kell indítani a játékot. A nyelv a Settings → Language menüben választható ki. A menü pontosan a PS5 rendszer 31 hivatalos nyelvi beállítását tartalmazza.
 
 ## Akadálymentesség
 

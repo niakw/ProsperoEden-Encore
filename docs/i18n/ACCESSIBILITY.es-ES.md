@@ -6,7 +6,7 @@ Texto más grande, contraste alto y movimiento reducido se activan de forma inde
 
 ## Ajustes · Touchpad
 
-Una pulsación breve del panel táctil (Touchpad) abre los ajustes rápidos de Encore durante el juego. El botón central del sistema está reservado a la consola. Allí se encuentran gráficos, asignación de botones, FPS y diagnósticos. Algunos cambios requieren reiniciar el juego. El idioma se selecciona en Settings → Language; no todas las traducciones están disponibles en el selector.
+Una pulsación breve del panel táctil (Touchpad) abre los ajustes rápidos de Encore durante el juego. El botón central del sistema está reservado a la consola. Allí se encuentran gráficos, asignación de botones, FPS y diagnósticos. Algunos cambios requieren reiniciar el juego. El idioma se selecciona en Settings → Language. El menú incluye exactamente las 31 opciones oficiales de idioma del sistema PS5.
 
 `L1/R1` · `Settings → Accessibility` · `Settings → Controls`
 

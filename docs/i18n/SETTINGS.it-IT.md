@@ -12,7 +12,7 @@ Il profilo consigliato parte da Vulkan, uscita TV 1440p, scala interna 1.25x, FS
 
 ## Impostazioni · Touchpad
 
-Una breve pressione del Touchpad apre le impostazioni rapide di Encore durante il gioco; il tasto centrale di sistema resta riservato alla console. Il menu include grafica, mappatura dei pulsanti, FPS e diagnostica. Alcune modifiche richiedono il riavvio del gioco. La lingua si seleziona in Settings → Language; non tutte le lingue dei cataloghi sono selezionabili.
+Una breve pressione del Touchpad apre le impostazioni rapide di Encore durante il gioco; il tasto centrale di sistema resta riservato alla console. Il menu include grafica, mappatura dei pulsanti, FPS e diagnostica. Alcune modifiche richiedono il riavvio del gioco. La lingua si seleziona in Settings → Language. Il menu include esattamente le 31 opzioni ufficiali della lingua di sistema PS5.
 
 ## Accessibilità
 

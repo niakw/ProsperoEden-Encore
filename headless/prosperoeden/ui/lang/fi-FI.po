@@ -334,10 +334,6 @@ msgstr "Teema · Logo · Tausta · Hehku (Peli: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Valitse yksi juuri avaimille, laiteohjelmistolle, peleille, päivityksille ja modeille"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Valitse pelien käyttämä kieli"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Valitse · käyttöliittymä. ohjelmistot / Ohjaus — ei muutoksia."

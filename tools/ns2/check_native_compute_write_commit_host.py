@@ -55,9 +55,11 @@ enum class ObtainBufferOperation { DoNothing, MarkAsWritten };
 struct MockGpuMemory {
     bool refuse{};
     bool moved{};
+    bool split{};
     std::optional<u64> GpuToCpuAddress(u64 address) {
         if(refuse && address>=0x20000 && address<0x21000) return {};
-        return address+0x4000000+(moved ? 0x1000000 : 0);
+        return address+0x4000000+(moved ? 0x1000000 : 0)+
+               ((split && address>=0x21000 && address<0x22000) ? 0x1000 : 0);
     }
 };
 struct MockBuffer {
@@ -109,7 +111,7 @@ int main() {
     auto& plan=*renderer.resources;
     using Shader::Ampere::NativeQmdStorageBinding;
     plan.storage_buffers.push_back(NativeQmdStorageBinding{0x10000,16,false,true});
-    plan.storage_buffers.push_back(NativeQmdStorageBinding{0x20000,0x1000,true,true});
+    plan.storage_buffers.push_back(NativeQmdStorageBinding{0x20000,0x3000,true,true});
     assert(renderer.Commit());
     assert(renderer.buffer_cache.writes.size()==1);
     assert(renderer.buffer_cache.writes[0].first==0x20000);
@@ -117,6 +119,15 @@ int main() {
     assert(!renderer.Commit(true));
     assert(renderer.buffer_cache.writes.empty());
     renderer.gpu_memory->moved=false;
+    assert(renderer.Commit());
+    renderer.buffer_cache.writes.clear();
+    // A contiguous guest VA with an independently remapped interior
+    // 4 KiB page must fail before any GPU-dirty mark, even if its first
+    // GMMU page still resolves to the same physical address.
+    renderer.gpu_memory->split=true;
+    assert(!renderer.Commit());
+    assert(renderer.buffer_cache.writes.empty());
+    renderer.gpu_memory->split=false;
     assert(renderer.Commit());
     renderer.buffer_cache.writes.clear();
     // Mapping preflight runs to completion before any cache dirty marking.
@@ -195,5 +206,5 @@ with tempfile.TemporaryDirectory(prefix='encore-write-commit-') as temp:
             run=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
             assert run.returncode==0,(cxx,run.stderr[-3500:])
             print('P2_3_NATIVE_STORAGE_COMMIT_AFTER_SNAPSHOT_PASS',Path(cxx).name,
-                  f'O{opt}', 'mappings=full', 'physical_remap=refused',
+                  f'O{opt}', 'mappings=full', 'physical_remap=refused', 'interior_page=refused',
                   'writes=known', 'owners=2',flush=True)

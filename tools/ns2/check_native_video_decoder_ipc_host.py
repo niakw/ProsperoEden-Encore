@@ -86,7 +86,11 @@ assert 'impl->pending_pts.merge(staged_pts);' in decode_body
 assert decode_body.index('if (!sent) return false;') < decode_body.index(
     'impl->pending_pts.merge(staged_pts);')
 assert 'impl->pending_pts.erase(it);' not in decode_body
-assert 'impl->pending_pts.erase(it);' in backend
+# The receive loop runs INSIDE Impl; its member is unqualified there.
+# A decoded matching frame must still retire exactly its PTS entry.
+receive_body = backend.split('    bool Receive(std::vector<Nx2Picture>& pictures) {', 1)[1].split(
+    '\n};\n\nNx2VideoDecoder::Nx2VideoDecoder(', 1)[0]
+assert 'pending_pts.erase(it);' in receive_body
 assert 'std::nullopt' in backend
 start='void IGraphicsVideoDecoderSession::Pump() {'
 end='\nvoid IGraphicsVideoDecoderSession::SubmitInput('

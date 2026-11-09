@@ -322,7 +322,7 @@
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Native channel bind-ID recycling now fails closed and retires stale parked waits with extracted-owner Clang/GCC witness. Full multi-channel guest semaphore, GPFIFO completion/fence ordering and native invalid-method rollback still need authenticated host execution.",
+      "blocker": "Channel epoch reuse, parked replay, and serialized shared GPU BindChannel now have real Scheduler owner Clang/GCC execution proof. Guest fence/semaphore values, actual GPU writes, invalid-method rollback and end-to-end native QMD ordering remain open.",
       "excluded_forms": []
     }
   ]

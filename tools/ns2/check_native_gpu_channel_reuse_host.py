@@ -25,6 +25,9 @@ assert 'std::erase(pending_native_channels, retired);' in declare
 assert 'existing->second = std::move(new_channel);' in declare
 assert 'if (existing->second == new_channel)' in declare
 assert 'std::runtime_error("Native GPFIFO: missing channel owner")' in push
+assert push.index("gpu_lock(gpu_submit_guard)") < push.index("gpu.BindChannel(")
+assert resume.index("gpu_lock(gpu_submit_guard)") < resume.index("gpu.BindChannel(")
+assert resume.index("gpu_lock(gpu_submit_guard)") < resume.index("pending_lock(pending_guard)")
 
 fixture=r"""
 #include <algorithm>
@@ -85,6 +88,7 @@ private:
     std::unordered_map<s32,std::shared_ptr<ChannelState>> channels;
     std::vector<std::shared_ptr<ChannelState>> pending_native_channels;
     std::shared_mutex scheduling_guard;
+    std::mutex gpu_submit_guard;
     mutable std::mutex pending_guard;
 };
 __REAL_OWNER__
@@ -190,6 +194,63 @@ int main() {
     assert(swapped.load());
     scheduler.Push(gpu,35,CommandList{});
     assert(replacement->payload->dma_pusher.dispatches==1);
+
+    // Two live channels may have independent epoch readers, but the GPU
+    // has one mutable BindChannel context. Submissions must not interleave
+    // the binding of channel 42 into channel 41's in-flight DispatchCalls.
+    auto first=channel(41), second=channel(42);
+    scheduler.DeclareChannel(first);
+    scheduler.DeclareChannel(second);
+    std::atomic<bool> first_entered{false}, first_allowed{false}, second_entered{false};
+    first->payload->dma_pusher.after_dispatch=[&] {
+        assert(gpu.current==41);
+        first_entered.store(true);
+        while (!first_allowed.load()) std::this_thread::yield();
+        assert(gpu.current==41);
+    };
+    second->payload->dma_pusher.after_dispatch=[&] {
+        assert(gpu.current==42);
+        second_entered.store(true);
+    };
+    std::thread t1([&] { scheduler.Push(gpu,41,CommandList{}); });
+    while (!first_entered.load()) std::this_thread::yield();
+    std::thread t2([&] { scheduler.Push(gpu,42,CommandList{}); });
+    std::this_thread::sleep_for(std::chrono::milliseconds{12});
+    assert(!second_entered.load()); // Binding may not change mid-dispatch.
+    first_allowed.store(true);
+    t1.join();
+    t2.join();
+    assert(second_entered.load());
+
+    // An idle semaphore replay owns the same GPU binding as a fresh push.
+    auto parked=channel(51), fresh=channel(52);
+    scheduler.DeclareChannel(parked);
+    scheduler.DeclareChannel(fresh);
+    parked->payload->dma_pusher.pending=true;
+    parked->payload->dma_pusher.ready=false;
+    scheduler.Push(gpu,51,CommandList{});
+    assert(scheduler.HasPendingNativeChannels());
+    parked->payload->dma_pusher.ready=true;
+    std::atomic<bool> replay_entered{false}, replay_allowed{false}, fresh_done{false};
+    parked->payload->dma_pusher.after_dispatch=[&] {
+        assert(gpu.current==51);
+        replay_entered.store(true);
+        while (!replay_allowed.load()) std::this_thread::yield();
+        assert(gpu.current==51);
+    };
+    std::thread replay([&] { scheduler.ResumePendingNative(gpu); });
+    while (!replay_entered.load()) std::this_thread::yield();
+    std::thread submit([&] {
+        scheduler.Push(gpu,52,CommandList{});
+        fresh_done.store(true);
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds{12});
+    assert(!fresh_done.load());
+    replay_allowed.store(true);
+    replay.join();
+    submit.join();
+    assert(fresh_done.load());
+    assert(!scheduler.HasPendingNativeChannels());
 }
 """.replace("__REAL_OWNER__",push+"\n"+resume+"\n"+declare)
 
@@ -211,4 +272,4 @@ with tempfile.TemporaryDirectory(prefix="eden-g10-scheduler-reuse-") as d:
             assert ran.returncode==0,ran.stderr[-4500:]
             print("G10_NATIVE_SCHEDULER_OWNER_REUSE_PASS",Path(compiler).name,opt,
                   "stale_wait_retired=1 same_owner_preserved=1"
-                  " unknown_owner_rejected=1 two_channel_replay=1 epoch_concurrency=1",flush=True)
+                  " unknown_owner_rejected=1 two_channel_replay=1 epoch_concurrency=1 concurrent_gpu_bind=serial semaphore_replay=serial",flush=True)

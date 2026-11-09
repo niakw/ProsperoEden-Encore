@@ -71,15 +71,19 @@ cp "$root/LICENSE" "$root/THIRD_PARTY_NOTICES.md" "$app/legal/"
 cp -a "$root/LICENSES" "$app/legal/LICENSES"
 cp "$root/vendor/encore-active/libwebp/COPYING" "$app/legal/LIBWEBP_LICENSE.txt"
 cp "$root/vendor/encore-active/libwebp/PATENTS" "$app/legal/LIBWEBP_PATENTS.txt"
+cp "$root/vendor/encore-active/PS5_MihawkGen/LICENSE.md" "$app/legal/MIHAWKGEN_LICENSE.md"
+cp "$root/vendor/encore-active/PS5_MihawkGen/THIRD_PARTY_NOTICES.txt" "$app/legal/MIHAWKGEN_THIRD_PARTY_NOTICES.txt"
+cp "$root/vendor/encore-active/PS5_FSR3OpticalFlow/COPYING" "$app/legal/FSR3_OPTICAL_LICENSE.txt"
+cp "$root/vendor/encore-active/PS5_FSR3OpticalFlow/shaders/LICENSE.txt" "$app/legal/FSR3_OPTICAL_SHADER_LICENSE.txt"
 # PS5-native MihawkGen network, bundled with the installed app only, including
 # the upstream GPL-3.0-or-later licence and all model distillation credits.
 # A mismatching/missing model must not silently produce a broken package.
-mihawk_root="$root/third_party/PS5_MihawkGen"
+mihawk_root="$root/vendor/encore-active/PS5_MihawkGen"
 python3 - "$mihawk_root/framegen/models/network.fgw" <<'PY_MIHAWK_NETWORK'
 import hashlib, sys
 from pathlib import Path
 network = Path(sys.argv[1])
-assert network.is_file(), "MihawkGen submodule/model missing"
+assert network.is_file(), "Vendored MihawkGen model missing"
 assert network.stat().st_size == 1757240, "MihawkGen model size mismatch"
 assert hashlib.sha256(network.read_bytes()).hexdigest() == "31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b", "MihawkGen model hash mismatch"
 PY_MIHAWK_NETWORK

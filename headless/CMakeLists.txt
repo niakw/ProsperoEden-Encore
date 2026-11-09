@@ -1781,7 +1781,7 @@ endif()
         # Pinned BSD-licensed libwebp: background one-time encoding and decode.
         set(EDEN_WEBP_ROOT "${PORT_ROOT}/vendor/encore-active/libwebp")
         if(NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")
-            message(FATAL_ERROR "Pinned libwebp vendor missing: git submodule update --init --recursive")
+            message(FATAL_ERROR "Pinned libwebp sources absent from sole vendor submodule")
         endif()
         set(WEBP_ENABLE_SIMD OFF CACHE BOOL "" FORCE)
         set(WEBP_USE_THREAD OFF CACHE BOOL "" FORCE)

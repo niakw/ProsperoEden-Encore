@@ -7,7 +7,7 @@ strings.py new <tag>          start headless/prosperoeden/ui/lang/<tag>.po from 
 strings.py check              check every catalog in headless/prosperoeden/ui/lang and embedded French
 strings.py embed-fr           rebuild headless/prosperoeden/fr_fr_embedded.h from fr-FR.po
 
-The code holds the English text: tr("...") where it is drawn, TR("...") in constant tables (and
+The code holds US English source text: tr("...") where it is drawn, TR("...") in tables (and
 the setting labels of headless/settings_store.h). A catalog is a gettext .po file named after the
 PS5 system language's tag (third_party/ps5_system_language.hpp): pt-BR.po, fr-FR.po...
 
@@ -259,7 +259,7 @@ def font_characters():
 
 # Catalogs written in scripts the console's fonts draw.
 SYSTEM_FONT_CATALOGS = {"ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "el-GR", "th-TH", "ar"}
-STRICT_CATALOGS = {"fr-FR", "fr-CA", "es-ES", "es-419"}
+STRICT_CATALOGS = {"fr-FR", "fr-CA", "es-ES", "es-419", "en-US", "en-GB"}
 # Characters that take no room: the zero-width space (a line may break there), direction marks.
 INVISIBLE = {0x200B, 0x200C, 0x200D, 0x200E, 0x200F}
 

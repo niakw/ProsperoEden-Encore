@@ -42,7 +42,7 @@ assert len(keys) == len(catalogs) >= 18
 assert keys[2] == 'fr' and catalogs[2] == 'fr-FR', (keys[2], catalogs[2])
 
 po = sorted(lang_dir.glob('*.po'))
-assert len(po) == 29, f'expected 29 official PS5 launcher catalogs, got {len(po)}'
+assert len(po) == 31, f'expected 31 official PS5 launcher catalogs, got {len(po)}'
 assert len(keys) == len(catalogs) == len(system_tags) == 31, 'official PS5 language choice count changed'
 assert len(labels) == len(guest_languages) == len(regions) == 31, 'PS5 language presentation and guest mappings differ'
 assert preview_labels == labels, 'host preview must expose exactly the same 31 PS5 labels as the native launcher'
@@ -50,11 +50,14 @@ assert preview_regions == regions, 'host preview regions have drifted from the n
 assert guest_languages[18:] == [1] * 13, 'PS5 UI-only locales must retain safe English guest fallback'
 assert all(0 <= region <= 6 for region in regions), 'invalid guest region index'
 assert set(catalogs) == set(system_tags), 'launcher choices must match the PS5 system language tags exactly'
-assert set(catalogs) - {'en-US', 'en-GB'} == {p.stem for p in po}, 'selected locale missing its PO catalog'
+assert set(catalogs) == {p.stem for p in po}, 'every PS5 selector must have its own PO catalog'
 assert len(set(catalogs)) == len(catalogs), 'duplicate catalog selector'
 assert keys[18:31] == catalogs[18:31], 'original thirteen hidden catalogs must be selectable'
 fr = lang_dir / 'fr-FR.po'
 assert fr.is_file() and fr.stat().st_size > 1000, 'complete fr-FR catalog missing'
+core_strings = (root / 'headless/prosperoeden/pe/core/strings.cpp').read_text()
+assert 'return {"en-US"};' in core_strings and 'return {"en-GB", "en-US"};' in core_strings, (
+    'both regional English catalogs must be loaded')
 
 # A release must never let an old dev override force English. The only language.txt read must live
 # inside the EDEN_DEV_PROFILE block.
@@ -74,4 +77,4 @@ assert 'language < static_cast<int>(std::size(kLanguageRegions))' in fake_servic
 assert 'static const std::vector<std::string> labels = Labels' not in services, 'translated labels survive a launcher restart'
 assert 'return language_labels_;' in services and 'return resolution_labels_;' in services, 'translated labels are not per-service caches'
 
-print('Language runtime contract PASS (PS5 French -> fr-FR, release override safe, live reload, 29 catalogs, 31 official PS5 selector choices)')
+print('Language runtime contract PASS (PS5 French -> fr-FR, release override safe, live reload, 31 catalogs, 31 official PS5 selector choices)')

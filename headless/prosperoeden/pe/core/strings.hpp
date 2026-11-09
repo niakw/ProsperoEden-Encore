@@ -61,7 +61,8 @@ class Catalog
 Catalog &catalog();
 
 // The catalogs to try for a system language tag, the best first: the tag itself, then the same
-// language as written elsewhere ("fr-CA": fr-CA, fr-FR). English ("en-US", "en-GB") needs none.
+// language as written elsewhere ("fr-CA": fr-CA, fr-FR). English has distinct
+// en-US and en-GB catalogs; en-GB may fall back to US if unavailable.
 std::vector<std::string> catalog_candidates(std::string_view tag);
 
 // The text in the player's language. The pointer is the catalog's (or english itself): it stays

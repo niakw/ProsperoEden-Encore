@@ -729,8 +729,9 @@ bool strings_check()
         same(pe::catalog_candidates("fr-CA"), {"fr-CA", "fr-FR"}) &&
         same(pe::catalog_candidates("pt-PT"), {"pt-PT", "pt-BR"}) &&
         same(pe::catalog_candidates("es-419"), {"es-419", "es-ES"}) &&
-        same(pe::catalog_candidates("de-DE"), {"de-DE"}) && pe::catalog_candidates("en-GB").empty() &&
-        pe::catalog_candidates("en-US").empty() && pe::catalog_candidates("").empty();
+        same(pe::catalog_candidates("de-DE"), {"de-DE"}) &&
+        same(pe::catalog_candidates("en-GB"), {"en-GB", "en-US"}) &&
+        same(pe::catalog_candidates("en-US"), {"en-US"}) && pe::catalog_candidates("").empty();
     if (!ok)
         std::fprintf(stderr, "error: the launcher's text functions fail their check\n");
     return ok;

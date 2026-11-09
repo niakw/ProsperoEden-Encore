@@ -109,8 +109,15 @@ std::vector<std::string> catalog_candidates(std::string_view tag)
         {"es-ES", "es-419"}, {"pt-PT", "pt-BR"}, {"pt-BR", "pt-PT"},
     };
     std::vector<std::string> result;
-    if (tag.empty() || tag.substr(0, 2) == "en")
+    if (tag.empty())
         return result;
+    // Explicit US and UK catalogs: prefer UK regional spelling before US fallback.
+    if (tag == "en-US")
+        return {"en-US"};
+    if (tag == "en-GB")
+        return {"en-GB", "en-US"};
+    if (tag.substr(0, 2) == "en")
+        return result; // No undeclared English locale.
     result.emplace_back(tag);
     for (const auto &pair : kRelated)
         if (pair[0] == tag)

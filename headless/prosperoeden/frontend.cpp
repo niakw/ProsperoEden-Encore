@@ -77,7 +77,8 @@ float MenuGain(int volume) {
 }
 
 // The launcher speaks the console's language when the app has a catalog for it
-// (ui/lang/<tag>.po, tags as in third_party/ps5_system_language.hpp), and English otherwise.
+// (ui/lang/<tag>.po, tags as in third_party/ps5_system_language.hpp), including
+// distinct English US/UK catalogs. Missing entries use US English source strings.
 // Development profiles may override it with language.txt; release builds always follow the saved setting.
 //
 // Montserrat has Latin and Cyrillic letters. The other scripts (Japanese, Korean, Chinese, Greek,
@@ -113,7 +114,7 @@ void LoadLanguage(pe::gfx::Font& font) {
     }
 
     // Every launcher instance starts with a clean catalog. This is essential when switching from
-    // a translated language back to English, whose candidate list is deliberately empty.
+    // any other language, including the two English regional variants.
     pe::catalog().clear();
     std::string catalog = "none";
     std::size_t texts = 0;
@@ -140,7 +141,7 @@ void LoadLanguage(pe::gfx::Font& font) {
         catalog += " (not used: no font for it)";
         texts = 0;
     }
-    if (tag.rfind("en", 0) != 0 && texts == 0) {
+    if (texts == 0) {
         Eden::Report("language", ("Requested launcher catalog unavailable: " + tag +
                                    " under " + Eden::AppFile("ui/lang")).c_str());
     }

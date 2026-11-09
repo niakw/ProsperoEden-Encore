@@ -44,8 +44,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: eden-p0-p4-host-${{ github.event.pull_request.head.sha || github.sha }}
-  cancel-in-progress: false
+  # Every candidate is still tested at its exact SHA, but obsolete
+  # intermediate runs never qualify the current main. Supersede them
+  # instead of exhausting host runners with outdated P0-P4 matrices.
+  # Keep workflow_dispatch distinct so an explicit release qualification
+  # is not cancelled by a concurrent source push.
+  group: eden-p0-p4-host-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
 
 jobs:
   # Fast, exact native Vulkan ABI witness. Uses only pinned vendor headers,

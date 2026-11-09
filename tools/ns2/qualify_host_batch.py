@@ -32,6 +32,7 @@ TESTS = {
     "process_handoff_transaction": "tools/ns2/check_native_process_handoff_transaction_host.py",
     "gpu_kernel_session_rollback": "tools/ns2/check_gpu_session_kernel_rollback_host.py",
     "gpu_ipc_event_partition_oom": "tools/ns2/check_native_gpu_session_ipc_oom_host.py",
+    "video_ready_event_oom": "tools/ns2/check_native_video_ready_event_oom_host.py",
     "gpu_acquire_worker_move_oom": "tools/ns2/check_native_gpu_acquire_worker_oom_host.py",
     "gpu_channel_alloc_owner": "tools/ns2/check_native_gpu_channel_allocation_host.py",
     "gpu_shader_cache_alloc": "tools/ns2/check_native_gpu_cache_allocation_host.py",

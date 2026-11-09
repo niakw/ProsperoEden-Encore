@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
           ref: '1a52235c04a26d3886093d102c46baa23ee705bc'
           path: source-candidate
-      - name: Validate 29 translated manuals for exact 31 PS5 choices
+      - name: Validate locale manuals in pinned prerelease source snapshot
         run: python3 -B source-candidate/tools/check-user-doc-locales.py
       - name: Create unpublished prerelease draft without assets or native build
         env:

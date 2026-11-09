@@ -334,10 +334,6 @@ msgstr "Θέμα · Λογότυπο · Φόντο · Λάμψη (Παιχνίδ
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Επιλέξτε μία ρίζα για κλειδιά, υλικολογισμικό, παιχνίδια, ενημερώσεις και mods"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Επιλέξτε τη γλώσσα που χρησιμοποιούν τα παιχνίδια"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Επιλέξτε · περιβάλλον. λογισμικό / Χειρισμός — χωρίς αλλαγές."

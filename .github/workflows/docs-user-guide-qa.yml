@@ -8,6 +8,7 @@ on:
       - 'headless/prosperoeden/ui/lang/**'
       - 'tools/check-english-regional-variants.py'
       - 'tools/launcher/launcher.pot'
+      - 'tools/launcher/english_variants.py'
       - 'headless/prosperoeden/pe/core/strings.cpp'
       - 'LANGUAGES.md'
       - 'README.md'

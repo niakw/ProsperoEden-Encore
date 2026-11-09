@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
-"""Fast no-build CI contract for both PS5 English regional launcher catalogs."""
+"""Fast no-build gate for separate PS5 English US and UK launcher catalogs."""
 from pathlib import Path
+import re
 import runpy
 
 root = Path(__file__).resolve().parents[1]
 language_dir = root / "headless/prosperoeden/ui/lang"
-parse_po = runpy.run_path(str(root / "tools/launcher/strings.py"))["parse_po"]
-source = parse_po(root / "tools/launcher/launcher.pot")
+module = runpy.run_path(str(root / "tools/launcher/strings.py"))
+parse_po = module["parse_po"]
+template = parse_po(root / "tools/launcher/launcher.pot")
 us = parse_po(language_dir / "en-US.po")
 uk = parse_po(language_dir / "en-GB.po")
-catalogs = {p.stem for p in language_dir.glob("*.po")}
-assert len(catalogs) == 31, f"Expected 31 official PS5 catalogs, got {len(catalogs)}"
-assert len(source) >= 500, "Launcher gettext source template is incomplete"
-assert set(us) == set(uk) == set(source), "English regional catalogs have missing or stale entries"
-assert all(us[key] == key for key in source), "US catalog must keep source US spelling"
-regional = {key: key.replace("Color", "Colour").replace("Customize", "Customise")
-            for key in source if "Color" in key or "Customize" in key}
-assert len(regional) >= 10, "Not enough real English UK spelling cases"
-assert all(uk[key] == regional.get(key, key) for key in source), (
-    "UK catalog must use British spellings while preserving unrelated strings")
+expected = set(template) | set(module["DYNAMIC_LIBRARY_GENRES"])
+assert len(list(language_dir.glob("*.po"))) == 31, "All 31 official PS5 catalogs are required"
+assert len(template) == 566 and len(expected) == 596, "Launcher template or runtime genres are incomplete"
+assert set(us) == set(uk) == expected, "English variants have missing or stale msgids"
+assert all(us[key] and uk[key] for key in expected), "Empty English translation"
+assert all(uk[key] == us[key].replace("Color", "Colour").replace("Customize", "Customise")
+           for key in expected), "UK catalog drifted from deliberate regional spelling differences"
+regional = {key for key in expected if us[key] != uk[key]}
+assert len(regional) >= 10 and uk["Customize"] == "Customise"
+assert uk["Color 1 blue"] == "Colour 1 blue"
+assert us["Intensité DLSS-NR"] == "DLSS-NR intensity", "Inherited French text not localized to English"
+french_source = [key for key in template if re.search("[àâéèêîôùûç]", key, re.I)]
+assert french_source and all(not re.search("[àâéèêîôùûç]", us[key], re.I)
+                             for key in french_source), "Untranslated legacy French UI source keys"
 core = (root / "headless/prosperoeden/pe/core/strings.cpp").read_text(encoding="utf-8")
 assert 'return {"en-US"};' in core and 'return {"en-GB", "en-US"};' in core, (
-    "Runtime must load each English variant's own catalog")
-print(f"ENGLISH_VARIANTS_PASS locales=31 catalog_entries={len(source)} uk_differences={len(regional)}")
+    "Runtime must load the appropriate regional catalog")
+print(f"ENGLISH_VARIANTS_PASS catalog_count=31 active={len(template)} "
+      f"runtime_categories={len(expected)-len(template)} regional_differences={len(regional)}")

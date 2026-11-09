@@ -1,5 +1,5 @@
 # ProsperoEden launcher - en-GB
-# Complete English regional catalog generated from the source gettext template.
+# Full regional English catalog including dynamic library categories.
 # English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
 # keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
 # AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
@@ -86,10 +86,22 @@ msgstr "Accessibility"
 msgid "ACCESSIBILITY"
 msgstr "ACCESSIBILITY"
 
+#: Nlib metadata
+msgid "Action"
+msgstr "Action"
+
+#: Nlib metadata
+msgid "Action-Adventure"
+msgstr "Action-Adventure"
+
 #. {0}: updates, DLC and mods of the game; {1}: the language it will use.
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Add-ons: {0}  /  Language: {1}"
+
+#: Nlib metadata
+msgid "Adventure"
+msgstr "Adventure"
 
 #: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "All credit for the Eden emulator goes to its developers and contributors."
@@ -102,10 +114,6 @@ msgstr "All Software"
 #: pe/ui/launcher.cpp
 msgid "Already up to date: {0}"
 msgstr "Already up to date: {0}"
-
-#: settings_store.h
-msgid "AMD FSR"
-msgstr "AMD FSR"
 
 #: eden_services.cpp
 msgid "Another language"
@@ -142,6 +150,10 @@ msgstr "APPLICATION"
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Application updates"
 msgstr "Application updates"
+
+#: Nlib metadata
+msgid "Arcade"
+msgstr "Arcade"
 
 #: pe/ui/home.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Audio"
@@ -205,6 +217,10 @@ msgstr "Bilinear is the lightest default. AMD FSR is most useful when rendering 
 #: pe/ui/library.cpp
 msgid "Bilinear is the lightest default. AMD FSR is useful when rendering below the TV output size."
 msgstr "Bilinear is the lightest default. AMD FSR is useful when rendering below the TV output size."
+
+#: Nlib metadata
+msgid "Board Game"
+msgstr "Board Game"
 
 #. Button hint: move through the list.
 #: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
@@ -270,6 +286,14 @@ msgstr "Cancel"
 #: eden_services.cpp
 msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
+
+#: Nlib metadata
+msgid "Card Game"
+msgstr "Card Game"
+
+#: Nlib metadata
+msgid "Casual"
+msgstr "Casual"
 
 #. Button hint: change the highlighted setting.
 #: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -369,6 +393,10 @@ msgstr "Cleared {0} of cache."
 #: pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "Close"
 msgstr "Close"
+
+#: Nlib metadata
+msgid "Co-op"
+msgstr "Co-op"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Color 1 blue"
@@ -594,6 +622,10 @@ msgstr "Edit"
 msgid "Edit custom mapping"
 msgstr "Edit custom mapping"
 
+#: Nlib metadata
+msgid "Education"
+msgstr "Education"
+
 #: pe/ui/browse.cpp
 msgid "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
 msgstr "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
@@ -640,6 +672,14 @@ msgstr "Export failed. Check that the storage root can be written."
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "Exported to {0}."
+
+#: Nlib metadata
+msgid "Family"
+msgstr "Family"
+
+#: Nlib metadata
+msgid "Fighting"
+msgstr "Fighting"
 
 #. What a mod is made of: files that replace the game's own.
 #: eden_services.cpp, host/fake_services.cpp
@@ -703,10 +743,6 @@ msgstr "FPS OVERLAY"
 msgid "FPS overlay"
 msgstr "FPS overlay"
 
-#: pe/ui/settings.cpp
-msgid "Enhanced smoothness"
-msgstr "Enhanced smoothness"
-
 #: settings_store.h
 msgid "French"
 msgstr "French"
@@ -714,18 +750,6 @@ msgstr "French"
 #: settings_store.h
 msgid "French (Canada)"
 msgstr "French (Canada)"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr "FSR sharpness"
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr "FSR SHARPNESS"
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
-msgstr "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
 
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
@@ -875,6 +899,10 @@ msgstr "High contrast"
 msgid "Home"
 msgstr "Home"
 
+#: Nlib metadata
+msgid "Horror"
+msgstr "Horror"
+
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Image darkness"
 msgstr "Image darkness"
@@ -904,6 +932,10 @@ msgstr "Imported. The save it replaced was backed up."
 #: pe/ui/browse.cpp
 msgid "IN USE"
 msgstr "IN USE"
+
+#: Nlib metadata
+msgid "Indie"
+msgstr "Indie"
 
 #: pe/ui/settings.cpp
 msgid "INSTALLED"
@@ -1068,10 +1100,6 @@ msgstr "MENU SOUNDS"
 msgid "Menu sounds"
 msgstr "Menu sounds"
 
-#: pe/ui/settings.cpp
-msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
-msgstr "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
-
 #: settings_store.h
 msgid "Minimum"
 msgstr "Minimum"
@@ -1102,9 +1130,13 @@ msgstr "Mods"
 msgid "Move cover"
 msgstr "Move cover"
 
-#: pe/ui/home.cpp, pe/ui/multiplayer.cpp, pe/ui/switch_theme.cpp
+#: Nlib metadata
 msgid "Multiplayer"
 msgstr "Multiplayer"
+
+#: Nlib metadata
+msgid "Music"
+msgstr "Music"
 
 #: pe/ui/settings.cpp
 msgid "MUTE"
@@ -1231,6 +1263,10 @@ msgstr "On"
 msgid "One root for keys, firmware, games, updates, mods and transfers."
 msgstr "One root for keys, firmware, games, updates, mods and transfers."
 
+#: Nlib metadata
+msgid "Online"
+msgstr "Online"
+
 #. Short tag on a folder row.
 #: pe/ui/browse.cpp
 msgid "OPEN"
@@ -1269,6 +1305,10 @@ msgstr "Open the per-game DualSense mapping. Global uses Settings > Controls; Cu
 msgid "Options"
 msgstr "Options"
 
+#: Nlib metadata
+msgid "Other"
+msgstr "Other"
+
 #. Button hint: jump a page of the list (L1 / R1).
 #: pe/ui/browse.cpp
 msgid "Page"
@@ -1278,6 +1318,10 @@ msgstr "Page"
 msgid "Parent folder"
 msgstr "Parent folder"
 
+#: Nlib metadata
+msgid "Party"
+msgstr "Party"
+
 #: pe/ui/multiplayer.cpp
 msgid "Password"
 msgstr "Password"
@@ -1286,6 +1330,10 @@ msgstr "Password"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Patch"
 msgstr "Patch"
+
+#: Nlib metadata
+msgid "Platformer"
+msgstr "Platformer"
 
 #: pe/ui/home.cpp
 msgid "Play"
@@ -1359,6 +1407,10 @@ msgstr "PS5 controller initialization failed"
 msgid "Public room service unavailable."
 msgstr "Public room service unavailable."
 
+#: Nlib metadata
+msgid "Puzzle"
+msgstr "Puzzle"
+
 #: pe/ui/home.cpp
 msgid "QUICK SETTINGS"
 msgstr "QUICK SETTINGS"
@@ -1370,6 +1422,10 @@ msgstr "Quick settings"
 #: pe/ui/home.cpp
 msgid "Quit"
 msgstr "Quit"
+
+#: Nlib metadata
+msgid "Racing"
+msgstr "Racing"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -1466,9 +1522,17 @@ msgstr "Restore defaults"
 msgid "Restore Neon"
 msgstr "Restore Neon"
 
+#: Nlib metadata
+msgid "Rhythm"
+msgstr "Rhythm"
+
 #: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Right stick press"
 msgstr "Right stick press"
+
+#: Nlib metadata
+msgid "Role-Playing"
+msgstr "Role-Playing"
 
 #: pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "ROM missing from the game files folder"
@@ -1481,6 +1545,10 @@ msgstr "ROM missing from the storage root"
 #: pe/ui/settings.cpp
 msgid "ROOT"
 msgstr "ROOT"
+
+#: Nlib metadata
+msgid "RPG"
+msgstr "RPG"
 
 #: pe/ui/settings.cpp
 msgid "Runtime health, storage and recovery tools."
@@ -1502,6 +1570,10 @@ msgstr "Safe launch"
 #: pe/ui/library.cpp
 msgid "Safe launch: OpenGL, Handheld, 1x, 60 Hz, 1080p and mods off for this launch only."
 msgstr "Safe launch: OpenGL, Handheld, 1x, 60 Hz, 1080p and mods off for this launch only."
+
+#: Nlib metadata
+msgid "Sandbox"
+msgstr "Sandbox"
 
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Sandbox only"
@@ -1599,13 +1671,21 @@ msgstr "Setup required: {0} Open Settings, Storage to choose the root that holds
 msgid "Setup validation failed. Check that firmware and key files are readable and valid."
 msgstr "Setup validation failed. Check that firmware and key files are readable and valid."
 
+#: Nlib metadata
+msgid "Shooter"
+msgstr "Shooter"
+
 #: pe/ui/settings.cpp
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 
-#: settings_store.h
-msgid "SMAA"
-msgstr "SMAA"
+#: Nlib metadata
+msgid "Simulation"
+msgstr "Simulation"
+
+#: Nlib metadata
+msgid "Single Player"
+msgstr "Single Player"
 
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
@@ -1626,6 +1706,10 @@ msgstr "Spanish"
 #: settings_store.h
 msgid "Spanish (Latin America)"
 msgstr "Spanish (Latin America)"
+
+#: Nlib metadata
+msgid "Sports"
+msgstr "Sports"
 
 #: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Square"
@@ -1680,6 +1764,10 @@ msgstr "Storage ready"
 #: pe/ui/browse.cpp
 msgid "Storage root saved. Reopen Encore to use it."
 msgstr "Storage root saved. Reopen Encore to use it."
+
+#: Nlib metadata
+msgid "Strategy"
+msgstr "Strategy"
 
 #: pe/ui/browse.cpp
 msgid "Supply your own files"
@@ -1811,14 +1899,6 @@ msgstr "Updates for the Eden Encore app, not games or firmware."
 msgid "UPDATES, DLC"
 msgstr "UPDATES, DLC"
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr "Upscaling filter"
-
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr "UPSCALING FILTER"
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr "USA"
@@ -1862,6 +1942,10 @@ msgstr "Video preset"
 #: pe/ui/settings.cpp
 msgid "VIDEO PRESET"
 msgstr "VIDEO PRESET"
+
+#: Nlib metadata
+msgid "Visual Novel"
+msgstr "Visual Novel"
 
 #: pe/ui/switch_theme.cpp
 msgid "Volume"
@@ -1982,14 +2066,6 @@ msgstr "{0}/ (NSP or XCI)"
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (one folder per game ID)"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
-msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
-msgstr "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
-
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms"
 msgstr "Public rooms"
@@ -2034,17 +2110,16 @@ msgstr "Downloading and verifying the PS5 update..."
 msgid "Updates unavailable on this host."
 msgstr "Updates unavailable on this host."
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
-msgstr "Public rooms (read-only)"
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
+msgstr "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
 
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
-msgstr "Read-only room directory"
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
+msgstr "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
-msgstr "Room joining is not available yet."
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
+msgstr "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
 
 #: R10 graphics UX
 msgid "AMD FSR 1: EASU enlarges the picture; RCAS adds sharpness. Most useful below the TV output resolution."
@@ -2162,10 +2237,6 @@ msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 1
 msgstr "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 100% is strongest. Reduce halos if needed."
 
 #: R10 graphics UX
-msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
-msgstr "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
-
-#: R10 graphics UX
 msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
 msgstr "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
 
@@ -2188,6 +2259,203 @@ msgstr "SHARPNESS"
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr "Neural Rendering saved for this game."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr "DLSS-NR intensity saved for this game."
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr "Preset: Default ({0})"
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr "Preset: {0}"
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr "Frame Generation"
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr "Neural Rendering"
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr "DLSS-NR intensity"
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr "Choose directly: Default, Off, A4K Enhanced Details, A4K Soft Image, A4K Clean Image, DLSS-NR Original, or DLSS-NR Compact."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr "DLSS-NR intensity (0–100%) applies only to the two DLSS-NR modes. Per-game settings are retained when disabled."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr "Neural Rendering: Off, A4K Enhanced Details, A4K Soft Image, A4K Clean Image, DLSS-NR Original, or DLSS-NR Compact. One engine at a time."
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr "DLSS-NR intensity: 0–100%. Inactive with the three A4K modes or when NR is off; the setting is retained."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr "A4K — Enhanced Details: neural network for sharper edges and 3D image detail. Requires Vulkan and 2x upscaling."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr "A4K — Soft Image: gentle restoration before detail enhancement. Useful when edges are too harsh. More demanding on the GPU."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr "A4K — Clean Image: neural reconstruction with denoising. Useful for grain or artifacts, with 2x upscaling."
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr "This mode requires Vulkan. Choose Vulkan or another upscaling method to avoid automatic fallback to Bilinear."
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr "A4K — Enhanced Details"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr "A4K — Soft Image"
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr "A4K — Clean Image"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr "DLSS-NR — Original"
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr "DLSS-NR — Compact"
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr "Off"
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr "A4K Enhanced Details: neural processing prioritizing edge definition. Only one NR engine can be selected."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr "A4K Soft Image: neural processing prioritizing a softer image and stable edges."
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr "A4K Clean Image: neural processing designed to reduce visual artifacts and image noise."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Original: full neural network. Intensity is configurable per game. Full PS5 rendering is not yet validated."
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr "DLSS-NR Compact: smaller neural network. Intensity is configurable per game. Full PS5 rendering is not yet validated."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr "Neural Rendering is off by default. Choose one of the three A4K modes or one of the two DLSS-NR modes directly."
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr "Intensity applies only to DLSS-NR Original/Compact; it is inactive in A4K or Off. The saved setting is preserved."
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr "DLSS-NR intensity from 0 to 100%. This does not affect FSR sharpness, anti-aliasing, or Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr "This Neural Rendering mode requires Vulkan; OpenGL is not supported."
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr "For this Neural Rendering mode, choose Bilinear under Upscaling: combining it with other methods is not yet validated on PS5."
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr "Forced MSAA is not yet validated with Neural Rendering. Use None, FXAA, or SMAA."
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr "Neural Rendering and Frame Generation are not yet validated together. Turn off Frame Generation."
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr "This engine is not yet connected to full in-game rendering."
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr "MSAA 2x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr "MSAA 4x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr "MSAA 8x"
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr "MSAA 16x"
+
+# Obsolete gettext entries: retained for translator history only; never active at runtime.
+#~ msgid "AMD FSR"
+#~ msgstr "AMD FSR"
+
+#~ msgid "FSR sharpness"
+#~ msgstr "Netteté FSR"
+
+#~ msgid "FSR SHARPNESS"
+#~ msgstr "NETTETÉ FSR"
+
+#~ msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
+#~ msgstr "La netteté FSR agit uniquement avec AMD FSR. Réduisez-la si l’image paraît granuleuse ou trop accentuée."
+
+#~ msgid "SMAA"
+#~ msgstr "SMAA"
+
+#~ msgid "Upscaling filter"
+#~ msgstr "Filtre de mise à l'échelle"
+
+#~ msgid "UPSCALING FILTER"
+#~ msgstr "FILTRE DE MISE À L'ÉCHELLE"
+
+#~ msgid "Enhanced smoothness"
+#~ msgstr "Fluidité améliorée"
+
+#~ msgid "Public rooms (read-only)"
+#~ msgstr "Salons publics (consultation seule)"
+
+#~ msgid "Read-only room directory"
+#~ msgstr "Annuaire des salons (lecture seule)"
+
+#~ msgid "Room joining is not available yet."
+#~ msgstr "La connexion aux salons n'est pas encore disponible."
+
+#~ msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+#~ msgstr "SGSR a besoin de Vulkan. OpenGL utiliserait silencieusement Bilinéaire ; sélectionnez Vulkan ou une autre méthode haut de gamme."
 
 #: settings_store.h
 msgid "Arabic"

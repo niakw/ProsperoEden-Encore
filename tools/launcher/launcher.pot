@@ -1,4 +1,5 @@
 # ProsperoEden launcher - template
+# Current active launcher strings; the 30 runtime-only game genres are excluded.
 # English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
 # keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
 # AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
@@ -100,10 +101,6 @@ msgstr ""
 
 #: pe/ui/launcher.cpp
 msgid "Already up to date: {0}"
-msgstr ""
-
-#: settings_store.h
-msgid "AMD FSR"
 msgstr ""
 
 #: eden_services.cpp
@@ -702,28 +699,12 @@ msgstr ""
 msgid "FPS overlay"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "Enhanced smoothness"
-msgstr ""
-
 #: settings_store.h
 msgid "French"
 msgstr ""
 
 #: settings_store.h
 msgid "French (Canada)"
-msgstr ""
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "FSR sharpness"
-msgstr ""
-
-#: pe/ui/settings.cpp
-msgid "FSR SHARPNESS"
-msgstr ""
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
 msgstr ""
 
 #. The app can read every folder of the console.
@@ -1067,10 +1048,6 @@ msgstr ""
 msgid "Menu sounds"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
-msgstr ""
-
 #: settings_store.h
 msgid "Minimum"
 msgstr ""
@@ -1101,7 +1078,7 @@ msgstr ""
 msgid "Move cover"
 msgstr ""
 
-#: pe/ui/home.cpp, pe/ui/multiplayer.cpp, pe/ui/switch_theme.cpp
+#: Nlib metadata
 msgid "Multiplayer"
 msgstr ""
 
@@ -1602,10 +1579,6 @@ msgstr ""
 msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
 msgstr ""
 
-#: settings_store.h
-msgid "SMAA"
-msgstr ""
-
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"
 msgstr ""
@@ -1810,14 +1783,6 @@ msgstr ""
 msgid "UPDATES, DLC"
 msgstr ""
 
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
-msgid "Upscaling filter"
-msgstr ""
-
-#: pe/ui/settings.cpp
-msgid "UPSCALING FILTER"
-msgstr ""
-
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
 msgstr ""
@@ -1981,14 +1946,6 @@ msgstr ""
 msgid "{0}/ (one folder per game ID)"
 msgstr ""
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
-msgstr ""
-
-#: pe/ui/library.cpp, pe/ui/settings.cpp
-msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
-msgstr ""
-
 #: pe/ui/multiplayer.cpp
 msgid "Public rooms"
 msgstr ""
@@ -2033,16 +1990,15 @@ msgstr ""
 msgid "Updates unavailable on this host."
 msgstr ""
 
-#: pe/ui/multiplayer.cpp
-msgid "Public rooms (read-only)"
+msgid "Frame generation can smooth the display without speeding up the game. Lossless Scaling needs your own DLL."
 msgstr ""
 
-#: pe/ui/multiplayer.cpp
-msgid "Read-only room directory"
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Lossless.dll missing or invalid. Place your own file in /data/prosperoeden/user/lossless/Lossless.dll."
 msgstr ""
 
-#: pe/ui/multiplayer.cpp
-msgid "Room joining is not available yet."
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "DLSS-NR: nvngx_dlssnr.dll missing or invalid. Place your own file in /data/prosperoeden/user/dlssnr/nvngx_dlssnr.dll."
 msgstr ""
 
 #: R10 graphics UX
@@ -2161,10 +2117,6 @@ msgid "SGSR edge sharpness: 0% disables extra edge intensity, 50% is balanced, 1
 msgstr ""
 
 #: R10 graphics UX
-msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
-msgstr ""
-
-#: R10 graphics UX
 msgid "SGSR: Qualcomm spatial upscale using a separate Vulkan shader. Try it when FSR 1 looks soft."
 msgstr ""
 
@@ -2187,6 +2139,203 @@ msgstr ""
 #: R07 SGSR graphics
 msgid "Texture filtering sharpens roads, floors and walls viewed at an angle. Start at 4x; 8x/16x use more GPU bandwidth. Unlike image sharpness, it does not sharpen the whole picture."
 msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Turn OFF Neural Rendering first. NR and frame generation are not validated together on PS5."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering saved for this game."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR intensity saved for this game."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Preset: Default ({0})"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Preset: {0}"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Frame Generation"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés : réseau neuronal pour améliorer les contours et les détails de l’image en 3D. Nécessite Vulkan et un agrandissement x2."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie : restauration douce avant amélioration des détails. Utile si les contours sont trop durs. Plus coûteux pour le GPU."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée : reconstruction neurale avec débruitage. Utile si l’image présente du grain ou des artefacts, avec agrandissement x2."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Ce traitement nécessite Vulkan. Choisis Vulkan ou un autre agrandissement d’image pour éviter un retour automatique au bilinéaire."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K — Détails améliorés"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image adoucie"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K — Image nettoyée"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Original"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR — Compact"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Désactivé"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K Détails améliorés : réseau de traitement de l'image privilégiant la définition des contours. Un seul moteur NR peut être sélectionné."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K Image adoucie : réseau de traitement de l'image privilégiant la douceur du rendu et la stabilité des contours."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "A4K Image nettoyée : réseau de traitement visant les parasites visuels et le bruit de l'image."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Original : réseau neuronal complet. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DLSS-NR Compact : réseau neuronal réduit. Son intensité est configurable par jeu. Le rendu PS5 complet reste à valider."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering est désactivé par défaut. Choisis directement l'un des trois A4K ou l'un des deux DLSS-NR."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "L'intensité est propre au DLSS-NR Original/Compact ; elle est inactive en mode A4K ou Désactivé. Le réglage enregistré est conservé."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Intensité du DLSS-NR de 0 à 100 %. Ce réglage ne modifie ni la netteté FSR, ni l'anticrénelage, ni le Frame Generation."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Ce Neural Rendering nécessite Vulkan ; OpenGL n'est pas compatible."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Pour ce Neural Rendering, choisis Bilinéaire dans Upscaling : les compositions avec les autres méthodes ne sont pas encore validées sur PS5."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Le MSAA forcé n'est pas encore validé avec Neural Rendering. Utilise Aucun, FXAA ou SMAA."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Neural Rendering et Frame Generation ne sont pas encore validés ensemble. Désactive Frame Generation."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Ce moteur n'est pas encore raccordé au rendu complet du jeu."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MSAA 2x"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MSAA 4x"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MSAA 8x"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MSAA 16x"
+msgstr ""
+
+# Obsolete gettext entries: retained for translator history only; never active at runtime.
+#~ msgid "AMD FSR"
+#~ msgstr "AMD FSR"
+
+#~ msgid "FSR sharpness"
+#~ msgstr "Netteté FSR"
+
+#~ msgid "FSR SHARPNESS"
+#~ msgstr "NETTETÉ FSR"
+
+#~ msgid "FSR sharpness changes detail recovery only when AMD FSR is selected. Lower it if the picture looks grainy or over-sharpened."
+#~ msgstr "La netteté FSR agit uniquement avec AMD FSR. Réduisez-la si l’image paraît granuleuse ou trop accentuée."
+
+#~ msgid "SMAA"
+#~ msgstr "SMAA"
+
+#~ msgid "Upscaling filter"
+#~ msgstr "Filtre de mise à l'échelle"
+
+#~ msgid "UPSCALING FILTER"
+#~ msgstr "FILTRE DE MISE À L'ÉCHELLE"
+
+#~ msgid "Enhanced smoothness"
+#~ msgstr "Fluidité améliorée"
+
+#~ msgid "Public rooms (read-only)"
+#~ msgstr "Salons publics (consultation seule)"
+
+#~ msgid "Read-only room directory"
+#~ msgstr "Annuaire des salons (lecture seule)"
+
+#~ msgid "Room joining is not available yet."
+#~ msgstr "La connexion aux salons n'est pas encore disponible."
+
+#~ msgid "SGSR needs Vulkan. OpenGL would silently use Bilinear; select Vulkan or another upscale method."
+#~ msgstr "SGSR a besoin de Vulkan. OpenGL utiliserait silencieusement Bilinéaire ; sélectionnez Vulkan ou une autre méthode haut de gamme."
 
 #: settings_store.h
 msgid "Arabic"

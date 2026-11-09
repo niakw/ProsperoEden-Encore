@@ -16,14 +16,14 @@ catalogs = sorted((root / "headless/prosperoeden/ui/lang").glob("*.po"))
 assert len(catalogs) == 31, f"catalog count changed: {len(catalogs)}"
 english_us = read_po(root / "headless/prosperoeden/ui/lang/en-US.po")
 english_uk = read_po(root / "headless/prosperoeden/ui/lang/en-GB.po")
-assert all(english_us.get(key) == key for key in marked), "en-US must retain US source spelling"
+assert all(english_us.get(key) for key in marked), "en-US must contain every active source string"
 uk_variants = {key: key.replace("Color", "Colour").replace("Customize", "Customise")
                for key in marked if "Color" in key or "Customize" in key}
 assert len(uk_variants) >= 10, "Not enough live UK spelling cases"
 assert all(english_uk.get(key) == value for key, value in uk_variants.items()), (
     "en-GB must use UK Colour/Customise spellings")
-assert all(english_uk.get(key) == key for key in marked if key not in uk_variants), (
-    "en-GB must retain all other source strings")
+assert all(english_uk.get(key) == english_us.get(key) for key in marked if key not in uk_variants), (
+    "en-GB must retain US translations for keys without regional spelling changes")
 # Category strings arrive from external metadata at runtime; they are not
 # automatically captured by tr("literal") extraction. Guard both French
 # regional catalogs, including genres that previously fell back to English.

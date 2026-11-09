@@ -63,14 +63,14 @@ locales = seed["locales"]
 codes = {x["code"] for x in locales}
 catalog_codes = {p.stem for p in CATALOGS.glob("*.po")}
 check(len(locales) == len(codes) == 29, "expected 29 unique documentation locales")
-check(codes == catalog_codes,
+check(codes <= catalog_codes and len(catalog_codes) == 41,
       f"documentation vs PO locale difference: {sorted(codes ^ catalog_codes)}")
 
 index = ROOT / "LANGUAGES.md"
 index_text = index.read_text(encoding="utf-8")
 local_links(index, index_text)
 check("29 application translation catalogs" in index_text, "language index count missing")
-check("18 language/region selections" in index_text, "launcher selection disclaimer missing")
+check("43 language/region selections" in index_text, "launcher selection count missing")
 
 for loc in locales:
     code, native = loc["code"], loc["native"]

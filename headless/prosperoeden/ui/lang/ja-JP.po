@@ -334,10 +334,6 @@ msgstr "テーマ · ロゴ · 背景 · 発光 (ゲーム: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "キー、ファームウェア、ゲーム、アップデート、MOD 用に 1 つのルートを選択します"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "ゲームで使う言語を選んでください"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "選択 · 画面. ソフト / 操作 — 変更なし."

@@ -334,10 +334,6 @@ msgstr "Chủ đề · Logo · Nền · Ánh sáng (Trò chơi: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Chọn một gốc cho khóa, chương trình cơ sở, trò chơi, bản cập nhật và mod"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Chọn ngôn ngữ dùng trong trò chơi"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Chọn · giao diện. phần mềm / Điều khiển — không đổi."

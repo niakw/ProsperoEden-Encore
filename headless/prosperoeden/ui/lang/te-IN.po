@@ -2317,3 +2317,104 @@ msgstr "MSAA 8x"
 #: pe/ui/settings.cpp
 msgid "MSAA 16x"
 msgstr "MSAA 16x"
+
+#: settings_store.h
+msgid "Arabic"
+msgstr "Arabic"
+
+#: settings_store.h
+msgid "Czech"
+msgstr "Czech"
+
+#: settings_store.h
+msgid "Danish"
+msgstr "Danish"
+
+#: settings_store.h
+msgid "Greek"
+msgstr "Greek"
+
+#: settings_store.h
+msgid "Finnish"
+msgstr "Finnish"
+
+#: settings_store.h
+msgid "Hungarian"
+msgstr "Hungarian"
+
+#: settings_store.h
+msgid "Indonesian"
+msgstr "Indonesian"
+
+#: settings_store.h
+msgid "Norwegian (Bokmål)"
+msgstr "Norwegian (Bokmål)"
+
+#: settings_store.h
+msgid "Romanian"
+msgstr "Romanian"
+
+#: settings_store.h
+msgid "Swedish"
+msgstr "Swedish"
+
+#: settings_store.h
+msgid "Turkish"
+msgstr "Turkish"
+
+#: settings_store.h
+msgid "Ukrainian"
+msgstr "Ukrainian"
+
+#: settings_store.h
+msgid "Vietnamese"
+msgstr "Vietnamese"
+
+#: settings_store.h
+msgid "Hindi (India)"
+msgstr "Hindi (India)"
+
+#: settings_store.h
+msgid "Bengali (India)"
+msgstr "Bengali (India)"
+
+#: settings_store.h
+msgid "Marathi (India)"
+msgstr "Marathi (India)"
+
+#: settings_store.h
+msgid "Telugu (India)"
+msgstr "తెలుగు"
+
+#: settings_store.h
+msgid "Tamil (India)"
+msgstr "Tamil (India)"
+
+#: settings_store.h
+msgid "Gujarati (India)"
+msgstr "Gujarati (India)"
+
+#: settings_store.h
+msgid "Kannada (India)"
+msgstr "Kannada (India)"
+
+#: settings_store.h
+msgid "Malayalam (India)"
+msgstr "Malayalam (India)"
+
+#: settings_store.h
+msgid "Punjabi (India)"
+msgstr "Punjabi (India)"
+
+#: settings_store.h
+msgid "Odia (India)"
+msgstr "Odia (India)"
+
+#: settings_store.h
+msgid "Urdu (India)"
+msgstr "Urdu (India)"
+
+#: settings_store.h
+msgid "Assamese (India)"
+msgstr "Assamese (India)"
+

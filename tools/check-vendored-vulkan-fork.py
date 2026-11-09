@@ -903,6 +903,24 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
           f'exact_hunks={resolve_hunks}',
           'source_sha256_pinned=1',
           'historical_generator_unchanged=1', flush=True)
+    # Native G07: exact production-only pipeline/descriptor-layout gate.
+    # The older reviewed source generator does not include this later fail-
+    # closed QMD3 path; reverse ONLY its actual hunk for strict byte parity.
+    # A changed generator or any unrelated maintained byte still fails.
+    compute_name = 'vk_compute_pipeline_cost.cpp'
+    g07_previous = "        if (!pipeline) return false;"
+    g07_current = "        // A successful native QMD3 dispatch must have both the Vulkan\n        // pipeline layout and every required descriptor-set layout. The\n        // recorded lambda would otherwise silently skip descriptor binding\n        // while the renderer could still mark guest SSBOs as GPU-written.\n        // Empty shaders are allowed to omit a descriptor-set layout.\n        if (!pipeline || !pipeline_layout ||\n            (num_descriptor_entries && !descriptor_set_layout))\n            return false;"
+    active_compute = expected[compute_name].read_text()
+    assert active_compute.count(g07_current) == 1, (
+        'G07 native compute pipeline-layout fail-closed hunk drift')
+    historical_compute = active_compute.replace(g07_current, g07_previous, 1)
+    native_pipeline_path = temp / 'normalized-vendor-g07' / compute_name
+    native_pipeline_path.parent.mkdir(parents=True, exist_ok=True)
+    native_pipeline_path.write_text(historical_compute)
+    normalized_expected[compute_name] = native_pipeline_path
+    print('ENCORE_G07_COMPUTE_LAYOUT_REVERSE_PARITY_PASS',
+          'historical_generator=immutable', 'native_guard=fail_closed', flush=True)
+
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

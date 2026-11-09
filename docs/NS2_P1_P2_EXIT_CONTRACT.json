@@ -374,9 +374,18 @@
       ],
       "positive": "Required Task+Mesh and Mesh-only stages create valid SPIR-V and a linkable Vulkan pipeline.",
       "negative": "Invalid stage combinations, Geometry header or oversized CBUF are rejected.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Real native Task+Mesh and Mesh-only EXT graphics pipeline creation probe is wired to the SPIR-V host runner, but this must execute successfully on a VK_EXT_mesh_shader-capable device before the positive G09 contract can close.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "real-owner-exec"
+        },
+        "negative": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

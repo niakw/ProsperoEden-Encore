@@ -334,10 +334,6 @@ msgstr "Tema · Logo · Sfondo · Bagliore (Gioco: —)"
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Scegli una root per chiavi, firmware, giochi, aggiornamenti e mod"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Scegli la lingua usata dai giochi"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Scegli · interfaccia. software / Comandi — invariati."

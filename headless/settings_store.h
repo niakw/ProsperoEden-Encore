@@ -108,20 +108,27 @@ inline constexpr const char* kControllerLayoutKeys[] = {"playstation", "switch"}
 inline constexpr const char* kControllerLayoutLabels[] = {"PlayStation", "Switch"};
 inline constexpr const char* kPerformanceProfileKeys[] = {"minimum", "recommended", "high", "ultra", "custom"};
 inline constexpr const char* kPerformanceProfileLabels[] = {"Minimum", "Recommended", "High", "Ultra", "Custom"};
-// Settings > Language: the system language games see, in launcher order. Each entry maps to Eden's
+// Settings > Language: launcher locale selection. The original 18 entries retain their saved
+// indices and guest-language behavior; additional locales use a supported English guest fallback.
+// Each entry maps to Eden's
 // Settings::Language and to the Settings::Region consoles sold with that language have (indices in
 // Eden's enum order; headless/main.cpp checks them). Eden's older "Chinese" and "Taiwanese" codes
 // are left out: games use Chinese (Simplified) and Chinese (Traditional) instead.
 inline constexpr const char* kLanguageKeys[] = {"en-US", "en-GB", "fr", "fr-CA", "de", "it", "es", "es-419", "pt",
-                                                "pt-BR", "nl", "ru", "pl", "ja", "ko", "zh-Hans", "zh-Hant", "th"};
+                                                "pt-BR", "nl", "ru", "pl", "ja", "ko", "zh-Hans", "zh-Hant", "th",
+    "ar", "cs-CZ", "da-DK", "el-GR", "fi-FI", "hu-HU", "id-ID", "nb-NO", "ro-RO", "sv-SE", "tr-TR", "uk-UA", "vi-VN", "hi-IN", "bn-IN", "mr-IN", "te-IN", "ta-IN", "gu-IN", "kn-IN", "ml-IN", "pa-IN", "or-IN", "ur-IN", "as-IN"};
 inline constexpr const char* kLanguageLabels[] = {"English (US)", "English (UK)", "French", "French (Canada)",
     "German", "Italian", "Spanish", "Spanish (Latin America)", "Portuguese", "Portuguese (Brazil)", "Dutch",
-    "Russian", "Polish", "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)", "Thai"};
+    "Russian", "Polish", "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)", "Thai",
+    "Arabic", "Czech", "Danish", "Greek", "Finnish", "Hungarian", "Indonesian", "Norwegian (Bokmål)", "Romanian", "Swedish", "Turkish", "Ukrainian", "Vietnamese", "Hindi (India)", "Bengali (India)", "Marathi (India)", "Telugu (India)", "Tamil (India)", "Gujarati (India)", "Kannada (India)", "Malayalam (India)", "Punjabi (India)", "Odia (India)", "Urdu (India)", "Assamese (India)"};
 inline constexpr const char* kLanguageCatalogTags[] = {
     "en-US", "en-GB", "fr-FR", "fr-CA", "de-DE", "it-IT", "es-ES", "es-419", "pt-PT",
-    "pt-BR", "nl-NL", "ru-RU", "pl-PL", "ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "th-TH"};
-inline constexpr int kLanguageSettings[] = {1, 12, 2, 13, 3, 4, 5, 14, 9, 17, 8, 10, 18, 0, 7, 15, 16, 19};
-inline constexpr int kLanguageRegions[] = {1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 5, 4, 6, 1};
+    "pt-BR", "nl-NL", "ru-RU", "pl-PL", "ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "th-TH",
+    "ar", "cs-CZ", "da-DK", "el-GR", "fi-FI", "hu-HU", "id-ID", "nb-NO", "ro-RO", "sv-SE", "tr-TR", "uk-UA", "vi-VN", "hi-IN", "bn-IN", "mr-IN", "te-IN", "ta-IN", "gu-IN", "kn-IN", "ml-IN", "pa-IN", "or-IN", "ur-IN", "as-IN"};
+inline constexpr int kLanguageSettings[] = {1, 12, 2, 13, 3, 4, 5, 14, 9, 17, 8, 10, 18, 0, 7, 15, 16, 19,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+inline constexpr int kLanguageRegions[] = {1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 5, 4, 6, 1,
+    1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 static_assert(std::size(kLanguageLabels) == std::size(kLanguageKeys) &&
               std::size(kLanguageCatalogTags) == std::size(kLanguageKeys) &&
               std::size(kLanguageSettings) == std::size(kLanguageKeys) &&

@@ -23,7 +23,7 @@ scope = (vendor / "sources/eden/src/common/scope_exit.h").read_text()
 assert 'void KSession::Initialize(' in session and 'this->Open(kernel);' in session
 assert 'm_server.Initialize(this);' in session and 'm_client.Initialize(this);' in session
 assert 'auto* session = new Session(' in server
-assert 'this->RegisterSession(server_session, std::move(manager));' in parent
+assert 'this->RegisterSession(server_session, std::move(manager));' in server
 assert 'session->GetClientSession().Close(kernel);' in parent
 assert 'session->GetServerSession().Close(kernel);' in parent
 assert '#define SCOPE_EXIT' in scope

@@ -354,7 +354,7 @@ void Launcher::draw_language(Canvas &c)
     draw_top_nav(c, 3);
     text_shrink(c, tr("Language"), 108.0f, baseline(138.0f, 34.0f, theme::kHeading),
                 theme::kHeading, theme::kTitle, 880.0f);
-    text_shrink(c, tr("Choose the language games use"), 108.0f,
+    text_shrink(c, tr("Choose your preferred language"), 108.0f,
                 baseline(166.0f, 22.0f, 18.0f), 18.0f, theme::kMeta, 1180.0f);
 
     glass(c, kListPanel, 26.0f, theme::kPanel.with_alpha(0.80f), theme::kPanelEdge.with_alpha(0.55f));

@@ -1,6 +1,6 @@
 # Support
 
-> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+> **29 fully localized sets of user guides; 41 application catalogs and 43 launcher language/region choices:** [Language directory](LANGUAGES.md). Twelve new Indian-language catalogs are provisional (many English fallback strings), and native console fonts remain unverified.
 
 
 ## Supported target

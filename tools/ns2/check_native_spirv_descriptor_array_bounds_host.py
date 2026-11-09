@@ -15,11 +15,14 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 owner=ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp"
 source=owner.read_text()
-start="[[nodiscard]] Id CheckedTextureArrayIndex("
+start="void CheckSingletonTextureIndex("
 end="\nId Texture("
 assert source.count(start)==source.count(end)==1
 method=start+source.split(start,1)[1].split(end,1)[0]
 assert source.count("CheckedTextureArrayIndex(ctx, index, def.count)") == 5
+assert source.count("CheckSingletonTextureIndex(index);") == 5
+assert "void CheckSingletonTextureIndex(" in method
+assert "index.IsImmediate() && index.U32() != 0" in method
 assert method.count("selected >= count") == 1
 assert method.index("selected >= count") < method.index("ctx.Const(selected)")
 assert "index.Type() != IR::Type::U32" in method
@@ -66,6 +69,20 @@ int main() {
     assert(CheckedTextureArrayIndex(ctx,good(0),4).value==100);
     assert(CheckedTextureArrayIndex(ctx,good(3),4).value==103);
     assert(CheckedTextureArrayIndex(ctx,dynamic(2),4).value==202);
+    CheckSingletonTextureIndex(IR::Value{false,true,IR::Type::U32,0});
+    CheckSingletonTextureIndex(good(0));
+    CheckSingletonTextureIndex(dynamic(0));
+    // Runtime-variable array indices are not yet guarded: G01 stays open.
+    CheckSingletonTextureIndex(dynamic(33));
+    auto reject_singleton=[](const IR::Value& value){
+        try { CheckSingletonTextureIndex(value); }
+        catch(const LogicError&) { return; }
+        assert(false && "Foreign singleton descriptor index accepted");
+    };
+    reject_singleton(good(1));
+    reject_singleton(good(std::numeric_limits<u32>::max()));
+    reject_singleton(IR::Value{true,false,IR::Type::U64,1});
+    reject_singleton(IR::Value{false,false,IR::Type::U64,1});
     const auto reject=[&](const IR::Value& value,u32 count) {
         try { (void)CheckedTextureArrayIndex(ctx,value,count); }
         catch(const LogicError&) { return; }
@@ -96,4 +113,6 @@ with tempfile.TemporaryDirectory(prefix="eden-g01-texel-index-") as d:
             assert run.returncode==0,run.stderr[-4500:]
             print("G01_REAL_SPIRV_DESCRIPTOR_INDEX_PASS",Path(cc).name,opt,
                   "valid=2 dynamic_preexisting=1 oob=2"
-                  " invalid_type=2 empty=1 zero_count=1",flush=True)
+                  " invalid_type=2 empty=1 zero_count=1"
+                  " singleton_invalid_imm=2 invalid_type=2"
+                  " dynamic_unchecked=1",flush=True)

@@ -32,7 +32,7 @@ static std::vector<uint32_t> ReadSpirv(const char* file) {
 // storage buffer and require both the original atomic return value and the
 // final memory word. The shader is emitted from maintained native IR.
 static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
-                              uint32_t family,VkQueue queue,const char* path) {
+                              uint32_t family,VkQueue queue,const char* path, bool global) {
     const auto code=ReadSpirv(path);
     uint32_t cas_count=0;
     for(std::size_t i=5;i<code.size();) {
@@ -42,12 +42,22 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
         i+=n;
     }
     Require(cas_count>=1,"G06 actual emitter omitted U32 CAS");
-    VkDescriptorSetLayoutBinding binding{};
-    binding.binding=0;binding.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    binding.descriptorCount=1;binding.stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
+    // Native global pointers reconstruct the SSBO physical base and size
+    // from uniform CBUF[0] (binding 0). The target storage descriptor lives
+    // at binding 1. A direct StorageAtomic CAS uses only binding 0.
+    VkDescriptorSetLayoutBinding bindings[2]{};
+    bindings[0].binding=0;
+    bindings[0].descriptorType=global ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER :
+                                        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    bindings[0].descriptorCount=1;
+    bindings[0].stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
+    bindings[1].binding=1;
+    bindings[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    bindings[1].descriptorCount=1;
+    bindings[1].stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
     VkDescriptorSetLayoutCreateInfo dli{};
     dli.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    dli.bindingCount=1;dli.pBindings=&binding;
+    dli.bindingCount=global?2:1;dli.pBindings=bindings;
     VkDescriptorSetLayout dsl=VK_NULL_HANDLE;
     Require(vkCreateDescriptorSetLayout(device,&dli,nullptr,&dsl)==VK_SUCCESS,"CAS set layout");
     VkPipelineLayoutCreateInfo pli{};
@@ -71,7 +81,9 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
             "real G06 compute CAS pipeline");
     VkBufferCreateInfo bi{};
     bi.sType=VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bi.size=64;bi.usage=VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    bi.size=global?65536U:64U;
+    bi.usage=VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if(global)bi.usage|=VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     bi.sharingMode=VK_SHARING_MODE_EXCLUSIVE;
     VkBuffer buffer=VK_NULL_HANDLE;
     Require(vkCreateBuffer(device,&bi,nullptr,&buffer)==VK_SUCCESS,"CAS SSBO");
@@ -96,13 +108,17 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     Require(vkAllocateMemory(device,&mai,nullptr,&memory)==VK_SUCCESS,"CAS device memory");
     Require(vkBindBufferMemory(device,buffer,memory,0)==VK_SUCCESS,"CAS SSBO bind");
     void* mapped=nullptr;
-    Require(vkMapMemory(device,memory,0,64,0,&mapped)==VK_SUCCESS,"CAS SSBO map");
+    Require(vkMapMemory(device,memory,0,bi.size,0,&mapped)==VK_SUCCESS,"CAS SSBO map");
     auto* values=static_cast<uint32_t*>(mapped);
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;poolSize.descriptorCount=1;
+    VkDescriptorPoolSize poolSizes[2]{};
+    poolSizes[0].type=global?VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                               VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    poolSizes[0].descriptorCount=1;
+    poolSizes[1].type=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    poolSizes[1].descriptorCount=1;
     VkDescriptorPoolCreateInfo dpci{};
     dpci.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    dpci.maxSets=1;dpci.poolSizeCount=1;dpci.pPoolSizes=&poolSize;
+    dpci.maxSets=1;dpci.poolSizeCount=global?2:1;dpci.pPoolSizes=poolSizes;
     VkDescriptorPool pool=VK_NULL_HANDLE;
     Require(vkCreateDescriptorPool(device,&dpci,nullptr,&pool)==VK_SUCCESS,"CAS descriptor pool");
     VkDescriptorSetAllocateInfo alloc{};
@@ -110,13 +126,21 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     alloc.descriptorPool=pool;alloc.descriptorSetCount=1;alloc.pSetLayouts=&dsl;
     VkDescriptorSet set=VK_NULL_HANDLE;
     Require(vkAllocateDescriptorSets(device,&alloc,&set)==VK_SUCCESS,"CAS descriptor set");
-    VkDescriptorBufferInfo dbi{};
-    dbi.buffer=buffer;dbi.offset=0;dbi.range=64;
-    VkWriteDescriptorSet write{};
-    write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet=set;write.dstBinding=0;write.descriptorCount=1;
-    write.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;write.pBufferInfo=&dbi;
-    vkUpdateDescriptorSets(device,1,&write,0,nullptr);
+    VkDescriptorBufferInfo storageInfo{};
+    storageInfo.buffer=buffer;storageInfo.offset=0;storageInfo.range=64;
+    VkDescriptorBufferInfo uniformInfo{};
+    uniformInfo.buffer=buffer;uniformInfo.offset=0;uniformInfo.range=65536;
+    VkWriteDescriptorSet writes[2]{};
+    writes[0].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[0].dstSet=set;writes[0].dstBinding=0;writes[0].descriptorCount=1;
+    writes[0].descriptorType=global?VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                                   VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    writes[0].pBufferInfo=global?&uniformInfo:&storageInfo;
+    writes[1].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[1].dstSet=set;writes[1].dstBinding=1;writes[1].descriptorCount=1;
+    writes[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    writes[1].pBufferInfo=&storageInfo;
+    vkUpdateDescriptorSets(device,global?2:1,writes,0,nullptr);
     VkCommandPoolCreateInfo cpi{};
     cpi.sType=VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     cpi.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -136,6 +160,11 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     for(uint32_t original : {7U,6U}) {
         for(uint32_t i=0;i<16;++i)values[i]=0;
         values[1]=original;values[2]=0xdeadbeefU;
+        if(global) {
+            // Real CBUF descriptor at guest offset 0x100: 49-bit physical
+            // address 0x100000 (low/high), followed by 64-byte SSBO extent.
+            values[64]=0x100000U;values[65]=0;values[66]=64U;
+        }
         VkCommandBufferBeginInfo begin{};
         begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -177,11 +206,13 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
     vkDestroyShaderModule(device,shader,nullptr);
     vkDestroyPipelineLayout(device,layout,nullptr);
     vkDestroyDescriptorSetLayout(device,dsl,nullptr);
-    std::puts("G06_REAL_VULKAN_CAS_WRITEBACK_PASS success=9 old=7 failure=6 old=6");
+    std::puts(global
+        ? "G06_REAL_VULKAN_GLOBAL_CAS_WRITEBACK_PASS success=9 old=7 failure=6 old=6"
+        : "G06_REAL_VULKAN_CAS_WRITEBACK_PASS success=9 old=7 failure=6 old=6");
 }
 
 int main(int argc,char** argv) {
-    Require(argc==7,"expected direct, dispatcher, Fragment, merged, Compute and real CAS modules");
+    Require(argc==8,"expected direct, dispatcher, Fragment, merged, Compute, storage CAS and global CAS");
     VkApplicationInfo application{};
     application.sType=VK_STRUCTURE_TYPE_APPLICATION_INFO;
     application.pApplicationName="NS2 synthetic shader module smoke test";
@@ -252,7 +283,7 @@ int main(int argc,char** argv) {
     VkPipelineLayout layout=VK_NULL_HANDLE;
     Require(vkCreatePipelineLayout(device,&layout_info,nullptr,&layout)==VK_SUCCESS,
             "synthetic shader pipeline layout creation failed");
-    for (int i=1;i<argc-2;++i) {
+    for (int i=1;i<argc-3;++i) {
         auto code=ReadSpirv(argv[i]);
         VkShaderModuleCreateInfo module_info{};
         module_info.sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -578,7 +609,8 @@ int main(int argc,char** argv) {
     vkDestroyPipeline(device,compute_pipeline,nullptr);
     vkDestroyShaderModule(device,compute_module,nullptr);
     std::puts("NS2 synthetic Ampere Compute Vulkan dispatch: PASS (host only; no QMD3 resources)");
-    VerifyRealHostCas(device,selected,queue,compute_queue,argv[6]);
+    VerifyRealHostCas(device,selected,queue,compute_queue,argv[6],false);
+    VerifyRealHostCas(device,selected,queue,compute_queue,argv[7],true);
 
     vkDestroyPipelineLayout(device,layout,nullptr);
     vkDestroyRenderPass(device,render_pass,nullptr);

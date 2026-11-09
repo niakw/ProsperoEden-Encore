@@ -293,7 +293,7 @@
       "negative": "Unsupported atomic operands or address space do not silently lower.",
       "status": "open",
       "evidence": {},
-      "blocker": "Actual source-emitted U64 global-CAS routing SPIR-V and CBUF/SSBO negative guards now have mandatory spirv-val witnesses, alongside an executed Vulkan U32 storage-CAS old/final result. Full global-CAS Vulkan descriptor readback and additional address-space forms await qualification.",
+      "blocker": "The actual native 64-bit global address CAS now has both source-emitted SPIR-V validity and mandatory host Vulkan old/final SSBO readback tests, plus explicit missing-CBUF/selector-overflow rejections. Await same-SHA host execution before assigning positive/negative exit evidence.",
       "excluded_forms": []
     },
     {

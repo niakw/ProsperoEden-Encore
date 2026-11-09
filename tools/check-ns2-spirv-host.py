@@ -217,7 +217,8 @@ def main():
                str(OUT / "synthetic-fragment.spv"),
                str(OUT / "synthetic-merged.spv"),
                str(OUT / "synthetic-compute.spv"),
-               str(OUT / "synthetic-u32-cas.spv")]).stdout, end="")
+               str(OUT / "synthetic-u32-cas.spv"),
+               str(OUT / "synthetic-global-cas.spv")]).stdout, end="")
     # G06: this genuine CAS shader runs a real Vulkan storage-buffer atomic
     # with old-value readback and fence-completed host memory visibility.
     print("SPIR-V validation and Vulkan CAS memory-readback passed; "

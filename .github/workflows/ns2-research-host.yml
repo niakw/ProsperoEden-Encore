@@ -69,6 +69,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev
+      - name: H05 decode authentic FFmpeg frame through maintained native pixel renderer
+        run: python3 -B tools/ns2/check_native_video_real_ffmpeg_frame_host.py
       - name: P2.3 validate real native SSBO write tracking only after final QMD/TIC admission
         run: python3 -B tools/ns2/check_native_compute_write_commit_host.py
       - name: P2.2b reject same-TIC GPU remaps before pinned Vulkan image dispatch

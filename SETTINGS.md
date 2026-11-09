@@ -194,7 +194,7 @@ Encore controls the emulated input mapping and its own PlayStation-style UI glyp
 
 ## Language
 
-The launcher exposes **exactly 31 official PS5 system language/region choices** and **29 translation catalogs** (English US/UK are separate system choices). This is a deliberate compatibility policy: **no extra launcher languages** beyond the [Sony PS5 system language list](https://www.playstation.com/fr-fr/legal/language-support/). All 31 are selectable; the historical first 18 keep their saved indices. See [LANGUAGES.md](LANGUAGES.md) for the full matrix.
+The launcher exposes **exactly 31 official PS5 system language/region choices** and **29 translation catalogs** (English US/UK are separate system choices). This is a deliberate compatibility policy: **no extra launcher languages** beyond the [Sony PS5 system language list](https://www.playstation.com/fr-fr/legal/language-support/). All 31 are selectable; the historical first 18 keep their saved indices. See [LANGUAGES.md](LANGUAGES.md) for the full matrix and the [strict PS5 language policy](docs/PS5_SYSTEM_LANGUAGE_POLICY.md) for the authoritative 31-entry allowlist.
 
 Settings → Language primarily selects the launcher interface. Only the original 18 selections map directly to a supported guest language.
 

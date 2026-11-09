@@ -103,12 +103,7 @@ void LoadLanguage(pe::gfx::Font& font) {
 
     std::string folder = "none";
     std::size_t files = 0;
-    // Optional SIL-OFL Indic font assets live in the application, not in user save data.
-    // Try them before the PS5's system fonts; if none can draw the full catalog,
-    // the existing safe English fallback stays in effect.
-    auto font_folders = pe::gfx::system_font_folders();
-    font_folders.insert(font_folders.begin(), Eden::AppResourceFile("ui/fonts/locale"));
-    for (const std::string& candidate : font_folders) {
+    for (const std::string& candidate : pe::gfx::system_font_folders()) {
         std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
         if (found.empty()) continue;
         folder = candidate;

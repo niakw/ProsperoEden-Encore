@@ -1,0 +1,40 @@
+name: Prepare Encore R2 release draft (no build or assets)
+on:
+  push:
+    branches:
+      - release/encore-r2-draft-20261109
+    paths:
+      - 'docs/releases/ENCORE_R2_DRAFT_2026-11-09.md'
+      - '.github/workflows/prepare-encore-r2-draft.yml'
+permissions:
+  contents: write
+jobs:
+  create-private-draft:
+    name: Create hidden prerelease draft from approved notes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout draft release notes only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Create draft prerelease without assets or PS5 build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TARGET_SHA: '94602df5b6b510c2e1c37978d359452ad51ec968'
+          RELEASE_TAG: 'encore-R2-preview-20261109'
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" --jq '.draft' 2>/dev/null || true)"
+          if [[ "$existing" == "false" ]]; then
+            echo "::error::The target tag belongs to an already-published release; refusing to modify it"
+            exit 1
+          elif [[ "$existing" == "true" ]]; then
+            gh release edit "$RELEASE_TAG" --title 'Eden Encore R2 Preview — post-R1 development (draft)' --notes-file docs/releases/ENCORE_R2_DRAFT_2026-11-09.md --draft --prerelease
+          else
+            gh release create "$RELEASE_TAG" --target "$RELEASE_TARGET_SHA" --title 'Eden Encore R2 Preview — post-R1 development (draft)' --notes-file docs/releases/ENCORE_R2_DRAFT_2026-11-09.md --draft --prerelease
+          fi
+          result="$(gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG")"
+          printf '%s' "$result" | jq -e '.draft == true and .prerelease == true and (.assets | length) == 0' >/dev/null
+          printf '%s' "$result" | jq '{id, tag_name, draft, prerelease, assets_count:(.assets|length), html_url}'

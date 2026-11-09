@@ -1,6 +1,6 @@
 # Prospero.Eden Encore — Settings guide
 
-> **User guides in 29 catalog languages:** [Language directory](LANGUAGES.md) — overview, install, settings, troubleshooting, support and accessibility. The launcher has 18 menu selections; some languages have documentation and catalogs but no launcher selector.
+> **29 fully localized sets of user guides; 41 application catalogs and 43 launcher language/region choices:** [Language directory](LANGUAGES.md). Twelve new Indian-language catalogs are provisional (many English fallback strings), and native console fonts remain unverified.
 
 
 This guide explains the settings exposed by Encore on PS5, their defaults, and practical starting profiles.
@@ -194,11 +194,11 @@ Encore controls the emulated input mapping and its own PlayStation-style UI glyp
 
 ## Language
 
-The launcher currently exposes **18 region/language choices across 13 distinct languages**. A complete app contains **29 translation catalogs**, not all selectable in Settings → Language. See [LANGUAGES.md](LANGUAGES.md) for the exact selector entries and their localized guides.
+The launcher source exposes **43 language/region choices**: the original 18 entries are preserved, the 13 previously hidden catalogs are now selectable, and 12 provisional Indian-language options have been added. There are **41 catalog files** in current source. See [LANGUAGES.md](LANGUAGES.md) for the precise catalog, documentation and font limitations.
 
-Settings → Language is shared by Encore and the games.
+Settings → Language primarily selects the launcher interface. Only the original 18 selections map directly to a supported guest language.
 
-On first setup, Encore seeds the preference from the PS5 system language. Changing it later rebuilds the launcher immediately with the selected catalog/fonts and also changes the language/region value presented to games. A game can still ignore the choice when that language is not included.
+On first setup, Encore seeds the preference from the PS5 system language. Changing it rebuilds the launcher immediately with the selected catalog/fonts. The original 18 selections preserve their guest language/region mappings; the 25 additional selections use an English guest-language fallback because these locales are not supported by the emulator's existing game-language enum. A game can still ignore the requested language when unsupported.
 
 ## Audio
 

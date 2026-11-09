@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate user-facing Encore documentation across all 29 shipped PO locales.
+"""Validate 29 fully documented launcher locales and 12 provisional Indian PO locales.
 
 This is a documentation/path check, not a native compiler, linguistic
 certification, hardware test, or replacement for P0-P4 exit proofs.
@@ -69,7 +69,7 @@ check(codes <= catalog_codes and len(catalog_codes) == 41,
 index = ROOT / "LANGUAGES.md"
 index_text = index.read_text(encoding="utf-8")
 local_links(index, index_text)
-check("29 application translation catalogs" in index_text, "language index count missing")
+check("41 application translation catalogs" in index_text, "language index count missing")
 check("43 language/region selections" in index_text, "launcher selection count missing")
 
 for loc in locales:

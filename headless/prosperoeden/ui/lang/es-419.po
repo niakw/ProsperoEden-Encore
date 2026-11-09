@@ -333,10 +333,6 @@ msgstr "Elige tema, logo, fondo y efectos de luz. Los juegos no cambian."
 msgid "Choose one root for keys, firmware, games, updates and mods"
 msgstr "Elige una carpeta raíz para claves, firmware, juegos, actualizaciones y mods"
 
-#: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
-msgid "Choose the language games use"
-msgstr "Elige el idioma de los juegos"
-
 #: pe/ui/settings.cpp
 msgid "Choose the launcher interface without changing game or controller settings."
 msgstr "Elegir · interfaz. programas / Controles — sin cambios."

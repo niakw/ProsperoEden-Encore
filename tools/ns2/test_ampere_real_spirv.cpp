@@ -755,6 +755,81 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
     compile(0, true);
     std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=2 dynamic_index=1 zero_rejected=1");
 }
+// G07: genuine native image-buffer descriptor fetch -> SSBO write.
+// This is a real SPIR-V emitter path, subsequently dispatched by Vulkan;
+// the separate sampled-image/TIC+TSC path is NOT claimed by this fixture.
+static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
+    using Shader::IR::Opcode;
+    using Shader::IR::Value;
+    Shader::ObjectPool<Shader::IR::Inst> pool{32};
+    Shader::IR::Block block{pool};
+    Shader::IR::Program program{};
+    program.stage = Shader::Stage::Compute;
+    program.workgroup_size = {1, 1, 1};
+    program.blocks.push_back(&block);
+    auto& node = program.syntax_list.emplace_back();
+    node.type = Shader::IR::AbstractSyntaxNode::Type::Block;
+    node.data.block = &block;
+    program.syntax_list.emplace_back().type =
+        Shader::IR::AbstractSyntaxNode::Type::Return;
+    Shader::TextureBufferDescriptor texel{};
+    texel.count = 2;
+    program.info.texture_buffer_descriptors.push_back(texel);
+    program.info.storage_buffers_descriptors.push_back({0, 0, 1, true});
+    program.info.used_storage_buffer_types = Shader::IR::Type::U32;
+    Shader::IR::TextureInstInfo image{};
+    image.raw = static_cast<u32>(Shader::TextureType::Buffer) << 16;
+    const auto fetch_and_commit = [&](Value descriptor, u32 texel_index, u32 offset) {
+        block.AppendNewInst(Opcode::ImageFetch,
+            {descriptor, Value{texel_index}, Value{}, Value{}, Value{}});
+        block.back().SetFlags(image);
+        const Value pixel{&block.back()};
+        block.AppendNewInst(Opcode::CompositeExtractF32x4,
+                            {pixel, Value{u32{0}}});
+        const Value channel{&block.back()};
+        block.AppendNewInst(Opcode::BitCastU32F32, {channel});
+        const Value bits{&block.back()};
+        block.AppendNewInst(Opcode::WriteStorage32,
+                            {Value{u32{0}}, Value{offset}, bits});
+    };
+    // First and last selected descriptors must remain distinct. The
+    // second index is non-immediate IR, not a constant OpAccessChain index.
+    fetch_and_commit(Value{u32{0}}, 4, 0);
+    block.AppendNewInst(Opcode::IAdd32,
+                        {Value{u32{0}}, Value{u32{1}}});
+    fetch_and_commit(Value{&block.back()}, 8, 4);
+    Shader::Profile profile{};
+    profile.supported_spirv = 0x00010500;
+    profile.unified_descriptor_binding = true;
+    profile.support_descriptor_aliasing = true;
+    Shader::Backend::Bindings bindings{};
+    const auto words = Shader::Backend::SPIRV::EmitSPIRV(
+        profile, Shader::RuntimeInfo{}, program, bindings);
+    Require(words.size() > 5 && words[0] == 0x07230203U,
+            "G07 real texture/SSBO module missing");
+    u32 image_fetches{}, storage_writes{}, descriptor_chains{};
+    for (std::size_t at = 5; at < words.size();) {
+        const u32 n = words[at] >> 16;
+        Require(n && n <= words.size() - at, "G07 malformed SPIR-V");
+        const u32 op = words[at] & 0xffffU;
+        image_fetches += op == static_cast<u32>(spv::Op::OpImageFetch);
+        storage_writes += op == static_cast<u32>(spv::Op::OpStore);
+        descriptor_chains += op == static_cast<u32>(spv::Op::OpAccessChain);
+        at += n;
+    }
+    Require(image_fetches == 2 && storage_writes >= 2 &&
+            descriptor_chains >= 2,
+            "G07 real source failed to fetch and commit two image-buffer elements");
+    const auto file_name = prefix + "-g07-texel-ssbo.spv";
+    std::ofstream file{file_name, std::ios::binary | std::ios::trunc};
+    Require(bool(file), "cannot open G07 real SPIR-V output");
+    file.write(reinterpret_cast<const char*>(words.data()),
+               static_cast<std::streamsize>(words.size() * sizeof(u32)));
+    Require(bool(file), "cannot write G07 real SPIR-V output");
+    std::printf("G07_REAL_NATIVE_TEXEL_SSBO_SPIRV_EMITTED words=%zu reads=%u stores=%u\n",
+                words.size(), image_fetches, storage_writes);
+}
+
 // G02: the ACTUAL SPIR-V backend must emit a fully split transform-feedback
 // output: two vec2 declarations at the same generic location, with disjoint
 // component decorations and byte ranges in one 16-byte guest stream.
@@ -953,6 +1028,7 @@ int main(int argc,char** argv) {
     VerifyRealTaskMeshSpirv(argv[1]);
     VerifyTaskMeshInvalidDimensions();
     VerifyRealTextureBufferArraySpirv(argv[1]);
+    VerifyNativeTexelSsboSpirv(argv[1]);
     VerifyRealTransformFeedbackSpirv(argv[1]);
     VerifyRealTessPatchSpirv(argv[1]);
     std::array<u8,0x50> header{};

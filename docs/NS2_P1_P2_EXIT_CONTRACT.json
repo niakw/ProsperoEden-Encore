@@ -329,13 +329,14 @@
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h",
       "validators": [
         "tools/ns2/check_native_compute_write_commit_host.py",
-        "tools/ns2/check_native_image_physical_backing_host.py"
+        "tools/ns2/check_native_image_physical_backing_host.py",
+        "tools/check-ns2-spirv-host.py"
       ],
       "positive": "Authenticated descriptors, SSBO slots and images reach actual vkCmdDispatch with fence-safe writes.",
       "negative": "Invalid backing, image kind or busy resources cannot dispatch or commit writes.",
       "status": "open",
       "evidence": {},
-      "blocker": "Demonstrate TIC/TSC+SSBO image resources through actual vkCmdDispatch and fence-safe GPU write commit.",
+      "blocker": "Native arrayed texel image reads and GPU SSBO writeback now have a real SPIR-V/Vulkan-fence witness pending qualification. Full TIC/TSC sampled and storage images with actual QMD3 descriptor selection/commit still need GPU proof.",
       "excluded_forms": []
     },
     {

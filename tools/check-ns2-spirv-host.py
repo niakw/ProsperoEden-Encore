@@ -196,6 +196,17 @@ def main():
         run([validator, "--target-env", env,
              str(OUT / "synthetic-texbuf-array.spv")])
         print(f"P2_2C_REAL_TEXTURE_BUFFER_ARRAY_VALIDATED {env}", flush=True)
+    # G07: real native image-buffer reads are committed to an SSBO and
+    # verified with Vulkan host dispatch + a completion fence (not PS5).
+    g07_module = OUT / "synthetic-g07-texel-ssbo.spv"
+    for env in ("spv1.5", "vulkan1.2"):
+        run([validator, "--target-env", env, str(g07_module)])
+        print(f"G07_NATIVE_TEXEL_SSBO_SPIRV_VALIDATED {env}", flush=True)
+    g07_exe = OUT / "ns2-g07-vulkan"
+    run([cxx, "-std=c++20", "-O2",
+         str(ROOT / "tools/ns2/test_g07_real_vulkan_texel.cpp"),
+         "-o", str(g07_exe), "-lvulkan"])
+    print(run([str(g07_exe), str(g07_module)]).stdout, end="")
     # G02: the actual emitted VertexB split XFB module must pass the
     # SPIR-V 1.5 and Vulkan 1.2 structural/resource validation rules.
     # The emitted OpStores, component splits and two guest byte offsets are

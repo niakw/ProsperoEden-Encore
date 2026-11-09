@@ -1,193 +1,290 @@
-# Eden Encore R2 Preview — complete post-R1 development changelog
+# Eden Encore R2 — Development Preview
 
-**Development period:** October 15 – November 9, 2026  
-**Release status:** **UNPUBLISHED DRAFT · PRERELEASE · NO ASSETS**  
-**Release scope:** P0–P4 unified-engine development candidate; P5 hardware build and validation excluded.
+### Complete post-R1 development changelog · 15 October – 9 November 2026
 
-This draft documents the work introduced or advanced **after the last genuinely compiled public PS5 R1 package**, including shared NS1/NS2 architecture, native loader and services, graphics, launcher, settings, resilience, host qualification, and the maintained vendor source tree. It is not a new PS5 binary, a compatibility announcement or an instruction to replace the existing installation.
+> **UNPUBLISHED DRAFT PRERELEASE — NO DOWNLOADABLE PS5 BUILD OR RELEASE ASSETS.** This is a proposed, source-level R2 changelog. It is intentionally based on the **last authentically compiled public R1 dated 15 October 2026**, not the 30 October repository mirror. Development milestones **P0–P4 are treated as completed for the scope of this proposed R2 prerelease**. The final exact-SHA host evidence is tracked independently; **P5 (native build, installation, console hardware testing and game validation) is not included or claimed here**.
 
-## Historical release baseline — October 15, not October 30
+**Draft reference:** engine `0b1d6587bec608a9f8cf98944c2ecc121e4d0e7f` · pinned vendor `dba9a02931dc3de32e1059379904e2aefa34e912` · source changes since the R1 compiled-source SHA `5629395324ff65c98b50c44f35f2142a4a92654a`.
 
-- **Last identified public native build:** [Eden Encore R1 — PS5 FTP](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), published **October 15, 2026**.
-- **Exact source SHA declared by that release:** `5629395324ff65c98b50c44f35f2142a4a92654a`.
-- **Native build evidence:** [GitHub Actions run #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232).
-- **Historical release tag commit:** `f037a78f88c0097d2031996390d7816b11e45479`; this tag pointer is **not** the compiled-source SHA.
-- **Package:** `Eden-Encore-56293953-FTP-PPSA99008.zip` plus `SHA256SUMS`.
-- **October 30 appearance in the standalone repository:** a mirror of the earlier release assets, **without recompilation**.
-- **This R2 draft:** source reference `0b1d6587bec608a9f8cf98944c2ecc121e4d0e7f`, with pinned vendor `dba9a02931dc3de32e1059379904e2aefa34e912`. These SHAs identify the source tree for documentation, **not** a newly built native binary.
-
-**Milestone framing:** P0, P1, P2, P3 and P4 are treated as **completed development work for this release candidate**. Formal acceptance receipts must still be read against the exact engine/vendor pair and the published [17-contract P1/P2 exit rules](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/P0_P4_EXIT_MATRIX_2026-11-06.md). P5—physical console compilation, installation, boot, frame delivery, game tests, stability and performance measurements—is a distinct, later gate. This changelog does not fabricate a successful P5 run.
-
-## 1. A single shared first-/second-generation emulation engine
-
-- Consolidated the engine's first- and second-generation work into the maintained `main` architecture instead of treating separate research branches or standalone prototypes as shipping implementations.
-- Reused the existing first-generation CPU, service, memory, graphics, shader and Vulkan infrastructure as the integration base for second-generation behavior.
-- Refactored generation-specific admission, service contracts and GPU formats behind shared source ownership rather than title-specific hacks.
-- Established predictable single native-target selection, owner manifests, explicit vendor pinning and source provenance checks.
-- Retained the original first-generation behavior as a regression boundary, including memory ownership, CPU/JIT, controller input, shaders and video presentation.
-- Kept unsupported guest behavior conservative: unrecognized instructions, invalid descriptors and unsupported service variants must not be silently reported as working.
-
-## 2. Game discovery, formats, firmware, keys and content
-
-- Expanded the shared content-discovery paths for `NSP`, `XCI`, `NSZ`, `XCZ`, extracted `ExeFS/RomFS`, and relevant direct executable/content forms (`NRO`, `NSO`, `NCA`, `NAX`, `KIP`) when their real layout and metadata permit admission.
-- Improved compressed-content handling, including NCZ/NSZ and compatible ZBIC/zstd and LZ4 paths, with explicit size, offset, compression-block and allocation bounds.
-- Added or reinforced negative-path handling for malformed archive tables, missing sections, unsupported content, truncated data and partial extraction.
-- Supported flexible library organization: base games, updates and DLC can be discovered from their documented folders or supported package layouts without silently misclassifying game generations.
-- Standardized per-generation `keys/ns1`, `keys/ns2`, `firmware/ns1` and `firmware/ns2` paths while preserving validated legacy layouts.
-- Worked on firmware imports, naming metadata, recognized firmware dumps and safe failure when required user-provided files are absent.
-- Preserved user data and installed content isolation: no keys, firmware, commercial game files, private saves or other proprietary inputs are bundled with Encore.
-
-## 3. NUP, VFS, RomFS and update/DLC integration
-
-- Integrated native NUP reader/VFS structures rather than relying on archive-name recognition alone.
-- Validated table-of-contents metadata, UUID, SHA-256 and bounded path normalization; rejected traversal and unsafe or inconsistent entry offsets.
-- Implemented raw and zstd content handling with integrity checks and explicit mount/read contracts.
-- Advanced the native filesystem owners for RomFS, service mounts, updates and add-on content, keeping per-title and per-process ownership explicit.
-- Improved rollback and partial-failure behavior so rejected content does not leave stale mounts or falsely available filesystem objects.
-
-## 4. Guest CPU, process admission, JIT and runtime scheduling
-
-- Advanced executable and process admission across ExeFS, NSO/NPDM metadata and associated identity/permission checks.
-- Consolidated host and guest process lifecycle rules, handle ownership, cleanup and shutdown ordering.
-- Refined AArch64/guest CPU support, instruction-boundary checks and source-level fallback behavior without claiming complete unknown-instruction coverage.
-- Reworked sparse native JIT allocation and alias probing to reduce unnecessary reservations and avoid unchecked dense-memory assumptions; added explicit fail-closed behavior and safer retry paths.
-- Preserved instruction-cache, guest-write visibility and host-service wait safeguards, with deterministic host tests where possible.
-- Tightened scheduling, worker ownership, condition and atomic waiting, thread transitions and synchronization to prevent lost notifications and invalid cleanup.
-- Extended diagnostic evidence for memory pressure, CPU waits, JIT regions and title lifecycle, while keeping expensive tracing optional.
-
-## 5. Memory, GMMU, NVMap and GPU resource ownership
-
-- Added or reinforced second-generation GPU virtual-memory contracts, including 49-bit address-space checks, 4 KiB guest pages, bounded mappings and arithmetic overflow guards.
-- Improved GPU-only allocations, NVMap lifetime rules, contiguous/sparse mappings, alias constraints and rollback on partial allocation or out-of-memory conditions.
-- Separated guest address validity from host allocation success, including checked lengths, offsets, ranges, alignment and permissions.
-- Added typed CPU/GPU memory-access validation, cache invalidation and deferred write publication in shared components.
-- Reduced the risk of stale buffers, premature frees and illegal GPU access during process teardown or graphics submission failures.
-- Preserved explicit rejection paths for inaccessible or unproven mappings instead of substituting dummy buffers.
-
-## 6. HLE, IPC/TIPC, services, video and audio
-
-- Expanded reviewed IPC/TIPC command handling, identity and session validation, request/response size checking and error responses.
-- Reinforced service-manager and process-bound handle lifetimes, ownership and cleanup.
-- Advanced display-system contracts: VI/VI2 negotiation, display identification, output resolution/format validation, timing and synchronization.
-- Improved native video-decoder queue behavior and surface/fence selection so an unavailable surface cannot unnecessarily prevent other eligible work.
-- Refined audio and multimedia service interfaces, bounded buffers, supported service commands and separation of host-only protocol tests from console playback.
-- Applied consistency checks to AM, filesystem, NVDRV and display-related service paths; invalid requests receive explicit safe outcomes.
-- Retained the first-generation service ABI as a mandatory shared-engine regression boundary.
-
-## 7. Second-generation GPU commands and shader translation
-
-- Advanced the native GPU path for GPFIFO/GMMU, DMA and channel ownership, with guarded initialization, submission, scheduling and fatal-error behavior.
-- Added reviewed Ampere method and instruction translation into common engine representations and the Maxwell/IR/SPIR-V pipeline.
-- Strengthened high-GPR operand handling, signed branch relocation, execution masks, vector spans and conservative handling of unreviewed instructions.
-- Worked on graphics stages including vertex, fragment, geometry and tessellation, and task/mesh where native host capabilities and actual shader semantics allow them.
-- Improved compute dispatch admission, shader resource reflection, instruction decoding, descriptor layout validation and SPIR-V compilation.
-- Extended the QMD3 path for CBUF banks, indirect accesses, SSBO bindings, global loads/stores, alignment, memory spans, atomics and texture/sampler descriptors.
-- Added strict failure rules when indirect descriptor indices, buffer offsets or branch targets cannot be safely established.
-- Improved synchronization between compute writes, later graphics/indirect reads, Vulkan barriers and fence ownership.
-- Enforced stage-appropriate patch/output access and structured shader emission rather than accepting invalid SPIR-V.
-
-## 8. Vulkan renderer, textures, caches and graphics stability
-
-- Hardened texture and buffer lifetime management, cache invalidation, staging buffers and resource recycling under GPU fences.
-- Reviewed texture descriptors, TIC/TSC, arrays, ASTC, image formats, sparse resources and access widths in the maintained renderer.
-- Improved native Vulkan buffer/image barriers, scheduler ordering and replay behavior for deferred GPU operations.
-- Consolidated maintained host graphics sources, RADV/PS5 adaptations and source-parity checks; preserved required third-party API and license identifiers.
-- Addressed selected HUD/update timing, rasterizer state, blit and presentation-path defects using host-source evidence and targeted regression checks.
-- Refined memory-pressure policies, GPU resource budgets and native graphics diagnostics to reduce unsafe behavior on a constrained device.
-- Kept first-generation rendering code paths available, with explicit host regression witnesses for shared changes.
-
-## 9. Video scaling, spatial FSR 1, anti-aliasing and image quality
-
-- **Preserved FSR 1 spatial upscaling** with its EASU/RCAS paths and sharpness preference. Translation cleanup must never remove the implemented filter.
-- Reviewed TV output versus internal guest resolution, sharpening strength, bilinear alternatives and other video-scaling choices.
-- Improved preset/profile bookkeeping across Minimum, Recommended, High, Ultra and Custom modes as supported by the source.
-- Worked on FXAA, optional antialiasing choices and compatible image-quality adaptations without asserting they are all GPU-certified on PS5.
-- Added source and host checks for graphics settings, UI labels and the distinction between render-scale settings and real game performance.
-- Investigated FSR 3 optical-flow interpolation and other frame-generation paths separately from spatial FSR 1; no unsupported option is to be promoted to a demonstrated native mode.
-
-## 10. R09 neural rendering and optional image generation
-
-- Advanced R09 neural-rendering research and maintained runtime integration for optional Anime4K-style paths, learned-model import and image composition.
-- Added checks for a **user-supplied private Windows model DLL** and model-package integrity. The DLL is read as data where supported; no proprietary DLL, tensor weights or private binaries are redistributed.
-- Validated model inventories and expected tensor manifests, size/shape checks, SHA-256 digests and original-versus-compact model paths.
-- Extended public host tools for model parsing, tensor layout, FSwin/ViT stages, convolution/decoder paths, GPU resource scheduling, Vulkan/SPIR-V ABI checks and bounded image readback.
-- Distinguished an authentic model import, a linked host executable, software-Vulkan shader execution, a synthetic fixture and successful end-to-end neural inference.
-- **No complete authentic Original 152-operation network output on PS5 is claimed.** Host tests or a generated sample image alone do not prove this.
-- Integrated safety gates for invalid user models and unsupported frame-generation modes so a setting cannot misleadingly claim native functionality.
-
-## 11. Launcher, media library and artwork
-
-- Expanded controller-first TV launcher behavior: home, tabs, settings, library, recent games, per-title settings, visual focus and consistent navigation.
-- Improved handling of first- and second-generation game artwork, fallback covers, case layouts, artwork indexing, front/back media and long titles.
-- Refined native 3D case previews, game-library sorting, responsive text and supported preview image formats.
-- Improved launcher loading/presentation continuity so the selected jacket remains visible rather than introducing an unnecessary second full-screen loading interruption.
-- Advanced background artwork, theme styling, visual hierarchies, screenshots and host preview workflows.
-- Preserved the distinction between real screenshot evidence and fictional/sample launcher artwork; sample covers are not a game-compatibility matrix.
-
-## 12. Controller mapping and in-game quick overlay
-
-- Established the **physical touchpad click** as the intended quick-overlay trigger; the central PS system button remains reserved for the console.
-- Added or refined in-game graphics, per-game settings, controller mapping, FPS/diagnostic information and runtime options in the overlay UI.
-- Moved FPS display control into settings rather than relying on a separate gameplay toggle shortcut.
-- Added warnings where a setting cannot take effect until a game restart.
-- Improved controller mapping, button/chord handling, capture/Home fallbacks, vibration and persistence of per-game preferences.
-- Preserved separation between the physical controller's input semantics, the guest button mapping and the game's own on-screen glyph artwork.
-- Kept unsupported ROM-specific glyph replacement or controller assumptions from being silently applied globally.
-
-## 13. Localization, documentation and accessibility
-
-- Maintained **29 application translation catalogs** and added user documentation for all 29 catalog locales, covering **six subjects per locale**: project overview, installation, settings, troubleshooting, support and accessibility.
-- Preserved the distinction between **29 catalogs** and the launcher's **18 currently selectable language/region choices**, which represent 13 spoken languages.
-- Fixed or extended Neural Rendering, A4K, frame-generation and FSR-related UI translation keys; retained useful previous translations as historical gettext entries instead of silently losing them.
-- Improved the English README, installation paths, upgrade guidance, troubleshooting, system-version caveats and user expectations.
-- Clarified accessible launcher controls: larger text, higher contrast and reduced motion, without claiming complete accessibility certification or universal in-game behavior.
-- Added a [complete language directory](https://github.com/niakw/ProsperoEden-Encore/blob/main/LANGUAGES.md). Localized practical guides are **shorter than the full English references** and still need native-speaker proofreading.
-- Updated the [vendor README, contributor rules and accessibility routing](https://github.com/niakw/Prospero.Eden-Encore-vendor) so consumers use the engine manuals, not dependency-source documentation.
-
-## 14. Reliability, security, CI and packaging
-
-- Expanded Clang/GCC checks, UBSan host witnesses, source-owner provenance, SPIR-V validation, Vulkan smoke tests and negative-path tests.
-- Added bounded **H01–H07** and **G01–G10** P1/P2 exit contracts, separating the structural audit from an enforceable all-proof exit decision.
-- Maintained source-preflight, core fast-gate, NS2 guards, P0–P4 sharded host qualification and release-source checks, with exact engine/vendor pairing.
-- Kept the native PS5 build workflow **explicitly opted-in**. Successful host checks and skipped native build jobs are never relabeled as newly compiled console packages.
-- Improved source integrity, dependency pinning, memory/path safety, dangerous archive-input rejection and private model handling.
-- Reviewed visible GitHub Actions workflow, job and step labels, and neutralized unnecessary commercial product naming in project-owned code comments.
-- Preserved third-party copyright and attribution, technical namespace names, vendor API identifiers, original SDK provenance and file names necessary for ABI correctness.
-- Fixed README provenance where source-only improvements had incorrectly sounded like features in the October R1 binary.
-- Provided conservative release-note distinctions among **implemented source**, **host-validated behavior**, **native build** and **physical device tests**.
-
-## 15. P0–P4 completed development scope and P5 handoff
-
-| Milestone | Release-candidate interpretation | Evidence boundary |
-| --- | --- | --- |
-| **P0** | Completed shared source architecture and pinned dependency ownership | Same-SHA source/CI gate evidence |
-| **P1** | Completed planned host-side loader, process, memory, HLE and service development | H01–H07 positive/negative owner contracts |
-| **P2** | Completed planned host-side GPU, compute, shader and Vulkan development | G01–G10 positive/negative owner contracts |
-| **P3** | Completed planned launcher, controls, locale and documentation development | UI source and host checks; real device UI remains P5 |
-| **P4** | Completed host qualification workstream for the candidate | Final explicit same-engine/vendor receipts, not a single unrelated green shard |
-| **P5** | **NOT INCLUDED IN THIS DRAFT** | Native package build, PS5 installation, boot, guest frame, games, crash/VRAM/FPS traces |
-
-These are **candidate changelog milestone states**, not a claim that the current technical issue tracker has been formally signed off or that `--enforce` has passed on this latest SHA. The [live roadmap issue](https://github.com/niakw/ProsperoEden-Encore/issues/15) and [exit matrix](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/P0_P4_EXIT_MATRIX_2026-11-06.md) provide the exact validation evidence and may record outstanding proof requirements.
-
-### Compatibility and deployment limitations
-
-- **Tested console firmware reference:** PS5 **13.60**; no new hardware run has been performed for this draft.
-- **First-generation titles:** previous R1-era evidence does not prove that all later memory, GPU, HUD or pause/freeze changes are stable on physical hardware.
-- **Second-generation titles:** no confirmed first guest-rendered PS5 frame or game-playability certificate for Mario Kart World or Donkey Kong Bananza.
-- **Performance:** no new FPS, latency, VRAM reduction or compatibility percentage is claimed without matched device measurements.
-- **Neural rendering and frame generation:** code, settings, host examples and vendor parsers are not a guarantee of completed native neural output or real interpolated frames.
-- **Installation:** do not delete or overwrite your personal `/data/prosperoeden/` folder or any external storage root; back up saves, settings and user-owned files before any future upgrade.
-- **Distribution:** no new `eboot.bin`, FTP ZIP, FFPFSC image, symbol package or other attachment exists in this draft. The October 15 R1 remains the last identified compiled public package.
-
-## Further documentation
-
-- [Engine README](https://github.com/niakw/ProsperoEden-Encore/blob/main/README.md) · [29-language user guide directory](https://github.com/niakw/ProsperoEden-Encore/blob/main/LANGUAGES.md)
-- [Installation](https://github.com/niakw/ProsperoEden-Encore/blob/main/INSTALL.md) · [Settings](https://github.com/niakw/ProsperoEden-Encore/blob/main/SETTINGS.md) · [Troubleshooting](https://github.com/niakw/ProsperoEden-Encore/blob/main/TROUBLESHOOTING.md)
-- [P0–P4 and P5 technical roadmap](https://github.com/niakw/ProsperoEden-Encore/issues/15) · [Source acceptance matrix](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/P0_P4_EXIT_MATRIX_2026-11-06.md)
-- [Historical release and CI audit](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md)
-- [Pinned source/vendor dependency repository](https://github.com/niakw/Prospero.Eden-Encore-vendor)
-- [Last actual compiled public R1 (October 15)](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953)
+**R1 provenance:** [Original 15 October release](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953) · [native build run #38752177232](https://github.com/niakw/Prospero.Eden-Encore/actions/runs/38752177232) · original source `56293953...` · release tag points to a different historical metadata commit `f037a78...`. The [30 October release in this repository](https://github.com/niakw/ProsperoEden-Encore/releases/tag/encore-R1-56293953) contains the **same imported R1 package**, not a new native compilation.
 
 ---
 
-**Release management:** This entry is intentionally kept as **draft + prerelease, with zero attached assets and no publication**. It is a documentation and release-planning candidate, not a replacement for the verified R1 download.
+## Highlights
+
+- **One maintained native PS5 application and shared NS1/NS2 core.** First- and second-generation guest support now share the maintained loader, CPU/JIT, memory, GPU and display infrastructure on `main`; no separate experimental second-generation application is required.
+- **Major guest GPU and Vulkan work.** New second-generation command handling, Ampere-to-common-IR translation, compute descriptors, graphics stages, synchronization, texture and memory protections, shader compilation and rejection paths.
+- **Safer content handling.** Better handling of NSP/XCI/NSZ/XCZ, extracted game files, updates/DLC, NUP, per-generation keys and firmware, and corrupted or incomplete input.
+- **Launcher and controller improvements.** Updated library, covers and 3D packaging, per-game settings, language support, controller mapping, faster startup presentation and a **touchpad-triggered Encore quick overlay**.
+- **Graphics and image processing.** Preserved spatial FSR 1 (EASU/RCAS and sharpening), revised presentation/AA/scaling policies, optional frame-interpolation source work and a separate neural-rendering R09 development path.
+- **Reliability and tooling.** Memory ownership, HLE/IPC, video queues, shader/graphics synchronization, more useful diagnostics, hardened release provenance and bounded code/host verification.
+- **International user documentation.** Six user-facing document types available across **all 29 application catalog locales**. The launcher still exposes only 18 language/region choices representing 13 distinct languages.
+- **Clean GitHub presentation.** Neutral workflow/job/step titles and non-essential brand mentions in owned source comments; required technical API names, provenance and third-party license notices stay intact.
+
+## 1. Unified engine and project architecture (P0)
+
+- Integrated shared first- and second-generation runtime owners into a **single active engine on `main`**.
+- Reused common OS services, scheduling, filesystem, translation, input, video output and rendering foundations instead of duplicating console executables.
+- Removed historical dependence on separate experimental/release CMake profiles for selecting different products; retain automatic capability detection and strict admissibility decisions.
+- Separated optional graphics experiments from the core engine's supported guest instruction and ABI requirements.
+- Retained only source-level compatibility where generation-specific behavior genuinely differs: executable format details, GPU instruction set, descriptor layout, firmware services and timing.
+- Consolidated maintained overrides into complete source units and explicit build selections; pinned the corresponding vendor tree rather than relying on invisible build-time rewriting.
+- Reconciled historical source inventories and post-audit owner additions without reinterpreting an old baseline as proof of performance.
+- Preserved the normal first-generation renderer and application behavior as the regression baseline.
+- Added source/provenance checks for common CMake, Vulkan, host service contracts, dependencies and graphics owners.
+- Kept native PS5 builds an **explicit choice** and publication a **separate approval**, instead of treating every successful host workflow as a release.
+
+## 2. Game discovery, executable loading, updates and DLC (P1)
+
+### Content types and file organization
+
+- Continued discovery and admission work for **NSP, XCI, NSZ and XCZ** game packages, extracted **ExeFS/RomFS** content and executable inputs such as **NRO, NSO, NCA, NAX and KIP**, where the corresponding loader supports the form.
+- Unified library scanning and explicit game/update/add-on matching, including generation-aware metadata and launch identity.
+- Improved handling of **base games, updates and DLC**, avoiding assumptions based solely on a file extension or hard-coded title list.
+- Kept a **flexible storage contract**: `roms/`, `updates/`, `dlc/`, `mods/`, user data and external roots can be resolved without user-side source edits.
+- Introduced independent `keys/ns1` and `keys/ns2`, and `firmware/ns1` and `firmware/ns2`, while retaining supported legacy flat storage layouts.
+- Added or refined named firmware-dump metadata and source-side guards for missing, incomplete or inconsistent system files.
+- Improved case-by-case handling of compressed NSO segments (**LZ4, ZBIC and zstd**) with bounded decompression, coherent error responses and no silent fallback to unrelated data.
+- Maintained NCZ/NSZ handling for supported compressed inputs, including validation of sizes, block indexes, extracted output and resource budgets.
+- Hardened content paths, directory traversal checks, invalid titles, metadata lengths and partial-input cleanup.
+
+### NUP and virtual filesystem
+
+- Introduced a maintained **NUP virtual filesystem** reader and mount path rather than forcing a bespoke extraction workflow.
+- Added validation of NUP v1 headers, table of contents, identifier/UUID records, SHA-256 integrity and normalized paths.
+- Added raw and zstd-backed entry handling and bounded file reads.
+- Integrated RomFS/add-on search and mounting contracts while rejecting invalid or ambiguous content.
+- Conserved NUP as part of the common source configuration, not a second-generation-only optional build product.
+
+### Process creation and execution
+
+- Worked on **NPDM/ACID/ACI, NSO/ExeFS, process identity and KProcess handoff** with actual maintained source owners.
+- Improved fail-closed admission for malformed process metadata, missing file segments, invalid access ranges and partial session construction.
+- Avoided publishing partially initialized processes or changing an established first-generation process path just to pass a second-generation test.
+
+## 3. CPU, JIT, memory and process synchronization (P1)
+
+- Consolidated first-/second-generation CPU translation policy, process setup, code memory and host callback boundaries.
+- Continued work on executable-memory aliases, JIT allocation/reuse, sparse commit, I-cache visibility and safe process shutdown.
+- Maintained source-level safeguards against dense JIT over-allocation, stale aliases and inconsistent guest/host permissions.
+- Improved 64-bit guest address checks and range arithmetic, including overflow, alignment and uncommitted memory validation.
+- Added bounded **49-bit GPU virtual-address** and page-mapping policies, with 4 KiB mappings and generation-specific sparse handling.
+- Strengthened guest/GPU ownership bookkeeping, **NVMap**, temporary pin references, VA remapping, allocation fallback and rollback after an error or out-of-memory event.
+- Avoided stale file descriptors, leaked pins, half-committed page tables and invalid access after teardown.
+- Revisited CPU scheduling, event signallers, atomic waits, process-wide synchronization and host/guest clock boundaries.
+- Kept fences, semaphore ordering and ownership transfers explicit rather than fixing freezes by disabling synchronization.
+- Added negative tests for invalid handle/session states, race-sensitive release order, oversized mappings and re-entrant teardown.
+
+## 4. Operating-system services, HLE, audio and video output (P1)
+
+- Expanded common **IPC/TIPC** parsing and dispatch guards, response buffers, handles, service sessions and command-specific failure paths.
+- Audited key services in **AM, SM, filesystem, NVDRV, VI/VI2 and audio** against expected guest message layouts.
+- Corrected session lifetime and close/teardown order, including NVDRV process registration and map release ownership.
+- Improved version-specific service admission rather than assuming a first-generation command has the same behavior for the successor.
+- Strengthened native **VI2** display queries, resolution and encoding responses, display/session identity checks, malformed packet rejection and output ownership.
+- Reviewed display cadence, virtual present state and guest-to-host presentation handoff.
+- Improved audio buffer and sink lifecycle, invalid-format responses and cleanup after guest state changes.
+- Corrected video decoder surface scheduling so a surface waiting on a fence does not unnecessarily stall other available output surfaces.
+- Conserved GPU/video fences and explicit errors when a frame, service or buffer is not ready.
+- Isolated host validation of individual service owners from PS5 runtime behavior; no claim of complete sound/video output for a successor game is made here.
+
+## 5. Guest GPU command processing and memory safety (P2)
+
+### Command submission, DMA and channel state
+
+- Maintained an explicit command path from guest **GPFIFO / GPU channels** through validated command decoding to the shared renderer.
+- Worked on generation-specific **Ampere DMA**, 3D/Compute command classes, macro processing, subchannel binding and command fetch.
+- Improved pre-initialization command behavior, GPU process identity, invalid binding and stale-process rejection.
+- Tightened semaphore/acquire ordering, synchronization points and queue publication.
+- Added bounded failure responses for malformed GPU commands and unmapped memory rather than pretending that unsupported instructions succeeded.
+
+### Virtual memory, buffers and descriptors
+
+- Improved GPU virtual-memory translation and **NVMap** integration, including 49-bit access bounds, sparse mappings, page pin ownership and rollback.
+- Revisited guest memory coherence, dirty ranges, DMA copies, texture invalidation and cache consistency.
+- Added detailed control over **CBUF banks, SSBOs, UBOs, global memory and texel buffers**.
+- Refined QMD3 descriptor discovery, indirect constant-buffer addresses, descriptor-array span validation and buffer/image classification.
+- Corrected write-only global-memory shader cases where a store needed an SSBO descriptor even without a corresponding read.
+- Checked complete byte spans, alignment, overflow, alias, write permissions and failed mapping at descriptor admission time.
+- Protected dynamically indexed/indirect resources against divergent offsets and unsupported addressing modes.
+- Improved atomic operations and per-buffer access tracking where source semantics could be established.
+- Reduced invalid reuse of stale resource views, pipeline descriptors and destroyed buffers.
+- Added real-source host witnesses and conservative negative cases for data-dependent GPU access.
+
+### Textures, caches and surfaces
+
+- Improved **TIC/TSC** sampling and descriptor interpretation, texture arrays, image views, image/buffer alias rules and unsupported format rejection.
+- Continued **ASTC** and sparse-texture transfer integration with safe staging and resource budgets.
+- Strengthened texture cache invalidation, rasterizer writes, GPU cache ownership and deferred cleanup.
+- Added protections for asynchronous allocation, queued presentation, framebuffer lifetime and render-pass transitions.
+- Improved GPU-only allocations, buffer identities and reserve/commit checks to reduce incorrect visibility between CPU and GPU.
+- Preserved first-generation texturing behavior when a successor-specific descriptor cannot be represented safely.
+
+## 6. GPU instruction translation, SPIR-V and Vulkan (P2)
+
+- Expanded Ampere instruction decoding and lowering into the shared Maxwell/IR-oriented back end without indiscriminately treating two generations as identical.
+- Reviewed high-register operands and multi-register vectors for arithmetic, memory and predicate operations.
+- Corrected branch relocation/target handling for conditional, signed and indirect branch forms where verified; unqualified variants remain explicit failures.
+- Improved macro engine sequencing, method and QMD interpretation, including rejection of invalid or reserved fields.
+- Continued **Vertex, Fragment, Geometry, Tessellation, Task and Mesh** stage integration with stage-specific capability checks.
+- Added checks for undefined patch variables, invalid tessellation stage usage, unrepresentable input/output layouts and out-of-range attributes.
+- Worked on native **Compute** pipelines from guest shader state through **SPIR-V** module generation, descriptor binding and Vulkan dispatch.
+- Revisited cross-dispatch memory dependencies, indirect dispatch arguments, barriers, image layouts and buffer visibility.
+- Hardened descriptor state during pipeline compilation, rasterizer binding and queued replay.
+- Improved Vulkan pipeline creation, shader cache, presentation image ownership and deferred destruction.
+- Qualified host-side shader syntax/ABI with Clang/GCC, shader witnesses and `spirv-val` where applicable.
+- Preserved the **fail-closed** policy for unknown guest opcodes, invalid descriptors, incompatible stage combinations and unsupported GPU capabilities.
+- **Important limitation:** a valid SPIR-V module or Vulkan host test is not a verified guest-rendered second-generation PS5 frame.
+
+## 7. Native graphics, scaling, anti-aliasing and frame presentation
+
+### Spatial rendering and display
+
+- Preserved **FSR 1** as the spatial upscaling mode, including **EASU**, **RCAS** and the user-adjustable sharpness control.
+- Restored or archived legacy translated FSR labels where needed instead of silently losing the original feature's locale coverage.
+- Distinguished TV output resolution from internal game scale, interpolation filter, sharpening, anti-aliasing and frame generation.
+- Continued tuning and safeguards for bilinear/bicubic/Lanczos-style scaling choices and output-size arithmetic.
+- Worked on **FXAA**, optional AA integrations, multisampling and resolution targets with strict compatibility checks.
+- Improved Vulkan presentation scheduling, display image history, render-pass transitions and overlay/HUD composition contracts.
+- Refined frame-timing measurements and source/host replay without asserting a specific FPS increase on PS5.
+
+### Optional frame generation
+
+- Added or refined optional frame-generation selection and host-side capability gates.
+- Separated actual emulated game cadence from displayed/interpolated frames.
+- Explored Vulkan optical-flow and native frame-interpolation approaches without treating an experimental source path as a universally supported release feature.
+- Preserved explicit off/unsupported states when required hardware, frame history, depth or motion input is absent.
+
+### Neural Rendering / R09
+
+- Introduced an optional neural-rendering workstream with distinct Original and Compact model manifests and user-side selection policies.
+- Added public model-layout and per-tensor verification tools, structural plan checks, optional image-path composition and Vulkan compute/shader ABIs.
+- Kept all **model DLLs and learned weights user-private**; they are never committed or attached to a release.
+- Added strict checks for tensor count, file bounds, offsets, byte ranges, hashes, model flavor and inconsistent resources.
+- Refined image pre/post-processing, Swin/ViT attention, QKV, feed-forward, U-Net/decoder stages and expected intermediate shapes.
+- Added source and host tooling to attempt complete graph execution and inspect GPU readback without distributing private inputs.
+- Updated public host examples and GitHub display names so a successful link, parser run, shader fixture or partial frame cannot be mistaken for a full authentic model inference.
+- **Not claimed:** a verified output image from the complete 152-operation Original network on the PS5 GPU, general game support, or equivalent quality to a desktop proprietary implementation.
+
+## 8. Launcher, home screen, game library and media (P3)
+
+- Reworked the PS5-oriented **controller-first home screen**, main navigation, settings menus, library browsing and per-game information.
+- Improved recent-game ordering, selected item focus, browsing state and background presentation.
+- Refined **NS1/NS2 game recognition** and book-keeping so changing sections does not repeatedly lose the ROM inventory.
+- Improved game metadata lookup and artwork association using available title information and media sources.
+- Extended jacket/cover reconstruction, front/back/spine handling, 3D box presentation and safe fallback when artwork is missing.
+- Addressed malformed or incomplete covers, transparency, incorrect box tinting, reversed artwork and long-title layouts in the source/host UI paths.
+- Updated TV-scale text, focus readability, navigation hints, spacing, clipping and accessibility option wiring.
+- Reduced unnecessary preview/covers work, improved asset format handling and used efficient image assets where supported.
+- Worked on preserving the selected jacket during game launch instead of showing an extra, unhelpful loading screen.
+- Maintained a single-file native application concept and the existing application identity.
+- Added or expanded launcher preview and source checks; they are not substitutes for observation on a physical console.
+
+## 9. Controller input, per-game controls and Encore quick overlay
+
+- Preserved the normal controller input chain and first-generation guest button semantics.
+- Extended per-game controller-layout selection and mapping rather than globally overwriting the user's preferred profile.
+- Supported virtual guest HOME/capture behaviors only through approved mappings; the console's own central system button remains reserved.
+- Added the **in-game Encore quick overlay on a touchpad press**, **not** on the central console system button.
+- Grouped current game settings, graphics, control mapping, FPS/diagnostics and log options in the overlay.
+- Removed the legacy standalone FPS-show shortcut in favor of the overlay-controlled setting.
+- Added contextual feedback when an option requires a game restart before it can take effect.
+- Revisited controller button glyphs, contextual prompts, mixed physical/guest mapping and title-specific artwork substitution policies.
+- Kept the local mapping state and in-game texture assets separate so an unsupported glyph conversion cannot silently alter game inputs.
+
+## 10. Languages, documentation and accessibility
+
+- Maintained **29 application gettext locale catalogs**, including new graphics, neural and frame-generation settings.
+- Improved coverage of new option labels and preserved useful historical FSR translations as inactive references where needed.
+- Added practical **README, installation, settings, troubleshooting, support and accessibility guides for all 29 catalog locales** (174 localized pages in total).
+- Preserved the existing detailed French and Spanish README/installation pages rather than replacing them with shorter copies.
+- Added a single language directory linking every one of the six user-facing pages for each locale.
+- Made the distinction explicit: the **launcher offers 18 language/region choices (13 distinct languages)**, while additional catalogs and documentation exist for other languages.
+- Documented the selected storage root, keys/firmware ownership, safe migration, release packaging and recovery steps.
+- Documented larger launcher text, high contrast and reduced motion as separate optional settings, not guaranteed accessibility inside games.
+- Improved the README's version history, R1 source SHA, native-build restrictions and provenance explanation.
+- Added source checks for the full user-guide matrix to prevent missing language links.
+- **Translation quality note:** complete file/key coverage is not a professional linguistic review. Arabic right-to-left layout, CJK glyph fallbacks, regional variants and UI truncation require native-speaker/device checks.
+
+## 11. Reliability, performance safeguards and diagnostics
+
+- Revisited stalls and timing regressions observed historically in FC27 and other first-generation titles, including gameplay HUD/pause behavior and service synchronization.
+- Improved explicit handling of GPU queue backpressure, video surface fences, stale present resources and kernel wait paths.
+- Hardened memory lifetime around JIT, direct-memory allocations, decoder surfaces, GPU caches and teardown.
+- Reduced repeated source-side allocations or conversion work where clearly justified without promising universal performance gains.
+- Added bounded diagnostics, host counters, error categories and trace review for unsupported guest operations.
+- Improved fail-closed behavior during malformed package loading, game restart and partial construction.
+- Expanded host-negative tests so guards are not considered correct merely because a synthetic positive fixture passes.
+- Preserved diagnostic modes without enabling costly logs or unqualified experimental behavior by default.
+
+## 12. Security, dependency provenance and GitHub workflows (P4)
+
+- Kept the maintained source and the **vendor** repository pinned by exact Git commit, preserving third-party licenses and source provenance.
+- Clarified which vendor directories are immutable upstream snapshots and which contain maintained source overrides.
+- Reviewed user-private model parsing, filename/size bounds, memory ownership and content path validation.
+- Maintained static security scans and conservative CodeQL reporting rather than suppressing real findings for cosmetic green CI.
+- Updated neutral names/descriptions for relevant workflow headings, jobs, steps and host artifacts.
+- Removed non-essential commercial-brand references from authored comments and local test messages without rewriting ABI symbols or upstream authorship.
+- Expanded source/host validation with **Clang, GCC, UBSan, SPIR-V and Vulkan host** witnesses.
+- Kept a finite P1/P2 acceptance structure with **H01–H07 and G01–G10** (17 contracts), expected positive and negative behavior, stable owner references and rejection of artificial blanket exclusions.
+- Separated a **structural audit** of test coverage from the `--enforce` evidence-based exit decision.
+- Maintained source preflight, Core fast gate, NS2 host guards, dedicated SPIR-V qualification, P0–P4 host matrix and vendor parity checks.
+- Avoided treating green jobs from different SHA revisions as one clean acceptance record.
+- Clarified the actual release workflow: ordinary `main` pushes do not cause a full native PS5 build; an explicit manual action or approved build marker is required; release publication is a further deliberate step.
+- Updated install guides so they reference actual R1 downloadable file names instead of imaginary historical assets.
+- Added this expanded, English-only R2 draft to an isolated release-preparation branch, with **no release assets and no automatic publication**.
+
+## 13. Development milestone summary for this draft
+
+| Milestone | R2 prerelease narrative | What is not included |
+| --- | --- | --- |
+| **P0** — common architecture, provenance, source CI | **Completed development scope** | PS5 hardware verification |
+| **P1** — loaders, CPU/JIT, memory, HLE and services | **Completed development scope** | Game-by-game console compatibility |
+| **P2** — GPU command paths, shaders, descriptors, SPIR-V/Vulkan | **Completed development scope** | Verified first NS2 game framebuffer on PS5 |
+| **P3** — launcher, controls, languages, media | **Completed development scope** | Physical console UI/cover verification |
+| **P4** — host code/ABI qualification and evidence framework | **Completed development scope for this changelog** | Formal same-SHA sign-off is tracked independently |
+| **P5** — native PS5 build, installation, games, stability and performance | **Not part of this draft** | Must occur separately before a new public binary release |
+
+This editorial summary **does not rewrite the tracked host evidence or the actual issue checklist**. Where those records still list open or `proof_defined` entries, they remain authoritative for formal verification. A planned-release description must not be used as a fabricated `--enforce` pass.
+
+## 14. Compatibility, limitations and expected testing
+
+**Last hardware-tested firmware:** **PS5 13.60 only**. There is no documented minimum firmware and no recommendation to update a console merely to match the test target.
+
+**First-generation titles:** existing first-generation behavior is the baseline. Previously observed issues included FC27 frame-pacing/HUD freezes and occasional crashes; BOTW was reported as playable in selected profiles on an older binary. None of these results qualify the new R2 candidate.
+
+**Second-generation titles:** Mario Kart World and Donkey Kong Bananza have previously reached guest initialization stages, but no confirmed guest-rendered first frame on the physical PS5 is available. Do not interpret loader progress, Vulkan initialization or host shader compilation as game compatibility.
+
+**Graphics extras:** FSR 1 is a retained spatial filter. Frame interpolation and neural rendering are separate, optional paths with additional restrictions. Selecting or compiling an option is not proof that the game produced more simulated frames or that R09 completed authentic inference.
+
+**User data:** never delete `/data/prosperoeden/` just to repair a failed installation. The original native app and Encore use the same `PPSA99008` title identity, so updating is a replacement, **not** an independent side-by-side install.
+
+**No private files:** the package contains no games, keys, firmware, DLLs, learned model weights, user saves or proprietary distribution assets.
+
+**Known qualification still needed in P5:** actual native ELF/package build from one pinned engine/vendor pair; package/file checksums; installation from a complete ZIP/FTP or explicitly validated image workflow; startup on physical hardware; correct language and artwork display; FC27/BOTW first-generation regressions; Mario Kart World/Donkey Kong Bananza first-frame observation; graphics/VRAM/synchronization stability; saves and per-game settings; valid performance traces.
+
+## 15. Install and upgrade information
+
+**There is nothing to install from this R2 draft.** It deliberately has **zero assets**. For the genuine last public build, download the [15 October R1 FTP package](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), which includes:
+
+- `Eden-Encore-56293953-FTP-PPSA99008.zip`
+- `SHA256SUMS`
+
+For ZIP/FTP, extract the complete `PPSA99008/` folder and install it under `/data/homebrew/PPSA99008/`. Do not create a nested `PPSA99008/PPSA99008/` folder. Preserve `/data/prosperoeden/` and any configured external storage. Use the [installation guide](https://github.com/niakw/ProsperoEden-Encore/blob/main/INSTALL.md) for firmware/keys, backup, migration, checksums and the **separate** FFPFSC/ShadowMountPlus method.
+
+## Documentation, sources and credits
+
+- [Main README and complete feature overview](https://github.com/niakw/ProsperoEden-Encore/blob/main/README.md)
+- [User documentation — 29 catalog languages](https://github.com/niakw/ProsperoEden-Encore/blob/main/LANGUAGES.md)
+- [Installation](https://github.com/niakw/ProsperoEden-Encore/blob/main/INSTALL.md) · [Settings](https://github.com/niakw/ProsperoEden-Encore/blob/main/SETTINGS.md) · [Troubleshooting](https://github.com/niakw/ProsperoEden-Encore/blob/main/TROUBLESHOOTING.md)
+- [Accessibility](https://github.com/niakw/ProsperoEden-Encore/blob/main/ACCESSIBILITY.md) · [Support](https://github.com/niakw/ProsperoEden-Encore/blob/main/SUPPORT.md)
+- [Historical R1 and workflow audit](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md)
+- [Unified roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) · [current milestone issue](https://github.com/niakw/ProsperoEden-Encore/issues/15)
+- [Engine source](https://github.com/niakw/ProsperoEden-Encore) · [Pinned dependency/vendor source](https://github.com/niakw/Prospero.Eden-Encore-vendor)
+- [Licenses and third-party notices](https://github.com/niakw/ProsperoEden-Encore/blob/main/THIRD_PARTY_NOTICES.md)
+
+**Eden Encore is an independent community project.** All upstream copyright, source attribution and license terms are retained. Trademark names used strictly to describe APIs, target platforms or compatibility do not imply endorsement or affiliation.
+
+---
+
+*This release record remains an **unpublished draft prerelease**, with no binaries attached and no new console build triggered. The changelog covers source development since 15 October 2026; the next native PS5 package is subject to the separate P5 qualification and explicit release decision.*

@@ -639,6 +639,14 @@ static void VerifyRealTransformFeedbackSpirv(const std::string& prefix) {
         }
         i+=count;
     }
+    if (!(stores>=4 && xfb_decorations>=2 && offset0>=1 &&
+          offset8>=1 && component2>=1 && xfb_mode>=1)) {
+        std::fprintf(stderr,
+                     "G02_REAL_XFB_OWNER_DIAGNOSTIC stores=%u buffer=%u "
+                     "offset0=%u offset8=%u component2=%u mode=%u words=%zu\\n",
+                     stores,xfb_decorations,offset0,offset8,component2,
+                     xfb_mode,words.size());
+    }
     Require(stores>=4 && xfb_decorations>=2 && offset0>=1 &&
             offset8>=1 && component2>=1 && xfb_mode>=1,
             "actual G02 XFB streams did not split/store four components");

@@ -31,6 +31,7 @@ TESTS = {
     "spirv_xfb_partition": "tools/ns2/check_native_spirv_xfb_partition_host.py",
     "process_handoff_transaction": "tools/ns2/check_native_process_handoff_transaction_host.py",
     "exefs_missing_directory": "tools/ns2/check_native_exefs_missing_directory_host.py",
+    "exefs_fs_registration": "tools/ns2/check_native_exefs_fs_registration_host.py",
     "native_nso_args_bound": "tools/ns2/check_native_nso_arguments_host.py",
     "native_nso_patch_extent": "tools/ns2/check_native_nso_patch_extent_host.py",
     "gpu_kernel_session_rollback": "tools/ns2/check_gpu_session_kernel_rollback_host.py",

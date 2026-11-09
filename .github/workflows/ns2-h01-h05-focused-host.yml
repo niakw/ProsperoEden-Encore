@@ -6,6 +6,7 @@ on:
     paths:
       - 'vendor'
       - 'tools/ns2/check_native_exefs_missing_directory_host.py'
+      - 'tools/ns2/check_native_exefs_fs_registration_host.py'
       - 'tools/ns2/check_native_nso_arguments_host.py'
       - 'tools/ns2/check_native_nso_patch_extent_host.py'
       - 'tools/ns2/check_native_spirv_descriptor_array_bounds_host.py'
@@ -37,6 +38,8 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
       - run: python3 -B tools/ns2/check_native_exefs_missing_directory_host.py
+      - run: python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
+      - run: python3 -B tools/ns2/check_native_exefs_fs_registration_host.py
       - run: python3 -B tools/ns2/check_native_nso_arguments_host.py
       - run: python3 -B tools/ns2/check_native_nso_patch_extent_host.py
 

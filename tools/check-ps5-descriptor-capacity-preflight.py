@@ -37,7 +37,19 @@ assert preflight.index("scheduler.Finish();") < preflight.index("++generation;")
 assert "DescriptorRingPreflightSize()" in raster
 assert raster.index("descriptor_buffer_ring.PreflightCapacity(") < raster.index(
     "std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")
-assert "gpu_memory->FlushCaching();\n        pipeline = pipeline_cache.CurrentGraphicsPipeline();" in raster
+# The graphics owner now reselects through its forced-MSAA aware policy.
+# Keep the capacity -> drain -> exact-recheck ordering and the guarantee that
+# both guest cache locks are acquired only AFTER this preflight.
+draw = raster.split("void RasterizerVulkan::PrepareDraw(", 1)[1].split(
+    "void RasterizerVulkan::Draw(", 1)[0]
+capacity = draw.index("if (descriptor_buffer_ring.PreflightCapacity(")
+flush = draw.index("gpu_memory->FlushCaching();", capacity)
+reselect = draw.index("pipeline = select_pipeline();", flush)
+exact = draw.index("guest_descriptor_queue.PreflightExactGuestDraw(", reselect)
+cache_lock = draw.index("std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")
+assert capacity < flush < reselect < exact < cache_lock
+assert "pipeline_cache.CurrentGraphicsPipelineForMsaa(native_samples)" in draw
+assert "return pipeline_cache.CurrentGraphicsPipeline();" in draw
 assert "DescriptorRingPreflightSize()" in oracle
 assert "PreflightCapacity(Scheduler& scheduler" in oracle
 assert "('vk_descriptor_buffer', 10, 4)" in oracle

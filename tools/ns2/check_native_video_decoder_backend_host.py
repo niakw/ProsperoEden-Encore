@@ -62,6 +62,7 @@ source = r'''
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <limits>
 #include <span>
 #include <optional>
 #include <string_view>

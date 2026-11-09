@@ -147,9 +147,18 @@
       ],
       "positive": "Required GPU session and worker commands produce exact response words, rights and owned handles.",
       "negative": "Unknown commands, stale FD and unauthorized process cannot produce success or mutate mappings.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "All GPU-session/worker TIPC command owners now have extracted host witnesses, including integrated 214 sparse reserve → 216 physical remap and 215 teardown. Require green SHA-pinned qualification and consolidated complete response/rights/rollback matrix before declaring H06 proof_defined; no PS5 guest-frame claim.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/ns2/check_native_gpu_worker_sparse_ipc_host.py",
+          "kind": "real-owner-ipc"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_gpu_fd_identity_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

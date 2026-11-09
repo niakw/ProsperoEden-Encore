@@ -130,7 +130,7 @@
       "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",
       "status": "open",
       "evidence": {},
-      "blocker": "Executed-owner FFmpeg decoded pixels and Pump publication/rollback are proven; supported native HEVC bitstream Decode->Drain->Render host witness is added but still requires green CI. Genuine guest TIPC ownership, GPU image memory, and guest fence ordering remain unqualified end-to-end.",
+      "blocker": "Authentic FFmpeg decoded NV12, HEVC Decode->Drain->Render EOS, real-owner Pump publication/rollback and bounded release-fence waits are green on host CI. True guest TIPC delivery, GPU image memory and Vulkan-backed guest fence lifecycle still require end-to-end proof.",
       "excluded_forms": []
     },
     {
@@ -420,13 +420,14 @@
         "tools/ns2/check_native_dma_unbound_subchannel_host.py",
         "tools/ns2/check_native_gpu_channel_reuse_host.py",
         "tools/ns2/check_native_ampere_sem_gmmu_host.py",
-        "tools/ns2/check_native_ampere_sem_linked_host.py"
+        "tools/ns2/check_native_ampere_sem_linked_host.py",
+        "tools/ns2/check_native_compute_report_alias_host.py"
       ],
       "positive": "True semaphore acquire/resume and multi-channel ordering publish guest completion only after execution.",
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Ampere SEM_EXECUTE now rejects unmapped release/acquire GPU VAs before fence or channel publication, with real-owner GMMU admission witness pending host CI. Native guest semaphore value completion and end-to-end QMD ordering still lack a single linked Vulkan/GPFIFO proof.",
+      "blocker": "Native SEM_EXECUTE park/replay and native Compute report semaphore backing checks have executed-owner host witnesses; linked QMD3 real Vulkan dispatch/fence completion, guest semaphore publication, and multi-channel GPFIFO ordering are still missing.",
       "excluded_forms": []
     }
   ]

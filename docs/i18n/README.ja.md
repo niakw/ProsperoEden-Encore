@@ -30,7 +30,7 @@
     <td align="center"><a href="#compatibility"><strong>互換性</strong></a></td>
     <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
     <td align="center"><a href="../../TROUBLESHOOTING.md"><strong>ヘルプ</strong></a></td>
-    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>計画</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>計画</strong></a></td>
   </tr>
 </table>
 
@@ -68,7 +68,7 @@ Switch 2 は別ブランチで研究中で、現在の PS5 版には含まれま
 
 ## コミュニティとクレジット
 
-[Complete English reference](../../README.md) · [Settings](../../SETTINGS.md) · [Accessibility](../../ACCESSIBILITY.md) · [Troubleshooting](../../TROUBLESHOOTING.md) · [Switch 2 research](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) · [Roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md) · [Original project credits](../../README.md#credits) · [GPL-3.0-or-later](../../LICENSE).
+[Complete English reference](../../README.md) · [Settings](../../SETTINGS.md) · [Accessibility](../../ACCESSIBILITY.md) · [Troubleshooting](../../TROUBLESHOOTING.md) · [Switch 2 research](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) · [Roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md) · [Original project credits](../../README.md#credits) · [GPL-3.0-or-later](../../LICENSE).
 
 ゲーム、暗号鍵、ファームウェアは配布しません。公開の不具合報告には個人情報を添付しないでください。
 

@@ -30,7 +30,7 @@
     <td align="center"><a href="#compatibility"><strong>호환성</strong></a></td>
     <td align="center"><a href="#faq"><strong>FAQ</strong></a></td>
     <td align="center"><a href="../../TROUBLESHOOTING.md"><strong>도움말</strong></a></td>
-    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>로드맵</strong></a></td>
+    <td align="center"><a href="https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md"><strong>로드맵</strong></a></td>
   </tr>
 </table>
 
@@ -68,7 +68,7 @@ Switch 2는 별도 연구 브랜치에서 다루며 현재 PS5 버전에는 포�
 
 ## 커뮤니티 및 기여자
 
-[Complete English reference](../../README.md) · [Settings](../../SETTINGS.md) · [Accessibility](../../ACCESSIBILITY.md) · [Troubleshooting](../../TROUBLESHOOTING.md) · [Switch 2 research](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-ps5-compatibility) · [Roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/feat/graphics-network-achievements/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md) · [Original project credits](../../README.md#credits) · [GPL-3.0-or-later](../../LICENSE).
+[Complete English reference](../../README.md) · [Settings](../../SETTINGS.md) · [Accessibility](../../ACCESSIBILITY.md) · [Troubleshooting](../../TROUBLESHOOTING.md) · [Switch 2 research](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_NS1_NS2_UNIFIED.md) · [Roadmap](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/ROADMAP_ENCORE_COLLAB_2026-10-25.md) · [Original project credits](../../README.md#credits) · [GPL-3.0-or-later](../../LICENSE).
 
 이 프로젝트는 게임, 콘솔 키, 펌웨어를 제공하지 않습니다. 공개 오류 보고서에 개인정보를 올리지 마세요.
 

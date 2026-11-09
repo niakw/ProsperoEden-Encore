@@ -24,6 +24,8 @@ owner=start+method.split(start,1)[1].split(end,1)[0]
 assert "nvmap.CreateHandle(size, handle)" in owner
 assert "handle->Alloc(" in owner and "catch (const std::bad_alloc&)" in owner
 assert "nvmap_oom = true;" in owner
+assert "status = Nvidia::NvResult::InvalidState;" in owner
+assert owner.index("status = Nvidia::NvResult::InvalidState;") < owner.index("bool committed = false;")
 assert owner.index("catch (const std::bad_alloc&)") < owner.index("bool committed = false;")
 assert owner.index("nvmap.FreeHandle(id, false)") < owner.index("table.UnmapPageGroup(")
 assert "return nvmap_oom ? Kernel::ResultOutOfResource : Kernel::ResultInvalidState;" in owner

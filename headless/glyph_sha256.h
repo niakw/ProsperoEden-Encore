@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Minimal bounded SHA-256 for validating installed in-game graphic assets.
-// This does NOT authenticate the Nintendo original currently mounted by Eden.
+// This does NOT authenticate the guest-original artwork currently mounted by Eden.
 // Host-tested known vectors; a cryptographic signature of the catalogue is
 // a separate distribution/trust problem. Never execute on the frame hotpath.
 #pragma once

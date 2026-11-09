@@ -92,7 +92,7 @@ public:
     bool Open();
     bool Poll();
     bool TakeReturnToMenu() { return return_to_menu.exchange(false); }
-    // Touchpad click (not the Sony PS/Home button) owns the in-game overlay.
+    // Touchpad click (not the reserved console Home/System button) owns the in-game overlay.
     void EnableOverlay(bool enabled) {
         overlay_enabled.store(enabled, std::memory_order_release);
         if (!enabled) {
@@ -107,7 +107,7 @@ public:
     unsigned ConnectedPlayers() const { return connected_players.load(); }
     unsigned TakeConnectionChanges() { return connection_changes.exchange(0); }
     void Close();
-    // Global PlayStation UI map is set before opening the guest HID device.
+    // Global console controller UI map is set before opening the guest HID device.
     void SetMapping(const ButtonMapping& value) {
         if (slots[0].handle >= 0) return;
         mapping = ValidMapping(value) ? value : kDefaultMapping;
@@ -123,7 +123,7 @@ private:
         u64 last_motion_us = 0;
         // Long touch holds guest Minus; short click is reserved for Encore's overlay.
         bool touch_chord = false;  // this press was part of a shortcut
-        GuestSystemButtonRoute guest_home; // Touchpad+Options fallback; Sony PS reserved
+        GuestSystemButtonRoute guest_home; // Touchpad+Options fallback; system button reserved
         bool select_held = false;  // a long press: its mapped button stays down until release
         unsigned touch_polls = 0;  // polls the touchpad has been down
         unsigned select_pulse = 0; // legacy guest Minus tap only when quick menu is unavailable
@@ -153,7 +153,7 @@ private:
     std::atomic<unsigned> connection_changes = 0;
     unsigned polls_since_scan = 0;
     u64 polls = 0, samples_read = 0, usable_samples = 0, intercepted_samples = 0, circle_samples = 0, read_errors = 0;
-    u64 options_edges = 0, create_edges = 0; // physical Sony edges, Detailed only
+    u64 options_edges = 0, create_edges = 0; // physical controller edges, Detailed only
     u64 rumble_updates = 0, rumble_errors = 0;
     int rumble_last_error = 0;
     PadEdgeDiagnostics face_edges{};

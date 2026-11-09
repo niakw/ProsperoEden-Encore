@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
-// Pure validation of pinned PS5 Sony current-CPU + AMD CPUID 0x8000001E.
+// Pure validation of pinned console current-CPU query + AMD CPUID 0x8000001E.
 // This does NOT perform affinity syscalls or synthesize SMT pairs from CPU IDs.
 #include <array>
 #include <bit>

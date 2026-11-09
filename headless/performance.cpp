@@ -266,11 +266,11 @@ void CheckWorkerTopology() {
     // kern.sched.topology_spec is available on older FreeBSD. ULE exposed
     // kern.sched.ule.topology_spec while reworking scheduler sysctls in
     // January 2026; the original alias was later reintroduced upstream.
-    // Sony's fork may expose neither. Probe both READ-ONLY without creating
+    // The console kernel fork may expose neither. Probe both READ-ONLY without creating
     // an artificial SMT map if the scheduler hides sibling relationships.
     size_t topology_length = 0;
     int os_topology_errno = 0;
-    // A single errno for both probes hid which sysctl the Sony kernel
+    // A single errno for both probes hid which sysctl the console kernel
     // actually exports. Keep the historical fields and add per-OID errors.
     std::array<int, 2> oid_errno{};
     const char* os_topology_source = "none";
@@ -909,7 +909,7 @@ void ReportJitCodeState(const char* phase) {
 #endif
 }
 
-// A Sony region enumeration may cost up to 8192 synchronous kernel calls.
+// A console region enumeration may cost up to 8192 synchronous kernel calls.
 // Do not make every menu -> game -> menu cycle pay for developer diagnostics.
 // Explicit opt-in is checked once at title launch; never from a frame callback.
 static std::atomic<bool> direct_region_scan_enabled{false};
@@ -961,7 +961,7 @@ void ReportDirectMemoryState(const char* phase) {
     ::Common::SparseJitUsage(&jit_reserved, &jit_committed);
     // Native GPU/guest/CPU use the SAME kernel-exposed direct pool (12 GiB
     // observed on FW 13.60, not the full installed 16 GiB GDDR6). Report
-    // physical owners, not uncommitted virtual VA reservations. The Sony
+    // physical owners, not uncommitted virtual VA reservations. The console
     // system's own reservation must never be counted as an Encore heap.
     unsigned large_blocks = 0;
     const std::size_t heap_large = eden_heap_large_held ? eden_heap_large_held(&large_blocks) : 0;

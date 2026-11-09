@@ -1101,7 +1101,7 @@ int main(int argc, char** argv) {
 #endif
         Eden::Report("launch", Eden::BackendName(backend));
 #ifdef PS5_NATIVE
-        // The full diagnostic enumerates up to 8192 Sony regions at EACH
+        // The full diagnostic enumerates up to 8192 console memory regions at EACH
         // lifecycle checkpoint. Opt in once per title with this marker;
         // leaving it absent keeps the largest-free and owner accounting but
         // eliminates the slow, unused synchronous kernel walk.
@@ -1828,11 +1828,11 @@ int main(int argc, char** argv) {
             // encore-overrides-style visual in-game glyph rules. This ONLY
             // enables/disables verified ROMFS *graphic assets*, not pad actions.
             // Unknown/updated titles, missing manifests and Safe Launch keep
-            // original Nintendo artwork. Once per launch; no GPU hot-path scan.
+            // original in-game artwork. Once per launch; no GPU hot-path scan.
             const auto glyph_catalogue = Eden::GlyphOverrides::LoadCatalogue(
                 Eden::ConfigFile("encore-glyph-overrides.json"));
             // sys-con-like separation of physical pad, normalized guest HID,
-            // and the game's art: a PlayStation texture pack is valid only
+            // and the game's art: a console-controller glyph texture pack is valid only
             // for the actual fixed Cross=A input profile. Custom/physical-
             // Switch mapping can require different game-native artwork.
             // Do not reread controller preferences for unsupported titles.
@@ -2753,7 +2753,7 @@ int main(int argc, char** argv) {
 #ifdef PS5_NATIVE
         // This thread is the only owner of its TLS allocation cache. Guest
         // workers have already joined and returned THEIR private cached blocks.
-        // Drain solely the already-freed small blocks; do not unmap Sony mspaces.
+        // Drain solely the already-freed small blocks; do not unmap platform mspaces.
         const std::size_t tcache_drained = eden_heap_release_current_tcache();
         // Always release this thread's freed blocks. The following deep
         // ownership walks/heap reports are observations only, and must not

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Offline Nintendo Switch 2 title identity fallback for games whose extracted
+// Offline second-generation guest title identity fallback for games whose extracted
 // Control NCA/NACP and Nlib Switch 1 database are unavailable.
 // Names: https://www.switchbrew.org/wiki/Switch_2:Title_list/Games
 // Original box scans are resolved separately from the Switch 1 + 2 LaunchBox

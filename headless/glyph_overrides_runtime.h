@@ -2,7 +2,7 @@
 // In-game PlayStation button ART, not DualSense input mapping.
 // Declarative per-title catalogue, just like encore-overrides. Once at
 // launch, gate an installed RomFS graphic mod against the current update.
-// Unsupported/unverified versions retain Nintendo's native artwork.
+// Unsupported/unverified versions retain the game's native artwork.
 #pragma once
 
 #include <algorithm>

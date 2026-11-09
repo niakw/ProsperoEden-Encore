@@ -5,7 +5,7 @@
 
 namespace Eden::VulkanMemory {
 // Process-global GPU capacity estimate, reset when a new VkDevice is built.
-// Startup's first Sony free-direct-memory query may transiently fail and
+// Startup's first platform free-direct-memory query may transiently fail and
 // report zero. Latch the first later nonzero observation, not permanent zero.
 // Sampling is performed by the EXISTING throttled graphics_memory_free
 // callback; this helper issues no new kernel probes and allocates nothing.

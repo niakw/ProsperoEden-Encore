@@ -2,7 +2,7 @@
 #pragma once
 #include <cstdint>
 
-// DualSense PS/Home is reserved by Sony and not available in scePadRead.
+// The central console system button is reserved and unavailable through scePadRead.
 // Use Touchpad+Options as an explicit guest HOME fallback. A completed chord
 // latches suppression of both input buttons until BOTH have been released,
 // avoiding an unwanted guest Plus or Minus when one side releases first.

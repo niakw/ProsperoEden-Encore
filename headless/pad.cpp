@@ -437,9 +437,9 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             return_to_menu = true;
         if ((pressed & menu_chord) == menu_chord)
             mapped_buttons &= ~(kButtonTouchPad | kButtonL1);
-        // libScePad does not expose the physical Sony PS/Home button.
+        // libScePad does not expose the physical console system/Home button.
         // Touchpad + Options is a local guest HOME substitute, NEVER a
-        // Nintendo system menu shortcut. It suppresses guest Plus and Minus
+        // guest system menu shortcut. It suppresses guest Plus and Minus
         // until both underlying controls are released.
         const bool guest_home = slot.guest_home.Observe(
             (pressed & kButtonTouchPad) != 0,

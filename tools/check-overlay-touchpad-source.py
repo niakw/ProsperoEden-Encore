@@ -17,7 +17,7 @@ vulkan = read("headless/vulkan_window_adapt_r08.cpp")
 shader = read("headless/vulkan_hud.frag")
 graphics = read("headless/graphics.cpp")
 
-# Click the physical touchpad, never Sony PS/Home; legacy touchpad shortcuts
+# Click the physical touchpad, never the reserved console system button; legacy shortcuts
 # and OpenGL guest Minus remain unchanged.
 assert "overlay_enabled.load(std::memory_order_acquire)" in pad
 assert "overlay_open.store(opening, std::memory_order_release)" in pad

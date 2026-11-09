@@ -7,7 +7,7 @@
 namespace Eden::DirectPool {
 
 // These are DISJOINT physical backing owners tracked by Encore, NOT all GPU
-// and guest allocations in the Sony direct-memory pool. A 3-GiB reserved
+// and guest allocations in the platform direct-memory pool. A 3-GiB reserved
 // VIRTUAL heap range is not physical usage; only committed mspace roots count.
 // The kernel's directly addressable extent is authoritative, not the PS5's
 // 16-GiB installed GDDR6 capacity.

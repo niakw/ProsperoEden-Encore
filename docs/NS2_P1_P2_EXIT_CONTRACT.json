@@ -1,0 +1,255 @@
+{
+  "schema": 1,
+  "title": "Eden Encore P1/P2 finite host exit contract",
+  "scope": "Exactly H01-H07 and G01-G10; optional unsupported SDK forms are recorded as explicit exclusions, never silently accepted.",
+  "limitations": "A host exit does not establish PS5 framebuffer, game compatibility or Vulkan performance; those are P5.",
+  "mandatory_workflows": [
+    "Encore core fast gate",
+    "Encore source preflight (host only)",
+    "NS2 research host guards",
+    "NS2 standalone graphics SPIR-V qualification (main only)",
+    "Eden P0-P4 host qualification (sharded)",
+    "Verify pinned vendor submodule"
+  ],
+  "statuses": [
+    "open",
+    "host_verified",
+    "scope_excluded"
+  ],
+  "items": [
+    {
+      "id": "H01",
+      "title": "NSO/ExeFS/NPDM load and process handoff",
+      "owner": "vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp",
+      "validators": [
+        "tools/ns2/check_process_run_owner.py",
+        "tools/ns2/test_process_run_source.py"
+      ],
+      "positive": "Valid NPDM, content and executable produce a correctly bounded KProcess handoff.",
+      "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "H02",
+      "title": "49-bit GMMU and NVMap transactional mappings",
+      "owner": "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+      "validators": [
+        "tools/ns2/check_native_nvdrv_allocation_range_host.py",
+        "tools/ns2/check_gpu_worker_staged_ledger_host.py"
+      ],
+      "positive": "4K and sparse mappings publish only after committed VA and NVMap ownership.",
+      "negative": "OOM, bad alignment, stale FD and remap overlap roll back without pins or PTE leaks.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "H03",
+      "title": "TIPC 214/216 4K and 64K sparse contract",
+      "owner": "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp",
+      "validators": [
+        "tools/check-ns2-graphics-hle-host.py",
+        "tools/ns2/check_gpu_worker_staged_ledger_host.py"
+      ],
+      "positive": "Real 214 region and 216 remap preserve 4K/64K granularity from authenticated reservation.",
+      "negative": "Unknown page shift, partial 64K remap and wrong address-space owner are refused.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "H04",
+      "title": "VI2 graphics supervisor and display capabilities",
+      "owner": "vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
+      "validators": [
+        "tools/ns2/check_native_vi2_oom_host.py",
+        "tools/ns2/check_native_vi2_vsync_oom_host.py"
+      ],
+      "positive": "VI2 surface/handle and max-resolution response match live service state.",
+      "negative": "Invalid client, retired handles and OOM cannot create fake display or signal.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "H05",
+      "title": "Decoder EOS, images and fences",
+      "owner": "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp",
+      "validators": [
+        "tools/ns2/check_native_video_decoder_ipc_host.py",
+        "tools/ns2/check_native_video_eos_host.py"
+      ],
+      "positive": "Valid stream, frame ownership and EOS advance output only after actual decoded pixels.",
+      "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "H06",
+      "title": "GPU IPC/TIPC command and handle ABI",
+      "owner": "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp",
+      "validators": [
+        "tools/ns2/check_gpu_worker_source_syntax_host.py",
+        "tools/ns2/check_gpu_worker_staged_ledger_host.py"
+      ],
+      "positive": "Required GPU session and worker commands produce exact response words, rights and owned handles.",
+      "negative": "Unknown commands, stale FD and unauthorized process cannot produce success or mutate mappings.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "H07",
+      "title": "NS1 Maxwell/shared-core regression safety",
+      "owner": "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp",
+      "validators": [
+        "tools/ns2/check_native_dma_unbound_subchannel_host.py",
+        "tools/ns2/check_shared_a64_ldapr_host.py"
+      ],
+      "positive": "NS1 Maxwell DMA, kernel/JIT and shader paths match their preserved successful behavior.",
+      "negative": "NS2 native fail-closed paths do not throw or alter semantics on NS1 channels.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G01",
+      "title": "SPIR-V texture-buffer descriptor arrays",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+      "validators": [
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      ],
+      "positive": "Descriptor counts and dynamic indices generate valid SPIR-V and select the intended guest texture.",
+      "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G02",
+      "title": "Transform-feedback outputs",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+      "validators": [
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      ],
+      "positive": "Required transform-feedback output partitions produce the right stage-specific SPIR-V.",
+      "negative": "Invalid partitions and write masks do not write beyond the declared stream.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G03",
+      "title": "Tessellation patch attributes and stages",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+      "validators": [
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      ],
+      "positive": "Required patch reads and writes emit validated SPIR-V for supported tess stages.",
+      "negative": "Non-generic or undeclared patch variables outside stage are explicitly rejected.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G04",
+      "title": "QMD3 direct and indirect CBUF indexing",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h",
+      "validators": [
+        "tools/ns2/check_native_qmd_direct_cbuf_host.py",
+        "tools/ns2/check_native_spirv_cbuf_span_host.py"
+      ],
+      "positive": "Guest physical banks and permitted dynamic offsets bind the exact original CBUF bytes.",
+      "negative": "Divergent bank, bad extent and unbound CBUF are rejected before shader dispatch.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G05",
+      "title": "Ampere atomics and QMD SSBO range",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h",
+      "validators": [
+        "tools/ns2/check_native_qmd_atomic_span_host.py"
+      ],
+      "positive": "Atomic return values and writes match validated SSBO backing spans.",
+      "negative": "Unbound, aliased or out-of-range global atomic access is rejected.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G06",
+      "title": "SPIR-V global CAS/atomic lowering",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_atomic_span.h",
+      "validators": [
+        "tools/ns2/check_native_qmd_atomic_span_host.py",
+        "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      ],
+      "positive": "U32 CAS and global memory operations generate spec-valid SPIR-V with correct atomic results.",
+      "negative": "Unsupported atomic operands or address space do not silently lower.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G07",
+      "title": "QMD3 TIC/TSC SSBO to real Vulkan Compute",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h",
+      "validators": [
+        "tools/ns2/check_native_compute_write_commit_host.py",
+        "tools/ns2/check_native_image_physical_backing_host.py"
+      ],
+      "positive": "Authenticated descriptors, SSBO slots and images reach actual vkCmdDispatch with fence-safe writes.",
+      "negative": "Invalid backing, image kind or busy resources cannot dispatch or commit writes.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G08",
+      "title": "Ampere ISA and CFG lowering",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h",
+      "validators": [
+        "tools/ns2/check_ampere_scalar_alu_sources_host.py"
+      ],
+      "positive": "Required reviewed instruction patterns preserve guest register and branch semantics.",
+      "negative": "Unknown ISA forms fail closed with instruction identity, never accepted as a no-op.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G09",
+      "title": "Task/Mesh pipeline link and geometry",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h",
+      "validators": [
+        "tools/ns2/check_task_mesh_vulkan_tus_host.py",
+        "tools/ns2/check_native_graphics_cbuf_bounds_host.py"
+      ],
+      "positive": "Required Task+Mesh and Mesh-only stages create valid SPIR-V and a linkable Vulkan pipeline.",
+      "negative": "Invalid stage combinations, Geometry header or oversized CBUF are rejected.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    },
+    {
+      "id": "G10",
+      "title": "GPFIFO fences, semaphore park/replay and invalid methods",
+      "owner": "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp",
+      "validators": [
+        "tools/ns2/check_native_ampere_semaphore_host.py",
+        "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",
+        "tools/ns2/check_native_dma_unbound_subchannel_host.py"
+      ],
+      "positive": "True semaphore acquire/resume and multi-channel ordering publish guest completion only after execution.",
+      "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
+      "status": "open",
+      "evidence": {},
+      "blocker": "Await a positive and negative real-owner/real-SPIR-V witness on a single qualified engine/vendor pair."
+    }
+  ]
+}

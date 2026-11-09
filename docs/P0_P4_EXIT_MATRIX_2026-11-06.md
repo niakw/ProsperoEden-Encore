@@ -29,3 +29,17 @@
 ### Ce que signifie « terminé »
 
 Une CI verte **ne ferme pas automatiquement** un critère de fonctionnalité dont le code manque encore. À l'inverse, une fonction source/hôte complète **ne doit pas attendre un essai console**. Ne pas annoncer de pourcentage d'avancement fictif ou de délai à partir du seul nombre de tests réussis. Les descriptions anciennes de #15 et de la roadmap sont un journal historique : les lignes « P5 verrouille le build » ou les neuf flags expérimentaux OFF sont obsolètes lorsqu'elles contredisent les sources intégrées récentes.
+
+
+## Contrat de clôture borné P1/P2 — 9 novembre 2026
+
+La [matrice machine à 17 contrats](NS2_P1_P2_EXIT_CONTRACT.json) fige **H01–H07** et **G01–G10**. Elle évite de transformer chaque refus d'opcode ou chaque titre inédit en une nouvelle condition de sortie. Chaque contrat décrit le propriétaire du code, une admission positive requise, un rejet négatif requis et des témoins hôte **déjà appelés dans la CI maintenue**. Ce n'est pas un pourcentage de compatibilité des jeux.
+
+Le validateur [`check_p1_p2_exit_gate.py`](../tools/ns2/check_p1_p2_exit_gate.py) fournit deux décisions **distinctes** :
+
+- `python3 tools/ns2/check_p1_p2_exit_gate.py --json` : **audit de structure** appelé depuis la qualification hôte P4. Un résultat vert signifie que les 17 contrats, propriétaires et chemins de test sont traçables, **pas** que les fonctions sont terminées. Il indique explicitement le nombre de contrats ouverts.
+- `python3 tools/ns2/check_p1_p2_exit_gate.py --enforce` : **décision de sortie bloquante**. Refuse tout contrat ouvert ; exige pour chaque contrat vérifié une preuve **positive et négative** réellement exécutée (pas une simple syntaxe), référencée par run GitHub ; contrôle le gitlink vendor, l'arbre propre et les six workflows obligatoires **verts au même SHA**. Les demandes hors périmètre nécessitent une justification SDK/ABI et un témoin de refus réel. Cette commande n'est **pas** appelée comme simple test vert dans la CI normale.
+
+Le dénominateur ne change pas après chaque découverte : **17 contrats fixes**. Tout écart doit être classé dans l'un d'eux avec un comportement attendu/une preuve, ou être reporté explicitement en P5 si son observation exige le matériel, sans prétendre qu'un problème confirmé de source a disparu. L'admission d'une instruction inconnue par un faux succès est toujours éliminatoire. Les tests jeu, le framebuffer et les performances PS5 restent P5.
+
+**État initial du contrat : 17 ouverts, aucun accusé de clôture signé.** Cela ne remet pas en cause les validations fonctionnelles précédentes (sparse H03, refus G10, P4 hôte), mais refuse d'en déduire sans examen une clôture de toute l'ABI. Le dernier résultat de CI et les preuves d'exécution rempliront les champs de clôture, sans fixer un objectif artificiel en heures ou en nombre de correctifs.

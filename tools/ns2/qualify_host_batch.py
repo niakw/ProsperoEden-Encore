@@ -103,6 +103,7 @@ TESTS = {
     "active_sources": "tools/check-active-source-inventory.py",
     "f07_review": "tools/check-eden-optimization-coverage.py",
     "repo_hygiene": "tools/ci/check-repo-hygiene.py",
+    "p1_p2_finite_exit_audit": "tools/ns2/check_p1_p2_exit_gate.py",
     "python_syntax": "tools/check-python-source-syntax.py",
 }
 SMOKE = ("source_owner", "release_profile", "shared_ampere",

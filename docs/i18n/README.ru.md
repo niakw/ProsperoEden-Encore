@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Настройки:** [Настройки](SETTINGS.ru-RU.md) · [Решение проблем](TROUBLESHOOTING.ru-RU.md) · [Поддержка](SUPPORT.ru-RU.md) · [Доступность](ACCESSIBILITY.ru-RU.md) · [Languages](../../LANGUAGES.md)
+>
+> Последняя действительно собранная публичная версия PS5 датирована 15 октября 2026 года; публикация 30 октября была её копией. Новый черновик предварительного выпуска не содержит бинарных файлов или подтверждённой совместимости игр второго поколения на консоли.
+
 <table width="100%">
   <tr><td align="center">
     <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="../../README.md">English</a> &nbsp; · &nbsp; <a href="../../README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>

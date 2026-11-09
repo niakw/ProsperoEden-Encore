@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **การตั้งค่า:** [การตั้งค่า](SETTINGS.th-TH.md) · [แก้ไขปัญหา](TROUBLESHOOTING.th-TH.md) · [การสนับสนุน](SUPPORT.th-TH.md) · [การช่วยการเข้าถึง](ACCESSIBILITY.th-TH.md) · [Languages](../../LANGUAGES.md)
+>
+> แพ็กเกจ PS5 สาธารณะที่คอมไพล์จริงล่าสุดคือวันที่ 15 ตุลาคม 2026 การเผยแพร่วันที่ 30 ตุลาคมเป็นเพียงสำเนา ฉบับร่างพรีรีลีสใหม่ไม่มีไฟล์ไบนารีหรือเกมรุ่นที่สองที่ยืนยันว่าเล่นบนคอนโซลได้
+
 <table width="100%">
   <tr><td align="center">
     <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="../../README.md">English</a> &nbsp; · &nbsp; <a href="../../README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <a href="README.zh-Hant.md">繁體中文</a> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>

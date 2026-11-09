@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **Configurações:** [Configurações](SETTINGS.pt-BR.md) · [Solução de problemas](TROUBLESHOOTING.pt-BR.md) · [Suporte](SUPPORT.pt-BR.md) · [Acessibilidade](ACCESSIBILITY.pt-BR.md) · [Languages](../../LANGUAGES.md)
+>
+> O último pacote PS5 público realmente compilado é de 15 de outubro de 2026; a publicação de 30 de outubro foi uma cópia. O novo rascunho de pré-lançamento não possui binários nem jogos de segunda geração validados no console.
+
 # Prospero.Eden Encore — Migração do projeto original (Português (Brasil))
 
 [← Português (Brasil)](README.pt-BR.md) · [Instalação completa em inglês](../../INSTALL.md) · [Todos os idiomas](../../LANGUAGES.md)

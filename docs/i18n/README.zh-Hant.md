@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **設定:** [設定](SETTINGS.zh-Hant.md) · [問題排除](TROUBLESHOOTING.zh-Hant.md) · [支援](SUPPORT.zh-Hant.md) · [無障礙](ACCESSIBILITY.zh-Hant.md) · [Languages](../../LANGUAGES.md)
+>
+> 最後一份真正完成編譯並公開的 PS5 安裝包日期為 2026 年 10 月 15 日；10 月 30 日發布的是相同內容的副本。新的預發布草稿沒有執行檔，也不代表第二代遊戲已通過主機驗證。
+
 <table width="100%">
   <tr><td align="center">
     <strong>🌐 LANGUAGES</strong> &nbsp; · &nbsp; <a href="../../README.md">English</a> &nbsp; · &nbsp; <a href="../../README.md">English UK</a> &nbsp; · &nbsp; <a href="README.zh-Hans.md">简体中文</a> &nbsp; · &nbsp; <strong>繁體中文</strong> &nbsp; · &nbsp; <a href="README.es-419.md">Español LatAm</a> &nbsp; · &nbsp; <a href="README.es.md">Español ES</a> &nbsp; · &nbsp; <a href="README.fr.md">Français</a> &nbsp; · &nbsp; <a href="README.fr-CA.md">Français CA</a> &nbsp; · &nbsp; <a href="README.pt-BR.md">Português BR</a><br>

@@ -1,3 +1,8 @@
+<!-- Encore user guide crosslinks 2026-11-09 -->
+> **设置:** [设置](SETTINGS.zh-Hans.md) · [问题排查](TROUBLESHOOTING.zh-Hans.md) · [支持](SUPPORT.zh-Hans.md) · [无障碍](ACCESSIBILITY.zh-Hans.md) · [Languages](../../LANGUAGES.md)
+>
+> 上一份真正编译并公开发布的 PS5 安装包日期为 2026 年 10 月 15 日；10 月 30 日发布的是相同文件的副本。新的预发布草稿不含可执行文件，也不表示第二代游戏已在主机上验证。
+
 # Prospero.Eden Encore — 从原版迁移或更新 (简体中文)
 
 [← 简体中文](README.zh-Hans.md) · [英语完整安装说明](../../INSTALL.md) · [所有语言](../../LANGUAGES.md)

@@ -725,6 +725,8 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
         Shader::Backend::Bindings bindings{};
         std::vector<u32> words;
         try {
+            // Real native compiler scope is thread-local; NS1 remains intact.
+            NativeSpirvCbufBoundsScope native_bounds;
             words = Shader::Backend::SPIRV::EmitSPIRV(
                 profile, Shader::RuntimeInfo{}, program, bindings);
         } catch (const std::exception& ex) {
@@ -817,6 +819,10 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     // at byte offset 12; index is NOT a constant IR expression.
     block.AppendNewInst(Opcode::LoadStorage32,
                         {Value{u32{0}}, Value{u32{12}}});
+    const Value source_descriptor_index{&block.back()};
+    // The guest shader itself masks the SSBO-selected descriptor to [0,1].
+    block.AppendNewInst(Opcode::BitwiseAnd32,
+                        {source_descriptor_index, Value{u32{1}}});
     const Value runtime_descriptor_index{&block.back()};
     fetch_and_commit(runtime_descriptor_index, 8, 4);
     // The real 2D sampled-image path reads TIC/TSC as a combined
@@ -847,6 +853,7 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     // this is an allowed-path fixture, not a fallback binding.
     profile.support_uniform_texel_buffer_array_nonuniform_indexing = true;
     Shader::Backend::Bindings bindings{};
+    NativeSpirvCbufBoundsScope native_bounds;
     const auto words = Shader::Backend::SPIRV::EmitSPIRV(
         profile, Shader::RuntimeInfo{}, program, bindings);
     Require(words.size() > 5 && words[0] == 0x07230203U,
@@ -872,6 +879,42 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     Require(bool(file), "cannot write G07 real SPIR-V output");
     std::printf("G07_REAL_NATIVE_TEXEL_SSBO_SPIRV_EMITTED words=%zu reads=%u stores=%u\n",
                 words.size(), image_fetches, storage_writes);
+    // Actual backend negative: an unbounded guest SSBO word must not be
+    // accepted as a Vulkan texture descriptor, even if two views exist.
+    Shader::ObjectPool<Shader::IR::Inst> unsafe_pool{8};
+    Shader::IR::Block unsafe_block{unsafe_pool};
+    Shader::IR::Program unsafe_program{};
+    unsafe_program.stage = Shader::Stage::Compute;
+    unsafe_program.workgroup_size = {1, 1, 1};
+    unsafe_program.blocks.push_back(&unsafe_block);
+    auto& unsafe_node = unsafe_program.syntax_list.emplace_back();
+    unsafe_node.type = Shader::IR::AbstractSyntaxNode::Type::Block;
+    unsafe_node.data.block = &unsafe_block;
+    unsafe_program.syntax_list.emplace_back().type =
+        Shader::IR::AbstractSyntaxNode::Type::Return;
+    Shader::TextureBufferDescriptor unbounded_texel{};
+    unbounded_texel.count = 2;
+    unsafe_program.info.texture_buffer_descriptors.push_back(unbounded_texel);
+    unsafe_program.info.storage_buffers_descriptors.push_back({0, 0, 1, false});
+    unsafe_program.info.used_storage_buffer_types = Shader::IR::Type::U32;
+    unsafe_block.AppendNewInst(Opcode::LoadStorage32,
+                               {Value{u32{0}}, Value{u32{12}}});
+    const Value unsafe_index{&unsafe_block.back()};
+    unsafe_block.AppendNewInst(Opcode::ImageFetch,
+        {unsafe_index, Value{u32{4}}, Value{}, Value{}, Value{}});
+    unsafe_block.back().SetFlags(image);
+    bool real_unbounded_refused = false;
+    try {
+        (void)Shader::Backend::SPIRV::EmitSPIRV(
+            profile, Shader::RuntimeInfo{}, unsafe_program, bindings);
+    } catch (const std::exception& e) {
+        real_unbounded_refused = std::string_view(e.what()).find(
+            "Native dynamic image descriptor index unbounded")
+                != std::string_view::npos;
+    }
+    Require(real_unbounded_refused,
+        "G01 actual unbounded guest descriptor index was not rejected");
+    std::puts("G01_REAL_NATIVE_DYNAMIC_DESCRIPTOR_OOB_FAIL_CLOSED_PASS");
 }
 
 // G02: the ACTUAL SPIR-V backend must emit a fully split transform-feedback

@@ -16,6 +16,27 @@ include_directories(BEFORE "${CMAKE_BINARY_DIR}/headless/sparse")
 # for every one.
 if(PS5_NATIVE)
     get_filename_component(EDEN_PORT_ROOT "${EDEN_PORT_DIR}/.." ABSOLUTE)
+    # CMake forbids add_subdirectory() in cmake_language(DEFER) callbacks.
+    # Register the pinned WebP target during the real project(yuzu) configure
+    # phase; the deferred Encore frontend may only link the existing target.
+    set(EDEN_WEBP_ROOT "${EDEN_PORT_ROOT}/vendor/sources/libwebp")
+    if(NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")
+        message(FATAL_ERROR "Pinned libwebp sources absent from sole vendor submodule")
+    endif()
+    set(WEBP_ENABLE_SIMD OFF CACHE BOOL "" FORCE)
+    set(WEBP_USE_THREAD OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_CWEBP OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_DWEBP OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_GIF2WEBP OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_VWEBP OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_LIBWEBPMUX OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)
+    set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+    set(WEBP_LINK_STATIC ON CACHE BOOL "" FORCE)
+    add_subdirectory("${EDEN_WEBP_ROOT}" "${CMAKE_BINARY_DIR}/headless/libwebp" EXCLUDE_FROM_ALL)
     add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}/="
                         "-ffile-prefix-map=${CMAKE_BINARY_DIR}/=build/"
                         "-ffile-prefix-map=${EDEN_PORT_ROOT}/=")

@@ -19,6 +19,7 @@ VENDOR_HEADER = Path("encore-active/ns2-runtime/ampere/shader_recompiler/fronten
 VULKAN_PIPE = Path("encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp")
 VULKAN_RASTER = Path("encore-active/eden-vulkan/vulkan_rasterizer.cpp")
 SHARED_BUFFER = Path("encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h")
+GPU_MEMORY_MANAGER = Path("encore-active/eden-core/src/video_core/memory_manager.cpp")
 EXPECTED_VENDOR = "22b69d6053db41b74edac2633c012f925b84f69e"
 
 def require(test: bool, message: str) -> None:
@@ -197,6 +198,18 @@ def main() -> None:
     pipe = (vendor / VULKAN_PIPE).read_text(encoding="utf-8")
     raster = (vendor / VULKAN_RASTER).read_text(encoding="utf-8")
     shared = (vendor / SHARED_BUFFER).read_text(encoding="utf-8")
+    memory_impl = (vendor / GPU_MEMORY_MANAGER).read_text(encoding="utf-8")
+    map_lookup = function_body(memory_impl, "MemoryManager::GpuToCpuAddress")
+    native_owner = function_body(pipe, "ComputePipeline::ConfigureNative")
+    require("GetEntry(gpu_addr, true)" in map_lookup and
+            "GetEntry(gpu_addr, false)" in map_lookup,
+            "Native mapping point lookup implementation changed")
+    # This is a narrowly scoped source observation, not a proof about external locks.
+    require("shared_lock" not in map_lookup and "scoped_lock" not in map_lookup and
+            "shared_lock" not in native_owner and "gpu_page_table_revision" not in native_owner,
+            "Native mapping read-lease/revision policy changed; re-audit")
+    require("std::atomic<u64> gpu_page_table_revision{1};" in memory_impl,
+            "Global page-table revision owner changed")
     legacy = function_body(pipe, "ComputePipeline::Configure")
     native = function_body(pipe, "ComputePipeline::ConfigureNative")
     require("BindComputeStorageBuffer" in legacy, "Legacy binding owner changed")
@@ -238,6 +251,7 @@ def main() -> None:
         "vendor_path": str(vendor), "reviewed_vendor_pin": EXPECTED_VENDOR,
         "native_uses_legacy_buffer_binding": False,
         "unknown_native_lengths_currently_rejected": True,
+        "no_explicit_gmmu_read_lease_in_examined_native_owners": True,
         "native_descriptor_tag_zero_length_nonzero_gate": True,
         "compilers": reports,
     }, indent=2))

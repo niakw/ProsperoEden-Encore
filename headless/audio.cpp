@@ -19,8 +19,10 @@ using namespace ps5::native_audio;
 // This owner only serves StreamType::In; AudioOut remains unchanged.
 class SilentAudioInputStream final : public SinkStream {
 public:
-    explicit SilentAudioInputStream(Core::System& system)
-        : SinkStream{system, StreamType::In} {}
+    explicit SilentAudioInputStream(Core::System& system, u32 channels)
+        : SinkStream{system, StreamType::In} {
+        SetSystemChannels(channels);
+    }
 
     void AppendBuffer(SinkBuffer&, std::span<s16>) override {}
 
@@ -136,7 +138,7 @@ SinkStream* AudioSink::AcquireSinkStream(Core::System& system, u32 channels,
     system_channels = channels;
     // Microphone capture is outside this output adapter.
     SinkStreamPtr stream = type == StreamType::In ?
-        SinkStreamPtr{std::make_unique<SilentAudioInputStream>(system)} :
+        SinkStreamPtr{std::make_unique<SilentAudioInputStream>(system, channels)} :
         SinkStreamPtr{std::make_unique<AudioStream>(system, channels, name, type)};
     stream->SetDeviceVolume(device_volume);
     stream->SetSystemVolume(system_volume);

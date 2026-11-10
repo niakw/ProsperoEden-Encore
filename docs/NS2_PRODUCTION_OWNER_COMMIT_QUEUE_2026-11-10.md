@@ -1,4 +1,26 @@
-# NS2 production-owner commit queue — R4 started, R2/R3 scoped
+# NS2 production-owner commit queue — implementation and qualification
+
+## LIVE CHECKPOINT — R3 wired in isolated Encore branch; R2 exact header compiled
+
+| Item | Implementation / proof | Unclosed owner files |
+| --- | --- | ---: |
+| **R4** | [Vendor PR #36](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/36) source reconciled with live native pin parity | 0 additional known; actual native compile + GPU/NS1 tests pending |
+| **R3** | [Vendor PR #37](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/37) decoder source plus separate Encore branch [`research/ns2-r3-gob16-cmake-selection-20261110`](https://github.com/niakw/ProsperoEden-Encore/tree/research/ns2-r3-gob16-cmake-selection-20261110) containing CMake selection + host gate | **0** CMake integration files left to prepare; real decoder compile/NS1 parity pending |
+| **R2** | [Vendor PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38) helper compiled from **exact GitHub bytes** (7578 chars/FNV32 `3110636912`) on Clang17/GCC14; [104-check host fixture](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/research/ns2-r2-verified-upload-batching-20261110/encore-active/eden-vulkan/tests/test_ns2_verified_upload_batch.cpp) passes 6 compiler/optimization ASan+UBSan runs, 624 checks | **At least 2:** buffer runtime + Vulkan scheduler, possibly additional allocation owner/provenance files |
+
+**COUNT: 3/3 tracks have source commits, 3/3 tracks still need true runtime qualification, and at least 2 R2 integration owner files remain.** Test files are counted separately from integration files.
+
+### R3 CMake host evidence
+
+Encore isolated CMake commit `eb864b61` selects the exact maintained `decoders.cpp` only if `EDEN_RESEARCH_NS2_GOB16=ON`, native PS5 Vulkan, source exists, original pinned TU remains located and the candidate is not already present. OFF is the default. A **7-case mini CMake target** using the exact GitHub CMake block (1369 characters, FNV32 `2313840989`) passes: OFF, missing decoder, wrong platform, no Vulkan, valid selection, changed original, and duplicate decoder. Reproducible source test committed as [`tools/ns2/check_gob16_cmake_selection_host.py`](https://github.com/niakw/ProsperoEden-Encore/blob/research/ns2-r3-gob16-cmake-selection-20261110/tools/ns2/check_gob16_cmake_selection_host.py), local bytes = 4431 characters, FNV32 `1053993644`. **Not a full Encore CMake configure with vendor #37 pinned; no PS5/native build.**
+
+R3 selection branch intentionally has no PR yet because PRs changing `headless/**` trigger the expensive CodeQL pull-request analysis. No vendor gitlink or main changes were made. To qualify actual decoder build, use a temporary worktree with vendor #37 pinned, only after owner review; do not touch the running P5 build.
+
+### R2 source-owner limitation
+
+The existing `BufferCacheRuntime::CopyBuffer(VkBuffer,VkBuffer,std::span<BufferCopy>,...)` accepts raw Vulkan handles and has no authenticated backing allocation ID / buffer size / native queue generation at that API boundary. The standalone R2 helper correctly rejects missing provenance; **do not wire it by manufacturing IDs from a handle or GPU address**. R2 remaining files may increase when the true allocation owner is identified. Keep upload barrier, `RecordWithUploadBuffer`, renderpass rollover, tick submission, CPU/GPU alias and NS1 ordering unchanged until an actual-source test can prove the batch-safe scheduling contract.
+
+---
 
 ## LIVE UPDATE — R2/R3/R4 source branches (supersedes historical entries below)
 

@@ -1,0 +1,59 @@
+name: A/B R23 complete Eden commit-file audit (read-only)
+
+on:
+  pull_request:
+    paths:
+      - "docs/audits/r23/**"
+      - "docs/audits/R23_EDEN_ALL_155_COMMITS_2026-11-10.json"
+      - "tools/audit/verify-r23-all-155-commit-files.py"
+      - ".github/workflows/audit-r23-all-155-files.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ab-r23-file-receipts-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-155:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact isolated PR head without vendor or native build
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Recalculate all 155 cross-file SHA and pagination receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/audit/verify-r23-all-155-commit-files.py --self-test
+          python3 -B tools/audit/verify-r23-all-155-commit-files.py > r23-all-155-verdict.json
+          python3 -B - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path("r23-all-155-verdict.json").read_text())
+          assert d["sha_title_file_receipts_verified"] == 155
+          assert d["per_commit_file_changes"] == 2376
+          assert d["runtime_or_shared_path_candidates_semantic_review_pending"] == 123
+          assert not d["semantic_parity_complete"]
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("## R23 all 155 Eden changed-file lists verified\n")
+              f.write("0 missing commit files and 0 GitHub 300-file caps.\n")
+              f.write("123 runtime-path candidates require semantic/source-compiled parity.\n")
+              f.write("**No native build, tests of emulator semantics, or PS5 device proof.**\n")
+          PY
+
+      - name: Upload proof manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r23-eden-155-file-register-receipt
+          path: r23-all-155-verdict.json
+          if-no-files-found: error
+          retention-days: 30

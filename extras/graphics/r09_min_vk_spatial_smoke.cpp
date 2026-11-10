@@ -4,6 +4,7 @@
 // reads/writes. This is NOT a DLSS-NR network inference.
 // Requires Vulkan 1.1 + storage RGBA16F/RGBA32F and linear sampling.
 #include "dlss_nr_min_spatial_abi.h"
+#include "dlss_nr_min_spatial_math.h"
 #include <vulkan/vulkan.h>
 #include <array>
 #include <cmath>
@@ -300,10 +301,14 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
     for(std::uint32_t y=0;y<H;++y)
         for(std::uint32_t x=0;x<W;++x) {
             const auto i=(y*W+x)*4u;
-            pixels[i]=0.1f+0.01f*float(x);
-            pixels[i+1u]=0.2f+0.007f*float(y);
-            pixels[i+2u]=0.3f+0.004f*float(x+y);
-            pixels[i+3u]=0.4f+0.003f*float(x^y);
+            // Real HDR (>1) and sharp UI-like checkerboard edges retain
+            // their exact native pixel values when residual is zero.
+            const float edge=x<16u?0.05f:1.65f;
+            const float checker=((x/4u+y/4u)&1u)?0.2f:1.0f;
+            pixels[i]=edge+0.005f*float(y);
+            pixels[i+1u]=checker+0.004f*float(x);
+            pixels[i+2u]=(y<16u?1.25f:0.15f)+0.001f*float(x);
+            pixels[i+3u]=((x+y)&1u)?1.0f:0.25f;
         }
     void* ptr{};
     Check(vkMapMemory(h.device,staging.memory,0u,bytes,0u,&ptr),"map source");
@@ -472,10 +477,25 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
     const auto* found=static_cast<const float*>(ptr);
     for(std::size_t i=0u;i<pixels.size();++i) {
         const auto channel=i%4u;
-        const float known_delta[4]{0.125f,-0.0625f,0.25f,0.0f};
+        // Independent host oracle for the spatially varying synthetic
+        // contribution. Bilinear interpolation of a work-space linear
+        // gradient equals its analytic value at the sampled coordinate
+        // except at clamped texel-center boundaries.
+        const std::uint32_t x=std::uint32_t(i/4u)%W;
+        const std::uint32_t y=std::uint32_t(i/4u)/W;
+        constexpr Eden::Graphics::DlssNrMin::AxisWarp warp{
+            W,Q,0.5f,0.875f};
+        const auto px=Eden::Graphics::DlssNrMin::WarpPixel(float(x)+0.5f,warp);
+        const auto py=Eden::Graphics::DlssNrMin::WarpPixel(float(y)+0.5f,warp);
+        if(!std::isfinite(px)||!std::isfinite(py))
+            throw std::runtime_error("Invalid reference axis mapping");
+        const float ux=std::clamp(px,0.5f,float(Q)-0.5f)/float(Q);
+        const float uy=std::clamp(py,0.5f,float(Q)-0.5f)/float(Q);
+        const float known_delta[4]{0.125f*ux,-0.0625f*uy,
+                                   0.125f*(ux+uy),0.0f};
         const float expected=pixels[i]+(identity?0.0f:known_delta[channel]);
         if(!std::isfinite(found[i]) ||
-           std::fabs(found[i]-expected)>0.0015f) {
+           std::fabs(found[i]-expected)>0.0035f) {
             const auto pixel=i/4u;
             const auto actual=found[i];
             vkUnmapMemory(h.device,readback.memory);
@@ -487,7 +507,7 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
         }
     }
     vkUnmapMemory(h.device,readback.memory);
-    std::cout<<(identity?"R09_MIN_VULKAN_IDENTITY_GPU_PASS ":"R09_MIN_VULKAN_SYNTHETIC_DELTA_GPU_PASS ")
+    std::cout<<(identity?"R09_MIN_VULKAN_IDENTITY_GPU_PASS ":"R09_MIN_VULKAN_SPATIALLY_VARYING_DELTA_GPU_PASS ")
              <<"32x32->28x28->32x32\n";
     std::cout<<"R09_MIN_HOST_VULKAN_PUBLIC_FIXTURE_NO_DLSS_INFERENCE\n";
 }

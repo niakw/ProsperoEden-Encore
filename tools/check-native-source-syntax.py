@@ -50,6 +50,10 @@ NATIVE_GRAPHICS_TARGETS = (
     # The optical-flow wrapper must be checked with the *PS5* libc++:
     # unique_ptr's default constructor/destructor need the complete engine.
     "headless/fsr3_optical_session.cpp",
+    # These graph owners must not disappear when CMake commits video_sources.
+    "vendor/sources/ps5-fsr3-optical-flow/src/ps5_framegen.cpp",
+    "headless/mihawk_native_session.cpp",
+    "headless/lossless_dll_r08.cpp",
 )
 PINNED_CACHE_TARGETS = (
     "video_core/host1x/gpu_device_memory_manager.cpp",

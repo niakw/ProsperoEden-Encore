@@ -227,3 +227,43 @@ finite-assertion calls; each scenario exercises many byte offsets.
 **Vendor checker remains SKIP** without the full pinned checkout.
 No native PS5 code, Vulkan allocator, scheduler, source pin or build changed.
 
+
+
+## Update — ninth suite: Lichii Fermi2D 3D volume-slice admission
+
+Added [`test_volume_slice_admission.cpp`](test_volume_slice_admission.cpp),
+**7,036 characters, FNV-1a 32-bit `1454960507`**, matching the exact
+locally compiled file. Source behavior reviewed from the upstream
+`TextureCache::CopyVolumeSlice` owner at Lichii nx2
+`879b616b1b377bfd085bf20f440b895cf4b83ab8`; actual engine
+types were replaced with small synthetic `Surface`, `CachedImage`,
+`Copy` and `Slice` structures. **This is a transcribed decision
+model**, not the original fully compiled Vulkan texture-cache method.
+
+**50/50 assertions pass on each of Clang 17 and GCC 14 with
+ASan/UBSan at `-O0`, `-O1`, `-O2` (six clean binaries).**
+Cases cover source/destination cached volume selection and depth,
+unmapped/undersized/malformed metadata, 2D/Pitch fallback, partial
+copy coordinates, mismatched format/dimensions, bad mip, cached image
+identity and explicit operation/filter negative admission.
+`CopyVolumeSlice` upstream checks neither `operation` nor `filter`,
+so a synthetic whole-volume `Blend`/`ROP`/`Bilinear` request is
+admitted; the stricter *proposed* preflight rejects it. Real production
+race/guest reachability was not tested.
+
+Local published runner `run_host_checks.sh` now has **nine host suites**
+and passed all nine with each compiler at `-O1`; `50` finite
+R4 assertions are added to the previous `181`, totaling **231 finite
+checks per compiler** alongside the **separate** 1,536 GOB scenarios.
+The two compilers at `-O1` therefore execute 462 finite checks and
+3,072 GOB scenarios, not 462 PS5 checks.
+
+A complete nine-suite × three-optimization matrix was attempted:
+**33 binary executions passed before the single batch timed out**
+at the expensive GCC `-O0` GOB oracle. This is a **timeout, not a
+passing complete 54-binary matrix**. The new volume-slice suite
+independently passed all six compiler/optimization combinations,
+and prior R2/R3 separate O0/O2 results remain recorded above.
+
+The pinned vendor source extractor still reports `SKIP`, no
+PS5 native build/CI tests executed, and no production files changed.

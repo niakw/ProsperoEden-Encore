@@ -171,3 +171,23 @@ The updated offline runner has **nine research suites**:
 compiler; the 6-case compiler/optimization combinations for this
 R4 suite passed. The end-to-end pinned-vendor source validator
 remains `SKIP` in the local work environment.
+
+
+### R4 source ABI cross-check and compatibility guard
+
+The host model was updated to match the **pinned real Fermi2D
+operation/filter numeric values** (SrcCopy=3, Blend=2, ROP=4,
+Point=0, Bilinear=1); it passes all 50 tests again under both
+compilers. In the shared Fermi2D engine, `Blit()` only reports
+an unsupported-operation diagnostic and still invokes
+`AccelerateSurfaceCopy`, so a future Encore source port must
+enforce the copy-only precondition in the native slice handler.
+
+All relevant source files were checked at fixed Git blob SHAs:
+Lichii texture cache `b497d4f1b08ccc4067613a4f769d857735d5bc61`;
+Encore active texture cache `f0c685c1be128ec161ebd53f2ab507badff88bc1`;
+Vulkan texture runtime `97c11bebf775b2139f87f3a8d22e4d06446df14e`;
+Fermi2D public header `7fddf9fdc19e3d1735bccab3bc8385756216cfee`;
+Fermi2D source `aeff5e156f8c331f5ec7c929aa1fdadd2eb5dc8a`.
+Encore already has deferred-clear flushing, cached-image lookup
+and Vulkan copy primitives. No redundant new cache owner is required.

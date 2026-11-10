@@ -28,7 +28,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'make_unique<SilentAudioInputStream>(system)' headless/audio.cpp
+          grep -Fq 'make_unique<SilentAudioInputStream>(system, channels)' headless/audio.cpp
+          grep -Fq 'SetSystemChannels(channels);' headless/audio.cpp
+          grep -Fq 'CHECK(input->GetSystemChannels() == channels);' headless/devices_check.cpp
           grep -Fq 'MakeSilentAudioInSamples(samples)' headless/audio.cpp
           grep -Fq 'audio_input_device_id = "ps5";' headless/main.cpp
           if grep -Fq 'make_unique<NullSinkStreamImpl>' headless/audio.cpp; then

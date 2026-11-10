@@ -118,8 +118,40 @@ jobs:
             --only headless/vulkan_blit_screen_r08.cpp \
             --only headless/vulkan_renderer_r08.cpp \
             --only headless/vulkan_window_adapt_r08.cpp \
-            --only headless/fsr3_optical_session.cpp
+            --only headless/fsr3_optical_session.cpp \
+            --only vendor/sources/ps5-fsr3-optical-flow/src/ps5_framegen.cpp \
+            --only headless/mihawk_native_session.cpp \
+            --only headless/lossless_dll_r08.cpp
           echo "P5_NATIVE_CXX_FAILURES_REQUALIFIED"
+          # A later CMake SOURCES assignment used to erase target_sources
+          # inside vulkan.cmake, silently dropping the FSR3/LSFG wrappers and
+          # Mihawk object library from video_core. Verify the REAL graph.
+          python3 - "$scratch/native-local" <<'PY_GRAPH_OWNERS'
+          import json
+          from pathlib import Path
+          import sys
+          native = Path(sys.argv[1])
+          records = json.loads((native / "compile_commands.json").read_text())
+          files = [str(item["file"]) for item in records]
+          required = (
+              "headless/fsr3_optical_session.cpp",
+              "vendor/sources/ps5-fsr3-optical-flow/src/ps5_framegen.cpp",
+              "headless/lossless_dll_r08.cpp",
+              "headless/mihawk_native_session.cpp",
+              "/frame_gen/lsfg_translate.cpp",
+          )
+          for path in required:
+              n = sum(file.endswith("/" + path.removeprefix("/")) or file.endswith(path)
+                      for file in files)
+              assert n == 1, (path, n)
+              print("NATIVE_GRAPHICS_SOURCE_SELECTED", path, flush=True)
+          lines = (native / "build.ninja").read_text().splitlines()
+          links = [line for line in lines if line.startswith("build src/video_core/libvideo_core.a:")]
+          assert len(links) == 1, len(links)
+          assert "eden-mihawkgen-native.dir/" in links[0], (
+              "Mihawk object library missing from native video_core archive")
+          print("NATIVE_GRAPHICS_LINK_OWNER_PASS", flush=True)
+          PY_GRAPH_OWNERS
           # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
           # translation units using the actual native compile_commands.json.
           # Collect all errors in one run; do not produce .o/ELF/ZIP.

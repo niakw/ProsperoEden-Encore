@@ -85,6 +85,9 @@ jobs:
           # Native GPU worker now arbitrates pending channels before sleeping.
           # Check its maintained source before the expensive native preparation.
           python3 -B tools/check-native-gpu-thread.py --source-only
+          # Compare the compiled PS5 PresentManager header against its
+          # maintained Vulkan synchronization owner before provisioning SDK.
+          python3 -B tools/check-ps5-present-header-contract.py
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

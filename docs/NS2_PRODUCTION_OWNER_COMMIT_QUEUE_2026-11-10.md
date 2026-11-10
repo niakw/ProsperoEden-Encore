@@ -1,5 +1,21 @@
 # NS2 production-owner commit queue — R4 started, R2/R3 scoped
 
+## LIVE UPDATE — R2/R3/R4 source branches (supersedes historical entries below)
+
+| Point | Source committed | Remaining source integration | Validation |
+| --- | --- | --- | --- |
+| R4 3D slices | [Vendor PR #36](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/36), current main parity restored | 0 new source files; existing active file must compile | Not done on actual owner / PS5 |
+| R2 upload batch | [Vendor PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38), bounded 64-copy, epoch/owner-aware helper | **2 files identified:** scheduler header and buffer-copy runtime; allocation provenance may require more | Helper not wired or compiled against true owner |
+| R3 GOB16 | [Vendor PR #37](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/37), complete maintained decoder with 32-entry table | **1 file identified:** Encore native CMake translation-unit selection | Maintained source not yet selected/compiled |
+
+**COUNT: 3/3 code tracks have real isolated source commits; 3/3 still require actual source/runtime qualification; at least 3 integration files remain (2 R2 + 1 R3).** Counts do not include future test fixtures or additional allocation-owner changes.
+
+Old [vendor PR #35](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/35) was closed without merge after an unrelated pin-parity change conflicted in the R4 source file. Its replacement **#36** preserves that new Vulkan/OpenGL pin-parity code and is mergeable. The current vendor `main` and Encore `main` gitlink are `90c9c8a203a27181e23349a889a8f2a7d1cd9dd2`; **no main, pins, releases or PS5 builds changed**.
+
+**The sections below document the historical first R4 draft and original R2/R3 plan; use this live update for current PR numbers and progress.**
+
+---
+
 **Updated:** 2026-11-10. Source audit is CLOSED for the frozen upstream snapshot; this document tracks **code preparation**, which is NOT complete.
 
 ## Commit 1 — R4 native Fermi2D 3D volume slice copy

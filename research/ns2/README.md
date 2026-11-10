@@ -318,3 +318,44 @@ negative case. Full six-blob download+Python gate **not executable in the
 current offline environment**, remains unverified. No source snapshot
 or production vendor files were committed into this PR.
 
+
+
+## R4 — Fermi2D cached 3D volume-slice admissibility
+
+The ninth host suite,
+[`test_volume_slice_admission.cpp`](test_volume_slice_admission.cpp),
+transcribes the cached 3D-slice eligibility conditions from
+[`Lichii nx2`](https://github.com/zortos293/Lichii/blob/879b616b1b377bfd085bf20f440b895cf4b83ab8/src/video_core/texture_cache/texture_cache.h).
+It models `ForEachImageInRegionGPU`, eligible zero-mip slices, matching
+cached volume dimensions/format, whole-slice source/destination rectangles,
+independent source/destination cache image IDs, and a hypothetical stricter
+admission rule. **It does not copy real Vulkan image bytes**, and unlike
+the QMD3 owner tests, this is a **policy transcription**, NOT compilation
+of the unmodified full upstream template method.
+
+**50/50 host checks pass with each of Clang 17 and GCC 14 at
+`-O0`, `-O1`, `-O2`, ASan+UBSan.** The candidate-specific negative
+tests show that the upstream selection method does not test
+`Fermi2D::Config::operation` or `filter`: it would accept synthetic
+`Blend`, `ROP`, or `Bilinear` full-slice requests as a direct copy.
+The current pinned Fermi2D `Blit()` emits an UNIMPLEMENTED diagnostic
+for non-`SrcCopy` operations but does not return immediately before
+calling `AccelerateSurfaceCopy`. Therefore, **require explicit native
+`SrcCopy` operation admission and qualify the filter** if integrating.
+This is a *source-level semantic risk*, not a proven PS5 gameplay
+regression. A conservative research `StrictCandidate` rejects unknown
+operations, filters, malformed metadata, and overwide image offsets.
+The real mapped region and `u32` narrowing must be authenticated before
+using `slice_offsets`.
+
+The positive test resolves distinct cached volume IDs and selects
+specific slices; partial rectangles, dimensions/formats mismatches,
+nonzero layers, mip levels other than zero, absent images and
+same-image copies fall back to generic `BlitImage`. Rejecting
+same-image copies is **upstream behavior**, not automatically a bug.
+
+**Current local host runner: nine suites, 231 finite research checks per
+compiler, plus 1,536 GOB differential scenarios per compiler.**
+Do not add the 1,536 separately to the 231 as if both represented
+identical individual assertions. The pinned vendor gate still reports
+`SKIP` in this environment. No PS5 speedup or rendering proof.

@@ -10,6 +10,7 @@ on:
       - "headless/main.cpp"
       - "tests/ab_ns1_audioin_silence_host.cpp"
       - "tools/audit/check-ab-ns1-audioin-timeline-host.py"
+      - "tools/audit/check-ab-ns1-guest-release-host.py"
       - ".github/workflows/ab-ns1-audioin-host.yml"
   workflow_dispatch:
 
@@ -66,3 +67,11 @@ jobs:
           python3 -B tools/audit/check-ab-ns1-audioin-timeline-host.py
           echo "Extracted native AudioIn class: ASan/UBSan, timed advancement, Stop, resume, Finalize PASS." >> "$GITHUB_STEP_SUMMARY"
           echo "This is not a real guest DeviceSession / PS5 runtime verification." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Compile and run actual DeviceSession ReleaseBuffer body against bad guest buffers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/audit/check-ab-ns1-guest-release-host.py
+          echo "AudioIn guest release extracted method: valid/invalid lengths, channel and guest span tests under ASan/UBSan PASS." >> "$GITHUB_STEP_SUMMARY"
+          echo "Native audio_core compilation and PS5 guest run still required." >> "$GITHUB_STEP_SUMMARY"

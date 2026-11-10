@@ -191,3 +191,39 @@ block-linear differential layouts per compiler** with 23.58 million
 address-oracle comparisons each. Do not conflate these test classes
 or infer 23.58 million real PS5 frames or CPU speedup.
 
+
+## Update — eighth host suite: Lichii Vulkan upload-batch admission
+
+Added [`test_vulkan_upload_batch_contract.cpp`](test_vulkan_upload_batch_contract.cpp)
+(5200 characters, FNV-1a `432374617`, Git blob
+`30a5afae2d9ef92d775f87c8d1e19851ed6603bb`).
+The synthetic-handle fixture executes the **exact maintained upstream
+`UploadBatch::CanAdd` and `UploadBatch::Add` C++ function bodies** from
+`zortos293/Lichii@879b616b1b377bfd085bf20f440b895cf4b83ab8`.
+Both normalized bodies match upstream (CanAdd 431 chars, FNV
+`1290869894`; Add 304 chars, FNV `3125317133`).
+
+**25/25 bounded host assertions pass** with Clang 17 and GCC 14 at
+`-O0`, `-O1`, `-O2`, with ASan/UBSan.
+Validated nonoverlap, same-buffer ordering, intergroup RAW/WAR hazards,
+destination overlaps, 64-copy budget, and caller-per-region enforcement.
+
+**Explicit hostile finding:** the upstream overlap expression adds
+`dstOffset+size` without checking unsigned overflow. For *invalid*
+simulated copy ranges near `UINT64_MAX`, it can miss an overlap.
+This is **not** proof of a Vulkan bug under authentic, already-bounded
+driver buffer lengths. A future Encore port must first reject any
+zero-length, out-of-buffer or overflowing `srcOffset` / `dstOffset`
+copy and must not batch overlaps or cross synchronization boundaries.
+
+Runner now includes **eight** suites; exact local/GitHub runner content
+matches (1453 chars, FNV `2912948555`, Git blob
+`6f70d453beb67858a46816f81282f9fa56857b7d`).
+The O1 matrix has **181 standalone assertion contracts per compiler**
+(19+23+30+33+35+16+25), **plus 1536 block-linear differential
+scenarios per compiler**. Do not treat the latter as 1536 extra
+finite-assertion calls; each scenario exercises many byte offsets.
+
+**Vendor checker remains SKIP** without the full pinned checkout.
+No native PS5 code, Vulkan allocator, scheduler, source pin or build changed.
+

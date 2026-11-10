@@ -74,7 +74,8 @@ jobs:
               test_dlss_nr_min_qkv_capacity \
               test_dlss_nr_min_720_route_trial \
               test_dlss_nr_min_720_vit_runtime_capacity \
-              test_dlss_nr_min_720_decoder_policy; do
+              test_dlss_nr_min_720_decoder_policy \
+              test_dlss_nr_min_720_plan_emit; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -88,7 +89,8 @@ jobs:
               test_dlss_nr_min_qkv_capacity \
               test_dlss_nr_min_720_route_trial \
               test_dlss_nr_min_720_vit_runtime_capacity \
-              test_dlss_nr_min_720_decoder_policy; do
+              test_dlss_nr_min_720_decoder_policy \
+              test_dlss_nr_min_720_plan_emit; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

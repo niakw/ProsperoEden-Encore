@@ -329,3 +329,21 @@ NOT 960 tokens. Scratch 16 is the fastest *host-policy batch-count*
 candidate at 720p (one FFN Expand batch + one QKV batch), but does NOT
 prove actual GPU performance. Only a full model, the guest frame path
 and PS5 hardware A/B can establish end-to-end 720p neural fluency.
+
+
+## 720p native plan serialization and parse round-trip (host only)
+
+The CPU host utility dlss_nr_min_720_plan_emit.h now serializes every
+row of the full 1280x720 Original (152 rows) and Compact (76 rows)
+candidate back into the SAME 19/21-field native text syntax consumed
+by the actual R09 plan parser. It then reparses the entire table,
+verifies every single row member is unchanged after round-trip,
+and revalidates NativeNrSchedule, all four U-Net skips, both Split-Swin
+runs and all eight ViT blocks (960 padded tokens). Both variants and
+negative malformed/empty source cases are tested under GCC/Clang UBSan.
+
+The serialized text is a CPU-only DEVELOPMENT CANDIDATE, NOT a runnable
+replacement model plan: some specialized launch fields remain from the
+1080p reference and have NOT yet been qualified for 720p. Its
+gpu_executable flag is hard false, and no native renderer, weights
+or source/target Vulkan dimensions have been modified.

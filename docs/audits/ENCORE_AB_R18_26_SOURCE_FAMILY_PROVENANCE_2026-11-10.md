@@ -57,3 +57,16 @@ For each of the 12 accessible Git origins, fetched the **exact pin's commit obje
 5. Keep NS2 research separate. Only common source compatibility/NS1 non-regression can enter this A/B audit.
 
 **Decision:** 26/26 **source-family identities inventoried**; **not** 26/26 externally certified or linked. R18 remains open for explicit verification above. No main build/vendor change.
+
+
+## Archived origin objects — verified later on 10 November
+
+Three upstream `blackbearreloaded` pin repositories return **404** through the current GitHub API. These are *not* silently replaced. However, the vendor stores archive chunks under `vendor/objects/`. The audit-only, no-build [run #42901485007](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42901485007) executed [`attest-r18-orphan-pin-archives.py`](../../tools/audit/attest-r18-orphan-pin-archives.py) and recomputed **all chunk and concatenated SHA-256 digests from the actual checked-out bytes**:
+
+| Archived upstream family | Actual archived bytes | Recalculated archive SHA-256 | Verdict |
+|---|---:|---|---|
+| `boilerplate` | 17,289,610 | `d38bca60f4e29b82d35af2adb0498a4dfa40be37a76165dbad2ae5ef57b5f309` | Internal custody integrity proved |
+| `opengl-native-boilerplate` | 17,271,171 | `17b6bb635b6a5286d39a4e46d72cdbb8665f28f39dc8eafc7fb34fdba38c8217` | Internal custody integrity proved |
+| `opengl-source` | 19,665,522 | `c939d4ddeb67bd910821fcd7e92561ed8285c01407625e63c4a9685726ad1419` | Internal custody integrity proved |
+
+**What this establishes:** the archived bytes available inside the exact vendor checkout match the hash declarations in each `objects/<family>/chunks.json`. **What it does not establish:** independent equivalence to `dd44bbd`, `4f531c4`, or `ad2807d` from the unavailable external upstream Git repositories. The official provenance gate remains explicitly **blocked on external historical commit identity**; the **internal archive corruption risk is closed** for these three bundles. No upstream network fetch, source edit, repin or PS5 build was performed.

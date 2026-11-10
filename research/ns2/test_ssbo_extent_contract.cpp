@@ -15,6 +15,14 @@ constexpr Request Base(DescriptorKind kind = DescriptorKind::NativeBare) {
             .driver_max_storage_range = 64 * MiB, .alignment = 256,
             .kind = kind, .compute = true, .written = false};
 }
+// Faithful model of the observed pinned vendor decision in StorageBufferBinding:
+// no provenance flag, so the next qword can be misidentified as a size.
+constexpr std::uint64_t CurrentVendorSizeHeuristic(std::uint64_t layout,
+                                                     std::uint64_t next_qword) {
+    const auto packed = static_cast<std::uint32_t>(next_qword);
+    if ((next_qword >> 32) == 0 && packed != 0 && packed <= layout) return packed;
+    return std::min(layout, LegacyFallback);
+}
 constexpr bool StaticChecks() {
     const auto b = Base();
     const auto good = ResolveExtent(b);
@@ -26,6 +34,12 @@ static_assert(StaticChecks());
 int main() {
     int cases = 0;
     const auto check = [&](bool pass) { assert(pass); ++cases; };
+    // RED baseline of old vendor behavior, measured against the desired native policy.
+    // The production owner itself is not compiled by this standalone fixture.
+    check(CurrentVendorSizeHeuristic(32 * MiB, 266) == 266 &&
+          ResolveExtent(Base()).extent > 266);
+    check(CurrentVendorSizeHeuristic(32 * MiB, (1ULL << 40) | 16) == 8 * MiB &&
+          ResolveExtent(Base()).extent > 8 * MiB);
     {
         const auto d = ResolveExtent(Base());
         check(d && d.extent == 32 * MiB); // NS2 native read > 8 MiB, second word=266.

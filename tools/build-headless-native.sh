@@ -138,6 +138,14 @@ cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
     -DDYNARMIC_ENABLE_NO_EXECUTE_SUPPORT=ON -DDYNARMIC_IGNORE_ASSERTS=OFF \
     -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF -DSDL_RENDER=OFF -DSDL_GPU=OFF
 
+# CMake can finish generation even when its resulting Ninja graph declares
+# the same output twice (for example maintained Vulkan source/header inputs).
+# Parse the REAL PS5 graph before running the expensive host validators; -t
+# targets executes no compiler or shader generator.
+echo "Checking native Ninja graph for duplicate output declarations"
+ninja -C "$scratch/native-local" -t targets all >/dev/null
+echo "ENCORE_NATIVE_NINJA_GRAPH_PASS"
+
 python3 -B "$root/headless/check_slab_lifetime.py" \
     "$scratch/native-local/headless/include/core/hle/kernel/slab_helpers.h" \
     "$scratch/source/src/core/hle/kernel/slab_helpers.h"

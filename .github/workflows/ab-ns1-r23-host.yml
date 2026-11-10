@@ -7,6 +7,8 @@ on:
       - "headless/r23_bcat_delivery_cache_file_ps5.cpp"
       - "headless/CMakeLists.txt"
       - "tools/audit/check-r23-f2i-bcat-host.py"
+      - "tools/audit/check-r23-viewport-host.py"
+      - "tools/prepare-vulkan-port.py"
       - ".github/workflows/ab-ns1-r23-host.yml"
   workflow_dispatch:
 
@@ -31,5 +33,6 @@ jobs:
           set -euo pipefail
           test "$(git -C vendor rev-parse HEAD)" = "22b69d6053db41b74edac2633c012f925b84f69e"
           python3 -B tools/audit/check-r23-f2i-bcat-host.py
-          echo "2 pinned source owners and source-extracted F2I + BCAT behavior: ASan/UBSan pass." >> "$GITHUB_STEP_SUMMARY"
+          python3 -B tools/audit/check-r23-viewport-host.py
+          echo "3 pinned source fixes (F2I, BCAT and viewport): isolated source-extracted ASan/UBSan pass." >> "$GITHUB_STEP_SUMMARY"
           echo "No native PS5 ELF, actual shader guest behavior, or BCAT title-level test." >> "$GITHUB_STEP_SUMMARY"

@@ -33,7 +33,7 @@
       "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",
       "status": "open",
       "evidence": {},
-      "blocker": "NS2 13-module patched ExeFS bounds preflight now executes before global CPU/NCE mode changes (vendor host CI green); KProcess partial guest memory rollback, malformed DLC/update integration and full NPDM/NSO process ownership still require linked evidence. Latest vendor changes await engine gitlink integration.",
+      "blocker": "NS2 ExeFS/NPDM guard and process-scoped RomFS rollback are owner-executed; full real KProcess guest-page rollback under later failure, patched update/DLC chain and entire process ownership still require connected evidence.",
       "excluded_forms": []
     },
     {
@@ -130,7 +130,7 @@
       "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",
       "status": "open",
       "evidence": {},
-      "blocker": "Valid FFmpeg HEVC Decode->Drain->Render and real Pump ownership are already host-qualified. NS2 now has atomic non-asserting syncpoint allocation that cannot reserve ID 0 on exhaustion, with a concurrent owner witness pending exact vendor CI; authenticated TIPC, GPU image write and Vulkan-backed guest fence lifetime remain open. Vendor changes not pinned in engine yet.",
+      "blocker": "Genuine FFmpeg Decode/Drain/Render and source-executed Pump release ownership are host-qualified. Connected authenticated video TIPC, NVMap guest GPU image write and real Vulkan-backed release-fence lifetime still lack one end-to-end witness.",
       "excluded_forms": []
     },
     {
@@ -195,7 +195,7 @@
     {
       "id": "G01",
       "title": "SPIR-V texture-buffer descriptor arrays",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
         "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py",
@@ -203,9 +203,18 @@
       ],
       "positive": "Descriptor counts and dynamic indices generate valid SPIR-V and select the intended guest texture.",
       "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Actual native IR guest SSBO dynamic index 0/1 -> SPIR-V -> Vulkan descriptor selection has two successful GPU submissions. Vendor singleton dynamic-index refusal is host-qualified, but runtime out-of-bounds array indexes and missing TIC/TSC/unsupported stages still need fail-closed evidence; vendor gitlink remains older.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/check-ns2-spirv-host.py",
+          "kind": "spirv-val"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py",
+          "kind": "real-owner-exec"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {
@@ -429,7 +438,7 @@
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Authentic Ampere SEM_EXECUTE -> Vulkan queue/fence -> guest memory -> second-channel resume and QMD3 release preflight/deferred owner callbacks have independent green host witnesses. One connected genuine QMD3 vkCmdDispatch -> full GPFIFO queue retirement and channel-generation ownership witness is still missing; latest vendor changes await pin.",
+      "blocker": "Ampere SEM_EXECUTE -> authentic host Vulkan fence -> two-channel guest semaphore resume and native QMD3 GPU shader dispatch have independent green host witnesses. A single connected native QMD3 vkCmdDispatch -> GPFIFO queue retirement, channel-generation ownership and guest completion chain is not yet proven.",
       "excluded_forms": []
     }
   ]

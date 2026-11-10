@@ -27,6 +27,7 @@ INIT_STOP = "\nvoid KProcess::DoWorkerTaskImpl("
 PREFIX = r"""
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -121,9 +122,11 @@ template<class F> HostScopeExit<F> operator+(HostScopeMaker, F fn) {
 #define R_TRY(expression) do { auto ns2_result_ = (expression); \
     if (ns2_result_.IsError()) return ns2_result_; } while (false)
 #define R_SUCCEED() do { Kernel::h01_init_succeeded=true; return Result{}; } while(false)
+#define ASSERT(expr) assert(expr)
 
 namespace Kernel {
 inline bool h01_init_succeeded=false;
+inline constexpr u64 ProcessIdMin=100, ProcessIdMax=10000;
 inline constexpr Result ResultOutOfResource{21};
 inline constexpr Result ResultLimitReached{22};
 inline constexpr Result ResultInvalidMemoryRegion{23};

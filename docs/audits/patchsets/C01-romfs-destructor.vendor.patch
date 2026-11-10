@@ -1,7 +1,10 @@
 diff --git a/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp b/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp
 --- a/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp
 +++ b/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp
-@@ -200,1 +200,12 @@
+@@ -197,7 +197,18 @@
+     VisitDirectory(base, ext, root);
+ }
+ 
 -RomFSBuildContext::~RomFSBuildContext() = default;
 +// Every entry also stays alive in directories/files. Release the long owning
 +// sibling/child chains before the vectors, so a wide RomFS does not recurse
@@ -15,3 +18,6 @@ diff --git a/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp b/e
 +        dir->file.reset();
 +    }
 +}
+ 
+ std::vector<std::pair<u64, VirtualFile>> RomFSBuildContext::Build() {
+     const u64 dir_hash_table_entry_count = romfs_get_hash_table_count(num_dirs);

@@ -62,6 +62,8 @@ These denominators describe **distinct categories** and are not additive. Unknow
 
 The corrective branch's **actual Git submodule pin** is the original `22b69d6053db41b74edac2633c012f925b84f69e`. PR workflows that had checked a moving temporary merge tree previously appeared to use `f9f08786` or `90c9c8a2` from concurrent `main`; the isolated tests now explicitly checkout the PR **head SHA**. Neither PR changed production `main` or `vendor`.
 
+**10 Nov C00 follow-up at corrective commit `c142519076fc9d588a468f25328e40f3cb3d203c`:** an explicitly selected PS5-only full-source `audio_core` owner now resides in `headless/audio_device_session_ps5.cpp` and validates whole PCM16 frame sizes, 2 MiB capture maximum, mapped guest memory ranges and exact sink vector sample counts before `WriteBlockUnsafe`. The [host #42914078454](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42914078454) source-extracted function passes ASan/UBSan negative tests for odd/misaligned byte lengths, invalid guest spans, short samples and Output no-op. It does **not** compile or link the complete `audio_core` C++ translation unit, and is **not** a real PS5 guest memory or device lifecycle proof. Frozen F07 baseline remains 518; the two added C00 headless paths (helper + device owner) have separate path accounting. Audit still requires actual source-compiled integration and device tests.
+
 **Current classification: C00 partially implemented with green host tests; AB-04 remains OPEN at E3/E4.**
 
 ## Audit-branch tools and immutable proof index

@@ -211,7 +211,10 @@ def negative_self_tests(source: dict[str, str]) -> int:
         if old not in source[filename]:
             raise Drift(f"Mutation fixture drifted: {name}")
         mutated = dict(source)
-        mutated[filename] = source[filename].replace(old, new, 1)
+        # Replace all matching barriers, including the terminal residual one.
+        # Otherwise the negative fixture could modify RecordActivation
+        # while leaving the critical RecordResidual barrier intact.
+        mutated[filename] = source[filename].replace(old, new)
         try:
             check(mutated)
         except Drift:

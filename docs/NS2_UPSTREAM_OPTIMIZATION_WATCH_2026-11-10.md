@@ -168,3 +168,18 @@ Do **not** blindly import nxnative's negative archive lookup memo into native co
 The shared Vulkan [`Device::GetMaxStorageBufferRange()`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-vulkan/include/video_core/vulkan_common/vulkan_device.h) exposes the runtime `maxStorageBufferRange`. The native QMD3 `NativeQmdContiguousGpuSpan` separately admits up to **256 MiB** of contiguous guest memory, while the current [`ConfigureNative`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp) and [`UpdateDescriptorQueue::AddBuffer`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h) carry the raw guest byte length into a Vulkan storage descriptor without a *visible explicit* comparison to that device limit at those call sites. This is a **potential gap in admission** if a real PS5 Vulkan device advertises a lower maximum; do not claim a validation error without the device's queried limit and the complete downstream binding audit.
 
 Proposed native-only evidence: capture the real `maxStorageBufferRange`, test equal-to-limit, just-above-limit, different base/offset alignment and correctly rejected buffer writes. A silently truncated buffer is not a correct alternative to refusing a genuinely unsupported shader access. No code change until a failing exact-owner/device test exists.
+
+
+### Exact source equivalence check (local harness ↔ pinned vendor)
+
+The previously executed 24-case host harness was checked against the fetched
+`NativeQmdContiguousGpuSpan` body in pinned vendor `22b69d60` rather than
+assumed equivalent. Removing C++ comments and whitespace from both function
+bodies yields the same normalized **460-byte code**, with matching FNV-1a
+fingerprint `1556815272`. The local normalized source has SHA-256
+`90c871905ad8c6d5a193acea84a457816cf1bc432d71c06de6f6ab68e0f9b7a2`.
+The native `known_size = tag == 0 && bytes != 0` condition also matches
+(normalized FNV-1a `4224985686`). The research script now pins the
+normalized guard SHA-256 in addition to the vendor commit SHA, so later
+code drift requires a new audit. This strengthens **host-only source
+equivalence**; it is not an actual Vulkan/PS5 dispatch.

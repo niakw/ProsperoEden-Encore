@@ -400,6 +400,7 @@ jobs:
           test ! -e build/release/eboot.bin
 
       - name: Prepare native build inputs
+        id: prepare_native
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}
         run: make prepare JOBS=4
 
@@ -527,8 +528,12 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Save build caches after verified artifact uploads
-        if: ${{ !cancelled() && steps.stage.outcome == 'success' }}
+      # Preserve expensive, fully prepared toolchain/dependency caches even
+      # if the later native compile, stage validation or upload fails. Do not
+      # cache an incomplete make-prepare run; stage/release artifacts remain
+      # subject to their independent integrity gates above.
+      - name: Save caches after successful native preparation
+        if: ${{ !cancelled() && steps.prepare_native.outcome == 'success' }}
         continue-on-error: true
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

@@ -40,13 +40,15 @@ using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 namespace Service::Nvidia::Devices {
 class NativeGpuChannelRegistry {
+    bool active{true};
 public:
+    void Revoke() {active=false;}
     static NativeGpuChannelRegistry& Instance() {
         static NativeGpuChannelRegistry instance;
         return instance;
     }
     bool IsCurrent(const int* channel, int ticket) const {
-        return channel && ticket == 7;
+        return active && channel && ticket == 7;
     }
 };
 }
@@ -138,7 +140,9 @@ __RELEASE__
     released();
     assert(data.writes == 3 && data.stored == 14);
     Eden::ResetGpuFailureForTitle();
-    ticket = 0; // Revoked channel: never signal a stale guest completion.
+    Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().Revoke();
+    // The callback captured the historical ticket, but the registry revoked
+    // that epoch. Neither deferred path may publish a stale guest completion.
     reduced();
     released();
     assert(data.writes == 3 && data.stored == 14 && !Eden::PeekGpuFailure());

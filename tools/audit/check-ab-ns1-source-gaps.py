@@ -84,7 +84,7 @@ def triage() -> dict:
         "AB-01-shader-NaN": {
             "classification": "unknown" if frag is None or not shader_selected else
                 "guard-present-in-source" if nan_guard else "source-gap",
-            "conditional_shared_source_selected": shader_selected,
+            "conditional_shared_source_declared_in_cmake": shader_selected,
             "float_output_nan_guard": nan_guard,
         },
         "AB-02-RADV-transfer": {
@@ -93,9 +93,10 @@ def triage() -> dict:
                 "direct-guards-present",
             "pipeline_barrier_direct_guard": barrier_split,
             "transfer_direct_guards": direct,
-            "meta_units_part_of_active_12_override_list": (
-                "src/amd/vulkan/meta/radv_meta_buffer.c" in installer or
-                "src/amd/vulkan/meta/radv_meta_copy.c" in installer),
+            "meta_unit_active_override_declarations": {
+                "radv_meta_buffer.c": "src/amd/vulkan/meta/radv_meta_buffer.c" in installer,
+                "radv_meta_copy.c": "src/amd/vulkan/meta/radv_meta_copy.c" in installer,
+            },
         },
         "AB-03-RomFS": {
             "classification": "source-gap" if romfs_default else

@@ -781,7 +781,23 @@ assert not h01_fs_paths.intersection(research_owners | post_f07_h05_syncpoint_ow
 print("ENCORE_POST_F07_H01_F07_ISOLATION_PASS",
       "maintained_overrides=1 historical_F07_unchanged=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths
+# P5 compile-only repair, added after the immutable 518-owner F07 audit:
+# this include-only header exposes the upstream RAII macro to the pinned
+# NS2 ASTC texture cache. It is NOT a historical F07 optimization owner.
+post_f07_p5_astc_scope_bridge_owners = {
+    "headless/ns2_astc_texture_cache_scope_bridge.h",
+}
+assert post_f07_p5_astc_scope_bridge_owners <= all_owners
+bridge = (ROOT / "headless/ns2_astc_texture_cache_scope_bridge.h").read_text()
+assert '#include "common/scope_exit.h"' in bridge
+assert '#include_next "video_core/texture_cache/texture_cache.h"' in bridge
+assert 'ns2_astc_texture_cache_scope_bridge.h' in (
+    ROOT / "headless/vulkan.cmake").read_text()
+assert not post_f07_p5_astc_scope_bridge_owners.intersection(
+    research_owners | post_f07_feature_stack_owners | post_f07_r09_overlay_owners)
+print("ENCORE_POST_F07_P5_ASTC_SCOPE_BRIDGE_PASS", "shipping_headers=1 historical_F07=518")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

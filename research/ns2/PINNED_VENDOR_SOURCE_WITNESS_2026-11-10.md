@@ -46,3 +46,28 @@ endpoint lookups. This is a source-derived count, not wall-clock PS5 timing.
 **Decision:** the source review gate is supported by authenticated
 GitHub blobs; keep the source-checkout, hardware and runtime gates
 independently open. No change to `main`, vendor or build workflows.
+
+## Reproducible Git-free source snapshot mode added
+
+The host validator now supports `--source-snapshot`. Unlike its original
+`git rev-parse HEAD` mode, this option authenticates the raw bytes of
+the **six** fetched files by their exact Git blob SHA-1 IDs shown above.
+It explicitly rejects missing/mutated source blobs before any compilation.
+
+On a **network-enabled development machine**, from the Encore repository
+root, an explicitly invoked helper downloads the six immutable sources
+and runs the actual owner gate under both host compilers:
+
+```bash
+bash research/ns2/fetch_pinned_vendor_snapshot.sh /tmp/encore-vendor-snapshot
+```
+
+This is a **host-only source-gate command**, not a PS5 native build.
+The downloader passed local `bash -n` syntax validation, and the
+blob-hash algorithm was checked against the independently fetched
+GitHub object ID of the GOB16 test source (including a modified-byte
+negative). **This environment cannot reach raw.githubusercontent.com**,
+so the complete six-source download+Python compiler execution is
+**NOT YET EXECUTED**. The prior **26/26 source-owner assertions**
+were evaluated independently on the pinned blobs through GitHub.
+

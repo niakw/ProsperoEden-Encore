@@ -40,13 +40,15 @@ using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 namespace Service::Nvidia::Devices {
 class NativeGpuChannelRegistry {
+    bool active{true};
 public:
+    void Revoke() {active=false;}
     static NativeGpuChannelRegistry& Instance() {
         static NativeGpuChannelRegistry instance;
         return instance;
     }
     bool IsCurrent(const int* channel, int ticket) const {
-        return channel && ticket == 7;
+        return active && channel && ticket == 7;
     }
 };
 }
@@ -100,7 +102,8 @@ __RELEASE__
     assert(data.stored == 8 && data.writes == 1 && !Eden::PeekGpuFailure());
     data.mapped = false;
     reduced();
-    assert(data.writes == 1 && !Eden::PeekGpuFailure());
+    assert(data.writes == 1 && Eden::PeekGpuFailure());
+    Eden::ResetGpuFailureForTitle();
     data.mapped = true;
     data.fail_map = true;
     reduced();
@@ -136,6 +139,13 @@ __RELEASE__
     data.fail_write = false;
     released();
     assert(data.writes == 3 && data.stored == 14);
+    Eden::ResetGpuFailureForTitle();
+    Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().Revoke();
+    // The callback captured the historical ticket, but the registry revoked
+    // that epoch. Neither deferred path may publish a stale guest completion.
+    reduced();
+    released();
+    assert(data.writes == 3 && data.stored == 14 && !Eden::PeekGpuFailure());
     std::puts("P4_2_NATIVE_DEFERRED_FENCE_FAULT_HOST_PASS");
 }
 """
@@ -168,4 +178,4 @@ with tempfile.TemporaryDirectory(prefix="eden-qmd-fence-fault-") as folder:
             assert ran.returncode == 0, (compiler, ran.stderr[-2700:])
             assert "P4_2_NATIVE_DEFERRED_FENCE_FAULT_HOST_PASS" in ran.stdout
             print("P4_2_NATIVE_DEFERRED_QMD_FENCE_PASS", Path(compiler).name,
-                  opt, "read/write/unmap=latched", flush=True)
+                  opt, "read/write/unmap=latched revoked_channel=no_completion", flush=True)

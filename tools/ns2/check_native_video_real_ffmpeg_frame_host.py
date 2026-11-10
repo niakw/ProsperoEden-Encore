@@ -28,6 +28,14 @@ assert "m_decoder->Render(frame.picture," in service
 assert service.index("m_owner->WriteVideoSurface(next.id, *target, pixels)") < service.index(
     "syncpoints.IncrementGuest(m_syncpoint);")
 assert "if (!m_decoder->Render(frame.picture," in service
+GUEST_SURFACE=ROOT/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+surface_source=GUEST_SURFACE.read_text()
+surface_begin="bool IGraphicsSupervisor::WriteVideoSurface("
+surface_end="\n// 901 and 1001 are the SDK's video codec/server-context admission calls."
+assert surface_source.count(surface_begin)==surface_source.count(surface_end)==1
+surface_write=surface_begin+surface_source.split(surface_begin,1)[1].split(surface_end,1)[0]
+assert "GetMemory().WriteBlock(" in surface_write
+assert surface_write.index("GetMemory().WriteBlock(") < surface_write.index("system.GPU().InvalidateRegion(")
 pump_start="void IGraphicsVideoDecoderSession::Pump() {"
 pump_end="\nvoid IGraphicsVideoDecoderSession::SubmitInput("
 assert service.count(pump_start)==service.count(pump_end)==1
@@ -46,6 +54,9 @@ cpp=r"""
 #include <optional>
 #include <set>
 #include <memory>
+#include <map>
+#include <mutex>
+#include <utility>
 #include <span>
 #include <vector>
 #include "video_core/host1x/syncpoint_manager.h"
@@ -144,15 +155,24 @@ namespace Tegra::Texture {
 std::size_t CalculateSize(bool,u32,u32,u32,u32,u32,u32) {return 0;}
 void SwizzleTexture(std::vector<u8>&,const std::vector<u8>&,u32,u32,u32,u32,u32,u32) {}
 }
+namespace Common { struct ProcessAddress { u64 address; }; }
 namespace Service::AM {
 using GuestSyncpoints=Tegra::Host1x::SyncpointManager;
 struct FakeHost1x {
     GuestSyncpoints sync;
     GuestSyncpoints& GetSyncpointManager(){return sync;}
 };
+struct FakeGPU {
+    unsigned invalidations{};
+    u64 address{};
+    std::size_t bytes{};
+    void InvalidateRegion(u64 addr,std::size_t n) {++invalidations;address=addr;bytes=n;}
+};
 struct FakeSystem {
     FakeHost1x host{};
+    FakeGPU gpu{};
     FakeHost1x& Host1x(){return host;}
+    FakeGPU& GPU(){return gpu;}
 };
 struct FakeSurface {
     struct Layout {
@@ -163,25 +183,70 @@ struct FakeSurface {
         bool nv12{true};
     } layout;
     u32 width{16},height{16};
+    u32 image_id{9}; u64 backing{12},address{0x2000};
     bool gpu_mapped{};
 };
-struct FakeOwner {
-    bool fail_write{}, throw_write{};
-    unsigned written{};
-    std::vector<u8> last_pixels;
-    std::shared_ptr<FakeSurface> surface=std::make_shared<FakeSurface>();
-    std::shared_ptr<FakeSurface> LookupVideoSurface(u32 id) {
-        return id==9 ? surface : nullptr;
+using VideoSurface=FakeSurface;
+struct VideoPoolView {u64 backing{};std::size_t offset{},size{};};
+struct VideoPool {
+    std::optional<VideoPoolView> view;
+    std::optional<VideoPoolView> Lookup(u32 id){return id==9?view:std::nullopt;}
+};
+struct MemoryRecord {bool bound{};u64 guest_address{};std::size_t size{};};
+struct NativeMemory {
+    std::optional<MemoryRecord> record;
+    std::optional<MemoryRecord> Get(u64 id){return id==12?record:std::nullopt;}
+};
+struct GuestMemory {
+    bool valid{true},writable{true},throw_write{};
+    std::vector<u8> bytes=std::vector<u8>(384,0xCC);
+    unsigned writes{};
+    bool IsValidVirtualAddressRange(Common::ProcessAddress a,std::size_t n){
+        return valid&&a.address==0x2000&&n<=bytes.size();
     }
-    bool WriteVideoSurface(u32 id,const FakeSurface&,
-                           const std::vector<u8>& pixels) {
-        assert(id==9 && pixels.size()==384);
-        if(throw_write) throw std::bad_alloc{};
-        if(fail_write) return false;
-        ++written;last_pixels=pixels;
-        return true;
+    bool WriteBlock(Common::ProcessAddress a,const u8* src,std::size_t n){
+        if(throw_write)throw std::bad_alloc{};
+        if(!writable||a.address!=0x2000||n>bytes.size())return false;
+        std::memcpy(bytes.data(),src,n);
+        ++writes;return true;
     }
 };
+struct KProcess {GuestMemory memory;GuestMemory& GetMemory(){return memory;}};
+struct NvMapHandle {bool allocated{};u64 address{},d_address{};u32 session_id{};};
+struct NvMapFile {
+    std::optional<NvMapHandle> handle;
+    const NvMapHandle* GetHandle(u64 id){return id==12&&handle?&*handle:nullptr;}
+};
+struct Session {KProcess* process{};};
+struct ModuleContainer {
+    NvMapFile nvmap;Session session;
+    NvMapFile& GetNvMapFile(){return nvmap;}
+    const Session* GetSession(u32 id)const{return id==34?&session:nullptr;}
+};
+struct NativeModule {ModuleContainer container;ModuleContainer& GetContainer(){return container;}};
+struct Mapping {unsigned references{};};
+struct IGraphicsSupervisor {
+    std::mutex m_native_memory_mutex;
+    VideoPool m_video_pools;
+    NativeMemory m_native_memory;
+    NativeModule module;
+    KProcess process;
+    NativeModule* m_native_module{&module};
+    KProcess* m_process{&process};
+    std::map<std::pair<u32,u32>,Mapping> m_video_mappings;
+    FakeSystem& system;
+    std::shared_ptr<FakeSurface> surface=std::make_shared<FakeSurface>();
+    explicit IGraphicsSupervisor(FakeSystem& owner_system):system(owner_system) {
+        m_video_pools.view=VideoPoolView{12,0,384};
+        m_native_memory.record=MemoryRecord{true,0x2000,384};
+        module.container.nvmap.handle=NvMapHandle{true,0x2000,0x9000,34};
+        module.container.session.process=&process;
+    }
+    std::shared_ptr<FakeSurface> LookupVideoSurface(u32 id) {return id==9?surface:nullptr;}
+    bool WriteVideoSurface(u32,const VideoSurface&,std::span<const u8>);
+};
+using FakeOwner=IGraphicsSupervisor;
+__REAL_SURFACE_WRITE__
 struct FakeReady {
     bool room{};
     unsigned notifications{};
@@ -197,7 +262,7 @@ public:
     struct PendingPicture{Tegra::Host1x::Nx2Picture picture;bool eos{};};
     struct Output{u32 image{},width{},height{};u64 pts{};bool eos{};};
     FakeSystem system;
-    std::shared_ptr<FakeOwner> m_owner=std::make_shared<FakeOwner>();
+    std::shared_ptr<FakeOwner> m_owner=std::make_shared<FakeOwner>(system);
     std::shared_ptr<FakeReady> m_ready=std::make_shared<FakeReady>();
     std::unique_ptr<Tegra::Host1x::Nx2VideoDecoder> m_decoder{
         std::make_unique<Tegra::Host1x::Nx2VideoDecoder>()};
@@ -271,37 +336,39 @@ int main(){
     session.Pump();
     assert(session.m_outputs.empty() && session.m_pending.size()==1);
     assert(session.system.host.sync.GetGuestSyncpointValue(5)==0 &&
-           session.m_owner->written==0);
+           session.m_owner->process.memory.writes==0);
     for(u32 i=0;i<10;++i) session.system.host.sync.IncrementGuest(7);
     assert(session.system.host.sync.GetGuestSyncpointValue(7)==10);
-    session.m_owner->fail_write=true;
+    session.m_owner->process.memory.writable=false;
     session.Pump();
     assert(session.m_outputs.empty() && session.m_pending.size()==1 &&
            session.m_guest_owned.empty());
-    assert(session.m_owner->written==0 && session.system.host.sync.GetGuestSyncpointValue(5)==0);
-    session.m_owner->fail_write=false;
+    assert(session.m_owner->process.memory.writes==0 && session.system.host.sync.GetGuestSyncpointValue(5)==0);
+    session.m_owner->process.memory.writable=true;
     // Exercise the ACTUAL maintained Pump through a late host allocation
     // failure after metadata/guest ownership have already been staged.
-    session.m_owner->throw_write=true;
+    session.m_owner->process.memory.throw_write=true;
     session.Pump();
     assert(session.m_outputs.empty() && session.m_pending.size()==1 &&
            session.m_guest_owned.empty() && session.m_available.size()==2);
     assert(session.system.host.sync.GetGuestSyncpointValue(5)==0);
-    session.m_owner->throw_write=false;
+    session.m_owner->process.memory.throw_write=false;
     session.Pump();
-    assert(session.m_owner->written==1 && session.system.host.sync.GetGuestSyncpointValue(5)==1);
+    assert(session.m_owner->process.memory.writes==1 && session.system.host.sync.GetGuestSyncpointValue(5)==1);
+    assert(session.system.gpu.invalidations==1 && session.system.gpu.address==0x9000 &&
+           session.system.gpu.bytes==384);
     assert(session.m_outputs.size()==1 && session.m_outputs.front().image==9 &&
            session.m_outputs.front().pts==123 && session.m_outputs.front().eos);
     assert(session.m_pending.empty() && session.m_guest_owned.contains(9));
     assert(session.m_available.size()==1 && session.m_available.front().id==8);
-    assert(session.m_owner->last_pixels.size()==size);
+    assert(session.m_owner->process.memory.bytes.size()==size);
     for(int y=0;y<16;++y)
        for(int x=0;x<16;++x)
-          assert(session.m_owner->last_pixels[y*16+x]==f->data[0][y*f->linesize[0]+x]);
+          assert(session.m_owner->process.memory.bytes[y*16+x]==f->data[0][y*f->linesize[0]+x]);
     for(int y=0;y<8;++y)
        for(int x=0;x<8;++x) {
-          assert(session.m_owner->last_pixels[luma+y*16+2*x]==f->data[1][y*f->linesize[1]+x]);
-          assert(session.m_owner->last_pixels[luma+y*16+2*x+1]==f->data[2][y*f->linesize[2]+x]);
+          assert(session.m_owner->process.memory.bytes[luma+y*16+2*x]==f->data[1][y*f->linesize[1]+x]);
+          assert(session.m_owner->process.memory.bytes[luma+y*16+2*x+1]==f->data[2][y*f->linesize[2]+x]);
        }
     // An impossible guest image is retired without fabricating an output.
     session.m_pending.push_back({picture,false});
@@ -320,13 +387,14 @@ int main(){
     session.m_owner->surface->layout.row_bytes=16;
     session.Pump();
     assert(session.m_pending.empty() && session.m_outputs.size()==2 &&
-           session.system.host.sync.GetGuestSyncpointValue(5)==2 && session.m_owner->written==2);
+           session.system.host.sync.GetGuestSyncpointValue(5)==2 && session.m_owner->process.memory.writes==2);
+    assert(session.system.gpu.invalidations==2);
     std::puts("H05_REAL_FFMPEG_PUMP_OWNER_PASS decoded_nv12=exact "
               "blocked_release=held no_head_of_line=1 failed_write=rolled_back "
               "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
-              "dead_image=retired write_oom=rolled_back true_ipc_vulkan_fence=not_exercised");
+              "dead_image=retired write_oom=rolled_back owner_nvmap_guest_write=1 true_ipc_vulkan_fence=not_exercised");
 }
-""".replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump)
+""".replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump).replace("__REAL_SURFACE_WRITE__",surface_write)
 compilers=list(dict.fromkeys(x for x in
     (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"C++20 compiler required"

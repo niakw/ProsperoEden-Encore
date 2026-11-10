@@ -100,18 +100,20 @@ template<class F> HostScopeExit<F> operator+(HostScopeMaker, F fn) {
     return {std::move(fn)};
 }
 #define SCOPE_EXIT auto ns2_scope_exit_guard_ = HostScopeMaker{} + [&]()
+#define R_UNLESS(condition, result) do { if (!(condition)) return (result); } while (false)
 #define R_TRY(expression) do { auto ns2_result_ = (expression); \
     if (ns2_result_.IsError()) return ns2_result_; } while (false)
 #define R_SUCCEED() return Result{}
 
 namespace Kernel {
+inline constexpr Result ResultOutOfResource{21};
 using KProcessAddress = u64;
 inline constexpr std::size_t PageSize = 0x1000;
 inline u64 GetInteger(KProcessAddress p) { return p; }
 struct KMemoryManager {
     enum class Pool : int { Application=0, System=1 };
 };
-struct DummySystem {};
+struct DummySystem { bool fail_resource_limit = false; };
 struct FakeMemoryManager {
     unsigned calls = 0;
     std::size_t GetSize(KMemoryManager::Pool pool) {
@@ -131,8 +133,9 @@ struct KResourceLimit {
     inline static unsigned closed = 0;
     void Close(KernelCore&) { ++closed; }
 };
-inline KResourceLimit* CreateResourceLimitForProcess(DummySystem&,
+inline KResourceLimit* CreateResourceLimitForProcess(DummySystem& system,
                                                       std::size_t bytes) {
+    if (system.fail_resource_limit) return nullptr;
     if (bytes != 0x10000000 && bytes != 0x8000000)
         throw std::runtime_error("wrong physical memory pool size");
     ++KResourceLimit::created;
@@ -306,11 +309,24 @@ int main(int argc, char** argv) {
                 Kernel::KResourceLimit::created==1 &&
                 Kernel::KResourceLimit::closed==1,
                 "real KProcess metadata failure did not close resource and stop");
+        // An OOM in the resource-limit allocator must return before
+        // scope registration and before guest page/handle publication.
+        kernel.sys.fail_resource_limit = true;
+        Kernel::KProcess oom;
+        const auto no_resource = oom.LoadFromMetadata(kernel, metadata, code_bytes,
+                                                        start, offset);
+        Require(no_resource.IsError() &&
+                no_resource.code == Kernel::ResultOutOfResource.code &&
+                !oom.initialized && !oom.interfaces_initialized &&
+                Kernel::KResourceLimit::created == 1 &&
+                Kernel::KResourceLimit::closed == 1,
+                "real KProcess null resource limit must fail before process handoff");
         std::cout << "NS2_REAL_KPROCESS_LOADFROMMETADATA_HOST_PASS"
                   << " actual_owner_method=1 public_npdm_and_nso=1"
                   << " all_address_space_flags=1 code_pages=4"
                   << " core_and_kac_forwarding=1 resource_scope_exit=1"
                   << " failing_Initialize_short_circuit=1"
+                  << " null_resource_limit_rejected=1"
                   << " real_kernel_Initialize_not_executed=1"
                   << " PS5_runtime_not_executed=1\n";
         return 0;
@@ -327,6 +343,7 @@ def unchanged_member(source: str) -> str:
         raise AssertionError("Maintained KProcess metadata function anchors changed")
     method = START + source.split(START,1)[1].split(STOP,1)[0]
     for anchor in ("CreateResourceLimitForProcess", "SCOPE_EXIT",
+                   "R_UNLESS(res_limit != nullptr, ResultOutOfResource)",
                    "CreateProcessParameter", "GetKernelCapabilities",
                    "this->Initialize(", "InitializeInterfaces("):
         if anchor not in method:

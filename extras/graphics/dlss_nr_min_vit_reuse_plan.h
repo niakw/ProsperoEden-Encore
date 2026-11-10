@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <limits>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace Eden::Graphics::DlssNrMin {
@@ -44,8 +45,6 @@ struct VitReuseCandidate {
     if(!AuditVitRequestedBufferBytes(native_plan,raster,sizes) ||
        sizes.vit_blocks!=8u || sizes.requested_buffers!=65u ||
        sizes.plane_bytes==0u) return false;
-    constexpr std::array<std::uint32_t,9> scale{
-        1u,1u,4u,1u,1u,4u,4u,4u,4u};
     // Slots 0,1: two ping-pong input/output full-plane buffers.
     // Slots 2...8: scratch groups, all distinct INSIDE one VitBlock.
     // 0 input/out, 1 output/input, 2 hidden, 3 ffwd, 4 attention,

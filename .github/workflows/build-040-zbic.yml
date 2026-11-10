@@ -88,6 +88,7 @@ jobs:
           # Compare the compiled PS5 PresentManager header against its
           # maintained Vulkan synchronization owner before provisioning SDK.
           python3 -B tools/check-ps5-present-header-contract.py
+          python3 -B tools/check-native-texture-pin-owner-parity.py
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

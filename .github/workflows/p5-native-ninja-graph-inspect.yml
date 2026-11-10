@@ -113,8 +113,11 @@ jobs:
           # The same witnesses are now in the mandatory native preflight.
           python3 -B tools/check-native-source-syntax.py "$scratch/native-local" \
             --only video_core/renderer_vulkan/vk_turbo_mode.cpp \
-            --only video_core/renderer_vulkan/vk_texture_cache_base.cpp
-          echo "P5_TENTH_NATIVE_CXX_FAILURES_REQUALIFIED"
+            --only video_core/renderer_vulkan/vk_texture_cache_base.cpp \
+            --only headless/vulkan_blit_screen_r08.cpp \
+            --only headless/vulkan_renderer_r08.cpp \
+            --only headless/vulkan_window_adapt_r08.cpp
+          echo "P5_NATIVE_CXX_FAILURES_REQUALIFIED"
           # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
           # translation units using the actual native compile_commands.json.
           # Collect all errors in one run; do not produce .o/ELF/ZIP.

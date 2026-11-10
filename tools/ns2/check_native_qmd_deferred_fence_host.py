@@ -54,10 +54,12 @@ public:
 }
 struct Memory {
     bool mapped = true;
+    bool remapped = false;
     bool fail_map = false;
     bool fail_read = false;
     bool fail_write = false;
     u32 stored = 5;
+    u32 replacement_word = 777;
     unsigned writes = 0;
     bool IsFullyMappedRange(u64, std::size_t) {
         if (fail_map) throw std::runtime_error("mapping race");
@@ -68,7 +70,7 @@ struct Memory {
     // exception behavior so a late backing failure is still latched.
     u32* GetPointer(u64) {
         if (fail_map) throw std::runtime_error("mapping race");
-        return mapped ? &stored : nullptr;
+        return mapped ? (remapped ? &replacement_word : &stored) : nullptr;
     }
     template<class T> T Read(u64) {
         if (fail_read) throw std::runtime_error("guest read fault");
@@ -94,7 +96,10 @@ int main() {
     const auto reduced = [channel, memory, ticket, address, payload, reduction] {
 __REDUCTION__
     };
-    const auto released = [channel, memory, ticket, addr, payload, flags] {
+    // This is the exact backing identity captured by the shipping QMD3
+    // release owner before GPU submission, not a newly looked-up pointer.
+    const auto* const backing = data.GetPointer(addr);
+    const auto released = [channel, memory, ticket, addr, payload, flags, backing] {
 __RELEASE__
     };
     Eden::ResetGpuFailureForTitle();
@@ -140,6 +145,14 @@ __RELEASE__
     released();
     assert(data.writes == 3 && data.stored == 14);
     Eden::ResetGpuFailureForTitle();
+    // A guest GMMU VA may be recycled for a different backing before
+    // VkFence retirement even while the channel ticket remains current.
+    data.remapped = true;
+    released();
+    assert(data.writes == 3 && data.stored == 14 &&
+           data.replacement_word == 777 && Eden::PeekGpuFailure());
+    Eden::ResetGpuFailureForTitle();
+    data.remapped = false;
     Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().Revoke();
     // The callback captured the historical ticket, but the registry revoked
     // that epoch. Neither deferred path may publish a stale guest completion.

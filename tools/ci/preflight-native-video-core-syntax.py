@@ -73,9 +73,11 @@ def main() -> int:
     parser.add_argument("native_build_dir", type=Path)
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--max-tus", type=int, default=240)
+    parser.add_argument("--start-index", type=int, default=0,
+                        help="Skip previously checked deterministic prefix for follow-up slices")
     args = parser.parse_args()
-    if not 1 <= args.jobs <= 8 or args.max_tus < 40:
-        parser.error("jobs must be 1..8 and max-tus >=40")
+    if not 1 <= args.jobs <= 8 or args.max_tus < 40 or args.start_index < 0:
+        parser.error("jobs must be 1..8, max-tus >=40 and start-index >=0")
     path = args.native_build_dir.resolve() / "compile_commands.json"
     records = json.loads(path.read_text())
     eligible = []
@@ -87,9 +89,13 @@ def main() -> int:
     eligible.sort(key=lambda item: item[0])
     if len(eligible) < 40:
         raise RuntimeError(f"Expected at least 40 real video/Vulkan C++ units; found {len(eligible)}")
-    selected = eligible[:args.max_tus]
+    if args.start_index >= len(eligible):
+        raise RuntimeError(f"Native syntax slice begins beyond eligible sources: "
+                           f"{args.start_index} >= {len(eligible)}")
+    selected = eligible[args.start_index:args.start_index + args.max_tus]
     print(f"PS5_VIDEO_SYNTAX_SCOPE selected={len(selected)} eligible={len(eligible)} "
-          f"unscanned={len(eligible)-len(selected)} jobs={args.jobs}", flush=True)
+          f"start_index={args.start_index} outside_slice={len(eligible)-len(selected)} "
+          f"jobs={args.jobs}", flush=True)
 
     def check(item: tuple):
         _grouping, file, record = item
@@ -114,7 +120,8 @@ def main() -> int:
         print(f"PS5_VIDEO_SYNTAX_RESULT FAILED={len(failed)} PASS={len(selected)-len(failed)}",
               file=sys.stderr)
         return 1
-    print(f"PS5_VIDEO_SYNTAX_PASS scanned={len(selected)} unscanned={len(eligible)-len(selected)} "
+    print(f"PS5_VIDEO_SYNTAX_PASS scanned={len(selected)} start_index={args.start_index} "
+          f"eligible={len(eligible)} outside_slice={len(eligible)-len(selected)} "
           "PS5_hardware_unverified=1 no_link=1", flush=True)
     return 0
 

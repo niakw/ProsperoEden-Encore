@@ -15,10 +15,10 @@ clang++ -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-
 
 Also run GCC when convenient. The positive/negative cases describe a **desired
 candidate** for the active `StorageBufferBinding` owner; they do not exercise
-that existing owner. To promote: first prove precise `native_pointer` and
-`compute` provenance from real Ampere resource reflection and mapping epoch;
-then implement in a vendor research branch, test actual source and build
-against then-pinned Encore, and verify NS1 and NS2 before main integration.
+that existing owner. This is a *model* of a possible storage-length policy. Do not wire it into
+legacy `BindComputeStorageBuffer`: native QMD3 instead goes through
+`NativeQmdResourcePlan` and `ConfigureNative`. Require real native descriptor
+ABI evidence and an actual-source test before any implementation review.
 
 Evidence snapshot: Encore `dd9f2b96`, pinned vendor `22b69d60`.
 Existing owner currently reads a size candidate from `ssbo_addr + 8` and uses
@@ -75,5 +75,19 @@ On the reviewed pinned code, one 32 MiB aligned span requests **8,193**
 not PS5 profiling and not proof that memoization is safe. The real
 process epochs, fence lifetime and map/revision race checks must remain.
 
-The same function text and 17-case C++ harness passed on Clang and GCC
-locally; the Python extractor has not yet executed on GitHub Actions.
+The inspected mapping function body plus the actual native size predicate passed
+**24 cases** with Clang and GCC / UBSan in an isolated local C++ harness.
+The complete repository extractor has **not** run on a pinned vendor checkout
+or GitHub Actions, so that verification is still outstanding.
+
+## Single bounded offline command
+
+```bash
+bash research/ns2/run_host_checks.sh
+```
+
+Runs 19 SSBO policy and 23 backing-lifetime assertions per compiler (Clang/GCC),
+then runs the exact-source native validator **only when** the pinned vendor
+checkout is present. Otherwise it reports `SKIP` and never pretends the source
+test passed. The source witness also checks the six-pass native mapping call
+graph and native descriptor-size predicate. There is no native PS5 build.

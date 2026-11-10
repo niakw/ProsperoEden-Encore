@@ -1,0 +1,1562 @@
+{
+  "schema": "R23-eden-commit-title-inventory-v1",
+  "date": "2026-11-10",
+  "base_pin_exclusive": "5f142c7926d0c7fcbbd0ce30794d72f638a43b2a",
+  "upstream_head_inclusive": "89d1a1cd7015ebd05ac1bb6a97d1a472bf28701b",
+  "commit_count": 155,
+  "method": "github commit metadata all 155; title-based categories are prompts to inspect, not verified code or build classifications",
+  "complete_commit_title_coverage": true,
+  "complete_file_diff_review": false,
+  "items": [
+    {
+      "index": 1,
+      "sha": "89d1a1cd7015ebd05ac1bb6a97d1a472bf28701b",
+      "date": "2026-11-10T09:32:39Z",
+      "title": "[hle] add cmds for fw23.5.0 qlaunch (#4689)",
+      "url": "https://github.com/eden-emulator/mirror/commit/89d1a1cd7015ebd05ac1bb6a97d1a472bf28701b",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 2,
+      "sha": "6a767ac43a089fe988526bf7f8477ccc43277fb1",
+      "date": "2026-11-09T21:39:07Z",
+      "title": "[vulkan]EDS3 Depth Clamp Fixes and Async Shader Fixes (#4639)",
+      "url": "https://github.com/eden-emulator/mirror/commit/6a767ac43a089fe988526bf7f8477ccc43277fb1",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 3,
+      "sha": "d3ee883e538b0152c6be5dceb0e53b2d1172beb0",
+      "date": "2026-11-09T18:16:23Z",
+      "title": "[*] fmt -> std::format, initial C++26 migration (#4677)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d3ee883e538b0152c6be5dceb0e53b2d1172beb0",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 4,
+      "sha": "295823040bb33cc9f473fea382e4eecd35ecd4fa",
+      "date": "2026-11-09T18:16:08Z",
+      "title": "[dist, android] Update translations from Transifex for Nov 09 (#4686)",
+      "url": "https://github.com/eden-emulator/mirror/commit/295823040bb33cc9f473fea382e4eecd35ecd4fa",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 5,
+      "sha": "ae60f8e7f85915a2b79d98b49e3134bbdbeca471",
+      "date": "2026-11-08T22:59:21Z",
+      "title": "[common] Fix Nightly auto updater build (#4678)",
+      "url": "https://github.com/eden-emulator/mirror/commit/ae60f8e7f85915a2b79d98b49e3134bbdbeca471",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 6,
+      "sha": "bfa72a22a34591453326dc1468fb9604fb86421f",
+      "date": "2026-11-08T19:43:33Z",
+      "title": "[core, video_core] Preserve GPU writes during NCE fault handling (#4604)",
+      "url": "https://github.com/eden-emulator/mirror/commit/bfa72a22a34591453326dc1468fb9604fb86421f",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 7,
+      "sha": "83fde0738cc819dc20196ba30fa7bc4313389b2b",
+      "date": "2026-11-08T19:19:37Z",
+      "title": "[common] nlohmann -> jacinth, httplib -> hydrocarbon, rework auto-updater UX (#4412)",
+      "url": "https://github.com/eden-emulator/mirror/commit/83fde0738cc819dc20196ba30fa7bc4313389b2b",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 8,
+      "sha": "8e81d847811111e07d9f1c0f4425cd452c64af18",
+      "date": "2026-11-08T18:56:11Z",
+      "title": "[android] replace revolt logo in about page with stoat logo (#4647)",
+      "url": "https://github.com/eden-emulator/mirror/commit/8e81d847811111e07d9f1c0f4425cd452c64af18",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 9,
+      "sha": "6e24dcb4b549e40f2ea02a29db86f02de6444887",
+      "date": "2026-11-08T02:31:47Z",
+      "title": "[shader_recompiler] Fixed Disco Elysium - bug in swapped abs/neg bits in F2I decoding (#4654)",
+      "url": "https://github.com/eden-emulator/mirror/commit/6e24dcb4b549e40f2ea02a29db86f02de6444887",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 10,
+      "sha": "656cdd948e097f20fcb72c3f5179e2744771f424",
+      "date": "2026-11-08T02:30:28Z",
+      "title": "[dynarmic] Fix guest debugging with gdb-stub (#4620)",
+      "url": "https://github.com/eden-emulator/mirror/commit/656cdd948e097f20fcb72c3f5179e2744771f424",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 11,
+      "sha": "35f0dd7c1ca064ec95ab7efd9981b00f8dcfb989",
+      "date": "2026-11-08T02:27:22Z",
+      "title": "[dynarmic] fix seven A32 and x64 defects (#4598)",
+      "url": "https://github.com/eden-emulator/mirror/commit/35f0dd7c1ca064ec95ab7efd9981b00f8dcfb989",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 12,
+      "sha": "63a94c0caae0bd4f1d74f1098f3f1bd8e8a7f465",
+      "date": "2026-11-08T02:26:50Z",
+      "title": "[nce] Correctly handle register 31 as the zero register in the interpreter (#4631)",
+      "url": "https://github.com/eden-emulator/mirror/commit/63a94c0caae0bd4f1d74f1098f3f1bd8e8a7f465",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 13,
+      "sha": "895d8ede2c69f5f8061b04afaf247c2c5e04c08d",
+      "date": "2026-11-08T02:24:40Z",
+      "title": "[cmake] Correct the -I quoting in the glslangValidator commands (#4632)",
+      "url": "https://github.com/eden-emulator/mirror/commit/895d8ede2c69f5f8061b04afaf247c2c5e04c08d",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 14,
+      "sha": "626568290a5bf6c42b9ba985f1aa32a7a7447053",
+      "date": "2026-11-08T02:21:42Z",
+      "title": "[docs] remove dead support header in README (#4638)",
+      "url": "https://github.com/eden-emulator/mirror/commit/626568290a5bf6c42b9ba985f1aa32a7a7447053",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 15,
+      "sha": "083b778508e16f0ea580e6004323e7309f766a03",
+      "date": "2026-11-08T01:45:40Z",
+      "title": "[android] fix dynarmic link to use Eden's dynarmic instead of the previous dead link (#4663)",
+      "url": "https://github.com/eden-emulator/mirror/commit/083b778508e16f0ea580e6004323e7309f766a03",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 16,
+      "sha": "7f1bc0c9d1872a0623dad8dd3bce7acafd1d39dc",
+      "date": "2026-11-07T20:21:11Z",
+      "title": "[desktop] fix: broken migration button strategy selection (#4661)",
+      "url": "https://github.com/eden-emulator/mirror/commit/7f1bc0c9d1872a0623dad8dd3bce7acafd1d39dc",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 17,
+      "sha": "c769b33e01882a04375c24406150097a2e124ece",
+      "date": "2026-11-07T18:13:14Z",
+      "title": "[dynarmic] A64: Flush deferred emits on long basic blocks and align page table sign bit (#4659)",
+      "url": "https://github.com/eden-emulator/mirror/commit/c769b33e01882a04375c24406150097a2e124ece",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 18,
+      "sha": "d85005b2b27ebdbe785316886cdf04c2894d550e",
+      "date": "2026-11-07T02:55:13Z",
+      "title": "Fixed Civilization VII - added TIR mixed samples support (#4553)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d85005b2b27ebdbe785316886cdf04c2894d550e",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 19,
+      "sha": "873fde41d03742db5e8e6a9f203385969b3f6e73",
+      "date": "2026-11-07T01:26:31Z",
+      "title": "[common, controller] [AI] Controller assignment modes, Controllers tab, Steam Gamemode/Gamescope fixes (gyroscope, controller) (#4583)",
+      "url": "https://github.com/eden-emulator/mirror/commit/873fde41d03742db5e8e6a9f203385969b3f6e73",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 20,
+      "sha": "885b333c08760ccc406202a02a5b3d3fa5eab60b",
+      "date": "2026-11-06T21:06:03Z",
+      "title": "[cmake] Fix build by forcing lz4 bundled (#4648)",
+      "url": "https://github.com/eden-emulator/mirror/commit/885b333c08760ccc406202a02a5b3d3fa5eab60b",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 21,
+      "sha": "5df599128d6828fa0e42968909da848c255d22b1",
+      "date": "2026-11-03T23:53:28Z",
+      "title": "[qt] don't show the game window while the loading screen fades out (#4633)",
+      "url": "https://github.com/eden-emulator/mirror/commit/5df599128d6828fa0e42968909da848c255d22b1",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 22,
+      "sha": "07677aa5006b45dc511269f2c4b2d055cab679bb",
+      "date": "2026-11-03T15:36:49Z",
+      "title": "[bcat] Verify delivery cache file names as file names (AI-assisted) (#4625)",
+      "url": "https://github.com/eden-emulator/mirror/commit/07677aa5006b45dc511269f2c4b2d055cab679bb",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 23,
+      "sha": "fa03b58f04e994c8967f59a20df6a3e40f25f1b4",
+      "date": "2026-11-03T06:42:45Z",
+      "title": "[docs] fix contributing link in README (#4629)",
+      "url": "https://github.com/eden-emulator/mirror/commit/fa03b58f04e994c8967f59a20df6a3e40f25f1b4",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 24,
+      "sha": "8d29148afe5cce1050927462d32772b21e9905ae",
+      "date": "2026-11-02T23:31:53Z",
+      "title": "[desktop] Bump minimum Qt to 6.6 (#4628)",
+      "url": "https://github.com/eden-emulator/mirror/commit/8d29148afe5cce1050927462d32772b21e9905ae",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 25,
+      "sha": "9c3bdeffc019048478e3a4ca3b35fb217676e248",
+      "date": "2026-11-02T22:40:12Z",
+      "title": "[desktop] Prefer X11, but allow Wayland (with a warning) (#4579)",
+      "url": "https://github.com/eden-emulator/mirror/commit/9c3bdeffc019048478e3a4ca3b35fb217676e248",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 26,
+      "sha": "060026dc2d1daa749cf0b39378f132f506cbfd93",
+      "date": "2026-11-02T17:59:46Z",
+      "title": "[dist, android] Update translations from Transifex for Nov 02 (#4626)",
+      "url": "https://github.com/eden-emulator/mirror/commit/060026dc2d1daa749cf0b39378f132f506cbfd93",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 27,
+      "sha": "92f54a034aa90b03ce33ca7571f24f58ddb380b0",
+      "date": "2026-11-02T03:32:10Z",
+      "title": "[android, docs] Update recommended drivers, Fix Android build Guide and Fix X link. (#4617)",
+      "url": "https://github.com/eden-emulator/mirror/commit/92f54a034aa90b03ce33ca7571f24f58ddb380b0",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 28,
+      "sha": "7a6d055094846b7787f9b8c0f238c0c68709f632",
+      "date": "2026-11-01T20:53:04Z",
+      "title": "[desktop] queue FirstFrameDisplayed to fix loading screen race (#4536)",
+      "url": "https://github.com/eden-emulator/mirror/commit/7a6d055094846b7787f9b8c0f238c0c68709f632",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 29,
+      "sha": "c6fa5c1f77ba40bcb091b1a53492230f40d97ded",
+      "date": "2026-11-01T20:52:29Z",
+      "title": "[common] use handrolled string utility conversions instead of wstring codecvt (#3773)",
+      "url": "https://github.com/eden-emulator/mirror/commit/c6fa5c1f77ba40bcb091b1a53492230f40d97ded",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 30,
+      "sha": "2c40328a23630353f4dd20778eb587e586cd83a5",
+      "date": "2026-11-01T20:51:51Z",
+      "title": "[macos, net] add sysctl(RT_xx)-fetched network interfaces (#3656)",
+      "url": "https://github.com/eden-emulator/mirror/commit/2c40328a23630353f4dd20778eb587e586cd83a5",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 31,
+      "sha": "41b6807f127526e89ede0fb40748d6ae988fc0cc",
+      "date": "2026-11-01T20:51:15Z",
+      "title": "[fs] use mmap() to read files using VM/pagefaults for higher throughput (#3151)",
+      "url": "https://github.com/eden-emulator/mirror/commit/41b6807f127526e89ede0fb40748d6ae988fc0cc",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 32,
+      "sha": "2bec66c0922673844bc761a0784e89cde7869f00",
+      "date": "2026-11-01T20:48:38Z",
+      "title": "[dynarmic] Remove redundant configure struct (#4485)",
+      "url": "https://github.com/eden-emulator/mirror/commit/2bec66c0922673844bc761a0784e89cde7869f00",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 33,
+      "sha": "be972d7fdc50376d231d4f6b0ca912adc958aadd",
+      "date": "2026-11-01T20:46:19Z",
+      "title": "[dynarmic] Remove redundant constant pool ops (#4516)",
+      "url": "https://github.com/eden-emulator/mirror/commit/be972d7fdc50376d231d4f6b0ca912adc958aadd",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 34,
+      "sha": "972860ac8fcb7be36c13d572890a7349353397ce",
+      "date": "2026-11-01T20:45:45Z",
+      "title": "[dist] reoptimize assets, and add svg optimization (#4537)",
+      "url": "https://github.com/eden-emulator/mirror/commit/972860ac8fcb7be36c13d572890a7349353397ce",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 35,
+      "sha": "3d3ed4b7d15b9fac14f2ea255b56f486c34bfa81",
+      "date": "2026-11-01T20:44:40Z",
+      "title": "[shader_recompiler, renderer_vulkan] draw sprites whose texture handle comes from a vertex attribute (#4566)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3d3ed4b7d15b9fac14f2ea255b56f486c34bfa81",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 36,
+      "sha": "be21ccce25ed598059ea7e679f227d0ac26e1e4e",
+      "date": "2026-11-01T17:27:36Z",
+      "title": "[docs] fix link to AI and LLM Usage in docs/README.md (#4618)",
+      "url": "https://github.com/eden-emulator/mirror/commit/be21ccce25ed598059ea7e679f227d0ac26e1e4e",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 37,
+      "sha": "db83070bf2ca788131fa0eac3db6a7a83b75a24c",
+      "date": "2026-11-01T04:16:02Z",
+      "title": "[meta] Add FUNDING.yml (#4613)",
+      "url": "https://github.com/eden-emulator/mirror/commit/db83070bf2ca788131fa0eac3db6a7a83b75a24c",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 38,
+      "sha": "e903d70d9eb46232c2b958674256ee04cf4e56c4",
+      "date": "2026-11-01T02:19:27Z",
+      "title": "[docs] Add site policy, disallow AI-written PRs/issues and spam (#4612)",
+      "url": "https://github.com/eden-emulator/mirror/commit/e903d70d9eb46232c2b958674256ee04cf4e56c4",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 39,
+      "sha": "802531c4578e88947a1bcfabfe7a5646d8ed2ce3",
+      "date": "2026-11-01T02:12:55Z",
+      "title": "[ports/*] Fix cross-compilation issues (#4493)",
+      "url": "https://github.com/eden-emulator/mirror/commit/802531c4578e88947a1bcfabfe7a5646d8ed2ce3",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 40,
+      "sha": "bd071e3464f3aa37dcade1b19f8a2df95936fca8",
+      "date": "2026-11-01T02:12:03Z",
+      "title": "[dynarmic] Add A64:SM4/SM3 tests (#4513)",
+      "url": "https://github.com/eden-emulator/mirror/commit/bd071e3464f3aa37dcade1b19f8a2df95936fca8",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 41,
+      "sha": "a845100bf098a67c738934bbd48acc825275bc55",
+      "date": "2026-11-01T02:11:26Z",
+      "title": "[cmake] Cleanup dynarmic's CMake (#4365)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a845100bf098a67c738934bbd48acc825275bc55",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 42,
+      "sha": "943f1fc76087adcfc893fb1ca3aea507df15d004",
+      "date": "2026-10-30T18:55:35Z",
+      "title": "[gpu_thread] drop affinity pinning, fix BOTW perf regression (#4603)",
+      "url": "https://github.com/eden-emulator/mirror/commit/943f1fc76087adcfc893fb1ca3aea507df15d004",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 43,
+      "sha": "072da775164ab258f2bbe62eecf935a99e7f36f1",
+      "date": "2026-10-30T15:45:11Z",
+      "title": "[android] Replace GitHub Icon with Forgejo icon in About page (#4535)",
+      "url": "https://github.com/eden-emulator/mirror/commit/072da775164ab258f2bbe62eecf935a99e7f36f1",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 44,
+      "sha": "035f4611cb8f369d11e97651aff1988e60e8a120",
+      "date": "2026-10-30T04:05:24Z",
+      "title": "[vk_rasterizer] Fix viewport Y flip for negative scale_y (#4558)",
+      "url": "https://github.com/eden-emulator/mirror/commit/035f4611cb8f369d11e97651aff1988e60e8a120",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 45,
+      "sha": "ea92c081b710dc1fb6e35ce8bc05bee8dd6ddf06",
+      "date": "2026-10-30T03:40:15Z",
+      "title": "[core] Speed up NCZBLOCK reads and skip double AES for pre-decrypted NCZ (#4582)",
+      "url": "https://github.com/eden-emulator/mirror/commit/ea92c081b710dc1fb6e35ce8bc05bee8dd6ddf06",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 46,
+      "sha": "69665063a9b13dad8fb2b90a64bd8bb0d0e90ea6",
+      "date": "2026-10-30T02:47:38Z",
+      "title": "[cheats] add runtime cheats toggles with master code support (#4334)",
+      "url": "https://github.com/eden-emulator/mirror/commit/69665063a9b13dad8fb2b90a64bd8bb0d0e90ea6",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 47,
+      "sha": "b4d5760014176bfc42b60b7dc5661240c97c8e3b",
+      "date": "2026-10-30T02:26:33Z",
+      "title": "[video_core] Revert 4490 and 4531 (#4584)",
+      "url": "https://github.com/eden-emulator/mirror/commit/b4d5760014176bfc42b60b7dc5661240c97c8e3b",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 48,
+      "sha": "0731f40f4d86227f05da3fffbc44831065b53a8a",
+      "date": "2026-10-30T02:06:33Z",
+      "title": "[video_core/host1x] VP9 Video Playback Fixes (#4590)",
+      "url": "https://github.com/eden-emulator/mirror/commit/0731f40f4d86227f05da3fffbc44831065b53a8a",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 49,
+      "sha": "3e6a5566cff1818c3a91e1824e6b672fd3eeb144",
+      "date": "2026-10-30T01:47:10Z",
+      "title": "[vk] handles unreachable unknown format 255 error (#4591)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3e6a5566cff1818c3a91e1824e6b672fd3eeb144",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 50,
+      "sha": "d89e02d3ac9b769046f5472f0361d5adb2596bab",
+      "date": "2026-10-30T01:26:33Z",
+      "title": "[emit_spirv_image] remove the fix for LA/EOW (#4589)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d89e02d3ac9b769046f5472f0361d5adb2596bab",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 51,
+      "sha": "a2aa4d97e10a8345babfe647e1abd5ed5909c623",
+      "date": "2026-10-29T16:10:37Z",
+      "title": "[docs] Remove AI restrictions, and adapt to new open registration (#4585)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a2aa4d97e10a8345babfe647e1abd5ed5909c623",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 52,
+      "sha": "26a03d2473787abf3223b2d0e65b291eee00c1e1",
+      "date": "2026-10-26T16:26:32Z",
+      "title": "Revert \"[video_core] Improve asynchronous shader building (#2560)\" (#4512)",
+      "url": "https://github.com/eden-emulator/mirror/commit/26a03d2473787abf3223b2d0e65b291eee00c1e1",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 53,
+      "sha": "b7c1ded1593c3c2dc58625824a04e30a63fe80c7",
+      "date": "2026-10-26T16:26:07Z",
+      "title": "[file_sys] added log for newer keys needed error (#4519)",
+      "url": "https://github.com/eden-emulator/mirror/commit/b7c1ded1593c3c2dc58625824a04e30a63fe80c7",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 54,
+      "sha": "cbd4cf2d8ce9b66936bff8a19be4715e770e0c71",
+      "date": "2026-10-26T16:25:47Z",
+      "title": "[hle][core] Hang Freeze Fix - Video Fixes - Revert Microsleep (#4316) (#4525)",
+      "url": "https://github.com/eden-emulator/mirror/commit/cbd4cf2d8ce9b66936bff8a19be4715e770e0c71",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 55,
+      "sha": "a3debcf731143aabd6eefee406d511551d3c9a73",
+      "date": "2026-10-26T16:25:24Z",
+      "title": "[buffer_cashe] use old logic when Optimized Vertex Buffers is disabled (#4528)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a3debcf731143aabd6eefee406d511551d3c9a73",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 56,
+      "sha": "5239cbe2a78d6533e3541a71c4d3c723818dcb6e",
+      "date": "2026-10-26T16:24:45Z",
+      "title": "[nce] handles duplicate NCE interrupts (#4530)",
+      "url": "https://github.com/eden-emulator/mirror/commit/5239cbe2a78d6533e3541a71c4d3c723818dcb6e",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 57,
+      "sha": "0e11fe8b5e3d3b563946726ed06cb44b2bf5ccb3",
+      "date": "2026-10-26T16:24:28Z",
+      "title": "[video_core, settings] readback for nce invalidations (#4490) optimization and nuke toggles (#4502) (#4531)",
+      "url": "https://github.com/eden-emulator/mirror/commit/0e11fe8b5e3d3b563946726ed06cb44b2bf5ccb3",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 58,
+      "sha": "0689f73147ebeddb9ac5fb8b0edf2625425f8d71",
+      "date": "2026-10-26T16:24:00Z",
+      "title": "[ir] resolve conditional Phi inputs when tracking bindless texture handles (#4551)",
+      "url": "https://github.com/eden-emulator/mirror/commit/0689f73147ebeddb9ac5fb8b0edf2625425f8d71",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 59,
+      "sha": "a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1",
+      "date": "2026-10-26T16:23:45Z",
+      "title": "[vulkan] Fix TOTK dark squares (#4565)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 60,
+      "sha": "58968bd1274d8ebb1f159ad31500dde8d74abea6",
+      "date": "2026-10-26T16:23:18Z",
+      "title": "[core] Support block-compressed NSZ and XCZ (#4552)",
+      "url": "https://github.com/eden-emulator/mirror/commit/58968bd1274d8ebb1f159ad31500dde8d74abea6",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 61,
+      "sha": "05f36d990ce5301b310871451201a72e4c52b4df",
+      "date": "2026-10-26T15:23:23Z",
+      "title": "[chore] re-add out/ to .gitignore (#4578)",
+      "url": "https://github.com/eden-emulator/mirror/commit/05f36d990ce5301b310871451201a72e4c52b4df",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 62,
+      "sha": "eb88a40a8eb0fe847281ea6913fcc7ff7daedcd2",
+      "date": "2026-10-25T15:06:46Z",
+      "title": "[qt] fix graphics API toggle getting stuck on OpenGL_GLSL (#4577)",
+      "url": "https://github.com/eden-emulator/mirror/commit/eb88a40a8eb0fe847281ea6913fcc7ff7daedcd2",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 63,
+      "sha": "305f40100d76ec57b13c2f03eafd490db83691cb",
+      "date": "2026-10-25T09:03:16Z",
+      "title": "Fix aarch and android builds (#4576)",
+      "url": "https://github.com/eden-emulator/mirror/commit/305f40100d76ec57b13c2f03eafd490db83691cb",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 64,
+      "sha": "989768aa46720e3fcab9e2111e3ddd70819c382b",
+      "date": "2026-10-19T13:58:04Z",
+      "title": "Fix [core, gpu, threads] Multithreading refactor (#4254) (#4548)",
+      "url": "https://github.com/eden-emulator/mirror/commit/989768aa46720e3fcab9e2111e3ddd70819c382b",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 65,
+      "sha": "de7e6e01d43e8cf2ec193d74fa053b0d7949955f",
+      "date": "2026-10-17T22:17:28Z",
+      "title": "Revert \t[input_common/joycon] Enumerate SDL devices iff SDL signals change (#4486) (#4545)",
+      "url": "https://github.com/eden-emulator/mirror/commit/de7e6e01d43e8cf2ec193d74fa053b0d7949955f",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 66,
+      "sha": "e0d47f2790e3f758fa2188926a0bb2f56af6b310",
+      "date": "2026-10-16T19:41:11Z",
+      "title": "[cmake] fix macOS compilation by forcing lz4 to be static (#4540)",
+      "url": "https://github.com/eden-emulator/mirror/commit/e0d47f2790e3f758fa2188926a0bb2f56af6b310",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 67,
+      "sha": "d8c6c59b679867d2595fdc0953df033475e23380",
+      "date": "2026-10-15T23:17:53Z",
+      "title": "Fix Check Strings after 4523 (#4534)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d8c6c59b679867d2595fdc0953df033475e23380",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 68,
+      "sha": "aaa0bcb9bf5694d62538c361b210147294a5ce3d",
+      "date": "2026-10-15T10:13:17Z",
+      "title": "[patcher, ro, settings] runtime tls patch (#4492) optimization and nuke toggle (#4502) (#4523)",
+      "url": "https://github.com/eden-emulator/mirror/commit/aaa0bcb9bf5694d62538c361b210147294a5ce3d",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 69,
+      "sha": "e255c20db4111485d228c10478bda63aabcfdde5",
+      "date": "2026-10-15T06:45:15Z",
+      "title": "Revert \"[hle] constexpr handler dispatch maps, introduce version gating (#4480)\" (#4532)",
+      "url": "https://github.com/eden-emulator/mirror/commit/e255c20db4111485d228c10478bda63aabcfdde5",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 70,
+      "sha": "14da4482a4668928bad43bb67ef12f96b9c9d972",
+      "date": "2026-10-14T19:24:58Z",
+      "title": "[input_common/joycon] Enumerate SDL devices iff SDL signals change (#4486)",
+      "url": "https://github.com/eden-emulator/mirror/commit/14da4482a4668928bad43bb67ef12f96b9c9d972",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 71,
+      "sha": "fb51a1253447a2655382d3cf952c4c470a1d96c6",
+      "date": "2026-10-14T19:24:35Z",
+      "title": "[input/sdl] nuke SDL_Vibration thread (#4299)",
+      "url": "https://github.com/eden-emulator/mirror/commit/fb51a1253447a2655382d3cf952c4c470a1d96c6",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 72,
+      "sha": "a594c8d60ef79280adc046760561912207e16e17",
+      "date": "2026-10-13T22:04:16Z",
+      "title": "[shader_recompiler, vulkan, qcom, tu] Provide handling to missing shader subgroups on QCOM (#4508)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a594c8d60ef79280adc046760561912207e16e17",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 73,
+      "sha": "6b3cb5772b6e4875f088e5b48e089a3b3fda7f0d",
+      "date": "2026-10-13T21:54:51Z",
+      "title": "[docs] revise AI policy (#4522)",
+      "url": "https://github.com/eden-emulator/mirror/commit/6b3cb5772b6e4875f088e5b48e089a3b3fda7f0d",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 74,
+      "sha": "218c6705d950635bc18f8458d738a1996fb592b6",
+      "date": "2026-10-13T02:38:36Z",
+      "title": "[hle] constexpr handler dispatch maps, introduce version gating (#4480)",
+      "url": "https://github.com/eden-emulator/mirror/commit/218c6705d950635bc18f8458d738a1996fb592b6",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 75,
+      "sha": "4dc69c06f764a235bccd01afbfc765d9ddbebc9f",
+      "date": "2026-10-12T20:21:17Z",
+      "title": "[*] Remove Fix{Static,Small}VectorADL workaround for GCC 12 (#4386)",
+      "url": "https://github.com/eden-emulator/mirror/commit/4dc69c06f764a235bccd01afbfc765d9ddbebc9f",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 76,
+      "sha": "9580e54f2f4787986abde4c7601177d0c5cd2792",
+      "date": "2026-10-12T17:23:00Z",
+      "title": "[dist, android] Update translations from Transifex for Oct 12 (#4527)",
+      "url": "https://github.com/eden-emulator/mirror/commit/9580e54f2f4787986abde4c7601177d0c5cd2792",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 77,
+      "sha": "6352612425ae0765802eaa8c5904ff652b97222a",
+      "date": "2026-10-11T23:09:10Z",
+      "title": "[vk] Return the corrections made for buffer update logic #3690 (#4499)",
+      "url": "https://github.com/eden-emulator/mirror/commit/6352612425ae0765802eaa8c5904ff652b97222a",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 78,
+      "sha": "fecc1b4ee32bc06f736f2d138680ec948cf13ab1",
+      "date": "2026-10-11T10:08:33Z",
+      "title": "revert [vulkan] Masquerade VkInfo as PUBGMobile + UE #4320 (#4520)",
+      "url": "https://github.com/eden-emulator/mirror/commit/fecc1b4ee32bc06f736f2d138680ec948cf13ab1",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 79,
+      "sha": "c746982201a60958193f0678fff1f39417aaaf1e",
+      "date": "2026-10-11T03:11:01Z",
+      "title": "[*] fix clangarm64 compilation (#4521)",
+      "url": "https://github.com/eden-emulator/mirror/commit/c746982201a60958193f0678fff1f39417aaaf1e",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 80,
+      "sha": "67bada77f8a43a90da2e94e89b8e7da73c256989",
+      "date": "2026-10-08T21:11:34Z",
+      "title": "[video_core] Skip fragment shaders with known issues on non-NVIDIA drivers (#4503)",
+      "url": "https://github.com/eden-emulator/mirror/commit/67bada77f8a43a90da2e94e89b8e7da73c256989",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 81,
+      "sha": "3cdd2ce141224079ce1dc8bfb4be7edc113aca02",
+      "date": "2026-10-08T17:02:48Z",
+      "title": "[android, renderer_vulkan] Сhange default settings (#4509)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3cdd2ce141224079ce1dc8bfb4be7edc113aca02",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 82,
+      "sha": "10bcd2d849843b146a79c61a21df615e1bdcfcde",
+      "date": "2026-10-05T20:37:30Z",
+      "title": "[settings] add PR4490 & PR4492 toggles (#4502)",
+      "url": "https://github.com/eden-emulator/mirror/commit/10bcd2d849843b146a79c61a21df615e1bdcfcde",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 83,
+      "sha": "48aeedd3b3c915b89aecfbda23c2462c0ed5746f",
+      "date": "2026-10-05T19:18:09Z",
+      "title": "[dist, android] Update translations from Transifex for Oct 05 (#4507)",
+      "url": "https://github.com/eden-emulator/mirror/commit/48aeedd3b3c915b89aecfbda23c2462c0ed5746f",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 84,
+      "sha": "d16735f5b618942136d6ab53466e3be0a382c30a",
+      "date": "2026-10-02T00:24:58Z",
+      "title": "[am] Properly handle None frontend applet (#4500)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d16735f5b618942136d6ab53466e3be0a382c30a",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 85,
+      "sha": "d3550c45718609dc563d8b58adfc0d846feefd03",
+      "date": "2026-10-01T05:39:44Z",
+      "title": "[qt] Filter collates accents (Unicode NFD) (#4380)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d3550c45718609dc563d8b58adfc0d846feefd03",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 86,
+      "sha": "963119e7cc3851007252c9981e4fae3e88b7687f",
+      "date": "2026-10-01T01:34:57Z",
+      "title": "[ffmpeg]Gamescope / Gamemode NVDEC Emulation -  GPU Decoding Patches (#4501)",
+      "url": "https://github.com/eden-emulator/mirror/commit/963119e7cc3851007252c9981e4fae3e88b7687f",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 87,
+      "sha": "2a7e9b53b12711f679238ee738a2ce57cc42c8ed",
+      "date": "2026-09-30T22:28:18Z",
+      "title": "[android,ui] fixed shader cache clearing when changing drivers (#4496)",
+      "url": "https://github.com/eden-emulator/mirror/commit/2a7e9b53b12711f679238ee738a2ce57cc42c8ed",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 88,
+      "sha": "8e2d26c272681d6cafe6d5e703dafdc8200c7b65",
+      "date": "2026-09-30T20:13:37Z",
+      "title": "[video_core] buffer cache readback for nce invalidations (#4490)",
+      "url": "https://github.com/eden-emulator/mirror/commit/8e2d26c272681d6cafe6d5e703dafdc8200c7b65",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 89,
+      "sha": "f8b76511041bb54070c52d1d09ea07d8108c592a",
+      "date": "2026-09-30T00:00:44Z",
+      "title": "[dist, android] Update translations from Transifex for Sep 28 (#4494)",
+      "url": "https://github.com/eden-emulator/mirror/commit/f8b76511041bb54070c52d1d09ea07d8108c592a",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 90,
+      "sha": "3f78512c83fca84a36bb450a10043b368830f8b0",
+      "date": "2026-09-29T22:58:29Z",
+      "title": "[ro] add TLS patching for runtime NROs (#4492)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3f78512c83fca84a36bb450a10043b368830f8b0",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 91,
+      "sha": "a82f31a310c5dc7cae50c47b3306510a24cc36a6",
+      "date": "2026-09-29T22:57:23Z",
+      "title": "[settings,qt] merge of \"disable controller applet\" toggle with \"controller applet mode\" picker (#4498)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a82f31a310c5dc7cae50c47b3306510a24cc36a6",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 92,
+      "sha": "815325cceca948030cf476dce7c46d901e4e4df5",
+      "date": "2026-09-27T10:48:45Z",
+      "title": "[loader] add ZBIC (zstd variant) NSO decompression support for Switch 22.0+ (#4482)",
+      "url": "https://github.com/eden-emulator/mirror/commit/815325cceca948030cf476dce7c46d901e4e4df5",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 93,
+      "sha": "37fe9119526c03ca064166130cc983c55b9a9e86",
+      "date": "2026-09-26T14:02:35Z",
+      "title": "[common/sparse_large_vector] correct Win32 exception handler (#4481)",
+      "url": "https://github.com/eden-emulator/mirror/commit/37fe9119526c03ca064166130cc983c55b9a9e86",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 94,
+      "sha": "f273423b2b83f1a37cc7c1a7a92601f26e0c12ae",
+      "date": "2026-09-26T03:01:27Z",
+      "title": "[buffer_cache] Simplify GPU fence synchronization and remove GPU buffer readback (#4477)",
+      "url": "https://github.com/eden-emulator/mirror/commit/f273423b2b83f1a37cc7c1a7a92601f26e0c12ae",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 95,
+      "sha": "87d2f03c39bc441055d593a7913f63a017795359",
+      "date": "2026-09-26T00:21:45Z",
+      "title": "[hid_core] Code cleanup (#4461)",
+      "url": "https://github.com/eden-emulator/mirror/commit/87d2f03c39bc441055d593a7913f63a017795359",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 96,
+      "sha": "bebc19da3253f13ceb5abfe8560cdbdc32ea7d8a",
+      "date": "2026-09-25T05:54:49Z",
+      "title": "[common] Use `std::make_unique_for_overwrite<T>` in ScratchBuffer, remove polyfill (#4432)",
+      "url": "https://github.com/eden-emulator/mirror/commit/bebc19da3253f13ceb5abfe8560cdbdc32ea7d8a",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 97,
+      "sha": "99bf8cf51afb7b367cb5003f11a797499c71d13c",
+      "date": "2026-09-25T03:29:08Z",
+      "title": "[am, renderer_vulkan] Fix overlay darkening and SGSR black screen on applets (#4475)",
+      "url": "https://github.com/eden-emulator/mirror/commit/99bf8cf51afb7b367cb5003f11a797499c71d13c",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 98,
+      "sha": "dbeb73ee011416cffc6c203945f5ccc6b90621f6",
+      "date": "2026-09-24T16:44:14Z",
+      "title": "[video_core] cpu buffer fix + kepler uploads / maxwell macro dirty tracking fixes (#4473)",
+      "url": "https://github.com/eden-emulator/mirror/commit/dbeb73ee011416cffc6c203945f5ccc6b90621f6",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 99,
+      "sha": "cb73a4dcc7710a7fea1643797b17e39858f4ae6a",
+      "date": "2026-09-24T00:48:46Z",
+      "title": "[renderer_vulkan] Skip post-processing on applet layers (#4474)",
+      "url": "https://github.com/eden-emulator/mirror/commit/cb73a4dcc7710a7fea1643797b17e39858f4ae6a",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 100,
+      "sha": "278f411dad6e8a52747994888f8778b277f6d953",
+      "date": "2026-09-23T12:51:51Z",
+      "title": "[frontend] Unify cmdline parsing (#4424)",
+      "url": "https://github.com/eden-emulator/mirror/commit/278f411dad6e8a52747994888f8778b277f6d953",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 101,
+      "sha": "3d37a816c6adc2708a7be70f5a7fbe0af36b8227",
+      "date": "2026-09-23T12:51:18Z",
+      "title": "[glsl] fix clang 23 build error for unused function `SetDefinition` (#4389)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3d37a816c6adc2708a7be70f5a7fbe0af36b8227",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 102,
+      "sha": "a25e32676fd3da5b66600e15045dfa699d93d989",
+      "date": "2026-09-23T12:39:12Z",
+      "title": "[hle] Use correct `audren:d` service framework (#4472)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a25e32676fd3da5b66600e15045dfa699d93d989",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 103,
+      "sha": "38df54edfe7b861d0a0a1ee305836049a39d42ef",
+      "date": "2026-09-23T11:52:29Z",
+      "title": "[common/sparse_large_vector] decommit unused pages + fix first page in zeroed region (#4471)",
+      "url": "https://github.com/eden-emulator/mirror/commit/38df54edfe7b861d0a0a1ee305836049a39d42ef",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 104,
+      "sha": "3266c20e3f27a459449b77214182be3f0332e8f4",
+      "date": "2026-09-22T22:36:47Z",
+      "title": "[ips_layer] read magic from IPS file and fix EOF check (#4469)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3266c20e3f27a459449b77214182be3f0332e8f4",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 105,
+      "sha": "9cd24e85c2c24016cfdba50e3533395561536f7e",
+      "date": "2026-09-21T17:25:54Z",
+      "title": "[dist, android] Update translations from Transifex for Sep 21 (#4466)",
+      "url": "https://github.com/eden-emulator/mirror/commit/9cd24e85c2c24016cfdba50e3533395561536f7e",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 106,
+      "sha": "74b5e10dc553bb24ccb3460529b15b3c3198bb10",
+      "date": "2026-09-20T20:56:06Z",
+      "title": "[native] doesUpdateMatchProgram update mask fix (#4465)",
+      "url": "https://github.com/eden-emulator/mirror/commit/74b5e10dc553bb24ccb3460529b15b3c3198bb10",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 107,
+      "sha": "a277b62fe4328dddaced9a97d324c6e5478d16a0",
+      "date": "2026-09-20T02:40:14Z",
+      "title": "[fs] revert #4319 savedata_factory changes (#4462)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a277b62fe4328dddaced9a97d324c6e5478d16a0",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 108,
+      "sha": "908b1e9a3701f142de51e133d910aa058d4b071c",
+      "date": "2026-09-19T22:29:28Z",
+      "title": "[dynarmic] fix bad arm codegen on relocations (#4458)",
+      "url": "https://github.com/eden-emulator/mirror/commit/908b1e9a3701f142de51e133d910aa058d4b071c",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 109,
+      "sha": "847e91c3a8ca2d699cc9ce0df68b733dd5f37b97",
+      "date": "2026-09-19T15:44:12Z",
+      "title": "[applet] add post exit cleanups to frontend applets to avoid accumulation (#4457)",
+      "url": "https://github.com/eden-emulator/mirror/commit/847e91c3a8ca2d699cc9ce0df68b733dd5f37b97",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 110,
+      "sha": "2d1eb0dab91ec9389870ed6da7d1ef1fd01ab14a",
+      "date": "2026-09-19T06:21:39Z",
+      "title": "[common/error] remove preprocessor macros for strerror_r gating (#4450)",
+      "url": "https://github.com/eden-emulator/mirror/commit/2d1eb0dab91ec9389870ed6da7d1ef1fd01ab14a",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 111,
+      "sha": "9a30172e45fcb7833cc49ba4d6450211449b14df",
+      "date": "2026-09-18T23:39:46Z",
+      "title": "[dynarmic] Coalesce non-exclusive Write/Read fallback functions (#4158)",
+      "url": "https://github.com/eden-emulator/mirror/commit/9a30172e45fcb7833cc49ba4d6450211449b14df",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 112,
+      "sha": "07f40d5cac635ff102aa6ce9c32572cc20d69959",
+      "date": "2026-09-18T21:49:17Z",
+      "title": "[npad,hid,am] npad WriteEmptyEntry fix, hid function 551 stub, and applet PopOutData rework (#4442)",
+      "url": "https://github.com/eden-emulator/mirror/commit/07f40d5cac635ff102aa6ce9c32572cc20d69959",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 113,
+      "sha": "3c38afad74c751a949de0bcca9a51cfc11797f68",
+      "date": "2026-09-18T21:48:35Z",
+      "title": "[fs] share parent resources with bundled programs (#4319)",
+      "url": "https://github.com/eden-emulator/mirror/commit/3c38afad74c751a949de0bcca9a51cfc11797f68",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 114,
+      "sha": "0ce29be60874b24890ab9239cecf1bd67b924428",
+      "date": "2026-09-17T17:50:19Z",
+      "title": "[common] Fix RDTSC nanosecond conversion (#4422)",
+      "url": "https://github.com/eden-emulator/mirror/commit/0ce29be60874b24890ab9239cecf1bd67b924428",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 115,
+      "sha": "1203082a8f1211ad6ce4d95f0c6947f7ecd27a55",
+      "date": "2026-09-17T06:16:18Z",
+      "title": "[msvc] fix build errors (#4451)",
+      "url": "https://github.com/eden-emulator/mirror/commit/1203082a8f1211ad6ce4d95f0c6947f7ecd27a55",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 116,
+      "sha": "14235dc0d0543c7397dd19eb1a677e76114c08f3",
+      "date": "2026-09-17T06:15:58Z",
+      "title": "[ips] fix .pchtxt with >256 bytes on a single line (#4445)",
+      "url": "https://github.com/eden-emulator/mirror/commit/14235dc0d0543c7397dd19eb1a677e76114c08f3",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 117,
+      "sha": "6374f7f51f0254358fc26a0b3a182f06a9d84ec9",
+      "date": "2026-09-17T03:52:36Z",
+      "title": "Partial revert: [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) (#4448)",
+      "url": "https://github.com/eden-emulator/mirror/commit/6374f7f51f0254358fc26a0b3a182f06a9d84ec9",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 118,
+      "sha": "73e004de6eb530567b3022531c11b92f55f265a6",
+      "date": "2026-09-17T03:51:23Z",
+      "title": "[common/page_table] unmark non-constexpr functions (#4433)",
+      "url": "https://github.com/eden-emulator/mirror/commit/73e004de6eb530567b3022531c11b92f55f265a6",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 119,
+      "sha": "f7b8ade40ec28b35309de0f86391ee7507affa36",
+      "date": "2026-09-17T03:45:37Z",
+      "title": "[hle] stpl:sys, stpl:u initial implementation (#4435)",
+      "url": "https://github.com/eden-emulator/mirror/commit/f7b8ade40ec28b35309de0f86391ee7507affa36",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 120,
+      "sha": "8c1194474e76be02eaf69eefb9fcfdd04bd31229",
+      "date": "2026-09-17T03:43:59Z",
+      "title": "[hle/ssl] Implement Peek(),{Get,Set}RenegotiationMode,Pending,Poll and stub miscellany (#4428)",
+      "url": "https://github.com/eden-emulator/mirror/commit/8c1194474e76be02eaf69eefb9fcfdd04bd31229",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 121,
+      "sha": "90aafeedc1d980849894f5bf251313db95594e8a",
+      "date": "2026-09-16T22:28:37Z",
+      "title": "[k_scheduler] fix for libc++ that lazily initializes mutexes (#4447)",
+      "url": "https://github.com/eden-emulator/mirror/commit/90aafeedc1d980849894f5bf251313db95594e8a",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 122,
+      "sha": "4fe5f62c38e71b045d425dc5f4cc4ab83feeafbe",
+      "date": "2026-09-16T20:47:16Z",
+      "title": "[dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446)",
+      "url": "https://github.com/eden-emulator/mirror/commit/4fe5f62c38e71b045d425dc5f4cc4ab83feeafbe",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 123,
+      "sha": "c3f1e6562b6cb5aefcb9edd490b303867917f25e",
+      "date": "2026-09-16T20:12:01Z",
+      "title": "[common/fs] Preserve Windows roots during path sanitization (#4437)",
+      "url": "https://github.com/eden-emulator/mirror/commit/c3f1e6562b6cb5aefcb9edd490b303867917f25e",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 124,
+      "sha": "ac35358b3ffed74aaac56b0e99b09e81bb60d2e1",
+      "date": "2026-09-16T13:35:13Z",
+      "title": "[common] Replace `Common::SpinLock` with `std::mutex` (#4436)",
+      "url": "https://github.com/eden-emulator/mirror/commit/ac35358b3ffed74aaac56b0e99b09e81bb60d2e1",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 125,
+      "sha": "7bf95be2c29328a4cfeb8b2384ce34c6fb6d890c",
+      "date": "2026-09-16T07:29:12Z",
+      "title": "[dynarmic] fix A32 crash due to wrong LEA encoding (#4444)",
+      "url": "https://github.com/eden-emulator/mirror/commit/7bf95be2c29328a4cfeb8b2384ce34c6fb6d890c",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 126,
+      "sha": "4ce45b3b37d162660f0e1ec829c4eab896fc4db4",
+      "date": "2026-09-16T06:10:29Z",
+      "title": "[hle] Fix crash on MK8D and SM3DW LDN (#4417)",
+      "url": "https://github.com/eden-emulator/mirror/commit/4ce45b3b37d162660f0e1ec829c4eab896fc4db4",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 127,
+      "sha": "fd34024f0e1ffca0aa813698d2552a1dea2b5b17",
+      "date": "2026-09-16T02:45:45Z",
+      "title": "[hle/ns] fix build error due to missing async_result.h (#4440)",
+      "url": "https://github.com/eden-emulator/mirror/commit/fd34024f0e1ffca0aa813698d2552a1dea2b5b17",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 128,
+      "sha": "d76f8f91c423841e131ad822ce26610585cca018",
+      "date": "2026-09-16T02:00:59Z",
+      "title": "[hle] Fix nullptr on ListApplicationIcon (#4438)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d76f8f91c423841e131ad822ce26610585cca018",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 129,
+      "sha": "a7061eb4c8afc3a74bd983212131954671317f0b",
+      "date": "2026-09-16T01:46:44Z",
+      "title": "[ns] Rename i_async_result -> async_result (#4439)",
+      "url": "https://github.com/eden-emulator/mirror/commit/a7061eb4c8afc3a74bd983212131954671317f0b",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 130,
+      "sha": "fa4e7c699243dae407a09fc3c54e7a0a822329b5",
+      "date": "2026-09-15T23:42:37Z",
+      "title": "[vk_texture_cache] drop depth comparison sampler fallback (#4408)",
+      "url": "https://github.com/eden-emulator/mirror/commit/fa4e7c699243dae407a09fc3c54e7a0a822329b5",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 131,
+      "sha": "b77308ced62abe890428955dba687c95e4d93aba",
+      "date": "2026-09-15T19:53:07Z",
+      "title": "[applet] ReconfigureControllers fallback unconditional disconnect fix (#4420)",
+      "url": "https://github.com/eden-emulator/mirror/commit/b77308ced62abe890428955dba687c95e4d93aba",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 132,
+      "sha": "defddec47ff997824b6f8adb3bece790f6723c24",
+      "date": "2026-09-15T06:01:17Z",
+      "title": "[ns] add stubs for cmd936 and cmd4042 (#4429)",
+      "url": "https://github.com/eden-emulator/mirror/commit/defddec47ff997824b6f8adb3bece790f6723c24",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 133,
+      "sha": "c5405250d179824cdcd55d2dbd0a484f516490af",
+      "date": "2026-09-15T05:23:12Z",
+      "title": "[common, ui] Refining UI for FX shaders for PC (#4426)",
+      "url": "https://github.com/eden-emulator/mirror/commit/c5405250d179824cdcd55d2dbd0a484f516490af",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 134,
+      "sha": "10c07d700c33fa1ff78d5f616c2da2872fc5d43f",
+      "date": "2026-09-15T05:22:23Z",
+      "title": "[cmake] Use a debloated boost distribution (#4198)",
+      "url": "https://github.com/eden-emulator/mirror/commit/10c07d700c33fa1ff78d5f616c2da2872fc5d43f",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 135,
+      "sha": "505b1576470796db7e6d561f62ac392f613b9797",
+      "date": "2026-09-15T01:42:11Z",
+      "title": "[qt common] use ConfigurationShared translation context (#4430)",
+      "url": "https://github.com/eden-emulator/mirror/commit/505b1576470796db7e6d561f62ac392f613b9797",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 136,
+      "sha": "1575f55abee50a563502e5afb098ebed9d5d8995",
+      "date": "2026-09-14T23:14:31Z",
+      "title": "[dynarmic] fix sign extension logic on x64 (#4415)",
+      "url": "https://github.com/eden-emulator/mirror/commit/1575f55abee50a563502e5afb098ebed9d5d8995",
+      "title_category_only": "cpu-jit",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 137,
+      "sha": "bfba95fd6072885b16aa3b52b450d4058cc871d6",
+      "date": "2026-09-14T21:53:44Z",
+      "title": "[ns, olsc] stubs for qlaunch fw23 (#4427)",
+      "url": "https://github.com/eden-emulator/mirror/commit/bfba95fd6072885b16aa3b52b450d4058cc871d6",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 138,
+      "sha": "ee73920d288586103491d3e2af003b5c40bf4a1c",
+      "date": "2026-09-14T20:15:54Z",
+      "title": "[hle/services/ssl] Remove deprecated SecureTransport and SChannel backends (#4392)",
+      "url": "https://github.com/eden-emulator/mirror/commit/ee73920d288586103491d3e2af003b5c40bf4a1c",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 139,
+      "sha": "42642f8bad85a3f194c4bf878e512d68791d1634",
+      "date": "2026-09-14T19:56:31Z",
+      "title": "[hle] Implement I{User,Debug,System}::StartDetectionWithFilter (#4425)",
+      "url": "https://github.com/eden-emulator/mirror/commit/42642f8bad85a3f194c4bf878e512d68791d1634",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 140,
+      "sha": "1a48de6e55d6894722e5f235bc1fc14beb308e27",
+      "date": "2026-09-14T17:00:47Z",
+      "title": "[dist, android] Update translations from Transifex for Sep 14 (#4423)",
+      "url": "https://github.com/eden-emulator/mirror/commit/1a48de6e55d6894722e5f235bc1fc14beb308e27",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 141,
+      "sha": "5adaa5b0f7e19df9bf9dbd883fe921dfe4952125",
+      "date": "2026-09-14T14:44:52Z",
+      "title": "[core] Fix MSVC handler table initialization (#4421)",
+      "url": "https://github.com/eden-emulator/mirror/commit/5adaa5b0f7e19df9bf9dbd883fe921dfe4952125",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 142,
+      "sha": "2b4184dd2bb33da081702263d59c3eadb299e673",
+      "date": "2026-09-14T12:34:24Z",
+      "title": "Revert \"[audio] Replace libopus with FFmpeg (#4169)\" (#4419)",
+      "url": "https://github.com/eden-emulator/mirror/commit/2b4184dd2bb33da081702263d59c3eadb299e673",
+      "title_category_only": "audio",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 143,
+      "sha": "d9159fefdd9e8850e550dd47cc59d7da999a2380",
+      "date": "2026-09-14T01:26:22Z",
+      "title": "[input] Fix mouse drift on Qt/SDL frontends (#4352)",
+      "url": "https://github.com/eden-emulator/mirror/commit/d9159fefdd9e8850e550dd47cc59d7da999a2380",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 144,
+      "sha": "099547b3f4578bf1fc0b39988aefbe2d54b540cc",
+      "date": "2026-09-14T00:53:30Z",
+      "title": "[android] Add LSFG UI to quick settings (#4393)",
+      "url": "https://github.com/eden-emulator/mirror/commit/099547b3f4578bf1fc0b39988aefbe2d54b540cc",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 145,
+      "sha": "93318ef697d386e9842cbb5887d5ab9b4e700a1c",
+      "date": "2026-09-14T00:13:49Z",
+      "title": "[audio] persistent device volume control (#4416)",
+      "url": "https://github.com/eden-emulator/mirror/commit/93318ef697d386e9842cbb5887d5ab9b4e700a1c",
+      "title_category_only": "audio",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 146,
+      "sha": "9b649444803bc95423035eba335a1e11c1871793",
+      "date": "2026-09-13T22:39:07Z",
+      "title": "[video_core/control] Fix SIGBUS due to uninit channel_state (#4406)",
+      "url": "https://github.com/eden-emulator/mirror/commit/9b649444803bc95423035eba335a1e11c1871793",
+      "title_category_only": "other-manual-classification",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 147,
+      "sha": "5d150cac5c6624fa6a0e94266846b75d91a6a5d0",
+      "date": "2026-09-13T00:13:06Z",
+      "title": "[dynarmic, am, android, ns] Fixes the latest qlaunch regressions on Android and adds cmd23 for launching games on FW 23 (#4407)",
+      "url": "https://github.com/eden-emulator/mirror/commit/5d150cac5c6624fa6a0e94266846b75d91a6a5d0",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 148,
+      "sha": "ff8368c6066faf3962e2f77af7da4954e2ff6a43",
+      "date": "2026-09-12T07:59:33Z",
+      "title": "[audio] Replace libopus with FFmpeg (#4169)",
+      "url": "https://github.com/eden-emulator/mirror/commit/ff8368c6066faf3962e2f77af7da4954e2ff6a43",
+      "title_category_only": "audio",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 149,
+      "sha": "8a22f1845b8b7ec19fbb518b696513e36d42b317",
+      "date": "2026-09-11T19:38:52Z",
+      "title": "[hle] Enforce max_sessions, add bpc:ams service (#4394)",
+      "url": "https://github.com/eden-emulator/mirror/commit/8a22f1845b8b7ec19fbb518b696513e36d42b317",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 150,
+      "sha": "301da63a15de8cfbe752ac44784db9b58cdd2d87",
+      "date": "2026-09-11T19:38:12Z",
+      "title": "[audio] hint openslES as audio driver on android to fix mute screen recording issue (#4397)",
+      "url": "https://github.com/eden-emulator/mirror/commit/301da63a15de8cfbe752ac44784db9b58cdd2d87",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 151,
+      "sha": "c95ad020fb529d47f9c3106a53553bec955c1586",
+      "date": "2026-09-11T13:29:52Z",
+      "title": "[gpu] Fix infinite hangup/freezes at shutdown/reset (#4395)",
+      "url": "https://github.com/eden-emulator/mirror/commit/c95ad020fb529d47f9c3106a53553bec955c1586",
+      "title_category_only": "gpu-renderer",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 152,
+      "sha": "f3af5d0c252feba0df73bedddcd8a40f71ebc0fa",
+      "date": "2026-09-10T20:30:07Z",
+      "title": "[fs] moved temp folder cleanup upstream (per-application level) to avoid per-program retrigger (#4375)",
+      "url": "https://github.com/eden-emulator/mirror/commit/f3af5d0c252feba0df73bedddcd8a40f71ebc0fa",
+      "title_category_only": "storage-fs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 153,
+      "sha": "00a1c392e7252eaad82b50119037e01bf6b92a73",
+      "date": "2026-09-10T20:29:35Z",
+      "title": "[opus] proper limit and error code for opus decoder instances (#4384)",
+      "url": "https://github.com/eden-emulator/mirror/commit/00a1c392e7252eaad82b50119037e01bf6b92a73",
+      "title_category_only": "audio",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 154,
+      "sha": "e7a96c7907fb8cb888f21d348b66de2121fdd1ca",
+      "date": "2026-09-10T20:28:39Z",
+      "title": "[hle] Firmware 23.0.0 (#4390)",
+      "url": "https://github.com/eden-emulator/mirror/commit/e7a96c7907fb8cb888f21d348b66de2121fdd1ca",
+      "title_category_only": "hle-ipc",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    },
+    {
+      "index": 155,
+      "sha": "ed566919f468e45ecb56e4e61185d98142a2cd1c",
+      "date": "2026-09-10T13:14:02Z",
+      "title": "[vulkan, android] Add feature of post-processing shaders on Android (#4348)",
+      "url": "https://github.com/eden-emulator/mirror/commit/ed566919f468e45ecb56e4e61185d98142a2cd1c",
+      "title_category_only": "frontend-or-docs",
+      "exact_compiled_owner": "unverified",
+      "behavior_test": "not-run"
+    }
+  ]
+}

@@ -57,6 +57,7 @@ jobs:
           for unit in \
               test_dlss_nr_min_policy \
               test_dlss_nr_min_spatial_math \
+              test_dlss_nr_min_spatial_abi \
               test_dlss_nr_min_graph_geometry; do
             grep -Fq "eden_r08_test(${unit})" tools/graphics/CMakeLists.txt
           done
@@ -64,6 +65,7 @@ jobs:
             for unit in \
                 test_dlss_nr_min_policy \
                 test_dlss_nr_min_spatial_math \
+              test_dlss_nr_min_spatial_abi \
                 test_dlss_nr_min_graph_geometry; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \

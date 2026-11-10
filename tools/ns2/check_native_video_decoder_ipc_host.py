@@ -129,6 +129,7 @@ fixture=r'''
 #include <deque>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <new>
 #include <optional>
 #include <set>
@@ -147,7 +148,22 @@ struct FakeSyncpoints {
 struct FakeHost {FakeSyncpoints sync;FakeSyncpoints& GetSyncpointManager(){return sync;}};
 struct FakeSystem {FakeHost host;FakeHost& Host1x(){return host;}int kernel{};int& Kernel(){return kernel;}};
 struct FakeLayout {std::size_t image_bytes{64};u32 row_bytes{16};u32 chroma_offset{};u32 cpu_kind{8};bool nv12{};};
+namespace Nvidia {
+struct FakeNativePool{
+ std::set<u32> reserved{4,9,15};
+ bool IsSyncpointAllocated(u32 id)const{return reserved.contains(id);}
+};
+struct Module{
+ struct Container{
+  FakeNativePool native;
+  FakeNativePool& GetSyncpointManager(){return native;}
+ } container;
+ Container& GetContainer(){return container;}
+};
+}
 struct FakeOwner {
+ std::mutex m_native_memory_mutex;
+ std::shared_ptr<Nvidia::Module> m_native_module=std::make_shared<Nvidia::Module>();
  struct VideoSurface {FakeLayout layout{};u32 width{4};u32 height{4};bool gpu_mapped{};};
  bool valid{true};bool writability{true};bool gpu{};bool nv12{};u32 writes{};std::vector<u8> last;
  std::set<u32> retired;

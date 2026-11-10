@@ -13,7 +13,7 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout current main with pinned vendor
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -156,8 +156,11 @@ jobs:
           # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
           # translation units using the actual native compile_commands.json.
           # Collect all errors in one run; do not produce .o/ELF/ZIP.
+          # Keep the 163 already-qualified Vulkan/NS2/FSR3 owners first,
+          # then cover unscanned video_core/core C++ using real PS5 flags.
+          # No .o files, native link or app artifacts are produced here.
           python3 -B tools/ci/preflight-native-video-core-syntax.py \
-            "$scratch/native-local" --jobs 4 --max-tus 240
+            "$scratch/native-local" --jobs 4 --max-tus 400
           # No full C++ build, package or release is authorized here.
 
       - name: Reject missing cache

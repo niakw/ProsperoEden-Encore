@@ -227,3 +227,23 @@ compile flags 0/1 (12 checks) plus the real nr_rdna2_frame_session.cpp
 with scratch profile selection 4,5,6,12 (four additional checks). The
 normal all-graph compilation path remains unchanged. This checks actual
 native owner source syntax, not linked execution or real GPU model output.
+
+
+## 720p native route reconstruction (CPU-only, no GPU enable)
+
+The 720p trial rebuilds the 152-row Original and 76-row Compact schedule
+in memory at 1280x720, using genuine native geometry and source ABI
+classifiers. It recalculates FSwin windows, four learned U-Net upsample
+dispatch domains, pre/post grids and Split-Swin dispatch window factors.
+The exact NativeNrSchedule, NativeUNetSkipMap, NativeSplitRoutes,
+NativeVitRoute and FSwin segmentation policies must all accept it.
+The bottleneck is 22x40=880 real raster tiles padded to 960 ViT tokens
+(vs 2560 padded tokens at 1080p). GCC/Clang UBSan positive and negative
+tests cover both Original/Compact source plans.
+
+Crucial: specialized ViT/decoder launch grids, true model tensor
+addressing, the native preflight and all GPU descriptors still require
+independent proof. The trial explicitly leaves all specialized
+dispatches unqualified, returns GPU_DISABLED and NEVER feeds the plan
+into the renderer. This is a CPU structural milestone, not a 720p
+DLSS-NR model running on PS5.

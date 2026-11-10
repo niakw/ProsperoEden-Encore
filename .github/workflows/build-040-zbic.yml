@@ -82,6 +82,9 @@ jobs:
           # The production JIT no longer has the retired ON/OFF CMake options.
           # Fail here instead of after native configure and 23 syntax TUs.
           python3 -B tools/check-performance.py --source-only
+          # Native GPU worker now arbitrates pending channels before sleeping.
+          # Check its maintained source before the expensive native preparation.
+          python3 -B tools/check-native-gpu-thread.py --source-only
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

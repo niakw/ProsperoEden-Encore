@@ -1,0 +1,77 @@
+name: A/B R18 vendored byte and CPM provenance (read-only)
+
+on:
+  pull_request:
+    paths:
+      - "tools/audit/attest-r18-archive-and-compiler-rt-bytes.py"
+      - "tools/audit/attest-r18-cpm-source-counts.py"
+      - ".github/workflows/audit-r18-vendor-archive-bytes.yml"
+      - "tools/deps.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ab-r18-vendored-bytes-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-pinned-bytes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout exact audit PR source and gitlink, not moving main merge ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Rehash six archived downloads and eight LLVM files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/audit/attest-r18-archive-and-compiler-rt-bytes.py --self-test
+          python3 -B tools/audit/attest-r18-archive-and-compiler-rt-bytes.py > r18-archives-compilerrt.json
+          python3 -B - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path("r18-archives-compilerrt.json").read_text())
+          assert d["archive_count"] == 6
+          assert d["compiler_rt_file_count"] == 8
+          assert not d["linked_into_native_binary"]
+          assert not d["external_upstream_independently_authenticated"]
+          assert all(row["matches_tools_deps"] for row in d["archives"].values())
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as output:
+              output.write("R18: 6/6 archive byte streams and 8/8 compiler-rt files exactly match declared checksums.\n")
+              output.write("Internal archive custody only; not external signatures or binary linkage.\n")
+          PY
+
+      - name: Inventory 22 CPM source trees and original manifest without forging archive hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/audit/attest-r18-cpm-source-counts.py --self-test
+          python3 -B tools/audit/attest-r18-cpm-source-counts.py > r18-cpm-counts.json
+          python3 -B - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path("r18-cpm-counts.json").read_text())
+          assert d["source_tree_count"] == len(d["components"]) == 22
+          assert d["declared_archives_cryptographically_verified"] is False
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as output:
+              output.write("R18: all 22 CPM source trees: actual file/byte totals and cpmfile SHA256 checked.\n")
+              output.write("CPM upstream tar digest equivalence remains unverified.\n")
+          PY
+
+      - name: Upload text-only byte receipts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r18-vendored-downloads-and-cpm-tree-witness
+          path: |
+            r18-archives-compilerrt.json
+            r18-cpm-counts.json
+          if-no-files-found: error
+          retention-days: 30

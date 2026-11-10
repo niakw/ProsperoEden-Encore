@@ -77,9 +77,19 @@ def inspect(manifest: dict, compile_commands: list, root: Path) -> dict:
                 status = "scheduled-source-not-on-disk"
             else:
                 selected = blob_hash(Path(matches[0]))
+                matched_active = any(
+                    Path(matches[0]).resolve(strict=False) == candidate.resolve(strict=False)
+                    and candidate.is_file()
+                    and blob_hash(candidate) == selected
+                    for candidate in (
+                        root / "vendor/encore-active/eden-shader" / relative,
+                        root / "vendor/encore-active/eden-core" / relative,
+                    )
+                )
                 status = ("scheduled-official-original" if selected == official else
                           "scheduled-vendor-mutated" if selected == mutated else
-                          "scheduled-neither-known-blob")
+                          "scheduled-maintained-override" if matched_active else
+                          "scheduled-unrecognized-source")
         results.append({
             "path": relative,
             "status": status,
@@ -144,7 +154,12 @@ def self_test() -> None:
         official_path.write_bytes(b"vendor edit\n")
         assert inspect(manifest, db, root)["rows"][0]["status"] == "scheduled-vendor-mutated"
         official_path.write_bytes(b"unknown\n")
-        assert inspect(manifest, db, root)["rows"][0]["status"] == "scheduled-neither-known-blob"
+        assert inspect(manifest, db, root)["rows"][0]["status"] == "scheduled-unrecognized-source"
+        maintained = root / "vendor/encore-active/eden-shader" / rel
+        maintained.parent.mkdir(parents=True, exist_ok=True)
+        maintained.write_bytes(b"maintained\n")
+        maintained_db = [{"directory": str(root), "file": str(maintained)}]
+        assert inspect(manifest, maintained_db, root)["rows"][0]["status"] == "scheduled-maintained-override"
         official_path.unlink()
         assert inspect(manifest, db, root)["rows"][0]["status"] == "scheduled-source-not-on-disk"
         assert inspect(manifest, [], root)["rows"][0]["status"] == "source-not-scheduled-in-this-db"

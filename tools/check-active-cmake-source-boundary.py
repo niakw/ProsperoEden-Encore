@@ -10,6 +10,25 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 root_cmake = (ROOT/"headless/CMakeLists.txt").read_text(encoding="utf-8")
+# P5: CMake defers only target wiring, never creating a subdirectory.
+# The actual project(yuzu) hook registers the immutable source before DEFER.
+native_inject = (ROOT/"headless/inject.cmake").read_text(encoding="utf-8")
+assert native_inject.count("cmake_language(DEFER CALL add_eden_headless)") == 1
+assert native_inject.count('add_subdirectory("${EDEN_WEBP_ROOT}"') == 1
+assert 'add_subdirectory("${EDEN_WEBP_ROOT}"' not in root_cmake
+assert 'if(NOT TARGET webp OR NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")' in root_cmake
+assert 'target_link_libraries(eden-headless PRIVATE webp)' in root_cmake
+assert native_inject.index('add_subdirectory("${EDEN_WEBP_ROOT}"') > (
+    native_inject.index("cmake_language(DEFER CALL add_eden_headless)"))
+# The existing maintained threading module selects absolute HLE sources.
+# Compare their canonical names before replacing the single Wait64 owner;
+# the unnormalised PORT_ROOT spelling may include /headless/...
+assert 'foreach(eden_wait64_candidate IN LISTS eden_wait64_sources)' in root_cmake
+assert 'get_filename_component(eden_wait64_reviewed_real' in root_cmake
+assert 'get_filename_component(eden_wait64_candidate_real' in root_cmake
+assert 'if(eden_wait64_candidate_real STREQUAL eden_wait64_reviewed_real)' in root_cmake
+assert root_cmake.count('message(FATAL_ERROR "Missing unified address arbiter owner:') == 1
+
 generator_sites = re.findall(
     r'^\s*write_derived\(\s*"([^"]+)"', root_cmake, re.M)
 assert generator_sites == ["${PORT_BUILD_DIR}/include/loading_scene_glsl.h"], generator_sites

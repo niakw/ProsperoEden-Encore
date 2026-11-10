@@ -23,6 +23,10 @@ VkImageMemoryBarrier Transition(VkImage image, VkImageLayout from,
 }
 }
 
+// Keep the default constructor next to the complete interpolator type.
+// An inline defaulted constructor instantiates unique_ptr's cleanup path
+// while ps5::framegen::interpolator is still forward-declared in the header.
+Fsr3OpticalSession::Fsr3OpticalSession() = default;
 Fsr3OpticalSession::~Fsr3OpticalSession() { Destroy(); }
 
 bool Fsr3OpticalSession::Ready() const noexcept {

@@ -198,13 +198,15 @@
       "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
-        "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py"
+        "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py",
+        "tools/ns2/test_ampere_real_spirv.cpp",
+        "tools/ns2/test_g07_real_vulkan_texel.cpp"
       ],
       "positive": "Descriptor counts and dynamic indices generate valid SPIR-V and select the intended guest texture.",
       "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
       "status": "open",
       "evidence": {},
-      "blocker": "Compile-time reflected descriptor index/count and missing-definition failures now have real-emitter source-owner C++ proofs. Runtime-variable array/singleton bounds and actual dynamically selected guest texture in validated SPIR-V/Vulkan execution remain unproven.",
+      "blocker": "Real native IR -> SPIR-V -> Vulkan shader now has a host test for guest-SSBO runtime descriptor 0/1 across two GPU fence completions (pending CI). Dynamic out-of-range protection and actual game's TIC/TSC ranges remain unproven.",
       "excluded_forms": []
     },
     {

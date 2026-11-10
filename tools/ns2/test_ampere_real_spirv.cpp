@@ -799,9 +799,12 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     // First and last selected descriptors must remain distinct. The
     // second index is non-immediate IR, not a constant OpAccessChain index.
     fetch_and_commit(Value{u32{0}}, 4, 0);
-    block.AppendNewInst(Opcode::IAdd32,
-                        {Value{u32{0}}, Value{u32{1}}});
-    fetch_and_commit(Value{&block.back()}, 8, 4);
+    // Actual runtime guest descriptor selection: read the SSBO word
+    // at byte offset 12; index is NOT a constant IR expression.
+    block.AppendNewInst(Opcode::LoadStorage32,
+                        {Value{u32{0}}, Value{u32{12}}});
+    const Value runtime_descriptor_index{&block.back()};
+    fetch_and_commit(runtime_descriptor_index, 8, 4);
     // The real 2D sampled-image path reads TIC/TSC as a combined
     // sampler+view descriptor. Fetch pixel (1,0) at integer LOD 0 and
     // publish its red channel in the same actual SSBO commit.

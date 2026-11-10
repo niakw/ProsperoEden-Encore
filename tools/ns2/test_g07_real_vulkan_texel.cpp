@@ -171,6 +171,8 @@ int main(int argc, char** argv) {
     std::fill_n(data, 1024, 0U);
     data[(256 + 4 * 16) / 4] = Bits(1.25f);
     data[(512 + 8 * 16) / 4] = Bits(7.5f);
+    data[(256 + 8 * 16) / 4] = Bits(4.75f);
+    data[3] = 1; // Guest-controlled descriptor array index read at runtime
     // 2x2 RGBA32F sampled image staging. Pixel (1,0) has red=2.5.
     data[(1024 + 16) / 4] = Bits(2.5f);
 
@@ -345,6 +347,7 @@ int main(int argc, char** argv) {
 
     VkCommandPoolCreateInfo cmd_pool_info{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
     cmd_pool_info.queueFamilyIndex = family;
+    cmd_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     VkCommandPool command_pool = VK_NULL_HANDLE;
     Check(vkCreateCommandPool(device, &cmd_pool_info, nullptr, &command_pool)
           == VK_SUCCESS, "command pool");
@@ -406,11 +409,38 @@ int main(int argc, char** argv) {
     Check(data[0] == Bits(1.25f) && data[1] == Bits(7.5f) &&
           data[2] == Bits(2.5f),
           "wrong GPU TIC/TSC image or texel descriptor selection/SSBO writeback");
-    for (uint32_t i = 3; i < 16; ++i)
+    Check(data[3] == 1, "GPU overwrote guest runtime descriptor index");
+    for (uint32_t i = 4; i < 16; ++i)
         Check(data[i] == 0, "GPU corrupted another SSBO word");
     Check(data[(256 + 4 * 16) / 4] == Bits(1.25f) &&
-          data[(512 + 8 * 16) / 4] == Bits(7.5f),
+          data[(512 + 8 * 16) / 4] == Bits(7.5f) &&
+          data[(256 + 8 * 16) / 4] == Bits(4.75f),
           "GPU modified read-only texel data");
+
+    // Same native SPIR-V shader, descriptors and Vulkan pipeline. Only
+    // the guest memory index changes from 1 to 0 before a second dispatch.
+    data[3] = 0;
+    data[1] = 0;
+    Check(vkResetFences(device, 1, &fence) == VK_SUCCESS, "reset guest-index fence");
+    Check(vkResetCommandBuffer(command, 0) == VK_SUCCESS, "reset guest-index command");
+    Check(vkBeginCommandBuffer(command, &begin) == VK_SUCCESS, "begin guest-index dispatch");
+    vkCmdBindPipeline(command, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+    vkCmdBindDescriptorSets(command, VK_PIPELINE_BIND_POINT_COMPUTE, layout,
+                            0, 1, &set, 0, nullptr);
+    vkCmdDispatch(command, 1, 1, 1);
+    vkCmdPipelineBarrier(command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                         VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &barrier,
+                         0, nullptr, 0, nullptr);
+    Check(vkEndCommandBuffer(command) == VK_SUCCESS, "end guest-index command");
+    Check(vkQueueSubmit(queue, 1, &submission, fence) == VK_SUCCESS,
+          "submit guest-index dispatch");
+    Check(vkWaitForFences(device, 1, &fence, VK_TRUE, 10000000000ULL) == VK_SUCCESS,
+          "guest-index GPU completion");
+    Check(data[0] == Bits(1.25f) && data[1] == Bits(4.75f) &&
+          data[2] == Bits(2.5f) && data[3] == 0,
+          "runtime index did not select other texel descriptor");
+    for (uint32_t i = 4; i < 16; ++i)
+        Check(data[i] == 0, "guest-index dispatch damaged other SSBO data");
 
     vkDeviceWaitIdle(device);
     vkDestroyFence(device, fence, nullptr);
@@ -431,5 +461,5 @@ int main(int argc, char** argv) {
     vkDestroyDescriptorSetLayout(device, set_layout, nullptr);
     vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
-    std::puts("G07_REAL_NATIVE_VULKAN_TIC_TSC_SSBO_PASS texel=2 sampled_2d=1 dispatch=1 fence=1 ssbo_write=3 qmd_staged=1 missing_mapping=refused missing_storage=refused rollback=once");
+    std::puts("G07_REAL_NATIVE_VULKAN_TIC_TSC_SSBO_PASS texel=2 sampled_2d=1 dispatch=2 fence=2 ssbo_write=3 guest_runtime_index=0,1 qmd_staged=1 missing_mapping=refused missing_storage=refused rollback=once");
 }

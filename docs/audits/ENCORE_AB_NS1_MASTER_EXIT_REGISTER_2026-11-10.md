@@ -1,0 +1,53 @@
+# Eden Encore — A/B and Switch 1 master exit register
+
+**Freeze:** 10 November 2026. **PR:** [#45, isolated draft](https://github.com/niakw/ProsperoEden-Encore/pull/45). **Engine audit baseline:** `e4f6a8253e1f6204a6f99d3b3d29abad1800f4c7`. **Vendor immutable pin at baseline:** `22b69d6053db41b74edac2633c012f925b84f69e`. **Main's separate tenth PS5 run:** `89e0f8c2bc378fedb849d90dade1e99f3cf8697c`, [run 42887138500](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42887138500), native compile **failure**, no ELF/package.
+
+**Purpose:** one durable, reviewable source of truth for **what was checked, what is disproved, what cannot yet be proved, the accepted next evidence and the responsible stream**. Do not reinterpret a green source checker, cached CMake graph or filename match as compiled/link/device proof. No merge or source fixes from this audit-only PR.
+
+## Evidence levels
+
+| Level | Meaning | Current evidence |
+|---|---|---|
+| **E0** | Exact pinned Git/blob/version & intended owner | Main/vendor SHAs, 26 vendor source families, R18 manifests |
+| **E1** | Source semantic delta, static analysis, unit tests of the checker | Four AB gaps, seven Dynarmic cases, independent tools with self-tests |
+| **E2** | Existing native **configured** graph and real scheduled input SHA | [Native graph #42886401919](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42886401919); [R18 historic compile SHA source witness #42894073292](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42894073292) |
+| **E3** | Actual source-compiled positive **and negative** tests and actual object linkage | **Insufficient** for the four AB gaps, JIT repairs, native header/inclusion paths |
+| **E4** | Successful final native PS5 binary and device/runtime evidence with NS1 non-regression | **Not available** from the tenth run; no verified FC27/HUD/FPS/PS5 behavior claim |
+
+## A — audit global, sources, dependencies, provenance
+
+| Roadmap | Current evidence | What exactly closes the audit (not necessarily repair) | Status |
+|---|---|---|---|
+| **R00 — baseline/build provenance** | Baseline and vendor gitlink confirmed; separate main build SHA; failed tenth native run traced to two C++ headers. | Freeze the source graph at the **successful** native artifact, give exact ELF SHA and compile/link receipt; record no modifications on audit branch to main/vendor. | **Open — E0/E2** |
+| **R05 — engine and selected owners** | Read-only historical `compile_commands.json` identifies six exact byte owners. Three Dynarmic x64 emitters are **original pinned**, not maintained overrides. All 35 mutated Eden snapshot files inventoried; 7 source originals, 6 known active C++ overrides, 5 names not scheduled, 17 headers unqualified. | Map 17 header inclusion paths and five renamed/missing owner families, compile actual seven Dynarmic instruction cases, resolve ownership and non-regression before implementation. | **Open — E2 historical** |
+| **R18 — full dependency/licence/security inventory** | 26 vendor source families; 22 fetch entries; PS5 Mesa source matches pin except `VENDOR-ORIGIN.json`; Eden **35 files modified in `sources/`**, contrary to immutable-original policy. Attribution/security questions tracked. | Verify bytewise provenance of other 24 families where upstream pins exist; exact staged/linked SBOM, licence notices, archive digest, SDK/ABI and applicable security issues; document intended migration of mutated source snapshots. | **Open — E0/E1** |
+| **R23 — actual upstream changes & dedupe** | 155 Eden commits fully indexed by SHA/title/date; segmented file-net diffs; 21 source leads; seven Dynarmic gaps detailed; Citron source not yet authoritatively identified. | Resolve GitHub's 300-file caps for bulk changes; for **every NS1/shared-relevant commit**, establish matching compiled owner and semantic classification `already integrated`/`missing`/`incompatible`/`irrelevant`, with evidence. Check relevant PS5/Mesa lineages and source licences; no bulk import. | **Open — E0/E1 partial** |
+| **R02 — PS5 SDK/renderer/drivers** | Mihawk PS5 Mesa pin is on a **diverged** branch; native Vulkan/Mesa own source tree and 12 maintained RADV overrides; transfer meta TUs outside override list; two tenth-run header errors. | Actual Meson CDB + copied RADV SHA, native shader/driver ABI, transfer/barrier stress, compiler include owner provenance, no ELF linkage assumptions. | **Open — E1/E2 partial** |
+| **R17 — external PS5 forks** | Relevant PS5/Windows/C# family differences mapped; NS2 ecosystem explicitly excluded. | Document source-level evidence/rationale for excluding incompatible runtime ports rather than inventing compatible C++ patches. | **Research scope documented; no import authorised** |
+| **R01 — operational metrics** | Host and telemetry CI verify counter formatting/host contracts. | PS5 guest frame handoff, GPU queue, VRAM, jitter/HUD, audio and CPU stalls correlated with actual device sessions; zero invented FPS. | **Open — E1, no device** |
+
+## B — NS1 CPU/GPU/HLE correctness (priority by risk, not by hype)
+
+| Case | Verified issue | Mandatory positive/negative evidence before closing |
+|---|---|---|
+| **AB-04 AudioIn — P0 memory safety** | `NullSinkStreamImpl::ReleaseBuffer` may return empty while `DeviceSession` copies requested positive bytes; input device route defaults to `auto`, not PS5 `ps5`. Conditional path, not a reproduced crash. | Real compiled source + ASan/UBSan invalid guest pointer/length, exact zero-filled samples, correct input route, teardown, unchanged AudioOut. |
+| **AB-03 RomFS — P0 lifetime** | Maintained builder destructor is default despite linked owning shared_ptr chains; prior 32k structural model is **not** maintained builder test. | Actual builder + deep/wide-file/dir creation and destruction under 256KiB pthread stack, repeated lifecycle, allocation/overflow/malformed paths, ASan O0/O2. |
+| **AB-02 RADV — P0 multi-TU transfer** | Active command buffer stream-split guard omits inspected transfer/barrier-only paths; historical remedy spans `radv_cmd_buffer.c` and `meta` buffer/copy. | Real copied-source Meson receipt, ABI/API visibility, transfer-only and barrier-only pressure, active queries, driver recovery, no double split. |
+| **AB-01 shader NaN — P0/P1** | Shared active SPIR-V fragment output stores unguarded float; compiled under conditional shared runtime profile. | Current actual CMake option/linked source, SPIR-V validation, NaN/Inf/finite float and integer semantics, correct temporal behavior, PS5 visuals if needed. |
+| **AB-05 Dynarmic seven fixes — P0/P1** | Selected historical original x64 source misses SDIV32 div0, FRINT fallback and SQSHLU corrections. Additional pinned candidates: SM4 PIE codegen, A32 SHA1 decode, FCVT #64 SSE2 fallback, AVX512 CLZ16 upper lanes. | Individual actual JIT instruction truth tests on current selected sources at normal and constrained host features; no entire commit cherry-pick; prioritize PS5 Zen2 path, not AVX512/ARM64 host branch. |
+| **AB-06 ARM64 vs x64 shared — P2** | Eden c769b33 ARM64-native deferred branches are **not** PS5 x64 host JIT. Shared page table sign bit may apply. | Prove exact included shared header & ABI bit semantics; exclude ARM64-backend-only code with rationale. |
+| **R03/R04 shared ancillary** | GPU sync, memory fences, audio, HLE/IPC, kernel teardown, ROM formats and shader cache source checks are in existing audits; no universal runtime-proof claim. | Keep deduplicated by actual compiled source and runtime tests; no cross-NS2 experimental patch. |
+| **R22 static recompiler** | Research concept, no safe production static recompiler implemented or tested. | Mark **excluded from operational release**; if research is later authorised, a separate test/rollback contract is mandatory, not implied by this A/B source audit. |
+
+## Audit-branch tools and immutable proof index
+
+- [Baseline & dependency source inventory](ENCORE_AB_NS1_SOURCE_AND_DEPENDENCY_AUDIT_2026-11-10.md)
+- [21-lead upstream matrix](ENCORE_AB_NS1_UPSTREAM_MATRIX_2026-11-10.md)
+- [Pass 7: native JIT source-owner proof and seven cases](ENCORE_AB_NS1_QUALIFICATION_PASS7_2026-11-10.md)
+- [Pass 8: original source divergence, native compile errors and 35-path classification](ENCORE_AB_NS1_QUALIFICATION_PASS8_2026-11-10.md)
+- [Exact 35-file Git blob manifest](R18_VENDOR_EDEN_35_SOURCE_MUTATIONS_2026-11-10.json)
+- [R18/R23 26 source families and upstream lineages](ENCORE_AB_R18_R23_SOURCE_FAMILIES_AND_LINEAGES_2026-11-10.md)
+- [All 155 official Eden commit SHAs/titles](R23_EDEN_ALL_155_COMMITS_2026-11-10.json)
+- [Read-only native build source ownership workflow](../../.github/workflows/audit-ab-ns1-readonly.yml) and [static tools](../../tools/audit/)
+
+**Stop/go rule:** This is **NOT a final all-green sign-off**. Do not mark the audit complete solely from CI tests of the analyzers. Source audit closure means every R00/R05/R18/R23/R02/R17/R01/R03/R04/R22 item has either a justified `verified`, `not applicable`, or precise `blocked` disposition with artifacts and owner; to claim PS5 functional readiness additionally requires E3 and E4. The user should only be told `audit intégralement terminé` after **no unreviewed source/family/comparator remains**, and `PS5 validé` only after device evidence. On this dated snapshot, **both claims would be false**.

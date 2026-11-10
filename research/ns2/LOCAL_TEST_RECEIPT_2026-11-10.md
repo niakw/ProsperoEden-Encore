@@ -14,13 +14,15 @@
 PASS: 19 NS2 SSBO extent research contracts
 PASS: 23 NS2 backing lifetime research contracts
 PASS: 30 leased GMMU memo research contracts; first 32MiB scan=8193, six scans under unchanged lease=8193 probes
+PASS: 30 native Vulkan range contracts
 PASS: 19 NS2 SSBO extent research contracts
 PASS: 23 NS2 backing lifetime research contracts
 PASS: 30 leased GMMU memo research contracts; first 32MiB scan=8193, six scans under unchanged lease=8193 probes
+PASS: 30 native Vulkan range contracts
 SKIP: exact-source NS2 QMD3 guard (pinned vendor checkout unavailable)
 ```
 
-**72 distinct assertions per compiler, 144 total across both compilers.** No failed assertion or sanitizer report. This validates **research models**, not actual runtime owners or console behavior.
+**102 distinct assertions per compiler, 204 total across both compilers.** No failed assertion or sanitizer report. This validates **research models**, not actual runtime owners or console behavior.
 
 Additionally compiled and executed an offline standalone `native_guard_real.cpp` excerpt of the native mapping guard and its `known_size` predicate: **PASS: 24 exact native guard and descriptor conditions** on each compiler. The function body was compared with the GitHub connector-fetched pinned vendor's `NativeQmdContiguousGpuSpan`: the normalized 460-byte function body had the same FNV-1a 32-bit fingerprint **1556815272** and local SHA-256 **90c871905ad8c6d5a193acea84a457816cf1bc432d71c06de6f6ab68e0f9b7a2**. The actual repository source-extraction Python script was **not executed end-to-end** in this environment.
 
@@ -34,3 +36,20 @@ The 16-entry positive GMMU span memo requires a real shared mapping read lease t
 - `encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h` — exact GMMU guard and QMD3 size admission.
 - `encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp` and `vulkan_rasterizer.cpp` — native owner and six full-span calls.
 - `encore-active/eden-core/src/video_core/memory_manager.cpp` — revision-keyed existing range cache, but no cross-dispatch mapping read lease.
+
+## O11 range admission local evidence (new suite)
+
+The 30 assertions in `test_native_vk_range_contract.cpp`, using
+`native_vk_range_contract.hpp`, passed under both Clang 17 and GCC 14 with
+UBSan. These test 49-bit guest boundaries, native 256 MiB ceiling, real
+driver range limit inputs (including zero / exact maximum / maximum + 1),
+uniform-CBUF 64 KiB limit, Vulkan descriptor offsets, backing-size bounds,
+and overflow-safe descriptor-buffer device-address calculation.
+
+Compiled local files match the exact UTF-8 content pushed to PR #44:
+`native_vk_range_contract.hpp` FNV-1a `1869386525` (3273 bytes) and
+`test_native_vk_range_contract.cpp` FNV-1a `3842164068` (4460 bytes).
+
+This remains host-only **candidate validation**, not an authentic Vulkan
+driver limit query and not proof the production `ConfigureNative` contains
+such a check. No GH Actions job was triggered by this research-only change.

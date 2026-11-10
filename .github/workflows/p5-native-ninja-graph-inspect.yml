@@ -113,6 +113,7 @@ jobs:
           # the exact PS5 target flags/headers, WITHOUT object output or link.
           # The same witnesses are now in the mandatory native preflight.
           python3 -B tools/check-native-source-syntax.py "$scratch/native-local" \
+            --only headless/vulkan_present_manager.cpp \
             --only video_core/renderer_vulkan/vk_turbo_mode.cpp \
             --only video_core/renderer_vulkan/vk_texture_cache_base.cpp \
             --only headless/vulkan_blit_screen_r08.cpp \

@@ -1,6 +1,6 @@
 # Eden Encore — pinned vendor submodule
 
-The directory `vendor/` remains at the same relative path as before, and is the **sole Git submodule**, pinned to `niakw/Prospero.Eden-Encore-vendor`. MihawkGen, FSR3 Optical Flow and libwebp are now regular versioned files inside `vendor/encore-active/`. Their exact byte-for-byte upstream tree hashes are checked by `tools/graphics/check-internalized-ps5-deps.py`; original revision identities are recorded in `vendor/docs/PS5_INTERNAL_DEPENDENCY_ORIGINS_2026-11-10.md`. This work was deliberately performed on isolated branches to protect parallel P1/P2 development.
+The directory `vendor/` remains at the same relative path as before, and is the **sole Git submodule**, pinned to `niakw/Prospero.Eden-Encore-vendor`. MihawkGen, FSR3 Optical Flow and libwebp are now regular, unchanged upstream source trees under `vendor/sources/` (specifically `ps5-mihawkgen/`, `ps5-fsr3-optical-flow/` and `libwebp/`). **Strict policy: `vendor/sources/` contains original third-party snapshots, whereas `vendor/encore-active/` is exclusively for Encore-maintained ports, patches and runtime overrides. No unmodified upstream dependency belongs in `encore-active/`.** Their exact byte-for-byte upstream tree hashes are checked by `tools/graphics/check-internalized-ps5-deps.py`; original revision identities are recorded in `vendor/docs/PS5_INTERNAL_DEPENDENCY_ORIGINS_2026-11-10.md`. This work was deliberately performed on isolated branches to protect parallel P1/P2 development.
 
 ## Clone and checkout
 

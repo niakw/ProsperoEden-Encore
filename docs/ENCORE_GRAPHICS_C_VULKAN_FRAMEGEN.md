@@ -8,7 +8,7 @@ Branche : `feat/encore-c-vulkan-framegen`. Ne pas fusionner `main` ni modifier l
 
 | Ordre | Méthode | Source / licence | État concret | Prochaine preuve |
 |---|---|---|---|---|
-| 1 | MihawkGen natif PS5 | `mihawk-99/PS5_MihawkGen` @ `c57232a`, module `framegen/` GPL-3.0-or-later, outillage PS5 MIT ; modèle `network.fgw` à auditer avec notices | Source interne sous `vendor/encore-active/PS5_MihawkGen` (ancien sous-module ; état historique de ce tableau : **pas encore branché dans le renderer Encore**) | Construire module et modèle sur la toolchain PS5, vérifier Vulkan/RADV, layouts/barrières/fences et premier couple d'images |
+| 1 | MihawkGen natif PS5 | `mihawk-99/PS5_MihawkGen` @ `c57232a`, module `framegen/` GPL-3.0-or-later, outillage PS5 MIT ; modèle `network.fgw` à auditer avec notices | Source interne sous `vendor/sources/ps5-mihawkgen` (ancien sous-module ; état historique de ce tableau : **pas encore branché dans le renderer Encore**) | Construire module et modèle sur la toolchain PS5, vérifier Vulkan/RADV, layouts/barrières/fences et premier couple d'images |
 | 2 | FSR 3.1 Frame Generation | AMD FidelityFX SDK, code MIT ; nécessite flux temporal/motion/depth et swapchain Vulkan qualifiés | Contrat R06 seulement | Prouver depth/motion/jitter invités, HUD distinct, profil de latence ; comparer aux mêmes images |
 | 3 | LSFG / Lossless Scaling | Intégration amont ProsperoEden pouvant dépendre d'une DLL Windows non redistribuable | Non intégré à Encore ; aucune DLL embarquée | Confirmer droits de distribution et backend **natif PS5** ; sinon refuser cette option |
 
@@ -395,7 +395,7 @@ PS5, latence ou affichage 30->60 sur console n'est encore démontré.
 ### C2.10 — troisième backend : AMD FSR3 optical flow PS5 (source-only)
 
 Le dépôt Swordpdf/ps5-framegen est désormais épinglé sous
-`vendor/encore-active/PS5_FSR3OpticalFlow` (anciennement
+`vendor/sources/ps5-fsr3-optical-flow` (anciennement
 `third_party/PS5_FSR3OpticalFlow`), SHA
 64362101757cdd6f7df9eeb984cb53f03f1fbfca.
 Ce port GPL-3 des passes optical-flow AMD (HLSL AMD MIT -> SPIR-V)

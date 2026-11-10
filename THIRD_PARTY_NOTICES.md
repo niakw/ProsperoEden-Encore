@@ -221,5 +221,5 @@ the many upstream free/open-source projects credited above.
 
 The launcher uses a pinned official release of Google libwebp for
 cover cache and compressed embedded UI images. BSD-style license with
-patent rights grant. Source license: vendor/encore-active/libwebp/COPYING;
+patent rights grant. Source license: vendor/sources/libwebp/COPYING;
 installed license: legal/LIBWEBP_LICENSE.txt.

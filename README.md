@@ -264,7 +264,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 - Refined packaging and reproducibility, exact-SHA executable and symbols matching, optional FFPFSC, and the prohibition of nested ZIPs.
 - Selected/pinned upstream engine fixes, compiler/runtime adaptations, SDK/Mesa/Vulkan/OpenGL dependencies and reproducible source manifests.
 - Audited transitive source integration and proved which upstream/backport overrides are selected in the compiled archive; rejected incomplete or unverified integrations.
-- Migrated the large **vendor** tree to an immutable, pinned Git submodule; preserved matching dependency sources and licenses. MihawkGen, FSR3 Optical Flow and libwebp 1.6.0 now live inside that sole vendor dependency as ordinary Git files, not additional external submodules.
+- Migrated the large **vendor** tree to an immutable, pinned Git submodule; preserved matching dependency sources and licenses. MihawkGen, FSR3 Optical Flow and libwebp 1.6.0 are pinned unmodified third-party source snapshots under `vendor/sources/` (not additional submodules). `vendor/encore-active/` is reserved exclusively for Encore-maintained runtime overrides and ports; original upstream dependency trees must never be stored there.
 - Compacted Git history while retaining recovery archives and provenance; migrated to an independent public repository with restored branches/tags/releases where applicable.
 - Established fast/full host gates, native build/package gates, static security analysis (including CodeQL), checksum/source checks and firmware-specific console-test checklists.
 - Kept code review, build results and on-device qualification **separate**, including a distinct record for source-only and experimental patches.

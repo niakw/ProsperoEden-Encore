@@ -41,7 +41,7 @@ struct SpatialStagingBytes {
     Extent original,Extent work,std::uint64_t measured_free_bytes,
     std::uint64_t safety_reserve_bytes) noexcept {
     const auto estimate=EstimateStandaloneSpatialStaging(original,work);
-    return estimate.valid && FitsMeasuredGpuBudget(
+    return estimate.valid && safety_reserve_bytes>0u && FitsMeasuredGpuBudget(
         measured_free_bytes,estimate.total,safety_reserve_bytes);
 }
 } // namespace Eden::Graphics::DlssNrMin

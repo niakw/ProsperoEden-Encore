@@ -56,3 +56,30 @@ These are frozen snapshots, not a claim that upstream can no longer move. Histor
 ## Closeout decision
 
 **Source-review comparison of the declared pinned upstream set and new head deltas is complete for this snapshot. Overall NS2 optimization implementation and console validation are NOT complete.** Do not close PR #44 as integrated production work or infer NS2 rendering was fixed. Keep it isolated as an auditable register, prioritize real QMD3 descriptor semantics and reader/remap ownership, then R4 3D slice copy and R2 in-order upload batching if real guest evidence identifies symptoms. After evidence, work on a separately reviewed vendor research branch, test true owner source, and only promote fixes into `main` after NS1 regression / PS5 P5 release gates.
+## Post-closeout validation — R3 swizzle and pinned native source gates
+
+R3 moved from **unverified candidate** to **host-formula differential
+candidate**, without production code. The new
+[GOB16 differential suite](../research/ns2/test_blocklinear_gob16_differential.cpp)
+passed **1536 layouts**, all 192 format/block/tiling combinations
+with 8 geometries each, **23,578,183 address-oracle comparisons** and
+whole/subrect output comparisons per run. Clang and GCC passed
+`-O0`, `-O1`, `-O2` with ASan/UBSan. Full image copies use 16B
+fast path only for BPP16; subrectangle fast path only for power-of-two
+BPP. The code is independent model/host-only, not actual vendor decode.
+
+Six pinned vendor file blobs were independently read at exact SHA
+`22b69d60` and **26/26 direct source-owner invariants passed**,
+with Git object hashes retained in
+[pinned source witness](../research/ns2/PINNED_VENDOR_SOURCE_WITNESS_2026-11-10.md).
+The full Python vendor-checkout execution still reports **SKIP**.
+Live QMD3 guest ABI, real memory remap race, actual PS5 decoder
+performance, NS1 regression and source-owner integration remain open.
+
+**Revised R3 next gate:** compile the optimization against *actual*
+maintained `decoders.cpp` in an isolated vendor research branch, test
+the full current public API and subrect edge cases against the old
+implementation, then benchmark on PS5 only after the native build P5
+is stable. Do not generalize an NS2 optimization into NS1 while it
+is only qualified on a mathematical model.
+

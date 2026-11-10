@@ -59,6 +59,7 @@ cpp=r"""
 #include <utility>
 #include <span>
 #include <vector>
+#include <vulkan/vulkan.h>
 #include "video_core/host1x/syncpoint_manager.h"
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -147,6 +148,127 @@ AVFrame* CodecRoundTrip() {
     avcodec_free_context(&dec);
     return output;
 }
+
+// A real host Vulkan command and VkFence drive guest release readiness.
+// The decoder's production Pump, NVMap/guest memory and Host1x syncpoint
+// owners remain source-extracted/compiled below. This is NOT a live PS5 TIPC.
+class VulkanVideoRelease {
+    VkInstance instance{};
+    VkPhysicalDevice physical{};
+    VkDevice device{};
+    VkQueue queue{};
+    VkBuffer buffer{};
+    VkDeviceMemory memory{};
+    VkCommandPool pool{};
+    VkCommandBuffer command{};
+    VkFence fence{};
+    u32* mapped{};
+public:
+    VulkanVideoRelease() {
+        VkApplicationInfo ai{}; ai.sType=VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        ai.apiVersion = VK_API_VERSION_1_1;
+        VkInstanceCreateInfo ci{}; ci.sType=VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        ci.pApplicationInfo = &ai;
+        assert(vkCreateInstance(&ci,nullptr,&instance)==VK_SUCCESS);
+        u32 count{};
+        assert(vkEnumeratePhysicalDevices(instance,&count,nullptr)==VK_SUCCESS && count);
+        std::vector<VkPhysicalDevice> devs(count);
+        assert(vkEnumeratePhysicalDevices(instance,&count,devs.data())==VK_SUCCESS);
+        u32 family{};
+        bool found{};
+        for(auto p:devs) {
+            u32 queues{};
+            vkGetPhysicalDeviceQueueFamilyProperties(p,&queues,nullptr);
+            std::vector<VkQueueFamilyProperties> properties(queues);
+            vkGetPhysicalDeviceQueueFamilyProperties(p,&queues,properties.data());
+            for(u32 i=0;i<queues;++i) {
+                if(properties[i].queueCount &&
+                   (properties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)) {
+                    physical=p;family=i;found=true;break;
+                }
+            }
+            if(found)break;
+        }
+        assert(found);
+        const float priority=1.0f;
+        VkDeviceQueueCreateInfo qi{}; qi.sType=VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        qi.queueFamilyIndex=family;qi.queueCount=1;qi.pQueuePriorities=&priority;
+        VkDeviceCreateInfo di{}; di.sType=VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        di.queueCreateInfoCount=1;di.pQueueCreateInfos=&qi;
+        assert(vkCreateDevice(physical,&di,nullptr,&device)==VK_SUCCESS);
+        vkGetDeviceQueue(device,family,0,&queue);
+        VkBufferCreateInfo bi{}; bi.sType=VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bi.size=sizeof(u32);bi.usage=VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        bi.sharingMode=VK_SHARING_MODE_EXCLUSIVE;
+        assert(vkCreateBuffer(device,&bi,nullptr,&buffer)==VK_SUCCESS);
+        VkMemoryRequirements requirements{};
+        vkGetBufferMemoryRequirements(device,buffer,&requirements);
+        VkPhysicalDeviceMemoryProperties memory_properties{};
+        vkGetPhysicalDeviceMemoryProperties(physical,&memory_properties);
+        u32 type=memory_properties.memoryTypeCount;
+        for(u32 i=0;i<memory_properties.memoryTypeCount;++i) {
+            if((requirements.memoryTypeBits & (1U<<i)) &&
+                (memory_properties.memoryTypes[i].propertyFlags &
+                (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) ==
+                (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {type=i;break;}
+        }
+        assert(type<memory_properties.memoryTypeCount);
+        VkMemoryAllocateInfo mai{}; mai.sType=VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        mai.allocationSize=requirements.size;mai.memoryTypeIndex=type;
+        assert(vkAllocateMemory(device,&mai,nullptr,&memory)==VK_SUCCESS);
+        assert(vkBindBufferMemory(device,buffer,memory,0)==VK_SUCCESS);
+        void* raw{};
+        assert(vkMapMemory(device,memory,0,sizeof(u32),0,&raw)==VK_SUCCESS);
+        mapped=static_cast<u32*>(raw);
+        *mapped=0;
+        VkCommandPoolCreateInfo pci{}; pci.sType=VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        pci.queueFamilyIndex=family;
+        pci.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        assert(vkCreateCommandPool(device,&pci,nullptr,&pool)==VK_SUCCESS);
+        VkCommandBufferAllocateInfo bai{}; bai.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        bai.commandPool=pool;bai.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        bai.commandBufferCount=1;
+        assert(vkAllocateCommandBuffers(device,&bai,&command)==VK_SUCCESS);
+        VkFenceCreateInfo fi{}; fi.sType=VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        assert(vkCreateFence(device,&fi,nullptr,&fence)==VK_SUCCESS);
+    }
+    void Submit(u32 guest_release_value) {
+        assert(vkResetCommandBuffer(command,0)==VK_SUCCESS);
+        assert(vkResetFences(device,1,&fence)==VK_SUCCESS);
+        VkCommandBufferBeginInfo begin{}; begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        assert(vkBeginCommandBuffer(command,&begin)==VK_SUCCESS);
+        vkCmdFillBuffer(command,buffer,0,sizeof(u32),guest_release_value);
+        VkBufferMemoryBarrier barrier{}; barrier.sType=VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
+        barrier.srcQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
+        barrier.buffer=buffer;barrier.offset=0;barrier.size=sizeof(u32);
+        vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_TRANSFER_BIT,
+                             VK_PIPELINE_STAGE_HOST_BIT,0,0,nullptr,1,&barrier,0,nullptr);
+        assert(vkEndCommandBuffer(command)==VK_SUCCESS);
+        VkSubmitInfo info{}; info.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        info.commandBufferCount=1;info.pCommandBuffers=&command;
+        assert(vkQueueSubmit(queue,1,&info,fence)==VK_SUCCESS);
+    }
+    u32 Retire() {
+        assert(vkWaitForFences(device,1,&fence,VK_TRUE,10000000000ULL)==VK_SUCCESS);
+        return *mapped; // Coherent host buffer only after genuine VkFence.
+    }
+    ~VulkanVideoRelease() {
+        if(device)vkDeviceWaitIdle(device);
+        if(fence)vkDestroyFence(device,fence,nullptr);
+        if(pool)vkDestroyCommandPool(device,pool,nullptr);
+        if(mapped)vkUnmapMemory(device,memory);
+        if(buffer)vkDestroyBuffer(device,buffer,nullptr);
+        if(memory)vkFreeMemory(device,memory,nullptr);
+        if(device)vkDestroyDevice(device,nullptr);
+        if(instance)vkDestroyInstance(instance,nullptr);
+    }
+};
 
 namespace Tegra::Texture {
 // The RGB block-linear branch has a separate true round-trip witness.
@@ -324,20 +446,26 @@ int main(){
     std::puts("H05_REAL_FFMPEG_DECODED_FRAME_RENDER_PASS "
               "codec=MPEG4 pixels=FFmpeg decoded NV12=exact RGBA=converted "
               "oob_pitch_offset_size=refused guest_fence=not_exercised");
-    // The ACTUAL maintained AM session Pump() runs against real decoded
-    // pixels. The syncpoint service below is a deterministic mock:
-    // this witnesses the production publication ORDER, not guest Vulkan.
+    // The ACTUAL maintained AM session Pump runs on real decoded pixels
+    // and the exact GraphicsSupervisor guest-write owner. A real Vulkan
+    // queue/fence now gates the release readiness, not a synthetic completion.
+    VulkanVideoRelease release_gpu;
     using Service::AM::IGraphicsVideoDecoderSession;
     IGraphicsVideoDecoderSession session;
     session.m_registered.insert(9);
     session.m_pending.push_back({picture,true});
     session.m_available.push_back({8,{{7,99}}}); // blocked older image
     session.m_available.push_back({9,{{7,10}}}); // ready only at fence 10
-    session.Pump();
+    release_gpu.Submit(10); // actual vkCmdFillBuffer + vkQueueSubmit
+    session.Pump(); // guest fence must not advance on submission alone
     assert(session.m_outputs.empty() && session.m_pending.size()==1);
     assert(session.system.host.sync.GetGuestSyncpointValue(5)==0 &&
            session.m_owner->process.memory.writes==0);
-    for(u32 i=0;i<10;++i) session.system.host.sync.IncrementGuest(7);
+    assert(session.system.host.sync.GetGuestSyncpointValue(7)==0);
+    const u32 completed_release = release_gpu.Retire();
+    assert(completed_release==10);
+    for(u32 i=0;i<completed_release;++i)
+        session.system.host.sync.IncrementGuest(7);
     assert(session.system.host.sync.GetGuestSyncpointValue(7)==10);
     session.m_owner->process.memory.writable=false;
     session.Pump();
@@ -372,7 +500,14 @@ int main(){
        }
     // An impossible guest image is retired without fabricating an output.
     session.m_pending.push_back({picture,false});
-    for(u32 i=10;i<99;++i) session.system.host.sync.IncrementGuest(7);
+    release_gpu.Submit(99);
+    session.Pump(); // blocked older image still cannot complete early
+    assert(session.m_outputs.size()==1 && session.m_pending.size()==1);
+    assert(session.system.host.sync.GetGuestSyncpointValue(5)==1);
+    const u32 second_release = release_gpu.Retire();
+    assert(second_release==99);
+    for(u32 i=10;i<second_release;++i)
+        session.system.host.sync.IncrementGuest(7);
     assert(session.system.host.sync.GetGuestSyncpointValue(7)==99);
     session.Pump();
     assert(session.m_outputs.size()==1 && session.m_pending.size()==1);
@@ -392,7 +527,7 @@ int main(){
     std::puts("H05_REAL_FFMPEG_PUMP_OWNER_PASS decoded_nv12=exact "
               "blocked_release=held no_head_of_line=1 failed_write=rolled_back "
               "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
-              "dead_image=retired write_oom=rolled_back owner_nvmap_guest_write=1 true_ipc_vulkan_fence=not_exercised");
+              "dead_image=retired write_oom=rolled_back owner_nvmap_guest_write=1 real_host_vk_fence_to_guest_syncpoint=1 live_TIPC=not_exercised");
 }
 """.replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump).replace("__REAL_SURFACE_WRITE__",surface_write)
 compilers=list(dict.fromkeys(x for x in
@@ -409,7 +544,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h05-ffmpeg-pixels-") as temp:
                  "-fno-sanitize-recover=all",
                  "-I"+str(ROOT/"vendor/sources/eden/src"),
                  str(src),str(SYNC_OWNER),"-o",str(exe),
-                 "-pthread","-lavcodec","-lavutil","-lswscale"]
+                 "-pthread","-lavcodec","-lavutil","-lswscale","-lvulkan"]
             built=subprocess.run(cmd,text=True,capture_output=True,
                                  timeout=75,env=os.environ.copy())
             assert built.returncode==0,(cc,built.stderr[-5000:])

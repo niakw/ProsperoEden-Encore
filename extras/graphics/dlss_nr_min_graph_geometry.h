@@ -7,6 +7,7 @@
 #include "video_core/renderer_vulkan/nr_rdna2_native_graph_schedule.h"
 #include <cstdint>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace Eden::Graphics::DlssNrMin {
@@ -79,6 +80,10 @@ struct GeometryAudit {
         const bool up=step.type.starts_with("CCTinlayoutFusedSwin") &&
             step.kernel.ends_with("_upsample_fp8");
         const bool fswin=step.type.starts_with("CCTinlayoutFusedSwin");
+        if(up && step.div<2u) {
+            result.issue=GeometryIssue::ReferenceGeometryMismatch;
+            return false;
+        }
         const std::uint32_t ref_windows_x=Ceil8(step.height);
         const std::uint32_t ref_windows_y=Ceil8(step.width);
         const std::uint64_t ref_padded_tokens =

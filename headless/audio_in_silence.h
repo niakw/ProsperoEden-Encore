@@ -14,6 +14,18 @@ namespace Eden {
 // A single guest capture request must not allocate arbitrary host RAM.
 // 2 MiB of PCM16 holds over 21 seconds of mono audio at 48 kHz.
 inline constexpr std::uint64_t kMaxSilentAudioInSamples = 1ull << 20;
+inline constexpr std::uint64_t kMaxSilentAudioInBytes =
+    kMaxSilentAudioInSamples * sizeof(std::int16_t);
+
+// Checked before entering the original AudioIn device session's raw guest
+// copy. Reject fractional PCM16 frames and unbounded capture requests.
+// The device-session owner separately validates the guest address range.
+inline constexpr bool IsValidAudioInBufferShape(std::uint64_t bytes,
+                                                 std::uint32_t channels) noexcept {
+    return (channels == 1 || channels == 2 || channels == 6) &&
+           bytes <= kMaxSilentAudioInBytes &&
+           bytes % (std::uint64_t{channels} * sizeof(std::int16_t)) == 0;
+}
 
 inline std::vector<std::int16_t> MakeSilentAudioInSamples(std::uint64_t count) {
     if (count > kMaxSilentAudioInSamples ||

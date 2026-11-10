@@ -19,3 +19,7 @@ Ce fichier accompagne le **premier build natif de qualification P5**, sans publi
 5. Ne pas écraser la dernière release publique ni déplacer le pointeur vendor sans validation distincte.
 
 Le suivi est dans [l'issue #15](https://github.com/niakw/ProsperoEden-Encore/issues/15) et [la roadmap](ROADMAP_NS1_NS2_UNIFIED.md).
+
+## GitHub Actions run créé
+
+[**Run #42846319389**](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389) est la première exécution native de P5, déclenchée automatiquement après le commit volontaire `6fcfe545` ([commit](https://github.com/niakw/ProsperoEden-Encore/commit/6fcfe5454a20f600f092e51bdda331a0796b8220)). Il doit être évalué selon ses propres étapes, artefacts et éventuelles erreurs. Les modifications **documentaires ultérieures** sur `main` n'entrent pas rétroactivement dans ce checkout et ne doivent pas annuler ce run.

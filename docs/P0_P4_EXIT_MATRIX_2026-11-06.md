@@ -1,5 +1,11 @@
 # Eden Encore — critères de sortie P0–P4 et frontière P5
 
+## Décision hôte révisée au 10 novembre 2026 — 17/17 clos
+
+Ce tableau du 6 novembre conserve ses **critères historiques**, mais ses anciennes cellules « ouverts » ne représentent plus le verdict du 10 novembre. Le [manifeste vivant](NS2_P1_P2_EXIT_CONTRACT.json) contient **17/17** contrats hôtes qualifiés (H01–H07, G01–G10) et **0 contrat ouvert**. Les [six CI obligatoires au SHA `7154be1`](https://github.com/niakw/ProsperoEden-Encore/actions?query=branch%3Amain) sont vertes, dont [qualification P0–P4 #42838074366](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42838074366). La [gate finale P1/P2 #42842249702](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42842249702) est **SUCCESS** au même couple moteur/vendor `7154be1` / `0b026507`.
+
+**P5 est maintenant lancé mais non qualifié :** [first P5 native-build workflow #42846319389](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389), checkout `6fcfe545` reprenant le pin vendor qualifié. Le build ne publie pas de release et n'atteste aucun framebuffer ou jeu NS2 sur PS5. Les preuves matérielles et de packaging restent explicitement **ouvertes**.
+
 **Référence : 6 novembre 2026.** Source de vérité des cases : [issue #15](https://github.com/niakw/ProsperoEden-Encore/issues/15). Ce tableau est une photographie des **critères**, et non une preuve de réussite au SHA le plus récent. Ne pas assimiler une commande Vulkan présente à une image console; ne pas assimiler une absence de trace console à une lacune de code.
 
 **Règle impérative : aucune validation, installation ou capture PS5 n'est exigée pour clôturer P0–P4.** Le build console, les jeux FC27/BOTW/MKW/Bananza, le premier framebuffer et les mesures GPU/VRAM/performances sont uniquement **P5**. Les contrôles source/ABI, tests C++ hôte, CI Linux, modules SPIR-V validés et preuves de provenance restent des critères P0–P4. Ne pas bloquer la clôture du code en attendant une PS5.

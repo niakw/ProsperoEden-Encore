@@ -1,4 +1,6 @@
 <a id="encore"></a>
+> **P5 native build in progress (10 Nov 2026):** [first full PS5 qualification build #42846319389](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389), checkout `6fcfe545`, vendor pin `0b026507`. P1/P2 host exit **17/17** with [final green gate #42842249702](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42842249702). **Not a published release or console-tested build.** [Current roadmap](docs/ROADMAP_NS1_NS2_UNIFIED.md) · [issue #15](https://github.com/niakw/ProsperoEden-Encore/issues/15).
+
 > **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.
 
 <table width="100%">

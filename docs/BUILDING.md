@@ -1,5 +1,11 @@
 # Building Prospero.Eden Encore
 
+## Active P5 native CI (10 November 2026)
+
+The first native P5 build has been **explicitly triggered**, not released: [first P5 native-build workflow #42846319389](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389), checkout `6fcfe5454a20f600f092e51bdda331a0796b8220`, retained vendor Gitlink `0b0265079139622b759167c9d10a9a31aba1ea88`. Its parent [finite host exit #42842249702](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42842249702) passed 17/17 contracts at parent SHA `7154be1` with all six mandatory workflows green. The P5 commit introduces only the [build rationale document](P5_FIRST_NATIVE_BUILD_2026-11-10.md).
+
+**Do not confuse native compilation with a release or PS5 device validation.** The build is a separate checkout-specific diagnostic and may fail source checks, toolchain/dependencies, native link or artifact packaging. Any fix should address the *first real failure*, retain its cache/stage where possible, preserve NS1 and the exact vendor pin, and avoid a second full build until confirmed necessary. Documentation-only pushes do not intentionally trigger full builds; only `workflow_dispatch` or an explicit `[full-build]` marker do. **No `[release]` marker was used** and public GitHub Releases stay unchanged.
+
 The authoritative release build runs on **Ubuntu 24.04**. WSL/Linux hosts with the same tools are suitable.
 Encore also supports local native-build iteration on Apple Silicon macOS through `tools/host-env.sh` and Homebrew LLVM 18; CI remains the release authority.
 

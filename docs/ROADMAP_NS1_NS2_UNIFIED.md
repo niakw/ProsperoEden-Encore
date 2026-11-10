@@ -1,6 +1,18 @@
 # Eden Encore — roadmap suivable pour un moteur PS5 commun NS1 / NS2
 
-**Mise à jour : 2026-11-06 · branche unique : `main`**
+## Situation actualisée — 10 novembre 2026 (prioritaire sur les historiques)
+
+- **Sortie P1/P2 hôte : QUALIFIÉE, 17/17 contrats H01–H07/G01–G10.** Preuves positives/négatives réelles hôtes, **six CI obligatoires vertes au même SHA** `7154be1e727437e264609b805d80a2d1a17d82e2` / vendor `0b0265079139622b759167c9d10a9a31aba1ea88`. Le [contrôle manuel P1/P2 #42842249702](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42842249702) est **SUCCESS**. Cela ne prouve **aucune** image GPU invitée sur console.
+- **P4 : qualification hôte sharded** [#42838074366](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42838074366) **verte** au même SHA ; les six workflows et la gate hôte constituent la recette de sortie retenue. Les constatations P0/P1/P2 « ouvertes » des notes historiques plus bas ne décrivent **pas** la situation actuelle des **17 contrats finis**.
+- **P5 : PREMIER BUILD NATIF DÉMARRÉ** sur le commit de lancement `6fcfe5454a20f600f092e51bdda331a0796b8220` via [first P5 native-build workflow #42846319389](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389), avec `[full-build]` uniquement, **sans `[release]`**. Contrôles natifs/packaging et chaîne PS5 restent à vérifier. Les éventuelles corrections de compilation doivent préserver le pin vendor, les preuves NS1/NS2 et les caches.
+- **Vendor:** de nouveaux documents/sécurités existent sur vendor `main`, mais le run P5 **compile le gitlink épinglé** `0b026507`, pas automatiquement le dernier vendor `main`. **Ne pas déplacer le gitlink pendant cette première recette.**
+- **Prochaine sortie :** après binaire et packaging réussis, qualifier *sur PS5* (FC27, BOTW, MKW, Bananza), mesurer le premier framebuffer / GPU/Vulkan / stabilité et décider d'une release seulement après faits matériels. Les 31 choix système PS5 et les 31 catalogues launcher restent une exigence, pas une preuve ici de qualité linguistique console.
+
+Suivi opérationnel synthétique : [issue #15](https://github.com/niakw/ProsperoEden-Encore/issues/15) · [fiche de ce build P5](P5_FIRST_NATIVE_BUILD_2026-11-10.md) · [archive des anciennes mises à jour volumineuses de l'issue](ISSUE_15_ROADMAP_HISTORY_THROUGH_2026-11-08.md).
+
+---
+
+**Dernière mise à jour : 2026-11-10 · branche unique : `main`**
 
 > **Backlog de fonctions avec fichiers, états et lots ChatGPT : [NS2_FUNCTION_BACKLOG_2026-11-06.md](NS2_FUNCTION_BACKLOG_2026-11-06.md)**
 > **Matrice de clôture P0–P4 sans exigence console : [P0_P4_EXIT_MATRIX_2026-11-06.md](P0_P4_EXIT_MATRIX_2026-11-06.md)**

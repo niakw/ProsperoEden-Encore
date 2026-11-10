@@ -49,6 +49,16 @@ try:
     assert all(entry["classification"] == "source-gap" for entry in initial.values())
     assert initial["AB-04-AudioIn"]["null_sink_returns_empty"] is True
     assert initial["AB-04-AudioIn"]["ps5_input_device_explicitly_selected"] is False
+    assert initial["AB-01-shader-NaN"]["conditional_shared_source_declared_in_cmake"] is True
+    assert initial["AB-02-RADV-transfer"]["meta_unit_active_override_declarations"] == {
+        "radv_meta_buffer.c": False, "radv_meta_copy.c": False}
+    # One replacement unit must not be confused with coverage for both.
+    DATA["tools/install-vendored-radv.py"] = (
+        "PATHS = ('src/amd/vulkan/meta/radv_meta_buffer.c',)")
+    assert module.triage()["AB-02-RADV-transfer"]["meta_unit_active_override_declarations"] == {
+        "radv_meta_buffer.c": True, "radv_meta_copy.c": False}
+    DATA["tools/install-vendored-radv.py"] = "PATHS = ('src/amd/vulkan/radv_cmd_buffer.c',)"
+
 
     DATA["vendor/sources/eden/src/audio_core/sink/null_sink.h"] = (
         "std::vector<s16> ReleaseBuffer(u64 num_samples) override { "

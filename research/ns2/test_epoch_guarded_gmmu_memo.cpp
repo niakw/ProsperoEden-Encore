@@ -4,6 +4,7 @@
 // all descriptor stages. Never deploy this model until that lease exists.
 #include <array>
 #include <atomic>
+#include <thread>
 #include <cassert>
 #include <cstdint>
 #include <iostream>
@@ -128,6 +129,24 @@ int main() {
     check(memo.CheckUnderLease(owner.Acquire(), gpu, 1));
     check(!memo.CheckUnderLease(owner.Acquire(), gpu, 8192)); // No mapped second page.
     check(memo.Hits() >= 6);
+    // A writer may not publish a new PTE while a reader holds the owner lease.
+    std::atomic<bool> writer_started{false}, writer_done{false};
+    std::thread writer;
+    {
+        const auto lease = owner.Acquire();
+        writer = std::thread([&] {
+            writer_started.store(true, std::memory_order_release);
+            owner.Set(gpu, cpu + 3 * Page);
+            writer_done.store(true, std::memory_order_release);
+        });
+        while (!writer_started.load(std::memory_order_acquire)) std::this_thread::yield();
+        check(!writer_done.load(std::memory_order_acquire));
+    }
+    writer.join();
+    check(writer_done.load(std::memory_order_acquire));
+    const auto previous_probes = memo.Probes();
+    check(memo.CheckUnderLease(owner.Acquire(), gpu, 1));
+    check(memo.Probes() > previous_probes); // Writer's revision invalidated memo.
     // A destroyed MemoryManager may be constructed at the exact same address
     // with the same process generation and page-table revision. Pointer +
     // revision is NOT a unique cache identity. Proven owner ID prevents ABA.

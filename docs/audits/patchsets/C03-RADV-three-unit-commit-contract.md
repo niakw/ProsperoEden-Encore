@@ -2,6 +2,8 @@
 
 **Status:** preparation only; no RADV code changed, no Meson compilation, no vendor repin. Keep C03 separate from C00–C02 and from P5.
 
+**Actual PR #46 vendor gitlink:** `f9f08786de9e623f2a40865027451dbf0676f6b4`. All three source blobs below were rechecked at this newer vendor revision and still match the audit-era pinned SHA values. Do not assume the old audit vendor SHA `22b69d6` is the current build input.
+
 ## Three C translation units — all required
 
 | Unit | Exact pinned Git blob | Required owner decision |

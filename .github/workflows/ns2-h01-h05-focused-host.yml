@@ -6,6 +6,7 @@ on:
     paths:
       - 'vendor'
       - 'tools/ns2/test_real_kprocess_metadata.py'
+      - 'tools/ns2/check_process_run_owner.py'
       - 'tools/ns2/test_real_kprocess_init_guest_rollback.py'
       - 'tools/ns2/check_native_exefs_missing_directory_host.py'
       - 'tools/ns2/check_native_exefs_fs_registration_host.py'
@@ -21,6 +22,7 @@ on:
     paths:
       - 'vendor'
       - 'tools/ns2/test_real_kprocess_metadata.py'
+      - 'tools/ns2/check_process_run_owner.py'
       - 'tools/ns2/test_real_kprocess_init_guest_rollback.py'
       - '.github/workflows/ns2-h01-h05-focused-host.yml'
   workflow_dispatch:

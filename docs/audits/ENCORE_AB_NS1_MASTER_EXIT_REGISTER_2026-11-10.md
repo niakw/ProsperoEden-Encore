@@ -39,6 +39,19 @@
 | **R03/R04 shared ancillary** | GPU sync, memory fences, audio, HLE/IPC, kernel teardown, ROM formats and shader cache source checks are in existing audits; no universal runtime-proof claim. | Keep deduplicated by actual compiled source and runtime tests; no cross-NS2 experimental patch. |
 | **R22 static recompiler** | Research concept, no safe production static recompiler implemented or tested. | Mark **excluded from operational release**; if research is later authorised, a separate test/rollback contract is mandatory, not implied by this A/B source audit. |
 
+## AB-04 additional release gate: real AudioIn timing and buffer retirement
+
+**Verified source graph, 10 November (vendor `f9f08786` checked separately from baseline `22b69d6`):**
+
+1. `DeviceSession::AppendBuffers` sends the input sink an `AppendBuffer` call; the draft C00 `SilentAudioInputStream` overrides it as a **no-op**.
+2. The pinned `SinkStream::GetExpectedPlayedSampleCount()` returns `min(estimated, max_played_sample_count) + TargetSampleCount * 5`; only `ProcessAudioIn` updates the maximum input count. The draft silent stream neither calls that function nor supplies a real capture callback. Assuming no other producer, its acknowledged sample count **cannot advance beyond the fixed allowance**.
+3. The real `audio_core/device/audio_buffers.h::ReleaseBuffers` requires `DeviceSession::IsBufferConsumed` before calling `DeviceSession::ReleaseBuffer` on an ordinary, non-force release. A capture buffer whose end timestamp exceeds that allowance can therefore remain registered indefinitely. This is a **new source-derived timing/queue risk**, not proof of a particular PS5 game's failure.
+4. The C00 AudioIn helper also does not solve odd-byte sizes or invalid guest buffers at the original `DeviceSession::ReleaseBuffer` copy site. The corrective PR #46 therefore **must remain draft** despite a green ASan/UBSan silence-vector test.
+
+**New AB-04 closure requirement:** actual source-compiled AudioIn service fixture with at least one buffer longer than the fixed allowance, multiple queued buffers, monotonic release timestamps and events, pause/resume, guest-address/odd-byte adversarial inputs, correct silence and unchanged AudioOut. The implementation must advance guest time correctly (not simply mark all captures complete on append or add a busy-loop thread). Completion of this service requires a coordinated selected `DeviceSession`/sink ownership change or an equivalent proved implementation, not just the C00 null-buffer replacement.
+
+**No current PS5 runtime sign-off, no vendor/source mutation by the audit.**
+
 ## Audit-branch tools and immutable proof index
 
 - [Baseline & dependency source inventory](ENCORE_AB_NS1_SOURCE_AND_DEPENDENCY_AUDIT_2026-11-10.md)

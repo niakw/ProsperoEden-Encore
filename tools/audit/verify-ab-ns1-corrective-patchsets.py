@@ -15,7 +15,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 VENDOR = ROOT / "vendor"
-PIN = "f9f08786de9e623f2a40865027451dbf0676f6b4"
+PIN = "22b69d6053db41b74edac2633c012f925b84f69e"
 
 SOURCES = {
     "C01": (

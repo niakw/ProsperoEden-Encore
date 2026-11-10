@@ -2,7 +2,7 @@
 
 **Status:** preparation only; no RADV code changed, no Meson compilation, no vendor repin. Keep C03 separate from C00–C02 and from P5.
 
-**Actual PR #46 vendor gitlink:** `f9f08786de9e623f2a40865027451dbf0676f6b4`. All three source blobs below were rechecked at this newer vendor revision and still match the audit-era pinned SHA values. Do not assume the old audit vendor SHA `22b69d6` is the current build input.
+**Actual corrective PR #46 gitlink:** `22b69d6053db41b74edac2633c012f925b84f69e` as read from the source branch's Git tree, rather than the `f9f08786`/`90c9c8a2` pins seen in transient GitHub PR merge checkouts. All three source blobs are unchanged from the audit baseline. The isolated patchset CI now checks the PR head, not a moving merge tree. No RADV integration or vendor repin is implied.
 
 ## Three C translation units — all required
 

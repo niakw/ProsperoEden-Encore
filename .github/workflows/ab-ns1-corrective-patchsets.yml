@@ -37,7 +37,7 @@ jobs:
           from pathlib import Path
           note = json.loads(Path("patchset-witness.json").read_text())
           assert note["vendor_worktree_clean"]
-          assert note["vendor_gitlink"] == "22b69d6053db41b74edac2633c012f925b84f69e"
+          assert note["vendor_gitlink"] == "f9f08786de9e623f2a40865027451dbf0676f6b4"
           assert all(note["units"][key]["patch_staged_and_context_valid"]
                      for key in ("C01", "C02"))
           assert all(not row["patch_applied"] and not row["compiled"] and

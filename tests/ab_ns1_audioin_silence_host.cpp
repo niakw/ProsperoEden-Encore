@@ -46,4 +46,20 @@ int main() {
         rejected = true;
     }
     assert(rejected && "untrusted AudioIn requests must be bounded to 2 MiB");
+    for (const std::uint32_t channels : {1u, 2u, 6u}) {
+        const std::uint64_t frame_bytes = channels * sizeof(std::int16_t);
+        const std::uint64_t max_good =
+            (Eden::kMaxSilentAudioInBytes / frame_bytes) * frame_bytes;
+        assert(Eden::IsValidAudioInBufferShape(0, channels));
+        assert(Eden::IsValidAudioInBufferShape(frame_bytes, channels));
+        assert(Eden::IsValidAudioInBufferShape(max_good, channels));
+        assert(!Eden::IsValidAudioInBufferShape(frame_bytes - 1, channels));
+        assert(!Eden::IsValidAudioInBufferShape(max_good + frame_bytes, channels));
+        assert(!Eden::IsValidAudioInBufferShape(
+            std::numeric_limits<std::uint64_t>::max(), channels));
+    }
+    assert(!Eden::IsValidAudioInBufferShape(2, 0));
+    assert(!Eden::IsValidAudioInBufferShape(2, 3));
+    assert(!Eden::IsValidAudioInBufferShape(2, 7));
+    assert(!Eden::IsValidAudioInBufferShape(1, 1));
 }

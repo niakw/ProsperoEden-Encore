@@ -946,13 +946,15 @@ headless_exts = {".c", ".cc", ".cpp", ".h", ".hpp", ".inc", ".cl"}
 post_f07_p5_headless_owners = {"headless/ns2_astc_texture_cache_scope_bridge.h"}
 # C00 is reviewed separately on the isolated A/B NS1 repair PR. Do not
 # retroactively count the new helper as a 2026-10-20 F07 headless source.
-post_f07_c00_audioin_owners = {"headless/audio_in_silence.h"}
+post_f07_c00_audioin_owners = {"headless/audio_in_silence.h",
+                                "headless/audio_device_session_ps5.cpp"}
 assert all((root / p).is_file() for p in post_f07_c00_audioin_owners)
 assert '#include "audio_in_silence.h"' in (root / "headless/audio.cpp").read_text()
 assert not post_f07_c00_audioin_owners & (
     post_f07_p5_headless_owners | post_f07_feature_headless_owners |
     post_f07_r09_headless_owners)
-print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=1 historical_headless=193")
+assert 'audio_device_session_ps5.cpp' in (root / "headless/CMakeLists.txt").read_text()
+print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=2 historical_headless=193")
 assert all((root / p).is_file() for p in post_f07_p5_headless_owners)
 assert not post_f07_p5_headless_owners & (
     post_f07_feature_headless_owners | post_f07_r09_headless_owners)

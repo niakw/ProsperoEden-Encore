@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "headless/audio.cpp"
+      - "headless/audio_device_session_ps5.cpp"
+      - "headless/CMakeLists.txt"
       - "headless/audio_in_silence.h"
       - "headless/main.cpp"
       - "tests/ab_ns1_audioin_silence_host.cpp"
@@ -36,6 +38,11 @@ jobs:
           grep -Fq 'CHECK(input->GetSystemChannels() == channels);' headless/devices_check.cpp
           grep -Fq 'MakeSilentAudioInSamples(samples)' headless/audio.cpp
           grep -Fq 'audio_input_device_id = "ps5";' headless/main.cpp
+          grep -Fq 'list(REMOVE_ITEM eden_c00_audio_sources "device/device_session.cpp")' headless/CMakeLists.txt
+          grep -Fq 'audio_device_session_ps5.cpp' headless/CMakeLists.txt
+          grep -Fq 'IsValidAudioInBufferShape(buffer.size, channel_count)' headless/audio_device_session_ps5.cpp
+          grep -Fq 'IsValidVirtualAddressRange(Common::ProcessAddress{buffer.samples}' headless/audio_device_session_ps5.cpp
+          grep -Fq 'samples.size() != buffer.size / sizeof(s16)' headless/audio_device_session_ps5.cpp
           if grep -Fq 'make_unique<NullSinkStreamImpl>' headless/audio.cpp; then
             echo "::error::AudioIn must not use an empty capture stream"
             exit 1

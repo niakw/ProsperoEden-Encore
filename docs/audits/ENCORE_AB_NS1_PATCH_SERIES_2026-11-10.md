@@ -30,4 +30,6 @@ This branch's host-only tests compile `tests/ab_ns1_audioin_silence_host.cpp` us
 4. A green sanitizer helper, source static check or CMake graph is **not** proof of linked ELF or 30/60 FPS gameplay. A full device validation is a separate P5 acceptance step.
 5. If an individual batch fails a guard, revert that one commit and preserve the other batches. No wholesale Eden/Mesa update.
 
+**C00 supplementary owner:** `headless/audio_device_session_ps5.cpp` is a full, copyright-preserving PS5-only copy of pinned `audio_core/device/device_session.cpp` selected by an explicit exactly-one CMake source replacement. It guards input PCM16 whole-frame sizes, 2 MiB maximum length and `IsValidVirtualAddressRange` before calling `WriteBlockUnsafe`, and skips unnecessary input temporary allocation. Pure buffer-shape tests run under host sanitizers; the complete owner still needs native source compilation and real guest-event tests. No pristine vendor source is modified.
+
 **Important:** C00 is the only integrated code batch in this draft. C01 and C02 have **reviewable, unapplied vendor patch files**; C03–C06 have only implementation contracts. These are **not commits containing working runtime fixes**. A future vendor PR requires source-blob/ABI checks, dedicated positive and negative tests, and an explicitly controlled gitlink bump.

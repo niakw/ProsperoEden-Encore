@@ -65,7 +65,10 @@ assert "observed.cpu_address" in native_acquire
 assert "ReadCoherentNativeSemaphore(dma_pusher, address)" in native_acquire
 assert "release has no CPU backing" in native_acquire
 assert native_acquire.index("GpuToCpuAddress(address, sizeof(u32))") < native_acquire.index(
-    "rasterizer->Query(")
+    "rasterizer->SignalFence(")
+assert "memory->GetPointer(address) != backing" in native_acquire
+assert "memory->Write<u32>(address, value)" in native_acquire
+assert "current.IsCurrent(channel, ticket)" in native_acquire
 assert "ReadCoherentNativeSemaphore(dma_pusher, pending.address)" in native_resume
 assert "pending_native_acquire.reset();" in native_resume
 assert "return false;" in native_resume

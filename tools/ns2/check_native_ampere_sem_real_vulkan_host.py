@@ -21,7 +21,7 @@ assert source.count(start)==source.count(stop)==1
 owner=start+source.split(start,1)[1].split(stop,1)[0]
 for needle in ("bool Puller::ResumeNativeAcquire(",
                "void Puller::ProcessNativeSemaphoreExecute(",
-               "pusher.rasterizer->Query(", "ReadCoherentNativeSemaphore("):
+               "pusher.rasterizer->SignalFence(", "ReadCoherentNativeSemaphore("):
     assert needle in owner,needle
 fixture=r"""
 #include <vulkan/vulkan.h>
@@ -33,6 +33,8 @@ fixture=r"""
 #include <chrono>
 #include <thread>
 #include <cstdlib>
+#include <functional>
+#include <exception>
 #include <optional>
 #include <stdexcept>
 #include <utility>
@@ -138,6 +140,8 @@ public:
         Check(vkCreateFence(device,&fi,nullptr,&fence)==VK_SUCCESS,"fence");
     }
     u32 Get() const{return *mapped;}
+    u32* Pointer() const{return mapped;}
+    void Set(u32 value){*mapped=value;}
     void FillAndRetire(u32 value) {
         Check(vkResetCommandBuffer(command,0)==VK_SUCCESS,"reset command");
         VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
@@ -191,23 +195,37 @@ struct MemoryManager {
         Check(IsFullyMappedRange(address,sizeof(T)),"guest semaphore read");
         return static_cast<T>(guest.Get());
     }
+    u32* GetPointer(GPUVAddr address) const {
+        return cpu_alias && IsFullyMappedRange(address,sizeof(u32))
+            ?guest.Pointer():nullptr;
+    }
+    template<class T>void Write(GPUVAddr address,T value) {
+        if(!GetPointer(address))
+            throw std::runtime_error("guest semaphore backing revoked");
+        guest.Set(static_cast<u32>(value));
+    }
 };
+namespace Eden {
+inline std::exception_ptr fatal;
+void RecordGpuFailure(std::exception_ptr why){fatal=why;}
+}
 struct Rasterizer {
     VulkanGuestWord& guest;
-    std::optional<u32> pending_value;
+    std::function<void()> completion;
     bool dirty{};
     unsigned queries{},flushes{},release_fences{};
-    void Query(GPUVAddr addr,VideoCommon::QueryType type,
-               VideoCommon::QueryPropertiesFlags flags,u32 value,u32) {
-        assert(addr==0x1000 && type==VideoCommon::QueryType::Payload &&
-               flags==VideoCommon::QueryPropertiesFlags::IsAFence);
-        assert(!pending_value);
-        pending_value=value;++queries;
+    void SignalFence(std::function<void()>&& callback) {
+        assert(!completion);
+        completion=std::move(callback);++queries;
     }
     void CompleteQueuedVulkanWork() {
-        assert(pending_value);
-        guest.FillAndRetire(*pending_value);
-        pending_value.reset();
+        assert(completion);
+        // The actual GPU queue finishes before the shipping fence callback
+        // may write into the selected guest-owned mapped semaphore word.
+        guest.FillAndRetire(guest.Get());
+        auto callback=std::move(completion);
+        completion={};
+        callback();
         dirty=true;
     }
     bool MustFlushRegion(u64 addr,std::size_t size,VideoCommon::CacheType) {
@@ -279,7 +297,7 @@ int main() {
     assert(channel_a.pending_native_acquire && guest.Get()==2);
     assert(!channel_a.ResumeNativeAcquire(a));
     channel_b.ProcessNativeSemaphoreExecute(b,1); // real native release owner
-    assert(gpu.queries==1 && gpu.pending_value==17 && guest.Get()==2);
+    assert(gpu.queries==1 && gpu.completion && guest.Get()==2);
     assert(!channel_a.ResumeNativeAcquire(a)); // unsubmitted GPU work isn't complete
     gpu.CompleteQueuedVulkanWork(); // genuine vkCmdFillBuffer, vkQueueSubmit, VkFence
     assert(guest.Get()==17);
@@ -310,11 +328,21 @@ int main() {
     try{(void)channel_a.ResumeNativeAcquire(a);}
     catch(const std::runtime_error&){stale_epoch_rejected=true;}
     assert(stale_epoch_rejected && channel_a.pending_native_acquire);
+    // A valid bound channel with a revoked backing cannot publish a late
+    // release, even after its Vulkan commands have genuinely retired.
+    channel_b.regs.reg_array[0x19]=23;
+    channel_b.ProcessNativeSemaphoreExecute(b,1);
+    assert(gpu.completion && guest.Get()==19);
+    memory.cpu_alias=false;
+    gpu.CompleteQueuedVulkanWork();
+    assert(guest.Get()==19 && Eden::fatal);
+    memory.cpu_alias=true;
     std::puts("G10_REAL_VULKAN_SEMAPHORE_OWNER_PASS"
               " channels=2 vkCmdFillBuffer=1 vkQueueSubmit=1"
               " VkFence_retired=1 guest_write_observed=17"
               " parked_replay=1 stale_alias_refused=1"
               " retired_channel_epoch=refused genuine_vk_fence_after_rebind=1"
+              " revoked_release_backing=no_guest_write fatal_latched=1"
               " QMD3_dispatch=not_exercised PS5=not_exercised");
 }
 """.replace("__REAL_OWNER__",owner)

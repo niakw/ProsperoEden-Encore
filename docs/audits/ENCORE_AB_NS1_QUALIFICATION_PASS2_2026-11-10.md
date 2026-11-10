@@ -76,3 +76,16 @@ The checker emits JSON and never modifies source. Missing files produce an incom
 6. No PR merge until proof of compiled owner, host test, existing native PS5 CI artifact and non-regression. R22 remains research only.
 
 **Pass-2 result: four unclosed source-level high-priority leads, an additional AudioIn routing dependency, and five more explicit upstream dependency families; zero PS5 gameplay or FPS claims.**
+
+
+## R05/R23 follow-up: upstream Dynarmic 35f0dd7 — source-owner trap
+
+The recent [Eden 35f0dd7](https://github.com/eden-emulator/mirror/commit/35f0dd7c1ca064ec95ab7efd9981b00f8dcfb989) contains several **distinct** x64 and A32 changes; do not label the whole multi-file commit "missing" or import it wholesale.
+
+- **Division-by-zero:** pinned source vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64_data_processing.cpp (blob d05d4aa0) and tracked encore-active source (3dd13ebc) both go from code.test(divisor, divisor) to code.jz(end) without Eden's recent code.cmovz(eax, divisor) zero-result step. On the affected x64 IR path the division-by-zero result is therefore a concrete **semantic gap candidate**; test the exact JIT result for positive/negative dividend, divisor=0, divisor=-1, and signed INT_MIN/-1.
+- **Floating-point rounding:** pinned source emit_x64_floating_point.cpp (blob 756a6f0a) documents extra arguments at bits 0–7 (rounding mode) and 8–15 (exact), yet EmitFPRoundThunk reads bit shifts **8 and 16**. Eden 35f0dd7 corrects them to **0 and 8**. Test fallback thunk plus SSE4.1 fast path with exact, rounding mode and FPSR/FPCR; do not conflate code presence with executed path.
+- **Vector count-leading-zeros:** maintained active emit_x64_vector.cpp (blob 4afc50c7) and original pinned emitter (blob 1165abb0) have the old AVX-512 CLZ16 upper-lane pack. The amending vextracti128 is useful to host feature-variant tests, but AVX-512 is **not a priority for the PS5's Zen 2 CPU**. Do not spend the console build gate on an unreachable host-feature variant.
+- **Important CMake reachability uncertainty:** headless/scalar-memory.cmake (blob 1de54e87) contains source selection for active data-processing and vector units; however an explicit include of this file was **not found** in the inspected headless/CMakeLists.txt or other returned GitHub code search matches. The pinned Dynarmic CMakeLists.txt itself lists both original x64 units. A maintained file or policy test that checks its contents does not establish the source was included in CMake. Require native compile_commands and build-tree target sources before selecting the actual patch owner. Floating-point unit has no corresponding override found in the inspected headless CMake.
+- **No test claim:** no full native configure, compiled JIT instruction test, PS5 device trace or FPS comparison was run. These are additional, separately triaged AB-05 lead details, not a fifth gameplay bug.
+
+The existing tools/check-maintained-scalar-emitters.py validates parity with retired CMake edits and mentions two compiled units, but it reads the selector file directly; it does **not** itself prove the selector was included in the real native target. Its scope must be kept explicit.

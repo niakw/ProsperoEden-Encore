@@ -75,7 +75,7 @@ int main() {
             const VitProjectionStageCapacity residual{
                 plane,1024u*1024u,4u*plane,
                 plane,2048u,plane};
-            for(const auto [kind,cap] : {
+            for(const auto& [kind,cap] : {
                 std::pair{VitProjectionKind::Expand,expand},
                 std::pair{VitProjectionKind::Contract,contract},
                 std::pair{VitProjectionKind::ResidualProjection,residual}}) {

@@ -147,7 +147,7 @@ static void dispose(Kernel::KernelCore& k) {
 int main() {
     {
         Kernel::KernelCore k; k.fail_create = true;
-        Core::System system{k};
+        Core::System system{k,{}};
         Service::Process process{system};
         Loader::AppLoader loader{Loader::ResultStatus::Success, Loader::LoadParameters{4, 8192}};
         auto result = Loader::ResultStatus::Success;
@@ -158,7 +158,7 @@ int main() {
     }
     {
         Kernel::KernelCore k;
-        Core::System system{k};
+        Core::System system{k,{}};
         Service::Process process{system};
         Loader::AppLoader loader{Loader::ResultStatus::ErrorLoadingNSO, std::nullopt,true};
         auto result = Loader::ResultStatus::Success;
@@ -171,7 +171,7 @@ int main() {
     }
     {
         Kernel::KernelCore k;
-        Core::System system{k};
+        Core::System system{k,{}};
         Service::Process process{system};
         Loader::AppLoader loader{Loader::ResultStatus::Success, std::nullopt,true};
         auto result = Loader::ResultStatus::Success;
@@ -184,7 +184,7 @@ int main() {
     }
     {
         Kernel::KernelCore k; k.fail_append=true;
-        Core::System system{k};
+        Core::System system{k,{}};
         Service::Process process{system};
         Loader::AppLoader loader{Loader::ResultStatus::Success,Loader::LoadParameters{1,4096},true};
         auto result=Loader::ResultStatus::Success;
@@ -198,7 +198,7 @@ int main() {
     }
     {
         Kernel::KernelCore k;
-        Core::System system{k};
+        Core::System system{k,{}};
         Service::Process process{system};
         Loader::AppLoader loader{Loader::ResultStatus::Success, Loader::LoadParameters{42, 0x8000},true};
         auto result = Loader::ResultStatus::ErrorLoadingNSO;

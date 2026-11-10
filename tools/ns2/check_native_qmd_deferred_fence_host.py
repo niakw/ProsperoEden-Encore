@@ -61,6 +61,13 @@ struct Memory {
         if (fail_map) throw std::runtime_error("mapping race");
         return mapped;
     }
+    // The maintained deferred QMD3 release checks the CPU backing
+    // pointer in addition to the GMMU span. Keep the test's fail_map
+    // exception behavior so a late backing failure is still latched.
+    u32* GetPointer(u64) {
+        if (fail_map) throw std::runtime_error("mapping race");
+        return mapped ? &stored : nullptr;
+    }
     template<class T> T Read(u64) {
         if (fail_read) throw std::runtime_error("guest read fault");
         return static_cast<T>(stored);

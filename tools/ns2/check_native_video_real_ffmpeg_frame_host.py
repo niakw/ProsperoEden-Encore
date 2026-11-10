@@ -48,6 +48,13 @@ submit_start="void IGraphicsVideoDecoderSession::SubmitInput(HLERequestContext& 
 submit_end="\nvoid IGraphicsVideoDecoderSession::GetOutputInfo("
 assert service.count(submit_start)==service.count(submit_end)==1
 submit=submit_start+service.split(submit_start,1)[1].split(submit_end,1)[0]
+supervisor_source=GUEST_SURFACE.read_text()
+open_video_begin="void IGraphicsSupervisor::OpenVideoDecoderSession(HLERequestContext& ctx) {"
+child_video_begin="void IGraphicsSupervisor::OpenVideoDecoderChildSession(HLERequestContext& ctx) {"
+child_video_end="\nvoid IGraphicsSupervisor::CreateVideoImagePool("
+assert supervisor_source.count(open_video_begin)==supervisor_source.count(child_video_begin)==supervisor_source.count(child_video_end)==1
+open_video=open_video_begin+supervisor_source.split(open_video_begin,1)[1].split("\n"+child_video_begin,1)[0]
+child_video=child_video_begin+supervisor_source.split(child_video_begin,1)[1].split(child_video_end,1)[0]
 
 cpp=r"""
 #include <algorithm>
@@ -340,18 +347,28 @@ void SwizzleTexture(std::vector<u8>&,const std::vector<u8>&,u32,u32,u32,u32,u32,
 }
 namespace Common { struct ProcessAddress { u64 address; }; }
 namespace Kernel {
+struct KClientSession{};
 inline constexpr u32 ResultInvalidState=1,ResultInvalidCombination=2,
     ResultOutOfResource=3,ResultInvalidSize=4,ResultInvalidArgument=5,
     ResultNotFound=6;
 }
+struct Result {
+    u32 raw{};
+    constexpr Result(u32 v=0):raw(v){}
+    constexpr bool IsError()const{return raw!=0;}
+};
 inline constexpr u32 ResultSuccess=0;
 struct HLERequestContext {
     std::array<u32,16> words{};
+    u32 command{400};
+    std::shared_ptr<void> handler;
+    unsigned moved{};
     std::vector<int> descriptors;
     std::vector<u8> compressed;
     std::vector<u32> response;
     u32* CommandBuffer(){return words.data();}
-    u32 GetCommand()const{return 400;}
+    u32 GetCommand()const{return command;}
+    void AddMoveObject(Kernel::KClientSession* session){assert(session);++moved;}
     const std::vector<int>& BufferDescriptorA()const{return descriptors;}
     std::span<const u8> ReadBufferA(std::size_t)const{return compressed;}
 };
@@ -360,6 +377,7 @@ inline constexpr std::size_t COMMAND_BUFFER_LENGTH=64;
 struct ResponseBuilder {
     HLERequestContext& ctx;
     ResponseBuilder(HLERequestContext& c,u32):ctx(c){}
+    ResponseBuilder(HLERequestContext& c,u32,u32,u32):ctx(c){}
     void Push(u32 value){ctx.response.push_back(value);}
 };
 }
@@ -439,7 +457,11 @@ struct ModuleContainer {
 };
 struct NativeModule {ModuleContainer container;ModuleContainer& GetContainer(){return container;}};
 struct Mapping {unsigned references{};};
-struct IGraphicsSupervisor {
+struct IGraphicsSupervisor : std::enable_shared_from_this<IGraphicsSupervisor> {
+    struct Bootstrap {
+        bool ready{true};
+        bool GpuContextReady()const{return ready;}
+    } m_bootstrap;
     std::mutex m_native_memory_mutex;
     VideoPool m_video_pools;
     NativeMemory m_native_memory;
@@ -458,6 +480,8 @@ struct IGraphicsSupervisor {
     }
     std::shared_ptr<FakeSurface> LookupVideoSurface(u32 id) {return id==9?surface:nullptr;}
     bool WriteVideoSurface(u32,const VideoSurface&,std::span<const u8>);
+    void OpenVideoDecoderSession(HLERequestContext&);
+    void OpenVideoDecoderChildSession(HLERequestContext&);
 };
 using FakeOwner=IGraphicsSupervisor;
 __REAL_SURFACE_WRITE__
@@ -475,7 +499,8 @@ public:
     struct AvailableImage{u32 id{};std::optional<ReleaseFence> release;};
     struct PendingPicture{Tegra::Host1x::Nx2Picture picture;bool eos{};};
     struct Output{u32 image{},width{},height{};u64 pts{};bool eos{};};
-    FakeSystem system;
+    FakeSystem internal_system;
+    FakeSystem& system=internal_system;
     std::shared_ptr<FakeOwner> m_owner=std::make_shared<FakeOwner>(system);
     std::shared_ptr<FakeReady> m_ready=std::make_shared<FakeReady>();
     std::unique_ptr<Tegra::Host1x::Nx2VideoDecoder> m_decoder{
@@ -489,12 +514,28 @@ public:
     bool m_creator{},m_finalized{};
     u64 m_submitted{};
     static constexpr std::size_t MaxInputBytes=16*1024*1024;
+    IGraphicsVideoDecoderSession()=default;
+    IGraphicsVideoDecoderSession(FakeSystem& authorized_system,
+                                 std::shared_ptr<FakeOwner> authorized_owner,
+                                 bool creator)
+      :system(authorized_system),m_owner(std::move(authorized_owner)),
+       m_creator(creator){}
     void Acknowledge(HLERequestContext& ctx,u32 code){ctx.response={code};}
     void Pump();
     void SubmitInput(HLERequestContext&);
 };
 __REAL_PUMP__
 __REAL_SUBMIT__
+template<class Handler>Result CreateMetadataSession(
+    FakeSystem&,HLERequestContext& ctx,std::shared_ptr<Handler> handler,
+    Kernel::KClientSession** client) {
+    static Kernel::KClientSession stub_kernel_session;
+    ctx.handler=std::move(handler);
+    *client=&stub_kernel_session;
+    return ResultSuccess;
+}
+__REAL_OPEN_VIDEO__
+__REAL_CHILD_VIDEO__
 } // namespace Service::AM
 
 int main(){
@@ -626,7 +667,42 @@ int main(){
     // a pre-populated Pump fixture. Its packet is genuinely decoded by
     // FFmpeg; an actual Vulkan fence gates the live SyncpointManager before
     // the maintained Pump + GraphicsSupervisor write guest NVMap bytes.
-    IGraphicsVideoDecoderSession from_tipc;
+    // Actual supervisor admission and child session owner methods; kernel
+    // session creation and bootstrap state are bounded host stand-ins.
+    Service::AM::FakeSystem guest_system;
+    auto owner=std::make_shared<Service::AM::IGraphicsSupervisor>(guest_system);
+    HLERequestContext parent_request;
+    parent_request.command=902;
+    parent_request.words[0]=parent_request.GetCommand()+0x10;
+    owner->m_bootstrap.ready=false;
+    owner->OpenVideoDecoderSession(parent_request);
+    assert(parent_request.response.size()==1 &&
+           parent_request.response[0]==Kernel::ResultInvalidState &&
+           !parent_request.handler && parent_request.moved==0);
+    owner->m_bootstrap.ready=true;
+    parent_request.words[0]=0;parent_request.response.clear();
+    owner->OpenVideoDecoderSession(parent_request);
+    assert(parent_request.response.size()==1 &&
+           parent_request.response[0]==Kernel::ResultInvalidCombination &&
+           !parent_request.handler && parent_request.moved==0);
+    parent_request.words[0]=parent_request.GetCommand()+0x10;
+    parent_request.response.clear();
+    owner->OpenVideoDecoderSession(parent_request);
+    assert(parent_request.response.size()==1 &&
+           parent_request.response[0]==ResultSuccess &&
+           parent_request.handler && parent_request.moved==1);
+    const auto parent=std::static_pointer_cast<IGraphicsVideoDecoderSession>(
+        parent_request.handler);
+    assert(parent->m_creator);
+    HLERequestContext child_request;
+    owner->OpenVideoDecoderChildSession(child_request);
+    assert(child_request.response.size()==1 &&
+           child_request.response[0]==ResultSuccess &&
+           child_request.handler && child_request.moved==1);
+    auto child=std::static_pointer_cast<IGraphicsVideoDecoderSession>(
+        child_request.handler);
+    assert(!child->m_creator && child->m_owner.get()==owner.get());
+    IGraphicsVideoDecoderSession& from_tipc=*child;
     from_tipc.m_registered.insert(9);
     from_tipc.m_available.push_back({9,{{7,3}}});
     HLERequestContext input;
@@ -671,9 +747,21 @@ int main(){
     from_tipc.SubmitInput(bad_pts);
     assert(bad_pts.response.size()==1 && bad_pts.response[0]==Kernel::ResultInvalidArgument);
     assert(from_tipc.m_submitted==1);
+    HLERequestContext invalid_codec=input;
+    invalid_codec.response.clear();
+    from_tipc.m_decoder=
+        std::make_unique<Tegra::Host1x::Nx2VideoDecoder>("video/unknown");
+    from_tipc.SubmitInput(invalid_codec);
+    assert(invalid_codec.response.size()==1 &&
+           invalid_codec.response[0]==Kernel::ResultInvalidState &&
+           from_tipc.m_submitted==1 &&
+           from_tipc.system.host.sync.GetGuestSyncpointValue(5)==1);
     std::puts("H05_REAL_SUBMITINPUT_FFMPEG_VULKAN_OWNER_PASS"
               " submit_owner=executed real_codec=HEVC"
               " native_decode_owner=executed native_drain_owner=executed"
+              " supervisor_auth_owner=executed child_session_owner=executed"
+              " denied_bootstrap=held invalid_codec=refused"
+              " kernel_session=host_fixture"
               " owner_pump=executed owner_nvmap_guest_write=executed"
               " real_vk_fence_retired=1 guest_completion_after_write=1"
               " invalid_tipc=refused invalid_pts=refused"
@@ -684,7 +772,7 @@ int main(){
               "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
               "dead_image=retired write_oom=rolled_back owner_nvmap_guest_write=1 real_host_vk_fence_to_guest_syncpoint=1 live_TIPC=not_exercised");
 }
-""".replace("__REAL_OWNER__",real).replace("__REAL_HELPERS__",helpers).replace("__REAL_PUMP__",pump).replace("__REAL_SUBMIT__",submit).replace("__REAL_SURFACE_WRITE__",surface_write)
+""".replace("__REAL_OWNER__",real).replace("__REAL_HELPERS__",helpers).replace("__REAL_PUMP__",pump).replace("__REAL_SUBMIT__",submit).replace("__REAL_SURFACE_WRITE__",surface_write).replace("__REAL_OPEN_VIDEO__",open_video).replace("__REAL_CHILD_VIDEO__",child_video)
 compilers=list(dict.fromkeys(x for x in
     (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"C++20 compiler required"

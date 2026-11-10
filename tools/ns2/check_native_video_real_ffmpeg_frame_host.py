@@ -165,9 +165,9 @@ class VulkanVideoRelease {
     u32* mapped{};
 public:
     VulkanVideoRelease() {
-        VkApplicationInfo ai{VK_STRUCTURE_TYPE_APPLICATION_INFO};
+        VkApplicationInfo ai{}; ai.sType=VK_STRUCTURE_TYPE_APPLICATION_INFO;
         ai.apiVersion = VK_API_VERSION_1_1;
-        VkInstanceCreateInfo ci{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+        VkInstanceCreateInfo ci{}; ci.sType=VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         ci.pApplicationInfo = &ai;
         assert(vkCreateInstance(&ci,nullptr,&instance)==VK_SUCCESS);
         u32 count{};
@@ -191,13 +191,13 @@ public:
         }
         assert(found);
         const float priority=1.0f;
-        VkDeviceQueueCreateInfo qi{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+        VkDeviceQueueCreateInfo qi{}; qi.sType=VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         qi.queueFamilyIndex=family;qi.queueCount=1;qi.pQueuePriorities=&priority;
-        VkDeviceCreateInfo di{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+        VkDeviceCreateInfo di{}; di.sType=VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         di.queueCreateInfoCount=1;di.pQueueCreateInfos=&qi;
         assert(vkCreateDevice(physical,&di,nullptr,&device)==VK_SUCCESS);
         vkGetDeviceQueue(device,family,0,&queue);
-        VkBufferCreateInfo bi{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+        VkBufferCreateInfo bi{}; bi.sType=VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bi.size=sizeof(u32);bi.usage=VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         bi.sharingMode=VK_SHARING_MODE_EXCLUSIVE;
         assert(vkCreateBuffer(device,&bi,nullptr,&buffer)==VK_SUCCESS);
@@ -215,7 +215,7 @@ public:
                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {type=i;break;}
         }
         assert(type<memory_properties.memoryTypeCount);
-        VkMemoryAllocateInfo mai{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+        VkMemoryAllocateInfo mai{}; mai.sType=VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         mai.allocationSize=requirements.size;mai.memoryTypeIndex=type;
         assert(vkAllocateMemory(device,&mai,nullptr,&memory)==VK_SUCCESS);
         assert(vkBindBufferMemory(device,buffer,memory,0)==VK_SUCCESS);
@@ -223,25 +223,25 @@ public:
         assert(vkMapMemory(device,memory,0,sizeof(u32),0,&raw)==VK_SUCCESS);
         mapped=static_cast<u32*>(raw);
         *mapped=0;
-        VkCommandPoolCreateInfo pci{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+        VkCommandPoolCreateInfo pci{}; pci.sType=VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         pci.queueFamilyIndex=family;
         pci.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         assert(vkCreateCommandPool(device,&pci,nullptr,&pool)==VK_SUCCESS);
-        VkCommandBufferAllocateInfo bai{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+        VkCommandBufferAllocateInfo bai{}; bai.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         bai.commandPool=pool;bai.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         bai.commandBufferCount=1;
         assert(vkAllocateCommandBuffers(device,&bai,&command)==VK_SUCCESS);
-        VkFenceCreateInfo fi{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+        VkFenceCreateInfo fi{}; fi.sType=VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         assert(vkCreateFence(device,&fi,nullptr,&fence)==VK_SUCCESS);
     }
     void Submit(u32 guest_release_value) {
         assert(vkResetCommandBuffer(command,0)==VK_SUCCESS);
         assert(vkResetFences(device,1,&fence)==VK_SUCCESS);
-        VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+        VkCommandBufferBeginInfo begin{}; begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         assert(vkBeginCommandBuffer(command,&begin)==VK_SUCCESS);
         vkCmdFillBuffer(command,buffer,0,sizeof(u32),guest_release_value);
-        VkBufferMemoryBarrier barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER};
+        VkBufferMemoryBarrier barrier{}; barrier.sType=VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
         barrier.srcQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
@@ -250,7 +250,7 @@ public:
         vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_TRANSFER_BIT,
                              VK_PIPELINE_STAGE_HOST_BIT,0,0,nullptr,1,&barrier,0,nullptr);
         assert(vkEndCommandBuffer(command)==VK_SUCCESS);
-        VkSubmitInfo info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+        VkSubmitInfo info{}; info.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO;
         info.commandBufferCount=1;info.pCommandBuffers=&command;
         assert(vkQueueSubmit(queue,1,&info,fence)==VK_SUCCESS);
     }

@@ -2752,7 +2752,14 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         "${EDEN_NATIVE_TASK_MESH_ROOT}/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp")
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_mesh_shader_target_sources}")
     target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
+    # P5: native Task/Mesh also contributes the original maintained Vulkan
+    # include directory. Place the CMake-selected ABI header overlay FIRST:
+    # renderer_vulkan_r08, vk_blit_screen_r08 and window_adapt_pass_r08 must
+    # be seen by their matching C++ implementations. Otherwise the older
+    # vendor headers shadow the selected release headers and compilation
+    # breaks on missing HUD/framegen members.
     target_include_directories(video_core BEFORE PRIVATE
+        "${PORT_BUILD_DIR}/include"
         "${EDEN_NATIVE_TASK_MESH_ROOT}" "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
 endif()

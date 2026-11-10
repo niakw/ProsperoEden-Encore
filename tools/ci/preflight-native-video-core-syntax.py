@@ -34,6 +34,18 @@ def category(path: str) -> tuple[int, str] | None:
         "/vulkan_" in path or "/mihawk_" in path or "/fsr" in path
     ):
         return (4, path)
+    # After the high-risk Vulkan/FSR3 owners, sweep other *real* native
+    # translation units. They are present in CMake's exact PS5 compile DB
+    # but were never covered by the previous 163/163 scan. Keep the priority
+    # order deterministic so --max-tus can bound expensive host work.
+    if "/source/src/video_core/" in path:
+        return (5, path)
+    if "/source/src/core/" in path:
+        return (6, path)
+    if "/source/src/audio_core/" in path:
+        return (7, path)
+    if "/source/src/common/" in path:
+        return (8, path)
     return None
 
 

@@ -126,18 +126,17 @@ private:
     std::vector<Frame> frames;
     boost::container::deque<Frame*> present_queue;
     boost::container::deque<Frame*> free_queue;
-    // The presentation worker's frame-availability wake is independent
-    // from frame_cv, which only wakes WaitPresent drain callers.
-    // A stop-token-aware wait requires condition_variable_any.
-    std::condition_variable_any present_ready_cv;
+    // Independent wakeups for the worker and WaitPresent consumers.
+    // Keep the complete maintained synchronization owner layout.
     std::condition_variable_any frame_cv;
+    std::condition_variable_any present_ready_cv;
     std::condition_variable free_cv;
     std::mutex swapchain_mutex;
     std::mutex queue_mutex;
     std::mutex free_mutex;
-    std::size_t free_waiters{};    // guarded by free_mutex
-    std::size_t present_waiters{}; // guarded by queue_mutex
+    std::size_t free_waiters{}; // guarded by free_mutex
     bool present_in_flight{}; // guarded by queue_mutex
+    std::size_t present_waiters{}; // drain waiters, guarded by queue_mutex
     std::exception_ptr present_failure;
     std::jthread present_thread;
     bool blit_supported;

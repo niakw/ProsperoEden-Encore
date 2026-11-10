@@ -3,11 +3,13 @@
 // The existing native GMMU owner has NO demonstrated read lease spanning
 // all descriptor stages. Never deploy this model until that lease exists.
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <iostream>
 #include <limits>
 #include <mutex>
+#include <new>
 #include <optional>
 #include <shared_mutex>
 #include <unordered_map>
@@ -19,6 +21,8 @@ constexpr u64 Page = 4096;
 constexpr u64 Limit = u64{1} << 49;
 constexpr u64 Cap = 256ULL * 1024 * 1024;
 struct Owner {
+    inline static std::atomic<u64> next_owner_id{1};
+    const u64 unique_owner_id{next_owner_id.fetch_add(1, std::memory_order_relaxed)};
     mutable std::shared_mutex mutex;
     std::unordered_map<u64, u64> page_to_cpu;
     struct ReadLease {
@@ -48,7 +52,7 @@ struct Owner {
         return it->second + (address % Page);
     }
 };
-struct Key { const Owner* owner{}; u64 generation{}, revision{}, address{}; u32 bytes{}; };
+struct Key { const Owner* owner{}; u64 owner_id{}, generation{}, revision{}, address{}; u32 bytes{}; };
 struct Entry { Key key{}; bool proven{}; };
 class Memo {
     std::array<Entry, 16> entries{};
@@ -66,9 +70,10 @@ public:
         if (!address || !bytes || bytes > Cap || address >= Limit ||
             bytes > Limit - address) return false;
         auto& entry = entries[Slot(address, bytes)];
-        const Key key{&owner, owner.process_generation, owner.map_revision, address, bytes};
+        const Key key{&owner, owner.unique_owner_id, owner.process_generation, owner.map_revision, address, bytes};
         const bool hit = entry.proven && entry.key.owner == key.owner &&
-            entry.key.generation == key.generation && entry.key.revision == key.revision &&
+            entry.key.owner_id == key.owner_id && entry.key.generation == key.generation &&
+            entry.key.revision == key.revision &&
             entry.key.address == key.address && entry.key.bytes == key.bytes;
         if (hit) { ++cache_hits; return true; }
         const auto map = [&](u64 x) { return owner.LookupUnderLease(x, underlying_lookups); };
@@ -121,6 +126,22 @@ int main() {
     check(memo.CheckUnderLease(owner.Acquire(), gpu, 1));
     check(!memo.CheckUnderLease(owner.Acquire(), gpu, 8192)); // No mapped second page.
     check(memo.Hits() >= 6);
+    // A destroyed MemoryManager may be constructed at the exact same address
+    // with the same process generation and page-table revision. Pointer +
+    // revision is NOT a unique cache identity. Proven owner ID prevents ABA.
+    alignas(Owner) char storage[sizeof(Owner)];
+    auto* a = new (storage) Owner{};
+    a->Set(gpu, cpu);
+    Memo instance_memo;
+    check(instance_memo.CheckUnderLease(a->Acquire(), gpu, 1));
+    const auto first_probes = instance_memo.Probes();
+    a->~Owner();
+    auto* b = new (storage) Owner{};
+    b->Set(gpu, cpu + Page);
+    check(instance_memo.CheckUnderLease(b->Acquire(), gpu, 1));
+    check(instance_memo.Probes() > first_probes); // Fresh lookup, no stale hit.
+    check(instance_memo.Hits() == 0);
+    b->~Owner();
     std::cout << "PASS: " << tests << " leased GMMU memo research contracts; "
               << "first 32MiB scan=8193, six scans under unchanged lease=8193 probes\n";
 }

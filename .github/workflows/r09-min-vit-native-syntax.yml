@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   native-syntax:
-    name: Six authentic native ViT C++ units × macro 0/1
+    name: Six authentic ViT C++ units × 0/1 plus 4 scratch profiles
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           pinned=22b69d6053db41b74edac2633c012f925b84f69e
-          candidate=6ee5be5a7e88ee2f077839c36cb3925412c027b6
+          candidate=64e08c8638358d46b8a9c4edf6096e81db416236
           test "$(git rev-parse HEAD:vendor)" = "$pinned"
           test "$(git -C vendor rev-parse HEAD)" = "$pinned"
           git -C vendor -c credential.helper= fetch --quiet --depth=1 origin "$candidate"
@@ -44,7 +44,7 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends \
             clang glslang-tools spirv-tools libvulkan-dev \
             libavcodec-dev libavutil-dev libswscale-dev
-      - name: Compile the six real ViT translation units in both macro modes
+      - name: Clang syntax 12 ViT modes plus four real allocator profile variants
         shell: bash
         run: |
           set -euo pipefail

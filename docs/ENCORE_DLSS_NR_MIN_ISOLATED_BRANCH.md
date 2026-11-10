@@ -215,3 +215,15 @@ These are per-block source-level counts, not measured runtime. The
 three other ViT stages, per-block barriers, attention and overall engine
 still require actual model/console qualification. At 720p and 4096 tokens
 the Pareto thresholds can differ; this table must not be applied blindly.
+
+
+## Native compilation qualification for four research scratch modes
+
+The isolated CI runner temporarily checks out exact vendor research commit
+64e08c8638358d46b8a9c4edf6096e81db416236, without changing either
+repository's main or the pinned vendor gitlink. The maintained native C++
+header-integrated syntax harness now checks six real ViT sources under
+compile flags 0/1 (12 checks) plus the real nr_rdna2_frame_session.cpp
+with scratch profile selection 4,5,6,12 (four additional checks). The
+normal all-graph compilation path remains unchanged. This checks actual
+native owner source syntax, not linked execution or real GPU model output.

@@ -215,17 +215,26 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "-I"+str(temp),
          *["-I"+str(p) for p in INCLUDES]]
     env=os.environ.copy()
-    tasks=(tuple((name,mode) for name in FILES for mode in ("0","1"))
-           if R09_MIN_DUAL=="1" else
-           tuple((name,None) for name in
-                 (*FILES,"__present_layer_r09__","__r09_full_gpu_host__")))
+    if R09_MIN_DUAL=="1":
+        # Every real ViT owner with pooling disabled/enabled, plus four
+        # independently compiled explicit scratch profiles in the only
+        # translation unit which selects them. No production default change.
+        tasks=tuple((name,mode) for name in FILES for mode in ("0","1"))+tuple(
+            ("nr_rdna2_frame_session.cpp","p"+profile)
+            for profile in ("4","5","6","12"))
+    else:
+        tasks=tuple((name,None) for name in
+                    (*FILES,"__present_layer_r09__","__r09_full_gpu_host__"))
     def check(task):
         name,mode=task
         source=(ROOT/"headless/vulkan_present_layer_r24.cpp"
                 if name=="__present_layer_r09__" else
                 ROOT/"tools/graphics/r09_full_gpu_host.cpp"
                 if name=="__r09_full_gpu_host__" else ACTIVE/name)
-        flags=(["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL="+mode]
+        flags=(["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL=1",
+                "-DEDEN_R09_MIN_VIT_POOL_SCRATCH_PLANES="+mode[1:]]
+               if mode is not None and mode.startswith("p")
+               else ["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL="+mode]
                if mode is not None else [])
         result=subprocess.run(cmd+flags+[str(source)],
             cwd=ROOT,env=env,text=True,capture_output=True,timeout=150)
@@ -241,7 +250,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
             print("R09_NEURAL_NATIVE_CPP_PASS",name,flush=True)
     assert not failures,("R09 selected native C++ syntax failed",failures)
     if R09_MIN_DUAL=="1":
-        assert len(results)==12
-        print("R09_MIN_VIT_NATIVE_CPP_DUAL_MODE_ALL_12_PASS",flush=True)
+        assert len(results)==16
+        print("R09_MIN_VIT_NATIVE_CPP_BOTH_MODES_AND_ALL_FOUR_SCRATCH_PROFILES_PASS",flush=True)
     else:
         print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

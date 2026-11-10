@@ -24,11 +24,13 @@ assert method.index("if (!load_parameters)") < method.index("AppendNewProcess(")
 assert "out_load_result = Loader::ResultStatus::ErrorNotInitialized;" in method
 assert "out_load_result = Loader::ResultStatus::ErrorUnableToParseKernelMetadata;" in method
 assert "SCOPE_EXIT {" in method
-assert "SvcTrace::Unregister(process->GetProcessId());" in method
-assert method.index("SvcTrace::Unregister(process->GetProcessId());") < method.index("m_process->Open(")
+assert "SvcTrace::Unregister(pid);" in method
+assert "m_system.GetFileSystemController().UnregisterProcessIfPresent(pid);" in method
+assert method.index("SvcTrace::Unregister(pid);") < method.index("m_process->Open(")
 assert "process_committed = true;" in method
 finalize=source.split("void Process::Finalize() {",1)[1].split("\nbool Process::Run()",1)[0]
 assert finalize.index("SvcTrace::Unregister(m_process->GetProcessId());") < finalize.index("m_process->Close(")
+assert "m_system.GetFileSystemController().UnregisterProcessIfPresent(" in finalize
 
 harness = r"""
 #include <cassert>

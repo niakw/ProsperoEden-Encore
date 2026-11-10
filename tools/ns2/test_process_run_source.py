@@ -18,7 +18,20 @@ struct Result { unsigned raw; bool IsFailure()const{return raw!=0;} };
 #define LOG_ERROR(...) ((void)0)
 constexpr int Service_LDR=0;
 struct KernelCore {};
-struct CoreSystem { KernelCore kernel; KernelCore& Kernel(){return kernel;} };
+struct FakeFilesystem {
+    unsigned removed{};
+    u64 last_pid{};
+    void UnregisterProcessIfPresent(u64 pid) {
+        ++removed;
+        last_pid=pid;
+    }
+};
+struct CoreSystem {
+    KernelCore kernel;
+    FakeFilesystem filesystem;
+    KernelCore& Kernel(){return kernel;}
+    FakeFilesystem& GetFileSystemController(){return filesystem;}
+};
 struct FakeKProcess {
     u64 pid{};
     Result result{0};
@@ -49,10 +62,12 @@ int main() {
     Process bad(sys);bad.m_process=&failed;
     assert(!bad.Run());assert(!bad.Run());assert(failed.calls==1);
     assert(active_pid.load()==0);
+    assert(sys.filesystem.removed==1 && sys.filesystem.last_pid==44);
     FakeKProcess sw1{55,{0x222},0};
     Register(0);
     Process legacy(sys);legacy.m_process=&sw1;
     assert(legacy.Run());assert(!legacy.Run());assert(sw1.calls==1);
+    assert(sys.filesystem.removed==1); // NS1 never enters H01 cleanup.
     Process nil(sys);
     assert(nil.Run());assert(!nil.Run());
     FakeKProcess other{99,{0x234},0};

@@ -842,6 +842,10 @@ static void VerifyNativeTexelSsboSpirv(const std::string& prefix) {
     profile.supported_spirv = 0x00010500;
     profile.unified_descriptor_binding = true;
     profile.support_descriptor_aliasing = true;
+    // The live G07 SSBO value chooses a uniform texel-buffer descriptor.
+    // Its selected Vulkan device must advertise non-uniform indexing;
+    // this is an allowed-path fixture, not a fallback binding.
+    profile.support_uniform_texel_buffer_array_nonuniform_indexing = true;
     Shader::Backend::Bindings bindings{};
     const auto words = Shader::Backend::SPIRV::EmitSPIRV(
         profile, Shader::RuntimeInfo{}, program, bindings);

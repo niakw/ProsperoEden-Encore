@@ -85,7 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends glslang-tools spirv-tools
-          for shader in peripheral_pack peripheral_detail_transfer; do
+          for shader in peripheral_pack peripheral_synthetic_delta peripheral_detail_transfer; do
             glslangValidator -V --target-env vulkan1.1 -S comp \
               "extras/graphics/r09_min_shaders/${shader}.comp" \
               -o ".build-local/r09-min/${shader}.spv"
@@ -117,7 +117,13 @@ jobs:
             -Iextras/graphics \
             extras/graphics/r09_min_vk_spatial_smoke.cpp -lvulkan \
             -o .build-local/r09-min/vk-spatial-readback
-          .build-local/r09-min/vk-spatial-readback \
-            .build-local/r09-min/peripheral_pack.spv \
-            .build-local/r09-min/peripheral_detail_transfer.spv
-          echo R09_MIN_HOST_VULKAN_GPU_READBACK_PASS_NO_NEURAL_MODEL
+          for mode in positive identity; do
+            args=()
+            if [[ "$mode" == identity ]]; then args+=(--identity); fi
+            .build-local/r09-min/vk-spatial-readback \
+              .build-local/r09-min/peripheral_pack.spv \
+              .build-local/r09-min/peripheral_synthetic_delta.spv \
+              .build-local/r09-min/peripheral_detail_transfer.spv \
+              "${args[@]}"
+          done
+          echo R09_MIN_HOST_VULKAN_GPU_READBACK_POSITIVE_AND_NEGATIVE_PASS

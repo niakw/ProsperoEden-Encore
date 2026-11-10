@@ -121,3 +121,53 @@ is unavailable in this runtime. The independently fetched source
 invariants remain **26/26 PASS**; the end-to-end executable gate remains
 **NOT RUN**.
 
+
+
+## R4 — Fermi2D 3D slice-copy admission qualified on host model
+
+**Status change:** R4 is now **source-policy modeled / host-qualified**,
+rather than merely source-diff qualified. Added the
+[50-case host oracle](../research/ns2/test_volume_slice_admission.cpp)
+on PR #44. **All 50 cases pass with both Clang and GCC at O0/O1/O2,
+ASan+UBSan**. The model matches cached 3D source and destination
+by format, size, GPU slice offset and mip level, ensures distinct
+image IDs, and rejects partial rectangles/layers/missing cached
+images. It is **not** direct compilation of Lichii's
+`TextureCache<P>::CopyVolumeSlice` template, and it does not
+exercise actual Vulkan image copies, alias barriers or PS5 frames.
+
+**Important porting guard discovered:** Lichii's
+[`CopyVolumeSlice`](https://github.com/zortos293/Lichii/blob/879b616b1b377bfd085bf20f440b895cf4b83ab8/src/video_core/texture_cache/texture_cache.h)
+does not check `copy.operation` or `copy.filter` before
+`runtime.CopyImage`. Pinned Encore's shared
+[`Fermi2D::Config`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/sources/eden/src/video_core/engines/fermi_2d.h)
+has Blend/ROP/SrcCopy operation codes and Point/Bilinear filters.
+`Fermi2D::Blit()` logs an unsupported-operation diagnostic but
+still invokes `rasterizer->AccelerateSurfaceCopy`. Therefore
+a direct transplant could treat a guest Blend/ROP as an ordinary
+copy. **This is a conservative source-level semantic risk**, not
+an observed game bug. An Encore adaptation must require an
+authenticated source-copy operation and test sampling/filter
+semantics, whole-slice format and resource aliasing.
+
+**Other preflight risk:** upstream casts `GPUVAddr -
+image.gpu_addr` to `u32` when matching `slice_offsets`;
+the actual registered image range must be bounded before such
+narrowing. It rejects copies within the same cached image ID
+entirely; this is an upstream limitation, not proof of
+invalid console output. Do not widen guest behavior without
+separate source-owner/driver evidence.
+
+**Next integration gate:** use an isolated vendor research branch
+to compile the real maintained Fermi2D/TextureCache owner,
+instrument slice-offset provenance, add a real Vulkan texture-copy
+oracle for whole-slice versus fallback and a negative Blend/ROP
+test, then verify NS1 behavior and PS5 performance. Do not
+modify `main`, the active vendor pin or launch a PS5 build while
+the concurrent native P5 work is running.
+
+The updated offline runner has **nine research suites**:
+231 finite host checks per compiler plus 1,536 GOB scenarios per
+compiler; the 6-case compiler/optimization combinations for this
+R4 suite passed. The end-to-end pinned-vendor source validator
+remains `SKIP` in the local work environment.

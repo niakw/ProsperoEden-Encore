@@ -1,0 +1,362 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    49,
+    60
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 49,
+      "sha": "3e6a5566cff1818c3a91e1824e6b672fd3eeb144",
+      "title": "[vk] handles unreachable unknown format 255 error (#4591)",
+      "date": "2026-10-30T01:47:10Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/vk_buffer_cache.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 50,
+      "sha": "d89e02d3ac9b769046f5472f0361d5adb2596bab",
+      "title": "[emit_spirv_image] remove the fix for LA/EOW (#4589)",
+      "date": "2026-10-30T01:26:33Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 51,
+      "sha": "a2aa4d97e10a8345babfe647e1abd5ed5909c623",
+      "title": "[docs] Remove AI restrictions, and adapt to new open registration (#4585)",
+      "date": "2026-10-29T16:10:37Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "patch_present": true
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "patch_present": true
+        },
+        {
+          "path": "docs/policies/AI.md",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 52,
+      "sha": "26a03d2473787abf3223b2d0e65b291eee00c1e1",
+      "title": "Revert \"[video_core] Improve asynchronous shader building (#2560)\" (#4512)",
+      "date": "2026-10-26T16:26:32Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/video_core/renderer_opengl/gl_shader_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 53,
+      "sha": "b7c1ded1593c3c2dc58625824a04e30a63fe80c7",
+      "title": "[file_sys] added log for newer keys needed error (#4519)",
+      "date": "2026-10-26T16:26:07Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/file_sys/content_archive.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 54,
+      "sha": "cbd4cf2d8ce9b66936bff8a19be4715e770e0c71",
+      "title": "[hle][core] Hang Freeze Fix - Video Fixes - Revert Microsleep (#4316) (#4525)",
+      "date": "2026-10-26T16:25:47Z",
+      "status": "file-list-retrieved",
+      "file_count": 7,
+      "files": [
+        {
+          "path": "src/core/core.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/core.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/devices/nvhost_nvdec.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/service.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 55,
+      "sha": "a3debcf731143aabd6eefee406d511551d3c9a73",
+      "title": "[buffer_cashe] use old logic when Optimized Vertex Buffers is disabled (#4528)",
+      "date": "2026-10-26T16:25:24Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/buffer_cache/buffer_cache.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 56,
+      "sha": "5239cbe2a78d6533e3541a71c4d3c723818dcb6e",
+      "title": "[nce] handles duplicate NCE interrupts (#4530)",
+      "date": "2026-10-26T16:24:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/arm/nce/arm_nce.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 57,
+      "sha": "0e11fe8b5e3d3b563946726ed06cb44b2bf5ccb3",
+      "title": "[video_core, settings] readback for nce invalidations (#4490) optimization and nuke toggles (#4502) (#4531)",
+      "date": "2026-10-26T16:24:28Z",
+      "status": "file-list-retrieved",
+      "file_count": 12,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/rasterizer_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 58,
+      "sha": "0689f73147ebeddb9ac5fb8b0edf2625425f8d71",
+      "title": "[ir] resolve conditional Phi inputs when tracking bindless texture handles (#4551)",
+      "date": "2026-10-26T16:24:00Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/shader_recompiler/frontend/ir/breadth_first_search.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/texture_pass.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 59,
+      "sha": "a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1",
+      "title": "[vulkan] Fix TOTK dark squares (#4565)",
+      "date": "2026-10-26T16:23:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 60,
+      "sha": "58968bd1274d8ebb1f159ad31500dde8d74abea6",
+      "title": "[core] Support block-compressed NSZ and XCZ (#4552)",
+      "date": "2026-10-26T16:23:18Z",
+      "status": "file-list-retrieved",
+      "file_count": 18,
+      "files": [
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/GameHelper.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/jni/game_metadata.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/zstd_compression.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/zstd_compression.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/crypto/ncz_decompressor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/crypto/ncz_decompressor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/registered_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/submission_package.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/loader/loader.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/loader/loader.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/loader/nsp.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/frontend_common/content_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/game_list/worker.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/qt_common.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

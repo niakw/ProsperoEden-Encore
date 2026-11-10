@@ -226,7 +226,7 @@ public:
         assert(vkCreateFence(device,&fi,nullptr,&fence)==VK_SUCCESS);
     }
     bool Submit(const Tegra::NativeComputeLaunch& launch){
-        assert(launch.program_address==0x5000 && launch.grid==std::array<u32,3>{1,1,1});
+        assert((launch.program_address==0x5000 && launch.grid==std::array<u32,3>{1,1,1}));
         assert(vkResetCommandBuffer(command,0)==VK_SUCCESS);
         assert(vkResetFences(device,1,&fence)==VK_SUCCESS);
         VkCommandBufferBeginInfo bi{};bi.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

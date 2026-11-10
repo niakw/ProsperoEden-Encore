@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Research-only: two local C++ model fixtures + optional exact-source GMMU guard.
+# Research-only: three local C++ model fixtures + optional exact-source GMMU guard.
 # NEVER runs the Encore PS5 build, modifies vendor, or enables GitHub Actions.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

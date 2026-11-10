@@ -1,0 +1,374 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    109,
+    120
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 109,
+      "sha": "847e91c3a8ca2d699cc9ce0df68b733dd5f37b97",
+      "title": "[applet] add post exit cleanups to frontend applets to avoid accumulation (#4457)",
+      "date": "2026-09-19T15:44:12Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/core/hle/service/am/frontend/applets.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_creator.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 110,
+      "sha": "2d1eb0dab91ec9389870ed6da7d1ef1fd01ab14a",
+      "title": "[common/error] remove preprocessor macros for strerror_r gating (#4450)",
+      "date": "2026-09-19T06:21:39Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/common/error.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 111,
+      "sha": "9a30172e45fcb7833cc49ba4d6450211449b14df",
+      "title": "[dynarmic] Coalesce non-exclusive Write/Read fallback functions (#4158)",
+      "date": "2026-09-18T23:39:46Z",
+      "status": "file-list-retrieved",
+      "file_count": 25,
+      "files": [
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_32.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_64.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_64.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/jit/jit_context.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/tools/freezer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/a32_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/a64_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a32_emit_x64_memory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a64_emit_x64_memory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.cpp.inc",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/interface/A32/config.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/interface/A64/config.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/opt_passes.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A32/fuzz_thumb.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A32/test_arm_instructions.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A32/testenv.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A64/a64.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A64/fibonacci.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A64/testenv.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/print_info.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/unicorn_emu/a32_unicorn.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/unicorn_emu/a64_unicorn.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 112,
+      "sha": "07f40d5cac635ff102aa6ce9c32572cc20d69959",
+      "title": "[npad,hid,am] npad WriteEmptyEntry fix, hid function 551 stub, and applet PopOutData rework (#4442)",
+      "date": "2026-09-18T21:49:17Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/core/hle/service/am/lifecycle_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_accessor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_system_server.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 113,
+      "sha": "3c38afad74c751a949de0bcca9a51cfc11797f68",
+      "title": "[fs] share parent resources with bundled programs (#4319)",
+      "date": "2026-09-18T21:48:35Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "src/core/file_sys/patch_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/patch_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/registered_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/registered_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/savedata_factory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/savedata_factory.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 114,
+      "sha": "0ce29be60874b24890ab9239cecf1bd67b924428",
+      "title": "[common] Fix RDTSC nanosecond conversion (#4422)",
+      "date": "2026-09-17T17:50:19Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/common/cpu_features.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/cpu_features.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 115,
+      "sha": "1203082a8f1211ad6ce4d95f0c6947f7ecd27a55",
+      "title": "[msvc] fix build errors (#4451)",
+      "date": "2026-09-17T06:16:18Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/common/sparse_large_vector.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_64.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ssl/ssl.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 116,
+      "sha": "14235dc0d0543c7397dd19eb1a677e76114c08f3",
+      "title": "[ips] fix .pchtxt with >256 bytes on a single line (#4445)",
+      "date": "2026-09-17T06:15:58Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/file_sys/ips_layer.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 117,
+      "sha": "6374f7f51f0254358fc26a0b3a182f06a9d84ec9",
+      "title": "Partial revert: [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) (#4448)",
+      "date": "2026-09-17T03:52:36Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 118,
+      "sha": "73e004de6eb530567b3022531c11b92f55f265a6",
+      "title": "[common/page_table] unmark non-constexpr functions (#4433)",
+      "date": "2026-09-17T03:51:23Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/common/page_table.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 119,
+      "sha": "f7b8ade40ec28b35309de0f86391ee7507affa36",
+      "title": "[hle] stpl:sys, stpl:u initial implementation (#4435)",
+      "date": "2026-09-17T03:45:37Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/core/hle/service/acc/profile_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_srv.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ipc_helpers.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ngc/ngc.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 120,
+      "sha": "8c1194474e76be02eaf69eefb9fcfdd04bd31229",
+      "title": "[hle/ssl] Implement Peek(),{Get,Set}RenegotiationMode,Pending,Poll and stub miscellany (#4428)",
+      "date": "2026-09-17T03:43:59Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": "src/core/hle/service/ssl/ssl.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ssl/ssl_backend.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ssl/ssl_backend_openssl.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

@@ -122,8 +122,8 @@ a new lock across scheduler waits or Vulkan recording could deadlock or
 stall remaps. Preserve every current preflight, post-staging and commit
 verification until actual ownership is redesigned and tested.
 
-Current bounded runner now tests **102 standalone assertions per compiler**
-(19 SSBO, 23 backing lifecycle, 30 lease/memo, 30 native Vulkan range). The **24-case**
+Current bounded runner now tests **105 standalone assertions per compiler**
+(19 SSBO, 23 backing lifecycle, 30 lease/memo, 33 native Vulkan range). The **24-case**
 separate source-expression harness remains a previously reproduced local
 test; it is not added to the standalone runner because it requires
 a pinned vendor source checkout for trustworthy extraction.
@@ -131,7 +131,7 @@ a pinned vendor source checkout for trustworthy extraction.
 ## O11 — native QMD3 Vulkan descriptor range guard (research only)
 
 The standalone [range contract](native_vk_range_contract.hpp) and
-[30-case fixture](test_native_vk_range_contract.cpp) model a **native-only
+[33-case fixture](test_native_vk_range_contract.cpp) model a **native-only
 two-stage Vulkan admission rule**. Both pass with Clang 17 / GCC 14 under UBSan.
 This does **not** alter the maintained vendor or PS5 runtime.
 
@@ -157,3 +157,20 @@ production patch. Preserve existing GMMU snapshot/remap checks, GPU
 write tracking, and Switch 1 behavior.
 
 Run all four host suites with `bash research/ns2/run_host_checks.sh`.
+
+### Which PS5 Vulkan driver is actually packaged?
+
+On the reviewed Encore `main`, `tools/build-package.sh` sets
+`EDEN_PS5_VULKAN=ON EDEN_VULKAN_DRIVER=RADV`, and the maintained
+RADV physical-device source at pinned vendor `22b69d60` advertises
+`maxStorageBufferRange = UINT32_MAX` and `maxUniformBufferRange = UINT32_MAX`.
+The *separate* `sources/ps5-vulkan-tools/driver/ps5vk_physical_device.c`
+advertises 128 MiB SSBO and 16 KiB UBO, but this PS5VK driver is **not**
+the main package's selected RADV path. The O11 128 MiB conflict therefore
+does **not** establish a current Encore main-build defect.
+
+The test fixture contains both source-advertised profiles (33 cases).
+Source constants are **not** a console query: the actual reported
+`VkPhysicalDeviceLimits` at runtime should still be recorded before
+changing production code. O11 becomes a low-priority future-proof
+admission guard rather than the NS2 optimization blocker.

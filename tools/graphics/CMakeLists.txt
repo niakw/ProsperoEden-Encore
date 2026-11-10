@@ -587,6 +587,7 @@ eden_r08_test(test_rdna2_nr_proxy_lift_link_policy)
 # Host-only R09 DLSS-NR Min staging: NO PS5 runtime or packaging code.
 eden_r08_test(test_dlss_nr_min_policy)
 eden_r08_test(test_dlss_nr_min_spatial_math)
+eden_r08_test(test_dlss_nr_min_spatial_abi)
 # Isolated R09 720p geometry audit: validates authentic Original/Compact
 # plan rows, but NEVER generates executable Vulkan graph/PS5 output.
 eden_r08_test(test_dlss_nr_min_graph_geometry)

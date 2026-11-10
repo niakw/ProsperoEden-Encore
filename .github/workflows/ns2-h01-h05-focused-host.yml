@@ -6,6 +6,7 @@ on:
     paths:
       - 'vendor'
       - 'tools/ns2/test_real_kprocess_metadata.py'
+      - 'tools/ns2/test_real_kprocess_init_guest_rollback.py'
       - 'tools/ns2/check_native_exefs_missing_directory_host.py'
       - 'tools/ns2/check_native_exefs_fs_registration_host.py'
       - 'tools/ns2/check_native_nso_arguments_host.py'
@@ -20,6 +21,7 @@ on:
     paths:
       - 'vendor'
       - 'tools/ns2/test_real_kprocess_metadata.py'
+      - 'tools/ns2/test_real_kprocess_init_guest_rollback.py'
       - '.github/workflows/ns2-h01-h05-focused-host.yml'
   workflow_dispatch:
 
@@ -55,6 +57,7 @@ jobs:
           python3 tools/ns2/build_public_nso_fixture.py --output build-h01/public-nso/hello.nso
           python3 tools/ns2/build_public_exefs_fixture.py --nso build-h01/public-nso/hello.nso --output-dir build-h01/public-exefs
           python3 tools/ns2/test_real_kprocess_metadata.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 tools/ns2/test_real_kprocess_init_guest_rollback.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
 
   exefs-owner:
     name: H01 real ExeFS null/patch admission C++ owner

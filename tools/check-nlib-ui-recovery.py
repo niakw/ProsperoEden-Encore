@@ -65,7 +65,17 @@ with tempfile.TemporaryDirectory(prefix="encore-rom-stat-") as temp:
         subprocess.run([str(binary)], check=True, capture_output=True, text=True)
 assert "return errno != ENOENT && errno != ENOTDIR;" in svc
 assert "if (lstat(path.c_str(), &info) == 0)" in svc
-assert lib.count('if (!services_.game_storage_available())') == 2
+# Three independent owner guards now exist: late initial-scan rollback,
+# pre-batch presence check, and post-batch root recheck.  The old total
+# count of two incorrectly rejected the stronger first-scan protection.
+assert lib.count('if (!services_.game_storage_available())') == 3
+initial_scan = lib.split('void Launcher::finish_scan(bool wait)', 1)[0]
+assert 'if (!services_.game_storage_available())\n                throw std::runtime_error{' in initial_scan
+presence = lib.split('presence_scan_ = std::async(std::launch::async,', 1)[1].split(
+    'bool Launcher::drop_missing_games(', 1)[0]
+assert presence.count('if (!services_.game_storage_available())') == 2
+assert 'if (!services_.game_storage_available())\n                return missing;' in presence
+assert 'if (!services_.game_storage_available())\n                missing.clear();' in presence
 assert 'missing.clear();' in lib
 assert "bool ValidNlibTga(" in svc
 # Cached media must be rejected if the full TGA header/payload is invalid,

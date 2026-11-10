@@ -9,36 +9,38 @@ main = (root / 'headless/main.cpp').read_text()
 jit_list = (root / 'headless/jit_list.h').read_text()
 jit_links = (root / 'vendor/encore-active/eden-core/dynarmic/shared-jit/jit_links.inc').read_text()
 
-assert 'option(EDEN_SHARED_JIT "Enable the experimental cross-core A64 JIT" OFF)' in cmake
-assert 'option(EDEN_JIT_COMPILE_BATCH "Compile bounded A64 successor chains on a cache miss" OFF)' in cmake
+# The production CMake graph was consolidated: no experiment selector is
+# defined, and the standard A64 owner is unconditionally selected.  The old
+# test demanded obsolete OFF options and shared-JIT variant branches and
+# blocked a correctly configured native build.
+assert 'option(EDEN_SHARED_JIT' not in cmake
+assert 'option(EDEN_JIT_COMPILE_BATCH' not in cmake
 assert 'set(EDEN_SHARED_JIT ON)' not in cmake
-# CMake now selects complete shared/standard A64 emitter units rather than
-# generating the JIT source with a shared-only foreach condition.
-assert 'if(bits EQUAL 64)' in cmake
-assert 'if(EDEN_SHARED_JIT)\n    set(EDEN_A64_EMITTER_UNIT "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_shared.cpp")' in cmake
+assert 'if(EDEN_SHARED_JIT)' not in cmake
+assert 'if(EDEN_JIT_COMPILE_BATCH)' not in cmake
 assert 'set(EDEN_A64_EMITTER_UNIT "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.cpp")' in cmake
-assert 'if(EDEN_SHARED_JIT)\n    eden_shared_jit_sources()' in cmake
-assert 'if(EDEN_SHARED_JIT)\n    set(EDEN_A64_INTERFACE_UNIT "${EDEN_A64_INTERFACE_ROOT}/a64_interface_shared.cpp")' in cmake
+assert 'set(EDEN_A64_EMITTER_HEADER "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.h")' in cmake
 assert 'set(EDEN_A64_INTERFACE_UNIT "${EDEN_A64_INTERFACE_ROOT}/a64_interface_standard.cpp")' in cmake
+assert 'configure_file("${EDEN_A64_INTERFACE_UNIT}" "${PORT_BUILD_DIR}/a64_interface.cpp" COPYONLY)' in cmake
 assert 'target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/a64_interface.cpp")' in cmake
-assert 'if(EDEN_SHARED_JIT OR EDEN_JIT_COMPILE_BATCH)' in cmake
-assert 'if(EDEN_JIT_COMPILE_BATCH AND (PS5_NATIVE OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))' in cmake
-assert 'EDEN_SHARED_JIT_AVAILABLE=$<BOOL:${EDEN_SHARED_JIT}>' in cmake
-assert 'EDEN_JIT_COMPILE_BATCH_AVAILABLE=$<BOOL:${EDEN_JIT_COMPILE_BATCH}>' in cmake
+assert 'target_compile_definitions(eden-memory-check PRIVATE EDEN_SHARED_JIT_AVAILABLE=0)' in cmake
+assert 'EDEN_SHARED_JIT_AVAILABLE=0' in cmake
+assert 'EDEN_JIT_COMPILE_BATCH_AVAILABLE=0' in cmake
 native = (root / 'tools/build-headless-native.sh').read_text()
-assert '-DEDEN_SHARED_JIT="${EDEN_SHARED_JIT:-OFF}"' in native
-assert '-DEDEN_JIT_COMPILE_BATCH="${EDEN_JIT_COMPILE_BATCH:-OFF}"' in native
 host = (root / 'tools/build-headless-host.sh').read_text()
-assert '-DEDEN_SHARED_JIT=OFF -DEDEN_JIT_COMPILE_BATCH=OFF' in host
 package_build = (root / 'tools/build-package.sh').read_text()
-assert 'export EDEN_SHARED_JIT=OFF EDEN_JIT_COMPILE_BATCH=OFF' in package_build
 package_script = (root / 'tools/package-headless-native.sh').read_text()
-assert "assert 'EDEN_SHARED_JIT:BOOL=OFF' in profile" in package_script
-assert "assert 'EDEN_JIT_COMPILE_BATCH:BOOL=OFF' in profile" in package_script
+# Host compatibility flags stay explicitly OFF; native release has no
+# experimental selector at all and packaging fails closed on a forced ON.
+assert '-DEDEN_SHARED_JIT=OFF -DEDEN_JIT_COMPILE_BATCH=OFF' in host
+for script in (native, package_build):
+    assert '-DEDEN_SHARED_JIT=ON' not in script
+    assert '-DEDEN_JIT_COMPILE_BATCH=ON' not in script
+assert "assert 'EDEN_SHARED_JIT:BOOL=ON' not in profile" in package_script
+assert "assert 'EDEN_JIT_COMPILE_BATCH:BOOL=ON' not in profile" in package_script
 memory_check = (root / 'headless/memory_check.cpp').read_text()
 assert '#if EDEN_SHARED_JIT_AVAILABLE\n// Shared compiled code' in memory_check
 assert '#if EDEN_SHARED_JIT_AVAILABLE\n// Dispatcher lookups' in memory_check
-assert 'target_compile_definitions(eden-memory-check PRIVATE EDEN_SHARED_JIT_AVAILABLE=$<BOOL:${EDEN_SHARED_JIT}>)' in cmake
 
 # Shipping builds cannot accidentally retain link-time references to JitGroup helpers.
 assert '#if EDEN_SHARED_JIT_AVAILABLE\nextern "C" bool eden_jit_shared;' in main

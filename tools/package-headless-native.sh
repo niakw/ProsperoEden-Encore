@@ -226,9 +226,14 @@ value.setdefault('kernel', {})['flexibleMemorySize'] = 335544320
 runpy.run_path(str(root / 'tools/load_alignment.py'))['check_load_alignment']((app / 'eboot.bin').read_bytes())
 profile = (root / 'build/headless-native/CMakeCache.txt').read_text()
 development = 'EDEN_DEV_PROFILE:BOOL=ON' in profile
-if not development:
-    assert 'EDEN_SHARED_JIT:BOOL=OFF' in profile
-    assert 'EDEN_JIT_COMPILE_BATCH:BOOL=OFF' in profile
+# The consolidated native CMake graph no longer declares the old
+# experiment options, so no corresponding BOOL=OFF cache lines exist.
+# Preserve the fail-closed rule: an explicit ON (BOOL or UNINITIALIZED)
+# still refuses packaging. CMake hardwires the production A64 units and
+# defines both availability macros to zero for the shipped executable.
+for experimental in ('EDEN_SHARED_JIT', 'EDEN_JIT_COMPILE_BATCH'):
+    assert experimental + ':BOOL=ON' not in profile
+    assert experimental + ':UNINITIALIZED=ON' not in profile
 assert sum(profile.count('EDEN_DEVICE_FRONTEND:BOOL=' + v) for v in ('ON', 'OFF')) == 1
 devices = 'EDEN_DEVICE_FRONTEND:BOOL=ON' in profile
 graphics = 'EDEN_PS5_OPENGL:BOOL=ON' in profile

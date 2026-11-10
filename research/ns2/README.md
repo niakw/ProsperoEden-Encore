@@ -359,3 +359,20 @@ compiler, plus 1,536 GOB differential scenarios per compiler.**
 Do not add the 1,536 separately to the 231 as if both represented
 identical individual assertions. The pinned vendor gate still reports
 `SKIP` in this environment. No PS5 speedup or rendering proof.
+
+
+### R4 compatibility and provenance addendum
+
+The synthetic Fermi2D operation codes are now pinned to actual
+`Fermi2D::Operation` values from the vendor: SrcCopy=3, Blend=2,
+ROP=4; filters Point=0 and Bilinear=1. The updated 50-case
+fixture is **7046 characters, FNV-1a 1403218692**, and passes
+both Clang/GCC in the whole `-O1` runner. The pinned
+`Fermi2D::Blit()` logs unsupported non-copy operations but does
+not short-circuit before calling `AccelerateSurfaceCopy`, so
+do not rely on that diagnostic for safe copy-only admission.
+
+Encore's active texture cache already has `CopyImage`,
+`ForEachImageInRegionGPU`, and `FlushDeferredClear` support;
+only **source-safe slice selection and cache integration** are
+candidate additions. This remains a host-only policy model.

@@ -1,0 +1,35 @@
+name: A/B NS1 R23 selected semantic host qualification
+
+on:
+  pull_request:
+    paths:
+      - "headless/r23_f2i_conversion_ps5.cpp"
+      - "headless/r23_bcat_delivery_cache_file_ps5.cpp"
+      - "headless/CMakeLists.txt"
+      - "tools/audit/check-r23-f2i-bcat-host.py"
+      - ".github/workflows/ab-ns1-r23-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-behavior:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated corrective HEAD and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+      - name: Validate complete maintained sources and execute extracted F2I/BCAT cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "22b69d6053db41b74edac2633c012f925b84f69e"
+          python3 -B tools/audit/check-r23-f2i-bcat-host.py
+          echo "2 pinned source owners and source-extracted F2I + BCAT behavior: ASan/UBSan pass." >> "$GITHUB_STEP_SUMMARY"
+          echo "No native PS5 ELF, actual shader guest behavior, or BCAT title-level test." >> "$GITHUB_STEP_SUMMARY"

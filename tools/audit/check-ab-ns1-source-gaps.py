@@ -23,7 +23,7 @@ def read(path: str) -> str:
 
 def body(src: str, symbol: str) -> str | None:
     matches = list(re.finditer(r"\b" + re.escape(symbol) +
-        r"\s*\([^;{}]*\)\s*(?:const\s*)?\{", src))
+        r"\s*\([^;{}]*\)(?:\s+(?:const|override|final|noexcept))*\s*\{", src))
     if len(matches) != 1:
         return None
     start = matches[0].end() - 1
@@ -124,6 +124,11 @@ def main_cli() -> int:
         assert body("void f(int i) { if (i) { i++; } }", "f") == " if (i) { i++; } "
         assert body("void f(int);", "f") is None
         assert body("void f() {} void f() {}", "f") is None
+        # Concrete pinned NullSink signature: "override" follows the argument list.
+        assert "return {};" in body("std::vector<s16> ReleaseBuffer(u64) override { return {}; }", "ReleaseBuffer")
+        assert body("void f() const override { int x = 1; }", "f") == " int x = 1; "
+        assert body("void f() noexcept { return; }", "f") == " return; "
+        assert body("void f() override;", "f") is None
         print("AB_NS1_SOURCE_TRIAGE_SELFTEST_OK")
         return 0
     try:

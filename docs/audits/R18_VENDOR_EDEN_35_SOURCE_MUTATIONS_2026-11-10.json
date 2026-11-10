@@ -1,0 +1,228 @@
+{
+  "schema": "vendor-eden-snapshot-tree-compare-v1",
+  "audit_date": "2026-11-10",
+  "upstream_repo": "eden-emulator/mirror",
+  "upstream_commit": "5f142c7926d0c7fcbbd0ce30794d72f638a43b2a",
+  "upstream_src_tree": "6af25b0ad9bb2b0cb30c446b269a2784ff53a471",
+  "vendor_repo": "niakw/Prospero.Eden-Encore-vendor",
+  "vendor_commit": "22b69d6053db41b74edac2633c012f925b84f69e",
+  "vendor_sources_eden_root_tree": "b7a1d7c41e9ae0f3a7379e04809d16bffd74da8b",
+  "vendor_sources_eden_src_tree": "2ce268b372cb34b3cefd35557bed09930cc2732e",
+  "method": "Git SHA-1 Merkle-tree equality for unchanged subtrees plus recursive blob listing for differing subtrees. All five subtree listings reported truncated=false; each changed src root leaf is included. No compile, semantic tests, or source mutation.",
+  "changed_files": 35,
+  "complete_src_tree_leaf_comparison": true,
+  "same_path_sets": true,
+  "source_policy_implication": "The sources/eden snapshot contains Encore-specific modifications versus the stated official pinned upstream: source/reference divergence. Treat as policy or provenance debt, not verified runtime regression.",
+  "rows": [
+    {
+      "path": "src/core/gpu_dirty_memory_manager.h",
+      "status": "blob-different",
+      "official_blob": "cc8fc176fd73690f8cf04125aa742c986ca1b22a",
+      "vendor_blob": "756b4ddbd2366440de07e4519ea66f4efc8c62ec"
+    },
+    {
+      "path": "src/core/hle/kernel/k_address_arbiter.cpp",
+      "status": "blob-different",
+      "official_blob": "02634f872178bb6fbb8f1416b178c0df85f80acb",
+      "vendor_blob": "36f76cfeedff3ef20a6ad56ce37f034b5e0a32f8"
+    },
+    {
+      "path": "src/core/hle/kernel/k_address_arbiter.h",
+      "status": "blob-different",
+      "official_blob": "b3afe194769e7826b74a4da2d4b3a356ac8c7ed4",
+      "vendor_blob": "4991d59fc80fcb8831afed55b3566163e3d2c0e9"
+    },
+    {
+      "path": "src/core/hle/kernel/k_process.cpp",
+      "status": "blob-different",
+      "official_blob": "27d1b1bfc41cecc916c2d4e915d5488326a1849e",
+      "vendor_blob": "f338b293eb5feadceed8948b89ba0b77dcd17c26"
+    },
+    {
+      "path": "src/core/hle/kernel/k_process.h",
+      "status": "blob-different",
+      "official_blob": "b5693751c305e0c173d624554213497fc2c2d815",
+      "vendor_blob": "4474a9e2727d95027e2216be21273322e9e7d595"
+    },
+    {
+      "path": "src/core/hle/kernel/svc.cpp",
+      "status": "blob-different",
+      "official_blob": "3542d5a3b6ad9e101ccd1e0df598c2e27c3bec4e",
+      "vendor_blob": "d647cedd46e9f681af238d20c8fa2a4cf83446f8"
+    },
+    {
+      "path": "src/core/hle/kernel/svc.h",
+      "status": "blob-different",
+      "official_blob": "356c1c109ac0220dee97a7e519ffb8cbcb805e6d",
+      "vendor_blob": "d1e02ec0bc83b538a7f372624958f7ed63bf1c37"
+    },
+    {
+      "path": "src/core/hle/kernel/svc/svc_address_arbiter.cpp",
+      "status": "blob-different",
+      "official_blob": "b3cd41aa8ef54a155cddd8b847c5d79c774aa931",
+      "vendor_blob": "6fa7f7a8812f50729842745b32256c4c693d0518"
+    },
+    {
+      "path": "src/core/hle/service/am/button_poller.cpp",
+      "status": "blob-different",
+      "official_blob": "825d28f5f07857867e2e4027418ebc5e3b419a13",
+      "vendor_blob": "04f214d8f6f775e8099cc74201d5156446530fec"
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_instructions.h",
+      "status": "blob-different",
+      "official_blob": "6f522ab5c2bfd734545ca2285c0f25d3473d58d3",
+      "vendor_blob": "3b236be436984c51b9fc0831e8771cb0bf37280b"
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
+      "status": "blob-different",
+      "official_blob": "9319ea007f236fca11658f4d7273f1c5cce8838e",
+      "vendor_blob": "1585cac2363129396fdfe6cb5a0a64fdfe5807f4"
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
+      "status": "blob-different",
+      "official_blob": "376a05827709952f86f6b49777019bea2af4d9aa",
+      "vendor_blob": "14acc7b2a3db238bc7000472c3856721639cadd9"
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_instructions.h",
+      "status": "blob-different",
+      "official_blob": "96aac502d517396c6042af22b9e252fabebfb241",
+      "vendor_blob": "3841bd5aba3d5695d8d35770746d1ae566803668"
+    },
+    {
+      "path": "src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
+      "status": "blob-different",
+      "official_blob": "d1c08c11310db3abd418b076f3778ef40e740e20",
+      "vendor_blob": "07d5187483a10851af5cbbf17f445e530f87eacb"
+    },
+    {
+      "path": "src/shader_recompiler/backend/spirv/emit_spirv_instructions.h",
+      "status": "blob-different",
+      "official_blob": "165ec3fe849ebf9f0a43acdd0b4e9e038fcb11a7",
+      "vendor_blob": "b5260485c3780e595627e23af4f34bae8071f336"
+    },
+    {
+      "path": "src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+      "status": "blob-different",
+      "official_blob": "b562e8298300a72bf667e4c8fcddb06f7bcd00b9",
+      "vendor_blob": "ef1f3f2ee83d3d44a571c03f19399dbe0697dd7e"
+    },
+    {
+      "path": "src/shader_recompiler/backend/spirv/spirv_emit_context.h",
+      "status": "blob-different",
+      "official_blob": "7edc104708d88f23b4518629bcaf2ba10aeb9011",
+      "vendor_blob": "612c7caa820f2465a2364f4350a91c0a759fa3bd"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/ir_emitter.cpp",
+      "status": "blob-different",
+      "official_blob": "95815d7d51654d298293ed72accd47978d13500a",
+      "vendor_blob": "b9bf3eeea8eb4a50dcddad1bd3da97f02846b455"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/ir_emitter.h",
+      "status": "blob-different",
+      "official_blob": "f22f0f75e2e05d84305fa693010ef0bdb6cc1af0",
+      "vendor_blob": "ee6ba636311b3639ebfd2b625077d7017734cad6"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/microinstruction.cpp",
+      "status": "blob-different",
+      "official_blob": "84417980bca92ac6d9ac767f7aecf7452c22c3d8",
+      "vendor_blob": "5f76f7c52882bb35f5eaa93d82b3ecb3c55e2de6"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/opcodes.cpp",
+      "status": "blob-different",
+      "official_blob": "94ba0f6ae02031453e7a6202678747ed9f830aa4",
+      "vendor_blob": "edefd61275751249580a5dc3aaf86486cbe6395e"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/opcodes.h",
+      "status": "blob-different",
+      "official_blob": "50f9d7b155a5de08eb14c45a9232d2c6c61b1ea9",
+      "vendor_blob": "c9a081cdd5b4469d77443c4cf929a8165d7c579d"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/opcodes.inc",
+      "status": "blob-different",
+      "official_blob": "fee0afaf3376e07645aff0bfe76b1ba7b1582c84",
+      "vendor_blob": "6f06a792d2ea1ff17abf88ce186f0c0a065b97c0"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/structured_control_flow.cpp",
+      "status": "blob-different",
+      "official_blob": "329d44443ebaeddee3df6ac3db0d35bf71298d80",
+      "vendor_blob": "ce93857d8facb960b83c2c35e7990a484779828d"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
+      "status": "blob-different",
+      "official_blob": "75087777dd22de4c69c4b869e421af3b9b064d3e",
+      "vendor_blob": "6cd738cbb3fdd181fd390c6af7ae67b67da3cc48"
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp",
+      "status": "blob-different",
+      "official_blob": "369af8e03af4d1140f313b9c087f1747cc54a86e",
+      "vendor_blob": "02553558a826d31e76c20eb53bf729af8de4a6b7"
+    },
+    {
+      "path": "src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp",
+      "status": "blob-different",
+      "official_blob": "9010c2bf68cd1b5b3270a1b68fbe8f89ce51913c",
+      "vendor_blob": "90f2d0a03639ee290e4fdf182c8ce73364fadef6"
+    },
+    {
+      "path": "src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp",
+      "status": "blob-different",
+      "official_blob": "f49d54e7ab6fb97c4751d9a7d53971fb8547e8ea",
+      "vendor_blob": "4ce1ff6c19c4937855d4460a515aec6a8a1e07e0"
+    },
+    {
+      "path": "src/video_core/present.h",
+      "status": "blob-different",
+      "official_blob": "4fdfcca68655fe0c5a83082431559fa75ef7a60b",
+      "vendor_blob": "4918daa0246945584aa9b4090670b732efcd540a"
+    },
+    {
+      "path": "src/video_core/rasterizer_interface.h",
+      "status": "blob-different",
+      "official_blob": "481efbf53bccbddb7a03462ab6fd5b83ffe25da6",
+      "vendor_blob": "3102223d900d06eea6c85b6aa61821d79e4ebaef"
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/fixed_pipeline_state.h",
+      "status": "blob-different",
+      "official_blob": "36a4b4b7a295478440a099e6da6eddab2951c1a3",
+      "vendor_blob": "86cec3db8c20891857e5cfd88f7c3ec01c880cfa"
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.h",
+      "status": "blob-different",
+      "official_blob": "71dfb46e3d425f605b38627d3d480fe9c936a90c",
+      "vendor_blob": "260c45ed3ad2941562d5a9d690f991f9900a8ef7"
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_rasterizer.h",
+      "status": "blob-different",
+      "official_blob": "7470aa4f148d6b6b79a79225c38f1c7af062c3cc",
+      "vendor_blob": "0e06dc31f9544780382dd3203ebb0c77d38b5d46"
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
+      "status": "blob-different",
+      "official_blob": "c3f56408b530c2b7fce7fd04f876005fed373dc7",
+      "vendor_blob": "3ae5c499c3b46e367715e8216f1c19c11b1efaf0"
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_texture_cache.h",
+      "status": "blob-different",
+      "official_blob": "68bf2af991d7002e46fe6f643ba213e5f1c52ed5",
+      "vendor_blob": "5b8c4287c3804c557fc333767533484b901a4132"
+    }
+  ]
+}

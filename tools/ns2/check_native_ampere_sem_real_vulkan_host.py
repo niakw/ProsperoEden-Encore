@@ -218,13 +218,47 @@ struct Rasterizer {
     }
     void ReleaseFences(){++release_fences;}
 };
+namespace Service::Nvidia::Devices {
+class NativeGpuChannelRegistry {
+    inline static int process_owner=1;
+    u64 channel_a_epoch{4};
+    bool active{true};
+public:
+    struct Ticket {
+        const void* process{};
+        u64 generation{},channel_generation{};
+    };
+    static NativeGpuChannelRegistry& Instance() {
+        static NativeGpuChannelRegistry owner;
+        return owner;
+    }
+    std::optional<Ticket> CaptureTicket(const int* channel) const {
+        if (!active || !channel) return std::nullopt;
+        return Ticket{&process_owner,7,*channel==1?channel_a_epoch:u64{8}};
+    }
+    bool IsCurrent(const int* channel,const Ticket& ticket) const {
+        const auto now=CaptureTicket(channel);
+        return now && now->process==ticket.process &&
+               now->generation==ticket.generation &&
+               now->channel_generation==ticket.channel_generation;
+    }
+    void RebindFirstChannel(){++channel_a_epoch;}
+};
+}
 struct DmaPusher{
     MemoryManager& memory_manager;
     Rasterizer* rasterizer{};
+    int channel_state{};
 };
 struct Puller{
     struct Regs{std::array<u32,64> reg_array{};} regs;
-    struct PendingNativeAcquire{GPUVAddr address{};u32 value{},operation{};u64 cpu_address{};};
+    struct PendingNativeAcquire{
+        GPUVAddr address{};
+        u32 value{},operation{};
+        u64 cpu_address{};
+        const void* process{};
+        u64 process_generation{},channel_generation{};
+    };
     std::optional<PendingNativeAcquire> pending_native_acquire{};
     bool ResumeNativeAcquire(DmaPusher&);
     void ProcessNativeSemaphoreExecute(DmaPusher&,u32);
@@ -234,7 +268,7 @@ int main() {
     VulkanGuestWord guest;
     MemoryManager memory{guest};
     Rasterizer gpu{guest};
-    DmaPusher a{memory,&gpu},b{memory,&gpu};
+    DmaPusher a{memory,&gpu,1},b{memory,&gpu,2};
     Puller channel_a,channel_b;
     for(auto* p:{&channel_a,&channel_b}){
         p->regs.reg_array[0x17]=0x1000;
@@ -262,10 +296,25 @@ int main() {
     try{(void)channel_a.ResumeNativeAcquire(a);}
     catch(const std::runtime_error&){rejected=true;}
     assert(rejected && channel_a.pending_native_acquire);
+    memory.cpu_alias=true;
+    // Even a completed Vulkan write must not wake a parked GPFIFO channel
+    // when the process-owned channel has been unbound and rebound at the
+    // same address. This previously had no epoch check at semaphore resume.
+    channel_b.regs.reg_array[0x19]=19;
+    channel_b.ProcessNativeSemaphoreExecute(b,1);
+    gpu.CompleteQueuedVulkanWork();
+    assert(guest.Get()==19);
+    Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+        .RebindFirstChannel();
+    bool stale_epoch_rejected=false;
+    try{(void)channel_a.ResumeNativeAcquire(a);}
+    catch(const std::runtime_error&){stale_epoch_rejected=true;}
+    assert(stale_epoch_rejected && channel_a.pending_native_acquire);
     std::puts("G10_REAL_VULKAN_SEMAPHORE_OWNER_PASS"
               " channels=2 vkCmdFillBuffer=1 vkQueueSubmit=1"
               " VkFence_retired=1 guest_write_observed=17"
               " parked_replay=1 stale_alias_refused=1"
+              " retired_channel_epoch=refused genuine_vk_fence_after_rebind=1"
               " QMD3_dispatch=not_exercised PS5=not_exercised");
 }
 """.replace("__REAL_OWNER__",owner)
@@ -284,7 +333,7 @@ with tempfile.TemporaryDirectory(prefix="eden-g10-vulkan-semaphore-") as tmp:
         env["LP_NUM_THREADS"]="2"
     for cc in compilers:
         exe=Path(tmp)/Path(cc).name.replace("+","p")
-        cmd=[cc,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
+        cmd=[cc,"-std=c++20","-O1","-DPS5_NATIVE=1","-Wall","-Wextra","-Werror",
              "-Wno-missing-field-initializers","-pthread",
              "-I"+str(NATIVE),str(cpp),"-o",str(exe),"-lvulkan"]
         result=subprocess.run(cmd,capture_output=True,text=True,

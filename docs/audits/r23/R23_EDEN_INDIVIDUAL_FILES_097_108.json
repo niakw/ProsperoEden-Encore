@@ -1,0 +1,394 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    97,
+    108
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 97,
+      "sha": "99bf8cf51afb7b367cb5003f11a797499c71d13c",
+      "title": "[am, renderer_vulkan] Fix overlay darkening and SGSR black screen on applets (#4475)",
+      "date": "2026-09-25T03:29:08Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": "src/core/hle/service/am/window_system.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/layer.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 98,
+      "sha": "dbeb73ee011416cffc6c203945f5ccc6b90621f6",
+      "title": "[video_core] cpu buffer fix + kepler uploads / maxwell macro dirty tracking fixes (#4473)",
+      "date": "2026-09-24T16:44:14Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/video_core/buffer_cache/buffer_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/dma_pusher.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/engines/kepler_compute.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/engines/kepler_compute.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 99,
+      "sha": "cb73a4dcc7710a7fea1643797b17e39858f4ae6a",
+      "title": "[renderer_vulkan] Skip post-processing on applet layers (#4474)",
+      "date": "2026-09-24T00:48:46Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/present/layer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/layer.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 100,
+      "sha": "278f411dad6e8a52747994888f8778b277f6d953",
+      "title": "[frontend] Unify cmdline parsing (#4424)",
+      "date": "2026-09-23T12:51:51Z",
+      "status": "file-list-retrieved",
+      "file_count": 7,
+      "files": [
+        {
+          "path": "docs/user/CommandLine.md",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/launch_params.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/launch_params.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu_cmd/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu_cmd/yuzu.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 101,
+      "sha": "3d37a816c6adc2708a7be70f5a7fbe0af36b8227",
+      "title": "[glsl] fix clang 23 build error for unused function `SetDefinition` (#4389)",
+      "date": "2026-09-23T12:51:18Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/shader_recompiler/backend/glsl/emit_glsl.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 102,
+      "sha": "a25e32676fd3da5b66600e15045dfa699d93d989",
+      "title": "[hle] Use correct `audren:d` service framework (#4472)",
+      "date": "2026-09-23T12:39:12Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/audio/audio.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 103,
+      "sha": "38df54edfe7b861d0a0a1ee305836049a39d42ef",
+      "title": "[common/sparse_large_vector] decommit unused pages + fix first page in zeroed region (#4471)",
+      "date": "2026-09-23T11:52:29Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/common/sparse_large_vector.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/sparse_large_vector.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 104,
+      "sha": "3266c20e3f27a459449b77214182be3f0332e8f4",
+      "title": "[ips_layer] read magic from IPS file and fix EOF check (#4469)",
+      "date": "2026-09-22T22:36:47Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/file_sys/ips_layer.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 105,
+      "sha": "9cd24e85c2c24016cfdba50e3533395561536f7e",
+      "title": "[dist, android] Update translations from Transifex for Sep 21 (#4466)",
+      "date": "2026-09-21T17:25:54Z",
+      "status": "file-list-retrieved",
+      "file_count": 31,
+      "files": [
+        {
+          "path": "dist/languages/ar.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 106,
+      "sha": "74b5e10dc553bb24ccb3460529b15b3c3198bb10",
+      "title": "[native] doesUpdateMatchProgram update mask fix (#4465)",
+      "date": "2026-09-20T20:56:06Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/android/app/src/main/jni/native.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 107,
+      "sha": "a277b62fe4328dddaced9a97d324c6e5478d16a0",
+      "title": "[fs] revert #4319 savedata_factory changes (#4462)",
+      "date": "2026-09-20T02:40:14Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/core/file_sys/savedata_factory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/savedata_factory.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 108,
+      "sha": "908b1e9a3701f142de51e133d910aa058d4b071c",
+      "title": "[dynarmic] fix bad arm codegen on relocations (#4458)",
+      "date": "2026-09-19T22:29:28Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/a32_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/a64_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

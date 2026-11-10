@@ -93,8 +93,16 @@ jobs:
           fetch-depth: 1
       - name: FFmpeg runtime and compiler headers
         run: |
-          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=25 update -qq
-          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends libavcodec-dev libavutil-dev libswscale-dev libvulkan-dev mesa-vulkan-drivers
+          # Ubuntu GitHub-hosted images may point to azure.archive.ubuntu.com,
+          # whose 54 MB cold FFmpeg/Mesa downloads exhausted the 12-minute
+          # H05 job on main before ANY decoder test ran. Prefer the official
+          # Ubuntu archive, retaining a second mirror for failover.
+          if test -f /etc/apt/apt-mirrors.txt; then
+            printf '%s\n' 'https://archive.ubuntu.com/ubuntu/' 'https://mirrors.kernel.org/ubuntu/' |
+              sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+          fi
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update -qq
+          sudo apt-get install -y -o Acquire::Retries=1 -o Acquire::http::Timeout=20 --no-install-recommends libavcodec-dev libavutil-dev libswscale-dev libvulkan-dev mesa-vulkan-drivers
       - run: python3 -B tools/ns2/check_native_video_packet_bounds_host.py
       - run: python3 -B tools/ns2/check_native_video_real_ffmpeg_frame_host.py
       - run: python3 -B tools/ns2/check_native_video_guest_surface_write_owner_host.py

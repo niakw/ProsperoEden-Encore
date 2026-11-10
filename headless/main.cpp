@@ -2003,6 +2003,7 @@ int main(int argc, char** argv) {
                 ", deadzone " + std::to_string(controls.stick_deadzone) + "%, vibration " +
                 (controls.vibration ? std::to_string(controls.vibration_strength) + "%" : "off")).c_str());
             Settings::values.audio_output_device_id = "ps5";
+            Settings::values.audio_input_device_id = "ps5";
             Settings::values.vibration_enabled.SetValue(controls.vibration);
             // One Pro Controller per signed-in user's DualSense; later changes apply mid-game.
             const unsigned connected = pad->ConnectedPlayers();

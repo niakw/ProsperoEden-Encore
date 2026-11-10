@@ -122,8 +122,8 @@ a new lock across scheduler waits or Vulkan recording could deadlock or
 stall remaps. Preserve every current preflight, post-staging and commit
 verification until actual ownership is redesigned and tested.
 
-Current bounded runner now tests **140 standalone assertions per compiler**
-(19 SSBO, 23 backing lifecycle, 30 lease/memo, 33 Vulkan range, 35 pinned QMD3 descriptor reader). The **24-case**
+Current bounded runner now tests **156 standalone checks per compiler**
+(19 SSBO, 23 backing lifecycle, 30 lease/memo, 33 Vulkan range, 35 QMD3 descriptor reader, 16 native GPU read status). The **24-case**
 separate source-expression harness remains a previously reproduced local
 test; it is not added to the standalone runner because it requires
 a pinned vendor source checkout for trustworthy extraction.
@@ -156,7 +156,7 @@ have **not** been queried. A real-source/driver test must precede any
 production patch. Preserve existing GMMU snapshot/remap checks, GPU
 write tracking, and Switch 1 behavior.
 
-Run all five host suites with `bash research/ns2/run_host_checks.sh`.
+Run all six host suites with `bash research/ns2/run_host_checks.sh`.
 
 ### Which PS5 Vulkan driver is actually packaged?
 
@@ -198,6 +198,38 @@ uses `known_size = tag == 0 && bytes != 0` and refuses unknown sizes.
 These tests therefore qualify the *reading* stage only, not native shader
 descriptor semantics, Vulkan dispatch, or any PS5 game.
 
-Current host runner: **140 checks per compiler** (19+23+30+33+35).
+Current host runner: **156 checks per compiler** (19+23+30+33+35+16).
 Separate real mapping-guard/known-size reproduction: 24 checks per compiler.
 The full pinned-vendor checkout validator remains **SKIPPED** locally.
+
+## O1 follow-up: native GPU shader read TOCTOU status hazard
+
+The [exact native read callback fixture](test_native_gpu_read_toctou.cpp)
+embeds the **unchanged** `VideoCommon::ReadNs2GpuShader` function from
+`encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp`
+at pinned vendor `22b69d60`. The normalized method body matches the
+vendor byte-for-byte after comments/whitespace removal (293 chars,
+FNV-1a `3943302951`, SHA-256
+`af4254dd7e7e00d246cef5a2d70f5790640077f6cc592c4a8c2b7871960eccf7`).
+**16/16 checks pass under Clang 17 and GCC 14 / UBSan**, including
+`-O0`, `-O1`, `-O2`. The fake `MemoryManager` controls a mapping
+change between `IsFullyMappedRange` and `ReadBlock`.
+
+Source-level contract concern: production `ReadNs2GpuShader`
+prechecks `IsFullyMappedRange` but returns `true` unconditionally
+after the **void** `MemoryManager::ReadBlock`, while the maintained
+`ReadBlockImpl` zero-fills unmapped pages without reporting failure.
+The mocked interleaving therefore accepts a zero-filled or partially
+copied descriptor as a successful read. A single GMMU read callback is
+NOT an atomic guest-memory transaction.
+
+**Do not assume the race is reachable on PS5.** Before any patch,
+trace map/unmap serialization, GPU channel lock and guest memory lifetime
+at `NativeQmdComputeEnvironment` call sites. A safe correction needs
+a real checked read/snapshot/lease guarantee under concurrent remaps.
+Do not detect failure from zero contents: valid guest data can be zero.
+Do not replace the existing safety barriers with a second unsound check.
+
+The full vendor source validator now also refuses a change to the
+callback body or zero-fill contract, but is still SKIPPED locally
+because the complete pinned vendor checkout is absent.

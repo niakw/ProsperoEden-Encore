@@ -19,10 +19,14 @@ SYNC_HEADER=ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h"
 assert "void SyncpointManager::IncrementGuest(" in SYNC_OWNER.read_text()
 assert "bool IsReadyGuest(u32 syncpoint_id, u32 expected_value) const" in SYNC_HEADER.read_text()
 original=OWNER.read_text()
-begin="bool Nx2VideoDecoder::Render("
-end="\n}\n\n} // namespace Tegra::Host1x"
+begin="struct Nx2VideoDecoder::Impl {"
+end="\n} // namespace Tegra::Host1x"
+helpers_begin="std::optional<NvdecCommon::VideoCodec> CodecFromMime("
+helpers_end="\n} // namespace\n\nbool IsH264Stream("
 assert original.count(begin)==original.count(end)==1
-real=begin+original.split(begin,1)[1].split(end,1)[0]+"\n}"
+assert original.count(helpers_begin)==original.count(helpers_end)==1
+real=begin+original.split(begin,1)[1].split(end,1)[0]
+helpers=helpers_begin+original.split(helpers_begin,1)[1].split(helpers_end,1)[0]
 service=SERVICE.read_text()
 assert "m_decoder->Render(frame.picture," in service
 assert service.index("m_owner->WriteVideoSurface(next.id, *target, pixels)") < service.index(
@@ -58,6 +62,8 @@ cpp=r"""
 #include <new>
 #include <optional>
 #include <set>
+#include <string>
+#include <string_view>
 #include <memory>
 #include <map>
 #include <mutex>
@@ -66,6 +72,7 @@ cpp=r"""
 #include <vector>
 #include <vulkan/vulkan.h>
 #include "video_core/host1x/syncpoint_manager.h"
+#include "video_core/host1x/h264_packet.h"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/pixdesc.h>
@@ -74,36 +81,77 @@ extern "C" {
 using u8=std::uint8_t;
 using u32=std::uint32_t;
 using u64=std::uint64_t;
+using s32=std::int32_t;
+using s64=std::int64_t;
 #define LOG_ERROR(...) ((void)0)
+#define LOG_INFO(...) ((void)0)
 constexpr int HW_GPU=0;
+namespace NvdecCommon {enum class VideoCodec{VP9,VP8,H264};}
+namespace Settings {
+enum class NvdecEmulation{Cpu,Gpu};
+struct Choice{NvdecEmulation GetValue()const{return NvdecEmulation::Cpu;}};
+struct Values{Choice nvdec_emulation;};
+inline Values values;
+}
 namespace FFmpeg {
 class Frame {
     AVFrame* frame;
 public:
-    explicit Frame(AVFrame* p):frame(p) {assert(frame);}
+    Frame():frame(av_frame_alloc()){assert(frame);}
+    explicit Frame(AVFrame* p):frame(p){assert(frame);}
     ~Frame(){av_frame_free(&frame);}
-    const AVFrame* GetFrame() const {return frame;}
+    Frame(const Frame&)=delete;Frame& operator=(const Frame&)=delete;
+    AVFrame* GetFrame(){return frame;}
+    const AVFrame* GetFrame()const{return frame;}
+};
+class Packet {
+    AVPacket* packet;
+public:
+    explicit Packet(std::span<const u8> bytes):packet(av_packet_alloc()) {
+        assert(packet && bytes.size()<=static_cast<std::size_t>(INT32_MAX));
+        assert(av_new_packet(packet,static_cast<int>(bytes.size()))==0);
+        std::memcpy(packet->data,bytes.data(),bytes.size());
+    }
+    ~Packet(){av_packet_free(&packet);}
+    AVPacket* GetPacket(){return packet;}
+};
+struct Decoder {
+    explicit Decoder(NvdecCommon::VideoCodec){}
+    const AVCodec* GetCodec()const{return nullptr;}
+};
+struct DecoderContext {
+    explicit DecoderContext(Decoder&){}
+    bool OpenContext(Decoder&){return false;}
+    AVCodecContext* GetCodecContext(){return nullptr;}
+    bool SendPacket(Packet&){return false;}
+    std::shared_ptr<Frame> ReceiveFrame(){return {};}
+};
+struct HardwareContext {
+    void InitializeForDecoder(DecoderContext&,Decoder&){}
 };
 }
 namespace Tegra::Host1x {
 struct Nx2Picture {
-    u32 width{}, height{};
-    u64 pts{};
+    u32 width{},height{};u64 pts{};
     std::shared_ptr<FFmpeg::Frame> frame;
 };
-enum class Nx2PictureFormat : u32 {Nv12,Rgba8,Bgra8};
+enum class Nx2PictureFormat:u32 {Nv12,Rgba8,Bgra8};
 class Nx2VideoDecoder {
-    struct Impl {
-        SwsContext* scaler{};
-        ~Impl(){sws_freeContext(scaler);}
-    };
-    std::unique_ptr<Impl> impl{std::make_unique<Impl>()};
 public:
-    bool Render(const Nx2Picture&, Nx2PictureFormat,u32,u32,u64,u64,std::span<u8>);
-    bool IsOpen() const {return true;}
+    explicit Nx2VideoDecoder(std::string_view mime="video/hevc");
+    ~Nx2VideoDecoder();
+    bool IsOpen()const;
+    const std::string& Name()const;
     bool Decode(std::span<const u8>,u64,std::vector<Nx2Picture>&);
-    bool Drain(std::vector<Nx2Picture>&) {return true;}
+    bool Drain(std::vector<Nx2Picture>&);
+    void Reset();
+    bool Render(const Nx2Picture&,Nx2PictureFormat,u32,u32,u64,u64,std::span<u8>);
+private:
+    struct Impl;std::unique_ptr<Impl> impl;
 };
+namespace {
+__REAL_HELPERS__
+}
 __REAL_OWNER__
 } // namespace Tegra::Host1x
 
@@ -159,40 +207,8 @@ AVFrame* CodecRoundTrip() {
     return output;
 }
 
-// Decode the exact compressed TIPC input using an independent FFmpeg MPEG4
-// context. The maintained Decode owner is NOT substituted by this shim: this
-// extends real SubmitInput/Pump/WriteVideoSurface connectivity on the host.
-bool Tegra::Host1x::Nx2VideoDecoder::Decode(
-    std::span<const u8> input,u64 pts,std::vector<Nx2Picture>& out) {
-    if(input.empty() || input.size()>static_cast<std::size_t>(INT32_MAX))
-        return false;
-    const AVCodec* codec=avcodec_find_decoder(AV_CODEC_ID_MPEG4);
-    if(!codec)return false;
-    AVCodecContext* ctx=avcodec_alloc_context3(codec);
-    if(!ctx)return false;
-    if(avcodec_open2(ctx,codec,nullptr)<0){avcodec_free_context(&ctx);return false;}
-    AVPacket* packet=av_packet_alloc();
-    AVFrame* frame=av_frame_alloc();
-    if(!packet||!frame||av_new_packet(packet,static_cast<int>(input.size()))<0){
-        av_packet_free(&packet);av_frame_free(&frame);avcodec_free_context(&ctx);
-        return false;
-    }
-    std::memcpy(packet->data,input.data(),input.size());
-    packet->pts=static_cast<std::int64_t>(pts);
-    int status=avcodec_send_packet(ctx,packet);
-    if(status==0)status=avcodec_receive_frame(ctx,frame);
-    if(status==AVERROR(EAGAIN)) {
-        status=avcodec_send_packet(ctx,nullptr);
-        if(status==0)status=avcodec_receive_frame(ctx,frame);
-    }
-    const bool valid=status==0 && frame->width==16 && frame->height==16;
-    if(valid)out.push_back({static_cast<u32>(frame->width),
-                            static_cast<u32>(frame->height),pts,
-                            std::make_shared<FFmpeg::Frame>(frame)});
-    else av_frame_free(&frame);
-    av_packet_free(&packet);avcodec_free_context(&ctx);
-    return valid;
-}
+// Authentic HEVC Annex-B access unit from native Decode/Drain qualification.
+static constexpr std::array<u8,96> encoded_hevc{0x00,0x00,0x00,0x01,0x40,0x01,0x0c,0x01,0xff,0xff,0x04,0x08,0x00,0x00,0x03,0x00,0x9f,0xa8,0x00,0x00,0x03,0x00,0x00,0x1e,0xba,0x02,0x40,0x00,0x00,0x00,0x01,0x42,0x01,0x01,0x04,0x08,0x00,0x00,0x03,0x00,0x9f,0xa8,0x00,0x00,0x03,0x00,0x00,0x1e,0xa0,0x88,0x45,0x96,0xe9,0x6f,0x0b,0xc0,0x5a,0x02,0x00,0x00,0x03,0x00,0x02,0x00,0x00,0x03,0x00,0x32,0x10,0x00,0x00,0x00,0x01,0x44,0x01,0xc0,0x71,0x81,0x12,0x00,0x00,0x01,0x28,0x01,0xad,0xe0,0xc7,0xa7,0xfd,0xa3,0xef,0xea,0x0e,0x87,0x54,0x27};
 
 // A real host Vulkan command and VkFence drive guest release readiness.
 // The decoder's production Pump, NVMap/guest memory and Host1x syncpoint
@@ -615,15 +631,19 @@ int main(){
     from_tipc.m_available.push_back({9,{{7,3}}});
     HLERequestContext input;
     input.descriptors.push_back(0);
-    input.compressed=encoded_mpeg4;
+    input.compressed.assign(encoded_hevc.begin(),encoded_hevc.end());
     input.words[0]=input.GetCommand()+0x10;
-    input.words[1]=3;input.words[5]=777;input.words[6]=0;input.words[7]=0;
+    input.words[1]=3;input.words[5]=777;input.words[6]=0;input.words[7]=1;
     from_tipc.SubmitInput(input);
     assert(input.response.size()==2 && input.response[0]==ResultSuccess &&
            input.response[1]==1 && from_tipc.m_submitted==1);
     assert(from_tipc.m_pending.size()==1 && from_tipc.m_outputs.empty() &&
+           from_tipc.m_pending.front().eos &&
            from_tipc.m_owner->process.memory.writes==0 &&
            from_tipc.system.host.sync.GetGuestSyncpointValue(5)==0);
+    const auto decoded_tipc=from_tipc.m_pending.front().picture.frame;
+    assert(decoded_tipc && decoded_tipc->GetFrame()->width==16 &&
+           decoded_tipc->GetFrame()->height==16);
     release_gpu.Submit(3);
     from_tipc.Pump(); // queued Vulkan commands do not unlock the image
     assert(from_tipc.m_outputs.empty() && from_tipc.m_pending.size()==1);
@@ -638,7 +658,7 @@ int main(){
     for(int y=0;y<16;++y)
         for(int x=0;x<16;++x)
             assert(from_tipc.m_owner->process.memory.bytes[y*16+x]==
-                   f->data[0][y*f->linesize[0]+x]);
+                   decoded_tipc->GetFrame()->data[0][y*decoded_tipc->GetFrame()->linesize[0]+x]);
     // Malformed TIPC command must fail before decoding or publishing bytes.
     HLERequestContext bad=input;
     bad.response.clear();bad.words[0]=0;
@@ -652,7 +672,8 @@ int main(){
     assert(bad_pts.response.size()==1 && bad_pts.response[0]==Kernel::ResultInvalidArgument);
     assert(from_tipc.m_submitted==1);
     std::puts("H05_REAL_SUBMITINPUT_FFMPEG_VULKAN_OWNER_PASS"
-              " submit_owner=executed real_codec=MPEG4"
+              " submit_owner=executed real_codec=HEVC"
+              " native_decode_owner=executed native_drain_owner=executed"
               " owner_pump=executed owner_nvmap_guest_write=executed"
               " real_vk_fence_retired=1 guest_completion_after_write=1"
               " invalid_tipc=refused invalid_pts=refused"
@@ -663,7 +684,7 @@ int main(){
               "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
               "dead_image=retired write_oom=rolled_back owner_nvmap_guest_write=1 real_host_vk_fence_to_guest_syncpoint=1 live_TIPC=not_exercised");
 }
-""".replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump).replace("__REAL_SUBMIT__",submit).replace("__REAL_SURFACE_WRITE__",surface_write)
+""".replace("__REAL_OWNER__",real).replace("__REAL_HELPERS__",helpers).replace("__REAL_PUMP__",pump).replace("__REAL_SUBMIT__",submit).replace("__REAL_SURFACE_WRITE__",surface_write)
 compilers=list(dict.fromkeys(x for x in
     (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"C++20 compiler required"
@@ -674,9 +695,10 @@ with tempfile.TemporaryDirectory(prefix="eden-h05-ffmpeg-pixels-") as temp:
         for opt in ("-O0","-O2"):
             exe=Path(temp)/(Path(cc).name+opt)
             cmd=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
-                 "-Wno-unused-variable","-fsanitize=undefined",
+                 "-Wno-unused-variable","-Wno-unused-function","-fsanitize=undefined",
                  "-fno-sanitize-recover=all",
                  "-I"+str(ROOT/"vendor/sources/eden/src"),
+                 "-I"+str(ROOT/"vendor/encore-active/ns2-runtime/video_decoder"),
                  str(src),str(SYNC_OWNER),"-o",str(exe),
                  "-pthread","-lavcodec","-lavutil","-lswscale","-lvulkan"]
             built=subprocess.run(cmd,text=True,capture_output=True,

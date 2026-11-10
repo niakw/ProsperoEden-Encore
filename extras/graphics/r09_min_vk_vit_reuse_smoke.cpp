@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Standalone host Vulkan witness: 8 synthetic blocks, 9 VkBuffers, 7 barriers.
 // NOT neural inference, NOT an R09 renderer integration, NOT PS5 qualified.
+#include "dlss_nr_min_vit_reuse_plan.h"
+#include "r09_native_plans.h"
 #include <vulkan/vulkan.h>
 #include <array>
 #include <cstdint>
@@ -113,8 +115,33 @@ struct Host{
   da.descriptorPool=descriptor_pool;da.descriptorSetCount=Blocks;
   da.pSetLayouts=layouts.data();
   Check(vkAllocateDescriptorSets(device,&da,sets.data()),"allocate sets");
+  // The GPU descriptors are driven by the SAME candidate maps derived
+  // from both authentic R09 model plans, at both candidate raster sizes.
+  using namespace Eden::Graphics::DlssNrMin;
+  static_assert(kVitFieldCount==Slots);
+  VitReuseCandidate reference{};
+  bool found=false;
+  for(const auto native : {Eden::NeuralPlans::Original,
+                           Eden::NeuralPlans::Compact}) {
+   for(const auto raster : {kCurrentR09Graph,kCandidateMinRaster}) {
+    VitReuseCandidate candidate{};
+    if(!BuildVitCrossBlockReuseCandidate(native,raster,candidate) ||
+       candidate.blocks.size()!=Blocks ||
+       candidate.pool_slots.size()!=Slots ||
+       candidate.runnable || candidate.gpu_barriers_proven ||
+       candidate.gpu_fences_proven)
+     throw std::runtime_error("Authentic R09 ViT reuse plan invalid");
+    if(!found){reference=candidate;found=true;}
+    else for(std::uint32_t j=0u;j<Blocks;++j)
+     if(candidate.blocks[j].slots!=reference.blocks[j].slots)
+      throw std::runtime_error("Original/Compact/720p mapping divergence");
+   }
+  }
+  if(!found)throw std::runtime_error("No candidate ViT plan");
+  if(CheckVitReuseAdmission(reference,{})!=VitReuseGate::ConcurrentGpuUse)
+   throw std::runtime_error("ViT reuse safety gate unexpectedly open");
   for(std::uint32_t j=0;j<Blocks;++j){
-   const std::array<std::uint32_t,Slots> map{j%2u,2u,3u,4u,(j+1u)%2u,5u,6u,7u,8u};
+   const auto& map=reference.blocks[j].slots;
    for(std::uint32_t a=0;a<Slots;++a)
     for(std::uint32_t b=0;b<a;++b)
      if(map[a]==map[b])throw std::runtime_error("Unsafe intra-block alias");

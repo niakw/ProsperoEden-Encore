@@ -97,3 +97,10 @@ and resource-lifetime requirements which this synthetic test cannot prove.
 The fail-closed production admission gate remains disabled; zero PS5 runtime
 code is modified. Nominal allocation savings are still projections, not VRAM
 measurements.
+
+
+The executable smoke now reads the actual candidate alias maps from the
+Original and Compact 1080p native schedules and the two 720p structural
+candidates. All four must agree on the nine VkBuffer binding slots before
+any dispatch begins; any divergence is a hard failure. Even a successful
+GPU smoke is still blocked by the separate PS5 runtime admission gate.

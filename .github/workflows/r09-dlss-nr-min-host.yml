@@ -146,6 +146,8 @@ jobs:
           spirv-val --target-env vulkan1.1 \
             .build-local/r09-min/vit_synthetic_reuse.spv
           g++ -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+            -Iextras/graphics -Iheadless \
+            -Ivendor/encore-active/eden-vulkan/include \
             extras/graphics/r09_min_vk_vit_reuse_smoke.cpp -lvulkan \
             -o .build-local/r09-min/vk-vit-reuse
           icd="$(dpkg -L mesa-vulkan-drivers |

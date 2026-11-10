@@ -1,0 +1,41 @@
+name: One-shot prune merged H01 G10 proof branches
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/encore-merged-20261110-cleanup.yml']
+permissions:
+  contents: read
+jobs:
+  prune:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Delete only exact merged PR heads and never active branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS='|' read -r branch expected pr; do
+            [[ -n "$branch" ]] || continue
+            current="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${branch}" --jq '.object.sha' 2>/dev/null || true)"
+            if [[ -z "$current" ]]; then echo "Already absent: $branch"; continue; fi
+            if [[ "$current" != "$expected" ]]; then echo "Ref advanced; preserved $branch"; continue; fi
+            open_count="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&head=niakw:${branch}" --jq 'length')"
+            [[ "$open_count" == "0" ]] || { echo "Open PR; preserved $branch"; continue; }
+            response="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${pr}")"
+            if ! jq -e --arg sha "$expected" '.merged == true and .head.sha == $sha' <<<"$response" >/dev/null; then
+              echo "Cannot prove merged exact PR head; preserved $branch"
+              continue
+            fi
+            recheck="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${branch}" --jq '.object.sha' 2>/dev/null || true)"
+            [[ "$recheck" == "$expected" ]] || { echo "Ref changed; preserved $branch"; continue; }
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${branch}"
+            echo "Deleted merged PR branch: $branch"
+          done <<'PINNED'
+          test/h01-real-kprocess-init-page-rollback-20261110|5e7d6b2534740b4513c073a6988b82a8178fc8ae|41
+          test/g10-real-qmd3-scheduler-vulkan-retire-20261110|05649f6ae5809c4774732494319468a2660b2d51|42
+          PINNED

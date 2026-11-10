@@ -8,6 +8,7 @@ not an actual guest process or Vulkan device.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -38,6 +39,15 @@ def function_body(source: str, name: str) -> str:
             if depth == 0:
                 return source[marker:index + 1]
     raise RuntimeError("unbalanced source owner: " + name)
+
+def normalized_function_sha256(source: str, function_name: str) -> str:
+    """Hash function behavior after removing only comments and whitespace."""
+    function = function_body(source, function_name)
+    body = function[function.index("{"):]
+    body = re.sub(r"//[^\n]*", "", body)
+    body = re.sub(r"/\*[\s\S]*?\*/", "", body)
+    body = "".join(body.split())
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 def extract_mapping_guard(source: str) -> str:
     fn = "NativeQmdContiguousGpuSpan"
@@ -227,6 +237,10 @@ def main() -> None:
     require("static_cast<u32>(8_MiB)" in shared and
             "StorageBufferBinding(ssbo_addr, cbuf_index, is_written)" in shared,
             "The legacy size fallback changed")
+    guard_sha256 = normalized_function_sha256(header, "NativeQmdContiguousGpuSpan")
+    require(guard_sha256 ==
+            "90c871905ad8c6d5a193acea84a457816cf1bc432d71c06de6f6ab68e0f9b7a2",
+            "Maintained native GMMU source differs from compiled local owner witness")
     source = (HARNESS.replace("__REAL_NATIVE_QMD_FUNCTION__", extract_mapping_guard(header))
               .replace("__REAL_NATIVE_SIZE_CONDITION__", extract_native_size_expression(header)))
     compilers = args.compiler or ["clang++", "g++"]
@@ -249,6 +263,7 @@ def main() -> None:
         "mode": "offline research; real extracted GMMU source, mocked mappings",
         "mapping_passes_static_owner_witness": mapping_scans,
         "vendor_path": str(vendor), "reviewed_vendor_pin": EXPECTED_VENDOR,
+        "exact_mapping_guard_normalized_sha256": guard_sha256,
         "native_uses_legacy_buffer_binding": False,
         "unknown_native_lengths_currently_rejected": True,
         "no_explicit_gmmu_read_lease_in_examined_native_owners": True,

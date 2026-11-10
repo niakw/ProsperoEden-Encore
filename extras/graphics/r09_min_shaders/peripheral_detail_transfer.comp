@@ -4,7 +4,8 @@
 // Original full-resolution color survives; only the neural *difference*
 // is transferred from compressed work space to native pixels.
 // Formula follows the symmetric MIT peripheral geometry of
-// BeliyG3/optimizer-fps-dlss5 (Yuri Grib, 2026).
+// BeliyG3/optimizer-fps-dlss5 (Copyright (c) 2026 Yuri Grib).
+// See LICENSES/optimizer-fps-dlss5-MIT.txt.
 layout(local_size_x=8,local_size_y=8,local_size_z=1) in;
 layout(set=0,binding=0) uniform sampler2D originalColor;
 layout(set=0,binding=1) uniform sampler2D beforeModel;
@@ -45,7 +46,8 @@ void main() {
     vec4 native=textureLod(originalColor,originalUv,0.0);
     vec3 before=textureLod(beforeModel,packedUv,0.0).rgb;
     vec3 after=textureLod(afterModel,packedUv,0.0).rgb;
-    // Identity neural effect => bit-equivalent native image (FP32 path).
+    // Zero enhancement residual preserves the native pixel values for
+    // finite inputs (no blurred double-resampling replacement).
     // Never replace native image with a blurred double-resampling copy.
     // Alpha/HUD stays native; any temporal reuse is OUT OF SCOPE.
     imageStore(resultColor,ivec2(id),

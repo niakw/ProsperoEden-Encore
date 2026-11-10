@@ -487,14 +487,15 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
         }
     }
     vkUnmapMemory(h.device,readback.memory);
-    std::cout<<"R09_MIN_VULKAN_PACK_DETAIL_TRANSFER_GPU_READBACK_PASS 32x32->28x28->32x32\n";
-    std::cout<<"R09_MIN_VULKAN_SYNTHETIC_IDENTITY_ONLY_NO_DLSS_INFERENCE\n";
+    std::cout<<(identity?"R09_MIN_VULKAN_IDENTITY_GPU_PASS ":"R09_MIN_VULKAN_SYNTHETIC_DELTA_GPU_PASS ")
+             <<"32x32->28x28->32x32\n";
+    std::cout<<"R09_MIN_HOST_VULKAN_PUBLIC_FIXTURE_NO_DLSS_INFERENCE\n";
 }
 } // namespace
 
 int main(int argc,char** argv) {
-    if(argc!=3) {
-        std::cerr<<"usage: r09_min_vk_spatial_smoke <pack.spv> <detail_transfer.spv>\n";
+    if(argc!=4 && argc!=5) {
+        std::cerr<<"usage: r09_min_vk_spatial_smoke <pack.spv> <synthetic_delta.spv> <detail_transfer.spv> [--identity]\n";
         return 2;
     }
     try {

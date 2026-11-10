@@ -152,3 +152,18 @@ never checks the undefined output of this intentionally invalid schedule.
 If the validation layer does not detect this hazard, the CI itself fails.
 This proves validator sensitivity on the tiny synthetic hazard, NOT
 completeness for real learned ViT GPU usage.
+
+
+## Native vendor translation-unit syntax gate
+
+The isolated workflow r09-min-vit-native-syntax.yml temporarily checks out
+vendor research SHA b1bc6b74d22bab1fef36cb2675848a59cb567221 inside
+a CI runner without updating the engine submodule gitlink (22b69d6053db).
+The existing source-inventory-complete Clang tool then checks six actual
+ViT C++ translation units in BOTH experimental-macro configurations. It
+generates the real Vulkan SPIR-V headers and uses the maintained production
+header overlays. All-owner checks are unchanged unless the explicit
+R09_MIN_VIT_NATIVE_TU_DUAL=1 selector is set.
+
+This is a genuine header-integrated syntax test, not a compiled/linkable
+PS5 binary or neural GPU execution. The pin remains unchanged.

@@ -1,0 +1,54 @@
+name: R09 Min authentic vendor Vulkan C++ syntax — isolated
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/r09-min-vit-native-syntax.yml'
+      - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: r09-min-native-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-syntax:
+    name: Six authentic native ViT C++ units × macro 0/1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact Encore PR and pinned submodules
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Stage exact vendor PR research revision temporarily in CI only
+        shell: bash
+        run: |
+          set -euo pipefail
+          pinned=22b69d6053db41b74edac2633c012f925b84f69e
+          candidate=b1bc6b74d22bab1fef36cb2675848a59cb567221
+          test "$(git rev-parse HEAD:vendor)" = "$pinned"
+          test "$(git -C vendor rev-parse HEAD)" = "$pinned"
+          git -C vendor -c credential.helper= fetch --quiet --depth=1 origin "$candidate"
+          git -C vendor checkout --quiet --detach "$candidate"
+          test "$(git -C vendor rev-parse HEAD)" = "$candidate"
+          test "$(git rev-parse HEAD:vendor)" = "$pinned"
+          test -f vendor/encore-active/eden-vulkan/include/rdna2_nr_vit_min_pool_policy.h
+          echo "R09_MIN_NATIVE_PAIR engine=$(git rev-parse HEAD) pinned_vendor=$pinned candidate_vendor=$candidate"
+      - name: Host Vulkan, SPIR-V and FFmpeg headers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang glslang-tools spirv-tools libvulkan-dev \
+            libavcodec-dev libavutil-dev libswscale-dev
+      - name: Compile the six real ViT translation units in both macro modes
+        shell: bash
+        run: |
+          set -euo pipefail
+          R09_MIN_VIT_NATIVE_TU_DUAL=1 \
+            python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
+          test "$(git rev-parse HEAD:vendor)" = "22b69d6053db41b74edac2633c012f925b84f69e"
+          echo R09_MIN_NATIVE_CPP_SYNTAX_ONLY_NO_PS5_BUILD_NO_VENDOR_PIN_ADVANCE

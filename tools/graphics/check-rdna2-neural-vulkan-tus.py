@@ -29,6 +29,16 @@ REQUIRED={"nr_rdna2_frame_session.cpp","nr_rdna2_frame_readback.cpp",
           "nr_rdna2_split_swin_block.cpp","nr_rdna2_vit_block.cpp"}
 assert len(FILES)>=72 and REQUIRED.issubset(FILES), (
     "R09 whole-graph C++ owner source inventory incomplete", len(FILES))
+# Restricted mode used ONLY by R09 Min's isolated native vendor CI.
+# The default whole-graph source inventory above remains mandatory.
+R09_MIN_DUAL=os.environ.get("R09_MIN_VIT_NATIVE_TU_DUAL","")
+assert R09_MIN_DUAL in ("","1")
+if R09_MIN_DUAL=="1":
+    chosen={"nr_rdna2_frame_session.cpp","nr_rdna2_vit_run.cpp",
+            "nr_rdna2_vit_block.cpp","nr_rdna2_vit_projection_stage.cpp",
+            "nr_rdna2_vit_epilogue.cpp","nr_rdna2_vit_qkv_attention_link.cpp"}
+    assert chosen.issubset(FILES)
+    FILES=tuple(sorted(chosen))
 INCLUDES=[
     ROOT/"extras/graphics",
     ROOT/"headless",
@@ -205,16 +215,23 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
          "-I"+str(temp),
          *["-I"+str(p) for p in INCLUDES]]
     env=os.environ.copy()
-    def check(name):
+    tasks=(tuple((name,mode) for name in FILES for mode in ("0","1"))
+           if R09_MIN_DUAL=="1" else
+           tuple((name,None) for name in
+                 (*FILES,"__present_layer_r09__","__r09_full_gpu_host__")))
+    def check(task):
+        name,mode=task
         source=(ROOT/"headless/vulkan_present_layer_r24.cpp"
                 if name=="__present_layer_r09__" else
                 ROOT/"tools/graphics/r09_full_gpu_host.cpp"
                 if name=="__r09_full_gpu_host__" else ACTIVE/name)
-        result=subprocess.run(cmd+[str(source)],
+        flags=(["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL="+mode]
+               if mode is not None else [])
+        result=subprocess.run(cmd+flags+[str(source)],
             cwd=ROOT,env=env,text=True,capture_output=True,timeout=150)
-        return name,result.returncode,result.stderr[-10000:]
+        return name+("_macro_"+mode if mode else ""),result.returncode,result.stderr[-10000:]
     with ThreadPoolExecutor(max_workers=2) as pool:
-        results=list(pool.map(check,(*FILES,"__present_layer_r09__","__r09_full_gpu_host__")))
+        results=list(pool.map(check,tasks))
     failures=[]
     for name,rc,diagnostics in results:
         if rc:
@@ -223,4 +240,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         else:
             print("R09_NEURAL_NATIVE_CPP_PASS",name,flush=True)
     assert not failures,("R09 selected native C++ syntax failed",failures)
-    print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)
+    if R09_MIN_DUAL=="1":
+        assert len(results)==12
+        print("R09_MIN_VIT_NATIVE_CPP_DUAL_MODE_ALL_12_PASS",flush=True)
+    else:
+        print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

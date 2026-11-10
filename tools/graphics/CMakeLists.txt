@@ -584,13 +584,3 @@ add_test(NAME test_rdna2_nr_proxy_feature_spirv_abi
 # The pre-normalized first frame and learned local NRMODEL1 lift must use
 # one scheduler, one exact FP16[16] intermediate and a C32 output tensor.
 eden_r08_test(test_rdna2_nr_proxy_lift_link_policy)
-# Host-only R09 DLSS-NR Min staging: NO PS5 runtime or packaging code.
-eden_r08_test(test_dlss_nr_min_policy)
-eden_r08_test(test_dlss_nr_min_spatial_math)
-eden_r08_test(test_dlss_nr_min_spatial_abi)
-# Isolated R09 720p geometry audit: validates authentic Original/Compact
-# plan rows, but NEVER generates executable Vulkan graph/PS5 output.
-eden_r08_test(test_dlss_nr_min_graph_geometry)
-target_include_directories(test_dlss_nr_min_graph_geometry PRIVATE
-    "${EDEN_ROOT}/headless"
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")

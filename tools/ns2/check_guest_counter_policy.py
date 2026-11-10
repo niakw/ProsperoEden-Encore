@@ -22,9 +22,17 @@ for witness in ("Eden::GuestCounter::NativeFactor()", "Eden::GuestCounter::Nanos
     assert witness in clock,witness
 assert "config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());" in jit
 assert "Eden::GuestCounter::SelectProgram(" not in npdm
-assert "Eden::GuestCounter::SelectProgram(metadata.IsSwitch2(), Common::g_cpu_caps.tsc_frequency)" in loader
-assert loader.index("Eden::GuestCounter::SelectProgram(") > loader.index("metadata.Reload(npdm)")
-assert loader.index("Eden::GuestCounter::SelectProgram(") < loader.index("is_loaded = true")
+# H01 intentionally defers the Switch 2 guest-counter selection until ALL
+# patched ExeFS modules passed the real NSO0 bounds preflight. An invalid
+# late module must not install a global mode for the next title; NS1 keeps
+# the original early-selection path.
+ns1 = "if (!metadata.IsSwitch2())\\n        Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency)"
+ns2 = "if (metadata.IsSwitch2())\\n        Eden::GuestCounter::SelectProgram(true, Common::g_cpu_caps.tsc_frequency)"
+assert ns1 in loader and ns2 in loader
+assert loader.index("metadata.Reload(npdm)") < loader.index(ns1)
+assert loader.index(ns1) < loader.index("PreflightNso(header, module_file->GetSize()).Ready()")
+assert loader.index("PreflightNso(header, module_file->GetSize()).Ready()") < loader.index(ns2)
+assert loader.index(ns2) < loader.index("is_loaded = true")
 assert "option(EDEN_NS2_GUEST_COUNTER_EXPERIMENTAL" not in cmake
 assert "if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)" in cmake
 assert "EDEN_SHARED_NS2_GUEST_COUNTER" in cmake

@@ -247,3 +247,22 @@ independent proof. The trial explicitly leaves all specialized
 dispatches unqualified, returns GPU_DISABLED and NEVER feeds the plan
 into the renderer. This is a CPU structural milestone, not a 720p
 DLSS-NR model running on PS5.
+
+
+## 720p ViT host policies: learned dispatch work and boundary geometry
+
+After the two complete 720p structural route candidates pass, the host
+witness test_dlss_nr_min_720_vit_runtime_capacity.cpp checks the REAL
+four FFN/QKV projection and attention capacity policies for the 960
+padded ViT tokens with all four existing scratch profiles (4/5/6/12).
+It verifies GEMM/normalization and projection batch coverage has no
+dropped tail and tests negative underallocation of each Q/K/V output.
+The genuine ViT tiled repack policy also validates 22x40 logical
+raster tiles => 960 padded 4x4 tokens, in BOTH directions, and refuses
+undersized input/output allocations. Both Original/Compact variants
+must pass GCC and Clang UBSan without any model or GPU submission.
+
+Remaining mandatory: specialized ViT/decoder Vulkan launch dimensions,
+the upstream FSwin/Split/token layout transitions, full graph image
+comparison, actual 720p model preflight and PS5 GPU measurements.
+All candidate GPU admission flags stay false.

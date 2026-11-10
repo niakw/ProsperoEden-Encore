@@ -33,7 +33,7 @@
       "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",
       "status": "open",
       "evidence": {},
-      "blocker": "NS2 ExeFS/NPDM guard and process-scoped RomFS rollback are owner-executed; full real KProcess guest-page rollback under later failure, patched update/DLC chain and entire process ownership still require connected evidence.",
+      "blocker": "Real NS2 Process::Finalize and filesystem-controller owners now retire process-owned RomFS independently of global SVC trace migration, with Clang/GCC O0/O2 positive/negative witnesses on pinned main/vendor; partial real KProcess metadata/page-map hosts also pass. Full connected real KProcess guest-page lifetime/late rollback, patched update/DLC ExeFS admission and final process handoff are not yet demonstrated by a single executed owner chain.",
       "excluded_forms": []
     },
     {

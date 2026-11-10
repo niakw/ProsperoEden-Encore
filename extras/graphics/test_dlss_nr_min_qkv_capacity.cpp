@@ -6,6 +6,8 @@
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
+#include <iostream>
+#include <utility>
 using namespace Eden::Graphics::NeuralRDNA2;
 
 int main() {
@@ -62,6 +64,49 @@ int main() {
             VitQkvBatches rejected{};
             assert(!BuildVitQkvBatches(tokens,too_small,rejected));
             assert(rejected.count==0u);
+        }
+        {
+            // Quantify the memory-versus-dispatch frontier for scratch:
+            // P<4 may lower buffer bytes, but necessarily increases
+            // real FFN Expand batch count at these exact token sizes.
+            const VitProjectionStageCapacity baseline_exp{
+                plane,4096u*1024u,4u*plane,
+                0u,0u,4u*plane};
+            VitProjectionStageBatches base_exp{};
+            assert(BuildVitProjectionStage(
+                VitProjectionKind::Expand,tokens,baseline_exp,base_exp));
+            assert(ValidateVitProjectionStage(base_exp));
+            for(std::uint32_t planes=1u;planes<4u;++planes) {
+                auto smaller=baseline_exp;
+                smaller.scratch_bytes=planes*plane;
+                VitProjectionStageBatches sliced{};
+                assert(BuildVitProjectionStage(
+                    VitProjectionKind::Expand,tokens,smaller,sliced));
+                assert(ValidateVitProjectionStage(sliced));
+                assert(sliced.count>base_exp.count);
+            }
+            // Larger scratch reduces some batches, but increases memory.
+            // This is a Pareto tradeoff, not a universally optimal FPS
+            // decision; the 4-plane setting preserves baseline dispatches.
+            for(std::uint32_t planes : {4u,8u,12u}) {
+                auto expanded=baseline_exp;
+                expanded.scratch_bytes=planes*plane;
+                VitProjectionStageBatches exp_batches{};
+                assert(BuildVitProjectionStage(
+                    VitProjectionKind::Expand,tokens,expanded,exp_batches));
+                auto norm_capacity=compact;
+                norm_capacity.fp32=planes*plane;
+                VitQkvBatches qkv_batches{};
+                assert(BuildVitQkvBatches(tokens,norm_capacity,qkv_batches));
+                assert(ValidVitQkvBatches(qkv_batches));
+                const auto total_planes=11u+planes;
+                assert(total_planes>=15u);
+                std::cout<<"R09_MIN_VIT_PARETO tokens="<<tokens
+                         <<" scratch_planes="<<planes
+                         <<" viT_total_planes="<<total_planes
+                         <<" ffwd_expand_batches="<<exp_batches.count
+                         <<" qkv_batches="<<qkv_batches.count<<"\n";
+            }
         }
         {
             // Preserve all three authentic ViT learned projection plans

@@ -119,13 +119,16 @@ jobs:
             -Iextras/graphics \
             extras/graphics/r09_min_vk_spatial_smoke.cpp -lvulkan \
             -o .build-local/r09-min/vk-spatial-readback
-          for mode in positive identity; do
-            args=()
-            if [[ "$mode" == identity ]]; then args+=(--identity); fi
-            .build-local/r09-min/vk-spatial-readback \
-              .build-local/r09-min/peripheral_pack.spv \
-              .build-local/r09-min/peripheral_synthetic_delta.spv \
-              .build-local/r09-min/peripheral_detail_transfer.spv \
-              "${args[@]}"
+          for shape in square widescreen; do
+            for mode in positive identity; do
+              args=()
+              if [[ "$shape" == widescreen ]]; then args+=(--widescreen); fi
+              if [[ "$mode" == identity ]]; then args+=(--identity); fi
+              .build-local/r09-min/vk-spatial-readback \
+                .build-local/r09-min/peripheral_pack.spv \
+                .build-local/r09-min/peripheral_synthetic_delta.spv \
+                .build-local/r09-min/peripheral_detail_transfer.spv \
+                "${args[@]}"
+            done
           done
-          echo R09_MIN_HOST_VULKAN_GPU_READBACK_POSITIVE_AND_NEGATIVE_PASS
+          echo R09_MIN_HOST_VULKAN_GPU_READBACK_4_SHAPES_MODES_PASS

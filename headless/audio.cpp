@@ -4,6 +4,10 @@
 #include "preferences.h"
 #include <algorithm>
 #include <array>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 #include <stdexcept>
 #include "audio_in_silence.h"
 #include "common/logging.h"
@@ -14,21 +18,75 @@ namespace Eden {
 using namespace AudioCore::Sink;
 using namespace ps5::native_audio;
 
-// A microphone capture request must supply the same number of samples that
-// DeviceSession::ReleaseBuffer subsequently copies into guest memory.
-// This owner only serves StreamType::In; AudioOut remains unchanged.
+// Input devices do not capture a physical microphone on PS5. They still
+// need guest-time progress: DeviceSession only releases completed buffers when
+// SinkStream::GetExpectedPlayedSampleCount() advances. Merely returning a
+// silent vector on ReleaseBuffer can permanently strand long guest buffers.
+// Pace a single silent capture source at 48 kHz without a busy loop.
 class SilentAudioInputStream final : public SinkStream {
 public:
     explicit SilentAudioInputStream(Core::System& system, u32 channels)
         : SinkStream{system, StreamType::In} {
         SetSystemChannels(channels);
+        worker = std::jthread([this](std::stop_token stop) {
+            constexpr auto tick = std::chrono::milliseconds{10};
+            constexpr std::size_t frames_per_tick = 480;
+            std::array<s16, frames_per_tick * 2> silent_frames{};
+            std::unique_lock lock{worker_mutex};
+            while (!stop.stop_requested()) {
+                if (!worker_wake.wait(lock, stop, [this] { return running; }))
+                    break;
+                // Timed sleep is interruptible on Stop, Finalize and destruction.
+                const bool interrupted = worker_wake.wait_for(
+                    lock, stop, tick, [this] { return !running; });
+                if (interrupted || stop.stop_requested() || !running)
+                    continue;
+                // Updates the real SinkStream capture counters, used by
+                // DeviceSession::IsBufferConsumed and AudioIn's buffer event.
+                // The underlying method already ignores paused/shutdown cores.
+                ProcessAudioIn(silent_frames, frames_per_tick);
+            }
+        });
     }
 
-    void AppendBuffer(SinkBuffer&, std::span<s16>) override {}
+    ~SilentAudioInputStream() override { Finalize(); }
+
+    void Start(bool = false) override {
+        std::scoped_lock lock{worker_mutex};
+        paused = false;
+        running = true;
+        worker_wake.notify_all();
+    }
+
+    void Stop() override {
+        std::scoped_lock lock{worker_mutex};
+        running = false;
+        paused = true;
+        worker_wake.notify_all();
+    }
+
+    void Finalize() override {
+        Stop();
+        worker.request_stop();
+        worker_wake.notify_all();
+        if (worker.joinable())
+            worker.join();
+    }
+
+    void AppendBuffer(SinkBuffer&, std::span<s16>) override {
+        // The guest owns the buffer descriptors. The capture clock is the
+        // pacing source, and guest PCM is written only on ReleaseBuffer.
+    }
 
     std::vector<s16> ReleaseBuffer(u64 samples) override {
         return MakeSilentAudioInSamples(samples);
     }
+
+private:
+    std::mutex worker_mutex;
+    std::condition_variable_any worker_wake;
+    bool running{false};
+    std::jthread worker;
 };
 
 AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& name_, StreamType type)

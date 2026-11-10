@@ -7,6 +7,7 @@ on:
       - 'vendor'
       - '.github/workflows/p5-native-preflight-host.yml'
       - 'tools/check-jit-stability.py'
+      - 'tools/check-performance.py'
       - 'tools/check-nlib-ui-recovery.py'
       - 'tools/package-headless-native.sh'
       - 'headless/CMakeLists.txt'
@@ -49,6 +50,8 @@ jobs:
         run: python3 -B tools/check-native-launcher-ui-host.py
       - name: Verify CPU6 G11 source chain, four CMake profiles, real C++ units and UBSan ticks
         run: python3 -B tools/ns2/check_cpu6_scheduler_tick_host.py
+      - name: Verify native performance checker uses shipping JIT, not retired experiment options
+        run: python3 -B tools/check-performance.py --source-only
       - name: Verify production JIT owner, no experimental build selector, and package policy
         run: python3 -B tools/check-jit-stability.py
       - name: Execute maintained ROM-storage and Nlib media tests with host C++ compiler

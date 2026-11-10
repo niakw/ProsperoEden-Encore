@@ -24,6 +24,7 @@ pinned = (
     "hle/kernel/svc/svc_address_arbiter.cpp",
     "hle/kernel/svc/svc_synchronization.cpp",
     "hle/kernel/svc/svc_thread.cpp",
+    "hle/service/nvdrv/core/syncpoint_manager.cpp",
 )
 
 fixture = r"""
@@ -69,6 +70,22 @@ foreach(file IN ITEMS k_thread.cpp k_scheduler.cpp k_condition_variable.cpp
         endif()
     endif()
 endforeach()
+
+# H05 is native-only: exercise the real pinned core source list, including
+# its syncpoint manager, before checking the selected maintained override.
+list(FIND selected "hle/service/nvdrv/core/syncpoint_manager.cpp" pinned_syncpoint_pos)
+list(FIND selected
+    "${PORT_ROOT}/vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp"
+    active_syncpoint_pos)
+if(PS5_NATIVE)
+    if(NOT pinned_syncpoint_pos EQUAL -1 OR active_syncpoint_pos EQUAL -1)
+        message(FATAL_ERROR "Native H05 syncpoint source wrong: pinned=${pinned_syncpoint_pos} active=${active_syncpoint_pos}")
+    endif()
+else()
+    if(pinned_syncpoint_pos EQUAL -1 OR NOT active_syncpoint_pos EQUAL -1)
+        message(FATAL_ERROR "Non-native H05 syncpoint source wrong: pinned=${pinned_syncpoint_pos} active=${active_syncpoint_pos}")
+    endif()
+endif()
 
 get_target_property(include_dirs core INCLUDE_DIRECTORIES)
 if(PS5_NATIVE)

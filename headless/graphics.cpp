@@ -745,7 +745,7 @@ void GraphicsWindow::OnFrameDisplayed() {
             vulkan_interval_witness.Reset();
             const bool capture_interval = Eden::NativeLogs::Detailed() &&
                 Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) &&
-                Experimental::vulkan_frame_probe.load(std::memory_order_relaxed);
+                JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed);
             if (capture_interval)
                 vulkan_interval_witness.Observe(CaptureFramePressure(), 0.0, frame_total);
 #endif
@@ -759,7 +759,7 @@ void GraphicsWindow::OnFrameDisplayed() {
             // The delayed callback cannot attribute this work to one guest frame.
             const bool capture_interval = Eden::NativeLogs::Detailed() &&
                 Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) &&
-                Experimental::vulkan_frame_probe.load(std::memory_order_relaxed);
+                JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed);
             if (capture_interval)
                 vulkan_interval_witness.Observe(CaptureFramePressure(),
                                                 present_interval * 1000.0, frame_total);
@@ -775,7 +775,7 @@ void GraphicsWindow::OnFrameDisplayed() {
             frame_late_200 += present_interval >= 0.200;
             frame_late_500 += present_interval >= 0.500;
             if (Eden::NativeLogs::Detailed() &&
-                Experimental::vulkan_frame_probe.load(std::memory_order_relaxed)) {
+                JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)) {
                 // Opt-in passive pacing histogram: never sleep or synthesize
                 // frames on the guest/compositor hot path.
                 const double ms = present_interval * 1000.0;
@@ -817,7 +817,7 @@ void GraphicsWindow::OnFrameDisplayed() {
                             interval_hist[1], interval_hist[2], interval_hist[3], interval_hist[4]);
                 interval_hist = {};
 #endif
-                if (Experimental::vulkan_frame_probe.load(std::memory_order_relaxed)) {
+                if (JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)) {
                     std::printf("EDEN_EXPERIMENT_PRESENT lt20=%u ms20_29=%u ms29_38=%u "
                                 "ms38_50=%u ms50_100=%u ge100=%u\n",
                         experimental_pacing_bins[0], experimental_pacing_bins[1],

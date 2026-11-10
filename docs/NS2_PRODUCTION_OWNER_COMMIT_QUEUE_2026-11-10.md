@@ -75,3 +75,34 @@ Old [vendor PR #35](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/35
 - Host-only source audit evidence in [the closeout](NS2_UPSTREAM_REFRESH_AND_CLOSEOUT_2026-11-10.md) does not establish PS5 gameplay or production safety. Treat the vendor PR #35 as an **uncompiled draft**, not a finished feature.
 
 **Status:** frozen upstream source audit complete; **R4 actual source draft created**; R2 and R3 implementation commits pending their real-owner integration/qualification gates; PS5/NS1 and vendor full build validation outstanding.
+
+### R2 owner provenance: precise source boundary (next integration stage)
+
+At vendor main `90c9c8a2`,
+`encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h`
+calls `runtime.CopyBuffer(dest_buffer,src_buffer,...)` with strong
+`Buffer` owners in some cases, but with a `StagingBufferRef.buffer`
+raw handle on uploads/downloads. The existing
+`encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h`
+exports `CopyBuffer(VkBuffer,VkBuffer,span<BufferCopy>,bool,bool)`,
+losing the buffer's `SizeBytes()` and provenance at the Vulkan runtime
+boundary. `BufferCacheRuntime::CanReorderUpload(const Buffer&,...)`
+only checks destination region usage; it does not authenticate source
+VMA allocation IDs or channel generation.
+
+The upcoming R2 work therefore needs **three source ownership levels**:
+the BufferCache caller (`buffer_cache.h`) for strong owner and staging
+lifetime, the Vulkan runtime (`vk_buffer_cache.h` and
+`vk_buffer_cache_cost.cpp`) for typed provenance and range semantics,
+and Scheduler (`vk_scheduler.h`, and possibly scheduler implementation)
+for command flush/retirement. **Two-file earlier estimate is a lower
+bound; a credible implementation likely touches at least four
+production source files**, depending on whether an existing owner
+adapter can carry the required data. Do not forge owner IDs from
+raw VkBuffer bit patterns or assume VMA allocations are unaliased.
+
+Research R2 `ns2_verified_upload_batch.h` has now been compiled from
+**byte-identical GitHub content** using Clang17 and GCC14 with UBSan
+and -Werror, and its new exact-header host fixture passes
+**104 assertions per run across six ASan+UBSan compiler/optimization
+runs (624 in total)**. These are not an integrated Vulkan queue proof.

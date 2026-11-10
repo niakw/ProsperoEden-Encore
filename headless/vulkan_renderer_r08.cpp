@@ -437,7 +437,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
             if (r08_capture.valid) {
                 const auto& owned = mihawk_native->Images();
                 const auto& private_history = owned.History(r08_capture.slot);
-                Eden::FeatureLab::MihawkSourceRecord source{
+                const Eden::FeatureLab::MihawkSourceRecord source{
                     .source_real = *frame->image,
                     .history_owned = private_history.image,
                     .history_initialized = owned.Initialized(r08_capture.slot),
@@ -542,14 +542,19 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
                     }
 
                     scheduler.RequestOutsideRenderPassOperationContext();
-                    scheduler.Record([source, neural, r08_generated](vk::CommandBuffer cmd) mutable {
-                        source.cmd = *cmd;
-                        (void)Eden::FeatureLab::RecordOwnedSnapshot(source);
+                    // Scheduler::Record may invoke the callback through a
+                    // const wrapper. Keep captured descriptors immutable and
+                    // update local copies with the command buffer handle.
+                    scheduler.Record([source, neural, r08_generated](vk::CommandBuffer cmd) {
+                        auto recorded_source = source;
+                        recorded_source.cmd = *cmd;
+                        (void)Eden::FeatureLab::RecordOwnedSnapshot(recorded_source);
                         if (r08_generated) {
-                            // Current history is ready for sampling after the
-                            // source-copy barriers in this SAME command buffer.
-                            neural.cmd = *cmd;
-                            (void)Eden::FeatureLab::RecordNativeMihawkPair(neural);
+                            // Source and generated image remain in the same
+                            // recorded command buffer and ordered submission.
+                            auto recorded_neural = neural;
+                            recorded_neural.cmd = *cmd;
+                            (void)Eden::FeatureLab::RecordNativeMihawkPair(recorded_neural);
                         }
                     });
                 } else {

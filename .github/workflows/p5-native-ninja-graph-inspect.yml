@@ -1,0 +1,67 @@
+name: Inspect cached native Ninja graph (no build)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p5-native-ninja-graph-inspect.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Restore ninth native run cache for read-only diagnosis
+        id: restore
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42880572712
+
+      - name: Inspect exact duplicate output from the cached graph
+        if: steps.restore.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
+          test "${#graphs[@]}" -eq 1
+          graph="${graphs[0]}"
+          echo "Cached graph: $graph"
+          echo "CACHED_NINJA_GRAPH_SOURCE sha=af106ca4431557246bc1db6d47ac5da562231bb3"
+          echo "Observed ninth build failure line 33673:"
+          sed -n '33668,33675p' "$graph" | cut -c 1-1200
+          echo "All build statements containing the conflicting Vulkan header:"
+          grep -n -F 'fsr31_temporal_upscaler.h' "$graph" | cut -c 1-1800 | head -20 || true
+          python3 - "$graph" <<'PY_GRAPH'
+          import sys
+          from pathlib import Path
+          lines = Path(sys.argv[1]).read_text().splitlines()
+          for i, line in enumerate(lines, 1):
+              if line.startswith("build ") and "fsr31_temporal_upscaler.h" in line:
+                  outputs = line.split(":", 1)[0].split()[1:]
+                  repeated = sorted({part for part in outputs if outputs.count(part) > 1})
+                  print(f"GRAPH_HEADER_EDGE line={i} outputs={len(outputs)} "
+                        f"repeated={repeated[:8]} head={outputs[:6]}")
+                  if repeated:
+                      print("CACHED_NINJA_DUPLICATE_CONFIRMED", repeated[:3])
+          PY_GRAPH
+          if ninja -f "$graph" -t targets all >/dev/null 2>&1; then
+            echo "CACHED_NINJA_GRAPH_PARSE_OK"
+          else
+            echo "CACHED_NINJA_GRAPH_PARSE_REJECTED_EXPECTED"
+          fi
+
+      - name: Reject missing cache
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: |
+          echo "::error::Exact ninth-run cache unavailable; native graph was not inspected"
+          exit 1

@@ -6,6 +6,33 @@ import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
+native_pending_wait = """            if (scheduler.HasPendingNativeChannels()) {
+                // CPU writes may satisfy a semaphore even without a new GPU
+                // submission; retry without blocking the command queue.
+                scheduler.ResumePendingNative(system.GPU());
+                if (!state.queue.TryPop(next)) {
+                    Eden::LoadingTick(renderer, true);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    continue;
+                }
+            } else if (Eden::LoadingTick(renderer, false)) {
+                if (!state.queue.TryPop(next)) {
+                    Eden::LoadingTick(renderer, true);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    continue;
+                }
+            } else {
+                state.queue.PopWait(next, stop_token);
+            }"""
+if sys.argv[1:] == ['--source-only']:
+    # Validate the maintained compiled worker without requiring a PS5 SDK,
+    # generated cache or host C++ compilation.
+    native = (root / 'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
+    assert native.count(native_pending_wait) == 1, (
+        'Maintained release GPU worker lost native-channel wake/idle arbitration')
+    print('GPU_NATIVE_CHANNEL_LOADING_WAIT_SOURCE_PASS')
+    raise SystemExit(0)
+
 cache = Path((root / '.local/headless-cache').read_text().strip())
 upstream = cache / 'source/src'
 generated = cache / 'native-local/headless/gpu_thread.cpp'
@@ -62,8 +89,9 @@ loading_wait = """            if (Eden::LoadingTick(renderer, false)) {
             } else {
             state.queue.PopWait(next, stop_token);
             }"""
-assert untraced.count(loading_wait) == 1
-untraced = untraced.replace(loading_wait, '            state.queue.PopWait(next, stop_token);')
+wait_pattern = loading_wait if development else native_pending_wait
+assert untraced.count(wait_pattern) == 1, ('native GPU channel/loading queue arbitration changed')
+untraced = untraced.replace(wait_pattern, '            state.queue.PopWait(next, stop_token);')
 # The native crash-only breadcrumb is coarse (one relaxed atomic per 64
 # completed GPU commands); strip it solely for the upstream-body comparison.
 progress_marker = (

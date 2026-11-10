@@ -127,3 +127,32 @@ Per fixed route and same console/build: first guest framebuffer reached; functio
 The research source-bound validator now also checks the six-pass call graph, extracts the real `tag == 0 && bytes != 0` expression, and refuses to run against an unrecognized vendor SHA. A small local compilation using the inspected native GMMU function body and size expression passed **24/24 assertions on Clang and GCC, UBSan**. The **exact repository script** was not run end-to-end against a real pinned vendor checkout in this environment. Do not misinterpret these results as proof of native gameplay, benchmark wins, or CI success.
 
 Local `run_host_checks.sh` successfully repeated the two standalone model suites: **19 + 23** assertions with Clang and GCC, but reported `SKIP` for the exact-source validator because the vendor checkout was unavailable locally. This skip is a real validation gap.
+
+
+## O10 — safe cache gate: real owner constraint (10 November)
+
+A candidate 16-slot, process-generation-and-revision-keyed GMMU span memo
+has been implemented only in [research/ns2/test_epoch_guarded_gmmu_memo.cpp](../research/ns2/test_epoch_guarded_gmmu_memo.cpp).
+Its 22 C++ assertions pass on Clang 17 and GCC 14 with UBSan.
+For six unchanged 32 MiB spans **under one explicit shared mapping lease**
+the model uses 8,193 translations instead of 49,158.
+That is a deterministic **83.3% fewer calls in the model**, NOT PS5 throughput.
+
+**Production blocker, confirmed by maintained source:**
+[`MemoryManager::GpuToCpuAddress`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-core/src/video_core/memory_manager.cpp)
+reads the mapped GPU PTEs directly, with no read lease exposed to
+`ComputePipeline::ConfigureNative` across capture/staging/fence commit.
+The already-maintained global page-table revision invalidates the
+`MaxContinuousRange` thread cache, but **is not equivalent** to a read
+lease covering a Vulkan dispatch. Its pre/post mutation increments alone
+do not authenticate an uninterrupted interval when multiple writers
+may overlap. Therefore **no change to active memory cache, renderer or
+vendor is authorized based on the model**. Next technical prerequisite:
+design and prove a short-lived mapping owner/snapshot protocol that
+keeps writer/remap ownership correct and never holds a page-table lock
+across scheduler/driver waits. Measure actual PS5 scan times before
+assuming the CPU cost affects framerate.
+
+**Current offline execution:** the single host runner passes **19 + 23 + 22
+= 64 distinct assertions on each of Clang and GCC**, while the exact
+vendor source validator reports **SKIP** without a real pinned checkout.

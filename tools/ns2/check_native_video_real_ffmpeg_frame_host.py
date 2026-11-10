@@ -40,12 +40,17 @@ pump_start="void IGraphicsVideoDecoderSession::Pump() {"
 pump_end="\nvoid IGraphicsVideoDecoderSession::SubmitInput("
 assert service.count(pump_start)==service.count(pump_end)==1
 pump=pump_start+service.split(pump_start,1)[1].split(pump_end,1)[0]
+submit_start="void IGraphicsVideoDecoderSession::SubmitInput(HLERequestContext& ctx) {"
+submit_end="\nvoid IGraphicsVideoDecoderSession::GetOutputInfo("
+assert service.count(submit_start)==service.count(submit_end)==1
+submit=submit_start+service.split(submit_start,1)[1].split(submit_end,1)[0]
 
 cpp=r"""
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <climits>
 #include <cstdio>
 #include <cstring>
 #include <deque>
@@ -95,12 +100,16 @@ class Nx2VideoDecoder {
     std::unique_ptr<Impl> impl{std::make_unique<Impl>()};
 public:
     bool Render(const Nx2Picture&, Nx2PictureFormat,u32,u32,u64,u64,std::span<u8>);
+    bool IsOpen() const {return true;}
+    bool Decode(std::span<const u8>,u64,std::vector<Nx2Picture>&);
+    bool Drain(std::vector<Nx2Picture>&) {return true;}
 };
 __REAL_OWNER__
 } // namespace Tegra::Host1x
 
 // Encode real planar pixels with FFmpeg's in-tree MPEG4 encoder; then decode
 // the compressed packet with FFmpeg's genuine decoder. No fake AVFrame.
+std::vector<u8> encoded_mpeg4;
 AVFrame* CodecRoundTrip() {
     const AVCodec* encoder=avcodec_find_encoder(AV_CODEC_ID_MPEG4);
     const AVCodec* decoder=avcodec_find_decoder(AV_CODEC_ID_MPEG4);
@@ -130,6 +139,7 @@ AVFrame* CodecRoundTrip() {
         ret=avcodec_receive_packet(enc,packet);
     }
     assert(ret==0 && packet->size>0);
+    encoded_mpeg4.assign(packet->data,packet->data+packet->size);
     AVCodecContext* dec=avcodec_alloc_context3(decoder);
     assert(dec && avcodec_open2(dec,decoder,nullptr)==0);
     assert(avcodec_send_packet(dec,packet)==0);
@@ -147,6 +157,41 @@ AVFrame* CodecRoundTrip() {
     avcodec_free_context(&enc);
     avcodec_free_context(&dec);
     return output;
+}
+
+// Decode the exact compressed TIPC input using an independent FFmpeg MPEG4
+// context. The maintained Decode owner is NOT substituted by this shim: this
+// extends real SubmitInput/Pump/WriteVideoSurface connectivity on the host.
+bool Tegra::Host1x::Nx2VideoDecoder::Decode(
+    std::span<const u8> input,u64 pts,std::vector<Nx2Picture>& out) {
+    if(input.empty() || input.size()>static_cast<std::size_t>(INT32_MAX))
+        return false;
+    const AVCodec* codec=avcodec_find_decoder(AV_CODEC_ID_MPEG4);
+    if(!codec)return false;
+    AVCodecContext* ctx=avcodec_alloc_context3(codec);
+    if(!ctx)return false;
+    if(avcodec_open2(ctx,codec,nullptr)<0){avcodec_free_context(&ctx);return false;}
+    AVPacket* packet=av_packet_alloc();
+    AVFrame* frame=av_frame_alloc();
+    if(!packet||!frame||av_new_packet(packet,static_cast<int>(input.size()))<0){
+        av_packet_free(&packet);av_frame_free(&frame);avcodec_free_context(&ctx);
+        return false;
+    }
+    std::memcpy(packet->data,input.data(),input.size());
+    packet->pts=static_cast<std::int64_t>(pts);
+    int status=avcodec_send_packet(ctx,packet);
+    if(status==0)status=avcodec_receive_frame(ctx,frame);
+    if(status==AVERROR(EAGAIN)) {
+        status=avcodec_send_packet(ctx,nullptr);
+        if(status==0)status=avcodec_receive_frame(ctx,frame);
+    }
+    const bool valid=status==0 && frame->width==16 && frame->height==16;
+    if(valid)out.push_back({static_cast<u32>(frame->width),
+                            static_cast<u32>(frame->height),pts,
+                            std::make_shared<FFmpeg::Frame>(frame)});
+    else av_frame_free(&frame);
+    av_packet_free(&packet);avcodec_free_context(&ctx);
+    return valid;
 }
 
 // A real host Vulkan command and VkFence drive guest release readiness.
@@ -278,6 +323,37 @@ std::size_t CalculateSize(bool,u32,u32,u32,u32,u32,u32) {return 0;}
 void SwizzleTexture(std::vector<u8>&,const std::vector<u8>&,u32,u32,u32,u32,u32,u32) {}
 }
 namespace Common { struct ProcessAddress { u64 address; }; }
+namespace Kernel {
+inline constexpr u32 ResultInvalidState=1,ResultInvalidCombination=2,
+    ResultOutOfResource=3,ResultInvalidSize=4,ResultInvalidArgument=5,
+    ResultNotFound=6;
+}
+inline constexpr u32 ResultSuccess=0;
+struct HLERequestContext {
+    std::array<u32,16> words{};
+    std::vector<int> descriptors;
+    std::vector<u8> compressed;
+    std::vector<u32> response;
+    u32* CommandBuffer(){return words.data();}
+    u32 GetCommand()const{return 400;}
+    const std::vector<int>& BufferDescriptorA()const{return descriptors;}
+    std::span<const u8> ReadBufferA(std::size_t)const{return compressed;}
+};
+namespace IPC {
+inline constexpr std::size_t COMMAND_BUFFER_LENGTH=64;
+struct ResponseBuilder {
+    HLERequestContext& ctx;
+    ResponseBuilder(HLERequestContext& c,u32):ctx(c){}
+    void Push(u32 value){ctx.response.push_back(value);}
+};
+}
+namespace VideoDecoderProtocol {
+template<class P,class O>bool MarkLastEos(P& pending,O& outputs) {
+    if(!pending.empty()){pending.back().eos=true;return true;}
+    if(!outputs.empty()){outputs.back().eos=true;return true;}
+    return false;
+}
+}
 namespace Service::AM {
 using GuestSyncpoints=Tegra::Host1x::SyncpointManager;
 struct FakeHost1x {
@@ -394,9 +470,15 @@ public:
     std::set<u32> m_registered,m_guest_owned;
     u32 m_syncpoint{5};
     bool m_started{true};
+    bool m_creator{},m_finalized{};
+    u64 m_submitted{};
+    static constexpr std::size_t MaxInputBytes=16*1024*1024;
+    void Acknowledge(HLERequestContext& ctx,u32 code){ctx.response={code};}
     void Pump();
+    void SubmitInput(HLERequestContext&);
 };
 __REAL_PUMP__
+__REAL_SUBMIT__
 } // namespace Service::AM
 
 int main(){
@@ -524,12 +606,64 @@ int main(){
     assert(session.m_pending.empty() && session.m_outputs.size()==2 &&
            session.system.host.sync.GetGuestSyncpointValue(5)==2 && session.m_owner->process.memory.writes==2);
     assert(session.system.gpu.invalidations==2);
+    // Execute the actual maintained SDK SubmitInput entrypoint, not merely
+    // a pre-populated Pump fixture. Its packet is genuinely decoded by
+    // FFmpeg; an actual Vulkan fence gates the live SyncpointManager before
+    // the maintained Pump + GraphicsSupervisor write guest NVMap bytes.
+    IGraphicsVideoDecoderSession from_tipc;
+    from_tipc.m_registered.insert(9);
+    from_tipc.m_available.push_back({9,{{7,3}}});
+    HLERequestContext input;
+    input.descriptors.push_back(0);
+    input.compressed=encoded_mpeg4;
+    input.words[0]=input.GetCommand()+0x10;
+    input.words[1]=3;input.words[5]=777;input.words[6]=0;input.words[7]=0;
+    from_tipc.SubmitInput(input);
+    assert(input.response.size()==2 && input.response[0]==ResultSuccess &&
+           input.response[1]==1 && from_tipc.m_submitted==1);
+    assert(from_tipc.m_pending.size()==1 && from_tipc.m_outputs.empty() &&
+           from_tipc.m_owner->process.memory.writes==0 &&
+           from_tipc.system.host.sync.GetGuestSyncpointValue(5)==0);
+    release_gpu.Submit(3);
+    from_tipc.Pump(); // queued Vulkan commands do not unlock the image
+    assert(from_tipc.m_outputs.empty() && from_tipc.m_pending.size()==1);
+    assert(release_gpu.Retire()==3);
+    for(u32 i=0;i<3;++i)from_tipc.system.host.sync.IncrementGuest(7);
+    from_tipc.Pump();
+    assert(from_tipc.m_pending.empty() && from_tipc.m_outputs.size()==1 &&
+           from_tipc.m_outputs.front().pts==777 &&
+           from_tipc.m_owner->process.memory.writes==1 &&
+           from_tipc.system.host.sync.GetGuestSyncpointValue(5)==1 &&
+           from_tipc.system.gpu.invalidations==1);
+    for(int y=0;y<16;++y)
+        for(int x=0;x<16;++x)
+            assert(from_tipc.m_owner->process.memory.bytes[y*16+x]==
+                   f->data[0][y*f->linesize[0]+x]);
+    // Malformed TIPC command must fail before decoding or publishing bytes.
+    HLERequestContext bad=input;
+    bad.response.clear();bad.words[0]=0;
+    from_tipc.SubmitInput(bad);
+    assert(bad.response.size()==1 && bad.response[0]==Kernel::ResultInvalidCombination);
+    assert(from_tipc.m_submitted==1 &&
+           from_tipc.system.host.sync.GetGuestSyncpointValue(5)==1);
+    HLERequestContext bad_pts=input;
+    bad_pts.response.clear();bad_pts.words[6]=0x80000000U;
+    from_tipc.SubmitInput(bad_pts);
+    assert(bad_pts.response.size()==1 && bad_pts.response[0]==Kernel::ResultInvalidArgument);
+    assert(from_tipc.m_submitted==1);
+    std::puts("H05_REAL_SUBMITINPUT_FFMPEG_VULKAN_OWNER_PASS"
+              " submit_owner=executed real_codec=MPEG4"
+              " owner_pump=executed owner_nvmap_guest_write=executed"
+              " real_vk_fence_retired=1 guest_completion_after_write=1"
+              " invalid_tipc=refused invalid_pts=refused"
+              " authenticated_production_tipc=not_exercised");
+
     std::puts("H05_REAL_FFMPEG_PUMP_OWNER_PASS decoded_nv12=exact "
               "blocked_release=held no_head_of_line=1 failed_write=rolled_back "
               "guest_syncpoint_real_owner_after_write=1 invalid_stride=no_completion "
               "dead_image=retired write_oom=rolled_back owner_nvmap_guest_write=1 real_host_vk_fence_to_guest_syncpoint=1 live_TIPC=not_exercised");
 }
-""".replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump).replace("__REAL_SURFACE_WRITE__",surface_write)
+""".replace("__REAL_OWNER__",real).replace("__REAL_PUMP__",pump).replace("__REAL_SUBMIT__",submit).replace("__REAL_SURFACE_WRITE__",surface_write)
 compilers=list(dict.fromkeys(x for x in
     (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"C++20 compiler required"

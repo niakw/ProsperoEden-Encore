@@ -56,4 +56,25 @@ The cached ninth-run compile database, if later extracted, is **historical SHA-s
 - **AB-01 shared SPIR-V:** configured conditional source ownership, emitted SPIR-V validated for NaN/Inf/finite float and preserved integer semantics.
 - **AB-05 JIT:** compiled-source owner and signed-div/rounding positive and negative instruction tests, without importing AVX-512-only changes for PS5 Zen 2.
 
+
+## Byte-level scheduled-source witness (audit branch only)
+
+The additional [read-only byte attestor](../../tools/audit/attest-ab-ns1-source-bytes.py) complements, **but does not replace**, the compile-owner checker. It independently hashes (SHA-256) an already-present \`compile_commands.json\` source path and compares its bytes to the corresponding canonical \`vendor/sources\`, \`vendor/encore-active\` or project source in the exact checkout.
+
+\`\`\`sh
+python3 -B tools/audit/attest-ab-ns1-source-bytes.py --self-test
+python3 -B tools/audit/attest-ab-ns1-source-bytes.py \
+  /existing/scratch/native-local/compile_commands.json \
+  --require jit_data --require jit_fp --require romfs_builder --require audio_adapter
+# Optional separate RADV Meson compile database can be appended.
+\`\`\`
+
+- \`byte-equal-canonical\`: one recorded source path exists and its bytes match a tracked canonical candidate. **Not** evidence it compiled successfully, linked or executed.
+- \`byte-mismatch\`: the recorded existing file differs from all available canonical candidates; investigate copy origin and environment before considering a source patch.
+- \`ambiguous-source-paths\`, \`compiled-source-not-on-disk\`, \`canonical-reference-not-on-disk\`, or \`not-in-database\`: **not qualified**. Required witnesses fail closed. Missing compile database returns 2.
+- For RADV, a source equal to pinned Mesa is **not the same** as a source equal to maintained Encore. Inspect \`canonical_byte_matches\`, not merely the aggregate status. The meta buffer/copy units are still outside the maintained installer tuple.
+- Tests against synthetic files exercise equality, mismatch, missing copy/reference and ambiguous owner. A successful real-source replay still requires an existing valid native database, a same-revision initialized vendor checkout and eventual link/runtime evidence.
+
+This tool runs no CMake, Ninja, PS5 build, network fetch, package or workflow dispatch. It does not alter \`main\`, \`vendor\`, source owners or the release process.
+
 **Decision:** keep PR #45 draft, do not merge/rebase, no vendor repin, no PS5 build, no source or workflow patches from this audit. All four source gaps and the Dynarmic lead remain *candidates*, not console-proven regressions.

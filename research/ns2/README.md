@@ -26,3 +26,20 @@ an 8 MiB fallback. This prototype requires explicit descriptor type and a
 fully contiguous device range and treats the next qword as a non-size parameter
 for proven native bare pointers. Both the interpretation and the range source
 must be verified before applying it to the real renderer.
+
+## Backing lifetime / alias-epoch research
+
+`test_gpu_backing_lifetime.cpp` is an independent **model** of GPU device/CPU
+backing registration, mapping, alias teardown, pending GPU fences and generation
+re-use. It is deliberately not linked to `IGpuWorker` or `nvhost_as_gpu`.
+Building it proves a proposed behavioral contract, not that Encore implements it.
+
+```bash
+clang++ -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
+  research/ns2/test_gpu_backing_lifetime.cpp -o /tmp/ns2-backing-contract
+/tmp/ns2-backing-contract
+```
+
+Local test counts on both clang++ and g++: SSBO contract **19/19** each;
+backing lifetime model **23/23** each. This totals 42 distinct assertions
+per compiler, all passed. No GitHub Actions or PS5 build were run.

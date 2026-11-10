@@ -237,6 +237,13 @@ def main() -> None:
     require("static_cast<u32>(8_MiB)" in shared and
             "StorageBufferBinding(ssbo_addr, cbuf_index, is_written)" in shared,
             "The legacy size fallback changed")
+    reader_sha256 = normalized_function_sha256(header, "ReadStorageDescriptor")
+    require(reader_sha256 ==
+            "44e011a540a5d79669867c9ebc16e2a2d6534ac94d6cffc8880948326ce9ade6",
+            "Maintained QMD3 16-byte CBUF descriptor reader differs from tested source")
+    require("const auto record = ReadStorageDescriptor(desc.cbuf_index, offset);" in header and
+            "const u32 bytes = record[2], tag = record[3];" in header,
+            "QMD3 descriptor call site or 4-word ABI changed")
     guard_sha256 = normalized_function_sha256(header, "NativeQmdContiguousGpuSpan")
     require(guard_sha256 ==
             "90c871905ad8c6d5a193acea84a457816cf1bc432d71c06de6f6ab68e0f9b7a2",
@@ -264,6 +271,7 @@ def main() -> None:
         "mapping_passes_static_owner_witness": mapping_scans,
         "vendor_path": str(vendor), "reviewed_vendor_pin": EXPECTED_VENDOR,
         "exact_mapping_guard_normalized_sha256": guard_sha256,
+        "exact_descriptor_reader_normalized_sha256": reader_sha256,
         "native_uses_legacy_buffer_binding": False,
         "unknown_native_lengths_currently_rejected": True,
         "no_explicit_gmmu_read_lease_in_examined_native_owners": True,

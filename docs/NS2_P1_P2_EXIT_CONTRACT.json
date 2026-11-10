@@ -2,7 +2,7 @@
   "schema": 1,
   "title": "Eden Encore P1/P2 finite host exit contract",
   "scope": "Exactly H01-H07 and G01-G10; optional unsupported SDK forms are recorded as explicit exclusions, never silently accepted.",
-  "limitations": "P1/P2 is a host-owner contract only; it does not establish PS5 framebuffer, game compatibility, Vulkan performance, or production guest-code boot. H01 uses host kernel/page-table/FS stand-ins; G10 executes genuine DmaPusher/Puller ownership and a host Vulkan compute pipeline with a synthetic shader and host command-word adapter. Console and complete native NS2 execution remain P5.",
+  "limitations": "P1/P2 is a host-owner contract only; it does not establish PS5 framebuffer, game compatibility, Vulkan performance, or production guest-code boot. H01 uses host kernel/page-table/FS stand-ins; G10 executes genuine DmaPusher/Puller ownership and a host Vulkan compute pipeline with a synthetic shader and host command-word adapter. Console and complete native NS2 execution remain P5. The release self-test rejects fabricated positive evidence even when all 17 host contracts are already defined; final exit still requires six successful CI runs at the identical source SHA.",
   "mandatory_workflows": [
     "Encore core fast gate",
     "Encore source preflight (host only)",

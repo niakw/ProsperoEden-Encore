@@ -221,6 +221,12 @@ def validate_fail_closed(data: dict) -> list[str]:
     invented = copy.deepcopy(data)
     invented["items"][0]["status"] = "proof_defined"
     invented["items"][0]["blocker"] = ""
+    # Always corrupt evidence, even when all 17 rows are already closed.
+    # Changing an open row into a closed row was a no-op at 17/17.
+    invented["items"][0]["evidence"]["positive"] = {
+        "validator": "tools/ns2/NOT_A_REAL_OWNER_TEST.py",
+        "kind": "real-owner-exec",
+    }
     cases.append(("fake positive/negative evidence", invented))
     short = copy.deepcopy(data)
     short["items"].pop()

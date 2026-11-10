@@ -153,8 +153,8 @@ keeps writer/remap ownership correct and never holds a page-table lock
 across scheduler/driver waits. Measure actual PS5 scan times before
 assuming the CPU cost affects framerate.
 
-**Current offline execution:** the single host runner passes **19 + 23 + 30
-= 72 distinct assertions on each of Clang and GCC**, while the exact
+**Current offline execution:** the single host runner passes **19 + 23 + 30 + 33 + 35
+= 140 distinct checks on each of Clang and GCC**, while the exact
 vendor source validator reports **SKIP** without a real pinned checkout.
 
 ### O5 — pipeline miss-cache crossover
@@ -204,8 +204,8 @@ On adoption, stage all resources only after complete preflight and
 retain every current QMD3/GMMU/snapshot/write/fence barrier. No vendor
 or `main` changes have been made.
 
-**Updated local runner:** 19 + 23 + 30 + 33 = **105 distinct research
-assertions per compiler, 210 across Clang/GCC**, plus a separate
+**Updated local runner:** 19 + 23 + 30 + 33 + 35 = **140 distinct research
+checks per compiler, 280 across Clang/GCC**, plus a separate
 24-case source-expression reproduction per compiler. See
 [local test receipt](../research/ns2/LOCAL_TEST_RECEIPT_2026-11-10.md).
 
@@ -245,3 +245,29 @@ owners are exercised under a hostile test with realistic guest state.
 
 **Priority:** O2 is now targeted regression coverage, below O1 native
 descriptor-layout/unknown-length admission. No production patch.
+
+### O1 source-owner gate: real 16-byte QMD3 CBUF descriptor reading
+
+**New exact-maintained-source tests:**
+[`test_qmd3_descriptor_read_owner.cpp`](../research/ns2/test_qmd3_descriptor_read_owner.cpp)
+executes the unchanged `ReadStorageDescriptor` method from
+[pinned native QMD3 owner](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h)
+with local fake CBUFs/GMMU read callback. The method body matched
+its maintained vendor counterpart (normalized 747 chars, FNV-1a
+`2431638797`; body SHA-256
+`44e011a540a5d79669867c9ebc16e2a2d6534ac94d6cffc8880948326ce9ade6`).
+**35/35 tests pass with Clang 17 and GCC 14 under UBSan**, including
+invalid CBUF bank, 16-byte read crossing the 64 KiB bound, 49-bit VA
+overflow, read refusal and a successful full-record return.
+
+Critical limitation: a *single callback* is not proof of an atomic guest
+memory snapshot. This method captures four descriptor words but does not
+authenticate their semantic length/tag meaning. `BuildResourcePlan`'s
+`known_size = tag == 0 && bytes != 0` and refusal for unknown size remain
+the actual native compatibility policy. **No authorized size widening**
+until a real 16-byte descriptor from an NS2 execution is known to be legal.
+
+All host suites now pass **140 checks per compiler at O1**, and
+the five suites also passed at O0/O2 (20 additional binary executions,
+560 checks). The full pinned-vendor source validator is still a skip
+on the local checkout; no native PS5 build/CI has been launched.

@@ -79,6 +79,9 @@ jobs:
           # Catch cache-step contract drift before apt and native dependencies.
           python3 -B tools/check-ci-cache.py
           python3 -B tools/check-post-f07-delta-register.py
+          # The production JIT no longer has the retired ON/OFF CMake options.
+          # Fail here instead of after native configure and 23 syntax TUs.
+          python3 -B tools/check-performance.py --source-only
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

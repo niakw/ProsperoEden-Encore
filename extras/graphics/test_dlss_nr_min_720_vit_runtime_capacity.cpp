@@ -7,6 +7,7 @@
 #include "rdna2_nr_vit_projection_stage_policy.h"
 #include "rdna2_nr_vit_boundary_repack_policy.h"
 #include "r09_native_plans.h"
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <iostream>
@@ -88,6 +89,67 @@ static void TestVariant(std::string_view native,bool original) {
                  <<" projections="<<stage_count
                  <<" tokens="<<tokens<<" GPU_DISABLED\n";
     }
+    // Exhaustive *720p-specific* scratch Pareto frontier. The 1080p
+    // frontier does NOT apply to this smaller learned token shape.
+    struct BatchWork {std::uint32_t expand{},contract{},projection{},qkv{};};
+    std::array<BatchWork,17u> measured{};
+    std::array<std::uint32_t,4u> frontier{};
+    std::uint32_t count{};
+    for(std::uint32_t scratch=4u;scratch<=16u;++scratch){
+        const std::uint64_t bytes=std::uint64_t(scratch)*plane;
+        const NR::VitQkvBuffersCapacity cap{
+            plane,3072u*1024u,bytes,128u,plane,plane,plane,plane};
+        NR::VitQkvBatches qkv{};
+        assert(NR::BuildVitQkvBatches(tokens,cap,qkv));
+        assert(NR::ValidVitQkvBatches(qkv));
+        auto& work=measured[scratch];
+        work.qkv=qkv.count;
+        for(const auto kind:{NR::VitProjectionKind::Expand,
+                            NR::VitProjectionKind::Contract,
+                            NR::VitProjectionKind::ResidualProjection}){
+            const NR::VitProjectionStageCapacity stage{
+                kind==NR::VitProjectionKind::Contract?4u*plane:plane,
+                kind==NR::VitProjectionKind::Expand?4096u*1024u:
+                kind==NR::VitProjectionKind::Contract?4096u*1024u:
+                1024u*1024u,
+                bytes,kind==NR::VitProjectionKind::Expand?0u:plane,
+                kind==NR::VitProjectionKind::Expand?0u:2048u,
+                kind==NR::VitProjectionKind::Expand?4u*plane:plane
+            };
+            NR::VitProjectionStageBatches stages{};
+            assert(NR::BuildVitProjectionStage(kind,tokens,stage,stages));
+            assert(NR::ValidateVitProjectionStage(stages));
+            if(kind==NR::VitProjectionKind::Expand)
+                work.expand=stages.count;
+            if(kind==NR::VitProjectionKind::Contract)
+                work.contract=stages.count;
+            if(kind==NR::VitProjectionKind::ResidualProjection)
+                work.projection=stages.count;
+        }
+        const auto no_more=[](const BatchWork& a,const BatchWork& b){
+            return a.expand<=b.expand&&a.contract<=b.contract&&
+                   a.projection<=b.projection&&a.qkv<=b.qkv;
+        };
+        bool dominated=false;
+        for(std::uint32_t cheaper=4u;cheaper<scratch;++cheaper)
+            dominated|=no_more(measured[cheaper],work);
+        if(!dominated){
+            assert(count<frontier.size());
+            frontier[count++]=scratch;
+            std::cout<<"R09_MIN_720P_PARETO scratch="<<scratch
+                     <<" memory_planes="<<(11u+scratch)
+                     <<" expand="<<work.expand
+                     <<" qkv="<<work.qkv<<"\n";
+        }
+    }
+    constexpr std::array<std::uint32_t,4u> expected{4u,6u,8u,12u};
+    assert(frontier==expected);
+    assert(count==expected.size());
+    assert(measured[4u].expand==4u&&measured[4u].qkv==3u);
+    assert(measured[6u].expand==3u&&measured[6u].qkv==2u);
+    assert(measured[8u].expand==2u&&measured[8u].qkv==2u);
+    assert(measured[12u].expand==2u&&measured[12u].qkv==1u);
+    std::cout<<"R09_MIN_720P_PARETO_ALL_FOUR_VERIFIED\n";
     assert(!candidate.ready_to_enable_720p);
 }
 int main(){

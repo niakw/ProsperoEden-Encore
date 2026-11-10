@@ -266,3 +266,26 @@ Remaining mandatory: specialized ViT/decoder Vulkan launch dimensions,
 the upstream FSwin/Split/token layout transitions, full graph image
 comparison, actual 720p model preflight and PS5 GPU measurements.
 All candidate GPU admission flags stay false.
+
+
+## The 720p scratch frontier differs from 1080p
+
+An exhaustive host-only 960-token sweep of genuine ViT scheduling
+policies at scratch capacities 4..16 identifies the four
+non-dominated 720p scratch choices: **4, 6, 8, 12 token-planes**.
+The 1080p choices (4,5,6,12) cannot simply be reused:
+
+| 720p scratch | ViT requested bytes | FFN Expand batches | QKV batches |
+| ---: | ---: | ---: | ---: |
+| 4 | 14.0625 MiB | 4 | 3 |
+| 6 | 15.9375 MiB | 3 | 2 |
+| 8 | 17.8125 MiB | 2 | 2 |
+| 12 | 21.5625 MiB | 2 | 1 |
+
+Scratch 5 is dominated at 720p; scratch 8 is NOT. The vendor's
+current selectable 9-buffer profiles were developed for 1080p and
+do NOT yet include the 720p-specific profile 8. Do not treat the
+vendor profile selector as 720p-optimal until it is extended and
+qualified on a 720p-capable native graph. All numbers are
+*requested ViT storage and CPU schedule batch counts*, not PS5 VRAM
+residency or actual FPS. A green sweep never sets ready_to_enable_720p.

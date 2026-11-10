@@ -47,6 +47,9 @@ NATIVE_GRAPHICS_TARGETS = (
     "headless/vulkan_blit_screen_r08.cpp",
     "headless/vulkan_renderer_r08.cpp",
     "headless/vulkan_window_adapt_r08.cpp",
+    # The optical-flow wrapper must be checked with the *PS5* libc++:
+    # unique_ptr's default constructor/destructor need the complete engine.
+    "headless/fsr3_optical_session.cpp",
 )
 PINNED_CACHE_TARGETS = (
     "video_core/host1x/gpu_device_memory_manager.cpp",

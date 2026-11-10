@@ -47,6 +47,52 @@ def extract_mapping_guard(source: str) -> str:
     require(const_match is not None, "native guard budget constant absent")
     return const_match.group(0) + "\n" + source[start:marker] + function_body(source, fn)
 
+def count_native_mapping_scans(header: str, pipe: str, raster: str) -> dict[str, int]:
+    """Fail closed if any of the six real native mapping validation owners drift."""
+    configure = function_body(pipe, "ComputePipeline::ConfigureNative")
+    stage = function_body(header, "StageVulkanBufferBindings")
+    validation = function_body(header, "ValidateGpuBufferMappings")
+    dispatch = function_body(raster, "RasterizerVulkan::DispatchNativeCompute")
+    snapshot_anchor = "struct NativeQmdPhysicalBufferSnapshot final {"
+    require(snapshot_anchor in header, "Physical buffer snapshot owner missing")
+    snapshot = header[header.index(snapshot_anchor):]
+    capture = function_body(snapshot, "Capture")
+    matches = function_body(snapshot, "Matches")
+    native_direct = configure.count("resources.ValidateGpuBufferMappings(mapped)")
+    native_stage = configure.count("resources.StageVulkanBufferBindings(")
+    raster_capture = dispatch.count("staged_buffer_mappings.Capture(")
+    raster_match = dispatch.count("staged_buffer_mappings.Matches(")
+    require((native_direct, native_stage, raster_capture, raster_match) == (2, 1, 1, 2),
+            "Native GMMU pass call graph changed; do not quote 6 passes")
+    require(stage.count("ValidateGpuBufferMappings(mapped)") == 1 and
+            stage.count("ValidateGpuMappings(mapped)") == 1,
+            "Native stage preflight path changed")
+    require("ValidateGpuBufferMappings(std::forward<IsMapped>(mapped))" in header,
+            "Native no-image validation delegate changed")
+    require("mapped(storage.gpu_address, storage.bytes)" in validation,
+            "Reflected native storage buffer mapping loop changed")
+    require(capture.count("NativeQmdContiguousGpuSpan(address, bytes, map)") == 1 and
+            matches.count("NativeQmdContiguousGpuSpan(address, bytes, map)") == 1,
+            "Native snapshot physical-span validation changed")
+    func = function_body(header, "NativeQmdContiguousGpuSpan")
+    require("delta = 4096 - (gpu_addr & 4095U)" in func and
+            "delta += 4096" in func and
+            "map(gpu_addr + bytes - 1)" in func,
+            "Native GMMU page granularity or final-byte check changed")
+    # Aligned 32 MiB: one start lookup, 8,191 interior page starts, one
+    # last-byte lookup. A successful native dispatch performs six full
+    # scans on its CBUF/SSBO spans (plus snapshot endpoint lookups).
+    direct_scans = native_direct + native_stage + raster_capture + raster_match
+    require(direct_scans == 6, "Native QMD3 pass-count mismatch")
+    bytes_32mib = 32 * 1024 * 1024
+    lookups_per_span = 2 + (bytes_32mib // 4096 - 1)
+    return {
+        "native_full_span_passes_per_successful_dispatch": direct_scans,
+        "aligned_32mib_lookups_per_pass": lookups_per_span,
+        "aligned_32mib_minimum_lookups_in_six_passes": direct_scans * lookups_per_span,
+    }
+
+
 def extract_native_size_expression(source: str) -> str:
     """Embed the exact maintained condition, not a guessed descriptor heuristic."""
     match = re.search(
@@ -185,8 +231,10 @@ def main() -> None:
             subprocess.run(command, check=True, capture_output=True, text=True)
             executed = subprocess.run([str(output)], check=True, capture_output=True, text=True)
             reports.append({"compiler": compiler, "result": executed.stdout.strip()})
+    mapping_scans = count_native_mapping_scans(header, pipe, raster)
     print(json.dumps({
         "mode": "offline research; real extracted GMMU source, mocked mappings",
+        "mapping_passes_static_owner_witness": mapping_scans,
         "vendor_path": str(vendor), "reviewed_vendor_pin": EXPECTED_VENDOR,
         "native_uses_legacy_buffer_binding": False,
         "unknown_native_lengths_currently_rejected": True,

@@ -84,9 +84,24 @@ int main(int argc, char** argv) {
     qci.queueFamilyIndex = family;
     qci.queueCount = 1;
     qci.pQueuePriorities = &priority;
+    // The emitted G01/G07 SPIR-V now contains the genuine non-uniform
+    // texel-array capability. Vulkan requires that feature to be queried
+    // AND enabled on the very device executing vkCmdDispatch. A successful
+    // SPIR-V validation cannot substitute for this live device contract.
+    VkPhysicalDeviceVulkan12Features supported12{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+    VkPhysicalDeviceFeatures2 supported{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+    supported.pNext = &supported12;
+    vkGetPhysicalDeviceFeatures2(gpu, &supported);
+    Check(supported12.shaderUniformTexelBufferArrayNonUniformIndexing == VK_TRUE,
+          "Vulkan GPU lacks uniform texel-buffer array non-uniform indexing");
+    VkPhysicalDeviceVulkan12Features enabled12{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+    enabled12.shaderUniformTexelBufferArrayNonUniformIndexing = VK_TRUE;
     VkDeviceCreateInfo dci{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
     dci.queueCreateInfoCount = 1;
     dci.pQueueCreateInfos = &qci;
+    dci.pNext = &enabled12;
     VkDevice device = VK_NULL_HANDLE;
     Check(vkCreateDevice(gpu, &dci, nullptr, &device) == VK_SUCCESS, "device");
     VkQueue queue = VK_NULL_HANDLE;

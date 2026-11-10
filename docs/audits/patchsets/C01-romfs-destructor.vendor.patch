@@ -1,0 +1,17 @@
+diff --git a/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp b/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp
+--- a/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp
++++ b/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp
+@@ -200,1 +200,12 @@
+-RomFSBuildContext::~RomFSBuildContext() = default;
++// Every entry also stays alive in directories/files. Release the long owning
++// sibling/child chains before the vectors, so a wide RomFS does not recurse
++// through thousands of shared_ptr destructors on the filesystem thread stack.
++RomFSBuildContext::~RomFSBuildContext() {
++    for (auto& file : files)
++        file->sibling.reset();
++    for (auto& dir : directories) {
++        dir->child.reset();
++        dir->sibling.reset();
++        dir->file.reset();
++    }
++}

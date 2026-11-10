@@ -12,7 +12,7 @@ for compiler in clang++ g++; do
     exit 2
   fi
   for test in test_ssbo_extent_contract test_gpu_backing_lifetime test_epoch_guarded_gmmu_memo; do
-    "$compiler" -std=c++20 -O1 -Wall -Wextra -Werror \
+    "$compiler" -std=c++20 -pthread -O1 -Wall -Wextra -Werror \
       -fsanitize=undefined -fno-sanitize-recover=all \
       "$root/research/ns2/${test}.cpp" -o "$tmp/${compiler//+/p}-$test"
     "$tmp/${compiler//+/p}-$test"

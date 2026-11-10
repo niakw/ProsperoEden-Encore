@@ -3,14 +3,34 @@
 from pathlib import Path
 import json
 import shlex
+import sys
 
 root = Path(__file__).resolve().parents[1]
+cmake = (root / 'headless/CMakeLists.txt').read_text()
+# Shipping JIT has exactly one source graph; options for shared JIT and
+# compile batching were removed. Reject their reintroduction or a stale
+# host test that demands the deleted OFF options.
+assert 'option(EDEN_SHARED_JIT' not in cmake
+assert 'option(EDEN_JIT_COMPILE_BATCH' not in cmake
+assert 'if(EDEN_SHARED_JIT)' not in cmake
+assert 'if(EDEN_JIT_COMPILE_BATCH)' not in cmake
+assert 'set(EDEN_A64_INTERFACE_UNIT "${EDEN_A64_INTERFACE_ROOT}/a64_interface_standard.cpp")' in cmake
+assert 'set(EDEN_A64_EMITTER_UNIT "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.cpp")' in cmake
+assert 'EDEN_SHARED_JIT_AVAILABLE=0' in cmake
+assert 'EDEN_JIT_COMPILE_BATCH_AVAILABLE=0' in cmake
+if '--source-only' in sys.argv:
+    print('ENCORE_G11_PRODUCTION_JIT_SOURCE_SELECTOR_PASS experimental_flags_absent=1')
+    raise SystemExit(0)
+
 cache = Path((root / '.local/headless-cache').read_text().strip())
 generated = cache / 'native-local/headless'
 cache_text = (generated.parent / 'CMakeCache.txt').read_text()
 development = 'EDEN_DEV_PROFILE:BOOL=ON' in cache_text
 shared_jit_enabled = 'EDEN_SHARED_JIT:BOOL=ON' in cache_text
 compile_batch_enabled = 'EDEN_JIT_COMPILE_BATCH:BOOL=ON' in cache_text
+assert not development, 'Native release cannot select a development JIT profile'
+assert not shared_jit_enabled and not compile_batch_enabled, (
+    'Native production cache must not enable removed JIT experiments')
 
 # Only the copied dependency interfaces still live under .local.
 # G11/X06's complete guest JIT wrappers are now maintained sources.
@@ -65,7 +85,7 @@ for bits in (32, 64):
 
 jit = (generated / 'a64_interface.cpp').read_text()
 interface_root = root / 'vendor/encore-active/eden-core/src/dynarmic/backend/x64'
-selected = 'a64_interface_shared.cpp' if shared_jit_enabled else 'a64_interface_standard.cpp'
+selected = 'a64_interface_standard.cpp'
 assert jit == (interface_root / selected).read_text(), 'configured A64 owner differs'
 # Complete units now contain guarded batch/DEV code even when disabled.
 # Check the actual command definitions, rather than absence from raw C++.
@@ -107,8 +127,8 @@ assert 'protection_timer' not in cmake
 shared_root = root / 'vendor/encore-active/eden-core/dynarmic/shared-jit'
 shared_jit = (shared_root / 'jit_group_support.inc').read_text()
 assert 'bool eden_jit_shared = false;' in shared_jit
-assert 'option(EDEN_SHARED_JIT "Enable the experimental cross-core A64 JIT" OFF)' in cmake
-assert 'option(EDEN_JIT_COMPILE_BATCH "Compile bounded A64 successor chains on a cache miss" OFF)' in cmake
+assert 'option(EDEN_SHARED_JIT' not in cmake
+assert 'option(EDEN_JIT_COMPILE_BATCH' not in cmake
 jit_group = (shared_root / 'jit_group.h').read_text()
 jit_impl = (shared_root / 'jit_impl.inc').read_text()
 # Production JIT waits must yield the CPU after their short spin. On PS5 real-time workers,

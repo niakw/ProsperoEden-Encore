@@ -114,3 +114,9 @@ Le contrôle GPU est maintenant ajusté en distinguant le chemin de production n
 Le validateur de stage possédait aussi un inventaire périmé : `self-updater.elf`, `encore-release.json` et `mihawkgen/network.fgw` sont produits par le vrai packager, mais n'étaient pas acceptés par `check-staged-app.py`. L'inventaire a été corrigé sur `main` dans `98b9bb5` ; aucune archive n'est donc réputée validée par avance. Enfin, l'audit de référence a mis en évidence un espace final isolé dans ce document, corrigé ici.
 
 **Politique :** ne déclencher une neuvième compilation explicite `[full-build]`, sans `[release]`, qu'après qualification des contrôles rapides sur le nouveau SHA ; ne pas représenter un code corrigé ou une CI hôte verte comme un binaire PS5 compilé ou testé en console.
+
+## Neuvième build — tentative native unique après correction GPU
+
+Le préflight P5 [#42879764399](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42879764399) a réussi ses 12 étapes sur le correctif du GPU maintenu. La comparaison de la boucle worker quiet avec le corps amont, après retrait strict des traces et de l'arbitrage natif des canaux, a également été vérifiée. Les premiers jobs P0–P4 sont verts, les autres se poursuivent sans échec confirmé lors du déclenchement. L'échec de source-baseline sur un ancien SHA était uniquement un espace final dans ce document, supprimé dans `2b8208f`.
+
+Ce commit demande **une seule neuvième exécution** `[full-build]` sur `main`, **sans** `[release]`. Conserver le vendor `22b69d6`, les caches et les garde-fous. Avant de conclure au succès, exiger une compilation et un link natifs terminés, la validation de stage, les ZIP vérifiés, leurs SHA et les artefacts téléchargeables. Aucun test sur console n'est déduit de cette CI.

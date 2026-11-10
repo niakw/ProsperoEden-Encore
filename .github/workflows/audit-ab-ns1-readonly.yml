@@ -52,7 +52,9 @@ jobs:
           python3 -B tools/audit/attest-r18-vendored-original-compile-owners.py --self-test
           python3 -B tools/audit/qualify-r18-replaced-source-paths.py --self-test
           python3 -B tools/audit/attest-r18-ninja-deps-headers.py --self-test
+          python3 -B tools/audit/attest-r18-orphan-pin-archives.py --self-test
           python3 -B tools/audit/check-ab-ns1-source-gaps.py > ab-ns1-witness/source-gaps.json
+          python3 -B tools/audit/attest-r18-orphan-pin-archives.py > ab-ns1-witness/r18-orphan-pin-archives.json
           mapfile -t databases < <(find "$HOME/.cache" -path '*/native-local/compile_commands.json' -type f -print)
           test "${#databases[@]}" -eq 1
           test -s "${databases[0]}"
@@ -80,6 +82,9 @@ jobs:
           r18 = json.loads(Path("ab-ns1-witness/r18-original-owners.json").read_text())
           replaced = json.loads(Path("ab-ns1-witness/r18-replaced-owners.json").read_text())
           header_deps = json.loads(Path("ab-ns1-witness/r18-headers-ninja-deps.json").read_text())
+          orphan = json.loads(Path("ab-ns1-witness/r18-orphan-pin-archives.json").read_text())
+          assert set(orphan["families"]) == {"boilerplate", "opengl-source", "opengl-native-boilerplate"}
+          assert not orphan["upstream_origin_verified"]
           assert header_deps["changed_header_count"] == 17
           assert set(replaced["cases"]) == {"kernel_address_arbiter", "kernel_svc",
                                            "kernel_svc_address_arbiter", "spirv_emit_context",
@@ -103,6 +108,8 @@ jobs:
               "r18_five_replacement_counts": replaced["counts"],
               "r18_historical_header_dependency_counts": header_deps["result_counts"],
               "r18_historical_header_dependency_present": header_deps["ninja_deps_text_present"],
+              "r18_archived_unavailable_pin_sha256": {k:v["archive_sha256"] for k,v in orphan["families"].items()},
+              "r18_archived_unavailable_pins_not_officially_proven": True,
           }
           Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")
           print("AB_NS1_HISTORICAL_CACHE_BYTE_WITNESS", json.dumps(note, sort_keys=True))

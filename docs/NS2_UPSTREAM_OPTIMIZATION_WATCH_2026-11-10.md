@@ -68,6 +68,22 @@ These are observed branch heads on 10 November 2026; refresh snapshots before im
 
 The BCn mip/array and Vulkan GC accounting changes above should be compared to Encore's **already existing** texture/image/eviction ownership, with positive multi-layer textures, negative malformed extents, exact device-memory accounting and a bounded VRAM-pressure fixture. These forks must not overtake Lichii as the primary source merely because they carry a recent patch. The task is to **test whether a source-level gap exists**, not to import their heuristics or launch another PS5 build.
 
+## Research fixture 2026-11-10 — O1/O3 (prototype only, not vendor integration)
+
+A standalone C++20 candidate contract is in [research/ns2/ssbo_extent_contract.hpp](../research/ns2/ssbo_extent_contract.hpp) with [positive/negative tests](../research/ns2/test_ssbo_extent_contract.cpp) and [offline reproduction instructions](../research/ns2/README.md). This is **not compiled into Encore** and cannot impact a native build. It is deliberately under a directory excluded by the examined active main source/PR validation path filters.
+
+**Local offline results:** \`clang++\` and \`g++\`, \`-std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all\`: **19/19 each** (38 individual assertions across the two binaries). Tests are a synthetic semantic harness, **not** direct execution of the production BufferCache template or a PS5 GPU.
+
+Actual pinned vendor source audit:
+1. [Vulkan Compute pipeline \`vk_compute_pipeline_cost.cpp\`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp) validates the flattened \`storage_buffers_descriptors\` via \`ComputeStorageLayout::ForEach\` but passes only \`(index, bank, offset, writable)\` to \`BindComputeStorageBuffer\`. There is **no proven native-bare descriptor type at this binding call**. This carrier is the missing integration prerequisite, not simply changing \`8_MiB\` to a large constant.
+2. [Shared \`BufferCache::StorageBufferBinding\`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h) reads \`ssbo_addr+8\` and takes its low 32 bits as length when high bits are zero, the value nonzero, and it fits \`GetMemoryLayoutSize\`; otherwise it uses \`min(layout, 8 MiB)\`. This source fact is reproduced in the test as \`CurrentVendorSizeHeuristic\`. A native bare pointer followed by \`266\` becomes a **266-byte binding** under that heuristic; a non-size word with nonzero high bits falls back to **8 MiB**. Neither is evidence such input occurred on the PS5 yet.
+3. [Active \`MemoryManager::MaxContinuousRange\`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-core/src/video_core/memory_manager.cpp) **already implements a per-thread page-table-revision-keyed cache** for repeated contiguous GPU scans. Do not reinvent it or add an unchecked scan. Use its real result, bound by buffer limits and ownership epoch, when integrating a verified native read.
+4. The [Ampere QMD3 IR code](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h) validates SSBO/CBUF index, write access, 16-byte records and QMD bank provenance before some native atomics. A future fix must preserve this admission contract and must **not** promote every reflected Compute binding to \`NativeBare\`.
+
+The prototype distinguishes \`LegacySized\`, authenticated \`NativeBare\`, authenticated \`NativeTable\`, and \`Unproven\` (rejected); it checks actual contiguous mapping, unaligned base, Vulkan \`maxStorageBufferRange\`, zero/null/overflow/invalid alignment, conservative writes, and NS1 fallback. It leaves production untouched.
+
+**Required actual-source gate before integration:** prove an explicit NS2-only provenance bit at the shader/QMD3 owner and propagate it through \`vk_compute_pipeline_cost.cpp\` → \`BindComputeStorageBuffer\` → \`StorageBufferBinding\`; test \`MaxContinuousRange\` on the process-matched mapping generation, native read >8 MiB, 266-size-lookalike, corrupted/stale mappings, writes and NS1 first. The existing synthetic tests cannot sign off this gate.
+
 ## Working acceptance checklist
 
 - [x] Research branch created from a pinned main SHA, vendor gitlink recorded.
@@ -75,7 +91,8 @@ The BCn mip/array and Vulkan GC accounting changes above should be compared to E
 - [x] Candidate O1 source-level mismatch verified in pinned Encore vendor.
 - [x] O2/O3 associated with existing maintained owners rather than labelled as missing wholesale.
 - [ ] Establish baseline console framebuffer + NS1/NS2 timing, peak VRAM/RAM and logs after the first P5 build.
-- [ ] Build isolated host positive/negative regression receipts for O1–O3 **without vendor/main writes**.
+- [x] Create a standalone *candidate-policy* host fixture with 19 assertions (Clang/GCC UBSan), **without vendor/main writes**; not yet actual-source verification.
+- [ ] Build actual maintained-source positive/negative regression receipts for O1–O3 without altering main/vendor.
 - [ ] Review any implementation in this branch against the then-current pinned vendor/source ownership and license.
 - [ ] Run limited host CI deliberately when main's native build is no longer competing; record actual SHAs.
 - [ ] Only after measurable non-regression: propose a separate reviewed integration PR for main. No auto-merge.

@@ -95,13 +95,17 @@ graph and native descriptor-size predicate. There is no native PS5 build.
 ## O10 — versioned mapping memo research (not a deployable renderer fix)
 
 The [lease-scoped GMMU memo fixture](test_epoch_guarded_gmmu_memo.cpp)
-covers 22 assertions per compiler, tested locally with Clang 17 / GCC 14
+covers 30 assertions per compiler, tested locally with Clang 17 / GCC 14
 under UBSan. All passed. The memo keys each positive result to the
 **owner identity, process generation, mapping revision, GPU base and byte
 length**, and a typed `ReadLease` holds a `shared_mutex` while the caller
 checks/reuses the entry. Writer mutations acquire exclusive ownership and
-increment the revision. A mapping hole, rebind, process reuse, overflow
-or mapping change is rejected or causes a new full scan.
+increment the revision. A mapping hole, rebind, process reuse, overflow,
+same-address owner destruction/recreation (ABA), or mapping change is
+rejected or causes a new full scan. A concurrent writer test verifies that
+an exclusive mapping update cannot finish during an active shared read lease;
+revisions invalidate reused cache results after the writer commits.
+A separate mutex protects memo state when readers overlap.
 
 Under this **synthetic shared-lease assumption only**, six identical
 32 MiB checks require 8,193 GPU→CPU translation callbacks rather than
@@ -118,8 +122,8 @@ a new lock across scheduler waits or Vulkan recording could deadlock or
 stall remaps. Preserve every current preflight, post-staging and commit
 verification until actual ownership is redesigned and tested.
 
-Current bounded runner now tests **64 standalone assertions per compiler**
-(19 SSBO, 23 backing lifecycle, 22 lease/memo). The **24-case**
+Current bounded runner now tests **72 standalone assertions per compiler**
+(19 SSBO, 23 backing lifecycle, 30 lease/memo). The **24-case**
 separate source-expression harness remains a previously reproduced local
 test; it is not added to the standalone runner because it requires
 a pinned vendor source checkout for trustworthy extraction.

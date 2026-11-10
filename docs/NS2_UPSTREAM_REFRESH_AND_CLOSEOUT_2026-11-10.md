@@ -105,3 +105,19 @@ R2 is **host-source-method qualified, integration pending**; R3 is
 copy remains only source-diff qualified. No PS5 timing/guest
 regression evidence, vendor production modifications or native build.
 
+
+### Source gate reproducibility improvement — no full vendor clone required
+
+The previously strict `check_native_qmd_owners.py` now accepts an
+**explicit** `--source-snapshot` mode, with all six source file raw
+Git blob hashes pinned to the exact vendor SHA. An optional
+[six-file download helper](../research/ns2/fetch_pinned_vendor_snapshot.sh)
+can reproduce it on a network-enabled host, without PS5 SDK or a
+gigantic vendor checkout. Normal checked-out vendor mode remains strict
+about `git rev-parse HEAD` matching the commit. This improves the
+reproducibility path, **not** the recorded result: the downloader and
+full Python validator have not executed here because GitHub raw download
+is unavailable in this runtime. The independently fetched source
+invariants remain **26/26 PASS**; the end-to-end executable gate remains
+**NOT RUN**.
+

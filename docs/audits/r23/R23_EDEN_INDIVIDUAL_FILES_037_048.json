@@ -1,0 +1,422 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    37,
+    48
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 37,
+      "sha": "db83070bf2ca788131fa0eac3db6a7a83b75a24c",
+      "title": "[meta] Add FUNDING.yml (#4613)",
+      "date": "2026-11-01T04:16:02Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": ".github/FUNDING.yml",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 38,
+      "sha": "e903d70d9eb46232c2b958674256ee04cf4e56c4",
+      "title": "[docs] Add site policy, disallow AI-written PRs/issues and spam (#4612)",
+      "date": "2026-11-01T02:19:27Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "patch_present": true
+        },
+        {
+          "path": "AGENTS.md",
+          "patch_present": true
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "patch_present": true
+        },
+        {
+          "path": "docs/Development.md",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 39,
+      "sha": "802531c4578e88947a1bcfabfe7a5646d8ed2ce3",
+      "title": "[ports/*] Fix cross-compilation issues (#4493)",
+      "date": "2026-11-01T02:12:55Z",
+      "status": "file-list-retrieved",
+      "file_count": 5,
+      "files": [
+        {
+          "path": ".patch/openssl-cmake/0005-cross-compile.patch",
+          "patch_present": true
+        },
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        },
+        {
+          "path": "docs/CrossCompile.md",
+          "patch_present": true
+        },
+        {
+          "path": "externals/cmake-modules/DetectArchitecture.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 40,
+      "sha": "bd071e3464f3aa37dcade1b19f8a2df95936fca8",
+      "title": "[dynarmic] Add A64:SM4/SM3 tests (#4513)",
+      "date": "2026-11-01T02:12:03Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/dynarmic/tests/A64/a64.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 41,
+      "sha": "a845100bf098a67c738934bbd48acc825275bc55",
+      "title": "[cmake] Cleanup dynarmic's CMake (#4365)",
+      "date": "2026-11-01T02:11:26Z",
+      "status": "file-list-retrieved",
+      "file_count": 11,
+      "files": [
+        {
+          "path": "src/dynarmic/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/CMakeModules/TargetArchitectureSpecificSources.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/CMakeModules/dynarmicConfig.cmake.in",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/CMakeModules/impl/TargetArchitectureSpecificSourcesWrapFile.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/block_of_code.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_vector.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/common/spin_lock_x64.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/decoder/decoder_detail.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/CMakeLists.txt",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 42,
+      "sha": "943f1fc76087adcfc893fb1ca3aea507df15d004",
+      "title": "[gpu_thread] drop affinity pinning, fix BOTW perf regression (#4603)",
+      "date": "2026-10-30T18:55:35Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/gpu_thread.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 43,
+      "sha": "072da775164ab258f2bbe62eecf935a99e7f36f1",
+      "title": "[android] Replace GitHub Icon with Forgejo icon in About page (#4535)",
+      "date": "2026-10-30T15:45:11Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/android/app/src/main/res/drawable/ic_forgejo.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/drawable/ic_github.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout-w600dp/fragment_about.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/fragment_about.xml",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 44,
+      "sha": "035f4611cb8f369d11e97651aff1988e60e8a120",
+      "title": "[vk_rasterizer] Fix viewport Y flip for negative scale_y (#4558)",
+      "date": "2026-10-30T04:05:24Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 45,
+      "sha": "ea92c081b710dc1fb6e35ce8bc05bee8dd6ddf06",
+      "title": "[core] Speed up NCZBLOCK reads and skip double AES for pre-decrypted NCZ (#4582)",
+      "date": "2026-10-30T03:40:15Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "src/core/crypto/ncz_decompressor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_nca_file_system_driver.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_nca_file_system_driver.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/vfs/vfs.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/vfs/vfs_offset.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/loader/xci.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 46,
+      "sha": "69665063a9b13dad8fb2b90a64bd8bb0d0e90ea6",
+      "title": "[cheats] add runtime cheats toggles with master code support (#4334)",
+      "date": "2026-10-30T02:47:38Z",
+      "status": "file-list-retrieved",
+      "file_count": 24,
+      "files": [
+        {
+          "path": "docs/user/UsingCheats.md",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/NativeLibrary.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/EmulationFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/jni/native.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/menu/menu_in_game.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/logging.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/logging.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/core.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/core.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/patch_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/memory/cheat_engine.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/memory/cheat_engine.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/memory/dmnt_cheat_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/memory/dmnt_cheat_vm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/memory/dmnt_cheat_vm.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main.ui",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 47,
+      "sha": "b4d5760014176bfc42b60b7dc5661240c97c8e3b",
+      "title": "[video_core] Revert 4490 and 4531 (#4584)",
+      "date": "2026-10-30T02:26:33Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "src/core/memory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/rasterizer_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 48,
+      "sha": "0731f40f4d86227f05da3fffbc44831065b53a8a",
+      "title": "[video_core/host1x] VP9 Video Playback Fixes (#4590)",
+      "date": "2026-10-30T02:06:33Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/video_core/host1x/codec_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/host1x/codecs/vp9.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

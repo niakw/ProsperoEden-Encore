@@ -1,0 +1,262 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    121,
+    132
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 121,
+      "sha": "90aafeedc1d980849894f5bf251313db95594e8a",
+      "title": "[k_scheduler] fix for libc++ that lazily initializes mutexes (#4447)",
+      "date": "2026-09-16T22:28:37Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/kernel/k_scheduler.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 122,
+      "sha": "4fe5f62c38e71b045d425dc5f4cc4ab83feeafbe",
+      "title": "[dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446)",
+      "date": "2026-09-16T20:47:16Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 123,
+      "sha": "c3f1e6562b6cb5aefcb9edd490b303867917f25e",
+      "title": "[common/fs] Preserve Windows roots during path sanitization (#4437)",
+      "date": "2026-09-16T20:12:01Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/common/fs/path_util.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/fs/path_util.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 124,
+      "sha": "ac35358b3ffed74aaac56b0e99b09e81bb60d2e1",
+      "title": "[common] Replace `Common::SpinLock` with `std::mutex` (#4436)",
+      "date": "2026-09-16T13:35:13Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/common/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/spin_lock.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/kernel/k_slab_heap.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/kernel/k_thread.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 125,
+      "sha": "7bf95be2c29328a4cfeb8b2384ce34c6fb6d890c",
+      "title": "[dynarmic] fix A32 crash due to wrong LEA encoding (#4444)",
+      "date": "2026-09-16T07:29:12Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 126,
+      "sha": "4ce45b3b37d162660f0e1ec829c4eab896fc4db4",
+      "title": "[hle] Fix crash on MK8D and SM3DW LDN (#4417)",
+      "date": "2026-09-16T06:10:29Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": "src/common/uuid.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/uuid.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_functions.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 127,
+      "sha": "fd34024f0e1ffca0aa813698d2552a1dea2b5b17",
+      "title": "[hle/ns] fix build error due to missing async_result.h (#4440)",
+      "date": "2026-09-16T02:45:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/ns/async_result.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 128,
+      "sha": "d76f8f91c423841e131ad822ce26610585cca018",
+      "title": "[hle] Fix nullptr on ListApplicationIcon (#4438)",
+      "date": "2026-09-16T02:00:59Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 129,
+      "sha": "a7061eb4c8afc3a74bd983212131954671317f0b",
+      "title": "[ns] Rename i_async_result -> async_result (#4439)",
+      "date": "2026-09-16T01:46:44Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/async_result.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/async_result.h",
+          "patch_present": false
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 130,
+      "sha": "fa4e7c699243dae407a09fc3c54e7a0a822329b5",
+      "title": "[vk_texture_cache] drop depth comparison sampler fallback (#4408)",
+      "date": "2026-09-15T23:42:37Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 131,
+      "sha": "b77308ced62abe890428955dba687c95e4d93aba",
+      "title": "[applet] ReconfigureControllers fallback unconditional disconnect fix (#4420)",
+      "date": "2026-09-15T19:53:07Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/frontend/applets/controller.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 132,
+      "sha": "defddec47ff997824b6f8adb3bece790f6723c24",
+      "title": "[ns] add stubs for cmd936 and cmd4042 (#4429)",
+      "date": "2026-09-15T06:01:17Z",
+      "status": "file-list-retrieved",
+      "file_count": 5,
+      "files": [
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/i_async_result.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/i_async_result.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

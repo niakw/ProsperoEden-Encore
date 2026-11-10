@@ -97,4 +97,67 @@ struct VitReuseCandidate {
     out=std::move(candidate);
     return true;
 }
+
+
+// Evidence required BEFORE considering a Vulkan implementation of the
+// candidate. These fields are independent of successful host CPU tests.
+// A green structural plan cannot turn these flags on by itself.
+enum class VitReuseGate : std::uint8_t {
+    InvalidCandidate,
+    ConcurrentGpuUse,
+    MissingInterBlockBarrier,
+    MissingLifetimeProof,
+    MissingGpuValidation,
+    RuntimeHardDisabled
+};
+struct VitReuseEvidence {
+    bool same_queue_serial_recording{};
+    bool no_concurrent_frame_or_queue{};
+    std::array<bool,7u> explicit_compute_write_to_read_write_barrier{};
+    bool no_external_live_temporary_consumer{};
+    bool no_early_release_or_async_readback{};
+    bool descriptor_sets_immutable_until_fence{};
+    bool per_frame_end_fence_completed{};
+    bool positive_gpu_test{};
+    bool negative_gpu_test{};
+};
+inline constexpr bool kVitReusePs5RuntimeEnabled=false;
+[[nodiscard]] inline VitReuseGate CheckVitReuseAdmission(
+    const VitReuseCandidate& plan,const VitReuseEvidence& evidence) noexcept {
+    if(plan.blocks.size()!=8u || !plan.in_block_distinct ||
+       !plan.previous_output_matches_next_input ||
+       plan.candidate_requested_bytes==0u ||
+       plan.candidate_requested_bytes>=plan.baseline_requested_bytes ||
+       plan.pool_slots.size()!=9u)
+        return VitReuseGate::InvalidCandidate;
+    for(std::size_t i=0u;i<plan.blocks.size();++i) {
+        const auto& slots=plan.blocks[i].slots;
+        for(std::size_t role=0u;role<slots.size();++role) {
+            if(slots[role]>=plan.pool_slots.size())
+                return VitReuseGate::InvalidCandidate;
+            for(std::size_t j=0u;j<role;++j)
+                if(slots[role]==slots[j])
+                    return VitReuseGate::InvalidCandidate;
+        }
+        if(i>0u && plan.blocks[i-1u].slots[
+                static_cast<std::size_t>(VitField::Output)] !=
+                       slots[static_cast<std::size_t>(VitField::Input)])
+            return VitReuseGate::InvalidCandidate;
+    }
+    if(!evidence.same_queue_serial_recording ||
+       !evidence.no_concurrent_frame_or_queue)
+        return VitReuseGate::ConcurrentGpuUse;
+    for(bool barrier:evidence.explicit_compute_write_to_read_write_barrier)
+        if(!barrier) return VitReuseGate::MissingInterBlockBarrier;
+    if(!evidence.no_external_live_temporary_consumer ||
+       !evidence.no_early_release_or_async_readback ||
+       !evidence.descriptor_sets_immutable_until_fence ||
+       !evidence.per_frame_end_fence_completed)
+        return VitReuseGate::MissingLifetimeProof;
+    if(!evidence.positive_gpu_test || !evidence.negative_gpu_test)
+        return VitReuseGate::MissingGpuValidation;
+    // No PS5 renderer rebind/fence proof exists; cannot be overridden by
+    // synthetic evidence. A separate qualified integration is required.
+    return VitReuseGate::RuntimeHardDisabled;
+}
 } // namespace Eden::Graphics::DlssNrMin

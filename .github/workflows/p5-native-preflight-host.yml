@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'vendor'
       - '.github/workflows/p5-native-preflight-host.yml'
       - 'tools/check-jit-stability.py'
       - 'tools/check-nlib-ui-recovery.py'

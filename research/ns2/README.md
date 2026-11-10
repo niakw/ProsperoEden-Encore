@@ -122,8 +122,8 @@ a new lock across scheduler waits or Vulkan recording could deadlock or
 stall remaps. Preserve every current preflight, post-staging and commit
 verification until actual ownership is redesigned and tested.
 
-Current bounded runner now tests **105 standalone assertions per compiler**
-(19 SSBO, 23 backing lifecycle, 30 lease/memo, 33 native Vulkan range). The **24-case**
+Current bounded runner now tests **140 standalone assertions per compiler**
+(19 SSBO, 23 backing lifecycle, 30 lease/memo, 33 Vulkan range, 35 pinned QMD3 descriptor reader). The **24-case**
 separate source-expression harness remains a previously reproduced local
 test; it is not added to the standalone runner because it requires
 a pinned vendor source checkout for trustworthy extraction.
@@ -156,7 +156,7 @@ have **not** been queried. A real-source/driver test must precede any
 production patch. Preserve existing GMMU snapshot/remap checks, GPU
 write tracking, and Switch 1 behavior.
 
-Run all four host suites with `bash research/ns2/run_host_checks.sh`.
+Run all five host suites with `bash research/ns2/run_host_checks.sh`.
 
 ### Which PS5 Vulkan driver is actually packaged?
 
@@ -174,3 +174,30 @@ Source constants are **not** a console query: the actual reported
 `VkPhysicalDeviceLimits` at runtime should still be recorded before
 changing production code. O11 becomes a low-priority future-proof
 admission guard rather than the NS2 optimization blocker.
+
+## O1 — exact native QMD3 descriptor reader (35 source-owner tests)
+
+[`test_qmd3_descriptor_read_owner.cpp`](test_qmd3_descriptor_read_owner.cpp)
+embeds the **exact** `NativeMaxwellEnvironment::ReadStorageDescriptor`
+method from pinned vendor `22b69d60`, with minimal fake QMD3 CBUF
+ownership and a replaceable guest read callback. The method's normalized
+747-character source matches the vendor's body and signature byte-for-byte
+after removing whitespace/comments (FNV-1a **2431638797**; body-only
+SHA-256 **44e011a540a5d79669867c9ebc16e2a2d6534ac94d6cffc8880948326ce9ade6**).
+
+**35/35 tests pass on Clang 17 and GCC 14 under UBSan.** Cases cover
+the eight-bank ABI, 4-byte descriptor offset alignment, complete 16-byte
+single-callback GMMU read, end of 64 KiB window, disabled/undersized
+CBUF, 49-bit guest VA boundary and read callback failure. The 16-byte
+single callback is **not automatically an atomic snapshot** against
+concurrent guest writes; later QMD3/renderer checks still matter.
+
+The reader intentionally returns raw record words. It does **not** decide
+whether word 2 is a legitimate byte length: `BuildResourcePlan` separately
+uses `known_size = tag == 0 && bytes != 0` and refuses unknown sizes.
+These tests therefore qualify the *reading* stage only, not native shader
+descriptor semantics, Vulkan dispatch, or any PS5 game.
+
+Current host runner: **140 checks per compiler** (19+23+30+33+35).
+Separate real mapping-guard/known-size reproduction: 24 checks per compiler.
+The full pinned-vendor checkout validator remains **SKIPPED** locally.

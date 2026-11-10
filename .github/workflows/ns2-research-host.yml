@@ -68,7 +68,7 @@ jobs:
       - name: Host Boost, Vulkan and native video FFmpeg headers
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libboost-dev libvulkan-dev libavcodec-dev libavutil-dev libswscale-dev
+          sudo apt-get install -y --no-install-recommends libboost-dev libvulkan-dev mesa-vulkan-drivers libavcodec-dev libavutil-dev libswscale-dev
       - name: H05 decode authentic FFmpeg frame through maintained native pixel renderer
         run: python3 -B tools/ns2/check_native_video_real_ffmpeg_frame_host.py
       - name: P2.3 validate real native SSBO write tracking only after final QMD/TIC admission

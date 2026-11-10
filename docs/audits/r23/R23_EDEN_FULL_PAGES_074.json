@@ -1,0 +1,2773 @@
+{
+  "schema": "R23-paginated-upstream-commit-exact-file-list-v1",
+  "index": 74,
+  "sha": "218c6705d950635bc18f8458d738a1996fb592b6",
+  "coverage": "all-pages-per_page-100",
+  "file_count": 392,
+  "unique_paths": 392,
+  "pages": [
+    {
+      "page": 1,
+      "count": 100
+    },
+    {
+      "page": 2,
+      "count": 100
+    },
+    {
+      "page": 3,
+      "count": 100
+    },
+    {
+      "page": 4,
+      "count": 92
+    }
+  ],
+  "files": [
+    {
+      "path": "docs/DesignOverview.md",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "docs/README.md",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "docs/SubsystemHLE.md",
+      "change": "renamed",
+      "add": 52,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/CMakeLists.txt",
+      "change": "modified",
+      "add": 1,
+      "del": 69,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/acc/acc.cpp",
+      "change": "modified",
+      "add": 970,
+      "del": 961,
+      "patch_present": false
+    },
+    {
+      "path": "src/core/hle/service/acc/acc.h",
+      "change": "modified",
+      "add": 0,
+      "del": 64,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/acc/async_context.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/acc/async_context.h",
+      "change": "modified",
+      "add": 13,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/am.cpp",
+      "change": "modified",
+      "add": 1333,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/all_system_applet_proxies_service.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 135,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/all_system_applet_proxies_service.h",
+      "change": "removed",
+      "add": 0,
+      "del": 56,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/applet_common_functions.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 98,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/applet_common_functions.h",
+      "change": "removed",
+      "add": 0,
+      "del": 33,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_accessor.cpp",
+      "change": "modified",
+      "add": 32,
+      "del": 32,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_accessor.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_creator.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_creator.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_functions.cpp",
+      "change": "modified",
+      "add": 77,
+      "del": 76,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_functions.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_proxy.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 106,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_proxy.h",
+      "change": "removed",
+      "add": 0,
+      "del": 49,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_proxy_service.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 44,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/application_proxy_service.h",
+      "change": "removed",
+      "add": 0,
+      "del": 33,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/audio_controller.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/audio_controller.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/common_state_getter.cpp",
+      "change": "modified",
+      "add": 139,
+      "del": 70,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/common_state_getter.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/cradle_firmware_updater.cpp",
+      "change": "modified",
+      "add": 15,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/cradle_firmware_updater.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/debug_functions.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 43,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/debug_functions.h",
+      "change": "removed",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/display_controller.cpp",
+      "change": "modified",
+      "add": 34,
+      "del": 34,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/display_controller.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/global_state_controller.cpp",
+      "change": "modified",
+      "add": 22,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/global_state_controller.h",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/home_menu_functions.cpp",
+      "change": "modified",
+      "add": 21,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/home_menu_functions.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_accessor.cpp",
+      "change": "modified",
+      "add": 30,
+      "del": 34,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_accessor.h",
+      "change": "modified",
+      "add": 21,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_creator.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 287,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_creator.h",
+      "change": "removed",
+      "add": 0,
+      "del": 44,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_proxy.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 134,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_proxy.h",
+      "change": "removed",
+      "add": 0,
+      "del": 56,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_self_accessor.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 332,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/library_applet_self_accessor.h",
+      "change": "removed",
+      "add": 0,
+      "del": 87,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/lock_accessor.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 78,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/lock_accessor.h",
+      "change": "removed",
+      "add": 0,
+      "del": 32,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/overlay_applet_proxy.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 120,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/overlay_applet_proxy.h",
+      "change": "removed",
+      "add": 0,
+      "del": 55,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/overlay_functions.cpp",
+      "change": "modified",
+      "add": 26,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/overlay_functions.h",
+      "change": "modified",
+      "add": 18,
+      "del": 17,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/process_winding_controller.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/process_winding_controller.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/self_controller.cpp",
+      "change": "modified",
+      "add": 56,
+      "del": 57,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/self_controller.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/storage.cpp",
+      "change": "modified",
+      "add": 71,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/storage.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/storage_accessor.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 68,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/storage_accessor.h",
+      "change": "removed",
+      "add": 0,
+      "del": 38,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/system_applet_proxy.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 133,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/system_applet_proxy.h",
+      "change": "removed",
+      "add": 0,
+      "del": 58,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/window_controller.cpp",
+      "change": "modified",
+      "add": 17,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/service/window_controller.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/aoc/addon_content_manager.cpp",
+      "change": "modified",
+      "add": 28,
+      "del": 29,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/aoc/addon_content_manager.h",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/aoc/purchase_event_manager.cpp",
+      "change": "modified",
+      "add": 16,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/aoc/purchase_event_manager.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/apm/apm_interface.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 29,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/apm/apm_interface.h",
+      "change": "modified",
+      "add": 24,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio.cpp",
+      "change": "modified",
+      "add": 104,
+      "del": 104,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_controller.cpp",
+      "change": "modified",
+      "add": 69,
+      "del": 71,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_controller.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_device.cpp",
+      "change": "modified",
+      "add": 27,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_device.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_in.cpp",
+      "change": "modified",
+      "add": 24,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_in.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_in_manager.cpp",
+      "change": "modified",
+      "add": 18,
+      "del": 15,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_in_manager.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_out.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_out.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_out_manager.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_out_manager.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_renderer.cpp",
+      "change": "modified",
+      "add": 25,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_renderer.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_renderer_manager.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_renderer_manager.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/final_output_recorder_manager.cpp",
+      "change": "modified",
+      "add": 21,
+      "del": 23,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/final_output_recorder_manager.h",
+      "change": "modified",
+      "add": 10,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/final_output_recorder_manager_for_applet.h",
+      "change": "modified",
+      "add": 11,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/hardware_opus_decoder.cpp",
+      "change": "modified",
+      "add": 19,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/hardware_opus_decoder.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/hardware_opus_decoder_manager.cpp",
+      "change": "modified",
+      "add": 19,
+      "del": 15,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/hardware_opus_decoder_manager.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/bcat_service.cpp",
+      "change": "modified",
+      "add": 38,
+      "del": 37,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/bcat_service.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_directory_service.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_directory_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_file_service.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_file_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_progress_service.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_progress_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_storage_service.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/delivery_cache_storage_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/newly_arrived_event_holder.cpp",
+      "change": "modified",
+      "add": 12,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/newly_arrived_event_holder.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/news_data_service.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/news_data_service.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/news_database_service.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/news_database_service.h",
+      "change": "modified",
+      "add": 3,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/news_service.cpp",
+      "change": "modified",
+      "add": 26,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/news_service.h",
+      "change": "modified",
+      "add": 2,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/overwrite_event_holder.cpp",
+      "change": "modified",
+      "add": 12,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/overwrite_event_holder.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/service_creator.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/news/service_creator.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/service_creator.cpp",
+      "change": "modified",
+      "add": 12,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/service_creator.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bpc/bpc.cpp",
+      "change": "modified",
+      "add": 70,
+      "del": 72,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btdrv/btdrv.cpp",
+      "change": "modified",
+      "add": 156,
+      "del": 156,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm.cpp",
+      "change": "modified",
+      "add": 401,
+      "del": 98,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_debug.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 40,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_debug.h",
+      "change": "removed",
+      "add": 0,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_system.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 34,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_system.h",
+      "change": "removed",
+      "add": 0,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_system_core.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 135,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_system_core.h",
+      "change": "removed",
+      "add": 0,
+      "del": 62,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_user.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 33,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_user.h",
+      "change": "removed",
+      "add": 0,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_user_core.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 106,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/btm/btm_user_core.h",
+      "change": "removed",
+      "add": 0,
+      "del": 47,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps.cpp",
+      "change": "modified",
+      "add": 208,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_a.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 211,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_a.h",
+      "change": "removed",
+      "add": 0,
+      "del": 63,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_c.cpp",
+      "change": "modified",
+      "add": 25,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_c.h",
+      "change": "modified",
+      "add": 6,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_sc.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_sc.h",
+      "change": "modified",
+      "add": 29,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_ss.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_ss.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_su.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_su.h",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_u.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_u.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/erpt/erpt.cpp",
+      "change": "modified",
+      "add": 34,
+      "del": 34,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/es/es.cpp",
+      "change": "modified",
+      "add": 171,
+      "del": 171,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/eupld/eupld.cpp",
+      "change": "modified",
+      "add": 26,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fatal/fatal.cpp",
+      "change": "modified",
+      "add": 29,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fatal/fatal_p.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fatal/fatal_p.h",
+      "change": "removed",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fatal/fatal_u.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fatal/fatal_u.h",
+      "change": "removed",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fgm/fgm.cpp",
+      "change": "modified",
+      "add": 29,
+      "del": 29,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_directory.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_directory.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_file.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_file.h",
+      "change": "modified",
+      "add": 16,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_filesystem.cpp",
+      "change": "modified",
+      "add": 23,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_filesystem.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.h",
+      "change": "modified",
+      "add": 10,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.h",
+      "change": "modified",
+      "add": 9,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.h",
+      "change": "modified",
+      "add": 16,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fsp_ldr.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fsp_ldr.h",
+      "change": "modified",
+      "add": 12,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fsp_pr.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fsp_pr.h",
+      "change": "modified",
+      "add": 13,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fsp_srv.cpp",
+      "change": "modified",
+      "add": 135,
+      "del": 136,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/fsp/fsp_srv.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/friend/friend.cpp",
+      "change": "modified",
+      "add": 197,
+      "del": 181,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/friend/friend_interface.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/friend/friend_interface.h",
+      "change": "removed",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/arp.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 35,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/arp.h",
+      "change": "modified",
+      "add": 26,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/bgtc.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 42,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/bgtc.h",
+      "change": "modified",
+      "add": 42,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/ectx.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 31,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/ectx.h",
+      "change": "modified",
+      "add": 26,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/notif.cpp",
+      "change": "modified",
+      "add": 47,
+      "del": 51,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/notif.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/time/static.cpp",
+      "change": "modified",
+      "add": 31,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/time/static.h",
+      "change": "modified",
+      "add": 4,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/time/time_zone.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/time/time_zone.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/gpio/gpio.cpp",
+      "change": "modified",
+      "add": 8,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/grc/grc.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/active_vibration_device_list.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/active_vibration_device_list.h",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/applet_resource.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/applet_resource.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid.cpp",
+      "change": "modified",
+      "add": 335,
+      "del": 30,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid_debug_server.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 295,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid_debug_server.h",
+      "change": "modified",
+      "add": 3,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid_server.cpp",
+      "change": "modified",
+      "add": 198,
+      "del": 198,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid_server.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid_system_server.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 246,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hid_system_server.h",
+      "change": "modified",
+      "add": 249,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hidbus.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 22,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/hidbus.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/irs.cpp",
+      "change": "modified",
+      "add": 24,
+      "del": 34,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/irs.h",
+      "change": "modified",
+      "add": 15,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/xcd.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 27,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/hid/xcd.h",
+      "change": "modified",
+      "add": 30,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/i2c/i2c.cpp",
+      "change": "modified",
+      "add": 28,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/jit/jit.cpp",
+      "change": "modified",
+      "add": 18,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/lbl/lbl.cpp",
+      "change": "modified",
+      "add": 36,
+      "del": 37,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/ldn.cpp",
+      "change": "modified",
+      "add": 79,
+      "del": 59,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/monitor_service.cpp",
+      "change": "modified",
+      "add": 17,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/monitor_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/sf_monitor_service.cpp",
+      "change": "modified",
+      "add": 12,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/sf_monitor_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/sf_service.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 37,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/sf_service.h",
+      "change": "removed",
+      "add": 0,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/sf_service_monitor.cpp",
+      "change": "modified",
+      "add": 22,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/sf_service_monitor.h",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/system_local_communication_service.cpp",
+      "change": "modified",
+      "add": 39,
+      "del": 36,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/system_local_communication_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/user_local_communication_service.cpp",
+      "change": "modified",
+      "add": 36,
+      "del": 36,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/user_local_communication_service.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldr/ldr.cpp",
+      "change": "modified",
+      "add": 25,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/lm/lm.cpp",
+      "change": "modified",
+      "add": 28,
+      "del": 27,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/mig/mig.cpp",
+      "change": "modified",
+      "add": 43,
+      "del": 43,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/mii/mii.cpp",
+      "change": "modified",
+      "add": 67,
+      "del": 69,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/mii/mii.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/mm/mm_u.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 15,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/mnpp/mnpp.cpp",
+      "change": "modified",
+      "add": 32,
+      "del": 32,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ncm/ncm.cpp",
+      "change": "modified",
+      "add": 112,
+      "del": 116,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nfc/nfc.cpp",
+      "change": "modified",
+      "add": 120,
+      "del": 126,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nfp/nfp.cpp",
+      "change": "modified",
+      "add": 136,
+      "del": 140,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ngc/ngc.cpp",
+      "change": "modified",
+      "add": 82,
+      "del": 78,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nifm/nifm.cpp",
+      "change": "modified",
+      "add": 115,
+      "del": 112,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nifm/nifm.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nim/nim.cpp",
+      "change": "modified",
+      "add": 339,
+      "del": 346,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/npns/npns.cpp",
+      "change": "modified",
+      "add": 99,
+      "del": 101,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/account_proxy_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/account_proxy_interface.h",
+      "change": "modified",
+      "add": 10,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/application_manager_interface.cpp",
+      "change": "modified",
+      "add": 452,
+      "del": 452,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/application_manager_interface.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/application_version_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/application_version_interface.h",
+      "change": "modified",
+      "add": 22,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/async_result.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/async_result.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/content_management_interface.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/content_management_interface.h",
+      "change": "modified",
+      "add": 16,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/develop_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/develop_interface.h",
+      "change": "modified",
+      "add": 28,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/document_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/document_interface.h",
+      "change": "modified",
+      "add": 12,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/download_task_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 15,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/download_task_interface.h",
+      "change": "modified",
+      "add": 18,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/dynamic_rights_interface.cpp",
+      "change": "modified",
+      "add": 35,
+      "del": 35,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/dynamic_rights_interface.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/ecommerce_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/ecommerce_interface.h",
+      "change": "modified",
+      "add": 16,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/factory_reset_interface.cpp",
+      "change": "modified",
+      "add": 16,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/factory_reset_interface.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/ns.cpp",
+      "change": "modified",
+      "add": 32,
+      "del": 31,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/platform_service_manager.cpp",
+      "change": "modified",
+      "add": 22,
+      "del": 22,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/platform_service_manager.h",
+      "change": "modified",
+      "add": 8,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/query_service.cpp",
+      "change": "modified",
+      "add": 32,
+      "del": 32,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/query_service.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+      "change": "modified",
+      "add": 25,
+      "del": 23,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/read_only_application_control_data_interface.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/read_only_application_record_interface.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/read_only_application_record_interface.h",
+      "change": "modified",
+      "add": 3,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/service_getter_interface.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 17,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/service_getter_interface.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/system_update_control.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 29,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/system_update_control.h",
+      "change": "modified",
+      "add": 32,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/system_update_interface.cpp",
+      "change": "modified",
+      "add": 26,
+      "del": 23,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ns/system_update_interface.h",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/nvdrv.cpp",
+      "change": "modified",
+      "add": 40,
+      "del": 34,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/nvdrv_interface.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 18,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/nvdrv_interface.h",
+      "change": "modified",
+      "add": 23,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/nvmemp.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/nvmemp.h",
+      "change": "modified",
+      "add": 11,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvnflinger/hos_binder_driver.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvnflinger/hos_binder_driver.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/daemon_controller.cpp",
+      "change": "modified",
+      "add": 17,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/daemon_controller.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/native_handle_holder.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/native_handle_holder.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/olsc.cpp",
+      "change": "modified",
+      "add": 165,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/olsc_service_for_application.cpp",
+      "change": "modified",
+      "add": 31,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/olsc_service_for_application.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/olsc_service_for_system_service.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 144,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/olsc_service_for_system_service.h",
+      "change": "removed",
+      "add": 0,
+      "del": 53,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/remote_storage_controller.cpp",
+      "change": "modified",
+      "add": 36,
+      "del": 36,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/remote_storage_controller.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/transfer_task_list_controller.cpp",
+      "change": "modified",
+      "add": 37,
+      "del": 37,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/olsc/transfer_task_list_controller.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/omm/operation_mode_manager.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 35,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/omm/operation_mode_manager.h",
+      "change": "modified",
+      "add": 38,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/omm/policy_manager_system.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/omm/policy_manager_system.h",
+      "change": "modified",
+      "add": 15,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/omm/power_state_interface.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 18,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/omm/power_state_interface.h",
+      "change": "modified",
+      "add": 21,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pcie/pcie.cpp",
+      "change": "modified",
+      "add": 44,
+      "del": 46,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/parental_control_service.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 498,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/parental_control_service.h",
+      "change": "removed",
+      "add": 0,
+      "del": 99,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/parental_control_service_factory.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 44,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/parental_control_service_factory.h",
+      "change": "removed",
+      "add": 0,
+      "del": 31,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/pctl.cpp",
+      "change": "modified",
+      "add": 624,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/pctl_results.h",
+      "change": "removed",
+      "add": 0,
+      "del": 15,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pctl/pctl_types.h",
+      "change": "removed",
+      "add": 0,
+      "del": 73,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pcv/pcv.cpp",
+      "change": "modified",
+      "add": 88,
+      "del": 90,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/pm/pm.cpp",
+      "change": "modified",
+      "add": 51,
+      "del": 49,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/prepo/prepo.cpp",
+      "change": "modified",
+      "add": 44,
+      "del": 49,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/receiver.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 118,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/receiver.h",
+      "change": "removed",
+      "add": 0,
+      "del": 46,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/receiver_service.cpp",
+      "change": "modified",
+      "add": 115,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/receiver_service.h",
+      "change": "modified",
+      "add": 5,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/sender.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 32,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/sender.h",
+      "change": "removed",
+      "add": 0,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/sender_service.cpp",
+      "change": "modified",
+      "add": 35,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/sender_service.h",
+      "change": "modified",
+      "add": 6,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/pm_control.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/pm_control.h",
+      "change": "removed",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/pm_module.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 24,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/pm_module.h",
+      "change": "removed",
+      "add": 0,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/pm_service.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/pm_service.h",
+      "change": "removed",
+      "add": 0,
+      "del": 22,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/psc.cpp",
+      "change": "modified",
+      "add": 119,
+      "del": 62,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/alarms.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 22,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/alarms.h",
+      "change": "modified",
+      "add": 19,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/manager.h",
+      "change": "modified",
+      "add": 17,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/power_state_service.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/power_state_service.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/service_manager.cpp",
+      "change": "modified",
+      "add": 24,
+      "del": 24,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/service_manager.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/static.cpp",
+      "change": "modified",
+      "add": 25,
+      "del": 25,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/static.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/steady_clock.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/steady_clock.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/system_clock.cpp",
+      "change": "modified",
+      "add": 12,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/system_clock.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/time_zone_service.cpp",
+      "change": "modified",
+      "add": 21,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/time_zone_service.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ptm/psm.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 39,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ptm/psm.h",
+      "change": "modified",
+      "add": 25,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ptm/ptm.cpp",
+      "change": "modified",
+      "add": 16,
+      "del": 16,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ptm/ts.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 21,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ptm/ts.h",
+      "change": "modified",
+      "add": 14,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ro/ro.cpp",
+      "change": "modified",
+      "add": 343,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ro/ro_nro_utils.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 185,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ro/ro_nro_utils.h",
+      "change": "removed",
+      "add": 0,
+      "del": 26,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ro/ro_results.h",
+      "change": "removed",
+      "add": 0,
+      "del": 29,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ro/ro_types.h",
+      "change": "removed",
+      "add": 0,
+      "del": 142,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/service.cpp",
+      "change": "modified",
+      "add": 40,
+      "del": 29,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/service.h",
+      "change": "modified",
+      "add": 84,
+      "del": 49,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/factory_settings_server.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 49,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/factory_settings_server.h",
+      "change": "modified",
+      "add": 52,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/firmware_debug_settings_server.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 18,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/firmware_debug_settings_server.h",
+      "change": "modified",
+      "add": 20,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/settings_server.cpp",
+      "change": "modified",
+      "add": 19,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/settings_server.h",
+      "change": "modified",
+      "add": 8,
+      "del": 17,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/system_settings_server.cpp",
+      "change": "modified",
+      "add": 232,
+      "del": 233,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/system_settings_server.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sm/sm.cpp",
+      "change": "modified",
+      "add": 167,
+      "del": 38,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sm/sm.h",
+      "change": "modified",
+      "add": 1,
+      "del": 23,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sm/sm_controller.cpp",
+      "change": "removed",
+      "add": 0,
+      "del": 128,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sm/sm_controller.h",
+      "change": "removed",
+      "add": 0,
+      "del": 27,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/bsd.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 81,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/bsd.h",
+      "change": "modified",
+      "add": 81,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/nsd.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 32,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/nsd.h",
+      "change": "modified",
+      "add": 32,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/sfdnsres.cpp",
+      "change": "modified",
+      "add": 0,
+      "del": 27,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/sfdnsres.h",
+      "change": "modified",
+      "add": 31,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/sockets.cpp",
+      "change": "modified",
+      "add": 31,
+      "del": 31,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/spl/spl.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 165,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/spl/spl.h",
+      "change": "modified",
+      "add": 141,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/spl/spl_module.cpp",
+      "change": "modified",
+      "add": 8,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ssl/ssl.cpp",
+      "change": "modified",
+      "add": 162,
+      "del": 207,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/tma/tma.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/usb/usb.cpp",
+      "change": "modified",
+      "add": 151,
+      "del": 159,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/application_display_service.cpp",
+      "change": "modified",
+      "add": 28,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/application_display_service.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/application_root_service.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/application_root_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/manager_display_service.cpp",
+      "change": "modified",
+      "add": 88,
+      "del": 88,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/manager_display_service.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/manager_root_service.cpp",
+      "change": "modified",
+      "add": 15,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/manager_root_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/shared_buffer_manager.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/system_display_service.cpp",
+      "change": "modified",
+      "add": 56,
+      "del": 56,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/system_display_service.h",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/system_root_service.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/vi/system_root_service.h",
+      "change": "modified",
+      "add": 4,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/wlan/wlan.cpp",
+      "change": "modified",
+      "add": 192,
+      "del": 176,
+      "patch_present": true
+    },
+    {
+      "path": "tools/README.md",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    }
+  ],
+  "semantics": "not-yet-reviewed"
+}

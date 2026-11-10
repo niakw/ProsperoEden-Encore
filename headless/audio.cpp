@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <stdexcept>
-#include "audio_core/sink/null_sink.h"
+#include "audio_in_silence.h"
 #include "common/logging.h"
 #include "native_audio.hpp"
 #include "audio_out_init.h"
@@ -13,6 +13,21 @@
 namespace Eden {
 using namespace AudioCore::Sink;
 using namespace ps5::native_audio;
+
+// A microphone capture request must supply the same number of samples that
+// DeviceSession::ReleaseBuffer subsequently copies into guest memory.
+// This owner only serves StreamType::In; AudioOut remains unchanged.
+class SilentAudioInputStream final : public SinkStream {
+public:
+    explicit SilentAudioInputStream(Core::System& system)
+        : SinkStream{system, StreamType::In} {}
+
+    void AppendBuffer(SinkBuffer&, std::span<s16>) override {}
+
+    std::vector<s16> ReleaseBuffer(u64 samples) override {
+        return MakeSilentAudioInSamples(samples);
+    }
+};
 
 AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& name_, StreamType type)
     : SinkStream{system, type} {
@@ -121,7 +136,7 @@ SinkStream* AudioSink::AcquireSinkStream(Core::System& system, u32 channels,
     system_channels = channels;
     // Microphone capture is outside this output adapter.
     SinkStreamPtr stream = type == StreamType::In ?
-        SinkStreamPtr{std::make_unique<NullSinkStreamImpl>(system, type)} :
+        SinkStreamPtr{std::make_unique<SilentAudioInputStream>(system)} :
         SinkStreamPtr{std::make_unique<AudioStream>(system, channels, name, type)};
     stream->SetDeviceVolume(device_volume);
     stream->SetSystemVolume(system_volume);

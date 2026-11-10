@@ -1,0 +1,474 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    13,
+    24
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 13,
+      "sha": "895d8ede2c69f5f8061b04afaf247c2c5e04c08d",
+      "title": "[cmake] Correct the -I quoting in the glslangValidator commands (#4632)",
+      "date": "2026-11-08T02:24:40Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/host_shaders/CMakeLists.txt",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 14,
+      "sha": "626568290a5bf6c42b9ba985f1aa32a7a7447053",
+      "title": "[docs] remove dead support header in README (#4638)",
+      "date": "2026-11-08T02:21:42Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "README.md",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 15,
+      "sha": "083b778508e16f0ea580e6004323e7309f766a03",
+      "title": "[android] fix dynarmic link to use Eden's dynarmic instead of the previous dead link (#4663)",
+      "date": "2026-11-08T01:45:40Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 16,
+      "sha": "7f1bc0c9d1872a0623dad8dd3bce7acafd1d39dc",
+      "title": "[desktop] fix: broken migration button strategy selection (#4661)",
+      "date": "2026-11-07T20:21:11Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/yuzu/user_data_migration.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 17,
+      "sha": "c769b33e01882a04375c24406150097a2e124ece",
+      "title": "[dynarmic] A64: Flush deferred emits on long basic blocks and align page table sign bit (#4659)",
+      "date": "2026-11-07T18:13:14Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/common/page_table.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 18,
+      "sha": "d85005b2b27ebdbe785316886cdf04c2894d550e",
+      "title": "Fixed Civilization VII - added TIR mixed samples support (#4553)",
+      "date": "2026-11-07T02:55:13Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/fixed_pipeline_state.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/texture_cache/texture_cache.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 19,
+      "sha": "873fde41d03742db5e8e6a9f203385969b3f6e73",
+      "title": "[common, controller] [AI] Controller assignment modes, Controllers tab, Steam Gamemode/Gamescope fixes (gyroscope, controller) (#4583)",
+      "date": "2026-11-07T01:26:31Z",
+      "status": "file-list-retrieved",
+      "file_count": 57,
+      "files": [
+        {
+          "path": "dist/qt_themes/qdarkstyle_midnight_blue/style.qss",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/controller_console_state.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/overlay_panels.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings_enums.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/hid_core.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/hid_core.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/drivers/sdl_driver.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/drivers/sdl_driver.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/helpers/stick_from_buttons.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/input_poller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/main.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/main.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/uisettings.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/uisettings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/filters.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/filters.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/window_adapt_pass.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/window_adapt_pass.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/renderer_vulkan.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_blit_screen.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_blit_screen.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/applets/qt_software_keyboard.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_applets.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_applets.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_dialog.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_dialog.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_graphics.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input_player.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input_player.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input_player_widget.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_modern_per_game.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_modern_per_game.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_per_game.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_per_game.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_player_assignment.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_player_assignment.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/input_profiles.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/input_profiles.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/shared_widget.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/game/game_list.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/game/game_list.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main.ui",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/yuzu/main_window.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/overlay_panel.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/overlay_panel.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/util/controller_navigation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/util/controller_navigation.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/util/gamescope.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/util/gamescope.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/util/overlay_dialog.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 20,
+      "sha": "885b333c08760ccc406202a02a5b3d3fa5eab60b",
+      "title": "[cmake] Fix build by forcing lz4 bundled (#4648)",
+      "date": "2026-11-06T21:06:03Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "CMakeLists.txt",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 21,
+      "sha": "5df599128d6828fa0e42968909da848c255d22b1",
+      "title": "[qt] don't show the game window while the loading screen fades out (#4633)",
+      "date": "2026-11-03T23:53:28Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 22,
+      "sha": "07677aa5006b45dc511269f2c4b2d055cab679bb",
+      "title": "[bcat] Verify delivery cache file names as file names (AI-assisted) (#4625)",
+      "date": "2026-11-03T15:36:49Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_file_service.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 23,
+      "sha": "fa03b58f04e994c8967f59a20df6a3e40f25f1b4",
+      "title": "[docs] fix contributing link in README (#4629)",
+      "date": "2026-11-03T06:42:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "README.md",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 24,
+      "sha": "8d29148afe5cce1050927462d32772b21e9905ae",
+      "title": "[desktop] Bump minimum Qt to 6.6 (#4628)",
+      "date": "2026-11-02T23:31:53Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "docs/Deps.md",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/qt_common.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/bootmanager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/loading_screen.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

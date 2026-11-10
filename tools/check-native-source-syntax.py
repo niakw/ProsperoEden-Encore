@@ -40,6 +40,14 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp",
     "vendor/encore-active/eden-core/src/common/fiber.cpp",
 )
+# Native release renderer TUs share the selected CMake ABI header overlay.
+# These use the pinned PS5 compiler's normal warning policy, not an extra
+# blanket -Werror that would reject otherwise admissible legacy warnings.
+NATIVE_GRAPHICS_TARGETS = (
+    "headless/vulkan_blit_screen_r08.cpp",
+    "headless/vulkan_renderer_r08.cpp",
+    "headless/vulkan_window_adapt_r08.cpp",
+)
 PINNED_CACHE_TARGETS = (
     "video_core/host1x/gpu_device_memory_manager.cpp",
     # First real native compiler failures in build #10 (881/1870). Keep
@@ -68,7 +76,7 @@ def main() -> int:
     parser.add_argument("--allow-stale", action="store_true",
                         help="Local audit only: override cached source paths; never use for release CI")
     parser.add_argument("--only", action="append",
-                        choices=(*TARGETS, *MAINTAINED_CORE_TARGETS,
+                        choices=(*TARGETS, *MAINTAINED_CORE_TARGETS, *NATIVE_GRAPHICS_TARGETS,
                                  *GENERATED_TARGETS, *PINNED_CACHE_TARGETS),
                         help="Compile just this real PS5 translation unit (repeatable)")
     args = parser.parse_args()
@@ -78,7 +86,8 @@ def main() -> int:
     records = json.loads(db.read_text())
     failures = []
     selected = tuple(args.only) if args.only else (
-        *TARGETS, *MAINTAINED_CORE_TARGETS, *GENERATED_TARGETS, *PINNED_CACHE_TARGETS)
+        *TARGETS, *MAINTAINED_CORE_TARGETS, *NATIVE_GRAPHICS_TARGETS,
+        *GENERATED_TARGETS, *PINNED_CACHE_TARGETS)
     for relative in selected:
         source_root = (args.native_build_dir.resolve() if relative in GENERATED_TARGETS else
                        args.native_build_dir.resolve().parent / "source/src"
@@ -123,7 +132,8 @@ def main() -> int:
         # Match real native warning severity: generated shader/Fermi objects
         # compile without -Werror, unlike the fork-owned launcher objects.
         argv = syntax_check_flags(
-            argv, generated=relative in (*MAINTAINED_CORE_TARGETS, *GENERATED_TARGETS, *PINNED_CACHE_TARGETS))
+            argv, generated=relative in (*MAINTAINED_CORE_TARGETS, *NATIVE_GRAPHICS_TARGETS,
+                                   *GENERATED_TARGETS, *PINNED_CACHE_TARGETS))
         try:
             check = subprocess.run(argv, cwd=entry["directory"], text=True,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)

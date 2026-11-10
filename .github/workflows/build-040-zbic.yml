@@ -76,6 +76,8 @@ jobs:
           set -euo pipefail
           python3 -B tools/check-vendor-consolidation-debt.py
           python3 -B tools/check-vendored-eden-cache-rebase-host.py
+          # Catch cache-step contract drift before apt and native dependencies.
+          python3 -B tools/check-ci-cache.py
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

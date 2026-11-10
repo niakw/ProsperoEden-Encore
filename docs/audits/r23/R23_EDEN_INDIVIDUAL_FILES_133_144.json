@@ -1,0 +1,650 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    133,
+    144
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 133,
+      "sha": "c5405250d179824cdcd55d2dbd0a484f516490af",
+      "title": "[common, ui] Refining UI for FX shaders for PC (#4426)",
+      "date": "2026-09-15T05:23:12Z",
+      "status": "file-list-retrieved",
+      "file_count": 5,
+      "files": [
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_graphics.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_post_processing.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 134,
+      "sha": "10c07d700c33fa1ff78d5f616c2da2872fc5d43f",
+      "title": "[cmake] Use a debloated boost distribution (#4198)",
+      "date": "2026-09-15T05:22:23Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": ".patch/boost/0001-clang-cl.patch",
+          "patch_present": true
+        },
+        {
+          "path": "CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 135,
+      "sha": "505b1576470796db7e6d561f62ac392f613b9797",
+      "title": "[qt common] use ConfigurationShared translation context (#4430)",
+      "date": "2026-09-15T01:42:11Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 136,
+      "sha": "1575f55abee50a563502e5afb098ebed9d5d8995",
+      "title": "[dynarmic] fix sign extension logic on x64 (#4415)",
+      "date": "2026-09-14T23:14:31Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 137,
+      "sha": "bfba95fd6072885b16aa3b52b450d4058cc871d6",
+      "title": "[ns, olsc] stubs for qlaunch fw23 (#4427)",
+      "date": "2026-09-14T21:53:44Z",
+      "status": "file-list-retrieved",
+      "file_count": 5,
+      "files": [
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/olsc/transfer_task_list_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/olsc/transfer_task_list_controller.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 138,
+      "sha": "ee73920d288586103491d3e2af003b5c40bf4a1c",
+      "title": "[hle/services/ssl] Remove deprecated SecureTransport and SChannel backends (#4392)",
+      "date": "2026-09-14T20:15:54Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ssl/ssl_backend_schannel.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ssl/ssl_backend_securetransport.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 139,
+      "sha": "42642f8bad85a3f194c4bf878e512d68791d1634",
+      "title": "[hle] Implement I{User,Debug,System}::StartDetectionWithFilter (#4425)",
+      "date": "2026-09-14T19:56:31Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/nfp/nfp.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 140,
+      "sha": "1a48de6e55d6894722e5f235bc1fc14beb308e27",
+      "title": "[dist, android] Update translations from Transifex for Sep 14 (#4423)",
+      "date": "2026-09-14T17:00:47Z",
+      "status": "file-list-retrieved",
+      "file_count": 49,
+      "files": [
+        {
+          "path": "dist/languages/ar.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ckb/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-cs/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-de/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-fr/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-he/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-hu/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-id/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-it/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ja/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ko/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-nb/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-pl/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-pt-rBR/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-pt-rPT/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-sr/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-uk/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-vi/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 141,
+      "sha": "5adaa5b0f7e19df9bf9dbd883fe921dfe4952125",
+      "title": "[core] Fix MSVC handler table initialization (#4421)",
+      "date": "2026-09-14T14:44:52Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/service.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 142,
+      "sha": "2b4184dd2bb33da081702263d59c3eadb299e673",
+      "title": "Revert \"[audio] Replace libopus with FFmpeg (#4169)\" (#4419)",
+      "date": "2026-09-14T12:34:24Z",
+      "status": "file-list-retrieved",
+      "file_count": 22,
+      "files": [
+        {
+          "path": ".patch/opus/0001-disable-clang-runtime-neon.patch",
+          "patch_present": true
+        },
+        {
+          "path": ".patch/opus/0002-no-install.patch",
+          "patch_present": true
+        },
+        {
+          "path": "CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "CMakeModules/find/FindOpus.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        },
+        {
+          "path": "docs/Deps.md",
+          "patch_present": true
+        },
+        {
+          "path": "shell.nix",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/LicensesFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decode_object.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decode_object.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decoder.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decoder.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_multistream_decode_object.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_multistream_decode_object.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/shared_memory.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/opus/hardware_opus.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/opus/hardware_opus.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/CMakeLists.txt",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 143,
+      "sha": "d9159fefdd9e8850e550dd47cc59d7da999a2380",
+      "title": "[input] Fix mouse drift on Qt/SDL frontends (#4352)",
+      "date": "2026-09-14T01:26:22Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "src/input_common/drivers/mouse.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/drivers/mouse.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/bootmanager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/bootmanager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu_cmd/emu_window/emu_window_sdl3.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu_cmd/emu_window/emu_window_sdl3.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 144,
+      "sha": "099547b3f4578bf1fc0b39988aefbe2d54b540cc",
+      "title": "[android] Add LSFG UI to quick settings (#4393)",
+      "date": "2026-09-14T00:53:30Z",
+      "status": "file-list-retrieved",
+      "file_count": 26,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/dialogs/QuickSettings.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/EmulationFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/jni/native.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/color/frame_gen_cell_text.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/drawable/frame_gen_cell_background.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_quick_settings_frame_gen.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_quick_settings_frame_gen_cell.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-de/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/arrays.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/frame_gen/lossless_dll.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/frame_gen/lossless_dll.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/frame_gen.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/lsfg_shaders.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_blit_screen.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_present_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_present_manager.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

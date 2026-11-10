@@ -1,0 +1,470 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    85,
+    96
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 85,
+      "sha": "d3550c45718609dc563d8b58adfc0d846feefd03",
+      "title": "[qt] Filter collates accents (Unicode NFD) (#4380)",
+      "date": "2026-10-01T05:39:44Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/yuzu/game/common.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 86,
+      "sha": "963119e7cc3851007252c9981e4fae3e88b7687f",
+      "title": "[ffmpeg]Gamescope / Gamemode NVDEC Emulation -  GPU Decoding Patches (#4501)",
+      "date": "2026-10-01T01:34:57Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 87,
+      "sha": "2a7e9b53b12711f679238ee738a2ce57cc42c8ed",
+      "title": "[android,ui] fixed shader cache clearing when changing drivers (#4496)",
+      "date": "2026-09-30T22:28:18Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/DriverViewModel.kt",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 88,
+      "sha": "8e2d26c272681d6cafe6d5e703dafdc8200c7b65",
+      "title": "[video_core] buffer cache readback for nce invalidations (#4490)",
+      "date": "2026-09-30T20:13:37Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": "src/core/memory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 89,
+      "sha": "f8b76511041bb54070c52d1d09ea07d8108c592a",
+      "title": "[dist, android] Update translations from Transifex for Sep 28 (#4494)",
+      "date": "2026-09-30T00:00:44Z",
+      "status": "file-list-retrieved",
+      "file_count": 27,
+      "files": [
+        {
+          "path": "dist/languages/ar.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "patch_present": false
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 90,
+      "sha": "3f78512c83fca84a36bb450a10043b368830f8b0",
+      "title": "[ro] add TLS patching for runtime NROs (#4492)",
+      "date": "2026-09-29T22:58:29Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/ro/ro.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 91,
+      "sha": "a82f31a310c5dc7cae50c47b3306510a24cc36a6",
+      "title": "[settings,qt] merge of \"disable controller applet\" toggle with \"controller applet mode\" picker (#4498)",
+      "date": "2026-09-29T22:57:23Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "src/common/settings_enums.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/uisettings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_applets.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/shared_widget.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 92,
+      "sha": "815325cceca948030cf476dce7c46d901e4e4df5",
+      "title": "[loader] add ZBIC (zstd variant) NSO decompression support for Switch 22.0+ (#4482)",
+      "date": "2026-09-27T10:48:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 7,
+      "files": [
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        },
+        {
+          "path": "externals/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/zbic_compression.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/zbic_compression.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/loader/nso.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/loader/nso.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 93,
+      "sha": "37fe9119526c03ca064166130cc983c55b9a9e86",
+      "title": "[common/sparse_large_vector] correct Win32 exception handler (#4481)",
+      "date": "2026-09-26T14:02:35Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/common/sparse_large_vector.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/sparse_large_vector.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 94,
+      "sha": "f273423b2b83f1a37cc7c1a7a92601f26e0c12ae",
+      "title": "[buffer_cache] Simplify GPU fence synchronization and remove GPU buffer readback (#4477)",
+      "date": "2026-09-26T03:01:27Z",
+      "status": "file-list-retrieved",
+      "file_count": 21,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-de/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/arrays.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings_enums.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/buffer_cache/buffer_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/buffer_cache/buffer_cache_base.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/fence_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/query_cache/query_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_buffer_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_buffer_cache.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 95,
+      "sha": "87d2f03c39bc441055d593a7913f63a017795359",
+      "title": "[hid_core] Code cleanup (#4461)",
+      "date": "2026-09-26T00:21:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/hid_core/frontend/emulated_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/frontend/emulated_controller.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 96,
+      "sha": "bebc19da3253f13ceb5abfe8560cdbdc32ea7d8a",
+      "title": "[common] Use `std::make_unique_for_overwrite<T>` in ScratchBuffer, remove polyfill (#4432)",
+      "date": "2026-09-25T05:54:49Z",
+      "status": "file-list-retrieved",
+      "file_count": 6,
+      "files": [
+        {
+          "path": "src/common/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/make_unique_for_overwrite.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/scratch_buffer.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/vfs/vfs_real.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/vfs/vfs_real.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/psc/ovln/receiver_service.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

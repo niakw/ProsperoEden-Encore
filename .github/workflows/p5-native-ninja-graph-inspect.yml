@@ -15,6 +15,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
+      - name: Checkout current main with pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+
       - name: Restore ninth native run cache for read-only diagnosis
         id: restore
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -59,6 +66,37 @@ jobs:
           else
             echo "CACHED_NINJA_GRAPH_PARSE_REJECTED_EXPECTED"
           fi
+
+      - name: Reconfigure cached native source using current main, then parse full Ninja graph
+        if: steps.restore.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools llvm-spirv-18 libllvmspirvlib-18-dev \
+            cmake ninja-build ccache make nasm meson rsync git \
+            glslang-tools spirv-tools bison flex autoconf \
+            python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
+            libboost-container-dev libssl-dev libzstd-dev
+          bash tools/ci/link-sibling-deps.sh
+          mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
+          test "${#graphs[@]}" -eq 1
+          graph="${graphs[0]}"
+          scratch="$(dirname "$(dirname "$graph")")"
+          mkdir -p .local
+          printf '%s\n' "$scratch" > .local/headless-cache
+          export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
+          export PROSPEROEDEN_GIT_DEPS_ROOT=.deps/repos
+          export PROSPEROEDEN_DEPS_OFFLINE=1
+          test -f "$scratch/source/CMakeLists.txt"
+          echo "Reconfiguring cached source (NO native compilation) against current main"
+          cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
+            -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          ninja -C "$scratch/native-local" -t targets all >/dev/null
+          echo "CURRENT_MAIN_NATIVE_NINJA_GRAPH_PASS"
+          # This diagnostic is not authorized to compile, package or release.
 
       - name: Reject missing cache
         if: steps.restore.outputs.cache-hit != 'true'

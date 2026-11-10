@@ -104,3 +104,28 @@ Original and Compact 1080p native schedules and the two 720p structural
 candidates. All four must agree on the nine VkBuffer binding slots before
 any dispatch begins; any divergence is a hard failure. Even a successful
 GPU smoke is still blocked by the separate PS5 runtime admission gate.
+
+
+## Pinned vendor source-drift gate for actual ViT subgraphs
+
+The isolated host CI now reads six **.cpp files from the exact pinned vendor
+submodule Git object** using git show HEAD:path, not floating vendor main:
+nr_rdna2_frame_session.cpp, nr_rdna2_vit_run.cpp, nr_rdna2_vit_block.cpp,
+nr_rdna2_vit_projection_stage.cpp, nr_rdna2_vit_epilogue.cpp and
+nr_rdna2_vit_qkv_attention_link.cpp.
+
+The source-level guard checks the real 9-role buffer allocations, strict
+previous-output-to-next-input equivalence, four ordered learned subgraphs,
+GEMM/QKV stage ordering and the terminal residual dispatch followed by
+compute-to-compute SHADER_WRITE -> SHADER_READ|SHADER_WRITE visibility.
+Seven independent negative mutations (lost barrier, changed mask, broken
+buffer identity, incorrect stage ordering, etc.) **must** fail the guard.
+The checked source hashes and exact vendor gitlink are emitted in CI.
+
+**Key revised finding:** the pinned native terminal projection already records
+a matching compute-to-compute memory barrier, so it is inaccurate to state
+that the existing engine has no inter-block barrier at all. This source
+property is necessary for aliasing and supports further investigation, but
+a static text check does NOT prove all descriptors' lifetimes, asynchronous
+queues or frame retirement; no production allocation/pooling change occurs.
+The hard-disabled gate remains hard-disabled pending actual PS5 qualification.

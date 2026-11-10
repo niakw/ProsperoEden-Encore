@@ -13,6 +13,7 @@ on:
       - 'extras/graphics/r09_min_shaders/**'
       - 'extras/graphics/r09_min_vk_spatial_smoke.cpp'
       - 'extras/graphics/r09_min_vk_vit_reuse_smoke.cpp'
+      - 'extras/graphics/test_dlss_nr_min_vendor_source_guard.py'
   workflow_dispatch:
 
 permissions:
@@ -51,6 +52,13 @@ jobs:
           git -C vendor checkout --quiet --detach "$expected"
           test "$(git -C vendor rev-parse HEAD)" = "$expected"
           test -f vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_native_graph_schedule.h
+      - name: Audit the six actual pinned vendor ViT sources with seven failing mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 extras/graphics/test_dlss_nr_min_vendor_source_guard.py --vendor vendor
+          echo R09_MIN_VIT_PINNED_SOURCE_GUARD_NO_PRODUCTION_CHANGES
+
       - name: C++20 host assertions with GCC and Clang under UBSan
         shell: bash
         run: |

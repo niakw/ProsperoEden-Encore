@@ -133,7 +133,7 @@ Local `run_host_checks.sh` successfully repeated the two standalone model suites
 
 A candidate 16-slot, process-generation-and-revision-keyed GMMU span memo
 has been implemented only in [research/ns2/test_epoch_guarded_gmmu_memo.cpp](../research/ns2/test_epoch_guarded_gmmu_memo.cpp).
-Its 22 C++ assertions pass on Clang 17 and GCC 14 with UBSan.
+Its 30 C++ assertions pass on Clang 17 and GCC 14 with UBSan.
 For six unchanged 32 MiB spans **under one explicit shared mapping lease**
 the model uses 8,193 translations instead of 49,158.
 That is a deterministic **83.3% fewer calls in the model**, NOT PS5 throughput.
@@ -153,6 +153,12 @@ keeps writer/remap ownership correct and never holds a page-table lock
 across scheduler/driver waits. Measure actual PS5 scan times before
 assuming the CPU cost affects framerate.
 
-**Current offline execution:** the single host runner passes **19 + 23 + 22
-= 64 distinct assertions on each of Clang and GCC**, while the exact
+**Current offline execution:** the single host runner passes **19 + 23 + 30
+= 72 distinct assertions on each of Clang and GCC**, while the exact
 vendor source validator reports **SKIP** without a real pinned checkout.
+
+### O5 — pipeline miss-cache crossover
+
+Encore's pinned native Vulkan pipeline owner already keeps a **12-entry positive Ampere Compute LRU**, keyed by process and channel generation and exact SPIR-V words, in [`vk_pipeline_cache_cost.cpp`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp). The same maintained file uses a generation-aware negative lookup memo for *attributeless graphics shader detection*, and a 64-key delayed graphics-pipeline retry gate exists in its header. These existing mechanisms are not equivalent to caching failed **native** compute pipeline creation.
+
+Do **not** blindly import nxnative's negative archive lookup memo into native compute pipeline creation: a failure there can be transient (pipeline build, guest generation, driver state, OOM). Measure repeat identical failures by exact shader/process/driver/epoch and validate all invalidation epochs before adding a negative cache. Native positive pipeline reuse is already present, so O5 is now **investigate-only**, not an easy missing optimization.

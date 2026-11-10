@@ -16,15 +16,17 @@ PASS: 23 NS2 backing lifetime research contracts
 PASS: 30 leased GMMU memo research contracts; first 32MiB scan=8193, six scans under unchanged lease=8193 probes
 PASS: 33 native Vulkan range contracts
 PASS: 35 pinned QMD3 ReadStorageDescriptor owner checks
+PASS: 16 exact native shader read callback checks; artificial remap can return TRUE with zeros
 PASS: 19 NS2 SSBO extent research contracts
 PASS: 23 NS2 backing lifetime research contracts
 PASS: 30 leased GMMU memo research contracts; first 32MiB scan=8193, six scans under unchanged lease=8193 probes
 PASS: 33 native Vulkan range contracts
 PASS: 35 pinned QMD3 ReadStorageDescriptor owner checks
+PASS: 16 exact native shader read callback checks; artificial remap can return TRUE with zeros
 SKIP: exact-source NS2 QMD3 guard (pinned vendor checkout unavailable)
 ```
 
-**140 distinct checks per compiler, 280 across both compilers.** No failed assertion or sanitizer report. This validates **research models**, not actual runtime owners or console behavior.
+**156 distinct checks per compiler, 312 across both compilers.** No failed assertion or sanitizer report. This validates **research models**, not actual runtime owners or console behavior.
 
 Additionally compiled and executed an offline standalone `native_guard_real.cpp` excerpt of the native mapping guard and its `known_size` predicate: **PASS: 24 exact native guard and descriptor conditions** on each compiler. The function body was compared with the GitHub connector-fetched pinned vendor's `NativeQmdContiguousGpuSpan`: the normalized 460-byte function body had the same FNV-1a 32-bit fingerprint **1556815272** and local SHA-256 **90c871905ad8c6d5a193acea84a457816cf1bc432d71c06de6f6ab68e0f9b7a2**. The actual repository source-extraction Python script was **not executed end-to-end** in this environment.
 
@@ -68,12 +70,12 @@ profiles. These constants have **not** been verified through a real PS5
 
 ## Additional optimizer matrix (host only)
 
-Recompiled and executed every one of the five host research suites with
+Recompiled and executed every one of the six host research suites with
 Clang 17 and GCC 14, using both `-O0` and `-O2` while keeping
 `-Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all`.
-All **20 binary executions passed** (2 compilers × 2 optimization levels
-× 5 suites), corresponding to **560 individual assertions** across these
-additional runs: (19 + 23 + 30 + 33 + 35) × 2 × 2.
+All **24 binary executions passed** (2 compilers × 2 optimization levels
+× 6 suites), corresponding to **624 individual assertions** across these
+additional runs: (19 + 23 + 30 + 33 + 35 + 16) × 2 × 2.
 No sanitizer errors were observed. These are local host model results
 only, not GitHub Actions and not PS5 hardware.
 
@@ -93,7 +95,29 @@ pinned vendor checkout is available.
 CBUF bank/size/alignment/VA admission and guest read failure, **not**
 atomicity against concurrent guest writes or any live PS5 process.
 
-The complete bounded runner now passes **140 checks on each compiler**.
+The complete bounded runner now passes **156 checks on each compiler**.
 With separate 24-case GMMU/size-predicate excerpt, `-O1` local
-tests total **328 checks across the two compilers**. The optional
+tests total **360 checks across the two compilers**. The optional
 full pinned-vendor script still reports **SKIP** without a checkout.
+
+## O1 additional real-source callback status finding
+
+`test_native_gpu_read_toctou.cpp` embeds the **unchanged**
+`VideoCommon::ReadNs2GpuShader` body from pinned vendor
+`encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp`.
+Normalized body: 293 chars, FNV-1a `3943302951`, SHA-256
+`af4254dd7e7e00d246cef5a2d70f5790640077f6cc592c4a8c2b7871960eccf7`.
+The 16 test checks pass Clang/GCC / UBSan at O0/O1/O2.
+
+Deterministically mocked interleave: `IsFullyMappedRange` returns
+true and then a synthetic unmap occurs before `ReadBlock`.
+Because `ReadBlock` returns void and zero-fills unmapped bytes, the
+unchanged `ReadNs2GpuShader` returns **true with all-zero data**.
+Simulated partially copied bytes also return true. The production
+`ReadBlockImpl` has zero-fill-on-unmapped behavior. This establishes
+a *possible status-contract gap* if the interleave can occur; it
+does not prove an actual PS5 GPU/channel synchronization failure.
+
+Do not change the runtime or weaken guest mapping guards until the
+actual remap lock/owner protocol is confirmed and actual-source
+race tests demonstrate a safe replacement.

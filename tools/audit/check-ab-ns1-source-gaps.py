@@ -22,7 +22,7 @@ def read(path: str) -> str:
 
 
 def body(src: str, symbol: str) -> str | None:
-    matches = list(re.finditer(r"\b" + re.escape(symbol) +
+    matches = list(re.finditer(r"(?<![A-Za-z0-9_])" + re.escape(symbol) +
         r"\s*\([^;{}]*\)(?:\s+(?:const|override|final|noexcept))*\s*\{", src))
     if len(matches) != 1:
         return None
@@ -129,6 +129,7 @@ def main_cli() -> int:
         assert body("void f() const override { int x = 1; }", "f") == " int x = 1; "
         assert body("void f() noexcept { return; }", "f") == " return; "
         assert body("void f() override;", "f") is None
+        assert "sibling.reset()" in body("RomFSBuildContext::~RomFSBuildContext() { sibling.reset(); }", "~RomFSBuildContext")
         print("AB_NS1_SOURCE_TRIAGE_SELFTEST_OK")
         return 0
     try:

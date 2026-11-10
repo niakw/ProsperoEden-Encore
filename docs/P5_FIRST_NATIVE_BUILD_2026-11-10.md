@@ -43,3 +43,11 @@ Le [second build #42848349739](https://github.com/niakw/ProsperoEden-Encore/acti
 Les deux scripts ont été synchronisés avec leurs sources réelles, en conservant les contrôles de refus et la sélection JIT standard, dans `6f414f4de5d93ad8fd74be98e3ad4234910cb0a1`. Le [workflow ciblé P5 #42850549825](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42850549825) a **réussi** les contrôles JIT et Nlib sur ce SHA, **sans build natif**. Ce feu vert autorise uniquement une nouvelle tentative de compilation PS5, pas une release.
 
 Le troisième lancement est déclenché par le présent commit avec le marqueur explicite `[full-build]`, **sans** `[release]`. L'application reste épinglée sur vendor `0b0265079139622b759167c9d10a9a31aba1ea88` et la publication est désactivée.
+
+## Troisième build : première compilation de dépendances natives observée
+
+Le [run #42850915181](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42850915181), déclenché par le commit moteur `1c9b6bea09638152781ba1843e97ea6950b9cfe1` avec vendor `0b026507`, a **effectivement réussi** les étapes de contrat source/cache, toolchain, NCZ, contrôle de la langue du launcher, restauration de cache, métadonnées/légal, lancement/stockage et préflight packaging. Les anciens blocages JIT/Nlib des tentatives #1/#2 n'ont donc pas réapparu pendant ces étapes.
+
+La tâche `Prepare native build inputs` (`make prepare JOBS=4`) a commencé. Son journal montrait la **compilation effective de Mesa/OpenGL** avec le compteur Ninja `[655/905]` lors de l'observation (messages Clang `-Wunreachable-code-generic-assoc` dans les macros du SDK `math.h`, sans échec démontré à ce stade). Ce compteur porte sur **une dépendance de préparation**, pas sur le nombre total d'unités du binaire Encore.
+
+**Ce constat est un jalon intermédiaire, pas une qualification P5 :** `make prepare`, `Build and stage native release`, la validation du ZIP et les tests PS5 restent à vérifier sur les résultats finaux du run. Ne ni déplacer le gitlink vendor ni relancer un build natif pour de simples modifications documentaires. Aucun `[release]` n'a été demandé.

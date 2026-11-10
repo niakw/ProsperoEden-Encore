@@ -9,6 +9,7 @@ on:
       - '.github/workflows/r09-dlss-nr-min-host.yml'
       - 'extras/graphics/dlss_nr_min_*.h'
       - 'extras/graphics/test_dlss_nr_min_*.cpp'
+      - 'extras/graphics/r09_min_shaders/**'
       - 'tools/graphics/CMakeLists.txt'
   workflow_dispatch:
 
@@ -75,3 +76,27 @@ jobs:
             done
           done
           echo R09_MIN_HOST_ONLY_PASS_NO_PS5_BUILD_NO_GPU_INFERENCE
+
+      - name: Compile and validate standalone Vulkan 1.1 spatial shaders
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends glslang-tools spirv-tools
+          for shader in peripheral_pack peripheral_detail_transfer; do
+            glslangValidator -V --target-env vulkan1.1 -S comp \
+              "extras/graphics/r09_min_shaders/${shader}.comp" \
+              -o ".build-local/r09-min/${shader}.spv"
+            spirv-val --target-env vulkan1.1 ".build-local/r09-min/${shader}.spv"
+            spirv-dis ".build-local/r09-min/${shader}.spv" \
+              > ".build-local/r09-min/${shader}.spvasm"
+            grep -Eq 'OpExecutionMode .* LocalSize 8 8 1' \
+              ".build-local/r09-min/${shader}.spvasm"
+            for offset in '0 Offset 0' '1 Offset 8' '2 Offset 16' '3 Offset 24'; do
+              grep -Fq "$offset" ".build-local/r09-min/${shader}.spvasm"
+            done
+            if grep -Eq 'OpCapability (CooperativeMatrix|RayTracingKHR)' \
+                ".build-local/r09-min/${shader}.spvasm"; then
+              echo "Unsupported NVIDIA/RTX shader capability"; exit 1
+            fi
+            echo "R09_MIN_SPIRV_PASS ${shader}"
+          done

@@ -32,9 +32,11 @@ assert "if (Eden::NS2::SvcTrace::active_pid.load" not in rollback
 assert "m_system.GetFileSystemController().UnregisterProcessIfPresent(pid);" in method
 assert method.index("SvcTrace::Unregister(pid);") < method.index("m_process->Open(")
 assert "process_committed = true;" in method
-finalize=source.split("void Process::Finalize() {",1)[1].split("\nbool Process::Run()",1)[0]
-assert finalize.index("SvcTrace::Unregister(m_process->GetProcessId());") < finalize.index("m_process->Close(")
-assert "m_system.GetFileSystemController().UnregisterProcessIfPresent(" in finalize
+finalize="void Process::Finalize() {"+source.split("void Process::Finalize() {",1)[1].split("\nbool Process::Run()",1)[0]
+assert finalize.index("UnregisterProcessIfPresent") < finalize.index(
+    "if (Eden::NS2::SvcTrace::active_pid.load")
+assert finalize.index("SvcTrace::Unregister(pid);") < finalize.index("m_process->Close(")
+assert "UnregisterProcessIfPresent(pid);" in finalize
 
 harness = r"""
 #include <cassert>
@@ -51,9 +53,10 @@ namespace Kernel {
 struct KProcess;
 struct KernelCore {
     bool fail_create{}, fail_append{};
-    int creates{}, registers{}, closes{}, opens{}, appends{};
+    int creates{}, registers{}, closes{}, opens{}, appends{}, removes{};
     KProcess* latest{};
     void AppendNewProcess(KProcess* p);
+    void RemoveProcess(KProcess* p);
 };
 struct KProcess {
     KernelCore* owner{};
@@ -75,6 +78,10 @@ inline void KernelCore::AppendNewProcess(KProcess* p) {
     assert(p && p->owner == this);
     if(fail_append)throw std::bad_alloc{};
     ++appends;
+}
+inline void KernelCore::RemoveProcess(KProcess* p) {
+    assert(p && p->owner == this);
+    ++removes;
 }
 }
 namespace Eden::NS2 {
@@ -138,16 +145,13 @@ struct Process {
     int m_main_thread_priority{};
     std::size_t m_main_thread_stack_size{};
     bool m_process_started{};
-    void Finalize() {
-        m_process = nullptr;
-        m_main_thread_priority = 0;
-        m_main_thread_stack_size = 0;
-        m_process_started = false;
-    }
+    void Terminate() {}
+    void Finalize();
     bool Initialize(Loader::AppLoader&, Loader::ResultStatus&);
 };
 #define EDEN_NS2_PROCESS_RUN_GUARD 1
 __REAL_OWNER__
+__REAL_FINALIZE__
 }
 static void dispose(Kernel::KernelCore& k) {
     delete k.latest;
@@ -255,8 +259,40 @@ int main() {
         assert(Eden::NS2::SvcTrace::active_pid==81 && Eden::NS2::SvcTrace::unregistered==0);
         dispose(k);
     }
+    {
+        // H01: normal teardown retires both RomFS record and SVC trace.
+        Kernel::KernelCore k;
+        Core::System system{k,{}};
+        Service::Process process{system};
+        Loader::AppLoader loader{Loader::ResultStatus::Success,
+                                 Loader::LoadParameters{42,8192},true,false,true};
+        auto result=Loader::ResultStatus::ErrorLoadingNSO;
+        assert(process.Initialize(loader,result));
+        assert(system.filesystem.registered_pid==81);
+        process.Finalize();
+        assert(!system.filesystem.registered_pid && system.filesystem.unregister_calls==1);
+        assert(Eden::NS2::SvcTrace::active_pid==0 && Eden::NS2::SvcTrace::unregistered==1);
+        assert(k.removes==1 && k.closes==2 && k.opens==1 && !process.m_process);
+        dispose(k);
+    }
+    {
+        // H01: a newer SVC trace must survive teardown of the older PID.
+        Kernel::KernelCore k;
+        Core::System system{k,{}};
+        Service::Process process{system};
+        Loader::AppLoader loader{Loader::ResultStatus::Success,
+                                 Loader::LoadParameters{42,8192},true,false,true};
+        auto result=Loader::ResultStatus::ErrorLoadingNSO;
+        assert(process.Initialize(loader,result));
+        Eden::NS2::SvcTrace::active_pid=777;
+        process.Finalize();
+        assert(!system.filesystem.registered_pid && system.filesystem.unregister_calls==1);
+        assert(Eden::NS2::SvcTrace::active_pid==777 && Eden::NS2::SvcTrace::unregistered==0);
+        assert(k.removes==1 && k.closes==2 && !process.m_process);
+        dispose(k);
+    }
 }
-""".replace("__REAL_OWNER__", method)
+""".replace("__REAL_OWNER__", method).replace("__REAL_FINALIZE__", finalize)
 
 compilers = list(dict.fromkeys(
     compiler for compiler in (shutil.which("clang++"), shutil.which("g++")) if compiler
@@ -280,5 +316,5 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-process-owner-") as temp:
             print("H01_PROCESS_OWNER_HANDOFF_PASS", Path(compiler).name, opt,
                   "null_allocation=refused absent_npdm=refused"
                   " malformed_load=refused trace_rollback=1 append_oom_rollback=1"
-                  " valid_process=published romfs_pretrace_rollback=1"
+                  " valid_process=published romfs_pretrace_rollback=1 finalization_romfs_cleanup=1 preserve_foreign_trace=1"
                   " ns1_macro_isolated=1", flush=True)

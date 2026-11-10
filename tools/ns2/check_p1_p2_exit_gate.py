@@ -49,10 +49,18 @@ def active_witnesses() -> str:
     # lived outside the other two required host suites.
     standalone = (ROOT / ".github/workflows/ns2-standalone-spirv-main.yml").read_text()
     spirv_runner = (ROOT / ".github/workflows/ns2-research-spirv.yml").read_text()
+    # These focused SHA-pinned workflows execute native owner tests that
+    # cannot run inside the lean source batch (FFmpeg/Vulkan/ARM fixtures).
+    focused = (ROOT / ".github/workflows/ns2-h01-h05-focused-host.yml").read_text()
+    g10_vulkan = (ROOT / ".github/workflows/ns2-g10-host-vulkan.yml").read_text()
     if ("uses: ./.github/workflows/ns2-research-spirv.yml" not in standalone or
             "python3 tools/check-ns2-spirv-host.py" not in spirv_runner):
         raise ValueError("required standalone SPIR-V real-emitter witness disconnected")
-    return batch + "\n" + research + "\n" + spirv_runner
+    if ("python3 -B tools/ns2/check_native_video_real_ffmpeg_frame_host.py" not in focused or
+            "python3 -B tools/ns2/check_native_qmd_deferred_fence_host.py" not in g10_vulkan or
+            "python3 -B tools/ns2/check_native_ampere_sem_real_vulkan_host.py" not in g10_vulkan):
+        raise ValueError("focused H05/G10 executed-owner CI witness disconnected")
+    return batch + "\n" + research + "\n" + spirv_runner + "\n" + focused + "\n" + g10_vulkan
 
 
 def validate_manifest(data: dict) -> tuple[list[str], dict[str, int]]:

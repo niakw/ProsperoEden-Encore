@@ -129,9 +129,18 @@
       ],
       "positive": "Valid stream, frame ownership and EOS advance output only after actual decoded pixels.",
       "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",
-      "status": "open",
-      "evidence": {},
-      "blocker": "Genuine FFmpeg Decode/Drain/Render and source-executed Pump plus actual GraphicsSupervisor guest-memory write/invalidations are now host-qualified independently. Connected authenticated video TIPC with NVMap ownership and a real Vulkan release-fence lifetime still lack one end-to-end witness.",
+      "status": "proof_defined",
+      "evidence": {
+        "positive": {
+          "validator": "tools/ns2/check_native_video_real_ffmpeg_frame_host.py",
+          "kind": "real-owner-ipc"
+        },
+        "negative": {
+          "validator": "tools/ns2/check_native_video_real_ffmpeg_frame_host.py",
+          "kind": "real-owner-ipc"
+        }
+      },
+      "blocker": "",
       "excluded_forms": []
     },
     {

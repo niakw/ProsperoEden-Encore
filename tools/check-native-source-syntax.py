@@ -61,6 +61,9 @@ PINNED_CACHE_TARGETS = (
     # both source-owned ABI consumers inside the cheap PS5 syntax preflight.
     "video_core/renderer_vulkan/vk_turbo_mode.cpp",
     "video_core/renderer_vulkan/vk_texture_cache_base.cpp",
+    # Explicit TextureCache<OpenGL> instantiation must reject native-only
+    # image/view/sampler GPU pin methods at compile time (no fake pins).
+    "video_core/renderer_opengl/gl_texture_cache_base.cpp",
 )
 GENERATED_TARGETS = (
     # Real PS5 PresentManager source compiled from the maintained Vulkan fork:

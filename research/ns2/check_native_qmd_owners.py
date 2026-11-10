@@ -45,8 +45,7 @@ def extract_mapping_guard(source: str) -> str:
     require(start >= 0, "Native QMD mapping guard is not templated")
     const_match = re.search(r"inline constexpr u64 kNativeQmdMaxContiguousBytes = [^;]+;", source)
     require(const_match is not None, "native guard budget constant absent")
-    return const_match.group(0) + "\n" + source[start:source.index(
-        function_body(source, fn), marker) + len(function_body(source, fn))]
+    return const_match.group(0) + "\n" + source[start:marker] + function_body(source, fn)
 
 HARNESS = r"""
 #include <cassert>
@@ -116,6 +115,13 @@ def main() -> None:
     parser.add_argument("--compiler", action="append", choices=["clang++", "g++"])
     args = parser.parse_args()
     vendor = args.vendor
+    git = shutil.which("git")
+    require(git is not None, "Git required to verify exact pinned vendor commit")
+    pinned = subprocess.run([git, "-C", str(vendor), "rev-parse", "HEAD"],
+                            capture_output=True, text=True, check=True).stdout.strip()
+    require(pinned == EXPECTED_VENDOR,
+            "Vendor SHA changed: re-audit first (expected " + EXPECTED_VENDOR +
+            ", got " + pinned + ")")
     header = (vendor / VENDOR_HEADER).read_text(encoding="utf-8")
     pipe = (vendor / VULKAN_PIPE).read_text(encoding="utf-8")
     raster = (vendor / VULKAN_RASTER).read_text(encoding="utf-8")

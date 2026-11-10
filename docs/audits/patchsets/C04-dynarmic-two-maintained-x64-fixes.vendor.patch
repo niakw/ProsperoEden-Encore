@@ -1,0 +1,28 @@
+diff --git a/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_data_processing.cpp b/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_data_processing.cpp
+--- a/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_data_processing.cpp
++++ b/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_data_processing.cpp
+@@ -1166,8 +1166,9 @@
+     Xbyak::Label end;
+ 
+     code.xor_(eax, eax);
+     code.test(divisor, divisor);
++    code.cmovz(eax, divisor); // ARM SDIV by zero: exact architectural result is 0
+     code.jz(end, code.T_NEAR);
+     code.mov(eax, dividend);
+     code.xor_(edx, edx);
+     code.div(divisor);
+diff --git a/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_vector.cpp b/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_vector.cpp
+--- a/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_vector.cpp
++++ b/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_vector.cpp
+@@ -5142,9 +5142,9 @@
+     bool qc_flag = false;
+     for (size_t i = 0; i < dst.size(); i++) {
+         auto const element = data[i];
+-        auto const shifted = U(element) << U(T(shift_amount));
++        U const shifted = U(U(element) << U(T(shift_amount)));
+         auto const shifted_test = shifted >> U(T(shift_amount));
+-        auto result = 0;
++        T result = 0;
+         if (element > 0 && shifted_test != U(element))
+             result = T((std::numeric_limits<U>::max)());
+         if (element > 0 && shifted_test == U(element))

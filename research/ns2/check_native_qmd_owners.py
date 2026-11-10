@@ -47,6 +47,18 @@ def extract_mapping_guard(source: str) -> str:
     require(const_match is not None, "native guard budget constant absent")
     return const_match.group(0) + "\n" + source[start:marker] + function_body(source, fn)
 
+def extract_native_size_expression(source: str) -> str:
+    """Embed the exact maintained condition, not a guessed descriptor heuristic."""
+    match = re.search(
+        r"const bool known_size = tag == 0 && bytes != 0;", source)
+    require(match is not None, "Native size admission condition changed")
+    require("const u32 bytes = record[2], tag = record[3];" in source,
+            "QMD3 four-word descriptor fields changed")
+    require("result.requires_memory_layout |= !known_size;" in source,
+            "Native unknown-length rejection changed")
+    return match.group(0)
+
+
 HARNESS = r"""
 #include <cassert>
 #include <cstdint>
@@ -57,6 +69,11 @@ HARNESS = r"""
 using u64 = std::uint64_t;
 using u32 = std::uint32_t;
 __REAL_NATIVE_QMD_FUNCTION__
+
+[[nodiscard]] bool NativeSizeKnown(u32 bytes, u32 tag) {
+    __REAL_NATIVE_SIZE_CONDITION__
+    return known_size;
+}
 
 int main() {
     int checks = 0;
@@ -105,6 +122,14 @@ int main() {
         }));
     check(NativeQmdContiguousGpuSpan(gpu, 1, contiguous));
     check(NativeQmdContiguousGpuSpan(gpu, 4096, contiguous));
+    // The condition below is the actual BuildResourcePlan descriptor policy.
+    check(NativeSizeKnown(266, 0)); // Ambiguous word is admitted as a 266-byte extent.
+    check(NativeSizeKnown(16 * 1024 * 1024, 0));
+    check(!NativeSizeKnown(0, 0));
+    check(!NativeSizeKnown(0, 1));
+    check(!NativeSizeKnown(266, 1));
+    check(!NativeSizeKnown(1024, std::numeric_limits<u32>::max()));
+    check(NativeSizeKnown(256U * 1024 * 1024 + 1, 0)); // Tag admits it, GMMU guard later rejects >256 MiB.
     std::cout << "PASS: " << checks << " exact-source native QMD mapped-span checks\\n";
 }
 """
@@ -143,7 +168,8 @@ def main() -> None:
     require("static_cast<u32>(8_MiB)" in shared and
             "StorageBufferBinding(ssbo_addr, cbuf_index, is_written)" in shared,
             "The legacy size fallback changed")
-    source = HARNESS.replace("__REAL_NATIVE_QMD_FUNCTION__", extract_mapping_guard(header))
+    source = (HARNESS.replace("__REAL_NATIVE_QMD_FUNCTION__", extract_mapping_guard(header))
+              .replace("__REAL_NATIVE_SIZE_CONDITION__", extract_native_size_expression(header)))
     compilers = args.compiler or ["clang++", "g++"]
     reports = []
     with tempfile.TemporaryDirectory(prefix="encore-ns2-owner-") as td:

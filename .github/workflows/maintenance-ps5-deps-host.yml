@@ -1,0 +1,98 @@
+name: PS5 internal dependency host qualification (no PS5 build)
+on:
+  push:
+    branches: [main, maintenance/internalize-ps5-deps-20261110]
+    paths:
+      - '.github/workflows/maintenance-ps5-deps-host.yml'
+      - '.gitmodules'
+      - 'vendor'
+      - 'headless/mihawk_volk.h'
+      - 'headless/vulkan.cmake'
+      - 'headless/CMakeLists.txt'
+      - 'tools/graphics/**'
+      - 'tools/package-headless-native.sh'
+      - 'tools/ci/check-staged-app.py'
+      - 'THIRD_PARTY_NOTICES.md'
+  pull_request:
+    paths:
+      - '.github/workflows/maintenance-ps5-deps-host.yml'
+      - '.gitmodules'
+      - 'vendor'
+      - 'headless/vulkan.cmake'
+      - 'headless/CMakeLists.txt'
+      - 'tools/graphics/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: maintenance-ps5-deps-host
+  cancel-in-progress: false
+jobs:
+  pinned-sources:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          filter: blob:none
+          submodules: false
+          persist-credentials: false
+      - name: Sparse checkout sole pinned vendor (no external submodules)
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$(git rev-parse HEAD:vendor)"
+          rm -rf vendor
+          git -c credential.helper= clone --quiet --filter=blob:none \
+            --no-checkout --single-branch \
+            --branch main \
+            https://github.com/niakw/Prospero.Eden-Encore-vendor.git vendor
+          git -C vendor fetch --depth=1 origin "$expected"
+          git -C vendor sparse-checkout set \
+            sources/ps5-mihawkgen \
+            sources/ps5-fsr3-optical-flow \
+            sources/libwebp \
+            docs
+          git -C vendor checkout --quiet --detach "$expected"
+          test "$(git -C vendor rev-parse HEAD)" = "$expected"
+          test ! -e vendor/.gitmodules
+      - name: Install bounded host-only validation tools
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends spirv-tools clang cmake ninja-build
+      - name: Verify exact source Git trees, one Gitlink, model, and notices
+        run: |
+          python3 -B tools/graphics/check-internalized-ps5-deps.py
+          python3 -B tools/check-credit-attribution.py
+      - name: Verify MihawkGen source and embedded SPIR-V (host only)
+        run: python3 -B tools/graphics/verify-mihawkgen-source.py
+      - name: Verify FSR3 Optical Flow source and SPIR-V (host only)
+        run: python3 -B tools/graphics/check-fsr3-optical-source.py
+      - name: Build libwebp 1.6.0 static codec (Linux host only)
+        run: |
+          cmake -S vendor/sources/libwebp -B /tmp/encore-webp -G Ninja \
+            -DBUILD_SHARED_LIBS=OFF -DWEBP_BUILD_CWEBP=OFF \
+            -DWEBP_BUILD_DWEBP=OFF -DWEBP_BUILD_EXTRAS=OFF \
+            -DWEBP_BUILD_ANIM_UTILS=OFF -DWEBP_BUILD_WEBPINFO=OFF
+          cmake --build /tmp/encore-webp --target webp -j 2
+      - name: Real WebP 1.6 encode/decode, alpha and truncated-data regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY_IMAGE'
+          from pathlib import Path
+          header=bytearray(18)
+          header[2]=2
+          header[12]=2
+          header[14]=2
+          header[16]=32
+          header[17]=0x28
+          pixels=bytes([2,3,250,255,5,200,10,128,100,12,24,0,48,96,144,200])
+          Path("/tmp/encore-webp-fixture.tga").write_bytes(header+pixels)
+          PY_IMAGE
+          test "$(find /tmp/encore-webp -name '*.a' -type f | wc -l)" -ge 1
+          c++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Ivendor/sources/libwebp/src \
+            tools/launcher/test-webp-cover-codec.cpp \
+            -Wl,--start-group $(find /tmp/encore-webp -name '*.a' -type f | sort) \
+            -Wl,--end-group -pthread -lm -o /tmp/encore-webp-host-codec
+          /tmp/encore-webp-host-codec /tmp/encore-webp-fixture.tga

@@ -1,3 +1,5 @@
+> **Dependency migration (10 November 2026, source-only; no PS5 release qualification):** Earlier external MihawkGen and FSR3 Optical Flow gitlinks were replaced by exact tracked upstream trees inside the sole vendor repository. Historical submodule references below describe earlier checkpoints and must not be interpreted as current wiring. Native PS5 testing remains separate.
+
 # C / R08 — Vulkan frame generation (état vérifiable)
 
 Branche : `feat/encore-c-vulkan-framegen`. Ne pas fusionner `main` ni modifier le vendor pour de simples contrats.
@@ -6,11 +8,11 @@ Branche : `feat/encore-c-vulkan-framegen`. Ne pas fusionner `main` ni modifier l
 
 | Ordre | Méthode | Source / licence | État concret | Prochaine preuve |
 |---|---|---|---|---|
-| 1 | MihawkGen natif PS5 | `mihawk-99/PS5_MihawkGen` @ `c57232a`, module `framegen/` GPL-3.0-or-later, outillage PS5 MIT ; modèle `network.fgw` à auditer avec notices | Source épinglée en sous-module, **aucun code de génération branché dans le renderer Encore** | Construire module et modèle sur la toolchain PS5, vérifier Vulkan/RADV, layouts/barrières/fences et premier couple d'images |
+| 1 | MihawkGen natif PS5 | `mihawk-99/PS5_MihawkGen` @ `c57232a`, module `framegen/` GPL-3.0-or-later, outillage PS5 MIT ; modèle `network.fgw` à auditer avec notices | Source interne sous `vendor/sources/ps5-mihawkgen` (ancien sous-module ; état historique de ce tableau : **pas encore branché dans le renderer Encore**) | Construire module et modèle sur la toolchain PS5, vérifier Vulkan/RADV, layouts/barrières/fences et premier couple d'images |
 | 2 | FSR 3.1 Frame Generation | AMD FidelityFX SDK, code MIT ; nécessite flux temporal/motion/depth et swapchain Vulkan qualifiés | Contrat R06 seulement | Prouver depth/motion/jitter invités, HUD distinct, profil de latence ; comparer aux mêmes images |
 | 3 | LSFG / Lossless Scaling | Intégration amont ProsperoEden pouvant dépendre d'une DLL Windows non redistribuable | Non intégré à Encore ; aucune DLL embarquée | Confirmer droits de distribution et backend **natif PS5** ; sinon refuser cette option |
 
-Le sous-module MihawkGen, pas les fichiers de son `external/` en bloc, constitue la provenance. Avant diffusion de tout modèle, confirmer séparément code, poids et notices. Selon le README MihawkGen, le réseau fourni a été entraîné sur des clips privés, avec certaines cibles distillées de modèles publics sous licences permissives : l’attribution et les conditions des poids sont à vérifier avant packaging. La présence du fichier dans le sous-module ne constitue pas une autorisation de redistribution dans les Releases Encore.
+La source MihawkGen épinglée et intégrée au vendor, pas les fichiers de son `external/` pris en bloc, constitue la provenance. Avant diffusion de tout modèle, confirmer séparément code, poids et notices. Selon le README MihawkGen, le réseau fourni a été entraîné sur des clips privés, avec certaines cibles distillées de modèles publics sous licences permissives : l’attribution et les conditions des poids sont à vérifier avant packaging. La présence du fichier dans la source importée ne constitue pas une autorisation de redistribution dans les Releases Encore.
 
 ## Premier garde-fou exécuté
 
@@ -392,8 +394,10 @@ PS5, latence ou affichage 30->60 sur console n'est encore démontré.
 
 ### C2.10 — troisième backend : AMD FSR3 optical flow PS5 (source-only)
 
-Le dépôt Swordpdf/ps5-framegen est épinglé sous
-third_party/PS5_FSR3OpticalFlow, SHA 64362101757cdd6f7df9eeb984cb53f03f1fbfca.
+Le dépôt Swordpdf/ps5-framegen est désormais épinglé sous
+`vendor/sources/ps5-fsr3-optical-flow` (anciennement
+`third_party/PS5_FSR3OpticalFlow`), SHA
+64362101757cdd6f7df9eeb984cb53f03f1fbfca.
 Ce port GPL-3 des passes optical-flow AMD (HLSL AMD MIT -> SPIR-V)
 reconstruit une image intermédiaire **sans motion vectors ni depth
 invités**. Ce n'est pas le backend FSR3 3.1 complet d'AMD.

@@ -116,6 +116,7 @@ def check():
   raise RuntimeError('Pinned Eden cpmfile.json unexpectedly changed')
  pins=json.loads(FILE.read_text())
  if len(obj['entries'])<20:raise RuntimeError('Expected 20+ cached PS5 CPM input packages')
+ drifted=[]
  for name,record in obj['entries'].items():
   folder=SOURCES/name/record['version']
   v=pins[record['cpm_key']]
@@ -123,7 +124,12 @@ def check():
    raise RuntimeError(f'Wrong CPM package or archive pin {name}')
   observed=tree(folder)
   if any(observed[k]!=record[k] for k in ('sha256','files','bytes')):
-   raise RuntimeError(f'CPM source tree changed: {name}')
+   drifted.append({'package':name,
+                  'expected':{k:record[k] for k in ('sha256','files','bytes')},
+                  'observed':observed})
+ if drifted:
+  raise RuntimeError('CPM pinned-source snapshot drift (do not silently repin): '+
+                     json.dumps(drifted,sort_keys=True))
  print('CPM_VENDOR_COMPLETE_OK',len(obj['entries']),'cached PS5 CPM packages; original EOL bytes restored',len(original_eol_files()),'; unused platform/test pins',len(obj['excluded_unfetched_cpm_pins']))
  return obj
 

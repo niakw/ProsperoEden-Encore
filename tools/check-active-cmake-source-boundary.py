@@ -29,6 +29,22 @@ module_paths = {
     *(ROOT/"vendor/encore-active").rglob("CMakeLists.txt"),
 }
 module_paths.discard(ROOT/"headless/CMakeLists.txt")
+
+# All original upstream source CMake files live under vendor/sources/:
+# they are not maintained Encore CMake mutation owners. Every active
+# override under vendor/encore-active remains in module_paths and is checked.
+pinned_upstream_roots = tuple(
+    ROOT / "vendor/sources" / name
+    for name in ("ps5-mihawkgen", "ps5-fsr3-optical-flow", "libwebp")
+)
+assert all(path.is_dir() and not (path / ".git").exists()
+           for path in pinned_upstream_roots)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not (ROOT / "vendor/encore-active" / stale).exists(), stale
+excluded_upstream_modules = 0
+assert not any(any(upstream in p.parents for upstream in pinned_upstream_roots)
+               for p in module_paths)
+
 # Exclude source-pin SDK manifests: the checked Encore CMake layer above
 # is the only location allowed to mutate included dependency sources.
 active_mutation = re.compile(
@@ -90,4 +106,5 @@ for path, code in (("native build", native_build),
 assert 'shutil.copyfile(maintained, tmp)' in (
     ROOT/"tools/install-active-core-backports.py").read_text()
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
+      f"pinned_upstream_modules={excluded_upstream_modules} "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

@@ -29,6 +29,25 @@ suffixes={".c",".cpp",".cxx",".cc",".h",".hpp",".inc"}
 all_owners={p for p in tracked
         if p.startswith(("headless/","src/","vendor/encore-active/"))
         and Path(p).suffix in suffixes}
+# Three unmodified upstream dependencies live under vendor/sources/.
+# Their snapshots must never be categorized as F07 owners or hidden as
+# Encore active overrides. Keep the immutable 518 historical source total.
+pinned_upstream_f07_counts = {
+    "ps5-mihawkgen": 474,
+    "ps5-fsr3-optical-flow": 41,
+    "libwebp": 245,
+}
+for name, expected in pinned_upstream_f07_counts.items():
+    prefix = f"vendor/sources/{name}/"
+    files = {p for p in tracked
+             if p.startswith(prefix) and Path(p).suffix in suffixes}
+    assert len(files) == expected, ("Upstream snapshot drift", name, len(files), expected)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not any(p.startswith(f"vendor/encore-active/{stale}/")
+                   for p in tracked), stale
+print("ENCORE_PINNED_UPSTREAM_F07_ISOLATION_PASS",
+      f"upstream_sources={sum(pinned_upstream_f07_counts.values())}",
+      "trees=3 historical_f07_unchanged=1")
 # NS2 is an explicitly unqualified research layer, not historical F07 review.
 # Do not silently count new research source code as already optimized.
 research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text())
@@ -725,7 +744,33 @@ assert not r09_private_and_readback & (research_owners | post_f07_feature_stack_
 print("ENCORE_R09_OVERLAY_POST_F07_OWNER_ISOLATION_PASS",
       "new_sources=67 historical_owners=518 console_not_qualified=1")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners
+# P1/P2 H05's new syncpoint allocator remains a reviewed, independently
+# maintained Encore override, not a historical F07 optimization proof.
+# Reuse the exact literal set from the active source inventory, and do not
+# broadly exclude any other new source under encore-active/.
+h05_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body
+    if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and
+        target.id == "post_f07_h05_syncpoint_owners"
+        for target in node.targets)
+]
+assert len(h05_nodes) == 1, "H05 source-owner inventory missing"
+h05_paths = ast.literal_eval(h05_nodes[0])
+assert h05_paths == {
+    "eden-sync/overrides/h05-syncpoint/core/hle/service/nvdrv/core/syncpoint_manager.h",
+    "eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp",
+}
+post_f07_h05_syncpoint_owners = {"vendor/encore-active/" + p for p in h05_paths}
+assert post_f07_h05_syncpoint_owners <= all_owners
+assert not post_f07_h05_syncpoint_owners.intersection(
+    research_owners | post_f07_feature_stack_owners | post_f07_r09_overlay_owners)
+print("ENCORE_POST_F07_H05_F07_ISOLATION_PASS",
+      "maintained_overrides=2 historical_F07_unchanged=1")
+
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

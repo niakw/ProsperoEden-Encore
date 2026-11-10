@@ -264,7 +264,7 @@ The following is a detailed **technical change inventory**: delivered source cha
 - Refined packaging and reproducibility, exact-SHA executable and symbols matching, optional FFPFSC, and the prohibition of nested ZIPs.
 - Selected/pinned upstream engine fixes, compiler/runtime adaptations, SDK/Mesa/Vulkan/OpenGL dependencies and reproducible source manifests.
 - Audited transitive source integration and proved which upstream/backport overrides are selected in the compiled archive; rejected incomplete or unverified integrations.
-- Migrated the large **vendor** tree to an immutable, pinned Git submodule; preserved matching dependency sources and licenses.
+- Migrated the large **vendor** tree to an immutable, pinned Git submodule; preserved matching dependency sources and licenses. MihawkGen, FSR3 Optical Flow and libwebp 1.6.0 are pinned unmodified third-party source snapshots under `vendor/sources/` (not additional submodules). `vendor/encore-active/` is reserved exclusively for Encore-maintained runtime overrides and ports; original upstream dependency trees must never be stored there.
 - Compacted Git history while retaining recovery archives and provenance; migrated to an independent public repository with restored branches/tags/releases where applicable.
 - Established fast/full host gates, native build/package gates, static security analysis (including CodeQL), checksum/source checks and firmware-specific console-test checklists.
 - Kept code review, build results and on-device qualification **separate**, including a distinct record for source-only and experimental patches.
@@ -502,6 +502,8 @@ Eden and the individual licence details are documented in [THIRD_PARTY_NOTICES.m
 - [PS5 OpenGL](https://github.com/blackbearreloaded/ps5-opengl) — **Authors / maintainers: BlackBearReloaded (`@blackbearreloaded`)** — OpenGL 4.6 runtime used by Encore.
 - [Mihawk's PS5 Mesa](https://github.com/mihawk-99/PS5_Mesa) — **Authors / maintainers: Mihawk (`@mihawk-99`) and Mesa contributors** — Mesa/RADV source used by the Vulkan path.
 - [Mihawk's PS5 Vulkan](https://github.com/mihawk-99/PS5_Vulkan) — **Authors / maintainers: Mihawk (`@mihawk-99`)** — PS5 Vulkan/RADV build and link recipes.
+- [PS5 MihawkGen](https://github.com/mihawk-99/PS5_MihawkGen) — **Authors / maintainers: Mihawk (`@mihawk-99`) and upstream model contributors** — native neural frame-generation source and SHA-256-pinned model, retaining its GPL/MIT and model-distillation notices.
+- [PS5 FSR3 Optical Flow](https://github.com/Swordpdf/ps5-framegen) — **Authors / maintainers: Swordpdf (`@Swordpdf`) and credited AMD FidelityFX contributors** — native optical-flow interpolation sources with their original GPL and shader licenses.
 - [Mihawk's PS5 PayloadSDK](https://github.com/mihawk-99/PS5_PayloadSDK) — **Authors / maintainers: Mihawk (`@mihawk-99`) and upstream SDK authors** — PayloadSDK fork used by the RADV toolchain.
 - [PS5 Payload SDK](https://github.com/ps5-payload-dev/sdk) — **Authors / maintainers: John Törnblom (`@john-tornblom`) and contributors `@ps5-payload-dev`** — PS5 homebrew SDK used by the native toolchain.
 - [ps5-vulkan](https://github.com/mpereiraesaa/ps5-vulkan) — **Authors / maintainers: `@mpereiraesaa` and contributors** — earlier PS5 Vulkan platform work used by the graphics stack.

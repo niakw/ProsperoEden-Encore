@@ -22,6 +22,25 @@ physical_all = sorted(
     for p in active.rglob("*")
     if p.is_file() and p.suffix in suffixes
 )
+# Exactly pinned third-party sources are in vendor/sources/, not in the
+# maintained/active F07 production graph. Reject stale original-source trees
+# in encore-active while still auditing *every* maintained override here.
+pinned_upstream_source_counts = {
+    "ps5-mihawkgen": 632,
+    "ps5-fsr3-optical-flow": 41,
+    "libwebp": 245,
+}
+for name, expected in pinned_upstream_source_counts.items():
+    upstream = root / "vendor/sources" / name
+    assert upstream.is_dir() and not (upstream / ".git").exists(), name
+    actual = sum(p.is_file() and p.suffix in suffixes
+                 for p in upstream.rglob("*"))
+    assert actual == expected, ("Pinned upstream inventory drift", name, actual, expected)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not (active / stale).exists(), ("Sources belong in sources/", stale)
+print("ENCORE_PINNED_UPSTREAM_SOURCES_PASS",
+      f"sources={sum(pinned_upstream_source_counts.values())}",
+      f"trees={len(pinned_upstream_source_counts)}", "excluded_from_f07=1")
 # Preserve the audited production source catalogue. The NS2 research sources
 # are tracked separately and explicitly; they are not F07 shipping proofs.
 research_manifest = json.loads(
@@ -614,6 +633,26 @@ assert post_f07_r09_headless_owners.isdisjoint(post_f07_feature_headless_owners)
 print("ENCORE_R09_POST_F07_VENDOR_CATALOG_PASS",
       "vendor=58", "headless=9", "historical_F07_unchanged=1")
 
+# P1/P2 H05 added two maintained NVDEC syncpoint allocator owners after
+# the historical F07 source snapshot. These are real Encore-active overrides,
+# NOT pristine upstream dependency trees and NOT retroactive F07 proofs.
+# Keep them explicitly inventoried and separately host-qualified.
+post_f07_h05_syncpoint_owners = {
+    "eden-sync/overrides/h05-syncpoint/core/hle/service/nvdrv/core/syncpoint_manager.h",
+    "eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp",
+}
+assert post_f07_h05_syncpoint_owners <= set(physical_all), (
+    "Missing maintained H05 syncpoint override", sorted(
+        post_f07_h05_syncpoint_owners - set(physical_all)))
+assert not post_f07_h05_syncpoint_owners.intersection(research_paths)
+h05_header = (active / "eden-sync/overrides/h05-syncpoint/core/hle/service/nvdrv/core/syncpoint_manager.h").read_text()
+h05_source = (active / "eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp").read_text()
+assert "[[nodiscard]] u32 TryAllocateSyncpoint(bool client_managed);" in h05_header
+assert "u32 SyncpointManager::TryAllocateSyncpoint(bool client_managed)" in h05_source
+assert "std::lock_guard lock(reservation_lock);" in h05_source
+print("ENCORE_POST_F07_H05_SYNCPOINT_OWNER_PASS", "owners=2",
+      "source_only=1 historical_F07_unchanged=1")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -627,7 +666,7 @@ physical = [p for p in physical_all
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
-             post_f07_r09_vendor_owners]
+             post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

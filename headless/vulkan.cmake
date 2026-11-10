@@ -1040,8 +1040,8 @@ target_include_directories(video_core BEFORE PUBLIC "${PORT_BUILD_DIR}/include")
 target_include_directories(video_core BEFORE PUBLIC "${PORT_BUILD_DIR}/vulkan-cache")
 target_include_directories(video_core PRIVATE
     "${PORT_BUILD_DIR}" "${EDEN_PORT_DIR}" "${PORT_ROOT}/extras/graphics"
-    "${PORT_ROOT}/third_party/PS5_MihawkGen/framegen/include"
-    "${PORT_ROOT}/third_party/PS5_MihawkGen/external")
+    "${PORT_ROOT}/vendor/sources/ps5-mihawkgen/framegen/include"
+    "${PORT_ROOT}/vendor/sources/ps5-mihawkgen/external")
 # The descriptor-buffer writer override (null descriptors): rebuild its callers once,
 # since existing depfiles still name the upstream header.
 set_property(SOURCE
@@ -1114,7 +1114,7 @@ endif()
 # Native MihawkGen always compiles into the production Vulkan renderer.
 # The selected method and measured device capabilities decide runtime use;
 # no dev/release/roadmap profile controls this integration.
-set(EDEN_MIHAWKGEN_ROOT "${PORT_ROOT}/third_party/PS5_MihawkGen")
+set(EDEN_MIHAWKGEN_ROOT "${PORT_ROOT}/vendor/sources/ps5-mihawkgen")
 set(EDEN_MIHAWKGEN_INC "${EDEN_MIHAWKGEN_ROOT}/framegen/include")
 set(EDEN_MIHAWKGEN_SRC "${EDEN_MIHAWKGEN_ROOT}/framegen/src")
 set(EDEN_MIHAWKGEN_VOLK "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk/volk.c")
@@ -1155,7 +1155,7 @@ target_sources(video_core PRIVATE $<TARGET_OBJECTS:eden-mihawkgen-native>)
 
 # R08 AMD candidate: FSR3 optical-flow shaders and a PS5-native Vulkan
 # interpolator, from Swordpdf/ps5-framegen. Not an official FSR3 backend.
-set(EDEN_FSR3_OF_ROOT "${PORT_ROOT}/third_party/PS5_FSR3OpticalFlow")
+set(EDEN_FSR3_OF_ROOT "${PORT_ROOT}/vendor/sources/ps5-fsr3-optical-flow")
 if(NOT EXISTS "${EDEN_FSR3_OF_ROOT}/src/framegen/fg_shaders.inc")
     message(FATAL_ERROR "Missing pinned PS5 FSR3 optical-flow source")
 endif()

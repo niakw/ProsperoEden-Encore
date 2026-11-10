@@ -347,3 +347,22 @@ replacement model plan: some specialized launch fields remain from the
 1080p reference and have NOT yet been qualified for 720p. Its
 gpu_executable flag is hard false, and no native renderer, weights
 or source/target Vulkan dimensions have been modified.
+
+
+## Exact 720p GPU launch blockers — enumerated rather than assumed
+
+The host route qualification now checks the original reference against the
+full 720p candidate and records **41 specialized native-plan rows** whose
+launch-grid fields were deliberately not rewritten: 8 blocks × 5 ViT
+operations = 40 rows (FFN Expand, Contract, QKV, Attention, Projection),
+plus 1 DecoderUpsample row. Every one retains the inherited 1080p launch
+grid even though its token count and geometry have changed. Both 152-row
+Original and 76-row Compact schedules must have this same breakdown.
+
+The ViT implementations separately derive many native Vulkan dispatches
+from the validated 960-token route and their own stage policies; the stale
+serialized row grids are **not alone proof of an out-of-bounds GPU access**.
+But no complete PS5 GPU integration proof exists for the 720p plan, so the
+candidate stays disabled. Future tests should focus on the exact ViT stage
+owner/descriptor dispatches, DecoderUpsample, input/output resolution and
+full model image rather than repeating structural-route validation.

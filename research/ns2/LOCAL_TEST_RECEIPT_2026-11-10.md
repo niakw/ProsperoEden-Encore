@@ -63,3 +63,14 @@ The *non-selected* PS5VK driver advertises 128 MiB SSBO / 16 KiB UBO.
 The 33-case fixture includes three tests for these distinct source-advertised
 profiles. These constants have **not** been verified through a real PS5
 `vkGetPhysicalDeviceProperties` call.
+
+## Additional optimizer matrix (host only)
+
+Recompiled and executed every one of the four research suites with
+Clang 17 and GCC 14, using both `-O0` and `-O2` while keeping
+`-Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all`.
+All **16 binary executions passed** (2 compilers × 2 optimization levels
+× 4 suites), corresponding to **420 individual assertions** across these
+additional runs: (19 + 23 + 30 + 33) × 2 × 2.
+No sanitizer errors were observed. These are local host model results
+only, not GitHub Actions and not PS5 hardware.

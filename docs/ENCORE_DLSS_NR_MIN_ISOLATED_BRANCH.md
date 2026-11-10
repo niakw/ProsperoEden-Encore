@@ -190,3 +190,28 @@ residency/frame time are tested on PS5. This DOES NOT make a valid
 dynamic 720p neural graph or globally-optimal full-model schedule.
 The vendor PR #34 holds the guarded layout change, unmerged, and the
 engine native syntax CI pairs with exact vendor revision 6ee5be5a.
+
+
+## Exact 1080p scratch Pareto frontier (real C++ dispatch policies)
+
+A separate test enumerates **every integer scratch allocation size from
+4 through 16 token-planes** for the actual 2560-token 1080p ViT block.
+It uses the real native host FFN Expand, Contract, ResidualProjection and
+QKV scheduling policies; a configuration is dominated if a smaller memory
+budget can schedule no more batches in **any** of those operations.
+The resulting non-dominated candidate scratch sizes are 4, 5, 6 and 12
+planes (15, 16, 17 and 23 total ViT planes respectively):
+
+| Scratch planes | ViT requested MiB | FFN Expand batches | QKV batches |
+| ---: | ---: | ---: | ---: |
+| 4 | 37.5 | 4 | 4 |
+| 5 | 40 | 4 | 3 |
+| 6 | 42.5 | 3 | 2 |
+| 12 | 57.5 | 3 | 1 |
+
+The previous **8-plane / 47.5 MiB** proposal is dominated by **6 planes /
+42.5 MiB** at **1080p**: both schedule the same FFN and QKV batch counts.
+These are per-block source-level counts, not measured runtime. The
+three other ViT stages, per-block barriers, attention and overall engine
+still require actual model/console qualification. At 720p and 4096 tokens
+the Pareto thresholds can differ; this table must not be applied blindly.

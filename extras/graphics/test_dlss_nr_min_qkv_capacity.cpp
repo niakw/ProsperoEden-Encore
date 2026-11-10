@@ -3,6 +3,7 @@
 // Does not load proprietary model weights or dispatch a Vulkan GPU.
 #include "rdna2_nr_vit_qkv_batches_policy.h"
 #include "rdna2_nr_vit_projection_stage_policy.h"
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <initializer_list>
@@ -107,6 +108,88 @@ int main() {
                          <<" ffwd_expand_batches="<<exp_batches.count
                          <<" qkv_batches="<<qkv_batches.count<<"\n";
             }
+        }
+        if(tokens==2560u) {
+            // Exhaustive integer scratch capacity frontier on the authentic
+            // Original 1080p ViT shape. No guessed GPU timings. Intra-block
+            // FFN expand, contract, terminal projection and QKV use actual
+            // BuildVit* scheduling policies and one-plane packed Q/K/V.
+            struct Work {
+                std::uint32_t expand{},contract{},projection{},qkv{};
+            };
+            std::array<Work,17u> schedules{};
+            constexpr std::array<std::uint32_t,4u> expected{4u,5u,6u,12u};
+            std::array<std::uint32_t,4u> frontier{};
+            std::size_t frontier_count{};
+            for(std::uint32_t scratch=4u;scratch<=16u;++scratch) {
+                auto qkv_capacity=compact;
+                qkv_capacity.fp32=std::uint64_t(scratch)*plane;
+                VitQkvBatches qkv{};
+                assert(BuildVitQkvBatches(tokens,qkv_capacity,qkv));
+                assert(ValidVitQkvBatches(qkv));
+                auto& work=schedules[scratch];
+                work.qkv=qkv.count;
+                for(const auto kind : {
+                    VitProjectionKind::Expand,
+                    VitProjectionKind::Contract,
+                    VitProjectionKind::ResidualProjection}) {
+                    const auto capacity=VitProjectionStageCapacity{
+                        kind==VitProjectionKind::Contract ? 4u*plane : plane,
+                        kind==VitProjectionKind::Expand ? 4096u*1024u :
+                        kind==VitProjectionKind::Contract ? 4096u*1024u :
+                        1024u*1024u,
+                        std::uint64_t(scratch)*plane,
+                        kind==VitProjectionKind::Expand ? 0u : plane,
+                        kind==VitProjectionKind::Expand ? 0u : 2048u,
+                        kind==VitProjectionKind::Expand ? 4u*plane : plane
+                    };
+                    VitProjectionStageBatches batches{};
+                    assert(BuildVitProjectionStage(
+                        kind,tokens,capacity,batches));
+                    assert(ValidateVitProjectionStage(batches));
+                    if(kind==VitProjectionKind::Expand)
+                        work.expand=batches.count;
+                    if(kind==VitProjectionKind::Contract)
+                        work.contract=batches.count;
+                    if(kind==VitProjectionKind::ResidualProjection)
+                        work.projection=batches.count;
+                }
+                const auto better_or_equal=[](const Work& a,const Work& b){
+                    return a.expand<=b.expand &&
+                           a.contract<=b.contract &&
+                           a.projection<=b.projection && a.qkv<=b.qkv;
+                };
+                // A less expensive scratch setting dominates this one
+                // when it schedules no more dispatch batches in ANY stage.
+                bool dominated=false;
+                for(std::uint32_t cheaper=4u;cheaper<scratch;++cheaper)
+                    if(better_or_equal(schedules[cheaper],work))
+                        dominated=true;
+                if(!dominated) {
+                    assert(frontier_count<frontier.size());
+                    frontier[frontier_count++]=scratch;
+                    std::cout<<"R09_MIN_VIT_1080P_PARETO scratch="<<scratch
+                             <<" total_planes="<<(11u+scratch)
+                             <<" requested_MiB="<<(2.5*(11u+scratch))
+                             <<" expand="<<work.expand
+                             <<" contract="<<work.contract
+                             <<" projection="<<work.projection
+                             <<" qkv="<<work.qkv<<"\n";
+                }
+                if(scratch>=7u&&scratch<=11u) {
+                    // These options are dominated by 6 planes at 1080p;
+                    // previous rough 8-plane recommendation was wasteful.
+                    assert(dominated);
+                }
+                if(scratch>=13u)assert(dominated);
+            }
+            assert(frontier_count==expected.size());
+            assert(frontier==expected);
+            assert(schedules[4u].expand==4u && schedules[4u].qkv==4u);
+            assert(schedules[5u].expand==4u && schedules[5u].qkv==3u);
+            assert(schedules[6u].expand==3u && schedules[6u].qkv==2u);
+            assert(schedules[12u].expand==3u && schedules[12u].qkv==1u);
+            std::cout<<"R09_MIN_VIT_1080P_EXHAUSTIVE_PARETO_PASS\n";
         }
         {
             // Preserve all three authentic ViT learned projection plans

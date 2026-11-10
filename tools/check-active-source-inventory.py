@@ -944,6 +944,15 @@ headless_exts = {".c", ".cc", ".cpp", ".h", ".hpp", ".inc", ".cl"}
 # Enforce its exact existence/selection separately; do not retroactively
 # rewrite the F07 table or classify it as an audited optimization.
 post_f07_p5_headless_owners = {"headless/ns2_astc_texture_cache_scope_bridge.h"}
+# C00 is reviewed separately on the isolated A/B NS1 repair PR. Do not
+# retroactively count the new helper as a 2026-10-20 F07 headless source.
+post_f07_c00_audioin_owners = {"headless/audio_in_silence.h"}
+assert all((root / p).is_file() for p in post_f07_c00_audioin_owners)
+assert '#include "audio_in_silence.h"' in (root / "headless/audio.cpp").read_text()
+assert not post_f07_c00_audioin_owners & (
+    post_f07_p5_headless_owners | post_f07_feature_headless_owners |
+    post_f07_r09_headless_owners)
+print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=1 historical_headless=193")
 assert all((root / p).is_file() for p in post_f07_p5_headless_owners)
 assert not post_f07_p5_headless_owners & (
     post_f07_feature_headless_owners | post_f07_r09_headless_owners)
@@ -956,7 +965,7 @@ headless_actual = sorted(
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners)
+        post_f07_p5_headless_owners | post_f07_c00_audioin_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

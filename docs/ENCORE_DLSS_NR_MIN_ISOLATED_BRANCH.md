@@ -167,3 +167,26 @@ R09_MIN_VIT_NATIVE_TU_DUAL=1 selector is set.
 
 This is a genuine header-integrated syntax test, not a compiled/linkable
 PS5 binary or neural GPU execution. The pin remains unchanged.
+
+
+## QKV exact FP8 capacity — 37.5 MiB nine-buffer candidate
+
+The first 60 MiB ViT pooling proposal retained four-plane Q/K/V buffers
+from the original 65-buffer allocator. The real E4M3FN norm producer
+CanVitQkvNorm and attention consumer CanVitAttention require exactly
+tokens*1024 bytes per Q/K/V tensor, **one plane**, not four.
+The separate C++ policy witness test_dlss_nr_min_qkv_capacity.cpp must
+prove native BuildVitQkvBatches/ValidVitQkvBatches accept all three
+one-plane outputs at 960, 2560 and 4096 tokens, that underallocation by
+four bytes is rejected, and that the learned QKV GEMM/normalize number
+of batches is unchanged versus the old four-plane outputs. All three
+FFN learned projection stage policies retain the original four-plane
+scratch space, so their batching is not changed by this capacity trim.
+
+**ViT requested sizes only:** 185 planes -> 15 planes at 1080p:
+462.5 MiB -> **37.5 MiB** (~91.9% reduction / 425 MiB).
+No runtime gain can be inferred until actual model weights and GPU
+residency/frame time are tested on PS5. This DOES NOT make a valid
+dynamic 720p neural graph or globally-optimal full-model schedule.
+The vendor PR #34 holds the guarded layout change, unmerged, and the
+engine native syntax CI pairs with exact vendor revision 6ee5be5a.

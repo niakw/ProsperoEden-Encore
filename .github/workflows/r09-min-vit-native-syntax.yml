@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           pinned=22b69d6053db41b74edac2633c012f925b84f69e
-          candidate=b1bc6b74d22bab1fef36cb2675848a59cb567221
+          candidate=6ee5be5a7e88ee2f077839c36cb3925412c027b6
           test "$(git rev-parse HEAD:vendor)" = "$pinned"
           test "$(git -C vendor rev-parse HEAD)" = "$pinned"
           git -C vendor -c credential.helper= fetch --quiet --depth=1 origin "$candidate"

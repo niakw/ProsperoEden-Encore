@@ -5,14 +5,26 @@
   "description": "Separate strict post-F07 source delta register. The original 518-owner F07 audit and original reviewed Git blobs remain immutable. A changed file is admitted only at its separately pinned current SHA and with its exact new source contract. This is source-change classification, not post-change optimization benchmark, translated catalog completeness, GPU execution, guest progress, or PS5 validation. CI still independently enforces active feature host checks.",
   "files": [
     {
+      "path": "headless/audio.cpp",
+      "historical_reviewed_git_blob": "a927dcc543fea01f7f548a9a614abf81180e923d",
+      "post_snapshot_git_blob": "4b5082d14fc12db39d7e3b06677d6dc403af2bf7",
+      "original_disposition": "code_changed_in_batch",
+      "source_scope": "C00 native PS5 silent AudioIn stream with bounded zero PCM, 10 ms capture pacing and stop/resume lifecycle; AudioOut unchanged",
+      "review_kind": "host_source_service",
+      "required_source_fragment": "ProcessAudioIn(silent_frames, frames_per_tick);",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-10: exact committed source identified. New host ASan/UBSan proof for real extracted SilentAudioInputStream pending; real guest DeviceSession and console runtime remain unqualified."
+    },
+    {
       "path": "headless/devices_check.cpp",
       "historical_reviewed_git_blob": "c9a8b4e737e6b2238cab90de06e4ddaf5cd48aef",
-      "post_snapshot_git_blob": "365b5aa849cdd1ded01c198a1bfb9f73c20196b6",
+      "post_snapshot_git_blob": "8a69273c21e929a361fc21941d7e8910bdee2dc8",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "input/overlay witness: short-click menu and guest Minus fallback",
       "review_kind": "host_source_input",
       "required_source_fragment": "OverlayVisible()",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-10 C00 added a real native AudioIn silent capture assertion for 1/2/6 channels and zero PCM; the fixed historical source blob and required OverlayVisible() contract remain unchanged. No PS5 device execution is implied."
     },
     {
       "path": "headless/devices.h",

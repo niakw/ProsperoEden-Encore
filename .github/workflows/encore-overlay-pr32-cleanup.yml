@@ -43,10 +43,10 @@ jobs:
             gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${branch}"
             echo "Deleted fully qualified branch: $branch"
           done <<'PINNED_HEADS'
-feat/h05-real-vulkan-guest-release-chain-20261110|e235d3e19f0980badd1ab7d0c48d0733aef198fd
-fix/h01-kprocess-oom-owner-proof-20261110|ee49f80a6ea02525dcddd687b5e77c3f59ea339e
-fix/h01-late-run-retirement-owner-proof-20261110|833e91a54d3dd84e28906e55415bcd28759c6990
-fix/h01-n52-source-audit-normalization-20261110|d64aa11f8a886f0b92cff2b737c4e914c044bf5c
-fix/h01-real-shipping-kprocess-metadata-test-20261110|629c9710d9d3a020216b01a7e73233cf98cc7fde
-fix/h01-romfs-pretrace-owner-proof-20261110|693129288028f70075d06f6a6a5696099faa3336
-PINNED_HEADS
+          feat/h05-real-vulkan-guest-release-chain-20261110|e235d3e19f0980badd1ab7d0c48d0733aef198fd
+          fix/h01-kprocess-oom-owner-proof-20261110|ee49f80a6ea02525dcddd687b5e77c3f59ea339e
+          fix/h01-late-run-retirement-owner-proof-20261110|833e91a54d3dd84e28906e55415bcd28759c6990
+          fix/h01-n52-source-audit-normalization-20261110|d64aa11f8a886f0b92cff2b737c4e914c044bf5c
+          fix/h01-real-shipping-kprocess-metadata-test-20261110|629c9710d9d3a020216b01a7e73233cf98cc7fde
+          fix/h01-romfs-pretrace-owner-proof-20261110|693129288028f70075d06f6a6a5696099faa3336
+          PINNED_HEADS

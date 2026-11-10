@@ -191,7 +191,11 @@ if [[ ${EDEN_SKIP_SOURCE_CHECKS:-0} != 1 && ${EDEN_SKIP_PREBUILD_SOURCE_CHECKS:-
 fi
 
 echo "Building Eden with $jobs parallel jobs"
-cmake --build "$scratch/native-local" --target eden-headless core -j "$jobs"
+# The native build is expensive to prepare. If independent C++ files fail,
+# finish every buildable Ninja edge (-k 0) so one CI run reports ALL compiler
+# errors instead of hiding the next failure behind the first one. Ninja still
+# exits nonzero and packaging never runs after a failed compilation.
+cmake --build "$scratch/native-local" --target eden-headless core -j "$jobs" -- -k 0
 
 # These two checks intentionally require the compiled dependency graph/native machine code.
 python3 -B "$root/tools/check-sparse-header.py" "$scratch/native-local"

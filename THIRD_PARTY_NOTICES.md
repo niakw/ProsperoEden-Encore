@@ -217,7 +217,7 @@ ProsperoEden and Encore exist thanks to the Eden maintainers and contributors,
 Mihawk, mpereiraesaa, John Törnblom, SvenGDK, the PS5 homebrew community and
 the many upstream free/open-source projects credited above.
 
-## libwebp (WebP image codec, vendor submodule)
+## libwebp 1.6.0 (WebP image codec, internally vendored source)
 
 The launcher uses a pinned official release of Google libwebp for
 cover cache and compressed embedded UI images. BSD-style license with

@@ -228,3 +228,20 @@ The 33-case range contract now checks both source-advertised profiles.
 Even so, the PS5 runtime's effective reported limits have not been
 queried on-console, and an actual `ConfigureNative`+RADV test has not
 been executed. The original QMD3 256 MiB GMMU admission cap remains.
+
+### O2 — source-traced native mapping teardown, no missing fix proven
+
+At the pinned vendor `22b69d60`, inspected these real maintained owners:
+
+- [`IGpuWorker`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp): the native 4 KiB unmap path invokes `system.GPU().WaitForIdle()` before `as->UnmapNative4K()` and only records ledger unmapping / signals success when the unmap succeeds. `ReleaseMemory` (102) rejects handles with outstanding NVMap `pins` or duplicate references, and preserves pending page-table unlock ownership across partial cleanup.
+- [`nvhost_as_gpu`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp): native 4 KiB map verifies the owning process, prevents overlapping reservations/mappings and pins the real NVMap handle. `UnmapNative4K` holds the address-space mutex, requires the matching exact-size reservation and calls `FreeMappingLocked`; that routine unpins NVMap and invokes `gmmu->Unmap()` before erasing the mapping owner.
+
+**Assessment:** the specific Lichii-style omission of GMMU unmap on explicit
+native mapping release is **not** shown by this source. It would be
+incorrect to transplant an unmap/release mechanism already present in
+Encore. A distinct multi-alias, allocation-generation or fault-path
+UAF remains a hypothesis until the *actual* 101→211→213→102→reuse
+owners are exercised under a hostile test with realistic guest state.
+
+**Priority:** O2 is now targeted regression coverage, below O1 native
+descriptor-layout/unknown-length admission. No production patch.

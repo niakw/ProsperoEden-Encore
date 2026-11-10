@@ -296,3 +296,21 @@ in **one** native batch (the per-batch cap is 1,024), explaining why
 this fifth profile is non-dominated at 720p but not at 1080p.
 The 16-plane option has not been exposed in the vendor allocator;
 this is still a host-only theoretical workload frontier.
+
+
+## 720p native decoder and skip path: policy checks
+
+A separate full-route host test now drives the genuine
+DecoderProjectionBatches, SplitDecoderSkipRepack and DecoderUpsample
+contracts at the actual 22×40 bottleneck. It proves the decoder
+projects 880 live ViT tokens into a 960-token padded 4×4-tile envelope
+in one native GEMM batch, consumes the 3×5 Split-Swin window-major skip,
+and fits the learned FP16 projection + skip/upsample buffer bounds.
+The test visits all 880 live 4×4-tile offsets and proves they are
+unique, leaving exactly 80 tail slots, and rejects undersized
+source, scratch, destination and gain buffers. Both Original and
+Compact must pass GCC/Clang UBSan.
+
+This is source-policy and host memory geometry validation only:
+the actual Vulkan shaders, model weights, complete image composition
+and console GPU fences still need qualified 720p A/B checks.

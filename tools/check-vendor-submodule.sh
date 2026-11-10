@@ -18,6 +18,6 @@ test -d vendor/sources/eden-cpm
 actual="$(git -C vendor rev-parse HEAD)"
 test "$actual" = "$expected" || { echo "Submodule SHA mismatch: $expected != $actual" >&2; exit 1; }
 git -C vendor diff --quiet
-# Pin all three formerly external PS5 source trees by exact upstream Git hashes.
+# Pin source-only third-party trees and keep encore-active reserved for overrides.
 python3 -B tools/graphics/check-internalized-ps5-deps.py
 echo "vendor gitlink and file paths verified at $actual"

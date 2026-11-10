@@ -49,6 +49,51 @@ int main() {
             }
         }
     }
+    // A structurally valid nine-buffer proposal remains non-executable.
+    {
+        VitReuseCandidate proposed{};
+        assert(BuildVitCrossBlockReuseCandidate(
+            Eden::NeuralPlans::Original,kCurrentR09Graph,proposed));
+        VitReuseEvidence proof{};
+        assert(CheckVitReuseAdmission(proposed,proof)==
+               VitReuseGate::ConcurrentGpuUse);
+        proof.same_queue_serial_recording=true;
+        proof.no_concurrent_frame_or_queue=true;
+        assert(CheckVitReuseAdmission(proposed,proof)==
+               VitReuseGate::MissingInterBlockBarrier);
+        proof.explicit_compute_write_to_read_write_barrier.fill(true);
+        for(std::size_t i=0u;i<7u;++i) {
+            proof.explicit_compute_write_to_read_write_barrier[i]=false;
+            assert(CheckVitReuseAdmission(proposed,proof)==
+                   VitReuseGate::MissingInterBlockBarrier);
+            proof.explicit_compute_write_to_read_write_barrier[i]=true;
+        }
+        assert(CheckVitReuseAdmission(proposed,proof)==
+               VitReuseGate::MissingLifetimeProof);
+        proof.no_external_live_temporary_consumer=true;
+        proof.no_early_release_or_async_readback=true;
+        proof.descriptor_sets_immutable_until_fence=true;
+        proof.per_frame_end_fence_completed=true;
+        assert(CheckVitReuseAdmission(proposed,proof)==
+               VitReuseGate::MissingGpuValidation);
+        proof.positive_gpu_test=true;
+        assert(CheckVitReuseAdmission(proposed,proof)==
+               VitReuseGate::MissingGpuValidation);
+        proof.negative_gpu_test=true;
+        assert(!kVitReusePs5RuntimeEnabled);
+        assert(CheckVitReuseAdmission(proposed,proof)==
+               VitReuseGate::RuntimeHardDisabled);
+        // Corrupted alias maps cannot be admitted, even with all proofs set.
+        auto corrupt=proposed;
+        corrupt.blocks[2].slots[6u]=corrupt.blocks[2].slots[7u];
+        assert(CheckVitReuseAdmission(corrupt,proof)==
+               VitReuseGate::InvalidCandidate);
+        corrupt=proposed;
+        corrupt.blocks[4].slots[
+            static_cast<std::size_t>(VitField::Input)]=9u;
+        assert(CheckVitReuseAdmission(corrupt,proof)==
+               VitReuseGate::InvalidCandidate);
+    }
     VitReuseCandidate rejected{};
     assert(!BuildVitCrossBlockReuseCandidate(
         Eden::NeuralPlans::Original,{3840u,2160u},rejected));

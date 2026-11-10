@@ -108,7 +108,8 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           ninja -C "$scratch/native-local" -t targets all >/dev/null
           echo "CURRENT_MAIN_NATIVE_NINJA_GRAPH_PASS"
-          # The tenth full build failed in these two TUs. Compile both with
+          # The tenth full build failed in two TUs; later preflight also exposed
+          # a const-mutation and an incomplete FSR3 constructor. Compile all with
           # the exact PS5 target flags/headers, WITHOUT object output or link.
           # The same witnesses are now in the mandatory native preflight.
           python3 -B tools/check-native-source-syntax.py "$scratch/native-local" \
@@ -116,7 +117,8 @@ jobs:
             --only video_core/renderer_vulkan/vk_texture_cache_base.cpp \
             --only headless/vulkan_blit_screen_r08.cpp \
             --only headless/vulkan_renderer_r08.cpp \
-            --only headless/vulkan_window_adapt_r08.cpp
+            --only headless/vulkan_window_adapt_r08.cpp \
+            --only headless/fsr3_optical_session.cpp
           echo "P5_NATIVE_CXX_FAILURES_REQUALIFIED"
           # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
           # translation units using the actual native compile_commands.json.

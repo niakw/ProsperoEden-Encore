@@ -1730,13 +1730,13 @@ int main(int argc, char** argv) {
             // A per-title override wins; otherwise retain the global choice.
             const int aniso_tier =
                 game_video.performance_profile >= 0 &&
-                    game_video.performance_profile < EncoreOverrides::kAuthoredProfileCount
+                    game_video.performance_profile < Eden::EncoreOverrides::kAuthoredProfileCount
                 ? game_video.performance_profile : launch_preferences.performance_profile;
             // The authored game profile owns its own sampler level. Otherwise
             // global Custom and per-game manual overrides are preserved.
             const int recommended_aniso = aniso_tier >= 0 &&
-                aniso_tier < EncoreOverrides::kAuthoredProfileCount
-                ? EncoreTextureProfiles::ForTitle(launch_title_id, aniso_tier)
+                aniso_tier < Eden::EncoreOverrides::kAuthoredProfileCount
+                ? Eden::EncoreTextureProfiles::ForTitle(launch_title_id, aniso_tier)
                 : launch_preferences.texture_anisotropy;
             const int aniso = safe_launch ? 1 :
                 (game_video.texture_anisotropy >= 0

@@ -350,7 +350,7 @@ void Launcher::start_app_update_check(bool manual)
             state->result = query();
         } catch (...) {
             state->result = {AppUpdateInfo::State::offline, {}, {},
-                             "Could not reach GitHub Releases.", {}};
+                             "Could not reach GitHub Releases.", {}, {}, {}, {}, 0};
         }
         // Results are written before the release-store and only read after
         // the UI thread observes the matching acquire-load.

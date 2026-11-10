@@ -353,14 +353,14 @@ class Services
     // consults official stable GitHub Releases (never games/firmware updates).
     virtual AppUpdateInfo check_app_update(const std::string& current) {
         return {AppUpdateInfo::State::incompatible, current, {},
-                "Updates unavailable on this host.", {}};
+                "Updates unavailable on this host.", {}, {}, {}, {}, 0};
     }
     // A task returned here MUST NOT capture Services or Launcher. The
     // background worker may outlive both during game admission/shutdown.
     virtual std::function<AppUpdateInfo()> detached_app_update_task(const std::string& current) {
         return [current]() -> AppUpdateInfo {
             return {AppUpdateInfo::State::incompatible, current, {},
-                    "Updates unavailable on this host.", {}};
+                    "Updates unavailable on this host.", {}, {}, {}, {}, 0};
         };
     }
 

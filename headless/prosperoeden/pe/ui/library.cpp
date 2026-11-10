@@ -2197,7 +2197,6 @@ void Launcher::draw_game(Canvas &c, float open)
     const int base_renderer = authored_global ? base_profile.renderer : prefs_.renderer;
     const int base_output = authored_global ? base_profile.output : prefs_.output;
     const int base_resolution = authored_global ? base_profile.resolution : prefs_.resolution;
-    const int base_filter = authored_global ? base_profile.filter : prefs_.filter;
     const int base_fsr = authored_global ? base_profile.fsr_sharpness : prefs_.fsr_sharpness;
     const int base_aa = authored_global ? base_profile.anti_aliasing : prefs_.anti_aliasing;
     const int base_refresh = authored_global ? base_profile.refresh : prefs_.refresh;

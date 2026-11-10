@@ -1,0 +1,59 @@
+name: A/B NS1 staged vendor patchset integrity (read-only)
+
+on:
+  pull_request:
+    paths:
+      - "docs/audits/patchsets/**"
+      - "tools/audit/verify-ab-ns1-corrective-patchsets.py"
+      - ".github/workflows/ab-ns1-corrective-patchsets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ab-ns1-patchsets-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated corrective branch and exact gitlink
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate C01 C02 git patch application without changing source and C03 frozen blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/audit/verify-ab-ns1-corrective-patchsets.py > patchset-witness.json
+          python3 -B - <<'PY'
+          import json
+          from pathlib import Path
+          note = json.loads(Path("patchset-witness.json").read_text())
+          assert note["vendor_worktree_clean"]
+          assert note["vendor_gitlink"] == "22b69d6053db41b74edac2633c012f925b84f69e"
+          assert all(note["units"][key]["patch_staged_and_context_valid"]
+                     for key in ("C01", "C02"))
+          assert all(not row["patch_applied"] and not row["compiled"] and
+                     not row["tested_on_ps5"] for row in note["units"].values())
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write("## A/B NS1 patchset integrity\n")
+              out.write("C01/C02 git apply --check passed with exact vendor Git blobs.\n")
+              out.write("C03 RADV three-source SHA provenance confirmed.\n")
+              out.write("**No vendor source edits, compiler invocation, ELF or PS5 test.**\n")
+          PY
+          git -C vendor status --porcelain
+
+      - name: Upload read-only patch provenance
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ab-ns1-patchset-provenance
+          path: patchset-witness.json
+          if-no-files-found: error
+          retention-days: 30

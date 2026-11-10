@@ -1,0 +1,4799 @@
+{
+  "date": "2026-11-10",
+  "scope": "Refinement of capped 31-commit windows 3 and 5 in R23_EDEN_SEGMENTED_155_COMMITS_FILES_2026-11-10.json. These four finer windows replace the two capped original windows.",
+  "uncapped": false,
+  "results": [
+    {
+      "part": 1,
+      "base": "f273423b2b83f1a37cc7c1a7a92601f26e0c12ae",
+      "head": "fecc1b4ee32bc06f736f2d138680ec948cf13ab1",
+      "commits": 16,
+      "changed_file_rows": 73,
+      "cap_hit": false,
+      "files": [
+        {
+          "path": "cpmfile.json",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 1
+        },
+        {
+          "path": "dist/languages/ar.ts",
+          "status": "modified",
+          "additions": 533,
+          "deletions": 562
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "status": "modified",
+          "additions": 443,
+          "deletions": 477
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 470
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 470
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 470
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "status": "modified",
+          "additions": 443,
+          "deletions": 477
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 470
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 470
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "status": "modified",
+          "additions": 443,
+          "deletions": 477
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "status": "modified",
+          "additions": 444,
+          "deletions": 474
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "status": "modified",
+          "additions": 447,
+          "deletions": 474
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "status": "modified",
+          "additions": 443,
+          "deletions": 477
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "status": "modified",
+          "additions": 442,
+          "deletions": 469
+        },
+        {
+          "path": "externals/CMakeLists.txt",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 7
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/DriverViewModel.kt",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 3
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "status": "modified",
+          "additions": 15,
+          "deletions": 17
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 2
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 2
+        },
+        {
+          "path": "src/android/app/src/main/res/values-uk/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 2
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 2
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "status": "modified",
+          "additions": 143,
+          "deletions": 136
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 2
+        },
+        {
+          "path": "src/common/CMakeLists.txt",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/settings.h",
+          "status": "modified",
+          "additions": 16,
+          "deletions": 15
+        },
+        {
+          "path": "src/common/settings_enums.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/sparse_large_vector.cpp",
+          "status": "modified",
+          "additions": 33,
+          "deletions": 17
+        },
+        {
+          "path": "src/common/sparse_large_vector.h",
+          "status": "modified",
+          "additions": 16,
+          "deletions": 11
+        },
+        {
+          "path": "src/common/zbic_compression.cpp",
+          "status": "added",
+          "additions": 46,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/zbic_compression.h",
+          "status": "added",
+          "additions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applets.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/bcat/backend/backend.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/ro/ro.cpp",
+          "status": "modified",
+          "additions": 33,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/loader/nso.cpp",
+          "status": "modified",
+          "additions": 31,
+          "deletions": 4
+        },
+        {
+          "path": "src/core/loader/nso.h",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/memory.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad_types.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "src/input_common/helpers/joycon_protocol/joycon_types.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/input_common/helpers/joycon_protocol/poller.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 9
+        },
+        {
+          "path": "src/qt_common/config/uisettings.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 2
+        },
+        {
+          "path": "src/shader_recompiler/frontend/maxwell/translate_program.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/passes.h",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 0
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/rescaling_pass.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 12
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
+          "status": "modified",
+          "additions": 43,
+          "deletions": 0
+        },
+        {
+          "path": "src/video_core/gpu.cpp",
+          "status": "modified",
+          "additions": 15,
+          "deletions": 3
+        },
+        {
+          "path": "src/video_core/gpu.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/renderer_vulkan.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 2
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 0
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_present_manager.cpp",
+          "status": "modified",
+          "additions": 25,
+          "deletions": 1
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_present_manager.h",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 1
+        },
+        {
+          "path": "src/video_core/vulkan_common/vulkan_wrapper.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 15
+        },
+        {
+          "path": "src/yuzu/configuration/configure_applets.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/configuration/shared_widget.cpp",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 4
+        },
+        {
+          "path": "src/yuzu/game/common.h",
+          "status": "modified",
+          "additions": 15,
+          "deletions": 11
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        }
+      ]
+    },
+    {
+      "part": 2,
+      "base": "fecc1b4ee32bc06f736f2d138680ec948cf13ab1",
+      "head": "305f40100d76ec57b13c2f03eafd490db83691cb",
+      "commits": 15,
+      "changed_file_rows": 300,
+      "cap_hit": true,
+      "files": [
+        {
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "AGENTS.md",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 1
+        },
+        {
+          "path": "CLAUDE.md",
+          "status": "removed",
+          "additions": 0,
+          "deletions": 1
+        },
+        {
+          "path": "CMakeModules/find/Findlz4.cmake",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 6
+        },
+        {
+          "path": "dist/languages/ar.ts",
+          "status": "modified",
+          "additions": 310,
+          "deletions": 302
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 290
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 290
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "status": "modified",
+          "additions": 298,
+          "deletions": 289
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "docs/policies/AI.md",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/build.gradle.kts",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/audio_core/in/audio_in_system.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/settings.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/arm/nce/arm_nce_asm_definitions.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/arm/nce/patcher.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/arm/nce/patcher.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/acc/async_context.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/acc/errors.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/am.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/am.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/applet_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_cabinet.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_error.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_general.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_mii_edit.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_mii_edit_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_net_connect.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_profile_select.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_profile_select.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_software_keyboard_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_web_browser.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applets.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/process_holder.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/process_holder.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_accessor.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_creator.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/audio_controller.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/audio_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/cradle_firmware_updater.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/cradle_firmware_updater.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/debug_functions.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/debug_functions.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/display_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/global_state_controller.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/global_state_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_creator.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_proxy.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_proxy.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/lock_accessor.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/overlay_applet_proxy.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/overlay_applet_proxy.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage_accessor.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage_accessor.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/system_applet_proxy.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/system_applet_proxy.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/window_controller.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/service/window_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/aoc/addon_content_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/aoc/purchase_event_manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/aoc/purchase_event_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/apm/apm.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/apm/apm_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/apm/apm_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_controller.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in_manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_out.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_renderer.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager_for_applet.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder_manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/bcat.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/bcat_result.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_directory_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_file_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_file_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_progress_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_progress_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_storage_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_storage_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/builtin_news.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/msgpack.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/msgpack.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/newly_arrived_event_holder.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/newly_arrived_event_holder.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_data_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_database_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_database_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_storage.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/overwrite_event_holder.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/overwrite_event_holder.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/service_creator.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/service_creator.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bcat/service_creator.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/bpc/bpc.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btdrv/btdrv.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_debug.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_debug.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_system.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_user.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_user_core.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_a.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_c.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_result.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_sc.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_sc.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_ss.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_su.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_u.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/cmif_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/erpt/erpt.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/es/es.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/eupld/eupld.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/eupld/eupld.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_p.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_p.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_u.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_u.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/fgm/fgm.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_directory.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_directory.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_file.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_ldr.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_ldr.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_pr.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_pr.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/save_data_transfer_prohibiter.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/save_data_transfer_prohibiter.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/romfs_controller.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/romfs_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/save_data_controller.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/filesystem/save_data_controller.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/friend/friend.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/friend/friend_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/friend/friend_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/arp.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/bgtc.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/errors.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/glue.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/glue_manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/glue_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/notif.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/alarm_worker.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/file_timestamp_worker.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/file_timestamp_worker.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/manager.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/pm_state_change_handler.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/pm_state_change_handler.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/standard_steady_clock_resource.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/standard_steady_clock_resource.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/static.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/static.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/time_zone_binary.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/time_zone_binary.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/glue/time/worker.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/grc/grc.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/active_vibration_device_list.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/applet_resource.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/hid.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_debug_server.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_debug_server.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_system_server.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/hidbus.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/irs.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/xcd.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/hid/xcd.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/jit/jit.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/jit/jit_context.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/lbl/lbl.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/lan_discovery.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/lan_discovery.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/ldn.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/ldn_results.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/monitor_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/monitor_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_monitor_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_monitor_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service_monitor.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service_monitor.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/system_local_communication_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/system_local_communication_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/user_local_communication_service.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldn/user_local_communication_service.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ldr/ldr.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/lm/lm.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mig/mig.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mig/mig.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii_database.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii_database.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii_database_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii_result.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/mii_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/char_info.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/char_info.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/core_data.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/core_data.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/raw_data.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/store_data.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/store_data.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/ver3_store_data.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mii/types/ver3_store_data.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/mm/mm_u.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ncm/ncm.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/common/device.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/common/device_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/mifare_result.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/mifare_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/nfc.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/nfc_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/nfc_result.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfc/nfc_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfp/nfp.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfp/nfp_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfp/nfp_result.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nfp/nfp_types.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ngc/ngc.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nifm/nifm.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nim/nim.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/npns/npns.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/account_proxy_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/account_proxy_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/application_version_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/application_version_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/develop_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/develop_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/document_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/document_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/download_task_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/download_task_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/ecommerce_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/ecommerce_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/factory_reset_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/factory_reset_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/ns.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/ns_results.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/platform_service_manager.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_record_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/service_getter_interface.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/service_getter_interface.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/ns/system_update_control.cpp",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 0
+        }
+      ]
+    },
+    {
+      "part": 3,
+      "base": "2bec66c0922673844bc761a0784e89cde7869f00",
+      "head": "7f1bc0c9d1872a0623dad8dd3bce7acafd1d39dc",
+      "commits": 16,
+      "changed_file_rows": 119,
+      "cap_hit": false,
+      "files": [
+        {
+          "path": "CMakeLists.txt",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "README.md",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "dist/languages/ar.ts",
+          "status": "modified",
+          "additions": 667,
+          "deletions": 653
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "status": "modified",
+          "additions": 630,
+          "deletions": 620
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "status": "modified",
+          "additions": 631,
+          "deletions": 621
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "status": "modified",
+          "additions": 631,
+          "deletions": 621
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "status": "modified",
+          "additions": 630,
+          "deletions": 620
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "status": "modified",
+          "additions": 630,
+          "deletions": 620
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "status": "modified",
+          "additions": 631,
+          "deletions": 621
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "status": "modified",
+          "additions": 639,
+          "deletions": 628
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "status": "modified",
+          "additions": 688,
+          "deletions": 673
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "status": "modified",
+          "additions": 631,
+          "deletions": 621
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "status": "modified",
+          "additions": 630,
+          "deletions": 620
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "status": "modified",
+          "additions": 631,
+          "deletions": 621
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "status": "modified",
+          "additions": 632,
+          "deletions": 622
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "status": "modified",
+          "additions": 630,
+          "deletions": 620
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "status": "modified",
+          "additions": 631,
+          "deletions": 621
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "status": "modified",
+          "additions": 629,
+          "deletions": 619
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "status": "modified",
+          "additions": 710,
+          "deletions": 695
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "status": "modified",
+          "additions": 630,
+          "deletions": 620
+        },
+        {
+          "path": "dist/qt_themes/qdarkstyle_midnight_blue/style.qss",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "docs/Deps.md",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "docs/build/Android.md",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 4
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/DriverFetcherFragment.kt",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 3
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "status": "modified",
+          "additions": 21,
+          "deletions": 15
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/res/values-uk/strings.xml",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "status": "modified",
+          "additions": 69,
+          "deletions": 28
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/controller_console_state.h",
+          "status": "added",
+          "additions": 125,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/fs/file.cpp",
+          "status": "modified",
+          "additions": 280,
+          "deletions": 158
+        },
+        {
+          "path": "src/common/fs/file.h",
+          "status": "modified",
+          "additions": 255,
+          "deletions": 247
+        },
+        {
+          "path": "src/common/overlay_panels.h",
+          "status": "added",
+          "additions": 107,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/page_table.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/settings.h",
+          "status": "modified",
+          "additions": 60,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/settings_enums.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/string_util.cpp",
+          "status": "modified",
+          "additions": 108,
+          "deletions": 6
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_file_service.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/internal_network/network_interface.cpp",
+          "status": "modified",
+          "additions": 20,
+          "deletions": 5
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
+          "status": "modified",
+          "additions": 11,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64.cpp",
+          "status": "modified",
+          "additions": 51,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64.h",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/hid_core/hid_core.cpp",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 0
+        },
+        {
+          "path": "src/hid_core/hid_core.h",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 0
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad.cpp",
+          "status": "modified",
+          "additions": 19,
+          "deletions": 1
+        },
+        {
+          "path": "src/input_common/drivers/sdl_driver.cpp",
+          "status": "modified",
+          "additions": 237,
+          "deletions": 4
+        },
+        {
+          "path": "src/input_common/drivers/sdl_driver.h",
+          "status": "modified",
+          "additions": 17,
+          "deletions": 0
+        },
+        {
+          "path": "src/input_common/helpers/stick_from_buttons.cpp",
+          "status": "modified",
+          "additions": 30,
+          "deletions": 3
+        },
+        {
+          "path": "src/input_common/input_poller.cpp",
+          "status": "modified",
+          "additions": 18,
+          "deletions": 3
+        },
+        {
+          "path": "src/input_common/main.cpp",
+          "status": "modified",
+          "additions": 17,
+          "deletions": 0
+        },
+        {
+          "path": "src/input_common/main.h",
+          "status": "modified",
+          "additions": 12,
+          "deletions": 1
+        },
+        {
+          "path": "src/qt_common/CMakeLists.txt",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 4
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "status": "modified",
+          "additions": 37,
+          "deletions": 7
+        },
+        {
+          "path": "src/qt_common/config/uisettings.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/qt_common/config/uisettings.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 6
+        },
+        {
+          "path": "src/qt_common/gui_settings.cpp",
+          "status": "removed",
+          "additions": 0,
+          "deletions": 26
+        },
+        {
+          "path": "src/qt_common/gui_settings.h",
+          "status": "removed",
+          "additions": 0,
+          "deletions": 15
+        },
+        {
+          "path": "src/qt_common/qt_common.cpp",
+          "status": "modified",
+          "additions": 51,
+          "deletions": 2
+        },
+        {
+          "path": "src/qt_common/qt_common.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/fixed_pipeline_state.cpp",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 1
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/filters.cpp",
+          "status": "modified",
+          "additions": 19,
+          "deletions": 19
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/filters.h",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 10
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/window_adapt_pass.cpp",
+          "status": "modified",
+          "additions": 153,
+          "deletions": 3
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/window_adapt_pass.h",
+          "status": "modified",
+          "additions": 37,
+          "deletions": 2
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/renderer_vulkan.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_blit_screen.cpp",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 13
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_blit_screen.h",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 0
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
+          "status": "modified",
+          "additions": 128,
+          "deletions": 5
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.h",
+          "status": "modified",
+          "additions": 30,
+          "deletions": 0
+        },
+        {
+          "path": "src/video_core/texture_cache/texture_cache.h",
+          "status": "modified",
+          "additions": 20,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/CMakeLists.txt",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/aboutdialog.ui",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/applets/qt_software_keyboard.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/bootmanager.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 6
+        },
+        {
+          "path": "src/yuzu/configuration/configure_applets.cpp",
+          "status": "modified",
+          "additions": 25,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_applets.h",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/configuration/configure_dialog.cpp",
+          "status": "modified",
+          "additions": 17,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_dialog.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_graphics.cpp",
+          "status": "modified",
+          "additions": 36,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input.cpp",
+          "status": "modified",
+          "additions": 837,
+          "deletions": 2
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input.h",
+          "status": "modified",
+          "additions": 87,
+          "deletions": 1
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input_player.cpp",
+          "status": "modified",
+          "additions": 665,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input_player.h",
+          "status": "modified",
+          "additions": 66,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_input_player_widget.cpp",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_modern_per_game.cpp",
+          "status": "added",
+          "additions": 53,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_modern_per_game.h",
+          "status": "added",
+          "additions": 36,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_per_game.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_per_game.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_player_assignment.cpp",
+          "status": "added",
+          "additions": 1634,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/configure_player_assignment.h",
+          "status": "added",
+          "additions": 160,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/input_profiles.cpp",
+          "status": "modified",
+          "additions": 45,
+          "deletions": 2
+        },
+        {
+          "path": "src/yuzu/configuration/input_profiles.h",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/configuration/shared_widget.cpp",
+          "status": "modified",
+          "additions": 33,
+          "deletions": 4
+        },
+        {
+          "path": "src/yuzu/game/game_list.cpp",
+          "status": "modified",
+          "additions": 40,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/game/game_list.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/loading_screen.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 4
+        },
+        {
+          "path": "src/yuzu/main.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 59
+        },
+        {
+          "path": "src/yuzu/main.ui",
+          "status": "modified",
+          "additions": 18,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "status": "modified",
+          "additions": 5783,
+          "deletions": 171
+        },
+        {
+          "path": "src/yuzu/main_window.h",
+          "status": "modified",
+          "additions": 262,
+          "deletions": 6
+        },
+        {
+          "path": "src/yuzu/overlay_panel.cpp",
+          "status": "added",
+          "additions": 84,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/overlay_panel.h",
+          "status": "added",
+          "additions": 56,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/user_data_migration.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 8
+        },
+        {
+          "path": "src/yuzu/util/controller_navigation.cpp",
+          "status": "modified",
+          "additions": 17,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/util/controller_navigation.h",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/util/gamescope.cpp",
+          "status": "added",
+          "additions": 449,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/util/gamescope.h",
+          "status": "added",
+          "additions": 19,
+          "deletions": 0
+        },
+        {
+          "path": "src/yuzu/util/overlay_dialog.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 1
+        }
+      ]
+    },
+    {
+      "part": 4,
+      "base": "7f1bc0c9d1872a0623dad8dd3bce7acafd1d39dc",
+      "head": "89d1a1cd7015ebd05ac1bb6a97d1a472bf28701b",
+      "commits": 15,
+      "changed_file_rows": 300,
+      "cap_hit": true,
+      "files": [
+        {
+          "path": ".patch/httplib/0001-mingw.patch",
+          "status": "removed",
+          "additions": 0,
+          "deletions": 62
+        },
+        {
+          "path": "CMakeLists.txt",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 16
+        },
+        {
+          "path": "CMakeModules/CPM.cmake",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 3
+        },
+        {
+          "path": "CMakeModules/find/Findhttplib.cmake",
+          "status": "removed",
+          "additions": 0,
+          "deletions": 34
+        },
+        {
+          "path": "README.md",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 1
+        },
+        {
+          "path": "cpmfile.json",
+          "status": "modified",
+          "additions": 22,
+          "deletions": 37
+        },
+        {
+          "path": "dist/languages/ar.ts",
+          "status": "modified",
+          "additions": 1988,
+          "deletions": 981
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "status": "modified",
+          "additions": 1981,
+          "deletions": 970
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "status": "modified",
+          "additions": 1981,
+          "deletions": 970
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "status": "modified",
+          "additions": 1976,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "status": "modified",
+          "additions": 1975,
+          "deletions": 968
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "status": "modified",
+          "additions": 1984,
+          "deletions": 973
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "status": "modified",
+          "additions": 1982,
+          "deletions": 971
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "status": "modified",
+          "additions": 1978,
+          "deletions": 970
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "status": "modified",
+          "additions": 1973,
+          "deletions": 963
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "status": "modified",
+          "additions": 1976,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "status": "modified",
+          "additions": 1975,
+          "deletions": 964
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "status": "modified",
+          "additions": 1985,
+          "deletions": 976
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "status": "modified",
+          "additions": 3264,
+          "deletions": 2200
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "status": "modified",
+          "additions": 1971,
+          "deletions": 964
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "status": "modified",
+          "additions": 2040,
+          "deletions": 1023
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "status": "modified",
+          "additions": 1979,
+          "deletions": 968
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "status": "modified",
+          "additions": 1976,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "status": "modified",
+          "additions": 2271,
+          "deletions": 1254
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "status": "modified",
+          "additions": 1980,
+          "deletions": 969
+        },
+        {
+          "path": "docs/Build.md",
+          "status": "modified",
+          "additions": 15,
+          "deletions": 22
+        },
+        {
+          "path": "docs/Caveats.md",
+          "status": "modified",
+          "additions": 15,
+          "deletions": 13
+        },
+        {
+          "path": "docs/Deps.md",
+          "status": "modified",
+          "additions": 112,
+          "deletions": 124
+        },
+        {
+          "path": "docs/build/Android.md",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "externals/CMakeLists.txt",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 9
+        },
+        {
+          "path": "externals/cmake-modules/CompilerChecks.cmake",
+          "status": "added",
+          "additions": 57,
+          "deletions": 0
+        },
+        {
+          "path": "externals/cmake-modules/FasterLinker.cmake",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 16
+        },
+        {
+          "path": "shell.nix",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/CMakeLists.txt",
+          "status": "modified",
+          "additions": 54,
+          "deletions": 3
+        },
+        {
+          "path": "src/android/app/build.gradle.kts",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 12
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/NativePostProcessing.kt",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 5
+        },
+        {
+          "path": "src/android/app/src/main/jni/CMakeLists.txt",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/jni/native.cpp",
+          "status": "modified",
+          "additions": 19,
+          "deletions": 17
+        },
+        {
+          "path": "src/android/app/src/main/jni/native_config.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/jni/native_input.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/app/src/main/jni/native_post_processing.cpp",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 65
+        },
+        {
+          "path": "src/android/app/src/main/res/drawable/ic_stoat.xml",
+          "status": "modified",
+          "additions": 31,
+          "deletions": 14
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 9
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 0
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/android/build.gradle.kts",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/adsp/apps/audio_renderer/audio_renderer.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/adsp/apps/audio_renderer/command_list_processor.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/common/common.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/device/device_session.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/renderer/command/data_source/adpcm.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/data_source/pcm_float.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/data_source/pcm_int16.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/aux_.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/biquad_filter.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/capture.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/compressor.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 3
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/delay.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 3
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/i3dl2_reverb.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 4
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/light_limiter.cpp",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 7
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/multi_tap_biquad_filter.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/effect/reverb.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 4
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/clear_mix.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/copy_mix.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/depop_for_mix_buffers.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/depop_prepare.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/mix.cpp",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 4
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/mix_ramp.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 6
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/mix_ramp_grouped.cpp",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 6
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/volume.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/audio_core/renderer/command/mix/volume_ramp.cpp",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 6
+        },
+        {
+          "path": "src/audio_core/renderer/command/performance/performance.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/audio_core/renderer/command/resample/downmix_6ch_to_2ch.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 3
+        },
+        {
+          "path": "src/audio_core/renderer/command/resample/upsample.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/audio_core/renderer/command/sink/circular_buffer.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/audio_core/renderer/command/sink/device.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/audio_core/renderer/effect/light_limiter.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/audio_core/sink/sink_details.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/audio_core/sink/sink_stream.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/CMakeLists.txt",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 10
+        },
+        {
+          "path": "src/common/android/android_common.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/android/multiplayer/multiplayer.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/common/announce_multiplayer_room.h",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 6
+        },
+        {
+          "path": "src/common/bit_field.h",
+          "status": "modified",
+          "additions": 11,
+          "deletions": 4
+        },
+        {
+          "path": "src/common/common_funcs.h",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 11
+        },
+        {
+          "path": "src/common/dynamic_library.cpp",
+          "status": "modified",
+          "additions": 11,
+          "deletions": 11
+        },
+        {
+          "path": "src/common/fs/file.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/fs/fs.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/common/fs/fs_android.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/common/fs/path_util.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 2
+        },
+        {
+          "path": "src/common/fs/path_util.h",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 0
+        },
+        {
+          "path": "src/common/fs/ryujinx_compat.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/common/fs/symlink.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/common/hex_util.h",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 3
+        },
+        {
+          "path": "src/common/httplib.h",
+          "status": "removed",
+          "additions": 0,
+          "deletions": 18
+        },
+        {
+          "path": "src/common/logging.cpp",
+          "status": "modified",
+          "additions": 32,
+          "deletions": 31
+        },
+        {
+          "path": "src/common/logging.h",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 10
+        },
+        {
+          "path": "src/common/net/net.cpp",
+          "status": "modified",
+          "additions": 108,
+          "deletions": 195
+        },
+        {
+          "path": "src/common/net/net.h",
+          "status": "modified",
+          "additions": 21,
+          "deletions": 22
+        },
+        {
+          "path": "src/common/ring_buffer.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/common/settings.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/common/settings_setting.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/common/time_zone.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 5
+        },
+        {
+          "path": "src/common/typed_address.h",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 11
+        },
+        {
+          "path": "src/common/uuid.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/common/uuid.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/CMakeLists.txt",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 7
+        },
+        {
+          "path": "src/core/arm/arm_interface.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 6
+        },
+        {
+          "path": "src/core/arm/debug.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/arm/dynarmic/arm_dynarmic_64.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/arm/dynarmic/dynarmic_cp15.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/arm/nce/arm_nce.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/arm/nce/interpreter_visitor.cpp",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/core.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/crypto/aes_util.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/crypto/key_manager.cpp",
+          "status": "modified",
+          "additions": 11,
+          "deletions": 11
+        },
+        {
+          "path": "src/core/crypto/key_manager.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/debugger/debugger.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/debugger/gdbstub.cpp",
+          "status": "modified",
+          "additions": 29,
+          "deletions": 18
+        },
+        {
+          "path": "src/core/debugger/gdbstub_arch.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/file_sys/bis_factory.cpp",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 4
+        },
+        {
+          "path": "src/core/file_sys/card_image.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/fs_save_data_types.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fs_types.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_aes_ctr_counter_extended_storage.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_bucket_tree.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_bucket_tree.h",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 6
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_bucket_tree_template_impl.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_compressed_storage.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_hierarchical_integrity_verification_storage.h",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_indirect_storage.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_integrity_verification_storage.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_nca_file_system_driver.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/file_sys/fssystem/fssystem_nca_header.h",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 14
+        },
+        {
+          "path": "src/core/file_sys/ips_layer.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/patch_manager.cpp",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 10
+        },
+        {
+          "path": "src/core/file_sys/registered_cache.cpp",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 17
+        },
+        {
+          "path": "src/core/file_sys/savedata_factory.cpp",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 9
+        },
+        {
+          "path": "src/core/file_sys/sdmc_factory.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/file_sys/submission_package.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/core/file_sys/system_archive/ng_word.cpp",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 5
+        },
+        {
+          "path": "src/core/file_sys/xts_archive.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/frontend/applets/error.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/api_version.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/kernel/k_page_table_base.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/kernel/kernel.cpp",
+          "status": "modified",
+          "additions": 24,
+          "deletions": 24
+        },
+        {
+          "path": "src/core/hle/kernel/svc.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/kernel/svc/svc_exception.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/result.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/acc/acc.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/acc/profile_manager.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_error.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_general.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_general.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/am/frontend/applet_web_browser.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_device.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_renderer_manager.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/core/hle/service/bcat/bcat_types.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/builtin_news.cpp",
+          "status": "modified",
+          "additions": 41,
+          "deletions": 36
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_manager.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_types.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal.cpp",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 14
+        },
+        {
+          "path": "src/core/hle/service/filesystem/filesystem.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/glue/time/time_zone_binary.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 4
+        },
+        {
+          "path": "src/core/hle/service/ldn/ldn_types.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/lm/lm.cpp",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 8
+        },
+        {
+          "path": "src/core/hle/service/nfc/common/device.cpp",
+          "status": "modified",
+          "additions": 24,
+          "deletions": 7
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.cpp",
+          "status": "modified",
+          "additions": 91,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.h",
+          "status": "modified",
+          "additions": 15,
+          "deletions": 0
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/devices/nvhost_ctrl.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/nvdrv.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/psc/ovln/sender.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/psc/time/common.h",
+          "status": "modified",
+          "additions": 24,
+          "deletions": 24
+        },
+        {
+          "path": "src/core/hle/service/psc/time/shared_memory.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/server_manager.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/service.cpp",
+          "status": "modified",
+          "additions": 9,
+          "deletions": 7
+        },
+        {
+          "path": "src/core/hle/service/set/settings_types.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/hle/service/sockets/bsd.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/launch_params.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/launch_timestamp_cache.cpp",
+          "status": "modified",
+          "additions": 23,
+          "deletions": 25
+        },
+        {
+          "path": "src/core/memory.cpp",
+          "status": "modified",
+          "additions": 13,
+          "deletions": 8
+        },
+        {
+          "path": "src/core/memory.h",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 2
+        },
+        {
+          "path": "src/core/memory/dmnt_cheat_vm.cpp",
+          "status": "modified",
+          "additions": 83,
+          "deletions": 83
+        },
+        {
+          "path": "src/core/memory/dmnt_cheat_vm.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/core/perf_stats.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 3
+        },
+        {
+          "path": "src/core/reporter.cpp",
+          "status": "modified",
+          "additions": 259,
+          "deletions": 145
+        },
+        {
+          "path": "src/dedicated_room/yuzu_room.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/CMakeLists.txt",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/CMakeLists.txt",
+          "status": "modified",
+          "additions": 16,
+          "deletions": 5
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_data_processing.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/verbose_debugging_output.cpp",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 10
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/exception_handler_macos.cpp",
+          "status": "modified",
+          "additions": 11,
+          "deletions": 11
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/exception_handler_posix.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 4
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32_coprocessor.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32_memory.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a64.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a64_memory.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_cryptography.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_data_processing.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_floating_point.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_packed.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_saturation.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_vector.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_vector_floating_point.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_vector_saturation.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a32_emit_x64.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a32_emit_x64_memory.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 5
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a64_emit_x64.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a64_emit_x64_memory.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 5
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/block_of_code.cpp",
+          "status": "modified",
+          "additions": 13,
+          "deletions": 5
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/devirtualize.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_data_processing.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_floating_point.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.cpp.inc",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_sm4.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_vector.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_vector_floating_point.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/host_feature.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/perf_map.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/reg_alloc.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/verbose_debugging_output.cpp",
+          "status": "modified",
+          "additions": 14,
+          "deletions": 10
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/common/fp/op/FPToFixed.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/common/llvm_disassemble.cpp",
+          "status": "modified",
+          "additions": 8,
+          "deletions": 8
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/a32_location_descriptor.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/a32_location_descriptor.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/a32_types.h",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 5
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/decoder/asimd.inc",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/a32_translate_impl.h",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/asimd_three_regs.cpp",
+          "status": "modified",
+          "additions": 85,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/asimd_two_regs_misc.cpp",
+          "status": "modified",
+          "additions": 38,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_location_descriptor.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_location_descriptor.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_types.cpp",
+          "status": "modified",
+          "additions": 6,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_types.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/basic_block.cpp",
+          "status": "modified",
+          "additions": 43,
+          "deletions": 43
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/location_descriptor.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/location_descriptor.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/opcodes.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/opt_passes.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/ir/type.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/tests/A32/fuzz_arm.cpp",
+          "status": "modified",
+          "additions": 33,
+          "deletions": 33
+        },
+        {
+          "path": "src/dynarmic/tests/A32/test_arm_instructions.cpp",
+          "status": "modified",
+          "additions": 208,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/tests/A32/test_invalidation.cpp",
+          "status": "added",
+          "additions": 116,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/tests/A32/test_mem_abort_context.cpp",
+          "status": "added",
+          "additions": 75,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/tests/A64/a64.cpp",
+          "status": "modified",
+          "additions": 127,
+          "deletions": 4
+        },
+        {
+          "path": "src/dynarmic/tests/A64/fuzz_with_unicorn.cpp",
+          "status": "modified",
+          "additions": 39,
+          "deletions": 39
+        },
+        {
+          "path": "src/dynarmic/tests/A64/testenv.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/dynarmic/tests/CMakeLists.txt",
+          "status": "modified",
+          "additions": 11,
+          "deletions": 8
+        },
+        {
+          "path": "src/dynarmic/tests/fuzz_util.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/tests/print_info.cpp",
+          "status": "modified",
+          "additions": 47,
+          "deletions": 47
+        },
+        {
+          "path": "src/dynarmic/tests/rsqrt_test.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/tests/test_generator.cpp",
+          "status": "modified",
+          "additions": 43,
+          "deletions": 43
+        },
+        {
+          "path": "src/dynarmic/tests/test_reader.cpp",
+          "status": "modified",
+          "additions": 58,
+          "deletions": 58
+        },
+        {
+          "path": "src/dynarmic/tests/unicorn_emu/a32_unicorn.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 3
+        },
+        {
+          "path": "src/dynarmic/tests/unicorn_emu/a64_unicorn.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/dynarmic/tests/x64_cpu_info.cpp",
+          "status": "modified",
+          "additions": 10,
+          "deletions": 0
+        },
+        {
+          "path": "src/frontend_common/CMakeLists.txt",
+          "status": "modified",
+          "additions": 0,
+          "deletions": 3
+        },
+        {
+          "path": "src/frontend_common/config.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/frontend_common/content_manager.h",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 2
+        },
+        {
+          "path": "src/frontend_common/data_manager.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "src/frontend_common/mod_manager.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/frontend_common/play_time_manager.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 5
+        },
+        {
+          "path": "src/frontend_common/update_checker.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 4
+        },
+        {
+          "path": "src/hid_core/frontend/emulated_devices.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/hid_core/hid_types.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 2
+        },
+        {
+          "path": "src/hid_core/irsensor/irs_types.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": "src/hid_core/resources/abstracted_pad/abstract_pad_holder.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 1
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad_types.h",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "src/input_common/drivers/android.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/input_common/drivers/camera.cpp",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "src/input_common/drivers/gc_adapter.cpp",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 2
+        },
+        {
+          "path": "src/input_common/drivers/joycon.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/input_common/drivers/mouse.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/input_common/drivers/sdl_driver.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 5
+        },
+        {
+          "path": "src/input_common/drivers/tas_input.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 5
+        },
+        {
+          "path": "src/input_common/drivers/udp_client.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/input_common/drivers/virtual_amiibo.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/input_common/helpers/joycon_protocol/nfc.cpp",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/network/room.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 3
+        },
+        {
+          "path": "src/qt_common/CMakeLists.txt",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 1
+        },
+        {
+          "path": "src/qt_common/abstract/frontend.h",
+          "status": "modified",
+          "additions": 7,
+          "deletions": 7
+        },
+        {
+          "path": "src/qt_common/discord/discord_impl.cpp",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 19
+        },
+        {
+          "path": "src/qt_common/game_list/game_list_p.h",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 1
+        },
+        {
+          "path": "src/qt_common/game_list/worker.cpp",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 5
+        },
+        {
+          "path": "src/qt_common/qt_common.cpp",
+          "status": "modified",
+          "additions": 12,
+          "deletions": 3
+        },
+        {
+          "path": "src/qt_common/qt_common.h",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        }
+      ]
+    }
+  ]
+}

@@ -32,6 +32,7 @@ def main() -> None:
             raise AssertionError("required guest memory safety check missing: " + expected)
     test = r"""
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -98,7 +99,7 @@ int main() {
     assert(mem.writes == 1);
     assert(mem.bytes.front() == 0xa5 && mem.bytes[1] == 0 &&
            mem.bytes[4] == 0 && mem.bytes[5] == 0xa5);
-    for (u64 bad : {0ull, 1ull, 3ull, 5ull,
+    for (u64 bad : std::array<u64, 6>{0, 1, 3, 5,
                      Eden::kMaxSilentAudioInBytes + 2,
                      UINT64_MAX}) {
         session.ReleaseBuffer({bad, 1});

@@ -270,3 +270,25 @@ replacement in the maintained decoder, general performance benefit,
 PS5 Vulkan result, or NS1 safety. The original decoder and vendor
 remain unchanged. Source check: [pinned vendor witness](PINNED_VENDOR_SOURCE_WITNESS_2026-11-10.md).
 
+
+## R2 — Vulkan upload batching source-equivalent negative/positive fixture
+
+Added [`test_vulkan_upload_batch_contract.cpp`](test_vulkan_upload_batch_contract.cpp)
+to the **eighth** bounded host suite. It embeds source-equivalent
+`CanAdd` / `Add` bodies from Lichii's pinned `upload_batch.h`
+(body fingerprints 1290869894 and 3125317133) and executes them
+with synthetic Vulkan buffer handles and copy regions.
+**25/25 tests pass with Clang/GCC across O0/O1/O2 and ASan/UBSan.**
+
+The R2 candidate must preserve explicit barriers, ordered staging and
+tick-based GPU lifetime. An integer-overflow negative test proves that
+the upstream overlap predicate assumes valid Vulkan copy offsets:
+a **separate fail-closed allocation-bound preflight** is mandatory
+before source-equivalent batching. This is an invalid-input test,
+not evidence that a real PS5 copy with valid offsets currently fails.
+
+The current runner has **eight host-only suites**, including 181
+discrete contracts and 1536 separately counted GOB differential layouts
+on each compiler. The optional full pinned-vendor checker remains SKIP
+until a real checkout is provided.
+

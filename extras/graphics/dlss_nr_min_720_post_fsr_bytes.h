@@ -50,7 +50,7 @@ CountNominalPostFsrImages(Extent output,std::uint32_t image_slots) noexcept {
     std::uint64_t reserve_bytes) noexcept {
     // Necessary, not sufficient: caller must separately obtain a true
     // free-VRAM measurement and include all non-image neural allocations.
-    return images.valid&&available_bytes>reserve_bytes&&
+    return images.valid&&reserve_bytes>0u&&available_bytes>reserve_bytes&&
            images.all_slots<=available_bytes-reserve_bytes;
 }
 } // namespace Eden::Graphics::DlssNrMin

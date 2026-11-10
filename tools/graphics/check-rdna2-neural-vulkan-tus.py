@@ -221,7 +221,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         # translation unit which selects them. No production default change.
         tasks=tuple((name,mode) for name in FILES for mode in ("0","1"))+tuple(
             ("nr_rdna2_frame_session.cpp","p"+profile)
-            for profile in ("4","5","6","12"))
+            for profile in ("4","5","6","8","12","16"))
     else:
         tasks=tuple((name,None) for name in
                     (*FILES,"__present_layer_r09__","__r09_full_gpu_host__"))
@@ -250,7 +250,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
             print("R09_NEURAL_NATIVE_CPP_PASS",name,flush=True)
     assert not failures,("R09 selected native C++ syntax failed",failures)
     if R09_MIN_DUAL=="1":
-        assert len(results)==16
-        print("R09_MIN_VIT_NATIVE_CPP_BOTH_MODES_AND_ALL_FOUR_SCRATCH_PROFILES_PASS",flush=True)
+        assert len(results)==18
+        print("R09_MIN_VIT_NATIVE_CPP_BOTH_MODES_AND_ALL_SIX_SCRATCH_PROFILES_PASS",flush=True)
     else:
         print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

@@ -314,3 +314,18 @@ Compact must pass GCC/Clang UBSan.
 This is source-policy and host memory geometry validation only:
 the actual Vulkan shaders, model weights, complete image composition
 and console GPU fences still need qualified 720p A/B checks.
+
+
+## Cross-repository 720p ViT allocator qualification
+
+The latest vendor research candidate is d5da2b83a8b93e998920bb0b6d448956cc450f00.
+The isolated host Clang gate temporarily checks it out in the CI runner
+without updating the pinned gitlink and compiles six authentic native ViT
+owner C++ units twice (pool off/on) plus frame-session scratch profiles
+4/5/6/8/12/16 for a total of 18 translation-unit syntax checks.
+
+Profiles 8 and 16 must fail closed if the model's native ViT route is
+NOT 960 tokens. Scratch 16 is the fastest *host-policy batch-count*
+candidate at 720p (one FFN Expand batch + one QKV batch), but does NOT
+prove actual GPU performance. Only a full model, the guest frame path
+and PS5 hardware A/B can establish end-to-end 720p neural fluency.

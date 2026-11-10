@@ -121,3 +121,37 @@ does not prove an actual PS5 GPU/channel synchronization failure.
 Do not change the runtime or weaken guest mapping guards until the
 actual remap lock/owner protocol is confirmed and actual-source
 race tests demonstrate a safe replacement.
+
+## Repeatability gate — committed GitHub inputs verified
+
+On the refreshed audit pass, independently fetched all nine test/runner
+source files from the GitHub PR #44 head and compared each file's exact
+UTF-8 character count and FNV-1a checksum with the locally compiled copy:
+
+| File | UTF-8 chars | FNV-1a 32-bit | Match |
+| --- | ---: | ---: | --- |
+| `run_host_checks.sh` | 1184 | 3584663938 | PASS |
+| `ssbo_extent_contract.hpp` | 3647 | 3367749903 | PASS |
+| `native_vk_range_contract.hpp` | 3273 | 1869386525 | PASS |
+| `test_ssbo_extent_contract.cpp` | 4758 | 1420155762 | PASS |
+| `test_gpu_backing_lifetime.cpp` | 5099 | 3112276382 | PASS |
+| `test_epoch_guarded_gmmu_memo.cpp` | 7662 | 1243215862 | PASS |
+| `test_native_vk_range_contract.cpp` | 5265 | 3696510677 | PASS |
+| `test_qmd3_descriptor_read_owner.cpp` | 4954 | 3415830595 | PASS |
+| `test_native_gpu_read_toctou.cpp` | 3879 | 3880345910 | PASS |
+
+The local runner initially differed in comment/formatting only. It was
+resynchronized to the **exact GitHub text** and verified at `(1184, 3584663938)`
+before repeating the full run. The six test sources and both headers
+were already byte-equivalent. No runtime implementation changed.
+
+With that exact runner and inputs:
+
+- **O1 / Clang 17 and GCC 14:** all six suites PASS; 156 checks each, 312 total.
+- **O0/O2 / both compilers:** all 24 binaries PASS; 624 checks.
+- **Vendor source extractor:** still SKIP (no pinned vendor git checkout), not PASS.
+
+All results are **local host research evidence**, not GitHub CI, not PS5
+and not proof of a real guest process race. Parent audit and refreshed
+[upstream closeout](../../docs/NS2_UPSTREAM_REFRESH_AND_CLOSEOUT_2026-11-10.md).
+

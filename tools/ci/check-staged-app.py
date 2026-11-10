@@ -51,7 +51,7 @@ ui_expected.add("ui/box-art-index.tsv")
 for source in (source_ui / "lang").glob("*.po"):
     ui_expected.add("ui/lang/" + source.with_suffix(".txt").name)
 legal_source = root / "LICENSES"
-legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md", "legal/LIBWEBP_LICENSE.txt", "legal/LIBWEBP_PATENTS.txt"} | {
+legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md", "legal/LIBWEBP_LICENSE.txt", "legal/LIBWEBP_PATENTS.txt", "legal/MIHAWKGEN_LICENSE.md", "legal/MIHAWKGEN_THIRD_PARTY_NOTICES.txt", "legal/FSR3_OPTICAL_LICENSE.txt", "legal/FSR3_OPTICAL_SHADER_LICENSE.txt"} | {
     "legal/LICENSES/" + p.name for p in legal_source.iterdir() if p.is_file()
 }
 expected = base | ui_expected | legal_expected

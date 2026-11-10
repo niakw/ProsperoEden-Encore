@@ -74,7 +74,8 @@ int main() {
     std::string malformed{Eden::NeuralPlans::Original};
     const auto pos=malformed.find("1920 1080 2073600");
     assert(pos!=std::string::npos);
-    malformed.replace(pos,15u,"1920 900 2073600");
+    malformed.replace(pos,std::string("1920 1080 2073600").size(),
+                      "1920 900 2073600");
     assert(!AuditNativeR09Candidate(malformed,kCandidateMinRaster,rejected));
     assert(rejected.issue==GeometryIssue::ReferenceGeometryMismatch ||
            rejected.issue==GeometryIssue::InvalidNativeSchedule);

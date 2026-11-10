@@ -114,6 +114,7 @@ jobs:
           # The same witnesses are now in the mandatory native preflight.
           python3 -B tools/check-native-source-syntax.py "$scratch/native-local" \
             --only headless/vulkan_present_manager.cpp \
+            --only headless/graphics.cpp \
             --only video_core/renderer_vulkan/vk_turbo_mode.cpp \
             --only video_core/renderer_vulkan/vk_texture_cache_base.cpp \
             --only video_core/renderer_opengl/gl_texture_cache_base.cpp \
@@ -154,17 +155,52 @@ jobs:
               "Mihawk object library missing from native video_core archive")
           print("NATIVE_GRAPHICS_LINK_OWNER_PASS", flush=True)
           PY_GRAPH_OWNERS
-          # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
-          # translation units using the actual native compile_commands.json.
-          # Collect all errors in one run; do not produce .o/ELF/ZIP.
-          # Separate real-PS5 C++ slice. The prior native run at
-          # 0e9dfd5 checks indices 0..399 on the pinned vendor; this run
-          # concurrently covers the remainder without repeating that work.
-          # Fail if the deterministic source set has fewer than 401 TUs.
-          # No native .o, link, app package or release is produced.
-          python3 -B tools/ci/preflight-native-video-core-syntax.py \
-            "$scratch/native-local" --jobs 4 --start-index 400 --max-tus 500
-          # No full C++ build, package or release is authorized here.
+          # Eleventh native build failed at 1364/1399 in WebP's x86-64
+          # scalar floating-point ABI and launcher's frame probe. Compile
+          # those SAME four real PS5 objects, not only synthetic host tests.
+          # Never link the application or publish an artifact in this workflow.
+          python3 - "$scratch/native-local" <<'PY_P5_OBJECTS'
+          import json
+          from pathlib import Path
+          import shlex
+          import subprocess
+          import sys
+
+          build = Path(sys.argv[1]).resolve()
+          database = json.loads((build / "compile_commands.json").read_text())
+          wanted = (
+              "headless/graphics.cpp",
+              "vendor/sources/libwebp/sharpyuv/sharpyuv_gamma.c",
+              "vendor/sources/libwebp/src/enc/filter_enc.c",
+              "vendor/sources/libwebp/src/dsp/ssim.c",
+              "vendor/sources/libwebp/src/enc/frame_enc.c",
+          )
+          graph = subprocess.check_output(
+              ["ninja", "-C", str(build), "-t", "targets", "all"], text=True)
+          targets = set(row.split(": ", 1)[0] for row in graph.splitlines())
+          selected = []
+          for suffix in wanted:
+              matching = [row for row in database if row["file"].endswith("/" + suffix)]
+              assert len(matching) == 1, (suffix, len(matching))
+              row = matching[0]
+              flags = list(row["arguments"]) if "arguments" in row else shlex.split(row["command"])
+              output_index = flags.index("-o")
+              output = flags[output_index + 1]
+              if suffix.endswith(".c"):
+                  assert "-mno-sse2" in flags and "-msse2" in flags, (suffix, flags)
+                  assert flags.index("-msse2") > flags.index("-mno-sse2"), (
+                      "SSE2 must override native conservative C flags", suffix)
+              else:
+                  assert "JitMemory" in (Path(row["file"]).read_text()), suffix
+              assert output in targets, (suffix, output)
+              selected.append(output)
+              print("P5_NATIVE_C11_COMPILE_OWNER", suffix, output, flush=True)
+          subprocess.run(["ninja", "-C", str(build), "-j", "2", *selected],
+                         check=True)
+          print("P5_NATIVE_C11_FAILED_OBJECTS_COMPILED_PASS count=5 no_link=1",
+                flush=True)
+          PY_P5_OBJECTS
+          # This is only five exact object builds, not an app build or release.
 
       - name: Reject missing cache
         if: steps.restore.outputs.cache-hit != 'true'

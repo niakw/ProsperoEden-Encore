@@ -1,0 +1,21 @@
+#version 450
+// SPDX-License-Identifier: GPL-3.0-or-later
+// STRICTLY A HOST TEST FIXTURE. This is not DLSS, neural inference,
+// a trained model, or a runtime optimization. Supplies a known RGB delta
+// to prove the pack -> residual transfer path does not merely pass through.
+layout(local_size_x=8,local_size_y=8,local_size_z=1) in;
+layout(set=0,binding=0) uniform sampler2D beforeModel;
+layout(set=0,binding=1,rgba16f) writeonly uniform image2D syntheticAfter;
+layout(push_constant) uniform Dimensions {
+    uvec2 originalExtent;
+    uvec2 workExtent;
+    vec2 centerFraction;
+    vec2 workFraction;
+} dims;
+void main(){
+    uvec2 id=gl_GlobalInvocationID.xy;
+    if(any(greaterThanEqual(id,dims.workExtent)))return;
+    vec4 color=texelFetch(beforeModel,ivec2(id),0);
+    color.rgb += vec3(0.125,-0.0625,0.25);
+    imageStore(syntheticAfter,ivec2(id),color);
+}

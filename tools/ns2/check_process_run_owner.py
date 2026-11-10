@@ -25,18 +25,19 @@ current=once(current,
 #endif''',
     '''#include "core/loader/ns2_svc_trace.h"
 #endif''')
-# Undo the additional H01 failed-Run RomFS cleanup before the original
-# byte-for-byte N52/H01 baseline normalization. This is native-only and
-# preserves the previous process scheduling semantics on NS1.
+# Undo the native-only late-Run finalization before the immutable N52 owner
+# hash comparison. NS1's historical Run() method is never modified.
 current=once(current,
-    '''            m_process_started = true;
-            // This NS2 run was already registered by the loader but was
-            // never scheduled successfully. Retire its RomFS owner BEFORE
-            // clearing the trace; Finalize cannot identify the NS2 process
-            // once the trace is gone. No NS1 behavior changes.
-            m_system.GetFileSystemController().UnregisterProcessIfPresent(
-                m_process->GetProcessId());
-            Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());''',
+    '''            // A late failure leaves no runnable NS2 process. Merely
+            // clearing its trace would strand the published KProcess and
+            // its guest code pages in the kernel process list. KProcess::Run
+            // has already unwound its transient stack/thread reservations;
+            // Finalize now closes the process, retires RomFS and removes the
+            // kernel registration on the same failure path.
+            this->Finalize();
+            // Do not let a second Run() on the empty failed instance report
+            // legacy success. A fresh Initialize() clears this terminal bit.
+            m_process_started = true;''',
     '''            m_process_started = true;
             Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());''')
 # H01 has three additional native-only guards in Process::Initialize /

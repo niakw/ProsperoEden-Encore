@@ -12,7 +12,7 @@ cmake = read("headless/vulkan.cmake")
 pack = read("tools/package-headless-native.sh")
 session = read("headless/mihawk_native_session.cpp")
 volk = read("headless/mihawk_volk.h")
-model = root / "third_party/PS5_MihawkGen/framegen/models/network.fgw"
+model = root / "vendor/sources/ps5-mihawkgen/framegen/models/network.fgw"
 
 def between(pattern, start=0):
     return fork.index(pattern, start)
@@ -44,7 +44,7 @@ assert "present_manager.Present(fsr3_synthetic)" in fork
 assert "blit_swapchain.DrawHudOverlay(device, fsr3_synthetic, postprocess_hud)" in fork
 assert "fsr3_optical.reset()" in fork
 assert "fsr3_optical_session.cpp" in cmake
-assert 'third_party/PS5_FSR3OpticalFlow' in cmake
+assert 'vendor/sources/ps5-fsr3-optical-flow' in cmake
 assert fork.index("present_manager.Present(fsr3_synthetic)") < fork.index(
     "const u64 real_tick = scheduler.Flush(*frame->render_ready)")
 assert "guest_motion_vectors = true" not in fork

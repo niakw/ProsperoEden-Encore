@@ -22,6 +22,25 @@ physical_all = sorted(
     for p in active.rglob("*")
     if p.is_file() and p.suffix in suffixes
 )
+# Exactly pinned third-party sources are in vendor/sources/, not in the
+# maintained/active F07 production graph. Reject stale original-source trees
+# in encore-active while still auditing *every* maintained override here.
+pinned_upstream_source_counts = {
+    "ps5-mihawkgen": 632,
+    "ps5-fsr3-optical-flow": 41,
+    "libwebp": 245,
+}
+for name, expected in pinned_upstream_source_counts.items():
+    upstream = root / "vendor/sources" / name
+    assert upstream.is_dir() and not (upstream / ".git").exists(), name
+    actual = sum(p.is_file() and p.suffix in suffixes
+                 for p in upstream.rglob("*"))
+    assert actual == expected, ("Pinned upstream inventory drift", name, actual, expected)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not (active / stale).exists(), ("Sources belong in sources/", stale)
+print("ENCORE_PINNED_UPSTREAM_SOURCES_PASS",
+      f"sources={sum(pinned_upstream_source_counts.values())}",
+      f"trees={len(pinned_upstream_source_counts)}", "excluded_from_f07=1")
 # Preserve the audited production source catalogue. The NS2 research sources
 # are tracked separately and explicitly; they are not F07 shipping proofs.
 research_manifest = json.loads(

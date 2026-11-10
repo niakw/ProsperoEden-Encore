@@ -7,11 +7,12 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[2]
-src=root/"third_party/PS5_FSR3OpticalFlow"
+src=root/"vendor/sources/ps5-fsr3-optical-flow"
 if not (src/"src/ps5_framegen.cpp").is_file():
-    raise SystemExit("Missing third_party/PS5_FSR3OpticalFlow submodule")
-commit=subprocess.check_output(["git","-C",str(src),"rev-parse","HEAD"],text=True).strip()
-assert commit=="64362101757cdd6f7df9eeb984cb53f03f1fbfca",commit
+    raise SystemExit("Missing pinned vendor/sources/ps5-fsr3-optical-flow upstream source")
+tree_sha=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD:sources/ps5-fsr3-optical-flow"],text=True).strip()
+assert tree_sha=="85e34d638cd9e8b211e08fb19d1a57a588bb8d76",tree_sha
+assert "64362101757cdd6f7df9eeb984cb53f03f1fbfca" in (root/"vendor/docs/PS5_INTERNAL_DEPENDENCY_ORIGINS_2026-11-10.md").read_text()
 inc=(src/"src/framegen/fg_shaders.inc").read_text()
 arrays=re.findall(r"static const u32 k_fg_spv_(\w+)\[(\d+)\]\s*=\s*\{(.*?)\};",inc,re.S)
 assert len(arrays)==10,f"expected 10 optical-flow shader arrays, got {len(arrays)}"

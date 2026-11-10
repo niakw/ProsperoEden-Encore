@@ -27,6 +27,8 @@ authors. Repository links provide provenance and full contributor histories.
 - [PS5 OpenGL](https://github.com/blackbearreloaded/ps5-opengl) — BlackBearReloaded (`@blackbearreloaded`).
 - [Mihawk's PS5 Mesa](https://github.com/mihawk-99/PS5_Mesa) — Mihawk (`@mihawk-99`) and Mesa contributors.
 - [Mihawk's PS5 Vulkan](https://github.com/mihawk-99/PS5_Vulkan) — Mihawk (`@mihawk-99`).
+- [PS5 MihawkGen](https://github.com/mihawk-99/PS5_MihawkGen) — Mihawk (`@mihawk-99`) and upstream model contributors.
+- [PS5 FSR3 Optical Flow](https://github.com/Swordpdf/ps5-framegen) — Swordpdf (`@Swordpdf`) and credited AMD FidelityFX contributors.
 - [Mihawk's PS5 PayloadSDK](https://github.com/mihawk-99/PS5_PayloadSDK) — Mihawk (`@mihawk-99`) and upstream SDK authors.
 - [PS5 Payload SDK](https://github.com/ps5-payload-dev/sdk) — John Törnblom (`@john-tornblom`) and contributors `@ps5-payload-dev`.
 - [ps5-vulkan](https://github.com/mpereiraesaa/ps5-vulkan) — `@mpereiraesaa` and contributors.
@@ -130,6 +132,17 @@ files.** The selected license text is preserved as
   **[ps5-audio-decoding-research](https://github.com/blackbearreloaded/ps5-audio-decoding-research)**;
   both upstream repositories are GPL-3.0.
 
+## Native frame generation source and upstream licences
+
+The vendor repository contains complete, byte-exact sources for MihawkGen
+(`c57232a9f16bcb6df5fe07c9bb631518f2b1cc0e`) and FSR3 Optical Flow
+(`64362101757cdd6f7df9eeb984cb53f03f1fbfca`). MihawkGen's pinned
+1,757,240-byte model retains upstream GPL/MIT notices and the author's model
+training/distillation credits. Optical Flow preserves the Swordpdf GPL and
+AMD shader licence material. Each notice is copied into the installed PS5
+title's legal directory. Sources being bundled does not establish successful
+PS5 interpolation, third-party endorsement or independent copyright ownership.
+
 ## Runtime metadata and media
 
 - **[LaunchBox](https://www.launchbox-app.com/)** — third-party public game catalogue and optional front/back case-art lookup. The build creates a compact local index, but does not embed the full external catalogue or commercial cover scans. Downloaded images remain subject to their original ownership and applicable terms.
@@ -204,9 +217,9 @@ ProsperoEden and Encore exist thanks to the Eden maintainers and contributors,
 Mihawk, mpereiraesaa, John Törnblom, SvenGDK, the PS5 homebrew community and
 the many upstream free/open-source projects credited above.
 
-## libwebp (WebP image codec, vendor submodule)
+## libwebp 1.6.0 (WebP image codec, internally vendored source)
 
 The launcher uses a pinned official release of Google libwebp for
 cover cache and compressed embedded UI images. BSD-style license with
-patent rights grant. Source license: vendor/encore-active/libwebp/COPYING;
+patent rights grant. Source license: vendor/sources/libwebp/COPYING;
 installed license: legal/LIBWEBP_LICENSE.txt.

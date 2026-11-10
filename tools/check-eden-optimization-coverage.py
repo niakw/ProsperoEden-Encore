@@ -29,6 +29,25 @@ suffixes={".c",".cpp",".cxx",".cc",".h",".hpp",".inc"}
 all_owners={p for p in tracked
         if p.startswith(("headless/","src/","vendor/encore-active/"))
         and Path(p).suffix in suffixes}
+# Three unmodified upstream dependencies live under vendor/sources/.
+# Their snapshots must never be categorized as F07 owners or hidden as
+# Encore active overrides. Keep the immutable 518 historical source total.
+pinned_upstream_f07_counts = {
+    "ps5-mihawkgen": 474,
+    "ps5-fsr3-optical-flow": 41,
+    "libwebp": 245,
+}
+for name, expected in pinned_upstream_f07_counts.items():
+    prefix = f"vendor/sources/{name}/"
+    files = {p for p in tracked
+             if p.startswith(prefix) and Path(p).suffix in suffixes}
+    assert len(files) == expected, ("Upstream snapshot drift", name, len(files), expected)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not any(p.startswith(f"vendor/encore-active/{stale}/")
+                   for p in tracked), stale
+print("ENCORE_PINNED_UPSTREAM_F07_ISOLATION_PASS",
+      f"upstream_sources={sum(pinned_upstream_f07_counts.values())}",
+      "trees=3 historical_f07_unchanged=1")
 # NS2 is an explicitly unqualified research layer, not historical F07 review.
 # Do not silently count new research source code as already optimized.
 research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text())

@@ -1,5 +1,7 @@
 # Eden Encore — cache WebP 80 et application compactée
 
+**Addendum du 10 novembre 2026 (branche de maintenance) :** libwebp 1.6.0 est maintenant intégré comme source amont épinglée sous `vendor/sources/libwebp/` (jamais comme override dans `encore-active/`) et n'est plus un sous-module externe. Les validations 1.5.0 rapportées ci-dessous sont historiques ; le nouveau binaire exige une validation hôte et PS5 indépendante.
+
 **6 novembre 2026 · PR #24 DRAFT · validation PS5 encore requise.**
 
 Le cache de couvertures stockait en TGA non compressé les JPEG/PNG
@@ -11,7 +13,7 @@ Nlib/LaunchBox téléchargés. Le relevé FTP en lecture seule donne
 - JPEG/PNG source vers WebP qualité 80 directement, sans JPEG 80
   intermédiaire et sans conversion TGA lors du téléchargement.
 - libwebp 1.5.0, version figée a4d7a715337ded4451fec90ff8ce79728e04126c,
-  sous-module de vendor/encore-active/libwebp, lié en statique.
+  ancien sous-module externe libwebp (état historique du 6 novembre), lié en statique ; la version 1.6.0 actuelle est maintenant dans `vendor/sources/libwebp/`.
 - Décodage WebP hors du thread UI ; JPEG/PNG et TGA historiques
   restent lisibles, ainsi que les avatars DDS.
 - Migration locale des TGA historiques générés par Eden :

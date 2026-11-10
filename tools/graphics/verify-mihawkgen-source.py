@@ -7,7 +7,7 @@ import subprocess
 import os
 
 root = Path(__file__).resolve().parents[2]
-module = root / "third_party/PS5_MihawkGen"
+module = root / "vendor/sources/ps5-mihawkgen"
 expected_sha = "c57232a9f16bcb6df5fe07c9bb631518f2b1cc0e"
 expected_network = "31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b"
 
@@ -15,9 +15,9 @@ def check(condition: bool, message: str):
     if not condition:
         raise AssertionError(message)
 
-git_sha = subprocess.check_output(
-    ["git", "-C", str(module), "rev-parse", "HEAD"], text=True).strip()
-check(git_sha == expected_sha, f"MihawkGen SHA mismatch: {git_sha}")
+tree_sha = subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD:sources/ps5-mihawkgen"], text=True).strip()
+check(tree_sha == "e3b42f5b89775469bec04795b93f048b74aff207", f"Vendored MihawkGen tree mismatch: {tree_sha}")
+check(expected_sha in (root/"vendor/docs/PS5_INTERNAL_DEPENDENCY_ORIGINS_2026-11-10.md").read_text(), "Missing original upstream commit")
 network = module / "framegen/models/network.fgw"
 check(network.stat().st_size == 1757240, "Unexpected MihawkGen model size")
 check(hashlib.sha256(network.read_bytes()).hexdigest() == expected_network,

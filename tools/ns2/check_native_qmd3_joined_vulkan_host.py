@@ -208,7 +208,7 @@ struct FakeSystem {
     bool IsPoweredOn()const{return true;}
     bool IsShuttingDown()const{return false;}
     FakeGpuWorker& GPU(){return gpu;}
-}
+};
 class VulkanCompute {
     VkInstance instance{};
     VkPhysicalDevice physical{};

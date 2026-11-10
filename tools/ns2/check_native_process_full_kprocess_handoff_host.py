@@ -166,7 +166,7 @@ case=r"""
         // models last KProcess reference and page-table ownership.
         for(unsigned fault=0;fault<5;++fault) {
             Kernel::KernelCore joined_kernel;
-            Core::System joined_system{joined_kernel};
+            Core::System joined_system{joined_kernel,{}};
             Service::Process process{joined_system};
             Loader::AppLoader loader{metadata,nso};
             loader.fail_late=fault==1;

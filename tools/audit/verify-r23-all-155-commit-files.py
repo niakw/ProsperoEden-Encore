@@ -85,8 +85,8 @@ def validate(root: Path) -> dict:
         evidence = paged[i] if i in paged else captured[i]
         if row["file_count"] != evidence["file_count"]:
             raise ValueError("file count diverges from upstream individual commit")
-        actual = [(x["path"], x["change"]) for x in row["files"]]
-        expected = [(x["path"], x["change"]) for x in evidence["files"]]
+        actual = [(x["path"], x.get("change")) for x in row["files"]]
+        expected = [(x["path"], x.get("change")) for x in evidence["files"]]
         if actual != expected or len(actual) != len(set(p for p, _ in actual)):
             raise ValueError(f"commit #{i}: changed file list diverges from exact receipt")
         buckets = {}

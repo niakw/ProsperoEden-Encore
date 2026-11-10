@@ -4,12 +4,14 @@ on:
     branches: [main]
     paths:
       - 'tools/ns2/check_native_ampere_sem_real_vulkan_host.py'
+      - 'tools/ns2/check_native_qmd3_joined_vulkan_host.py'
       - 'tools/ns2/check_native_qmd_deferred_fence_host.py'
       - 'vendor'
       - '.github/workflows/ns2-g10-host-vulkan.yml'
   pull_request:
     paths:
       - 'tools/ns2/check_native_ampere_sem_real_vulkan_host.py'
+      - 'tools/ns2/check_native_qmd3_joined_vulkan_host.py'
       - 'tools/ns2/check_native_qmd_deferred_fence_host.py'
       - 'vendor'
       - '.github/workflows/ns2-g10-host-vulkan.yml'
@@ -39,3 +41,5 @@ jobs:
         run: python3 -B tools/ns2/check_native_qmd_deferred_fence_host.py
       - name: Execute maintained native semaphore owner through a real Vulkan GPU fence
         run: python3 -B tools/ns2/check_native_ampere_sem_real_vulkan_host.py
+      - name: Execute real QMD3 PCAS owner through Vulkan compute and second channel
+        run: python3 -B tools/ns2/check_native_qmd3_joined_vulkan_host.py

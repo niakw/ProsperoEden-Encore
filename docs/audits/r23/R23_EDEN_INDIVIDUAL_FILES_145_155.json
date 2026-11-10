@@ -1,0 +1,822 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    145,
+    155
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 11,
+  "ok": 11,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 145,
+      "sha": "93318ef697d386e9842cbb5887d5ab9b4e700a1c",
+      "title": "[audio] persistent device volume control (#4416)",
+      "date": "2026-09-14T00:13:49Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/audio_core/sink/cubeb_sink.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/sink/null_sink.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/sink/sdl3_sink.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/sink/sink.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 146,
+      "sha": "9b649444803bc95423035eba335a1e11c1871793",
+      "title": "[video_core/control] Fix SIGBUS due to uninit channel_state (#4406)",
+      "date": "2026-09-13T22:39:07Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/control/channel_state_cache.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 147,
+      "sha": "5d150cac5c6624fa6a0e94266846b75d91a6a5d0",
+      "title": "[dynarmic, am, android, ns] Fixes the latest qlaunch regressions on Android and adds cmd23 for launching games on FW 23 (#4407)",
+      "date": "2026-09-13T00:13:06Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/display_layer_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_memory.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 148,
+      "sha": "ff8368c6066faf3962e2f77af7da4954e2ff6a43",
+      "title": "[audio] Replace libopus with FFmpeg (#4169)",
+      "date": "2026-09-12T07:59:33Z",
+      "status": "file-list-retrieved",
+      "file_count": 22,
+      "files": [
+        {
+          "path": ".patch/opus/0001-disable-clang-runtime-neon.patch",
+          "patch_present": true
+        },
+        {
+          "path": ".patch/opus/0002-no-install.patch",
+          "patch_present": true
+        },
+        {
+          "path": "CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "CMakeModules/find/FindOpus.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        },
+        {
+          "path": "docs/Deps.md",
+          "patch_present": true
+        },
+        {
+          "path": "shell.nix",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/LicensesFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decode_object.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decode_object.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decoder.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_decoder.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_multistream_decode_object.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_multistream_decode_object.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/opus_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/adsp/apps/opus/shared_memory.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/opus/hardware_opus.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/opus/hardware_opus.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/CMakeLists.txt",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 149,
+      "sha": "8a22f1845b8b7ec19fbb518b696513e36d42b317",
+      "title": "[hle] Enforce max_sessions, add bpc:ams service (#4394)",
+      "date": "2026-09-11T19:38:52Z",
+      "status": "file-list-retrieved",
+      "file_count": 19,
+      "files": [
+        {
+          "path": "src/audio_core/audio_render_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/bcat.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bpc/bpc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/filesystem.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/arp.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/glue.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/grc/grc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldr/ldr.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ngc/ngc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nifm/nifm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/ns.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/pm/pm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ro/ro.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/set/settings.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/sm/sm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/sockets/sockets.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/usb/usb.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/wlan/wlan.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 150,
+      "sha": "301da63a15de8cfbe752ac44784db9b58cdd2d87",
+      "title": "[audio] hint openslES as audio driver on android to fix mute screen recording issue (#4397)",
+      "date": "2026-09-11T19:38:12Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/audio_core/sink/sdl3_sink.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 151,
+      "sha": "c95ad020fb529d47f9c3106a53553bec955c1586",
+      "title": "[gpu] Fix infinite hangup/freezes at shutdown/reset (#4395)",
+      "date": "2026-09-11T13:29:52Z",
+      "status": "file-list-retrieved",
+      "file_count": 3,
+      "files": [
+        {
+          "path": "src/video_core/gpu.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu_thread.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu_thread.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 152,
+      "sha": "f3af5d0c252feba0df73bedddcd8a40f71ebc0fa",
+      "title": "[fs] moved temp folder cleanup upstream (per-application level) to avoid per-program retrigger (#4375)",
+      "date": "2026-09-10T20:30:07Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/core/core.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/file_sys/savedata_factory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/filesystem.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/filesystem.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 153,
+      "sha": "00a1c392e7252eaad82b50119037e01bf6b92a73",
+      "title": "[opus] proper limit and error code for opus decoder instances (#4384)",
+      "date": "2026-09-10T20:29:35Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/audio_core/opus/decoder.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/opus/hardware_opus.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/audio_core/opus/hardware_opus.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/errors.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 154,
+      "sha": "e7a96c7907fb8cb888f21d348b66de2121fdd1ca",
+      "title": "[hle] Firmware 23.0.0 (#4390)",
+      "date": "2026-09-10T20:28:39Z",
+      "status": "file-list-retrieved",
+      "file_count": 13,
+      "files": [
+        {
+          "path": "src/core/file_sys/system_archive/system_version.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/api_version.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/kernel/svc/svc_info.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/kernel/svc_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_creator.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_creator.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/self_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/self_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_srv.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_srv.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/pctl/parental_control_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/pctl/parental_control_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/pctl/pctl_types.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 155,
+      "sha": "ed566919f468e45ecb56e4e61185d98142a2cd1c",
+      "title": "[vulkan, android] Add feature of post-processing shaders on Android (#4348)",
+      "date": "2026-09-10T13:14:02Z",
+      "status": "file-list-retrieved",
+      "file_count": 94,
+      "files": [
+        {
+          "path": ".patch/reshade/0001-from-chars-fallback.patch",
+          "patch_present": true
+        },
+        {
+          "path": "CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "cpmfile.json",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_presets/Anime.fxp",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_presets/Cinematic.fxp",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_presets/Clean.fxp",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_presets/Dreamy.fxp",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_presets/Retro.fxp",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_presets/Vivid.fxp",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Bloom.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Blur.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/CRT.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Cartoon.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/CartoonSoft.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/CelShading.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/ChromaticAberration.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/ColorGrade.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Deband.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Denoise.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/FilmGrain.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/FilmicCurve.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/LensDistortion.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Levels.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/MotionBlur.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/NaturalColors.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Reflections.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Scanlines.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Sharpen.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/SplitToning.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/Vignette.fx",
+          "patch_present": true
+        },
+        {
+          "path": "dist/post_shaders/WhiteBalance.fx",
+          "patch_present": true
+        },
+        {
+          "path": "externals/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/dialogs/QuickSettings.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/FxPresetNameSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/FxUniformSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/Settings.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/StringSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/FxButtonSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/FxPresetSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/FxShaderCardSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/FxToolbarSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsAdapter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/viewholder/FxButtonViewHolder.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/viewholder/FxPresetViewHolder.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/viewholder/FxShaderCardViewHolder.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/viewholder/FxToolbarViewHolder.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/EmulationFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/GamePropertiesFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/HomeSettingsFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/NativePostProcessing.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/jni/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/jni/native_config.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/jni/native_post_processing.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/drawable/ic_post_processing.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/drawable/shader_card_background.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_quick_settings_add.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_quick_settings_preset.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_quick_settings_shader.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_setting_fx_actions.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/item_setting_fx_slider.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/list_item_setting_fx_button.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/list_item_setting_fx_preset.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/list_item_setting_fx_shader.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/layout/list_item_setting_fx_toolbar.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/fs/fs_paths.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/fs/path_util.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/fs/path_util.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/GenerateBundledEffects.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/GenerateBundledPresets.cmake",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_chain.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_chain.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_compile.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_compile.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_effect.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_effect.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_preset.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/post_processing/fx_preset.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/layer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/layer.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/post_process.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/present/post_process.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/renderer_vulkan.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_post_processing.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/configuration/configure_post_processing.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main.ui",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

@@ -292,3 +292,29 @@ discrete contracts and 1536 separately counted GOB differential layouts
 on each compiler. The optional full pinned-vendor checker remains SKIP
 until a real checkout is provided.
 
+
+## Reproduce pinned vendor owner gate without cloning vendor
+
+The original full-checkout form remains:
+`python3 -B research/ns2/check_native_qmd_owners.py --vendor vendor`.
+
+For a machine with Internet access, the alternate **six-source snapshot**
+form avoids a complete vendor checkout:
+
+```bash
+bash research/ns2/fetch_pinned_vendor_snapshot.sh /tmp/encore-vendor-snapshot
+```
+
+The helper explicitly downloads six files from immutable vendor SHA
+`22b69d60`, then calls the real Python validator with `--source-snapshot`.
+The validator independently calculates Git's raw-blob SHA-1 for all six
+files and **fails closed** on even a single wrong source byte. It then
+compiles the exact native mapping helper on Clang/GCC and checks owner
+and 6-pass rules. This is different from the synthetic standalone suite.
+
+**Execution honesty:** snapshot downloader passed `bash -n`; hash
+math passed against an existing published Git blob and a changed-byte
+negative case. Full six-blob download+Python gate **not executable in the
+current offline environment**, remains unverified. No source snapshot
+or production vendor files were committed into this PR.
+

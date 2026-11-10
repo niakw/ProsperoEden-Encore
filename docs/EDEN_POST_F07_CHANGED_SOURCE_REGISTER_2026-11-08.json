@@ -70,11 +70,11 @@
     {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
-      "post_snapshot_git_blob": "9eacdcbde5025e30f42124848eaafdf6afd6edaf",
+      "post_snapshot_git_blob": "9609fc43767af93bf245e1923519bec61cc8998a",
       "original_disposition": "code_changed_in_batch",
-      "source_scope": "HUD enable state uses atomic release and explicit setter",
+      "source_scope": "HUD state and native opt-in frame probe use the existing JitMemory owner; retained atomic control",
       "review_kind": "source_contract",
-      "required_source_fragment": "void SetHudEnabled(bool enabled)",
+      "required_source_fragment": "JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
     },
     {

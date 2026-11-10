@@ -437,7 +437,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
             if (r08_capture.valid) {
                 const auto& owned = mihawk_native->Images();
                 const auto& private_history = owned.History(r08_capture.slot);
-                const Eden::FeatureLab::MihawkSourceRecord source{
+                Eden::FeatureLab::MihawkSourceRecord source{
                     .source_real = *frame->image,
                     .history_owned = private_history.image,
                     .history_initialized = owned.Initialized(r08_capture.slot),

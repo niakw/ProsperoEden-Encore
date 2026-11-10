@@ -87,4 +87,3 @@ jobs:
             -Wl,--start-group $(find /tmp/encore-webp -name '*.a' -type f | sort) \
             -Wl,--end-group -pthread -lm -o /tmp/encore-webp-host-codec
           /tmp/encore-webp-host-codec /tmp/encore-webp-fixture.tga
-

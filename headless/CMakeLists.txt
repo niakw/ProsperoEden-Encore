@@ -2098,11 +2098,23 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     foreach(eden_cpu6_file IN ITEMS
             "hle/kernel/global_scheduler_context.cpp"
             "arm/dynarmic/arm_dynarmic_32.cpp")
-        list(FIND eden_cpu6_core_sources "${eden_cpu6_file}" eden_cpu6_owner_idx)
-        if(eden_cpu6_owner_idx EQUAL -1)
-            message(FATAL_ERROR "Pinned CPU6 scheduler/tick owner changed: ${eden_cpu6_file}")
+        # G11 has already replaced the original A32 translation unit.
+        # Consume that exact selected native profile, not the removed relative
+        # upstream file. The CPU6 A32 static owner is based on this G11 profile
+        # and changes only the per-process six-core tick denominator.
+        set(eden_cpu6_selected_source "${eden_cpu6_file}")
+        if(eden_cpu6_file STREQUAL "arm/dynarmic/arm_dynarmic_32.cpp")
+            set(eden_cpu6_selected_source
+                "${EDEN_G11_ROOT}/arm_dynarmic_32_${EDEN_G11_PLATFORM}_${EDEN_G11_PROFILE}.cpp")
+            if(NOT PS5_NATIVE OR NOT EXISTS "${eden_cpu6_selected_source}")
+                message(FATAL_ERROR "CPU6 requires maintained native G11 A32 source")
+            endif()
         endif()
-        list(REMOVE_ITEM eden_cpu6_core_sources "${eden_cpu6_file}")
+        list(FIND eden_cpu6_core_sources "${eden_cpu6_selected_source}" eden_cpu6_owner_idx)
+        if(eden_cpu6_owner_idx EQUAL -1)
+            message(FATAL_ERROR "Selected CPU6 scheduler/tick owner changed: ${eden_cpu6_selected_source}")
+        endif()
+        list(REMOVE_ITEM eden_cpu6_core_sources "${eden_cpu6_selected_source}")
         list(APPEND eden_cpu6_core_sources
             "${EDEN_CPU6_OUTPUT_ROOT}/core/${eden_cpu6_file}")
     endforeach()

@@ -1,5 +1,7 @@
 # NS2 upstream optimization watch — isolated development audit (2026-11-10)
 
+**Upstream refreshed / source review disposition:** see the [10 November comparative closeout](NS2_UPSTREAM_REFRESH_AND_CLOSEOUT_2026-11-10.md) for **17 newer Lichii commits**, **2 newer nxnative commits**, the checked fork heads and the actual Encore PS5 source owners. Branch SHAs and earlier preliminary priorities below are historical snapshots, **not** a recommendation to import them. Overall PS5 validation and production integration remain open.
+
 ## Critical native owner reconciliation — 10 November 2026 (supersedes prior O1/O3 guesses)
 
 **The native NS2 path does not use the legacy `BindComputeStorageBuffer` size heuristic.** This is source-verified on the pinned vendor SHA `22b69d60`: 

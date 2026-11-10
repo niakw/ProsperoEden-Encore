@@ -243,3 +243,30 @@ The six-suite local runner and its inputs now match their published
 GitHub source copies byte-for-byte in the reviewed snapshot; no
 vendor checkout or native console execution is implied.
 
+
+## R3 — GOB16 differential qualification
+
+[`test_blocklinear_gob16_differential.cpp`](test_blocklinear_gob16_differential.cpp)
+adds the seventh host suite to `run_host_checks.sh`. The C++ model
+compares the pinned Encore per-pixel block-linear address formula against
+Lichii's 16-byte group offset formula. Its **1536 seeded layouts** cover
+all 192 combinations of 8 BPP values, block heights 0–3, block depths 0–2,
+and both tiling orders, eight dimensions per combination, including
+full-texture and subrectangle swizzle/unswizzle with canary-filled output.
+23,578,183 byte-level address comparisons per execution passed; six
+Clang/GCC × `-O0/-O1/-O2` executions passed with ASan and UBSan.
+
+Only `BPP=16` uses the whole-image 16-byte fast copy in this model;
+power-of-two BPP (1/2/4/8/16) may use split 16-byte subrectangle
+runs, while 3/6/12 retain the original legacy per-pixel copy.
+That restriction is intentional: the decoder's old memcpy semantics
+do not guarantee a mathematically invertible path for non-power BPP
+straddling swizzled unit boundaries. We test output equivalence there,
+not claim a new valid roundtrip.
+
+**Research-only:** identical mathematical offsets and sanitizer-clean
+test runs justify a **candidate optimization**, not source-level
+replacement in the maintained decoder, general performance benefit,
+PS5 Vulkan result, or NS1 safety. The original decoder and vendor
+remain unchanged. Source check: [pinned vendor witness](PINNED_VENDOR_SOURCE_WITNESS_2026-11-10.md).
+

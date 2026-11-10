@@ -939,12 +939,24 @@ headless_start = "<!-- HEADLESS_SOURCE_CATALOG_START -->"
 headless_end = "<!-- HEADLESS_SOURCE_CATALOG_END -->"
 assert headless_doc.count(headless_start) == headless_doc.count(headless_end) == 1
 headless_exts = {".c", ".cc", ".cpp", ".h", ".hpp", ".inc", ".cl"}
+# P5: the first compiler-error repairs add one include-only native header
+# after the immutable 193-entry historical headless source catalogue.
+# Enforce its exact existence/selection separately; do not retroactively
+# rewrite the F07 table or classify it as an audited optimization.
+post_f07_p5_headless_owners = {"headless/ns2_astc_texture_cache_scope_bridge.h"}
+assert all((root / p).is_file() for p in post_f07_p5_headless_owners)
+assert not post_f07_p5_headless_owners & (
+    post_f07_feature_headless_owners | post_f07_r09_headless_owners)
+assert 'ns2_astc_texture_cache_scope_bridge.h' in (
+    root / "headless/vulkan.cmake").read_text()
+print("ENCORE_POST_F07_P5_NATIVE_HEADER_SOURCE_PASS", "owners=1 historical_headless=193")
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
-        post_f07_feature_headless_owners | post_f07_r09_headless_owners)
+        post_f07_feature_headless_owners | post_f07_r09_headless_owners |
+        post_f07_p5_headless_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

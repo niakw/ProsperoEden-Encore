@@ -1,0 +1,101 @@
+name: A-B NS1 read-only compiled-source audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/audit-ab-ns1-readonly.yml"
+      - "tools/audit/**"
+      - "docs/audits/ENCORE_AB_NS1_QUALIFICATION_PASS7_2026-11-10.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ab-ns1-readonly-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  provenance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout audited PR tree and exact pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Reuse existing ninth-run native source and compile database cache only
+        id: restore
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42880572712
+
+      - name: Run audit diagnostics against pinned inputs and existing native compile database
+        if: steps.restore.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ab-ns1-witness
+          python3 -B tools/audit/check-ab-ns1-source-gaps.py --self-test
+          python3 -B tools/audit/test-ab-ns1-source-gaps.py
+          python3 -B tools/audit/verify-ab-ns1-compile-owners.py --self-test
+          python3 -B tools/audit/attest-ab-ns1-source-bytes.py --self-test
+          python3 -B tools/audit/check-ab-ns1-source-gaps.py > ab-ns1-witness/source-gaps.json
+          mapfile -t databases < <(find "$HOME/.cache" -path '*/native-local/compile_commands.json' -type f -print)
+          test "${#databases[@]}" -eq 1
+          test -s "${databases[0]}"
+          printf '%s\n' "${databases[0]}" > ab-ns1-witness/compile-database-path.txt
+          python3 -B tools/audit/verify-ab-ns1-compile-owners.py "${databases[0]}" > ab-ns1-witness/owners.json
+          python3 -B tools/audit/attest-ab-ns1-source-bytes.py "${databases[0]}" > ab-ns1-witness/bytes.json
+          python3 -B - <<'PY'
+          import json
+          from pathlib import Path
+          from collections import Counter
+          src = json.loads(Path("ab-ns1-witness/source-gaps.json").read_text())
+          owners = json.loads(Path("ab-ns1-witness/owners.json").read_text())
+          checksums = json.loads(Path("ab-ns1-witness/bytes.json").read_text())
+          statuses = {name: row["status"] for name, row in checksums["owners"].items()}
+          assert set(statuses) == set(owners["owners"])
+          note = {
+              "audit_pr_only": True,
+              "historical_cache_native_source_sha": "af106ca4431557246bc1db6d47ac5da562231bb3",
+              "not_current_main_compilation_or_link_proof": True,
+              "native_build_or_network_fetch_performed": False,
+              "source_gap_classifications": {k: v["classification"] for k,v in src["results"].items()},
+              "scheduled_source_byte_classifications": statuses,
+              "scheduled_source_byte_summary": dict(Counter(statuses.values())),
+          }
+          Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")
+          print("AB_NS1_HISTORICAL_CACHE_BYTE_WITNESS", json.dumps(note, sort_keys=True))
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("## A/B NS1 — historical native compile database\n")
+              summary.write("Read-only comparison with the ninth-run cache. No native compilation, linker, rebase or release.\n")
+              summary.write("**Not a certificate for the current main binary or PS5 runtime.**\n")
+              summary.write("\n| Source | Result |\n|---|---|\n")
+              for k,v in statuses.items():
+                  summary.write(f"| {k} | {v} |\n")
+          PY
+
+      - name: Fail closed if ninth-run source database cache was not available
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: |
+          echo "::error::Existing ninth-run cache absent: do not claim native compile-source provenance."
+          exit 1
+
+      - name: Upload only JSON read-only witnesses, never binaries
+        if: always() && steps.restore.outputs.cache-hit == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ab-ns1-historical-compile-witness
+          path: ab-ns1-witness/
+          if-no-files-found: error
+          retention-days: 30

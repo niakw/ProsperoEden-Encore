@@ -1175,7 +1175,10 @@ target_include_directories(eden-mihawkgen-native PRIVATE
     "${EDEN_MIHAWKGEN_INC}" "${EDEN_MIHAWKGEN_SRC}"
     "${EDEN_MIHAWKGEN_ROOT}/external" "${EDEN_MIHAWKGEN_ROOT}/ps5/third_party/volk"
     "${PORT_ROOT}/extras/graphics" "${EDEN_PORT_DIR}")
-target_sources(video_core PRIVATE $<TARGET_OBJECTS:eden-mihawkgen-native>)
+# This module is included before headless/CMakeLists.txt commits video_sources
+# with set_property(TARGET video_core PROPERTY SOURCES ...). Append to that
+# canonical list, otherwise the later assignment silently discards the link.
+list(APPEND video_sources "$<TARGET_OBJECTS:eden-mihawkgen-native>")
 
 # R08 AMD candidate: FSR3 optical-flow shaders and a PS5-native Vulkan
 # interpolator, from Swordpdf/ps5-framegen. Not an official FSR3 backend.
@@ -1183,7 +1186,7 @@ set(EDEN_FSR3_OF_ROOT "${PORT_ROOT}/vendor/sources/ps5-fsr3-optical-flow")
 if(NOT EXISTS "${EDEN_FSR3_OF_ROOT}/src/framegen/fg_shaders.inc")
     message(FATAL_ERROR "Missing pinned PS5 FSR3 optical-flow source")
 endif()
-target_sources(video_core PRIVATE
+list(APPEND video_sources
     "${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
     "${EDEN_PORT_DIR}/fsr3_optical_session.cpp")
 set_source_files_properties("${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
@@ -1214,5 +1217,5 @@ foreach(path IN LISTS EDEN_LSFG_NATIVE_SOURCES)
         message(FATAL_ERROR "Missing maintained LSFG native input: ${path}")
     endif()
 endforeach()
-target_sources(video_core PRIVATE ${EDEN_LSFG_NATIVE_SOURCES})
+list(APPEND video_sources ${EDEN_LSFG_NATIVE_SOURCES})
 target_compile_definitions(video_core PUBLIC HAS_LSFG)

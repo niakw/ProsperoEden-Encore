@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Research-only: six local C++ host fixtures + optional full vendor source validation.
+# Research-only: seven local C++ host fixtures + optional full vendor source validation.
 # NEVER runs the Encore PS5 build, modifies vendor, or enables GitHub Actions.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -11,9 +11,13 @@ for compiler in clang++ g++; do
     echo "MISSING compiler: $compiler" >&2
     exit 2
   fi
-  for test in test_ssbo_extent_contract test_gpu_backing_lifetime test_epoch_guarded_gmmu_memo test_native_vk_range_contract test_qmd3_descriptor_read_owner test_native_gpu_read_toctou; do
+  for test in test_ssbo_extent_contract test_gpu_backing_lifetime test_epoch_guarded_gmmu_memo test_native_vk_range_contract test_qmd3_descriptor_read_owner test_native_gpu_read_toctou test_blocklinear_gob16_differential; do
+    sanitizer='-fsanitize=undefined'
+    if [[ "$test" == test_blocklinear_gob16_differential ]]; then
+      sanitizer='-fsanitize=address,undefined'
+    fi
     "$compiler" -std=c++20 -pthread -O1 -Wall -Wextra -Werror \
-      -fsanitize=undefined -fno-sanitize-recover=all \
+      "$sanitizer" -fno-sanitize-recover=all \
       "$root/research/ns2/${test}.cpp" -o "$tmp/${compiler//+/p}-$test"
     "$tmp/${compiler//+/p}-$test"
   done

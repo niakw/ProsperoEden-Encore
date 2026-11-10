@@ -176,8 +176,8 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
         qmd[24]=0x4000;
         qmd[25]=(1U<<23) | (1U<<30);
         qmd[26]=(original==7U?19U:29U);
-        const u32 expected_release=qmd[26];
-        u32 guest_semaphore{};
+        const uint32_t expected_release=qmd[26];
+        uint32_t guest_semaphore{};
         unsigned accepted_dispatches{};
         std::vector<std::function<void()>> on_vk_fence;
         bool permit_dispatch{};
@@ -187,7 +187,7 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
             out=qmd;
             return true;
         };
-        const auto release_guest=[&](uint64_t address,u32 value,u32 flags) {
+        const auto release_guest=[&](uint64_t address,uint32_t value,uint32_t flags) {
             if(address!=0x4000 || !accepted_dispatches ||
                !(flags&(1U<<23)))return false;
             on_vk_fence.emplace_back([&,value] {guest_semaphore=value;});

@@ -23,6 +23,21 @@ SHARED_BUFFER = Path("encore-active/eden-core/src/video_core/buffer_cache/buffer
 GPU_MEMORY_MANAGER = Path("encore-active/eden-core/src/video_core/memory_manager.cpp")
 SHADER_READER = Path("encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp")
 EXPECTED_VENDOR = "22b69d6053db41b74edac2633c012f925b84f69e"
+EXPECTED_SOURCE_BLOBS = {
+    VENDOR_HEADER: "ff57773021b024935d5150c1c6a3708a2faa25b5",
+    VULKAN_PIPE: "53a545c32a034cfdd3421f381f354a28b306c259",
+    VULKAN_RASTER: "921fd6d9db216d3a4a745bcdccb4a454addcf623",
+    SHARED_BUFFER: "3d1cba92005617c96a15af481133513ff3feef1b",
+    GPU_MEMORY_MANAGER: "f36837c70435a919fd8d51b46983707c634039cc",
+    SHADER_READER: "979d5273d286d543d739e3f26ad51ee83106d479",
+}
+
+def git_blob_sha1(path: Path) -> str:
+    """Git object ID over raw bytes, never a normalized text approximation."""
+    data = path.read_bytes()
+    header = b"blob " + str(len(data)).encode("ascii") + b"\x00"
+    return hashlib.sha1(header + data).hexdigest()
+
 
 def require(test: bool, message: str) -> None:
     if not test:
@@ -196,15 +211,28 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--vendor", type=Path, default=Path("vendor"))
     parser.add_argument("--compiler", action="append", choices=["clang++", "g++"])
+    parser.add_argument("--source-snapshot", action="store_true",
+                        help="Authenticate the six pinned GitHub source blobs without requiring a full vendor checkout")
     args = parser.parse_args()
     vendor = args.vendor
-    git = shutil.which("git")
-    require(git is not None, "Git required to verify exact pinned vendor commit")
-    pinned = subprocess.run([git, "-C", str(vendor), "rev-parse", "HEAD"],
-                            capture_output=True, text=True, check=True).stdout.strip()
-    require(pinned == EXPECTED_VENDOR,
-            "Vendor SHA changed: re-audit first (expected " + EXPECTED_VENDOR +
-            ", got " + pinned + ")")
+    if args.source_snapshot:
+        # Six immutable source blobs fetched from the pinned GitHub commit are
+        # sufficient for this exact-owner host gate, without pretending to
+        # authenticate a complete vendor tree or a compilable PS5 source checkout.
+        for relative, expected_blob in EXPECTED_SOURCE_BLOBS.items():
+            current = git_blob_sha1(vendor / relative)
+            require(current == expected_blob,
+                    "Pinned vendor source blob mismatch for " + str(relative) +
+                    ": expected " + expected_blob + ", got " + current)
+        pinned = EXPECTED_VENDOR
+    else:
+        git = shutil.which("git")
+        require(git is not None, "Git required to verify exact pinned vendor commit")
+        pinned = subprocess.run([git, "-C", str(vendor), "rev-parse", "HEAD"],
+                                capture_output=True, text=True, check=True).stdout.strip()
+        require(pinned == EXPECTED_VENDOR,
+                "Vendor SHA changed: re-audit first (expected " + EXPECTED_VENDOR +
+                ", got " + pinned + ")")
     header = (vendor / VENDOR_HEADER).read_text(encoding="utf-8")
     pipe = (vendor / VULKAN_PIPE).read_text(encoding="utf-8")
     raster = (vendor / VULKAN_RASTER).read_text(encoding="utf-8")
@@ -284,6 +312,7 @@ def main() -> None:
         "mode": "offline research; real extracted GMMU source, mocked mappings",
         "mapping_passes_static_owner_witness": mapping_scans,
         "vendor_path": str(vendor), "reviewed_vendor_pin": EXPECTED_VENDOR,
+        "source_authentication_mode": "six_pinned_git_blob_shas" if args.source_snapshot else "git_head",
         "exact_mapping_guard_normalized_sha256": guard_sha256,
         "exact_descriptor_reader_normalized_sha256": reader_sha256,
         "exact_native_shader_read_callback_normalized_sha256": callback_sha256,

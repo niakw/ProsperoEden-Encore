@@ -183,3 +183,28 @@ The native `known_size = tag == 0 && bytes != 0` condition also matches
 normalized guard SHA-256 in addition to the vendor commit SHA, so later
 code drift requires a new audit. This strengthens **host-only source
 equivalence**; it is not an actual Vulkan/PS5 dispatch.
+
+### O11 — local positive/negative contract now implemented (research-only)
+
+Created [`research/ns2/native_vk_range_contract.hpp`](../research/ns2/native_vk_range_contract.hpp)
+and [`test_native_vk_range_contract.cpp`](../research/ns2/test_native_vk_range_contract.cpp).
+**30/30 positive and negative tests on each Clang 17 and GCC 14 with UBSan.**
+The two-stage policy checks, before expensive GMMU staging, guest 49-bit
+range, current QMD3 256 MiB policy, actual supplied Vulkan uniform/storage
+range limits, and the QMD3 64 KiB uniform cap. After `ObtainBuffer`, it
+checks the real offset against device alignment, the allocated backing
+length, and descriptor-buffer address overflow. It never clips an SSBO
+to a shorter length, which would silently change shader behavior.
+
+The *actual* PS5 Vulkan `maxStorageBufferRange`, `maxUniformBufferRange`
+and alignment must be read from `Device::GetPhysical().GetProperties().limits`
+before promoting this into the real native Vulkan owner. The currently
+maintained `Device::GetMaxStorageBufferRange()` is also available.
+On adoption, stage all resources only after complete preflight and
+retain every current QMD3/GMMU/snapshot/write/fence barrier. No vendor
+or `main` changes have been made.
+
+**Updated local runner:** 19 + 23 + 30 + 30 = **102 distinct research
+assertions per compiler, 204 across Clang/GCC**, plus a separate
+24-case source-expression reproduction per compiler. See
+[local test receipt](../research/ns2/LOCAL_TEST_RECEIPT_2026-11-10.md).

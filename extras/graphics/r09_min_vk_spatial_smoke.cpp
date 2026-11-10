@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Real host Vulkan compute/readback for isolated R09 Min spatial shaders.
-// Uses one synthetic image and the SAME work image as before/after-model,
-// so the expected neural residual is exactly zero. Not DLSS-NR inference.
+// Validates both zero residual and known synthetic RGB delta using actual GPU
+// reads/writes. This is NOT a DLSS-NR network inference.
 // Requires Vulkan 1.1 + storage RGBA16F/RGBA32F and linear sampling.
 #include "dlss_nr_min_spatial_abi.h"
 #include <vulkan/vulkan.h>
@@ -282,7 +282,8 @@ void ImageBarrier(VkCommandBuffer cmd,VkImageMemoryBarrier bar,
                   VkPipelineStageFlags src,VkPipelineStageFlags dst) {
     vkCmdPipelineBarrier(cmd,src,dst,0u,0u,nullptr,0u,nullptr,1u,&bar);
 }
-void Run(Host& h,const char* pack_spv,const char* transfer_spv) {
+void Run(Host& h,const char* pack_spv,const char* delta_spv,
+         const char* transfer_spv,bool identity) {
     constexpr std::uint32_t W=32u,H=32u,Q=28u;
     constexpr VkDeviceSize bytes=W*H*4u*sizeof(float);
     const auto staging=h.NewBuffer(bytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
@@ -290,6 +291,8 @@ void Run(Host& h,const char* pack_spv,const char* transfer_spv) {
     const auto source=h.NewImage(W,H,VK_FORMAT_R32G32B32A32_SFLOAT,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
     const auto work=h.NewImage(Q,Q,VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
+    const auto enhanced=h.NewImage(Q,Q,VK_FORMAT_R16G16B16A16_SFLOAT,
         VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
     const auto target=h.NewImage(W,H,VK_FORMAT_R32G32B32A32_SFLOAT,
         VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
@@ -332,30 +335,33 @@ void Run(Host& h,const char* pack_spv,const char* transfer_spv) {
             VK_SHADER_STAGE_COMPUTE_BIT,nullptr},
         {3u,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,1u,
             VK_SHADER_STAGE_COMPUTE_BIT,nullptr}};
-    const auto pset=h.SetLayout(pb,2u),uset=h.SetLayout(ub,4u);
+    const auto pset=h.SetLayout(pb,2u),dset=h.SetLayout(pb,2u),
+               uset=h.SetLayout(ub,4u);
     const std::array<VkDescriptorPoolSize,2> sizes{{
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,4u},
-        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,2u}}};
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,5u},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,3u}}};
     VkDescriptorPoolCreateInfo dpi{};
     dpi.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    dpi.maxSets=2u;
+    dpi.maxSets=3u;
     dpi.poolSizeCount=std::uint32_t(sizes.size());
     dpi.pPoolSizes=sizes.data();
     Check(vkCreateDescriptorPool(h.device,&dpi,nullptr,&h.descriptor_pool),
           "descriptor pool");
-    const std::array<VkDescriptorSetLayout,2> layouts{pset,uset};
-    std::array<VkDescriptorSet,2> sets{};
+    const std::array<VkDescriptorSetLayout,3> layouts{pset,dset,uset};
+    std::array<VkDescriptorSet,3> sets{};
     VkDescriptorSetAllocateInfo asi{};
     asi.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     asi.descriptorPool=h.descriptor_pool;
-    asi.descriptorSetCount=2u;
+    asi.descriptorSetCount=3u;
     asi.pSetLayouts=layouts.data();
     Check(vkAllocateDescriptorSets(h.device,&asi,sets.data()),"alloc sets");
     const VkDescriptorImageInfo original{h.sampler,source.view,VK_IMAGE_LAYOUT_GENERAL};
     const VkDescriptorImageInfo work_read{h.sampler,work.view,VK_IMAGE_LAYOUT_GENERAL};
     const VkDescriptorImageInfo work_write{VK_NULL_HANDLE,work.view,VK_IMAGE_LAYOUT_GENERAL};
+    const VkDescriptorImageInfo enhanced_read{h.sampler,enhanced.view,VK_IMAGE_LAYOUT_GENERAL};
+    const VkDescriptorImageInfo enhanced_write{VK_NULL_HANDLE,enhanced.view,VK_IMAGE_LAYOUT_GENERAL};
     const VkDescriptorImageInfo output{VK_NULL_HANDLE,target.view,VK_IMAGE_LAYOUT_GENERAL};
-    std::array<VkWriteDescriptorSet,6> writes{};
+    std::array<VkWriteDescriptorSet,8> writes{};
     auto write=[&](std::size_t n,VkDescriptorSet set,std::uint32_t binding,
                    VkDescriptorType type,const VkDescriptorImageInfo* info) {
         auto& w=writes[n];
@@ -368,14 +374,18 @@ void Run(Host& h,const char* pack_spv,const char* transfer_spv) {
     };
     write(0,sets[0],0u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&original);
     write(1,sets[0],1u,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,&work_write);
-    write(2,sets[1],0u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&original);
-    write(3,sets[1],1u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&work_read);
-    write(4,sets[1],2u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&work_read);
-    write(5,sets[1],3u,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,&output);
+    write(2,sets[1],0u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&work_read);
+    write(3,sets[1],1u,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,&enhanced_write);
+    write(4,sets[2],0u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&original);
+    write(5,sets[2],1u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,&work_read);
+    write(6,sets[2],2u,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          identity?&work_read:&enhanced_read);
+    write(7,sets[2],3u,VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,&output);
     vkUpdateDescriptorSets(h.device,std::uint32_t(writes.size()),writes.data(),
                            0u,nullptr);
-    VkPipelineLayout pack_layout{},unpack_layout{};
+    VkPipelineLayout pack_layout{},delta_layout{},unpack_layout{};
     const auto pack=h.Pipeline(h.Shader(pack_spv),pset,pack_layout);
+    const auto delta=h.Pipeline(h.Shader(delta_spv),dset,delta_layout);
     const auto unpack=h.Pipeline(h.Shader(transfer_spv),uset,unpack_layout);
     const Eden::Graphics::DlssNrMin::SpatialShaderPush push{
         W,H,Q,Q,0.5f,0.5f,0.875f,0.875f};

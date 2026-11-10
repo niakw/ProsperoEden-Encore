@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 // R09 Min isolated host shader; NOT linked to PS5 renderer.
 // Symmetric peripheral transform adapted from the MIT work of Yuri Grib
-// (BeliyG3/optimizer-fps-dlss5). See docs/ENCORE_DLSS_NR_MIN_ISOLATED_BRANCH.md.
+// (BeliyG3/optimizer-fps-dlss5). Copyright (c) 2026 Yuri Grib.
+// See LICENSES/optimizer-fps-dlss5-MIT.txt and the isolated R09 Min docs.
 // Consume a full-resolution source; output smaller work image.
 // Vulkan 1.1 compatible, ordinary FP32 arithmetic, no NVIDIA extensions.
 layout(local_size_x=8,local_size_y=8,local_size_z=1) in;

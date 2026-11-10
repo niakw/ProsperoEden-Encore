@@ -54,6 +54,20 @@ These are observed branch heads on 10 November 2026; refresh snapshots before im
 **O8 — correctness oracle: Ampere register predicates / task-mesh dependencies.**  
 [oboromi IADD3 carry-out rejection](https://github.com/0xNikilite/oboromi/commit/77594cf0e1b8) demonstrates conservative negative decoding; [EglantinePS5 high uniform registers](https://github.com/heydemoura/EglantinePS5/commit/eab04ed6a7f0) discusses UR28+; [its game-specific mesh skip](https://github.com/heydemoura/EglantinePS5/commit/80afe48d22f2) is **not** an acceptable fix. Encore already has Ampere/QMD3/SPIR-V and tests. **Next:** check precise recognized ISA and UR operand coverage, reject unsupported carry-output encodings, then prove GPU-written task counts precede mesh consumer reads. Never suppress a title's mesh draws as a generic optimization.
 
+
+## Additional fork discovery (10 Nov; not automatically adopted)
+
+| Newly checked fork | Verifiable recent difference | Disposition |
+| --- | --- | --- |
+| [mucahidkambur/EglantinePS5](https://github.com/mucahidkambur/EglantinePS5/commit/588238a37e) (`dbadad075c`, 1 Nov) | Own [BCn array/mip handling](https://github.com/mucahidkambur/EglantinePS5/commit/588238a37e) and [Vulkan GC byte accounting](https://github.com/mucahidkambur/EglantinePS5/commit/dbadad075c) | **Secondary follow-up:** compare texture cache resource/accounting semantics against O4; verify image completeness and memory before porting |
+| [exploitizm/EglantinePS5](https://github.com/exploitizm/EglantinePS5/commit/d1a8d529ad) (8 Nov) | Isolating cold paging, staging caps and stale image-upload skipping with diagnostic file switches | Useful **hypothesis isolation**, not a performance win; reject user-facing debug switches or changing release semantics without reproducible symptoms |
+| [quatrixone/PS5_Lichii](https://github.com/quatrixone/PS5_Lichii/commit/8e90019d57) (9 Nov) | Frame cap and frame-generation Auto rate changes | Conditional only; presentation pacing must not conceal absent guest GPU frames, increase latency or regress NS1 |
+| [PlayTendoh](https://github.com/premohq/PlayTendoh) / [Nightshade](https://github.com/Oliv3rmoon/Nightshade) | Separate multi-emulator frontend / PS5 fork work | Not elevated to NS2 core references without an identified and demonstrated generic CPU/GPU implementation difference |
+
+### O9 — secondary texture/GC fork comparison
+
+The BCn mip/array and Vulkan GC accounting changes above should be compared to Encore's **already existing** texture/image/eviction ownership, with positive multi-layer textures, negative malformed extents, exact device-memory accounting and a bounded VRAM-pressure fixture. These forks must not overtake Lichii as the primary source merely because they carry a recent patch. The task is to **test whether a source-level gap exists**, not to import their heuristics or launch another PS5 build.
+
 ## Working acceptance checklist
 
 - [x] Research branch created from a pinned main SHA, vendor gitlink recorded.

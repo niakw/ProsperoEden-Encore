@@ -63,6 +63,9 @@ PINNED_CACHE_TARGETS = (
     "video_core/renderer_vulkan/vk_texture_cache_base.cpp",
 )
 GENERATED_TARGETS = (
+    # Real PS5 PresentManager source compiled from the maintained Vulkan fork:
+    # worker wakeups and waiter counters must match our selected header.
+    "headless/vulkan_present_manager.cpp",
     "headless/vulkan_query_cache.cpp",
     "headless/a64_emit_x64.cpp",
     "headless/physical_core.cpp",

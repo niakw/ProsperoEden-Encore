@@ -11,10 +11,14 @@
 
 namespace Eden {
 
+// A single guest capture request must not allocate arbitrary host RAM.
+// 2 MiB of PCM16 holds over 21 seconds of mono audio at 48 kHz.
+inline constexpr std::uint64_t kMaxSilentAudioInSamples = 1ull << 20;
+
 inline std::vector<std::int16_t> MakeSilentAudioInSamples(std::uint64_t count) {
-    const auto limit = std::vector<std::int16_t>{}.max_size();
-    if (count > static_cast<std::uint64_t>(limit))
-        throw std::length_error("AudioIn sample count exceeds vector capacity");
+    if (count > kMaxSilentAudioInSamples ||
+        count > static_cast<std::uint64_t>(std::vector<std::int16_t>{}.max_size()))
+        throw std::length_error("AudioIn sample count exceeds bounded capture capacity");
     return std::vector<std::int16_t>(static_cast<std::size_t>(count), 0);
 }
 

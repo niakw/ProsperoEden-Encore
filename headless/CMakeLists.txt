@@ -1780,24 +1780,11 @@ endif()
     if(PS5_NATIVE)
         set(launcher_dir "${EDEN_PORT_DIR}/prosperoeden")
         # Pinned BSD-licensed libwebp: background one-time encoding and decode.
-        set(EDEN_WEBP_ROOT "${PORT_ROOT}/vendor/sources/libwebp")
-        if(NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")
-            message(FATAL_ERROR "Pinned libwebp sources absent from sole vendor submodule")
+        # inject.cmake registers the pinned WebP target before the deferred
+        # add_eden_headless callback. No subdirectories may be created here.
+        if(NOT TARGET webp OR NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")
+            message(FATAL_ERROR "Pinned libwebp target was not registered in project(yuzu)")
         endif()
-        set(WEBP_ENABLE_SIMD OFF CACHE BOOL "" FORCE)
-        set(WEBP_USE_THREAD OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_CWEBP OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_DWEBP OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_GIF2WEBP OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_VWEBP OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_LIBWEBPMUX OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)
-        set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
-        set(WEBP_LINK_STATIC ON CACHE BOOL "" FORCE)
-        add_subdirectory("${EDEN_WEBP_ROOT}" "${PORT_BUILD_DIR}/libwebp" EXCLUDE_FROM_ALL)
         target_link_libraries(eden-headless PRIVATE webp)
         target_include_directories(eden-headless PRIVATE "${EDEN_WEBP_ROOT}/src")
         target_sources(eden-headless PRIVATE
@@ -1995,9 +1982,26 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
         set(eden_wait64_selected_source "${eden_wait64_owner}")
         list(FIND eden_wait64_sources "${eden_wait64_selected_source}" eden_wait64_index)
         if(eden_wait64_index LESS 0 AND PS5_NATIVE)
-            set(eden_wait64_selected_source
-                "${PORT_ROOT}/vendor/encore-active/eden-threading/src/core/${eden_wait64_owner}")
-            list(FIND eden_wait64_sources "${eden_wait64_selected_source}" eden_wait64_index)
+            # The maintained threading module has already replaced pinned HLE
+            # sources with absolute paths. PORT_ROOT may still contain /headless/..
+            # while CMAKE_CURRENT_LIST_DIR in the module is canonical: compare
+            # existing source files by real path, never by their spelling.
+            get_filename_component(eden_wait64_reviewed_real
+                "${PORT_ROOT}/vendor/encore-active/eden-threading/src/core/${eden_wait64_owner}"
+                REALPATH)
+            foreach(eden_wait64_candidate IN LISTS eden_wait64_sources)
+                if(IS_ABSOLUTE "${eden_wait64_candidate}" AND
+                   EXISTS "${eden_wait64_candidate}")
+                    get_filename_component(eden_wait64_candidate_real
+                        "${eden_wait64_candidate}" REALPATH)
+                    if(eden_wait64_candidate_real STREQUAL eden_wait64_reviewed_real)
+                        set(eden_wait64_selected_source "${eden_wait64_candidate}")
+                        list(FIND eden_wait64_sources
+                            "${eden_wait64_selected_source}" eden_wait64_index)
+                        break()
+                    endif()
+                endif()
+            endforeach()
         endif()
         if(eden_wait64_index LESS 0)
             message(FATAL_ERROR "Missing unified address arbiter owner: ${eden_wait64_owner}")

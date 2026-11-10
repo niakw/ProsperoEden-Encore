@@ -42,6 +42,10 @@ MAINTAINED_CORE_TARGETS = (
 )
 PINNED_CACHE_TARGETS = (
     "video_core/host1x/gpu_device_memory_manager.cpp",
+    # First real native compiler failures in build #10 (881/1870). Keep
+    # both source-owned ABI consumers inside the cheap PS5 syntax preflight.
+    "video_core/renderer_vulkan/vk_turbo_mode.cpp",
+    "video_core/renderer_vulkan/vk_texture_cache_base.cpp",
 )
 GENERATED_TARGETS = (
     "headless/vulkan_query_cache.cpp",

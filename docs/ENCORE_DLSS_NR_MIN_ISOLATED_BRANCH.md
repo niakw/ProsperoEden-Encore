@@ -140,3 +140,15 @@ error callback, failing if a validation ERROR is emitted. The dedicated host
 workflow runs both the original readback oracle and the validation variant
 using Lavapipe. This is NOT a PS5 driver-validation run and cannot rule out
 proprietary-model hazards or real ViT live-range conflicts.
+
+
+### Deliberate missing-barrier negative control
+
+The host sync validation fixture also removes exactly one of the seven
+synthetic inter-block compute barriers (between blocks 3 and 4, zero-based)
+only when invoked with --negative-missing-barrier and the software Vulkan ICD.
+It expects Khronos synchronization validation to **report an ERROR**, and
+never checks the undefined output of this intentionally invalid schedule.
+If the validation layer does not detect this hazard, the CI itself fails.
+This proves validator sensitivity on the tiny synthetic hazard, NOT
+completeness for real learned ViT GPU usage.

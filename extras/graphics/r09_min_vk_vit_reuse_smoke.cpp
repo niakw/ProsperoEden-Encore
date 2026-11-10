@@ -244,7 +244,7 @@ struct Host{
   ci.stage=stage;ci.layout=pipeline_layout;
   Check(vkCreateComputePipelines(device,VK_NULL_HANDLE,1u,&ci,nullptr,&pipeline),"pipeline");
  }
- void Run(){
+ void Run(bool omit_one_interblock_barrier=false){
   for(std::uint32_t s=0;s<Slots;++s){
    void* mapped{};
    Check(vkMapMemory(device,buffers[s].memory,0u,Bytes,0u,&mapped),"map initialize");
@@ -267,7 +267,7 @@ struct Host{
    vkCmdPushConstants(cmd,pipeline_layout,VK_SHADER_STAGE_COMPUTE_BIT,
      0u,sizeof(j),&j);
    vkCmdDispatch(cmd,1u,1u,1u);
-   if(j+1u<Blocks){
+   if(j+1u<Blocks && !(omit_one_interblock_barrier && j==3u)){
     VkMemoryBarrier barrier{};barrier.sType=VK_STRUCTURE_TYPE_MEMORY_BARRIER;
     barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT;
     barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_SHADER_WRITE_BIT;
@@ -326,9 +326,26 @@ struct Host{
 };
 } // namespace
 int main(int argc,char** argv){
- if(argc!=2){std::cerr<<"usage: r09_min_vk_vit_reuse_smoke <shader.spv>\n";return 2;}
+ if(argc!=2 && argc!=3){
+  std::cerr<<"usage: r09_min_vk_vit_reuse_smoke <shader.spv> [--negative-missing-barrier]\n";
+  return 2;
+ }
+ const bool negative=argc==3 && std::string(argv[2])=="--negative-missing-barrier";
+ if(argc==3 && !negative)return 2;
  try{
-  Host h;h.Init();h.Pipeline(argv[1]);h.Run();h.Verify();
+  Host h;h.Init();h.Pipeline(argv[1]);
+  if(negative && !h.validation_enabled)
+   throw std::runtime_error("Negative barrier fixture requires Khronos sync validation");
+  h.Run(negative);
+  if(negative){
+   // Expected-only negative control: no readback or assertion on the
+   // undefined data produced by dispatches lacking a memory dependency.
+   if(h.validation_errors.load()==0u)
+    throw std::runtime_error("Missing barrier was NOT detected by Khronos");
+   std::cout<<"R09_MIN_VIT_KHRONOS_SYNC_NEGATIVE_MISSING_BARRIER_DETECTED\n";
+   return 0;
+  }
+  h.Verify();
   if(h.validation_enabled){
    if(h.validation_errors.load()!=0u)
     throw std::runtime_error("Khronos detected Vulkan validation errors");

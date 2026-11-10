@@ -1,0 +1,578 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    25,
+    36
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 0,
+  "rows": [
+    {
+      "index": 25,
+      "sha": "9c3bdeffc019048478e3a4ca3b35fb217676e248",
+      "title": "[desktop] Prefer X11, but allow Wayland (with a warning) (#4579)",
+      "date": "2026-11-02T22:40:12Z",
+      "status": "file-list-retrieved",
+      "file_count": 10,
+      "files": [
+        {
+          "path": "src/qt_common/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/uisettings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/gui_settings.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/gui_settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/qt_common.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/qt_common.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 26,
+      "sha": "060026dc2d1daa749cf0b39378f132f506cbfd93",
+      "title": "[dist, android] Update translations from Transifex for Nov 02 (#4626)",
+      "date": "2026-11-02T17:59:46Z",
+      "status": "file-list-retrieved",
+      "file_count": 33,
+      "files": [
+        {
+          "path": "dist/languages/ar.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-uk/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 27,
+      "sha": "92f54a034aa90b03ce33ca7571f24f58ddb380b0",
+      "title": "[android, docs] Update recommended drivers, Fix Android build Guide and Fix X link. (#4617)",
+      "date": "2026-11-02T03:32:10Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "docs/build/Android.md",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/DriverFetcherFragment.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/aboutdialog.ui",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 28,
+      "sha": "7a6d055094846b7787f9b8c0f238c0c68709f632",
+      "title": "[desktop] queue FirstFrameDisplayed to fix loading screen race (#4536)",
+      "date": "2026-11-01T20:53:04Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/yuzu/bootmanager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/yuzu/main_window.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 29,
+      "sha": "c6fa5c1f77ba40bcb091b1a53492230f40d97ded",
+      "title": "[common] use handrolled string utility conversions instead of wstring codecvt (#3773)",
+      "date": "2026-11-01T20:52:29Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/common/string_util.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 30,
+      "sha": "2c40328a23630353f4dd20778eb587e586cd83a5",
+      "title": "[macos, net] add sysctl(RT_xx)-fetched network interfaces (#3656)",
+      "date": "2026-11-01T20:51:51Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/internal_network/network_interface.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 31,
+      "sha": "41b6807f127526e89ede0fb40748d6ae988fc0cc",
+      "title": "[fs] use mmap() to read files using VM/pagefaults for higher throughput (#3151)",
+      "date": "2026-11-01T20:51:15Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/common/fs/file.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/fs/file.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 32,
+      "sha": "2bec66c0922673844bc761a0784e89cde7869f00",
+      "title": "[dynarmic] Remove redundant configure struct (#4485)",
+      "date": "2026-11-01T20:48:38Z",
+      "status": "file-list-retrieved",
+      "file_count": 22,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/a32_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/arm64/a64_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/loongarch64/a32_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/riscv64/a32_address_space.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/a64_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/a32_translate.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/a32_translate.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/a32_exception_generating.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/a32_translate_impl.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/hint.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/thumb16.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/impl/thumb32_load_byte.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/translate_arm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A32/translate/translate_thumb.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/translate/a64_translate.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/translate/a64_translate.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/translate/impl/impl.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/frontend/A64/translate/impl/system.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A32/fuzz_thumb.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/tests/A64/fuzz_with_unicorn.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 33,
+      "sha": "be972d7fdc50376d231d4f6b0ca912adc958aadd",
+      "title": "[dynarmic] Remove redundant constant pool ops (#4516)",
+      "date": "2026-11-01T20:46:19Z",
+      "status": "file-list-retrieved",
+      "file_count": 2,
+      "files": [
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/dynarmic/src/dynarmic/backend/x64/constant_pool.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 34,
+      "sha": "972860ac8fcb7be36c13d572890a7349353397ce",
+      "title": "[dist] reoptimize assets, and add svg optimization (#4537)",
+      "date": "2026-11-01T20:45:45Z",
+      "status": "file-list-retrieved",
+      "file_count": 19,
+      "files": [
+        {
+          "path": "dist/dev.eden_emu.eden.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/eden.icon/Assets/dev.eden_emu.eden.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/1an.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/2025.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/aprilfools2026.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/base.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/halloween2025.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/newyear2025.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/original_small.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/saintpatrick2026.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icon_variations/valentines2026.svg",
+          "patch_present": true
+        },
+        {
+          "path": "dist/icons/controller/applet_dual_joycon_dark_disabled.png",
+          "patch_present": false
+        },
+        {
+          "path": "dist/icons/controller/applet_dual_joycon_midnight_disabled.png",
+          "patch_present": false
+        },
+        {
+          "path": "dist/icons/controller/applet_single_joycon_right_midnight.png",
+          "patch_present": false
+        },
+        {
+          "path": "docs/dynarmic/Fastmem.svg",
+          "patch_present": false
+        },
+        {
+          "path": "docs/dynarmic/HostToGuest.svg",
+          "patch_present": false
+        },
+        {
+          "path": "docs/img/creator-1.png",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/drawable/ic_yuzu.png",
+          "patch_present": false
+        },
+        {
+          "path": "tools/optimize-assets.sh",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 35,
+      "sha": "3d3ed4b7d15b9fac14f2ea255b56f486c34bfa81",
+      "title": "[shader_recompiler, renderer_vulkan] draw sprites whose texture handle comes from a vertex attribute (#4566)",
+      "date": "2026-11-01T20:44:40Z",
+      "status": "file-list-retrieved",
+      "file_count": 8,
+      "files": [
+        {
+          "path": "src/shader_recompiler/host_translate_info.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/texture_pass.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/shader_info.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_graphics_pipeline.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_graphics_pipeline.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_rasterizer.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 36,
+      "sha": "be21ccce25ed598059ea7e679f227d0ac26e1e4e",
+      "title": "[docs] fix link to AI and LLM Usage in docs/README.md (#4618)",
+      "date": "2026-11-01T17:27:36Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "docs/README.md",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

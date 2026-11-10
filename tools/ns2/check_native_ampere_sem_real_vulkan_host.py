@@ -262,6 +262,7 @@ with tempfile.TemporaryDirectory(prefix="eden-g10-vulkan-semaphore-") as tmp:
     for cc in compilers:
         exe=Path(tmp)/Path(cc).name.replace("+","p")
         cmd=[cc,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
+             "-Wno-missing-field-initializers",
              "-I"+str(NATIVE),str(cpp),"-o",str(exe),"-lvulkan"]
         result=subprocess.run(cmd,capture_output=True,text=True,
                               timeout=80,env=os.environ.copy())

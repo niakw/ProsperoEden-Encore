@@ -78,18 +78,33 @@ assert 'if (!services_.game_storage_available())\n                return missing
 assert 'if (!services_.game_storage_available())\n                missing.clear();' in presence
 assert 'missing.clear();' in lib
 assert "bool ValidNlibTga(" in svc
-# Cached media must be rejected if the full TGA header/payload is invalid,
-# while an already valid image may still be refreshed when its TTL expires.
-assert "return ValidNlibTga(path) ? path : std::string{};" in svc
-assert "if (ValidNlibTga(path)) screens.push_back(path);" in svc
-assert "if (!ValidNlibTga(path) || refresh_existing_artwork)" in svc
+# Cached artwork now prefers independently validated WebP and retains a
+# validated legacy TGA fallback until conversion has succeeded. Reject bad
+# WebP/TGA payloads and do not treat existence as proof of safe media.
+assert "bool ValidNlibWebP(" in svc
+assert "bool ValidNlibTga(" in svc
+assert 'bool ValidCachedArtwork(const std::string& path)' in svc
+assert 'if (path.ends_with(".webp")) return ValidNlibWebP(path);' in svc
+assert 'return ValidNlibTga(path);' in svc
+assert 'std::string AvailableArtwork(const std::string& preferred)' in svc
+assert 'if (ValidCachedArtwork(preferred)) return preferred;' in svc
+assert 'if (ValidNlibTga(legacy)) return legacy;' in svc
+# Real cache owners (hero/icon/screens) must not return an unverified path.
+assert svc.count('return AvailableArtwork(path);') >= 2
+assert 'if (auto available = AvailableArtwork(path); !available.empty()) screens.push_back(available);' in svc
+# Only the worker, not the UI frame, may perform asynchronous refreshes.
+assert 'if (!ValidCachedArtwork(path) || refresh_existing_artwork)' in svc
+assert 'if (has_banner && (!ValidNlibWebP(NlibHeroPath(title_id)) || refresh_existing_artwork))' in svc
+assert 'if (has_icon && (!ValidNlibWebP(NlibIconPath(title_id)) || refresh_existing_artwork))' in svc
 assert "info.st_size < 18" in svc
 assert "info.st_size) >= bytes" in svc
 assert "const bool sparse_metadata = current_metadata_cache" in svc
 assert "metadata_expired || sparse_metadata" in svc
 assert 'metadata["_encore_checked_at"] = now_seconds' in svc
 assert "refresh_existing_artwork" in svc
-assert "CachedNlibHero(title_id).empty()" in svc
+# A screenshot-backed hero must never suppress the missing/expired true
+# banner fetch; the actual native condition is keyed by its WebP owner.
+assert 'if (has_banner && (!ValidNlibWebP(NlibHeroPath(title_id)) || refresh_existing_artwork))' in svc
 assert "game.artwork_changed = enrichment.artwork_changed" in svc
 assert "textures_.invalidate(enriched.hero)" in lib
 assert "void Textures::invalidate(" in src("headless/prosperoeden/pe/ui/textures.cpp")
@@ -435,7 +450,12 @@ assert "auto games = scan_.get();" in lib
 finish_entry = lib.split("void Launcher::finish_scan(", 1)[1].split(
     "void Launcher::start_home_media()", 1)[0]
 assert "games_loaded_ = true;" not in finish_entry
-assert "if (!games_loaded_ && !pending_settings_file_.empty())" in finish_entry
+# First-scan failure clears an impossible deferred settings request, while
+# successful completion is processed asynchronously in launcher update().
+assert 'if (!games_loaded_) {' in finish_entry
+assert 'pending_settings_file_.clear();' in finish_entry
+assert 'say(tr("Could not load game list. Please try again."), true);' in finish_entry
+assert 'if (games_loaded_ && !pending_settings_file_.empty())' in nav
 assert "pending_settings_file_.clear();" in finish_entry
 
 assert "apply_games(std::move(games));" in lib

@@ -1,0 +1,37 @@
+name: P5 native preflight focused host checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p5-native-preflight-host.yml'
+      - 'tools/check-jit-stability.py'
+      - 'tools/check-nlib-ui-recovery.py'
+      - 'tools/package-headless-native.sh'
+      - 'headless/CMakeLists.txt'
+      - 'headless/prosperoeden/eden_services.cpp'
+      - 'headless/prosperoeden/pe/ui/library.cpp'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p5-native-host-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-owners:
+    name: Check production JIT and native media/storage owners before expensive build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+          fetch-depth: 1
+      - name: Verify production JIT owner, no experimental build selector, and package policy
+        run: python3 -B tools/check-jit-stability.py
+      - name: Execute maintained ROM-storage and Nlib media tests with host C++ compiler
+        run: python3 -B tools/check-nlib-ui-recovery.py

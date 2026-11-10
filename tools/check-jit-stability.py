@@ -36,8 +36,9 @@ assert '-DEDEN_SHARED_JIT=OFF -DEDEN_JIT_COMPILE_BATCH=OFF' in host
 for script in (native, package_build):
     assert '-DEDEN_SHARED_JIT=ON' not in script
     assert '-DEDEN_JIT_COMPILE_BATCH=ON' not in script
-assert "assert 'EDEN_SHARED_JIT:BOOL=ON' not in profile" in package_script
-assert "assert 'EDEN_JIT_COMPILE_BATCH:BOOL=ON' not in profile" in package_script
+assert "for experimental in ('EDEN_SHARED_JIT', 'EDEN_JIT_COMPILE_BATCH'):" in package_script
+assert "assert experimental + ':BOOL=ON' not in profile" in package_script
+assert "assert experimental + ':UNINITIALIZED=ON' not in profile" in package_script
 memory_check = (root / 'headless/memory_check.cpp').read_text()
 assert '#if EDEN_SHARED_JIT_AVAILABLE\n// Shared compiled code' in memory_check
 assert '#if EDEN_SHARED_JIT_AVAILABLE\n// Dispatcher lookups' in memory_check

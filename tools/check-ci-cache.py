@@ -104,14 +104,17 @@ assert "-exec touch" not in build
 assert '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON' in build
 assert 'tools/check-native-source-syntax.py' in build
 assert build.index('tools/check-native-source-syntax.py') < build.index('cmake --build "$scratch/native-local"')
-# One release artifact: publish verified FTP and release bundle BEFORE any
-# optional cache upload. Do not restore the obsolete all-on/dev package path.
+# Publish a verified FTP title and release bundle independently of optional
+# dependency cache preservation. Do not restore an obsolete dev package path.
 assert "EDEN_TEST_ALL_ON" not in workflow
 assert "Upload validated native development package" not in workflow
 assert "Upload native development debug symbols" not in workflow
 assert "bash tools/build-package.sh dev" not in workflow
-assert workflow.index("Upload FTP-ready title folder") < workflow.index("Save build caches after verified artifact uploads")
-assert workflow.index("Upload compiled release bundle") < workflow.index("Save build caches after verified artifact uploads")
+native_cache_step = "      - name: Save caches after successful native preparation"
+assert workflow.count(native_cache_step) == 1
+assert workflow.index("Prepare native build inputs") < workflow.index(native_cache_step)
+assert workflow.index("Upload FTP-ready title folder") < workflow.index(native_cache_step)
+assert workflow.index("Upload compiled release bundle") < workflow.index(native_cache_step)
 # Only the verified FTP title archive is presented as the installable package.
 # Preserve resumable failed-job state internally; historical downloads are a
 # restore fallback, never an additional upload in a new run.
@@ -129,6 +132,8 @@ assert workflow.index("Save internal stage checkpoint") < workflow.index("Assemb
 assert workflow.index("Upload FTP-ready title folder") < workflow.index("Validate actual downloadable FTP ZIP root")
 assert "name: Eden-Encore-PS5-FTP-PPSA99008" in workflow
 
-cache_block = workflow.split("      - name: Save build caches after verified artifact uploads", 1)[1].split("  release:", 1)[0]
+cache_block = workflow.split(native_cache_step, 1)[1].split("\n  release:", 1)[0]
+assert "if: ${{ !cancelled() && steps.prepare_native.outcome == 'success' }}" in cache_block
 assert "continue-on-error: true" in cache_block, "optional cache write must not fail artifact delivery"
+assert "uses: actions/cache/save@" in cache_block
 print("Encore CI incremental-cache and early syntax gate contract PASS")

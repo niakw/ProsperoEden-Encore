@@ -1,7 +1,8 @@
 name: R09 DLSS-NR Min — isolated host proof
 
 # Small, non-PS5 PR gate. Never builds the native console application,
-# loads private neural weights, executes Vulkan or touches main.
+# loads private neural weights or touches main. A tiny public-input Vulkan
+# compute witness runs only under a host software driver (Lavapipe).
 on:
   pull_request:
     branches: [main]
@@ -10,7 +11,7 @@ on:
       - 'extras/graphics/dlss_nr_min_*.h'
       - 'extras/graphics/test_dlss_nr_min_*.cpp'
       - 'extras/graphics/r09_min_shaders/**'
-      - 'tools/graphics/CMakeLists.txt'
+      - 'extras/graphics/r09_min_vk_spatial_smoke.cpp'
   workflow_dispatch:
 
 permissions:
@@ -22,9 +23,9 @@ concurrency:
 
 jobs:
   min-host:
-    name: R09 Min C++20 geometry / budget / invertibility
+    name: R09 Min C++20 + Vulkan synthetic GPU witness
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Checkout exact PR SHA (no PS5 build)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -57,9 +58,9 @@ jobs:
           for unit in \
               test_dlss_nr_min_policy \
               test_dlss_nr_min_spatial_math \
-              test_dlss_nr_min_spatial_abi \
+                test_dlss_nr_min_spatial_abi \
               test_dlss_nr_min_graph_geometry; do
-            grep -Fq "eden_r08_test(${unit})" tools/graphics/CMakeLists.txt
+            test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
             for unit in \
@@ -102,3 +103,21 @@ jobs:
             fi
             echo "R09_MIN_SPIRV_PASS ${shader}"
           done
+
+      - name: Execute actual Vulkan pack/detail-transfer under Lavapipe
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends libvulkan-dev mesa-vulkan-drivers
+          icd="$(dpkg -L mesa-vulkan-drivers |
+            grep -E '/[^/]*(lvp|lavapipe)[^/]*[.]json$' | head -n 1 || true)"
+          test -n "$icd" && test -f "$icd"
+          export VK_ICD_FILENAMES="$icd"
+          g++ -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+            -Iextras/graphics \
+            extras/graphics/r09_min_vk_spatial_smoke.cpp -lvulkan \
+            -o .build-local/r09-min/vk-spatial-readback
+          .build-local/r09-min/vk-spatial-readback \
+            .build-local/r09-min/peripheral_pack.spv \
+            .build-local/r09-min/peripheral_detail_transfer.spv
+          echo R09_MIN_HOST_VULKAN_GPU_READBACK_PASS_NO_NEURAL_MODEL

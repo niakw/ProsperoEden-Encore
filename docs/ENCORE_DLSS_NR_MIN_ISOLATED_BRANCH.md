@@ -80,3 +80,20 @@ The current draft is **a development foundation, not a finished DLSS-NR Min impl
 - **Next blocker:** link our existing authentic R09 model to genuinely produced guest frames and full Original graph GPU fences. The 720p row plan is **structural** only: specialized Split-Swin, ViT, decoder and learned-layout resource ABI remain unqualified.
 - **No speed claim:** 55.56% fewer 720p pixels is arithmetic, not observed GPU time, and adding the two work images has its own memory/compute costs. Validate net savings on PS5 against the existing 1080p baseline before enabling.
 - **No release or main merge:** this PR is isolated and draft by design, even after a green host-run.
+
+
+## Vulkan test of the ViT reuse mechanism (synthetic only)
+
+The standalone host test r09_min_vk_vit_reuse_smoke.cpp executes eight
+real Vulkan compute dispatches via Lavapipe, using nine separate physical
+VkBuffers: two ping-pong IO buffers and seven reusable scratch-class buffers.
+Seven explicit SHADER_WRITE to SHADER_READ|SHADER_WRITE barriers separate
+consecutive blocks. The test waits on a Vulkan fence and checks the final
+64-token result and all seven scratch-buffer results against CPU oracles.
+
+This is NOT execution of learned ViT weights or any of the authentic five
+operations per ViT block. The real buffers have additional in-flight descriptor
+and resource-lifetime requirements which this synthetic test cannot prove.
+The fail-closed production admission gate remains disabled; zero PS5 runtime
+code is modified. Nominal allocation savings are still projections, not VRAM
+measurements.

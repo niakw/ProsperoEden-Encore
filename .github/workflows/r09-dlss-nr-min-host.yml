@@ -12,6 +12,7 @@ on:
       - 'extras/graphics/test_dlss_nr_min_*.cpp'
       - 'extras/graphics/r09_min_shaders/**'
       - 'extras/graphics/r09_min_vk_spatial_smoke.cpp'
+      - 'extras/graphics/r09_min_vk_vit_reuse_smoke.cpp'
   workflow_dispatch:
 
 permissions:
@@ -134,3 +135,23 @@ jobs:
             done
           done
           echo R09_MIN_HOST_VULKAN_GPU_READBACK_4_SHAPES_MODES_PASS
+
+      - name: Execute eight synthetic ViT dispatches with reused buffers
+        shell: bash
+        run: |
+          set -euo pipefail
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            extras/graphics/r09_min_shaders/vit_synthetic_reuse.comp \
+            -o .build-local/r09-min/vit_synthetic_reuse.spv
+          spirv-val --target-env vulkan1.1 \
+            .build-local/r09-min/vit_synthetic_reuse.spv
+          g++ -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+            extras/graphics/r09_min_vk_vit_reuse_smoke.cpp -lvulkan \
+            -o .build-local/r09-min/vk-vit-reuse
+          icd="$(dpkg -L mesa-vulkan-drivers |
+            grep -E '/[^/]*(lvp|lavapipe)[^/]*[.]json$' | head -n 1 || true)"
+          test -n "$icd" && test -f "$icd"
+          export VK_ICD_FILENAMES="$icd"
+          .build-local/r09-min/vk-vit-reuse \
+            .build-local/r09-min/vit_synthetic_reuse.spv
+          echo R09_MIN_VIT_VULKAN_REUSE_SYNTHETIC_PROOF_ONLY

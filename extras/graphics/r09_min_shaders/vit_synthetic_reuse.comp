@@ -1,0 +1,33 @@
+#version 450
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Synthetic Vulkan ViT reuse fixture. NOT DLSS, trained layers, or PS5 code.
+layout(local_size_x=64,local_size_y=1,local_size_z=1) in;
+layout(set=0,binding=0,std430) readonly buffer Input {uint v[];} inputData;
+layout(set=0,binding=1,std430) writeonly buffer Hidden {uint v[];} hiddenData;
+layout(set=0,binding=2,std430) writeonly buffer Ffwd {uint v[];} ffwdData;
+layout(set=0,binding=3,std430) writeonly buffer Attention {uint v[];} attentionData;
+layout(set=0,binding=4,std430) writeonly buffer Output {uint v[];} outputData;
+layout(set=0,binding=5,std430) writeonly buffer Scratch {uint v[];} scratchData;
+layout(set=0,binding=6,std430) writeonly buffer Query {uint v[];} queryData;
+layout(set=0,binding=7,std430) writeonly buffer Key {uint v[];} keyData;
+layout(set=0,binding=8,std430) writeonly buffer Value {uint v[];} valueData;
+layout(push_constant) uniform Step {uint blockIndex;} step;
+void main(){
+ uint i=gl_GlobalInvocationID.x;
+ if(i>=64u)return;
+ uint hidden=inputData.v[i]+step.blockIndex;
+ uint ffwd=hidden*2u;
+ uint attention=ffwd+1u;
+ uint scratch=attention+3u;
+ uint query=scratch+5u;
+ uint key=query+7u;
+ uint value=key+11u;
+ hiddenData.v[i]=hidden;
+ ffwdData.v[i]=ffwd;
+ attentionData.v[i]=attention;
+ scratchData.v[i]=scratch;
+ queryData.v[i]=query;
+ keyData.v[i]=key;
+ valueData.v[i]=value;
+ outputData.v[i]=value+13u;
+}

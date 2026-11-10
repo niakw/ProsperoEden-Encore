@@ -670,7 +670,8 @@ static void VerifyTaskMeshInvalidDimensions() {
 // emitter. A CMake-selected DefineTextureBuffers implementation is not
 // enough until OpTypeArray and Vulkan validation accept a live module.
 static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
-    const auto compile = [&](u32 descriptor_count, bool expect_reject) {
+    const auto compile = [&](u32 descriptor_count, bool expect_reject,
+                             bool nonuniform_supported) {
         Shader::ObjectPool<Shader::IR::Inst> pool{8};
         Shader::IR::Block block{pool};
         Shader::IR::Program program{};
@@ -715,14 +716,26 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
         }
         Shader::Profile profile{};
         profile.supported_spirv = 0x00010500;
+        // The production G01 emitter refuses dynamic descriptor-array
+        // indexes unless Vulkan advertises the precise texel-buffer
+        // non-uniform indexing feature. Test both allowed and forbidden
+        // paths with the exact same genuine IR and SPIR-V emitter.
+        profile.support_uniform_texel_buffer_array_nonuniform_indexing =
+            nonuniform_supported;
         Shader::Backend::Bindings bindings{};
         std::vector<u32> words;
         try {
             words = Shader::Backend::SPIRV::EmitSPIRV(
                 profile, Shader::RuntimeInfo{}, program, bindings);
         } catch (const std::exception& ex) {
-            Require(expect_reject && std::string(ex.what()).find(
-                        "Empty texture buffer descriptor array") != std::string::npos,
+            const std::string why{ex.what()};
+            const bool refused_empty = descriptor_count == 0 &&
+                why.find("Empty texture buffer descriptor array") != std::string::npos;
+            const bool refused_nonuniform = descriptor_count == 2 &&
+                !nonuniform_supported &&
+                why.find("Native dynamic image descriptor requires non-uniform indexing support")
+                    != std::string::npos;
+            Require(expect_reject && (refused_empty || refused_nonuniform),
                     "texture-buffer descriptor rejection was not the expected ABI guard");
             return;
         }
@@ -751,9 +764,10 @@ static void VerifyRealTextureBufferArraySpirv(const std::string& prefix) {
                      static_cast<std::streamsize>(words.size() * sizeof(u32)));
         Require(bool(output), "cannot write descriptor array module");
     };
-    compile(2, false);
-    compile(0, true);
-    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=2 dynamic_index=1 zero_rejected=1");
+    compile(2, false, true); // Valid OpAccessChain with advertised Vulkan capability.
+    compile(2, true, false); // Missing capability must fail before emitting a guest texture.
+    compile(0, true, true); // Missing descriptor must fail independently of capability.
+    std::puts("P2_2C_REAL_TEXTURE_BUFFER_ARRAY_SPIRV_EMITTED count=2 indexed_fetch=2 dynamic_index=1 zero_rejected=1 capability_refused=1");
 }
 // G07: genuine native image-buffer descriptor fetch -> SSBO write.
 // This is a real SPIR-V emitter path, subsequently dispatched by Vulkan;

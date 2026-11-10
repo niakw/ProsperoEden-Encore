@@ -1,0 +1,48 @@
+name: A/B NS1 AudioIn isolated host verification
+
+on:
+  pull_request:
+    paths:
+      - "headless/audio.cpp"
+      - "headless/audio_in_silence.h"
+      - "headless/main.cpp"
+      - "tests/ab_ns1_audioin_silence_host.cpp"
+      - ".github/workflows/ab-ns1-audioin-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-silence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout isolated patch branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify capture-only native routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'make_unique<SilentAudioInputStream>(system)' headless/audio.cpp
+          grep -Fq 'MakeSilentAudioInSamples(samples)' headless/audio.cpp
+          grep -Fq 'audio_input_device_id = "ps5";' headless/main.cpp
+          if grep -Fq 'make_unique<NullSinkStreamImpl>' headless/audio.cpp; then
+            echo "::error::AudioIn must not use an empty capture stream"
+            exit 1
+          fi
+
+      - name: Compile and execute real silence helper with ASan and UBSan
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -O1 -g -Wall -Wextra -Werror \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -I. tests/ab_ns1_audioin_silence_host.cpp -o /tmp/ab-ns1-audioin-host
+          /tmp/ab-ns1-audioin-host
+          echo "A_B_NS1_AUDIOIN_HOST_SILENCE_PASS" >> "$GITHUB_STEP_SUMMARY"
+          echo "No PS5 compiler, native ELF, or guest memory write is tested." >> "$GITHUB_STEP_SUMMARY"

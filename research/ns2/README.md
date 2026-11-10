@@ -122,8 +122,38 @@ a new lock across scheduler waits or Vulkan recording could deadlock or
 stall remaps. Preserve every current preflight, post-staging and commit
 verification until actual ownership is redesigned and tested.
 
-Current bounded runner now tests **72 standalone assertions per compiler**
-(19 SSBO, 23 backing lifecycle, 30 lease/memo). The **24-case**
+Current bounded runner now tests **102 standalone assertions per compiler**
+(19 SSBO, 23 backing lifecycle, 30 lease/memo, 30 native Vulkan range). The **24-case**
 separate source-expression harness remains a previously reproduced local
 test; it is not added to the standalone runner because it requires
 a pinned vendor source checkout for trustworthy extraction.
+
+## O11 — native QMD3 Vulkan descriptor range guard (research only)
+
+The standalone [range contract](native_vk_range_contract.hpp) and
+[30-case fixture](test_native_vk_range_contract.cpp) model a **native-only
+two-stage Vulkan admission rule**. Both pass with Clang 17 / GCC 14 under UBSan.
+This does **not** alter the maintained vendor or PS5 runtime.
+
+- **Before GMMU staging:** reject zero, overflowing 49-bit guest spans,
+  spans above the current native 256 MiB ceiling, and descriptor lengths
+  exceeding the *queried* Vulkan `maxStorageBufferRange` or
+  `maxUniformBufferRange` (also enforce the 64 KiB QMD3 CBUF ABI ceiling).
+- **After `BufferCache::ObtainBuffer`:** require the actual buffer offset
+  to meet device alignment, and `bytes <= backing_size - offset` using
+  overflow-safe subtraction. Descriptor-buffer mode must have a nonzero
+  base device address and valid `base + offset` arithmetic.
+- **No silent clamping.** Reducing a declared guest buffer span can change
+  shader semantics. Reject unsupported descriptors instead.
+- Reviewed source owners at vendor `22b69d60`: `ConfigureNative` in
+  `encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp`;
+  `Device::GetMaxStorageBufferRange()` / alignments in the maintained Vulkan
+  device header; `Buffer::SizeBytes()` inherited from `BufferBase`; and
+  `GuestDescriptorQueue::AddBuffer()` in `vk_update_descriptor.h`.
+
+The actual PS5 driver `maxStorageBufferRange` and `maxUniformBufferRange`
+have **not** been queried. A real-source/driver test must precede any
+production patch. Preserve existing GMMU snapshot/remap checks, GPU
+write tracking, and Switch 1 behavior.
+
+Run all four host suites with `bash research/ns2/run_host_checks.sh`.

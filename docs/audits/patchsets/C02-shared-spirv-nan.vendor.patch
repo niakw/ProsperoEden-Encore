@@ -1,0 +1,14 @@
+diff --git a/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp b/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp
+--- a/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp
++++ b/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp
+@@ -686,9 +686,9 @@
+     const Id component_id{ctx.Const(component)};
+     const AttributeType type{ctx.runtime_info.color_output_types[index]};
+     if (type == AttributeType::Float) {
+         const Id pointer{ctx.OpAccessChain(ctx.output_f32, ctx.frag_color.at(index), component_id)};
+-        ctx.OpStore(pointer, value);
++        ctx.OpStore(pointer, ctx.OpSelect(ctx.F32[1], ctx.OpIsNan(ctx.U1, value), ctx.Const(0.0f), value));
+     } else if (type == AttributeType::UnsignedInt) {
+         const Id pointer{ctx.OpAccessChain(ctx.output_u32, ctx.frag_color.at(index), component_id)};
+         ctx.OpStore(pointer, ctx.OpBitcast(ctx.U32[1], value));
+     } else if (type == AttributeType::SignedInt) {

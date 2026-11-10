@@ -99,7 +99,7 @@ int main() {
     bad=kReference;bad.fsr_target.extent={1280u,720u};
     ExpectReject(bad,Present720Reason::InvalidFsrOutput);
     std::cout<<"R09_MIN_720_POST_NEURAL_FSR_HOST_CONTRACT_PASS "
-             <<"positive_targets=3 negative_conditions=21 "
+             <<"positive_targets=3 negative_conditions=22 "
              <<"stage_order=NEURAL_BARRIER_EASU_RCAS_PRESENT "
              <<"runtime=DISABLED\n";
 }

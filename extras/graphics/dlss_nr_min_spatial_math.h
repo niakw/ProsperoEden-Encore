@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Host-only PS5 R09 spatial-coordinate model. Adapts symmetric peripheral
 // radius transforms published by BeliyG3/optimizer-fps-dlss5 (MIT).
+// Copyright (c) 2026 Yuri Grib (BeliyG3), see LICENSES/optimizer-fps-dlss5-MIT.txt.
 #pragma once
 #include <algorithm>
 #include <cmath>

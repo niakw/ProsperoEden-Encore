@@ -364,6 +364,7 @@ static void VerifyCase(const FileSys::ProgramMetadata& metadata,
     Kernel::KResourceLimit::closed=0;
     Kernel::KProcess process;
     Kernel::KernelCore kernel;
+    Kernel::h01_init_succeeded=false;
     constexpr u64 start=0x200000;
     constexpr std::size_t offset=0x4000;
     const auto result=process.LoadFromMetadata(kernel,m,code_bytes,start,offset);
@@ -395,6 +396,10 @@ static void VerifyCase(const FileSys::ProgramMetadata& metadata,
             Kernel::KResourceLimit::created==1 &&
             Kernel::KResourceLimit::closed==1,
             "real KProcess resource-limit scope/closure incorrect");
+    Require(process.m_page_table.mapped_pages==code_bytes/Kernel::PageSize &&
+            process.m_page_table.finalizations==0 &&
+            process.m_memory.attached && process.m_memory.gpu_dirty,
+            "real KProcess Initialize did not map the guest code pages");
 }
 int main(int argc, char** argv) {
     try {
@@ -422,17 +427,44 @@ int main(int argc, char** argv) {
         Kernel::KResourceLimit::closed=0;
         Kernel::KernelCore kernel;
         Kernel::KProcess denied;
+        Kernel::h01_init_succeeded=false;
         denied.fail_initialize=true;
         const auto error=denied.LoadFromMetadata(kernel,metadata,code_bytes,
                                                   start,offset);
         Require(error.IsError() && error.code==123 && denied.initialized &&
                 !denied.interfaces_initialized &&
+                denied.m_page_table.mapped_pages==0 &&
+                denied.m_page_table.finalizations==1 &&
                 Kernel::KResourceLimit::created==1 &&
                 Kernel::KResourceLimit::closed==1,
-                "real KProcess metadata failure did not close resource and stop");
+                "real KProcess late base failure did not roll back mapped pages");
+        // Negative owner executions: reject early and late allocation/map/
+        // user-capability failures. Pages must not leak into a failed PID.
+        for(unsigned mode=0;mode<5;++mode) {
+            Kernel::KProcess rejected;
+            Kernel::KernelCore failing_kernel;
+            Kernel::h01_init_succeeded=false;
+            if(mode==0)failing_kernel.fail_reservation=true;
+            if(mode==1)rejected.m_page_table.fail_initialize=true;
+            if(mode==2)rejected.m_page_table.fail_containment=true;
+            if(mode==3)rejected.m_page_table.fail_map=true;
+            if(mode==4)rejected.m_capabilities.fail=true;
+            const auto invalid=rejected.LoadFromMetadata(
+                failing_kernel,metadata,code_bytes,start,offset);
+            Require(invalid.IsError() && !rejected.initialized &&
+                    !rejected.interfaces_initialized &&
+                    rejected.m_page_table.mapped_pages==0 &&
+                    failing_kernel.app.opens==failing_kernel.app.closes,
+                    "real KProcess Initialize guest code pages leaked");
+            if(mode>=2)Require(rejected.m_page_table.finalizations==1,
+                               "real KProcess late failure skipped page table finalize");
+            if(mode==0)Require(rejected.m_page_table.mapping_calls==0,
+                               "resource failure mapped guest pages");
+        }
         // An OOM in the resource-limit allocator must return before
         // scope registration and before guest page/handle publication.
         kernel.sys.fail_resource_limit = true;
+        Kernel::h01_init_succeeded=false;
         Kernel::KProcess oom;
         const auto no_resource = oom.LoadFromMetadata(kernel, metadata, code_bytes,
                                                         start, offset);
@@ -442,13 +474,14 @@ int main(int argc, char** argv) {
                 Kernel::KResourceLimit::created == 1 &&
                 Kernel::KResourceLimit::closed == 1,
                 "real KProcess null resource limit must fail before process handoff");
-        std::cout << "NS2_REAL_KPROCESS_LOADFROMMETADATA_HOST_PASS"
+        std::cout << "H01_KPROCESS_METADATA_TO_INIT_PAGE_ROLLBACK_HOST_PASS"
                   << " actual_owner_method=1 public_npdm_and_nso=1"
                   << " all_address_space_flags=1 code_pages=4"
                   << " core_and_kac_forwarding=1 resource_scope_exit=1"
                   << " failing_Initialize_short_circuit=1"
                   << " null_resource_limit_rejected=1"
-                  << " real_kernel_Initialize_not_executed=1"
+                  << " actual_kernel_Initialize_executed=1"
+                  << " failing_page_and_caps=rolled_back"
                   << " PS5_runtime_not_executed=1\n";
         return 0;
     } catch (const std::exception& e) {
@@ -458,6 +491,17 @@ int main(int argc, char** argv) {
     }
 }
 """
+
+def actual_initializer(source: str) -> str:
+    if source.count(INIT_START) != 1 or source.count(INIT_STOP) != 1:
+        raise AssertionError("Maintained KProcess::Initialize anchor changed")
+    method = INIT_START + source.split(INIT_START, 1)[1].split(INIT_STOP, 1)[0]
+    for marker in ("m_page_table.MapPages(", "m_capabilities.InitializeForUser(",
+                   "ON_RESULT_FAILURE_2", "m_page_table.Finalize()",
+                   "memory_reservation.Commit()"):
+        if marker not in method:
+            raise AssertionError("Missing page-map rollback owner: "+marker)
+    return method
 
 def unchanged_member(source: str) -> str:
     if source.count(START) != 1 or STOP not in source.split(START,1)[1]:
@@ -482,8 +526,10 @@ def main() -> None:
         for owner_name, owner_path in OWNERS:
             src = owner_path.read_text(encoding="utf-8")
             method = unchanged_member(src)
+            initializer = actual_initializer(src)
             cpp = Path(d) / f"kprocess_metadata_{owner_name}.cpp"
-            cpp.write_text(PREFIX + "\n" + method + "\n" + TEST, encoding="utf-8")
+            cpp.write_text(PREFIX + "\n" + initializer + "\n" + method + "\n" + TEST,
+                           encoding="utf-8")
             for cxx in ("clang++","g++"):
                 if not shutil.which(cxx):
                     raise RuntimeError("Host compiler unavailable: "+cxx)

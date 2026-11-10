@@ -205,11 +205,11 @@ assert present.count("vulkan_interval_witness.Observe(CaptureFramePressure()") =
 assert present.count("vulkan_interval_witness.Reset();") == 2  # title reset + transition to quiet
 assert "else if (vulkan_interval_witness.seeded)\n                vulkan_interval_witness.Reset();" in present
 assert present.count("Eden::NativeLogs::Detailed() &&") == 3  # two witnesses + pacing histogram
-assert "if (Eden::NativeLogs::Detailed() &&\n                Experimental::vulkan_frame_probe.load(std::memory_order_relaxed))" in present
+assert "if (Eden::NativeLogs::Detailed() &&\n                JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed))" in present
 assert "if (Eden::NativeLogs::Detailed()) {\n                const double interval_ms = present_interval * 1000.0;" in present
 assert "if (vulkan_interval_witness.seeded)\n                    vulkan_interval_witness.NextWindow();" in present
 assert "std::fflush(stdout);" not in present
-assert present.count("Experimental::vulkan_frame_probe.load(std::memory_order_relaxed)") >= 2
+assert present.count("JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)") >= 2
 assert "if (vulkan_interval_witness.captured) {" in present
 assert "EDEN_PRESENT_INTERVAL_WITNESS frame=%u interval_ms=%.3f" in present
 assert "scope=between_presents\\n" in present

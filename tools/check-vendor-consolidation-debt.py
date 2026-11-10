@@ -925,8 +925,25 @@ native_fs_old = "nand_directory, std::move(load_directory), std::move(dump_direc
 native_fs_new = ('nand_directory, std::move(load_directory), std::move(dump_directory), '
                  'vfs.OpenDirectory(Eden::AssetsPath("firmware"), FileSys::OpenMode::Read));')
 assert native_fs_pinned.count(native_fs_old) == 1
-assert native_fs_active == ('#include "assets_dir.h"\n'
-                           + native_fs_pinned.replace(native_fs_old, native_fs_new))
+# H01 adds one exact native-only FS registration rollback owner after the
+# original audited firmware-root transformation. Reject ANY other source
+# drift; never relax the historical native filesystem parity contract.
+h01_fs_rollback = (
+    "void FileSystemController::UnregisterProcessIfPresent(ProcessId process_id) {\n"
+    "    // A KProcess may reject AFTER its ExeFS loader already registered a\n"
+    "    // RomFS factory. Remove only that process's entry, never Reset() the\n"
+    "    // filesystem controller (which would discard other live NS1/NS2 titles).\n"
+    "    std::scoped_lock lk{registration_lock};\n"
+    "    registrations.erase(process_id);\n"
+    "}\n\n"
+)
+assert native_fs_active.count(h01_fs_rollback) == 1
+assert native_fs_active.replace(h01_fs_rollback, "", 1) == (
+    '#include "assets_dir.h"\n'
+    + native_fs_pinned.replace(native_fs_old, native_fs_new)
+)
+h01_fs_header = (active / "eden-core/overrides/h01-filesystem/core/hle/service/filesystem/filesystem.h").read_text()
+assert "void UnregisterProcessIfPresent(ProcessId process_id);" in h01_fs_header
 assert c.count('list(REMOVE_ITEM core_sources hle/service/filesystem/filesystem.cpp)') == 1
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_NATIVE_FILESYSTEM}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_FILESYSTEM}")' in c

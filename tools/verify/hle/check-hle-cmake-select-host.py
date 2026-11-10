@@ -37,6 +37,20 @@ add_library(core STATIC
 )
 include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")
 get_target_property(selected core SOURCES)
+# A native-only NVDRV pool replaces the pinned owner when PS5_NATIVE is ON.
+set(sync_pinned "hle/service/nvdrv/core/syncpoint_manager.cpp")
+set(sync_native "${PORT_ROOT}/vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp")
+list(FIND selected "${sync_pinned}" sync_pinned_pos)
+list(FIND selected "${sync_native}" sync_native_pos)
+if(PS5_NATIVE)
+    if(NOT sync_pinned_pos EQUAL -1 OR sync_native_pos EQUAL -1)
+        message(FATAL_ERROR "H05 native NVDRV owner selector failed")
+    endif()
+else()
+    if(sync_pinned_pos EQUAL -1 OR NOT sync_native_pos EQUAL -1)
+        message(FATAL_ERROR "NS1 pinned NVDRV owner selector regressed")
+    endif()
+endif()
 
 foreach(file IN ITEMS k_thread.cpp k_scheduler.cpp k_condition_variable.cpp
                      k_address_arbiter.cpp svc_condition_variable.cpp

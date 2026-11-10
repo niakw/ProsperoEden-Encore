@@ -83,3 +83,25 @@ implementation, then benchmark on PS5 only after the native build P5
 is stable. Do not generalize an NS2 optimization into NS1 while it
 is only qualified on a mathematical model.
 
+
+### R2 — source-verified upload hazard preflight (post-closeout update)
+
+Tested the exact Lichii [upload-batch owner](https://github.com/zortos293/Lichii/blob/879b616b1b377bfd085bf20f440b895cf4b83ab8/src/video_core/renderer_vulkan/upload_batch.h)
+`CanAdd`/`Add` methods in an isolated
+[25-case C++ fixture](../research/ns2/test_vulkan_upload_batch_contract.cpp).
+The method bodies match upstream after whitespace/comments removal;
+**25 cases pass on Clang/GCC under ASan+UBSan, O0/O1/O2.**
+Notable precondition: overlap checks use unsigned
+`dstOffset + size`, so deliberately invalid, overflowing offsets can
+make a fake overlapping copy look non-overlapping. Since Vulkan buffer
+offsets must already fit the actual allocation, this is **not a
+confirmed live PS5 issue**. Any Encore adaptation must check source
+and destination allocation bounds before batching, split dependent
+RAW/WAR or overlapping copies and preserve ordering across dispatches,
+render-pass boundaries, scheduler flushes and GPU timeline retirement.
+
+R2 is **host-source-method qualified, integration pending**; R3 is
+**host-differential qualified, integration pending**; R4 3D image slice
+copy remains only source-diff qualified. No PS5 timing/guest
+regression evidence, vendor production modifications or native build.
+

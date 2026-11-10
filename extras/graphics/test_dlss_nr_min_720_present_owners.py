@@ -56,6 +56,14 @@ def check(presenter: str, owners: dict[str, str]) -> None:
     require(result, "source_image_view=*neural_views[image_index];",
             "R09 successful result publishes only the view")
 
+    fsr_images=method(compact(owners["fsr"]), "voidFSR::CreateImages(")
+    require(fsr_images, "m_dynamic_images.resize(m_image_count);",
+            "Per-frame FSR image slots")
+    for stage in ("Easu","Rcas"):
+        require(fsr_images,
+                f"images.images[{stage}]=CreateWrappedImage(m_memory_allocator,"
+                "m_extent,VK_FORMAT_R16G16B16A16_SFLOAT);",
+                f"Native {stage} RGBA16F output surface")
     fsr=method(compact(owners["fsr"]), "VkImageViewFSR::Draw(")
     ordered(fsr, (
         "UpdateDescriptorSets(device,source_image_view,image_index);",
@@ -95,6 +103,9 @@ def negative_tests(presenter: str, owners: dict[str, str]) -> int:
         ("missing neural fragment visibility", "neural_present",
          "VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |",
          "VK_PIPELINE_STAGE_TRANSFER_BIT |"),
+        ("FSR output format drift", "fsr",
+         "images.images[Easu] = CreateWrappedImage(m_memory_allocator, m_extent, VK_FORMAT_R16G16B16A16_SFLOAT);",
+         "images.images[Easu] = CreateWrappedImage(m_memory_allocator, m_extent, VK_FORMAT_R32G32B32A32_SFLOAT);"),
         ("discard NR-FSR exclusivity", "presenter",
          "std::holds_alternative<std::monostate>(sr_filter)",
          "std::holds_alternative<FSR>(sr_filter)"),

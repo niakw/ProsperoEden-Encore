@@ -60,7 +60,8 @@ jobs:
               test_dlss_nr_min_spatial_math \
                 test_dlss_nr_min_spatial_abi \
               test_dlss_nr_min_graph_geometry \
-              test_dlss_nr_min_vit_memory_audit; do
+              test_dlss_nr_min_vit_memory_audit \
+              test_dlss_nr_min_vit_reuse_plan; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -69,7 +70,8 @@ jobs:
                 test_dlss_nr_min_spatial_math \
               test_dlss_nr_min_spatial_abi \
                 test_dlss_nr_min_graph_geometry \
-              test_dlss_nr_min_vit_memory_audit; do
+              test_dlss_nr_min_vit_memory_audit \
+              test_dlss_nr_min_vit_reuse_plan; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

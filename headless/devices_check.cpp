@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <numbers>
+#include <limits>
 #include <stdexcept>
 #include "common/fs/path_util.h"
 #include "common/input.h"
@@ -396,7 +397,13 @@ void CheckAudio() {
     Reject([&] { stream->AppendBuffer(buffer, pcm); });
     sink.CloseStreams(); state.fail_output = false;
     const int opened = state.audio_opens;
-    sink.AcquireSinkStream(system, 2, "input null", StreamType::In);
+    auto* input = sink.AcquireSinkStream(system, 2, "input silence", StreamType::In);
+    for (u64 count : {0ull, 1ull, 2ull, 0x780ull}) {
+        const auto samples = input->ReleaseBuffer(count);
+        CHECK(samples.size() == count);
+        CHECK(std::all_of(samples.begin(), samples.end(), [](s16 sample) { return sample == 0; }));
+    }
+    Reject([&] { input->ReleaseBuffer(std::numeric_limits<u64>::max()); });
     sink.CloseStreams(); CHECK(state.audio_opens == opened);
     CHECK(state.audio_opens == state.audio_closes); CHECK(state.audio_drains == 6);
     std::puts("Audio PCM mono/stereo/6-channel, volume, queue, underrun, pause/resume and failure cleanup PASS");

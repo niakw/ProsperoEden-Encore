@@ -153,8 +153,8 @@ keeps writer/remap ownership correct and never holds a page-table lock
 across scheduler/driver waits. Measure actual PS5 scan times before
 assuming the CPU cost affects framerate.
 
-**Current offline execution:** the single host runner passes **19 + 23 + 30 + 33 + 35
-= 140 distinct checks on each of Clang and GCC**, while the exact
+**Current offline execution:** the single host runner passes **19 + 23 + 30 + 33 + 35 + 16
+= 156 checks on each of Clang and GCC**, while the exact
 vendor source validator reports **SKIP** without a real pinned checkout.
 
 ### O5 — pipeline miss-cache crossover
@@ -204,8 +204,8 @@ On adoption, stage all resources only after complete preflight and
 retain every current QMD3/GMMU/snapshot/write/fence barrier. No vendor
 or `main` changes have been made.
 
-**Updated local runner:** 19 + 23 + 30 + 33 + 35 = **140 distinct research
-checks per compiler, 280 across Clang/GCC**, plus a separate
+**Updated local runner:** 19 + 23 + 30 + 33 + 35 + 16 = **156 distinct research
+checks per compiler, 312 across Clang/GCC**, plus a separate
 24-case source-expression reproduction per compiler. See
 [local test receipt](../research/ns2/LOCAL_TEST_RECEIPT_2026-11-10.md).
 
@@ -267,7 +267,41 @@ authenticate their semantic length/tag meaning. `BuildResourcePlan`'s
 the actual native compatibility policy. **No authorized size widening**
 until a real 16-byte descriptor from an NS2 execution is known to be legal.
 
-All host suites now pass **140 checks per compiler at O1**, and
+All host suites now pass **156 checks per compiler at O1**, and
 the five suites also passed at O0/O2 (20 additional binary executions,
 560 checks). The full pinned-vendor source validator is still a skip
 on the local checkout; no native PS5 build/CI has been launched.
+
+### O1 — concrete native shader read status gap under an artificial remap
+
+New [16-case source-body test](../research/ns2/test_native_gpu_read_toctou.cpp)
+executes the **unmodified** `VideoCommon::ReadNs2GpuShader` from
+[maintained native shader capture](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp).
+The exact function body has normalized length 293 and SHA-256
+`af4254dd7e7e00d246cef5a2d70f5790640077f6cc592c4a8c2b7871960eccf7`.
+All 16 tests pass on Clang 17 and GCC 14 under UBSan.
+
+**Verified source contract:** `ReadNs2GpuShader` checks
+`memory->IsFullyMappedRange(address, size)`, calls
+`memory->ReadBlock(address, dest, size)`, then returns `true`.
+The maintained [`MemoryManager::ReadBlockImpl`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/eden-core/src/video_core/memory_manager.cpp)
+writes zero-filled bytes for an unmapped page and cannot propagate
+its partial/fault status through the `void ReadBlock` call.
+A fake mapping change between these operations makes the real callback
+return **true** with zero-filled destination; a partially simulated
+read also returns true.
+
+**Crucial limitation:** this is a deterministic host interleaving,
+NOT a confirmed PS5 race or proof that a remap is allowed past
+the native GPU channel owner lock. Before a production fix, trace
+exact GMMU writer synchronization and full guest process ownership;
+then establish a checked whole-span copy that cannot accept a
+partial/unmapped result. Merely testing for all-zero bytes is wrong
+(valid guests may contain zeroes); a post-read check alone does not
+solve ABA/remap races. Do not touch NS1 or vendor main.
+
+New O1 priority order: **1)** verify actual read/remap serialization;
+**2)** prove read status and plan consistency with real-source host
+owner tests; **3)** capture authentic NVN QMD3 four-word descriptor
+semantics; **4)** only then consider an NS2-only read-only length
+policy or resource performance optimization.

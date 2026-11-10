@@ -80,6 +80,7 @@ TESTS = {
     "native_video_packet_bounds": "tools/ns2/check_native_video_packet_bounds_host.py",
     "native_video_real_hevc_eos": "tools/ns2/check_native_video_real_hevc_eos_host.py",
     "native_video_decoder_ipc": "tools/ns2/check_native_video_decoder_ipc_host.py",
+    "native_video_guest_surface_write": "tools/ns2/check_native_video_guest_surface_write_owner_host.py",
     "native_video_eos": "tools/ns2/check_native_video_eos_host.py",
     "native_video_work_buffer": "tools/ns2/check_native_video_work_buffer_host.py",
     "native_video_ready_event": "tools/ns2/check_native_video_ready_event_host.py",

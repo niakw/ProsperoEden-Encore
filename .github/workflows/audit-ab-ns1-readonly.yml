@@ -72,6 +72,8 @@ jobs:
               "native_build_or_network_fetch_performed": False,
               "source_gap_classifications": {k: v["classification"] for k,v in src["results"].items()},
               "scheduled_source_byte_classifications": statuses,
+              "scheduled_source_paths": {k: owners["owners"][k]["source_paths"] for k in statuses},
+              "canonical_source_byte_matches": {k: row["canonical_byte_matches"] for k,row in checksums["owners"].items()},
               "scheduled_source_byte_summary": dict(Counter(statuses.values())),
           }
           Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")

@@ -27,7 +27,7 @@ int main() {
     static_assert(!CanStageSpatialSurfaces(
         native.native,native.work,high.total,0u));
     static_assert(CanStageSpatialSurfaces(
-        native.native,native.work,high.total+1u,0u));
+        native.native,native.work,high.total+1u,1u));
     constexpr std::uint64_t mib=1024ull*1024ull;
     assert(!CanStageSpatialSurfaces(
         native.native,native.work,100u*mib,64u*mib));

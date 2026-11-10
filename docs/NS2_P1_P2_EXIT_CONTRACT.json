@@ -33,7 +33,7 @@
       "negative": "Malformed NPDM, NSO and missing content reject without partially publishing a process.",
       "status": "open",
       "evidence": {},
-      "blocker": "NS2 SVC-trace rollback and standalone filesystem-registration commit now have executed source-owner host witnesses; full ExeFS/NPDM/NSO admission (malformed updates/DLC and guest-memory rollback after partial module mapping) still requires linked process-owner proofs.",
+      "blocker": "NS2 13-module patched ExeFS bounds preflight now executes before global CPU/NCE mode changes (vendor host CI green); KProcess partial guest memory rollback, malformed DLC/update integration and full NPDM/NSO process ownership still require linked evidence. Latest vendor changes await engine gitlink integration.",
       "excluded_forms": []
     },
     {
@@ -130,7 +130,7 @@
       "negative": "Invalid codec, unmet release fences and allocation failures retain ownership and do not advance guest fences.",
       "status": "open",
       "evidence": {},
-      "blocker": "Authentic FFmpeg decoded NV12, HEVC Decode->Drain->Render EOS, real-owner Pump publication/rollback and bounded release-fence waits are green on host CI. True guest TIPC delivery, GPU image memory and Vulkan-backed guest fence lifecycle still require end-to-end proof.",
+      "blocker": "Valid FFmpeg HEVC Decode->Drain->Render and real Pump ownership are already host-qualified. NS2 now has atomic non-asserting syncpoint allocation that cannot reserve ID 0 on exhaustion, with a concurrent owner witness pending exact vendor CI; authenticated TIPC, GPU image write and Vulkan-backed guest fence lifetime remain open. Vendor changes not pinned in engine yet.",
       "excluded_forms": []
     },
     {
@@ -205,7 +205,7 @@
       "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
       "status": "open",
       "evidence": {},
-      "blocker": "Native IR runtime guest SSBO index 0/1 now feeds actual SPIR-V texture descriptor array and is tested by two Vulkan submissions (CI pending). Dynamic OOB, missing guest TIC/TSC and unsupported hardware stages still lack complete negative/positive proof.",
+      "blocker": "Actual native IR guest SSBO dynamic index 0/1 -> SPIR-V -> Vulkan descriptor selection has two successful GPU submissions. Vendor singleton dynamic-index refusal is host-qualified, but runtime out-of-bounds array indexes and missing TIC/TSC/unsupported stages still need fail-closed evidence; vendor gitlink remains older.",
       "excluded_forms": []
     },
     {
@@ -429,7 +429,7 @@
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Actual Ampere SEM_EXECUTE owner -> Vulkan vkCmdFillBuffer/submit/fence -> guest mapped word -> parked second-channel resume now has a linked host witness pending validation. QMD3 native shader vkCmdDispatch, authenticated GPU backend and actual guest GPFIFO queue retirement still lack one linked proof; do not close G10.",
+      "blocker": "Authentic Ampere SEM_EXECUTE -> Vulkan queue/fence -> guest memory -> second-channel resume and QMD3 release preflight/deferred owner callbacks have independent green host witnesses. One connected genuine QMD3 vkCmdDispatch -> full GPFIFO queue retirement and channel-generation ownership witness is still missing; latest vendor changes await pin.",
       "excluded_forms": []
     }
   ]

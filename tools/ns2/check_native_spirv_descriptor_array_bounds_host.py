@@ -27,7 +27,14 @@ assert 'throw LogicError("Missing reflected image/texture descriptor");' in meth
 assert "if (count != 1)" in method
 assert 'Invalid singleton texture descriptor count' in method
 assert "void CheckSingletonTextureIndex(" in method
-assert "index.IsImmediate() && index.U32() != 0" in method
+strict_singleton = 'Dynamic singleton texture descriptor index unsupported' in method
+if strict_singleton:
+    assert "if (!index.IsImmediate())" in method
+    assert "if (index.U32() != 0)" in method
+else:
+    # The still-pinned legacy vendor permits dynamic singleton indices.
+    # Report that missing negative explicitly; never label it a proof.
+    assert "index.IsImmediate() && index.U32() != 0" in method
 assert method.count("selected >= count") == 1
 assert method.index("selected >= count") < method.index("ctx.Const(selected)")
 assert "index.Type() != IR::Type::U32" in method
@@ -87,14 +94,12 @@ int main() {
     assert(CheckedTextureArrayIndex(ctx,dynamic(2),4).value==202);
     CheckSingletonTextureIndex(IR::Value{false,true,IR::Type::U32,0},1);
     CheckSingletonTextureIndex(good(0),1);
-    CheckSingletonTextureIndex(dynamic(0),1);
-    // Runtime-variable array indices are not yet guarded: G01 stays open.
-    CheckSingletonTextureIndex(dynamic(33),1);
     auto reject_singleton=[](const IR::Value& value,u32 count=1){
         try { CheckSingletonTextureIndex(value,count); }
         catch(const LogicError&) { return; }
         assert(false && "Foreign singleton descriptor index accepted");
     };
+    __DYNAMIC_SINGLETON_TEST__
     reject_singleton(good(0),0);
     reject_singleton(dynamic(0),0);
     reject_singleton(good(1));
@@ -114,6 +119,12 @@ int main() {
     reject(IR::Value{false,true,IR::Type::U32,0},4);
 }
 """.replace("__REAL_OWNER__",method)
+if strict_singleton:
+    fixture=fixture.replace("__DYNAMIC_SINGLETON_TEST__",
+                            "reject_singleton(dynamic(0));\n    reject_singleton(dynamic(33));")
+else:
+    fixture=fixture.replace("__DYNAMIC_SINGLETON_TEST__",
+                            "CheckSingletonTextureIndex(dynamic(0),1);\n    CheckSingletonTextureIndex(dynamic(33),1);")
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-g01-texel-index-") as d:
@@ -133,4 +144,5 @@ with tempfile.TemporaryDirectory(prefix="eden-g01-texel-index-") as d:
                   "valid=2 dynamic_preexisting=1 oob=2"
                   " invalid_type=2 empty=1 zero_count=1"
                   " singleton_invalid_imm=2 invalid_type=2 count_zero=2"
-                  " dynamic_unchecked=1 missing_descriptor=refused",flush=True)
+                  " dynamic_singleton=" + ("refused" if strict_singleton else "unchecked")
+                  + " missing_descriptor=refused",flush=True)

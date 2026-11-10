@@ -23,6 +23,8 @@ INIT_START = ("Result KProcess::Initialize(KernelCore& kernel, "
               "const Svc::CreateProcessParameter& params,\n"
               "                            std::span<const u32> user_caps")
 INIT_STOP = "\nvoid KProcess::DoWorkerTaskImpl("
+MODULE_START = "void KProcess::LoadModule("
+MODULE_END = "\nvoid KProcess::InitializeInterfaces("
 
 PREFIX = r"""
 #include <algorithm>
@@ -47,6 +49,7 @@ using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 using s32 = std::int32_t;
 namespace Svc {
+enum class MemoryPermission : u8 {ReadExecute,Read,ReadWrite};
 enum class CreateProcessFlag : u32 {
     IsApplication = 1U << 0,
     Is64Bit = 1U << 1,
@@ -131,6 +134,14 @@ inline constexpr Result ResultOutOfResource{21};
 inline constexpr Result ResultLimitReached{22};
 inline constexpr Result ResultInvalidMemoryRegion{23};
 enum class KMemoryState {Code};
+struct CodeSet {
+    struct Segment{u64 addr{};u32 size{};};
+    std::vector<u8> memory;
+    std::array<Segment,3> segments{};
+    const Segment& CodeSegment()const{return segments[0];}
+    const Segment& RODataSegment()const{return segments[1];}
+    const Segment& DataSegment()const{return segments[2];}
+};
 enum class KMemoryPermission : u32 {KernelRead=1,NotMapped=2};
 constexpr KMemoryPermission operator|(KMemoryPermission a,KMemoryPermission b) {
     return static_cast<KMemoryPermission>(static_cast<u32>(a)|static_cast<u32>(b));
@@ -216,10 +227,20 @@ struct KScopedResourceReservation {
 };
 struct GuestMemory {
     bool attached{},gpu_dirty{};
+    u64 address{};
+    std::vector<u8> image;
+    unsigned writes{};
     template<class T>void SetCurrentPageTable(T&){attached=true;}
     void SetGPUDirtyManagers(int){gpu_dirty=true;}
+    void WriteBlock(u64 addr,const u8* data,std::size_t size) {
+        if(!attached || !gpu_dirty || !data || size>0x100000)
+            throw std::runtime_error("invalid guest code mapping");
+        image.assign(data,data+size);address=addr;++writes;
+    }
 };
 struct KPageTable {
+    struct Record{u64 address{};u32 size{};Svc::MemoryPermission permission{};};
+    std::vector<Record> permissions;
     bool fail_initialize{},fail_containment{},fail_map{};
     unsigned mapped_pages{},finalizations{},mapping_calls{};
     KProcessAddress captured_start{};
@@ -236,6 +257,9 @@ struct KPageTable {
         return fail_map ? Result{32}:Result{};
     }
     void Finalize(){mapped_pages=0;++finalizations;}
+    void SetProcessMemoryPermission(u64 addr,u32 size,Svc::MemoryPermission kind) {
+        permissions.push_back({addr,size,kind});
+    }
     void AllowDeviceMappingOfExecPages(){}
 };
 struct KCapabilities {
@@ -270,6 +294,7 @@ struct KProcess {
     KSystemResource* m_system_resource{};
     KPageTable m_page_table;
     GuestMemory m_memory;
+    GuestMemory& GetMemory(){return m_memory;}
     KCapabilities m_capabilities;
     Svc::CreateProcessParameter captured{};
     std::vector<u32> captured_caps;
@@ -291,6 +316,7 @@ struct KProcess {
     void InitializeInterfaces(KernelCore&){interfaces_initialized=true;}
     Result LoadFromMetadata(KernelCore&,const FileSys::ProgramMetadata&,
                             std::size_t,KProcessAddress,std::size_t);
+    void LoadModule(KernelCore&,CodeSet,KProcessAddress);
 };
 """
 
@@ -353,6 +379,19 @@ static std::size_t CodeBytesFromKnownNso(const std::vector<u8>& nso) {
             "unexpected public NSO memory layout");
     const auto total=last+len+bss;
     return (total+0xFFF)&~std::size_t{0xFFF};
+}
+static Kernel::CodeSet PrepareGuestImage(const std::vector<u8>& nso,std::size_t size) {
+    Kernel::CodeSet code;code.memory.assign(size,0);
+    for(unsigned i=0;i<3;++i) {
+        const auto h=0x10+0x10*i;
+        const u32 file=Read32(nso,h),offset=Read32(nso,h+4),len=Read32(nso,h+8);
+        Require(file>=0x100 && file<=nso.size() && len<=nso.size()-file &&
+                offset<size && len<=size-offset,"bad public NSO section bounds");
+        std::copy_n(nso.begin()+file,len,code.memory.begin()+offset);
+        const u32 bss=i==2?Read32(nso,0x3c):0;
+        code.segments[i]={offset,static_cast<u32>((u64{len}+bss+0xfff)&~u64{0xfff})};
+    }
+    return code;
 }
 static void VerifyCase(const FileSys::ProgramMetadata& metadata,
                        std::size_t code_bytes,
@@ -426,6 +465,32 @@ int main(int argc, char** argv) {
         VerifyCase(metadata,code_bytes,A::Is39Bit,0x80000000ULL+start+offset,
                    F::AddressSpace64Bit,false);
 
+        // Single actual KProcess: metadata -> page-map Init -> guest NSO write.
+        // Only the guest page backing and final teardown are host stand-ins.
+        Kernel::h01_init_succeeded=false;
+        Kernel::KernelCore linked_kernel;
+        Kernel::KProcess linked;
+        Require(linked.LoadFromMetadata(linked_kernel,metadata,code_bytes,start,offset)
+                .IsSuccess() && linked.m_page_table.mapped_pages==4,
+                "actual metadata to guest page mapping failed");
+        const auto guest=PrepareGuestImage(nso,code_bytes);
+        const u64 base=linked.captured.code_address;
+        linked.LoadModule(linked_kernel,guest,base);
+        Require(linked.m_memory.writes==1 && linked.m_memory.address==base &&
+                linked.m_memory.image==guest.memory &&
+                linked.m_page_table.permissions.size()==3,
+                "actual NSO guest image/permissions not published");
+        for(unsigned i=0;i<3;++i) {
+            const auto& seen=linked.m_page_table.permissions[i];
+            Require(seen.address==base+guest.segments[i].addr &&
+                    seen.size==guest.segments[i].size &&
+                    seen.permission==static_cast<Svc::MemoryPermission>(i),
+                    "actual NSO segment protection incorrect");
+        }
+        linked.m_page_table.Finalize();
+        Require(linked.m_page_table.mapped_pages==0,
+                "host teardown left guest code pages published");
+
         Kernel::KResourceLimit::created=0;
         Kernel::KResourceLimit::closed=0;
         Kernel::KernelCore kernel;
@@ -489,6 +554,7 @@ int main(int argc, char** argv) {
                   << " failing_Initialize_short_circuit=1"
                   << " null_resource_limit_rejected=1"
                   << " actual_kernel_Initialize_executed=1"
+                   << " LoadModule_joined=1 guest_nso_bytes=exact permissions=3"
                   << " failing_page_and_caps=rolled_back"
                   << " PS5_runtime_not_executed=1\n";
         return 0;
@@ -510,6 +576,12 @@ def actual_initializer(source: str) -> str:
         if marker not in method:
             raise AssertionError("Missing page-map rollback owner: "+marker)
     return method
+
+def actual_module(source: str) -> str:
+    assert source.count(MODULE_START)==1 and MODULE_END in source.split(MODULE_START,1)[1]
+    body=MODULE_START+source.split(MODULE_START,1)[1].split(MODULE_END,1)[0]
+    assert "GetMemory().WriteBlock" in body and "SetProcessMemoryPermission" in body
+    return body
 
 def unchanged_member(source: str) -> str:
     if source.count(START) != 1 or STOP not in source.split(START,1)[1]:
@@ -536,7 +608,9 @@ def main() -> None:
             method = unchanged_member(src)
             initializer = actual_initializer(src)
             cpp = Path(d) / f"kprocess_metadata_{owner_name}.cpp"
-            cpp.write_text(PREFIX + "\n" + initializer + "\n" + method + "\n" + TEST,
+            module=actual_module(src)
+            cpp.write_text(PREFIX + "\n" + initializer + "\n" + method +
+                           "\n" + module + "\n" + TEST,
                            encoding="utf-8")
             for cxx in ("clang++","g++"):
                 if not shutil.which(cxx):

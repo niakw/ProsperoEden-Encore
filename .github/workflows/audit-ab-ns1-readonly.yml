@@ -51,6 +51,7 @@ jobs:
           python3 -B tools/audit/attest-ab-ns1-source-bytes.py --self-test
           python3 -B tools/audit/attest-r18-vendored-original-compile-owners.py --self-test
           python3 -B tools/audit/qualify-r18-replaced-source-paths.py --self-test
+          python3 -B tools/audit/attest-r18-ninja-deps-headers.py --self-test
           python3 -B tools/audit/check-ab-ns1-source-gaps.py > ab-ns1-witness/source-gaps.json
           mapfile -t databases < <(find "$HOME/.cache" -path '*/native-local/compile_commands.json' -type f -print)
           test "${#databases[@]}" -eq 1
@@ -60,6 +61,14 @@ jobs:
           python3 -B tools/audit/attest-ab-ns1-source-bytes.py "${databases[0]}" > ab-ns1-witness/bytes.json
           python3 -B tools/audit/attest-r18-vendored-original-compile-owners.py "${databases[0]}" > ab-ns1-witness/r18-original-owners.json
           python3 -B tools/audit/qualify-r18-replaced-source-paths.py "${databases[0]}" > ab-ns1-witness/r18-replaced-owners.json
+          native_dir="$(dirname "${databases[0]}")"
+          if test -s "$native_dir/.ninja_deps"; then
+            ninja -C "$native_dir" -t deps > ab-ns1-witness/.ninja-deps-raw.txt
+          else
+            : > ab-ns1-witness/.ninja-deps-raw.txt
+          fi
+          python3 -B tools/audit/attest-r18-ninja-deps-headers.py             ab-ns1-witness/.ninja-deps-raw.txt --build-dir "$native_dir" > ab-ns1-witness/r18-headers-ninja-deps.json
+          rm -f ab-ns1-witness/.ninja-deps-raw.txt
           python3 -B - <<'PY'
           import json
           from pathlib import Path
@@ -70,6 +79,8 @@ jobs:
           statuses = {name: row["status"] for name, row in checksums["owners"].items()}
           r18 = json.loads(Path("ab-ns1-witness/r18-original-owners.json").read_text())
           replaced = json.loads(Path("ab-ns1-witness/r18-replaced-owners.json").read_text())
+          header_deps = json.loads(Path("ab-ns1-witness/r18-headers-ninja-deps.json").read_text())
+          assert header_deps["changed_header_count"] == 17
           assert set(replaced["cases"]) == {"kernel_address_arbiter", "kernel_svc",
                                            "kernel_svc_address_arbiter", "spirv_emit_context",
                                            "vulkan_texture_cache"}
@@ -90,6 +101,8 @@ jobs:
               "r18_source_mutations": r18["total_source_divergences"],
               "r18_five_replacement_owners": {k: v["status"] for k,v in replaced["cases"].items()},
               "r18_five_replacement_counts": replaced["counts"],
+              "r18_historical_header_dependency_counts": header_deps["result_counts"],
+              "r18_historical_header_dependency_present": header_deps["ninja_deps_text_present"],
           }
           Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")
           print("AB_NS1_HISTORICAL_CACHE_BYTE_WITNESS", json.dumps(note, sort_keys=True))

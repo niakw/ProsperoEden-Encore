@@ -21,6 +21,7 @@ VULKAN_PIPE = Path("encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp")
 VULKAN_RASTER = Path("encore-active/eden-vulkan/vulkan_rasterizer.cpp")
 SHARED_BUFFER = Path("encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h")
 GPU_MEMORY_MANAGER = Path("encore-active/eden-core/src/video_core/memory_manager.cpp")
+SHADER_READER = Path("encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp")
 EXPECTED_VENDOR = "22b69d6053db41b74edac2633c012f925b84f69e"
 
 def require(test: bool, message: str) -> None:
@@ -209,6 +210,19 @@ def main() -> None:
     raster = (vendor / VULKAN_RASTER).read_text(encoding="utf-8")
     shared = (vendor / SHARED_BUFFER).read_text(encoding="utf-8")
     memory_impl = (vendor / GPU_MEMORY_MANAGER).read_text(encoding="utf-8")
+    shader_reader = (vendor / SHADER_READER).read_text(encoding="utf-8")
+    callback_sha256 = normalized_function_sha256(shader_reader, "ReadNs2GpuShader")
+    require(callback_sha256 ==
+            "af4254dd7e7e00d246cef5a2d70f5790640077f6cc592c4a8c2b7871960eccf7",
+            "Native NS2 shader GMMU read callback changed; re-audit TOCTOU contract")
+    require("memory->IsFullyMappedRange(address, size)" in shader_reader and
+            "memory->ReadBlock(address, dest, size);" in shader_reader,
+            "Native shader mapping precheck/void read call changed")
+    require("void MemoryManager::ReadBlock(" in memory_impl and
+            "void MemoryManager::ReadBlockImpl(" in memory_impl and
+            "std::memset(dest_buffer, 0, copy_amount);" in memory_impl,
+            "Native shader zero-fill-on-unmapped behavior changed")
+
     map_lookup = function_body(memory_impl, "MemoryManager::GpuToCpuAddress")
     native_owner = function_body(pipe, "ComputePipeline::ConfigureNative")
     require("GetEntry(gpu_addr, true)" in map_lookup and
@@ -272,6 +286,8 @@ def main() -> None:
         "vendor_path": str(vendor), "reviewed_vendor_pin": EXPECTED_VENDOR,
         "exact_mapping_guard_normalized_sha256": guard_sha256,
         "exact_descriptor_reader_normalized_sha256": reader_sha256,
+        "exact_native_shader_read_callback_normalized_sha256": callback_sha256,
+        "shader_read_zero_fill_status_hazard_requires_mapping_race_proof": True,
         "native_uses_legacy_buffer_binding": False,
         "unknown_native_lengths_currently_rejected": True,
         "no_explicit_gmmu_read_lease_in_examined_native_owners": True,

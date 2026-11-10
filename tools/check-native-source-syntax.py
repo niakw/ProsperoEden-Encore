@@ -16,6 +16,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = (
+    # The native release launcher owns runtime presentation telemetry. It must
+    # compile with the real graphics backend, not merely pass host string tests.
+    "headless/graphics.cpp",
     "headless/ps5_net_compat.c",
     "headless/network_domain_rules.c",
     "headless/network_audit.c",

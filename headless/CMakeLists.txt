@@ -2777,3 +2777,32 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         "${EDEN_NATIVE_TASK_MESH_ROOT}" "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
 endif()
+
+# C06 / R23: exact full-source NS1 fixes, not changes to pristine vendor/sources.
+# Both sources carry the pinned Eden licence and only their small upstream
+# semantic corrections. Exclude duplicate original TUs from their targets.
+if(PS5_NATIVE)
+    set(eden_r23_bcat_original "hle/service/bcat/delivery_cache_file_service.cpp")
+    get_target_property(eden_r23_core_sources core SOURCES)
+    list(FIND eden_r23_core_sources "${eden_r23_bcat_original}" eden_r23_bcat_idx)
+    if(eden_r23_bcat_idx LESS 0)
+        message(FATAL_ERROR "R23 BCAT source owner moved: requalify before porting")
+    endif()
+    list(REMOVE_ITEM eden_r23_core_sources "${eden_r23_bcat_original}")
+    list(APPEND eden_r23_core_sources
+        "${EDEN_PORT_DIR}/r23_bcat_delivery_cache_file_ps5.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_core_sources}")
+
+    set(eden_r23_f2i_original
+        "frontend/maxwell/translate/impl/floating_point_conversion_integer.cpp")
+    get_target_property(eden_r23_shader_sources shader_recompiler SOURCES)
+    list(FIND eden_r23_shader_sources "${eden_r23_f2i_original}" eden_r23_f2i_idx)
+    if(eden_r23_f2i_idx LESS 0)
+        message(FATAL_ERROR "R23 Maxwell F2I source owner moved: requalify")
+    endif()
+    list(REMOVE_ITEM eden_r23_shader_sources "${eden_r23_f2i_original}")
+    list(APPEND eden_r23_shader_sources
+        "${EDEN_PORT_DIR}/r23_f2i_conversion_ps5.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_shader_sources}")
+    message(STATUS "Encore R23: single active BCAT and Maxwell F2I fixes")
+endif()

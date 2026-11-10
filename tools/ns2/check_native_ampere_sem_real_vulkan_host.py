@@ -30,6 +30,8 @@ fixture=r"""
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <chrono>
+#include <thread>
 #include <cstdlib>
 #include <optional>
 #include <stdexcept>
@@ -60,7 +62,20 @@ public:
         ai.apiVersion=VK_API_VERSION_1_1;
         VkInstanceCreateInfo ici{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
         ici.pApplicationInfo=&ai;
-        Check(vkCreateInstance(&ici,nullptr,&instance)==VK_SUCCESS,"instance");
+        VkResult instance_status = VK_ERROR_INITIALIZATION_FAILED;
+        for (unsigned attempt = 0; attempt < 5; ++attempt) {
+            instance_status = vkCreateInstance(&ici, nullptr, &instance);
+            if (instance_status == VK_SUCCESS) break;
+            std::fprintf(stderr,
+                         "G10 Vulkan loader transient: vkCreateInstance=%d attempt=%u\n",
+                         static_cast<int>(instance_status), attempt + 1);
+            // A concurrent Vulkan host qualification may transiently exhaust
+            // the runner's resources. An unsupported ICD is NOT retryable.
+            if (instance_status != VK_ERROR_OUT_OF_HOST_MEMORY &&
+                instance_status != VK_ERROR_INITIALIZATION_FAILED) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(400 * (attempt + 1)));
+        }
+        Check(instance_status == VK_SUCCESS, "instance");
         u32 n{};
         Check(vkEnumeratePhysicalDevices(instance,&n,nullptr)==VK_SUCCESS&&n,"device count");
         std::vector<VkPhysicalDevice> devs(n);
@@ -259,15 +274,23 @@ compilers=list(dict.fromkeys(x for x in
 assert compilers
 with tempfile.TemporaryDirectory(prefix="eden-g10-vulkan-semaphore-") as tmp:
     cpp=Path(tmp)/"owner.cpp";cpp.write_text(fixture)
+    # The sharded P0-P4 job can launch several host Vulkan consumers in
+    # parallel. Force Mesa's real software ICD and limit its worker threads;
+    # do not fabricate a passing result if instance creation still fails.
+    env=os.environ.copy()
+    icd=Path("/usr/share/vulkan/icd.d/lvp_icd.x86_64.json")
+    if icd.is_file():
+        env["VK_ICD_FILENAMES"]=str(icd)
+        env["LP_NUM_THREADS"]="2"
     for cc in compilers:
         exe=Path(tmp)/Path(cc).name.replace("+","p")
         cmd=[cc,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
-             "-Wno-missing-field-initializers",
+             "-Wno-missing-field-initializers","-pthread",
              "-I"+str(NATIVE),str(cpp),"-o",str(exe),"-lvulkan"]
         result=subprocess.run(cmd,capture_output=True,text=True,
-                              timeout=80,env=os.environ.copy())
+                              timeout=80,env=env)
         assert result.returncode==0,(cc,result.stderr[-6500:])
         run=subprocess.run([str(exe)],capture_output=True,text=True,
-                           timeout=45,env=os.environ.copy())
+                           timeout=45,env=env)
         assert run.returncode==0,(cc,run.stderr[-6000:])
         print(Path(cc).name,run.stdout.strip(),flush=True)

@@ -183,6 +183,9 @@ def main()->None:
             assert exists==selected_native
             print('P0_2_UNIFIED_CPU6_CMAKE_SOURCE_SELECTOR_PASS',
                   f'ps5_native={enabled}',f'dual_npdm={dual}',flush=True)
+        if '--selector-only' in sys.argv:
+            print('P5_CPU6_G11_NATIVE_CONFIGURE_PREFLIGHT_PASS',flush=True)
+            return
         flags=[compiler,'-std=c++20','-fsyntax-only','-Wno-unused-parameter',
                '-DFMT_HEADER_ONLY',*stdlib,*includes]
         def compile_owner(name:str)->tuple[str,subprocess.CompletedProcess[str]]:

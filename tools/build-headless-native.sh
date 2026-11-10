@@ -18,6 +18,8 @@ jobs=${EDEN_BUILD_JOBS:-$(eden_host_jobs)}
 command -v ninja >/dev/null
 cache=$(command -v ccache)
 cd "$root"
+# Repeat the source-only owner parity gate for direct local native builds.
+python3 -B tools/check-ps5-present-header-contract.py
 # Source provenance travels with the app; the scratch tree is a detached
 # upstream snapshot, so derive the SHA from our actual Encore checkout.
 source_commit=$(git -C "$root" rev-parse --verify HEAD)

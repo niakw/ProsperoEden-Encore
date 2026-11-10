@@ -155,3 +155,39 @@ All results are **local host research evidence**, not GitHub CI, not PS5
 and not proof of a real guest process race. Parent audit and refreshed
 [upstream closeout](../../docs/NS2_UPSTREAM_REFRESH_AND_CLOSEOUT_2026-11-10.md).
 
+
+## Update — 7th suite and authenticated pinned-vendor source review
+
+**Previously stated six-suite totals above remain historical**; the current
+bounded runner has **seven** standalone suites. All seven compile and pass
+on Clang 17 and GCC 14 at `-O1`; the seventh suite additionally passed
+on both compilers at `-O0` and `-O2` with **ASan + UBSan**.
+
+Seventh suite: [`test_blocklinear_gob16_differential.cpp`](test_blocklinear_gob16_differential.cpp),
+exact locally executed UTF-8 content **8605 chars, FNV-1a 18407156**,
+Git blob `2f2ea5ee0d1a1d4f40508f40e34233136f3b5ee7`. The published
+[runner](run_host_checks.sh) is also local-byte-identical:
+**1371 chars, FNV-1a 2846275155**.
+
+The seeded differential oracle covers **1536 layouts = 192 unique
+BPP / block-height / block-depth / tiling profiles × 8 shapes**.
+It checked **23,578,183 individual block-linear byte-address mappings**
+per execution, plus positive/negative full-texture and partial-rectangle
+swizzle/unswizzle output equivalence and legal roundtrips. Supported
+BPP cases: `1,2,3,4,6,8,12,16`; 3/6/12 retain the original fallback.
+All six compiler×optimization executions passed with ASan/UBSan enabled.
+**This is a separately reconstructed source-formula differential model,
+not compilation of either complete emulator decoder or a PS5 performance test.**
+
+Additional vendor source evidence: [26/26 source-owner checks](PINNED_VENDOR_SOURCE_WITNESS_2026-11-10.md)
+passed against six vendor files independently fetched at the exact
+`22b69d60` commit, recording all six Git blob hashes. Those checks
+do **not** replace the Python full-vendor Git-checkout extractor
+(still **SKIP** in the local runner).
+
+Current gate totals must be reported separately: **156 discrete SSBO/
+memory/GMMU/Vulkan/QMD3/read contracts per compiler**, plus **1536
+block-linear differential layouts per compiler** with 23.58 million
+address-oracle comparisons each. Do not conflate these test classes
+or infer 23.58 million real PS5 frames or CPU speedup.
+

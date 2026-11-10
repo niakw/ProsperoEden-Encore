@@ -1020,6 +1020,20 @@ add_library(eden-pad STATIC "${EDEN_PORT_DIR}/pad.cpp"
 target_include_directories(eden-pad PUBLIC "${EDEN_PORT_DIR}" "${pad_contract}" "${audio_contract}" "${PROJECT_SOURCE_DIR}/src")
 target_link_libraries(eden-pad PUBLIC common)
 target_compile_options(eden-pad PRIVATE -fno-rtti $<$<BOOL:${PS5_NATIVE}>:-femulated-tls>)
+# C00: replace exactly one pinned audio_core device session translation unit.
+# Guard AudioIn guest PCM16 byte lengths and guest address ranges on PS5.
+# AudioOut logic remains byte-identical to the pinned original in our full copy.
+if(PS5_NATIVE)
+    get_target_property(eden_c00_audio_sources audio_core SOURCES)
+    list(FIND eden_c00_audio_sources "device/device_session.cpp" eden_c00_session_index)
+    if(eden_c00_session_index LESS 0)
+        message(FATAL_ERROR "C00 pinned AudioIn DeviceSession source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_c00_audio_sources "device/device_session.cpp")
+    list(APPEND eden_c00_audio_sources "${EDEN_PORT_DIR}/audio_device_session_ps5.cpp")
+    set_property(TARGET audio_core PROPERTY SOURCES "${eden_c00_audio_sources}")
+    message(STATUS "Encore C00 PS5 AudioIn: one checked native device-session owner")
+endif()
 target_sources(audio_core PRIVATE "${EDEN_PORT_DIR}/audio.cpp")
 target_include_directories(audio_core PRIVATE "${EDEN_PORT_DIR}" "${pad_contract}" "${audio_contract}")
 # The native audio sink's exact pinned-source transform is maintained as C++.

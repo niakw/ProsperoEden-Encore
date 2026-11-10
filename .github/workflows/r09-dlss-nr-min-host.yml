@@ -164,4 +164,7 @@ jobs:
           export VK_ICD_FILENAMES="$icd"
           .build-local/r09-min/vk-vit-reuse \
             .build-local/r09-min/vit_synthetic_reuse.spv
-          echo R09_MIN_VIT_VULKAN_REUSE_SYNTHETIC_PROOF_ONLY
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends vulkan-validationlayers
+          R09_MIN_VALIDATE_SYNC=1 .build-local/r09-min/vk-vit-reuse \
+            .build-local/r09-min/vit_synthetic_reuse.spv
+          echo R09_MIN_VIT_VULKAN_REUSE_SYNTHETIC_AND_KHRONOS_SYNC_PASS

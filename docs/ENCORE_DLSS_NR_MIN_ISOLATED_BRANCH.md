@@ -129,3 +129,14 @@ property is necessary for aliasing and supports further investigation, but
 a static text check does NOT prove all descriptors' lifetimes, asynchronous
 queues or frame retirement; no production allocation/pooling change occurs.
 The hard-disabled gate remains hard-disabled pending actual PS5 qualification.
+
+
+## Khronos synchronization validation (host only)
+
+The standalone ViT reuse witness can also run with
+R09_MIN_VALIDATE_SYNC=1. This opts into VK_LAYER_KHRONOS_validation,
+VK_EXT_validation_features synchronization validation and the debug-utils
+error callback, failing if a validation ERROR is emitted. The dedicated host
+workflow runs both the original readback oracle and the validation variant
+using Lavapipe. This is NOT a PS5 driver-validation run and cannot rule out
+proprietary-model hazards or real ViT live-range conflicts.

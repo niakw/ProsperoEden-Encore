@@ -5,7 +5,9 @@
 #include "r09_native_plans.h"
 #include <vulkan/vulkan.h>
 #include <array>
+#include <atomic>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -18,6 +20,18 @@ void Check(VkResult r,const char* name){
  if(r!=VK_SUCCESS)throw std::runtime_error(std::string(name)+": "+std::to_string(r));
 }
 struct Buf{VkBuffer buffer{};VkDeviceMemory memory{};};
+VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+    VkDebugUtilsMessageTypeFlagsEXT,
+    const VkDebugUtilsMessengerCallbackDataEXT* details,
+    void* user) {
+    if(severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        static_cast<std::atomic<unsigned>*>(user)->fetch_add(1u);
+        std::cerr<<"R09_MIN_VIT_KHRONOS_VALIDATION_ERROR: "
+                 <<(details&&details->pMessage?details->pMessage:"unknown")<<"\n";
+    }
+    return VK_FALSE;
+}
 struct Host{
  VkInstance instance{};VkPhysicalDevice physical{};VkDevice device{};VkQueue queue{};
  std::uint32_t family{};VkPhysicalDeviceMemoryProperties properties{};
@@ -26,6 +40,9 @@ struct Host{
  std::array<VkDescriptorSet,Blocks> sets{};
  VkShaderModule shader{};VkPipelineLayout pipeline_layout{};VkPipeline pipeline{};
  VkCommandPool pool{};VkCommandBuffer cmd{};VkFence fence{};
+ VkDebugUtilsMessengerEXT debug_messenger{};
+ std::atomic<unsigned> validation_errors{0u};
+ bool validation_enabled{};
  ~Host(){
   if(device){
    vkDeviceWaitIdle(device);
@@ -42,7 +59,14 @@ struct Host{
    if(pool)vkDestroyCommandPool(device,pool,nullptr);
    vkDestroyDevice(device,nullptr);
   }
-  if(instance)vkDestroyInstance(instance,nullptr);
+  if(instance) {
+   if(debug_messenger){
+    auto destroy=reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+        vkGetInstanceProcAddr(instance,"vkDestroyDebugUtilsMessengerEXT"));
+    if(destroy)destroy(instance,debug_messenger,nullptr);
+   }
+   vkDestroyInstance(instance,nullptr);
+  }
  }
  std::uint32_t Mem(std::uint32_t bits,VkMemoryPropertyFlags flags)const{
   for(std::uint32_t i=0;i<properties.memoryTypeCount;++i)
@@ -55,7 +79,41 @@ struct Host{
   app.pApplicationName="Encore R09 Min synthetic ViT reuse";
   VkInstanceCreateInfo ici{};ici.sType=VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   ici.pApplicationInfo=&app;
+  validation_enabled=std::getenv("R09_MIN_VALIDATE_SYNC")!=nullptr;
+  const char* layer="VK_LAYER_KHRONOS_validation";
+  const std::array<const char*,2> extensions{
+      VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+      VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME};
+  VkValidationFeatureEnableEXT enabled_feature=
+      VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT;
+  VkValidationFeaturesEXT features{};
+  features.sType=VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+  features.enabledValidationFeatureCount=1u;
+  features.pEnabledValidationFeatures=&enabled_feature;
+  VkDebugUtilsMessengerCreateInfoEXT debug_info{};
+  debug_info.sType=VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  debug_info.messageSeverity=VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  debug_info.messageType=VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT|
+                         VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
+  debug_info.pfnUserCallback=ValidationCallback;
+  debug_info.pUserData=&validation_errors;
+  if(validation_enabled){
+   features.pNext=&debug_info;
+   ici.pNext=&features;
+   ici.enabledLayerCount=1u;
+   ici.ppEnabledLayerNames=&layer;
+   ici.enabledExtensionCount=std::uint32_t(extensions.size());
+   ici.ppEnabledExtensionNames=extensions.data();
+  }
   Check(vkCreateInstance(&ici,nullptr,&instance),"create instance");
+  if(validation_enabled){
+   auto create=reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+       vkGetInstanceProcAddr(instance,"vkCreateDebugUtilsMessengerEXT"));
+   if(!create)throw std::runtime_error("Khronos debug messenger unavailable");
+   Check(create(instance,&debug_info,nullptr,&debug_messenger),
+         "create Khronos debug messenger");
+   std::cout<<"R09_MIN_VIT_KHRONOS_SYNC_VALIDATION_ENABLED\n";
+  }
   std::uint32_t count{};
   Check(vkEnumeratePhysicalDevices(instance,&count,nullptr),"device count");
   if(!count)throw std::runtime_error("No Vulkan device");
@@ -269,7 +327,15 @@ struct Host{
 } // namespace
 int main(int argc,char** argv){
  if(argc!=2){std::cerr<<"usage: r09_min_vk_vit_reuse_smoke <shader.spv>\n";return 2;}
- try{Host h;h.Init();h.Pipeline(argv[1]);h.Run();h.Verify();return 0;}
+ try{
+  Host h;h.Init();h.Pipeline(argv[1]);h.Run();h.Verify();
+  if(h.validation_enabled){
+   if(h.validation_errors.load()!=0u)
+    throw std::runtime_error("Khronos detected Vulkan validation errors");
+   std::cout<<"R09_MIN_VIT_KHRONOS_SYNC_VALIDATION_ZERO_ERRORS\n";
+  }
+  return 0;
+ }
  catch(const std::exception& e){
   std::cerr<<"R09_MIN_VIT_REUSE_GPU_SMOKE_FAIL: "<<e.what()<<"\n";return 1;
  }

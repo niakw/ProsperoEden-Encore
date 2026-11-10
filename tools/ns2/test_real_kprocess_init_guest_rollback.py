@@ -466,6 +466,11 @@ int main(int argc, char** argv) {
         }
         // An OOM in the resource-limit allocator must return before
         // scope registration and before guest page/handle publication.
+        // Independent late-failure cases above legitimately allocate and
+        // close resource-limit fixtures. Reset counters for this original
+        // null-allocation baseline, which must perform NO new allocation.
+        Kernel::KResourceLimit::created=1;
+        Kernel::KResourceLimit::closed=1;
         kernel.sys.fail_resource_limit = true;
         Kernel::h01_init_succeeded=false;
         Kernel::KProcess oom;

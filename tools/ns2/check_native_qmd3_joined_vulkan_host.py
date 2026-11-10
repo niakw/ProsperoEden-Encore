@@ -57,7 +57,7 @@ using u32=std::uint32_t;
 using u64=std::uint64_t;
 using GPUVAddr=u64;
 using namespace Tegra::Engines;
-constexpr int HW_GPU=0;
+[[maybe_unused]] constexpr int HW_GPU=0;
 #define LOG_ERROR(...) ((void)0)
 namespace Eden {
 inline std::exception_ptr fatal{};

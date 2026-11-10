@@ -982,14 +982,13 @@ add_dependencies(video_core eden-r24-fxaa-quality-spv)
 
 configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_blit_screen.h" COPYONLY)
-# Track each maintained Vulkan input through one configure-dependency
-# mechanism. GLOB CONFIGURE_DEPENDS *plus* an explicit CMAKE_CONFIGURE_DEPENDS
-# registration duplicates source records in the large native Ninja graph.
-# Existing files must still trigger a configure-time refresh of file(COPY).
-# A new vendor file is picked up whenever the pinned checkout is configured.
-file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES "${EDEN_ACTIVE_VULKAN}/*")
-list(REMOVE_DUPLICATES EDEN_VULKAN_FORK_FILES)
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${EDEN_VULKAN_FORK_FILES})
+# The native build driver explicitly re-runs CMake before every build,
+# refreshing file(COPY) even when the pinned fork's file content has changed.
+# GLOB CONFIGURE_DEPENDS also tracks additions/removals for direct Ninja use.
+# Do NOT register this full list again as CMAKE_CONFIGURE_DEPENDS: some of
+# these headers are already tracked by configure_file() above, and the
+# duplicate "missing CMake input" phony outputs make build.ninja unparseable.
+file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
 # These shaders are build inputs; the five older .inc injections only
 # reconstruct the historical generator oracle and are NOT compiled here.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS

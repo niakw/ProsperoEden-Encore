@@ -90,14 +90,16 @@ reviewed=once(reviewed,
 reviewed=once(reviewed,
     '''    if (m_process) {
 #ifdef EDEN_NS2_PROCESS_RUN_GUARD
-        // Do not retain a stale NS2 trace after process teardown.
-        if (Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire) ==
-            m_process->GetProcessId()) {
-            // Normal NS2 teardown must also retire its process-owned
-            // filesystem registration before the kernel PID is recyclable.
-            m_system.GetFileSystemController().UnregisterProcessIfPresent(
-                m_process->GetProcessId());
-            Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());
+        // Retire this PID's filesystem ownership even when the global SVC
+        // trace has moved to another process (or was already unregistered).
+        // The filesystem operation is idempotent for absent/non-NS2 records;
+        // tying it to active_pid leaked RomFS registrations on late teardown.
+        const auto pid = m_process->GetProcessId();
+        m_system.GetFileSystemController().UnregisterProcessIfPresent(pid);
+        // A different active trace belongs to its own process and must
+        // survive this teardown.
+        if (Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire) == pid) {
+            Eden::NS2::SvcTrace::Unregister(pid);
         }
 #endif
         m_process->Close(m_system.Kernel());''',
@@ -153,4 +155,4 @@ assert 'if(EDEN_SHARED_NS2_EXEFS)' in CMAKE and 'EDEN_NS2_EXEFS_EXPERIMENTAL' no
 assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE
 assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE
 assert 'headless/ns2/overrides/core/hle/service/os/process.cpp' not in CMAKE
-print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS H01_guarded_transaction=1 H01_trace_rollback=1 historical_ns1_hash_unchanged=1")
+print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS H01_guarded_transaction=1 H01_trace_rollback=1 H01_independent_romfs_teardown=1 historical_ns1_hash_unchanged=1")

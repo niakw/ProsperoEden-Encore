@@ -14,6 +14,8 @@ on:
       - 'tools/check-active-cmake-source-boundary.py'
       - 'tools/ns2/check_cpu6_scheduler_tick_host.py'
       - 'tools/check-native-launcher-ui-host.py'
+      - 'tools/check-post-f07-delta-register.py'
+      - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
       - 'headless/main.cpp'
       - 'headless/prosperoeden/pe/ui/services.hpp'
       - 'headless/prosperoeden/pe/ui/launcher.cpp'
@@ -41,6 +43,8 @@ jobs:
           fetch-depth: 1
       - name: Verify P5 native CMake ownership before expensive build
         run: python3 -B tools/check-active-cmake-source-boundary.py
+      - name: Verify post-F07 reviewed file hashes before expensive host C++
+        run: python3 -B tools/check-post-f07-delta-register.py
       - name: Check native launcher C++ namespaces and real update initializers
         run: python3 -B tools/check-native-launcher-ui-host.py
       - name: Verify CPU6 G11 source chain, four CMake profiles, real C++ units and UBSan ticks

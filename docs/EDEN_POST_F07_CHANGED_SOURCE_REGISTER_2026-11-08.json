@@ -209,9 +209,9 @@
     {
       "path": "headless/prosperoeden/pe/ui/launcher.cpp",
       "historical_reviewed_git_blob": "f42459d21a8257dfea32f8a92657b571027618a2",
-      "post_snapshot_git_blob": "3cd506609f5ffc40ab8c8b39e3c99d141fba11d5",
+      "post_snapshot_git_blob": "94907df1269804dc8bd2ededa0901ba611c48752",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "asynchronous release-update state and update-in-UI presentation",
+      "source_scope": "asynchronous release-update UI and offline fallback; fully initialized AppUpdateInfo metadata under PS5 -Werror",
       "review_kind": "host_source_ui",
       "required_source_fragment": "UpdateCheckState",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
@@ -230,9 +230,9 @@
     {
       "path": "headless/prosperoeden/pe/ui/services.hpp",
       "historical_reviewed_git_blob": "3d26738cbf0f8a3804d4147a147d433573861f84",
-      "post_snapshot_git_blob": "34201bfd35aeadd920f2935ab3da5f342228d14d",
+      "post_snapshot_git_blob": "1eea87609fbf3f4b6d83c049c22f60acce2c16d8",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "bounded release update contract, external metadata and transport separation",
+      "source_scope": "release-update API fallbacks fully initialize package metadata fields, preserving offline behavior",
       "review_kind": "source_interface",
       "required_source_fragment": "struct AppUpdateInfo",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"

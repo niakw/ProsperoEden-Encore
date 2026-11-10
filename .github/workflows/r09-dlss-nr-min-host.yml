@@ -1,0 +1,77 @@
+name: R09 DLSS-NR Min — isolated host proof
+
+# Small, non-PS5 PR gate. Never builds the native console application,
+# loads private neural weights, executes Vulkan or touches main.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/r09-dlss-nr-min-host.yml'
+      - 'extras/graphics/dlss_nr_min_*.h'
+      - 'extras/graphics/test_dlss_nr_min_*.cpp'
+      - 'tools/graphics/CMakeLists.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r09-min-host-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  min-host:
+    name: R09 Min C++20 geometry / budget / invertibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact PR SHA (no PS5 build)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+      - name: Sparse fetch exact pinned vendor headers only
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+          expected="$(git rev-parse HEAD:vendor)"
+          rm -rf vendor
+          git -c credential.helper= clone --quiet --filter=blob:none \
+            --no-checkout --single-branch --branch main \
+            https://github.com/niakw/Prospero.Eden-Encore-vendor.git vendor
+          git -C vendor fetch --quiet --depth=1 origin "$expected"
+          git -C vendor sparse-checkout set \
+            encore-active/eden-vulkan/include
+          git -C vendor checkout --quiet --detach "$expected"
+          test "$(git -C vendor rev-parse HEAD)" = "$expected"
+          test -f vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_native_graph_schedule.h
+      - name: C++20 host assertions with GCC and Clang under UBSan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .build-local/r09-min
+          for unit in \
+              test_dlss_nr_min_policy \
+              test_dlss_nr_min_spatial_math \
+              test_dlss_nr_min_graph_geometry; do
+            grep -Fq "eden_r08_test(${unit})" tools/graphics/CMakeLists.txt
+          done
+          for cxx in g++ clang++; do
+            for unit in \
+                test_dlss_nr_min_policy \
+                test_dlss_nr_min_spatial_math \
+                test_dlss_nr_min_graph_geometry; do
+              "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+                -fsanitize=undefined -fno-sanitize-recover=all \
+                -Iextras/graphics -Iheadless \
+                -Ivendor/encore-active/eden-vulkan/include \
+                "extras/graphics/${unit}.cpp" \
+                -o ".build-local/r09-min/${unit}-${cxx}"
+              UBSAN_OPTIONS=halt_on_error=1 ".build-local/r09-min/${unit}-${cxx}"
+              echo "R09_MIN_HOST_PASS ${unit} ${cxx}"
+            done
+          done
+          echo R09_MIN_HOST_ONLY_PASS_NO_PS5_BUILD_NO_GPU_INFERENCE

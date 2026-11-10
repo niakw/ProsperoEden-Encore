@@ -410,6 +410,9 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
     ImageBarrier(h.cmd,Transition(work.image,VK_IMAGE_LAYOUT_UNDEFINED,
                  VK_IMAGE_LAYOUT_GENERAL,0u,VK_ACCESS_SHADER_WRITE_BIT),
                  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    ImageBarrier(h.cmd,Transition(enhanced.image,VK_IMAGE_LAYOUT_UNDEFINED,
+                 VK_IMAGE_LAYOUT_GENERAL,0u,VK_ACCESS_SHADER_WRITE_BIT),
+                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
     ImageBarrier(h.cmd,Transition(target.image,VK_IMAGE_LAYOUT_UNDEFINED,
                  VK_IMAGE_LAYOUT_GENERAL,0u,VK_ACCESS_SHADER_WRITE_BIT),
                  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
@@ -424,9 +427,22 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
                  VK_ACCESS_SHADER_READ_BIT),
                  VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                  VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    if(!identity) {
+        vkCmdBindPipeline(h.cmd,VK_PIPELINE_BIND_POINT_COMPUTE,delta);
+        vkCmdBindDescriptorSets(h.cmd,VK_PIPELINE_BIND_POINT_COMPUTE,
+                                delta_layout,0u,1u,&sets[1],0u,nullptr);
+        vkCmdPushConstants(h.cmd,delta_layout,VK_SHADER_STAGE_COMPUTE_BIT,
+                           0u,sizeof(push),&push);
+        vkCmdDispatch(h.cmd,(Q+7u)/8u,(Q+7u)/8u,1u);
+        ImageBarrier(h.cmd,Transition(enhanced.image,VK_IMAGE_LAYOUT_GENERAL,
+                     VK_IMAGE_LAYOUT_GENERAL,VK_ACCESS_SHADER_WRITE_BIT,
+                     VK_ACCESS_SHADER_READ_BIT),
+                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    }
     vkCmdBindPipeline(h.cmd,VK_PIPELINE_BIND_POINT_COMPUTE,unpack);
     vkCmdBindDescriptorSets(h.cmd,VK_PIPELINE_BIND_POINT_COMPUTE,
-                            unpack_layout,0u,1u,&sets[1],0u,nullptr);
+                            unpack_layout,0u,1u,&sets[2],0u,nullptr);
     vkCmdPushConstants(h.cmd,unpack_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(push),&push);
     vkCmdDispatch(h.cmd,(W+7u)/8u,(H+7u)/8u,1u);
@@ -455,17 +471,19 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
     Check(vkMapMemory(h.device,readback.memory,0u,bytes,0u,&ptr),"readback");
     const auto* found=static_cast<const float*>(ptr);
     for(std::size_t i=0u;i<pixels.size();++i) {
+        const auto channel=i%4u;
+        const float known_delta[4]{0.125f,-0.0625f,0.25f,0.0f};
+        const float expected=pixels[i]+(identity?0.0f:known_delta[channel]);
         if(!std::isfinite(found[i]) ||
-           std::fabs(found[i]-pixels[i])>0.00015f) {
-            const auto channel=i%4u;
+           std::fabs(found[i]-expected)>0.0015f) {
             const auto pixel=i/4u;
             const auto actual=found[i];
             vkUnmapMemory(h.device,readback.memory);
             throw std::runtime_error(
-                "R09_MIN_VULKAN_RESIDUAL_IDENTITY_FAIL pixel="+
+                "R09_MIN_VULKAN_RESIDUAL_GPU_MISMATCH pixel="+
                 std::to_string(pixel)+" channel="+std::to_string(channel)+
                 " actual="+std::to_string(actual)+
-                " expected="+std::to_string(pixels[i]));
+                " expected="+std::to_string(expected));
         }
     }
     vkUnmapMemory(h.device,readback.memory);
@@ -482,7 +500,8 @@ int main(int argc,char** argv) {
     try {
         Host h;
         h.Init();
-        Run(h,argv[1],argv[2]);
+        if(argc==5 && std::string(argv[4])!="--identity")return 2;
+        Run(h,argv[1],argv[2],argv[3],argc==5);
         return 0;
     } catch(const std::exception& e) {
         std::cerr<<"R09_MIN_VULKAN_GPU_SMOKE_FAIL: "<<e.what()<<"\n";

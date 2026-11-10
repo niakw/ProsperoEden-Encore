@@ -27,6 +27,24 @@ The independent `main` tenth native build [#42887138500](https://github.com/niak
 
 **Precise next inspection (owned by main build workstream, NOT this audit branch):** for the two failing units only, capture `clang++ -H` or a preprocessor dependency trace on the **existing** native compile command, record the paths and SHA256 of the resolved `fixed_pipeline_state.h`, `texture_cache.h` and `scope_exit.h`, ensure one canonical owner of each header, and rerun narrowly *before* another expensive all-target build. Verify both NS1 and NS2 common include behavior and no header-class layout split. The A/B audit should only consume the resulting evidence, not perform repairs in `main`/vendor.
 
+
+## R18 — actual native source-file owner disposition for the 35 differences
+
+The independent [read-only compile-path/byte witness #42894073292](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42894073292) ran successfully against the cached ninth native compilation database (generated for `af106ca`, not latest main). The full `r18-original-owners.json` JSON is retained in the workflow's `ab-ns1-historical-compile-witness` artifact.
+
+| File type/selection | Count | Verified interpretation |
+|---|---:|---|
+| Scheduled original Eden SHA | **7** | Selected bytes match the *official* pinned upstream source, **not** the modified `vendor/sources/eden` copy. |
+| Scheduled maintained Encore override SHA | **6** | Initially grouped as "neither original nor altered snapshot", but all six were separately matched **by exact Git blob hash and real source path** to `vendor/encore-active/eden-shader` (five units) or `vendor/encore-active/eden-core` (one unit). Legitimate maintained third variants, not unknown input. |
+| Not scheduled by the same source relative filename | **5** | No compile database owner using the exact `src/...` filename; **does not prove functionality absent**, e.g. renamed/maintained owner may replace it. |
+| Header-only mutation | **17** | A `compile_commands.json` records translation units, **not selected header bytes**. Requires compiler `-H`, depfile or preprocessor trace to verify inclusion and ABI consistency. |
+
+The five nonscheduled path candidates are `core/hle/kernel/k_address_arbiter.cpp`, `core/hle/kernel/svc.cpp`, `core/hle/kernel/svc/svc_address_arbiter.cpp`, `shader_recompiler/backend/spirv/spirv_emit_context.cpp`, and `video_core/renderer_vulkan/vk_texture_cache.cpp` (all below `src/`).
+
+**Consequence:** the 35 divergences are now **fully enumerated** and their *historical translation-unit selections* sorted into non-overlapping classes; the main unresolved source provenance is **17 headers, possible renamed owners for five source names, and current-main/link outputs**. This is progress in ownership triage, **not** 35 repaired bugs or completion of the full R18 legal/ABI/SBOM gate.
+
+After discovering the six legitimate maintained SHA matches, `tools/audit/attest-r18-vendored-original-compile-owners.py` was refined to label them `scheduled-maintained-override` only when **the recorded scheduled path and actual bytes** both match an initialized `encore-active` candidate. All other unexpected paths remain `scheduled-unrecognized-source`. This is conservative and does not infer source semantics.
+
 ## Reconciliation with A/B completion criteria
 
 | Row | Update | Status |

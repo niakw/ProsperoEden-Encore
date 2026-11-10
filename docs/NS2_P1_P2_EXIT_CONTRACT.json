@@ -199,14 +199,13 @@
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
         "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py",
-        "tools/ns2/test_ampere_real_spirv.cpp",
-        "tools/ns2/test_g07_real_vulkan_texel.cpp"
+        "tools/check-ns2-spirv-host.py"
       ],
       "positive": "Descriptor counts and dynamic indices generate valid SPIR-V and select the intended guest texture.",
       "negative": "Out-of-range indices, missing descriptors and unsupported stages fail without fabricated binding.",
       "status": "open",
       "evidence": {},
-      "blocker": "Real native IR -> SPIR-V -> Vulkan shader now has a host test for guest-SSBO runtime descriptor 0/1 across two GPU fence completions (pending CI). Dynamic out-of-range protection and actual game's TIC/TSC ranges remain unproven.",
+      "blocker": "Native IR runtime guest SSBO index 0/1 now feeds actual SPIR-V texture descriptor array and is tested by two Vulkan submissions (CI pending). Dynamic OOB, missing guest TIC/TSC and unsupported hardware stages still lack complete negative/positive proof.",
       "excluded_forms": []
     },
     {

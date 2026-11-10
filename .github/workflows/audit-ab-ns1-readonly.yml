@@ -49,6 +49,7 @@ jobs:
           python3 -B tools/audit/test-ab-ns1-source-gaps.py
           python3 -B tools/audit/verify-ab-ns1-compile-owners.py --self-test
           python3 -B tools/audit/attest-ab-ns1-source-bytes.py --self-test
+          python3 -B tools/audit/attest-r18-vendored-original-compile-owners.py --self-test
           python3 -B tools/audit/check-ab-ns1-source-gaps.py > ab-ns1-witness/source-gaps.json
           mapfile -t databases < <(find "$HOME/.cache" -path '*/native-local/compile_commands.json' -type f -print)
           test "${#databases[@]}" -eq 1
@@ -56,6 +57,7 @@ jobs:
           printf '%s\n' "${databases[0]}" > ab-ns1-witness/compile-database-path.txt
           python3 -B tools/audit/verify-ab-ns1-compile-owners.py "${databases[0]}" > ab-ns1-witness/owners.json
           python3 -B tools/audit/attest-ab-ns1-source-bytes.py "${databases[0]}" > ab-ns1-witness/bytes.json
+          python3 -B tools/audit/attest-r18-vendored-original-compile-owners.py "${databases[0]}" > ab-ns1-witness/r18-original-owners.json
           python3 -B - <<'PY'
           import json
           from pathlib import Path
@@ -64,6 +66,9 @@ jobs:
           owners = json.loads(Path("ab-ns1-witness/owners.json").read_text())
           checksums = json.loads(Path("ab-ns1-witness/bytes.json").read_text())
           statuses = {name: row["status"] for name, row in checksums["owners"].items()}
+          r18 = json.loads(Path("ab-ns1-witness/r18-original-owners.json").read_text())
+          assert r18["all_vendor_snapshot_blobs_match_manifest"]
+          assert r18["total_source_divergences"] == 35
           assert set(statuses) == set(owners["owners"])
           note = {
               "audit_pr_only": True,
@@ -75,6 +80,8 @@ jobs:
               "scheduled_source_paths": {k: owners["owners"][k]["source_paths"] for k in statuses},
               "canonical_source_byte_matches": {k: row["canonical_byte_matches"] for k,row in checksums["owners"].items()},
               "scheduled_source_byte_summary": dict(Counter(statuses.values())),
+              "r18_source_mutation_counts": r18["status_counts"],
+              "r18_source_mutations": r18["total_source_divergences"],
           }
           Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")
           print("AB_NS1_HISTORICAL_CACHE_BYTE_WITNESS", json.dumps(note, sort_keys=True))

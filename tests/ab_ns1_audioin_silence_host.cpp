@@ -5,6 +5,8 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <cstring>
+#include <vector>
 #include <limits>
 #include <stdexcept>
 
@@ -17,6 +19,16 @@ int main() {
         assert(samples.size() == count);
         assert(std::all_of(samples.begin(), samples.end(),
                            [](std::int16_t sample) { return sample == 0; }));
+        // DeviceSession's actual fast path copies buffer.size bytes. Exercise
+        // that copy boundary under ASan/UBSan for every VALID even-size request.
+        const auto bytes = static_cast<std::size_t>(count * sizeof(std::int16_t));
+        std::vector<std::uint8_t> guest(bytes + 2, 0xa5);
+        if (bytes != 0) {
+            std::memcpy(guest.data() + 1, samples.data(), bytes);
+        }
+        assert(guest.front() == 0xa5 && guest.back() == 0xa5);
+        assert(std::all_of(guest.begin() + 1, guest.end() - 1,
+                           [](std::uint8_t byte) { return byte == 0; }));
     }
 
     bool rejected = false;

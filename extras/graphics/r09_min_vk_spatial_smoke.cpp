@@ -6,6 +6,7 @@
 #include "dlss_nr_min_spatial_abi.h"
 #include "dlss_nr_min_spatial_math.h"
 #include <vulkan/vulkan.h>
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -284,30 +285,36 @@ void ImageBarrier(VkCommandBuffer cmd,VkImageMemoryBarrier bar,
     vkCmdPipelineBarrier(cmd,src,dst,0u,0u,nullptr,0u,nullptr,1u,&bar);
 }
 void Run(Host& h,const char* pack_spv,const char* delta_spv,
-         const char* transfer_spv,bool identity) {
-    constexpr std::uint32_t W=32u,H=32u,Q=28u;
-    constexpr VkDeviceSize bytes=W*H*4u*sizeof(float);
+         const char* transfer_spv,bool identity,bool widescreen) {
+    // 160x90 -> 144x82 tests asymmetric 16:9 and a non-8-aligned
+    // output edge. The 32x32 -> 28x28 canary catches the prior path.
+    const std::uint32_t W=widescreen?160u:32u;
+    const std::uint32_t H=widescreen?90u:32u;
+    const std::uint32_t QX=widescreen?144u:28u;
+    const std::uint32_t QY=widescreen?82u:28u;
+    const float center=widescreen?0.8f:0.5f;
+    const VkDeviceSize bytes=VkDeviceSize(W)*H*4u*sizeof(float);
     const auto staging=h.NewBuffer(bytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     const auto readback=h.NewBuffer(bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT);
     const auto source=h.NewImage(W,H,VK_FORMAT_R32G32B32A32_SFLOAT,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
-    const auto work=h.NewImage(Q,Q,VK_FORMAT_R16G16B16A16_SFLOAT,
+    const auto work=h.NewImage(QX,QY,VK_FORMAT_R16G16B16A16_SFLOAT,
         VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
-    const auto enhanced=h.NewImage(Q,Q,VK_FORMAT_R16G16B16A16_SFLOAT,
+    const auto enhanced=h.NewImage(QX,QY,VK_FORMAT_R16G16B16A16_SFLOAT,
         VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_SAMPLED_BIT);
     const auto target=h.NewImage(W,H,VK_FORMAT_R32G32B32A32_SFLOAT,
         VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-    std::array<float,W*H*4u> pixels{};
+    std::vector<float> pixels(std::size_t(W)*H*4u);
     for(std::uint32_t y=0;y<H;++y)
         for(std::uint32_t x=0;x<W;++x) {
             const auto i=(y*W+x)*4u;
             // Real HDR (>1) and sharp UI-like checkerboard edges retain
             // their exact native pixel values when residual is zero.
-            const float edge=x<16u?0.05f:1.65f;
+            const float edge=x<W/2u?0.05f:1.65f;
             const float checker=((x/4u+y/4u)&1u)?0.2f:1.0f;
             pixels[i]=edge+0.005f*float(y);
             pixels[i+1u]=checker+0.004f*float(x);
-            pixels[i+2u]=(y<16u?1.25f:0.15f)+0.001f*float(x);
+            pixels[i+2u]=(y<H/2u?1.25f:0.15f)+0.001f*float(x);
             pixels[i+3u]=((x+y)&1u)?1.0f:0.25f;
         }
     void* ptr{};
@@ -393,7 +400,7 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
     const auto delta=h.Pipeline(h.Shader(delta_spv),dset,delta_layout);
     const auto unpack=h.Pipeline(h.Shader(transfer_spv),uset,unpack_layout);
     const Eden::Graphics::DlssNrMin::SpatialShaderPush push{
-        W,H,Q,Q,0.5f,0.5f,0.875f,0.875f};
+        W,H,QX,QY,center,center,float(QX)/float(W),float(QY)/float(H)};
 
     VkCommandBufferBeginInfo begin{};
     begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -426,7 +433,7 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
                             pack_layout,0u,1u,&sets[0],0u,nullptr);
     vkCmdPushConstants(h.cmd,pack_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                        0u,sizeof(push),&push);
-    vkCmdDispatch(h.cmd,(Q+7u)/8u,(Q+7u)/8u,1u);
+    vkCmdDispatch(h.cmd,(QX+7u)/8u,(QY+7u)/8u,1u);
     ImageBarrier(h.cmd,Transition(work.image,VK_IMAGE_LAYOUT_GENERAL,
                  VK_IMAGE_LAYOUT_GENERAL,VK_ACCESS_SHADER_WRITE_BIT,
                  VK_ACCESS_SHADER_READ_BIT),
@@ -438,7 +445,7 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
                                 delta_layout,0u,1u,&sets[1],0u,nullptr);
         vkCmdPushConstants(h.cmd,delta_layout,VK_SHADER_STAGE_COMPUTE_BIT,
                            0u,sizeof(push),&push);
-        vkCmdDispatch(h.cmd,(Q+7u)/8u,(Q+7u)/8u,1u);
+        vkCmdDispatch(h.cmd,(QX+7u)/8u,(QY+7u)/8u,1u);
         ImageBarrier(h.cmd,Transition(enhanced.image,VK_IMAGE_LAYOUT_GENERAL,
                      VK_IMAGE_LAYOUT_GENERAL,VK_ACCESS_SHADER_WRITE_BIT,
                      VK_ACCESS_SHADER_READ_BIT),
@@ -483,14 +490,16 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
         // except at clamped texel-center boundaries.
         const std::uint32_t x=std::uint32_t(i/4u)%W;
         const std::uint32_t y=std::uint32_t(i/4u)/W;
-        constexpr Eden::Graphics::DlssNrMin::AxisWarp warp{
-            W,Q,0.5f,0.875f};
-        const auto px=Eden::Graphics::DlssNrMin::WarpPixel(float(x)+0.5f,warp);
-        const auto py=Eden::Graphics::DlssNrMin::WarpPixel(float(y)+0.5f,warp);
+        const Eden::Graphics::DlssNrMin::AxisWarp warp_x{
+            W,QX,center,float(QX)/float(W)};
+        const Eden::Graphics::DlssNrMin::AxisWarp warp_y{
+            H,QY,center,float(QY)/float(H)};
+        const auto px=Eden::Graphics::DlssNrMin::WarpPixel(float(x)+0.5f,warp_x);
+        const auto py=Eden::Graphics::DlssNrMin::WarpPixel(float(y)+0.5f,warp_y);
         if(!std::isfinite(px)||!std::isfinite(py))
             throw std::runtime_error("Invalid reference axis mapping");
-        const float ux=std::clamp(px,0.5f,float(Q)-0.5f)/float(Q);
-        const float uy=std::clamp(py,0.5f,float(Q)-0.5f)/float(Q);
+        const float ux=std::clamp(px,0.5f,float(QX)-0.5f)/float(QX);
+        const float uy=std::clamp(py,0.5f,float(QY)-0.5f)/float(QY);
         const float known_delta[4]{0.125f*ux,-0.0625f*uy,
                                    0.125f*(ux+uy),0.0f};
         const float expected=pixels[i]+(identity?0.0f:known_delta[channel]);
@@ -508,21 +517,27 @@ void Run(Host& h,const char* pack_spv,const char* delta_spv,
     }
     vkUnmapMemory(h.device,readback.memory);
     std::cout<<(identity?"R09_MIN_VULKAN_IDENTITY_GPU_PASS ":"R09_MIN_VULKAN_SPATIALLY_VARYING_DELTA_GPU_PASS ")
-             <<"32x32->28x28->32x32\n";
+             <<W<<"x"<<H<<"->"<<QX<<"x"<<QY<<"->"<<W<<"x"<<H<<"\n";
     std::cout<<"R09_MIN_HOST_VULKAN_PUBLIC_FIXTURE_NO_DLSS_INFERENCE\n";
 }
 } // namespace
 
 int main(int argc,char** argv) {
-    if(argc!=4 && argc!=5) {
-        std::cerr<<"usage: r09_min_vk_spatial_smoke <pack.spv> <synthetic_delta.spv> <detail_transfer.spv> [--identity]\n";
+    if(argc<4 || argc>6) {
+        std::cerr<<"usage: r09_min_vk_spatial_smoke <pack.spv> <synthetic_delta.spv> <detail_transfer.spv> [--identity] [--widescreen]\n";
         return 2;
     }
     try {
         Host h;
         h.Init();
-        if(argc==5 && std::string(argv[4])!="--identity")return 2;
-        Run(h,argv[1],argv[2],argv[3],argc==5);
+        bool identity=false,widescreen=false;
+        for(int i=4;i<argc;++i) {
+            const std::string opt{argv[i]};
+            if(opt=="--identity" && !identity)identity=true;
+            else if(opt=="--widescreen" && !widescreen)widescreen=true;
+            else return 2;
+        }
+        Run(h,argv[1],argv[2],argv[3],identity,widescreen);
         return 0;
     } catch(const std::exception& e) {
         std::cerr<<"R09_MIN_VULKAN_GPU_SMOKE_FAIL: "<<e.what()<<"\n";

@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Offline source closure: one vendor Gitlink, three exact upstream Git trees."""
+from pathlib import Path
+import hashlib, subprocess
+root=Path(__file__).resolve().parents[2]
+vendor=root/"vendor"
+def git(c,*args): return subprocess.check_output(["git","-C",str(c),*args],text=True).strip()
+modules=[s.split()[-1] for s in git(root,"ls-tree","-r","HEAD").splitlines() if s.startswith("160000 commit ")]
+assert modules==["vendor"],modules
+assert (root/".gitmodules").read_text().count('[submodule "')==1
+assert not (vendor/".gitmodules").exists()
+assert git(root,"rev-parse","HEAD:vendor")==git(vendor,"rev-parse","HEAD")
+pins={"PS5_MihawkGen":("e3b42f5b89775469bec04795b93f048b74aff207","c57232a9f16bcb6df5fe07c9bb631518f2b1cc0e"),
+"PS5_FSR3OpticalFlow":("85e34d638cd9e8b211e08fb19d1a57a588bb8d76","64362101757cdd6f7df9eeb984cb53f03f1fbfca"),
+"libwebp":("3a7830b9713d9187cf1211862d4571ff58b0d507","4fa21912338357f89e4fd51cf2368325b59e9bd9")}
+provenance=(vendor/"docs/PS5_INTERNAL_DEPENDENCY_ORIGINS_2026-11-10.md").read_text()
+for name,(tree,sha) in pins.items():
+    path=vendor/"encore-active"/name
+    assert path.is_dir() and not (path/".git").exists(),name
+    assert git(vendor,"rev-parse","HEAD:encore-active/"+name)==tree,name
+    assert sha in provenance,name
+net=vendor/"encore-active/PS5_MihawkGen/framegen/models/network.fgw"
+assert net.stat().st_size==1757240
+assert hashlib.sha256(net.read_bytes()).hexdigest()=="31ecc7d69af1e9defd62b9abad71bc3430cd8a0a4d2f4eafcabaafa48c34bf6b"
+for p in ["PS5_MihawkGen/LICENSE.md","PS5_MihawkGen/THIRD_PARTY_NOTICES.txt","PS5_FSR3OpticalFlow/COPYING","PS5_FSR3OpticalFlow/shaders/LICENSE.txt","libwebp/COPYING","libwebp/PATENTS"]:
+    assert (vendor/"encore-active"/p).is_file(),p
+assert "version 1.6.0" in (vendor/"encore-active/libwebp/NEWS").read_text()
+print("PS5_INTERNAL_DEPENDENCIES_PASS gitlinks=1 sources=3 trees=byte_exact model=sha256 libwebp=1.6.0 no_ps5_build=1")

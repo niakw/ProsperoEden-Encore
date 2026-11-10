@@ -1,5 +1,7 @@
 # Eden Encore — cache WebP 80 et application compactée
 
+**Addendum du 10 novembre 2026 (branche de maintenance) :** libwebp 1.6.0 est désormais intégré en fichiers Git sous `vendor/encore-active/libwebp/` et n'est plus un sous-module externe. Les validations 1.5.0 rapportées ci-dessous sont historiques ; le nouveau binaire exige une validation hôte et PS5 indépendante.
+
 **6 novembre 2026 · PR #24 DRAFT · validation PS5 encore requise.**
 
 Le cache de couvertures stockait en TGA non compressé les JPEG/PNG

@@ -17,11 +17,38 @@ begin, end = "<!-- ACTIVE_SOURCE_CATALOG_START -->", "<!-- ACTIVE_SOURCE_CATALOG
 assert document.count(begin) == document.count(end) == 1
 section = document.split(begin, 1)[1].split(end, 1)[0]
 suffixes = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".inc", ".inl", ".s", ".S", ".asm", ".cl"}
-physical_all = sorted(
+physical_discovered = sorted(
     p.relative_to(active).as_posix()
     for p in active.rglob("*")
     if p.is_file() and p.suffix in suffixes
 )
+# Three upstream dependencies were internalized under vendor/encore-active.
+# They remain *unchanged pinned source trees*, not owners of the 337-file
+# historical F07 production audit or post-F07 maintained shader/CPU overlays.
+# Exact upstream Git tree SHAs and licenses are checked independently by
+# tools/graphics/check-internalized-ps5-deps.py. Count each imported source
+# tree explicitly here so we never silently ignore extra or missing files.
+pinned_upstream_source_counts = {
+    "PS5_MihawkGen": 632,
+    "PS5_FSR3OpticalFlow": 41,
+    "libwebp": 245,
+}
+for upstream_name, expected_sources in pinned_upstream_source_counts.items():
+    upstream_root = active / upstream_name
+    assert upstream_root.is_dir() and not (upstream_root / ".git").exists(), upstream_name
+    present = [p for p in physical_discovered if p.startswith(upstream_name + "/")]
+    assert len(present) == expected_sources, (
+        "Pinned upstream source inventory changed", upstream_name,
+        len(present), expected_sources)
+physical_all = [
+    p for p in physical_discovered
+    if p.split("/", 1)[0] not in pinned_upstream_source_counts
+]
+assert len(physical_discovered) == (
+    len(physical_all) + sum(pinned_upstream_source_counts.values()))
+print("ENCORE_PINNED_UPSTREAM_SOURCES_PASS",
+      f"sources={sum(pinned_upstream_source_counts.values())}",
+      f"trees={len(pinned_upstream_source_counts)}", "excluded_from_f07=1")
 # Preserve the audited production source catalogue. The NS2 research sources
 # are tracked separately and explicitly; they are not F07 shipping proofs.
 research_manifest = json.loads(

@@ -57,7 +57,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 extras/graphics/test_dlss_nr_min_vendor_source_guard.py --vendor vendor
-          echo R09_MIN_VIT_PINNED_SOURCE_GUARD_NO_PRODUCTION_CHANGES
+          python3 extras/graphics/test_dlss_nr_min_720_specialized_launch_sources.py --vendor vendor
+          echo R09_MIN_VIT_AND_720_NATIVE_LAUNCH_PINNED_SOURCE_GUARDS_PASS
 
       - name: C++20 host assertions with GCC and Clang under UBSan
         shell: bash
@@ -75,7 +76,8 @@ jobs:
               test_dlss_nr_min_720_route_trial \
               test_dlss_nr_min_720_vit_runtime_capacity \
               test_dlss_nr_min_720_decoder_policy \
-              test_dlss_nr_min_720_plan_emit; do
+              test_dlss_nr_min_720_plan_emit \
+              test_dlss_nr_min_720_native_owner_launch; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -90,7 +92,8 @@ jobs:
               test_dlss_nr_min_720_route_trial \
               test_dlss_nr_min_720_vit_runtime_capacity \
               test_dlss_nr_min_720_decoder_policy \
-              test_dlss_nr_min_720_plan_emit; do
+              test_dlss_nr_min_720_plan_emit \
+              test_dlss_nr_min_720_native_owner_launch; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

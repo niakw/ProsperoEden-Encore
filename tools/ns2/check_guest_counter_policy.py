@@ -26,8 +26,8 @@ assert "Eden::GuestCounter::SelectProgram(" not in npdm
 # patched ExeFS modules passed the real NSO0 bounds preflight. An invalid
 # late module must not install a global mode for the next title; NS1 keeps
 # the original early-selection path.
-ns1 = "if (!metadata.IsSwitch2())\\n        Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency)"
-ns2 = "if (metadata.IsSwitch2())\\n        Eden::GuestCounter::SelectProgram(true, Common::g_cpu_caps.tsc_frequency)"
+ns1 = "if (!metadata.IsSwitch2())\n        Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency)"
+ns2 = "if (metadata.IsSwitch2())\n        Eden::GuestCounter::SelectProgram(true, Common::g_cpu_caps.tsc_frequency)"
 assert ns1 in loader and ns2 in loader
 assert loader.index("metadata.Reload(npdm)") < loader.index(ns1)
 assert loader.index(ns1) < loader.index("PreflightNso(header, module_file->GetSize()).Ready()")

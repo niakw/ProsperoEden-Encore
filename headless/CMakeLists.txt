@@ -1785,6 +1785,23 @@ endif()
         if(NOT TARGET webp OR NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")
             message(FATAL_ERROR "Pinned libwebp target was not registered in project(yuzu)")
         endif()
+        # The PS5 SDK is x86-64 (Zen 2), where SSE2 is baseline ABI.
+        # Our default conservative -mno-sse2 flag breaks libwebp C scalar
+        # routines returning doubles: clang reports "SSE2 register return
+        # with SSE2 disabled". Restore only SSE2 for the pinned WebP object
+        # libraries; keep globally disabled SIMD extensions and the
+        # WEBP_ENABLE_SIMD=OFF policy unchanged. These CMake targets own
+        # every WebP object linked into eden-headless (including SharpYUV).
+        foreach(eden_webp_c_target IN ITEMS
+                sharpyuv webpdecode webpdspdecode webputilsdecode
+                webpencode webpdsp webputils webp webpdecoder)
+            if(NOT TARGET ${eden_webp_c_target})
+                message(FATAL_ERROR
+                    "Missing pinned WebP ABI target: ${eden_webp_c_target}")
+            endif()
+            target_compile_options(${eden_webp_c_target} PRIVATE
+                $<$<COMPILE_LANGUAGE:C>:-msse2>)
+        endforeach()
         target_link_libraries(eden-headless PRIVATE webp)
         target_include_directories(eden-headless PRIVATE "${EDEN_WEBP_ROOT}/src")
         target_sources(eden-headless PRIVATE

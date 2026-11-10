@@ -39,18 +39,30 @@
 | **R03/R04 shared ancillary** | GPU sync, memory fences, audio, HLE/IPC, kernel teardown, ROM formats and shader cache source checks are in existing audits; no universal runtime-proof claim. | Keep deduplicated by actual compiled source and runtime tests; no cross-NS2 experimental patch. |
 | **R22 static recompiler** | Research concept, no safe production static recompiler implemented or tested. | Mark **excluded from operational release**; if research is later authorised, a separate test/rollback contract is mandatory, not implied by this A/B source audit. |
 
+## Counted exit gates (10 Nov, source proof vs runtime qualification)
+
+| Exact count | Verified/complete | Pending | Meaning |
+|---|---:|---:|---|
+| A/B source drift **C/C++ owners** | **18/18** | **0** | Historical native compile database and source Git blob identities; not final linked ELF |
+| A/B divergent **header inclusions** | **0/17** | **17** | Historic native cache has no applicable Ninja dep ledger; exact include dependency receipts missing |
+| Corrective batches **C00–C06 fully release-qualified** | **0/7** | **7** | C00 host implementation tested, C01/C02 staged source patches, C03 owner contract, C04–C06 pending source/behavioral gates |
+| C01/C02 source-patch **applicability** | **2/2** | **0** | PR #46 run #42912086261 read-only `git apply --check`, **not** compiled/applied vendor patches |
+| Post-F07 source-delta **register rows** | **33/33 recorded** | **0 unregistered on frozen PR-head check** | A dedicated row for C00 `headless/audio.cpp`; 518 historical F07 owners remain immutable. Do not extrapolate to moving-main merge CI |
+
+These denominators describe **distinct categories** and are not additive. Unknown numbers of semantic parity tests across 155 upstream commits, actual current `main` linked owners and external 404 Git origins are tracked by R18/R23 and **not falsely counted as zero**.
+
 ## AB-04 additional release gate: real AudioIn timing and buffer retirement
 
-**Verified source graph, 10 November (vendor `f9f08786` checked separately from baseline `22b69d6`):**
+**Updated from the former source-only failure** after [isolated corrective PR #46](https://github.com/niakw/ProsperoEden-Encore/pull/46) SHA `5f07b1c2683488d3256ad32c47167489f3c76d33`:
 
-1. `DeviceSession::AppendBuffers` sends the input sink an `AppendBuffer` call; the draft C00 `SilentAudioInputStream` overrides it as a **no-op**.
-2. The pinned `SinkStream::GetExpectedPlayedSampleCount()` returns `min(estimated, max_played_sample_count) + TargetSampleCount * 5`; only `ProcessAudioIn` updates the maximum input count. The draft silent stream neither calls that function nor supplies a real capture callback. Assuming no other producer, its acknowledged sample count **cannot advance beyond the fixed allowance**.
-3. The real `audio_core/device/audio_buffers.h::ReleaseBuffers` requires `DeviceSession::IsBufferConsumed` before calling `DeviceSession::ReleaseBuffer` on an ordinary, non-force release. A capture buffer whose end timestamp exceeds that allowance can therefore remain registered indefinitely. This is a **new source-derived timing/queue risk**, not proof of a particular PS5 game's failure.
-4. The C00 AudioIn helper also does not solve odd-byte sizes or invalid guest buffers at the original `DeviceSession::ReleaseBuffer` copy site. The corrective PR #46 therefore **must remain draft** despite a green ASan/UBSan silence-vector test.
+1. Prior C00 AudioIn used a `NullSinkStreamImpl` that returned zero bytes for positive microphone sample requests, while `DeviceSession::ReleaseBuffer` copied the requested byte count. C00 now uses a bounded **2 MiB** silent PCM16 helper, PS5 input routing and correct input channel metadata. The actual `SilentAudioInputStream` class has a single **10 ms interruptible worker**, calling the pinned `SinkStream::ProcessAudioIn` with 480 two-channel zero frames per tick; it uses controlled Start/Stop/Finalize and performs **no busy-loop capture**.
+2. [Actual-class host extractor / ASan/UBSan #42912086254](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42912086254) **passed** for 1/2/6 guest input channels, capture counter progress, Stop, resume, Finalize and bounded zero PCM output. This is a source-extracted real class with **mock** SinkStream/System; no compiled `DeviceSession`, native audio API, Console RAM or real guest event sequencing was tested.
+3. The previous source-derived **no-progress capture** condition is now **addressed in the draft adapter**, but cannot yet be labelled fixed in an actual PS5 title. The original `audio_core/device/device_session.cpp` still has incomplete validation: `buffer.size` odd bytes can lead to `ReleaseBuffer(buffer.size / 2)` providing fewer bytes than subsequently copied, oversized input allocations occur in `AppendBuffers`, and validity of `buffer.samples` in guest address space has not been proved at the unsafe write. The original `AudioBuffers::ReleaseBuffers` requires `IsBufferConsumed` for timed retirement, which an isolated mock cannot certify.
+4. **Remaining AB-04 runtime gate:** source-compiled `DeviceSession` with invalid/odd guest byte lengths, invalid guest addresses and zero/oversized requests; multi-buffer timeout/ordering/events, 48 kHz monotonic retired timestamps, pause/resume/teardown, no audio-out regression; then real native PS5 build/guest validation under a fixed `main` pin. Avoid adding unreviewed guest memory access to production until this gate has positive and negative evidence.
 
-**New AB-04 closure requirement:** actual source-compiled AudioIn service fixture with at least one buffer longer than the fixed allowance, multiple queued buffers, monotonic release timestamps and events, pause/resume, guest-address/odd-byte adversarial inputs, correct silence and unchanged AudioOut. The implementation must advance guest time correctly (not simply mark all captures complete on append or add a busy-loop thread). Completion of this service requires a coordinated selected `DeviceSession`/sink ownership change or an equivalent proved implementation, not just the C00 null-buffer replacement.
+The corrective branch's **actual Git submodule pin** is the original `22b69d6053db41b74edac2633c012f925b84f69e`. PR workflows that had checked a moving temporary merge tree previously appeared to use `f9f08786` or `90c9c8a2` from concurrent `main`; the isolated tests now explicitly checkout the PR **head SHA**. Neither PR changed production `main` or `vendor`.
 
-**No current PS5 runtime sign-off, no vendor/source mutation by the audit.**
+**Current classification: C00 partially implemented with green host tests; AB-04 remains OPEN at E3/E4.**
 
 ## Audit-branch tools and immutable proof index
 

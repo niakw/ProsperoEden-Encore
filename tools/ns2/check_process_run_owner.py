@@ -17,6 +17,28 @@ def once(src,old,new):
     return src.replace(old,new)
 
 current=SRC.read_text()
+# Native H01 adds an explicit filesystem-controller include. Remove only
+# this known overlay before checking the unchanged historical NS1 hashes.
+current=once(current,
+    '''#include "core/loader/ns2_svc_trace.h"
+#include "core/hle/service/filesystem/filesystem.h"
+#endif''',
+    '''#include "core/loader/ns2_svc_trace.h"
+#endif''')
+# Undo the additional H01 failed-Run RomFS cleanup before the original
+# byte-for-byte N52/H01 baseline normalization. This is native-only and
+# preserves the previous process scheduling semantics on NS1.
+current=once(current,
+    '''            m_process_started = true;
+            // This NS2 run was already registered by the loader but was
+            // never scheduled successfully. Retire its RomFS owner BEFORE
+            // clearing the trace; Finalize cannot identify the NS2 process
+            // once the trace is gone. No NS1 behavior changes.
+            m_system.GetFileSystemController().UnregisterProcessIfPresent(
+                m_process->GetProcessId());
+            Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());''',
+    '''            m_process_started = true;
+            Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());''')
 # H01 has three additional native-only guards in Process::Initialize /
 # Finalize. Unwind them IN REVERSE without touching any other owner byte.
 # The immutable historical H01 and N52 digests below remain unchanged.
@@ -32,7 +54,15 @@ reviewed=once(current,
     bool process_committed = false;
     SCOPE_EXIT {
         if (!process_committed) {
-            Eden::NS2::SvcTrace::Unregister(process->GetProcessId());
+            // Loader::Load registers the NS2 RomFS before KProcess handoff.
+            // A later NPDM rejection/AppendNewProcess failure must not
+            // leave a reachable stale filesystem record for this PID.
+            // Only the real NS2 trace can authorize this cleanup.
+            const auto pid = process->GetProcessId();
+            if (Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire) == pid) {
+                m_system.GetFileSystemController().UnregisterProcessIfPresent(pid);
+            }
+            Eden::NS2::SvcTrace::Unregister(pid);
         }
     };
 #endif
@@ -61,6 +91,10 @@ reviewed=once(reviewed,
         // Do not retain a stale NS2 trace after process teardown.
         if (Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire) ==
             m_process->GetProcessId()) {
+            // Normal NS2 teardown must also retire its process-owned
+            // filesystem registration before the kernel PID is recyclable.
+            m_system.GetFileSystemController().UnregisterProcessIfPresent(
+                m_process->GetProcessId());
             Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());
         }
 #endif

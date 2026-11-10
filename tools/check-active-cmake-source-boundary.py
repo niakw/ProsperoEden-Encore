@@ -29,6 +29,36 @@ module_paths = {
     *(ROOT/"vendor/encore-active").rglob("CMakeLists.txt"),
 }
 module_paths.discard(ROOT/"headless/CMakeLists.txt")
+
+# The dependency migration retains three *unaltered pinned upstream source
+# trees* under vendor/encore-active instead of external Git submodules. Their
+# own CMake scripts may legitimately generate build artifacts (e.g. MihawkGen
+# ps5/CMakeLists.txt uses file(WRITE)); they are NOT Encore-owned mutation
+# modules and must not create false positives in this active-source audit.
+# Do not broadly exempt vendor/encore-active or any other SDK: only these three
+# exact directories, whose Git trees, model bytes and notices are separately
+# pinned by tools/graphics/check-internalized-ps5-deps.py.
+pinned_upstream_roots = tuple(
+    ROOT/"vendor/encore-active"/name
+    for name in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp")
+)
+assert all(root.is_dir() and not (root/".git").exists()
+           for root in pinned_upstream_roots)
+
+def is_pinned_upstream_cmake(path: Path) -> bool:
+    return any(root in path.parents for root in pinned_upstream_roots)
+
+assert is_pinned_upstream_cmake(
+    ROOT/"vendor/encore-active/PS5_MihawkGen/ps5/CMakeLists.txt")
+assert is_pinned_upstream_cmake(
+    ROOT/"vendor/encore-active/libwebp/CMakeLists.txt")
+assert not is_pinned_upstream_cmake(
+    ROOT/"vendor/encore-active/eden-vulkan/CMakeLists.txt")
+assert not is_pinned_upstream_cmake(ROOT/"headless/vulkan.cmake")
+excluded_upstream_modules = sum(is_pinned_upstream_cmake(p) for p in module_paths)
+module_paths = {p for p in module_paths if not is_pinned_upstream_cmake(p)}
+assert excluded_upstream_modules > 0, excluded_upstream_modules
+
 # Exclude source-pin SDK manifests: the checked Encore CMake layer above
 # is the only location allowed to mutate included dependency sources.
 active_mutation = re.compile(
@@ -90,4 +120,5 @@ for path, code in (("native build", native_build),
 assert 'shutil.copyfile(maintained, tmp)' in (
     ROOT/"tools/install-active-core-backports.py").read_text()
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
+      f"pinned_upstream_modules={excluded_upstream_modules} "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

@@ -68,7 +68,7 @@ approved_notices = (
 )
 for line in package.splitlines():
     stripped = line.strip()
-    if re.match(r"^(?:cp|rsync|tar)\\s", stripped) and "vendor/sources" in stripped:
+    if re.match(r"^(?:cp|rsync|tar)\s", stripped) and "vendor/sources" in stripped:
         assert any(f'vendor/sources/{notice}"' in stripped for notice in approved_notices), (
             "Non-license vendored source copy into package", stripped)
 print("R423: PASS — ten public Plotly Mapbox demo occurrences in six pinned Boost HTML files")

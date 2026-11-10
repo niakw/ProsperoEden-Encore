@@ -2,6 +2,8 @@
 
 **Preparation snapshot:** 2026-11-10. **Isolation:** `dev/ab-ns1-corrective-batches-2026-11-10`, forked from `main@d829ab4ed7e76f6341a45145e2e70dc180c0e518`. The independently maintained [audit PR #45](https://github.com/niakw/ProsperoEden-Encore/pull/45) retains all source/provenance evidence. Do not rebase or merge either branch into a running P5 build.
 
+**Actual implementation vendor pin:** `f9f08786de9e623f2a40865027451dbf0676f6b4`, **not** the older audit baseline `22b69d6`. Verified that the pinned blobs for C01, C02 and all three C03 RADV units remain byte-identical across these two vendor revisions. Source-proposal patch application is validated against `f9f08786` through a separate read-only CI, not applied to the vendor. Audit PR #45 retains its older baseline independently.
+
 ## Implementation order — one risk owner and one reversible patch per batch
 
 | Batch | Actual code owner / operation | Regression contract | Current state |

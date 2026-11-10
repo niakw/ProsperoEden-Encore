@@ -157,11 +157,13 @@ jobs:
           # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
           # translation units using the actual native compile_commands.json.
           # Collect all errors in one run; do not produce .o/ELF/ZIP.
-          # Keep the 163 already-qualified Vulkan/NS2/FSR3 owners first,
-          # then cover unscanned video_core/core C++ using real PS5 flags.
-          # No .o files, native link or app artifacts are produced here.
+          # Separate real-PS5 C++ slice. The prior native run at
+          # 0e9dfd5 checks indices 0..399 on the pinned vendor; this run
+          # concurrently covers the remainder without repeating that work.
+          # Fail if the deterministic source set has fewer than 401 TUs.
+          # No native .o, link, app package or release is produced.
           python3 -B tools/ci/preflight-native-video-core-syntax.py \
-            "$scratch/native-local" --jobs 4 --max-tus 400
+            "$scratch/native-local" --jobs 4 --start-index 400 --max-tus 500
           # No full C++ build, package or release is authorized here.
 
       - name: Reject missing cache

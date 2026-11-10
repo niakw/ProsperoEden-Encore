@@ -81,7 +81,8 @@ jobs:
               test_dlss_nr_min_720_decoder_policy \
               test_dlss_nr_min_720_plan_emit \
               test_dlss_nr_min_720_native_owner_launch \
-              test_dlss_nr_min_720_present_handoff; do
+              test_dlss_nr_min_720_present_handoff \
+              test_dlss_nr_min_720_post_fsr_bytes; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -98,7 +99,8 @@ jobs:
               test_dlss_nr_min_720_decoder_policy \
               test_dlss_nr_min_720_plan_emit \
               test_dlss_nr_min_720_native_owner_launch \
-              test_dlss_nr_min_720_present_handoff; do
+              test_dlss_nr_min_720_present_handoff \
+              test_dlss_nr_min_720_post_fsr_bytes; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

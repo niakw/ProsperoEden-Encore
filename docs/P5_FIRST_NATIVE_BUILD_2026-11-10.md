@@ -23,3 +23,15 @@ Le suivi est dans [l'issue #15](https://github.com/niakw/ProsperoEden-Encore/iss
 ## GitHub Actions run créé
 
 [**Run #42846319389**](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389) est la première exécution native de P5, déclenchée automatiquement après le commit volontaire `6fcfe545` ([commit](https://github.com/niakw/ProsperoEden-Encore/commit/6fcfe5454a20f600f092e51bdda331a0796b8220)). Il doit être évalué selon ses propres étapes, artefacts et éventuelles erreurs. Les modifications **documentaires ultérieures** sur `main` n'entrent pas rétroactivement dans ce checkout et ne doivent pas annuler ce run.
+
+## Premier retour P5 et correction isolée
+
+[Premier run #42846319389](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42846319389) : **échec dans les contrôles source, avant tout build natif lourd**. Les logs ont identifié exactement deux assertions héritées du CMake et des scanners ROM plus anciens :
+
+1. `tools/check-jit-stability.py` attendait des options `EDEN_SHARED_JIT` / `EDEN_JIT_COMPILE_BATCH` et des branches de source expérimentales retirées. Le vrai `headless/CMakeLists.txt` sélectionne **sans condition** `a64_emit_x64_standard.cpp` et `a64_interface_standard.cpp`, avec les deux disponibilités JIT à **0**. Le témoin vérifie désormais ces propriétaires et refuse tout rétablissement expérimental.
+2. `tools/check-nlib-ui-recovery.py` attendait **deux** garde-fous `game_storage_available()`; le code maintenu en a **trois** : rollback en fin du scan initial, contrôle avant le batch de présence et contrôle après le batch avec `missing.clear()`. Le témoin contrôle maintenant explicitement les trois chemins, au lieu d'en supprimer un.
+3. `tools/package-headless-native.sh` vérifiait la présence de `:BOOL=OFF` pour des anciennes options CMake **supprimées**. La validation du package rejette désormais explicitement les valeurs `:BOOL=ON` et `:UNINITIALIZED=ON`, tandis que la configuration CMake et les unités standard sont attestées par le contrôle JIT source.
+
+Ces corrections de **tests devenus périmés**, sans changement moteur ni vendor, sont intégrées dans [`879cbddedcd16453406c5754e3ce338e233a50ea`](https://github.com/niakw/ProsperoEden-Encore/commit/879cbddedcd16453406c5754e3ce338e233a50ea).
+
+[**Second build #42848349739**](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42848349739) lancé volontairement sur ce commit : contrôles toolchain/NCZ/langues/cache/métadonnées passés au début de son exécution ; résultat final natif/packaging **à juger sur le run**. Aucun marqueur de publication, aucun déplacement du gitlink vendor, aucune prétendue validation console.

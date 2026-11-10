@@ -11,7 +11,7 @@ for compiler in clang++ g++; do
     echo "MISSING compiler: $compiler" >&2
     exit 2
   fi
-  for test in test_ssbo_extent_contract test_gpu_backing_lifetime; do
+  for test in test_ssbo_extent_contract test_gpu_backing_lifetime test_epoch_guarded_gmmu_memo; do
     "$compiler" -std=c++20 -O1 -Wall -Wextra -Werror \
       -fsanitize=undefined -fno-sanitize-recover=all \
       "$root/research/ns2/${test}.cpp" -o "$tmp/${compiler//+/p}-$test"

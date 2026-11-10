@@ -54,7 +54,22 @@ for folder in (ROOT / ".github/workflows",):
 package = (ROOT / "tools/package-headless-native.sh").read_text()
 # The packaging pipeline copies the app, native modules, UI and legal notices;
 # do not ever ship the vendored Boost documentation or its public demo token.
-assert "vendor/sources" not in package and "mapboxAccessToken" not in package
-assert "MAPBOX_TOKEN" not in package
+# The internalized PS5 dependencies deliberately supply legal notices from
+# vendor/sources. Allow only those explicit notice copies, not source trees.
+assert "mapboxAccessToken" not in package and "MAPBOX_TOKEN" not in package
+assert "vendor/sources/eden-cpm/boost" not in package
+approved_notices = (
+    "libwebp/COPYING",
+    "libwebp/PATENTS",
+    "ps5-mihawkgen/LICENSE.md",
+    "ps5-mihawkgen/THIRD_PARTY_NOTICES.txt",
+    "ps5-fsr3-optical-flow/COPYING",
+    "ps5-fsr3-optical-flow/shaders/LICENSE.txt",
+)
+for line in package.splitlines():
+    stripped = line.strip()
+    if re.match(r"^(?:cp|rsync|tar)\\s", stripped) and "vendor/sources" in stripped:
+        assert any(f'vendor/sources/{notice}"' in stripped for notice in approved_notices), (
+            "Non-license vendored source copy into package", stripped)
 print("R423: PASS — ten public Plotly Mapbox demo occurrences in six pinned Boost HTML files")
 print("R423: PASS — no CI Mapbox token injection; preserved Boost reproducibility")

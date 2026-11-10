@@ -11,7 +11,12 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "vendor/sources/eden/src/core/hle/kernel/k_process.cpp"
+# Exercise both the canonical source and the actual linked shipping owner:
+# a green test against sources/ alone previously missed the KProcess OOM bug.
+OWNERS = (
+    ("canonical", ROOT / "vendor/sources/eden/src/core/hle/kernel/k_process.cpp"),
+    ("shipping", ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/k_process.cpp"),
+)
 START = "Result KProcess::LoadFromMetadata("
 STOP = "\nvoid KProcess::LoadModule("
 
@@ -357,23 +362,25 @@ def main() -> None:
     args = parser.parse_args()
     if not args.npdm.is_file() or not args.nso.is_file():
         raise FileNotFoundError("Missing paired public ExeFS homebrew")
-    src = OWNER.read_text(encoding="utf-8")
-    method = unchanged_member(src)
     with tempfile.TemporaryDirectory(prefix="ns2-kprocess-metadata-host-") as d:
-        cpp = Path(d) / "kprocess_metadata.cpp"
-        cpp.write_text(PREFIX + "\n" + method + "\n" + TEST, encoding="utf-8")
-        for cxx in ("clang++","g++"):
-            if not shutil.which(cxx):
-                raise RuntimeError("Host compiler unavailable: "+cxx)
-            exe = Path(d) / cxx.replace("+","p")
-            subprocess.run([cxx,"-std=c++20","-O1","-g","-Wall","-Wextra",
-                            "-Werror","-Wno-unused-parameter",
-                            "-fsanitize=address,undefined",
-                            "-fno-sanitize-recover=all",
-                            "-fno-omit-frame-pointer",str(cpp),"-o",str(exe)],
-                           timeout=120,check=True)
-            subprocess.run([str(exe),str(args.npdm.resolve()),str(args.nso.resolve())],
-                           timeout=30,check=True)
+        for owner_name, owner_path in OWNERS:
+            src = owner_path.read_text(encoding="utf-8")
+            method = unchanged_member(src)
+            cpp = Path(d) / f"kprocess_metadata_{owner_name}.cpp"
+            cpp.write_text(PREFIX + "\n" + method + "\n" + TEST, encoding="utf-8")
+            for cxx in ("clang++","g++"):
+                if not shutil.which(cxx):
+                    raise RuntimeError("Host compiler unavailable: "+cxx)
+                exe = Path(d) / f"{owner_name}_{cxx.replace('+','p')}"
+                subprocess.run([cxx,"-std=c++20","-O1","-g","-Wall","-Wextra",
+                                "-Werror","-Wno-unused-parameter",
+                                "-fsanitize=address,undefined",
+                                "-fno-sanitize-recover=all",
+                                "-fno-omit-frame-pointer",str(cpp),"-o",str(exe)],
+                               timeout=120,check=True)
+                subprocess.run([str(exe),str(args.npdm.resolve()),str(args.nso.resolve())],
+                               timeout=30,check=True)
+            print(f"H01_REAL_KPROCESS_{owner_name.upper()}_OWNER_PASS", flush=True)
 
 if __name__ == "__main__":
     main()

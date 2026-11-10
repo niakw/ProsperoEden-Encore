@@ -201,31 +201,93 @@ inline KResourceLimit* CreateResourceLimitForProcess(DummySystem& system,
     static KResourceLimit limit;
     return &limit;
 }
+struct KScopedResourceReservation {
+    inline static unsigned committed{},rolled_back{};
+    bool accepted{},is_committed{};
+    KScopedResourceReservation(KernelCore& k,KResourceLimit*,
+                               Svc::LimitableResource,std::size_t size)
+      :accepted(!k.fail_reservation && size!=0) {}
+    bool Succeeded()const{return accepted;}
+    void Commit(){is_committed=true;++committed;}
+    ~KScopedResourceReservation(){if(accepted&&!is_committed)++rolled_back;}
+};
+struct GuestMemory {
+    bool attached{},gpu_dirty{};
+    template<class T>void SetCurrentPageTable(T&){attached=true;}
+    void SetGPUDirtyManagers(int){gpu_dirty=true;}
+};
+struct KPageTable {
+    bool fail_initialize{},fail_containment{},fail_map{};
+    unsigned mapped_pages{},finalizations{},mapping_calls{};
+    KProcessAddress captured_start{};
+    Result Initialize(Svc::CreateProcessFlag,bool,bool,bool,KMemoryManager::Pool,
+                      u64,u64,KSystemResource*,KResourceLimit*,GuestMemory&,
+                      KProcessAddress start) {
+        captured_start=start;
+        return fail_initialize ? Result{31}:Result{};
+    }
+    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}
+    Result MapPages(u64,std::size_t pages,KMemoryState,KMemoryPermission) {
+        ++mapping_calls;
+        mapped_pages=static_cast<unsigned>(pages);
+        return fail_map ? Result{32}:Result{};
+    }
+    void Finalize(){mapped_pages=0;++finalizations;}
+    void AllowDeviceMappingOfExecPages(){}
+};
+struct KCapabilities {
+    bool fail{};
+    std::vector<u32> observed;
+    Result InitializeForUser(std::span<const u32> caps,KPageTable*) {
+        observed.assign(caps.begin(),caps.end());
+        return fail ? Result{33}:Result{};
+    }
+    unsigned GetIntendedKernelMajorVersion()const{return 26;}
+};
+template<class F> struct OnResultFail {
+    F fn;
+    ~OnResultFail(){if(!h01_init_succeeded)fn();}
+};
+struct OnResultFailMaker{};
+template<class F> OnResultFail<F> operator+(OnResultFailMaker,F f) {
+    return OnResultFail<F>{std::move(f)};
+}
+#define ON_RESULT_FAILURE auto h01_guard_1 = OnResultFailMaker{} + [&]()
+#define ON_RESULT_FAILURE_2 auto h01_guard_2 = OnResultFailMaker{} + [&]()
+
 struct KProcess {
-    bool m_is_application = false;
-    unsigned m_ideal_core_id = 999;
-    bool fail_initialize = false;
-    bool initialized = false;
-    bool interfaces_initialized = false;
+    bool m_is_application=false;
+    unsigned m_ideal_core_id=999;
+    bool fail_initialize=false;
+    bool initialized=false;
+    bool interfaces_initialized=false;
+    bool m_is_default_application_system_resource{},m_is_immortal{};
+    u64 m_process_id{};
+    KMemoryManager::Pool m_memory_pool=KMemoryManager::Pool::System;
+    KSystemResource* m_system_resource{};
+    KPageTable m_page_table;
+    GuestMemory m_memory;
+    KCapabilities m_capabilities;
     Svc::CreateProcessParameter captured{};
     std::vector<u32> captured_caps;
-    KMemoryManager::Pool captured_pool = KMemoryManager::Pool::System;
-    KProcessAddress captured_aslr_start = 0;
-    Result Initialize(KernelCore&, const Svc::CreateProcessParameter& params,
-                      std::span<const u32> caps, KResourceLimit* resource,
-                      KMemoryManager::Pool pool, KProcessAddress start) {
-        if (!resource) throw std::runtime_error("null kernel resource limit");
-        initialized = true;
-        captured = params;
-        captured_caps.assign(caps.begin(), caps.end());
-        captured_pool = pool;
-        captured_aslr_start = start;
-        return Result{fail_initialize ? 123 : 0};
+    KMemoryManager::Pool captured_pool=KMemoryManager::Pool::System;
+    KProcessAddress captured_aslr_start=0;
+    Result Initialize(KernelCore&,const Svc::CreateProcessParameter&,
+                      std::span<const u32>,KResourceLimit*,
+                      KMemoryManager::Pool,KProcessAddress);
+    Result Initialize(KernelCore&,const Svc::CreateProcessParameter& params,
+                      KResourceLimit* resource,bool) {
+        if(!resource)throw std::runtime_error("null kernel resource limit");
+        initialized=true;
+        captured=params;
+        captured_caps=m_capabilities.observed;
+        captured_pool=m_memory_pool;
+        captured_aslr_start=m_page_table.captured_start;
+        return Result{fail_initialize?123:0};
     }
-    void InitializeInterfaces(KernelCore&) { interfaces_initialized = true; }
-    Result LoadFromMetadata(KernelCore& kernel, const FileSys::ProgramMetadata& metadata,
-                            std::size_t code_size, KProcessAddress aslr_space_start,
-                            std::size_t aslr_space_offset);
+    void InitializeInterfaces(KernelCore&){interfaces_initialized=true;}
+    Result LoadFromMetadata(KernelCore&,const FileSys::ProgramMetadata&,
+                            std::size_t,KProcessAddress,std::size_t);
 };
 """
 

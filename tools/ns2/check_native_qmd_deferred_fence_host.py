@@ -100,7 +100,8 @@ __RELEASE__
     assert(data.stored == 8 && data.writes == 1 && !Eden::PeekGpuFailure());
     data.mapped = false;
     reduced();
-    assert(data.writes == 1 && !Eden::PeekGpuFailure());
+    assert(data.writes == 1 && Eden::PeekGpuFailure());
+    Eden::ResetGpuFailureForTitle();
     data.mapped = true;
     data.fail_map = true;
     reduced();
@@ -136,6 +137,11 @@ __RELEASE__
     data.fail_write = false;
     released();
     assert(data.writes == 3 && data.stored == 14);
+    Eden::ResetGpuFailureForTitle();
+    ticket = 0; // Revoked channel: never signal a stale guest completion.
+    reduced();
+    released();
+    assert(data.writes == 3 && data.stored == 14 && !Eden::PeekGpuFailure());
     std::puts("P4_2_NATIVE_DEFERRED_FENCE_FAULT_HOST_PASS");
 }
 """
@@ -168,4 +174,4 @@ with tempfile.TemporaryDirectory(prefix="eden-qmd-fence-fault-") as folder:
             assert ran.returncode == 0, (compiler, ran.stderr[-2700:])
             assert "P4_2_NATIVE_DEFERRED_FENCE_FAULT_HOST_PASS" in ran.stdout
             print("P4_2_NATIVE_DEFERRED_QMD_FENCE_PASS", Path(compiler).name,
-                  opt, "read/write/unmap=latched", flush=True)
+                  opt, "read/write/unmap=latched revoked_channel=no_completion", flush=True)

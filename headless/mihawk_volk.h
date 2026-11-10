@@ -4,5 +4,5 @@
 // RADV's actual vkGetInstanceProcAddr function with a volk global pointer.
 #define VK_NO_PROTOTYPES 1
 #define VOLK_NAMESPACE 1
-#include "../vendor/encore-active/PS5_MihawkGen/ps5/third_party/volk/volk.h"
+#include "../vendor/sources/ps5-mihawkgen/ps5/third_party/volk/volk.h"
 using namespace volk;

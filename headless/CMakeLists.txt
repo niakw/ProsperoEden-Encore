@@ -1779,7 +1779,7 @@ endif()
     if(PS5_NATIVE)
         set(launcher_dir "${EDEN_PORT_DIR}/prosperoeden")
         # Pinned BSD-licensed libwebp: background one-time encoding and decode.
-        set(EDEN_WEBP_ROOT "${PORT_ROOT}/vendor/encore-active/libwebp")
+        set(EDEN_WEBP_ROOT "${PORT_ROOT}/vendor/sources/libwebp")
         if(NOT EXISTS "${EDEN_WEBP_ROOT}/CMakeLists.txt")
             message(FATAL_ERROR "Pinned libwebp sources absent from sole vendor submodule")
         endif()

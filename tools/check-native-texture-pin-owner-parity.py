@@ -22,7 +22,7 @@ assert owner(astc, "ASTC") == owner(vulkan, "Vulkan"), (
 for name in ("Image& image, ImageView& view", "Sampler& sampler"):
     assert name in astc, f"GPU pin capability guard missing: {name}"
 for text in (astc, vulkan):
-    assert text.count("PinNativeGpu();") == 5
+    assert text.count("PinNativeGpu();") == 6
     assert "if constexpr (!(requires(Image& image, ImageView& view)" in text
     assert "if constexpr (!(requires(Sampler& sampler)" in text
 print("PS5_NATIVE_ASTC_VULKAN_PIN_PARITY_PASS")

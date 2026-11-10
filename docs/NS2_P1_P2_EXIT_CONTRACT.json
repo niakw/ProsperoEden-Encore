@@ -421,13 +421,14 @@
         "tools/ns2/check_native_gpu_channel_reuse_host.py",
         "tools/ns2/check_native_ampere_sem_gmmu_host.py",
         "tools/ns2/check_native_ampere_sem_linked_host.py",
-        "tools/ns2/check_native_compute_report_alias_host.py"
+        "tools/ns2/check_native_compute_report_alias_host.py",
+        "tools/ns2/check_native_ampere_sem_real_vulkan_host.py"
       ],
       "positive": "True semaphore acquire/resume and multi-channel ordering publish guest completion only after execution.",
       "negative": "Unknown SET_OBJECT, unbound subchannels, unsupported puller commands and unsatisfied waits never signal false completion.",
       "status": "open",
       "evidence": {},
-      "blocker": "Native SEM_EXECUTE park/replay and native Compute report semaphore backing checks have executed-owner host witnesses; linked QMD3 real Vulkan dispatch/fence completion, guest semaphore publication, and multi-channel GPFIFO ordering are still missing.",
+      "blocker": "Actual Ampere SEM_EXECUTE owner -> Vulkan vkCmdFillBuffer/submit/fence -> guest mapped word -> parked second-channel resume now has a linked host witness pending validation. QMD3 native shader vkCmdDispatch, authenticated GPU backend and actual guest GPFIFO queue retirement still lack one linked proof; do not close G10.",
       "excluded_forms": []
     }
   ]

@@ -92,6 +92,7 @@ TESTS = {
     "native_ampere_sem_execute": "tools/ns2/check_native_ampere_semaphore_host.py",
     "native_ampere_sem_gmmu_owner": "tools/ns2/check_native_ampere_sem_gmmu_host.py",
     "native_ampere_sem_linked": "tools/ns2/check_native_ampere_sem_linked_host.py",
+    "native_ampere_sem_real_vulkan": "tools/ns2/check_native_ampere_sem_real_vulkan_host.py",
     "native_compute_report_alias": "tools/ns2/check_native_compute_report_alias_host.py",
     "native_gpu_channel_reuse": "tools/ns2/check_native_gpu_channel_reuse_host.py",
     "native_invalid_bind": "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",

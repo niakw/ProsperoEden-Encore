@@ -1,0 +1,32 @@
+name: NS2 G10 real Vulkan semaphore host proof
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/ns2/check_native_ampere_sem_real_vulkan_host.py'
+      - 'vendor'
+      - '.github/workflows/ns2-g10-host-vulkan.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ns2-g10-real-vulkan-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  sem-retirement:
+    name: G10 actual Ampere owner to Vulkan fence to second channel
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install Vulkan 1.1 host ICD and headers
+        run: |
+          sudo apt-get -o Acquire::Retries=2 update -qq
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends libvulkan-dev mesa-vulkan-drivers
+      - name: Execute maintained native semaphore owner through a real Vulkan GPU fence
+        run: python3 -B tools/ns2/check_native_ampere_sem_real_vulkan_host.py

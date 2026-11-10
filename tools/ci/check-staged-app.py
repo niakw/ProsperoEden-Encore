@@ -10,7 +10,8 @@ app = Path(sys.argv[1] if len(sys.argv) > 1 else root / "build/release/PPSA99008
 assert app.name == "PPSA99008" and app.is_dir(), app
 
 base = {
-    "eboot.bin", "core-homebrew.nro", "sandbox-elevator.elf", "network-hosts.txt",
+    "eboot.bin", "core-homebrew.nro", "sandbox-elevator.elf", "self-updater.elf",
+    "encore-release.json", "mihawkgen/network.fgw", "network-hosts.txt",
     "sce_module/libc.prx", "sce_sys/param.json", "sce_sys/icon0.png", "sce_sys/icon0.dds",
     "sce_sys/pic0.dds", "sce_sys/pic1.dds", "sce_sys/snd0.at9",
 }

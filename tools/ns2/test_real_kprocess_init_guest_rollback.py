@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""N47: execute unchanged maintained KProcess::LoadFromMetadata against public
-NPDM/NSO-derived attributes with controlled host kernel/resource fakes.
-NOT actual process allocation, page-table creation, scheduler or PS5 boot.
+"""H01: execute actual maintained KProcess::LoadFromMetadata -> Initialize
+on public NPDM/NSO attributes, with page-table map/rollback failure injection.
+Guest page backing and kernel scheduler are host-controlled fakes, NOT P5 boot.
 """
 from __future__ import annotations
 import argparse
@@ -19,6 +19,10 @@ OWNERS = (
 )
 START = "Result KProcess::LoadFromMetadata("
 STOP = "\nvoid KProcess::LoadModule("
+INIT_START = ("Result KProcess::Initialize(KernelCore& kernel, "
+              "const Svc::CreateProcessParameter& params,\n"
+              "                            std::span<const u32> user_caps")
+INIT_STOP = "\nvoid KProcess::DoWorkerTaskImpl("
 
 PREFIX = r"""
 #include <algorithm>
@@ -48,7 +52,11 @@ enum class CreateProcessFlag : u32 {
     AddressSpace64Bit = 1U << 2,
     AddressSpace64BitDeprecated = 1U << 3,
     AddressSpace32Bit = 1U << 4,
-    AddressSpace32BitWithoutAlias = 1U << 5
+    AddressSpace32BitWithoutAlias = 1U << 5,
+    AddressSpaceMask = 0x3c,
+    EnableAslr = 1U << 6,
+    DisableDeviceAddressSpaceMerge = 1U << 7,
+    OptimizeMemoryAllocation = 1U << 8
 };
 constexpr CreateProcessFlag operator|(CreateProcessFlag a, CreateProcessFlag b) {
     return static_cast<CreateProcessFlag>(static_cast<u32>(a) | static_cast<u32>(b));
@@ -56,6 +64,10 @@ constexpr CreateProcessFlag operator|(CreateProcessFlag a, CreateProcessFlag b) 
 inline CreateProcessFlag& operator|=(CreateProcessFlag& a, CreateProcessFlag b) {
     return a = a | b;
 }
+constexpr CreateProcessFlag operator&(CreateProcessFlag a, CreateProcessFlag b) {
+    return static_cast<CreateProcessFlag>(static_cast<u32>(a) & static_cast<u32>(b));
+}
+enum class LimitableResource {PhysicalMemoryMax};
 inline constexpr u32 InvalidHandle = 0xFFFFFFFFU;
 struct CreateProcessParameter {
     std::array<u8, 12> name{};
@@ -108,30 +120,72 @@ template<class F> HostScopeExit<F> operator+(HostScopeMaker, F fn) {
 #define R_UNLESS(condition, result) do { if (!(condition)) return (result); } while (false)
 #define R_TRY(expression) do { auto ns2_result_ = (expression); \
     if (ns2_result_.IsError()) return ns2_result_; } while (false)
-#define R_SUCCEED() return Result{}
+#define R_SUCCEED() do { Kernel::h01_init_succeeded=true; return Result{}; } while(false)
 
 namespace Kernel {
+inline bool h01_init_succeeded=false;
 inline constexpr Result ResultOutOfResource{21};
+inline constexpr Result ResultLimitReached{22};
+inline constexpr Result ResultInvalidMemoryRegion{23};
+enum class KMemoryState {Code};
+enum class KMemoryPermission : u32 {KernelRead=1,NotMapped=2};
+constexpr KMemoryPermission operator|(KMemoryPermission a,KMemoryPermission b) {
+    return static_cast<KMemoryPermission>(static_cast<u32>(a)|static_cast<u32>(b));
+}
+constexpr bool True(Svc::CreateProcessFlag v){return static_cast<u32>(v)!=0;}
+constexpr bool False(Svc::CreateProcessFlag v){return !True(v);}
 using KProcessAddress = u64;
 inline constexpr std::size_t PageSize = 0x1000;
 inline u64 GetInteger(KProcessAddress p) { return p; }
 struct KMemoryManager {
     enum class Pool : int { Application=0, System=1 };
 };
-struct DummySystem { bool fail_resource_limit = false; };
+struct DummySystem {
+    bool fail_resource_limit=false;
+    int GetGPUDirtyMemoryManager()const{return 0;}
+};
 struct FakeMemoryManager {
     unsigned calls = 0;
+    bool fail_optimized{};
+    Result InitializeOptimizedMemory(u64,KMemoryManager::Pool) {
+        return fail_optimized ? Result{77}:Result{};
+    }
     std::size_t GetSize(KMemoryManager::Pool pool) {
         ++calls;
         return pool == KMemoryManager::Pool::Application
              ? std::size_t{0x10000000} : std::size_t{0x8000000};
     }
 };
+struct KernelCore;
+struct KSystemResource {
+    bool secure{};
+    unsigned opens{},closes{};
+    void Open(KernelCore&){++opens;}
+    void Close(KernelCore&){++closes;}
+    bool IsSecureResource()const{return secure;}
+};
 struct KernelCore {
     DummySystem sys;
     FakeMemoryManager memory_manager;
-    DummySystem& System() { return sys; }
-    FakeMemoryManager& MemoryManager() { return memory_manager; }
+    KSystemResource app{},sysres{};
+    bool fail_reservation{};
+    u64 next_pid{200};
+    DummySystem& System(){return sys;}
+    FakeMemoryManager& MemoryManager(){return memory_manager;}
+    KSystemResource& GetAppSystemResource(){return app;}
+    KSystemResource& GetSystemSystemResource(){return sysres;}
+    u64 CreateNewUserProcessID(){return next_pid++;}
+};
+struct KResourceLimit;
+struct KSecureSystemResource:KSystemResource {
+    KSecureSystemResource(){secure=true;}
+    static KSecureSystemResource* Create(KernelCore&) {
+        static KSecureSystemResource singleton;
+        return &singleton;
+    }
+    Result Initialize(KernelCore&,std::size_t,KResourceLimit*,KMemoryManager::Pool){
+        return Result{};
+    }
 };
 struct KResourceLimit {
     inline static unsigned created = 0;

@@ -9,7 +9,7 @@ namespace Eden::FeatureLab {
 // No guessed guest depth or motion vectors. Same Vulkan device as renderer.
 class Fsr3OpticalSession final {
 public:
-    Fsr3OpticalSession() = default;
+    Fsr3OpticalSession();
     ~Fsr3OpticalSession();
     Fsr3OpticalSession(const Fsr3OpticalSession&) = delete;
     Fsr3OpticalSession& operator=(const Fsr3OpticalSession&) = delete;

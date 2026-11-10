@@ -19,6 +19,7 @@ SCRIPT=ROOT/'headless/ns2_cpu6_source_bridge.cmake'
 BASE=ROOT/'vendor/sources/eden/src'
 CPU6=ROOT/'vendor/encore-active/ns2-runtime/cpu6'
 G11=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
+G11_A32=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 FILES=('hle/kernel/global_scheduler_context.cpp',
        'arm/dynarmic/arm_dynarmic_32.cpp',
@@ -28,6 +29,8 @@ research=CMAKE.split('# Unified NS2 six-core kernel owner',1)[1].split('# Shared
 assert 'set_property(TARGET core PROPERTY SOURCES "${eden_cpu6_core_sources}")' in research
 assert 'EDEN_CPU6_OUTPUT_ROOT' in research
 assert 'EDEN_N76_NATIVE_JIT_SOURCE' in research
+assert 'arm_dynarmic_32_${EDEN_G11_PLATFORM}_${EDEN_G11_PROFILE}.cpp' in research
+assert 'list(FIND eden_cpu6_core_sources "${eden_cpu6_selected_source}" eden_cpu6_owner_idx)' in research
 assert 'CPU6 must retain selected N76/G11 JIT source' in research
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in research
 assert 'EDEN_NS2_CPU6_EXPERIMENTAL' not in CMAKE
@@ -88,8 +91,9 @@ def main()->None:
             assert 'Core::Hardware::NUM_LEGACY_CPU_CORES' in src
             assert src.count('const u64 extended_cores =')==1
             assert src.count('amortized_ticks = ticks /')==1
-            old=(G11 if name.endswith('arm_dynarmic_64.cpp')
-                 else BASE/'core'/name).read_text()
+            old=(G11 if name.endswith('arm_dynarmic_64.cpp') else
+                 G11_A32 if name.endswith('arm_dynarmic_32.cpp') else
+                 BASE/'core'/name).read_text()
             assert old.count('ticks / Core::Hardware::NUM_CPU_CORES')==1
         assert '#ifdef EDEN_NS2_GUEST_COUNTER' in (
             out/'core/arm/dynarmic/arm_dynarmic_64.cpp').read_text()
@@ -97,7 +101,7 @@ def main()->None:
             out/'core/arm/dynarmic/arm_dynarmic_64.cpp').read_text()
         print('P0_2_CPU6_STATIC_SCHEDULER_TICK_OWNERS_PASS 3 owners',flush=True)
         # Audited full sources, NOT CMake-generated C++: prove exact byte parity
-        # against the pinned Eden scheduler/A32 and optimized N76/G11 A64.
+        # against pinned Eden scheduler and BOTH maintained native G11 A32/A64.
         old_scheduler="""    static constexpr std::array<u32, Core::Hardware::NUM_CPU_CORES> per_core{
         59,
         59,
@@ -114,7 +118,7 @@ def main()->None:
     const u64 extended_cores = m_process->GetPhysicalCoreMask() & ((u64{1} << 4) | (u64{1} << 5));
     u64 amortized_ticks = ticks / (extended_cores ? Core::Hardware::NUM_CPU_CORES
                                                      : Core::Hardware::NUM_LEGACY_CPU_CORES);"""
-        origins=(BASE/'core'/FILES[0],BASE/'core'/FILES[1],G11)
+        origins=(BASE/'core'/FILES[0],G11_A32,G11)
         originals=[src.read_text() for src in origins]
         for index, (name, original) in enumerate(zip(FILES, originals)):
             old, replacement=(old_scheduler,new_scheduler) if index==0 else (old_ticks,new_ticks)
@@ -151,12 +155,16 @@ def main()->None:
                 fake.write_text('int cpu6_stub=1;\n')
             cmake_text='cmake_minimum_required(VERSION 3.20)\nproject(cpu6_selector LANGUAGES CXX)\nset(PORT_ROOT "@ROOT@")\nset(PORT_BUILD_DIR "@OUT@")\nset(PS5_NATIVE @ENABLED@)\nset(EDEN_REVIEWED_DUAL_NPDM @DUAL@)\nadd_library(core STATIC dummy.cpp\n    hle/kernel/global_scheduler_context.cpp\n    arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)\nadd_library(dynarmic STATIC dummy.cpp)\nadd_library(eden-headless STATIC dummy.cpp)\n'
             cmake_text=cmake_text.replace(
-                'arm/dynarmic/arm_dynarmic_64.cpp)',
-                '"${EDEN_N76_NATIVE_JIT_SOURCE}")')
+                'arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)',
+                '"${EDEN_G11_A32_SELECTED}"\n    "${EDEN_N76_NATIVE_JIT_SOURCE}")')
             cmake_text=cmake_text.replace(
                 'add_library(core STATIC dummy.cpp',
                 'set(EDEN_SHARED_NS2_GUEST_COUNTER ON)\n'
                 f'set(EDEN_N76_NATIVE_JIT_SOURCE "{G11}")\n'
+                f'set(EDEN_G11_A32_SELECTED "{G11_A32}")\n'
+                f'set(EDEN_G11_ROOT "{G11_A32.parent}")\n'
+                'set(EDEN_G11_PLATFORM native)\n'
+                'set(EDEN_G11_PROFILE normal)\n'
                 'add_library(core STATIC dummy.cpp')
             cmake_text=cmake_text.replace('@ROOT@',ROOT.as_posix()).replace(
                 '@OUT@',(prj/'generated').as_posix()).replace(

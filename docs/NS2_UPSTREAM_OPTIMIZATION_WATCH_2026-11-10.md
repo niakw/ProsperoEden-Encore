@@ -188,7 +188,7 @@ equivalence**; it is not an actual Vulkan/PS5 dispatch.
 
 Created [`research/ns2/native_vk_range_contract.hpp`](../research/ns2/native_vk_range_contract.hpp)
 and [`test_native_vk_range_contract.cpp`](../research/ns2/test_native_vk_range_contract.cpp).
-**30/30 positive and negative tests on each Clang 17 and GCC 14 with UBSan.**
+**33/33 positive and negative tests on each Clang 17 and GCC 14 with UBSan.**
 The two-stage policy checks, before expensive GMMU staging, guest 49-bit
 range, current QMD3 256 MiB policy, actual supplied Vulkan uniform/storage
 range limits, and the QMD3 64 KiB uniform cap. After `ObtainBuffer`, it
@@ -204,7 +204,27 @@ On adoption, stage all resources only after complete preflight and
 retain every current QMD3/GMMU/snapshot/write/fence barrier. No vendor
 or `main` changes have been made.
 
-**Updated local runner:** 19 + 23 + 30 + 30 = **102 distinct research
-assertions per compiler, 204 across Clang/GCC**, plus a separate
+**Updated local runner:** 19 + 23 + 30 + 33 = **105 distinct research
+assertions per compiler, 210 across Clang/GCC**, plus a separate
 24-case source-expression reproduction per compiler. See
 [local test receipt](../research/ns2/LOCAL_TEST_RECEIPT_2026-11-10.md).
+
+### O11 priority correction — the packaged PS5 renderer uses RADV
+
+Source-verified on the current Encore main:
+[`tools/build-package.sh`](https://github.com/niakw/ProsperoEden-Encore/blob/main/tools/build-package.sh)
+explicitly exports `EDEN_PS5_VULKAN=ON EDEN_VULKAN_DRIVER=RADV`.
+The pinned maintained [RADV physical device](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ps5-mesa/src/amd/vulkan/radv_physical_device.c)
+advertises `maxStorageBufferRange=UINT32_MAX` and
+`maxUniformBufferRange=UINT32_MAX`. Meanwhile the *different* source
+[PS5VK physical device](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/sources/ps5-vulkan-tools/driver/ps5vk_physical_device.c)
+has `maxStorageBufferRange=128 MiB` and `maxUniformBufferRange=16 KiB`.
+PS5VK **is not the selected main-package driver**. A hypothetical 128 MiB
+driver/storage conflict does **not** substantiate an issue on today's
+packaged Encore RADV path; de-prioritize O11 to preventive robustness,
+not confirmed correctness/performance regression.
+
+The 33-case range contract now checks both source-advertised profiles.
+Even so, the PS5 runtime's effective reported limits have not been
+queried on-console, and an actual `ConfigureNative`+RADV test has not
+been executed. The original QMD3 256 MiB GMMU admission cap remains.

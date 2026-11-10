@@ -11,8 +11,8 @@
 #include <stdexcept>
 
 int main() {
-    constexpr std::array<std::uint64_t, 7> sample_counts{
-        0, 1, 2, 16, 128, 8192, 65536
+    constexpr std::array<std::uint64_t, 8> sample_counts{
+        0, 1, 2, 16, 128, 8192, 65536, Eden::kMaxSilentAudioInSamples
     };
     for (const auto count : sample_counts) {
         const auto samples = Eden::MakeSilentAudioInSamples(count);
@@ -39,4 +39,11 @@ int main() {
         rejected = true;
     }
     assert(rejected && "oversize sample request must be rejected before allocating");
+    rejected = false;
+    try {
+        (void)Eden::MakeSilentAudioInSamples(Eden::kMaxSilentAudioInSamples + 1);
+    } catch (const std::length_error&) {
+        rejected = true;
+    }
+    assert(rejected && "untrusted AudioIn requests must be bounded to 2 MiB");
 }

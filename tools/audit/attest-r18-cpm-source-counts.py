@@ -88,7 +88,11 @@ def self_test() -> None:
             "excluded_unfetched_cpm_pins": [],
         }))
         assert checked(root)["source_tree_count"] == 22
-        (folder / "part00/source.cpp").write_text("tampered")
+        # A same-size edit is intentionally NOT caught by size/count receipts.
+        # This witness must never claim cryptographic archive identity.
+        (folder / "part00/source.cpp").write_bytes(b"XXXXXXXX")
+        assert checked(root)["source_tree_count"] == 22
+        (folder / "part00/source.cpp").write_text("tampered-with-different-length")
         try:
             checked(root)
         except ValueError:

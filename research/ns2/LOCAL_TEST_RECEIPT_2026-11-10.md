@@ -232,7 +232,7 @@ No native PS5 code, Vulkan allocator, scheduler, source pin or build changed.
 ## Update — ninth suite: Lichii Fermi2D 3D volume-slice admission
 
 Added [`test_volume_slice_admission.cpp`](test_volume_slice_admission.cpp),
-**7,036 characters, FNV-1a 32-bit `1454960507`**, matching the exact
+**7,046 characters, FNV-1a 32-bit `1403218692`**, matching the exact
 locally compiled file. Source behavior reviewed from the upstream
 `TextureCache::CopyVolumeSlice` owner at Lichii nx2
 `879b616b1b377bfd085bf20f440b895cf4b83ab8`; actual engine
@@ -267,3 +267,37 @@ and prior R2/R3 separate O0/O2 results remain recorded above.
 
 The pinned vendor source extractor still reports `SKIP`, no
 PS5 native build/CI tests executed, and no production files changed.
+
+### R4 verified owner/ABI cross-check
+
+The R4 test fixture now uses the **pinned real Fermi2D operation/filter
+integer codes**, `SrcCopy=3`, `Blend=2`, `ROP=4`, `Point=0`,
+`Bilinear=1`, rather than invented test-only enum ordinals. Source
+owners and pinned Git blob IDs were independently verified:
+
+- Lichii `src/video_core/texture_cache/texture_cache.h` at
+  `879b616b1b377bfd085bf20f440b895cf4b83ab8`:
+  `b497d4f1b08ccc4067613a4f769d857735d5bc61`.
+- Encore active `encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h`:
+  `f0c685c1be128ec161ebd53f2ab507badff88bc1`.
+- Encore `encore-active/eden-vulkan/vk_texture_cache_cost.cpp`:
+  `97c11bebf775b2139f87f3a8d22e4d06446df14e`.
+- Encore `sources/eden/src/video_core/engines/fermi_2d.h`:
+  `7fddf9fdc19e3d1735bccab3bc8385756216cfee`.
+- Encore `sources/eden/src/video_core/engines/fermi_2d.cpp`:
+  `aeff5e156f8c331f5ec7c929aa1fdadd2eb5dc8a`.
+
+Direct owner inspection confirms `CopyVolumeSlice` is not yet
+integrated, while `TextureCacheRuntime::CopyImage`, cached image
+lookup and `FlushDeferredClear` are already present. The native
+source-copy acceptance guards still need real-owner integration.
+After updating the enum values, the nine-suite `-O1` runner was
+re-executed and **all nine suites passed under Clang and GCC**,
+including the updated R4 50-case suite. The exact GitHub R4 source
+is **7,046 characters, FNV-1a 1403218692**.
+
+**Matrix qualification:** the R4 suite separately passed all
+six compiler × optimization (`-O0`, `-O1`, `-O2`) combinations
+with ASan/UBSan before and after the enum adjustment at `-O1`.
+The full 54-binary matrix still has a timeout at GCC -O0
+GOB16, so its completeness is not claimed.

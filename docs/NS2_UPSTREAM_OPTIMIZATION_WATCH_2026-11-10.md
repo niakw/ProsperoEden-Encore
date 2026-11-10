@@ -305,3 +305,26 @@ New O1 priority order: **1)** verify actual read/remap serialization;
 owner tests; **3)** capture authentic NVN QMD3 four-word descriptor
 semantics; **4)** only then consider an NS2-only read-only length
 policy or resource performance optimization.
+
+#### Remap lock ownership — source trace
+
+The matching native address-space writer
+[`nvhost_as_gpu::UnmapNative4K`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/22b69d6053db41b74edac2633c012f925b84f69e/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp)
+does hold its device-local `mutex` and calls `FreeMappingLocked`.
+However the native shader reader calls
+`Tegra::MemoryManager::IsFullyMappedRange` then `ReadBlock` without
+an exposed hold on that **same** address-space mutex. The shared
+`MemoryManager::PageTableOp` mutates page entries with global
+revision increments before and after the change, but the read
+callback does not consume a validated revision/snapshot.
+The compute dispatch's `NativeGpuChannelRegistry` ticket is a process
+identity check, not itself a documented guest page-table read lease.
+
+**Reachability remains unproven:** there may be higher-level GPU worker
+serialization not visible in these local functions. Before marking
+this a confirmed runtime race, trace caller threading and all paths
+to `gpu_memory->Map/Unmap`, including sparse updates, and run a
+real-owner forced interleave against the installed code with no PS5
+release build. The host fixture currently proves a vulnerable
+**return-value contract if concurrency is possible**, not an
+observed graphics regression.

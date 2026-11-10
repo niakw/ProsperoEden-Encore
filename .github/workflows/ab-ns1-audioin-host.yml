@@ -7,6 +7,7 @@ on:
       - "headless/audio_in_silence.h"
       - "headless/main.cpp"
       - "tests/ab_ns1_audioin_silence_host.cpp"
+      - "tools/audit/check-ab-ns1-audioin-timeline-host.py"
       - ".github/workflows/ab-ns1-audioin-host.yml"
   workflow_dispatch:
 
@@ -48,3 +49,11 @@ jobs:
           /tmp/ab-ns1-audioin-host
           echo "A_B_NS1_AUDIOIN_HOST_SILENCE_PASS" >> "$GITHUB_STEP_SUMMARY"
           echo "No PS5 compiler, native ELF, or guest memory write is tested." >> "$GITHUB_STEP_SUMMARY"
+          
+      - name: Compile and run extracted real SilentAudioInputStream host timeline under sanitizers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/audit/check-ab-ns1-audioin-timeline-host.py
+          echo "Extracted native AudioIn class: ASan/UBSan, timed advancement, Stop, resume, Finalize PASS." >> "$GITHUB_STEP_SUMMARY"
+          echo "This is not a real guest DeviceSession / PS5 runtime verification." >> "$GITHUB_STEP_SUMMARY"

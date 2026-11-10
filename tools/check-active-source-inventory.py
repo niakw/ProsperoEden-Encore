@@ -653,6 +653,29 @@ assert "std::lock_guard lock(reservation_lock);" in h05_source
 print("ENCORE_POST_F07_H05_SYNCPOINT_OWNER_PASS", "owners=2",
       "source_only=1 historical_F07_unchanged=1")
 
+# H01 adds a native-only filesystem-controller ABI override after the
+# frozen F07 inventory. Keep it distinct from pristine sources/eden and
+# verify its real executable owner, not a retroactive shipping claim.
+post_f07_h01_fs_owners = {
+    "eden-core/overrides/h01-filesystem/core/hle/service/filesystem/filesystem.h",
+}
+assert post_f07_h01_fs_owners <= set(physical_all), (
+    "Missing H01 native filesystem rollback header",
+    sorted(post_f07_h01_fs_owners - set(physical_all)))
+assert not post_f07_h01_fs_owners.intersection(research_paths)
+h01_header = (active / next(iter(post_f07_h01_fs_owners))).read_text()
+h01_source = (
+    active / "eden-core/src/core/hle/service/filesystem/filesystem.cpp"
+).read_text()
+h01_process = (
+    active / "ns2-runtime/process/core/hle/service/os/process.cpp"
+).read_text()
+assert "void UnregisterProcessIfPresent(ProcessId process_id);" in h01_header
+assert "void FileSystemController::UnregisterProcessIfPresent(" in h01_source
+assert "UnregisterProcessIfPresent(" in h01_process
+print("ENCORE_POST_F07_H01_FS_ROLLBACK_OWNER_PASS", "owners=1",
+      "historical_F07_unchanged=1")
+
 physical = [p for p in physical_all
             if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -666,7 +689,8 @@ physical = [p for p in physical_all
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
-             post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners]
+             post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
+             post_f07_h01_fs_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

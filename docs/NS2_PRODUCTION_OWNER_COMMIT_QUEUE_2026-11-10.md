@@ -1,5 +1,19 @@
 # NS2 production-owner commit queue — implementation and qualification
 
+## Latest verified host CI — 11 November 2026
+
+| Candidate | New real-source proof | Integration remaining |
+| --- | --- | --- |
+| **R2** | [Vendor CI #42924901299](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42924901299) **PASS**: exact bounded-upload header, **110 checks × 6 Clang/GCC O0/O1/O2 ASan/UBSan = 660 checks**; rejects shared VkDeviceMemory aliases even with distinct VMA allocation IDs | **4+ production-owner source files**, then real Vulkan/PS5 and NS1 tests |
+| **R3** | [Encore CI #42925529798](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42925529798) **PASS**: pinned exact R3 code vendor gitlink on *research branch only*, 7/7 CMake owner gates. [Vendor CI #42926795620](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42926795620) **PASS**: complete real old/new decoder C++ translation units linked against real public API, **1280 full textures + 96 subrectangles per run**, Clang/GCC O1/O2 and ASan/UBSan, identical digest `7430280414279798289` | **0 CMake source files**; full engine/console compile and NS1/PS5 benchmarks still open |
+| **R4** | [Vendor PR #36](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/36) retains guarded source-owner implementation, but only previous 50-case policy-model tests | **0 new known integration files**; actual maintained-source compile, image-copy readback, NS1/PS5 tests open |
+
+**COUNT: 3/3 research tracks have real source commits; 3/3 still await runtime/console qualification; 4+ R2 production source files remain to be wired.** R2/R3 host CI no longer counted as pending. Do not count the R3 minimal-header host compiler check as a full PS5 or NS1 console validation.
+
+**Important pin distinction:** on branch `research/ns2-r3-gob16-cmake-selection-20261110` only, the `vendor` gitlink is deliberately pinned to R3 *code-bearing* commit `7389c327`; newer vendor PR #37 commits only add targeted tests/workflow. **Encore `main` vendor remains `90c9c8a2`.** No main/release/native-build changes. All vendor PRs #36/#37/#38 remain drafts.
+
+---
+
 ## LIVE CHECKPOINT — R3 wired in isolated Encore branch; R2 exact header compiled
 
 | Item | Implementation / proof | Unclosed owner files |

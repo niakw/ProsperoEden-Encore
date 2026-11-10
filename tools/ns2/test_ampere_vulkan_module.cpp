@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -163,27 +164,84 @@ static void VerifyRealHostCas(VkDevice device,VkPhysicalDevice gpu,
             // address 0x100000 (low/high), followed by 64-byte SSBO extent.
             values[64]=0x100000U;values[65]=0;values[66]=64U;
         }
-        VkCommandBufferBeginInfo begin{};
-        begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        Require(vkBeginCommandBuffer(command,&begin)==VK_SUCCESS,"CAS begin");
-        vkCmdBindPipeline(command,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
-        vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_COMPUTE,
-                                layout,0,1,&set,0,nullptr);
-        vkCmdDispatch(command,1,1,1);
-        VkMemoryBarrier barrier{};
-        barrier.sType=VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-        barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT;
-        barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
-        vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                             VK_PIPELINE_STAGE_HOST_BIT,0,1,&barrier,0,nullptr,0,nullptr);
-        Require(vkEndCommandBuffer(command)==VK_SUCCESS,"CAS end");
-        VkSubmitInfo submit{};
-        submit.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submit.commandBufferCount=1;submit.pCommandBuffers=&command;
-        Require(vkQueueSubmit(queue,1,&submit,fence)==VK_SUCCESS,"CAS submit");
+        // This is an actual QMD3 PCAS transaction, rather than a free-
+        // standing vkCmdDispatch. Its real maintained scheduler admits the
+        // generated Ampere CAS shader into the Vulkan host queue, then
+        // registers one deferred guest semaphore for actual VkFence retire.
+        Tegra::NativeQmdScheduler qmd_scheduler;
+        Tegra::NativeQmdScheduler::Descriptor qmd{};
+        qmd[12]=1;qmd[13]=1;qmd[14]=1; // one real native Compute CTA
+        qmd[18]=0x30U | (1U<<16);
+        qmd[19]=1U | (1U<<16);
+        qmd[24]=0x4000;
+        qmd[25]=(1U<<23) | (1U<<30);
+        qmd[26]=(original==7U?19U:29U);
+        const uint32_t expected_release=qmd[26];
+        uint32_t guest_semaphore{};
+        unsigned accepted_dispatches{};
+        std::vector<std::function<void()>> on_vk_fence;
+        bool permit_dispatch{};
+        const auto read_qmd=[&](uint64_t address,
+                                Tegra::NativeQmdScheduler::Descriptor& out) {
+            if(address!=0x2000)return false;
+            out=qmd;
+            return true;
+        };
+        const auto release_guest=[&](uint64_t address,uint32_t value,uint32_t flags) {
+            if(address!=0x4000 || !accepted_dispatches ||
+               !(flags&(1U<<23)))return false;
+            on_vk_fence.emplace_back([&,value] {guest_semaphore=value;});
+            return true;
+        };
+        const auto dispatch_qmd=[&](const Tegra::NativeQmdScheduler::Descriptor& desc) {
+            if(!permit_dispatch)return false;
+            Require(desc[18]==qmd[18] && desc[12]==1,"QMD3 dispatch identity");
+    VkCommandBufferBeginInfo begin{};
+            begin.sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            begin.flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            Require(vkBeginCommandBuffer(command,&begin)==VK_SUCCESS,"CAS begin");
+            vkCmdBindPipeline(command,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
+            vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_COMPUTE,
+                                    layout,0,1,&set,0,nullptr);
+            vkCmdDispatch(command,1,1,1);
+            VkMemoryBarrier barrier{};
+            barrier.sType=VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT;
+            barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
+            vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                 VK_PIPELINE_STAGE_HOST_BIT,0,1,&barrier,0,nullptr,0,nullptr);
+            Require(vkEndCommandBuffer(command)==VK_SUCCESS,"CAS end");
+            VkSubmitInfo submit{};
+            submit.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submit.commandBufferCount=1;submit.pCommandBuffers=&command;
+            Require(vkQueueSubmit(queue,1,&submit,fence)==VK_SUCCESS,"CAS submit");
+            ++accepted_dispatches;
+            return true;
+        };
+        Require(!qmd_scheduler.Signal(0x2000,6,read_qmd,release_guest,dispatch_qmd).empty(),
+                "unsupported PCAS action must fail closed");
+        Require(!qmd_scheduler.Signal(0x2000,3,read_qmd,release_guest,dispatch_qmd).empty(),
+                "refused QMD3 compute must not publish a guest release");
+        Require(accepted_dispatches==0 && guest_semaphore==0 &&
+                on_vk_fence.empty(),"rejected shader fabricated completion");
+        permit_dispatch=true;
+        Require(qmd_scheduler.Signal(0x2000,2,read_qmd,release_guest,dispatch_qmd).empty(),
+                "QMD3 scheduler rejected real Vulkan compute");
+        Require(accepted_dispatches==1 && guest_semaphore==0 &&
+                on_vk_fence.size()==1,"QMD3 published before GPU fence");
+        Require(qmd_scheduler.Signal(0x2000,2,read_qmd,release_guest,dispatch_qmd).empty(),
+                "duplicate PCAS action must be idempotent");
+        Require(accepted_dispatches==1 && on_vk_fence.size()==1,
+                "duplicate QMD3 PCAS re-submitted shader or fence");
         Require(vkWaitForFences(device,1,&fence,VK_TRUE,10000000000ULL)==VK_SUCCESS,
-                "CAS GPU completion fence");
+                "QMD3 authentic Vulkan dispatch completion fence");
+        Require(guest_semaphore==0,"GPU execution did not retire guest release late");
+        for(auto& callback:on_vk_fence)callback();
+        Require(guest_semaphore==expected_release,
+                "QMD3 GPU release not published after real Vulkan fence");
+        std::puts("G10_QMD3_SCHEDULER_REAL_VULKAN_DISPATCH_AND_FENCE_PASS"
+                  " unknown_pcas=no_release denied_dispatch=no_release"
+                  " duplicate_pcas=single_submission guest_after_vk_fence=1");
         Require(values[1]==(original==7U?9U:6U),"CAS final SSBO word differs");
         Require(values[2]==original,"CAS returned old SSBO value differs");
         for(uint32_t other=0;other<16;++other)

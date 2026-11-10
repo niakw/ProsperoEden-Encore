@@ -1,0 +1,16 @@
+name: NS2 QMD3 real Vulkan PR owner qualification
+
+on:
+  pull_request:
+    paths:
+      - 'tools/ns2/test_ampere_vulkan_module.cpp'
+      - '.github/workflows/ns2-g10-qmd-vulkan-pr.yml'
+
+permissions:
+  contents: read
+
+# PR-scoped executed-owner proof. The mandatory standalone SPIR-V sign-off
+# remains independently required on the final main SHA.
+jobs:
+  validate-real-qmd-vulkan:
+    uses: ./.github/workflows/ns2-research-spirv.yml

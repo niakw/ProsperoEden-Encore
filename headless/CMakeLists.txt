@@ -1706,9 +1706,10 @@ if(EDEN_SHARED_NS2_GUEST_COUNTER)
     if(NOT n76_legacy_owner_idx EQUAL -1)
         message(FATAL_ERROR "N76 must not compile the unqualified legacy A64 owner")
     endif()
-    # The selector is harmless for NS1: the combined ExeFS loader calls
-    # SelectProgram(metadata.IsSwitch2()) on every normal game load, restoring
-    # 19.2 MHz after an NS2 session; G11 retains the optimized native owner.
+    # Switch 1 selects 19.2 MHz at its original ExeFS handoff, while NS2
+    # selects 31.25 MHz only AFTER the full patched-NSO bounds preflight.
+    # This keeps malformed NS2 titles from changing the next title's clock;
+    # G11 retains the optimized native owner.
     # The dedicated host selector guard verifies the opt-in G11 source bytes.
     # The GPU report-timestamp owner must see the SAME metadata-selected
     # guest generation as the A64/JIT and loader. No global NS2 GPU mode

@@ -20,7 +20,12 @@ assert 'foreach(n76_target IN ITEMS core common eden-headless video_core)' in cm
 assert 'EDEN_NS2_GUEST_COUNTER=1' in cmake
 npdm=(ROOT/'vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp').read_text()
 main=(ROOT/'headless/main.cpp').read_text()
-assert 'SelectProgram(metadata.IsSwitch2(), Common::g_cpu_caps.tsc_frequency)' in npdm
+# H01 moves native guest-clock activation AFTER every patched NSO0
+# preflight succeeds. The legacy Switch 1 selection remains before it.
+assert 'Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency)' in npdm
+assert 'Eden::GuestCounter::SelectProgram(true, Common::g_cpu_caps.tsc_frequency)' in npdm
+assert npdm.index('Eden::GuestCounter::SelectProgram(true,') > npdm.index(
+    'PreflightNso(header, module_file->GetSize()).Ready()')
 assert 'SelectProgram(false, Common::g_cpu_caps.tsc_frequency)' in main
 assert 'EDEN_NS2_GUEST_COUNTER' not in (ROOT/'vendor/sources/eden/src/video_core/gpu.cpp').read_text()
 

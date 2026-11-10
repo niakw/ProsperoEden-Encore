@@ -38,7 +38,9 @@ current=once(current,
             // Do not let a second Run() on the empty failed instance report
             // legacy success. A fresh Initialize() clears this terminal bit.
             m_process_started = true;''',
-    '''            m_process_started = true;
+    '''            // KProcess may already have allocated/rolled back resources; never
+            // start it twice without Finalize and a fresh loader handoff.
+            m_process_started = true;
             Eden::NS2::SvcTrace::Unregister(m_process->GetProcessId());''')
 # H01 has three additional native-only guards in Process::Initialize /
 # Finalize. Unwind them IN REVERSE without touching any other owner byte.

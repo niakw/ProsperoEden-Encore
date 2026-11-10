@@ -93,7 +93,7 @@ static void TestVariant(std::string_view native,bool original) {
     // frontier does NOT apply to this smaller learned token shape.
     struct BatchWork {std::uint32_t expand{},contract{},projection{},qkv{};};
     std::array<BatchWork,17u> measured{};
-    std::array<std::uint32_t,4u> frontier{};
+    std::array<std::uint32_t,5u> frontier{};
     std::uint32_t count{};
     for(std::uint32_t scratch=4u;scratch<=16u;++scratch){
         const std::uint64_t bytes=std::uint64_t(scratch)*plane;
@@ -142,13 +142,14 @@ static void TestVariant(std::string_view native,bool original) {
                      <<" qkv="<<work.qkv<<"\n";
         }
     }
-    constexpr std::array<std::uint32_t,4u> expected{4u,6u,8u,12u};
+    constexpr std::array<std::uint32_t,5u> expected{4u,6u,8u,12u,16u};
     assert(frontier==expected);
     assert(count==expected.size());
     assert(measured[4u].expand==4u&&measured[4u].qkv==3u);
     assert(measured[6u].expand==3u&&measured[6u].qkv==2u);
     assert(measured[8u].expand==2u&&measured[8u].qkv==2u);
     assert(measured[12u].expand==2u&&measured[12u].qkv==1u);
+    assert(measured[16u].expand==1u&&measured[16u].qkv==1u);
     std::cout<<"R09_MIN_720P_PARETO_ALL_FOUR_VERIFIED\n";
     assert(!candidate.ready_to_enable_720p);
 }

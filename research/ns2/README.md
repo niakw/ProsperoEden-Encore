@@ -91,3 +91,35 @@ then runs the exact-source native validator **only when** the pinned vendor
 checkout is present. Otherwise it reports `SKIP` and never pretends the source
 test passed. The source witness also checks the six-pass native mapping call
 graph and native descriptor-size predicate. There is no native PS5 build.
+
+## O10 — versioned mapping memo research (not a deployable renderer fix)
+
+The [lease-scoped GMMU memo fixture](test_epoch_guarded_gmmu_memo.cpp)
+covers 22 assertions per compiler, tested locally with Clang 17 / GCC 14
+under UBSan. All passed. The memo keys each positive result to the
+**owner identity, process generation, mapping revision, GPU base and byte
+length**, and a typed `ReadLease` holds a `shared_mutex` while the caller
+checks/reuses the entry. Writer mutations acquire exclusive ownership and
+increment the revision. A mapping hole, rebind, process reuse, overflow
+or mapping change is rejected or causes a new full scan.
+
+Under this **synthetic shared-lease assumption only**, six identical
+32 MiB checks require 8,193 GPU→CPU translation callbacks rather than
+49,158: an **83.3% reduction in lookups**, not a measured PS5 speedup.
+
+**Do not port this memo into Encore yet.** The pinned production
+`MemoryManager::GpuToCpuAddress` reads page entries without such a
+public `ReadLease`, and native `ConfigureNative` does not acquire a mapping
+revision/lease that extends through its descriptor and dispatch phases.
+A global mapping revision is incremented around mutations, but merely
+reading that revision without a real writer-exclusion protocol does NOT
+prove a stable mapping (especially during overlapping writes). Holding
+a new lock across scheduler waits or Vulkan recording could deadlock or
+stall remaps. Preserve every current preflight, post-staging and commit
+verification until actual ownership is redesigned and tested.
+
+Current bounded runner now tests **64 standalone assertions per compiler**
+(19 SSBO, 23 backing lifecycle, 22 lease/memo). The **24-case**
+separate source-expression harness remains a previously reproduced local
+test; it is not added to the standalone runner because it requires
+a pinned vendor source checkout for trustworthy extraction.

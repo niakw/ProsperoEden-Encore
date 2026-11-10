@@ -89,5 +89,17 @@ int main() {
     check(CheckNativeVkResolved(r, limits) == VkRangeStatus::Ok);
     r.request.bytes = 65537;
     check(CheckNativeVkResolved(r, limits) == VkRangeStatus::DriverRangeExceeded);
+    // Source-advertised limits, NOT a runtime GPU property query:
+    // maintained RADV reports UINT32_MAX, alternate PS5VK reports 128 MiB.
+    VkRangeLimits radv_source{std::numeric_limits<std::uint32_t>::max(),
+                              std::numeric_limits<std::uint32_t>::max(), 256, 256};
+    VkRangeLimits ps5vk_source{16384, 128ULL * 1024 * 1024, 256, 256};
+    VkRangeRequest max_native{VkBindingKind::Storage, 0x400000,
+                              kNativeQmdMaxContiguousBytes};
+    check(CheckNativeVkRange(max_native, radv_source) == VkRangeStatus::Ok);
+    check(CheckNativeVkRange(max_native, ps5vk_source) == VkRangeStatus::DriverRangeExceeded);
+    check(CheckNativeVkRange({VkBindingKind::Uniform, 0x400000, 65536}, ps5vk_source)
+          == VkRangeStatus::DriverRangeExceeded);
+
     std::cout << "PASS: " << n << " native Vulkan range contracts\n";
 }

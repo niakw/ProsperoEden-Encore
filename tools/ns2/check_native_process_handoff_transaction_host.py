@@ -25,6 +25,10 @@ assert "out_load_result = Loader::ResultStatus::ErrorNotInitialized;" in method
 assert "out_load_result = Loader::ResultStatus::ErrorUnableToParseKernelMetadata;" in method
 assert "SCOPE_EXIT {" in method
 assert "SvcTrace::Unregister(pid);" in method
+rollback = method.split("if (!process_committed) {", 1)[1].split(
+    "SvcTrace::Unregister(pid);", 1)[0]
+assert "m_system.GetFileSystemController().UnregisterProcessIfPresent(pid);" in rollback
+assert "if (Eden::NS2::SvcTrace::active_pid.load" not in rollback
 assert "m_system.GetFileSystemController().UnregisterProcessIfPresent(pid);" in method
 assert method.index("SvcTrace::Unregister(pid);") < method.index("m_process->Open(")
 assert "process_committed = true;" in method
@@ -86,9 +90,15 @@ struct SvcTrace {
 namespace Core {
 struct FakeFilesystem {
     unsigned unregister_calls{};
+    std::optional<std::uint64_t> registered_pid{};
+    void RegisterProcess(std::uint64_t pid) {
+        assert(pid==81 && !registered_pid);
+        registered_pid=pid;
+    }
     void UnregisterProcessIfPresent(std::uint64_t pid){
         assert(pid==81);
         ++unregister_calls;
+        if (registered_pid==pid) registered_pid.reset();
     }
 };
 struct System {
@@ -109,10 +119,12 @@ struct LoadParameters {
 struct AppLoader {
     ResultStatus status{};
     std::optional<LoadParameters> parameters{};
-    bool trace_register{}, throw_after_trace{};
+    bool trace_register{}, throw_after_trace{}, register_romfs{};
     std::pair<ResultStatus, std::optional<LoadParameters>>
-    Load(Kernel::KProcess& p, Core::System&) {
+    Load(Kernel::KProcess& p, Core::System& system) {
         assert(p.owner);
+        // The real ExeFS loader installs RomFS before trace publication.
+        if(register_romfs) system.filesystem.RegisterProcess(p.GetProcessId());
         if(trace_register) Eden::NS2::SvcTrace::Register(p.GetProcessId());
         if(throw_after_trace)throw std::bad_alloc{};
         return {status, parameters};
@@ -183,6 +195,39 @@ int main() {
         dispose(k);
     }
     {
+        // Negative H01: RomFS registered, no SVC trace yet. Even a malformed
+        // ExeFS load must drop its process-owned filesystem registration.
+        Kernel::KernelCore k;
+        Core::System system{k,{}};
+        Service::Process process{system};
+        Loader::AppLoader loader{Loader::ResultStatus::ErrorLoadingNSO,
+                                 std::nullopt,false,false,true};
+        auto result=Loader::ResultStatus::Success;
+        assert(!process.Initialize(loader,result));
+        assert(result==Loader::ResultStatus::ErrorLoadingNSO &&
+               !system.filesystem.registered_pid &&
+               system.filesystem.unregister_calls==1 &&
+               Eden::NS2::SvcTrace::active_pid==0);
+        assert(k.registers==1 && k.closes==1 && k.appends==0 && k.opens==0);
+        dispose(k);
+    }
+    {
+        // A Success code without NPDM parameters must take the same path.
+        Kernel::KernelCore k;
+        Core::System system{k,{}};
+        Service::Process process{system};
+        Loader::AppLoader loader{Loader::ResultStatus::Success,
+                                 std::nullopt,false,false,true};
+        auto result=Loader::ResultStatus::Success;
+        assert(!process.Initialize(loader,result));
+        assert(result==Loader::ResultStatus::ErrorUnableToParseKernelMetadata &&
+               !system.filesystem.registered_pid &&
+               system.filesystem.unregister_calls==1 &&
+               Eden::NS2::SvcTrace::active_pid==0);
+        assert(k.registers==1 && k.closes==1 && k.appends==0 && k.opens==0);
+        dispose(k);
+    }
+    {
         Kernel::KernelCore k; k.fail_append=true;
         Core::System system{k,{}};
         Service::Process process{system};
@@ -235,4 +280,5 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-process-owner-") as temp:
             print("H01_PROCESS_OWNER_HANDOFF_PASS", Path(compiler).name, opt,
                   "null_allocation=refused absent_npdm=refused"
                   " malformed_load=refused trace_rollback=1 append_oom_rollback=1"
-                  " valid_process=published ns1_macro_isolated=1", flush=True)
+                  " valid_process=published romfs_pretrace_rollback=1"
+                  " ns1_macro_isolated=1", flush=True)

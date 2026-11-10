@@ -80,6 +80,12 @@ jobs:
             python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
             libboost-container-dev libssl-dev libzstd-dev
           bash tools/ci/link-sibling-deps.sh
+          # The ninth-run cache stores the original pinned RADV archive in
+          # .deps, but build/radv-isolated and build/stubs are not cache paths.
+          # Materialize those native CMake link inputs without compiling Mesa.
+          test -s ../mihawk-vulkan-review/.deps/native/radv-release/lib/libvulkan_radeon.ps5.a
+          python3 -B tools/isolate-radv.py
+          bash tools/build-agc-driver-stub.sh
           mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
           test "${#graphs[@]}" -eq 1
           graph="${graphs[0]}"

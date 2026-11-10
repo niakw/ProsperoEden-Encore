@@ -67,13 +67,19 @@ def main() -> int:
     parser.add_argument("native_build_dir", type=Path)
     parser.add_argument("--allow-stale", action="store_true",
                         help="Local audit only: override cached source paths; never use for release CI")
+    parser.add_argument("--only", action="append",
+                        choices=(*TARGETS, *MAINTAINED_CORE_TARGETS,
+                                 *GENERATED_TARGETS, *PINNED_CACHE_TARGETS),
+                        help="Compile just this real PS5 translation unit (repeatable)")
     args = parser.parse_args()
     db = args.native_build_dir.resolve() / "compile_commands.json"
     if not db.is_file():
         parser.error(f"native CMake compile database missing: {db}")
     records = json.loads(db.read_text())
     failures = []
-    for relative in (*TARGETS, *MAINTAINED_CORE_TARGETS, *GENERATED_TARGETS, *PINNED_CACHE_TARGETS):
+    selected = tuple(args.only) if args.only else (
+        *TARGETS, *MAINTAINED_CORE_TARGETS, *GENERATED_TARGETS, *PINNED_CACHE_TARGETS)
+    for relative in selected:
         source_root = (args.native_build_dir.resolve() if relative in GENERATED_TARGETS else
                        args.native_build_dir.resolve().parent / "source/src"
                        if relative in PINNED_CACHE_TARGETS else ROOT)
@@ -131,8 +137,7 @@ def main() -> int:
     if failures:
         print("\n".join(failures), file=sys.stderr, flush=True)
         return 1
-    count = len(TARGETS) + len(MAINTAINED_CORE_TARGETS) + len(GENERATED_TARGETS) + len(PINNED_CACHE_TARGETS)
-    print(f"PS5 native syntax preflight PASS ({count} translation units; no app build)")
+    print(f"PS5 native syntax preflight PASS ({len(selected)} translation units; no app build)")
     return 0
 
 if __name__ == "__main__":

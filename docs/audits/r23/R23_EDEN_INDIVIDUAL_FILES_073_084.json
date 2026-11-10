@@ -1,0 +1,1782 @@
+{
+  "schema": "R23-Eden-individual-commit-file-receipts-v1",
+  "batch": [
+    73,
+    84
+  ],
+  "basis": "GitHub commit endpoints individually; file presence does not establish semantic or compiled parity",
+  "count": 12,
+  "ok": 12,
+  "errors": 0,
+  "capped": 1,
+  "rows": [
+    {
+      "index": 73,
+      "sha": "6b3cb5772b6e4875f088e5b48e089a3b3fda7f0d",
+      "title": "[docs] revise AI policy (#4522)",
+      "date": "2026-10-13T21:54:51Z",
+      "status": "file-list-retrieved",
+      "file_count": 5,
+      "files": [
+        {
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "patch_present": true
+        },
+        {
+          "path": "AGENTS.md",
+          "patch_present": true
+        },
+        {
+          "path": "CLAUDE.md",
+          "patch_present": true
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "patch_present": true
+        },
+        {
+          "path": "docs/policies/AI.md",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 74,
+      "sha": "218c6705d950635bc18f8458d738a1996fb592b6",
+      "title": "[hle] constexpr handler dispatch maps, introduce version gating (#4480)",
+      "date": "2026-10-13T02:38:36Z",
+      "status": "possible-api-file-cap",
+      "file_count": 300,
+      "files": [
+        {
+          "path": "docs/DesignOverview.md",
+          "patch_present": true
+        },
+        {
+          "path": "docs/README.md",
+          "patch_present": true
+        },
+        {
+          "path": "docs/SubsystemHLE.md",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/CMakeLists.txt",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/acc/acc.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/acc/acc.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/acc/async_context.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/acc/async_context.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/am.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/all_system_applet_proxies_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/all_system_applet_proxies_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/applet_common_functions.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/applet_common_functions.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_accessor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_accessor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_creator.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_creator.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_functions.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_functions.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/application_proxy_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/audio_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/audio_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/common_state_getter.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/common_state_getter.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/cradle_firmware_updater.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/cradle_firmware_updater.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/debug_functions.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/debug_functions.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/display_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/display_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/global_state_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/global_state_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/home_menu_functions.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/home_menu_functions.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_accessor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_accessor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_creator.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_creator.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_proxy.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_proxy.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_self_accessor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/library_applet_self_accessor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/lock_accessor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/lock_accessor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/overlay_applet_proxy.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/overlay_applet_proxy.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/overlay_functions.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/overlay_functions.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/process_winding_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/process_winding_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/self_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/self_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage_accessor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/storage_accessor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/system_applet_proxy.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/system_applet_proxy.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/window_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/am/service/window_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/aoc/addon_content_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/aoc/addon_content_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/aoc/purchase_event_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/aoc/purchase_event_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/apm/apm_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/apm/apm_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_controller.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_controller.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_device.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_device.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_in_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_out.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_out.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_out_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_out_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_renderer.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_renderer.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_renderer_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/audio_renderer_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/final_output_recorder_manager_for_applet.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/audio/hardware_opus_decoder_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/bcat_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/bcat_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_directory_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_directory_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_file_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_file_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_progress_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_progress_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_storage_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/delivery_cache_storage_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/newly_arrived_event_holder.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/newly_arrived_event_holder.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_data_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_data_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_database_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_database_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/news_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/overwrite_event_holder.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/overwrite_event_holder.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/service_creator.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/news/service_creator.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/service_creator.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bcat/service_creator.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/bpc/bpc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btdrv/btdrv.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_debug.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_debug.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_system.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_system.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_system_core.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_system_core.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_user.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_user.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_user_core.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/btm/btm_user_core.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_a.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_a.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_c.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_c.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_sc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_sc.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_ss.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_ss.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_su.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_su.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_u.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/caps/caps_u.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/erpt/erpt.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/es/es.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/eupld/eupld.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_p.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_p.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_u.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/fatal/fatal_u.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/fgm/fgm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_directory.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_directory.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_file.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_file.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_filesystem.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_filesystem.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fs_i_storage.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_ldr.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_ldr.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_pr.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_pr.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_srv.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/filesystem/fsp/fsp_srv.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/friend/friend.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/friend/friend_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/friend/friend_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/arp.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/arp.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/bgtc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/bgtc.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/ectx.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/ectx.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/notif.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/notif.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/time/static.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/time/static.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/time/time_zone.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/glue/time/time_zone.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/gpio/gpio.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/grc/grc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/active_vibration_device_list.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/active_vibration_device_list.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/applet_resource.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/applet_resource.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_debug_server.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_debug_server.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_server.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_server.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_system_server.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hid_system_server.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hidbus.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/hidbus.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/irs.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/irs.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/xcd.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/hid/xcd.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/i2c/i2c.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/jit/jit.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/lbl/lbl.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/ldn.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/monitor_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/monitor_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_monitor_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_monitor_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service_monitor.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/sf_service_monitor.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/system_local_communication_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/system_local_communication_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/user_local_communication_service.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldn/user_local_communication_service.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ldr/ldr.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/lm/lm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/mig/mig.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/mii/mii.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/mii/mii.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/mm/mm_u.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/mnpp/mnpp.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ncm/ncm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nfc/nfc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nfp/nfp.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ngc/ngc.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nifm/nifm.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nifm/nifm.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/nim/nim.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/npns/npns.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/account_proxy_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/account_proxy_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_manager_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_version_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/application_version_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/async_result.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/async_result.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/content_management_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/content_management_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/develop_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/develop_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/document_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/document_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/download_task_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/download_task_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/dynamic_rights_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/dynamic_rights_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/ecommerce_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/ecommerce_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/factory_reset_interface.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/factory_reset_interface.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ns/ns.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/platform_service_manager.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/platform_service_manager.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/query_service.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/query_service.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_control_data_interface.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_record_interface.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/read_only_application_record_interface.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/service_getter_interface.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/service_getter_interface.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/system_update_control.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/system_update_control.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/system_update_interface.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/ns/system_update_interface.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/nvdrv.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/nvdrv_interface.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/nvdrv_interface.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/nvmemp.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvdrv/nvmemp.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvnflinger/hos_binder_driver.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/nvnflinger/hos_binder_driver.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/daemon_controller.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/daemon_controller.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/native_handle_holder.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/native_handle_holder.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/olsc.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/olsc_service_for_application.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/olsc_service_for_application.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/olsc_service_for_system_service.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/olsc_service_for_system_service.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/remote_storage_controller.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/remote_storage_controller.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/transfer_task_list_controller.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/olsc/transfer_task_list_controller.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/omm/operation_mode_manager.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/omm/operation_mode_manager.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/omm/policy_manager_system.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/omm/policy_manager_system.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/omm/power_state_interface.cpp",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/omm/power_state_interface.h",
+          "patch_present": false
+        },
+        {
+          "path": "src/core/hle/service/pcie/pcie.cpp",
+          "patch_present": false
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 75,
+      "sha": "4dc69c06f764a235bccd01afbfc765d9ddbebc9f",
+      "title": "[*] Remove Fix{Static,Small}VectorADL workaround for GCC 12 (#4386)",
+      "date": "2026-10-12T20:21:17Z",
+      "status": "file-list-retrieved",
+      "file_count": 7,
+      "files": [
+        {
+          "path": "src/audio_core/in/audio_in_system.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/buffer_cache/buffer_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/memory_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_buffer_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/texture_cache/texture_cache.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/texture_cache/util.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 76,
+      "sha": "9580e54f2f4787986abde4c7601177d0c5cd2792",
+      "title": "[dist, android] Update translations from Transifex for Oct 12 (#4527)",
+      "date": "2026-10-12T17:23:00Z",
+      "status": "file-list-retrieved",
+      "file_count": 29,
+      "files": [
+        {
+          "path": "dist/languages/ar.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": false
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 77,
+      "sha": "6352612425ae0765802eaa8c5904ff652b97222a",
+      "title": "[vk] Return the corrections made for buffer update logic #3690 (#4499)",
+      "date": "2026-10-11T23:09:10Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/renderer_vulkan/vk_query_cache.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 78,
+      "sha": "fecc1b4ee32bc06f736f2d138680ec948cf13ab1",
+      "title": "revert [vulkan] Masquerade VkInfo as PUBGMobile + UE #4320 (#4520)",
+      "date": "2026-10-11T10:08:33Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/video_core/vulkan_common/vulkan_wrapper.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 79,
+      "sha": "c746982201a60958193f0678fff1f39417aaaf1e",
+      "title": "[*] fix clangarm64 compilation (#4521)",
+      "date": "2026-10-11T03:11:01Z",
+      "status": "file-list-retrieved",
+      "file_count": 4,
+      "files": [
+        {
+          "path": "src/core/hle/service/bcat/backend/backend.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/hid_core/resources/npad/npad_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/helpers/joycon_protocol/joycon_types.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/input_common/helpers/joycon_protocol/poller.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 80,
+      "sha": "67bada77f8a43a90da2e94e89b8e7da73c256989",
+      "title": "[video_core] Skip fragment shaders with known issues on non-NVIDIA drivers (#4503)",
+      "date": "2026-10-08T21:11:34Z",
+      "status": "file-list-retrieved",
+      "file_count": 7,
+      "files": [
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/frontend/maxwell/translate_program.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/passes.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/rescaling_pass.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 81,
+      "sha": "3cdd2ce141224079ce1dc8bfb4be7edc113aca02",
+      "title": "[android, renderer_vulkan] Сhange default settings (#4509)",
+      "date": "2026-10-08T17:02:48Z",
+      "status": "file-list-retrieved",
+      "file_count": 14,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-es/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ru/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-uk/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rCN/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/renderer_vulkan.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_present_manager.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/renderer_vulkan/vk_present_manager.h",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 82,
+      "sha": "10bcd2d849843b146a79c61a21df615e1bdcfcde",
+      "title": "[settings] add PR4490 & PR4492 toggles (#4502)",
+      "date": "2026-10-05T20:37:30Z",
+      "status": "file-list-retrieved",
+      "file_count": 8,
+      "files": [
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/ui/SettingsFragmentPresenter.kt",
+          "patch_present": true
+        },
+        {
+          "path": "src/android/app/src/main/res/values/strings.xml",
+          "patch_present": true
+        },
+        {
+          "path": "src/common/settings.h",
+          "patch_present": true
+        },
+        {
+          "path": "src/core/hle/service/ro/ro.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/qt_common/config/shared_translation.cpp",
+          "patch_present": true
+        },
+        {
+          "path": "src/video_core/gpu.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 83,
+      "sha": "48aeedd3b3c915b89aecfbda23c2462c0ed5746f",
+      "title": "[dist, android] Update translations from Transifex for Oct 05 (#4507)",
+      "date": "2026-10-05T19:18:09Z",
+      "status": "file-list-retrieved",
+      "file_count": 29,
+      "files": [
+        {
+          "path": "dist/languages/ar.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/ca.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/cs.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/da.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/de.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/el.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/es.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/fi.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/fr.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/hu.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/id.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/it.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/ja_JP.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/ko_KR.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/nb.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/nl.ts",
+          "patch_present": true
+        },
+        {
+          "path": "dist/languages/pl.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_BR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/pt_PT.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/ru_RU.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/sv.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/tr_TR.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/uk.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/vi_VN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_CN.ts",
+          "patch_present": false
+        },
+        {
+          "path": "dist/languages/zh_TW.ts",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-ar/strings.xml",
+          "patch_present": false
+        },
+        {
+          "path": "src/android/app/src/main/res/values-zh-rTW/strings.xml",
+          "patch_present": false
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    },
+    {
+      "index": 84,
+      "sha": "d16735f5b618942136d6ab53466e3be0a382c30a",
+      "title": "[am] Properly handle None frontend applet (#4500)",
+      "date": "2026-10-02T00:24:58Z",
+      "status": "file-list-retrieved",
+      "file_count": 1,
+      "files": [
+        {
+          "path": "src/core/hle/service/am/frontend/applets.cpp",
+          "patch_present": true
+        }
+      ],
+      "semantic_parity": "unverified",
+      "native_owner": "unverified"
+    }
+  ]
+}

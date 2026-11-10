@@ -33,6 +33,10 @@ adapt('src/video_core/renderer_vulkan/vk_rasterizer.h',
      "#endif\n\nnamespace Engines {"),
 ])
 adapt('src/video_core/renderer_vulkan/vk_rasterizer.cpp', 'vulkan_rasterizer.cpp', [
+    # R23/AB-11: exact pinned original viewport Y-flip correction from Eden
+    # 035f4611. Keep the rest of the PS5 rasterizer's reviewed transforms.
+    ("    if (lower_left) {\n        // Flip by surface clip height\n        y += conv(static_cast<f32>(regs.surface_clip.height));\n        height = -height;\n    }",
+     "    if (lower_left) {\n        // Flip by surface clip height\n        const float clip_height = conv(static_cast<f32>(regs.surface_clip.height));\n        if (src.scale_y < 0.0f && y >= clip_height) {\n            y = clip_height - y;\n        } else {\n            y += clip_height;\n        }\n        height = -height;\n    }"),
     # DMA extent width contract: avoid u32 wrap before buffer-cache lookup.
     ("    const u32 buffer_size = static_cast<u32>(buffer_operand.pitch * buffer_operand.height);", "    // Widen before multiplying, then respect the u32 buffer-cache span.\n    const u64 buffer_size_wide = static_cast<u64>(buffer_operand.pitch) * buffer_operand.height;\n    if (buffer_size_wide > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    const u32 buffer_size = static_cast<u32>(buffer_size_wide);"),
     # CPU page registration proof for buffer-only guest readbacks.

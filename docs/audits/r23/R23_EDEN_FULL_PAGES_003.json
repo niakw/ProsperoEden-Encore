@@ -1,0 +1,2192 @@
+{
+  "schema": "R23-paginated-upstream-commit-exact-file-list-v1",
+  "index": 3,
+  "sha": "d3ee883e538b0152c6be5dceb0e53b2d1172beb0",
+  "coverage": "all-pages-per_page-100",
+  "file_count": 309,
+  "unique_paths": 309,
+  "pages": [
+    {
+      "page": 1,
+      "count": 100
+    },
+    {
+      "page": 2,
+      "count": 100
+    },
+    {
+      "page": 3,
+      "count": 100
+    },
+    {
+      "page": 4,
+      "count": 9
+    }
+  ],
+  "files": [
+    {
+      "path": "CMakeLists.txt",
+      "change": "modified",
+      "add": 0,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "cpmfile.json",
+      "change": "modified",
+      "add": 0,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "docs/Deps.md",
+      "change": "modified",
+      "add": 14,
+      "del": 15,
+      "patch_present": true
+    },
+    {
+      "path": "shell.nix",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/android/app/src/main/jni/native.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/android/app/src/main/jni/native_config.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/android/app/src/main/jni/native_input.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/adsp/apps/audio_renderer/audio_renderer.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/adsp/apps/audio_renderer/command_list_processor.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/common/common.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/device/device_session.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/data_source/adpcm.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/data_source/pcm_float.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/data_source/pcm_int16.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/aux_.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/biquad_filter.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/capture.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/compressor.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/delay.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/i3dl2_reverb.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/light_limiter.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/multi_tap_biquad_filter.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/effect/reverb.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/clear_mix.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/copy_mix.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/depop_for_mix_buffers.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/depop_prepare.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/mix.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/mix_ramp.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/mix_ramp_grouped.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/volume.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/mix/volume_ramp.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/performance/performance.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/resample/downmix_6ch_to_2ch.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/resample/upsample.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/sink/circular_buffer.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/command/sink/device.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/renderer/effect/light_limiter.h",
+      "change": "modified",
+      "add": 3,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/audio_core/sink/sink_stream.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/CMakeLists.txt",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/bit_field.h",
+      "change": "modified",
+      "add": 11,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/common_funcs.h",
+      "change": "modified",
+      "add": 0,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/dynamic_library.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/fs/file.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/fs/fs.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/fs/ryujinx_compat.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/fs/symlink.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/hex_util.h",
+      "change": "modified",
+      "add": 9,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/logging.cpp",
+      "change": "modified",
+      "add": 32,
+      "del": 31,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/logging.h",
+      "change": "modified",
+      "add": 8,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/net/net.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/ring_buffer.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/settings.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/settings_setting.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/time_zone.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/typed_address.h",
+      "change": "modified",
+      "add": 10,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/uuid.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/common/uuid.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/CMakeLists.txt",
+      "change": "modified",
+      "add": 0,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/arm/arm_interface.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/arm/debug.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/arm/dynarmic/dynarmic_cp15.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/core.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/crypto/aes_util.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/crypto/key_manager.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/crypto/key_manager.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/debugger/debugger.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/debugger/gdbstub.cpp",
+      "change": "modified",
+      "add": 29,
+      "del": 18,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/debugger/gdbstub_arch.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/bis_factory.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/card_image.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fs_save_data_types.h",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fs_types.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_aes_ctr_counter_extended_storage.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_bucket_tree.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_bucket_tree.h",
+      "change": "modified",
+      "add": 6,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_bucket_tree_template_impl.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_compressed_storage.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_hierarchical_integrity_verification_storage.h",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_indirect_storage.h",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_integrity_verification_storage.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_nca_file_system_driver.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/fssystem/fssystem_nca_header.h",
+      "change": "modified",
+      "add": 14,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/ips_layer.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/patch_manager.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/registered_cache.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 17,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/savedata_factory.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/sdmc_factory.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/submission_package.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/system_archive/ng_word.cpp",
+      "change": "modified",
+      "add": 8,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/file_sys/xts_archive.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/frontend/applets/error.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/api_version.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/kernel/k_page_table_base.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/kernel/svc.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/kernel/svc/svc_exception.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/result.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/acc/acc.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/acc/profile_manager.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/frontend/applet_error.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/frontend/applet_general.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/frontend/applet_general.h",
+      "change": "modified",
+      "add": 2,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/am/frontend/applet_web_browser.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_device.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/audio/audio_renderer_manager.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/bcat/bcat_types.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_manager.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/caps/caps_types.h",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/fatal/fatal.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/filesystem/filesystem.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/glue/time/time_zone_binary.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/ldn/ldn_types.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/lm/lm.cpp",
+      "change": "modified",
+      "add": 8,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nfc/common/device.cpp",
+      "change": "modified",
+      "add": 24,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/devices/nvhost_ctrl.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/nvdrv/nvdrv.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/ovln/sender.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/common.h",
+      "change": "modified",
+      "add": 24,
+      "del": 24,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/psc/time/shared_memory.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/server_manager.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/service.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/set/settings_types.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/hle/service/sockets/bsd.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/launch_params.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/memory/dmnt_cheat_vm.cpp",
+      "change": "modified",
+      "add": 83,
+      "del": 83,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/memory/dmnt_cheat_vm.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/core/perf_stats.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dedicated_room/yuzu_room.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/CMakeLists.txt",
+      "change": "modified",
+      "add": 1,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/CMakeLists.txt",
+      "change": "modified",
+      "add": 13,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_data_processing.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/arm64/verbose_debugging_output.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/exception_handler_macos.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 11,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/exception_handler_posix.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32_coprocessor.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32_memory.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a64.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a64_memory.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_cryptography.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_data_processing.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_floating_point.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_packed.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_saturation.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_vector.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_vector_floating_point.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_vector_saturation.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/a32_emit_x64.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/a32_emit_x64_memory.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/a64_emit_x64.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/a64_emit_x64_memory.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/block_of_code.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/devirtualize.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.cpp.inc",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/perf_map.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/reg_alloc.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/backend/x64/verbose_debugging_output.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/common/fp/op/FPToFixed.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/common/llvm_disassemble.cpp",
+      "change": "modified",
+      "add": 8,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A32/a32_location_descriptor.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A32/a32_location_descriptor.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A32/a32_types.h",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_location_descriptor.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_location_descriptor.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_types.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/frontend/A64/a64_types.h",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/ir/basic_block.cpp",
+      "change": "modified",
+      "add": 43,
+      "del": 43,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/ir/location_descriptor.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/ir/location_descriptor.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/ir/opcodes.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/src/dynarmic/ir/type.h",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/A32/fuzz_arm.cpp",
+      "change": "modified",
+      "add": 33,
+      "del": 33,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/A64/a64.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/A64/fuzz_with_unicorn.cpp",
+      "change": "modified",
+      "add": 39,
+      "del": 39,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/A64/testenv.h",
+      "change": "modified",
+      "add": 3,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/CMakeLists.txt",
+      "change": "modified",
+      "add": 4,
+      "del": 8,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/fuzz_util.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/print_info.cpp",
+      "change": "modified",
+      "add": 47,
+      "del": 47,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/rsqrt_test.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/test_generator.cpp",
+      "change": "modified",
+      "add": 43,
+      "del": 43,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/test_reader.cpp",
+      "change": "modified",
+      "add": 58,
+      "del": 58,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/unicorn_emu/a32_unicorn.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/dynarmic/tests/unicorn_emu/a64_unicorn.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/frontend_common/config.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/frontend_common/content_manager.h",
+      "change": "modified",
+      "add": 4,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/frontend_common/data_manager.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/frontend_common/mod_manager.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/frontend_common/play_time_manager.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/hid_core/frontend/emulated_devices.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/hid_core/hid_types.h",
+      "change": "modified",
+      "add": 3,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/hid_core/irsensor/irs_types.h",
+      "change": "modified",
+      "add": 3,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/android.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/camera.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/gc_adapter.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/joycon.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/mouse.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/sdl_driver.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/tas_input.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/udp_client.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/drivers/virtual_amiibo.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/input_common/helpers/joycon_protocol/nfc.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/network/room.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/game_list/game_list_p.h",
+      "change": "modified",
+      "add": 2,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/game_list/worker.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/qt_common.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/util/content.cpp",
+      "change": "modified",
+      "add": 18,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/util/game.cpp",
+      "change": "modified",
+      "add": 21,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/util/path.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/qt_common/util/vk.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/CMakeLists.txt",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm.cpp",
+      "change": "modified",
+      "add": 17,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_composite.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_image.cpp",
+      "change": "modified",
+      "add": 16,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
+      "change": "modified",
+      "add": 13,
+      "del": 9,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/emit_glasm_warp.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/glasm_emit_context.h",
+      "change": "modified",
+      "add": 9,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/reg_alloc.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glasm/reg_alloc.h",
+      "change": "modified",
+      "add": 19,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
+      "change": "modified",
+      "add": 11,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp",
+      "change": "modified",
+      "add": 26,
+      "del": 22,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_image.cpp",
+      "change": "modified",
+      "add": 31,
+      "del": 27,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_integer.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_memory.cpp",
+      "change": "modified",
+      "add": 9,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_shared_memory.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_special.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/emit_glsl_warp.cpp",
+      "change": "modified",
+      "add": 29,
+      "del": 28,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/glsl_emit_context.cpp",
+      "change": "modified",
+      "add": 46,
+      "del": 45,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/glsl_emit_context.h",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/glsl/var_alloc.cpp",
+      "change": "modified",
+      "add": 10,
+      "del": 10,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+      "change": "modified",
+      "add": 15,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/exception.h",
+      "change": "modified",
+      "add": 6,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/attribute.h",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/basic_block.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/condition.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/condition.h",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/flow_test.h",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/opcodes.h",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/patch.h",
+      "change": "modified",
+      "add": 3,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/pred.h",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/program.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/reg.h",
+      "change": "modified",
+      "add": 7,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/ir/type.h",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/control_flow.cpp",
+      "change": "modified",
+      "add": 22,
+      "del": 22,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/location.h",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/opcodes.h",
+      "change": "modified",
+      "add": 6,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/structured_control_flow.cpp",
+      "change": "modified",
+      "add": 19,
+      "del": 19,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/frontend/maxwell/translate/impl/integer_floating_point_conversion.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/shader_recompiler/stage.h",
+      "change": "modified",
+      "add": 3,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/engines/nv01_timer.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/engines/puller.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/gpu_logging/gpu_logging.cpp",
+      "change": "modified",
+      "add": 30,
+      "del": 30,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/gpu_logging/gpu_state_capture.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/host1x/codec_types.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/host1x/ffmpeg.cpp",
+      "change": "modified",
+      "add": 15,
+      "del": 13,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/host1x/nvdec_common.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/host1x/vic.h",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/macro.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/post_processing/fx_chain.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/query_cache/types.h",
+      "change": "modified",
+      "add": 3,
+      "del": 0,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_opengl/gl_buffer_cache.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_opengl/gl_shader_cache.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_opengl/gl_texture_cache.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_opengl/present/filters.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_opengl/present/util.h",
+      "change": "modified",
+      "add": 5,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/pipeline_statistics.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/present/window_adapt_pass.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/renderer_vulkan.cpp",
+      "change": "modified",
+      "add": 16,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_buffer_cache.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_compute_pipeline.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_graphics_pipeline.cpp",
+      "change": "modified",
+      "add": 3,
+      "del": 3,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
+      "change": "modified",
+      "add": 5,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_scheduler.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/renderer_vulkan/vk_staging_buffer_pool.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/shader_environment.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/texture_cache/formatter.cpp",
+      "change": "modified",
+      "add": 20,
+      "del": 20,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/texture_cache/formatter.h",
+      "change": "modified",
+      "add": 6,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/texture_cache/image_info.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/vulkan_common/nsight_aftermath_tracker.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/video_core/vulkan_common/vulkan_device.cpp",
+      "change": "modified",
+      "add": 12,
+      "del": 12,
+      "patch_present": true
+    },
+    {
+      "path": "src/web_service/announce_room_json.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/web_service/verify_user_jwt.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/web_service/verify_user_jwt.h",
+      "change": "modified",
+      "add": 4,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/web_service/web_backend.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/about_dialog.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/applets/qt_profile_select.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/configure_per_game.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/configure_per_game_addons.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/configure_profile_manager.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/configure_ringcon.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/input_profiles.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/shared_widget.cpp",
+      "change": "modified",
+      "add": 4,
+      "del": 4,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/configuration/system/new_user_dialog.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/deps_dialog.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/main_window.cpp",
+      "change": "modified",
+      "add": 37,
+      "del": 37,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/startup_checks.cpp",
+      "change": "modified",
+      "add": 14,
+      "del": 14,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/updater/update_dialog.cpp",
+      "change": "modified",
+      "add": 2,
+      "del": 2,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu/util/util.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu_cmd/emu_window/emu_window_sdl3.cpp",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu_cmd/emu_window/emu_window_sdl3_gl.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu_cmd/emu_window/emu_window_sdl3_null.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 5,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu_cmd/emu_window/emu_window_sdl3_vk.cpp",
+      "change": "modified",
+      "add": 7,
+      "del": 7,
+      "patch_present": true
+    },
+    {
+      "path": "src/yuzu_cmd/yuzu.cpp",
+      "change": "modified",
+      "add": 6,
+      "del": 6,
+      "patch_present": true
+    },
+    {
+      "path": "tools/svc_generator.py",
+      "change": "modified",
+      "add": 1,
+      "del": 1,
+      "patch_present": true
+    }
+  ],
+  "semantics": "not-yet-reviewed"
+}

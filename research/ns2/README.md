@@ -233,3 +233,13 @@ Do not replace the existing safety barriers with a second unsound check.
 The full vendor source validator now also refuses a change to the
 callback body or zero-fill contract, but is still SKIPPED locally
 because the complete pinned vendor checkout is absent.
+
+## Audit disposition / refreshed forks
+
+The full source-review decisions for Lichii's 17 newer commits and
+nxnative's 2 new commits are recorded in
+[NS2_UPSTREAM_REFRESH_AND_CLOSEOUT_2026-11-10.md](../../docs/NS2_UPSTREAM_REFRESH_AND_CLOSEOUT_2026-11-10.md).
+The six-suite local runner and its inputs now match their published
+GitHub source copies byte-for-byte in the reviewed snapshot; no
+vendor checkout or native console execution is implied.
+

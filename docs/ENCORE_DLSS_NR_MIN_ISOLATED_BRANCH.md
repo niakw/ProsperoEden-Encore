@@ -380,9 +380,11 @@ The native presenter `headless/vulkan_present_layer_r24.cpp` has NOT been modifi
 All new code is still **research-only and runtime hard-disabled**. No changes to `main`, vendor pin, guest NS1/NS2 renderer, user model import, or PS5 build.
 
 
-### Source-level 720p residual-dimension sweep
+### Source-level 720p residual-dimension sweep — 264 source files
 
-On the pinned vendor SHA `22b69d6053db41b74edac2633c012f925b84f69e`, all **73** `encore-active/eden-vulkan/nr_rdna2_*.cpp` implementation files were read. A literal sweep for `1920`, `1080`, `2560`, `2160`, `1980`, `33u`, `60u`, `33x60`, `880u` and `960u` found **no matching executable-code lines** in these CPP files. Three source comments still mention the old raster or token shape: `nr_rdna2_native_decoder_link.cpp`, `nr_rdna2_preblock_run.cpp`, and `nr_rdna2_unet_upsample_link.cpp`. This is a bounded lexical survey only: it does **not** prove correctness of all headers, shaders, generic dimension constraints, exact model-weight tensors, or runtime GPU synchronization. The presenter, independently audited above, is still explicitly 1080p-only.
+The **pinned vendor** SHA is `22b69d6053db41b74edac2633c012f925b84f69e`. This pass read exactly **73** `nr_rdna2_*.cpp` native implementation files, **107** `nr_rdna2_*.h` native Vulkan header files, and **35** active `r09_rdna2_nr/*.comp` compute shaders. It also read **49** host engine `extras/graphics/rdna2_nr_*.h` native policy headers on this experimental PR: **264 files total**.
+
+A targeted literal scan for `1920`, `1080`, `2560`, `2160`, `1980`, `33u`, `60u`, `33x60`, `880u` and `960u` found **no matching executable-code line** among the 264 inspected files. Remaining matches are old-shape comments in `nr_rdna2_native_decoder_link.cpp`, `nr_rdna2_preblock_run.cpp`, `nr_rdna2_unet_upsample_link.cpp`, `rdna2_nr_decoder_upsample_policy.h`, `rdna2_nr_vit_attention_policy.h`, `rdna2_nr_vit_native_route_policy.h`, and `decoder_upsample_rdna2.comp`. This is **a reproducible targeted literal review, not a proof of model correctness**: constants can be encoded indirectly and tensor layouts/learned layer assumptions may still require source-specific 720p tests. The production presenter is outside those groups and **does** hard-code 1920x1080. The neural attention shader is token-count-parametric but states explicitly that its FP16 reduction order is not bit-equivalent to the original proprietary implementation. Neither observation replaces authentic image comparisons.
 
 ### 720p attention throughput arithmetic (not a performance test)
 

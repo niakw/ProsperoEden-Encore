@@ -13,7 +13,7 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout current main with pinned vendor
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -115,6 +115,11 @@ jobs:
             --only video_core/renderer_vulkan/vk_turbo_mode.cpp \
             --only video_core/renderer_vulkan/vk_texture_cache_base.cpp
           echo "P5_TENTH_NATIVE_CXX_FAILURES_REQUALIFIED"
+          # Broad PS5 syntax-only sweep: real video_core + maintained Vulkan
+          # translation units using the actual native compile_commands.json.
+          # Collect all errors in one run; do not produce .o/ELF/ZIP.
+          python3 -B tools/ci/preflight-native-video-core-syntax.py \
+            "$scratch/native-local" --jobs 4 --max-tus 240
           # No full C++ build, package or release is authorized here.
 
       - name: Reject missing cache

@@ -20,6 +20,7 @@ cache=$(command -v ccache)
 cd "$root"
 # Repeat the source-only owner parity gate for direct local native builds.
 python3 -B tools/check-ps5-present-header-contract.py
+python3 -B tools/check-native-texture-pin-owner-parity.py
 # Source provenance travels with the app; the scratch tree is a detached
 # upstream snapshot, so derive the SHA from our actual Encore checkout.
 source_commit=$(git -C "$root" rev-parse --verify HEAD)

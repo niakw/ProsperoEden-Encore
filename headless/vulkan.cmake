@@ -9,6 +9,25 @@ if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/vulkan_renderer.cpp")
     message(FATAL_ERROR "Missing checked-in Encore Vulkan fork")
 endif()
 file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")
+# P5: the extracted native Eden cache can carry an older FixedPipelineState
+# header without the native forced-colour-resolve bit used by the maintained
+# Vulkan pipeline. Select the *pinned vendor source header* (same POD layout,
+# its reserved bit 22 now named) for ALL native consumers, not a CMake-generated
+# reconstruction or a local copy of the definition.
+set(EDEN_P5_FIXED_PIPELINE_HEADER
+    "${PORT_ROOT}/vendor/sources/eden/src/video_core/renderer_vulkan/fixed_pipeline_state.h")
+if(NOT EXISTS "${EDEN_P5_FIXED_PIPELINE_HEADER}")
+    message(FATAL_ERROR "Missing pinned fixed pipeline state ABI header")
+endif()
+file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan"
+                    "${PORT_BUILD_DIR}/include/video_core/texture_cache")
+configure_file("${EDEN_P5_FIXED_PIPELINE_HEADER}"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/fixed_pipeline_state.h" COPYONLY)
+# Keep the pinned ns2-astc texture-cache source itself immutable. Its native
+# channel lease relies on SCOPE_EXIT; make that existing macro visible through
+# a thin include-only bridge, then include_next the same maintained header.
+configure_file("${EDEN_PORT_DIR}/ns2_astc_texture_cache_scope_bridge.h"
+    "${PORT_BUILD_DIR}/include/video_core/texture_cache/texture_cache.h" COPYONLY)
 # Encore owns the versioned native renderer and its header; no generated
 # source injection or changes to the pinned vendor repository.
 configure_file("${EDEN_PORT_DIR}/renderer_vulkan_r08.h"

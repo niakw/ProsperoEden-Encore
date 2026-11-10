@@ -15,6 +15,12 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 NATIVE=ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch"
 text=(NATIVE/"video_core/engines/puller.cpp").read_text()
+dma_source=(ROOT/"vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
+def dma_owner(begin,end):
+    assert dma_source.count(begin)==1 and end in dma_source.split(begin,1)[1]
+    return begin+dma_source.split(begin,1)[1].split(end,1)[0]
+dma_dispatch=dma_owner("void DmaPusher::DispatchCalls() {","\nbool DmaPusher::Step() {")
+dma_step=dma_owner("bool DmaPusher::Step() {","\nvoid DmaPusher::ProcessCommands(")
 def owner(begin,end):
     assert text.count(begin)==1 and end in text.split(begin,1)[1],(begin,end)
     return begin+text.split(begin,1)[1].split(end,1)[0]
@@ -35,6 +41,10 @@ cpp=r"""
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <deque>
+#include <queue>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -62,12 +72,14 @@ using namespace Tegra::Engines;
 namespace Eden {
 inline std::exception_ptr fatal{};
 void RecordGpuFailure(std::exception_ptr why){fatal=why;}
+std::exception_ptr PeekGpuFailure(){return fatal;}
 }
 struct MemoryManager {
     Tegra::NativeQmdScheduler::Descriptor qmd{};
     u32 guest{},replacement{777};
     bool qmd_mapped{true},program_mapped{true},release_mapped{true},remapped{};
     unsigned writes{};
+    bool IsMemoryDirty(u64,std::size_t)const{return false;}
     bool IsFullyMappedRange(GPUVAddr address,std::size_t length)const {
         if(address==0x2000 && length==sizeof(qmd))return qmd_mapped;
         if(address==0x5000 && length==16)return program_mapped;
@@ -124,6 +136,9 @@ struct NativeGpuChannelRegistry {
         if(!e || !e->epoch)return {};
         return Ticket{&native_process,7,e->epoch};
     }
+    bool IsNative(const ChannelState* c)const{
+        return CaptureTicket(c).has_value();
+    }
     bool IsCurrent(const ChannelState* c,Ticket t)const {
         const auto now=CaptureTicket(c);
         return now && now->process==t.process &&
@@ -146,6 +161,53 @@ namespace VideoCommon {
 enum class CacheType{BufferCache};
 enum class QueryType{Payload};
 enum class QueryPropertiesFlags{IsAFence};
+}
+namespace Tegra {
+struct CommandHeader{u32 kind{},argument{};};
+namespace Memory {
+enum class GuestMemoryFlags{SafeRead,UnsafeRead};
+template<class T,GuestMemoryFlags>
+struct GpuGuestMemory{
+    std::vector<T> values;
+    GpuGuestMemory(MemoryManager&,u64,size_t count,std::vector<T>*):values(count){}
+    const T* data()const{return values.data();}
+    size_t size()const{return values.size();}
+};
+}
+namespace Engines{enum class EngineTypes{KeplerCompute,Maxwell3D};}
+}
+namespace Engines=Tegra::Engines;
+using CommandHeader=Tegra::CommandHeader;
+struct CommandListHeader{u64 addr{};size_t size{};bool sync{};};
+struct CommandList{
+    std::vector<CommandHeader> prefetch_command_list;
+    std::vector<CommandListHeader> command_lists;
+};
+struct EngineAdapter{bool current_dirty{};};
+constexpr u32 ComputeInline=0x50,MacroRegistersStart=0x100;
+namespace Settings {
+bool IsDMALevelDefault(){return false;}
+bool IsGPULevelHigh(){return true;}
+bool IsDMALevelSafe(){return true;}
+struct Flag{bool GetValue()const{return false;}};
+struct Values{Flag sync_memory_operations;};
+inline Values values;
+}
+namespace Service::Nvidia::Devices {
+template<class Mapped>bool NativeGpfifoFetchMapped(u64 addr,u64 words,Mapped&& mapped){
+    return words<=0x10000 && mapped(addr,words*sizeof(u32));
+}
+}
+struct FakeGpuWorker {
+    unsigned flushes{},ends{};
+    void FlushCommands(){++flushes;}
+    void OnCommandListEnd(){++ends;}
+};
+struct FakeSystem {
+    FakeGpuWorker gpu{};
+    bool IsPoweredOn()const{return true;}
+    bool IsShuttingDown()const{return false;}
+    FakeGpuWorker& GPU(){return gpu;}
 }
 class VulkanCompute {
     VkInstance instance{};
@@ -284,15 +346,37 @@ struct Rasterizer {
     void ReleaseFences(){}
     void Query(u64,VideoCommon::QueryType,VideoCommon::QueryPropertiesFlags,u32,u32){}
 };
+struct Puller;
 struct DmaPusher {
+    struct DmaState{
+        bool is_last_call{},non_incrementing{};
+        u64 dma_get{};
+        u32 subchannel{},method_count{},method{};
+    };
+    FakeSystem system;
     ChannelState channel_state;
     MemoryManager& memory_manager;
     Rasterizer* rasterizer{};
+    Puller* active_puller{};
+    std::queue<CommandList> dma_pushbuffer;
+    std::array<EngineAdapter*,8> subchannels{};
+    std::array<Engines::EngineTypes,8> subchannel_type{};
+    std::vector<CommandHeader> command_headers;
+    DmaState dma_state;
+    bool ib_enable{true},signal_sync{},synced{};
+    std::mutex sync_mutex;
+    std::condition_variable sync_cv;
+    size_t dma_pushbuffer_subindex{},command_resume_offset{};
     DmaPusher(MemoryManager& m,Rasterizer* r,u64 epoch)
       :channel_state{},memory_manager(m),rasterizer(r){
         channel_state.epoch=epoch;
         channel_state.payload->kepler_compute.epoch=epoch;
     }
+    bool ResumeNativeAcquire();
+    bool HasPendingNativeAcquire()const;
+    void ProcessCommands(std::span<const CommandHeader>);
+    bool Step();
+    void DispatchCalls();
 };
 struct Puller {
     struct Regs{std::array<u32,64> reg_array{};}regs;
@@ -310,6 +394,27 @@ struct Puller {
 __REAL_SEMAPHORES__
 __REAL_QMD_CALL__
 __REAL_QMD_DISPATCH__
+__REAL_DMA_DISPATCH__
+__REAL_DMA_STEP__
+bool DmaPusher::ResumeNativeAcquire(){
+    return !active_puller || active_puller->ResumeNativeAcquire(*this);
+}
+bool DmaPusher::HasPendingNativeAcquire()const{
+    return active_puller && active_puller->pending_native_acquire.has_value();
+}
+void DmaPusher::ProcessCommands(std::span<const CommandHeader> commands){
+    assert(active_puller);
+    for(const auto& command:commands){
+        if(command.kind==1)
+            active_puller->ProcessNativeComputeQmd(*this,0xb0,command.argument,0);
+        else if(command.kind==2)
+            active_puller->ProcessNativeSemaphoreExecute(*this,command.argument);
+        else
+            throw std::runtime_error("host GPFIFO header unknown");
+        ++command_resume_offset;
+        if(HasPendingNativeAcquire())return;
+    }
+}
 int main(){
     MemoryManager memory;
     memory.qmd[12]=1;memory.qmd[13]=1;memory.qmd[14]=1;
@@ -322,6 +427,8 @@ int main(){
     Rasterizer gpu;
     DmaPusher producer{memory,&gpu,41},consumer{memory,&gpu,42};
     Puller qmd_puller,wait_puller;
+    producer.active_puller=&qmd_puller;
+    consumer.active_puller=&wait_puller;
     producer.channel_state.payload->kepler_compute.regs.reg_array[0xad]=0x20;
     wait_puller.regs.reg_array[0x17]=0x4000;
     wait_puller.regs.reg_array[0x18]=0;
@@ -333,16 +440,30 @@ int main(){
     catch(const std::runtime_error&){rejected=true;}
     assert(rejected && gpu.dispatches==0 && memory.writes==0);
     memory.release_mapped=true;
-    qmd_puller.ProcessNativeComputeQmd(producer,0xb0,3,0);
-    assert(gpu.dispatches==1 && gpu.fences==1 && memory.guest==0 && memory.writes==0);
-    wait_puller.ProcessNativeSemaphoreExecute(consumer,0);
-    assert(wait_puller.pending_native_acquire && !wait_puller.ResumeNativeAcquire(consumer));
+    // Real DmaPusher::DispatchCalls and Step own both GPFIFO prefetch
+    // queues. Only the method-word decoder is a host adapter.
+    CommandList launch;
+    launch.prefetch_command_list.push_back({1,3});
+    producer.dma_pushbuffer.push(std::move(launch));
+    producer.DispatchCalls();
+    assert(producer.dma_pushbuffer.empty() && producer.system.gpu.ends==1 &&
+           gpu.dispatches==1 && gpu.fences==1 &&
+           memory.guest==0 && memory.writes==0);
+    CommandList acquire;
+    acquire.prefetch_command_list.push_back({2,0});
+    consumer.dma_pushbuffer.push(std::move(acquire));
+    consumer.DispatchCalls();
+    assert(wait_puller.pending_native_acquire &&
+           consumer.dma_pushbuffer.size()==1 &&
+           consumer.command_resume_offset==1 &&
+           !wait_puller.ResumeNativeAcquire(consumer));
     // Duplicate PCAS must not dispatch or publish a second release.
     qmd_puller.ProcessNativeComputeQmd(producer,0xb0,2,0);
     assert(gpu.dispatches==1 && gpu.fences==1 && memory.guest==0);
     gpu.Retire(); // genuine VkFence after real vkCmdDispatch, not synthetic
+    consumer.DispatchCalls(); // same real GPFIFO Step resumes and retires
     assert(memory.guest==17 && memory.writes==1 &&
-           wait_puller.ResumeNativeAcquire(consumer) &&
+           consumer.dma_pushbuffer.empty() &&
            !wait_puller.pending_native_acquire && !Eden::fatal);
     // Reject an unsupported real PCAS action without a host submission.
     rejected=false;
@@ -378,12 +499,15 @@ int main(){
               " unmapped_release=refused duplicate_pcas=held"
               " unsupported_pcas=refused backing_reuse=latched"
               " revoked_epoch=no_completion"
-              " host_shader_and_gpfifo_worker_stubs=1 PS5=not_exercised");
+              " real_dma_step_dispatchcalls=1 prefetch_queue_retired_after_fence=1"
+              " host_shader_and_command_decoder_stubs=1 PS5=not_exercised");
 }
 """
 cpp=cpp.replace("__REAL_SEMAPHORES__",semaphores)
 cpp=cpp.replace("__REAL_QMD_CALL__",qmd_call)
 cpp=cpp.replace("__REAL_QMD_DISPATCH__",qmd_dispatch)
+cpp=cpp.replace("__REAL_DMA_DISPATCH__",dma_dispatch)
+cpp=cpp.replace("__REAL_DMA_STEP__",dma_step)
 env=dict(os.environ)
 icd=Path("/usr/share/vulkan/icd.d/lvp_icd.x86_64.json")
 if icd.is_file():

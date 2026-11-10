@@ -55,6 +55,7 @@ struct Owner {
 struct Key { const Owner* owner{}; u64 owner_id{}, generation{}, revision{}, address{}; u32 bytes{}; };
 struct Entry { Key key{}; bool proven{}; };
 class Memo {
+    mutable std::mutex memo_mutex; // Multiple read leases can coexist.
     std::array<Entry, 16> entries{};
     u64 underlying_lookups{};
     u64 cache_hits{};
@@ -67,6 +68,7 @@ public:
     // a cached result across Vulkan submission or any unlocked callback.
     bool CheckUnderLease(const Owner::ReadLease& lease, u64 address, u32 bytes) {
         const Owner& owner = lease.owner;
+        std::lock_guard cache_guard{memo_mutex};
         if (!address || !bytes || bytes > Cap || address >= Limit ||
             bytes > Limit - address) return false;
         auto& entry = entries[Slot(address, bytes)];
@@ -88,8 +90,8 @@ public:
         entry = {key, true};
         return true;
     }
-    u64 Probes() const { return underlying_lookups; }
-    u64 Hits() const { return cache_hits; }
+    u64 Probes() const { std::lock_guard guard{memo_mutex}; return underlying_lookups; }
+    u64 Hits() const { std::lock_guard guard{memo_mutex}; return cache_hits; }
 };
 }
 

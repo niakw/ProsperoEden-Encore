@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Research-only: three local C++ model fixtures + optional exact-source GMMU guard.
+# Research-only: four local C++ model fixtures + optional exact-source GMMU guard.
 # NEVER runs the Encore PS5 build, modifies vendor, or enables GitHub Actions.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -11,7 +11,7 @@ for compiler in clang++ g++; do
     echo "MISSING compiler: $compiler" >&2
     exit 2
   fi
-  for test in test_ssbo_extent_contract test_gpu_backing_lifetime test_epoch_guarded_gmmu_memo; do
+  for test in test_ssbo_extent_contract test_gpu_backing_lifetime test_epoch_guarded_gmmu_memo test_native_vk_range_contract; do
     "$compiler" -std=c++20 -pthread -O1 -Wall -Wextra -Werror \
       -fsanitize=undefined -fno-sanitize-recover=all \
       "$root/research/ns2/${test}.cpp" -o "$tmp/${compiler//+/p}-$test"

@@ -30,34 +30,20 @@ module_paths = {
 }
 module_paths.discard(ROOT/"headless/CMakeLists.txt")
 
-# The dependency migration retains three *unaltered pinned upstream source
-# trees* under vendor/encore-active instead of external Git submodules. Their
-# own CMake scripts may legitimately generate build artifacts (e.g. MihawkGen
-# ps5/CMakeLists.txt uses file(WRITE)); they are NOT Encore-owned mutation
-# modules and must not create false positives in this active-source audit.
-# Do not broadly exempt vendor/encore-active or any other SDK: only these three
-# exact directories, whose Git trees, model bytes and notices are separately
-# pinned by tools/graphics/check-internalized-ps5-deps.py.
+# All original upstream source CMake files live under vendor/sources/:
+# they are not maintained Encore CMake mutation owners. Every active
+# override under vendor/encore-active remains in module_paths and is checked.
 pinned_upstream_roots = tuple(
-    ROOT/"vendor/encore-active"/name
-    for name in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp")
+    ROOT / "vendor/sources" / name
+    for name in ("ps5-mihawkgen", "ps5-fsr3-optical-flow", "libwebp")
 )
-assert all(root.is_dir() and not (root/".git").exists()
-           for root in pinned_upstream_roots)
-
-def is_pinned_upstream_cmake(path: Path) -> bool:
-    return any(root in path.parents for root in pinned_upstream_roots)
-
-assert is_pinned_upstream_cmake(
-    ROOT/"vendor/encore-active/PS5_MihawkGen/ps5/CMakeLists.txt")
-assert is_pinned_upstream_cmake(
-    ROOT/"vendor/encore-active/libwebp/CMakeLists.txt")
-assert not is_pinned_upstream_cmake(
-    ROOT/"vendor/encore-active/eden-vulkan/CMakeLists.txt")
-assert not is_pinned_upstream_cmake(ROOT/"headless/vulkan.cmake")
-excluded_upstream_modules = sum(is_pinned_upstream_cmake(p) for p in module_paths)
-module_paths = {p for p in module_paths if not is_pinned_upstream_cmake(p)}
-assert excluded_upstream_modules > 0, excluded_upstream_modules
+assert all(path.is_dir() and not (path / ".git").exists()
+           for path in pinned_upstream_roots)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not (ROOT / "vendor/encore-active" / stale).exists(), stale
+excluded_upstream_modules = 0
+assert not any(any(upstream in p.parents for upstream in pinned_upstream_roots)
+               for p in module_paths)
 
 # Exclude source-pin SDK manifests: the checked Encore CMake layer above
 # is the only location allowed to mutate included dependency sources.

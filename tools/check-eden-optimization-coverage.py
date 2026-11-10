@@ -29,29 +29,24 @@ suffixes={".c",".cpp",".cxx",".cc",".h",".hpp",".inc"}
 all_owners={p for p in tracked
         if p.startswith(("headless/","src/","vendor/encore-active/"))
         and Path(p).suffix in suffixes}
-# The three byte-exact pinned upstream packages now live inside vendor/
-# encore-active as ordinary Git-tracked files. They are third-party input,
-# not Encore-owned active-source F07 performance reviews. Validate each
-# explicit upstream tree's C/C++ file count instead of inflating the frozen
-# 518-owner snapshot or broadly exempting vendor/encore-active files.
-# Git tree hashes / license notices remain independently enforced by
-# tools/graphics/check-internalized-ps5-deps.py.
+# Three unmodified upstream dependencies live under vendor/sources/.
+# Their snapshots must never be categorized as F07 owners or hidden as
+# Encore active overrides. Keep the immutable 518 historical source total.
 pinned_upstream_f07_counts = {
-    "PS5_MihawkGen": 474,
-    "PS5_FSR3OpticalFlow": 41,
+    "ps5-mihawkgen": 474,
+    "ps5-fsr3-optical-flow": 41,
     "libwebp": 245,
 }
-pinned_upstream_owners = set()
 for name, expected in pinned_upstream_f07_counts.items():
-    prefix = f"vendor/encore-active/{name}/"
-    present = {p for p in all_owners if p.startswith(prefix)}
-    assert len(present) == expected, (
-        "Pinned third-party source drift", name, len(present), expected)
-    pinned_upstream_owners.update(present)
-assert len(pinned_upstream_owners) == sum(pinned_upstream_f07_counts.values()) == 760
-all_owners -= pinned_upstream_owners
+    prefix = f"vendor/sources/{name}/"
+    files = {p for p in tracked
+             if p.startswith(prefix) and Path(p).suffix in suffixes}
+    assert len(files) == expected, ("Upstream snapshot drift", name, len(files), expected)
+for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
+    assert not any(p.startswith(f"vendor/encore-active/{stale}/")
+                   for p in tracked), stale
 print("ENCORE_PINNED_UPSTREAM_F07_ISOLATION_PASS",
-      f"upstream_sources={len(pinned_upstream_owners)}",
+      f"upstream_sources={sum(pinned_upstream_f07_counts.values())}",
       "trees=3 historical_f07_unchanged=1")
 # NS2 is an explicitly unqualified research layer, not historical F07 review.
 # Do not silently count new research source code as already optimized.

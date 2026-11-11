@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 44,
+        "runtime-semantic-review-pending": 40,
+        "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64": 1,
         "reviewed-Android-only-LA-EOW-SPIRV-bloom-option": 1,
         "reviewed-ReShade-applet-postprocess-not-native-selected": 1,
         "source-equivalent-native-GPU-worker-stop-lifecycle": 1,
@@ -88,7 +89,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 15,
+        "verified-relevant-source-gap-awaiting-native-proof": 18,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -383,6 +384,25 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or 'gpu_thread_quiet.cpp' not in native_cmake
             or 'vulkan_present_layer_r24.cpp' not in native_vulkan):
         raise ValueError("R23 pass14 PS5 selected owner changed")
+    # Pass 15: NCE-only runtime NRO vs x64 ConstPool, applet release and
+    # x64 page-table sign extension source gaps are all E1 and distinct.
+    cases15 = {
+        90: "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64",
+        33: "verified-relevant-source-gap-awaiting-native-proof",
+        109: "verified-relevant-source-gap-awaiting-native-proof",
+        136: "verified-relevant-source-gap-awaiting-native-proof",
+    }
+    for idx, klass in cases15.items():
+        r = by_index[idx]
+        if r["classification"] != klass or not r.get("source_evidence_level", "").startswith("E1"):
+            raise ValueError(f"R23 pass15 #${idx} source gap/policy was lost")
+    doc15 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS15_2026-11-11.md").read_text()
+    for source_pin in ("922fc10440bad898f392b1f290ec18fd2e3cc5e7",
+                       "8782ab0c73e9defb4f7744063c6691806147effb",
+                       "407ca10602a1fe9107d13aa8393f4145ac7d715a",
+                       "9686e4fc047f78d0863df3ccb5149c8ecc9dc484"):
+        if source_pin not in doc15:
+            raise ValueError("R23 pass15 pinned source proof missing")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -552,7 +572,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 44
+    assert validate(root)["runtime_semantic_cases_pending"] == 40
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -561,7 +581,7 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
-    for case in (29, 49, 54, 58, 63, 74, 76, 83, 98, 130, 150):
+    for case in (29, 32, 49, 54, 58, 63, 74, 76, 83, 89, 98, 108, 130, 135, 150):
         bad = copy.deepcopy(current)
         bad["individual_commits"][case]["classification"] = "runtime-semantic-review-pending"
         try:

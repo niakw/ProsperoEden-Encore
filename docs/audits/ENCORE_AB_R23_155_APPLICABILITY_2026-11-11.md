@@ -216,3 +216,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 14 — four source-owner decisions (11 Nov)
 
 [Full source report](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS14_2026-11-11.md) scopes #50 Android-only SPIR-V bloom and #99 ReShade applet bypass away from native selected code, verifies the intended GPU worker stop/join lifecycle #151 is source-implemented in the maintained PS5 GPU/worker owners, and identifies #64 NVNflinger HWC frame release order as a real unported guest-visible gap. Counts now **44** general semantic cases, **15** source gaps, 2 scoped GPU/UTF policies, 17 headers, seven C00–C06 release qualifications.
+
+## R23 pass 15 — four source-reviewed decisions (11 Nov)
+
+[Exact pin and semantic report](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS15_2026-11-11.md): #90 scope-excludes ARM64 NCE-only NRO patch on x64; #33 x64 ConstantPool, #109 frontend lifecycle, #136 Dynarmic x64 page-table addressing remain source-proven gaps. **40** generic semantic reviews, **18** gaps, **2** scoped policies, **17** native changed-header receipts and **7** corrective batches remain.

@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 15,
-    "runtime-semantic-review-pending": 44,
+    "verified-relevant-source-gap-awaiting-native-proof": 18,
+    "runtime-semantic-review-pending": 40,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -52,7 +52,8 @@
     "source-equivalent-selected-Vulkan-TFB-end-buffer-order": 1,
     "reviewed-Android-only-LA-EOW-SPIRV-bloom-option": 1,
     "reviewed-ReShade-applet-postprocess-not-native-selected": 1,
-    "source-equivalent-native-GPU-worker-stop-lifecycle": 1
+    "source-equivalent-native-GPU-worker-stop-lifecycle": 1,
+    "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1017,13 +1018,14 @@
       "sha": "be972d7fdc50376d231d4f6b0ca912adc958aadd",
       "title": "[dynarmic] Remove redundant constant pool ops (#4516)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 upstream #33 rewrites x64 Dynarmic ConstantPool with 64-byte alignment, 128-bit slot storage and offset-indexed constant dedup. Original pinned x64 constant_pool.cpp/.h use insertion_point and ptr-valued hash map, and active native PS5 uses x64 Dynarmic. Not cosmetic: code cache allocation, correctness of RIP-relative constant references and relocation must be qualified before port.",
+      "action": "Stage a coherent two-file x64 ConstantPool change with BlockOfCode ABI and allocation alignment tests on C04 research branch; native compiler JIT tests for duplicates, high 64-bit limbs, cache exhaustion and page boundaries required. No production merge until vetted.",
       "paths": [
         "src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp",
         "src/dynarmic/src/dynarmic/backend/x64/constant_pool.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream be972d7fdc50376d231d4f6b0ca912adc958aadd; pinned x64 constant_pool.cpp 8782ab0c73e9defb4f7744063c6691806147effb and .h d3bad95d701c75b3a3e616a46a916590387e867; not a PS5 JIT test."
     },
     {
       "index": 34,
@@ -2958,12 +2960,13 @@
       "sha": "3f78512c83fca84a36bb450a10043b368830f8b0",
       "title": "[ro] add TLS patching for runtime NROs (#4492)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64",
+      "scope": "E1 official upstream #90 changes ro.cpp to patch NRO text through Core::NCE::Patcher only inside #ifdef HAS_NCE and if Settings::IsNceEnabled. PS5 native host is x86-64 Dynarmic, not ARM64 NCE. The only unguarded source edit adds KernelCore& to an internal method signature and its caller, not guest IPC response behavior.",
+      "action": "Retain PS5 x64 ro.cpp; do not import ARM64 NCE shared-memory runtime patching into a PS5 x64 build. Reopen if NCE is ever enabled, source/ABI ownership changes, or a guest runtime NRO failure is observed. Compiler macro dump and title-level ro tests remain separate.",
       "paths": [
         "src/core/hle/service/ro/ro.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 3f78512c83fca84a36bb450a10043b368830f8b0; pinned ro.cpp blob 922fc10440bad898f392b1f290ec18fd2e3cc5e7, PS5 toolchain x64; no native NCE macro dump."
     },
     {
       "index": 91,
@@ -3277,13 +3280,14 @@
       "sha": "847e91c3a8ca2d699cc9ce0df68b733dd5f37b97",
       "title": "[applet] add post exit cleanups to frontend applets to avoid accumulation (#4457)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 upstream #109 fixes post-exit frontend applet lifecycle: move state signal under inner lock, remove completed applet from caller child_applets, request window update, and take caller lock on guest and frontend child append. Pinned core AM frontend Exit currently signals only, and CreateGuestApplet appends child without lock; selected native core files remain unpatched.",
+      "action": "Group source-correct #84 None and #109 applet exit/child lock in a single C06 corrective unit after checking call site null guards and child lock ordering. Run host lifecycle concurrency, repeated applet create/exit, display-update and guest application tests; do not backport a partial unlink under existing lock.",
       "paths": [
         "src/core/hle/service/am/frontend/applets.cpp",
         "src/core/hle/service/am/service/library_applet_creator.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 847e91c3a8ca2d699cc9ce0df68b733dd5f37b97; original core frontend applets.cpp blob 407ca10602a1fe9107d13aa8393f4145ac7d715a and library_applet_creator.cpp c20a77f8c40c7fbf023411fd47a299662b798cb3; not PS5 applet test."
     },
     {
       "index": 110,
@@ -3670,12 +3674,13 @@
       "sha": "1575f55abee50a563502e5afb098ebed9d5d8995",
       "title": "[dynarmic] fix sign extension logic on x64 (#4415)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 upstream #136 fixes x64 Dynarmic page-table address/host pointer sign extension: x64 emits scale addressing for small stride and changes shl/sar amount from raw sign-bit setting to 63 minus the setting. Pinned x64 emit_x64_memory.h still emits the original shl/sar sequence; PS5 native uses Dynarmic x64.",
+      "action": "Add exact tested correction to C04 only after checking page_table_sign_extension units/ABI, scale factors and code/relocations; test mapped/marked/unmapped and sign-extension edge addresses with host x64 JIT. Do not assume upstream one-file patch fixes current title crash.",
       "paths": [
         "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 1575f55abee50a563502e5afb098ebed9d5d8995; pinned x64 emit_x64_memory.h blob 9686e4fc047f78d0863df3ccb5149c8ecc9dc484; no JIT runtime proof."
     },
     {
       "index": 137,

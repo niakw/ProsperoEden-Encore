@@ -2804,5 +2804,26 @@ if(PS5_NATIVE)
     list(APPEND eden_r23_shader_sources
         "${EDEN_PORT_DIR}/r23_f2i_conversion_ps5.cpp")
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_shader_sources}")
-    message(STATUS "Encore R23: single active BCAT and Maxwell F2I fixes")
+
+    # Keep IPS patches and audren:d debugger routing on maintained,
+    # full-source owners: one original TU removed, one corrected TU selected.
+    foreach(eden_r23_core_owner IN ITEMS
+            "file_sys/ips_layer.cpp"
+            "hle/service/audio/audio.cpp")
+        get_target_property(eden_r23_core_sources core SOURCES)
+        list(FIND eden_r23_core_sources "${eden_r23_core_owner}" eden_r23_idx)
+        if(eden_r23_idx LESS 0)
+            message(FATAL_ERROR "R23 selected core source moved: ${eden_r23_core_owner}")
+        endif()
+        list(REMOVE_ITEM eden_r23_core_sources "${eden_r23_core_owner}")
+        if(eden_r23_core_owner STREQUAL "file_sys/ips_layer.cpp")
+            list(APPEND eden_r23_core_sources
+                "${EDEN_PORT_DIR}/r23_ips_layer_ps5.cpp")
+        else()
+            list(APPEND eden_r23_core_sources
+                "${EDEN_PORT_DIR}/r23_audren_debug_ps5.cpp")
+        endif()
+        set_property(TARGET core PROPERTY SOURCES "${eden_r23_core_sources}")
+    endforeach()
+    message(STATUS "Encore R23: single active BCAT/F2I/IPS/audren source owners")
 endif()

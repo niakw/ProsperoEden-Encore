@@ -36,7 +36,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
 
-      - name: Validate C01/C02/C04 and staged R23 viewport/root/glslang patches; freeze C03 blobs
+      - name: Validate C01/C02/C04 and staged R23 viewport/root/glslang/FW23 patches; freeze C03 blobs
         shell: bash
         run: |
           set -euo pipefail
@@ -48,12 +48,12 @@ jobs:
           assert note["vendor_worktree_clean"]
           assert note["vendor_gitlink"] == "22b69d6053db41b74edac2633c012f925b84f69e"
           assert all(note["units"][key]["patch_staged_and_context_valid"]
-                     for key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root", "R23-glslang-include"))
+                     for key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root", "R23-glslang-include", "R23-fw23-ns-cmd23"))
           assert all(not row["patch_applied"] and not row["compiled"] and
                      not row["tested_on_ps5"] for row in note["units"].values())
           with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as out:
               out.write("## A/B NS1 patchset integrity\n")
-              out.write("C01/C02/C04 and R23 viewport/path-root/glslang git apply --check passed with exact pinned vendor Git blobs.\n")
+              out.write("C01/C02/C04 and R23 viewport/path-root/glslang/FW23 NS cmd23 git apply --check passed with exact pinned vendor Git blobs.\n")
               out.write("C03 RADV three-source SHA provenance confirmed. R23 viewport exists in generator only, not active maintained native rasterizer.\n")
               out.write("**No vendor source edits, compiler invocation, ELF or PS5 test.**\n")
           PY

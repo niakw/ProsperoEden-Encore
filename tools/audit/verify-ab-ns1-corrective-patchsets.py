@@ -30,6 +30,11 @@ SOURCES = {
         "f768235d3a6667f18ee5900311364c7d9a7853ba",
         "docs/audits/patchsets/C02-shared-spirv-nan.vendor.patch",
     ),
+    "R23-fw23-ns-cmd23": (
+        "sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+        "c7606a83bf771c9251ef8a44add72b72a2589870",
+        "docs/audits/patchsets/R23-fw23-ns-cmd23.vendor.patch",
+    ),
     "R23-glslang-include": (
         "sources/eden/src/video_core/host_shaders/CMakeLists.txt",
         "c4e7ac3f6fe1778423db2933a82ba9febb53637b",
@@ -128,6 +133,13 @@ def main() -> int:
                     {a for a,b in changed if a == b} != expected_sources or
                     data.count("\n@@ ") != (2 if name == "R23-glslang-include" else len(expected_sources))):
                 raise ValueError(f"{name}: patch contains unexpected/missing maintained source")
+            if name == "R23-fw23-ns-cmd23":
+                exact_new = (
+                    "+        {23, D<&IReadOnlyApplicationControlDataInterface::"
+                    'GetApplicationControlData3>, "GetApplicationControlData"},'
+                )
+                if data.count(exact_new) != 1 or data.count("\n+") != 1:
+                    raise ValueError("FW23 cmd23 staged patch must add exactly one IPC alias")
             # Applicability is not proof of actual native compiled-owner selection.
             run_git("apply", "--check", str(relative_patch))
             result["patch_staged_and_context_valid"] = True
@@ -136,10 +148,10 @@ def main() -> int:
     if dirty_after != dirty_before:
         raise AssertionError("read-only audit changed vendor files")
     if not all(row["patch_staged_and_context_valid"] for key, row in results.items()
-               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root", "R23-glslang-include")):
+               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root", "R23-glslang-include", "R23-fw23-ns-cmd23")):
         raise AssertionError("all staged owner hunks must have valid context")
     print(json.dumps({
-        "scope": "C01/C02/C04/R23 viewport/path root/glslang patch contexts, C03 Git blobs (not compiled)",
+        "scope": "C01/C02/C04/R23 viewport/path root/glslang/FW23 NS cmd23 patch contexts, C03 Git blobs (not compiled)",
         "vendor_gitlink": PIN,
         "vendor_worktree_clean": True,
         "implementation_proof": False,

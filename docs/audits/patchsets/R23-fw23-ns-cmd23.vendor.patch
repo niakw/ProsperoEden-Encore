@@ -1,0 +1,12 @@
+diff --git a/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp b/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp
+--- a/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp
++++ b/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp
+@@ -142,7 +142,8 @@
+         {10, &IReadOnlyApplicationControlDataInterface::ListApplicationIcon, "ListApplicationIcon"},
+         {13, &IReadOnlyApplicationControlDataInterface::ListApplicationTitle, "ListApplicationTitle"},
+         {19, D<&IReadOnlyApplicationControlDataInterface::GetApplicationControlData3>, "GetApplicationControlData"},
++        {23, D<&IReadOnlyApplicationControlDataInterface::GetApplicationControlData3>, "GetApplicationControlData"},
+     };
+     // clang-format on
+ 
+     RegisterHandlers(functions);

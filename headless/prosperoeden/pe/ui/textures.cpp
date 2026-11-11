@@ -34,6 +34,12 @@ bool IsProfileAvatarImage(std::string_view path)
            path.find("/NiakPS5/assets/niak-profile.") != std::string_view::npos;
 }
 
+bool IsRetailBoxImage(std::string_view path)
+{
+    return path.find("/box-front-") != std::string_view::npos ||
+           path.find("/box-back-") != std::string_view::npos;
+}
+
 } // namespace
 
 Textures::~Textures()
@@ -241,8 +247,13 @@ Cover Textures::cover(const std::string &path, float size)
         entry.target_pixels = target_pixels;
         entry.generation = ++next_generation_;
         it = covers_.emplace(key, std::move(entry)).first;
-        if (IsProfileAvatarImage(path)) queue_.push_front(key);
-        else queue_.push_back(key);
+        // Large selected jackets are navigationally critical. Prioritize
+        // their fronts/rears over old library thumbnails, without I/O on UI.
+        if (IsProfileAvatarImage(path) ||
+            (IsRetailBoxImage(path) && target_pixels >= 1024))
+            queue_.push_front(key);
+        else
+            queue_.push_back(key);
     }
     it->second.used = frame_;
     // Calculate age only for visible/queried covers, not every cached entry.
@@ -259,14 +270,38 @@ Cover Textures::cover(const std::string &path, float size)
         it->second.loaded = false;
         it->second.loaded_at_seconds = uptime_seconds_;
         age = 0.0f;
-        if (IsProfileAvatarImage(path)) queue_.push_front(key);
-        else queue_.push_back(key);
+        // Large selected jackets are navigationally critical. Prioritize
+        // their fronts/rears over old library thumbnails, without I/O on UI.
+        if (IsProfileAvatarImage(path) ||
+            (IsRetailBoxImage(path) && target_pixels >= 1024))
+            queue_.push_front(key);
+        else
+            queue_.push_back(key);
     }
     // Preserve a previously confirmed missing state while its next decode
     // is queued. Otherwise a failed official scan briefly hides its composed
     // sleeve on every retry, before the eventual successful upload.
     const bool missing = it->second.texture == 0 &&
                          (it->second.loaded || it->second.failed_loads != 0);
+    // Shelf (512px) and enlarged/3D jacket (1024px) can request the same
+    // WebP in different buckets. Reuse an already-uploaded sibling until the
+    // requested resolution arrives: no empty-face / late-sticker effect.
+    // All variants are purged together by invalidate(), so no stale artwork.
+    if (it->second.texture == 0 && IsRetailBoxImage(path)) {
+        const int alternatives[] = {target_pixels / 2, target_pixels * 2,
+                                    target_pixels / 4, target_pixels * 4};
+        for (const int alternate_size : alternatives) {
+            if (alternate_size < 64 || alternate_size > 2048) continue;
+            const auto sibling = covers_.find(path + '#' + std::to_string(alternate_size));
+            if (sibling != covers_.end() && sibling->second.texture != 0) {
+                sibling->second.used = frame_; // prevent eviction while borrowed
+                const float sibling_age = static_cast<float>(
+                    uptime_seconds_ - sibling->second.loaded_at_seconds);
+                return {sibling->second.texture,
+                        std::max(sibling_age, 0.22f), false, sibling->second.aspect};
+            }
+        }
+    }
     return {it->second.texture, age, missing,
             it->second.aspect};
 }

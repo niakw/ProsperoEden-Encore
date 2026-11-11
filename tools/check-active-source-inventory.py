@@ -958,7 +958,6 @@ print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=2 historical_headless=1
 post_f07_r23_fixed_source_owners = {
     "headless/r23_f2i_conversion_ps5.cpp",
     "headless/r23_bcat_delivery_cache_file_ps5.cpp",
-    "headless/r23_controller_applet_ps5.cpp",
     "headless/r23_audren_debug_ps5.cpp",
     "headless/r23_channel_state_cache_ps5.h",
 }
@@ -968,7 +967,7 @@ assert all(path.rsplit("/", 1)[-1] in r23_cmake for path in post_f07_r23_fixed_s
 assert post_f07_r23_fixed_source_owners.isdisjoint(
     post_f07_c00_audioin_owners | post_f07_p5_headless_owners |
     post_f07_feature_headless_owners | post_f07_r09_headless_owners)
-print("ENCORE_POST_F07_R23_FIVE_SELECTED_OWNERS_PASS", "owners=5 historical_headless=193")
+print("ENCORE_POST_F07_R23_FOUR_SELECTED_OWNERS_PASS", "owners=4 historical_headless=193")
 # C02 is a separately reviewed shared shader source; do not alter F07's 193 catalog.
 post_f07_c02_spirv_owners = {"headless/c02_spirv_fragcolor_ps5.cpp"}
 assert all((root / path).is_file() for path in post_f07_c02_spirv_owners)

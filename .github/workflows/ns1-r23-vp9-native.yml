@@ -1,0 +1,38 @@
+name: NS1 R23 VP9 selected native decoder and ABI (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-vp9-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-vp9-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vp9-matched-pair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify exact candidate pin and coherent native codec types/decoder
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "52ab85f8b79d243d0b145f060e7f2f6a71dce656"
+          python3 -B vendor/tests/ns1_r23_48_vp9_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          cm=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(FIND eden_r23_vp9_units "host1x/codecs/vp9.cpp" eden_r23_vp9_old)' in cm
+          assert 'list(REMOVE_ITEM eden_r23_vp9_units "host1x/codecs/vp9.cpp")' in cm
+          assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_R23_VP9_INCLUDE}")' in cm
+          assert Path('vendor/encore-active/eden-core/src/video_core/host1x/codecs/vp9.cpp').is_file()
+          assert Path('vendor/encore-active/eden-core/src/video_core/host1x/codec_types.h').is_file()
+          print('R23_VP9_NATIVE_SOURCE_OWNER_PASS translation_units=1 header=1')
+          PY

@@ -66,6 +66,13 @@ The corrective branch's **actual Git submodule pin** is the original `22b69d6053
 
 **Current classification: C00 partially implemented with green host tests; AB-04 remains OPEN at E3/E4.**
 
+### 11 November — R18 / R23 finite evidence checkpoint
+
+- [R18 22-tree CPM reconciliation](ENCORE_AB_R18_CPM_BOOST_BYTE_DRIFT_2026-11-11.md): **21/22** regular-file count/size trees match the lock; MoltenVK/zstd are 3 symlinks properly excluded. Only Boost remains: **59,798 files**, checkout **1,527 bytes shorter than lock**. Git blob accounting localizes **689 checkout-vs-Git bytes to five Windows batch scripts**, but does **not** reconcile the underlying 2,216-byte lock-vs-Git aggregate difference. Official archive hashes and provenance remain open.
+- [R23 historical source-compilation crosswalk](ENCORE_AB_R23_HISTORICAL_NATIVE_TU_CROSSWALK_2026-11-11.md): 155/155 commits against 1,985 historical CMake native inputs; **749 source-TU change occurrences** map to a scheduled source, **311** remain without exact path mapping (possible maintained names), and **83 commits** changed headers whose effective inclusion is not proven. This is scheduled-input evidence, not a link/PS5 runtime attestation.
+- [R23 155-commit actionability](ENCORE_AB_R23_155_APPLICABILITY_2026-11-11.md) now has **110 runtime semantic reviews pending**, **5 staged host fixes still awaiting native/device qualification**, **8 asset/distribution decisions** and **4 native build/dependency reviews**; **23** explicit native-runtime non-applicable paths, **4** ARM-only non-transposable entries and **1** test-only reference. Counts sum to **155**, but categories are **not** a completed runtime parity audit.
+- [Corrective PR #46](https://github.com/niakw/ProsperoEden-Encore/pull/46) remains draft. No member of C00–C06 has complete native PS5 console qualification. Its host gates are **not** substitutes for source-compiled full units or guest proof, and the last P0–P4 aggregation needs a green matching corrective SHA before any merge.
+
 ## Audit-branch tools and immutable proof index
 
 - [Baseline & dependency source inventory](ENCORE_AB_NS1_SOURCE_AND_DEPENDENCY_AUDIT_2026-11-10.md)

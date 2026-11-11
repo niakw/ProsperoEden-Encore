@@ -1,0 +1,62 @@
+name: R09 universal optional render-path coverage (host, no apt)
+
+# Isolated research branch; no PS5/vendored native build or runtime toggle.
+# The Vulkan evidence jobs remain independent and must not be replaced by
+# source-policy tests. Never download third-party model weights or images.
+on:
+  push:
+    branches: [feature/dlss-nr-min-rdna2-ps5]
+    paths:
+      - '.github/workflows/r09-universal-path-coverage-host.yml'
+      - 'extras/graphics/neural_pipeline_composer.h'
+      - 'extras/graphics/neural_pipeline_recipe.h'
+      - 'extras/graphics/neural_pipeline_path_selection.h'
+      - 'extras/graphics/test_neural_pipeline_composer.cpp'
+      - 'extras/graphics/test_neural_pipeline_recipe.cpp'
+      - 'extras/graphics/test_neural_pipeline_aa_composer.cpp'
+      - 'extras/graphics/test_neural_pipeline_universal_paths.cpp'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r09-universal-optional-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  universal-topology-proof:
+    name: Every optional path, no NR, repeated stages and measured dedup (GCC/Clang)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact research-only source commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          submodules: false
+      - name: Compile and run four graph suites with undefined behavior sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .build-local/r09-universal
+          for cxx in g++ clang++; do
+            for suite in \
+              test_neural_pipeline_composer \
+              test_neural_pipeline_recipe \
+              test_neural_pipeline_aa_composer \
+              test_neural_pipeline_universal_paths; do
+              "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+                -fsanitize=undefined -fno-sanitize-recover=all \
+                -Iextras/graphics \
+                "extras/graphics/${suite}.cpp" \
+                -o ".build-local/r09-universal/${suite}-${cxx}"
+              UBSAN_OPTIONS=halt_on_error=1 \
+                ".build-local/r09-universal/${suite}-${cxx}"
+              echo "R09_OPTIONAL_PATH_CXX_UBSAN_PASS suite=${suite} compiler=${cxx}"
+            done
+          done
+          echo "R09_ALL_19531_ROLE_SEQUENCES_20480_OPTIONAL_METHODS_TWO_COMPILERS_PASS"
+          echo "R09_NATIVE_TWO_STREAM_POST_FG_PROOF_REQUIRED_DEDUP_MEASURED_ONLY"
+          echo "R09_HOST_ONLY_PS5_RUNTIME_DISABLED_NO_MODEL_NO_GPU_INFERENCE"

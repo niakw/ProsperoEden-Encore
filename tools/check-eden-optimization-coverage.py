@@ -812,7 +812,6 @@ print("ENCORE_POST_F07_C00_AUDIOIN_OWNER_PASS", "shipping_sources=2 historical_F
 post_f07_r23_fixed_source_owners = {
     "headless/r23_f2i_conversion_ps5.cpp",
     "headless/r23_bcat_delivery_cache_file_ps5.cpp",
-    "headless/r23_controller_applet_ps5.cpp",
     "headless/r23_audren_debug_ps5.cpp",
     "headless/r23_channel_state_cache_ps5.h",
 }
@@ -822,7 +821,7 @@ assert post_f07_r23_fixed_source_owners.isdisjoint(
     post_f07_r09_overlay_owners | post_f07_p5_astc_scope_bridge_owners)
 r23_cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert all(p.rsplit("/", 1)[-1] in r23_cmake for p in post_f07_r23_fixed_source_owners)
-print("ENCORE_POST_F07_R23_FIVE_SELECTED_OWNERS_PASS", "owners=5 historical_F07=518")
+print("ENCORE_POST_F07_R23_FOUR_SELECTED_OWNERS_PASS", "owners=4 historical_F07=518")
 # C02 is a reviewed owner OUTSIDE the immutable 518 historical F07 files.
 post_f07_c02_spirv_owners = {"headless/c02_spirv_fragcolor_ps5.cpp"}
 assert post_f07_c02_spirv_owners <= all_owners

@@ -4,6 +4,7 @@
 #pragma once
 #include "neural_pipeline_composer.h"
 #include <cstdint>
+#include <type_traits>
 namespace Eden::Graphics::PipelineComposer {
 inline constexpr bool kNativeSpatialVulkanChainQualified=false;
 enum class TwoPassReason : std::uint8_t {
@@ -17,15 +18,25 @@ struct TwoPassInput {
     std::uint64_t source_image{},source_view{},first_image{},
                   first_view{},second_image{},second_view{};
     bool same_vulkan_queue{};
-    bool first_renderpass_completed{};
+    bool first_renderpass_recorded{};
     bool color_write_to_fragment_read_barrier{};
-    bool second_renderpass_completed{};
+    bool second_renderpass_recorded{};
     bool both_owners_live_through_gpu_tick{};
 };
 struct TwoPassResult {
     TwoPassReason reason{TwoPassReason::UnsupportedStage};
     bool host_contract_passed{},ps5_runtime_allowed{};
 };
+// VkImage/VkImageView may be pointers or uint64_t depending on Vulkan
+// header configuration. Keep tokens as pure host policy IDs only.
+template<typename NativeHandle>
+[[nodiscard]] std::uint64_t NativeHandleToken(NativeHandle handle) noexcept {
+    if constexpr(std::is_pointer_v<NativeHandle>)
+        return static_cast<std::uint64_t>(
+            reinterpret_cast<std::uintptr_t>(handle));
+    else
+        return static_cast<std::uint64_t>(handle);
+}
 [[nodiscard]] constexpr bool IsTrueSpatialShader(int method) noexcept {
     return method==1||method==5||method==6;
 }
@@ -57,8 +68,8 @@ struct TwoPassResult {
             }
         }
     }
-    if(!x.first_renderpass_completed||
-       !x.second_renderpass_completed||
+    if(!x.first_renderpass_recorded||
+       !x.second_renderpass_recorded||
        !x.color_write_to_fragment_read_barrier) {
         v.reason=TwoPassReason::MissingBarrier;return v;
     }

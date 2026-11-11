@@ -2838,9 +2838,12 @@ endif()
 # source with the obsolete one-line research copy: it would drop the
 # already-shipped #128 missing-icon control null guards.
 if(PS5_NATIVE)
-    file(READ
+    # Inspect only relevant installed backport lines; do not add a source
+    # rewrite or regress the frozen native CMake READ budget.
+    file(STRINGS
         "${PROJECT_SOURCE_DIR}/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
-        eden_r23_fw23_ns_prepared)
+        eden_r23_fw23_ns_prepared
+        REGEX "GetApplicationControlData3|GetControlMetadata")
     string(FIND "${eden_r23_fw23_ns_prepared}"
         "{23, D<&IReadOnlyApplicationControlDataInterface::GetApplicationControlData3>"
         eden_r23_fw23_cmd23)

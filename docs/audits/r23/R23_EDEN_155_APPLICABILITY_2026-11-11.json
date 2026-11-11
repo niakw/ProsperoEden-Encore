@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 80,
+    "runtime-semantic-review-pending": 78,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -13,7 +13,7 @@
     "native-build-or-dependency-review": 6,
     "test-only-upstream": 1,
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
-    "verified-relevant-source-gap-awaiting-native-proof": 6,
+    "verified-relevant-source-gap-awaiting-native-proof": 7,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
@@ -21,6 +21,7 @@
     "source-implemented-native-PS5-ZBIC-NSO": 1,
     "source-equivalent-native-PS5-sparse-commit-failstop": 1,
     "source-equivalent-pinned-savedata-post-revert": 1,
+    "source-equivalent-PS5-semaphore-lock-lifecycle": 1,
     "source-equivalent-current-openssl-native-build": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
@@ -3421,12 +3422,13 @@
       "sha": "90aafeedc1d980849894f5bf251313db95594e8a",
       "title": "[k_scheduler] fix for libc++ that lazily initializes mutexes (#4447)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-PS5-semaphore-lock-lifecycle",
+      "scope": "Upstream #121 works around lazily initialized libc++ mutex in KScheduler by try_lock before unlock in ScheduleImplFiber and Unload. PS5 default EDEN_BLOCKING_GUEST_CONTEXT_LOCKS=ON selects vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp (blob 6bf49c0165ecac602628679adbb8cee8d8407190) via native-hle-overrides.cmake, and k_thread.h blob e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6 declares std::binary_semaphore m_context_guard{1}. The scheduler already uses try_acquire/release, with explicit bootstrap permit handling; mutex::unlock lazy init issue cannot arise on this production owner. Disabled/alternative owner not qualified.",
+      "action": "Do not transplant std::mutex try_lock workaround into std::binary_semaphore path. Treat normal PS5 scheduling lifecycle source-equivalent to the safety objective; retain scheduler stress tests on actual selected owner. If EDEN_BLOCKING_GUEST_CONTEXT_LOCKS OFF, this decision does not cover that profile.",
       "paths": [
         "src/core/hle/kernel/k_scheduler.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 selected production native owner + upstream individual patch; E3/E4 not executed"
     },
     {
       "index": 122,
@@ -3972,15 +3974,16 @@
       "sha": "f3af5d0c252feba0df73bedddcd8a40f71ebc0fa",
       "title": "[fs] moved temp folder cleanup upstream (per-application level) to avoid per-program retrigger (#4375)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream #152 transfers deletion of savedata/temp directory from SaveDataFactory constructor to FileSystemController::InitTempStorage once at FrontendInitiated app load. Current main PS5 headless/CMakeLists.txt selects complete vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp (blob 021de7c7f2f3cee7d5ad6c6fa458a57fc23a8002), which still invokes dir->DeleteSubdirectoryRecursive(\"temp\") on every SaveDataFactory construction. No InitTempStorage implementation appears in native main/vendor source inventory. Behavior can retrigger for multi-program launch and differs from upstream.",
+      "action": "Prepare a separate maintained NS1/common FS owner change before any merge; test front-end app load exactly once versus per-program creation, multi-program storage, unexpected shutdown, malformed temp entries, real PS5 FS permissions and preserved savedata. Do not delete global temp data as a blind workaround.",
       "paths": [
         "src/core/core.cpp",
         "src/core/file_sys/savedata_factory.cpp",
         "src/core/hle/service/filesystem/filesystem.cpp",
         "src/core/hle/service/filesystem/filesystem.h"
-      ]
+      ],
+      "source_evidence_level": "E1 selected production native owner + upstream individual patch; E3/E4 not executed"
     },
     {
       "index": 153,

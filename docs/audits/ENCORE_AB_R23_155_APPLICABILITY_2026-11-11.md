@@ -4,26 +4,27 @@
 
 | Catégorie R23 à jour | Commits | Action restante |
 |---|---:|---|
-| Runtime NS1/partagé : avis sémantique encore ouvert | **80** | Code, vrai propriétaire et tests à examiner |
+| Runtime NS1/partagé : avis sémantique encore ouvert | **78** | Code, propriétaire, tests |
 | Build/dépendance non validés | **6** | CI/toolchain/ABI |
-| Correctifs source préparés/testés hôte | **5** | Native/console requis |
-| Source gaps établis à vérifier natif | **7** | Test / propriété de source |
+| Correctifs source préparés/testés hôte | **5** | E3/E4 à obtenir |
+| Source gaps établis à vérifier natif | **8** | Test/compile/PS5 |
 | Non applicable au code PS5 natif | **27** | Pas de portage |
 | Non exécutable PS5 x64 (ARM64/NCE) | **6** | Non transposable |
 | Assets/langues non packagés | **8** | Aucun code runtime |
 | Test amont seulement | **1** | Corpus de référence |
 | Affinité GPU à mesurer | **1** | Trace PS5 |
-| Observabilité/logs uniquement | **2** | Ne pas importer |
-| Joycon revert exact | **2** | Déjà fermé |
-| HLE grands commits source inchangée | **2** | Preuve Git complète |
-| Savedata restauré | **1** | Déjà fermé |
-| OpenSSL native équivalent | **1** | Déjà sélectionné |
-| Opus/FFmpeg migration annulée | **2** | Ne pas importer |
-| PS5 sparse allocator fail-stop équivalent | **1** | Source E1 |
-| AudioSink PS5 volume persistant | **1** | Source E1 |
-| NSO ZBIC natif déjà intégré | **1** | Propriétaire CMake/loader |
-| NCZBLOCK NSZ/XCZ déjà intégré | **1** | Propriétaire CMake/VFS |
-| **Total** | **155** | **80 décisions runtime sémantiques encore ouvertes** |
+| Observabilité/logs uniquement | **2** | Pas de portage |
+| Joycon revert exact | **2** | Source vérifiée |
+| HLE grand revert source restaurée | **2** | Preuve Git |
+| Savedata revert exact | **1** | Source vérifiée |
+| OpenSSL natif équivalent | **1** | Déjà sélectionné |
+| Migration Opus/FFmpeg annulée | **2** | Aucun import |
+| PS5 sparse fail-stop équivalent | **1** | Source E1 |
+| PS5 volume persistant | **1** | Source E1 |
+| ZBIC natif intégré | **1** | Source E1 |
+| NCZBLOCK natif intégré | **1** | Source E1 |
+| Scheduler PS5 par sémaphore, pas de lazy mutex | **1** | Source E1 |
+| **Total** | **155** | **78 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 

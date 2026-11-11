@@ -54,6 +54,7 @@ jobs:
           python3 -B tools/audit/attest-r18-vendored-original-compile-owners.py --self-test
           python3 -B tools/audit/qualify-r18-replaced-source-paths.py --self-test
           python3 -B tools/audit/attest-r18-ninja-deps-headers.py --self-test
+          python3 -B tools/audit/check-r23-hid-button-connection-host.py
           python3 -B tools/audit/crosswalk-r23-cdb-native-source-owners.py --self-test
           python3 -B tools/audit/attest-r18-orphan-pin-archives.py --self-test
           python3 -B tools/audit/verify-r23-x64-memory-source.py --self-test

@@ -67,6 +67,29 @@ int main(){
     native.stages[6]=StageEvidence{};
     v=QualifyBoundRecipe(preset,native);
     assert(v.reason==R::HostCandidateOnly&&v.spatial_passes==3u);
+    // Move a same-output-resolution filter BEFORE another spatial pass
+    // without disturbing the underlying native-owner proof indices.
+    assert(MoveStep(preset,3,2));
+    assert(preset.stages[2].kind==K::Spatial);
+    assert(preset.stages[2].method==4);
+    assert(preset.stages[3].method==5);
+    v=QualifyBoundRecipe(preset,native);
+    assert(v.reason==R::HostCandidateOnly&&v.spatial_passes==3u);
+    assert(MoveStep(preset,2,3));
+    assert(preset.stages[2].method==5&&preset.stages[3].method==4);
+    v=QualifyBoundRecipe(preset,native);
+    assert(v.reason==R::HostCandidateOnly);
+    // Unsafe user reorder: moving FG in front of real-frame
+    // composition is prohibited even if all saved IDs look valid.
+    assert(MoveStep(preset,5,4));
+    v=QualifyBoundRecipe(preset,native);
+    assert(v.reason==R::FramegenRequiresComposedRealFrames);
+    assert(MoveStep(preset,4,5));
+    v=QualifyBoundRecipe(preset,native);
+    assert(v.reason==R::HostCandidateOnly);
+    assert(MoveStep(preset,4,4));
+    assert(!MoveStep(preset,kMaxSteps,0));
+    assert(!MoveStep(preset,0,kMaxSteps));
     // Native bindings are MANDATORY: never manufacture evidence.
     auto no_real_images=native;
     no_real_images.stages[2].image=0u;

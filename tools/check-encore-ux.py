@@ -354,3 +354,23 @@ assert 'bool warning_row = quick && kind == 4u;' in read('headless/vulkan_hud.fr
 quick_vulkan = read('headless/vulkan_window_adapt_r08.cpp')
 assert 'hud_pipeline ? *hud_pipeline : VK_NULL_HANDLE' in quick_vulkan
 assert 'hud_layout ? *hud_layout : VK_NULL_HANDLE' in quick_vulkan
+
+
+# R457 console: shoulder switching must never select the Recent or Update
+# actions; those remain reachable by D-pad/Cross in the top navigation.
+assert 'kShoulderDestinations[] = {0, 1, 4}' in launcher
+assert 'const int next = (current + (key == Key::r1 ? 1 : 2)) % 3;' in launcher
+assert 'top_nav_focus_ = kShoulderDestinations[next];' in launcher
+assert 'const float gx = i >= 3 ? r.x + r.w * 0.5f' in launcher
+# A development R457 install is newer than the last public R1 release.
+assert 'info.installed_version.empty() ? info.latest_version' in launcher
+assert ': info.installed_version' in launcher
+# Both firmware family folders must use the real shared format classifier
+# (including extracted and ZIP), not a count of only firmware/*.nca.
+assert 'bool firmware_ready = false;' in ui_preferences
+assert 'std::string firmware_detail;' in ui_preferences
+assert 'Eden::DetectFirmwareFormat(folder)' in services
+assert 'family({"ns1", "switch1", "ns1-extracted", "switch1-extracted"})' in services
+assert 'family({"ns2", "switch2", "ns2-extracted", "switch2-extracted"})' in services
+assert 'folder_info_.firmware_ready ? folder_info_.firmware_detail' in browse
+assert 'folder_info_.firmware_ready?tr("Firmware ready")' in read('headless/prosperoeden/pe/ui/switch_theme.cpp')

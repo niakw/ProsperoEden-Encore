@@ -102,6 +102,25 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
                 "#pragma once\n#include <array>\n#include <cstdint>\n"
                 f"inline constexpr std::array<std::uint32_t,4> {symbol}"
                 "{0x07230203u,0u,0u,0u};\n",encoding="utf-8")
+    if R09_NATIVE_SPATIAL_DUAL=="1":
+        # Syntax-only objects: NEVER execute these tiny placeholder SPIR-V
+        # bytes, or pass them as a GPU proof. Actual native FSR/SGSR source
+        # and descriptor ABI are compiled using pinned vendor PR #40.
+        for stem in (
+            "vulkan_fidelityfx_fsr_easu_fp16_frag",
+            "vulkan_fidelityfx_fsr_easu_fp32_frag",
+            "vulkan_fidelityfx_fsr_rcas_fp16_frag",
+            "vulkan_fidelityfx_fsr_rcas_fp32_frag",
+            "vulkan_fidelityfx_fsr_vert",
+            "sgsr1_shader_mobile_frag",
+            "sgsr1_shader_mobile_edge_direction_frag",
+            "sgsr1_shader_vert",
+        ):
+            symbol=stem.upper()+"_SPV"
+            (shader_headers/(stem+"_spv.h")).write_text(
+                "#pragma once\n#include <array>\n#include <cstdint>\n"
+                f"inline constexpr std::array<std::uint32_t,4> {symbol}"
+                "{0x07230203u,0u,0u,0u};\n",encoding="utf-8")
     for tool,header in (
         ("test-rdna2-decoder-tile-linear-spv.py",
          "rdna2_nr_decoder_tile_linear_comp_spv.h"),

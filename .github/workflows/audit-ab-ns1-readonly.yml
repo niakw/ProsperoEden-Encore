@@ -55,6 +55,7 @@ jobs:
           python3 -B tools/audit/qualify-r18-replaced-source-paths.py --self-test
           python3 -B tools/audit/attest-r18-ninja-deps-headers.py --self-test
           python3 -B tools/audit/check-r23-hid-button-connection-host.py
+          python3 -B tools/audit/attest-r23-native-lz4-static-mode.py --self-test
           python3 -B tools/audit/crosswalk-r23-cdb-native-source-owners.py --self-test
           python3 -B tools/audit/attest-r18-orphan-pin-archives.py --self-test
           python3 -B tools/audit/verify-r23-x64-memory-source.py --self-test
@@ -71,6 +72,7 @@ jobs:
           python3 -B tools/audit/qualify-r18-replaced-source-paths.py "${databases[0]}" > ab-ns1-witness/r18-replaced-owners.json
           python3 -B tools/audit/crosswalk-r23-cdb-native-source-owners.py             "${databases[0]}" > ab-ns1-witness/r23-native-TU-owners.json
           native_dir="$(dirname "${databases[0]}")"
+          python3 -B tools/audit/attest-r23-native-lz4-static-mode.py "$native_dir/CMakeCache.txt" > ab-ns1-witness/r23-lz4-static-mode.json
           if test -s "$native_dir/.ninja_deps"; then
             ninja -C "$native_dir" -t deps > ab-ns1-witness/.ninja-deps-raw.txt
           else
@@ -94,6 +96,8 @@ jobs:
           assert r23_crosswalk["header_inclusion_proven"] is False
           header_deps = json.loads(Path("ab-ns1-witness/r18-headers-ninja-deps.json").read_text())
           orphan = json.loads(Path("ab-ns1-witness/r18-orphan-pin-archives.json").read_text())
+          lz4 = json.loads(Path("ab-ns1-witness/r23-lz4-static-mode.json").read_text())
+          assert lz4["YUZU_STATIC_BUILD"] in ("ON", "OFF", "FALSE", "TRUE", "0", "1", "unknown")
           x64 = json.loads(Path("ab-ns1-witness/r23-x64-memory-source.json").read_text())
           assert x64["cases"]["136_A32_upstream_sign_extension"] == "still-divergent-test-required"
           assert all(x64["cases"][key] == "source-equivalent-E1"
@@ -129,6 +133,9 @@ jobs:
               "r18_historical_header_dependency_present": header_deps["ninja_deps_text_present"],
               "r18_archived_unavailable_pin_sha256": {k:v["archive_sha256"] for k,v in orphan["families"].items()},
               "r18_archived_unavailable_pins_not_officially_proven": True,
+              "r23_native_static_cmake_cache_present": lz4["native_cache_present"],
+              "r23_native_static_mode": lz4["YUZU_STATIC_BUILD"],
+              "r23_lz4_20_and_66_inert_in_historic_cache": lz4["both_lz4_changes_inert_in_this_cached_static_profile"],
               "r23_x64_memory_source_parity": x64["cases"],
           }
           Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")

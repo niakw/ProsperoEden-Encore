@@ -82,6 +82,7 @@ Layer::Layer(const Device& device, MemoryAllocator& memory_allocator_, Scheduler
     , device_memory(device_memory_)
     , filters(filters_)
     , image_count(image_count_)
+    , target_output_extent(output_size)
 {
     CreateDescriptorPool(device);
     CreateDescriptorSets(device, layout);
@@ -212,11 +213,22 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
          texture_info->sample_count==VK_SAMPLE_COUNT_1_BIT) &&
         (std::holds_alternative<FSR>(sr_filter) ||
          std::holds_alternative<SGSR>(sr_filter) ||
-         std::holds_alternative<std::monostate>(sr_filter));
+         std::holds_alternative<std::monostate>(sr_filter)) &&
+        // A4K has already upscaled 720->1440. Only a native sampler
+        // may downsample 1440->1080; FSR1/SGSR are upscale kernels.
+        (std::holds_alternative<std::monostate>(sr_filter) ||
+         (target_output_extent.width>=2560u &&
+          target_output_extent.height>=1440u));
     if(research_post_a4k_spatial){
         const VkImage unprocessed_game_image=source_image;
         const VkImageView unprocessed_game_view=source_image_view;
         try{
+            if(research_a4k_neural &&
+               research_a4k_owner_mode!=selected.mode){
+                // Old views may survive in other frame slots. The native
+                // owner's destructor synchronizes its pending GPU work.
+                research_a4k_neural.reset();
+            }
             if(!research_a4k_neural){
                 const auto profile=selected.mode==Eden::NeuralVideo::kA4kSoft?
                     Anime4K3D::Profile::Soft:
@@ -226,6 +238,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                 research_a4k_neural=std::make_unique<Anime4K3D>(
                     device,memory_allocator,scheduler,image_count,
                     VkExtent2D{2560u,1440u},profile);
+                research_a4k_owner_mode=selected.mode;
             }
             const auto result=research_a4k_neural->DrawFrame(
                 image_index,source_image,source_image_view,

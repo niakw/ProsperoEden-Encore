@@ -40,7 +40,7 @@ def check(presenter: str, owners: dict[str, str]) -> None:
         "SetMatrixData(",
     ), "Default FSR-before-R09 and separately gated post-R09 FSR")
     for token,why in (
-        ("if(!research_post_neural_fsr){",
+        ("if(!research_post_neural_fsr&&!research_native_spatial_pair){",
          "Default pre-neural FSR must be unchanged"),
         ("Eden::Graphics::DlssNrMin::kPostNeuralFsrRuntimeWired",
          "Missing first explicit runtime denial"),
@@ -132,7 +132,7 @@ def negative_tests(presenter: str, owners: dict[str, str]) -> int:
         ("wrong research raster","presenter",
          "VkExtent2D{1280u,720u}","VkExtent2D{1920u,1080u}"),
         ("lost pre-FSR defer guard","presenter",
-         "if(!research_post_neural_fsr){","if(research_post_neural_fsr){"),
+         "if(!research_post_neural_fsr&&!research_native_spatial_pair){","if(research_post_neural_fsr){"),
         ("lifted first qualification gate","presenter",
          "Eden::Graphics::DlssNrMin::kPostNeuralFsrRuntimeWired",
          "true"),

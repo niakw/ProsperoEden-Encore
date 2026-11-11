@@ -815,6 +815,31 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #48 VP9: this source pair must be selected together. The header
+# extends the native Vp9PictureInfo ABI and the .cpp consumes those fields.
+if(PS5_NATIVE)
+    set(EDEN_R23_VP9_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x")
+    set(EDEN_R23_VP9_INCLUDE "${PORT_BUILD_DIR}/r23-vp9/include")
+    if(NOT EXISTS "${EDEN_R23_VP9_ROOT}/codec_types.h"
+       OR NOT EXISTS "${EDEN_R23_VP9_ROOT}/codecs/vp9.cpp")
+        message(FATAL_ERROR "R23 #48 reviewed VP9 source/header pair is incomplete")
+    endif()
+    configure_file("${EDEN_R23_VP9_ROOT}/codec_types.h"
+        "${EDEN_R23_VP9_INCLUDE}/video_core/host1x/codec_types.h" COPYONLY)
+    get_target_property(eden_r23_vp9_units video_core SOURCES)
+    list(FIND eden_r23_vp9_units "host1x/codecs/vp9.cpp" eden_r23_vp9_old)
+    if(eden_r23_vp9_old LESS 0)
+        message(FATAL_ERROR "R23 #48 pinned VP9 decoder source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_vp9_units "host1x/codecs/vp9.cpp")
+    list(APPEND eden_r23_vp9_units "${EDEN_R23_VP9_ROOT}/codecs/vp9.cpp")
+    set_property(TARGET video_core PROPERTY SOURCES "${eden_r23_vp9_units}")
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_R23_VP9_INCLUDE}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_VP9_INCLUDE}")
+    message(STATUS "R23 #48: coherent VP9 frame metadata and single maintained decoder")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

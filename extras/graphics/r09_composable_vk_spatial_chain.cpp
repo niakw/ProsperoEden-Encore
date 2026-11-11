@@ -150,8 +150,15 @@ struct Host {
                 "vkCreateDebugUtilsMessengerEXT"));
         if(!create)
             throw std::runtime_error("Missing Khronos debug messenger");
-        Check(create(instance,&debug_info,nullptr,&debug),
+        // The pNext chain on vkCreateInstance is legal, but
+        // vkCreateDebugUtilsMessengerEXT requires pCreateInfo->pNext=NULL.
+        VkDebugUtilsMessengerCreateInfoEXT messenger_info=debug_info;
+        messenger_info.pNext=nullptr;
+        Check(create(instance,&messenger_info,nullptr,&debug),
               "create Khronos debug messenger");
+        if(validation_errors!=0u)
+            throw std::runtime_error(
+                "Khronos rejected validation messenger configuration");
         std::uint32_t count{};
         Check(vkEnumeratePhysicalDevices(instance,&count,nullptr),"count");
         if(!count)throw std::runtime_error("No Vulkan physical device");

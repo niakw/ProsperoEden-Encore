@@ -136,9 +136,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The isolated R2 branch carries exact SHA-pinned unmerged vendor
     # research additions and source owners. Never add these to the production
     # 238-path allowlist; the executable oracle remains byte-exact.
+    # GitHub Actions uses a merge ref for pull_request events; admit only
+    # this exact draft research head, and still pin every changed source SHA.
     r2_research = (
         os.environ.get('GITHUB_REF') ==
         'refs/heads/research/ns2-r234-integrated-native-20261111'
+        or os.environ.get('GITHUB_HEAD_REF') ==
+        'research/ns2-r234-integrated-native-20261111'
     )
     if r2_research:
         r2_vendor = '4f08b9c9dd2f34deecc9c9fa0d8196dcd6575c2e'

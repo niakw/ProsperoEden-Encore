@@ -5,7 +5,7 @@ on:
   push:
     branches: [research/ns2-r234-integrated-native-20261111]
     paths:
-      - '.github/workflows/ns2-r2-native-cmake-graph.yml'
+      - '.github/workflows/ns2-r234-real-native-source.yml'
       - 'tools/ns2/check_r2_native_cmake_graph.py'
       - 'tools/ns2/check_r2_native_graph_syntax.py'
       - 'tools/ns2/check_r2_native_graph_objects.py'

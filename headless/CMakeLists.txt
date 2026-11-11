@@ -974,6 +974,25 @@ list(REMOVE_ITEM core_sources hle/kernel/kernel.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_KERNEL_SOURCE}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #46 — compile the bounded cheat parser from exactly one maintained
+# full TU, never modify the immutable checked-out Eden source during CMake.
+if(PS5_NATIVE)
+    set(EDEN_R23_CHEATS
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/memory/cheat_engine.cpp")
+    if(NOT EXISTS "${EDEN_R23_CHEATS}")
+        message(FATAL_ERROR "R23 #46 maintained cheat_engine.cpp source absent")
+    endif()
+    get_target_property(eden_r23_cheat_sources core SOURCES)
+    list(FIND eden_r23_cheat_sources "memory/cheat_engine.cpp" eden_r23_old_cheats)
+    if(eden_r23_old_cheats EQUAL -1)
+        message(FATAL_ERROR "R23 #46 original cheat TU owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_cheat_sources "memory/cheat_engine.cpp")
+    list(APPEND eden_r23_cheat_sources "${EDEN_R23_CHEATS}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_cheat_sources}")
+    message(STATUS "R23 #46 selected one bounded cheat parser C++ TU")
+endif()
+
 # Replace SDL audio with the optional native sink; the renderer stays null.
 get_target_property(audio_sources audio_core SOURCES)
 list(FILTER audio_sources EXCLUDE REGEX "sink/sdl3_sink\\.")

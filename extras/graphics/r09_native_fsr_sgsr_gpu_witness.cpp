@@ -270,8 +270,9 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
     std::array<VkPipelineLayout,2u> pls{};
     for(unsigned i=0;i<2u;++i){
         const VkPushConstantRange push{
-            i==0u?VK_SHADER_STAGE_FRAGMENT_BIT:
-                VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_VERTEX_BIT,
+            static_cast<VkShaderStageFlags>(
+                i==0u?VK_SHADER_STAGE_FRAGMENT_BIT:
+                (VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_VERTEX_BIT)),
             0u,i==0u?64u:36u};
         VkPipelineLayoutCreateInfo li{};
         li.sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

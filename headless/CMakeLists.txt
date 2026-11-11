@@ -2878,6 +2878,27 @@ if(PS5_NATIVE)
     message(STATUS "Encore R23 #131: preserved-controller fallback selected")
 endif()
 
+# R23 #84/#109: two pinned PS5 AM frontend source owners, no vendor mutation.
+if(PS5_NATIVE)
+    get_target_property(eden_am_sources core SOURCES)
+    foreach(eden_am_original IN ITEMS
+            "hle/service/am/frontend/applets.cpp"
+            "hle/service/am/service/library_applet_creator.cpp")
+        list(FIND eden_am_sources "${eden_am_original}" eden_am_index)
+        if(eden_am_index LESS 0)
+            message(FATAL_ERROR "R23 AM core owner moved: ${eden_am_original}")
+        endif()
+        list(REMOVE_ITEM eden_am_sources "${eden_am_original}")
+        if(eden_am_original STREQUAL "hle/service/am/frontend/applets.cpp")
+            list(APPEND eden_am_sources "${EDEN_PORT_DIR}/r23_am_frontend_applets_ps5.cpp")
+        else()
+            list(APPEND eden_am_sources "${EDEN_PORT_DIR}/r23_am_library_applet_creator_ps5.cpp")
+        endif()
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_am_sources}")
+    message(STATUS "R23 AM #84/#109 selected native source owners")
+endif()
+
 # R23 #146 / #4406: one maintained native header for Maxwell channel cache.
 # The pinned vendor snapshot is immutable; do not copy a generated patch over it.
 if(PS5_NATIVE)

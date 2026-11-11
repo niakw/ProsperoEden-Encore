@@ -5,12 +5,12 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 92,
+    "runtime-semantic-review-pending": 91,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 6,
-    "native-build-or-dependency-review": 5,
+    "native-build-or-dependency-review": 6,
     "test-only-upstream": 1,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "upstream-runtime-then-reverted-equivalent": 2,
@@ -3090,12 +3090,13 @@
       "sha": "3d37a816c6adc2708a7be70f5a7fbe0af36b8227",
       "title": "[glsl] fix clang 23 build error for unused function `SetDefinition` (#4389)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "native-build-or-dependency-review",
+      "scope": "Exact Eden #101 changes only backend/glsl/emit_glsl.cpp. Pinned shader_recompiler CMake target includes that translation unit exclusively under if(ENABLE_OPENGL). Headless host sets ENABLE_OPENGL=OFF; native PS5 script optionally enables OpenGL with graphics profile. No Vulkan SPIR-V semantic change, but optional PS5 OpenGL GLSL build remains untested.",
+      "action": "Keep as optional OpenGL Clang23 syntax/semantic case; compile actual selected GLSL TU with native compiler before accepting. No general Vulkan patch.",
       "paths": [
         "src/shader_recompiler/backend/glsl/emit_glsl.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 exact source and CMake selector; no native/console proof"
     },
     {
       "index": 102,

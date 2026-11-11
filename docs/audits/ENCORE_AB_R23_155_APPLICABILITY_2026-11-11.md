@@ -184,3 +184,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## 11 novembre — source pass 6, nouveaux avis bornés
 
 [Décisions détaillées et preuves exactes #91, #129, #134](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS6_2026-11-11.md). Les trois sources en question sont **classées E1 seulement** : applet Qt non expédié, renommage NS strictement cosmétique, mise à jour Boost 1.90→1.92 *délibérément non appliquée*. La catégorie « candidatures build en attente » passe à **2**, les cas runtime non tranchés à **64**. Les anciennes étapes de ce journal restent des jalons historiques, non des chiffres actuels.
+
+## R23 pass 7 — #100 native CLI scope and next runtime source risks (11 novembre)
+
+[Exact source evidence and reopen tests](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS7_2026-11-11.md). The `#100` upstream change moves CLI parsing into a new core TU and changes Qt/SDL entrypoints, but the pinned PS5 core does not compile that new TU and the native recipe explicitly turns off both frontends. Excluded **only as a current native frontend port**, not as proof of successful PS5 game boot. Remaining **58** semantic decisions; five host-staged fixes, eleven source gaps, seventeen native header receipts and seven corrective release gates remain separate. #29 Unicode and #52 Vulkan async shader behavior stay open, with concrete behavioral divergences to test.

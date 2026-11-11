@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 11,
-    "runtime-semantic-review-pending": 59,
+    "runtime-semantic-review-pending": 58,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -41,7 +41,8 @@
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "reviewed-mouse-Qt-SDL-frontend-timer-not-native": 1,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
-    "verified-absent-GPU-null-initialization-candidate": 1
+    "verified-absent-GPU-null-initialization-candidate": 1,
+    "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3104,9 +3105,9 @@
       "sha": "278f411dad6e8a52747994888f8778b277f6d953",
       "title": "[frontend] Unify cmdline parsing (#4424)",
       "file_count": 7,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-frontend-cli-only-no-current-headless-PS5-port",
+      "scope": "E1 scoped exclusion: upstream adds Core::ParseLaunchParams and moves Qt/SDL CLI parsing into core; pinned core CMake has no launch_params.cpp, native PS5 disables Qt and yuzu-cmd, and headless/main.cpp uses its own entry point.",
+      "action": "No CLI parser transplant into current PS5 runtime. Reopen if headless starts calling ParseLaunchParams, native CMake selects launch_params.cpp, or a Qt/SDL frontend is packaged; then require argument/parser and startup regression tests.",
       "paths": [
         "docs/user/CommandLine.md",
         "src/core/CMakeLists.txt",
@@ -3115,7 +3116,8 @@
         "src/yuzu/main_window.cpp",
         "src/yuzu_cmd/CMakeLists.txt",
         "src/yuzu_cmd/yuzu.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1: exact upstream 7-path diff + pinned core CMake blob 508ace350173f5068bd7531f37e70199134fde3a + native build and headless main source; not a compiled/link/device receipt."
     },
     {
       "index": 101,

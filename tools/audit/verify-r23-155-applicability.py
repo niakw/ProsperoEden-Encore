@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 59,
+        "runtime-semantic-review-pending": 58,
+        "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -165,6 +166,27 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for i in (91, 129, 134):
         if f"## #{i}" not in pass6_doc:
             raise ValueError(f"Missing reviewed source proof for R23 #{i}")
+    # #100 only unifies Qt/SDL CLI parsing. In the frozen PS5 profile,
+    # neither frontend is selected, the upstream new core TU does not exist
+    # in the pinned original, and native headless main has its own entry.
+    cli_paths = [
+        "docs/user/CommandLine.md",
+        "src/core/CMakeLists.txt",
+        "src/core/launch_params.cpp",
+        "src/core/launch_params.h",
+        "src/yuzu/main_window.cpp",
+        "src/yuzu_cmd/CMakeLists.txt",
+        "src/yuzu_cmd/yuzu.cpp",
+    ]
+    cli = by_index[100]
+    if (cli["classification"] != "reviewed-frontend-cli-only-no-current-headless-PS5-port"
+            or cli["paths"] != cli_paths
+            or not cli.get("source_evidence_level", "").startswith("E1")
+            or "ParseLaunchParams" in
+                (root / "headless/main.cpp").read_text()
+            or "## #100" not in
+                (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS7_2026-11-11.md").read_text()):
+        raise ValueError("R23 #100 headless CLI exclusion lost exact E1 proof")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -333,7 +355,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 59
+    assert validate(root)["runtime_semantic_cases_pending"] == 58
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

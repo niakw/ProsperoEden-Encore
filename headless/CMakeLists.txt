@@ -806,7 +806,7 @@ if(PS5_NATIVE)
     # Read only relevant prepared-source lines; no new CMake source rewrite.
     file(STRINGS "${PROJECT_SOURCE_DIR}/src/core/frontend/applets/controller.cpp"
          eden_controller_prepared REGEX "keep_connected")
-    string(FIND "${eden_controller_prepared}" "if (keep_connected[index]) continue;"
+    string(FIND "${eden_controller_prepared}" "if (keep_connected[index]) continue"
            eden_controller_keep)
     if(eden_controller_keep LESS 0)
         message(FATAL_ERROR "R23 #131 selected prepared controller lacks retention fix")

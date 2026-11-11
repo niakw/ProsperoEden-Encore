@@ -18,11 +18,12 @@ assert cmake.count('set(EDEN_NS2_CPU6_ROOT "') == 1
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in cmake
 for target, visibility in (("core", "PUBLIC"), ("dynarmic", "PUBLIC"),
                            ("audio_core", "PRIVATE"), ("video_core", "PRIVATE"),
+                           ("hid_core", "PRIVATE"),
                            ("eden-headless", "PRIVATE")):
     call = (f'target_include_directories({target} BEFORE {visibility} '
             '"${EDEN_NS2_CPU6_ROOT}")')
     assert cmake.count(call) == 1, call
-assert 'foreach(eden_cpu6_abi_consumer IN ITEMS core audio_core video_core)' in cmake
+assert 'foreach(eden_cpu6_abi_consumer IN ITEMS core audio_core video_core hid_core)' in cmake
 assert 'target_sources(${eden_cpu6_abi_consumer} PRIVATE' in cmake
 assert '"${EDEN_PORT_DIR}/ps5_cpu6_abi_probe.cpp")' in cmake
 assert 'static_assert(Core::Hardware::NUM_CPU_CORES == 6,' in probe
@@ -56,4 +57,4 @@ with tempfile.TemporaryDirectory(prefix="r457-cpu6-abi-") as temp:
         else:
             assert run.returncode != 0, "ABI probe silently accepted a 4-core module"
             assert "NUM_CPU_CORES == 6" in run.stderr, run.stderr
-print("R457_NATIVE_KPROCESS_ABI_SOURCE_GATE_PASS core6=1 audio6=1 video6=1 rejects4=1")
+print("R457_NATIVE_KPROCESS_ABI_SOURCE_GATE_PASS core6=1 audio6=1 video6=1 hid6=1 rejects4=1")

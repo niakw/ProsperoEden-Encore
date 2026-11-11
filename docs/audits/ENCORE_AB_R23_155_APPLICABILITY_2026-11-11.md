@@ -2,24 +2,26 @@
 
 **État : audit PR #45, en lecture seule.** L'inventaire des 155 diffs par commit est complet; ce registre applique maintenant une catégorie explicite à **chaque** commit et n'importe aucun code. Un commit classé *runtime à examiner* n'est pas déclaré intégré ou absent sans vraie preuve; un fix testé sur hôte n'est pas validé PS5.
 
-| Catégorie vérifiée au 11 novembre | Commits | État / suite |
+| Catégorie au 11 novembre | Commits | Suite |
 |---|---:|---|
-| Revue sémantique runtime NS1 ou partagé encore ouverte | **84** | Vérifier vrai propriétaire/équivalence/test ; ne pas importer en masse |
-| Changement build/dépendance à qualifier | **6** | Compiler/versions et liens natifs à vérifier |
-| Correctif source préparé avec tests hôte | **5** | E3 native, E4 console requis |
-| Écart de code source établi mais non validé natif | **7** | Effectivité propriétaire et négatifs requis |
-| Non applicable au runtime natif par source | **27** | Ne pas importer ; pas de prétendue preuve PS5 |
-| Spécifique host ARM64/NCE non exécutable sur Zen2 | **6** | Exclure backend, conserver tests communs si nécessaires |
-| Langues/assets non embarqués | **8** | Pas de portage runtime |
-| Test amont de référence seulement | **1** | Corpus utile, pas de correctif binaire |
-| Affinité GPU nécessitant mesure PS5 | **1** | Source identifiée, trace console requise |
-| Observabilité/log sans changement guest | **2** | Aucun portage comportemental |
-| Couple Joycon aller/retour, source restaurée | **2** | Exclusion vérifiée |
-| Couple HLE #74/#69, code restauré après normalisation | **2** | [Preuve Git complète](ENCORE_AB_R23_HLE_REVERSION_FINAL_SOURCE_RECEIPT_2026-11-11.md) ; droit/licence conservés |
-| Savedata source identique après retour | **1** | Exclusion vérifiée |
-| Configuration native OpenSSL équivalente | **1** | Ne pas importer fallback inutilisé |
-| Migration Opus/FFmpeg annulée | **2** | Pas de portage de migration annulée |
-| **Total audité par SHA** | **155** | 0 commit manquant, **84** décisions runtime encore ouvertes |
+| Revue sémantique NS1/partagée encore ouverte | **82** | Propriétaire/équivalence/essais réels |
+| Build/dépendance natifs à qualifier | **6** | Pins, API, liens et ABI |
+| Correctifs de source préparés / tests hôte | **5** | E3/E4 natifs à obtenir |
+| Gaps source établis avec validation native restante | **7** | Tests, compile et PS5 |
+| Non applicable au code runtime natif | **27** | Pas de portage comportemental |
+| Exclusion host ARM64/NCE pour PS5 Zen2 | **6** | Écart backend non transposable |
+| Assets/langues non distribués sur PS5 | **8** | Pas de code runtime |
+| Test amont seul | **1** | Corpus de référence |
+| Affinité GPU, trace PS5 en attente | **1** | Mesures console |
+| Observation/logs sans changement guest | **2** | Pas de portage de comportement |
+| Annulation Joycon, sans changement net | **2** | Source vérifiée |
+| Grande annulation HLE, changements cosmétiques seuls | **2** | Comparaison complète Git |
+| Savedata identique après revert | **1** | Source vérifiée |
+| Backend OpenSSL équivalent | **1** | Code sélectionné identique |
+| Migration Opus/FFmpeg annulée | **2** | Aucun portage de migration |
+| Commit sparse PS5 équivalent en sécurité de commit | **1** | Source directe, E3/E4 distincts |
+| Volume PS5 natif déjà persistant | **1** | Source directe, test console distinct |
+| **Total** | **155** | **82 revues runtime ouvertes** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 

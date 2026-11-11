@@ -73,6 +73,10 @@ struct StageEvidence {
     bool hud_history_safe{};
     bool native_fg_provider_verified{};
     bool measured_gpu_memory_and_time_budget{};
+    // A user-editable recipe cannot attest that a post-FG pass touches
+    // BOTH the real and synthetic image streams. Only the native Vulkan
+    // owner can supply this independent binding.
+    bool processes_real_and_generated_verified{};
 };
 struct Bindings {
     std::uint64_t guest_image{},guest_view{};
@@ -117,7 +121,8 @@ struct Bindings {
             s.image=proof.image;s.view=proof.view;
         }
         s.processes_real_and_generated=
-            spec.processes_real_and_generated;
+            spec.processes_real_and_generated &&
+            proof.processes_real_and_generated_verified;
         s.native_gpu_pass_recorded=proof.native_gpu_pass_recorded;
         s.compatible_queue=proof.compatible_queue;
         s.producer_to_consumer_visible=

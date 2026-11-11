@@ -49,6 +49,43 @@ for stem in ("switch-logo", "switch-rear-footer", "ns2-head"):
 # Resumed builds restore the already staged catalog from an earlier Actions
 # run: the source-tree index is not regenerated during a stage resume.
 ui_expected.add("ui/box-art-index.tsv")
+
+# The native package step deliberately creates a bounded, offline daily-art
+# snapshot after checkout. It is not part of the committed source tree.
+# Inspect its manifest instead of accepting arbitrary ui/art/daily extras.
+daily = app / "ui/art/daily"
+if daily.exists():
+    manifest_path = daily / "index.json"
+    assert manifest_path.is_file() and not manifest_path.is_symlink(), (
+        "daily wallpaper manifest missing or unsafe"
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest.get("schema") == 1, "daily wallpaper schema drift"
+    entries = manifest.get("entries")
+    assert isinstance(entries, list) and 1 <= len(entries) <= 16, (
+        "daily wallpaper inventory out of bounds"
+    )
+    daily_files = set()
+    for index, item in enumerate(entries):
+        assert isinstance(item, dict) and item.get("approved") is True
+        filename = f"wall-{index:02d}.jpg"
+        assert item.get("filename") == filename, "daily wallpaper name/order drift"
+        assert item.get("platform") in ("NS1", "NS2", "Switch", "Switch 2", "ns1", "ns2"), (
+            "unexpected daily wallpaper platform"
+        )
+        path = daily / filename
+        assert path.is_file() and not path.is_symlink()
+        data = path.read_bytes()
+        assert 4000 <= len(data) <= 16 * 1024 * 1024
+        assert data.startswith(b"\\xff\\xd8\\xff") and data.endswith(b"\\xff\\xd9"), (
+            f"invalid daily JPEG: {filename}"
+        )
+        daily_files.add(filename)
+        ui_expected.add(f"ui/art/daily/{filename}")
+    assert {p.name for p in daily.iterdir()} == daily_files | {"index.json"}, (
+        "daily wallpaper extras or missing files"
+    )
+    ui_expected.add("ui/art/daily/index.json")
 for source in (source_ui / "lang").glob("*.po"):
     ui_expected.add("ui/lang/" + source.with_suffix(".txt").name)
 legal_source = root / "LICENSES"

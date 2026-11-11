@@ -112,6 +112,16 @@ AssessPostNeuralFramegen(const FramegenBridgeInput& e) noexcept {
        !e.final_post_spatial_frame_composited){
         result.reason=FramegenBridgeReason::WrongOrderOrExtent;return result;
     }
+    // A4K emits 1440p when fed 720p. The spatial filter needs a
+    // genuine upscale target; 1440p->1080p is only accepted for
+    // native samplers, NOT FSR1 EASU or SGSR / SGSR Edge.
+    if(a4k&&SelectSpatialBackend(e.spatial_filter)!=
+            SpatialBackend::NativeSampler&&
+       (e.post_spatial.extent.width<e.neural.extent.width||
+        e.post_spatial.extent.height<e.neural.extent.height)){
+        result.reason=FramegenBridgeReason::WrongOrderOrExtent;
+        return result;
+    }
     if(!e.neural_result_submitted||!e.same_graphics_queue||
        !e.prior_real_frame_gpu_fence_complete||
        !e.resource_lifetime_through_interpolation_fence){

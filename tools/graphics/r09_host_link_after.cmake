@@ -116,6 +116,21 @@ add_executable(r09-full-gpu-host
     "${ENCORE_R09_ROOT}/tools/graphics/r09_host_vma_impl.cpp"
     "${_r09_vendor}/sources/eden/src/frontend_common/play_time_manager.cpp")
 target_compile_features(r09-full-gpu-host PRIVATE cxx_std_20)
+# Research-only 720p Original GPU entry. OFF by default, never set by the
+# production PS5 pipeline or normal Linux host link. Requires an actual
+# user-authorized, SHA-256 authenticated model and 1280x720 raw capture.
+option(ENCORE_R09_MIN_720_HOST_RESEARCH
+    "Permit manual Linux-host-only 720p Original neural research trial" OFF)
+if(ENCORE_R09_MIN_720_HOST_RESEARCH)
+    target_compile_definitions(r09-full-gpu-host PRIVATE
+        EDEN_R09_MIN_720_HOST_EXPERIMENTAL=1)
+    message(WARNING
+        "R09 720p Original research GPU entry ON for LINUX HOST ONLY; "
+        "GPU/model/PS5 performance NOT yet qualified")
+else()
+    target_compile_definitions(r09-full-gpu-host PRIVATE
+        EDEN_R09_MIN_720_HOST_EXPERIMENTAL=0)
+endif()
 target_include_directories(r09-full-gpu-host BEFORE PRIVATE
     "${_r09_compat}"
     "${_r09_shader_include}"

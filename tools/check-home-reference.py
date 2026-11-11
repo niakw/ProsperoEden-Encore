@@ -74,11 +74,15 @@ assert 'hero_file.empty() ? std::string{tr("Your next adventure")}' in home
 # R385: unified left Hero column from the annotated PS5 screenshot.
 assert 'constexpr float kHeroX = 90.0f' in home
 assert 'constexpr float kHeroContentWidth = 1250.0f' in home
+assert 'const bool dark_hero_surface = prefs_.color_palette == 3 &&' in home
+assert 'prefs_.show_game_background;' in home
+assert 'const Color hero_title_ink = dark_hero_surface ? Color::rgb(0xffffff) : theme::kTitle;' in home
+assert 'const Color hero_description_ink = dark_hero_surface ? Color::rgb(0xf2f5fb) : theme::kBody;' in home
 assert 'text_shrink(c, title_label, kHeroX' in home
-assert 'kTitleSize, theme::kTitle, kHeroContentWidth, Align::left, 0.0f, 0.45f)' in home
+assert 'kTitleSize, hero_title_ink, kHeroContentWidth, Align::left, 0.0f, 0.45f)' in home
 assert 'theme::kWarning, kHeroContentWidth, 2, true)' in home
 assert 'text_block_semantic(c, hero_caption, kHeroX' in home
-assert 'theme::kBody, kHeroContentWidth, 2, 0.90f)' in home
+assert 'hero_description_ink, kHeroContentWidth, 2, 0.90f)' in home
 assert 'constexpr float kChipGap = 9.0f' in home
 assert 'const float room = kHeroX + kHeroContentWidth - chip_x - kChipGap * 3.0f' in home
 assert 'width *= factor' in home

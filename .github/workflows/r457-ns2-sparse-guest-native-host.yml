@@ -30,7 +30,7 @@ jobs:
             tools/ns2/test_r457_native_sparse_owner.cpp -o /tmp/r457-native-owner
           /tmp/r457-native-owner
           python3 -B tools/ns2/check_r457_sparse_kernel_source.py
-      - name: Verify production PS5 sparse backing and maintained guest PTE owner
+      - name: Verify production sparse backing and maintained guest PTE owner
         run: |
           set -euo pipefail
           grep -F 'set(EDEN_NS2_SPARSE_BACKING ON)' headless/CMakeLists.txt

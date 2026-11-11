@@ -24,6 +24,10 @@ po=(root/'headless/prosperoeden/ui/lang/fr-FR.po').read_text()
 embedded=(root/'headless/prosperoeden/fr_fr_embedded.h').read_text()
 assert 'constexpr float kHeroX = 90.0f' in home
 assert 'constexpr float kHeroContentWidth = 1250.0f' in home
+assert 'const bool dark_hero_surface = prefs_.color_palette == 3 &&' in home
+assert 'prefs_.show_game_background;' in home
+assert 'const Color hero_title_ink = dark_hero_surface ? Color::rgb(0xffffff) : theme::kTitle;' in home
+assert 'const Color hero_description_ink = dark_hero_surface ? Color::rgb(0xf2f5fb) : theme::kBody;' in home
 assert 'text_shrink(c, title_label, kHeroX' in home
 assert 'kHeroContentWidth, Align::left, 0.0f, 0.45f)' in home
 assert 'text_block(c, title_label, kHeroX' not in home
@@ -31,7 +35,7 @@ assert 'text_block_semantic(c, hero_caption, kHeroX' in home
 assert 'kHeroX + kHeroContentWidth - chip_x' in home
 assert 'room / desired' in home
 assert 'list.image(hero_picture.texture, hero, uv' in home
-assert 'theme::kBody, kHeroContentWidth, 2, 0.90f' in home
+assert 'hero_description_ink, kHeroContentWidth, 2, 0.90f' in home
 assert 'constexpr float kChipGap = 9.0f' in home
 assert 90+1250 <= 1340
 

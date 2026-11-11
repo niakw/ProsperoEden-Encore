@@ -18,6 +18,7 @@ namespace Eden::Graphics::PipelineComposer {
         const auto& x=a.stages[i];
         const auto& y=b.stages[i];
         if(x.kind!=y.kind||x.method!=y.method||x.output!=y.output||
+           x.strength_percent!=y.strength_percent||
            x.processes_real_and_generated!=y.processes_real_and_generated)
             return false;
     }

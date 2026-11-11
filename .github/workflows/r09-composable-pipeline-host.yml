@@ -14,6 +14,7 @@ on:
       - 'extras/graphics/test_neural_pipeline_recipe.cpp'
       - 'extras/graphics/r09_min_shaders/pipeline_resample_host.comp'
       - 'extras/graphics/r09_composable_vk_spatial_chain.cpp'
+      - 'extras/graphics/r09_native_fsr_sgsr_gpu_witness.cpp'
   workflow_dispatch:
 
 permissions:
@@ -178,3 +179,39 @@ jobs:
             echo "R09_AUTHENTIC_VENDOR_SHADER_SPIRV_VALID entry=$entry"
           done
           echo R09_REAL_FSR1_EASU_RCAS_SGSR_EDGE_SPIRV_ALL_SIX_VALID
+      - name: Compile genuine vendor graphics-shader Vulkan three-pass witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq --no-install-recommends \
+            g++ libvulkan-dev mesa-vulkan-drivers vulkan-validationlayers
+          g++ -std=c++20 -O1 -Wall -Wextra -Werror -Wno-unused-function \
+            -UNDEBUG -Iextras/graphics \
+            extras/graphics/r09_native_fsr_sgsr_gpu_witness.cpp \
+            -lvulkan -o .build-local/r09-vendor-real-spv/native_gpu
+      - name: Run authentic vendor EASU → RCAS → SGSR/Edge GPU and independent pixel checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          icd="$(find /usr/share/vulkan/icd.d -maxdepth 1 \
+            -type f -name 'lvp_icd*.json' -print -quit)"
+          test -n "$icd" && test -f "$icd"
+          export VK_ICD_FILENAMES="$icd"
+          export VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_validation
+          out=.build-local/r09-vendor-real-spv
+          for method in normal edge; do
+            frag=sgsr1_shader_mobile.frag
+            if [[ "$method" == edge ]]; then
+              frag=sgsr1_shader_mobile_edge_direction.frag
+            fi
+            for pattern in constant gradient; do
+              "$out/native_gpu" \
+                "$out/vulkan_fidelityfx_fsr.vert.spv" \
+                "$out/vulkan_fidelityfx_fsr_easu_fp32.frag.spv" \
+                "$out/vulkan_fidelityfx_fsr_rcas_fp32.frag.spv" \
+                "$out/sgsr1_shader.vert.spv" \
+                "$out/$frag.spv" "$method" "$pattern"
+            done
+          done
+          echo R09_AUTHENTIC_VENDOR_NATIVE_GLSL_EASU_RCAS_SGSR_EDGE_GPU_PASS
+          echo R09_HOST_LAVAPIPE_NOT_PS5_NOT_TRAINED_NEURAL_NOT_NATIVE_CPP_OWNER_CALL

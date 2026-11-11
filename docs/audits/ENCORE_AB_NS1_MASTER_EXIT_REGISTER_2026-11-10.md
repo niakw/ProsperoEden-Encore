@@ -185,3 +185,8 @@ The [HID source policy report](ENCORE_AB_R23_HID_CONNECTION_POLICY_2026-11-11.md
 ### R23 pass 17 — measured native IOFile vs absent NCZBLOCK source owner (11 Nov)
 
 [Exact native owner qualification](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS17_2026-11-11.md): #31 upstream mmap+pagefault file-reader changes alter native FreeBSD lifecycle/VM costs and include untested fd=0/empty file cases, so retained stdio pending actual PS5 perf/safety proof. #45 upstream NCZBLOCK 32-slot decoder optimization introduces an entire `ncz_decompressor.cpp` module not in the selected frozen vendor core CMake and cannot simply be cherry-picked as an optimization of a nonexisting TU. **31** semantic reviews left; **22** source gaps unchanged; **7** scope/policy decisions (2 old GL/UTF + 3 pass16 + 2 pass17), 17 headers and 7 corrective batches. No new branches, merges or production changes.
+
+
+### R23 pass 18 — NCE-only settings toggle #82 (11 Nov 2026)
+
+[Source E1 decision](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS18_2026-11-11.md): upstream #82 adds NCE-only NRO and disabled-by-default GPU-readback controls; pinned CMake selects NCE only under ARM64 Android/Linux, not PS5 x64 Dynarmic. The 155-entry JSON applicability register and its fail-closed validator now classify #82 as reviewed/non-port for this native profile. **30 generic semantic reviews remain**, **22 confirmed source gaps**, **7 scoped policy/refactor decisions**, **17 header include receipts**, **7 full release gates C00–C06**. #68's unconditional RO permission change, #6's shared GPU cache writes and #149's HLE session limits **remain open**. Historical pass counts above are dated snapshots, not the latest state. No native compiler/ELF/PS5 proof and no production/vendor change.

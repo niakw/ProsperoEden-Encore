@@ -206,6 +206,19 @@ get_target_property(common_sources common SOURCES)
 list(REMOVE_ITEM common_sources host_memory.cpp sparse_large_vector.cpp)
 set_property(TARGET common PROPERTY SOURCES "${common_sources}")
 target_sources(common PRIVATE "${PORT_ROOT}/src/host_memory.cpp" "${PORT_ROOT}/src/memory_pages.cpp")
+# Isolated R457 NS2 12 GiB virtual / bounded 2 MiB physical resident owner.
+# Real native syscalls and guest PTE precommit; NOT included by default.
+# Do not turn this on in production until GPU coherency and PS5 boot pass.
+option(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING "Research-only 12GiB NS2 sparse direct backing" OFF)
+if(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING)
+    if(NOT PS5_NATIVE)
+        message(FATAL_ERROR "NS2 sparse PS5 direct-memory owner requires PS5_NATIVE")
+    endif()
+    target_sources(common PRIVATE "${PORT_ROOT}/src/ns2_sparse_guest.cpp")
+    target_include_directories(common PRIVATE "${PORT_ROOT}/headless")
+    target_compile_definitions(common PRIVATE EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING=1)
+    target_compile_definitions(core PRIVATE EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING=1)
+endif()
 # Sparse JIT trim helpers are shared with Dynarmic. The native release
 # uses the one sparse JIT allocator path; these are compile-time helpers.
 target_include_directories(common PRIVATE "${EDEN_PORT_DIR}")

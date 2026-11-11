@@ -49,13 +49,13 @@ extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_
 int main() {
     assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule)); // NS1 no active owner
     {
-        Runtime guest(kNs2Dram,4*kGranule);
+        Runtime guest(kNs2Dram,5*kGranule);
         assert(guest.Valid() && guest.VirtualBytes()==kNs2Dram);
         assert(guest.Install());
         auto* base = static_cast<std::uint8_t*>(guest.Base());
         assert(!EdenNs2CommitGuestBacking(nullptr,0,kGranule)); // wrong owner
         assert(!guest.Commit(kNs2Dram-1,2));
-        assert(!guest.Commit(0,5*kGranule)); // budget fail before first mapping
+        assert(!guest.Commit(0,6*kGranule)); // budget fail before first mapping
         assert(guest.UsedBytes()==0 && successful_commits==0);
         assert(EdenNs2CommitGuestBacking(base,0,kGranule+1));
         assert(successful_commits==2 && guest.UsedBytes()==2*kGranule);
@@ -73,13 +73,15 @@ int main() {
         assert(guest.Commit(3*kGranule,kGranule)); // zero-filled retry
         assert(base[3*kGranule]==0);
         assert(guest.UsedBytes()==4*kGranule);
+        assert(guest.Commit(4*kGranule,kGranule));
+        assert(guest.UsedBytes()==5*kGranule);
         assert(!guest.Commit(6*kGranule,kGranule)); // hard budget
         assert(base[kGranule-2]==0xA2 && base[kGranule+2]==0xB3);
         assert(base[kNs2Dram-1]==0xC5);
         guest.Uninstall();
         assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     }
-    assert(released==5); // 1 rolled back + 4 committed at teardown
+    assert(released==6); // 1 rolled back + 5 committed at teardown
     for (const auto& [pa,live]:alive) assert(!live);
     std::puts("R457_PS5_SPARSE_GUEST_REAL_OWNER_MOCK_PASS");
 }

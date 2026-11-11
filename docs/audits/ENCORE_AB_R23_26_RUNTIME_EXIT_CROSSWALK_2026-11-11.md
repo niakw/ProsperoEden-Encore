@@ -36,7 +36,7 @@
 ## Strict accounting and non-overlap
 
 - **26/26** generic semantic cases have a concrete owner/test route above; this is **not 26/26 completed reviews**, because the required source owner comparisons/tests are still missing. An inventory row or code title cannot close a case.
-- Separate ledgers: **24** verified native source gaps (not counted in 26), **8** PS5-specific scope/refactor/policy gates (not counted in 26), **17** changed header include receipts (not counted in 26), **7** C00–C06 release batches (0/7 PS5-qualified), and **26** vendor family provenance / archive / SBOM obligations.
+- Separate ledgers: **24** verified native source gaps (including the confirmed **SSL** guest-facing HLE command omissions in pass21; these are not part of the 26 generic reviews) (not counted in 26), **8** PS5-specific scope/refactor/policy gates (not counted in 26), **17** changed header include receipts (not counted in 26), **7** C00–C06 release batches (0/7 PS5-qualified), and **26** vendor family provenance / archive / SBOM obligations.
 - Baseline NS1 guest runtime shared with NS2 requires positive/negative NS1 test even if upstream issue was introduced for NS2 or Android. Non-PS5 backends are excluded only by actual current compiled owner and preprocessor/source evidence, never by commit title.
 - PR #55 AM/HID, PR #54 FW23 cmd23, PR #52 CPU6/launcher and PR #46 old corrective candidates are **implementation candidates**, not proof of shipped fixes. The master audit must retain unchanged release gates until native ELF/PS5 testing passes.
 - No new experimental mode or duplicate branch was created. No merge/rebase/vendor repin or production modification.

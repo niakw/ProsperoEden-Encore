@@ -53,6 +53,12 @@ Le journal R457 rapporte `Unable to find the alsa development library` lors du c
 - **CMake/paquets tiers** : Opus `Could not get package version` (version affichée 0, source épinglée `a3f0ec02b3`) ; SDL3 `Unable to find the alsa development library` (sonde ALSA hôte). Qualifier le mode de compilation et les fonctionnalités effectivement activées avant de modifier la configuration. Absence d'ALSA sur un hôte de build PS5 n'est pas automatiquement un défaut audio PS5.
 - **UI/i18n** : avertissements de dépassement de libellés en plusieurs langues et glyphes non vérifiés pour certaines polices. Ne pas raccourcir massivement les traductions sans vérifier le sens et les composants UI réels.
 
+### P1 — PSBC SPIR-V : vraie cause des diagnostics de flot
+
+La commande GCC du run natif #42942150990 utilise `-DHAVE_FUNC_ATTRIBUTE_PACKED=1`, mais **pas** `-DHAVE_FUNC_ATTRIBUTE_NORETURN=1`. Or `src/util/macros.h` de la dépendance PSBC ne définit `NORETURN` que lorsque ce macro est présent. `src/compiler/spirv/vtn_private.h` déclare `NORETURN void _vtn_fail(...)` et l'implémentation appelle `vtn_longjmp(...)`. L'attribut perdu explique directement des diagnostics `-Wreturn-type`, et peut expliquer certains `-Wmaybe-uninitialized`, lorsque le compilateur croit qu'un chemin `vtn_fail()` revient.
+
+**Correction isolée :** ajouter le macro supporté par GCC/Clang temporairement dans les configurations PSBC hôte et PS5 pendant `build-opengl-sdk.sh`, avec sauvegarde/restauration byte-for-byte des fichiers sources épinglés. Le test hôte reproduit sous `-Werror=return-type` un avertissement sans attribut et vérifie sa disparition avec attribut. Aucun fichier Mesa original ne reste modifié et aucune option `-Wno-...` n'est ajoutée. La suppression effective de l'ensemble des warnings doit être confirmée lors de la prochaine construction de dépendances volontaire.
+
 ## Règles de clôture
 
 1. **Pas de nouveau build PS5 lourd** pour nettoyer des logs. Corriger par propriétaire, utiliser source-preflight et témoins hôtes, puis seulement un nouveau build explicitement approuvé.

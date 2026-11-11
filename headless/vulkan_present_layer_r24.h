@@ -86,6 +86,7 @@ private:
     Tegra::MaxwellDeviceMemoryManager& device_memory;
     const PresentFilters& filters;
     const size_t image_count{};
+    VkExtent2D target_output_extent{};
     vk::DescriptorPool descriptor_pool{};
     vk::DescriptorSets descriptor_sets{};
 
@@ -105,6 +106,7 @@ private:
     // Optional *second* neural stage only in the vendor-API research test.
     // Spatial sr_filter remains independent. Never active on a normal PS5.
     std::unique_ptr<Anime4K3D> research_a4k_neural{};
+    int research_a4k_owner_mode{};
 #endif
     std::vector<u64> resource_ticks{};
     // Each model session is single-use. On a slot's next presentation,

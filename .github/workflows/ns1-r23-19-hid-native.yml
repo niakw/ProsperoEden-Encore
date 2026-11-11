@@ -1,0 +1,37 @@
+name: NS1 R23 HIDCore JoyHold native ABI source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-hid-joyhold-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-19-hid-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  complete-hidcore-abi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exact native HIDCore TU/header and matched active NPad
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "882b88d8a5f8a6aa1c03365df5904c9e7a6faeb5"
+          python3 -B vendor/tests/ns1_r23_19_joyhold_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_hidcore_units "hid_core.cpp")' in s
+          assert 'list(APPEND eden_r23_hidcore_units "${EDEN_R23_HIDCORE_CPP}")' in s
+          assert 'target_include_directories(${eden_r23_hid_consumer}' in s
+          assert 'EDEN_MAINTAINED_NPAD' in s and 'EDEN_MAINTAINED_RUMBLE_CONTROLLER' in s
+          print('NS1_R23_HIDCORE_NATIVE_ABI_SINGLE_OWNER_HOST_PASS')
+          PY

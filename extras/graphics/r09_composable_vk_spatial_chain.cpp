@@ -36,6 +36,21 @@ struct Image {
 };
 struct Host {
     VkInstance instance{};
+    VkDebugUtilsMessengerEXT debug{};
+    std::uint32_t validation_errors{};
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessage(
+        VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+        VkDebugUtilsMessageTypeFlagsEXT,
+        const VkDebugUtilsMessengerCallbackDataEXT* msg,void* user) {
+        if(severity&VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT){
+            auto* h=static_cast<Host*>(user);
+            ++h->validation_errors;
+            std::cerr<<"R09_COMPOSABLE_KHRONOS_ERROR "
+                     <<(msg&&msg->pMessage?msg->pMessage:"unknown")
+                     <<"\n";
+        }
+        return VK_FALSE;
+    }
     VkPhysicalDevice physical{};
     VkDevice device{};
     VkQueue queue{};
@@ -73,6 +88,13 @@ struct Host {
             if(pool)vkDestroyCommandPool(device,pool,nullptr);
             vkDestroyDevice(device,nullptr);
         }
+        if(debug&&instance){
+            const auto destroy=reinterpret_cast<
+                PFN_vkDestroyDebugUtilsMessengerEXT>(
+                vkGetInstanceProcAddr(instance,
+                    "vkDestroyDebugUtilsMessengerEXT"));
+            if(destroy)destroy(instance,debug,nullptr);
+        }
         if(instance)vkDestroyInstance(instance,nullptr);
     }
     std::uint32_t Memory(std::uint32_t bits,VkMemoryPropertyFlags flags) const {
@@ -87,10 +109,49 @@ struct Host {
         app.sType=VK_STRUCTURE_TYPE_APPLICATION_INFO;
         app.pApplicationName="Eden R09 Min host GPU witness";
         app.apiVersion=VK_API_VERSION_1_1;
+        // Enforce the Khronos debug messenger and synchronization
+        // validator instead of merely trusting an environment variable.
+        const char* layer="VK_LAYER_KHRONOS_validation";
+        const char* extensions[]{
+            VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+            VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME
+        };
+        constexpr VkValidationFeatureEnableEXT sync[]{
+            VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+        };
+        VkValidationFeaturesEXT features{};
+        features.sType=VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        features.enabledValidationFeatureCount=1u;
+        features.pEnabledValidationFeatures=sync;
+        VkDebugUtilsMessengerCreateInfoEXT debug_info{};
+        debug_info.sType=
+            VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debug_info.pNext=&features;
+        debug_info.messageSeverity=
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debug_info.messageType=
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT|
+            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT|
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debug_info.pfnUserCallback=&DebugMessage;
+        debug_info.pUserData=this;
         VkInstanceCreateInfo ci{};
         ci.sType=VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         ci.pApplicationInfo=&app;
-        Check(vkCreateInstance(&ci,nullptr,&instance),"instance");
+        ci.enabledLayerCount=1u;
+        ci.ppEnabledLayerNames=&layer;
+        ci.enabledExtensionCount=2u;
+        ci.ppEnabledExtensionNames=extensions;
+        ci.pNext=&debug_info;
+        Check(vkCreateInstance(&ci,nullptr,&instance),"validated instance");
+        const auto create=reinterpret_cast<
+            PFN_vkCreateDebugUtilsMessengerEXT>(
+            vkGetInstanceProcAddr(instance,
+                "vkCreateDebugUtilsMessengerEXT"));
+        if(!create)
+            throw std::runtime_error("Missing Khronos debug messenger");
+        Check(create(instance,&debug_info,nullptr,&debug),
+              "create Khronos debug messenger");
         std::uint32_t count{};
         Check(vkEnumeratePhysicalDevices(instance,&count,nullptr),"count");
         if(!count)throw std::runtime_error("No Vulkan physical device");
@@ -330,7 +391,8 @@ template<typename Handle>
     else
         return static_cast<std::uint64_t>(h);
 }
-void Run(Host& h,const char* spv,unsigned passes,bool recipe_720){
+void Run(Host& h,const char* spv,unsigned passes,bool recipe_720,
+         bool negative_missing_barrier){
     if(passes<1u||passes>3u)
         throw std::runtime_error("Expected 1,2,3 spatial stages");
     const std::array<Size,4u> shapes=recipe_720?
@@ -492,13 +554,15 @@ void Run(Host& h,const char* spv,unsigned passes,bool recipe_720){
         vkCmdDispatch(h.cmd,(out.w+7u)/8u,(out.h+7u)/8u,1u);
         // This one barrier makes the actual GPU-produced next-stage image
         // visible to subsequent shader sampling AND to exact GPU readback.
-        ImageBarrier(h.cmd,Transition(images[i+1u].image,
-            VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,
-            VK_ACCESS_SHADER_WRITE_BIT,
-            VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_TRANSFER_READ_BIT),
-            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|
-            VK_PIPELINE_STAGE_TRANSFER_BIT);
+        if(!(negative_missing_barrier&&i==0u)){
+            ImageBarrier(h.cmd,Transition(images[i+1u].image,
+                VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,
+                VK_ACCESS_SHADER_WRITE_BIT,
+                VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_TRANSFER_READ_BIT),
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|
+                VK_PIPELINE_STAGE_TRANSFER_BIT);
+        }
         VkBufferImageCopy region{};
         region.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0u,0u,1u};
         region.imageExtent={out.w,out.h,1u};
@@ -525,6 +589,20 @@ void Run(Host& h,const char* spv,unsigned passes,bool recipe_720){
     Check(vkWaitForFences(h.device,1u,&fence,VK_TRUE,10'000'000'000ull),
           "wait GPU fence");
     vkDestroyFence(h.device,fence,nullptr);
+    if(negative_missing_barrier){
+        // NEVER trust or inspect the output of a deliberately unsafe
+        // GPU submission. Only the synchronization validator is an oracle.
+        if(h.validation_errors==0u)
+            throw std::runtime_error(
+                "Khronos failed to reject omitted producer barrier");
+        std::cout<<"R09_COMPOSABLE_KHRONOS_NEGATIVE_BARRIER_REJECTED "
+                 <<"errors="<<h.validation_errors<<"\n";
+        return;
+    }
+    if(h.validation_errors!=0u)
+        throw std::runtime_error(
+            "Khronos detected errors in correct image pipeline");
+    std::cout<<"R09_COMPOSABLE_KHRONOS_POSITIVE_ZERO_ERRORS\n";
 
     // Independent CPU nearest/bilinear oracle for ALL intermediate stages.
     // Comparing only the last output would allow broken stage reuse.
@@ -602,9 +680,11 @@ void Run(Host& h,const char* spv,unsigned passes,bool recipe_720){
 int main(int argc,char** argv){
     const bool recipe_720=argc==4&&
         std::string(argv[3])=="--recipe-720p";
-    if(argc!=3&&!recipe_720){
+    const bool unsafe=argc==4&&
+        std::string(argv[3])=="--negative-missing-barrier";
+    if(argc!=3&&!recipe_720&&!unsafe){
         std::cerr<<"Usage: r09_composable_vk_spatial_chain <shader.spv> "
-                    "<passes:1|2|3> [--recipe-720p]\n";
+                    "<passes:1|2|3> [--recipe-720p|--negative-missing-barrier]\n";
         return 2;
     }
     try {
@@ -612,7 +692,7 @@ int main(int argc,char** argv){
         if(n<1||n>3)return 2;
         Host h;
         h.Init();
-        Run(h,argv[1],static_cast<unsigned>(n),recipe_720);
+        Run(h,argv[1],static_cast<unsigned>(n),recipe_720,unsafe);
         return 0;
     }catch(const std::exception& ex){
         std::cerr<<"R09_COMPOSABLE_VULKAN_CHAIN_FAIL "<<ex.what()<<"\n";

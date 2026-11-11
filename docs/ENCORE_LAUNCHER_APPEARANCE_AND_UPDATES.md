@@ -31,7 +31,7 @@ Personal wallpapers remain in their original PNG, JPEG, TGA or WebP format
 art and downloaded cover caches use WebP. Decoding occurs
 on the existing launcher texture worker, never synchronously in draw().
 
-Daily Switch 1/2 mode rotates at most 16 verified, cached WebPs by local
+Daily Switch 1/2 mode rotates at most 8 verified, cached WebPs by local
 console date; there is no network access in the UI loop. The app first
 checks the user override folder:
 <Eden::UserDir()>/wallpapers/daily/index.json
@@ -47,9 +47,12 @@ EXIF orientation before discarding metadata. No redundant image flip is
 applied. Portrait/square
 art is placed on a blurred canvas; it is not distorted.
 
-Packaging prepares the snapshot best-effort by default. A packager can
-disable it with EDEN_BAKE_DAILY_SWITCH_ART=0 for offline reproducibility
-or media licensing review. Failed downloads never block launch or builds.
+By default, packaging ships ZERO daily images and performs ZERO daily
+artwork downloads. A packager explicitly opts in after redistribution
+review with EDEN_BAKE_DAILY_SWITCH_ART=1. The generator ranks released
+NS1/NS2 games together by descending verified release date; the eight
+newest replace the oldest entries. Network failures never block the build.
+The on-console Daily background option is also disabled by default.
 The snapshot is refreshed on package builds (NiakPS5's architecture), while
 wallpaper selection rotates each day completely offline. The included catalog
 does NOT fetch new games daily after installation: a refreshed package or a

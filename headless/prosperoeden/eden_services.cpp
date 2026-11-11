@@ -2912,8 +2912,8 @@ std::string EdenServices::daily_wallpaper() {
         std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) {
             return a.date > b.date || (a.date == b.date && a.path < b.path);
         });
-        // At most the most recent 16 RELEASED titles are eligible for rotation.
-        if (candidates.size() > 16) candidates.resize(16);
+        // Only the newest eight released titles rotate each day.
+        if (candidates.size() > 8) candidates.resize(8);
         const std::time_t now = std::time(nullptr);
         const std::tm* local = std::localtime(&now);
         // Use a stable per-day index, not process randomness.

@@ -50,12 +50,12 @@ cp "$root/assets/icon0.png" "$app/sce_sys/icon0.png"
 cp "$root/assets/icon0.dds" "$app/sce_sys/icon0.dds"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
-# Best-effort build-time Switch 1/2 wallpaper snapshot (NiakPS5 pattern).
-# Default on for a ready-to-use Daily background; packagers may explicitly disable
-# redistribution with EDEN_BAKE_DAILY_SWITCH_ART=0 after their rights review.
-# Network errors never fail package creation or stall a console launch.
-# The native loader accepts the same schema under the user's wallpaper folder.
-if [[ ${EDEN_BAKE_DAILY_SWITCH_ART:-1} == 1 ]]; then
+# Zero built-in daily images and zero daily-art downloads by default.
+# Only an explicit, reviewed packaging opt-in enables automatic catalog
+# snapshot fetching. The console-side Daily option remains off by default.
+# Never allow source-tree art to silently re-enable a disabled snapshot.
+rm -rf "$app/ui/art/daily"
+if [[ ${EDEN_BAKE_DAILY_SWITCH_ART:-0} == 1 ]]; then
     python3 "$root/tools/launcher/fetch_daily_switch.py" \
         --output "$app/ui/art/daily" ||
         echo "Daily Switch artwork unavailable; keep the original Encore background" >&2

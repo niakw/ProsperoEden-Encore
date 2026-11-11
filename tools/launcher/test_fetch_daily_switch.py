@@ -85,6 +85,46 @@ class DailyWallpaperTests(TestCase):
                 self.assertEqual(daily.build(folder, self.today, candidates), 0)
             self.assertEqual((folder/"index.json").read_bytes(), before)
 
+    def test_eight_newest_releases_displace_older_webp(self):
+        # A calendar-controlled replay proves 8, descending release order,
+        # and no preorders or releases older than the admission window.
+        recent = [
+            {"title": f"New {i}", "day": date(2026, 11, 11 - i),
+             "platform": "ns1" if i % 2 else "ns2",
+             "art": f"https://www.nintendo.com/eu/art-{i}.jpg"}
+            for i in range(11)
+        ]
+        recent += [
+            {"title": "Future", "day": date(2026, 11, 12),
+             "platform": "ns2", "art": "https://www.nintendo.com/eu/future.jpg"},
+            {"title": "Obsolete", "day": date(2025, 3, 1),
+             "platform": "ns1", "art": "https://www.nintendo.com/eu/old.jpg"},
+        ]
+        # Deliberately reverse the supplied inventory: newest must win.
+        with TemporaryDirectory() as temp:
+            folder = Path(temp)
+            def fake_convert(_source, target):
+                payload = b"VP8 " + b"X" * 4096
+                target.write_bytes(
+                    b"RIFF" + (len(payload) + 4).to_bytes(4, "little")
+                    + b"WEBP" + payload)
+            with patch.object(daily, "fetch", return_value=b"fixture"), \
+                 patch.object(daily, "convert_art", side_effect=fake_convert):
+                self.assertEqual(daily.build(folder, date(2026, 11, 11),
+                                             list(reversed(recent))), 8)
+            manifest = json.loads((folder / "index.json").read_text())
+            self.assertEqual([e["title"] for e in manifest["entries"]],
+                             [f"New {i}" for i in range(8)])
+            self.assertEqual([e["filename"] for e in manifest["entries"]],
+                             [f"wall-{i:02d}.webp" for i in range(8)])
+            self.assertFalse(list(folder.glob("*.jpg")))
+            # A second successful refresh removes a stale eighth image.
+            with patch.object(daily, "fetch", return_value=b"fixture"), \
+                 patch.object(daily, "convert_art", side_effect=fake_convert):
+                self.assertEqual(daily.build(folder, date(2026, 11, 11),
+                                             recent[:7]), 7)
+            self.assertFalse((folder / "wall-07.webp").exists())
+
     def test_rejects_unapproved_hosts(self):
         for url in ("http://api.nlib.cc/x", "https://attacker.example/x",
                     "https://api.nlib.cc.attacker.example/x"):

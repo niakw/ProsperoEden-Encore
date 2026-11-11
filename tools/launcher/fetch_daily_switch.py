@@ -27,7 +27,7 @@ DATA_HOSTS = {"raw.githubusercontent.com"}
 ART_HOSTS = {"api.nlib.cc", "www.nintendo.com", "assets.nintendo.eu"}
 MAX_FEED = 3 * 1024 * 1024
 MAX_IMAGE = 7 * 1024 * 1024
-MAX_ITEMS = 16
+MAX_ITEMS = 8
 MAX_LOOKBACK = 180
 
 def fetch(url: str, hosts: set[str], maximum: int, timeout: int = 9) -> bytes:
@@ -118,15 +118,21 @@ def gather(today: date) -> list[dict]:
     except (OSError, ValueError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"NS1 feed unavailable: {type(exc).__name__}", file=sys.stderr)
     ns1.sort(key=lambda x: (-x["day"].toordinal(), x["title"].casefold()))
-    merged = ns1[:8] + ns2[:8]
-    seen = {x["title"].casefold() for x in merged}
-    for item in sorted(ns1[8:] + ns2[8:], key=lambda x: -x["day"].toordinal()):
-        if len(merged) >= MAX_ITEMS:
+    # Keep eight newest verified releases irrespective of platform: new
+    # titles replace the oldest release, not a fixed NS1/NS2 quota.
+    seen = set()
+    result = []
+    for item in sorted(ns1 + ns2,
+                       key=lambda x: (-x["day"].toordinal(),
+                                      x["title"].casefold(), x["platform"])):
+        key = item["title"].casefold().strip()
+        if key in seen:
+            continue
+        result.append(item)
+        seen.add(key)
+        if len(result) == MAX_ITEMS:
             break
-        if item["title"].casefold() not in seen:
-            merged.append(item)
-            seen.add(item["title"].casefold())
-    return merged
+    return result
 
 def convert_art(source: Path, target: Path) -> None:
     # ImageMagick 7 exposes 'magick identify'; Ubuntu 24.04 may ship
@@ -176,6 +182,13 @@ def build(out: Path, today: date | None = None, candidates: list[dict] | None = 
     out.mkdir(parents=True, exist_ok=True)
     now = today or date.today()
     batch = candidates if candidates is not None else gather(now)
+    # Even caller-supplied lists must obey chronological release order.
+    batch = sorted(
+        (item for item in batch if isinstance(item, dict) and
+         isinstance(item.get("day"), date) and
+         now - timedelta(days=MAX_LOOKBACK) <= item["day"] <= now),
+        key=lambda item: (-item["day"].toordinal(),
+                          str(item.get("title", "")).casefold()))
     entries: list[dict] = []
     with tempfile.TemporaryDirectory(prefix="encore-wallpaper-") as temp:
         scratch = Path(temp)

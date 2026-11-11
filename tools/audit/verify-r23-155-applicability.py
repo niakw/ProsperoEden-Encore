@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 68,
+        "runtime-semantic-review-pending": 67,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -85,6 +85,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "verified-absent-GPU-null-initialization-candidate": 1,
         "reviewed-include-only-no-native-behavioral-port": 1,
         "ci-only-ffmpeg-artifact-not-selected-native": 1,
+        "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1,
     }
     if dict(categories) != mandatory:
         raise ValueError("R23 dated classification changed without reviewed baseline bump")
@@ -118,8 +119,15 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or "src/video_core/renderer_vulkan/vk_present_manager.cpp" not in by_index[144]["paths"]):
         raise ValueError("R23 #144 native framegen change falsely excluded")
     # #123 Windows roots also refactors the non-Windows sanitizer path.
-    if by_index[123]["classification"] != "runtime-semantic-review-pending":
-        raise ValueError("R23 #123 shared path sanitizer semantic change falsely excluded")
+    if by_index[123]["classification"] != "source-verified-shared-FS-root-preservation-awaiting-PS5-decision":
+        raise ValueError("R23 #123 exact source-root-difference lost, missing native behavior proof")
+    path_test = (root / "tests/audit_r23_path_sanitizer_host.cpp").read_text()
+    if (by_index[123]["paths"] != [
+            "src/common/fs/path_util.cpp", "src/common/fs/path_util.h"]
+            or "namespace Pinned" not in path_test
+            or "namespace Upstream" not in path_test
+            or 'R23_PS5_COMMON_FS_SANITIZE_EXACT_SOURCE_DIVERGENCE_PASS' not in path_test):
+        raise ValueError("R23 #123 exact source-tested path-API receipt missing")
     # #93: selected PS5 sparse physical memory commits fail-stop rather than
     # upstream mprotect; source equivalence is not a PS5 device test.
     if by_index[93]["classification"] != "source-equivalent-native-PS5-sparse-commit-failstop":
@@ -236,7 +244,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 68
+    assert validate(root)["runtime_semantic_cases_pending"] == 67
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

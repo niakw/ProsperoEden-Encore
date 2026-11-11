@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 68,
+    "runtime-semantic-review-pending": 67,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -33,7 +33,8 @@
     "MSVC-constexpr-only-no-current-PS5-runtime-port": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
-    "verified-absent-GPU-null-initialization-candidate": 1
+    "verified-absent-GPU-null-initialization-candidate": 1,
+    "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3457,9 +3458,9 @@
       "sha": "c3f1e6562b6cb5aefcb9edd490b303867917f25e",
       "title": "[common/fs] Preserve Windows roots during path sanitization (#4437)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-verified-shared-FS-root-preservation-awaiting-PS5-decision",
+      "scope": "E1 compiled exact source A/B on Linux under ASan+UBSan: 9 cases; pinned normalizes '/' to empty while Eden upstream preserves '/', likewise rooted path resolving to root; both already eliminate leading '..' in tested corpus. No guest FS exploit or PS5 behavior established.",
+      "action": "Pending: exact native selected path owner and release-mode ABI, edge-case corpus for absolute/relative paths, user mounting/ROM search and saves, then choose minimal fix vs upstream port with native and PS5 nonregression proof. Host-only run 42995344113.",
       "paths": [
         "src/common/fs/path_util.cpp",
         "src/common/fs/path_util.h"

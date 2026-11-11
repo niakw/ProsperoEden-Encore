@@ -29,9 +29,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          url='https://raw.githubusercontent.com/niakw/Prospero.Eden-Encore-vendor/a6df3c45f4119bd21cb8ee42ff5fe0d21b2664e1/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h'
+          url='https://raw.githubusercontent.com/niakw/Prospero.Eden-Encore-vendor/4c2a56676ed2cc7b8b923b10b5c0c0fe39817b2d/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h'
           curl --fail --location --silent --show-error --retry 2 "${url}" -o "${RUNNER_TEMP}/r4-texture-cache.h"
-          test "$(git hash-object "${RUNNER_TEMP}/r4-texture-cache.h")" = 38e93fdcf8e7403b726668c552f22fe5b6cb9c60
+          test "$(git hash-object "${RUNNER_TEMP}/r4-texture-cache.h")" = 6b5b9084aeb63aa05b0061d6bcfbd2b4f99312f9
           python3 - "${RUNNER_TEMP}/r4-texture-cache.h" <<'PY'
           from pathlib import Path
           import sys
@@ -51,7 +51,7 @@ jobs:
           for needle in checks:
               assert needle in active, f"missing R4 active source contract: {needle}"
           assert active.count("IsGraphicsCurrent(maxwell3d, *ticket)") >= 2
-          print("R4_PINNED_ACTIVE_SOURCE_WITNESS_PASS (text/source only)")
+          print("R4_PINNED_N60_ACTIVE_SOURCE_WITNESS_PASS (text/source only)")
           PY
       - name: Run conservative 3D slice model on Clang and GCC with sanitizers
         shell: bash

@@ -21,7 +21,7 @@ LIVE_HEADER = ("vendor/encore-active/ns2-astc/include/"
                "video_core/texture_cache/texture_cache.h")
 INACTIVE_HEADER = ("vendor/encore-active/eden-vulkan/vulkan-cache/"
                    "video_core/texture_cache/texture_cache.h")
-TU = "vk_texture_cache_cost.cpp"
+TU = "vk_graphics_pipeline_cost.cpp"
 
 def run(argv, cwd=None, env=None, timeout=900):
     p = subprocess.run(argv, cwd=cwd, env=env, text=True,
@@ -61,7 +61,7 @@ def main():
     matches=[r for r in cc if Path(r["file"]).name==TU]
     expected=(native/"headless"/TU).resolve()
     if len(matches)!=1 or Path(matches[0]["file"]).resolve()!=expected:
-        raise RuntimeError("R4 real native VkTextureCache consumer missing/duplicated")
+        raise RuntimeError("R4 real native VkGraphicsPipeline consumer missing/duplicated")
     record=matches[0]
     flags=list(record["arguments"]) if "arguments" in record else shlex.split(record["command"])
     if "-c" not in flags or "-o" not in flags or flags.count(str(record["file"]))!=1:
@@ -93,7 +93,7 @@ def main():
     if INACTIVE_HEADER in include_tree:
         raise RuntimeError("R4 compiler selected inactive shadow TextureCache")
     print("R4_NATIVE_ACTIVE_HEADER_PASS: exact N60 ASTC header in real -H compiler graph",flush=True)
-    print("R4_NATIVE_SYNTAX_PASS: active full vk_texture_cache_cost.cpp",flush=True)
+    print("R4_NATIVE_SYNTAX_PASS: active full vk_graphics_pipeline_cost.cpp",flush=True)
     with tempfile.TemporaryDirectory(prefix="r4-active-native-") as td:
         out=Path(td)
         bc=out/"r4-texture-cache-lto.o"

@@ -64,6 +64,8 @@ def checked(root: Path) -> dict:
                  "HEAD", "--", f"sources/eden-cpm/{name}"],
                 capture_output=True, text=True, check=True)
             objects_count, objects_bytes, git_links = 0, 0, 0
+            checkout_vs_blob_size_deltas = []
+            checkout_vs_blob_size_total = 0
             for line in candidate.stdout.splitlines():
                 info, _, _ = line.partition("\t")
                 parts = info.split()
@@ -74,6 +76,18 @@ def checked(root: Path) -> dict:
                 elif parts[3].isdigit():
                     objects_count += 1
                     objects_bytes += int(parts[3])
+                    relative = line.partition("\t")[2]
+                    checkout_path = root / "vendor" / relative
+                    if not checkout_path.is_file() or checkout_path.is_symlink():
+                        raise ValueError(f"{name}: pinned Git object absent from checkout: {relative}")
+                    observed = checkout_path.stat().st_size
+                    diff = observed - int(parts[3])
+                    if diff:
+                        checkout_vs_blob_size_total += diff
+                        checkout_vs_blob_size_deltas.append({
+                            "path": relative, "git_blob_size": int(parts[3]),
+                            "checkout_size": observed, "difference": diff,
+                            "git_blob_sha": parts[2]})
             git_counts = {
                 "tracked_regular_files": objects_count,
                 "tracked_regular_blob_bytes": objects_bytes,
@@ -81,6 +95,11 @@ def checked(root: Path) -> dict:
                 "checkout_regular_count_equals_git": count == objects_count,
                 "checkout_regular_bytes_equal_git_blobs": total == objects_bytes,
                 "lock_bytes_minus_git_blobs": record["bytes"] - objects_bytes,
+                "checkout_bytes_minus_git_blobs": total - objects_bytes,
+                "checkout_git_size_delta_reconciled": checkout_vs_blob_size_total == total - objects_bytes,
+                "checkout_git_byte_delta_file_count": len(checkout_vs_blob_size_deltas),
+                "checkout_git_byte_delta_paths": checkout_vs_blob_size_deltas[:50],
+                "checkout_git_byte_deltas_truncated": len(checkout_vs_blob_size_deltas) > 50,
             }
         paths[name] = {
             "files": count, "file_bytes": total, "symlinks_excluded_from_regular_files": links,

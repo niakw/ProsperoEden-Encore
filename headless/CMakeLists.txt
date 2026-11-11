@@ -815,6 +815,37 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #126: shared RFC4122 UUIDv5 16-byte signature must compile in
+# both common and the ACTUAL PS5-selected ns2-runtime/AM service source.
+# The earlier Eden-core AM unit is shadowed by EDEN_SHARED_NS2_AM; do not
+# report a changed but unselected source as a console fix.
+if(PS5_NATIVE)
+    set(EDEN_R23_UUID_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_UUID_INCLUDE "${PORT_BUILD_DIR}/r23-uuid16/include")
+    foreach(p IN ITEMS
+            "${EDEN_R23_UUID_ROOT}/src/common/uuid.cpp"
+            "${EDEN_R23_UUID_ROOT}/include/common/uuid.h"
+            "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp")
+        if(NOT EXISTS "${p}")
+            message(FATAL_ERROR "R23 #126 native UUID16 source/selected AM owner missing: ${p}")
+        endif()
+    endforeach()
+    configure_file("${EDEN_R23_UUID_ROOT}/include/common/uuid.h"
+        "${EDEN_R23_UUID_INCLUDE}/common/uuid.h" COPYONLY)
+    get_target_property(eden_r23_uuid_sources common SOURCES)
+    list(FIND eden_r23_uuid_sources "uuid.cpp" eden_r23_uuid_orig)
+    if(eden_r23_uuid_orig LESS 0)
+        message(FATAL_ERROR "R23 #126 original UUID.cpp source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_uuid_sources "uuid.cpp")
+    list(APPEND eden_r23_uuid_sources "${EDEN_R23_UUID_ROOT}/src/common/uuid.cpp")
+    set_property(TARGET common PROPERTY SOURCES "${eden_r23_uuid_sources}")
+    target_include_directories(common BEFORE PUBLIC "${EDEN_R23_UUID_INCLUDE}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_UUID_INCLUDE}")
+    message(STATUS "R23 #126 UUID 16-byte ABI and PS5-selected AM source staged")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

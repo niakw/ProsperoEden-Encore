@@ -508,7 +508,9 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for i in (47, 88):
         if by_index[i]["classification"] != "source-equivalent-GPU-NCE-readback-reverted":
             raise ValueError(f"R23 NCE GPU reverted pair #{i} lost source proof")
-    for i in (45, 60, 92):
+    # #45 moved to reviewed missing-native-TU disposition in pass17;
+    # retain the exact older implementation guards for #60 and #92.
+    for i in (60, 92):
         if by_index[i]["classification"] not in (
             "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ",
             "source-implemented-native-PS5-ZBIC-NSO",

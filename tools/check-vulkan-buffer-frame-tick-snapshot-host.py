@@ -24,7 +24,13 @@ assert "scheduler.IsFree(it->LastUsageTick())" in original
 assert "scheduler.GetMasterSemaphore().KnownGpuTick()" in modified
 assert "scheduler.IsFree(it->LastUsageTick())" not in modified
 assert "#ifdef PS5_NATIVE\n    // No tracked buffers" in modified
-assert modified.index("if (slot_buffers.begin() == slot_buffers.end())") < modified.index("KnownGpuTick()")
+# R2 now owns a separate deleted-GPU-buffer retirement queue. It MUST
+# sample actual completion even when there are zero resident slot buffers.
+# The resident optimization only suppresses its own semaphore lookup.
+assert "if (deleted_gpu_buffers.Outstanding())" in modified
+assert modified.index("if (deleted_gpu_buffers.Outstanding())") < modified.index("if (slot_buffers.begin() == slot_buffers.end())")
+resident = modified[modified.index("if (slot_buffers.begin() == slot_buffers.end())"):]
+assert resident.index("KnownGpuTick()") > resident.index("if (slot_buffers.begin() == slot_buffers.end())")
 assert "No tracked buffers: avoid even the GPU-completion semaphore snapshot" in GEN
 assert "sampled_completed_tick" in modified
 assert modified.index("if (last_tick == 0)") < modified.index("KnownGpuTick();", modified.index("for (auto it = slot_buffers.begin()"))

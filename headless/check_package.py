@@ -17,10 +17,18 @@ if 'EDEN_PACKAGE_DIR' in os.environ:
 OUT = ROOT / 'build/headless-native'
 BASE_REQUIRED = {'network-hosts.txt', 'eboot.bin', 'core-homebrew.nro', 'sce_module/libc.prx',
             'sce_sys/param.json', 'sce_sys/icon0.png', 'sce_sys/icon0.dds', 'sce_sys/pic0.dds', 'sce_sys/pic1.dds',
-            'sce_sys/snd0.at9', 'sandbox-elevator.elf'}
+            'sce_sys/snd0.at9', 'sandbox-elevator.elf', 'self-updater.elf',
+            'encore-release.json', 'mihawkgen/network.fgw'}
 REQUIRED = set(BASE_REQUIRED)
 REQUIRED.update(p.relative_to(APP).as_posix() for p in (APP / 'ui').rglob('*') if p.is_file())
-REQUIRED.update({'legal/LICENSE', 'legal/THIRD_PARTY_NOTICES.md'})
+# The installable app ships complete third-party notices and the native
+# model, not only the original two umbrella license files. Keep this exact
+# inventory synchronized with tools/ci/check-staged-app.py; do not accept
+# arbitrary extras or omit required notices.
+REQUIRED.update({'legal/LICENSE', 'legal/THIRD_PARTY_NOTICES.md',
+                 'legal/LIBWEBP_LICENSE.txt', 'legal/LIBWEBP_PATENTS.txt',
+                 'legal/MIHAWKGEN_LICENSE.md', 'legal/MIHAWKGEN_THIRD_PARTY_NOTICES.txt',
+                 'legal/FSR3_OPTICAL_LICENSE.txt', 'legal/FSR3_OPTICAL_SHADER_LICENSE.txt'})
 REQUIRED.update('legal/LICENSES/' + p.name for p in (ROOT / 'LICENSES').iterdir() if p.is_file())
 RECEIPT = ROOT / 'HEADLESS_CANDIDATE.json'
 GL_SDK_SOURCE_COMMIT = 'ad2807d41cef2681882a9ee0d20808779f74b7cd'
@@ -63,7 +71,10 @@ def check():
             assert digest(APP / name) == expected, name
         REQUIRED.update(assets)
         REQUIRED.add('game-assets.json')
-    assert {p.relative_to(APP).as_posix() for p in APP.rglob('*') if p.is_file()} == REQUIRED
+    actual = {p.relative_to(APP).as_posix() for p in APP.rglob('*') if p.is_file()}
+    missing, extra = sorted(REQUIRED - actual), sorted(actual - REQUIRED)
+    assert not missing and not extra, (
+        f"staged title inventory mismatch: missing={missing} extra={extra}")
     assert all(not (APP / p).is_symlink() and (APP / p).stat().st_size for p in REQUIRED)
     param = json.loads((APP / 'sce_sys/param.json').read_text())
     assert param['titleId'] == 'PPSA99008' and param['contentId'].endswith('PROSPEROEDEN0001')

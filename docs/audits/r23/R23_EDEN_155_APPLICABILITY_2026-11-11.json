@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 33,
-    "runtime-semantic-review-pending": 13,
+    "verified-relevant-source-gap-awaiting-native-proof": 28,
+    "runtime-semantic-review-pending": 10,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -65,7 +65,8 @@
     "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1,
     "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
     "reviewed-current-PS5-CXX26-fmt-migration-deferred": 1,
-    "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1
+    "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1,
+    "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 8
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3058,9 +3059,9 @@
       "sha": "f273423b2b83f1a37cc7c1a7a92601f26e0c12ae",
       "title": "[buffer_cache] Simplify GPU fence synchronization and remove GPU buffer readback (#4477)",
       "file_count": 21,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously unresolved because pristine vendor omitted materialized backport. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
@@ -3083,7 +3084,9 @@
         "src/video_core/query_cache/query_cache.h",
         "src/video_core/renderer_vulkan/vk_buffer_cache.cpp",
         "src/video_core/renderer_vulkan/vk_buffer_cache.h"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 95,
@@ -3137,15 +3140,17 @@
       "sha": "dbeb73ee011416cffc6c203945f5ccc6b90621f6",
       "title": "[video_core] cpu buffer fix + kepler uploads / maxwell macro dirty tracking fixes (#4473)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously unresolved because pristine vendor omitted materialized backport. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/video_core/buffer_cache/buffer_cache.h",
         "src/video_core/dma_pusher.cpp",
         "src/video_core/engines/kepler_compute.cpp",
         "src/video_core/engines/kepler_compute.h"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 99,
@@ -3380,15 +3385,17 @@
       "sha": "07f40d5cac635ff102aa6ce9c32572cc20d69959",
       "title": "[npad,hid,am] npad WriteEmptyEntry fix, hid function 551 stub, and applet PopOutData rework (#4442)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously unresolved because pristine vendor omitted materialized backport. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/core/hle/service/am/lifecycle_manager.h",
         "src/core/hle/service/am/service/library_applet_accessor.cpp",
         "src/core/hle/service/hid/hid_system_server.cpp",
         "src/hid_core/resources/npad/npad.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 113,
@@ -3643,29 +3650,32 @@
       "sha": "b77308ced62abe890428955dba687c95e4d93aba",
       "title": "[applet] ReconfigureControllers fallback unconditional disconnect fix (#4420)",
       "file_count": 1,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "E1 source divergence: the pinned NS1 DefaultControllerApplet::ReconfigureControllers unconditionally disconnects handheld and all player controllers, ignoring keep_controllers_connected; Eden upstream #131 reserves compatible connected controllers within requested max before filling min slots.",
-      "action": "Stage isolated exact source patch on corrective PR #46 only, add positive/negative keep/limit/style tests and require real compiled PS5 core TU, HID callback, guest applet and paired controller test; don't claim gameplay fix from host source check.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously misclassified as missing from pristine vendor. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/core/frontend/applets/controller.cpp"
       ],
-      "source_evidence_level": "E1 pinned core/frontend/applets/controller.cpp Git blob c4292c5a1257dbfb18c3709d4911193caf2ed5b6; exact upstream b77308ced62abe890428955dba687c95e4d93aba; not PS5 controller test."
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 132,
       "sha": "defddec47ff997824b6f8adb3bece790f6723c24",
       "title": "[ns] add stubs for cmd936 and cmd4042 (#4429)",
       "file_count": 5,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "Source-level differential confirms missing Switch 23.x NS/OLSC IPC handlers or new async service source in frozen vendor@22b69d6; no native or device behavior proof.",
-      "action": "See ENCORE_AB_R23_FW23_NS_OLSC_SOURCE_GAPS_2026-11-11.md. Test firmware-version IPC dispatch, handles, event lifecycle and actual selected native source before any vendor import.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously misclassified as missing from pristine vendor. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/core/CMakeLists.txt",
         "src/core/hle/service/ns/application_manager_interface.cpp",
         "src/core/hle/service/ns/application_manager_interface.h",
         "src/core/hle/service/ns/i_async_result.cpp",
         "src/core/hle/service/ns/i_async_result.h"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 133,
@@ -3728,16 +3738,18 @@
       "sha": "bfba95fd6072885b16aa3b52b450d4058cc871d6",
       "title": "[ns, olsc] stubs for qlaunch fw23 (#4427)",
       "file_count": 5,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "Source-level differential confirms missing Switch 23.x NS/OLSC IPC handlers or new async service source in frozen vendor@22b69d6; no native or device behavior proof.",
-      "action": "See ENCORE_AB_R23_FW23_NS_OLSC_SOURCE_GAPS_2026-11-11.md. Test firmware-version IPC dispatch, handles, event lifecycle and actual selected native source before any vendor import.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously misclassified as missing from pristine vendor. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/core/hle/service/ns/application_manager_interface.cpp",
         "src/core/hle/service/ns/application_manager_interface.h",
         "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
         "src/core/hle/service/olsc/transfer_task_list_controller.cpp",
         "src/core/hle/service/olsc/transfer_task_list_controller.h"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 138,
@@ -3759,12 +3771,14 @@
       "sha": "42642f8bad85a3f194c4bf878e512d68791d1634",
       "title": "[hle] Implement I{User,Debug,System}::StartDetectionWithFilter (#4425)",
       "file_count": 1,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "Upstream commit #139 adds command ID 25 StartDetectionWithFilter in NFP IUser, ISystem and IDebug handler tables and maps to preexisting StartDetection. Pinned vendor/sources/eden/src/core/hle/service/nfp/nfp.cpp Git blob b9922ce024b11da6613c7c6fd70c121bc1e59e55 has no StartDetectionWithFilter registrations; sources/eden/src/core/CMakeLists.txt includes the NFP TU. Semantic missing command registration E1 only.",
-      "action": "Add three NFP cmd25 entries in selected full source owner without changing original vendor, test valid/invalid interface dispatch and state side effects; native compiled IPC and PS5 game proof remain required.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously misclassified as missing from pristine vendor. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/core/hle/service/nfp/nfp.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 140,
@@ -4012,9 +4026,9 @@
       "sha": "8a22f1845b8b7ec19fbb518b696513e36d42b317",
       "title": "[hle] Enforce max_sessions, add bpc:ams service (#4394)",
       "file_count": 19,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "E1 actual pinned BPC/audio service owner misses bpc:ams and explicit session limits; ServerManager supports max_sessions=64 default, not upstream policy.",
-      "action": "Qualify BPC, audio, BCAT and all guest session caps plus audio session ID guard in matched native units. See ENCORE_AB_R23_SEMANTIC_SOURCE_PASS21_2026-11-11.md.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 verified installed shipping backport / actual native owner, not original Eden pin. Previously misclassified as missing from pristine vendor. Pass28 source receipt.",
+      "action": "Shipping source already contains upstream change; do not duplicate fix. Still require exact built object/symbol and PS5 NS1+NS2 guest regression, particularly GPU fences, HID IPC and firmware dispatch. See pass28.",
       "paths": [
         "src/audio_core/audio_render_manager.cpp",
         "src/core/hle/service/audio/audio.cpp",
@@ -4035,7 +4049,9 @@
         "src/core/hle/service/sockets/sockets.cpp",
         "src/core/hle/service/usb/usb.cpp",
         "src/core/hle/service/wlan/wlan.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 83-file/50-receipt shipping manifest, selected native source/overlay and exact active symbols; no compiled PS5 ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 150,
@@ -4102,8 +4118,8 @@
       "title": "[hle] Firmware 23.0.0 (#4390)",
       "file_count": 13,
       "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "E1 FW23 upstream adds many guest-visible HLE IPC/SVC/FS/PCTL/AM service differences absent from current pinned/maintained selected source, beyond isolated NS cmd23 draft.",
-      "action": "Coordinate exact HOS FW23 guest command sizes/handles with draft #54 without merging; test SVC 37/38, fsp 2/210, PCTL 1459/1460, AM 240 and older FW title launch, see pass26.",
+      "scope": "E1 partial: all 13 upstream FW23 paths are materially patched in shipping Eden source, but PS5 native CMake replaces patched self_controller.cpp with NS2-owned maintained source lacking command 240; native response/ABI and device unqualified.",
+      "action": "Do not re-import whole FW23 backport. Target only actual selected NS2 SelfController 240 and any independently verified missing native behavior; validate service 2/210, 1459/1460 and firmware old/new via compiled PS5.",
       "paths": [
         "src/core/file_sys/system_archive/system_version.cpp",
         "src/core/hle/api_version.h",
@@ -4119,8 +4135,8 @@
         "src/core/hle/service/pctl/parental_control_service.h",
         "src/core/hle/service/pctl/pctl_types.h"
       ],
-      "source_evidence_level": "E1 upstream diff and selected exact original/maintained source refs; no native console proof",
-      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS26_2026-11-11.md"
+      "source_evidence_level": "E1 manifest 83 and selected maintained source gap; no native ELF or device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
     },
     {
       "index": 155,

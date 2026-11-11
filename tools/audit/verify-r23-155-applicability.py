@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 13,
+        "runtime-semantic-review-pending": 10,
+        "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 8,
         "reviewed-current-PS5-CXX26-fmt-migration-deferred": 1,
         "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1,
         "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
@@ -101,7 +102,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 33,
+        "verified-relevant-source-gap-awaiting-native-proof": 28,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -127,8 +128,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     build = (root / "docs/audits/ENCORE_AB_R23_FINAL_TWO_BUILD_CASES_2026-11-11.md").read_text()
     expected_new = {
         1: "verified-relevant-source-gap-awaiting-native-proof",
-        132: "verified-relevant-source-gap-awaiting-native-proof",
-        137: "verified-relevant-source-gap-awaiting-native-proof",
+        132: "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+        137: "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
         13: "reviewed-native-glslang-argv-no-space-current-build",
         101: "reviewed-clang23-only-glsl-backend-no-current-PS5-port",
     }
@@ -156,16 +157,16 @@ def validate(root: Path, app: dict | None = None) -> dict:
         if token not in doc57:
             raise ValueError(f"R23 #57 net-revert receipt missing {token}")
     r23_hle_pass21 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS21_2026-11-11.md").read_text()
-    for idx in (120, 149):
+    for idx in (120,):
         rec = next((item for item in rows if item["index"] == idx), None)
         if rec is None or rec["classification"] != "verified-relevant-source-gap-awaiting-native-proof":
             raise ValueError(f"R23 HLE case #{idx} source gap lost")
         if f"#{idx}" not in r23_hle_pass21:
             raise ValueError(f"R23 HLE case #{idx} evidence missing")
-    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_13_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
-    for token in ("13 upstream runtime-semantic", "13/13", "33", "SSL", "guest"):
+    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_10_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
+    for token in ("10 upstream runtime-semantic", "10/10", "28", "SSL", "guest"):
         if token not in current_r23_crosswalk:
-            raise ValueError(f"R23 13-case exit crosswalk missing {token}")
+            raise ValueError(f"R23 10-case exit crosswalk missing {token}")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")
@@ -333,7 +334,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # #131: controller fallback must not be called equivalent merely because
     # a PS5 pad frontend exists; exact applet owner disconnects all controllers.
     ctl = by_index[131]
-    if (ctl["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+    if (ctl["classification"] != "source-covered-shipping-native-backport-E1-awaiting-PS5-proof"
             or ctl["paths"] != ["src/core/frontend/applets/controller.cpp"]
             or not ctl.get("source_evidence_level", "").startswith("E1")):
         raise ValueError("R23 #131 keep_connected behavioral gap lost")
@@ -659,6 +660,37 @@ def validate(root: Path, app: dict | None = None) -> dict:
                  "2b030f20b379272367cb6a9e8e8f9bb3e74cbf78"):
         if blob not in pass27:
             raise ValueError(f"R23 pass27 missing source pin {blob}")
+    # Pass28 supersedes pristine-source classifications with actual 83-file
+    # shipping backport and *selected* native maintained owner; this is E1.
+    pass28 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md").read_text()
+    for idx in (94, 98, 112, 131, 132, 137, 139, 149):
+        row = by_index[idx]
+        if (row["classification"] != "source-covered-shipping-native-backport-E1-awaiting-PS5-proof"
+                or row.get("source_proof_document") !=
+                "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"
+                or not row.get("source_evidence_level", "").startswith("E1")
+                or f"#{idx}" not in pass28):
+            raise ValueError(f"R23 pass28 active backport owner #{idx} not proven")
+    fw23_selected = by_index[154]
+    if (fw23_selected["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+            or "self_controller" not in fw23_selected["scope"]
+            or fw23_selected.get("source_proof_document") !=
+            "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS28_2026-11-11.md"):
+        raise ValueError("FW23 #154 selected native SelfController gap dropped")
+    for needle in ("ad41509f2d8f32290b2e65f8dd1d95a2df1f9967",
+                   "83abaa7cbbb3de0782443e4d83ccf1e83d75c429",
+                   "ad2b043f972170651b61d2d33aea4082e95c47cf",
+                   "4ac313c1618ca1a163393997e5d26dc1f69cb814",
+                   "469eddd0ea9e0a3498446bf08ab473caac3b76f9",
+                   "e0c24679aba667a3b5ebd59bffd2ec5ff23641d1"):
+        if needle not in pass28:
+            raise ValueError(f"Pass28 immutable shipping pin lost: {needle}")
+    prepared = (root / "tools/prepare-build.sh").read_text()
+    installed = (root / "tools/install-vendored-eden-backports.py").read_text()
+    if ("install-vendored-eden-backports.py --repair-owned-cache" not in prepared
+            or "83 full sources" not in prepared
+            or "ACTIVE=ROOT/'vendor/encore-active/eden-backports'" not in installed):
+        raise ValueError("Actual native shipping backport installation source changed")
     # #123 keeps its tested root-preservation E1 disposition; its PS5 behavior still requires validation.
     if by_index[123]["classification"] != "source-verified-shared-FS-root-preservation-awaiting-PS5-decision":
         raise ValueError("R23 #123 exact source-root-difference lost, missing native behavior proof")
@@ -775,7 +807,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         49: "verified-relevant-source-gap-awaiting-native-proof",
         107: "source-equivalent-pinned-savedata-post-revert",
         126: "verified-relevant-source-gap-awaiting-native-proof",
-        139: "verified-relevant-source-gap-awaiting-native-proof",
+        139: "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
     }
     for i, classification in new_cases.items():
         if by_index[i]["classification"] != classification:
@@ -807,7 +839,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 13
+    assert validate(root)["runtime_semantic_cases_pending"] == 10
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

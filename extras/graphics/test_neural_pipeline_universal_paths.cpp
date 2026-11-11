@@ -252,6 +252,53 @@ static Bindings NativeBindings(bool with_aa) {
     }
     return b;
 }
+static void StageStrengthParameterMatrix() {
+    static_assert(HasExistingStrengthControl(K::Neural,4));
+    static_assert(HasExistingStrengthControl(K::Spatial,1));
+    static_assert(HasExistingStrengthControl(K::Spatial,5));
+    static_assert(HasExistingStrengthControl(K::Spatial,6));
+    static_assert(!HasExistingStrengthControl(K::Neural,1));
+    static_assert(!HasExistingStrengthControl(K::AntiAlias,2));
+    unsigned cases=0u,positive=0u,negative=0u;
+    for(int method=1;method<=4;++method)
+      for(int strength:{-2,-1,0,25,50,100,101}) {
+        auto c=Start();
+        const E shape=method<=3?p1440:p720;
+        Add(c,K::Neural,method,shape);
+        c.steps[0].strength_percent=static_cast<std::int16_t>(strength);
+        c=Finish(c,shape);
+        const bool valid=strength==-1||
+             (method==4&&strength>=0&&strength<=100);
+        assert((Plan(c).reason==R::HostCandidateOnly)==valid);
+        ++cases;
+        valid?++positive:++negative;
+      }
+    for(int method=0;method<=6;++method)
+      for(int strength:{-2,-1,0,25,50,100,101}) {
+        auto c=Start();
+        Add(c,K::Spatial,method,p720);
+        c.steps[0].strength_percent=static_cast<std::int16_t>(strength);
+        c=Finish(c,p720);
+        const bool adjustable=method==1||method==5||method==6;
+        const bool valid=strength==-1||
+             (adjustable&&strength>=0&&strength<=100);
+        assert((Plan(c).reason==R::HostCandidateOnly)==valid);
+        ++cases;
+        valid?++positive:++negative;
+      }
+    for(int aa=1;aa<=3;++aa) {
+        auto c=Start();
+        Add(c,K::AntiAlias,aa,p720);
+        c.steps[0].strength_percent=50;
+        c=Finish(c,p720);
+        assert(Plan(c).reason==R::InvalidStageStrengthParameter);
+        ++cases;++negative;
+    }
+    assert(cases==80u&&positive>0u&&negative>0u);
+    std::cout<<"R09_PER_STAGE_NR_AND_SPATIAL_STRENGTH_MATRIX_PASS cases="
+             <<cases<<" accepted="<<positive<<" rejected="<<negative
+             <<" FXAA_SMAA_NO_FAKE_INTENSITY=YES runtime=OFF\n";
+}
 static void MeasuredOptimizationOnly() {
     const Recipe spatial=BuildRecipe(false);
     const Recipe spatial_aa=BuildRecipe(true);
@@ -260,6 +307,18 @@ static void MeasuredOptimizationOnly() {
     static_assert(!kComposablePs5RuntimeQualified);
     assert(SameRecipe(spatial,spatial));
     assert(!SameRecipe(spatial,spatial_aa));
+    auto spatial_tuned=spatial;
+    spatial_tuned.stages[0].strength_percent=75;
+    assert(!SameRecipe(spatial,spatial_tuned));
+    const auto tuned=std::array<MeasuredCandidate,2>{
+        MeasuredCandidate{&spatial,&owner0,9000000u,40000000u,true,true,true,true},
+        MeasuredCandidate{&spatial_tuned,&owner0,8000000u,40000000u,true,true,true,true}
+    };
+    auto separate=SelectMeasuredPath(
+        tuned,{p4k,11000000u,80000000u});
+    assert(separate.reason==SelectionReason::ResearchWinnerOnly);
+    assert(separate.index==1u&&separate.valid_candidates==2u);
+    assert(separate.duplicate_recipes==0u);
     auto candidates=std::array<MeasuredCandidate,4>{
         MeasuredCandidate{&spatial,&owner0,9000000u,40000000u,true,true,true,true},
         MeasuredCandidate{&spatial,&owner0,9000000u,40000000u,true,true,true,true},
@@ -304,5 +363,6 @@ int main(){
     ExhaustiveOrders();
     FullMethodMatrix();
     BoundaryAndRasterWithoutNeural();
+    StageStrengthParameterMatrix();
     MeasuredOptimizationOnly();
 }

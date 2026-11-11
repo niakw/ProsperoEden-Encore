@@ -1,0 +1,41 @@
+name: NS1 R23 bundled-program FS native owner selection (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-bundled-parent-fs-native-20261111
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - vendor
+      - ".github/workflows/ns1-r23-113-parent-fs-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fs-parent-owners:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check exact branch-only vendor, 3 selected native owners, sanitizer fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "5ff59105bf0aca685a0931ec704dac9df92fc121"
+          python3 -B vendor/tests/ns1_r23_113_parent_fs.py
+          python3 - <<'PY'
+          from pathlib import Path
+          cm=Path("headless/CMakeLists.txt").read_text()
+          assert 'get_target_property(eden_r23_fs_units core SOURCES)' in cm
+          assert 'list(FIND eden_r23_fs_units "${eden_r23_fs_cpp}" eden_r23_fs_existing)' in cm
+          assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_R23_PARENT_FS_INCLUDES}")' in cm
+          root=Path("vendor/encore-active/eden-core")
+          for name in ("patch_manager","registered_cache","savedata_factory"):
+              assert (root/"src/core/file_sys"/(name+".cpp")).is_file()
+              assert (root/"include/core/file_sys"/(name+".h")).is_file()
+          print("NS1_R23_PARENT_FS_CPP_AND_HEADERS_SOURCE_PASS paths=6")
+          PY
+          echo 'Host-only source selection; native full PS5 compile and guest save/title tests still required' >> "$GITHUB_STEP_SUMMARY"

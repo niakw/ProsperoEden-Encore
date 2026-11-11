@@ -171,6 +171,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 ['git', 'hash-object', str(expected[name])],
                 text=True).strip() == sha, ('R2 research-only source blob drift', name)
         approved_native_additions |= set(r2_extra)
+        # R09 native additions belong to this single production vendor pin.
+        # Verify each exact blob; preserve the immutable 238-path generator list.
+        r09_extra = {
+                  "include/rdna2_nr_fswin_scratch_pool_policy.h": "091b9734e93e33478d58a20a111d7a3be4b016e0",
+                  "include/rdna2_nr_vit_min_pool_policy.h": "75354460bd4857229d86e023c0e620dd33d47787",
+                  "include/video_core/renderer_vulkan/nr_rdna2_readback_dimensions.h": "9175c9ec02a5bf2a4990f2c8f1a175cabd52de61",
+                  "r09_rdna2_nr/vit_attention_tiled_min_rdna2.comp": "239ac76328be0170905e6fea999910f3a7e453c7"
+        }
+        for name, blob in r09_extra.items():
+            assert subprocess.check_output(
+                ['git', 'hash-object', str(expected[name])], text=True
+            ).strip() == blob, ('R09 maintained native additional owner drift', name)
+        approved_native_additions |= set(r09_extra)
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         assert subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip() == (

@@ -2967,3 +2967,31 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     set_property(TARGET core PROPERTY SOURCES
         "${eden_r457_sparse_kernel_units}")
 endif()
+
+# R23 #58: after all Task/Mesh and CAS owners have been selected, replace
+# exactly one shared bindless texture IR source and stage its matched resolver.
+# This is shared NS1/NS2 GPU compiler state and must be graph-qualified later.
+if(PS5_NATIVE)
+    set(EDEN_R23_PHI_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader")
+    set(EDEN_R23_PHI_CPP
+        "${EDEN_R23_PHI_ROOT}/src/shader_recompiler/ir_opt/texture_pass.cpp")
+    set(EDEN_R23_PHI_HEADER
+        "${EDEN_R23_PHI_ROOT}/include/shader_recompiler/frontend/ir/breadth_first_search.h")
+    if(NOT EXISTS "${EDEN_R23_PHI_CPP}" OR NOT EXISTS "${EDEN_R23_PHI_HEADER}")
+        message(FATAL_ERROR "R23 #58 missing coherent ConditionalPhi shader IR pair")
+    endif()
+    configure_file("${EDEN_R23_PHI_HEADER}"
+        "${PORT_BUILD_DIR}/include/shader_recompiler/frontend/ir/breadth_first_search.h"
+        COPYONLY)
+    get_target_property(eden_r23_phi_units shader_recompiler SOURCES)
+    list(FIND eden_r23_phi_units "ir_opt/texture_pass.cpp" eden_r23_phi_old)
+    if(eden_r23_phi_old EQUAL -1)
+        message(FATAL_ERROR "R23 #58 pinned shader texture IR source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_phi_units "ir_opt/texture_pass.cpp")
+    list(APPEND eden_r23_phi_units "${EDEN_R23_PHI_CPP}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_phi_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${PORT_BUILD_DIR}/include")
+    message(STATUS "R23 #58: one conditional-Phi shader IR translation unit and resolver header")
+endif()

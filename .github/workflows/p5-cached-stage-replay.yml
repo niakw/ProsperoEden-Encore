@@ -262,7 +262,10 @@ jobs:
             --app-title PPSA99008
           cp build/headless-native/crash-provenance.json build/symbols/crash-provenance.json
           python3 -B tools/ci/check-ftp-archive-root.py dist
-          sha256sum --check --strict --ignore-missing dist/SHA256SUMS
+          # The checksummed filenames are RELATIVE TO dist/, not repo root.
+          # Do not --ignore-missing: both archives MUST exist and match hashes.
+          test "$(wc -l < dist/SHA256SUMS)" -eq 2
+          (cd dist && sha256sum --check --strict SHA256SUMS)
           echo "P5_REPLAY_DISTRIBUTION_ZIPS_PASS"
 
       - name: Upload recovered, verified PS5 release bundle (no GitHub Release)

@@ -39,7 +39,9 @@ def verify():
         "r23_f2i_conversion_ps5.cpp",
         "R23 BCAT source owner moved:",
         "R23 Maxwell F2I source owner moved:"):
-        assert cm.count(marker)==1, ("CMake owner contract",marker)
+        required=2 if marker in ("list(FIND eden_r23_core_sources",
+                                  "list(REMOVE_ITEM eden_r23_core_sources") else 1
+        assert cm.count(marker)==required, ("CMake owner contract",marker,cm.count(marker),required)
     for name,(src,port,sha,old,new) in CASES.items():
         assert gitblob(src)==sha, ("unpinned vendor source",name)
         before,after=src.read_text(),port.read_text()

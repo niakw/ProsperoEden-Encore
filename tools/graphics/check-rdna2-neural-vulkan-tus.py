@@ -90,6 +90,17 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     inc=temp/"include"
     shader_headers=inc/"video_core/host_shaders"
     shader_headers.mkdir(parents=True)
+    if R09_A4K_OWNER_DUAL=="1":
+        # Compile real vendor C++ methods, with 13 non-executable SPIR-V
+        # header stubs for host SYNTAX ONLY. Never run these shader bytes.
+        for stem in (*("anime4k_3d_us_stage_"+str(i) for i in range(4)),
+                     *("anime4k_soft_stage_"+str(i) for i in range(4)),
+                     *("anime4k_denoise_stage_"+str(i) for i in range(5))):
+            symbol=stem.upper()+"_COMP_SPV"
+            (shader_headers/(stem+"_comp_spv.h")).write_text(
+                "#pragma once\\n#include <array>\\n#include <cstdint>\\n"
+                f"inline constexpr std::array<std::uint32_t,4> {symbol}"
+                "{0x07230203u,0u,0u,0u};\\n",encoding="utf-8")
     for tool,header in (
         ("test-rdna2-decoder-tile-linear-spv.py",
          "rdna2_nr_decoder_tile_linear_comp_spv.h"),
@@ -255,17 +266,18 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         tasks=(("__present_layer_r09__","r0"),
                ("__present_layer_r09__","r1"))
     elif R09_A4K_OWNER_DUAL=="1":
-        # Requires ONLY the separate vendor A4K image+view research API.
-        # Test script must run in an ephemeral vendor checkout; the
-        # production pin and branch remain unchanged.
-        tasks=(("__present_layer_r09__","a0"),
+        # Requires separate vendor PR #40, temporarily checked out in CI.
+        tasks=(("__native_a4k_owner__","a0"),
+               ("__present_layer_r09__","a0"),
                ("__present_layer_r09__","a1"))
     else:
         tasks=tuple((name,None) for name in
                     (*FILES,"__present_layer_r09__","__r09_full_gpu_host__"))
     def check(task):
         name,mode=task
-        source=(ROOT/"headless/vulkan_present_layer_r24.cpp"
+        source=(ROOT/"vendor/encore-active/eden-vulkan/anime4k_3d.cpp"
+                if name=="__native_a4k_owner__" else
+                ROOT/"headless/vulkan_present_layer_r24.cpp"
                 if name=="__present_layer_r09__" else
                 ROOT/"tools/graphics/r09_full_gpu_host.cpp"
                 if name=="__r09_full_gpu_host__" else ACTIVE/name)
@@ -308,7 +320,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         assert len(results)==2
         print("R09_MIN_720_REAL_POST_NEURAL_FSR_PRESENTER_MACRO_OFF_ON_SYNTAX_PASS",flush=True)
     elif R09_A4K_OWNER_DUAL=="1":
-        assert len(results)==2
-        print("R09_A4K_NATIVE_X2_POST_SPATIAL_PRESENTER_MACRO_OFF_ON_SYNTAX_PASS",flush=True)
+        assert len(results)==3
+        print("R09_A4K_NATIVE_OWNER_AND_SPATIAL_PRESENTER_BOTH_MACROS_SYNTAX_PASS",flush=True)
     else:
         print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

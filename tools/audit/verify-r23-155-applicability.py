@@ -54,15 +54,15 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # This dated pin is a frozen audit decision, not permission to silently
     # drop pending counts without exact source and owner proof.
     mandatory = {
-        "runtime-semantic-review-pending": 97,
+        "runtime-semantic-review-pending": 95,
         "not-applicable-to-PS5-native-packaging-assets": 8,
-        "not-applicable-to-native-runtime-source": 26,
+        "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
         "native-build-or-dependency-review": 5,
         "test-only-upstream": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
-        "reviewed-observability-only-no-NS1-behavioral-port": 1,
+        "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-equivalent-current-openssl-native-build": 1,
         "upstream-opus-ffmpeg-migration-reverted": 2,
         "verified-absent-GPU-null-initialization-candidate": 1,
@@ -102,6 +102,19 @@ def validate(root: Path, app: dict | None = None) -> dict:
         if not all(p.startswith(("dist/", "src/android/app/src/main/res/", "docs/"))
                    or p == "tools/optimize-assets.sh" for p in row["paths"]):
             raise ValueError(f"R23 asset source #{i} touches an unreviewed native path")
+    native_build = (root / "tools/build-headless-native.sh").read_text()
+    if "-DENABLE_QT=OFF -DYUZU_CMD=OFF" not in native_build:
+        raise ValueError("PS5 native Qt frontend exclusion changed")
+    if by_index[24]["classification"] != "not-applicable-to-native-runtime-source":
+        raise ValueError("Qt-only commit was reclassified without native-build proof")
+    if not all(p in ("CMakeLists.txt", "docs/Deps.md") or
+               p.startswith(("src/qt_common/", "src/yuzu/"))
+               for p in by_index[24]["paths"]):
+        raise ValueError("Qt commit has an unexpected compiled source")
+    if by_index[110]["classification"] != "reviewed-observability-only-no-NS1-behavioral-port":
+        raise ValueError("XSI strerror_r semantic parity was reclassified")
+    if by_index[110]["paths"] != ["src/common/error.cpp"]:
+        raise ValueError("strerror_r diagnostics commit contains another source")
     if by_index[44]["classification"] != "staged-host-source-fix":
         raise ValueError("viewport is a proposed host fix, not tested native behavior")
     return {
@@ -119,7 +132,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 97
+    assert validate(root)["runtime_semantic_cases_pending"] == 95
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

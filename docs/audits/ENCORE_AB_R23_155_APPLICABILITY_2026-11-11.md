@@ -109,3 +109,10 @@ Les huit commits amont **#4, #26, #34, #76, #83, #89, #105 et #140** ne touchent
 - **#153 — quotas décodeurs Opus** : le fichier épinglé `audio_core/opus/hardware_opus.h` (blob `caa74684`) ne contient pas le registre des 24 décodeurs et les erreurs `ResultOutOfOpusDecoders` introduits en amont. **Absence source confirmée** ; portage HLE audio avec tests positif/négatif (25e refus, rollback init) et licence/ABI avant toute fusion.
 
 Ces trois écarts sont **des décisions source E1**, pas des crashs PS5 prouvés ni des correctifs actifs. Ils sont déplacés de la file d'analyse sémantique vers une file **correctif identifié — intégration/test à effectuer**. Le total passe à **94 commits runtime sans décision, 4 écarts source identifiés (dont #146 GPU), 5 correctifs déjà préparés**, 13 cas assets/build, 17 en-têtes non attestés et 7 lots sans clôture native/console.
+
+## Deux revues de code fermées sur la cible PS5 native
+
+- **#24, version minimum Qt :** le `find_package(Qt6 6.5)` modifié est sous `if(ENABLE_QT)`. Les autres modifications touchent `src/qt_common/`, `src/yuzu/` et la documentation Qt. `tools/build-headless-native.sh` configure explicitement `-DENABLE_QT=OFF -DYUZU_CMD=OFF`, et la distribution PS5 fournit sa propre interface. **Pas de portage de code nécessaire pour PS5 native** (le frontend Qt reste une cible distincte).
+- **#110, `NativeErrorToString` :** le code Eden original épinglé `vendor/sources/eden/src/common/error.cpp` (blob Git `070c9a5c7eb6a444c08e4e23c20f55351ae8f3ee`) traite déjà la libc FreeBSD avec `int second_err = strerror_r(...)` ; l'amont applique un template `HandleStrerrorR(int,char*)` qui renvoie le même texte sur succès et le même fallback sur échec. **Équivalent fonctionnel au niveau source pour la branche FreeBSD/XSI**, pas d'altération de guest IPC/JIT/GPU. Une vérification ABI sera requise si la libc de l'outil PS5 change.
+
+**Comptage actualisé : 95 revues sémantiques runtime ouvertes, 5 vérifications build/dépendances, 5 correctifs hôte préparés, 17 en-têtes à attester, 7 lots C00–C06 sans preuve console complète.**

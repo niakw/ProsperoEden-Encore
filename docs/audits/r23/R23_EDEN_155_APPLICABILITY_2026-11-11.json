@@ -5,14 +5,14 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 94,
+    "runtime-semantic-review-pending": 92,
     "not-applicable-to-PS5-native-packaging-assets": 8,
-    "not-applicable-to-native-runtime-source": 26,
+    "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 6,
     "native-build-or-dependency-review": 5,
     "test-only-upstream": 1,
-    "reviewed-observability-only-no-NS1-behavioral-port": 1,
+    "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "upstream-runtime-then-reverted-equivalent": 2,
     "verified-relevant-source-gap-awaiting-native-proof": 3,
     "source-equivalent-current-openssl-native-build": 1,
@@ -800,9 +800,9 @@
       "sha": "8d29148afe5cce1050927462d32772b21e9905ae",
       "title": "[desktop] Bump minimum Qt to 6.6 (#4628)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "Official #24 changes Qt6 version requirement under if(ENABLE_QT), src/qt_common and src/yuzu desktop-only source and Qt documentation. Native tools/build-headless-native.sh explicitly configures -DENABLE_QT=OFF -DYUZU_CMD=OFF, and packages independent headless/prosperoeden UI.",
+      "action": "Not applicable to the current PS5 native/launcher runtime, not imported. Reopen if the Qt desktop frontend is selected; does not attest console graphics.",
       "paths": [
         "CMakeLists.txt",
         "docs/Deps.md",
@@ -3234,9 +3234,9 @@
       "sha": "2d1eb0dab91ec9389870ed6da7d1ef1fd01ab14a",
       "title": "[common/error] remove preprocessor macros for strerror_r gating (#4450)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-observability-only-no-NS1-behavioral-port",
+      "scope": "Official #110 changes only NativeErrorToString in common/error.cpp. FreeBSD/XSI strerror_r returns int; pinned original and upstream int-overload produce the same buffer string on success and identical fallback on failure, with no guest CPU, IPC or GPU code changed.",
+      "action": "No NS1 functional port needed for the FreeBSD libc XSI branch; optional diagnostic portability review if the libc ABI changes, not a native binary sign-off.",
       "paths": [
         "src/common/error.cpp"
       ]

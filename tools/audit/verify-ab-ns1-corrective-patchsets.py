@@ -138,7 +138,7 @@ def main() -> int:
                     "+        {23, D<&IReadOnlyApplicationControlDataInterface::"
                     'GetApplicationControlData3>, "GetApplicationControlData"},'
                 )
-                if data.count(exact_new) != 1 or len(re.findall(r"^\\+(?!\\+\\+)", data, re.MULTILINE)) != 1:
+                if data.count(exact_new) != 1 or len(re.findall(r"^\+(?!\+\+)", data, re.MULTILINE)) != 1:
                     raise ValueError("FW23 cmd23 staged patch must add exactly one IPC alias")
             # Applicability is not proof of actual native compiled-owner selection.
             run_git("apply", "--check", str(relative_patch))

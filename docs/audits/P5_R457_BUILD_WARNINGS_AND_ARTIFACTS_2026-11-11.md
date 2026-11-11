@@ -39,6 +39,10 @@ Tous les 12 runs ci-dessous ont été contrôlés par leurs jobs GitHub Actions,
 
 **Runs de récupération (pas de compilation globale)** : #42936540352 et #42937511728 n'ont produit aucun artefact ; [#42938625487](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42938625487) a fourni un FTP brut mais échoué pendant l'assemblage des ZIP ; [#42941245433](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42941245433) a fourni un FTP brut mais échoué au contrôle SHA depuis un répertoire incorrect ; **[#42942150990](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42942150990) a fourni les deux artefacts FTP et bundle, CI SUCCESS**. Le [run #42934160729](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42934160729) a qualifié le relink cache, mais ne fournissait pas de paquet.
 
+### P2 — SDL ALSA : cause et correction isolée
+
+Le journal R457 rapporte `Unable to find the alsa development library` lors du configure SDL3, alors que le CMake Encore désactive explicitement la source `sink/sdl3_sink`, retire `SDL3::SDL3` de l'audio et utilise l'interface native PS5. La branche PR #47 demande donc `SDL_ALSA=OFF` **uniquement sous `PS5_NATIVE`**, avant la configuration des dépendances. Ce choix de backend n'affecte pas les builds hôtes et évite de sonder la machine Linux pour un périphérique audio inexistant sur PS5. Contrôle de propriétaire hôte ajouté ; le prochain configure natif devra confirmer la disparition effective du warning.
+
 ## Journaux natifs lourds et warnings — triage par propriétaire
 
 - [Run #42911552038](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42911552038) (11e tentative environ) : compilation native effective, échec `libwebp` avec `SSE2 register return with SSE2 disabled` sur `sharpyuv_gamma.c`, autres TUs WebP et `graphics.cpp`. Défaut bloquant historique ; le run R457 a depuis produit un paquet, sans prouver à lui seul qu'une nouvelle compilation complète aurait réussi avec le même graphe.

@@ -7,6 +7,8 @@ on:
       - 'tools/launcher/fetch_daily_switch.py'
       - 'tools/check-daily-art-converter-host.py'
       - 'tools/check-case-art-png-profile-host.py'
+      - 'tools/check-native-sdl-alsa-host.py'
+      - 'headless/inject.cmake'
       - 'tools/check-crash-provenance-host.py'
       - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
   push:
@@ -18,6 +20,8 @@ on:
       - 'tools/launcher/fetch_daily_switch.py'
       - 'tools/check-daily-art-converter-host.py'
       - 'tools/check-case-art-png-profile-host.py'
+      - 'tools/check-native-sdl-alsa-host.py'
+      - 'headless/inject.cmake'
       - 'tools/check-crash-provenance-host.py'
       - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
 permissions:
@@ -38,4 +42,5 @@ jobs:
           python3 -B tools/check-crash-provenance-host.py
           python3 -B tools/check-daily-art-converter-host.py
           python3 -B tools/check-case-art-png-profile-host.py
+          python3 -B tools/check-native-sdl-alsa-host.py
           echo "P5_PACKAGING_WARNINGS_HOST_PASS"

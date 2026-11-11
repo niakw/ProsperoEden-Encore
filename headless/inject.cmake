@@ -15,6 +15,10 @@ include_directories(BEFORE "${CMAKE_BINARY_DIR}/headless/sparse")
 # the machine that built it: a package must not carry those. Before any target exists, so it holds
 # for every one.
 if(PS5_NATIVE)
+    # SDL3 is kept only for host-oriented dependencies; Encore removes its
+    # SDL audio sink and uses the native PS5 audio path (see CMakeLists.txt).
+    # Do not probe the host runner for Linux ALSA on the PS5 target.
+    set(SDL_ALSA OFF CACHE BOOL "PS5 uses the native audio backend, not Linux ALSA" FORCE)
     get_filename_component(EDEN_PORT_ROOT "${EDEN_PORT_DIR}/.." ABSOLUTE)
     # CMake forbids add_subdirectory() in cmake_language(DEFER) callbacks.
     # Register the pinned WebP target during the real project(yuzu) configure

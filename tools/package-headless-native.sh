@@ -234,8 +234,27 @@ development = 'EDEN_DEV_PROFILE:BOOL=ON' in profile
 for experimental in ('EDEN_SHARED_JIT', 'EDEN_JIT_COMPILE_BATCH'):
     assert experimental + ':BOOL=ON' not in profile
     assert experimental + ':UNINITIALIZED=ON' not in profile
-assert sum(profile.count('EDEN_DEVICE_FRONTEND:BOOL=' + v) for v in ('ON', 'OFF')) == 1
-devices = 'EDEN_DEVICE_FRONTEND:BOOL=ON' in profile
+# The shipping native UI is selected by a real target compile definition,
+# not by the retired EDEN_DEVICE_FRONTEND CMake cache option. Prove that the
+# launcher object was compiled with the only allowed production value.
+# The earlier cache-only assertion incorrectly rejected a successfully linked
+# PS5 title when no legacy BOOL entry existed.
+import shlex
+compiled_db = json.loads((root / '.local/headless-cache').read_text().strip()
+                   and (pathlib.Path((root / '.local/headless-cache').read_text().strip())
+                        / 'native-local/compile_commands.json').read_text())
+launcher_units = [entry for entry in compiled_db
+                  if pathlib.Path(entry['file']).as_posix().endswith('/headless/main.cpp')]
+assert len(launcher_units) == 1, 'Cannot prove native launcher frontend selection'
+launcher = launcher_units[0]
+launcher_args = (launcher['arguments'] if 'arguments' in launcher
+                 else shlex.split(launcher['command']))
+frontend_flags = [flag for flag in launcher_args if flag.startswith('-DEDEN_DEVICE_FRONTEND=')]
+assert frontend_flags == ['-DEDEN_DEVICE_FRONTEND=0'], (
+    'Shipping PS5 native frontend must be compiled OFF', frontend_flags)
+assert 'EDEN_DEVICE_FRONTEND:BOOL=ON' not in profile
+assert 'EDEN_DEVICE_FRONTEND:UNINITIALIZED=ON' not in profile
+devices = False
 graphics = 'EDEN_PS5_OPENGL:BOOL=ON' in profile
 assert not (integration and devices)
 assert not game or graphics

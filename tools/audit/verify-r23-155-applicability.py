@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 53,
+        "runtime-semantic-review-pending": 52,
+        "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected": 1,
         "reviewed-current-Boost190-ADL-compat-wrapper-retained": 1,
         "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1,
         "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
@@ -303,6 +304,25 @@ def validate(root: Path, app: dict | None = None) -> dict:
     ):
         if token not in evidence:
             raise ValueError("R23 #75/#131 pin/semantic evidence missing")
+    # #30: selected native FreeBSD interface enumerator is our maintained
+    # getifaddrs owner; upstream Darwin/legacy route change is not its runtime.
+    # Keep the network gateway/device proof separate from source-only review.
+    net = by_index[30]
+    if (net["classification"] != "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected"
+            or net["paths"] != ["src/core/internal_network/network_interface.cpp"]
+            or not net.get("source_evidence_level", "").startswith("E1")):
+        raise ValueError("R23 #30 scoped native network owner decision lost")
+    netcm = (root / "headless/CMakeLists.txt").read_text()
+    if ('list(REMOVE_ITEM core_sources internal_network/network_interface.cpp)' not in netcm
+            or 'encore-active/eden-core/src/core/internal_network/network_interface.cpp' not in netcm):
+        raise ValueError("R23 #30 selected native interface owner changed")
+    netdoc = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS12_2026-11-11.md").read_text()
+    for receipt in ("2c40328a23630353f4dd20778eb587e586cd83a5",
+                    "8ea8093bf09c20ede50cab1993e7cfaebe645816",
+                    "f68d4617ebb7a665f270052889d4262f83b07641",
+                    "__FreeBSD__", "getifaddrs"):
+        if receipt not in netdoc:
+            raise ValueError("R23 #30 native network evidence missing")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -471,7 +491,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 53
+    assert validate(root)["runtime_semantic_cases_pending"] == 52
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -480,7 +500,7 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
-    for case in (74, 130):
+    for case in (29, 74, 130):
         bad = copy.deepcopy(current)
         bad["individual_commits"][case]["classification"] = "runtime-semantic-review-pending"
         try:

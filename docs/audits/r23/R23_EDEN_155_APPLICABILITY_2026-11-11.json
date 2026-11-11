@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 13,
-    "runtime-semantic-review-pending": 53,
+    "runtime-semantic-review-pending": 52,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -45,7 +45,8 @@
     "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
     "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
     "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1,
-    "reviewed-current-Boost190-ADL-compat-wrapper-retained": 1
+    "reviewed-current-Boost190-ADL-compat-wrapper-retained": 1,
+    "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -951,12 +952,13 @@
       "sha": "2c40328a23630353f4dd20778eb587e586cd83a5",
       "title": "[macos, net] add sysctl(RT_xx)-fetched network interfaces (#3656)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected",
+      "scope": "E1 current PS5 CMake owner is encore-active/eden-core/src/core/internal_network/network_interface.cpp. That maintained unit's preprocessor chooses getifaddrs for __FreeBSD__ before a now-unreachable FreeBSD route-socket branch; Eden upstream #30 adds Darwin/macOS path and FreeBSD<15 link_ntoa compatibility to the route branch, not selected by this maintained PS5 path.",
+      "action": "Do not import MacOS interface enumerator. Preserve native getifaddrs+zero-gateway policy. Reopen if native network owner, PS5 preprocessor macro profile, libc/route header support or multiplayer network requirements change; actual PS5 interface/gateway enumeration still needs device proof.",
       "paths": [
         "src/core/internal_network/network_interface.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream commit 2c40328a23630353f4dd20778eb587e586cd83a5, pinned source f68d4617ebb7a665f270052889d4262f83b07641, maintained 8ea8093bf09c20ede50cab1993e7cfaebe645816, current headless CMake owner string; not compiled PS5 macro dump."
     },
     {
       "index": 31,

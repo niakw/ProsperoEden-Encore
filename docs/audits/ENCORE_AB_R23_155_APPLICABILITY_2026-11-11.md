@@ -204,3 +204,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 11 — #75 Boost ADL compatibility vs #131 controller disconnect (11 novembre)
 
 [Reviewed exact pins](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS11_2026-11-11.md). Upstream #75 removes legacy GCC 12 wrapper helpers from seven sites; pinned Boost 1.90.0 selects same-type vector helpers already. Decision: retain current source until a future compiler/Boost or performance qualification, not a blanket import. Upstream #131 corrects a guest-observable controller applet policy: the selected original source disconnects even requested connected controllers. Reclassified #131 as confirmed gap awaiting native/HID tests, with no production change. Updated totals: **53** generic semantic cases; **2** scoped OpenGL/UTF tests; **13** source gaps; **17** header inclusion receipts; **7** corrective batches.
+
+## R23 pass 12 — #30 native network source selected and Darwin-only change excluded (11 novembre)
+
+[Source-level decision](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS12_2026-11-11.md). The PS5 profile selects a maintained native FreeBSD interface enumerator using `getifaddrs`, not the upstream new Darwin path nor the legacy FreeBSD route helper. No native game networking claim; **52** generic semantic reviews remain, **13** gaps, **2** scoped policies, 17 headers and seven corrective batches.

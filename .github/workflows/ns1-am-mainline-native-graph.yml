@@ -70,6 +70,18 @@ jobs:
           export PROSPEROEDEN_GIT_DEPS_ROOT=.deps/repos
           export PROSPEROEDEN_DEPS_OFFLINE=1
           test -f "$scratch/source/CMakeLists.txt"
+          # The ninth-run cache predates the current versioned #131/#109
+          # shipping backports. Refresh ONLY the owned disposable build source
+          # from the pinned vendor before asking native CMake about its owners.
+          # A stale cached original must never masquerade as the production TU.
+          test -f "$scratch/owner"
+          test "$(cd -- "$(cat "$scratch/owner")" && pwd -P)" = "$GITHUB_WORKSPACE"
+          python3 -B tools/install-vendored-eden-backports.py --repair-owned-cache "$scratch/source"
+          python3 -B tools/install-vendored-eden-build-flags.py "$scratch/source"
+          python3 -B tools/install-active-core-backports.py "$scratch/source" --repair-owned-cache
+          python3 -B tools/install-active-core-backports.py "$scratch/source" --check
+          python3 -B tools/install-eden-header-hygiene.py "$scratch/source"
+          python3 -B tools/install-eden-header-hygiene.py "$scratch/source" --check
           cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
             -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

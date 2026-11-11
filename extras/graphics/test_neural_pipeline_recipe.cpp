@@ -27,7 +27,7 @@ static StageEvidence Proof(unsigned idx){
     return p;
 }
 int main(){
-    static_assert(kRecipeVersion==1u);
+    static_assert(kRecipeVersion==2u);
     static_assert(!kComposablePs5RuntimeQualified);
     Recipe preset{};
     preset.source_extent=p360;
@@ -151,7 +151,7 @@ int main(){
     assert(!RemoveStep(after_fg,kMaxSteps));
     // Prototype is a versioned sequence of types/ids/resolutions only.
     // The separate live native owners must bind real resources later.
-    std::cout<<"R09_COMPOSABLE_RECIPE_V1_HOST_PASS "
+    std::cout<<"R09_COMPOSABLE_RECIPE_V2_HOST_PASS "
              <<"add_remove_reorder=YES native_bindings_required=YES "
              <<"post_FG_all_streams_guard=YES runtime=OFF\n";
 }

@@ -1,0 +1,76 @@
+name: NS2 R4 actual PS5 native texture-cache source gate (no full build)
+on:
+  push:
+    branches: [research/ns2-r4-volume-active-native-20261111]
+    paths:
+      - vendor
+      - headless/CMakeLists.txt
+      - tools/ns2/check_r4_real_native.py
+      - .github/workflows/ns2-r4-real-native-source.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ns2-r4-real-native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  r4-real-native-compiler:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PROSPEROEDEN_GIT_DEPS_ROOT: .deps/repos
+      PROSPEROEDEN_DEPS_OFFLINE: '1'
+    steps:
+      - name: Checkout isolated R4 engine and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Validate exact R4 research vendor
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:vendor)" = 4c2a56676ed2cc7b8b923b10b5c0c0fe39817b2d
+          test "$(git -C vendor rev-parse HEAD)" = 4c2a56676ed2cc7b8b923b10b5c0c0fe39817b2d
+      - name: Restore prior native PS5 project cache read-only
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42924336057
+      - name: Configure genuine PS5 graph and compile ONLY active VkTextureCache TU
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.cache.outputs.cache-hit }}" = true
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools \
+            llvm-spirv-18 libllvmspirvlib-18-dev cmake ninja-build ccache make \
+            nasm meson rsync git glslang-tools spirv-tools bison flex autoconf \
+            python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
+            libboost-container-dev libssl-dev libzstd-dev
+          bash tools/ci/link-sibling-deps.sh
+          test -s ../mihawk-vulkan-review/.deps/native/radv-release/lib/libvulkan_radeon.ps5.a
+          python3 -B tools/isolate-radv.py
+          bash tools/build-agc-driver-stub.sh
+          python3 -m pip install --user --break-system-packages "meson==1.12.1"
+          export PATH="$HOME/.local/bin:$PATH"
+          bash tools/build-opengl-sdk.sh
+          mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
+          test "${#graphs[@]}" -eq 1
+          native="$(dirname "${graphs[0]}")"
+          scratch="$(dirname "$native")"
+          export PS5_PAYLOAD_SDK="$scratch/sdk"
+          export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
+          cmake -S "$scratch/source" -B "$native" -G Ninja \
+            -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DEDEN_PS5_VULKAN=ON \
+            -DEDEN_RESEARCH_NS2_R4_VOLUME=ON
+          python3 -B tools/ns2/check_r4_real_native.py "$native"

@@ -1350,6 +1350,35 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_LAYER_DECODE=1)
 endif()
 
+# R4 native research-only: compile the actual N60 ASTC TextureCache
+# implementation (the source used by the PS5 renderer), NOT the shadowed
+# eden-vulkan/vulkan-cache copy. Explicit opt-in, default OFF on all builds.
+option(EDEN_RESEARCH_NS2_R4_VOLUME
+       "Qualify native 3D cached volume-slice copy in active NS1/NS2 TextureCache" OFF)
+if(EDEN_RESEARCH_NS2_R4_VOLUME)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR "R4 volume-slice research requires PS5 native Vulkan")
+    endif()
+    set(EDEN_R4_ACTIVE_TEXTURE_CACHE
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h")
+    if(NOT EXISTS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
+        message(FATAL_ERROR "R4 N60 maintained TextureCache owner missing")
+    endif()
+    file(READ "${EDEN_R4_ACTIVE_TEXTURE_CACHE}" EDEN_R4_ACTIVE_OWNER_SOURCE)
+    if(NOT EDEN_R4_ACTIVE_OWNER_SOURCE MATCHES
+           "copy_native_volume_slice")
+        message(FATAL_ERROR "R4 wrong active TextureCache owner selected")
+    endif()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp"
+         EDEN_R4_CONSUMER_INDEX)
+    if(EDEN_R4_CONSUMER_INDEX LESS 0)
+        message(FATAL_ERROR "R4 active Vulkan cache consumer missing from native graph")
+    endif()
+    target_compile_definitions(video_core PRIVATE EDEN_RESEARCH_NS2_R4_VOLUME=1)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
+endif()
+
 # Sparse native GPU probes were diagnostic paths without a production
 # consumer. Keep the supported dense Vulkan texture cache until sparse
 # mapping integrates with the same normal scheduler and memory ownership.

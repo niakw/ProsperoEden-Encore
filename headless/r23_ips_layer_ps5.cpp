@@ -141,6 +141,7 @@ static IPSwitchRecord EscapeStringSequences(std::string_view sv) {
             }
             it += 2;
         } else {
+            r.data.push_back(*it);
             ++it;
         }
     }

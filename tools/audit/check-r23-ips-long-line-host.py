@@ -29,6 +29,7 @@ def main() -> None:
         "auto replace_size = record.second.data.size();",
     ):
         assert required in source, "missing real source implementation " + required
+    assert "r.data.push_back(*it);" in source, "unescaped characters must be emitted"
     for forbidden in ("r.count", "r.data[r.count]", "std::array<uint8_t, 256 - sizeof(size_t)>"):
         assert forbidden not in source, "unsafe legacy buffer in selected source " + forbidden
     fixture = r"""

@@ -299,7 +299,14 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
 #endif
         Eden::LaunchHandoff::Clear();
         bool handoff_captured = false;
-        while (running && !launcher.done() && !launcher.restart_requested()) {
+        unsigned handoff_attempts = 0;
+        // A failed GL readback may be retried for at most three final-case
+        // frames while the EGL surface is still alive. Never start Vulkan
+        // with an accidentally blank mailbox after one transient GL error.
+        while (running && !launcher.restart_requested() &&
+               (!launcher.done() ||
+                (!launcher.selected_game().empty() && !handoff_captured &&
+                 handoff_attempts < 3u))) {
             const auto frame_start = Clock::now();
             // Start-to-start frame time; a long frame does not make the animations jump.
             const float dt = first_frame ? 1.0f / 60.0f :
@@ -396,10 +403,10 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             // reuses this exact scene until the first guest frame.
             if (!handoff_captured && launcher.done() &&
                 !launcher.selected_game().empty()) {
+                    ++handoff_attempts;
                     // The final launcher frame remains fully visible, with
                     // the 3D case settled and NO black outro. Capture this
                     // exact presentation instead of an earlier spin angle.
-                    handoff_captured = true;
                     const int width = display.width();
                     const int height = display.height();
                     if (width > 0 && height > 0 && width <= 4096 && height <= 2160) {
@@ -423,6 +430,22 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                             glGetIntegerv(GL_PACK_SKIP_ROWS, &old_pack_skip_rows);
                             glGetIntegerv(GL_PACK_SKIP_PIXELS, &old_pack_skip_pixels);
                             glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &old_pack_buffer);
+                            // GL errors accumulate. Don't interpret a stale
+                            // render error as a failed screenshot readback;
+                            // report it separately rather than silently masking.
+                            GLenum prior_gl_error = GL_NO_ERROR;
+                            unsigned prior_gl_errors = 0;
+                            for (unsigned n = 0; n < 8; ++n) {
+                                const GLenum stale = glGetError();
+                                if (stale == GL_NO_ERROR) break;
+                                prior_gl_error = stale;
+                                ++prior_gl_errors;
+                            }
+                            if (prior_gl_errors)
+                                std::fprintf(stderr,
+                                    "EDEN_LAUNCH_GL_PRIOR_ERROR count=%u last=%x\n",
+                                    prior_gl_errors,
+                                    static_cast<unsigned>(prior_gl_error));
                             glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
                             glPixelStorei(GL_PACK_ALIGNMENT, 1);
                             glPixelStorei(GL_PACK_ROW_LENGTH, 0);
@@ -451,6 +474,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                                     std::memcpy(bottom, row.data(), row_bytes);
                                 }
                                 Eden::LaunchHandoff::Publish(std::move(snapshot));
+                                handoff_captured = true;
                                 std::fprintf(stderr,
                                     "EDEN_LOADER_JACKET_HANDOFF_CAPTURE size=%dx%d ready=1\n",
                                     width, height);
@@ -460,6 +484,9 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                                     static_cast<unsigned>(error));
                             }
                         } catch (const std::bad_alloc&) {
+                            // A second 4K RGBA allocation after real OOM
+                            // would only worsen memory pressure during boot.
+                            handoff_attempts = 3;
                             std::fprintf(stderr,
                                 "EDEN_LOADER_JACKET_HANDOFF_CAPTURE ready=0 memory=insufficient\n");
                         }
@@ -527,8 +554,10 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             *restart_requested = launcher.restart_requested();
         selected_game = launcher.selected_game();
         if (!launcher.done()) selected_game.clear();
-        // Let the last sound end (the screen is already dark), then give everything back.
-        for (int wait = 0; audio_ready && wait < 60 && mixer->active_voices() > 0; ++wait) sceKernelUsleep(10000);
+        // The screenshot has been presented. Waiting up to 600 ms for a
+        // launch cue needlessly freezes the jacket before EGL->Vulkan.
+        // Silence the UI bus and release audio promptly instead.
+        if (audio_ready) mixer->set_bus_gain(pe::audio::Bus::ui, 0.0f);
         audio.stop();
         if (input_ready) radio_input_shutdown();
         textures.release();

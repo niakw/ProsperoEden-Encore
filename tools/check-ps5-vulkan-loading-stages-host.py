@@ -81,6 +81,16 @@ assert "handoff_captured = true;" in frontend
 # The production guard already contains the substring after its leading '!'.
 # Check the *full* conditional, not an ambiguous substring.
 assert frontend.count("if (!handoff_captured && launcher.done() &&") == 1
+# The final case remains alive for at most three GPU-readback attempts.
+# Stale GL errors must not turn a successful readback into a false failure.
+assert "handoff_attempts < 3u" in frontend
+assert "++handoff_attempts;" in frontend
+assert "handoff_captured = true;" in frontend
+assert "EDEN_LAUNCH_GL_PRIOR_ERROR" in frontend
+assert frontend.index("EDEN_LAUNCH_GL_PRIOR_ERROR") < frontend.index("glReadPixels(0, 0, width, height, GL_RGBA")
+assert "mixer->active_voices()" not in frontend
+assert "mixer->set_bus_gain(pe::audio::Bus::ui, 0.0f);" in frontend
+
 assert "if (handoff_captured && launcher.done() &&" not in frontend
 assert "if (!handoff_captured && launcher.done() &&" in frontend
 launcher_scene = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()

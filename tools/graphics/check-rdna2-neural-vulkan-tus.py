@@ -37,12 +37,15 @@ R09_HOST_720_DUAL=os.environ.get("R09_MIN_720_HOST_RUNNER_DUAL","")
 R09_PRESENT_720_DUAL=os.environ.get("R09_MIN_720_PRESENT_TU_DUAL","")
 R09_A4K_OWNER_DUAL=os.environ.get("R09_A4K_NATIVE_OUTPUT_DUAL","")
 R09_NATIVE_SPATIAL_DUAL=os.environ.get("R09_NATIVE_SPATIAL_CHAIN_DUAL","")
+R09_READBACK_OWNER_DUAL=os.environ.get("R09_MIN_720_READBACK_OWNER_DUAL","")
 assert all(v in ("","1") for v in
            (R09_MIN_DUAL,R09_FSWIN_DUAL,R09_HOST_720_DUAL,
-            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL,R09_NATIVE_SPATIAL_DUAL))
+            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL,R09_NATIVE_SPATIAL_DUAL,
+            R09_READBACK_OWNER_DUAL))
 assert sum(v=="1" for v in
            (R09_MIN_DUAL,R09_FSWIN_DUAL,R09_HOST_720_DUAL,
-            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL,R09_NATIVE_SPATIAL_DUAL))<=1
+            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL,R09_NATIVE_SPATIAL_DUAL,
+            R09_READBACK_OWNER_DUAL))<=1
 if R09_MIN_DUAL=="1":
     chosen={"nr_rdna2_frame_session.cpp","nr_rdna2_vit_run.cpp",
             "nr_rdna2_vit_block.cpp","nr_rdna2_vit_projection_stage.cpp",
@@ -57,6 +60,8 @@ elif R09_FSWIN_DUAL=="1":
             "nr_rdna2_fswin_chain.cpp"}
     assert chosen.issubset(FILES)
     FILES=tuple(sorted(chosen))
+elif R09_READBACK_OWNER_DUAL=="1":
+    FILES=("nr_rdna2_frame_session.cpp","nr_rdna2_frame_readback.cpp")
 elif R09_HOST_720_DUAL=="1" or R09_PRESENT_720_DUAL=="1" or R09_A4K_OWNER_DUAL=="1" or R09_NATIVE_SPATIAL_DUAL=="1":
     # Compile either the host runner or real PS5 presenter in both macro
     # states: syntax-only, no execution or runtime opt-in.
@@ -279,6 +284,11 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         # mode. This is syntax-only with real emulator/Vulkan headers.
         tasks=tuple((name,"f"+mode)
                     for name in FILES for mode in ("0","1"))
+    elif R09_READBACK_OWNER_DUAL=="1":
+        tasks=(("nr_rdna2_frame_session.cpp",None),
+               ("nr_rdna2_frame_readback.cpp",None),
+               ("__r09_full_gpu_host__","h0"),
+               ("__r09_full_gpu_host__","h1"))
     elif R09_HOST_720_DUAL=="1":
         tasks=(("__r09_full_gpu_host__","h0"),
                ("__r09_full_gpu_host__","h1"))
@@ -344,6 +354,9 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     elif R09_FSWIN_DUAL=="1":
         assert len(results)==6
         print("R09_FSWIN_NATIVE_CPP_ALL_THREE_REAL_TUS_BOTH_MACRO_MODES_PASS",flush=True)
+    elif R09_READBACK_OWNER_DUAL=="1":
+        assert len(results)==4
+        print("R09_MIN_720_REAL_SESSION_READBACK_TUS_AND_HOST_DUAL_SYNTAX_PASS",flush=True)
     elif R09_HOST_720_DUAL=="1":
         assert len(results)==2
         print("R09_MIN_720_ORIGINAL_REAL_HOST_RUNNER_MACRO_OFF_ON_SYNTAX_PASS",flush=True)

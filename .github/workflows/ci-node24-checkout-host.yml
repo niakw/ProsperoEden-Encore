@@ -1,0 +1,33 @@
+name: Node24 checkout pin and release safety host preflight
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prepare-encore-r2-draft.yml'
+      - '.github/workflows/encore-overrides-source-integrity.yml'
+      - '.github/workflows/r09-host-link.yml'
+      - '.github/workflows/r09-vit-boundary-qualification.yml'
+      - '.github/workflows/ci-node24-checkout-host.yml'
+      - 'tools/check-node24-checkout-host.py'
+  push:
+    branches:
+      - ci/node24-checkout-migration-20261111
+    paths:
+      - '.github/workflows/prepare-encore-r2-draft.yml'
+      - '.github/workflows/encore-overrides-source-integrity.yml'
+      - '.github/workflows/r09-host-link.yml'
+      - '.github/workflows/r09-vit-boundary-qualification.yml'
+      - '.github/workflows/ci-node24-checkout-host.yml'
+      - 'tools/check-node24-checkout-host.py'
+permissions:
+  contents: read
+jobs:
+  verify-pins:
+    name: Verify all checkout pins and safety gates (no native build)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout isolated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check stable Node24 pins and no release publishing
+        run: python3 -B tools/check-node24-checkout-host.py

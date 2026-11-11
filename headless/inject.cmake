@@ -20,6 +20,16 @@ if(PS5_NATIVE)
     # Do not probe the host runner for Linux ALSA on the PS5 target.
     set(SDL_ALSA OFF CACHE BOOL "PS5 uses the native audio backend, not Linux ALSA" FORCE)
     get_filename_component(EDEN_PORT_ROOT "${EDEN_PORT_DIR}/.." ABSOLUTE)
+    # The pinned Opus CPM snapshot is Xiph v1.6.1 + 6 commits
+    # (upstream a3f0ec02b342, after signed v1.6.1 tag 22244de5).
+    # Its archive has neither .git nor package_version, so upstream CMake
+    # otherwise reports an invented project version "0" at configure time,
+    # also affecting opus_get_version_string(). Supply its traceable
+    # git-describe identity ONLY for this exact PS5 snapshot. The normal
+    # variable is intentionally not cached, and no vendor file is patched.
+    if(EXISTS "${EDEN_PORT_ROOT}/vendor/sources/eden-cpm/opus/a3f0ec02b3/cmake/OpusPackageVersion.cmake")
+        set(OPUS_PACKAGE_VERSION "1.6.1-6-ga3f0ec02b342")
+    endif()
     # CMake forbids add_subdirectory() in cmake_language(DEFER) callbacks.
     # Register the pinned WebP target during the real project(yuzu) configure
     # phase; the deferred Encore frontend may only link the existing target.

@@ -16,6 +16,16 @@
 | **C05 / vendor provenance** | 35 modified files in `vendor/sources/eden`; complete Git blobs and actual owner inventory in PR #45 | Every copied/mutated header/translation unit mapped to a single maintained selected owner before moving, restoring or deleting any source | **Audit manifest ready, migrations NOT applied.** 18 C++ units explained, 17 headers need compiler include receipts |
 | **C06 / R18/R23 dependency/security parity** | 26 source trees and 22 CPM locks; Eden 155-commit upstream register, Mesa diverged branch | Full reachable-source map, package files/licences, verified security alerts, no irrelevant upstream code imported | **Audit still open; no unreviewed dependency or fork auto-imported** |
 
+## Source-selection checkpoint — C02, R23 viewport and legacy generator
+
+**Exact branch diagnostic from P0–P4 #42931313784:**
+
+- C02 source `headless/c02_spirv_fragcolor_ps5.cpp` is checked in, but the **synthetic native GPU owner CMake fixture** lacked `EDEN_PORT_DIR`; when `PS5_NATIVE` is enabled it incorrectly searched for `/c02_spirv_fragcolor_ps5.cpp`. The fixed fixture explicitly sets `EDEN_PORT_DIR` and checks exactly one C02 emitter owner. This repairs the *fixture*, not evidence of PS5-native shader linking.
+- The historical F07 audit omitted C02 from its list of **later reviewed** headless files. The source-inventory and optimization-coverage checkers now account for it separately, preserving the old **193 headless / 518 total** F07 baselines.
+- **R23 viewport #44 is staged, NOT shipping.** `tools/prepare-vulkan-port.py` contains the negative-`scale_y` correction but the selected `headless/vulkan.cmake` copies `vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp`, which retains the *original* uncorrected expression. The [exact maintained-vendor patch](patchsets/R23-viewport-negative-y.vendor.patch) is a read-only `git apply --check` input only; `tools/check-vendored-vulkan-fork.py` inversely recognizes precisely that staged hunk and must not certify the fix as active. Before source/PS5 signoff, integrate an approved maintained owner and verify one Vulkan compiled TU and negative-Y viewport behavior.
+
+A green simulator or source-normalizer test is not a compiled or device-level repair. `main` and `vendor` were not modified.
+
 ## P0 AudioIn code changes and limitations
 
 `NullSinkStreamImpl::ReleaseBuffer` returns an empty vector for every nonzero AudioIn request. The pinned `audio_core/device/device_session.cpp` subsequently copies `buffer.size` bytes from `ReleaseBuffer(buffer.size / sizeof(s16)).data()`. Returning a correctly sized silent vector closes the **nonzero-even-length null-buffer** hazard on this adapter; it does not fix the original DeviceSession's lack of explicit odd-byte alignment validation, invalid guest address checks or arbitrary huge buffer allocation. These are separate required pre-release tests and possibly a separate maintained device-session owner change. **Do not claim memory-safety signoff merely from the helper test.**

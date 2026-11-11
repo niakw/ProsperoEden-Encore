@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 19,
+        "runtime-semantic-review-pending": 17,
         "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
         "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1,
         "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
@@ -99,7 +99,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 29,
+        "verified-relevant-source-gap-awaiting-native-proof": 31,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -160,10 +160,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
             raise ValueError(f"R23 HLE case #{idx} source gap lost")
         if f"#{idx}" not in r23_hle_pass21:
             raise ValueError(f"R23 HLE case #{idx} evidence missing")
-    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_19_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
-    for token in ("19 upstream runtime-semantic", "19/19", "29", "SSL", "guest"):
+    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_17_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
+    for token in ("17 upstream runtime-semantic", "17/17", "31", "SSL", "guest"):
         if token not in current_r23_crosswalk:
-            raise ValueError(f"R23 19-case exit crosswalk missing {token}")
+            raise ValueError(f"R23 17-case exit crosswalk missing {token}")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")
@@ -609,6 +609,31 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or 'vulkan_present_layer_r24.cpp' not in native_vulkan
             or 'HAS_RESHADE' in native_vulkan):
         raise ValueError("R23 pass25 selected layer or postFX build graph changed")
+    # Pass26: firmware23 services and the selected applet renderer are E1
+    # source gaps, not proof that guest command sizes or GPU output pass.
+    pass26 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS26_2026-11-11.md").read_text()
+    for idx, path_token in (
+            (97, "src/video_core/renderer_vulkan/present/layer.cpp"),
+            (154, "src/core/hle/service/filesystem/fsp/fsp_srv.cpp")):
+        r = by_index[idx]
+        if (r["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+                or path_token not in r["paths"]
+                or r.get("source_proof_document") !=
+                "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS26_2026-11-11.md"
+                or not r.get("source_evidence_level", "").startswith("E1")
+                or f"#{idx}" not in pass26):
+            raise ValueError(f"R23 pass26 native source gap #{idx} missing")
+    for token in ("29b4f4008ce49205b3453809b8ce77193435f512",
+                  "fdbd50ed7a2192cf04af80b398d4ecdc82bd6b7e",
+                  "ad2b043f972170651b61d2d33aea4082e95c47cf",
+                  "dea657ef3911828b9437aced16ec9863aeb3b30a",
+                  "4ac313c1618ca1a163393997e5d26dc1f69cb814"):
+        if token not in pass26:
+            raise ValueError(f"R23 pass26 pinned source missing: {token}")
+    native_vulkan = (root / "headless/vulkan.cmake").read_text()
+    if ('vulkan_present_layer_r24.cpp' not in native_vulkan or
+            'renderer_vulkan/present/layer.cpp' not in native_vulkan):
+        raise ValueError("R23 pass26 native renderer selected source changed")
     # #123 keeps its tested root-preservation E1 disposition; its PS5 behavior still requires validation.
     if by_index[123]["classification"] != "source-verified-shared-FS-root-preservation-awaiting-PS5-decision":
         raise ValueError("R23 #123 exact source-root-difference lost, missing native behavior proof")
@@ -757,7 +782,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 19
+    assert validate(root)["runtime_semantic_cases_pending"] == 17
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

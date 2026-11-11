@@ -15,7 +15,13 @@ struct Extent {
     [[nodiscard]] constexpr bool operator==(const Extent&) const = default;
 };
 enum class Kind : std::uint8_t {
-    Neural,Spatial,ComposeRealFrame,FrameGeneration,Present
+    Neural,Spatial,ComposeRealFrame,FrameGeneration,Present,AntiAlias
+};
+// Source-side multisampling happens INSIDE guest rasterisation, not in
+// the postprocessing chain. Forced modes are research-only and are NOT
+// equivalent to repeated FXAA/SMAA fullscreen passes.
+enum class RasterAa : std::uint8_t {
+    None, GuestNative, ForcedX2, ForcedX4, ForcedX8, ForcedX16
 };
 enum class Reason : std::uint8_t {
     HostCandidateOnly,EmptyOrTooMany,MissingInput,InvalidExtent,
@@ -24,13 +30,19 @@ enum class Reason : std::uint8_t {
     SpatialShaderCannotDownscale,MissingNativeVkImageAndView,
     MissingQueueBarrierOrFence,FramegenRequiresComposedRealFrames,
     MissingHistoryHudProviderOrBudget,GeneratedFramesNotProcessed,
-    InvalidPresentOrder,MissingPresent
+    InvalidPresentOrder,MissingPresent,
+    UnknownRasterAa,MissingRasterAaResolveOrNativeOwner,
+    MissingRasterAaFormatOrBudget,PostAaCannotResize,
+    RasterAaNotAFullscreenFilter,TemporalAaMotionHistoryUnqualified
 };
 inline constexpr bool kComposablePs5RuntimeQualified=false;
 // Mode 1/2/3: maintained A4K CNN 2x; 4: Original 720p denoise;
 // mode 5 (Compact) is deliberately excluded pending its own full GPU proof.
 // Spatial 0/2/3/4 = native samplers, 1 = FSR1, 5/6 = SGSR/SGSR Edge.
 // FG 1 = MihawkGen, 2 = FSR3 optical flow, 3 = LSFG user DLL.
+// Post AA: 1 FXAA, 2 SMAA Ultra, 3 FXAA+ (real R24 shader variant).
+// AA method 0 means OMIT this stage; 4..7 are RASTER MSAA only, and
+// method 8 temporal AA is NOT available without motion/depth/history.
 struct Step {
     Kind kind{Kind::Spatial};
     int method{};
@@ -56,6 +68,14 @@ inline constexpr std::size_t kMaxSteps=12u;
 struct Chain {
     Extent source_extent{1280u,720u};
     std::uint64_t source_image{1u},source_view{2u};
+    RasterAa source_raster_aa{RasterAa::None};
+    // Independent evidence from the real guest raster and native resolve:
+    // the composer must never reinterpret a multisample VkImage as 1x.
+    bool source_raster_resolve_and_owner_verified{};
+    bool source_raster_guest_attachment_safe{};
+    bool source_raster_format_and_sample_count_supported{};
+    bool source_raster_fences_retired{};
+    bool source_raster_gpu_budget_measured{};
     std::array<Step,kMaxSteps> steps{};
     std::size_t count{};
 };
@@ -63,7 +83,8 @@ struct Verdict {
     Reason reason{Reason::EmptyOrTooMany};
     std::size_t at{};
     Extent result{};
-    std::uint32_t spatial_passes{};
+    std::uint32_t spatial_passes{},aa_passes{};
+    RasterAa source_raster_aa{RasterAa::None};
     bool neural{},frame_generation{},has_real_composition{};
     bool processes_generated_stream{};
     bool shape_qualified{};
@@ -84,6 +105,25 @@ struct Verdict {
 [[nodiscard]] constexpr bool IsFg(int method) noexcept {
     return method>=1&&method<=3;
 }
+[[nodiscard]] constexpr bool IsPostAa(int method) noexcept {
+    return method>=1&&method<=3;
+}
+[[nodiscard]] constexpr bool ValidRasterAa(RasterAa source) noexcept {
+    switch(source) {
+    case RasterAa::None:
+    case RasterAa::GuestNative:
+    case RasterAa::ForcedX2:
+    case RasterAa::ForcedX4:
+    case RasterAa::ForcedX8:
+    case RasterAa::ForcedX16:
+        return true;
+    }
+    return false;
+}
+[[nodiscard]] constexpr bool ForcedRasterAa(RasterAa source) noexcept {
+    return source==RasterAa::ForcedX2||source==RasterAa::ForcedX4||
+           source==RasterAa::ForcedX8||source==RasterAa::ForcedX16;
+}
 [[nodiscard]] constexpr bool ShaderUpscaleOnly(int spatial) noexcept {
     return spatial==1||spatial==5||spatial==6;
 }
@@ -100,6 +140,24 @@ struct Verdict {
     if(!chain.source_image||!chain.source_view||
        chain.source_image==chain.source_view) {
         out.reason=Reason::MissingInput;return out;
+    }
+    out.source_raster_aa=chain.source_raster_aa;
+    if(!ValidRasterAa(chain.source_raster_aa)) {
+        out.reason=Reason::UnknownRasterAa;return out;
+    }
+    if(chain.source_raster_aa!=RasterAa::None) {
+        if(!chain.source_raster_resolve_and_owner_verified||
+           !chain.source_raster_guest_attachment_safe||
+           !chain.source_raster_fences_retired) {
+            out.reason=Reason::MissingRasterAaResolveOrNativeOwner;
+            return out;
+        }
+        if(!chain.source_raster_format_and_sample_count_supported||
+           (ForcedRasterAa(chain.source_raster_aa)&&
+            !chain.source_raster_gpu_budget_measured)) {
+            out.reason=Reason::MissingRasterAaFormatOrBudget;
+            return out;
+        }
     }
     std::uint64_t current_image=chain.source_image;
     std::uint64_t current_view=chain.source_view;
@@ -143,6 +201,27 @@ struct Verdict {
             out.reason=Reason::MissingQueueBarrierOrFence;return out;
         }
         switch(step.kind){
+        case Kind::AntiAlias:
+            // FXAA/SMAA/FXAA+ operate on a resolved single-sample image at
+            // their CURRENT extent, before or after neural/spatial/FG only
+            // when a matching real VkImage+View, barriers and fences exist.
+            if(step.method>=4&&step.method<=7) {
+                out.reason=Reason::RasterAaNotAFullscreenFilter;return out;
+            }
+            if(step.method==8) {
+                out.reason=Reason::TemporalAaMotionHistoryUnqualified;return out;
+            }
+            if(!IsPostAa(step.method)) {
+                out.reason=Reason::UnknownStageOrProvider;return out;
+            }
+            if(step.output!=out.result) {
+                out.reason=Reason::PostAaCannotResize;return out;
+            }
+            if(generated&&!step.processes_real_and_generated) {
+                out.reason=Reason::GeneratedFramesNotProcessed;return out;
+            }
+            ++out.aa_passes;
+            break;
         case Kind::Neural:
             if(!IsNeural(step.method)||!step.trained_model_and_weights_verified){
                 out.reason=Reason::UnknownStageOrProvider;return out;

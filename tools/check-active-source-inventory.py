@@ -1113,12 +1113,12 @@ for consumer in ("sockets/bsd.cpp", "sockets/sfdnsres.cpp", "nifm/nifm.cpp"):
     assert 'Eden::Encore::kGuestNetworkOffline' in body, ("guest network policy not used", consumer)
 print("ENCORE_NATIVE_GUEST_NETWORK_POLICY_PASS consumers=3")
 
-# Native RADV is installed from exactly twelve versioned inputs,
+# Native RADV is installed from exactly fourteen versioned inputs,
 # including an OpenCL geometry shader that the C/C++ scanner once omitted.
 installer_inputs = runpy.run_path(str(root / "tools/install-vendored-radv.py"))["PATHS"]
 mesa_inputs = {"ps5-mesa/" + path for path in installer_inputs}
 mesa_physical = {path for path in physical if path.startswith("ps5-mesa/")}
-assert len(mesa_inputs) == 12 and mesa_inputs == mesa_physical
+assert len(mesa_inputs) == 14 and mesa_inputs == mesa_physical
 assert all(path in graph for path in mesa_inputs), (
     "missing RADV source owner", sorted(path for path in mesa_inputs if path not in graph))
 assert "ps5-mesa/src/amd/vulkan/cl/radv_gs_compute.cl" in mesa_inputs

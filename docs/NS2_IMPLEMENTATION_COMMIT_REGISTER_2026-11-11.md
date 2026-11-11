@@ -1,5 +1,22 @@
 # NS2 — source commit checkpoint (2026-11-11)
 
+
+## R2 scheduler/staging request epoch — verified research checkpoint (11 Nov)
+
+**Code commits:** [vendor `29d283b3`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/29d283b3d1c48c5bd561b5d3f62e5b1ff00755ec) adds request generation/submission tick to the maintained staging owner and an actual `vk_scheduler.h` recording snapshot, plus fail-closed fallback to the original ordered `CopyBuffer` when the request context has changed. [Vendor `d11ace99`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/d11ace9922585e8a6c878c47a2cfa263cc4ca6c8) creates the exact-method host compiler test. [Vendor `0700cab1`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/0700cab1cf17eb9528dc59642c448d7acbeb0222) asserts both production typed upload call sites still request their barriers and the PS5 upload reordering path continues to require `!barrier`.
+
+**Final research-only Encore pin:** [`ad157030`](https://github.com/niakw/ProsperoEden-Encore/commit/ad157030626a772d579cc8c19575bd6fbf4c5ec5). Historical vendor oracle now normalizes the exact additional scheduler method *before* N73/P04 MSAA SHA comparison and still rejects all other source differences. The normalizer fixes and ref pin are ONLY on the R2 branch.
+
+**Verified host CI:**
+- [Vendor #42935241845](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42935241845) **PASS**: 128 actual admission checks × six Clang/GCC optimizer+ASan/UBSan binaries (**768**), plus 15 source-derived scheduler/staging `Request` epoch cases × four binaries (**60**). The source-derived test compiles copied exact method bodies inside mock ownership shells; it is NOT a full native Vulkan translation-unit compile.
+- [Encore CMake #42935383810](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42935383810) **PASS 9/9** source-selection gates, matching research vendor SHA.
+- [Encore vendor verifier #42935383816](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42935383816) **PASS** with SHA-locked additive inventory and historical generated/native Vulkan parity. [Vendor Security & Quality #42935241840](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42935241840) source checks also run on this revision.
+
+**What remains genuinely open:** Cross-command upload batching is **NOT enabled**. Both typed callers pass `barrier=true`, whereas PS5's old reordered upload queue only accepts `!barrier`. A future patch must explicitly prove which command groups can omit/interleave barriers, propagate authenticated native channel/queue generations, retain strong Buffer/staging owners until the real GPU retirement fence, and flush every pending group at record/renderpass/tick/submit/exception/allocator-reuse boundaries. `vulkan_scheduler.cpp` batch dispatch is still untouched. No full Encore include-graph native compile, no console NS1 regression, no PS5 pixels/benchmark, no release or merge.
+
+**Counts:** vendor R2 draft **14 research commits** through `0700cab1`, 4 core/runtime/scheduler source-owner files now have R2 code, plus staging pool source/header. R2/R3/R4 remain **3/3 runtime/console qualification tracks open**. The final number of source edits for batching is not yet established, but at least scheduler dispatch and resource retirement owners remain.
+
+
 ## Latest R2 source-owner implementation — 11 November 2026
 
 **Research-only commits pushed, not merged:** vendor [`e03b6ccf`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/e03b6ccf61278a549ffe6f02381effc5c2ea03f2) on [draft PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38), and Encore CMake/vendor-gitlink [`52b35aad`](https://github.com/niakw/ProsperoEden-Encore/commit/52b35aad55a22a2ff4c1afeec980924f245230dc) on the independent R2 branch. Follow-up CI-only inventory guard [`de70dacb`](https://github.com/niakw/ProsperoEden-Encore/commit/de70dacb3df9c10dffc571b1da6eda74780de9dc) is intentionally limited to that research branch.

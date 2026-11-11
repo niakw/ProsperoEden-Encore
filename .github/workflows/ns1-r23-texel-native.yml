@@ -1,0 +1,36 @@
+name: NS1 R23 Vulkan texel descriptor format source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-vk-texel-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-texel-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  texel-header:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check isolated header owner and invalid view shader descriptor host fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "cf04b040fd615f95716a904158825577eb872855"
+          python3 -B vendor/tests/ns1_r23_49_texel_bind.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'target_include_directories(${eden_r23_texel_target} BEFORE PRIVATE' in s
+          assert 'video_core/renderer_vulkan/vk_buffer_cache.h' in s
+          assert Path('vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h').is_file()
+          print('R23_49_VK_TEXEL_HEADER_NATIVE_OWNER_PASS')
+          PY

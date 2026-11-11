@@ -5,6 +5,7 @@
 // Requires Vulkan 1.1 + storage RGBA16F/RGBA32F and linear sampling.
 #include "dlss_nr_min_spatial_abi.h"
 #include "dlss_nr_min_spatial_math.h"
+#include "neural_pipeline_recipe.h"
 #include <vulkan/vulkan.h>
 #include <algorithm>
 #include <array>
@@ -14,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <type_traits>
 #include <string>
 #include <vector>
 
@@ -320,13 +322,41 @@ std::vector<float> Expected(const std::vector<float>& in,Size a,Size b,
     return out;
 }
 
-void Run(Host& h,const char* spv,unsigned passes){
+template<typename Handle>
+[[nodiscard]] std::uint64_t RealHandleToken(Handle h) {
+    if constexpr(std::is_pointer_v<Handle>)
+        return static_cast<std::uint64_t>(
+            reinterpret_cast<std::uintptr_t>(h));
+    else
+        return static_cast<std::uint64_t>(h);
+}
+void Run(Host& h,const char* spv,unsigned passes,bool recipe_720){
     if(passes<1u||passes>3u)
         throw std::runtime_error("Expected 1,2,3 spatial stages");
-    constexpr std::array<Size,4u> shapes{{
-        {64u,36u},{128u,72u},{192u,108u},{256u,144u}
-    }};
+    const std::array<Size,4u> shapes=recipe_720?
+        std::array<Size,4u>{{
+            {320u,180u},{640u,360u},{960u,540u},{1280u,720u}
+        }}:
+        std::array<Size,4u>{{
+            {64u,36u},{128u,72u},{192u,108u},{256u,144u}
+        }};
     constexpr std::array<bool,3u> use_nearest{{true,false,true}};
+    Eden::Graphics::PipelineComposer::Recipe recipe{};
+    if(recipe_720){
+        namespace PC=Eden::Graphics::PipelineComposer;
+        recipe.source_extent={shapes[0].w,shapes[0].h};
+        for(unsigned i=0;i<passes;++i){
+            const PC::RecipeStage stage{
+                PC::Kind::Spatial,use_nearest[i]?3:0,
+                {shapes[i+1u].w,shapes[i+1u].h},false};
+            if(!PC::InsertStep(recipe,i,stage))
+                throw std::runtime_error("Could not insert native spatial pass");
+        }
+        if(!PC::InsertStep(recipe,passes,{
+            PC::Kind::Present,0,
+            {shapes[passes].w,shapes[passes].h},false}))
+            throw std::runtime_error("Could not append terminal Present");
+    }
     // Use a gradient PLUS sharp discontinuities and alpha values to
     // ensure every pass really reads the PREVIOUS output, not guest input.
     std::vector<float> original(std::size_t(shapes[0].w)*shapes[0].h*4u);
@@ -440,6 +470,13 @@ void Run(Host& h,const char* spv,unsigned passes){
         VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
     for(unsigned i=0u;i<passes;++i){
         const auto in=shapes[i],out=shapes[i+1u];
+        if(recipe_720){
+            const auto& stage=recipe.stages[i];
+            if(stage.kind!=Eden::Graphics::PipelineComposer::Kind::Spatial||
+               stage.method!=(use_nearest[i]?3:0)||
+               stage.output!=Eden::Graphics::PipelineComposer::Extent{out.w,out.h})
+                throw std::runtime_error("Compiled graph stage drift");
+        }
         ImageBarrier(h.cmd,Transition(images[i+1u].image,
             VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_GENERAL,0u,
             VK_ACCESS_SHADER_WRITE_BIT),
@@ -521,6 +558,40 @@ void Run(Host& h,const char* spv,unsigned passes){
                  <<" source_image=PREVIOUS_OUTPUT"
                  <<" pixels="<<expected.size()/4u<<"\n";
     }
+    if(recipe_720){
+        namespace PC=Eden::Graphics::PipelineComposer;
+        PC::Bindings ownership{};
+        ownership.guest_image=RealHandleToken(images[0].image);
+        ownership.guest_view=RealHandleToken(images[0].view);
+        for(unsigned i=0u;i<passes;++i){
+            auto& proof=ownership.stages[i];
+            proof.image=RealHandleToken(images[i+1u].image);
+            proof.view=RealHandleToken(images[i+1u].view);
+            proof.native_gpu_pass_recorded=true;
+            proof.compatible_queue=true;
+            proof.producer_to_consumer_visible=true;
+            // All VkImage/VkImageView owners remain in Host.images
+            // until AFTER this method and GPU fence have completed.
+            proof.owner_retained_through_gpu_fence=true;
+        }
+        const auto qualified=PC::QualifyBoundRecipe(recipe,ownership);
+        if(qualified.reason!=PC::Reason::HostCandidateOnly||
+           !qualified.shape_qualified||qualified.runtime_enabled||
+           qualified.spatial_passes!=passes||
+           qualified.result!=PC::Extent{shapes[passes].w,shapes[passes].h})
+            throw std::runtime_error(
+                "Real VkImage-bound ordered recipe rejected");
+        // Missing one genuine Vulkan source/owner must fail closed.
+        ownership.stages[0].owner_retained_through_gpu_fence=false;
+        if(PC::QualifyBoundRecipe(recipe,ownership).reason!=
+           PC::Reason::MissingQueueBarrierOrFence)
+            throw std::runtime_error(
+                "Recipe incorrectly tolerated dropped Vulkan owner");
+        std::cout<<"R09_COMPOSABLE_REAL_VULKAN_RECIPE_BOUND_PASS "
+                 <<"passes="<<passes<<" source=320x180"
+                 <<" target="<<shapes[passes].w<<"x"<<shapes[passes].h
+                 <<" all_real_image_views_bound=YES runtime=OFF\n";
+    }
     std::cout<<"R09_COMPOSABLE_HOST_VULKAN_MULTI_IMAGE_GPU_PASS passes="
              <<passes<<" channels_compared="<<checked
              <<" real_images=YES per_stage_fence=YES"
@@ -529,9 +600,11 @@ void Run(Host& h,const char* spv,unsigned passes){
 } // namespace
 
 int main(int argc,char** argv){
-    if(argc!=3){
+    const bool recipe_720=argc==4&&
+        std::string(argv[3])=="--recipe-720p";
+    if(argc!=3&&!recipe_720){
         std::cerr<<"Usage: r09_composable_vk_spatial_chain <shader.spv> "
-                    "<passes:1|2|3>\n";
+                    "<passes:1|2|3> [--recipe-720p]\n";
         return 2;
     }
     try {
@@ -539,7 +612,7 @@ int main(int argc,char** argv){
         if(n<1||n>3)return 2;
         Host h;
         h.Init();
-        Run(h,argv[1],static_cast<unsigned>(n));
+        Run(h,argv[1],static_cast<unsigned>(n),recipe_720);
         return 0;
     }catch(const std::exception& ex){
         std::cerr<<"R09_COMPOSABLE_VULKAN_CHAIN_FAIL "<<ex.what()<<"\n";

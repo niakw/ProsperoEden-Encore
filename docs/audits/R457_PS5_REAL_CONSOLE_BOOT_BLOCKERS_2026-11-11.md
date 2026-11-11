@@ -6,26 +6,34 @@
 - **Actual user console testing, cache cleared:** two crash files for NS1 FC27 and a normal failed launch log for NS2. Never upload the entire user log archives (which may expose paths/identifiers) as a PR asset. The minimal observations below are sufficient to reproduce forensic analyses.
 - **Exact artifact recovered from GitHub:** `build/symbols/Prospero.Eden-Encore-R457.elf`, `199322632` bytes from the recovered R457 bundle, symbols trace to `memory_native_a32.cpp`; `crash-provenance.json` says `native_ps5_execution_verified=false`. Tests of this ELF alone do not qualify emulation on the console.
 
-## P0-NS1 — FC27 null memory implementation on the audio thread
+## P0-NS1 — FC27: ABI KProcess 4/6 cœurs confirmé par ELF R457
 
-Two console crashes were observed at 10:06:47 and 10:07:14, both:
-- Signal `SIGSEGV` (fault address `0x10`) on thread `audio`.
-- Instruction offset `eboot+0x39152f`; `rdi=0`, `rdx=0xc00`, sample guest buffer address in `rsi`.
-- Disassembly in the **actual R457 ELF** at `0x39152f`: `mov 0x10(%rdi), %r8`, exactly the failing 16-byte-offset memory dereference.
-- Native symbol `Core::Memory::Memory::Impl::GetSpan(unsigned long, unsigned long) const`; the call stack resolves via `Core::Memory::GuestMemory<..., short, UnsafeRead>::Read` → `AudioCore::DeviceSession::AppendBuffers` → `AudioCore::AudioOut::System::Start` → `Service::Audio::IAudioOut::Start`. This is **not** a Vulkan driver or Opus decoder crash.
-- Native wrapper `Memory::GetSpan` at `0x38d050` loads `Memory::impl` with `mov 0x8(%rdi), %rdi`, then jumps to `Impl::GetSpan`. At the crash site that **implementation pointer is null**. A preexisting `current_page_table == nullptr` guard inside `Impl::GetSpan` cannot execute because `Impl::this` is already null.
+### Preuves de crash
 
-Pinned source audit:
-- `vendor/encore-active/eden-core/src/core/memory_native_a32.cpp`: `Memory::Memory(Core::System&)` calls `Reset()`, which `make_unique<Impl>`; `GetSpan` simply forwards through `impl`.
-- `vendor/encore-active/eden-core/src/core/hle/kernel/k_process.cpp`: `KProcess` constructs its `m_memory{kernel.System()}`.
-- `vendor/sources/eden/src/audio_core/device/device_session.cpp`: audio output dereferences `handle->GetMemory()` in `AppendBuffers` and uses `CpuGuestMemory<UnsafeRead>`. `Initialize` calls `handle->Open(...)` and `Finalize` calls `handle->Close(...)`.
-- **What is proved:** null `Memory::impl` dereference at the audio guest-read call. **Not proved:** why it becomes null (partially initialized/destroyed process object, stale handle, lifetime race, memory overwrite or another bug).
+Les deux crashes à 10:06:47 et 10:07:14 ont le même signal `SIGSEGV`, la même adresse fautive `0x10`, le même thread `audio` et le même offset `eboot+0x39152f` (image PS5 à `0x400000`, ELF de symboles `.text` à zéro).
 
-Resolution checklist (no fake success):
-1. Trace the full audio service and `KProcess` lifetime at setup, guest launch, audio event scheduling, shutdown/relaunch; examine all paths that publish, Close, reuse or destroy `KProcess`, `Memory`, `AudioOut::System`, and `DeviceSession`. Include the process identity/generation, audio session ID, `handle`, and `m_memory` readiness in **diagnostics only**, no sensitive game data.
-2. Reproduce the null implementation in a host fixture for audio-session process teardown/interleaving, then modify the **true owner** of the lifetime/initialization bug, not an unrelated GetSpan cast or synthetic zero-fill. Ensure audio event is cancelled before process destruction and that live process memory is initialized before publishing audio session.
-3. Host negative test: no audio callback may access a finalized process; host positive test: AudioOut buffered reads continue with valid mapped memory. Avoid disabling audio globally.
-4. Qualify touched native C++ source selected by real CMake, then at most one consented PS5 test candidate. Acceptance: FC27 advances past AudioOut startup, first game-presented frame, audio works, crash `0x39152f` absent.
+Dans **l'ELF non dépouillé du même build R457** :
+- `Core::Memory::Memory::Impl::GetSpan` à `0x39152f` exécute `mov 0x10(%rdi), %r8` avec **`rdi=0`**, d'où le SIGSEGV.
+- Le constructeur réel de `Kernel::KProcess` (vers `0x2aa150`) prépare **`m_memory` à `KProcess+0x1b0`** ; l'instruction `lea 0x1b0(%rbx), %rdi` se trouve à `0x2aa1ff`, avant l'appel du constructeur de `Core::Memory::Memory` vers `0x2aa20c`.
+- Le code compilé de `AudioCore::DeviceSession::AppendBuffers` (vers `0xfe7a50`) lit `handle` puis fabrique l'adresse de **`m_memory` à `KProcess+0x160`** (immédiat `0x160` vers `0xfe7b22`), avant d'appeler `CpuGuestMemory<short, UnsafeRead>::Read`.
+- **Différence exacte : `0x1b0 - 0x160 = 0x50 = 80 octets`.** Le `KProcess` épinglé contient cinq tableaux `std::array` à huit octets par entrée **avant `m_memory`**. `Core::Hardware::NUM_CPU_CORES` vaut 4 dans l'en-tête source Eden d'origine, mais 6 dans `vendor/encore-active/ns2-runtime/cpu6/core/hardware_properties.h`. Deux entrées de plus dans cinq tableaux expliquent **exactement** les 80 octets.
+- Le moteur PS5 sélectionne déjà l'en-tête CPU6 pour `core`, `dynarmic` et `eden-headless` dans `headless/CMakeLists.txt`, mais **pas en priorité explicite pour `audio_core` et `video_core`**. C'est une **incohérence ABI/ODR entre unités de compilation**, pas une démonstration d'un constructeur `Memory` intrinsèquement défaillant.
+
+**Conclusion prouvée** : le binaire utilise au moins deux dispositions de `KProcess` incompatibles ; l'audio lit une adresse d'objet qui n'est pas `m_memory`. Ce diagnostic explique l'accès nul à `GetSpan` et oriente une correction du contrat des en-têtes de compilation. Il reste à confirmer que **toutes** les unités natives utilisent le même layout et qu'aucun second problème ne survient après.
+
+### Correctif ciblé sur la PR #50 (sans changer vendor)
+
+- Le bloc conditionnel PS5 CPU6 du **vrai** `headless/CMakeLists.txt` force `target_include_directories(audio_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")` et le même contrat sur `video_core`, en conservant ceux de `core`, `dynarmic` et de l'exécutable.
+- `headless/ps5_cpu6_abi_probe.cpp` est inscrit comme unité compilée dans **`core`, `audio_core`, `video_core`** : l'assertion C++ `NUM_CPU_CORES == 6` refuse une compilation qui verrait le mauvais en-tête et vérifie l'accès réel à `KProcess::GetMemory`.
+- [Contrôle host ABI #43016026480](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43016026480) : **SUCCESS** sur `e5437841`. Le script compile le véritable témoin contre un jeu synthétique d'en-têtes `4 cœurs` (échec attendu) et `6 cœurs` (succès). **Il ne constitue pas une compilation réelle des trois unités PS5**.
+- [PR vendor #41](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/41), ancien essai de silence temporaire en cas de mémoire « non prête », est **supplantée et ne doit pas être fusionnée** : elle masque le défaut ABI et risquerait d'occulter d'autres champs mal adressés. Aucun changement de pointeur vendor.
+
+### Portes de sortie
+
+1. Confirmer sur **vrai graphe CMake PS5** les lignes de compilation et priorités des includes pour les trois cibles, puis passer leurs assertions C++ sans erreur (aucun refactor large ni masquage de warning).
+2. Vérifier l'identité ABI de tous les consommateurs de `KProcess`, particulièrement les autres services audio et GPU ; ne pas se limiter au symptôme FC27.
+3. Valider sur **un vrai build PS5 identifié et testé sur la console** : FC27 dépasse `AudioOut::Start`, affiche sa première image de jeu, l'audio reste fonctionnel et le crash `0x39152f` ne revient pas.
+4. Si un autre crash survient, symboliser son **nouvel ELF** ; ne pas assimiler les CI vertes à une validation du jeu.
 
 ## P0-NS2 — physically impossible monolithic 12 GiB guest backing on PS5
 

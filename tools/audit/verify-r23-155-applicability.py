@@ -56,7 +56,9 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 73,
+        "runtime-semantic-review-pending": 71,
+        "staged-native-IPS-longline-awaiting-current-host-proof": 1,
+        "MSVC-constexpr-only-no-current-PS5-runtime-port": 1,
         "source-equivalent-declared-native-x64-lookup": 3,
         "not-applicable-to-PS5-native-packaging-assets": 8,
         "not-applicable-to-native-runtime-source": 27,
@@ -124,6 +126,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
             raise ValueError(f"R23 x64 page-table lookup #${i} lost E1 parity proof")
     if by_index[136]["classification"] != "runtime-semantic-review-pending":
         raise ValueError("R23 A32 sign-extension divergence #136 still requires JIT tests")
+    if by_index[116]["classification"] != "staged-native-IPS-longline-awaiting-current-host-proof":
+        raise ValueError("R23 IPS >256B source is staged, NOT tested at exact corrective HEAD")
+    if by_index[141]["classification"] != "MSVC-constexpr-only-no-current-PS5-runtime-port":
+        raise ValueError("R23 MSVC-only constexpr constructor source decision changed")
     # All eight upstream UI/translation commits are outside the actual PS5 package:
     # the separate launcher embeds its own ui/*.po, branded assets and artwork.
     native_pkg = (root / "tools/package-headless-native.sh").read_text()
@@ -196,7 +202,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 73
+    assert validate(root)["runtime_semantic_cases_pending"] == 71
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

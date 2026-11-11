@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 73,
+    "runtime-semantic-review-pending": 71,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -27,7 +27,9 @@
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
     "verified-absent-GPU-null-initialization-candidate": 1,
-    "source-equivalent-declared-native-x64-lookup": 3
+    "source-equivalent-declared-native-x64-lookup": 3,
+    "staged-native-IPS-longline-awaiting-current-host-proof": 1,
+    "MSVC-constexpr-only-no-current-PS5-runtime-port": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3361,9 +3363,9 @@
       "sha": "14235dc0d0543c7397dd19eb1a677e76114c08f3",
       "title": "[ips] fix .pchtxt with >256 bytes on a single line (#4445)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "staged-native-IPS-longline-awaiting-current-host-proof",
+      "scope": "NS1 IPSwitch >256-byte line vulnerability in pinned source. Corrective PR #46 stages headless/r23_ips_layer_ps5.cpp blob 5e01ee8f931798e972031ee5b10e5d31815d2be3 using bounded dynamic vectors; source-extracted ASan test exists but was not executed at the current source blob. See ENCORE_AB_R23_IPS_LONG_LINE_AND_HLE_MSVC_2026-11-11.md.",
+      "action": "Qualify source-extracted >256-byte IPS patches under ASan/UBSan at the exact current corrective HEAD, full Core C++ compilation and PS5 guest patches; do not claim passing test #42931313765 proves the newer source.",
       "paths": [
         "src/core/file_sys/ips_layer.cpp"
       ]
@@ -3744,9 +3746,9 @@
       "sha": "5adaa5b0f7e19df9bf9dbd883fe921dfe4952125",
       "title": "[core] Fix MSVC handler table initialization (#4421)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "MSVC-constexpr-only-no-current-PS5-runtime-port",
+      "scope": "Official upstream commit changes only constexpr keyword of ServiceFramework::FunctionInfoTyped constructor in core/hle/service/service.h; handler pointer conversion and constructor body are unchanged, so no native PS5/Clang service dispatch behavior is ported. See ENCORE_AB_R23_IPS_LONG_LINE_AND_HLE_MSVC_2026-11-11.md.",
+      "action": "Source-only E1 build portability decision. No PS5 runtime patch needed for the existing compiler; re-review only when toolchain/compiler changes or real C++ MSVC builds are required.",
       "paths": [
         "src/core/hle/service/service.h"
       ]

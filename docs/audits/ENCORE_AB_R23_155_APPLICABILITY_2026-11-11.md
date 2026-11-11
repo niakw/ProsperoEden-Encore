@@ -4,10 +4,12 @@
 
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/shared still open | **73** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Runtime NS1/shared still open | **71** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native build/dependency | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Staged host fixes | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Declared native Dynarmic x64 source-equivalent fixes (E1 only) | **3** | Source-level #117/#122/#125 matched; #136 remains open; no JIT execution/depfile proof |
+| IPSwitch long-line full source staged, untested at current HEAD | **1** | Source E1 prepared in corrective PR #46; no new exact-source-HEAD host proof |
+| MSVC-only HLE constructor constexpr portability | **1** | Exact one-token removal; unchanged service runtime constructor body |
 | Verified source gaps | **8** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Not native runtime | **27** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Not x64 host backend | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
@@ -26,7 +28,7 @@
 | NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| **Total** | **155** | **73 avis runtime encore ouverts** |
+| **Total** | **155** | **71 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 
@@ -155,3 +157,7 @@ Ces décisions sont **source-review completed**, jamais des correctifs homologu�
 ## 11 Nov — contrôle Dynarmic x64 page-table (source E1, non E3/E4)
 
 Le [rapport de comparaison des quatre commits x64](ENCORE_AB_R23_DYNARMIC_X64_LOOKUP_PARITY_2026-11-11.md) et le garde-fou source en lecture seule distinguent **#125 A32 LEA**, **#122 A64 LEA** et **#117 restauration A64 sign extension** (trois équivalences E1) du cas **#136 A32 sign extension**, encore divergent. Le vrai chemin de l'en-tête dépend des reçus de compilation; ne pas déduire de FPS ou de correction console d'une copie CMake. **73 analyses sémantiques R23 restantes**, 17 en-têtes originaux à tracer, 7 lots correctifs à qualifier. Les anciens compteurs documentés dans les passes datées restent historiques.
+
+## 11 Nov — IPSwitch + constructeur MSVC (E1)
+
+Voir [les deux décisions source exactes](ENCORE_AB_R23_IPS_LONG_LINE_AND_HLE_MSVC_2026-11-11.md). **#116** requiert toujours le test sur le blob correctif courant `5e01ee8...` et une compilation native du Core. **#141** ne change que `constexpr`, sans modifier le constructeur/dispatch sur PS5 Clang. Le registre contient **71** autres commits encore sans décision sémantique; une source préparée n'est ni fusionnée ni testée en jeu.

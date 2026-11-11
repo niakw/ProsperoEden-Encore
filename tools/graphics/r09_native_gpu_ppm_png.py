@@ -55,8 +55,14 @@ def compare(a: Path, b: Path) -> None:
     differing = sum(x != y for x, y in zip(left, right))
     print(f"R09_NATIVE_GPU_SGSR_VS_EDGE_RGB8_DIFFERENT_CHANNELS={differing} "
           f"total_channels={len(left)}")
-    # A hash difference is informative, but do not falsely require a
-    # visual difference for every synthetic gradient input.
+    # Green-channel luma boundaries in the pinned test fixture MUST
+    # distinguish both original Qualcomm kernels on the validated
+    # Lavapipe ICD. A missing variant selection or wrong shader binding
+    # is a real regression, not a success with two identical PNGs.
+    if differing < 100_000:
+        raise ValueError("Authentic SGSR Edge variant did not materially "
+                         "differ from normal shader on green-edge fixture")
+    print("R09_AUTHENTIC_SGSR_EDGE_SHADER_SELECTION_DIFFERENTIAL_PASS")
     print(f"R09_NATIVE_GPU_OUTPUTS_NONEMPTY_SHA256="
           f"{hashlib.sha256(left).hexdigest()} "
           f"{hashlib.sha256(right).hexdigest()}")

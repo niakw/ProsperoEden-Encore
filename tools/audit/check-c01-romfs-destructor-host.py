@@ -55,7 +55,7 @@ def run():
     start=source.index("RomFSBuildContext::~RomFSBuildContext() {")
     end=source.index("\n\nstd::vector<std::pair<u64, VirtualFile>>",start)
     destructor=source[start:end]
-    assert destructor==AFTER.split("RomFSBuildContext::~RomFSBuildContext() {",1)[0].strip()+"\n"+destructor if False else bool(destructor)
+    assert destructor == AFTER[AFTER.index("RomFSBuildContext::~RomFSBuildContext() {"):], "incorrect production destructor body"
     program=r"""
 #include <cassert>
 #include <cstdint>

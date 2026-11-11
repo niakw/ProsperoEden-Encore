@@ -1,0 +1,42 @@
+name: NS1 R23 applet zorder and SGSR history bypass (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-applet-sgsr-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/vulkan_present_layer_r24.cpp"
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-97-sgsr-applet.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-applet-layer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check selected applet compositor, native SGSR history bypass
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "36a59bfc328e6c8c6dbe7944d6c8a6c53db4c193"
+          python3 -B vendor/tests/ns1_r23_97_applet_zorder.py
+          python3 - <<'PY'
+          from pathlib import Path
+          c=Path('headless/CMakeLists.txt').read_text()
+          s=Path('headless/vulkan_present_layer_r24.cpp').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_applet_window_units' in c
+          assert 'list(APPEND eden_r23_applet_window_units "${EDEN_R23_APPLET_WINDOW_SOURCE}")' in c
+          assert 'const bool is_applet =' in s
+          assert 'Service::Nvnflinger::LayerStackId::Recording' in s
+          assert 'if (!is_applet) {' in s
+          idx=s.index('} else if (auto* sgsr = std::get_if<SGSR>(&sr_filter))')
+          assert s.index('if (!is_applet) {',idx)<s.index('sgsr->Draw(',idx)
+          print('NS1_R23_APPLET_SGSR_NATIVE_SOURCE_PATH_PASS recording_bit=1')
+          PY

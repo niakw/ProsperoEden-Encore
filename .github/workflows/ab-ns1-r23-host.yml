@@ -40,7 +40,8 @@ jobs:
           test "$(git -C vendor rev-parse HEAD)" = "22b69d6053db41b74edac2633c012f925b84f69e"
           python3 -B tools/audit/check-r23-f2i-bcat-host.py
           python3 -B tools/audit/check-r23-ips-audren-host.py
+          python3 -B tools/audit/check-r23-ips-long-line-host.py
           python3 -B tools/audit/check-r23-viewport-host.py
           python3 -B tools/audit/check-r23-channel-state-host.py
-          echo "6 pinned source fixes (F2I, BCAT, IPS, audren, viewport and GPU channel init): isolated source-extracted ASan/UBSan pass." >> "$GITHUB_STEP_SUMMARY"
+          echo "7 reviewed R23 source changes (F2I, BCAT, IPS EOF, IPS >256-byte line, audren, viewport and GPU channel init): isolated source-extracted ASan/UBSan pass." >> "$GITHUB_STEP_SUMMARY"
           echo "No native PS5 ELF, real Maxwell header compiler include receipt, actual shader guest behavior, or BCAT title-level test." >> "$GITHUB_STEP_SUMMARY"

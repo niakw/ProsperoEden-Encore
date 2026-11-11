@@ -6,6 +6,8 @@
 // Parse that upstream enum before the Vulkan platform headers import X.h.
 #include "core/hle/service/nvdrv/nvdata.h"
 #include "r09_native_plans.h"
+#include "dlss_nr_min_720_plan_emit.h"
+#include "video_core/renderer_vulkan/nr_rdna2_session_preflight.h"
 #include "nr_dll_launch_preflight.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_readback.h"
@@ -43,10 +45,11 @@
 
 namespace vk = Vulkan::vk;
 namespace {
-constexpr std::uint32_t kWidth = 1920u;
-constexpr std::uint32_t kHeight = 1080u;
-constexpr VkExtent2D kExtent{kWidth, kHeight};
-constexpr std::uint64_t kInputBytes = std::uint64_t(kWidth) * kHeight * 4u;
+constexpr VkExtent2D kReferenceExtent{1920u,1080u};
+constexpr VkExtent2D kResearch720Extent{1280u,720u};
+[[nodiscard]] constexpr std::uint64_t RgbaBytes(VkExtent2D extent) noexcept {
+    return std::uint64_t(extent.width)*extent.height*4u;
+}
 
 // The public runner may consume one user-supplied original model DLL directly.
 // Import as DATA (never execute a Windows DLL), authenticate the 599 learned
@@ -86,14 +89,18 @@ std::filesystem::path ResolvePrivateOriginal(
     return model;
 }
 
-std::vector<std::uint8_t> ReadRawRgba8(const std::filesystem::path& path) {
+std::vector<std::uint8_t> ReadRawRgba8(
+    const std::filesystem::path& path,VkExtent2D extent,bool min_720) {
+    const auto bytes=RgbaBytes(extent);
     if (!std::filesystem::is_regular_file(path) ||
-        std::filesystem::file_size(path) != kInputBytes) {
-        throw std::runtime_error("R09_HOST_INPUT_NOT_REAL_RGBA8_1920X1080");
+        std::filesystem::file_size(path) != bytes) {
+        throw std::runtime_error(min_720?
+            "R09_MIN_720_INPUT_NOT_REAL_RGBA8_1280X720":
+            "R09_HOST_INPUT_NOT_REAL_RGBA8_1920X1080");
     }
     std::ifstream stream{path, std::ios::binary};
     if (!stream) throw std::runtime_error("R09_HOST_INPUT_READ_FAILED");
-    std::vector<std::uint8_t> contents(kInputBytes);
+    std::vector<std::uint8_t> contents(static_cast<std::size_t>(bytes));
     stream.read(reinterpret_cast<char*>(contents.data()),
                 static_cast<std::streamsize>(contents.size()));
     if (!stream || stream.gcount() != static_cast<std::streamsize>(contents.size())) {
@@ -103,14 +110,14 @@ std::vector<std::uint8_t> ReadRawRgba8(const std::filesystem::path& path) {
 }
 
 vk::Image MakeImage(Vulkan::MemoryAllocator& allocator, VkFormat format,
-                    VkImageUsageFlags usage) {
+                    VkImageUsageFlags usage,VkExtent2D extent) {
     const VkImageCreateInfo ci{
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0u,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
-        .extent = {kWidth, kHeight, 1u},
+        .extent = {extent.width, extent.height, 1u},
         .mipLevels = 1u,
         .arrayLayers = 1u,
         .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -128,7 +135,8 @@ vk::Image MakeImage(Vulkan::MemoryAllocator& allocator, VkFormat format,
 
 void Run(const std::filesystem::path& original_model_or_dll,
          const std::filesystem::path& input_path,
-         const std::filesystem::path& output_path) {
+         const std::filesystem::path& output_path,bool min_720) {
+    const VkExtent2D extent=min_720?kResearch720Extent:kReferenceExtent;
     PrivateModelCache private_cache{};
     const auto model_path = ResolvePrivateOriginal(
         original_model_or_dll, private_cache);
@@ -146,7 +154,29 @@ void Run(const std::filesystem::path& original_model_or_dll,
     if (!private_cache.directory.empty()) {
         std::cout << "R09_HOST_AUTHENTIC_DLL_IMPORT_AND_599_HASH_PASS\n";
     }
-    const auto source_pixels = ReadRawRgba8(input_path);
+    std::string emitted_720{};
+    std::string_view native_plan=Eden::NeuralPlans::Original;
+    if(min_720) {
+        Eden::Graphics::DlssNrMin::EmittedR09Min720Plan candidate{};
+        if(!Eden::Graphics::DlssNrMin::EmitR09Min720NativePlan(
+               Eden::NeuralPlans::Original,candidate)||
+           !candidate.exact_native_round_trip||candidate.rows!=152u||
+           candidate.gpu_executable)
+            throw std::runtime_error("R09_MIN_720_NATIVE_PLAN_REJECTED");
+        emitted_720=std::move(candidate.text);
+        native_plan=emitted_720;
+        Eden::Graphics::NeuralRDNA2::R09SessionCPUPlan checked{};
+        if(!Eden::Graphics::NeuralRDNA2::PreflightR09Session(
+               model_path.string(),native_plan,extent.width,extent.height,
+               extent.width,extent.height,checked)||
+           !Eden::Graphics::NeuralRDNA2::ValidateR09LearnedUpsampleInputs(
+               checked))
+            throw std::runtime_error(
+               "R09_MIN_720_AUTHENTIC_MODEL_ADAPTER_PREFLIGHT_REJECTED");
+        std::cout<<"R09_MIN_720_AUTHENTIC_152_ROW_CPU_PREFLIGHT_PASS"
+                    " raster=1280x720 HOST_ONLY\\n";
+    }
+    const auto source_pixels=ReadRawRgba8(input_path,extent,min_720);
     auto library = Vulkan::OpenLibrary();
     vk::InstanceDispatch dispatch{};
     auto instance = Vulkan::CreateInstance(*library, dispatch, VK_API_VERSION_1_1);
@@ -162,11 +192,11 @@ void Run(const std::filesystem::path& original_model_or_dll,
     Vulkan::Scheduler scheduler{device, state_tracker};
     auto source_image = MakeImage(allocator, VK_FORMAT_R8G8B8A8_UNORM,
                                   VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                                  VK_IMAGE_USAGE_SAMPLED_BIT);
+                                  VK_IMAGE_USAGE_SAMPLED_BIT,extent);
     auto target_image = MakeImage(allocator, VK_FORMAT_R32G32B32A32_SFLOAT,
                                   VK_IMAGE_USAGE_STORAGE_BIT |
                                   VK_IMAGE_USAGE_SAMPLED_BIT |
-                                  VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+                                  VK_IMAGE_USAGE_TRANSFER_SRC_BIT,extent);
     auto source_view = Vulkan::CreateWrappedImageView(
         device, source_image, VK_FORMAT_R8G8B8A8_UNORM);
     auto target_view = Vulkan::CreateWrappedImageView(
@@ -177,7 +207,7 @@ void Run(const std::filesystem::path& original_model_or_dll,
     }
     // True Vulkan upload to GENERAL, followed by a completed GPU tick.
     Vulkan::UploadImage(device, allocator, scheduler, source_image,
-                        kExtent, VK_FORMAT_R8G8B8A8_UNORM,
+                        extent, VK_FORMAT_R8G8B8A8_UNORM,
                         std::span<const std::uint8_t>{source_pixels});
     // The neural present shader expects the destination in GENERAL.
     scheduler.RequestOutsideRenderPassOperationContext();
@@ -190,9 +220,9 @@ void Run(const std::filesystem::path& original_model_or_dll,
     scheduler.Finish();
     Vulkan::NrRdna2FrameSession frame{device, allocator, scheduler};
     if (!frame.Initialize(
-        model_path.string(), Eden::NeuralPlans::Original,
-        *source_view, *source_sampler, VK_FORMAT_R8G8B8A8_UNORM, kExtent,
-        *target_view, VK_FORMAT_R32G32B32A32_SFLOAT, kExtent,
+        model_path.string(), native_plan,
+        *source_view, *source_sampler, VK_FORMAT_R8G8B8A8_UNORM, extent,
+        *target_view, VK_FORMAT_R32G32B32A32_SFLOAT, extent,
         1.0f, 1.0f)) {
         throw std::runtime_error(
             std::string("R09_HOST_ORIGINAL_INIT_REJECTED phase=") +
@@ -201,7 +231,7 @@ void Run(const std::filesystem::path& original_model_or_dll,
     Vulkan::NrRdna2FrameGpuReadback evidence{};
     if (!Vulkan::ExecuteR09FrameAndReadback(
             frame, allocator, scheduler, target,
-            *target_view, kExtent, evidence) ||
+            *target_view, extent, evidence) ||
         !evidence.readback_completed) {
         throw std::runtime_error(
             std::string("R09_HOST_ORIGINAL_GPU_FAILED phase=") +
@@ -210,7 +240,7 @@ void Run(const std::filesystem::path& original_model_or_dll,
     // Output size is fixed by the true shader target. The separate
     // r09_verify_full_gpu_evidence tool must still compare an independent
     // oracle and reject incomplete per-operation GPU traces.
-    constexpr std::uint64_t output_size = kInputBytes * sizeof(float);
+    const std::uint64_t output_size=RgbaBytes(extent)*sizeof(float);
     if (evidence.rgba32f_le.size() != output_size) {
         throw std::runtime_error("R09_HOST_RGBA32F_SIZE_MISMATCH");
     }
@@ -276,7 +306,7 @@ void Run(const std::filesystem::path& original_model_or_dll,
     Eden::GlyphIntegrity::Sha256 output_hash;
     output_hash.Update(evidence.rgba32f_le.data(),
                        evidence.rgba32f_le.size());
-    std::cout << "R09_HOST_REAL_FRAME_VULKAN_READBACK "
+    std::cout << (min_720 ? "R09_MIN_720_RESEARCH_FRAME_VULKAN_READBACK " : "R09_HOST_REAL_FRAME_VULKAN_READBACK ")
               << evidence.rgba32f_le.size()
               << " bytes; scheduler_callbacks="
               << evidence.enqueued_callbacks << "\n"
@@ -287,16 +317,25 @@ void Run(const std::filesystem::path& original_model_or_dll,
 } // namespace
 
 int main(int argc, char** argv) {
-    if (argc != 4) {
-        std::cerr << "Usage: r09_full_gpu_host ORIGINAL.nrmodel|nvngx_dlssnr.dll "
-                  << "CAPTURE_1920x1080.rgba8 OUTPUT.rgba32f\n";
+    const bool min_720=argc==5&&
+        std::string_view(argv[4])=="--research-720p";
+    if(argc!=4&&!min_720) {
+        std::cerr<<"Usage: r09_full_gpu_host ORIGINAL.nrmodel|nvngx_dlssnr.dll "
+                    "CAPTURE_1920x1080.rgba8 OUTPUT.rgba32f "
+                    "[--research-720p (expects 1280x720 capture)]\n";
         return 64;
     }
+#if !defined(EDEN_R09_MIN_720_HOST_EXPERIMENTAL) || !EDEN_R09_MIN_720_HOST_EXPERIMENTAL
+    if(min_720) {
+        std::cerr<<"R09_MIN_720_HOST_EXPERIMENTAL_COMPILE_GATE_DISABLED\n";
+        return 64;
+    }
+#endif
     try {
-        Run(argv[1], argv[2], argv[3]);
+        Run(argv[1],argv[2],argv[3],min_720);
         return 0;
-    } catch (const std::exception& failure) {
-        std::cerr << "R09_FULL_GPU_HOST_REJECTED: " << failure.what() << "\n";
+    } catch(const std::exception& failure) {
+        std::cerr<<"R09_FULL_GPU_HOST_REJECTED: "<<failure.what()<<"\n";
         return 70;
     }
 }

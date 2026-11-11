@@ -9,8 +9,6 @@
 // PS5 source owner for upstream Eden #4406: initialize channel_state on construction.
 // Exact baseline: vendor/sources/eden/src/video_core/control/channel_state_cache.h
 // Only this pointer default initializer differs from the pinned header.
-
-
 #include <deque>
 #include <limits>
 #include <mutex>

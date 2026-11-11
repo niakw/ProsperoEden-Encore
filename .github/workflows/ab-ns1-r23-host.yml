@@ -24,6 +24,7 @@ on:
       - "headless/CMakeLists.txt"
       - "headless/r23_controller_applet_ps5.cpp"
       - "headless/r23_audren_debug_ps5.cpp"
+      - "headless/r23_channel_state_cache_ps5.h"
       - "tools/audit/check-r23-*.py"
       - ".github/workflows/ab-ns1-r23-host.yml"
   workflow_dispatch:

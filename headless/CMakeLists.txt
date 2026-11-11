@@ -2827,3 +2827,21 @@ if(PS5_NATIVE)
     endforeach()
     message(STATUS "Encore R23: single active BCAT/F2I/IPS/audren source owners")
 endif()
+
+# C01 / AB-03: preserve the native vendor source snapshot, but select the
+# reviewed full-TU destructor fix from this isolated source owner exactly once.
+if(PS5_NATIVE)
+    if(NOT DEFINED EDEN_MAINTAINED_ROMFS_BUILDER)
+        message(FATAL_ERROR "C01 original RomFS CMake owner was not registered")
+    endif()
+    get_target_property(eden_c01_romfs_sources core SOURCES)
+    list(FIND eden_c01_romfs_sources "${EDEN_MAINTAINED_ROMFS_BUILDER}" eden_c01_old_idx)
+    if(eden_c01_old_idx LESS 0)
+        message(FATAL_ERROR "C01 expected maintained RomFS source not selected")
+    endif()
+    list(REMOVE_ITEM eden_c01_romfs_sources "${EDEN_MAINTAINED_ROMFS_BUILDER}")
+    list(APPEND eden_c01_romfs_sources
+        "${EDEN_PORT_DIR}/c01_romfs_builder_ps5.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_c01_romfs_sources}")
+    message(STATUS "Encore C01 RomFS builder exact selected lifetime fix")
+endif()

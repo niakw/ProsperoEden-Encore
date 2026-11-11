@@ -9,6 +9,7 @@ on:
     paths:
       - '.github/workflows/r09-dlss-nr-min-host.yml'
       - 'extras/graphics/dlss_nr_min_*.h'
+      - 'headless/vulkan_renderer_r08.cpp'
       - 'extras/graphics/test_dlss_nr_min_*.cpp'
       - 'extras/graphics/r09_min_shaders/**'
       - 'extras/graphics/r09_min_vk_spatial_smoke.cpp'
@@ -92,7 +93,8 @@ jobs:
               test_dlss_nr_min_720_session_buffer_audit \
               test_dlss_nr_min_720_full_owner_coverage \
               test_dlss_nr_min_720_fswin_tensor_audit \
-              test_dlss_nr_min_720_fswin_scratch_pool; do
+              test_dlss_nr_min_720_fswin_scratch_pool \
+              test_dlss_nr_min_720_framegen_bridge; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -114,7 +116,8 @@ jobs:
               test_dlss_nr_min_720_session_buffer_audit \
               test_dlss_nr_min_720_full_owner_coverage \
               test_dlss_nr_min_720_fswin_tensor_audit \
-              test_dlss_nr_min_720_fswin_scratch_pool; do
+              test_dlss_nr_min_720_fswin_scratch_pool \
+              test_dlss_nr_min_720_framegen_bridge; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

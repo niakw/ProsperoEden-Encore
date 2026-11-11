@@ -2831,3 +2831,26 @@ if(PS5_NATIVE)
     set_property(TARGET shader_recompiler PROPERTY SOURCES
         "${eden_native_cas_sources}")
 endif()
+
+
+# R23 #147 / FW23 NS compatibility: only the reviewed command 23 alias
+# to the existing command 19 handler. Leave unrelated AM visual overlays,
+# ARM64 host JIT and other NS services completely unchanged.
+# This branch is a research-only candidate; never infer console boot from it.
+if(PS5_NATIVE)
+    set(EDEN_FW23_NS_CMD23_SOURCE
+        "${PORT_ROOT}/headless/fw23_ns_application_control_ps5.cpp")
+    if(NOT EXISTS "${EDEN_FW23_NS_CMD23_SOURCE}")
+        message(FATAL_ERROR "FW23 NS command 23 maintained source missing")
+    endif()
+    get_target_property(eden_fw23_ns_core_sources core SOURCES)
+    list(FIND eden_fw23_ns_core_sources
+        "hle/service/ns/read_only_application_control_data_interface.cpp" eden_fw23_original_index)
+    if(eden_fw23_original_index LESS 0)
+        message(FATAL_ERROR "FW23 NS source selector changed; re-audit native owner")
+    endif()
+    list(REMOVE_ITEM eden_fw23_ns_core_sources
+        "hle/service/ns/read_only_application_control_data_interface.cpp")
+    list(APPEND eden_fw23_ns_core_sources "${EDEN_FW23_NS_CMD23_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_fw23_ns_core_sources}")
+endif()

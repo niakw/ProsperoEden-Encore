@@ -1,0 +1,23 @@
+name: R457 FW23 command 23 source parity (host only)
+on:
+  pull_request:
+    paths:
+      - 'headless/fw23_ns_application_control_ps5.cpp'
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/check_r457_fw23_ns_source.py'
+      - '.github/workflows/r457-fw23-ns-source-host.yml'
+      - vendor
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewed-ns-source-only:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout reviewed exact source and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check exact command alias and sole native source selection
+        run: python3 -B tools/ns2/check_r457_fw23_ns_source.py

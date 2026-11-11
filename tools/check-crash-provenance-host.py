@@ -87,4 +87,11 @@ assert "--app-title PPSA99008" in workflow
 assert "build/headless-native/crash-provenance.json" in workflow
 assert "build/symbols/crash-provenance.json" in workflow
 assert "EDEN_TEST_ALL_ON" not in workflow
+# This previously shipped an incomplete crash package: the receipt referenced
+# link.map but the uploaded symbols artifact had only ELF and JSON.
+replay = (root / ".github/workflows/p5-cached-stage-replay.yml").read_text()
+assert "install -m 0644 build/headless-native/link.map build/symbols/link.map" in replay
+assert '("link_map", symbols / "link.map")' in replay
+assert "P5_SYMBOL_BUNDLE_MANIFEST_MATCH_PASS" in replay
+assert "python3 -B tools/check-daily-art-converter-host.py" in replay
 print("PASS host-only PS5 crash provenance: ELF bounds, SHA256 receipt binding and build gate")

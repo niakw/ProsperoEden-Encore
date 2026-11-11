@@ -1,0 +1,56 @@
+name: P5 packaging warnings and artifact fast gates
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/p5-cached-stage-replay.yml'
+      - '.github/workflows/p5-package-warning-host.yml'
+      - 'tools/launcher/fetch_daily_switch.py'
+      - 'tools/check-daily-art-converter-host.py'
+      - 'tools/check-case-art-png-profile-host.py'
+      - 'tools/check-native-sdl-alsa-host.py'
+      - 'tools/check-opus-version-host.py'
+      - 'tools/check-psbc-noreturn-host.py'
+      - 'tools/ci/patch-psbc-noreturn-flags.py'
+      - 'tools/build-opengl-sdk.sh'
+      - 'headless/inject.cmake'
+      - 'tools/check-crash-provenance-host.py'
+      - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
+  push:
+    branches:
+      - fix/p5-r457-package-warning-audit-20261111
+    paths:
+      - '.github/workflows/p5-cached-stage-replay.yml'
+      - '.github/workflows/p5-package-warning-host.yml'
+      - 'tools/launcher/fetch_daily_switch.py'
+      - 'tools/check-daily-art-converter-host.py'
+      - 'tools/check-case-art-png-profile-host.py'
+      - 'tools/check-native-sdl-alsa-host.py'
+      - 'tools/check-opus-version-host.py'
+      - 'tools/check-psbc-noreturn-host.py'
+      - 'headless/inject.cmake'
+      - 'tools/check-crash-provenance-host.py'
+      - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
+      - 'tools/ci/patch-psbc-noreturn-flags.py'
+      - 'tools/build-opengl-sdk.sh'
+permissions:
+  contents: read
+jobs:
+  fast-package-host:
+    name: Verify package symbols, wallpaper tools, image profile and CRC
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout isolated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node.js 24)
+        with:
+          persist-credentials: false
+      - name: Run focused host tests only (no native PS5 compilation)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-crash-provenance-host.py
+          python3 -B tools/check-daily-art-converter-host.py
+          python3 -B tools/check-case-art-png-profile-host.py
+          python3 -B tools/check-native-sdl-alsa-host.py
+          python3 -B tools/check-opus-version-host.py
+          python3 -B tools/check-psbc-noreturn-host.py
+          echo "P5_PACKAGING_WARNINGS_HOST_PASS"

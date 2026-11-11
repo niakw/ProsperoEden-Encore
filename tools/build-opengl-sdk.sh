@@ -77,8 +77,28 @@ mkdir -p "$root/.local"
 # section only for this build, then restore the SDK file byte-for-byte on exit.
 cross_file="$sdk/toolchain/prospero.ini"
 cross_backup=""
+host_test="$source_dir/tests/ps5/test_compute_bindings.py"
+host_test_backup=""
+psbc_configs=()
+cleanup() {
+    if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
+        mv -f "$host_test_backup" "$host_test"
+    fi
+    if [[ -n ${cross_backup:-} && -f $cross_backup ]]; then
+        mv -f "$cross_backup" "$cross_file"
+    fi
+    # Preserve original checked-out OpenGL build inputs after all exit paths.
+    for cfg in "${psbc_configs[@]}"; do
+        if [[ -f "${cfg}.encore-backup.$" ]]; then
+            mv -f "${cfg}.encore-backup.$" "$cfg"
+        fi
+    done
+    rm -rf -- "$stage"
+}
+trap cleanup EXIT
+
 if ! grep -q '^\[host_machine\]' "$cross_file"; then
-    cross_backup="${cross_file}.encore-backup.$$"
+    cross_backup="${cross_file}.encore-backup.$"
     cp "$cross_file" "$cross_backup"
     cat >> "$cross_file" <<'EOF_CROSS'
 
@@ -100,22 +120,22 @@ EOF_CROSS
         echo 'Mesa PS5 x86_64 cache: verified and reusable'
     fi
 fi
-host_test="$source_dir/tests/ps5/test_compute_bindings.py"
-host_test_backup=""
-cleanup() {
-    if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
-        mv -f "$host_test_backup" "$host_test"
-    fi
-    if [[ -n ${cross_backup:-} && -f $cross_backup ]]; then
-        mv -f "$cross_backup" "$cross_file"
-    fi
-    rm -rf -- "$stage"
-}
-trap cleanup EXIT
 
 # Upstream's own fetcher pins and hashes Mesa/compiler dependencies. Building the SDK here keeps
 # Encore on a reviewed source commit instead of silently consuming an untagged moving HEAD.
 python3 "$source_dir/tools/fetch-sources.py"
+
+# The pinned PSBC toolchain configs omit GCC/Clang's supported NORETURN
+# attribute while vtn_fail() actually longjmps. Temporarily annotate both
+# compiler configs; restore byte-for-byte on success and all error paths.
+# This fixes GCC flow analysis without editing Mesa code or masking warnings.
+for cfg in "$source_dir/toolchain/opengnm-psbc-host.mak" \
+           "$source_dir/toolchain/opengnm-psbc-ps5.mak"; do
+    [[ -f "$cfg" ]] || { echo "Missing pinned PSBC compiler config: $cfg" >&2; exit 1; }
+    cp -p "$cfg" "${cfg}.encore-backup.$"
+    psbc_configs+=("$cfg")
+    python3 -B "$root/tools/ci/patch-psbc-noreturn-flags.py" "$cfg"
+done
 
 # Mesa's vendored c99_alloca.h relies on stdlib exposing alloca. Modern Apple SDKs do not do that
 # for this GNU-C host build, while Clang provides the exact builtin Mesa expects. Scope the alias to
@@ -203,6 +223,10 @@ if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
     mv -f "$host_test_backup" "$host_test"
     host_test_backup=""
 fi
+for cfg in "${psbc_configs[@]}"; do
+    mv -f "${cfg}.encore-backup.$" "$cfg"
+done
+psbc_configs=()
 (cd "$stage" && sha256sum --check --strict manifest.sha256 >/dev/null)
 printf '%s\n' "$expected" > "$stage/ENCORE_SOURCE_COMMIT"
 printf '%s\n' 'Includes upstream 1.0.1 plus 217da45 constant-buffer/alignment and 67c873f scanout flush.' \

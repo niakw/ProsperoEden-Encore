@@ -1,0 +1,29 @@
+name: R457 NS2 guest backing ownership research host gate
+on:
+  pull_request:
+    paths:
+      - 'headless/ps5_ns2_guest_backing_plan.h'
+      - 'tools/ns2/test_r457_ps5_guest_backing_plan.cpp'
+      - '.github/workflows/r457-ns2-guest-backing-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ns2-virtual-physical-ownership:
+    name: 12GiB VA and segmented physical owner rollback (C++20, no PS5 build)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact research head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node.js 24
+        with:
+          persist-credentials: false
+      - name: Validate planner and reject accidental runtime integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -F '#include "ps5_ns2_guest_backing_plan.h"' src/host_memory.cpp; then
+            echo "::error::NS2 backing research activated without PS5 kernel/GPU alias qualification"
+            exit 1
+          fi
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic -Iheadless             tools/ns2/test_r457_ps5_guest_backing_plan.cpp -o /tmp/r457-ns2-backing-plan-test
+          /tmp/r457-ns2-backing-plan-test

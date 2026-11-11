@@ -10,6 +10,8 @@
 #include "r09_composable_vk_spatial_chain.cpp"
 #undef main
 #include <bit>
+#include <cstdlib>
+#include <fstream>
 #include <limits>
 
 namespace {
@@ -454,6 +456,36 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
             throw std::runtime_error(
                 "Gradient failed to propagate to native stage="+
                 std::to_string(i));
+        }
+        // Preserve a REAL GPU-rendered output for visual A/B inspection
+        // only on the full 720p→4K gradient path. A PPM diagnostic is
+        // NOT the original 16-bit float frame, nor a PS5 screenshot.
+        const char* ppm=std::getenv("R09_NATIVE_GPU_DUMP_PPM");
+        if(i==2u&&full720&&gradient&&ppm&&*ppm){
+            std::ofstream out(ppm,std::ios::binary);
+            if(!out) {
+                vkUnmapMemory(h.device,b.memory);
+                throw std::runtime_error("Cannot open native GPU PPM dump");
+            }
+            out<<"P6\n"<<extent.width<<" "<<extent.height<<"\n255\n";
+            for(std::size_t pixel=0u;
+                pixel<std::size_t(extent.width)*extent.height;++pixel){
+                unsigned char rgb[3]{};
+                for(unsigned c=0u;c<3u;++c){
+                    const auto value=HalfToFloat(half[pixel*4u+c]);
+                    rgb[c]=static_cast<unsigned char>(
+                        std::lround(std::clamp(value,0.f,1.f)*255.f));
+                }
+                out.write(reinterpret_cast<const char*>(rgb),3);
+            }
+            out.flush();
+            if(!out){
+                vkUnmapMemory(h.device,b.memory);
+                throw std::runtime_error("Native GPU PPM dump incomplete");
+            }
+            std::cout<<"R09_AUTHENTIC_NATIVE_GPU_4K_PPM_WRITTEN path="
+                     <<ppm<<" width="<<extent.width
+                     <<" height="<<extent.height<<"\n";
         }
         vkUnmapMemory(h.device,b.memory);
         std::cout<<"R09_AUTHENTIC_FSR_SGSR_GPU_STAGE_PASS stage="<<i

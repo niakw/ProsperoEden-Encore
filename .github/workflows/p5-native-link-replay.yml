@@ -108,13 +108,15 @@ jobs:
                      else shlex.split(entry["command"]))
               assert "-c" in cmd and "-o" in cmd, relative
               obj = Path(entry["directory"]) / cmd[cmd.index("-o") + 1]
-              assert obj.parent.is_dir(), obj
+              obj.parent.mkdir(parents=True, exist_ok=True)
               if relative.endswith("/ps5_framegen.cpp"):
                   assert any("PS5_FRAMEGEN_VULKAN_HEADER" in arg for arg in cmd), cmd
                   assert any("VK_NO_PROTOTYPES" in arg for arg in cmd), cmd
                   assert any("VOLK_NAMESPACE" in arg for arg in cmd), cmd
                   assert "-include" in cmd and any(
                       "mihawk_volk.h" in arg for arg in cmd), cmd
+                  assert not any("SHELL:-include" in arg for arg in cmd), cmd
+                  print("P5_REPLAY_FSR3_FORCED_INCLUDE_FLAGS_PASS", flush=True)
               print("P5_REPLAY_COMPILE_REAL_OBJECT", relative, flush=True)
               subprocess.run(cmd, cwd=entry["directory"], check=True)
               assert obj.is_file() and obj.stat().st_size > 0, obj

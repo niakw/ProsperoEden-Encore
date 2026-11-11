@@ -194,7 +194,7 @@ for stem, wh, digest in (
     ("switch-logo", (193, 190),
      "e4299753479b26855f3817806e77c6710295a30b96add0f6e38ba83b66a1868d"),
     ("switch-rear-footer", (600, 286),
-     "3b8cd6f6a3af33f986e0539ac8a6e305582f5746d60d433e4eee4d18d209171c"),
+     "842379c76da45fe85ecf943f192d62b44b201323cb8b7f282a992678fc42b0b8"),
 ):
     packed = (root / f"headless/prosperoeden/ui/art/{stem}.png.b64").read_text().strip()
     raw = base64.b64decode(packed, validate=True)

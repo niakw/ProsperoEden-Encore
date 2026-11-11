@@ -106,11 +106,12 @@ else
 fi
 # PS5 tile remains native; ship only compressed WebP scenery and brand.
 # ImageMagick directly decodes the JPEG/PNG source and WebP-encodes once.
-"${image_convert[@]}" "$root/assets/encore-background.jpg" -resize '1920x1080^'     -gravity center -extent 1920x1080 -flip -alpha off     -quality 80 -define webp:method=5 "$app/ui/art/backdrop.webp"
-# Keep the legacy OpenGL vertical orientation, and alpha lossless.
-"${image_convert[@]}" "$app/sce_sys/icon0.png" -resize 256x256 -flip -alpha on     -define webp:lossless=true -quality 80 "$app/ui/art/brand.webp"
+"${image_convert[@]}" "$root/assets/encore-background.jpg" -resize '1920x1080^'     -gravity center -extent 1920x1080 -alpha off     -quality 80 -define webp:method=5 "$app/ui/art/backdrop.webp"
+# The UI renderer samples image row zero at its top edge. Store source-oriented
+# WebP directly; the historical -flip operation inverted logos on real PS5.
+"${image_convert[@]}" "$app/sce_sys/icon0.png" -resize 256x256 -alpha on     -define webp:lossless=true -quality 80 "$app/ui/art/brand.webp"
 for logo in noneon white dark; do
-    "${image_convert[@]}" "$root/assets/branding/encore-${logo}.png"         -resize 256x256 -flip -alpha on -define webp:lossless=true -quality 80         "$app/ui/art/brand-${logo}.webp"
+    "${image_convert[@]}" "$root/assets/branding/encore-${logo}.png"         -resize 256x256 -alpha on -define webp:lossless=true -quality 80         "$app/ui/art/brand-${logo}.webp"
 done
 rm -f "$app/ui/art/backdrop.tga" "$app/ui/art/brand.tga"       "$app/ui/art/brand-noneon.tga" "$app/ui/art/brand-white.tga"       "$app/ui/art/brand-dark.tga"
 python3 - "$app/ui/art/backdrop.webp" "$app/ui/art/brand.webp" <<'PY_WEBP_STAGE'

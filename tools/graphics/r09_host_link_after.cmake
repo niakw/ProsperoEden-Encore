@@ -100,13 +100,34 @@ if(NOT _r09_msaa_native_count EQUAL 1)
     message(FATAL_ERROR "R09 host/native MSAA owner mismatch")
 endif()
 
-# The scheduler/device/allocator are ABI-coupled with maintained neural
-# owners. Remove the three pristine implementations, never compile duplicates.
+# Linux R09 must use the same real image-format Vulkan ABI as the R24
+# shadow pass above. The pinned upstream Vulkan wrapper lacks BOTH the
+# PhysicalDevice::GetImageFormatProperties method and the instance dispatch
+# loader. Stage those exact native vendor additions into an otherwise pristine
+# Linux implementation, without pulling the PS5 performance/mesh wrapper.
+set(_r09_host_wrapper "${_r09_compat}/video_core/vulkan_common/vulkan_wrapper.cpp")
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}"
+        "${ENCORE_R09_ROOT}/tools/graphics/r09_stage_host_vulkan_wrapper.py"
+        --upstream "${_r09_vendor}/sources/eden/src/video_core/vulkan_common/vulkan_wrapper.cpp"
+        --maintained "${_r09_active}/vulkan_wrapper.cpp"
+        --output "${_r09_host_wrapper}"
+    RESULT_VARIABLE _r09_wrapper_rc
+    OUTPUT_VARIABLE _r09_wrapper_out ERROR_VARIABLE _r09_wrapper_err)
+if(NOT _r09_wrapper_rc EQUAL 0)
+    message(FATAL_ERROR
+        "R09 native Vulkan physical-device wrapper drift: ${_r09_wrapper_out} ${_r09_wrapper_err}")
+endif()
+message(STATUS "${_r09_wrapper_out}")
+
+# The scheduler/device/allocator/wrapper are ABI-coupled with maintained
+# neural/R24 owners. Remove each pristine implementation exactly once.
 get_target_property(_r09_video_sources video_core SOURCES)
 foreach(_r09_pinned IN ITEMS
         renderer_vulkan/vk_scheduler.cpp
         vulkan_common/vulkan_device.cpp
-        vulkan_common/vulkan_memory_allocator.cpp)
+        vulkan_common/vulkan_memory_allocator.cpp
+        vulkan_common/vulkan_wrapper.cpp)
     list(FIND _r09_video_sources "${_r09_pinned}" _r09_old_index)
     if(_r09_old_index EQUAL -1)
         message(FATAL_ERROR "Pinned source changed: ${_r09_pinned}")
@@ -116,6 +137,7 @@ endforeach()
 set_property(TARGET video_core PROPERTY SOURCES "${_r09_video_sources}")
 target_sources(video_core PRIVATE ${_r09_cpp}
     "${_r09_msaa_owner}"
+    "${_r09_host_wrapper}"
     "${_r09_active}/vulkan_scheduler.cpp"
     "${_r09_active}/vulkan_device.cpp"
     "${_r09_active}/vulkan_memory_allocator.cpp")

@@ -142,7 +142,7 @@ int main(){
     after_fg.count=3u;
     assert(QualifyBoundRecipe(after_fg,proof).reason==R::MissingPresent);
     after_fg.count=4u;
-    after_fg.version=2u;
+    after_fg.version=1u; // stale v1 must fail under research recipe v2.
     assert(QualifyBoundRecipe(after_fg,proof).reason==R::MissingInput);
     assert(!InsertStep(after_fg,0,S(K::Spatial,1,p720)));
     after_fg.version=kRecipeVersion;

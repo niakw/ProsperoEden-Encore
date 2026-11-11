@@ -1,0 +1,36 @@
+name: NS1 R23 paced IStorage native service source pair (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-storage-paced-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-storage-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  storage-native-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exact branch candidate and two corrected service translation units
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "3b1dcbf04c69ab3fdccf728b1f2b29df189c17e1"
+          python3 -B vendor/tests/ns1_r23_54_storage_pacing.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'get_target_property(eden_r23_storage_units core SOURCES)' in s
+          assert 'list(REMOVE_ITEM eden_r23_storage_units "${eden_r23_storage_source}")' in s
+          assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STORAGE_HEADERS}")' in s
+          print('R23_54_STORAGE_TWO_NATIVE_TU_AND_HEADERS_HOST_PASS')
+          PY

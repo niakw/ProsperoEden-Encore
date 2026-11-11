@@ -15,6 +15,9 @@ on:
       - 'extras/graphics/dlss_nr_min_720_route_trial.h'
       - 'extras/graphics/dlss_nr_min_graph_geometry.h'
       - 'extras/graphics/test_r09_min_720_readback_dimensions.cpp'
+      - 'tools/graphics/r09_authentic_preview_png.py'
+      - 'tools/graphics/test_r09_authentic_preview_geometry.py'
+      - 'tools/graphics/r09_run_full_network_mac.sh'
   workflow_dispatch:
 
 permissions:
@@ -62,6 +65,14 @@ jobs:
           test "$(git rev-parse HEAD:vendor)" = "22b69d6053db41b74edac2633c012f925b84f69e"
           echo R09_MIN_720_HOST_PLUS_POST_NEURAL_FSR_RENDERER_CPP_SYNTAX_ONLY_NO_PS5_BUILD
 
+      - name: Validate private 720p or 1080p preview and Mac wrapper (no model)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/graphics/test_r09_authentic_preview_geometry.py
+          python3 -B -m py_compile tools/graphics/r09_authentic_preview_png.py
+          bash -n tools/graphics/r09_run_full_network_mac.sh
+          echo R09_PRIVATE_CAPTURE_HELPER_SOURCE_AND_GEOMETRY_720_1080_PASS
       - name: Test research vendor #42 readback sizes and actual native C++ owners
         shell: bash
         run: |

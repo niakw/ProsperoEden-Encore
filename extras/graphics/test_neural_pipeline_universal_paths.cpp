@@ -189,6 +189,46 @@ static void FullMethodMatrix() {
              <<" post_fg_aa="<<post_fg_aa
              <<" source720_1440_4k=YES PS5_RUNTIME_OFF\n";
 }
+static void BoundaryAndRasterWithoutNeural() {
+    // The authored graph has room for eleven processing steps plus Present.
+    auto maximal=Start();
+    for(unsigned i=0;i<kMaxSteps-1u;++i) {
+        const K type=i%2u?K::Spatial:K::AntiAlias;
+        Add(maximal,type,type==K::Spatial?0:1,p720);
+    }
+    assert(maximal.count==kMaxSteps-1u);
+    maximal=Finish(maximal,p720);
+    assert(maximal.count==kMaxSteps);
+    ExpectCandidate(maximal);
+    auto overflow=maximal;
+    overflow.count=kMaxSteps+1u;
+    assert(Plan(overflow).reason==R::EmptyOrTooMany);
+
+    // An otherwise EMPTY graphics-effects graph must still accept an
+    // authentic resolved guest-MSAA source. Neither NR nor AA/FG required.
+    for(auto raster : {RasterAa::GuestNative,RasterAa::ForcedX2,
+                       RasterAa::ForcedX4,RasterAa::ForcedX8,
+                       RasterAa::ForcedX16}) {
+        auto no_post=Start();
+        no_post.source_raster_aa=raster;
+        no_post=Finish(no_post,p720);
+        assert(Plan(no_post).reason==
+               R::MissingRasterAaResolveOrNativeOwner);
+        no_post.source_raster_resolve_and_owner_verified=true;
+        no_post.source_raster_guest_attachment_safe=true;
+        no_post.source_raster_fences_retired=true;
+        assert(Plan(no_post).reason==R::MissingRasterAaFormatOrBudget);
+        no_post.source_raster_format_and_sample_count_supported=true;
+        if(ForcedRasterAa(raster))
+            assert(Plan(no_post).reason==
+                   R::MissingRasterAaFormatOrBudget);
+        no_post.source_raster_gpu_budget_measured=true;
+        ExpectCandidate(no_post);
+    }
+    std::cout<<"R09_MAX_12_STEPS_AND_NR_FREE_SOURCE_MSAA_PASS "
+                "forced_msaa_fails_without_real_budget=YES "
+                "no_postprocessing_with_guest_msaa=YES runtime=OFF\n";
+}
 static Recipe BuildRecipe(bool add_aa) {
     Recipe r{};
     r.source_extent=p720;
@@ -263,5 +303,6 @@ static void MeasuredOptimizationOnly() {
 int main(){
     ExhaustiveOrders();
     FullMethodMatrix();
+    BoundaryAndRasterWithoutNeural();
     MeasuredOptimizationOnly();
 }

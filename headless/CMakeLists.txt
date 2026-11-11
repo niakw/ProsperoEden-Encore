@@ -815,6 +815,32 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #114: WallClock nanoseconds-to-host ticks must use the matching
+# maintained header: the old Q0.64 factor overflows at >1 GHz. Compile
+# exactly one replacement common/cpu_features.cpp and stage its header.
+if(PS5_NATIVE)
+    set(EDEN_R23_CLOCK
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/cpu_features.cpp")
+    set(EDEN_R23_CLOCK_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/common/cpu_features.h")
+    set(EDEN_R23_CLOCK_INCLUDE "${PORT_BUILD_DIR}/r23-clock/include")
+    if(NOT EXISTS "${EDEN_R23_CLOCK}" OR NOT EXISTS "${EDEN_R23_CLOCK_HEADER}")
+        message(FATAL_ERROR "R23 #114 maintained WallClock pair unavailable")
+    endif()
+    configure_file("${EDEN_R23_CLOCK_HEADER}"
+        "${EDEN_R23_CLOCK_INCLUDE}/common/cpu_features.h" COPYONLY)
+    get_target_property(eden_r23_clock_tus common SOURCES)
+    list(FIND eden_r23_clock_tus "cpu_features.cpp" eden_r23_clock_original)
+    if(eden_r23_clock_original LESS 0)
+        message(FATAL_ERROR "R23 #114 pinned common/cpu_features.cpp owner drift")
+    endif()
+    list(REMOVE_ITEM eden_r23_clock_tus "cpu_features.cpp")
+    list(APPEND eden_r23_clock_tus "${EDEN_R23_CLOCK}")
+    set_property(TARGET common PROPERTY SOURCES "${eden_r23_clock_tus}")
+    target_include_directories(common BEFORE PUBLIC "${EDEN_R23_CLOCK_INCLUDE}")
+    message(STATUS "R23 #114: source/headers match 2–4 GHz WallClock conversion")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/p5-cached-stage-replay.yml'
       - 'tools/package-headless-native.sh'
+      - 'headless/check_package.py'
   workflow_dispatch:
 
 permissions:

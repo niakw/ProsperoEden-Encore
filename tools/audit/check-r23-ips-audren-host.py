@@ -20,7 +20,7 @@ AUDIO_OWNER=ROOT/"headless/r23_audren_debug_ps5.cpp"
 IPS_SHA="9d46549bf0fae3ec5fd0ab6c65bc432dcff68818"
 AUDIO_SHA="c4332833042d7bca6309fdbe532637d80d90b4e6"
 REPLACE_IPS=(
- ("#include <span>\\n", "#include <span>\\n#include <vector>\\n"),
+ ("#include <span>\n", "#include <span>\n#include <vector>\n"),
  ("magic.size() > 3 && std::memcmp(magic.data(), \"EOF\", 3) == 0",
   "magic.size() >= 3 && std::memcmp(magic.data(), \"EOF\", 3) == 0"),
  ("magic.size() > 4 && std::memcmp(magic.data(), \"EEOF\", 4) == 0",

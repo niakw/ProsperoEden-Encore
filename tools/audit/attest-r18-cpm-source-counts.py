@@ -60,13 +60,15 @@ def checked(root: Path) -> dict:
         git_counts = None
         if (count != record["files"] or total != record["bytes"]) and (root / "vendor/.git").exists():
             candidate = subprocess.run(
-                ["git", "-C", str(root / "vendor"), "ls-tree", "-r", "-l",
+                ["git", "-C", str(root / "vendor"), "ls-tree", "-r", "-l", "-z",
                  "HEAD", "--", f"sources/eden-cpm/{name}"],
                 capture_output=True, text=True, check=True)
             objects_count, objects_bytes, git_links = 0, 0, 0
             checkout_vs_blob_size_deltas = []
             checkout_vs_blob_size_total = 0
-            for line in candidate.stdout.splitlines():
+            for line in candidate.stdout.split("\0"):
+                if not line:
+                    continue
                 info, _, _ = line.partition("\t")
                 parts = info.split()
                 if len(parts) != 4 or parts[1] != "blob":

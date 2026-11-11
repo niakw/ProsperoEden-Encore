@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout draft release notes only
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node.js 24)
         with:
           persist-credentials: false
       - name: Checkout exact source candidate (documentation only)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node.js 24)
         with:
           persist-credentials: false
           ref: '1a52235c04a26d3886093d102c46baa23ee705bc'

@@ -1,5 +1,18 @@
 # NS2 — source commit checkpoint (2026-11-11)
 
+## Latest R2 source-owner implementation — 11 November 2026
+
+**Research-only commits pushed, not merged:** vendor [`e03b6ccf`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/e03b6ccf61278a549ffe6f02381effc5c2ea03f2) on [draft PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38), and Encore CMake/vendor-gitlink [`52b35aad`](https://github.com/niakw/ProsperoEden-Encore/commit/52b35aad55a22a2ff4c1afeec980924f245230dc) on the independent R2 branch. Follow-up CI-only inventory guard [`de70dacb`](https://github.com/niakw/ProsperoEden-Encore/commit/de70dacb3df9c10dffc571b1da6eda74780de9dc) is intentionally limited to that research branch.
+
+- R2 now touches **three real source-owner files** in vendor: generic `buffer_cache.h` (both upload call sites), Vulkan `vk_buffer_cache.h` and `vk_buffer_cache_cost.cpp`; a pure C++ range helper and exact host fixture make five files total.
+- Under **`PS5_NATIVE && EDEN_RESEARCH_NS2_STAGE_BACKING`**, a typed `CopyStagingUpload(Buffer&,StagingBufferRef&, ...)` path verifies source/destination logical bounds, mapped region, physical binding offsets and same-VkDeviceMemory alias before delegating to the **unchanged** `CopyBuffer` path. All legacy paths and their upload queue/barrier semantics remain intact. This is **not** actual multi-command batching and proves no memory retirement lease.
+- [Vendor source CI #42931416245](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42931416245) **PASS**, 120 host assertions × six Clang/GCC O0/O1/O2 ASan/UBSan variants = **720 checks** (including 10 additional typed-bounds checks). [Vendor quality CI #42931416214](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42931416214) PASS. Neither compiles the full real Vulkan runtime.
+- [Encore R2 CMake CI #42931693349](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42931693349) **PASS, 9/9** source selection/admission cases. Only the R2 branch pins vendor `e03b6ccf`; OFF remains default, and ON sets the matching C++ gate.
+- The ordinary Encore vendor verifier initially rejected the five *new research-only* additive paths. Its [first run #42931693456](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42931693456) is **red** for this inventoried difference; a separate branch/pin/SHA-exact normalizer has been committed, with repeat verification [#42932224629](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42932224629) pending at this checkpoint. This does not relax the production 238-path allowlist.
+- **Remaining R2 source owner**: the Vulkan Scheduler (header and potentially implementation), plus genuine buffer/staging lifetime leases and retirement/flush/barrier proofs; actual batching is still **not implemented**. This is **one known untouched owner area, potentially 2+ source files**, *not* a claim of only one final edit.
+- R3 and R4 remain unchanged: no full native owner compile, PS5 measurements, NS1 console regression or merge. The production Encore `main` gitlink remains `90c9c8a2`.
+
+
 ## Live counts
 
 | Scope | Done | Still open |

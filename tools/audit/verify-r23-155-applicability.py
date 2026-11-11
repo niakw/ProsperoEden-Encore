@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 66,
+        "runtime-semantic-review-pending": 64,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -66,7 +66,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
-        "native-build-or-dependency-review": 3,
+        "native-build-or-dependency-review": 2,
         "reviewed-inactive-native-static-LZ4-option": 2,
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
@@ -96,6 +96,33 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or any(by_index[i]["classification"] != "runtime-semantic-review-pending"
                    for i in (30,))):
         raise ValueError("semantically guarded source cases silently reclassified")
+    # R23 pass 6: preserve three exact source-only dispositions.
+    pass6 = {
+        91: ("reviewed-Qt-applet-picker-no-current-headless-port",
+             ["src/common/settings_enums.h",
+              "src/qt_common/config/shared_translation.cpp",
+              "src/qt_common/config/uisettings.h",
+              "src/yuzu/configuration/configure_applets.h",
+              "src/yuzu/configuration/shared_widget.cpp",
+              "src/yuzu/main_window.cpp"]),
+        129: ("reviewed-upstream-NS-async-result-pure-rename",
+              ["src/core/CMakeLists.txt",
+               "src/core/hle/service/ns/application_manager_interface.h",
+               "src/core/hle/service/ns/async_result.cpp",
+               "src/core/hle/service/ns/async_result.h"]),
+        134: ("reviewed-upstream-Boost-repin-deferred-native-dependency",
+              [".patch/boost/0001-clang-cl.patch",
+               "CMakeLists.txt", "cpmfile.json"]),
+    }
+    for i, (klass, exact_paths) in pass6.items():
+        if by_index[i]["classification"] != klass or by_index[i]["paths"] != exact_paths:
+            raise ValueError(f"R23 pass6 exact source decision #{i} changed")
+        if by_index[i].get("source_evidence_level", "").startswith("E1") is False:
+            raise ValueError(f"R23 pass6 #{i} has no E1-only evidence limit")
+    pass6_doc = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS6_2026-11-11.md").read_text()
+    for i in (91, 129, 134):
+        if f"## #{i}" not in pass6_doc:
+            raise ValueError(f"Missing reviewed source proof for R23 #{i}")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -264,7 +291,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 66
+    assert validate(root)["runtime_semantic_cases_pending"] == 64
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

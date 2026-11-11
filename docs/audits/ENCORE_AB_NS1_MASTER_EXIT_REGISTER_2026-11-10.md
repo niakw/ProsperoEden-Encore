@@ -125,3 +125,8 @@ The [HID source policy report](ENCORE_AB_R23_HID_CONNECTION_POLICY_2026-11-11.md
 ### R23 second exact source exclusion — #5 Nightly updater
 
 - #5 `ae60f8e7` changes only the `#ifdef NIGHTLY_BUILD` automatic release asset parser in `src/common/net/net.cpp`; not a PS5 guest-emulation fix. Runtime-port status `not-applicable` (25), unresolved runtime-semantic cases **105**. If future NIGHTLY builds enable that parser, it requires a dedicated distro test. **#123** shared path sanitation and **#141** common service constructor remain unresolved, despite Windows/MSVC titles.
+
+
+### R23 pass 6 — exact source decisions #91/#129/#134 (11 Nov)
+
+[Evidence](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS6_2026-11-11.md): two runtime candidates removed from open semantic queue by source-only, non-native decisions (Qt applet Disabled picker not selected, NS async-result zero-line rename); one optional upstream Boost repin reviewed and explicitly deferred. **64 runtime semantic cases + 2 build/dependency upstream candidates** remain. This does not close the **17** native changed headers, **8** verified NS1 source gaps, **7** PS5 corrective batch runtime gates, or R18 source/licence/linked-artifact proof. No source applied to main/vendor.

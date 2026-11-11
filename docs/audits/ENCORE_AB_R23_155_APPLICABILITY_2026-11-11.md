@@ -4,8 +4,8 @@
 
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/shared still open | **66** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| Native build/dependency | **3** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Runtime NS1/shared still open | **64** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native build/dependency | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native-static LZ4 changes inactive in historical cache (#20/#66) | **2** | Effective CMakeCache `YUZU_STATIC_BUILD=OFF`; current main requires separate verification |
 | Include-only C++ portability (#79) | **1** | E1; aucun changement de fonction exécutable, compilation PS5 restant à prouver |
 | FFmpeg CI upstream-only (#86) | **1** | E1; runtime FFmpeg source pin séparé, pas de changement native ABI |
@@ -34,7 +34,7 @@
 | NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| **Total** | **155** | **66 avis runtime encore ouverts** |
+| **Total** | **155** | **64 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 
@@ -179,3 +179,8 @@ The upstream [Eden #95](https://github.com/eden-emulator/mirror/commit/87d2f03c3
 ## R23 #20/#66 — effective native CMake static mode
 
 The pinned Eden source and [native build recipe](../../tools/build-headless-native.sh) were compared against the actual ninth-run CMake cache. [Read-only audit #43012467528](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43012467528) attests `YUZU_STATIC_BUILD:BOOL=OFF`: upstream #20 only sets `lz4_FORCE_BUNDLED` inside `if(YUZU_STATIC_BUILD)`, while #66 only changes the LZ4 shared-target selection condition when the option is ON. Neither new static-mode branch executes for this historical build input. **2** build cases are conditionally closed for this frozen profile; **3** native build cases remain. This does not prove the current `main` configuration, LZ4 link artifact or package runtime correctness. [Source/cache evidence](ENCORE_AB_R23_NATIVE_LZ4_MODE_2026-11-11.md).
+
+
+## 11 novembre — source pass 6, nouveaux avis bornés
+
+[Décisions détaillées et preuves exactes #91, #129, #134](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS6_2026-11-11.md). Les trois sources en question sont **classées E1 seulement** : applet Qt non expédié, renommage NS strictement cosmétique, mise à jour Boost 1.90→1.92 *délibérément non appliquée*. La catégorie « candidatures build en attente » passe à **2**, les cas runtime non tranchés à **64**. Les anciennes étapes de ce journal restent des jalons historiques, non des chiffres actuels.

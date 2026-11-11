@@ -5,12 +5,13 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 66,
+    "runtime-semantic-review-pending": 64,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 6,
-    "native-build-or-dependency-review": 3,
+    "native-build-or-dependency-review": 2,
+    "reviewed-inactive-native-static-LZ4-option": 2,
     "test-only-upstream": 1,
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
     "source-equivalent-GPU-NCE-readback-reverted": 2,
@@ -21,6 +22,7 @@
     "source-equivalent-hle-handler-revert-cosmetic-only": 2,
     "reviewed-include-only-no-native-behavioral-port": 1,
     "ci-only-ffmpeg-artifact-not-selected-native": 1,
+    "reviewed-Qt-applet-picker-no-current-headless-port": 1,
     "source-implemented-native-PS5-ZBIC-NSO": 1,
     "source-equivalent-native-PS5-sparse-commit-failstop": 1,
     "source-equivalent-pinned-savedata-post-revert": 1,
@@ -29,13 +31,14 @@
     "source-equivalent-declared-native-x64-lookup": 3,
     "constexpr-atomic-page-methods-build-compat-only": 1,
     "source-equivalent-PS5-semaphore-lock-lifecycle": 1,
+    "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1,
+    "reviewed-upstream-NS-async-result-pure-rename": 1,
+    "reviewed-upstream-Boost-repin-deferred-native-dependency": 1,
     "source-equivalent-current-openssl-native-build": 1,
     "MSVC-constexpr-only-no-current-PS5-runtime-port": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
-    "verified-absent-GPU-null-initialization-candidate": 1,
-    "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1,
-    "reviewed-inactive-native-static-LZ4-option": 2
+    "verified-absent-GPU-null-initialization-candidate": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -2943,9 +2946,9 @@
       "sha": "a82f31a310c5dc7cae50c47b3306510a24cc36a6",
       "title": "[settings,qt] merge of \"disable controller applet\" toggle with \"controller applet mode\" picker (#4498)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-Qt-applet-picker-no-current-headless-port",
+      "scope": "E1: five Qt/Yuzu frontend paths only; one shared AppletMode enum appends Disabled without changing HLE/LLE ordinal values. Pinned PS5 headless target excludes the Qt selector.",
+      "action": "No Qt picker source port. Retain HLE/LLE; reopen only if PS5 frontend implements Disabled. #84/#112/#131 functional applet candidates remain open.",
       "paths": [
         "src/common/settings_enums.h",
         "src/qt_common/config/shared_translation.cpp",
@@ -2953,7 +2956,8 @@
         "src/yuzu/configuration/configure_applets.h",
         "src/yuzu/configuration/shared_widget.cpp",
         "src/yuzu/main_window.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream exact diff / pinned AppletMode enum; not a device applet test"
     },
     {
       "index": 92,
@@ -3539,15 +3543,16 @@
       "sha": "a7061eb4c8afc3a74bd983212131954671317f0b",
       "title": "[ns] Rename i_async_result -> async_result (#4439)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-upstream-NS-async-result-pure-rename",
+      "scope": "E1: two upstream .cpp/.h Git renames have 0 changed lines, remaining 2 paths only CMake source rename and include rename. Current pinned source has neither generation of this newly introduced NS async service.",
+      "action": "No functional code port from this rename. Future FW23 NS HLE #1/#132/#137 must keep matching filename/header source and own behavior tests.",
       "paths": [
         "src/core/CMakeLists.txt",
         "src/core/hle/service/ns/application_manager_interface.h",
         "src/core/hle/service/ns/async_result.cpp",
         "src/core/hle/service/ns/async_result.h"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream 4-file commit and old pinned vendor absence; no HLE runtime proof"
     },
     {
       "index": 130,
@@ -3611,14 +3616,15 @@
       "sha": "10c07d700c33fa1ff78d5f616c2da2872fc5d43f",
       "title": "[cmake] Use a debloated boost distribution (#4198)",
       "file_count": 3,
-      "classification": "native-build-or-dependency-review",
-      "scope": "Changes root CMake, CMakeModules, cpmfile/patch dependencies. No direct source runtime patch, but build linkage/ABI reproducibility may be affected.",
-      "action": "Check exact native project CMake/CPM selection and pinned lz4, ffmpeg, boost origin; native build owner must requalify before adapting.",
+      "classification": "reviewed-upstream-Boost-repin-deferred-native-dependency",
+      "scope": "E1: upstream changes only root CMake/Boost metadata, removes MSVC patch and upgrades Boost 1.90 to alternate 1.92 distribution (headers 1.91). Encore still pins original Boost 1.90 in vendor CPM.",
+      "action": "Decline unqualified Boost dependency repin for current native profile. R18 supply-chain, binary linkage and ABI obligations remain open.",
       "paths": [
         ".patch/boost/0001-clang-cl.patch",
         "CMakeLists.txt",
         "cpmfile.json"
-      ]
+      ],
+      "source_evidence_level": "E1 exact three-path upstream diff and pinned cpmfile; no native compile/link proof"
     },
     {
       "index": 135,

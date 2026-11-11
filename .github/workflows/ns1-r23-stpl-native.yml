@@ -1,0 +1,38 @@
+name: NS1 HOS23 stpl selected native service pair (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-stpl-hos23-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-stpl-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-service-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exact stpl pin and HOS23 IPC services/headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "8816cb94d3da1eee6cd0380802d989eb918b8a6e"
+          python3 -B vendor/tests/ns1_r23_119_stpl_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          c=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(FIND eden_r23_stpl_units' in c
+          assert 'list(REMOVE_ITEM eden_r23_stpl_units' in c
+          assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STPL_INCLUDE}")' in c
+          assert all(s in c for s in ('ngc/ngc.cpp','filesystem/fsp/fsp_srv.cpp',
+                                     'acc/profile_manager.h','ipc_helpers.h'))
+          print('NS1_R23_HOS23_STPL_NATIVE_OWNER_PASS services=2 headers=2')
+          PY

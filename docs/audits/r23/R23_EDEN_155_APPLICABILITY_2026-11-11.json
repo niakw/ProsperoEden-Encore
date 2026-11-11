@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 12,
-    "runtime-semantic-review-pending": 55,
+    "verified-relevant-source-gap-awaiting-native-proof": 13,
+    "runtime-semantic-review-pending": 53,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -44,7 +44,8 @@
     "verified-absent-GPU-null-initialization-candidate": 1,
     "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
     "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
-    "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1
+    "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1,
+    "reviewed-current-Boost190-ADL-compat-wrapper-retained": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -2641,9 +2642,9 @@
       "sha": "4dc69c06f764a235bccd01afbfc765d9ddbebc9f",
       "title": "[*] Remove Fix{Static,Small}VectorADL workaround for GCC 12 (#4386)",
       "file_count": 7,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-current-Boost190-ADL-compat-wrapper-retained",
+      "scope": "E1 current profile: the pinned vendor CPM lock uses Boost 1.90.0, so the >=1.81 conditional Fix{Static,Small}VectorADL branches preserve the boost::container vector type. Upstream #75 replaces temporary materialization with direct container arguments, and removes helpers, but this is not a demonstrated PS5 speed or correctness fix.",
+      "action": "Retain current maintained helpers in PS5 sources. Do not cherry-pick seven-file C++ cleanup blindly; reopen on Boost or compiler change, ADL compile failure, changed async span/temporary lifetime behavior or measured allocation overhead. Require native clang/Boost compile and AudioIn/Vulkan usage regression for a future port.",
       "paths": [
         "src/audio_core/in/audio_in_system.cpp",
         "src/video_core/buffer_cache/buffer_cache.h",
@@ -2652,7 +2653,8 @@
         "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
         "src/video_core/texture_cache/texture_cache.h",
         "src/video_core/texture_cache/util.h"
-      ]
+      ],
+      "source_evidence_level": "E1 exact seven-file upstream diff 4dc69c06f764a235bccd01afbfc765d9ddbebc9f; pinned cpmfile boost-1.90.0 and active util.h blob 69a45a6f6ad1977b3015fc3bfeddfc35ef117cf1; pinned AudioIn f71a2df6be6484be3427c1fc29b6e2c184de0d09; no native object measurement."
     },
     {
       "index": 76,
@@ -3581,12 +3583,13 @@
       "sha": "b77308ced62abe890428955dba687c95e4d93aba",
       "title": "[applet] ReconfigureControllers fallback unconditional disconnect fix (#4420)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 source divergence: the pinned NS1 DefaultControllerApplet::ReconfigureControllers unconditionally disconnects handheld and all player controllers, ignoring keep_controllers_connected; Eden upstream #131 reserves compatible connected controllers within requested max before filling min slots.",
+      "action": "Stage isolated exact source patch on corrective PR #46 only, add positive/negative keep/limit/style tests and require real compiled PS5 core TU, HID callback, guest applet and paired controller test; don't claim gameplay fix from host source check.",
       "paths": [
         "src/core/frontend/applets/controller.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned core/frontend/applets/controller.cpp Git blob c4292c5a1257dbfb18c3709d4911193caf2ed5b6; exact upstream b77308ced62abe890428955dba687c95e4d93aba; not PS5 controller test."
     },
     {
       "index": 132,

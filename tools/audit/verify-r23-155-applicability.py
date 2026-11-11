@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 55,
+        "runtime-semantic-review-pending": 53,
+        "reviewed-current-Boost190-ADL-compat-wrapper-retained": 1,
         "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1,
         "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
         "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
@@ -80,7 +81,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 12,
+        "verified-relevant-source-gap-awaiting-native-proof": 13,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -276,6 +277,32 @@ def validate(root: Path, app: dict | None = None) -> dict:
     if ("PinnedUtf8ToUtf16" not in utf_test
             or "UpstreamUtf8ToUtf16" not in utf_test):
         raise ValueError("R23 #29 source-extracted host input shapes absent")
+    # #131: controller fallback must not be called equivalent merely because
+    # a PS5 pad frontend exists; exact applet owner disconnects all controllers.
+    ctl = by_index[131]
+    if (ctl["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+            or ctl["paths"] != ["src/core/frontend/applets/controller.cpp"]
+            or not ctl.get("source_evidence_level", "").startswith("E1")):
+        raise ValueError("R23 #131 keep_connected behavioral gap lost")
+    # #75: Boost 1.90 preserves the original high-version vector wrapper
+    # type, but this is only an E1 current-version disposition.
+    adl = by_index[75]
+    if (adl["classification"] != "reviewed-current-Boost190-ADL-compat-wrapper-retained"
+            or len(adl["paths"]) != 7
+            or "src/video_core/texture_cache/util.h" not in adl["paths"]
+            or not adl.get("source_evidence_level", "").startswith("E1")):
+        raise ValueError("R23 #75 Boost version-conditional ADL source review lost")
+    evidence = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS11_2026-11-11.md").read_text()
+    for token in (
+        "c4292c5a1257dbfb18c3709d4911193caf2ed5b6",
+        "b77308ced62abe890428955dba687c95e4d93aba",
+        "4dc69c06f764a235bccd01afbfc765d9ddbebc9f",
+        "boost-1.90.0",
+        "keep_controllers_connected",
+        "13 source gaps",
+    ):
+        if token not in evidence:
+            raise ValueError("R23 #75/#131 pin/semantic evidence missing")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -444,7 +471,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 55
+    assert validate(root)["runtime_semantic_cases_pending"] == 53
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -453,6 +480,15 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
+    for case in (74, 130):
+        bad = copy.deepcopy(current)
+        bad["individual_commits"][case]["classification"] = "runtime-semantic-review-pending"
+        try:
+            validate(root, bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"R23 source-specific disposition case {case + 1} was reset")
     bad = copy.deepcopy(current)
     bad["individual_commits"][28]["classification"] = "runtime-semantic-review-pending"
     try:

@@ -200,3 +200,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 10 — #29 Unicode conversion upstream is not equivalent (11 novembre)
 
 [Exact source and host evidence](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS10_2026-11-11.md). Source-extracted `UTF8ToUTF16` comparison shows upstream's hand-coded conversion accepts malformed overlong `C0 80` as NUL while the pinned `std::wstring_convert` path rejects it on Clang17/libstdc++. Importing blindly could affect filenames/paths and guest-controlled string handling. The reviewed port decision is **defer**, not 'fixed': **55** generic runtime cases, **2** separately open policy/test gates (Vulkan/OpenGL and UTF), 12 gaps, 17 headers, seven corrective batches. No production source change.
+
+## R23 pass 11 — #75 Boost ADL compatibility vs #131 controller disconnect (11 novembre)
+
+[Reviewed exact pins](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS11_2026-11-11.md). Upstream #75 removes legacy GCC 12 wrapper helpers from seven sites; pinned Boost 1.90.0 selects same-type vector helpers already. Decision: retain current source until a future compiler/Boost or performance qualification, not a blanket import. Upstream #131 corrects a guest-observable controller applet policy: the selected original source disconnects even requested connected controllers. Reclassified #131 as confirmed gap awaiting native/HID tests, with no production change. Updated totals: **53** generic semantic cases; **2** scoped OpenGL/UTF tests; **13** source gaps; **17** header inclusion receipts; **7** corrective batches.

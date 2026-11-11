@@ -39,10 +39,10 @@ assert "if (vulkan && !splash_hidden)" not in graphics
 # One in-flight worker, at most one completed upload, bounded queue probes
 # and bounded GPU texture reclamation on each frame.
 pump = textures[textures.index("void Textures::pump("):]
-assert "if (decode_.valid() &&" in pump
-assert "decode_.wait_for(std::chrono::seconds(0)) == std::future_status::ready" in pump
-assert "DecodedCover result = decode_.get();" in pump
-assert "if (budget > 0 && !decode_.valid())" in pump
+assert "if (decode.valid() &&" in pump
+assert "decode.wait_for(std::chrono::seconds(0)) == std::future_status::ready" in pump
+assert "DecodedCover result = decode.get();" in pump
+assert "if (budget > 0)" in pump and "if (decode.valid()) continue;" in pump
 assert "inspected < kMaxCoverQueueLookupsPerFrame" in pump
 assert "std::async(std::launch::async," in pump
 assert "decoded.ok = services_.load_image(path, &decoded.image);" in pump
@@ -51,7 +51,7 @@ assert "entry.texture = create(result.image);" in pump
 assert "deleted_this_frame < kMaxTextureReclaimsPerFrame" in pump
 assert "failed_loads = std::min(entry.failed_loads + 1u, 4u)" in textures
 assert "unsigned failed_loads = 0;" in texture_header
-assert "std::future<DecodedCover> decode_;" in texture_header
+assert "std::array<std::future<DecodedCover>, 2> decode_{};" in texture_header
 
 # Both controller symbols use the same PS5-inspired shape; settings is a cog
 # in the Home utility card and the top navigation.

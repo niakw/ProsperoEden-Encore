@@ -14,6 +14,10 @@ Usage:
     "$HOME/Downloads/real-game-screenshot.png"
 
 Second argument optional: if omitted, capture the Mac screen locally.
+Research-only 720p mode (requires exact new Linux artifact, no fallback):
+  R09_RESEARCH_720=1 bash tools/graphics/r09_run_full_network_mac.sh \\
+    "$HOME/Downloads/nvngx_dlssnr.dll.zip" \\
+    "$HOME/Downloads/real-game-screenshot.png"
 The user file must be the supported Windows model DLL or a ZIP containing it.
 This script executes the real full-network ENTRYPOINT (not the old R09
 partial fixture runner). A finished readback is not proof of 152 correct
@@ -37,9 +41,30 @@ github_repo="niakw/ProsperoEden-Encore"
 # The default points to the ONE corrected, vendor-pinned public host link.
 # Its exact binary SHA is included in the same GitHub Actions artifact
 # together with engine/vendor commits; no user weights ever enter GitHub.
-linked_run="${R09_HOST_LINKED_RUN_ID:-42488585951}"
-expected_engine="${R09_HOST_EXPECTED_ENGINE_SHA:-27e782902a06659691d857a1df0e802abd1dbef4}"
-expected_vendor="0f47339c219087801bb75075a7bcc862b39f5bfd"
+research_720="${R09_RESEARCH_720:-0}"
+if [[ "$research_720" != 0 && "$research_720" != 1 ]]; then
+  echo "R09_MAC_RESEARCH_720_FLAG_MUST_BE_ZERO_OR_ONE" >&2
+  exit 64
+fi
+if [[ "$research_720" == 1 ]]; then
+  linked_run="${R09_HOST_LINKED_RUN_ID:-43022421489}"
+  expected_engine="${R09_HOST_EXPECTED_ENGINE_SHA:-697a9d779a3c57be5a3a20907777ba398c88e15f}"
+  expected_vendor="b26075ab190460014cbffd6c744faf897088375c"
+  artifact_name="r09-min-720-authentic-linux-host-vulkan-runner-public-only"
+  capture_width=1280
+  capture_height=720
+  capture_bytes=3686400
+  output_bytes=14745600
+else
+  linked_run="${R09_HOST_LINKED_RUN_ID:-42488585951}"
+  expected_engine="${R09_HOST_EXPECTED_ENGINE_SHA:-27e782902a06659691d857a1df0e802abd1dbef4}"
+  expected_vendor="0f47339c219087801bb75075a7bcc862b39f5bfd"
+  artifact_name="r09-public-host-vulkan-runner"
+  capture_width=1920
+  capture_height=1080
+  capture_bytes=8294400
+  output_bytes=33177600
+fi
 required_binary_sha="${R09_HOST_LINKED_SHA256:-}"
 image="eden-r09-original-host:ubuntu2404-amd64"
 
@@ -194,7 +219,7 @@ fi
 
 echo "R09_FETCHING_PREVIOUSLY_LINKED_PUBLIC_BINARY_RUN=$linked_run"
 gh run download "$linked_run" -R "$github_repo" \
-  -n r09-public-host-vulkan-runner -D "$work/download"
+  -n "$artifact_name" -D "$work/download"
 binary="$(find "$work/download" -type f -name r09-full-gpu-host -print -quit)"
 if [[ -z "$binary" ]]; then
   echo "R09_MAC_ARTIFACT_MISSING_OR_EXPIRED" >&2
@@ -206,10 +231,20 @@ if [[ ! -f "$manifest" || ! -f "$provenance" ]]; then
   echo "R09_HOST_SIGNED_SOURCE_PROVENANCE_MANIFEST_MISSING" >&2
   exit 72
 fi
-if ! grep -Fxq "engine=$expected_engine" "$provenance" ||
-   ! grep -Fxq "vendor=$expected_vendor" "$provenance"; then
-  echo "R09_HOST_ENGINE_OR_VENDOR_PROVENANCE_MISMATCH" >&2
-  exit 72
+if [[ "$research_720" == 1 ]]; then
+  if ! grep -Fxq "engine=$expected_engine" "$provenance" ||
+     ! grep -Fxq "vendor_research=$expected_vendor" "$provenance" ||
+     ! grep -Fxq "engine_gitlink=22b69d6053db41b74edac2633c012f925b84f69e" "$provenance" ||
+     ! grep -Fxq "research_720p=ON" "$provenance"; then
+    echo "R09_MIN_720_RESEARCH_BINARY_PROVENANCE_REJECTED" >&2
+    exit 72
+  fi
+else
+  if ! grep -Fxq "engine=$expected_engine" "$provenance" ||
+     ! grep -Fxq "vendor=$expected_vendor" "$provenance"; then
+    echo "R09_HOST_ENGINE_OR_VENDOR_PROVENANCE_MISMATCH" >&2
+    exit 72
+  fi
 fi
 binary_sha256="$(awk 'NR==1 {print $1}' "$manifest")"
 if [[ ! "$binary_sha256" =~ ^[0-9a-f]{64}$ ]]; then
@@ -280,7 +315,7 @@ echo "R09_DOCKER_IMAGE_READY=$image_id arch=$selected_arch"
 
 memory="$(docker info --format '{{.MemTotal}}' 2>/dev/null || echo 0)"
 if [[ "$memory" =~ ^[0-9]+$ ]] && (( memory > 0 && memory < 5368709120 )); then
-  echo "R09_WARNING_DOCKER_MEMORY_LOW_BYTES=$memory (full 1080p neural graph may OOM)"
+  echo "R09_WARNING_DOCKER_MEMORY_LOW_BYTES=$memory (full neural graph may OOM)"
 fi
 
 echo "R09_FULL_NETWORK_ATTEMPT_START"
@@ -289,6 +324,11 @@ docker run --pull never --rm --init --platform linux/amd64 \
   --mount "type=bind,source=$work/public,target=/repo,readonly" \
   --mount "type=bind,source=$work,target=/private" \
   -e "R09_CAPTURE_IS_RAW=$capture_is_raw" \
+  -e "R09_CAPTURE_WIDTH=$capture_width" \
+  -e "R09_CAPTURE_HEIGHT=$capture_height" \
+  -e "R09_CAPTURE_BYTES=$capture_bytes" \
+  -e "R09_OUTPUT_BYTES=$output_bytes" \
+  -e "R09_RESEARCH_720=$research_720" \
   -e LP_NUM_THREADS=2 -e GALLIUM_NUM_THREADS=2 \
   "$image" bash -euo pipefail -c '
     test "$(uname -m)" = "x86_64"
@@ -300,15 +340,15 @@ docker run --pull never --rm --init --platform linux/amd64 \
     /private/bin/r09-private-model-import \
       /private/nvngx_dlssnr.dll /private/original.nrmodel
     if [ "$R09_CAPTURE_IS_RAW" = 1 ]; then
-      cp /private/capture-source.rgba8 /private/capture-1920x1080.rgba8
+      cp /private/capture-source.rgba8 /private/capture-input.rgba8
     else
       ffmpeg -hide_banner -nostdin -loglevel error -y \
         -i /private/capture-source.image \
-        -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,format=rgba" \
+        -vf "scale=${R09_CAPTURE_WIDTH}:${R09_CAPTURE_HEIGHT}:force_original_aspect_ratio=decrease,pad=${R09_CAPTURE_WIDTH}:${R09_CAPTURE_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=black,format=rgba" \
         -frames:v 1 -pix_fmt rgba -f rawvideo \
-        /private/capture-1920x1080.rgba8
+        /private/capture-input.rgba8
     fi
-    test "$(stat -c %s /private/capture-1920x1080.rgba8)" = "8294400"
+    test "$(stat -c %s /private/capture-input.rgba8)" = "$R09_CAPTURE_BYTES"
     icd="$(find /usr/share/vulkan/icd.d /etc/vulkan/icd.d \
       -type f -iname "*lvp*.json" -print -quit 2>/dev/null || true)"
     test -n "$icd" || { echo R09_MESA_LAVAPIPE_ICD_MISSING; exit 78; }
@@ -321,14 +361,23 @@ docker run --pull never --rm --init --platform linux/amd64 \
       exit 79
     fi
     echo "R09_AUTHENTIC_152_GRAPH_EXECUTION_ATTEMPT"
-    /private/bin/r09-full-gpu-host \
-      /private/original.nrmodel \
-      /private/capture-1920x1080.rgba8 \
-      /private/output-original.rgba32f
-    test "$(stat -c %s /private/output-original.rgba32f)" = "33177600"
+    if [ "$R09_RESEARCH_720" = 1 ]; then
+      echo "R09_AUTHENTIC_720P_152_GRAPH_EXECUTION_ATTEMPT_NOT_PROOF"
+      /private/bin/r09-full-gpu-host \
+        /private/original.nrmodel \
+        /private/capture-input.rgba8 \
+        /private/output-original.rgba32f --research-720p
+    else
+      /private/bin/r09-full-gpu-host \
+        /private/original.nrmodel \
+        /private/capture-input.rgba8 \
+        /private/output-original.rgba32f
+    fi
+    test "$(stat -c %s /private/output-original.rgba32f)" = "$R09_OUTPUT_BYTES"
     python3 /repo/tools/graphics/r09_authentic_preview_png.py \
-      --input-rgba8 /private/capture-1920x1080.rgba8 \
+      --input-rgba8 /private/capture-input.rgba8 \
       --output-rgba32f /private/output-original.rgba32f \
+      --width "$R09_CAPTURE_WIDTH" --height "$R09_CAPTURE_HEIGHT" \
       --before-png /private/r09_before_real.png \
       --after-png /private/r09_after_unverified_gpu.png
     echo "R09_GPU_READBACK_PRODUCED_NOT_YET_INDEPENDENTLY_VERIFIED"

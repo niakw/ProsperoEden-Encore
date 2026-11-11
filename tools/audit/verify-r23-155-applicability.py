@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 31,
+        "runtime-semantic-review-pending": 30,
+        "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
         "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
         "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
         "reviewed-std-overwrite-coallocation-refactor-deferred": 1,
@@ -125,6 +126,15 @@ def validate(root: Path, app: dict | None = None) -> dict:
         13: "reviewed-native-glslang-argv-no-space-current-build",
         101: "reviewed-clang23-only-glsl-backend-no-current-PS5-port",
     }
+    if by_index_82 := next((item for item in rows if item["index"] == 82), None):
+        if by_index_82["classification"] != "reviewed-NCE-settings-toggle-no-PS5-x64-port":
+            raise ValueError("R23 #82 native x64 settings-toggle disposition changed")
+        evidence = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS18_2026-11-11.md").read_text()
+        for token in ("#82", "10bcd2d849", "8b068b85b4de2a2a04fbf32875a79b4304c52294", "#68", "#6", "#149"):
+            if token not in evidence:
+                raise ValueError(f"R23 #82 audit evidence missing {token}")
+    else:
+        raise ValueError("R23 #82 missing from 155-commit register")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")

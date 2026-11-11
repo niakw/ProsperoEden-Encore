@@ -36,6 +36,20 @@ def owner_class(path: str) -> str:
     return "other_scheduled_source"
 
 
+def unmatched_family(path: str) -> str:
+    if path.startswith(("src/android/", "src/qt_common/", "src/yuzu/", "src/yuzu_cmd/")):
+        return "not_native_frontend"
+    if path.startswith((
+            "src/core/arm/nce/",
+            "src/dynarmic/src/dynarmic/backend/arm64/",
+            "src/dynarmic/src/dynarmic/backend/loongarch64/",
+            "src/dynarmic/src/dynarmic/backend/riscv64/")):
+        return "not_ps5_x64_backend"
+    if path.startswith(("src/dynarmic/tests/", "src/tests/", "tests/")):
+        return "upstream_test_fixture_only"
+    return "requires_actual_native_owner_mapping"
+
+
 def classify(reg: dict, db: list[dict]) -> dict:
     if not isinstance(db, list) or not isinstance(reg.get("rows"), list):
         raise ValueError("expected CMake CDB and upstream path register")
@@ -67,8 +81,11 @@ def classify(reg: dict, db: list[dict]) -> dict:
                 matched.append({"upstream_path": path, "scheduled_sources": owners})
                 all_cases["changed_tu_with_historical_schedule"] += 1
             else:
-                unlocated.append({"path": path, "reason": "no_exact_suffix_in_historical_CDB"})
+                family = unmatched_family(path)
+                unlocated.append({"path": path, "reason": "no_exact_suffix_in_historical_CDB",
+                                  "native_owner_triage": family})
                 all_cases["changed_tu_requires_owner_mapping"] += 1
+                all_cases["unmapped_tu_" + family] += 1
         output.append({
             "index": item["index"],
             "sha": item["sha"],
@@ -85,6 +102,9 @@ def classify(reg: dict, db: list[dict]) -> dict:
             all_cases["commits_with_unmapped_changed_TUs"] += 1
         if headers:
             all_cases["commits_with_header_changes_without_depfile_proof"] += 1
+    assert sum(all_cases["unmapped_tu_" + fam] for fam in (
+        "not_native_frontend", "not_ps5_x64_backend",
+        "upstream_test_fixture_only", "requires_actual_native_owner_mapping")) == all_cases["changed_tu_requires_owner_mapping"]
     return {
         "scope": "historical configured CMake compile database only, not current main or a binary",
         "source_commit_baseline": reg.get("baseline"),
@@ -122,6 +142,10 @@ def self_test() -> None:
         assert r["commits"][0]["scheduled_changed_tus"][1]["scheduled_sources"][0]["ownership"] == "maintained_vendor_source"
         assert r["commits"][0]["changed_headers_in_commit"] == 1
         assert r["commits"][1]["unmapped_changed_tus"][0]["reason"] == "no_exact_suffix_in_historical_CDB"
+        assert r["counts"]["unmapped_tu_requires_actual_native_owner_mapping"] == 1
+        assert unmatched_family("src/qt_common/config/widget.cpp") == "not_native_frontend"
+        assert unmatched_family("src/dynarmic/tests/A64/a64.cpp") == "upstream_test_fixture_only"
+        assert unmatched_family("src/core/arm/nce/arm_nce.cpp") == "not_ps5_x64_backend"
     print("R23_HISTORICAL_NATIVE_TU_OWNER_CROSSWALK_SELFTEST_OK")
 
 

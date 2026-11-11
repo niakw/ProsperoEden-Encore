@@ -1,0 +1,37 @@
+name: NS1 R23 matched HID controller native source/header (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-hid-connected-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-hid-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-controller:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Assert PS5 maintained rumble controller and header are coherent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "62923ab1baf8f1a2ffa407711593ea5c11b4b673"
+          python3 -B vendor/tests/ns1_r23_95_hid_connected.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(APPEND controller_sources "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")' in s
+          assert 'target_include_directories(hid_core BEFORE PUBLIC "${EDEN_R23_HID_ROOT}")' in s
+          assert Path('vendor/encore-active/eden-core/include/hid_core/frontend/emulated_controller.h').is_file()
+          assert Path('vendor/encore-active/eden-core/src/hid_core/frontend/emulated_controller.cpp').is_file()
+          print('R23_HID_NATIVE_CONNECTED_HEADER_SOURCE_PASS')
+          PY

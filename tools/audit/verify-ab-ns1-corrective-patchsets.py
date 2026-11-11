@@ -65,6 +65,16 @@ SOURCES = {
         "d473cfb2fd57e7026a1da3cd6aa933e75b208b66",
         "docs/audits/patchsets/R23-shared-path-root-posix.vendor.patch",
     ),
+    "C04-A32-SIGNEXT": (
+        "encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h",
+        "c34906cc34a7b9576025520f1eb7f6416543ef33",
+        "docs/audits/patchsets/C04-a32-page-sign-extension.vendor.patch",
+    ),
+    "C04-PAGETABLE-BIT55": (
+        "sources/eden/src/common/page_table.h",
+        "1588eca6168bdcaf04229d6aa4115c3acb624081",
+        "docs/audits/patchsets/C04-page-table-sign-bit55.vendor.patch",
+    ),
     "C04-SDIV32": (
         "encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_data_processing.cpp",
         "3dd13ebc5c519de63672f0699a796009024e4a13",
@@ -133,6 +143,12 @@ def main() -> int:
                     {a for a,b in changed if a == b} != expected_sources or
                     data.count("\n@@ ") != (2 if name == "R23-glslang-include" else len(expected_sources))):
                 raise ValueError(f"{name}: patch contains unexpected/missing maintained source")
+            if name == "C04-A32-SIGNEXT":
+                if (data.count("+        code.shl(page, 63 - int(*ctx.conf.page_table_sign_extension));") != 1
+                        or data.count("+        code.sar(page, 63 - int(*ctx.conf.page_table_sign_extension));") != 1):
+                    raise ValueError("C04 A32 sign extension must be two source lines only")
+            if name == "C04-PAGETABLE-BIT55" and data.count("+    static constexpr u64 SIGN_BIT = 44 + 12 - 1;") != 1:
+                raise ValueError("C04 page table bit55 must match 44-bit attribute mask")
             if name == "R23-fw23-ns-cmd23":
                 exact_new = (
                     "+        {23, D<&IReadOnlyApplicationControlDataInterface::"
@@ -148,7 +164,7 @@ def main() -> int:
     if dirty_after != dirty_before:
         raise AssertionError("read-only audit changed vendor files")
     if not all(row["patch_staged_and_context_valid"] for key, row in results.items()
-               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root", "R23-glslang-include", "R23-fw23-ns-cmd23")):
+               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "C04-A32-SIGNEXT", "C04-PAGETABLE-BIT55", "R23-viewport", "R23-path-root", "R23-glslang-include", "R23-fw23-ns-cmd23")):
         raise AssertionError("all staged owner hunks must have valid context")
     print(json.dumps({
         "scope": "C01/C02/C04/R23 viewport/path root/glslang/FW23 NS cmd23 patch contexts, C03 Git blobs (not compiled)",

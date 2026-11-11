@@ -1,0 +1,44 @@
+diff --git a/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h b/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h
+--- a/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h
++++ b/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h
+@@ -115,27 +115,27 @@
+         code.test(page, page);
+     } else if (std::in_range<s32>(ctx.conf.page_table_pointer_mask)) {
+         code.and_(page, ctx.conf.page_table_pointer_mask);
+     } else {
+         code.mov(tmp, ctx.conf.page_table_pointer_mask);
+         code.and_(page, tmp);
+     }
+-    if (ctx.conf.page_table_sign_extension) {
+-        code.shl(page, *ctx.conf.page_table_sign_extension);
+-        code.sar(page, *ctx.conf.page_table_sign_extension);
+-    }
+-    }
+-
+-    code.jz(abort, code.T_NEAR);
+-    if (ctx.conf.absolute_offset_page_table) {
+-        return page + vaddr;
+-    }
+-    code.mov(tmp, vaddr);
+-    code.and_(tmp, u32(page_table_const_mask));
+-    return page + tmp.cvt64();
++    if (ctx.conf.page_table_sign_extension) {
++        code.shl(page, 63 - int(*ctx.conf.page_table_sign_extension));
++        code.sar(page, 63 - int(*ctx.conf.page_table_sign_extension));
++    }
++    }
++
++    code.jz(abort, code.T_NEAR);
++    if (ctx.conf.absolute_offset_page_table) {
++        return page + vaddr;
++    }
++    code.mov(tmp, vaddr);
++    code.and_(tmp, u32(page_table_const_mask));
++    return page + tmp.cvt64();
+ }
+ 
+ template<>
+ [[maybe_unused]] Xbyak::RegExp EmitVAddrLookup<A64EmitContext>(BlockOfCode& code, A64EmitContext& ctx, size_t bitsize, Xbyak::Label& abort, Xbyak::Reg64 vaddr, std::optional<std::pair<Xbyak::Reg64, Xbyak::Reg64>> scratch) {
+     const size_t valid_page_index_bits = ctx.conf.page_table_address_space_bits - page_table_const_bits;
+     const size_t unused_top_bits = 64 - ctx.conf.page_table_address_space_bits;
+ 

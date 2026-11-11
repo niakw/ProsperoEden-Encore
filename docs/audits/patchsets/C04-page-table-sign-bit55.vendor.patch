@@ -1,0 +1,22 @@
+diff --git a/sources/eden/src/common/page_table.h b/sources/eden/src/common/page_table.h
+--- a/sources/eden/src/common/page_table.h
++++ b/sources/eden/src/common/page_table.h
+@@ -41,17 +41,17 @@
+         u64 next_page{};
+         u64 next_offset{};
+     };
+ 
+     /// Masks out bits reserved for attribute tagging.
+     static constexpr u64 ATTRIBUTE_MASK = ((1ULL << 44) - 1) << 12;
+ 
+     /// Specifies sign bit for page table entries.
+-    static constexpr u64 SIGN_BIT = 45 + 12; // 44 bits of data + page offset
++    static constexpr u64 SIGN_BIT = 44 + 12 - 1; // top bit of ATTRIBUTE_MASK
+ 
+     /**
+      * Atomic tuple of host pointer, page type, and block id.
+      * This uses the lower bits of a given pointer to store the attributes.
+      * Writing and reading the pointer attribute pair is guaranteed to be atomic for the same method
+      * call. In other words, they are guaranteed to be synchronized at all times.
+      */
+     class PageEntryData {

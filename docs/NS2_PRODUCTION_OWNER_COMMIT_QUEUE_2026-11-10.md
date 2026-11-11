@@ -1,5 +1,16 @@
 # NS2 production-owner commit queue — implementation and qualification
 
+## R2 native PS5 cached syntax — three real maintained translation units passed (11 Nov 2026)
+
+**Research-only Encore R2 source branch**: [`c356b4c3`](https://github.com/niakw/ProsperoEden-Encore/commit/c356b4c33e8b0537d2399c58d6b67ff62f314800) and dedicated [workflow](https://github.com/niakw/ProsperoEden-Encore/actions/workflows/ns2-r2-cached-native-syntax.yml). [Native syntax-only run #42987010797](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42987010797) **PASS**. The job checks out **exact vendor `38a6c1b6`**, restores the verified 12th-build cached native compile graph (`...-42924336057`, 3.5 GB), reuses its genuine PS5 compiler/SDK options, and executes **`-fsyntax-only` on three complete, SHA-pinned, maintained source translation units**:
+
+- `vendor/encore-active/eden-vulkan/vk_staging_buffer_pool.cpp`: **PASS** (with the original pinned Eden staging TU's cached PS5 compiler flags; the historical graph predates R2 selection)
+- `vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp`: **PASS**
+- `vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp`: **PASS**, including native header inclusion for the guarded `BufferCache` destructor.
+
+**Source selection and parity remain separately green** on [R2 CMake 10/10 #42952688038](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42952688038) and [vendor/Vulkan parity #42952688002](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42952688002). This is the **first complete R2-native-source syntax pass** against the existing PS5 native compiler flags; it is **NOT** a freshly configured R2 CMake/Ninja build graph, object/link test, physical GPU execution or NS1 device regression. It does not enable cross-command batching or alter the researched GPU ownership contract. Only isolated Encore research files/workflow were modified; no vendor code changed and production `main` remains pinned to `90c9c8a2`. **R2/R3/R4 device qualification remains 3/3 OPEN.**
+
+
 ## R2 — bounded stream-ring final-region scan (11 Nov 2026)
 
 **Research commit:** [vendor `38a6c1b6`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/38a6c1b6b00db4cc9b26f0dbd993822b727b752d), draft [PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38), **39 commits**. In `StagingBufferPool::GetStreamBuffer`, a cursor exactly at `stream_buffer_size` previously computed `Region(free_iterator)+1` as **17** for a **16-entry** GPU-sync array, and could supply an inverted iterator range to `std::any_of`. The `PS5_NATIVE && EDEN_RESEARCH_NS2_STAGE_BACKING` path now bounds both scan endpoints to `NUM_SYNCS` and only probes if begin < end. The existing mandatory wrapped-region-zero and repeat-retry safety tests remain, and the new source-derived boundary case covers an **exactly exhausted ring**, blocked region-zero reuse, and subsequent post-GPU-completion admission. Non-research production sources remain unchanged.

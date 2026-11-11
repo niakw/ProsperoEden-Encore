@@ -1,0 +1,39 @@
+name: NS1 R23 A32 SHA1 selected native source graph (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-a32-sha1-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-a32-sha1-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-a32-crypto:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check exact maintained code, header include graph and branch pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "d24a381c0326c83b7430c88beac8e5d96bf942b2"
+          python3 -B vendor/tests/ns1_r23_11_a32_source.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_R23_A32_OVERLAY}")' in s
+          assert 'frontend/A32/translate/a32_translate.cpp' in s
+          assert 'frontend/A32/decoder/asimd.h' in s
+          assert 'frontend/A32/decoder/asimd.inc' in s
+          assert all(x in s for x in
+              ('a32_translate_impl.h','asimd_three_regs.cpp','asimd_two_regs_misc.cpp'))
+          print('NS1_R23_A32_SHA1_SELECTED_HEADER_GRAPH_PASS four_source_fragments=1')
+          PY

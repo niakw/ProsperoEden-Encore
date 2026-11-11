@@ -129,10 +129,21 @@ def gather(today: date) -> list[dict]:
     return merged
 
 def convert_art(source: Path, target: Path) -> None:
-    if not shutil.which("magick"):
-        raise RuntimeError("ImageMagick required")
-    prefix = ["magick", "-limit", "memory", "256MiB", "-limit", "map", "256MiB"]
-    meta = subprocess.check_output(["magick", "identify", "-limit", "memory", "256MiB", "-limit", "map", "256MiB", "-format", "%w %h", str(source)],
+    # ImageMagick 7 exposes 'magick identify'; Ubuntu 24.04 may ship
+    # ImageMagick 6 as separate 'convert' and 'identify' programs.
+    magick = shutil.which("magick")
+    if magick:
+        convert = [magick]
+        identify = [magick, "identify"]
+    else:
+        convert_exe = shutil.which("convert")
+        identify_exe = shutil.which("identify")
+        if not convert_exe or not identify_exe:
+            raise RuntimeError("ImageMagick (magick or convert+identify) required")
+        convert = [convert_exe]
+        identify = [identify_exe]
+    prefix = convert + ["-limit", "memory", "256MiB", "-limit", "map", "256MiB"]
+    meta = subprocess.check_output(identify + ["-limit", "memory", "256MiB", "-limit", "map", "256MiB", "-format", "%w %h", str(source)],
                                    timeout=12, text=True)
     width, height = map(int, meta.split())
     if not (300 <= width <= 4096 and 200 <= height <= 4096 and width*height <= 12_000_000):

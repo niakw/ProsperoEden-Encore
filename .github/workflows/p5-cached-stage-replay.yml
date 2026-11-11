@@ -218,6 +218,7 @@ jobs:
           bash tools/build-core-fixture.sh
           test -s ../ps5-native-app-boilerplate/runtime/libc.prx
           (cd ../ps5-native-app-boilerplate/runtime && sha256sum --check --strict libc.prx.sha256)
+          python3 -B tools/check-daily-art-converter-host.py
           python3 -B tools/launcher/build-box-art-index.py --self-test
           python3 -B tools/launcher/build-box-art-index.py --download --output headless/prosperoeden/ui/box-art-index.tsv
           test -s headless/prosperoeden/ui/box-art-index.tsv
@@ -261,6 +262,29 @@ jobs:
             --output build/headless-native/crash-provenance.json \
             --app-title PPSA99008
           cp build/headless-native/crash-provenance.json build/symbols/crash-provenance.json
+          # The receipt fingerprints link.map: ship the exact same-run map alongside ELF.
+          install -m 0644 build/headless-native/link.map build/symbols/link.map
+          python3 -B - <<'PY_SYMBOLS'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          symbols = Path("build/symbols")
+          manifest = json.loads((symbols / "crash-provenance.json").read_text())
+          elfs = list(symbols.glob("Prospero.Eden-Encore-R*.elf"))
+          assert len(elfs) == 1, f"expected exactly one release ELF, found {elfs}"
+          for key, path in (("unstripped_elf", elfs[0]),
+                            ("link_map", symbols / "link.map")):
+              expected = manifest["files"][key]
+              assert path.is_file() and not path.is_symlink(), key
+              assert path.stat().st_size == expected["size_bytes"], key
+              digest = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              assert digest.hexdigest() == expected["sha256"], key
+          print("P5_SYMBOL_BUNDLE_MANIFEST_MATCH_PASS")
+          PY_SYMBOLS
           python3 -B tools/ci/check-ftp-archive-root.py dist
           # The checksummed filenames are RELATIVE TO dist/, not repo root.
           # Do not --ignore-missing: both archives MUST exist and match hashes.

@@ -7,7 +7,6 @@ on:
   pull_request:
     paths:
       - "headless/CMakeLists.txt"
-      - "headless/r23_controller_applet_ps5.cpp"
       - "headless/r23_am_*.cpp"
       - "tools/audit/check-r23-controller-applet-host.py"
       - "tools/audit/check-r23-am-applets-host.py"

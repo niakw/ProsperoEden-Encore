@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 22,
-    "runtime-semantic-review-pending": 33,
+    "runtime-semantic-review-pending": 31,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -56,7 +56,9 @@
     "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64": 1,
     "reviewed-std-overwrite-coallocation-refactor-deferred": 1,
     "reviewed-lock-contention-policy-deferred-native": 1,
-    "reviewed-depth-sampler-fallback-preserved-test-open": 1
+    "reviewed-depth-sampler-fallback-preserved-test-open": 1,
+    "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
+    "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -976,13 +978,14 @@
       "sha": "41b6807f127526e89ede0fb40748d6ae988fc0cc",
       "title": "[fs] use mmap() to read files using VM/pagefaults for higher throughput (#3151)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-native-mmap-IOFile-experimental-policy-deferred",
+      "scope": "Upstream #31 replaces original stdio IOFile path with read-only mmap/madvise including FreeBSD MAP_ALIGNED and MAP_NOSYNC options; frozen PS5 common/fs/file.cpp and file.h expose only FILE* and no mmap_fd, so port is not equivalent or required. Source diff also gates successful open fd on >0 rather than >=0 and applies mappable policy to immutable game archives; not a proven safe improvement on PS5.",
+      "action": "Do not import broad mmap VM/pagefault file-read refactor into PS5 without fd0, empty file, truncated/mutated file, mapped lifetime, ps5 mmap flags, 256MiB sequential/readahead and memory-pressure positive/negative tests. Keep current stable stdio read path; reopen on measured profile bottleneck.",
       "paths": [
         "src/common/fs/file.cpp",
         "src/common/fs/file.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 41b6807f127526e89ede0fb40748d6ae988fc0cc, pinned common/fs/file.cpp blob 461a5eee352dcc95025667f9e02d625fe00c52e5 and file.h b1ccfbd18a38f65dfa452d4632a66d3b5b55c308; no PS5 mmap/perf trace."
     },
     {
       "index": 32,
@@ -1214,9 +1217,9 @@
       "sha": "ea92c081b710dc1fb6e35ce8bc05bee8dd6ddf06",
       "title": "[core] Speed up NCZBLOCK reads and skip double AES for pre-decrypted NCZ (#4582)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner",
+      "scope": "Upstream #45 introduces ncz_decompressor BlockReader direct-mapped 32-slot cache and zstd decoder reuse; the frozen vendor sources/eden/src/core/crypto directory does not even contain ncz_decompressor.cpp and pinned src/core/CMakeLists.txt does not compile one. This optimization cannot be cherry-picked as a change to current PS5 compiled NSZ/NCZ owner; source absence is not proof NCZ support or speed is equivalent.",
+      "action": "Keep as optional upstream optimizer to revisit after identifying real NSZ/NCZ loader and active module; test archive compatibility for compressed/decrypted blocks, random 32-slot accesses, cache collisions, 1MiB bounds and library ZSTD ABI. No blind addition of upstream TU.",
       "paths": [
         "src/core/crypto/ncz_decompressor.cpp",
         "src/core/file_sys/fssystem/fssystem_nca_file_system_driver.cpp",
@@ -1224,7 +1227,8 @@
         "src/core/file_sys/vfs/vfs.h",
         "src/core/file_sys/vfs/vfs_offset.h",
         "src/core/loader/xci.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream ea92c081b710dc1fb6e35ce8bc05bee8dd6ddf06; pinned sources/eden/src/core/CMakeLists.txt blob 508ace350173f5068bd7531f37e70199134fde3a lacks ncz_decompressor.cpp and vendor core/crypto directory lacks source; no native compressed archive test."
     },
     {
       "index": 46,

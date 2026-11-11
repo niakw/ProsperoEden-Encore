@@ -56,7 +56,9 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 33,
+        "runtime-semantic-review-pending": 31,
+        "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
+        "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
         "reviewed-std-overwrite-coallocation-refactor-deferred": 1,
         "reviewed-lock-contention-policy-deferred-native": 1,
         "reviewed-depth-sampler-fallback-preserved-test-open": 1,
@@ -432,6 +434,22 @@ def validate(root: Path, app: dict | None = None) -> dict:
     ):
         if receipt not in pass16_doc:
             raise ValueError("R23 pass16 pinned owner evidence missing")
+    # Source-only policy/compiled owner decisions: mmap IOFile and upstream
+    # NCZ decoder are not presumed equivalent or mandatory on current PS5.
+    for idx, klass in {
+        31: "reviewed-native-mmap-IOFile-experimental-policy-deferred",
+        45: "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner",
+    }.items():
+        if (by_index[idx]["classification"] != klass or
+                not by_index[idx].get("source_evidence_level", "").startswith("E1")):
+            raise ValueError(f"R23 pass17 #${idx} native IO/NCZ owner decision changed")
+    pass17 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS17_2026-11-11.md").read_text()
+    for pin in ("461a5eee352dcc95025667f9e02d625fe00c52e5",
+                "b1ccfbd18a38f65dfa452d4632a66d3b5b55c308",
+                "508ace350173f5068bd7531f37e70199134fde3a",
+                "ncz_decompressor.cpp"):
+        if pin not in pass17:
+            raise ValueError("R23 pass17 pinned native files/owner absence not attested")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -601,7 +619,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 33
+    assert validate(root)["runtime_semantic_cases_pending"] == 31
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -610,7 +628,7 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
-    for case in (16, 29, 32, 47, 49, 54, 58, 63, 74, 76, 83, 89, 95, 98, 102, 108, 118, 123, 129, 130, 135, 150):
+    for case in (16, 29, 30, 32, 44, 47, 49, 54, 58, 63, 74, 76, 83, 89, 95, 98, 102, 108, 118, 123, 129, 130, 135, 150):
         bad = copy.deepcopy(current)
         bad["individual_commits"][case]["classification"] = "runtime-semantic-review-pending"
         try:

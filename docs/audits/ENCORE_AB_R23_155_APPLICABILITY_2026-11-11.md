@@ -224,3 +224,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass16 — seven remaining upstream semantic cases (11 Nov)
 
 [Source pin and decision matrix](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS16_2026-11-11.md). Four source gaps added (#17 PageTable sign bit, #48 VP9 segmentation probabilities, #103 sparse page indexing and decommit, #119 FW23 stpl services). Three source-reviewed changes retained for targeted policy/benchmark checks (#96 C++ overwrite+FS allocation, #124 lock contention, #130 depth comparison sampler fallback). **33 generic semantic reviews**, **22 source gaps**, **5 scoped policy/refactor records**, **17** header receipts and **7** corrective batches remain. No release/console qualification.
+
+## R23 pass 17 — native mmap and new NCZBLOCK module (11 Nov)
+
+[Scoped E1 review](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS17_2026-11-11.md): #31 uses POSIX read-only mmap with substantial OS flag/lifetime changes unsafe to claim superior on PS5 without tests; #45 requires a new upstream NCZ module not present in pinned native Eden core CMake. Both are reviewed deferred decisions, not current-P5 performance equivalence. **31** generic semantic reviews, **22** source gaps, **7** policy/refactor gates, **17** native header proofs and **7** corrective-batch release gates remain.

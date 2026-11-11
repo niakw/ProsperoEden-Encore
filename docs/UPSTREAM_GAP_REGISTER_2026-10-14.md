@@ -76,13 +76,13 @@ The native build previously inherited a boilerplate `param.json` without the opt
 <!-- BEGIN AUTO-UPSTREAM-COMPARISON -->
 ### Automated comparison (daily + manual)
 
-Checked in UTC: **2026-11-09 13:57 UTC**. Changes are commits relative to pins, not proven missing fixes.
+Checked in UTC: **2026-11-11 12:44 UTC**. Changes are commits relative to pins, not proven missing fixes.
 This workflow never imports source patches, modifies dependencies, or reads console data.
 
 | Dependency | Source | Pinned revision | Ahead / behind | Status |
 |---|---|---|---:|---|
-| eden | [eden-emulator/mirror](https://github.com/eden-emulator/mirror) | 5f142c7926d0 | +151 / -0 | upstream ahead |
-| ffmpeg | [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) | c7b5f1537d9c | +5776 / -0 | upstream ahead |
+| eden | [eden-emulator/mirror](https://github.com/eden-emulator/mirror) | 5f142c7926d0 | +156 / -0 | upstream ahead |
+| ffmpeg | [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) | c7b5f1537d9c | +5848 / -0 | upstream ahead |
 | fmt | [fmtlib/fmt](https://github.com/fmtlib/fmt) | 12.1.0 | +408 / -0 | upstream ahead |
 | zbic | [kinnay/zbic](https://github.com/kinnay/zbic) | 11b08f271226 | +0 / -0 | identical |
 | compiler-rt | frozen archive / binary | — | — | not comparable |
@@ -90,17 +90,17 @@ This workflow never imports source patches, modifies dependencies, or reads cons
 | opengl-source | [blackbearreloaded/ps5-opengl](https://github.com/blackbearreloaded/ps5-opengl) | ad2807d41cef | — | repository unavailable |
 | harfbuzz | frozen archive / binary | — | — | not comparable |
 | boilerplate | [blackbearreloaded/ps5-native-app-boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate) | dd44bbdc7543 | — | repository unavailable |
-| ps5-vulkan-tools | [mihawk-99/PS5_Vulkan](https://github.com/mihawk-99/PS5_Vulkan) | 3f3ee6960701 | +80 / -0 | upstream ahead |
-| ps5-mesa | [mihawk-99/PS5_Mesa](https://github.com/mihawk-99/PS5_Mesa) | 0b2d6d1a61d9 | +127 / -103 | diverged |
-| ps5-payload-sdk-fork | [mihawk-99/PS5_PayloadSDK](https://github.com/mihawk-99/PS5_PayloadSDK) | 95c08f27386f | +105 / -48 | diverged |
+| ps5-vulkan-tools | [mihawk-99/PS5_Vulkan](https://github.com/mihawk-99/PS5_Vulkan) | 3f3ee6960701 | +81 / -0 | upstream ahead |
+| ps5-mesa | [mihawk-99/PS5_Mesa](https://github.com/mihawk-99/PS5_Mesa) | 0b2d6d1a61d9 | +129 / -103 | diverged |
+| ps5-payload-sdk-fork | [mihawk-99/PS5_PayloadSDK](https://github.com/mihawk-99/PS5_PayloadSDK) | 95c08f27386f | +123 / -48 | diverged |
 | encore-overrides | [niakw/encore-overrides](https://github.com/niakw/encore-overrides) | 95f21edf13bf | +5 / -0 | upstream ahead |
 | opengl-opengnm-psbc | [PS4-OpenGNM/opengnm-psbc](https://github.com/PS4-OpenGNM/opengnm-psbc) | a92a1228ea3a | +4 / -0 | upstream ahead |
 | opengl-opengnm | [PS4-OpenGNM/opengnm](https://github.com/PS4-OpenGNM/opengnm) | 4b295ca54c82 | +0 / -0 | identical |
 | opengl-spirv-headers | [KhronosGroup/SPIRV-Headers](https://github.com/KhronosGroup/SPIRV-Headers) | 0d25db97cb9b | +14 / -0 | upstream ahead |
 | opengl-vulkan-headers | [KhronosGroup/Vulkan-Headers](https://github.com/KhronosGroup/Vulkan-Headers) | b51f6b865c18 | +11 / -0 | upstream ahead |
-| opengl-imgui | [ocornut/imgui](https://github.com/ocornut/imgui) | f5befd2d29e6 | +1552 / -0 | upstream ahead |
+| opengl-imgui | [ocornut/imgui](https://github.com/ocornut/imgui) | f5befd2d29e6 | +1563 / -0 | upstream ahead |
 | opengl-nanovg | [memononen/nanovg](https://github.com/memononen/nanovg) | ce3bf745eb2d | +0 / -0 | identical |
-| opengl-sokol | [floooh/sokol](https://github.com/floooh/sokol) | 48c85905aeaa | +352 / -0 | upstream ahead |
+| opengl-sokol | [floooh/sokol](https://github.com/floooh/sokol) | 48c85905aeaa | +361 / -0 | upstream ahead |
 | opengl-native-boilerplate | [blackbearreloaded/ps5-native-app-boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate) | 4f531c4b517f | — | repository unavailable |
 | opengl-mesa-26-2 | frozen archive / binary | — | — | not comparable |
 
@@ -176,7 +176,6 @@ These are upstream commit titles, not validated Encore integrations.
 - [2eda43e9be17](https://github.com/fmtlib/fmt/commit/2eda43e9be17) — Add FMT_USE_FLOCKFILE macro to force has_flockfile trait to false (#4666)
 
 **ps5-vulkan-tools**
-- [a62b05d9fe7f](https://github.com/mihawk-99/PS5_Vulkan/commit/a62b05d9fe7f) — gpu-broker: a panel change over a waiting game is shown at once, not at the bubbles' next re-show
 - [66dad9f1670e](https://github.com/mihawk-99/PS5_Vulkan/commit/66dad9f1670e) — gpu-broker: the panel's blur made every second frame, and a rare glass sweep (1 s after it opens, then at most ever
 - [75805096e518](https://github.com/mihawk-99/PS5_Vulkan/commit/75805096e518) — gpu-broker: FIFO holds the presenting thread to the display, and a fast-copy capture is copied out whole
 - [12a39c51d3ed](https://github.com/mihawk-99/PS5_Vulkan/commit/12a39c51d3ed) — gpu-broker: with the fast copy a frame of another size is scaled into rows, then line-copied
@@ -184,6 +183,7 @@ These are upstream commit titles, not validated Encore integrations.
 - [1c828fc7fcc4](https://github.com/mihawk-99/PS5_Vulkan/commit/1c828fc7fcc4) — gpu-broker: a second small panel over every frame (the title's statistics HUD), and the GPU's busy time for it
 - [ebc931d1c2d2](https://github.com/mihawk-99/PS5_Vulkan/commit/ebc931d1c2d2) — gpu-broker: a panel's bubbles rise in its own margins
 - [ace98a99460c](https://github.com/mihawk-99/PS5_Vulkan/commit/ace98a99460c) — gpu-broker: the open panel keeps to the 120 Hz budget: its blend cached, its blur made a band a frame
+- [7f492b4c6f67](https://github.com/mihawk-99/PS5_Vulkan/commit/7f492b4c6f67) — radv smoke: storage and uniform buffers bound from offsets inside a buffer
 
 **ps5-mesa** (history excerpt; some commits omitted)
 - [ff437af31b9b](https://github.com/mihawk-99/PS5_Mesa/commit/ff437af31b9b) — radv/ps5: mesh workgroups in parts run once and publish their outputs
@@ -208,6 +208,8 @@ These are upstream commit titles, not validated Encore integrations.
 - [d0d7325e447b](https://github.com/mihawk-99/PS5_Mesa/commit/d0d7325e447b) — radv: threaded recording (RADV_THREADED_RECORDING=1)
 
 **ps5-payload-sdk-fork** (history excerpt; some commits omitted)
+- [783518d87bef](https://github.com/mihawk-99/PS5_PayloadSDK/commit/783518d87bef) — platform: the IEEE floating-point state, and threads inherit MXCSR
+- [93e0d7e6ebe6](https://github.com/mihawk-99/PS5_PayloadSDK/commit/93e0d7e6ebe6) — host: the compiler wrappers assume IEEE denormals
 - [118653bc5d11](https://github.com/mihawk-99/PS5_PayloadSDK/commit/118653bc5d11) — setup-sdk: install the fork's compiler wrappers over the release's
 - [5e9abd707a57](https://github.com/mihawk-99/PS5_PayloadSDK/commit/5e9abd707a57) — PROBE: memory streams on a pipe, measured through the CTS title
 - [a5cbafeed4b0](https://github.com/mihawk-99/PS5_PayloadSDK/commit/a5cbafeed4b0) — platform: memfd_create, on libkernel's anonymous shared memory objects
@@ -226,8 +228,6 @@ These are upstream commit titles, not validated Encore integrations.
 - [b9d357168fbb](https://github.com/mihawk-99/PS5_PayloadSDK/commit/b9d357168fbb) — platform: statfs, fstatfs, umask, fork, setsid and wait4
 - [43e51c4ac782](https://github.com/mihawk-99/PS5_PayloadSDK/commit/43e51c4ac782) — platform: the offload probe reads the mount with _fstatfs
 - [4141c13cf537](https://github.com/mihawk-99/PS5_PayloadSDK/commit/4141c13cf537) — platform: the route probe writes with 1, 4 and 8 threads after the burst
-- [7613b71460b8](https://github.com/mihawk-99/PS5_PayloadSDK/commit/7613b71460b8) — platform: each topology pair runs on two fresh threads
-- [3752be7e7812](https://github.com/mihawk-99/PS5_PayloadSDK/commit/3752be7e7812) — Block contended heap waits and expose shared memory availability
 
 **encore-overrides**
 - [902fb8ba4882](https://github.com/niakw/encore-overrides/commit/902fb8ba4882) — fix(dependabot): replace invalid ecosystem placeholder with grouped Actions updates

@@ -29,7 +29,8 @@ def checked(root: Path) -> dict:
         base = folder / name
         if name in {".", ".."} or "/" in name or "\\" in name:
             raise ValueError("unsafe CPM lock name")
-        total, count, links = 0, 0, 0
+        total, count, links, link_target_bytes = 0, 0, 0, 0
+        symlink_examples = []
         for walk, dirs, files in os.walk(base, followlinks=False):
             dirs[:] = sorted(dirs)
             if ".git" in dirs:
@@ -37,7 +38,15 @@ def checked(root: Path) -> dict:
             for fn in sorted(files):
                 p = Path(walk) / fn
                 if p.is_symlink():
+                    # Original CPM lock counts *regular source files*, not the
+                    # payload of symlink targets. A symlink to a large binary
+                    # can otherwise add megabytes to an apparent source drift.
                     links += 1
+                    if len(symlink_examples) < 8:
+                        symlink_examples.append(str(p.relative_to(base)))
+                    if p.is_file():
+                        link_target_bytes += p.stat().st_size
+                    continue
                 if not p.is_file():
                     raise ValueError(f"{name}: unsupported non-regular file")
                 total += p.stat().st_size
@@ -45,7 +54,9 @@ def checked(root: Path) -> dict:
         count_match = count == record["files"]
         bytes_match = total == record["bytes"]
         paths[name] = {
-            "files": count, "file_bytes": total, "symlinks_counted": links,
+            "files": count, "file_bytes": total, "symlinks_excluded_from_regular_files": links,
+            "symlink_target_bytes_excluded": link_target_bytes,
+            "symlink_examples": symlink_examples,
             "lock_files": record["files"], "lock_file_bytes": record["bytes"],
             "file_count_matches_lock": count_match,
             "byte_count_matches_lock": bytes_match,
@@ -68,7 +79,8 @@ def checked(root: Path) -> dict:
             name: {"actual_files": row["files"], "actual_bytes": row["file_bytes"],
                    "lock_files": row["lock_files"], "lock_bytes": row["lock_file_bytes"],
                    "byte_difference": row["byte_difference_vs_lock"],
-                   "symlinks": row["symlinks_counted"]}
+                   "symlinks_excluded": row["symlinks_excluded_from_regular_files"],
+                   "symlink_target_bytes_excluded": row["symlink_target_bytes_excluded"]}
             for name, row in paths.items()
             if not row["file_count_matches_lock"] or not row["byte_count_matches_lock"]
         },
@@ -103,6 +115,12 @@ def self_test() -> None:
             "excluded_unfetched_cpm_pins": [],
         }))
         assert checked(root)["source_tree_count"] == 22
+        # Links must never be counted as regular file bytes or as source files.
+        (folder / "part00/shortcut.cpp").symlink_to("source.cpp")
+        link_checked = checked(root)
+        assert link_checked["all_lock_tree_sizes_match"]
+        assert link_checked["components"]["part00"]["symlinks_excluded_from_regular_files"] == 1
+        assert link_checked["components"]["part00"]["symlink_target_bytes_excluded"] == len(b"source-0")
         # A same-size edit is intentionally NOT caught by size/count receipts.
         # This witness must never claim cryptographic archive identity.
         (folder / "part00/source.cpp").write_bytes(b"XXXXXXXX")

@@ -1,0 +1,69 @@
+name: R09 A4K x2 image→spatial research syntax (host only)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/r09-a4k-dual-image-host.yml'
+      - 'headless/vulkan_present_layer_r24.cpp'
+      - 'headless/vulkan_present_layer_r24.h'
+      - 'headless/main.cpp'
+      - 'headless/neural_runtime_state.h'
+      - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
+      - 'extras/graphics/dlss_nr_min_720_spatial_bridge.h'
+      - 'extras/graphics/dlss_nr_min_720_framegen_bridge.h'
+      - 'extras/graphics/test_dlss_nr_min_720_*bridge.cpp'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r09-a4k-dual-image-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  a4k-real-native-image-owner:
+    name: Real A4K x2 VkImage+View presenter macro OFF / ON
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout EXACT Encore head and pinned production vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify unchanged engine gitlink and temporarily check out independent vendor research
+        shell: bash
+        run: |
+          set -euo pipefail
+          pin=22b69d6053db41b74edac2633c012f925b84f69e
+          test "$(git rev-parse HEAD:vendor)" = "$pin"
+          test "$(git -C vendor rev-parse HEAD)" = "$pin"
+          # This ephemeral runner checkout does NOT advance the engine's
+          # gitlink or change vendor/main. The separate PR #40 is DRAFT.
+          git -C vendor fetch --depth=1 origin \
+            refs/heads/research/r09-a4k-output-image-handoff-20261111
+          git -C vendor checkout --detach FETCH_HEAD
+          grep -q 'std::optional<OutputFrame> DrawFrame' \
+            vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/present/anime4k3d.h
+          test "$(git rev-parse HEAD:vendor)" = "$pin"
+          echo R09_A4K_RESEARCH_VENDOR_CHECKOUT_ISOLATED_FROM_PIN
+      - name: Install C++ Vulkan host tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang glslang-tools spirv-tools libvulkan-dev \
+            libavcodec-dev libavutil-dev libswscale-dev
+      - name: Compile actual presenter against research native A4K image owner (both gates)
+        shell: bash
+        run: |
+          set -euo pipefail
+          R09_A4K_NATIVE_OUTPUT_DUAL=1 \
+            python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
+          # On disk vendor is a test checkout, while the GITLINK in the
+          # Encore commit remains the original pinned main commit.
+          test "$(git rev-parse HEAD:vendor)" = "22b69d6053db41b74edac2633c012f925b84f69e"
+          echo R09_A4K_REAL_VKIMAGE_VIEW_A4K_TO_SPATIAL_SYNTAX_NO_PS5_BUILD

@@ -77,7 +77,7 @@ The corrective branch's **actual Git submodule pin** is the original `22b69d6053
 - [R18 complete 26-source-family provenance — 12 verified Git roots / 3 blocked 404](ENCORE_AB_R18_26_SOURCE_FAMILY_PROVENANCE_2026-11-10.md)
 - [All 155 official Eden commit SHAs/titles](R23_EDEN_ALL_155_COMMITS_2026-11-10.json)
 - [All 155 paginated per-commit changed-file lists](r23/R23_EDEN_COMPLETE_155_COMMIT_PATH_REGISTER.json) and [R23 exact path/semantic boundaries](ENCORE_AB_R23_COMPLETE_COMMIT_PATH_AUDIT_2026-11-10.md)
-- [R23 155-per-commit applicability decisions](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) and [122+ source/build pending precise ledger](ENCORE_AB_R23_155_APPLICABILITY_2026-11-11.md); 115 runtime semantic cases, 12 build/assets and 3 staged native gates; no blanket sign-off.
+- [R23 155-per-commit applicability decisions](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) and [human-readable applicability and pending-test ledger](ENCORE_AB_R23_155_APPLICABILITY_2026-11-11.md); 115 runtime semantic cases, 12 build/assets and 3 staged native gates; no blanket sign-off.
 - [Eleventh failed PS5 native build: exact two-class error triage](ENCORE_AB_R00_11TH_NATIVE_BUILD_FAILURE_2026-11-10.md)
 - [Read-only native build source ownership workflow](../../.github/workflows/audit-ab-ns1-readonly.yml) and [static tools](../../tools/audit/)
 

@@ -1198,7 +1198,7 @@ set_source_files_properties("${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
     TARGET_DIRECTORY video_core
     PROPERTIES
         COMPILE_DEFINITIONS "PS5_FRAMEGEN_VULKAN_HEADER=\"mihawk_volk.h\";VK_NO_PROTOTYPES=1;VOLK_NAMESPACE=1"
-        COMPILE_OPTIONS "SHELL:-include ${EDEN_MIHAWKGEN_NAMESPACED_HEADER}")
+        COMPILE_OPTIONS "-include;${EDEN_MIHAWKGEN_NAMESPACED_HEADER}")
 target_include_directories(video_core PRIVATE "${EDEN_FSR3_OF_ROOT}/src")
 
 

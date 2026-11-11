@@ -212,3 +212,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 13 — four selected runtime owner decisions (11 Nov)
 
 [Exact report](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS13_2026-11-11.md) compares #55 Optimized Vertex Buffer Android fallback, #59 Qualcomm/Turnip driver flags, #77 native maintained Vulkan query semantics, #84 AM None applet missing dispatch. Source-scoped categories reduce the general queue to **48**; AM #84 adds a **14th** source gap requiring guest/ABI tests, without claiming it causes a current PS5 launch crash. Other gates remain: 2 GL/UTF policies, 17 native headers, 7 corrective batches.
+
+## R23 pass 14 — four source-owner decisions (11 Nov)
+
+[Full source report](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS14_2026-11-11.md) scopes #50 Android-only SPIR-V bloom and #99 ReShade applet bypass away from native selected code, verifies the intended GPU worker stop/join lifecycle #151 is source-implemented in the maintained PS5 GPU/worker owners, and identifies #64 NVNflinger HWC frame release order as a real unported guest-visible gap. Counts now **44** general semantic cases, **15** source gaps, 2 scoped GPU/UTF policies, 17 headers, seven C00–C06 release qualifications.

@@ -56,7 +56,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 48,
+        "runtime-semantic-review-pending": 44,
+        "reviewed-Android-only-LA-EOW-SPIRV-bloom-option": 1,
+        "reviewed-ReShade-applet-postprocess-not-native-selected": 1,
+        "source-equivalent-native-GPU-worker-stop-lifecycle": 1,
         "reviewed-nonAndroid-optimized-vertex-branch-only": 1,
         "reviewed-Qualcomm-driver-flag-outside-PS5-RADV": 1,
         "source-equivalent-selected-Vulkan-TFB-end-buffer-order": 1,
@@ -85,7 +88,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 14,
+        "verified-relevant-source-gap-awaiting-native-proof": 15,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -353,6 +356,33 @@ def validate(root: Path, app: dict | None = None) -> dict:
     if ('"${PORT_BUILD_DIR}/vulkan_query_cache.cpp"' not in current_vk
             or '"${PORT_BUILD_DIR}/${name}_cost.cpp"' not in current_vk):
         raise ValueError("R23 native Vulkan source selection drifted")
+    # Pass 14: Android-only bloom, native HWC lifecycle, ReShade-only layer
+    # and native GPU worker stop are four distinct source-owner cases.
+    pass14 = {
+        50: ("reviewed-Android-only-LA-EOW-SPIRV-bloom-option", 2),
+        64: ("verified-relevant-source-gap-awaiting-native-proof", 1),
+        99: ("reviewed-ReShade-applet-postprocess-not-native-selected", 2),
+        151: ("source-equivalent-native-GPU-worker-stop-lifecycle", 3),
+    }
+    for i, (classification, files) in pass14.items():
+        item = by_index[i]
+        if (item["classification"] != classification or len(item["paths"]) != files
+                or not item.get("source_evidence_level", "").startswith("E1")):
+            raise ValueError(f"R23 pass14 source owner #${i} changed")
+    pass14_doc = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS14_2026-11-11.md").read_text()
+    for evidence in ("5d4983b9f7be52e607029239cb0f85ff1db066f0",
+                     "5decb791e1bb1ab2420f386e3fdbdd2b8628a324",
+                     "dea657ef3911828b9437aced16ec9863aeb3b30a",
+                     "51e21613c1e23b0f5aefef0dd78ed9d9b13806e7",
+                     "28eab249dc8eefdcadb27ccfdb308743a95580ad"):
+        if evidence not in pass14_doc:
+            raise ValueError("R23 pass14 exact source receipts missing")
+    native_cmake = (root / "headless/CMakeLists.txt").read_text()
+    native_vulkan = (root / "headless/vulkan.cmake").read_text()
+    if ('gpu_gl_native.cpp' not in native_cmake
+            or 'gpu_thread_quiet.cpp' not in native_cmake
+            or 'vulkan_present_layer_r24.cpp' not in native_vulkan):
+        raise ValueError("R23 pass14 PS5 selected owner changed")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -522,7 +552,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 48
+    assert validate(root)["runtime_semantic_cases_pending"] == 44
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -531,7 +561,7 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
-    for case in (29, 54, 58, 74, 76, 83, 130):
+    for case in (29, 49, 54, 58, 63, 74, 76, 83, 98, 130, 150):
         bad = copy.deepcopy(current)
         bad["individual_commits"][case]["classification"] = "runtime-semantic-review-pending"
         try:

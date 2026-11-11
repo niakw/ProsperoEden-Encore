@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 14,
-    "runtime-semantic-review-pending": 48,
+    "verified-relevant-source-gap-awaiting-native-proof": 15,
+    "runtime-semantic-review-pending": 44,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -49,7 +49,10 @@
     "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected": 1,
     "reviewed-nonAndroid-optimized-vertex-branch-only": 1,
     "reviewed-Qualcomm-driver-flag-outside-PS5-RADV": 1,
-    "source-equivalent-selected-Vulkan-TFB-end-buffer-order": 1
+    "source-equivalent-selected-Vulkan-TFB-end-buffer-order": 1,
+    "reviewed-Android-only-LA-EOW-SPIRV-bloom-option": 1,
+    "reviewed-ReShade-applet-postprocess-not-native-selected": 1,
+    "source-equivalent-native-GPU-worker-stop-lifecycle": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1300,13 +1303,14 @@
       "sha": "d89e02d3ac9b769046f5472f0361d5adb2596bab",
       "title": "[emit_spirv_image] remove the fix for LA/EOW (#4589)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-Android-only-LA-EOW-SPIRV-bloom-option",
+      "scope": "E1 upstream #50 removes a 0.98 float image-sample scale guarded entirely by __ANDROID__. PS5 Vulkan SPIR-V emitter retains the code but PS5 non-Android preprocessing excludes it; Android string asset is not packaged.",
+      "action": "No native change; reopen if native PS5 defines __ANDROID__ unexpectedly or its active image emitter is changed, and verify actual SPIR-V output if driver shader behavior is questioned.",
       "paths": [
         "src/android/app/src/main/res/values/strings.xml",
         "src/shader_recompiler/backend/spirv/emit_spirv_image.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream d89e02d3ac9b769046f5472f0361d5adb2596bab, pinned emit_spirv_image.cpp Git blob 5d4983b9f7be52e607029239cb0f85ff1db066f0; native PS5 profile non-Android, no SPIR-V output captured."
     },
     {
       "index": 51,
@@ -1512,12 +1516,13 @@
       "sha": "989768aa46720e3fcab9e2111e3ddd70819c382b",
       "title": "Fix [core, gpu, threads] Multithreading refactor (#4254) (#4548)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 upstream #64 changes native-relevant HLE NVNflinger HardwareComposer::ComposeLocked lifecycle: skip invisible-only display composition, move ReleaseFramebuffersLocked after composition handoff. Pinned core HWC blob 5decb791e1bb1ab2420f386e3fdbdd2b8628a324 still waits/releases early and has no visible-layer short-circuit; CMake selects original HWC source.",
+      "action": "Review source owner and actual guest buffer acquire/release/fences. Port only a carefully tested release-order correction; upstream admits potential tearing from early release. Test invisible/app layer transitions and short shutdown on PS5, especially current NS1 crash.",
       "paths": [
         "src/core/hle/service/nvnflinger/hardware_composer.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 989768aa46720e3fcab9e2111e3ddd70819c382b, pinned hardware_composer.cpp Git blob 5decb791e1bb1ab2420f386e3fdbdd2b8628a324; no PS5 framebuffer fence trace."
     },
     {
       "index": 65,
@@ -3107,13 +3112,14 @@
       "sha": "cb73a4dcc7710a7fea1643797b17e39858f4ae6a",
       "title": "[renderer_vulkan] Skip post-processing on applet layers (#4474)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-ReShade-applet-postprocess-not-native-selected",
+      "scope": "E1 upstream #99 changes Vulkan Layer::SetPostProcessPass under HAS_RESHADE to skip applet layers. Current PS5 headless/vulkan.cmake compiles maintained headless/vulkan_present_layer_r24.cpp, which has neither HAS_RESHADE nor SetPostProcessPass, using its own upscaler/compose stack.",
+      "action": "Do not import ReShade-only applet gating into the current PS5 present layer. If native ReShade is introduced or layer source changes, separately validate applet stack mask, postprocessing and SGSR/NR visual overlay.",
       "paths": [
         "src/video_core/renderer_vulkan/present/layer.cpp",
         "src/video_core/renderer_vulkan/present/layer.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream cb73a4dcc7710a7fea1643797b17e39858f4ae6a; PS5 selected layer blob dea657ef3911828b9437aced16ec9863aeb3b30a, native vulkan.cmake path; no console visual test."
     },
     {
       "index": 100,
@@ -4000,14 +4006,15 @@
       "sha": "c95ad020fb529d47f9c3106a53553bec955c1586",
       "title": "[gpu] Fix infinite hangup/freezes at shutdown/reset (#4395)",
       "file_count": 3,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-native-GPU-worker-stop-lifecycle",
+      "scope": "E1 upstream #151 adds GPU thread NotifyShutdown request_stop/join before renderer teardown and orders Core::System before thread manager. Active PS5 G21 gpu_gl_native.cpp already publishes shutdown then calls gpu_thread.Stop; current native gpu_thread_quiet.cpp Stop requests stop, pthread_join, drains pending queue and header Stop() exists; system field precedes GPU worker. This addresses corresponding lifecycle at source, not byte-equivalent implementations.",
+      "action": "Retain PS5 native GPU shutdown owner, do not cherry-pick jthread implementation into pthread worker. Reopen if Vulkan/OpenGL GPU TU selection or queue stop changes; require PS5 crash/shutdown-cycle trace and no deadlocks before runtime qualification.",
       "paths": [
         "src/video_core/gpu.cpp",
         "src/video_core/gpu_thread.cpp",
         "src/video_core/gpu_thread.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream c95ad020fb529d47f9c3106a53553bec955c1586, selected gpu_gl_native.cpp blob 51e21613c1e23b0f5aefef0dd78ed9d9b13806e7, gpu_thread_quiet.cpp blob 28eab249dc8eefdcadb27ccfdb308743a95580ad, header f9c5f72a17867f40e47416e12c62076c9b011e6d; no PS5 runtime trace."
     },
     {
       "index": 152,

@@ -815,6 +815,26 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #97: use the maintained one-line applet z-order WindowSystem
+# while retaining all other native AM/HID service and NPad overrides.
+if(PS5_NATIVE)
+    set(EDEN_R23_APPLET_WINDOW
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp")
+    if(NOT EXISTS "${EDEN_R23_APPLET_WINDOW}")
+        message(FATAL_ERROR "R23 #97 maintained applet WindowSystem missing")
+    endif()
+    get_target_property(eden_r23_window_units core SOURCES)
+    list(FIND eden_r23_window_units
+        "hle/service/am/window_system.cpp" eden_r23_window_old)
+    if(eden_r23_window_old LESS 0)
+        message(FATAL_ERROR "R23 #97 native WindowSystem owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_window_units "hle/service/am/window_system.cpp")
+    list(APPEND eden_r23_window_units "${EDEN_R23_APPLET_WINDOW}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_window_units}")
+    message(STATUS "R23 #97: selected applet z-index owner with native SGSR bypass")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

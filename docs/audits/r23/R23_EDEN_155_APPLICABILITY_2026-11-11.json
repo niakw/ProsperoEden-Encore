@@ -5,10 +5,10 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 115,
+    "runtime-semantic-review-pending": 113,
     "asset-and-translation-package-review": 8,
     "not-applicable-to-native-runtime-source": 20,
-    "staged-host-source-fix": 3,
+    "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 4,
     "native-build-or-dependency-review": 4,
     "test-only-upstream": 1
@@ -3093,9 +3093,9 @@
       "sha": "a25e32676fd3da5b66600e15045dfa699d93d989",
       "title": "[hle] Use correct `audren:d` service framework (#4472)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "staged-host-source-fix",
+      "scope": "audren:d -> headless/r23_audren_debug_ps5.cpp: debugger audio renderer service (not AudioIn manager)",
+      "action": "Full pinned audio.cpp only semantic replacement; ASan/UBSan service registration fixture green. Native audio_core and actual IPC untested.",
       "paths": [
         "src/core/hle/service/audio/audio.cpp"
       ]
@@ -3118,9 +3118,9 @@
       "sha": "3266c20e3f27a459449b77214182be3f0332e8f4",
       "title": "[ips_layer] read magic from IPS file and fix EOF check (#4469)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "staged-host-source-fix",
+      "scope": "IPS -> headless/r23_ips_layer_ps5.cpp: use patch header, inclusive EOF size and nonempty input",
+      "action": "Full pinned IPS implementation, exact official semantic changes; source-extracted IPS/IPS32 magic and EOF behavior ASan/UBSan green. Actual VFS/game loading untested.",
       "paths": [
         "src/core/file_sys/ips_layer.cpp"
       ]

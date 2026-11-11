@@ -9,15 +9,17 @@
 | CMake / CPM / versions dépendances | **4** | Vérifier les pins et la compilation PS5 |
 | NCE ARM / Dynarmic ARM64 host uniquement | **4** | Exclusion explicite du PS5 x64 |
 | Commit modifiant uniquement un test Dynarmic | **1** | Conserver comme référence de tests, pas de patch runtime |
-| Correctif de code NS1/partagé préparé sur PR #46 | **3** | F2I, BCAT, viewport : hôte ciblé; compilation native/console en attente |
-| Autres changements NS1/partagés | **115** | Révision sémantique à faire, pas seulement les chemins |
+| Correctif de code NS1/partagé préparé sur PR #46 | **5** | F2I, BCAT, viewport, IPS, `audren:d` : hôte ciblé; compilation native/console en attente |
+| Autres changements NS1/partagés | **113** | Révision sémantique à faire, pas seulement les chemins |
 | **Total** | **155** | **0 commit manquant à l'inventaire** |
 
-## Trois modifications ciblées déjà préparées (aucune fusion)
+## Cinq modifications ciblées déjà préparées (aucune fusion)
 
 - **#9 — F2I** `6e24dcb` : `BitField<45>` = `neg`, `BitField<49>` = `abs`, source `headless/r23_f2i_conversion_ps5.cpp`, propriétaire `shader_recompiler` avec remplacement CMake fail-closed. Test hôte à lier au SHA exact.
 - **#22 — BCAT** `07677aa` : `VerifyNameValidFile(file_name_raw)` au lieu de `VerifyNameValidDir`, source `headless/r23_bcat_delivery_cache_file_ps5.cpp`, propriétaire `core`. Test des vrais validateurs de noms sous ASan/UBSan.
 - **#44 — viewport** `035f461` : correction du flip Y pour `scale_y` négatif dans le rasterizer Vulkan généré depuis le code amont épinglé (`tools/prepare-vulkan-port.py`). Test mathématique extrait, pas de rendu Vulkan/PS5 validé.
+- **#102 — `audren:d`** `a25e326` : utilisation de `IAudioRendererManagerForDebugger` dans `headless/r23_audren_debug_ps5.cpp`, propriétaire cible `core`, test d'enregistrement du service extrait sous ASan/UBSan.
+- **#104 — IPS** `3266c20` : magic depuis le fichier patch, fin `EOF`/`EEOF` exacte et garde entrée vide dans `headless/r23_ips_layer_ps5.cpp`, propriétaire `core`, tests de fragments réels sous ASan/UBSan.
 
 ## Exclusions de backend x64 prouvables à partir des chemins
 
@@ -33,6 +35,8 @@ Les commits **#74 (`218c6705d`)** et **#69 (`e255c20db`)** concernent une introd
 
 ## Ce qui manque encore
 
-Les **115** entrées `runtime-semantic-review-pending` demandent une décision **unité compilée réellement sélectionnée + équivalence/régression**. Les **3** fixs hôte doivent recevoir un vrai CMake/compilateur natif puis une validation console. Les **12** assets et dépendances sont ouverts, tout comme les **17** en-têtes issus des 35 écarts Eden sans reçu d'inclusion native. Les **7** lots C00–C06 ne sont pas qualifiés de bout en bout.
+Les **113** entrées `runtime-semantic-review-pending` demandent une décision **unité compilée réellement sélectionnée + équivalence/régression**. Les **5** fixs hôte doivent recevoir un vrai CMake/compilateur natif puis une validation console. Les **12** assets et dépendances sont ouverts, tout comme les **17** en-têtes issus des 35 écarts Eden sans reçu d'inclusion native. Les **7** lots C00–C06 ne sont pas qualifiés de bout en bout.
+
+**Tests des cinq correctifs :** [CI hôte R23 #42929157123](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42929157123) — compilation de fonctions/structures extraites, pas des cinq unités natives PS5 complètes, ni de rendu ou service invité réel.
 
 **Preuves :** [liste exacte des 155 commits](r23/R23_EDEN_COMPLETE_155_COMMIT_PATH_REGISTER.json), [32 dispositions frontend/build/asset](r23/R23_EDEN_NON_RUNTIME_32_DECISIONS.json), [registre machine-readable de 155 catégories](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json). Aucune modification à `main` ou au submodule `vendor` depuis cette PR.

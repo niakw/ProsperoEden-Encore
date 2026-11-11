@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 11,
-    "runtime-semantic-review-pending": 57,
+    "verified-relevant-source-gap-awaiting-native-proof": 12,
+    "runtime-semantic-review-pending": 56,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -3894,15 +3894,16 @@
       "sha": "5d150cac5c6624fa6a0e94266846b75d91a6a5d0",
       "title": "[dynarmic, am, android, ns] Fixes the latest qlaunch regressions on Android and adds cmd23 for launching games on FW 23 (#4407)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 direct source deficiency: pinned compiled core NS dispatcher registers GetApplicationControlData3 at ID 19 but lacks FW23 command 23; Eden upstream #147 adds command 23 as the same handler. The same upstream commit also modifies AM overlay/layer stack policy and ARM64 Dynarmic, which must be separately scoped to PS5.",
+      "action": "Prepare one reviewable PS5 maintained NS dispatch alias with real guest IPC request/response tests and exact selected CMake owner, preserving cmd19; do NOT import AM overlay changes or ARM64 backend blindly. Overlay requires matching VI layer API/header, applet/stack visual and PS5 runtime tests.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
         "src/core/hle/service/am/display_layer_manager.cpp",
         "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
         "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_memory.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream 4-file diff, pinned NS blob c7606a83bf771c9251ef8a44add72b72a2589870, pinned AM blob 494e8a132b30962c5d13f20155eb00725652207a, core CMake blob 508ace350173f5068bd7531f37e70199134fde3a; not a compiled guest IPC test."
     },
     {
       "index": 148,

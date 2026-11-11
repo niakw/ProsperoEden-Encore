@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 57,
+        "runtime-semantic-review-pending": 56,
         "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
         "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
@@ -79,7 +79,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 11,
+        "verified-relevant-source-gap-awaiting-native-proof": 12,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -232,6 +232,30 @@ def validate(root: Path, app: dict | None = None) -> dict:
     ):
         if frozen_receipt not in async_note:
             raise ValueError("R23 #52 exact source receipt/reopen contract missing")
+    # #147: NS cmd23 is missing in the frozen selected core HLE dispatcher,
+    # but cmd19 already names the required GetApplicationControlData3 handler.
+    # The unrelated AM/overlay edits and ARM64-only JIT code MUST NOT be
+    # considered qualified by that one-line IPC table difference.
+    fw23 = by_index[147]
+    if (fw23["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+            or fw23["paths"] != [
+                "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
+                "src/core/hle/service/am/display_layer_manager.cpp",
+                "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
+                "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_memory.cpp"]
+            or not fw23.get("source_evidence_level", "").startswith("E1")):
+        raise ValueError("R23 #147 FW23 NS+AM semantic gap/source split lost")
+    ns_readme = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS9_2026-11-11.md").read_text()
+    for frozen_ns in (
+        "c7606a83bf771c9251ef8a44add72b72a2589870",
+        "494e8a132b30962c5d13f20155eb00725652207a",
+        "508ace350173f5068bd7531f37e70199134fde3a",
+        "5d150cac5c6624fa6a0e94266846b75d91a6a5d0",
+        "cmd 19",
+        "cmd 23",
+    ):
+        if frozen_ns not in ns_readme:
+            raise ValueError("R23 #147 exact pinned NS/AM source proof missing")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -400,7 +424,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 57
+    assert validate(root)["runtime_semantic_cases_pending"] == 56
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -409,6 +433,14 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
+    bad = copy.deepcopy(current)
+    bad["individual_commits"][146]["classification"] = "runtime-semantic-review-pending"
+    try:
+        validate(root, bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("R23 #147 missing cmd23 semantic gap was accepted as closed")
     bad = copy.deepcopy(current)
     bad["individual_commits"][51]["classification"] = "runtime-semantic-review-pending"
     try:

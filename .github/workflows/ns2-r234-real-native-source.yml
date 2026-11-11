@@ -1,0 +1,103 @@
+name: NS2 R234 integrated exact native Vulkan source (no full app build)
+# Research branch only. Generate exactly three scratch Vulkan .o files; no Ninja
+# targets, application link, PS5 executable, package or console execution.
+on:
+  push:
+    branches: [research/ns2-r234-integrated-native-20261111]
+    paths:
+      - '.github/workflows/ns2-r2-native-cmake-graph.yml'
+      - 'tools/ns2/check_r2_native_cmake_graph.py'
+      - 'tools/ns2/check_r2_native_graph_syntax.py'
+      - 'tools/ns2/check_r2_native_graph_objects.py'
+      - 'tools/ns2/check_r3_real_native.py'
+      - 'tools/ns2/check_r4_real_native.py'
+      - 'headless/CMakeLists.txt'
+      - 'headless/vulkan.cmake'
+      - vendor
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: r234-actual-cmake-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-configure-and-three-objects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      PROSPEROEDEN_GIT_DEPS_ROOT: .deps/repos
+      PROSPEROEDEN_DEPS_OFFLINE: '1'
+    steps:
+      - name: Checkout exact R2 research and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify no production vendor changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:vendor)" = 4f08b9c9dd2f34deecc9c9fa0d8196dcd6575c2e
+          test "$(git -C vendor rev-parse HEAD)" = 4f08b9c9dd2f34deecc9c9fa0d8196dcd6575c2e
+      - name: Restore read-only PS5 native project cache
+        id: native_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42924336057
+      - name: Reconfigure real PS5 graph, check syntax and compile only 3 scratch objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.native_cache.outputs.cache-hit }}" != "true" ]; then
+            echo "::error::Exact native PS5 graph cache absent; no native compilation attempted"
+            exit 1
+          fi
+          # Recover ONLY pinned native SDK / graphics libraries from cached
+          # source dependencies; never call a global PS5 application build.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools \
+            llvm-spirv-18 libllvmspirvlib-18-dev cmake ninja-build ccache make \
+            nasm meson rsync git glslang-tools spirv-tools bison flex autoconf \
+            python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
+            libboost-container-dev libssl-dev libzstd-dev
+          bash tools/ci/link-sibling-deps.sh
+          test -s ../mihawk-vulkan-review/.deps/native/radv-release/lib/libvulkan_radeon.ps5.a
+          python3 -B tools/isolate-radv.py
+          bash tools/build-agc-driver-stub.sh
+          python3 -m pip install --user --break-system-packages "meson==1.12.1"
+          export PATH="$HOME/.local/bin:$PATH"
+          bash tools/build-opengl-sdk.sh
+          mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
+          test "${#graphs[@]}" -eq 1
+          native="$(dirname "${graphs[0]}")"
+          scratch="$(dirname "$native")"
+          test -f "$scratch/source/CMakeLists.txt"
+          export PS5_PAYLOAD_SDK="$scratch/sdk"
+          export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
+          # Configure the real PS5-source CMake project with OUR current
+          # research inject and genuine pinned R2 vendor source headers.
+          # No make/ninja build targets or application ELF are produced.
+          cmake -S "$scratch/source" -B "$native" -G Ninja \
+            -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DEDEN_PS5_VULKAN=ON \
+            -DEDEN_RESEARCH_NS2_STAGE_BACKING=ON \
+            -DEDEN_RESEARCH_NS2_GOB16=ON \
+            -DEDEN_RESEARCH_NS2_R4_VOLUME=ON
+          python3 -B tools/ns2/check_r2_native_cmake_graph.py "$native"
+          # The graph is now genuinely configured with R2. Compile its exact
+          # recorded translation units in syntax-only mode, NOT cached-flag
+          # substitutions or Ninja build targets.
+          python3 -B tools/ns2/check_r2_native_graph_syntax.py "$native"
+          # Only these three source objects; temporary outputs erased on exit.
+          # This does not link video_core, build a PS5 app or modify main.
+          python3 -B tools/ns2/check_r2_native_graph_objects.py "$native"
+          python3 -B tools/ns2/check_r3_real_native.py "$native"
+          python3 -B tools/ns2/check_r4_real_native.py "$native"

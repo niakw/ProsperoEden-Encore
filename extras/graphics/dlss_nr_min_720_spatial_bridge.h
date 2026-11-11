@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Host-only R09 Original 720p -> USER-SELECTED spatial upscaling contract.
+// Host-only R09 720p -> selected A4K x2 OR DLSS-NR Original -> spatial contract.
 // Existing Eden filter IDs MUST remain stable; this is not FSR3 temporal.
 // No Vulkan work, no synthetic output, no default PS5 runtime activation.
 #pragma once
@@ -21,6 +21,7 @@ enum class SpatialBridgeReason : std::uint8_t {
     HostCandidateOnly
 };
 inline constexpr bool kPostNeuralSpatialRuntimeWired=false;
+inline constexpr bool kA4kNeuralToSpatialRuntimeQualified=false;
 [[nodiscard]] constexpr bool ValidSpatialFilter(int filter) noexcept {
     return filter>=0&&filter<=6;
 }
@@ -35,6 +36,8 @@ struct SpatialBridgeEvidence {
     Present720Image guest{},neural{},output{};
     bool authenticated_original_model{};
     bool original_152_gpu_recorded{};
+    bool a4k_native_x2_gpu_recorded{};
+    bool a4k_output_image_and_view_identified{};
     bool guest_frame_ready{};
     bool antialiasing_disabled{};
     bool no_pre_neural_scaling{};
@@ -51,13 +54,21 @@ struct SpatialBridgeCandidate {
     SpatialBackend backend{SpatialBackend::NativeSampler};
     Present720Image filter_input{},output{};
     bool host_shape_qualified{};
+    bool downstream_is_downscale{};
+    bool a4k_neural_source{};
     bool runtime_executable{};
 };
 [[nodiscard]] constexpr SpatialBridgeCandidate
 AssessPostNeuralSpatial(const SpatialBridgeEvidence& e) noexcept {
     SpatialBridgeCandidate out{};
-    if(e.neural_mode!=4||!e.authenticated_original_model||
-       !e.original_152_gpu_recorded)
+    const bool a4k=e.neural_mode>=1&&e.neural_mode<=3;
+    const bool original=e.neural_mode==4;
+    if(!a4k&&!original)return out;
+    if(original&&(!e.authenticated_original_model||
+                  !e.original_152_gpu_recorded))
+        return out;
+    if(a4k&&(!e.a4k_native_x2_gpu_recorded||
+             !e.a4k_output_image_and_view_identified))
         return out;
     if(!ValidSpatialFilter(e.filter)){
         out.reason=SpatialBridgeReason::UnsupportedFilter;return out;
@@ -70,8 +81,11 @@ AssessPostNeuralSpatial(const SpatialBridgeEvidence& e) noexcept {
         out.reason=SpatialBridgeReason::MissingGuestOrNeuralImage;
         return out;
     }
+    const auto source_width=a4k?2560u:1280u;
+    const auto source_height=a4k?1440u:720u;
     if(e.guest.extent.width!=1280u||e.guest.extent.height!=720u||
-       e.neural.extent.width!=1280u||e.neural.extent.height!=720u||
+       e.neural.extent.width!=source_width||
+       e.neural.extent.height!=source_height||
        !ValidPresent720Output(e.output.extent)){
         out.reason=SpatialBridgeReason::InvalidRasterOrOutput;return out;
     }
@@ -105,8 +119,16 @@ AssessPostNeuralSpatial(const SpatialBridgeEvidence& e) noexcept {
     out.filter_input=e.neural;
     out.output=e.output;
     out.host_shape_qualified=true;
-    out.runtime_executable=kPs5MinRuntimeQualified &&
-        kPostNeuralSpatialRuntimeWired;
+    out.a4k_neural_source=a4k;
+    out.downstream_is_downscale=
+        e.output.extent.width<source_width||
+        e.output.extent.height<source_height;
+    // The A4K x2 pipeline is already a real spatial upscaler. A 1080p
+    // display target therefore requires DOWNSCALING its 1440p result.
+    // Do not label FSR/SGSR as useful "upscaling" in this case.
+    out.runtime_executable=kPostNeuralSpatialRuntimeWired &&
+        (a4k?kA4kNeuralToSpatialRuntimeQualified:
+             kPs5MinRuntimeQualified);
     return out;
 }
 } // namespace Eden::Graphics::DlssNrMin

@@ -1,0 +1,51 @@
+name: R09 composable video pipeline graph (host-only)
+
+# Fast policy-only gate: multiple spatial passes, optional neural,
+# real-frame generation and arbitrary safe order. No Vulkan execution,
+# no proprietary model, no vendor pin changes and no PS5 build.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/r09-composable-pipeline-host.yml'
+      - 'extras/graphics/neural_pipeline_composer.h'
+      - 'extras/graphics/test_neural_pipeline_composer.cpp'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r09-composable-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  topology-and-ownership:
+    name: Ordered multi-stage graph and safety invariants (GCC / Clang)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout isolated research commit only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+          submodules: false
+      - name: Compile and execute exhaustive stage-order contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .build-local/r09-composable
+          for cxx in g++ clang++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+              -fsanitize=undefined -fno-sanitize-recover=all \
+              -Iextras/graphics \
+              extras/graphics/test_neural_pipeline_composer.cpp \
+              -o ".build-local/r09-composable/pipeline-${cxx}"
+            UBSAN_OPTIONS=halt_on_error=1 \
+              ".build-local/r09-composable/pipeline-${cxx}"
+            echo "R09_COMPOSABLE_VIDEO_GRAPH_CXX_PASS compiler=${cxx}"
+          done
+          echo R09_ORDERED_NEURAL_SPATIAL_COMPOSE_FG_PRESENT_CONTRACTS_PASS
+          echo R09_COMPOSABLE_PS5_RUNTIME_DEFAULT_OFF_NO_GPU_EXECUTION

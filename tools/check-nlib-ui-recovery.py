@@ -159,12 +159,12 @@ assert "hero_caption_warning ? home_.last_caption :" in home
 # Never decompress or resize Nlib artwork inside the frame update.
 texture_h = src("headless/prosperoeden/pe/ui/textures.hpp")
 texture_cpp = src("headless/prosperoeden/pe/ui/textures.cpp")
-assert "std::future<DecodedCover> decode_;" in texture_h
+assert "std::array<std::future<DecodedCover>, 2> decode_{};" in texture_h
 assert "decoded.ok = services_.load_image(path, &decoded.image);" in texture_cpp
-assert "decode_ = std::async(std::launch::async" in texture_cpp
+assert "decode = std::async(std::launch::async" in texture_cpp
 assert "it->second.generation == result.generation" in texture_cpp
 assert "entry.texture = create(result.image);" in texture_cpp
-assert "decode_.wait_for(std::chrono::seconds(0))" in texture_cpp
+assert "decode.wait_for(std::chrono::seconds(0))" in texture_cpp
 # Nlib media must be scaled on the decode worker to the dimensions the
 # launcher actually draws. Otherwise every 300px card uploads a 1080p image.
 assert "int target_pixels = 64;" in texture_cpp
@@ -181,6 +181,8 @@ assert "reclaimed < kMaxTextureReclaimsPerFrame" in texture_cpp
 # The old cache collected/sorted a vector of 160+ records every frame and
 # erased the first item from a vector queue. Neither belongs in D-pad input.
 assert "std::deque<std::string> queue_;" in texture_h
+assert "for (auto& decode : decode_)" in texture_cpp
+assert "if (decode.valid()) continue;" in texture_cpp
 # Home controller *presence* is optional UI metadata; do not poll native
 # device status at 60Hz while held-button/D-pad repeat animations run.
 assert "float controller_poll_elapsed_ = 0.0f;" in hdr

@@ -7,6 +7,7 @@
 #include "pe/gfx/gl_batch.hpp"
 #include "pe/ui/services.hpp"
 
+#include <array>
 #include <cstdint>
 #include <deque>
 #include <future>
@@ -119,7 +120,7 @@ class Textures
         gfx::Image image;
         bool ok = false;
     };
-    std::future<DecodedCover> decode_;
+    std::array<std::future<DecodedCover>, 2> decode_{}; // bounded parallel front/rear decoding
     std::uint32_t create(const gfx::Image &image);
 
     gfx::GlBatch &batch_;

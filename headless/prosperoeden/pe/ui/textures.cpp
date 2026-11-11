@@ -201,9 +201,10 @@ void Textures::release()
     clear_case_pages();
     // The worker only reads/decompresses CPU-side bytes. Its lifetime must
     // end before the Services reference backing it can be destroyed.
-    if (decode_.valid()) {
-        decode_.wait();
-        try { (void)decode_.get(); } catch (...) {}
+    for (auto& decode : decode_) {
+        if (!decode.valid()) continue;
+        decode.wait();
+        try { (void)decode.get(); } catch (...) {}
     }
     for (std::uint32_t *texture : {&backdrop_, &backdrop_blur_, &brand_, &controller_,
                                    &switch_logo_, &switch_rear_footer_, &switch2_header_})
@@ -353,11 +354,14 @@ void Textures::pump(float dt, int budget)
     // the UI thread caused visible menu repeat/scroll stalls (>100 ms).
     // Only the GL texture upload stays on the owner thread. Handle *at most
     // one* completed upload this frame and prefetch the next image afterwards.
-    if (decode_.valid() &&
-        decode_.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+    // Two bounded CPU decoders let the visible front/rear finish concurrently.
+    // Uploads remain serialized on the GL owner thread, at most two per frame.
+    for (auto& decode : decode_) {
+    if (decode.valid() &&
+        decode.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
     {
         try {
-            DecodedCover result = decode_.get();
+            DecodedCover result = decode.get();
             const auto it = covers_.find(result.key);
             if (it != covers_.end() &&
                 it->second.generation == result.generation) {
@@ -402,8 +406,11 @@ void Textures::pump(float dt, int budget)
         }
         // A consumed future is invalid. The next queued image can start now.
     }
+    }
 
-    if (budget > 0 && !decode_.valid()) {
+    if (budget > 0) {
+        for (auto& decode : decode_) {
+            if (decode.valid()) continue;
         std::size_t inspected = 0;
         while (!queue_.empty() && inspected < kMaxCoverQueueLookupsPerFrame) {
             ++inspected;
@@ -415,7 +422,7 @@ void Textures::pump(float dt, int budget)
             const int target_pixels = it->second.target_pixels;
             const auto generation = it->second.generation;
             try {
-                decode_ = std::async(std::launch::async,
+                decode = std::async(std::launch::async,
                     [this, key = std::move(key), path, target_pixels, generation]() mutable {
                         DecodedCover decoded;
                         decoded.key = std::move(key);
@@ -448,6 +455,7 @@ void Textures::pump(float dt, int budget)
                 it->second.failed_loads = std::min(it->second.failed_loads + 1u, 4u);
             }
             break;
+        }
         }
     }
 

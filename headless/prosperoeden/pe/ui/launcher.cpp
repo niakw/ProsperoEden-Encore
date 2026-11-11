@@ -1082,7 +1082,11 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
         // geometric centre for the draw and the ring/hover target.
         const float gx = i >= 3 ? r.x + r.w * 0.5f : r.x + 30.0f;
         const float gy = r.y + r.h * 0.5f;
-        const Color ink = active || focused > 0.01f ? theme::kTitle : theme::kMuted;
+        // Light-mode focused/active tabs sit on a dark violet selection
+        // plate; dark text vanished there. Idle tabs retain dark ink.
+        const bool selected = active || focused > 0.01f;
+        const Color ink = selected && prefs_.color_palette == 3
+                              ? kWhite : selected ? theme::kTitle : theme::kMuted;
         if (i == 0) {
             list.triangle({gx - 13.0f, gy - 16.0f, 26.0f, 17.0f}, ink);
             list.rounded_rect({gx - 10.0f, gy - 2.0f, 20.0f, 16.0f}, 2.0f, ink);

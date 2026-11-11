@@ -1,0 +1,162 @@
+name: P5 cached native link replay (no full rebuild)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p5-native-link-replay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact CMake and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Restore completed objects from twelfth failed native build
+        id: restore
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42924336057
+
+      - name: Refuse cache misses rather than rebuild 1399 objects
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: |
+          echo "::error::Exact twelfth-run object cache missing; no native compile authorized"
+          exit 1
+
+      - name: Recreate only external native SDK link dependencies
+        if: steps.restore.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools llvm-spirv-18 libllvmspirvlib-18-dev \
+            cmake ninja-build ccache make nasm meson rsync git \
+            glslang-tools spirv-tools bison flex autoconf \
+            python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
+            libboost-container-dev libssl-dev libzstd-dev
+          bash tools/ci/link-sibling-deps.sh
+          test -s ../mihawk-vulkan-review/.deps/native/radv-release/lib/libvulkan_radeon.ps5.a
+          python3 -B tools/isolate-radv.py
+          bash tools/build-agc-driver-stub.sh
+          python3 -m pip install --user --break-system-packages "meson==1.12.1"
+          export PATH="$HOME/.local/bin:$PATH"
+          bash tools/build-opengl-sdk.sh
+          echo "P5_REPLAY_EXTERNAL_LINK_DEPS_PASS"
+
+      - name: Reconfigure and relink from restored native objects
+        if: steps.restore.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
+          test "${#graphs[@]}" -eq 1
+          native="$(dirname "${graphs[0]}")"
+          scratch="$(dirname "$native")"
+          test -f "$scratch/source/CMakeLists.txt"
+          test -f "$native/src/shader_recompiler/libshader_recompiler.a"
+          test -f "$native/src/video_core/libvideo_core.a"
+          mkdir -p .local
+          printf '%s\n' "$scratch" > .local/headless-cache
+          export PATH="$HOME/.local/bin:$PATH"
+          export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
+          export PROSPEROEDEN_GIT_DEPS_ROOT=.deps/repos
+          export PROSPEROEDEN_DEPS_OFFLINE=1
+          cmake -S "$scratch/source" -B "$native" -G Ninja \
+            -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          ninja -C "$native" -t targets all >/dev/null
+          echo "P5_CACHED_NATIVE_GRAPH_PASS"
+          python3 - "$native" <<'PY_REPLAY'
+          import json
+          from pathlib import Path
+          import shlex
+          import subprocess
+          import sys
+
+          native = Path(sys.argv[1]).resolve()
+          db = json.loads((native / "compile_commands.json").read_text())
+          expected = (
+              "vendor/sources/ps5-fsr3-optical-flow/src/ps5_framegen.cpp",
+              "vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
+              "vendor/sources/eden/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
+              "vendor/sources/eden/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
+              "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
+          )
+          for relative in expected:
+              matches = [entry for entry in db if entry["file"].endswith("/" + relative)]
+              assert len(matches) == 1, (relative, len(matches))
+              entry = matches[0]
+              cmd = (list(entry["arguments"]) if "arguments" in entry
+                     else shlex.split(entry["command"]))
+              assert "-c" in cmd and "-o" in cmd, relative
+              obj = Path(entry["directory"]) / cmd[cmd.index("-o") + 1]
+              assert obj.parent.is_dir(), obj
+              if relative.endswith("/ps5_framegen.cpp"):
+                  assert any("PS5_FRAMEGEN_VULKAN_HEADER" in arg for arg in cmd), cmd
+                  assert any("VK_NO_PROTOTYPES" in arg for arg in cmd), cmd
+                  assert any("VOLK_NAMESPACE" in arg for arg in cmd), cmd
+                  assert "-include" in cmd and any(
+                      "mihawk_volk.h" in arg for arg in cmd), cmd
+              print("P5_REPLAY_COMPILE_REAL_OBJECT", relative, flush=True)
+              subprocess.run(cmd, cwd=entry["directory"], check=True)
+              assert obj.is_file() and obj.stat().st_size > 0, obj
+
+          # Never invoke Ninja's global build target: existing 1399-step
+          # objects remain untouched. Repack ONLY the shader archive by
+          # executing its native Ninja archive rule after five exact TUs.
+          def final_command(target):
+              commands = subprocess.check_output(
+                  ["ninja", "-C", str(native), "-t", "commands", target],
+                  text=True).splitlines()
+              assert commands, target
+              return commands[-1]
+
+          archive = final_command("src/shader_recompiler/libshader_recompiler.a")
+          assert "libshader_recompiler.a" in archive and " -E rm -f " in archive, archive[-600:]
+          subprocess.run(archive, cwd=native, shell=True, executable="/bin/bash",
+                         check=True)
+          print("P5_REPLAY_SHADER_ARCHIVE_REPACK_PASS", flush=True)
+
+          # Explicitly resolve every native Vulkan dispatch reference from the
+          # real FrameGen object through namespace-isolated volk pointers.
+          framegen = next(e for e in db if e["file"].endswith(expected[0]))
+          framecmd = (list(framegen["arguments"]) if "arguments" in framegen
+                      else shlex.split(framegen["command"]))
+          frameobj = native / framecmd[framecmd.index("-o") + 1]
+          nm = subprocess.check_output(["llvm-nm-18", "-u", str(frameobj)],
+                                       text=True)
+          assert "vkCreateImage" in nm and "_ZN4volk" in nm, (
+              "Expected volk-namespaced Vulkan dispatch, not global vk* calls", nm[:1500])
+          print("P5_REPLAY_FSR3_VOLK_DISPATCH_PASS", flush=True)
+
+          # The command generated by CMake already wraps Clang/LLD via
+          # tools/link-headless-native.sh and points at the restored objects.
+          # Run ONLY that link command; no package/upload/release.
+          link = final_command("bin/eden-headless")
+          assert "link-headless-native.sh" in link, link[:400]
+          print("P5_REPLAY_FINAL_LINK_START no_full_build=1", flush=True)
+          subprocess.run(link, cwd=native, shell=True, executable="/bin/bash",
+                         check=True)
+          binary = native / "bin/eden-headless"
+          assert binary.is_file() and binary.stat().st_size > 0, binary
+          print("P5_REPLAY_FINAL_LINK_PASS binary_bytes=" + str(binary.stat().st_size)
+                + " no_stage=1 no_package=1 no_console=1", flush=True)
+          PY_REPLAY

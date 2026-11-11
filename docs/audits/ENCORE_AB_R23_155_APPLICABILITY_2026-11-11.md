@@ -228,3 +228,8 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 17 — native mmap and new NCZBLOCK module (11 Nov)
 
 [Scoped E1 review](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS17_2026-11-11.md): #31 uses POSIX read-only mmap with substantial OS flag/lifetime changes unsafe to claim superior on PS5 without tests; #45 requires a new upstream NCZ module not present in pinned native Eden core CMake. Both are reviewed deferred decisions, not current-P5 performance equivalence. **31** generic semantic reviews, **22** source gaps, **7** policy/refactor gates, **17** native header proofs and **7** corrective-batch release gates remain.
+
+
+### R23 pass 18 — NCE-only settings toggle #82 (11 Nov 2026)
+
+[Source E1 decision](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS18_2026-11-11.md): upstream #82 adds NCE-only NRO and disabled-by-default GPU-readback controls; pinned CMake selects NCE only under ARM64 Android/Linux, not PS5 x64 Dynarmic. The 155-entry JSON applicability register and its fail-closed validator now classify #82 as reviewed/non-port for this native profile. **30 generic semantic reviews remain**, **22 confirmed source gaps**, **7 scoped policy/refactor decisions**, **17 header include receipts**, **7 full release gates C00–C06**. #68's unconditional RO permission change, #6's shared GPU cache writes and #149's HLE session limits **remain open**. Historical pass counts above are dated snapshots, not the latest state. No native compiler/ELF/PS5 proof and no production/vendor change.

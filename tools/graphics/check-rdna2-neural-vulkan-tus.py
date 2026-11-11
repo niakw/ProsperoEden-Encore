@@ -36,12 +36,13 @@ R09_FSWIN_DUAL=os.environ.get("R09_FSWIN_NATIVE_TU_DUAL","")
 R09_HOST_720_DUAL=os.environ.get("R09_MIN_720_HOST_RUNNER_DUAL","")
 R09_PRESENT_720_DUAL=os.environ.get("R09_MIN_720_PRESENT_TU_DUAL","")
 R09_A4K_OWNER_DUAL=os.environ.get("R09_A4K_NATIVE_OUTPUT_DUAL","")
+R09_NATIVE_SPATIAL_DUAL=os.environ.get("R09_NATIVE_SPATIAL_CHAIN_DUAL","")
 assert all(v in ("","1") for v in
            (R09_MIN_DUAL,R09_FSWIN_DUAL,R09_HOST_720_DUAL,
-            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL))
+            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL,R09_NATIVE_SPATIAL_DUAL))
 assert sum(v=="1" for v in
            (R09_MIN_DUAL,R09_FSWIN_DUAL,R09_HOST_720_DUAL,
-            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL))<=1
+            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL,R09_NATIVE_SPATIAL_DUAL))<=1
 if R09_MIN_DUAL=="1":
     chosen={"nr_rdna2_frame_session.cpp","nr_rdna2_vit_run.cpp",
             "nr_rdna2_vit_block.cpp","nr_rdna2_vit_projection_stage.cpp",
@@ -56,7 +57,7 @@ elif R09_FSWIN_DUAL=="1":
             "nr_rdna2_fswin_chain.cpp"}
     assert chosen.issubset(FILES)
     FILES=tuple(sorted(chosen))
-elif R09_HOST_720_DUAL=="1" or R09_PRESENT_720_DUAL=="1" or R09_A4K_OWNER_DUAL=="1":
+elif R09_HOST_720_DUAL=="1" or R09_PRESENT_720_DUAL=="1" or R09_A4K_OWNER_DUAL=="1" or R09_NATIVE_SPATIAL_DUAL=="1":
     # Compile either the host runner or real PS5 presenter in both macro
     # states: syntax-only, no execution or runtime opt-in.
     FILES=()
@@ -270,18 +271,29 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         tasks=(("__native_a4k_owner__","a0"),
                ("__present_layer_r09__","a0"),
                ("__present_layer_r09__","a1"))
+    elif R09_NATIVE_SPATIAL_DUAL=="1":
+        tasks=(("__native_fsr_owner__",None),
+               ("__native_sgsr_owner__",None),
+               ("__present_layer_r09__","s0"),
+               ("__present_layer_r09__","s1"))
     else:
         tasks=tuple((name,None) for name in
                     (*FILES,"__present_layer_r09__","__r09_full_gpu_host__"))
     def check(task):
         name,mode=task
-        source=(ROOT/"vendor/encore-active/eden-vulkan/anime4k_3d.cpp"
+        source=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/present/fsr.cpp"
+                if name=="__native_fsr_owner__" else
+                ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/present/sgsr.cpp"
+                if name=="__native_sgsr_owner__" else
+                ROOT/"vendor/encore-active/eden-vulkan/anime4k_3d.cpp"
                 if name=="__native_a4k_owner__" else
                 ROOT/"headless/vulkan_present_layer_r24.cpp"
                 if name=="__present_layer_r09__" else
                 ROOT/"tools/graphics/r09_full_gpu_host.cpp"
                 if name=="__r09_full_gpu_host__" else ACTIVE/name)
-        flags=(["-DEDEN_R09_A4K_DUAL_IMAGE_RESEARCH="+mode[1:]]
+        flags=(["-DEDEN_R09_NATIVE_SPATIAL_CHAIN_RESEARCH="+mode[1:]]
+                if mode is not None and mode.startswith("s")
+                else ["-DEDEN_R09_A4K_DUAL_IMAGE_RESEARCH="+mode[1:]]
                 if mode is not None and mode.startswith("a")
                 else ["-DEDEN_R09_MIN_720_PRESENT_RESEARCH="+mode[1:]]
                if mode is not None and mode.startswith("r")
@@ -322,5 +334,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     elif R09_A4K_OWNER_DUAL=="1":
         assert len(results)==3
         print("R09_A4K_NATIVE_OWNER_AND_SPATIAL_PRESENTER_BOTH_MACROS_SYNTAX_PASS",flush=True)
+    elif R09_NATIVE_SPATIAL_DUAL=="1":
+        assert len(results)==4
+        print("R09_NATIVE_FSR_SGSR_BOTH_REAL_VENDOR_TUS_AND_PRESENTER_MACRO_OFF_ON_PASS",flush=True)
     else:
         print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

@@ -37,7 +37,9 @@ jobs:
             ~/.cache/prosperoeden-mkpfs
             .deps
           key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42880572712
-      # Reuse the ninth-run native CDB/dependency archive already restored successfully\n      # by audit-ab-ns1-readonly (#43046719027); the tenth-run key did not exist.\n      - name: Fail closed if native cache is unavailable
+      # Reuse the ninth-run native CDB/dependency archive already restored successfully
+      # by audit-ab-ns1-readonly (#43046719027); the tenth-run key did not exist.
+      - name: Fail closed if native cache is unavailable
         if: steps.restore.outputs.cache-hit != 'true'
         run: |
           echo "::error::Exact native dependency/cache restore missing. No PS5 source proof obtained."

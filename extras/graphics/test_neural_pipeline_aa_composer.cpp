@@ -84,7 +84,7 @@ static StageEvidence NativeEvidence(unsigned i) {
 }
 int main() {
     static_assert(!kComposablePs5RuntimeQualified);
-    static_assert(kRecipeVersion==2u);
+    static_assert(kRecipeVersion==3u);
     static_assert(IsPostAa(1)&&IsPostAa(2)&&IsPostAa(3));
     static_assert(!IsPostAa(0)&&!IsPostAa(4)&&!IsPostAa(8));
     static_assert(ForcedRasterAa(RasterAa::ForcedX16));
@@ -189,7 +189,7 @@ int main() {
     native.raster_gpu_budget_measured=true;
     v=QualifyBoundRecipe(saved,native);
     assert(v.reason==R::HostCandidateOnly&&v.aa_passes==1u&&!v.runtime_enabled);
-    saved.version=1u; // no silent v1 -> v2 compatibility.
+    saved.version=2u; // no silent v2 -> v3 compatibility.
     v=QualifyBoundRecipe(saved,native);
     assert(v.reason==R::MissingInput);
     std::cout<<"R09_AA_NEURAL_SPATIAL_FG_HOST_MATRIX_PASS permutations="

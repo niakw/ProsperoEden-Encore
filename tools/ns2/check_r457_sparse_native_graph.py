@@ -51,12 +51,38 @@ def main():
         cleaned=[]
         i=0
         while i<len(command):
-            if command[i]=="-o": i+=2;continue
-            if command[i]=="-c": i+=1;continue
+            if command[i] in ("-o","-MF","-MT","-MQ"):
+                if i+1>=len(command): raise RuntimeError(label+" dangling compile flag")
+                i+=2;continue
+            if command[i] in ("-c","-MD","-MMD","-MP"):
+                i+=1;continue
             cleaned.append(command[i]);i+=1
+        # The native graph may have PS5_NATIVE defined yet still inherit
+        # incomplete C-header search paths. Record the *real* compiler
+        # target/sysroot without silently introducing Linux libc into the
+        # purported PS5 ABI. A separate non-accepting diagnostic can show
+        # whether the C++ changes themselves then have syntax errors.
+        markers=[flag for flag in cleaned if
+                 flag.startswith(("--target","-target","--sysroot","-isysroot",
+                                  "-nostdinc","-stdlib","-isystem"))]
+        print("R457_NS2_SPARSE_NATIVE_TOOLCHAIN",label,
+              "compiler="+cleaned[0], "flags="+repr(markers[:20]),flush=True)
         p=subprocess.run(cleaned+["-fsyntax-only"],cwd=row["directory"],
                          capture_output=True,text=True,timeout=210)
-        if p.returncode: raise RuntimeError(label+" syntax: "+p.stderr[-8500:])
+        if p.returncode:
+            if "bits/libc-header-start.h" in p.stderr:
+                # Host-only header-path experiment, never accepted as a
+                # native SDK success. Continue the strict gate after it.
+                mixed=cleaned+["-isystem","/usr/include/x86_64-linux-gnu",
+                               "-fsyntax-only"]
+                diagnostic=subprocess.run(mixed,cwd=row["directory"],
+                           capture_output=True,text=True,timeout=210)
+                print("R457_NS2_SPARSE_HOST_LIBC_DIAGNOSTIC",label,
+                      "status="+str(diagnostic.returncode),
+                      "NOT_REAL_PS5_ABI",flush=True)
+                if diagnostic.returncode:
+                    print(diagnostic.stderr[-3500:],file=sys.stderr,flush=True)
+            raise RuntimeError(label+" genuine SDK syntax: "+p.stderr[-8500:])
         print("R457_NS2_SPARSE_NATIVE_SYNTAX_PASS",label,flush=True)
     print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_3_TUS_PASS no link/gameplay",flush=True)
 

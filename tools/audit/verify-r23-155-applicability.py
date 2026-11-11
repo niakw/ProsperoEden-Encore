@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 28,
+        "runtime-semantic-review-pending": 26,
         "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
         "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
         "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
@@ -97,7 +97,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 22,
+        "verified-relevant-source-gap-awaiting-native-proof": 24,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -151,6 +151,17 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for token in ("#57", "#47", "0e11fe8b5e", "b4d576001417", "28"):
         if token not in doc57:
             raise ValueError(f"R23 #57 net-revert receipt missing {token}")
+    r23_hle_pass21 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS21_2026-11-11.md").read_text()
+    for idx in (120, 149):
+        rec = next((item for item in rows if item["index"] == idx), None)
+        if rec is None or rec["classification"] != "verified-relevant-source-gap-awaiting-native-proof":
+            raise ValueError(f"R23 HLE case #{idx} source gap lost")
+        if f"#{idx}" not in r23_hle_pass21:
+            raise ValueError(f"R23 HLE case #{idx} evidence missing")
+    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_26_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
+    for token in ("26 upstream runtime-semantic", "26/26", "24", "SSL", "guest"):
+        if token not in current_r23_crosswalk:
+            raise ValueError(f"R23 26-case exit crosswalk missing {token}")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")
@@ -647,7 +658,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 28
+    assert validate(root)["runtime_semantic_cases_pending"] == 26
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

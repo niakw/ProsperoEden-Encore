@@ -12,6 +12,7 @@ on:
       - 'extras/graphics/test_neural_pipeline_composer.cpp'
       - 'extras/graphics/neural_pipeline_recipe.h'
       - 'extras/graphics/test_neural_pipeline_recipe.cpp'
+      - 'extras/graphics/test_neural_pipeline_aa_composer.cpp'
       - 'extras/graphics/r09_min_shaders/pipeline_resample_host.comp'
       - 'extras/graphics/r09_composable_vk_spatial_chain.cpp'
       - 'extras/graphics/r09_native_fsr_sgsr_gpu_witness.cpp'
@@ -44,7 +45,7 @@ jobs:
           set -euo pipefail
           mkdir -p .build-local/r09-composable
           for cxx in g++ clang++; do
-            for test_name in test_neural_pipeline_composer test_neural_pipeline_recipe; do
+            for test_name in test_neural_pipeline_composer test_neural_pipeline_recipe test_neural_pipeline_aa_composer; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics \
@@ -55,7 +56,8 @@ jobs:
               echo "R09_COMPOSABLE_VIDEO_GRAPH_CXX_PASS ${test_name} compiler=${cxx}"
             done
           done
-          echo R09_ORDERED_NEURAL_SPATIAL_COMPOSE_FG_PRESENT_CONTRACTS_PASS
+          echo R09_ORDERED_AA_NEURAL_SPATIAL_COMPOSE_FG_PRESENT_CONTRACTS_PASS
+          echo R09_GUEST_MSAA_RESOLVE_REQUIRED_BEFORE_FULLSCREEN_STAGES_PASS
           echo R09_VERSIONED_SEQUENCE_WITH_REAL_GPU_BINDING_GATE_PASS
           echo R09_COMPOSABLE_PS5_RUNTIME_DEFAULT_OFF_NO_GPU_EXECUTION
 

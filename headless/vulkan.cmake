@@ -1189,8 +1189,16 @@ endif()
 list(APPEND video_sources
     "${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
     "${EDEN_PORT_DIR}/fsr3_optical_session.cpp")
+# The native FrameGen TU is owned by the src/video_core directory, NOT
+# this deferred root CMake directory. TARGET_DIRECTORY is essential: without
+# it, the source-only PS5_FRAMEGEN_VULKAN_HEADER property does not reach Clang.
+# Avoid unmangled vkCreate*/vkDestroy* external references: all FSR3 calls
+# must use the same isolated volk:: dispatch pointers as MihawkGen.
 set_source_files_properties("${EDEN_FSR3_OF_ROOT}/src/ps5_framegen.cpp"
-    PROPERTIES COMPILE_DEFINITIONS "PS5_FRAMEGEN_VULKAN_HEADER=\"mihawk_volk.h\"")
+    TARGET_DIRECTORY video_core
+    PROPERTIES
+        COMPILE_DEFINITIONS "PS5_FRAMEGEN_VULKAN_HEADER=\\\"mihawk_volk.h\\\";VK_NO_PROTOTYPES=1;VOLK_NAMESPACE=1"
+        COMPILE_OPTIONS "SHELL:-include ${EDEN_MIHAWKGEN_NAMESPACED_HEADER}")
 target_include_directories(video_core PRIVATE "${EDEN_FSR3_OF_ROOT}/src")
 
 

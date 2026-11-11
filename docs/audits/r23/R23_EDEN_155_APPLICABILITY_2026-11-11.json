@@ -5,12 +5,12 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 101,
+    "runtime-semantic-review-pending": 97,
     "asset-and-translation-package-review": 8,
-    "not-applicable-to-native-runtime-source": 25,
+    "not-applicable-to-native-runtime-source": 26,
     "staged-host-source-fix": 5,
-    "not-applicable-PS5-x64-execution": 4,
-    "native-build-or-dependency-review": 4,
+    "not-applicable-PS5-x64-execution": 6,
+    "native-build-or-dependency-review": 5,
     "test-only-upstream": 1,
     "reviewed-observability-only-no-NS1-behavioral-port": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
@@ -604,12 +604,13 @@
       "sha": "895d8ede2c69f5f8061b04afaf247c2c5e04c08d",
       "title": "[cmake] Correct the -I quoting in the glslangValidator commands (#4632)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "native-build-or-dependency-review",
+      "scope": "Upstream modifies exactly two glslangValidator CMake -I command argument quoting locations in src/video_core/host_shaders/CMakeLists.txt, not C++ runtime. PS5 has a shader compile toolchain and requires native command-line/ABI receipt.",
+      "action": "Compare actual PS5 native shader generator command and glslangValidator output; do not touch C++ runtime or mark build flag parity proven.",
       "paths": [
         "src/video_core/host_shaders/CMakeLists.txt"
-      ]
+      ],
+      "source_evidence_level": "E1 source/platform proof only; no current PS5 native compilation or console test"
     },
     {
       "index": 14,
@@ -1079,16 +1080,17 @@
       "sha": "802531c4578e88947a1bcfabfe7a5646d8ed2ce3",
       "title": "[ports/*] Fix cross-compilation issues (#4493)",
       "file_count": 5,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-PS5-x64-execution",
+      "scope": "Exact 5-file upstream patch is Emscripten/wasm OpenSSL and DetectArchitecture configuration, a RISC-V64 Dynarmic emitter call correction and cross-compile documentation; none selects PS5 x86-64 runtime path.",
+      "action": "No native PS5 code import; keep generic toolchain/Openssl CMake provenance under separate R18 build checks if its platform choice changes.",
       "paths": [
         ".patch/openssl-cmake/0005-cross-compile.patch",
         "cpmfile.json",
         "docs/CrossCompile.md",
         "externals/cmake-modules/DetectArchitecture.cmake",
         "src/dynarmic/src/dynarmic/backend/riscv64/emit_riscv64_a32.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 source/platform proof only; no current PS5 native compilation or console test"
     },
     {
       "index": 40,
@@ -2675,12 +2677,13 @@
       "sha": "fecc1b4ee32bc06f736f2d138680ec948cf13ab1",
       "title": "revert [vulkan] Masquerade VkInfo as PUBGMobile + UE #4320 (#4520)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-PS5-x64-execution",
+      "scope": "Only source path changed is vulkan_common/vulkan_wrapper.cpp; upstream removes #ifdef __ANDROID__ branch masquerading as PUBGMobile/UnrealEngine and leaves non-Android VkApplicationInfo yuzu Emulator API 1.3 version literals unchanged. Pinned original blob 5044881598bc775187b9a957bce563ec31c8f23b has the same non-Android branch.",
+      "action": "No PS5 Vulkan application-identity change; Android-only masquerade revert excluded, selected PS5 Vulkan wrapper still needs actual native source/link receipts.",
       "paths": [
         "src/video_core/vulkan_common/vulkan_wrapper.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 source/platform proof only; no current PS5 native compilation or console test"
     },
     {
       "index": 79,
@@ -3481,12 +3484,13 @@
       "sha": "fd34024f0e1ffca0aa813698d2552a1dea2b5b17",
       "title": "[hle/ns] fix build error due to missing async_result.h (#4440)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "Upstream async_result.cpp fixes an include after HLE ns async-result file rename. Pinned Eden src/core/hle/service/ns directory contains 40 files and has no async_result.cpp, async_result.h or i_async_result.h; headless/CMakeLists.txt has no source injection for that renamed TU.",
+      "action": "No patch for absent source; if later NS qlaunch async-result new service is imported, requalify its exact owner and header include, do not transplant one-line include in isolation.",
       "paths": [
         "src/core/hle/service/ns/async_result.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 source/platform proof only; no current PS5 native compilation or console test"
     },
     {
       "index": 128,

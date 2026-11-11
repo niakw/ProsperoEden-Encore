@@ -20,7 +20,9 @@ assert "keep_connected[index]" not in old
 assert "if (keep_connected[index]) continue;" in new
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert "r23_controller_applet_ps5.cpp" not in cmake, "redundant native controller override reintroduced"
-for marker in ('src/core/frontend/applets/controller.cpp', 'if (keep_connected[index]) continue;'):
+# CMake file(STRINGS) escapes ';' in list elements: the guard deliberately
+# uses the stable control expression while byte-exact vendor proof stays above.
+for marker in ('src/core/frontend/applets/controller.cpp', 'if (keep_connected[index]) continue'):
     assert marker in cmake, marker
 import json
 manifest = json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").read_text())

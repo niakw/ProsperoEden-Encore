@@ -374,3 +374,15 @@ assert 'family({"ns1", "switch1", "ns1-extracted", "switch1-extracted"})' in ser
 assert 'family({"ns2", "switch2", "ns2-extracted", "switch2-extracted"})' in services
 assert 'folder_info_.firmware_ready ? folder_info_.firmware_detail' in browse
 assert 'folder_info_.firmware_ready?tr("Firmware ready")' in read('headless/prosperoeden/pe/ui/switch_theme.cpp')
+
+
+# R457 retail jacket: prioritize the selected large WebP and reuse the
+# existing shelf texture until its sharper bucket has finished uploading.
+# A single source replacement must invalidate all texture-size variants.
+retail_textures = read('headless/prosperoeden/pe/ui/textures.cpp')
+assert 'bool IsRetailBoxImage(std::string_view path)' in retail_textures
+assert 'IsRetailBoxImage(path) && target_pixels >= 1024' in retail_textures
+assert 'sibling->second.used = frame_' in retail_textures
+assert 'covers_.find(path + ' in retail_textures
+assert 'it->second.texture == 0 && IsRetailBoxImage(path)' in retail_textures
+assert 'if (it->second.path == path)' in retail_textures

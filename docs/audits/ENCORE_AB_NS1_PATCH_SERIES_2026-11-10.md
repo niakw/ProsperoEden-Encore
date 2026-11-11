@@ -32,6 +32,12 @@ A green simulator or source-normalizer test is not a compiled or device-level re
 
 This branch's host-only tests compile `tests/ab_ns1_audioin_silence_host.cpp` using Clang C++20 and ASan/UBSan and check the actual source wiring. The `headless/devices_check.cpp` native fixture further tests the real `AudioSink` input-stream object, but requires a supported native/devices check build to execute; host helper tests alone cannot run that PS5-specific unit.
 
+## R23 #123 — source-maintained POSIX root preservation, unapplied
+
+The [audit #45 path-source A/B host test](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42995344113) proves the pinned `SanitizePath("/")` returns an empty string, whereas the reviewed Eden upstream preserves `/`. The **actual historic native CDB owner** is `vendor/encore-active/eden-core/src/common/fs/path_util.cpp` (Git blob `d473cfb2fd57e7026a1da3cd6aa933e75b208b66`); the audit confirmed its `SanitizePath` body is byte-identical to the pinned original ([native maintained source check](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42996878705)).
+
+A [minimal source patch](patchsets/R23-shared-path-root-posix.vendor.patch) is prepared to retain an absolute root without replacing unrelated Windows/UNC or relative-path handling. **It is not applied to vendor or current PS5 executable.** Before migration, require full native owner compilation, source/target ABI receipts, relative and mount-path tests and PS5 ROM/savedata nonregression; `git apply --check` is source-context proof only.
+
 ## Merge and synchronization protocol
 
 1. Keep both PRs **draft** until each test gate is demonstrably green at a frozen SHA. A research-only audit PR is not merged with corrective code; only specific proven source changes graduate.

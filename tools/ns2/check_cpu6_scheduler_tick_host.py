@@ -187,7 +187,7 @@ def main()->None:
             # R457 compiles the separate KProcess ABI witness into core.
             # That adds an independently selected TU before this generated
             # source; require exact ownership presence/absence, not an ordinal.
-            selected_match = re.search(r'CPU6_GENERATED_OWNER_INDEX=(-?\\d+)',
+            selected_match = re.search(r'CPU6_GENERATED_OWNER_INDEX=(-?\d+)',
                                        configured.stdout)
             assert selected_match, (prj, configured.stdout[-2800:])
             selected_index = int(selected_match.group(1))

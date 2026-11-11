@@ -5,13 +5,14 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 110,
+    "runtime-semantic-review-pending": 107,
     "asset-and-translation-package-review": 8,
-    "not-applicable-to-native-runtime-source": 23,
+    "not-applicable-to-native-runtime-source": 24,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 4,
     "native-build-or-dependency-review": 4,
-    "test-only-upstream": 1
+    "test-only-upstream": 1,
+    "upstream-runtime-then-reverted-equivalent": 2
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1477,9 +1478,9 @@
       "sha": "de7e6e01d43e8cf2ec193d74fa053b0d7949955f",
       "title": "Revert \t[input_common/joycon] Enumerate SDL devices iff SDL signals change (#4486) (#4545)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "upstream-runtime-then-reverted-equivalent",
+      "scope": "Upstream commits #70 then #65 modify and restore Joycons::ScanThread() exactly. Parent of #70 and post-revert #65 function bodies byte-equal; remaining file change is copyright year.",
+      "action": "No feature import; preserved old HID enumeration loop. Keep source GIthub SHAs, do not transplant a reverted SDL device-change experiment.",
       "paths": [
         "src/input_common/drivers/joycon.cpp"
       ]
@@ -2133,9 +2134,9 @@
       "sha": "14da4482a4668928bad43bb67ef12f96b9c9d972",
       "title": "[input_common/joycon] Enumerate SDL devices iff SDL signals change (#4486)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "upstream-runtime-then-reverted-equivalent",
+      "scope": "Upstream commits #70 then #65 modify and restore Joycons::ScanThread() exactly. Parent of #70 and post-revert #65 function bodies byte-equal; remaining file change is copyright year.",
+      "action": "No feature import; preserved old HID enumeration loop. Keep source GIthub SHAs, do not transplant a reverted SDL device-change experiment.",
       "paths": [
         "src/input_common/drivers/joycon.cpp"
       ]
@@ -3916,9 +3917,9 @@
       "sha": "301da63a15de8cfbe752ac44784db9b58cdd2d87",
       "title": "[audio] hint openslES as audio driver on android to fix mute screen recording issue (#4397)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "SDL3 audio sink excluded from PS5 native audio_core target by explicit CMake FILTER. No historical PS5 native CDB TU; native PS5 output uses a separate audio.cpp stream.",
+      "action": "No Android/SDL3 source import into PS5. Upstream #150 has Android-gated OpenSL ES hint and non-Android SDL changes, all confined to unselected SDL3 sink.",
       "paths": [
         "src/audio_core/sink/sdl3_sink.cpp"
       ]

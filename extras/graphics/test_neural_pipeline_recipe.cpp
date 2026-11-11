@@ -67,16 +67,28 @@ int main(){
     native.stages[6]=StageEvidence{};
     v=QualifyBoundRecipe(preset,native);
     assert(v.reason==R::HostCandidateOnly&&v.spatial_passes==3u);
-    // Move a same-output-resolution filter BEFORE another spatial pass
-    // without disturbing the underlying native-owner proof indices.
+    // Reorder two 4K-compatible native spatial filters. Build the
+    // temporary new step's *real* evidence separately.
+    auto reordered=preset;
+    assert(InsertStep(reordered,4,S(K::Spatial,2,p4k)));
+    auto reordered_native=native;
+    for(std::size_t i=0;i+1u<reordered.count;++i)
+        reordered_native.stages[i]=Proof(static_cast<unsigned>(i));
+    reordered_native.stages[reordered.count-1u]=StageEvidence{};
+    assert(MoveStep(reordered,3,4));
+    assert(reordered.stages[3].method==2);
+    assert(reordered.stages[4].method==4);
+    v=QualifyBoundRecipe(reordered,reordered_native);
+    assert(v.reason==R::HostCandidateOnly&&v.spatial_passes==4u);
+    assert(MoveStep(reordered,4,3));
+    v=QualifyBoundRecipe(reordered,reordered_native);
+    assert(v.reason==R::HostCandidateOnly);
+    // Reordering DIFFERENT-resolution stages breaks the graph and
+    // must be rejected (1440p SGSR cannot follow 4K Lanczos).
     assert(MoveStep(preset,3,2));
-    assert(preset.stages[2].kind==K::Spatial);
-    assert(preset.stages[2].method==4);
-    assert(preset.stages[3].method==5);
     v=QualifyBoundRecipe(preset,native);
-    assert(v.reason==R::HostCandidateOnly&&v.spatial_passes==3u);
+    assert(v.reason==R::SpatialShaderCannotDownscale);
     assert(MoveStep(preset,2,3));
-    assert(preset.stages[2].method==5&&preset.stages[3].method==4);
     v=QualifyBoundRecipe(preset,native);
     assert(v.reason==R::HostCandidateOnly);
     // Unsafe user reorder: moving FG in front of real-frame

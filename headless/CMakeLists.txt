@@ -2847,10 +2847,15 @@ if(PS5_NATIVE)
     string(FIND "${eden_r23_fw23_ns_prepared}"
         "{23, D<&IReadOnlyApplicationControlDataInterface::GetApplicationControlData3>"
         eden_r23_fw23_cmd23)
+    # CMake file(STRINGS) escapes semicolons. Check both halves of
+    # the installed null guard rather than a false-negative escaped line.
     string(FIND "${eden_r23_fw23_ns_prepared}"
-        "if (const auto control = pm.GetControlMetadata(); control.second)"
+        "if (const auto control = pm.GetControlMetadata()"
         eden_r23_fw23_null_icon)
-    if(eden_r23_fw23_cmd23 LESS 0 OR eden_r23_fw23_null_icon LESS 0)
+    string(FIND "${eden_r23_fw23_ns_prepared}"
+        "control.second)" eden_r23_fw23_null_icon_condition)
+    if(eden_r23_fw23_cmd23 LESS 0 OR eden_r23_fw23_null_icon LESS 0 OR
+       eden_r23_fw23_null_icon_condition LESS 0)
         message(FATAL_ERROR
             "Selected FW23 NS source lost installed cmd23 or icon null guard")
     endif()

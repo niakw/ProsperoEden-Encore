@@ -87,15 +87,60 @@ def main():
     # must come through the live ns2-astc source after include_next bridge.
     probe=run([*flags,"-H","-fsyntax-only"], cwd=record["directory"],env=env,timeout=900)
     include_tree=probe.stderr
+    # An absolute path assertion alone is too strict if Clang reports
+    # normalized/relative include paths. Print exactly the relevant header
+    # resolution chain on every run, including failures (no guessing).
+    include_matches = [line.strip() for line in include_tree.splitlines()
+                       if "texture_cache.h" in line.lower()
+                       or "ns2-astc" in line.lower()]
+    print("R4_NATIVE_HEADER_TRACE_BEGIN", flush=True)
+    for line in include_matches[:60]:
+        print("R4_NATIVE_HEADER_TRACE " + line[:600], flush=True)
+    print("R4_NATIVE_HEADER_TRACE_END lines=" + str(len(include_matches)),
+          flush=True)
     if str(h.resolve()) not in include_tree and \
-       str(h.absolute()) not in include_tree:
-        raise RuntimeError("R4 compiler did NOT include actual N60 ASTC owner")
+       str(h.absolute()) not in include_tree and \
+       "ns2-astc/include/video_core/texture_cache/texture_cache.h" not in include_tree:
+        raise RuntimeError("R4 compiler did NOT include actual N60 ASTC owner"
+                           " (see trace above)")
     if INACTIVE_HEADER in include_tree:
         raise RuntimeError("R4 compiler selected inactive shadow TextureCache")
     print("R4_NATIVE_ACTIVE_HEADER_PASS: exact N60 ASTC header in real -H compiler graph",flush=True)
     print("R4_NATIVE_SYNTAX_PASS: active full vk_graphics_pipeline_cost.cpp",flush=True)
     with tempfile.TemporaryDirectory(prefix="r4-active-native-") as td:
         out=Path(td)
+        # Force the real Vulkan TextureCache<Params>::BlitImage member to
+        # instantiate. Compiling an including TU alone can leave dependent
+        # expressions unchecked and R4 code un-emitted.
+        explicit=out/"r4-blit-explicit-instantiation.cpp"
+        preamble=(native/"headless"/"performance.h").resolve()
+        explicit.write_text(
+            f'#include "{preamble.as_posix()}"\\n'
+            '#include "common/scope_exit.h"\\n'
+            '#include "video_core/renderer_vulkan/vk_texture_cache.h"\\n'
+            '#include "video_core/texture_cache/texture_cache.h"\\n'
+            'static_assert(!Vulkan::TextureCacheParams::FRAMEBUFFER_BLITS);\\n'
+            'template bool VideoCommon::TextureCache<Vulkan::TextureCacheParams>::BlitImage(\\n'
+            '    const Tegra::Engines::Fermi2D::Surface&,\\n'
+            '    const Tegra::Engines::Fermi2D::Surface&,\\n'
+            '    const Tegra::Engines::Fermi2D::Config&);\\n')
+        orig_source=str(record["file"])
+        explicit_flags=[str(explicit) if flag==orig_source else flag for flag in flags]
+        if explicit_flags.count(str(explicit))!=1:
+            raise RuntimeError("R4 explicit TU did not replace original source once")
+        run([*explicit_flags,"-fsyntax-only"],cwd=record["directory"],env=env,timeout=900)
+        native_blit=out/"r4-explicit-blit-native.o"
+        run([*explicit_flags,"-fno-lto","-o",str(native_blit)],
+            cwd=record["directory"],env=env,timeout=1200)
+        elf(native_blit)
+        nm=shutil.which("llvm-nm-18") or shutil.which("nm")
+        if not nm:
+            raise RuntimeError("R4 explicit Vulkan symbol verifier unavailable")
+        symbols=run([nm,"-C","--defined-only",str(native_blit)]).stdout
+        if "TextureCache<Vulkan::TextureCacheParams>::BlitImage(" not in symbols:
+            raise RuntimeError("R4 Vulkan BlitImage was not emitted by explicit instantiation")
+        print("R4_NATIVE_EXPLICIT_BLIT_PASS: genuine Vulkan template instantiated and "
+              "native BlitImage symbol emitted",flush=True)
         bc=out/"r4-texture-cache-lto.o"
         run([*flags,"-o",str(bc)],cwd=record["directory"],env=env,timeout=1200)
         binary=bc.read_bytes()

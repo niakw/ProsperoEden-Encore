@@ -2,18 +2,24 @@
 
 **État : audit PR #45, en lecture seule.** L'inventaire des 155 diffs par commit est complet; ce registre applique maintenant une catégorie explicite à **chaque** commit et n'importe aucun code. Un commit classé *runtime à examiner* n'est pas déclaré intégré ou absent sans vraie preuve; un fix testé sur hôte n'est pas validé PS5.
 
-| Catégorie | Commits | Action |
+| Catégorie vérifiée au 11 novembre | Commits | État / suite |
 |---|---:|---|
-| Source ne modifiant pas le runtime PS5 (Android/Qt/docs/SDL, updater NIGHTLY) | **25** | Exclusion du portage runtime; packaging/légal hors de cette décision |
-| Assets et langues de la distribution | **8** | Vérifier les assets effectivement packagés |
-| CMake / CPM / versions dépendances | **4** | Vérifier les pins et la compilation PS5 |
-| NCE ARM / Dynarmic ARM64 host uniquement | **4** | Exclusion explicite du PS5 x64 |
-| Commit modifiant uniquement un test Dynarmic | **1** | Conserver comme référence de tests, pas de patch runtime |
-| Correctif de code NS1/partagé préparé sur PR #46 | **5** | F2I, BCAT, viewport, IPS, `audren:d` : hôte ciblé; compilation native/console en attente |
-| Autres changements NS1/partagés | **105** | Révision sémantique à faire, pas seulement les chemins |
-| Fonction Joycon modifiée puis intégralement rétablie | **2** | #70 et #65 : méthode `ScanThread()` byte-identique avant/après, aucun portage de l'essai SDL |
-| Diagnostic NCA, changement de journal seulement | **1** | Décision sémantique source établie, portage fonctionnel inutile |
-| **Total** | **155** | **0 commit manquant à l'inventaire** |
+| Revue sémantique runtime NS1 ou partagé encore ouverte | **84** | Vérifier vrai propriétaire/équivalence/test ; ne pas importer en masse |
+| Changement build/dépendance à qualifier | **6** | Compiler/versions et liens natifs à vérifier |
+| Correctif source préparé avec tests hôte | **5** | E3 native, E4 console requis |
+| Écart de code source établi mais non validé natif | **7** | Effectivité propriétaire et négatifs requis |
+| Non applicable au runtime natif par source | **27** | Ne pas importer ; pas de prétendue preuve PS5 |
+| Spécifique host ARM64/NCE non exécutable sur Zen2 | **6** | Exclure backend, conserver tests communs si nécessaires |
+| Langues/assets non embarqués | **8** | Pas de portage runtime |
+| Test amont de référence seulement | **1** | Corpus utile, pas de correctif binaire |
+| Affinité GPU nécessitant mesure PS5 | **1** | Source identifiée, trace console requise |
+| Observabilité/log sans changement guest | **2** | Aucun portage comportemental |
+| Couple Joycon aller/retour, source restaurée | **2** | Exclusion vérifiée |
+| Couple HLE #74/#69, code restauré après normalisation | **2** | [Preuve Git complète](ENCORE_AB_R23_HLE_REVERSION_FINAL_SOURCE_RECEIPT_2026-11-11.md) ; droit/licence conservés |
+| Savedata source identique après retour | **1** | Exclusion vérifiée |
+| Configuration native OpenSSL équivalente | **1** | Ne pas importer fallback inutilisé |
+| Migration Opus/FFmpeg annulée | **2** | Pas de portage de migration annulée |
+| **Total audité par SHA** | **155** | 0 commit manquant, **84** décisions runtime encore ouvertes |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 

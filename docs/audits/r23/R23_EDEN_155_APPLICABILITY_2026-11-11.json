@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 86,
+    "runtime-semantic-review-pending": 84,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -16,6 +16,7 @@
     "verified-relevant-source-gap-awaiting-native-proof": 6,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "upstream-runtime-then-reverted-equivalent": 2,
+    "source-equivalent-hle-handler-revert-cosmetic-only": 2,
     "source-equivalent-pinned-savedata-post-revert": 1,
     "source-equivalent-current-openssl-native-build": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
@@ -1544,9 +1545,9 @@
       "sha": "e255c20db4111485d228c10478bda63aabcfdde5",
       "title": "Revert \"[hle] constexpr handler dispatch maps, introduce version gating (#4480)\" (#4532)",
       "file_count": 588,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-hle-handler-revert-cosmetic-only",
+      "scope": "Verified net of all 741 HLE service files before #74 and after #69: 392 Git blobs changed, of which 339 add exactly a three-line SPDX notice and 53 are only copyright-year or whitespace changes; zero noncosmetic HLE source differences after Git -w/blank/SPDX exclusion. Native src/core/CMakeLists.txt exact Git blob unchanged. Scope is HLE service behavior, not distribution legal notices or PS5 device execution.",
+      "action": "Do not import the intermediate constexpr handler-table experiment or its revert. Source-equivalent at full HLE service tree and core CMake after the pair. Keep future native behavior/ABI tests separate.",
       "paths": [
         "docs/DesignOverview.md",
         "docs/HosKernel.md",
@@ -2136,7 +2137,8 @@
         "src/core/hle/service/vi/vi_types.h",
         "src/core/hle/service/wlan/wlan.cpp",
         "tools/README.md"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream immutable Git net diff, audit run #42949170234"
     },
     {
       "index": 70,
@@ -2207,9 +2209,9 @@
       "sha": "218c6705d950635bc18f8458d738a1996fb592b6",
       "title": "[hle] constexpr handler dispatch maps, introduce version gating (#4480)",
       "file_count": 392,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-hle-handler-revert-cosmetic-only",
+      "scope": "Verified net of all 741 HLE service files before #74 and after #69: 392 Git blobs changed, of which 339 add exactly a three-line SPDX notice and 53 are only copyright-year or whitespace changes; zero noncosmetic HLE source differences after Git -w/blank/SPDX exclusion. Native src/core/CMakeLists.txt exact Git blob unchanged. Scope is HLE service behavior, not distribution legal notices or PS5 device execution.",
+      "action": "Do not import the intermediate constexpr handler-table experiment or its revert. Source-equivalent at full HLE service tree and core CMake after the pair. Keep future native behavior/ABI tests separate.",
       "paths": [
         "docs/DesignOverview.md",
         "docs/README.md",
@@ -2603,7 +2605,8 @@
         "src/core/hle/service/vi/system_root_service.h",
         "src/core/hle/service/wlan/wlan.cpp",
         "tools/README.md"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream immutable Git net diff, audit run #42949170234"
     },
     {
       "index": 75,

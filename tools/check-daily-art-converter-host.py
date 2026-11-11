@@ -65,4 +65,33 @@ assert 'if (candidates.size() > 8) candidates.resize(8);' in service
 assert 'ext == ".tga" || ext == ".webp"' in service
 print("PASS zero-default daily art, eight newest WebPs, user import exception")
 
+# Real ImageMagick/WebP round-trip (not a mocked converter):
+# A BottomLeft EXIF orientation must be applied exactly once and removed
+# before the uploaded launcher texture. These are self-authored gradients,
+# never game imagery or network data.
+actual_tool = shutil.which("magick") or shutil.which("convert")
+actual_identify = ([shutil.which("magick"), "identify"] if
+                   shutil.which("magick") else [shutil.which("identify")])
+if actual_tool and all(actual_identify):
+    with tempfile.TemporaryDirectory(prefix="eden-webp-orientation-") as tmp:
+        source = Path(tmp) / "source.png"
+        final = Path(tmp) / "daily.webp"
+        subprocess.run([actual_tool, "-size", "640x360",
+                        "gradient:red-blue", "-orient", "BottomLeft",
+                        str(source)], check=True, timeout=20)
+        convert_art(source, final)
+        result = subprocess.check_output(
+            actual_identify + [
+                "-format",
+                "%w %h %m %[fx:p{0,0}.r] %[fx:p{0,0}.b] "
+                "%[fx:p{0,719}.r] %[fx:p{0,719}.b]",
+                str(final)
+            ], text=True, timeout=20
+        ).split()
+        assert result[:3] == ["1280", "720", "WEBP"], result
+        top_red, top_blue, bottom_red, bottom_blue = map(float, result[3:])
+        assert top_blue > 0.85 and top_red < 0.15, result
+        assert bottom_red > 0.85 and bottom_blue < 0.15, result
+    print("PASS native ImageMagick WebP 1280x720 orientation correction: BottomLeft normalized once")
+
 print("PASS ImageMagick 7 and Ubuntu ImageMagick 6 conversion tool selection")

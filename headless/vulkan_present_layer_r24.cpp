@@ -20,6 +20,7 @@
 #include "r09_native_plans.h"
 #include "dlss_nr_min_720_plan_emit.h"
 #include "dlss_nr_min_720_present_handoff.h"
+#include "dlss_nr_min_720_spatial_bridge.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
 #include "common/logging.h"
@@ -161,24 +162,36 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
         .height = scaled_height,
     };
     const auto selected=Eden::NeuralRuntime::Current();
-    // Explicit research-only post-NR FSR path. BOTH qualification flags
-    // remain false, including when the research macro is defined.
+    // Research-only routing for all seven existing spatial filters:
+    // native sampler: bilinear/bicubic/nearest/Lanczos;
+    // own graphics pass: FSR1 EASU+RCAS or SGSR / SGSR Edge.
+    // BOTH runtime gates and the generic spatial bridge remain false.
     bool research_post_neural_fsr=false;
+    bool research_post_neural_other=false;
 #if defined(EDEN_R09_MIN_720_PRESENT_RESEARCH) && EDEN_R09_MIN_720_PRESENT_RESEARCH
-    research_post_neural_fsr=
-        Eden::Graphics::DlssNrMin::kPostNeuralFsrRuntimeWired &&
+    const bool research_spatial_geometry=
         Eden::Graphics::DlssNrMin::kPs5MinRuntimeQualified &&
         filters.allow_game_neural_rendering &&
         selected.mode==Eden::NeuralVideo::kDlssOriginal &&
         std::holds_alternative<std::monostate>(anti_alias) &&
-        std::holds_alternative<FSR>(sr_filter) &&
         render_extent.width==1280u&&render_extent.height==720u &&
         texture_width==1280u&&texture_height==720u &&
         crop_rect.left==0.0f&&crop_rect.top==0.0f&&
         crop_rect.right==1.0f&&crop_rect.bottom==1.0f&&
         (!use_accelerated||
          texture_info->sample_count==VK_SAMPLE_COUNT_1_BIT);
+    research_post_neural_fsr=
+        research_spatial_geometry &&
+        Eden::Graphics::DlssNrMin::kPostNeuralFsrRuntimeWired &&
+        std::holds_alternative<FSR>(sr_filter);
+    research_post_neural_other=
+        research_spatial_geometry &&
+        Eden::Graphics::DlssNrMin::kPostNeuralSpatialRuntimeWired &&
+        (std::holds_alternative<SGSR>(sr_filter) ||
+         std::holds_alternative<std::monostate>(sr_filter));
 #endif
+    const bool research_post_neural_spatial=
+        research_post_neural_fsr||research_post_neural_other;
 
     if (auto* fsr = std::get_if<FSR>(&sr_filter)) {
         if(!research_post_neural_fsr){
@@ -187,8 +200,11 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
             crop_rect = {0, 0, 1, 1};
         }
     } else if (auto* sgsr = std::get_if<SGSR>(&sr_filter)) {
-        source_image_view = sgsr->Draw(device, scheduler, image_index, source_image, source_image_view, render_extent, crop_rect);
-        crop_rect = {0, 0, 1, 1};
+        if(!research_post_neural_other){
+            source_image_view=sgsr->Draw(device,scheduler,image_index,
+                source_image,source_image_view,render_extent,crop_rect);
+            crop_rect={0,0,1,1};
+        }
     } else if (auto* a4k = std::get_if<Anime4K3D>(&sr_filter)) {
         if (const auto output = a4k->Draw(image_index, source_image, source_image_view,
                                           render_extent, crop_rect)) {
@@ -213,7 +229,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     // cache supplies a real sampled image view and its post-scaling
     // dimensions. Only accept an exact 1080p physical view and full
     // crop; unknown source formats still fail the session's format gate.
-    const bool nr_geometry=research_post_neural_fsr||
+    const bool nr_geometry=research_post_neural_spatial||
         Eden::Graphics::CanR09CaptureDisplay({
         .accelerated=use_accelerated,
         .live_image=source_image!=VK_NULL_HANDLE&&
@@ -229,7 +245,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     const bool nr_exclusive=
         std::holds_alternative<std::monostate>(anti_alias)&&
         (std::holds_alternative<std::monostate>(sr_filter)||
-         research_post_neural_fsr);
+         research_post_neural_spatial);
     if(nr_selected&&nr_geometry&&nr_exclusive&&
        !neural_model_failed&&image_index<neural_sessions.size()&&
        image_index<neural_images.size()&&image_index<neural_views.size()) {
@@ -271,7 +287,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                 // The neural output is a compute storage image sampled by
                 // the presenter, never a render-pass color attachment.
                 // Do not require COLOR_ATTACHMENT support on RGBA32F.
-                const VkExtent2D neural_extent=research_post_neural_fsr?
+                const VkExtent2D neural_extent=research_post_neural_spatial?
                     VkExtent2D{1280u,720u}:VkExtent2D{1920u,1080u};
                 const VkImageCreateInfo neural_output_ci{
                     .sType=VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -312,7 +328,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                 std::string owned_plan_720{};
                 std::string_view plan=original?
                     Eden::NeuralPlans::Original:Eden::NeuralPlans::Compact;
-                if(research_post_neural_fsr) {
+                if(research_post_neural_spatial) {
                     Eden::Graphics::DlssNrMin::EmittedR09Min720Plan emitted{};
                     if(!original||
                        !Eden::Graphics::DlssNrMin::EmitR09Min720NativePlan(
@@ -403,7 +419,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                         source_image=target;
                         source_image_view=*neural_views[image_index];
                         crop_rect={0,0,1,1};
-                        if(research_post_neural_fsr){
+                        if(research_post_neural_spatial){
 #if defined(EDEN_R09_MIN_720_PRESENT_RESEARCH) && EDEN_R09_MIN_720_PRESENT_RESEARCH
                             scheduler.RequestOutsideRenderPassOperationContext();
                             scheduler.Record([target](vk::CommandBuffer cmd){
@@ -426,16 +442,31 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                     0u,barrier);
                             });
-                            auto* fsr=std::get_if<FSR>(&sr_filter);
-                            if(!fsr)throw std::runtime_error(
-                                "R09 post-neural FSR owner missing");
-                            const VkImageView upscaled=fsr->Draw(
-                                device,scheduler,image_index,
-                                target,*neural_views[image_index],
-                                neural_extent,crop_rect);
-                            if(!upscaled)throw std::runtime_error(
-                                "R09 FSR EASU/RCAS output view missing");
-                            source_image_view=upscaled;
+                            if(auto* fsr=std::get_if<FSR>(&sr_filter)){
+                                const VkImageView upscaled=fsr->Draw(
+                                    device,scheduler,image_index,
+                                    target,*neural_views[image_index],
+                                    neural_extent,crop_rect);
+                                if(!upscaled)throw std::runtime_error(
+                                    "R09 FSR EASU/RCAS output view missing");
+                                source_image_view=upscaled;
+                            }else if(auto* sgsr=std::get_if<SGSR>(&sr_filter)){
+                                const VkImageView upscaled=sgsr->Draw(
+                                    device,scheduler,image_index,
+                                    target,*neural_views[image_index],
+                                    neural_extent,crop_rect);
+                                if(!upscaled)throw std::runtime_error(
+                                    "R09 SGSR/Edge output view missing");
+                                source_image_view=upscaled;
+                            }else if(std::holds_alternative<std::monostate>(sr_filter)){
+                                // Bilinear, Nearest, Bicubic, Lanczos:
+                                // the existing final native sampler draws
+                                // the 720p neural view at display extent.
+                                source_image_view=*neural_views[image_index];
+                            }else{
+                                throw std::runtime_error(
+                                    "R09 post-neural spatial filter unsupported");
+                            }
 #endif
                         }
                     }else {

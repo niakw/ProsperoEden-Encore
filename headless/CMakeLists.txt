@@ -803,15 +803,16 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Never override those real prepared sources with old headless copies:
 # the latter also concealed the FW23 dynamic library-applet version cap.
 if(PS5_NATIVE)
-    file(READ "${PROJECT_SOURCE_DIR}/src/core/frontend/applets/controller.cpp"
-         eden_controller_prepared)
+    # Read only relevant prepared-source lines; no new CMake source rewrite.
+    file(STRINGS "${PROJECT_SOURCE_DIR}/src/core/frontend/applets/controller.cpp"
+         eden_controller_prepared REGEX "keep_connected")
     string(FIND "${eden_controller_prepared}" "if (keep_connected[index]) continue;"
            eden_controller_keep)
     if(eden_controller_keep LESS 0)
         message(FATAL_ERROR "R23 #131 selected prepared controller lacks retention fix")
     endif()
-    file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/am/service/library_applet_creator.cpp"
-         eden_am_creator_prepared)
+    file(STRINGS "${PROJECT_SOURCE_DIR}/src/core/hle/service/am/service/library_applet_creator.cpp"
+         eden_am_creator_prepared REGEX "CreateProcess")
     string(FIND "${eden_am_creator_prepared}"
         "CreateProcess(system, program_id, 1, HLE::ApiVersion::HOS_VERSION_MAJOR)"
         eden_creator_fw23)

@@ -30,7 +30,7 @@ def exercise(programs, expected_convert, expected_identify):
              patch.object(subprocess, "check_output", side_effect=identify), \
              patch.object(subprocess, "run", side_effect=convert):
             convert_art(src, target)
-        assert target.stat().st_size == 4096
+        assert target.stat().st_size == 4108  # RIFF + WEBP + 4096-byte mock payload
     assert seen[0][:len(expected_identify)] == expected_identify, seen[0]
     assert seen[1][0] == expected_convert, seen[1]
     assert "-auto-orient" in seen[1] and "-strip" in seen[1], seen[1]
@@ -47,23 +47,23 @@ with patch.object(shutil, "which", return_value=None):
         assert "ImageMagick" in str(e)
     else:
         raise AssertionError("missing conversion tools accepted")
-# No promotional game-art downloads or assets without explicit opt-in.
-# The launcher preference is separately off by default and only the Daily
-# background path schedules the asynchronous local catalog lookup.
+# The build refreshes 16 recent WebPs by default, but the user must
+# explicitly select the Daily theme. Packagers may still disable media
+# fetching for offline reproducibility or redistribution-rights review.
 root = Path(__file__).resolve().parents[1]
 pack = (root / "tools/package-headless-native.sh").read_text()
 settings = (root / "headless/settings_store.h").read_text()
 launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
 generator = (root / "tools/launcher/fetch_daily_switch.py").read_text()
 service = (root / "headless/prosperoeden/eden_services.cpp").read_text()
-assert 'EDEN_BAKE_DAILY_SWITCH_ART:-0' in pack
+assert 'EDEN_BAKE_DAILY_SWITCH_ART:-1' in pack
 assert 'rm -rf "$app/ui/art/daily"' in pack
 assert 'int background_style = 0;' in settings
 assert 'if (value.background == 5)' in launcher
-assert 'MAX_ITEMS = 8' in generator
-assert 'if (candidates.size() > 8) candidates.resize(8);' in service
+assert 'MAX_ITEMS = 16' in generator
+assert 'if (candidates.size() > 16) candidates.resize(16);' in service
 assert 'ext == ".tga" || ext == ".webp"' in service
-print("PASS zero-default daily art, eight newest WebPs, user import exception")
+print("PASS 16 newest WebPs, user opt-in to Daily theme, personal import exception")
 
 # Real ImageMagick/WebP round-trip (not a mocked converter):
 # A BottomLeft EXIF orientation must be applied exactly once and removed

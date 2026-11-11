@@ -815,6 +815,25 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# NS1 R23 #64: visible HWC composition must preserve waited buffer
+# retirement. Select exactly one full maintained native HWC source owner.
+if(PS5_NATIVE)
+    set(EDEN_R23_HWC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp")
+    if(NOT EXISTS "${EDEN_R23_HWC_SOURCE}")
+        message(FATAL_ERROR "R23 #64 native HWC visibility source missing")
+    endif()
+    get_target_property(eden_r23_hwc_units core SOURCES)
+    list(FIND eden_r23_hwc_units
+         "hle/service/nvnflinger/hardware_composer.cpp" eden_r23_hwc_old)
+    if(eden_r23_hwc_old LESS 0)
+        message(FATAL_ERROR "R23 #64 expected HWC source owner was replaced")
+    endif()
+    list(REMOVE_ITEM eden_r23_hwc_units "hle/service/nvnflinger/hardware_composer.cpp")
+    list(APPEND eden_r23_hwc_units "${EDEN_R23_HWC_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_hwc_units}")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

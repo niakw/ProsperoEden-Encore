@@ -1,0 +1,37 @@
+name: NS1 R23 UUID16 common / actual PS5 AM owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-uuid16-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-126-uuid-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  uuid16-selected-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify selected native UUIDv5 16-byte header and AM source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "a88f28a8c8f727844d57734eba4544159ab4059b"
+          python3 -B vendor/tests/ns1_r23_126_uuid_sha1.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_uuid_sources "uuid.cpp")' in s
+          assert 'target_include_directories(common BEFORE PUBLIC "${EDEN_R23_UUID_INCLUDE}")' in s
+          assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_R23_UUID_INCLUDE}")' in s
+          assert 'EDEN_SHARED_NS2_AM' in s
+          print('R23_UUID16_REAL_PS5_OWNER_SOURCE_PASS')
+          PY

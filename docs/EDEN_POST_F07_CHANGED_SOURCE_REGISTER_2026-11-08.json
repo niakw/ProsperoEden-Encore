@@ -242,13 +242,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/settings.cpp",
       "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
-      "post_snapshot_git_blob": "b005b1b1bd0a5c6c7d46d4640649cfd7442808fe",
+      "post_snapshot_git_blob": "d3e0631c296a2f65142f3f761387657d05d2c7e9",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "explanatory NR/FG controls and four-row settings dialogue",
+      "source_scope": "Light-theme-readable App Updates summary/notes in a separate opaque panel below the two actionable update rows",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "kFramegenInfo",
+      "required_source_fragment": "Always render release status in its own opaque, high-contrast band",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Single settings explanatory string now distinguishes original 18 game-language selectors from 13 additional UI-only selections. No input or settings mutation changed in this hunk."
+      "review_note": "2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending."
     },
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",

@@ -13,6 +13,18 @@ on:
       - "tools/audit/check-ab-ns1-guest-release-host.py"
       - ".github/workflows/ab-ns1-audioin-host.yml"
   workflow_dispatch:
+  push:
+    branches:
+      - dev/ab-ns1-corrective-batches-2026-11-10
+    paths:
+      - ".github/workflows/ab-ns1-audioin-host.yml"
+      - "headless/audio.cpp"
+      - "headless/audio_in_silence.h"
+      - "headless/audio_device_session_ps5.cpp"
+      - "headless/CMakeLists.txt"
+      - "tools/audit/check-ab-ns1-audioin-timeline-host.py"
+      - "tools/audit/check-ab-ns1-guest-release-host.py"
+      - "tests/ab_ns1_audioin_silence_host.cpp"
 
 permissions:
   contents: read

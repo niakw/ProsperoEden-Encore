@@ -7,6 +7,13 @@ on:
       - "tools/audit/verify-ab-ns1-corrective-patchsets.py"
       - ".github/workflows/ab-ns1-corrective-patchsets.yml"
   workflow_dispatch:
+  push:
+    branches:
+      - dev/ab-ns1-corrective-batches-2026-11-10
+    paths:
+      - ".github/workflows/ab-ns1-corrective-patchsets.yml"
+      - "tools/audit/verify-ab-ns1-corrective-patchsets.py"
+      - "docs/audits/patchsets/**"
 
 permissions:
   contents: read

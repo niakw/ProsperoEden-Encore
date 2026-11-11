@@ -1,0 +1,38 @@
+name: NS1 R23 native EDS3 fixed source and Vulkan depth clip ABI (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-eds3-depthclip-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/vulkan.cmake"
+      - ".github/workflows/ns1-r23-eds3-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  eds3-native-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify 7 depth clip sources, exact CMake owner and sanitized branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "854edfbf5c3ab6babdcabb338fce2c09c8e0bf58"
+          python3 -B vendor/tests/ns1_r23_2_depth_clip.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/vulkan.cmake').read_text()
+          assert 'list(REMOVE_ITEM video_sources renderer_vulkan/fixed_pipeline_state.cpp)' in s
+          assert 'list(APPEND video_sources "${PORT_BUILD_DIR}/fixed_pipeline_state.cpp")' in s
+          assert '"${EDEN_ACTIVE_VULKAN}/include/video_core/renderer_vulkan/fixed_pipeline_state.h"' in s
+          assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in s
+          assert Path('vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').is_file()
+          print('R23_EDS3_NATIVE_FIXED_STATE_HEADER_TU_OWNER_PASS')
+          PY

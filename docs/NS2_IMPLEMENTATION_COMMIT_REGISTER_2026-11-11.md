@@ -1,5 +1,19 @@
 # NS2 — source commit checkpoint (2026-11-11)
 
+## R2 actual PS5 native object codegen 3/3 PASS — 11 November 2026
+
+**Newest qualified milestone:** [research commit `9119b135`](https://github.com/niakw/ProsperoEden-Encore/commit/9119b135d44a8a1fffc7952d3cf3fb371afab610); [focused PS5 native run #42997254745](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42997254745) **SUCCESS**, source branch `research/ns2-r2-stage-backing-cmake-20261111` pinning exact vendor R2 `38a6c1b6`. This run reconfigures the **actual** cached PS5 CMake/Ninja graph with `EDEN_RESEARCH_NS2_STAGE_BACKING=ON`, proves three precise active Vulkan owners and four header copies, then runs the complete native C++ syntax checks and **real compiler `-c` invocations** without ccache for all three. The active PS5 toolchain generates **LLVM LTO bitcode**, not immediate ELF, so the primary exact-command result is the successfully emitted LLVM bitcode object; a distinct `-fno-lto` run proves machine-code generation as an ELF64 x86-64 ET_REL for each source:
+
+| Vulkan owner | exact-CMake LTO output | non-LTO x86-64 ELF |
+|---|---|---|
+| `vk_staging_buffer_pool.cpp` | PASS, 117156 B | PASS, 65984 B |
+| `vk_buffer_cache_cost.cpp` | PASS, 271948 B | PASS, 185896 B |
+| `vulkan_rasterizer.cpp` | PASS, 1171896 B | PASS, 805824 B |
+
+GitHub reports `R2_NATIVE_OBJECTS_PASS 3/3`. **Honest boundary:** LLVM-disassembler supplemental verification reports `R2_NATIVE_LTO_IR_DISASSEMBLY_UNQUALIFIED` on all three, so do not represent the bitcode as independently IR-parsed. Primary Clang compiler return code + bitcode magic and size passed, and separate machine-code ELF validation passed. **No full-application LTO link, ELF link, PS5 build/package, console execution, Vulkan queue/fence proof, NS1 regression or FPS benchmark** was performed. No production `main`, production vendor pointer or release changed.
+
+**Next R2 owner tasks (all OPEN):** full native LTO symbol/link integration; actual PS5 GPU completion/fence and staging/destination retirement under channel teardown; verified guest process/channel/queue epochs; NS1 console regression and performance. The existing [`NativeGpuChannelRegistry::Ticket`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/90c9c8a203a27181e23349a889a8f2a7d1cd9dd2/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h) provides authenticated process generation and channel bind generation and can be assessed for a **future** R2 connection. It does **not** itself provide a verified upload-queue epoch. Existing R2 `IsCurrentStagingRequest()` tests nonzero generation plus tick equality, not membership in the pool's live reservation, and `VerifiedUploadBatch` guest epochs remain unwired to actual submission. **Cross-command batching OFF**. Vendor R3 #37 (5 commits) and R4 #36 (2 commits) remain separate draft tracks with native/device qualification OPEN.
+
 ## R2 additional qualification — native object code generation launched (11 November 2026)
 
 **Research branch only:** [object check script `ebe60b4e`](https://github.com/niakw/ProsperoEden-Encore/commit/ebe60b4e4c4978bcfcfe773594cc12719d0e96d8), [native CMake workflow `ba5318e5`](https://github.com/niakw/ProsperoEden-Encore/commit/ba5318e5cd7af3660222c64becb11cf2aaeb4425), [run #42993824626](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42993824626). At the time of this register update the run is **in progress**; it is **not an object-compilation PASS receipt**.

@@ -114,6 +114,10 @@ The corrective branch's **actual Git submodule pin** is the original `22b69d6053
 - Upstream #53 `b7c1ded` is **diagnostic-only**: one `LOG_ERROR` added before the unchanged NCA missing-key status and return. No change to guest decrypt/error semantics; no code import required. `runtime-semantic-review-pending` is now **106** of 155. Upstream #30 has FreeBSD host code and #93 has non-Windows sparse-memory header semantics: both **remain open** despite titles suggesting Mac/Win32-only.
 
 
+### R23 #95 — native HID source connection branch is divergent
+
+The [HID source policy report](ENCORE_AB_R23_HID_CONNECTION_POLICY_2026-11-11.md) records a real upstream change in button-triggered Connect() conditions which is absent from the maintained native PS5 HID unit. A 48-state source-model test is checked in read-only CI. This is **not** proof that new Connect logic is correct for PS5 or that a game fails. R23 general semantic cases **66**, explicit source gaps **8**; no imports.
+
 ### R23 second exact source exclusion — #5 Nightly updater
 
 - #5 `ae60f8e7` changes only the `#ifdef NIGHTLY_BUILD` automatic release asset parser in `src/common/net/net.cpp`; not a PS5 guest-emulation fix. Runtime-port status `not-applicable` (25), unresolved runtime-semantic cases **105**. If future NIGHTLY builds enable that parser, it requires a dedicated distro test. **#123** shared path sanitation and **#141** common service constructor remain unresolved, despite Windows/MSVC titles.

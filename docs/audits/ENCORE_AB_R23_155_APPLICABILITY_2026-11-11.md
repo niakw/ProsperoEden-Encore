@@ -4,7 +4,7 @@
 
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/shared still open | **67** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Runtime NS1/shared still open | **66** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native build/dependency | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Include-only C++ portability (#79) | **1** | E1; aucun changement de fonction exécutable, compilation PS5 restant à prouver |
 | FFmpeg CI upstream-only (#86) | **1** | E1; runtime FFmpeg source pin séparé, pas de changement native ABI |
@@ -33,7 +33,7 @@
 | NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| **Total** | **155** | **67 avis runtime encore ouverts** |
+| **Total** | **155** | **66 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 
@@ -170,3 +170,7 @@ Voir [les deux décisions source exactes](ENCORE_AB_R23_IPS_LONG_LINE_AND_HLE_MS
 ## 11 Nov — autres distinctions de compatibilité compilateur
 
 La [comparaison #115 MSVC et #118 PageTable](ENCORE_AB_R23_MSVC_PAGETABLE_COMPILE_ONLY_2026-11-11.md) vérifie les diffs exacts : des casts source/MSVC et trois spécificateurs `constexpr` retirés, sans nouvelle opération runtime pour le chemin compilateur PS5 actuel. Il reste **67** revues sémantiques; aucune preuve E4 n'est déduite de cette exclusion fonctionnelle.
+
+## R23 #95 — HID behavior is not merely cleanup
+
+The upstream [Eden #95](https://github.com/eden-emulator/mirror/commit/87d2f03c39bc441055d593a7913f63a017795359) changes the conditions for EmulatedController::Connect(), not just source formatting. The selected maintained PS5 HID owner (Git blob dba492c9d60e967cd051ff15e32ce2db0479830d) still uses the pinned !is_connected/Handheld/Player1/other-slot gate, while the upstream version uses player.connected. A [48-case source-state check](../../tools/audit/check-r23-hid-button-connection-host.py) demonstrates distinct connection decisions. This is E1 source evidence only: no physical pad, NPad callback, ELF or guest test. Classification: relevant source gap awaiting native regression proof. **66** generic semantic cases remain; **8** such gaps are explicitly classified.

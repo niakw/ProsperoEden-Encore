@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 67,
+        "runtime-semantic-review-pending": 66,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -70,7 +70,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 7,
+        "verified-relevant-source-gap-awaiting-native-proof": 8,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -206,6 +206,14 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for i in (114, 128, 153):
         if by_index[i]["classification"] != "verified-relevant-source-gap-awaiting-native-proof":
             raise ValueError(f"R23 confirmed source gap #{i} silently changed")
+    # #95 changes HID Connect() branch decisions despite the cleanup title.
+    if (by_index[95]["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+            or by_index[95]["paths"] != [
+                "src/hid_core/frontend/emulated_controller.cpp",
+                "src/hid_core/frontend/emulated_controller.h"]
+            or "R23_HID_CONNECT_BRANCH_SOURCE_DIFFERENCE_PASS" not in
+                (root / "tools/audit/check-r23-hid-button-connection-host.py").read_text()):
+        raise ValueError("R23 #95 HID connection source-policy proof missing")
     # Source-reviewed batches: do not label a missing feature as already shipped.
     new_cases = {
         42: "verified-native-GPU-thread-affinity-review-needs-PS5-trace",

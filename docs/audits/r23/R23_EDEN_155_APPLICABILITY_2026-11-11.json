@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 67,
+    "runtime-semantic-review-pending": 66,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -14,7 +14,7 @@
     "test-only-upstream": 1,
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
     "source-equivalent-GPU-NCE-readback-reverted": 2,
-    "verified-relevant-source-gap-awaiting-native-proof": 7,
+    "verified-relevant-source-gap-awaiting-native-proof": 8,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
@@ -3024,9 +3024,9 @@
       "sha": "87d2f03c39bc441055d593a7913f63a017795359",
       "title": "[hid_core] Code cleanup (#4461)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream HID #95 changes button-triggered Connect policy; selected PS5 maintained source retains earlier !is_connected/slot criteria. E1 functional source difference, not proven PS5 defect.",
+      "action": "Review 48-state source truth table, actual NPad/PS5 callbacks, connect/disconnect/reconnect and header ABI before any import.",
       "paths": [
         "src/hid_core/frontend/emulated_controller.cpp",
         "src/hid_core/frontend/emulated_controller.h"

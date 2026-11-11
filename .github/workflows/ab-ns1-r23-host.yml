@@ -11,6 +11,7 @@ on:
       - "headless/r23_audren_debug_ps5.cpp"
       - "headless/r23_controller_applet_ps5.cpp"
       - "tools/audit/check-r23-controller-applet-host.py"
+      - "tools/audit/check-r23-ips-audren-host.py"
       - "headless/CMakeLists.txt"
       - "tools/audit/check-r23-f2i-bcat-host.py"
       - "tools/audit/check-r23-ips-audren-host.py"

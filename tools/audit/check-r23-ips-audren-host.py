@@ -25,7 +25,7 @@ REPLACE_IPS=(
  ("magic.size() > 4 && std::memcmp(magic.data(), \"EEOF\", 4) == 0",
   "magic.size() >= 4 && std::memcmp(magic.data(), \"EEOF\", 4) == 0"),
  ("    auto in_data = in->ReadAllBytes();\n    auto const type = IdentifyMagic(in_data);\n    if (type == IPSFileType::Error)\n        return nullptr;\n\n",
-  "    const auto type = IdentifyMagic(ips->ReadBytes(0x5));\n    if (type == IPSFileType::Error)\n        return nullptr;\n\n    auto in_data = in->ReadAllBytes();\n    if (in_data.size() == 0)\n        return nullptr;\n\n")
+  "    const auto type = IdentifyMagic(ips->ReadBytes(0x5));\n    if (type == IPSFileType::Error)\n        return nullptr;\n\n    auto in_data = in->ReadAllBytes();\n    if (in_data.size() == 0)\n        return nullptr;\n\n"),
  ("""struct IPSwitchRecord {
     std::array<uint8_t, 256 - sizeof(size_t)> data;
     size_t count;

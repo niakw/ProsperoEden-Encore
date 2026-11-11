@@ -53,8 +53,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
         raise ValueError("inconsistent applicability class totals")
     # This dated pin is a frozen audit decision, not permission to silently
     # drop pending counts without exact source and owner proof.
+    # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
+    # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 86,
+        "runtime-semantic-review-pending": 76,
         "not-applicable-to-PS5-native-packaging-assets": 8,
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
@@ -62,12 +64,19 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "native-build-or-dependency-review": 6,
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
-        "verified-relevant-source-gap-awaiting-native-proof": 6,
+        "source-equivalent-GPU-NCE-readback-reverted": 2,
+        "verified-relevant-source-gap-awaiting-native-proof": 7,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
+        "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
+        "source-equivalent-hle-handler-revert-cosmetic-only": 2,
+        "source-implemented-native-PS5-ZBIC-NSO": 1,
+        "source-equivalent-native-PS5-sparse-commit-failstop": 1,
         "source-equivalent-pinned-savedata-post-revert": 1,
+        "source-equivalent-PS5-semaphore-lock-lifecycle": 1,
         "source-equivalent-current-openssl-native-build": 1,
         "upstream-opus-ffmpeg-migration-reverted": 2,
+        "source-equivalent-native-PS5-sink-volume-lifetime": 1,
         "verified-absent-GPU-null-initialization-candidate": 1,
     }
     if dict(categories) != mandatory:
@@ -89,6 +98,22 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for i in (30, 93, 123, 141):
         if by_index[i]["classification"] != "runtime-semantic-review-pending":
             raise ValueError(f"R23 common/native semantic case #{i} was closed without proof")
+    # Exact upstream source reversion receipts were reviewed separately.
+    # Do not accidentally reactivate either giant HLE pair or the NCE GPU
+    # writeback sequence because the frozen class totals happen to match.
+    for i in (69, 74):
+        if by_index[i]["classification"] != "source-equivalent-hle-handler-revert-cosmetic-only":
+            raise ValueError(f"R23 HLE handler undo pair #{i} lost source proof")
+    for i in (47, 88):
+        if by_index[i]["classification"] != "source-equivalent-GPU-NCE-readback-reverted":
+            raise ValueError(f"R23 NCE GPU reverted pair #{i} lost source proof")
+    for i in (45, 60, 92):
+        if by_index[i]["classification"] not in (
+            "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ",
+            "source-implemented-native-PS5-ZBIC-NSO",
+            "runtime-semantic-review-pending",
+        ):
+            raise ValueError(f"R23 compressed-content case #{i} changed silently")
     # All eight upstream UI/translation commits are outside the actual PS5 package:
     # the separate launcher embeds its own ui/*.po, branded assets and artwork.
     native_pkg = (root / "tools/package-headless-native.sh").read_text()
@@ -161,7 +186,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 86
+    assert validate(root)["runtime_semantic_cases_pending"] == 76
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

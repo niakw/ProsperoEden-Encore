@@ -9,6 +9,8 @@ on:
       - 'headless/vulkan_present_layer_r24.h'
       - 'headless/main.cpp'
       - 'headless/neural_runtime_state.h'
+      - 'extras/graphics/neural_a4k_spatial_launch_route.h'
+      - 'extras/graphics/test_neural_a4k_spatial_launch_route.cpp'
       - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
       - 'extras/graphics/dlss_nr_min_720_spatial_bridge.h'
       - 'extras/graphics/dlss_nr_min_720_framegen_bridge.h'
@@ -67,3 +69,16 @@ jobs:
           # Encore commit remains the original pinned main commit.
           test "$(git rev-parse HEAD:vendor)" = "22b69d6053db41b74edac2633c012f925b84f69e"
           echo R09_A4K_REAL_VKIMAGE_VIEW_A4K_TO_SPATIAL_SYNTAX_NO_PS5_BUILD
+      - name: Qualify per-game A4K neural and independent spatial/FG selection (84 safe choices)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cxx in g++ clang++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+              -fsanitize=undefined -fno-sanitize-recover=all \
+              -Iextras/graphics -Iheadless \
+              extras/graphics/test_neural_a4k_spatial_launch_route.cpp \
+              -o "/tmp/r09-a4k-launch-${cxx}"
+            UBSAN_OPTIONS=halt_on_error=1 "/tmp/r09-a4k-launch-${cxx}"
+          done
+          echo R09_A4K_84_NEURAL_SPATIAL_FG_LAUNCH_CANDIDATES_PROVED_RUNTIME_OFF

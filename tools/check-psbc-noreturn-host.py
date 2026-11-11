@@ -28,7 +28,17 @@ build = (root / "tools/build-opengl-sdk.sh").read_text()
 assert build.count('python3 -B "$root/tools/ci/patch-psbc-noreturn-flags.py" "$cfg"') == 1
 assert "toolchain/opengnm-psbc-host.mak" in build
 assert "toolchain/opengnm-psbc-ps5.mak" in build
-assert "psbc_configs=()" in build and "encore-backup.$$" in build
+assert "psbc_configs=()" in build
+# P5 inputs must be restored on failures during the early PS5 SDK cross-file
+# mutation, not only failures during the later PSBC/Mesa build.
+assert build.index("trap cleanup EXIT") < build.index("if ! grep -q")
+# The PSBC config backups must be per-process: a fixed ".backup.$" path can
+# be overwritten by overlapping builds and silently restore the wrong input.
+assert build.count('${cfg}.encore-backup.$"') == 4
+assert '${cfg}.encore-backup.$"' not in build
+syntax = subprocess.run(["bash", "-n", str(root / "tools/build-opengl-sdk.sh")],
+                        capture_output=True, text=True)
+assert syntax.returncode == 0, syntax.stderr
 cc = shutil.which("gcc") or shutil.which("clang")
 assert cc, "GCC or Clang required"
 code = r"""

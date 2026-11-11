@@ -608,7 +608,7 @@ void Launcher::draw_switch_files(Canvas& c) {
     list.rounded_rect({1300,352,462,1},0,kGrey);
     const std::array<std::string,3> info{
         folder_info_.keys?tr("Keys found"):tr("Keys missing"),
-        folder_info_.firmware>0?tr("Firmware ready"):tr("Setup required"),
+        folder_info_.firmware_ready?tr("Firmware ready"):tr("Setup required"),
         folder_info_.games>0?tr("Games found"):tr("No games found")
     };
     for(int i=0;i<3;++i)

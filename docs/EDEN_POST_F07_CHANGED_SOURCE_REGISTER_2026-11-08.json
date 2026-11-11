@@ -101,13 +101,13 @@
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "historical_reviewed_git_blob": "6c5d76341ef2c97b7db7fff23545ee21333037da",
-      "post_snapshot_git_blob": "f0345910da1ce47086eeeb72eb36d8639e080438",
+      "post_snapshot_git_blob": "a444de4e8c177a5e075d26e06125d25584b160bb",
       "original_disposition": "new_source_issue_corrected",
-      "source_scope": "WebP/app services and explicit UI-only locale fallback avoiding fabricated guest-language names",
+      "source_scope": "FolderInfo probes firmware/ns1 and firmware/ns2 aliases through the existing validated firmware format classifier without following unsafe symlink directories",
       "review_kind": "host_source_service",
-      "required_source_fragment": "#include <webp/decode.h>",
+      "required_source_fragment": "Eden::DetectFirmwareFormat(folder)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Host service translates 31 launcher preferences but only first 18 map to guest enums; later 13 use explicit supported English game-language fallback. Reviewed two value/loop edits; no PS5 or guest-language correctness proof."
+      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified."
     },
     {
       "path": "headless/prosperoeden/eden_services.h",
@@ -188,33 +188,35 @@
     {
       "path": "headless/prosperoeden/pe/ui/browse.cpp",
       "historical_reviewed_git_blob": "1f48fc883e2930704275b16e9333e33b1793d517",
-      "post_snapshot_git_blob": "7e40f78fe3a96efbcc612dd89f1d611cdb698a52",
+      "post_snapshot_git_blob": "b4aadcef4666e648a463423fe8c65560c1014852",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Language browser explanatory text distinguishes 18 guest-language selections from 13 PS5 UI-only choices",
+      "source_scope": "Settings storage detail reports recognized NS1/NS2 firmware formats rather than only NCA files in flat firmware root",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "language_.selected < 18",
+      "required_source_fragment": "folder_info_.firmware_ready ? folder_info_.firmware_detail",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: compared exact 523-line F07 source blob with 527-line current source. Ten changed lines: one neutral language header and conditional explanatory text for original 18 guest-language mappings versus 13 UI-only locales. Folder storage browsing, key handling and execution paths remain byte-identical; no runtime or console proof claimed."
+      "review_note": "2026-11-11: Report actual generation and file format on Storage screen when resolved; fallback retains historical missing-folder/zero-NCA status when no recognized format. Host/source review, PS5 visual unverified."
     },
     {
       "path": "headless/prosperoeden/pe/ui/home.cpp",
       "historical_reviewed_git_blob": "a40fd7f010aa77ec58222ec002a94fd9c3947995",
-      "post_snapshot_git_blob": "d71859178869c858e1dae6b5b6d3b1e1112d8a51",
+      "post_snapshot_git_blob": "c7b6ac3e3dc239d2c601ac4e9e05e6e521dc0ef5",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "new stable update-navigation target without renumbering existing controls",
       "review_kind": "host_source_ui",
       "required_source_fragment": "kHomeNavUpdate",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. "
     },
     {
       "path": "headless/prosperoeden/pe/ui/launcher.cpp",
       "historical_reviewed_git_blob": "f42459d21a8257dfea32f8a92657b571027618a2",
-      "post_snapshot_git_blob": "94907df1269804dc8bd2ededa0901ba611c48752",
+      "post_snapshot_git_blob": "f0aef353cde121872c6497e3256baea2cb16d4f4",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "asynchronous release-update UI and offline fallback; fully initialized AppUpdateInfo metadata under PS5 -Werror",
+      "source_scope": "Console R457 launcher input: shoulder navigation only through Home, Library and Settings; installed release label and top utility icon center",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "UpdateCheckState",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "required_source_fragment": "kShoulderDestinations[] = {0, 1, 4}",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Actual console feedback; reviewed main-tab physical IDs 0/1/4, excluding Recent/Update, installed release status uses current build label and settings gear aligned. Source-only; PS5 rendering/input not yet qualified."
     },
     {
       "path": "headless/prosperoeden/pe/ui/launcher.hpp",
@@ -230,34 +232,35 @@
     {
       "path": "headless/prosperoeden/pe/ui/services.hpp",
       "historical_reviewed_git_blob": "3d26738cbf0f8a3804d4147a147d433573861f84",
-      "post_snapshot_git_blob": "1eea87609fbf3f4b6d83c049c22f60acce2c16d8",
+      "post_snapshot_git_blob": "fa175993ef388572d756ecc3c38c1b155e920f2c",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "release-update API fallbacks fully initialize package metadata fields, preserving offline behavior",
+      "source_scope": "FolderInfo stores validated firmware availability and per-family format detail separately from the legacy NCA file count",
       "review_kind": "source_interface",
-      "required_source_fragment": "struct AppUpdateInfo",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "required_source_fragment": "bool firmware_ready = false;",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-11: Added firmware_ready and firmware_detail to represent non-NCA valid NS1/NS2 formats without making zero-NCA mean unusable firmware. Source-only, no PS5 guest boot proof."
     },
     {
       "path": "headless/prosperoeden/pe/ui/settings.cpp",
       "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
-      "post_snapshot_git_blob": "b005b1b1bd0a5c6c7d46d4640649cfd7442808fe",
+      "post_snapshot_git_blob": "55175bf49a2155e47dddb92c82fbb4d65ce17265",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "explanatory NR/FG controls and four-row settings dialogue",
+      "source_scope": "Light-theme-readable App Updates summary/notes in a separate opaque panel below the two actionable update rows",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "kFramegenInfo",
+      "required_source_fragment": "Always render release status in its own opaque, high-contrast band",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Single settings explanatory string now distinguishes original 18 game-language selectors from 13 additional UI-only selections. No input or settings mutation changed in this hunk."
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending."
     },
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",
       "historical_reviewed_git_blob": "996adb5c2d93dc2ef8c223658744486ba5f446ac",
-      "post_snapshot_git_blob": "185873da65dfff9db2fa484dfefaac58b915d677",
+      "post_snapshot_git_blob": "5715e34a6e3173551805685d5385c893876c5e2f",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Switch-style contextual video help and update shortcut",
+      "source_scope": "Switch UI storage readiness uses recognized firmware formats rather than a flat NCA counter",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "switch_video_help(",
+      "required_source_fragment": "folder_info_.firmware_ready?tr(\"Firmware ready\")",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Only selector description changes to Choose your preferred language; screen navigation and guest configuration remain byte-identical in reviewed diff."
+      "review_note": "2026-11-11: Use FolderInfo firmware_ready in Switch-theme setup summary to avoid false missing-firmware warnings for extracted/ZIP NS1 and NS2. Host/source review, console unverified."
     },
     {
       "path": "headless/prosperoeden/pe/ui/theme.hpp",

@@ -354,3 +354,55 @@ assert 'bool warning_row = quick && kind == 4u;' in read('headless/vulkan_hud.fr
 quick_vulkan = read('headless/vulkan_window_adapt_r08.cpp')
 assert 'hud_pipeline ? *hud_pipeline : VK_NULL_HANDLE' in quick_vulkan
 assert 'hud_layout ? *hud_layout : VK_NULL_HANDLE' in quick_vulkan
+
+
+# R457 console: shoulder switching must never select the Recent or Update
+# actions; those remain reachable by D-pad/Cross in the top navigation.
+assert 'kShoulderDestinations[] = {0, 1, 4}' in launcher
+assert 'const int next = (current + (key == Key::r1 ? 1 : 2)) % 3;' in launcher
+assert 'top_nav_focus_ = kShoulderDestinations[next];' in launcher
+assert 'const float gx = i >= 3 ? r.x + r.w * 0.5f' in launcher
+# A development R457 install is newer than the last public R1 release.
+assert 'info.installed_version.empty() ? info.latest_version' in launcher
+assert ': info.installed_version' in launcher
+# Both firmware family folders must use the real shared format classifier
+# (including extracted and ZIP), not a count of only firmware/*.nca.
+assert 'bool firmware_ready = false;' in ui_preferences
+assert 'std::string firmware_detail;' in ui_preferences
+assert 'Eden::DetectFirmwareFormat(folder)' in services
+assert 'family({"ns1", "switch1", "ns1-extracted", "switch1-extracted"})' in services
+assert 'family({"ns2", "switch2", "ns2-extracted", "switch2-extracted"})' in services
+assert 'folder_info_.firmware_ready ? folder_info_.firmware_detail' in browse
+assert 'folder_info_.firmware_ready?tr("Firmware ready")' in read('headless/prosperoeden/pe/ui/switch_theme.cpp')
+
+
+# R457 retail jacket: prioritize the selected large WebP and reuse the
+# existing shelf texture until its sharper bucket has finished uploading.
+# A single source replacement must invalidate all texture-size variants.
+retail_textures = read('headless/prosperoeden/pe/ui/textures.cpp')
+assert 'bool IsRetailBoxImage(std::string_view path)' in retail_textures
+assert 'IsRetailBoxImage(path) && target_pixels >= 1024' in retail_textures
+assert 'sibling->second.used = frame_' in retail_textures
+assert 'covers_.find(path + ' in retail_textures
+assert 'it->second.texture == 0 && IsRetailBoxImage(path)' in retail_textures
+assert 'if (it->second.path == path)' in retail_textures
+
+
+# R457 real-console update dialog: ensure status cannot be painted underneath
+# the two 94px buttons (row 2 ends at 516+94 = 610 virtual pixels).
+r457_dialog = read('headless/prosperoeden/pe/ui/settings.cpp')
+assert 'list.rounded_rect({592.0f, 632.0f, 736.0f, 160.0f}' in r457_dialog
+assert 'baseline(652.0f, 25.0f, theme::kSmall)' in r457_dialog
+assert 'baseline(718.0f, 24.0f, theme::kSmall)' in r457_dialog
+# 632+160 = 792, before footer y=811; status and notes cannot overlap it.
+assert 632 + 160 < 811
+# Palette-specific white labels only on the dark focus plate; idle light
+# surface labels remain dark, otherwise unselected tabs disappear.
+assert 'selected && prefs_.color_palette == 3' in launcher
+assert '? kWhite : selected ? theme::kTitle : theme::kMuted' in launcher
+r457_home = read('headless/prosperoeden/pe/ui/home.cpp')
+assert 'const bool dark_hero_surface = prefs_.color_palette == 3 &&' in r457_home
+assert 'hero_title_ink' in r457_home and 'hero_description_ink' in r457_home
+assert '22.0f, 27.0f, hero_description_ink, kHeroContentWidth' in r457_home
+assert 'Color::rgb(0x10121d, 0.96f)' in r457_dialog
+assert 'Color::rgb(0xf4f2f8)' in r457_dialog

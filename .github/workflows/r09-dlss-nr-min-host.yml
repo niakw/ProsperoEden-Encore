@@ -10,6 +10,10 @@ on:
       - '.github/workflows/r09-dlss-nr-min-host.yml'
       - 'extras/graphics/dlss_nr_min_*.h'
       - 'headless/vulkan_renderer_r08.cpp'
+      - 'headless/neural_runtime_state.h'
+      - 'headless/neural_video_policy.h'
+      - 'extras/graphics/test_neural_runtime_state.cpp'
+      - 'extras/graphics/test_dlss_nr_min_720_spatial_bridge.cpp'
       - 'extras/graphics/test_dlss_nr_min_*.cpp'
       - 'extras/graphics/r09_min_shaders/**'
       - 'extras/graphics/r09_min_vk_spatial_smoke.cpp'
@@ -94,7 +98,9 @@ jobs:
               test_dlss_nr_min_720_full_owner_coverage \
               test_dlss_nr_min_720_fswin_tensor_audit \
               test_dlss_nr_min_720_fswin_scratch_pool \
-              test_dlss_nr_min_720_framegen_bridge; do
+              test_dlss_nr_min_720_framegen_bridge \
+              test_dlss_nr_min_720_spatial_bridge \
+              test_neural_runtime_state; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -117,7 +123,9 @@ jobs:
               test_dlss_nr_min_720_full_owner_coverage \
               test_dlss_nr_min_720_fswin_tensor_audit \
               test_dlss_nr_min_720_fswin_scratch_pool \
-              test_dlss_nr_min_720_framegen_bridge; do
+              test_dlss_nr_min_720_framegen_bridge \
+              test_dlss_nr_min_720_spatial_bridge \
+              test_neural_runtime_state; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

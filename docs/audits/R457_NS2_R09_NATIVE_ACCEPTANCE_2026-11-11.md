@@ -14,3 +14,8 @@ Integrated production sources: NS1 six-core ABI, NS2 12 GiB sparse virtual/physi
 6. DLSS-NR Original/Compact 720p trained 152-stage Vulkan execution and output/image quality, separate from source/host qualification.
 
 Host source validation does not establish gameplay success. This commit requests one canonical native application build and no GitHub Release publishing. The 720p trained DLSS-NR graph is not qualified yet; do not misreport success.
+
+
+## Production native build rerun after validated host fixes
+
+Host source preflight identified and fixed: dynamic hero title/caption checks in three independent scripts, three neutral workflow step labels, two whitespace defects in native NS2 workflow YAML, and the SHA-pinned shared R437/R2 source replay required by the source audit. First four source shards were green at run #43073115349; full PS5 SDK compilation is not yet qualified. Current code unchanged from 1cd6b31c155eb1b2d269e48d873caba6dbd41266; package must be generated from this new exact source SHA, never from the R457 checkpoint. No release publication without a green build and exact app+symbols provenance.

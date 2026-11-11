@@ -32,7 +32,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD:vendor)" = 51af925b6f89f2750a1eea3406f615eb22f687af
           test "$(git -C vendor rev-parse HEAD)" = 51af925b6f89f2750a1eea3406f615eb22f687af
-      - name: Restore prior native PS5 project cache read-only
+      - name: Restore isolated native compiler dependency cache read-only
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -43,7 +43,7 @@ jobs:
             ~/.cache/prosperoeden-mkpfs
             .deps
           key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42924336057
-      - name: Configure genuine PS5 graph and compile ONLY active VkGraphicsPipeline TU
+      - name: Configure native graph and compile the selected Vulkan translation unit
         shell: bash
         run: |
           set -euo pipefail

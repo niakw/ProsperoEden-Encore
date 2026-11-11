@@ -1364,7 +1364,8 @@ if(EDEN_RESEARCH_NS2_R4_VOLUME)
     if(NOT EXISTS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
         message(FATAL_ERROR "R4 N60 maintained TextureCache owner missing")
     endif()
-    file(READ "${EDEN_R4_ACTIVE_TEXTURE_CACHE}" EDEN_R4_ACTIVE_OWNER_SOURCE)
+    file(STRINGS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}" EDEN_R4_ACTIVE_OWNER_SOURCE
+         REGEX "copy_native_volume_slice")
     if(NOT EDEN_R4_ACTIVE_OWNER_SOURCE MATCHES
            "copy_native_volume_slice")
         message(FATAL_ERROR "R4 wrong active TextureCache owner selected")

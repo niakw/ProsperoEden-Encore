@@ -1,0 +1,58 @@
+name: R09 Min 720p Original — authentic host runner syntax only
+
+# Strictly isolated: does not link/run a 152-stage neural frame, build PS5,
+# merge vendor research branches or change pinned vendor dependency.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/r09-min-720-original-host-entry.yml'
+      - 'tools/graphics/r09_full_gpu_host.cpp'
+      - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
+      - 'extras/graphics/dlss_nr_min_720_plan_emit.h'
+      - 'extras/graphics/dlss_nr_min_720_route_trial.h'
+      - 'extras/graphics/dlss_nr_min_graph_geometry.h'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r09-720-real-host-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-host-runner:
+    name: Authentic 720p Original host GPU entry (macro OFF and ON)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact Encore feature commit and PINNED vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+      - name: Confirm production vendor pin is unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          pinned=22b69d6053db41b74edac2633c012f925b84f69e
+          test "$(git rev-parse HEAD:vendor)" = "$pinned"
+          test "$(git -C vendor rev-parse HEAD)" = "$pinned"
+          echo R09_MIN_720_ORIGINAL_AUTHENTIC_HOST_PIN_STILL_MAIN
+      - name: Install host-only Vulkan SPIR-V and native C++ dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang glslang-tools spirv-tools libvulkan-dev \
+            libavcodec-dev libavutil-dev libswscale-dev
+      - name: Compile complete authentic Original GPU runner in both explicit research gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          R09_MIN_720_HOST_RUNNER_DUAL=1 \
+            python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
+          test "$(git rev-parse HEAD:vendor)" = "22b69d6053db41b74edac2633c012f925b84f69e"
+          echo R09_MIN_720_HOST_CPP_SYNTAX_ONLY_NO_GPU_INFERENCE_NO_PS5_BUILD

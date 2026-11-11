@@ -12,6 +12,8 @@ on:
       - 'extras/graphics/test_neural_pipeline_composer.cpp'
       - 'extras/graphics/neural_pipeline_recipe.h'
       - 'extras/graphics/test_neural_pipeline_recipe.cpp'
+      - 'extras/graphics/r09_min_shaders/pipeline_resample_host.comp'
+      - 'extras/graphics/r09_composable_vk_spatial_chain.cpp'
   workflow_dispatch:
 
 permissions:
@@ -54,3 +56,53 @@ jobs:
           echo R09_ORDERED_NEURAL_SPATIAL_COMPOSE_FG_PRESENT_CONTRACTS_PASS
           echo R09_VERSIONED_SEQUENCE_WITH_REAL_GPU_BINDING_GATE_PASS
           echo R09_COMPOSABLE_PS5_RUNTIME_DEFAULT_OFF_NO_GPU_EXECUTION
+
+  vulkan-multi-image-spatial:
+    name: REAL Vulkan multi-image chained spatial outputs (1 / 2 / 3 passes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated research branch without vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+      - name: Install only host Vulkan / SPIR-V / Khronos validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            g++ libvulkan-dev mesa-vulkan-drivers \
+            glslang-tools spirv-tools vulkan-validationlayers
+      - name: Compile host shader and validate SPIR-V ABI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .build-local/r09-composable-gpu
+          glslangValidator -V --target-env vulkan1.1 -S comp \
+            extras/graphics/r09_min_shaders/pipeline_resample_host.comp \
+            -o .build-local/r09-composable-gpu/resample.spv
+          spirv-val --target-env vulkan1.1 \
+            .build-local/r09-composable-gpu/resample.spv
+          g++ -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+            -Iextras/graphics \
+            extras/graphics/r09_composable_vk_spatial_chain.cpp \
+            -lvulkan -o .build-local/r09-composable-gpu/chain
+      - name: Execute TRUE GPU readback of every VkImage intermediate with Vulkan validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          icd="$(find /usr/share/vulkan/icd.d -maxdepth 1 \
+            -type f -name 'lvp_icd*.json' -print -quit)"
+          test -n "$icd" && test -f "$icd"
+          export VK_ICD_FILENAMES="$icd"
+          export VK_INSTANCE_LAYERS=VK_LAYER_KHRONOS_validation
+          for passes in 1 2 3; do
+            .build-local/r09-composable-gpu/chain \
+              .build-local/r09-composable-gpu/resample.spv "$passes"
+          done
+          echo R09_REAL_GPU_MULTI_IMAGE_1_2_3_SPATIAL_STAGES_AND_ORACLE_PASS
+          echo R09_ONLY_PUBLIC_HOST_SHADERS_NO_TRAINED_NEURAL_NO_PS5

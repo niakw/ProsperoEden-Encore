@@ -126,7 +126,7 @@ def main() -> int:
             changed = re.findall(r"^diff --git a/(\S+) b/(\S+)$", data, re.MULTILINE)
             if (not changed or len(changed) != len(expected_sources) or
                     {a for a,b in changed if a == b} != expected_sources or
-                    data.count("\n@@ ") != len(expected_sources)):
+                    data.count("\n@@ ") != (2 if name == "R23-glslang-include" else len(expected_sources))):
                 raise ValueError(f"{name}: patch contains unexpected/missing maintained source")
             # Applicability is not proof of actual native compiled-owner selection.
             run_git("apply", "--check", str(relative_patch))

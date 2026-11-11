@@ -42,13 +42,13 @@ jobs:
           selected = Path("vendor/encore-active/eden-core/src/common/fs/path_util.cpp").read_text()
           fixture = Path("tests/audit_r23_path_sanitizer_host.cpp").read_text()
           start = "std::string SanitizePath("
-          end = "\\nstd::string GetParentPath("
+          end = chr(10) + "std::string GetParentPath("
           def method(src):
               i = src.index(start)
               return src[i:src.index(end, i)].strip()
           original = method(old)
           maintained = method(selected)
-          compiled = fixture.split("namespace Pinned {", 1)[1].split("\\n}\nnamespace Upstream {", 1)[0].strip()
+          compiled = fixture.split("namespace Pinned {", 1)[1].split("namespace Upstream {", 1)[0].rsplit("}", 1)[0].strip()
           assert original == maintained == compiled, "native selected FS function drift"
           print("R23_FS_SELECTED_NATIVE_MAINTAINED_METHOD_EXACT_BYTES_PASS")
           PY
@@ -64,4 +64,4 @@ jobs:
             tests/audit_r23_path_sanitizer_host.cpp -o /tmp/audit-r23-path
           /tmp/audit-r23-path
           echo "9 source-extracted pinned/maintained/upstream SanitizePath cases, compiled on host under ASan/UBSan." >> "$GITHUB_STEP_SUMMARY"
-          echo "Path behavior differs on roots and leading parent components; no PS5 runtime or filesystem security signoff." >> "$GITHUB_STEP_SUMMARY"
+          echo "Root path representation differs; parent components agree in tested POSIX cases; no PS5 runtime or filesystem security signoff." >> "$GITHUB_STEP_SUMMARY"

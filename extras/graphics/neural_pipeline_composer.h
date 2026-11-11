@@ -33,7 +33,8 @@ enum class Reason : std::uint8_t {
     InvalidPresentOrder,MissingPresent,
     UnknownRasterAa,MissingRasterAaResolveOrNativeOwner,
     MissingRasterAaFormatOrBudget,PostAaCannotResize,
-    RasterAaNotAFullscreenFilter,TemporalAaMotionHistoryUnqualified
+    RasterAaNotAFullscreenFilter,TemporalAaMotionHistoryUnqualified,
+    InvalidStageStrengthParameter
 };
 inline constexpr bool kComposablePs5RuntimeQualified=false;
 // Mode 1/2/3: maintained A4K CNN 2x; 4: Original 720p denoise;
@@ -47,6 +48,9 @@ struct Step {
     Kind kind{Kind::Spatial};
     int method{};
     Extent output{};
+    // -1: inherit existing global/per-game preference. 0..100: explicit
+    // per-pass NR intensity or FSR/SGSR sharpening; never a new shader.
+    std::int16_t strength_percent{-1};
     // Opaque logical identifiers in the host planner, NOT VkImage handles.
     // Runtime must bind each to a genuine VkImage+VkImageView and owner.
     std::uint64_t image{},view{};
@@ -107,6 +111,17 @@ struct Verdict {
 }
 [[nodiscard]] constexpr bool IsPostAa(int method) noexcept {
     return method>=1&&method<=3;
+}
+[[nodiscard]] constexpr bool HasExistingStrengthControl(
+    Kind kind,int method) noexcept {
+    return (kind==Kind::Neural&&method==4)||
+           (kind==Kind::Spatial&&
+            (method==1||method==5||method==6));
+}
+[[nodiscard]] constexpr bool ValidStageStrength(const Step& s) noexcept {
+    return s.strength_percent==-1||
+           (s.strength_percent>=0&&s.strength_percent<=100&&
+            HasExistingStrengthControl(s.kind,s.method));
 }
 [[nodiscard]] constexpr bool ValidRasterAa(RasterAa source) noexcept {
     switch(source) {
@@ -183,6 +198,9 @@ struct Verdict {
         }
         if(!ValidExtent(step.output)){
             out.reason=Reason::InvalidExtent;return out;
+        }
+        if(!ValidStageStrength(step)){
+            out.reason=Reason::InvalidStageStrengthParameter;return out;
         }
         if(!step.image||!step.view||step.image==step.view ||
            step.image==current_image||step.view==current_view) {

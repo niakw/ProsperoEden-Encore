@@ -1,0 +1,38 @@
+name: NS1 AM/HID selected source test against main
+
+on:
+  push:
+    branches:
+      - research/ns1-am-applets-mainline-20261111
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - "headless/r23_controller_applet_ps5.cpp"
+      - "headless/r23_am_*.cpp"
+      - "tools/audit/check-r23-controller-applet-host.py"
+      - "tools/audit/check-r23-am-applets-host.py"
+      - ".github/workflows/ns1-am-mainline-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-behavior:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact source owner branch and vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Pinned production vendor and extracted AM/HID C++ mock sanitizer tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "90c9c8a203a27181e23349a889a8f2a7d1cd9dd2"
+          python3 -B tools/audit/check-r23-controller-applet-host.py
+          python3 -B tools/audit/check-r23-am-applets-host.py
+          echo "Host source and mock ASan/UBSan only; no PS5 native object, ELF or guest execution." >> "$GITHUB_STEP_SUMMARY"

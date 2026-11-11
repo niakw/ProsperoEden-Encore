@@ -1,0 +1,7 @@
+# NS1 AM/HID mainline integration research — 11 November 2026
+
+This branch is isolated from [draft corrective PR #46](https://github.com/niakw/ProsperoEden-Encore/pull/46) and starts at **`main@ce175860d6a1692967ddf50702af72d430766826`**. It retains the **production vendor gitlink `90c9c8a203a27181e23349a889a8f2a7d1cd9dd2`** and does not overwrite newer main's WebP SSE2 ABI exception or shader atomic CAS fixes.
+
+Three originally selected vendor C++ units have identical blobs between research pin `22b69d6` and current main pin `90c9c8a`: `frontend/applets/controller.cpp` = `c4292c5a1257dbfb18c3709d4911193caf2ed5b6`, `core/hle/service/am/frontend/applets.cpp` = `407ca10602a1fe9107d13aa8393f4145ac7d715a`, `core/hle/service/am/service/library_applet_creator.cpp` = `c20a77f8c40c7fbf023411fd47a299662b798cb3`. PS5-only CMake source-owner substitutions from PR #46 are now layered on current `main`, with original owners removed once and fail-closed guards.
+
+The implementation contains #131 controller preservation, #84 explicit `AppletId::None` return and #109 AM child-appended/removed under lock, post-exit cleanup, and window update. Two host scripts test exact source relationships and extract real C++ methods under ASan/UBSan mock contexts. This is **not yet** a full PS5 SDK compile or proof of NS1 title boot. Required: verified native CMake selected source graph, changed-unit native builds, guest IPC/HID lifecycle and physical PS5 NS1 runtime; no production merge before those gates.

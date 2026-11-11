@@ -1,7 +1,7 @@
 diff --git a/encore-active/eden-vulkan/vulkan_rasterizer.cpp b/encore-active/eden-vulkan/vulkan_rasterizer.cpp
 --- a/encore-active/eden-vulkan/vulkan_rasterizer.cpp
 +++ b/encore-active/eden-vulkan/vulkan_rasterizer.cpp
-@@ -124,7 +124,11 @@
+@@ -124,7 +124,12 @@
  
      if (lower_left) {
          // Flip by surface clip height

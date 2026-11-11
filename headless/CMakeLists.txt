@@ -799,45 +799,43 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
-# R23 #131: PS5-only selected full controller applet TU from reviewed upstream.
-# Original Eden vendor remains immutable; fail if the selected owner moves.
+# R23 #131 and #109 are ALREADY shipped by versioned Eden backports.
+# Never override those real prepared sources with old headless copies:
+# the latter also concealed the FW23 dynamic library-applet version cap.
 if(PS5_NATIVE)
-    set(eden_r23_controller_original "frontend/applets/controller.cpp")
-    set(eden_r23_controller_fixed "${EDEN_PORT_DIR}/r23_controller_applet_ps5.cpp")
-    if(NOT EXISTS "${eden_r23_controller_fixed}")
-        message(FATAL_ERROR "R23 #131 maintained controller applet missing")
+    file(READ "${PROJECT_SOURCE_DIR}/src/core/frontend/applets/controller.cpp"
+         eden_controller_prepared)
+    string(FIND "${eden_controller_prepared}" "if (keep_connected[index]) continue;"
+           eden_controller_keep)
+    if(eden_controller_keep LESS 0)
+        message(FATAL_ERROR "R23 #131 selected prepared controller lacks retention fix")
     endif()
-    get_target_property(eden_r23_controller_sources core SOURCES)
-    list(FIND eden_r23_controller_sources "${eden_r23_controller_original}"
-        eden_r23_controller_original_index)
-    if(eden_r23_controller_original_index LESS 0)
-        message(FATAL_ERROR "R23 #131 core owner changed; stop")
+    file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/am/service/library_applet_creator.cpp"
+         eden_am_creator_prepared)
+    string(FIND "${eden_am_creator_prepared}"
+        "CreateProcess(system, program_id, 1, HLE::ApiVersion::HOS_VERSION_MAJOR)"
+        eden_creator_fw23)
+    if(eden_creator_fw23 LESS 0)
+        message(FATAL_ERROR "R23 #109 selected AM creator lost dynamic FW23 version bound")
     endif()
-    list(REMOVE_ITEM eden_r23_controller_sources "${eden_r23_controller_original}")
-    list(APPEND eden_r23_controller_sources "${eden_r23_controller_fixed}")
-    set_property(TARGET core PROPERTY SOURCES "${eden_r23_controller_sources}")
-    message(STATUS "Encore R23 #131: preserved-controller fallback selected")
 endif()
 
-# R23 #84/#109: two pinned PS5 AM frontend source owners, no vendor mutation.
+# R23 #84 is the ONLY still-needed AM frontend candidate.
+# #109 applet Exit lifecycle is already in the installed backport; this
+# full-source candidate differs from shipping frontend only by None behavior.
 if(PS5_NATIVE)
     get_target_property(eden_am_sources core SOURCES)
-    foreach(eden_am_original IN ITEMS
-            "hle/service/am/frontend/applets.cpp"
-            "hle/service/am/service/library_applet_creator.cpp")
-        list(FIND eden_am_sources "${eden_am_original}" eden_am_index)
-        if(eden_am_index LESS 0)
-            message(FATAL_ERROR "R23 AM core owner moved: ${eden_am_original}")
-        endif()
-        list(REMOVE_ITEM eden_am_sources "${eden_am_original}")
-        if(eden_am_original STREQUAL "hle/service/am/frontend/applets.cpp")
-            list(APPEND eden_am_sources "${EDEN_PORT_DIR}/r23_am_frontend_applets_ps5.cpp")
-        else()
-            list(APPEND eden_am_sources "${EDEN_PORT_DIR}/r23_am_library_applet_creator_ps5.cpp")
-        endif()
-    endforeach()
+    list(FIND eden_am_sources "hle/service/am/frontend/applets.cpp" eden_am_index)
+    if(eden_am_index LESS 0)
+        message(FATAL_ERROR "R23 #84 frontend core owner moved")
+    endif()
+    if(NOT EXISTS "${EDEN_PORT_DIR}/r23_am_frontend_applets_ps5.cpp")
+        message(FATAL_ERROR "R23 #84 frontend candidate missing")
+    endif()
+    list(REMOVE_ITEM eden_am_sources "hle/service/am/frontend/applets.cpp")
+    list(APPEND eden_am_sources "${EDEN_PORT_DIR}/r23_am_frontend_applets_ps5.cpp")
     set_property(TARGET core PROPERTY SOURCES "${eden_am_sources}")
-    message(STATUS "R23 AM #84/#109 selected native source owners")
+    message(STATUS "R23 #84: only None frontend candidate; FW23 creator and controller backports preserved")
 endif()
 
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is

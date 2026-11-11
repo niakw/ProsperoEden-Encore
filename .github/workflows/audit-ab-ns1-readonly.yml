@@ -56,8 +56,10 @@ jobs:
           python3 -B tools/audit/attest-r18-ninja-deps-headers.py --self-test
           python3 -B tools/audit/crosswalk-r23-cdb-native-source-owners.py --self-test
           python3 -B tools/audit/attest-r18-orphan-pin-archives.py --self-test
+          python3 -B tools/audit/verify-r23-x64-memory-source.py --self-test
           python3 -B tools/audit/check-ab-ns1-source-gaps.py > ab-ns1-witness/source-gaps.json
           python3 -B tools/audit/attest-r18-orphan-pin-archives.py > ab-ns1-witness/r18-orphan-pin-archives.json
+          python3 -B tools/audit/verify-r23-x64-memory-source.py > ab-ns1-witness/r23-x64-memory-source.json
           mapfile -t databases < <(find "$HOME/.cache" -path '*/native-local/compile_commands.json' -type f -print)
           test "${#databases[@]}" -eq 1
           test -s "${databases[0]}"
@@ -91,6 +93,12 @@ jobs:
           assert r23_crosswalk["header_inclusion_proven"] is False
           header_deps = json.loads(Path("ab-ns1-witness/r18-headers-ninja-deps.json").read_text())
           orphan = json.loads(Path("ab-ns1-witness/r18-orphan-pin-archives.json").read_text())
+          x64 = json.loads(Path("ab-ns1-witness/r23-x64-memory-source.json").read_text())
+          assert x64["cases"]["136_A32_upstream_sign_extension"] == "still-divergent-test-required"
+          assert all(x64["cases"][key] == "source-equivalent-E1"
+                     for key in ("117_A64_sign_extension_final", "122_A64_scaled_lookup",
+                                 "125_A32_LEA_stride"))
+          assert not x64["cases"]["compiler_header_depfile_proven"]
           assert set(orphan["families"]) == {"boilerplate", "opengl-source", "opengl-native-boilerplate"}
           assert not orphan["upstream_origin_verified"]
           assert header_deps["changed_header_count"] == 17
@@ -120,6 +128,7 @@ jobs:
               "r18_historical_header_dependency_present": header_deps["ninja_deps_text_present"],
               "r18_archived_unavailable_pin_sha256": {k:v["archive_sha256"] for k,v in orphan["families"].items()},
               "r18_archived_unavailable_pins_not_officially_proven": True,
+              "r23_x64_memory_source_parity": x64["cases"],
           }
           Path("ab-ns1-witness/verdict.json").write_text(json.dumps(note, indent=2, sort_keys=True)+"\n")
           print("AB_NS1_HISTORICAL_CACHE_BYTE_WITNESS", json.dumps(note, sort_keys=True))

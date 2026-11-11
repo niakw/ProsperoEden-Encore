@@ -9,7 +9,7 @@ base=root/"vendor/sources/eden/src/core/hle/service/am"
 orig_front=base/"frontend/applets.cpp"
 orig_creator=base/"service/library_applet_creator.cpp"
 new_front=root/"headless/r23_am_frontend_applets_ps5.cpp"
-new_creator=root/"headless/r23_am_library_applet_creator_ps5.cpp"
+new_creator=root/"vendor/encore-active/eden-backports/src/core/hle/service/am/service/library_applet_creator.cpp"
 def gitblob(path):
     b=path.read_bytes()
     return hashlib.sha1(b"blob "+str(len(b)).encode()+b"\0"+b).hexdigest()
@@ -47,34 +47,17 @@ expected=expected.replace("    default:\n        LOG_ERROR(Service_AM,",
 assert expected==new, "AM frontend full TU differs beyond #84/#109"
 assert new.count("case AppletId::None:\n        return nullptr;")==1
 assert "return std::make_shared<StubApplet>(system, applet, id, mode);" in new
-original=orig_creator.read_text()
 target=new_creator.read_text()
-expected=original.replace(
-"""        caller_applet->child_applets.push_back(applet);
-        window_system.TrackApplet(applet, false);""",
-"""        {
-            std::scoped_lock lk{caller_applet->lock};
-            caller_applet->child_applets.push_back(applet);
-        }
-        window_system.TrackApplet(applet, false);""")
-expected=expected.replace(
-"""    caller_applet->child_applets.push_back(applet);
-
-    window_system.TrackApplet(applet, false);
-
-    return std::make_shared<ILibraryAppletAccessor>(system, storage, applet);""",
-"""    {
-        std::scoped_lock lk{caller_applet->lock};
-        caller_applet->child_applets.push_back(applet);
-    }
-    return std::make_shared<ILibraryAppletAccessor>(system, storage, applet);""")
-assert expected==target,"AM creator full TU differs beyond #109"
+assert gitblob(new_creator)=="4ee92908b539c2ee1aad04b38523a297689ce016"
+assert '#include "core/hle/api_version.h"' in target
+assert "CreateProcess(system, program_id, 1, HLE::ApiVersion::HOS_VERSION_MAJOR)" in target
 assert target.count("std::scoped_lock lk{caller_applet->lock};")==2
 cm=(root/"headless/CMakeLists.txt").read_text()
-for token in ("r23_am_frontend_applets_ps5.cpp","r23_am_library_applet_creator_ps5.cpp",
-              "R23 AM core owner moved:","list(REMOVE_ITEM eden_am_sources"):
-    assert token in cm,token
-print("R23_AM_FULL_TWO_SOURCE_OWNER_EXACT_DIFF_PASS")
+assert "r23_am_frontend_applets_ps5.cpp" in cm
+assert "r23_am_library_applet_creator_ps5.cpp" not in cm
+assert 'src/core/hle/service/am/service/library_applet_creator.cpp' in cm
+assert 'R23 #84 frontend core owner moved' in cm
+print("R23_AM_ONE_FRONTEND_PLUS_SHIPPING_FW23_CREATOR_PASS")
 cpp=r"""
 #include <algorithm>
 #include <cassert>

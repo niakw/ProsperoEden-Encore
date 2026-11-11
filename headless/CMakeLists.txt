@@ -634,6 +634,41 @@ if(TARGET libzstd_static)
     target_link_libraries(core PRIVATE libzstd_static)
 endif()
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
+# R23 #113 — the three FS compiler inputs are ALREADY complete
+# maintained owners (NCZ registered_cache, per-title savedata and IPS
+# patch_manager). Pair their exact patched public headers without adding
+# duplicate translation units or ever modifying immutable pinned originals.
+if(PS5_NATIVE)
+    set(EDEN_R23_PARENT_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_PARENT_INCLUDE
+        "${PORT_BUILD_DIR}/r23-parent/include")
+    foreach(eden_r23_fs_relative IN ITEMS
+            registered_cache.h savedata_factory.h patch_manager.h)
+        if(NOT EXISTS
+               "${EDEN_R23_PARENT_ROOT}/include/core/file_sys/${eden_r23_fs_relative}")
+            message(FATAL_ERROR "R23 #113 missing maintained FS header: ${eden_r23_fs_relative}")
+        endif()
+        configure_file(
+            "${EDEN_R23_PARENT_ROOT}/include/core/file_sys/${eden_r23_fs_relative}"
+            "${EDEN_R23_PARENT_INCLUDE}/core/file_sys/${eden_r23_fs_relative}"
+            COPYONLY)
+    endforeach()
+    get_target_property(eden_r23_parent_sources core SOURCES)
+    foreach(eden_r23_fs_source IN ITEMS
+            registered_cache.cpp savedata_factory.cpp patch_manager.cpp)
+        set(eden_r23_fs_path
+             "${EDEN_R23_PARENT_ROOT}/src/core/file_sys/${eden_r23_fs_source}")
+        list(FIND eden_r23_parent_sources
+             "${eden_r23_fs_path}" eden_r23_parent_owner)
+        if(eden_r23_parent_owner EQUAL -1)
+            message(FATAL_ERROR "R23 #113 actual maintained FS owner drifted: ${eden_r23_fs_source}")
+        endif()
+    endforeach()
+    target_include_directories(core BEFORE PRIVATE "${EDEN_R23_PARENT_INCLUDE}")
+    message(STATUS "R23 #113: 3 maintained FS units + matching 3 headers; no duplicate owners")
+endif()
+
 # The guest title is the owner of a zero-ID cache storage request.
 set(EDEN_MAINTAINED_SAVEDATA
     "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp")

@@ -168,6 +168,20 @@ jobs:
           # Run ONLY that link command; no package/upload/release.
           link = final_command("bin/eden-headless")
           assert "link-headless-native.sh" in link, link[:400]
+          # The exact twelfth native build linked the CMake-built static LZ4
+          # object archive. In the isolated cache replay, CMake re-detects
+          # host liblz4 and substitutes -llz4, which the PS5 LLD cannot find.
+          # Reuse the ORIGINAL native archive, never host/system LZ4.
+          expected_lz4 = native / "_deps/lz4-build/liblz4.a"
+          assert expected_lz4.is_file() and expected_lz4.stat().st_size > 0, (
+              "Twelfth-run static LZ4 archive missing from recovered cache")
+          if " -llz4 " in link:
+              assert link.count(" -llz4 ") == 1
+              link = link.replace(" -llz4 ", " _deps/lz4-build/liblz4.a ")
+          else:
+              assert " _deps/lz4-build/liblz4.a " in link, (
+                  "Expected original exact static LZ4 linker dependency", link[-1600:])
+          print("P5_REPLAY_PINNED_LZ4_ARCHIVE_PASS", flush=True)
           print("P5_REPLAY_FINAL_LINK_START no_full_build=1", flush=True)
           subprocess.run(link, cwd=native, shell=True, executable="/bin/bash",
                          check=True)

@@ -83,6 +83,23 @@ foreach(_r09_target IN ITEMS
     endif()
 endforeach()
 
+# The pinned Eden rasterizer header already owns a unique_ptr to
+# MsaaColorClearShadowPass. Its destructor is out-of-line in the maintained
+# R24 Vulkan owner, but the pristine Linux video_core list does not compile
+# that owner. The previous full link (#43022421489) reached 1357/1358 and
+# failed ONLY on this unresolved destructor. Compile the same real owner
+# already selected by headless/vulkan.cmake on PS5 (host-only injection).
+set(_r09_msaa_owner "${_r09_active}/msaa_color_shadow_pass.cpp")
+if(NOT EXISTS "${_r09_msaa_owner}")
+    message(FATAL_ERROR "R09 MSAA shadow owner absent from pinned vendor")
+endif()
+file(STRINGS "${ENCORE_R09_ROOT}/headless/vulkan.cmake"
+    _r09_msaa_native_list REGEX "msaa_color_shadow_pass[.]cpp")
+list(LENGTH _r09_msaa_native_list _r09_msaa_native_count)
+if(NOT _r09_msaa_native_count EQUAL 1)
+    message(FATAL_ERROR "R09 host/native MSAA owner mismatch")
+endif()
+
 # The scheduler/device/allocator are ABI-coupled with maintained neural
 # owners. Remove the three pristine implementations, never compile duplicates.
 get_target_property(_r09_video_sources video_core SOURCES)
@@ -98,6 +115,7 @@ foreach(_r09_pinned IN ITEMS
 endforeach()
 set_property(TARGET video_core PROPERTY SOURCES "${_r09_video_sources}")
 target_sources(video_core PRIVATE ${_r09_cpp}
+    "${_r09_msaa_owner}"
     "${_r09_active}/vulkan_scheduler.cpp"
     "${_r09_active}/vulkan_device.cpp"
     "${_r09_active}/vulkan_memory_allocator.cpp")

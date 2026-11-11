@@ -1,0 +1,35 @@
+name: NS1 R23 HWC safe visible source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-hwc-visible-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-64-hwc-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hwc-source-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Validate exact maintained HWC body and waited release order
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "00bde1d0ce914fa50b0961cb3fd11949d754198d"
+          python3 -B vendor/tests/ns1_r23_64_hwc_visibility.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_hwc_units "hle/service/nvnflinger/hardware_composer.cpp")' in s
+          assert 'list(APPEND eden_r23_hwc_units "${EDEN_R23_HWC_SOURCE}")' in s
+          print('R23_HWC_NATIVE_SELECTED_OWNER_PASS')
+          PY

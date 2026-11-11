@@ -2839,7 +2839,7 @@ endif()
 # This branch is a research-only candidate; never infer console boot from it.
 if(PS5_NATIVE)
     set(EDEN_FW23_NS_CMD23_SOURCE
-        "${PORT_ROOT}/headless/fw23_ns_application_control_ps5.cpp")
+        "${PORT_ROOT}/research/r23/fw23_ns_application_control_ps5.cpp")
     if(NOT EXISTS "${EDEN_FW23_NS_CMD23_SOURCE}")
         message(FATAL_ERROR "FW23 NS command 23 maintained source missing")
     endif()

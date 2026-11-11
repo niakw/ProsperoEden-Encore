@@ -10,7 +10,7 @@ import subprocess
 import re
 ROOT=Path(__file__).resolve().parents[2]
 original=ROOT/"vendor/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
-modified=ROOT/"headless/fw23_ns_application_control_ps5.cpp"
+modified=ROOT/"research/r23/fw23_ns_application_control_ps5.cpp"
 cmake=(ROOT/"headless/CMakeLists.txt").read_text()
 original_sha=subprocess.check_output(["git","hash-object",str(original)],text=True).strip()
 assert original_sha=="c7606a83bf771c9251ef8a44add72b72a2589870",original_sha

@@ -2,7 +2,7 @@ name: R457 FW23 command 23 source parity (host only)
 on:
   pull_request:
     paths:
-      - 'headless/fw23_ns_application_control_ps5.cpp'
+      - 'research/r23/fw23_ns_application_control_ps5.cpp'
       - 'headless/CMakeLists.txt'
       - 'tools/ns2/check_r457_fw23_ns_source.py'
       - '.github/workflows/r457-fw23-ns-source-host.yml'

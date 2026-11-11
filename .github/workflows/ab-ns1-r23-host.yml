@@ -12,6 +12,7 @@ on:
       - "headless/CMakeLists.txt"
       - "tools/audit/check-r23-f2i-bcat-host.py"
       - "tools/audit/check-r23-ips-audren-host.py"
+      - "tools/audit/check-r23-ips-long-line-host.py"
       - "tools/audit/check-r23-viewport-host.py"
       - "tools/prepare-vulkan-port.py"
       - ".github/workflows/ab-ns1-r23-host.yml"

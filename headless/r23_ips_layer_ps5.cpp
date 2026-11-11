@@ -1,5 +1,5 @@
 // Maintained full-TU PS5 owner; original Eden Git blob 9d46549bf0fae3ec5fd0ab6c65bc432dcff68818.
-// Official semantic fix 3266c20e3f27a459449b77214182be3f0332e8f4; upstream SPDX notices follow.
+// Official IPS/EOF fix 3266c20e3f27a459449b77214182be3f0332e8f4 and long-line fix 14235dc0d0543c7397dd19eb1a677e76114c08f3; preserve upstream notices.
 // SPDX-FileCopyrightText: Copyright 2026 Eden Emulator Project
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 #include <span>
+#include <vector>
 #include <cctype>
 #include "common/container/unordered_map.h"
 
@@ -105,8 +106,7 @@ VirtualFile PatchIPS(const VirtualFile& in, const VirtualFile& ips) {
 
 
 struct IPSwitchRecord {
-    std::array<uint8_t, 256 - sizeof(size_t)> data;
-    size_t count;
+    std::vector<uint8_t> data;
 };
 struct IPSwitchCompiler::IPSwitchPatch {
     ::Common::unordered_map<u32, IPSwitchRecord> records;
@@ -128,21 +128,19 @@ static IPSwitchRecord EscapeStringSequences(std::string_view sv) {
     for (auto it = sv.cbegin(); it < sv.cend(); ) {
         if (*it == '\\' && it + 1 < sv.cend()) {
             switch (it[1]) {
-            case 'a': r.data[r.count] = '\a'; break;
-            case 'b': r.data[r.count] = '\b'; break;
-            case 'e': r.data[r.count] = '\e'; break;
-            case 'f': r.data[r.count] = '\f'; break;
-            case 'n': r.data[r.count] = '\n'; break;
-            case 'r': r.data[r.count] = '\r'; break;
-            case 't': r.data[r.count] = '\t'; break;
-            case 'v': r.data[r.count] = '\v'; break;
-            case '?': r.data[r.count] = '\?'; break;
-            default: r.data[r.count] = it[1]; break;
+            case 'a': r.data.push_back('\a'); break;
+            case 'b': r.data.push_back('\b'); break;
+            case 'e': r.data.push_back('\e'); break;
+            case 'f': r.data.push_back('\f'); break;
+            case 'n': r.data.push_back('\n'); break;
+            case 'r': r.data.push_back('\r'); break;
+            case 't': r.data.push_back('\t'); break;
+            case 'v': r.data.push_back('\v'); break;
+            case '?': r.data.push_back('\?'); break;
+            default: r.data.push_back(it[1]); break;
             }
-            ++r.count;
             it += 2;
         } else {
-            ++r.count;
             ++it;
         }
     }
@@ -228,8 +226,8 @@ void IPSwitchCompiler::Parse(std::span<u8 const> bytes) {
                 if (start <= line.cend() && end <= line.cend()) {
                     // Actually IPS wants ordering from {lsb, ..., msb} -- so LE and BE are inverted, fun!
                     auto const hs = Common::HexStringToVector({start, end}, is_little_endian);
+                    r.data.resize(hs.size());
                     std::memcpy(r.data.data(), hs.data(), hs.size());
-                    r.count = hs.size();
                     LOG_INFO(Loader, "[H] value @ {:#08X}", offset);
                     patches.back().records.insert_or_assign(u32(offset), std::move(r));
                 } else {
@@ -298,7 +296,7 @@ VirtualFile IPSwitchCompiler::Apply(const VirtualFile& in) const {
         if (patch.enabled) {
             for (const auto& record : patch.records) {
                 if (record.first < in_data.size()) {
-                    auto replace_size = record.second.count;
+                    auto replace_size = record.second.data.size();
                     if (record.first + replace_size > in_data.size())
                         replace_size = in_data.size() - record.first;
                     std::memcpy(in_data.data() + record.first, record.second.data.data(), replace_size);

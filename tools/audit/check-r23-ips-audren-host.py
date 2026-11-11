@@ -26,6 +26,17 @@ REPLACE_IPS=(
   "magic.size() >= 4 && std::memcmp(magic.data(), \"EEOF\", 4) == 0"),
  ("    auto in_data = in->ReadAllBytes();\n    auto const type = IdentifyMagic(in_data);\n    if (type == IPSFileType::Error)\n        return nullptr;\n\n",
   "    const auto type = IdentifyMagic(ips->ReadBytes(0x5));\n    if (type == IPSFileType::Error)\n        return nullptr;\n\n    auto in_data = in->ReadAllBytes();\n    if (in_data.size() == 0)\n        return nullptr;\n\n")
+ ("""struct IPSwitchRecord {
+    std::array<uint8_t, 256 - sizeof(size_t)> data;
+    size_t count;
+};""", """struct IPSwitchRecord {
+    std::vector<uint8_t> data;
+};"""),
+ ("static IPSwitchRecord EscapeStringSequences(std::string_view sv) {\n    IPSwitchRecord r{};\n    for (auto it = sv.cbegin(); it < sv.cend(); ) {\n        if (*it == '\\\\' && it + 1 < sv.cend()) {\n            switch (it[1]) {\n            case 'a': r.data[r.count] = '\\a'; break;\n            case 'b': r.data[r.count] = '\\b'; break;\n            case 'e': r.data[r.count] = '\\e'; break;\n            case 'f': r.data[r.count] = '\\f'; break;\n            case 'n': r.data[r.count] = '\\n'; break;\n            case 'r': r.data[r.count] = '\\r'; break;\n            case 't': r.data[r.count] = '\\t'; break;\n            case 'v': r.data[r.count] = '\\v'; break;\n            case '?': r.data[r.count] = '\\?'; break;\n            default: r.data[r.count] = it[1]; break;\n            }\n            ++r.count;\n            it += 2;\n        } else {\n            ++r.count;\n            ++it;\n        }\n    }\n    return r;\n}", "static IPSwitchRecord EscapeStringSequences(std::string_view sv) {\n    IPSwitchRecord r{};\n    for (auto it = sv.cbegin(); it < sv.cend(); ) {\n        if (*it == '\\\\' && it + 1 < sv.cend()) {\n            switch (it[1]) {\n            case 'a': r.data.push_back('\\a'); break;\n            case 'b': r.data.push_back('\\b'); break;\n            case 'e': r.data.push_back('\\e'); break;\n            case 'f': r.data.push_back('\\f'); break;\n            case 'n': r.data.push_back('\\n'); break;\n            case 'r': r.data.push_back('\\r'); break;\n            case 't': r.data.push_back('\\t'); break;\n            case 'v': r.data.push_back('\\v'); break;\n            case '?': r.data.push_back('\\?'); break;\n            default: r.data.push_back(it[1]); break;\n            }\n            it += 2;\n        } else {\n            ++it;\n        }\n    }\n    return r;\n}"),
+ ("""std::memcpy(r.data.data(), hs.data(), hs.size());
+                    r.count = hs.size();""", """r.data.resize(hs.size());
+                    std::memcpy(r.data.data(), hs.data(), hs.size());"""),
+ ("auto replace_size = record.second.count;", "auto replace_size = record.second.data.size();"),
 )
 REPLACE_AUDIO=(
  ("RegisterNamedService(\"audren:d\", std::make_shared<IAudioInManager>(system))",

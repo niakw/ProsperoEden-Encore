@@ -6,9 +6,7 @@ on:
       - research/ns1-am-applets-mainline-20261111
     paths:
       - "headless/CMakeLists.txt"
-      - "headless/r23_controller_applet_ps5.cpp"
       - "headless/r23_am_frontend_applets_ps5.cpp"
-      - "headless/r23_am_library_applet_creator_ps5.cpp"
       - ".github/workflows/ns1-am-mainline-native-graph.yml"
   workflow_dispatch:
 
@@ -44,7 +42,7 @@ jobs:
         run: |
           echo "::error::Exact native dependency/cache restore missing. No PS5 source proof obtained."
           exit 1
-      - name: Reconfigure real cached PS5 CMake graph and syntax-compile only 3 applet units
+      - name: Reconfigure native graph; syntax-compile 1 #84 overlay and 2 installed backports
         if: steps.restore.outputs.cache-hit == 'true'
         shell: bash
         run: |
@@ -80,23 +78,24 @@ jobs:
           import json,sys
           from pathlib import Path
           files=[str(row["file"]) for row in json.loads(Path(sys.argv[1]).read_text())]
+          # Native compiles exactly the two already-versioned shipping backports,
+          # not copies of pristine #131 / #109 source that would mask FW23.
           for original in ("frontend/applets/controller.cpp",
-                           "hle/service/am/frontend/applets.cpp",
                            "hle/service/am/service/library_applet_creator.cpp"):
-              # Exclude the original vendor owner from the actual compilation graph,
-              # not just a string assertion in headless/CMakeLists.txt.
               count=sum(f.endswith("/"+original) and "/headless/" not in f for f in files)
-              assert count == 0, (original,count)
-          for basename in ("r23_controller_applet_ps5.cpp",
-                           "r23_am_frontend_applets_ps5.cpp",
-                           "r23_am_library_applet_creator_ps5.cpp"):
-              count=sum(f.endswith("/headless/"+basename) for f in files)
-              assert count == 1,(basename,count)
-              print("PS5_NATIVE_APPLET_SINGLE_COMPILE_OWNER",basename,flush=True)
-          print("PS5_NATIVE_APPLET_CMAKE_GRAPH_PASS",flush=True)
+              assert count == 1, (original,count)
+              print("PS5_NATIVE_SHIPPING_BACKPORT_SINGLE_COMPILE_OWNER",original,flush=True)
+          assert not any(f.endswith("/hle/service/am/frontend/applets.cpp") and
+                         "/headless/" not in f for f in files)
+          count=sum(f.endswith("/headless/r23_am_frontend_applets_ps5.cpp") for f in files)
+          assert count == 1, ("#84 None overlay",count)
+          for stale in ("r23_controller_applet_ps5.cpp",
+                        "r23_am_library_applet_creator_ps5.cpp"):
+              assert not any(f.endswith("/headless/"+stale) for f in files),stale
+          print("PS5_NATIVE_APPLET_CMAKE_GRAPH_PASS no_duplicate_shipping_owner=1",flush=True)
           PY
           python3 -B tools/check-native-source-syntax.py "$scratch/native-local" \
-            --only headless/r23_controller_applet_ps5.cpp \
+            --only src/core/frontend/applets/controller.cpp \
             --only headless/r23_am_frontend_applets_ps5.cpp \
-            --only headless/r23_am_library_applet_creator_ps5.cpp
-          echo "PS5_NATIVE_APPLET_3_TU_SYNTAX_PASS no_elf_link=1 no_package=1"
+            --only src/core/hle/service/am/service/library_applet_creator.cpp
+          echo "PS5_NATIVE_APPLET_SHIPPING_3_TU_SYNTAX_PASS no_elf_link=1 no_package=1"

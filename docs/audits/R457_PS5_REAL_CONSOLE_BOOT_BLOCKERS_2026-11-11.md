@@ -46,8 +46,15 @@ Two launches of NS2 titles fail *before* game boot with the same exception:
 
 Required architectural change: preserve the **full emulated NS2 guest DRAM address space** but reserve host virtual range independently of physically committed pages. Implement page/granule-level, owned, lazy direct-memory commit with synchronized read/write, GPU DMA/address-translation and Vulkan alias coherence, correct zero-fill on first touch, defined reuse and rollback; maintain alignment, exact ownership, use-after-free prevention, and peak physical memory budget. `std::memset` of a virtual hole, reduced declared NS2 DRAM, silent allocation retries, increasing swap on the console, or `malloc(12 GiB)` are NOT sufficient.
 
+### Avancée du modèle d'ownership (recherche uniquement)
+
+- `headless/ps5_ns2_guest_backing_plan.h` modélise 12 Gio de **capacité virtuelle** en 6144 blocs de 2 Mio, avec propriétaires physiques indépendants, budget explicite et transactions `Begin → Stage → Publish` ou `Abort → ReleaseAcknowledged → FinishAbort`.
+- `tools/ns2/test_r457_ps5_guest_backing_plan.cpp` contrôle le premier et le dernier bloc, les budgets, l'absence de double propriétaire, le rollback partiel, la non-libération des résidents existants et la nécessité d'un accusé de libération.
+- [CI NS2 #43016026399](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43016026399) : **SUCCESS** au commit `e5437841`. Elle interdit expressément l'inclusion du modèle dans `src/host_memory.cpp` : aucun raccordement PS5 dangereux n'est introduit.
+- Ce modèle n'implémente **ni** `sceKernelReserveVirtualRange` + commit paresseux, **ni** mapping/zero-fill au premier accès, **ni** les alias GPU/CPU, **ni** les contraintes de `DirectMemoryStart`/fastmem. Il est **impossible de conclure que NS2 démarre** depuis cette CI.
+
 Resolution / test gates:
-1. Host mapping ownership state machine and sparse commit/decommit test across 16KiB native granules, first/last page, cross-page CPU read/write, repeated alloc and no double-free.
+1. Host mapping ownership state machine et **implémentation réelle** du commit/décommit sur granules natives 16K ou blocs 2M, accès à la première/dernière page, CPU read/write transverses, répétition, pas de double-free ; modèle logique seul insuffisant.
 2. Exhaustion and fragmentation behavior, predictable error handling and rollback, plus consistent CPU→GPU and GPU→CPU views; protect source shared with NS1 and use only real compiled overrides.
 3. Real PS5 CMake graph selects all modified sources and headers; run an isolated memory test before a full build.
 4. PS5 startup gate: direct backing no longer asks for 12 GiB physical at once; both NS2 games reach **guest CPU service startup and first GPU frame handoff** before claiming success.

@@ -815,6 +815,31 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #58: shared shader IR bindless Phi propagation is one complete TU
+# plus one header, used by both NS1 and NS2. Never compile old and new passes.
+if(PS5_NATIVE)
+    set(EDEN_R23_PHI_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp")
+    set(EDEN_R23_PHI_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h")
+    set(EDEN_R23_PHI_INCLUDE "${PORT_BUILD_DIR}/r23-shader-phi/include")
+    if(NOT EXISTS "${EDEN_R23_PHI_SOURCE}" OR NOT EXISTS "${EDEN_R23_PHI_HEADER}")
+        message(FATAL_ERROR "R23 #58 maintained shader Phi full-source pair incomplete")
+    endif()
+    configure_file("${EDEN_R23_PHI_HEADER}"
+        "${EDEN_R23_PHI_INCLUDE}/shader_recompiler/frontend/ir/breadth_first_search.h" COPYONLY)
+    get_target_property(eden_r23_phi_units shader_recompiler SOURCES)
+    list(FIND eden_r23_phi_units "ir_opt/texture_pass.cpp" eden_r23_phi_old)
+    if(eden_r23_phi_old LESS 0)
+        message(FATAL_ERROR "R23 #58 native texture pass owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_phi_units "ir_opt/texture_pass.cpp")
+    list(APPEND eden_r23_phi_units "${EDEN_R23_PHI_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_phi_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_PHI_INCLUDE}")
+    message(STATUS "R23 #58: one shared native bindless Phi TU and matched header")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

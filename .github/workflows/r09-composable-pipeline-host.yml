@@ -214,4 +214,15 @@ jobs:
             done
           done
           echo R09_AUTHENTIC_VENDOR_NATIVE_GLSL_EASU_RCAS_SGSR_EDGE_GPU_PASS
+          # One exact full-raster end-to-end 720p→1440p→4K run.
+          # The high-resolution software-Vulkan run is intentionally
+          # limited to the normal SGSR gradient test, not a full sweep.
+          "$out/native_gpu" \
+            "$out/vulkan_fidelityfx_fsr.vert.spv" \
+            "$out/vulkan_fidelityfx_fsr_easu_fp32.frag.spv" \
+            "$out/vulkan_fidelityfx_fsr_rcas_fp32.frag.spv" \
+            "$out/sgsr1_shader.vert.spv" \
+            "$out/sgsr1_shader_mobile.frag.spv" \
+            normal gradient --full720
+          echo R09_AUTHENTIC_PINNED_FSR1_SGSR_GPU_FULL_720P_TO_4K_PASS
           echo R09_HOST_LAVAPIPE_NOT_PS5_NOT_TRAINED_NEURAL_NOT_NATIVE_CPP_OWNER_CALL

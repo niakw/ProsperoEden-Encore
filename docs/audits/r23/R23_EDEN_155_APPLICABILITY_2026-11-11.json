@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 22,
-    "runtime-semantic-review-pending": 29,
+    "runtime-semantic-review-pending": 28,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -60,7 +60,8 @@
     "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
     "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
     "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
-    "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1
+    "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
+    "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1413,9 +1414,9 @@
       "sha": "0e11fe8b5e3d3b563946726ed06cb44b2bf5ccb3",
       "title": "[video_core, settings] readback for nce invalidations (#4490) optimization and nuke toggles (#4502) (#4531)",
       "file_count": 12,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Partially disposed: its GPU readback pieces in video_core/gpu.cpp, rasterizer_interface.h and renderer_vulkan/vk_rasterizer.cpp/h are undone by upstream #47; upstream #88 core/memory and gpu changes also restored. Only remaining settings/Android/Qt configuration semantics need inspection; do not reimport the reverted GPU readback path.",
-      "action": "Audit current PS5 settings consumers separately and confirm no other runtime toggle/ABI change; do not port NCE readback or assume all #57 changes are irrelevant.",
+      "classification": "reviewed-NCE-GPU-readback-reverted-non-native-settings",
+      "scope": "E1 source: #57 changed shared GPU invalidation and introduced TryCacheInvalidation, but the later #47 reverts this whole readback sequence. Before #88 vs after #47 matches exact GPU C++ blobs; only source licence notice remains. Other changes remove obsolete UI/settings controls.",
+      "action": "Do not re-add obsolete NCE GPU readback on PS5 x64. Reference ENCORE_AB_R23_SEMANTIC_SOURCE_PASS20_2026-11-11.md and R23_NCE_GPU_REVERT_NET_PROOF; separate #6 newer shared GPU dirty-page fix remains pending.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",

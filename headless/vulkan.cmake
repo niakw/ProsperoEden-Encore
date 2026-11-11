@@ -1012,6 +1012,16 @@ file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN
 # reconstruct the historical generator oracle and are NOT compiled here.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${EDEN_PORT_DIR}/vulkan_hud.vert" "${EDEN_PORT_DIR}/vulkan_hud.frag")
+# R23 #18 TIR: one native fixed-state compiler owner. The native
+# Vulkan fork includes vk_texture_cache_cost.cpp + its matched header through
+# file(COPY); the shared NS2 ASTC header is selected by the normal native
+# texture cache bridge, not a duplicate local header.
+if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/fixed_pipeline_state.cpp"
+   OR NOT EXISTS "${EDEN_ACTIVE_VULKAN}/include/video_core/renderer_vulkan/vk_texture_cache.h")
+    message(FATAL_ERROR "R23 #18 native mixed-sample source/header missing")
+endif()
+list(REMOVE_ITEM video_sources renderer_vulkan/fixed_pipeline_state.cpp)
+list(APPEND video_sources "${PORT_BUILD_DIR}/fixed_pipeline_state.cpp")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp
     vulkan_common/vulkan_memory_allocator.cpp renderer_vulkan/vk_scheduler.cpp)
 # Spatial FSR1 stock percentage was reversed relative to RCAS stops:

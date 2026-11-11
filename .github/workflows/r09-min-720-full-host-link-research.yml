@@ -1,13 +1,14 @@
 name: R09 Min 720p - ONE research Linux Vulkan native host link
 
-# ONCE on this isolated draft PR workflow file addition only.
-# No PS5 compilation, main/vendor pin change, DLL, weights or private inputs.
-# No regular push trigger and no subsequent unrelated PR changes re-link.
+# Isolated ONE source-triggered research relink. A pull_request paths filter
+# sees the accumulated PR diff and repeats the entire 1358-object build on
+# every new commit, so only the corrected host CMake source path may trigger.
+# Never runs on main and never includes private model, weights or PS5 SDK.
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [feature/dlss-nr-min-rdna2-ps5]
     paths:
-      - '.github/workflows/r09-min-720-full-host-link-research.yml'
+      - 'tools/graphics/r09_host_link_after.cmake'
 
 permissions:
   contents: read
@@ -18,10 +19,6 @@ concurrency:
 
 jobs:
   r09-real-host-link:
-    # EXACT initial one-off source commit ONLY. A PR path filter matches the
-    # entire outstanding diff on later sync events, so without this guard
-    # every unrelated commit would spend another full Eden native link.
-    if: ${{ github.event.pull_request.head.sha == '697a9d779a3c57be5a3a20907777ba398c88e15f' }}
     name: Build Linux Vulkan R09 executable (no private model)
     runs-on: ubuntu-24.04
     timeout-minutes: 75
@@ -118,6 +115,16 @@ jobs:
           if len(targets) < 50:
               raise SystemExit("R09_VULKAN_NATIVE_OBJECT_INVENTORY_INCOMPLETE="
                                + str(len(targets)))
+          # Old full-link run #43022421489 compiled 1356 objects but failed
+          # with unresolved MsaaColorClearShadowPass destructor. Build its
+          # authentic native owner EARLY or fail before 1300 other objects.
+          msaa = [t for t in targets if "msaa_color_shadow_pass.cpp.o" in t]
+          if len(msaa) != 1:
+              raise SystemExit("R09_MSAA_NATIVE_LINK_OWNER_MISSING_OR_DUPLICATE="
+                               + str(len(msaa)))
+          subprocess.run(["ninja", "-C", ".build-r09-linked",
+                          "-j", "2", *msaa], check=True)
+          print("R09_MSAA_REAL_NATIVE_LINK_OWNER_CPP_PASS", flush=True)
           print("R09_LINUX_VULKAN_OBJECTS_SELECTED", len(targets), flush=True)
           # -k 0 gathers independent, real compilation errors in ONE run,
           # rather than retrying a 1600-object full link for each failure.

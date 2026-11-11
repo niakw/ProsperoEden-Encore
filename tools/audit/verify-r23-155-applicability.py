@@ -49,7 +49,11 @@ def validate(root: Path, app: dict | None = None) -> dict:
         categories[label] += 1
     if set(seen) != set(expected):
         raise ValueError("one or more upstream commits are not categorized")
-    if dict(categories) != app["classification_counts"] or sum(categories.values()) != 155:
+    # A frozen zero-decision queue is deliberately recorded as 0 in the
+    # ledger, but Counter omits keys with no matching rows. Normalize only
+    # explicit zero categories; never hide a nonzero category mismatch.
+    if (dict(categories) != {key: count for key, count in app["classification_counts"].items() if count > 0}
+            or sum(categories.values()) != 155):
         raise ValueError("inconsistent applicability class totals")
     # This dated pin is a frozen audit decision, not permission to silently
     # drop pending counts without exact source and owner proof.
@@ -121,7 +125,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "ci-only-ffmpeg-artifact-not-selected-native": 1,
         "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1,
     }
-    if dict(categories) != mandatory:
+    if dict(categories) != {key: count for key, count in mandatory.items() if count > 0}:
         raise ValueError("R23 dated classification changed without reviewed baseline bump")
     # Exact E1 source receipts for newly classified firmware NS/OLSC and
     # two conditional native build-only upstream differences. Neither means

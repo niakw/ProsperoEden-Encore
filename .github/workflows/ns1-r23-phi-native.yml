@@ -1,0 +1,37 @@
+name: NS1 R23 shared bindless Phi native source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-bindless-phi-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-phi-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phi-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Validate exact selected source and shared shader CFG fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "21b69b3aaa2f5a1d9b25c2df75e44e6729547841"
+          python3 -B vendor/tests/ns1_r23_58_bindless_phi.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_phi_units "ir_opt/texture_pass.cpp")' in s
+          assert 'target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_PHI_INCLUDE}")' in s
+          assert Path('vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp').is_file()
+          assert Path('vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h').is_file()
+          print('R23_SHARED_SHADER_PHI_SOURCE_OWNER_PASS one_TU=1 header=1')
+          PY

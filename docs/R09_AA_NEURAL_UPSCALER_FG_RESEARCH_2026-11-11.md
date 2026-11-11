@@ -15,7 +15,7 @@ Date: 2026-11-11. Research-only, PR #43. **PS5 runtime remains OFF.**
 - No general guest-wide TAA or motion/depth history source is qualified.
   FSR 3.1 temporal image reconstruction is not interchangeable with FXAA.
 
-## Proposed independently ordered image-space stages (planner v2)
+## Proposed independently ordered image-space stages (planner v3)
 The `Kind::AntiAlias` stage has unchanged input and output resolution,
 requires a **distinct real** output image + image view, compatible queue,
 producer/consumer barrier, and lifetime until GPU fence retirement.
@@ -50,7 +50,7 @@ A compositor/Preset MUST NOT substitute a fake image, owner, sample-count,
 queue barrier, GPU fence, model weight, or measured VRAM budget.
 
 The serialized, research-only `neural_pipeline_recipe.h` schema is
-**version 2**, so a previous v1 recipe requires explicit migration.
+**version 3**, so previous v1/v2 recipes require explicit migration. Each Original NR / FSR1 / SGSR stage may inherit the existing intensity/sharpness (-1) or use an independent 0–100% value; two identical shader methods with different values are **not** duplicate recipes. No new sharpening shader is introduced.
 It stores logical method/order/resolution and source MSAA selection,
 not driver evidence or Vulkan handles. Actual `Bindings` from a native
 stage owner are mandatory. The complete `Plan` still forces

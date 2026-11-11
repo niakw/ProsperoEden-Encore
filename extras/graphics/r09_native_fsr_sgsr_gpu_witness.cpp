@@ -169,7 +169,6 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
     constexpr VkExtent2D source{128u,72u};
     constexpr VkExtent2D intermediate{256u,144u};
     constexpr VkExtent2D final{512u,288u};
-    VkQueueFamilyProperties qp{};
     std::uint32_t count{};
     vkGetPhysicalDeviceQueueFamilyProperties(h.physical,&count,nullptr);
     std::vector<VkQueueFamilyProperties> queues(count);

@@ -14,6 +14,7 @@ on:
       - 'extras/graphics/dlss_nr_min_720_plan_emit.h'
       - 'extras/graphics/dlss_nr_min_720_route_trial.h'
       - 'extras/graphics/dlss_nr_min_graph_geometry.h'
+      - 'extras/graphics/test_r09_min_720_readback_dimensions.cpp'
   workflow_dispatch:
 
 permissions:
@@ -60,3 +61,29 @@ jobs:
             python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
           test "$(git rev-parse HEAD:vendor)" = "22b69d6053db41b74edac2633c012f925b84f69e"
           echo R09_MIN_720_HOST_PLUS_POST_NEURAL_FSR_RENDERER_CPP_SYNTAX_ONLY_NO_PS5_BUILD
+
+      - name: Test research vendor #42 readback sizes and actual native C++ owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          pinned=22b69d6053db41b74edac2633c012f925b84f69e
+          candidate=b26075ab190460014cbffd6c744faf897088375c
+          test "$(git rev-parse HEAD:vendor)" = "$pinned"
+          test "$(git -C vendor rev-parse HEAD)" = "$pinned"
+          # Detached CI-only vendor PR #42 checkout; the engine gitlink
+          # remains unchanged. No PS5 build, runtime activation or weights.
+          git -C vendor -c credential.helper= fetch --quiet --depth=1 origin "$candidate"
+          git -C vendor checkout --quiet --detach "$candidate"
+          test "$(git -C vendor rev-parse HEAD)" = "$candidate"
+          for cxx in g++ clang++; do
+            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+              -fsanitize=undefined -fno-sanitize-recover=all \
+              -Ivendor/encore-active/eden-vulkan/include \
+              extras/graphics/test_r09_min_720_readback_dimensions.cpp \
+              -o "/tmp/r09-readback-geometry-${cxx}"
+            UBSAN_OPTIONS=halt_on_error=1 "/tmp/r09-readback-geometry-${cxx}"
+          done
+          R09_MIN_720_READBACK_OWNER_DUAL=1 \
+            python3 -B tools/graphics/check-rdna2-neural-vulkan-tus.py
+          test "$(git rev-parse HEAD:vendor)" = "$pinned"
+          echo R09_MIN_720_VENDOR_42_REAL_NATIVE_OWNERS_AND_HOST_GATE_PASS_NO_GPU_NO_PS5

@@ -163,12 +163,15 @@ float HalfToFloat(std::uint16_t v){
     return sign*std::ldexp(float(mantissa+1024u),int(exponent)-25);
 }
 void RunNative(Host& h,const std::array<const char*,5u>& shaders,
-               bool edge,bool gradient){
+               bool edge,bool gradient,bool full720){
     // 1280×720->1440p->4K needs real PS5 qualification; use smaller
     // but exact ratio on software Vulkan for non-toy shader correctness.
-    constexpr VkExtent2D source{128u,72u};
-    constexpr VkExtent2D intermediate{256u,144u};
-    constexpr VkExtent2D final{512u,288u};
+    const VkExtent2D source=full720?VkExtent2D{1280u,720u}:
+                                      VkExtent2D{128u,72u};
+    const VkExtent2D intermediate=full720?VkExtent2D{2560u,1440u}:
+                                            VkExtent2D{256u,144u};
+    const VkExtent2D final=full720?VkExtent2D{3840u,2160u}:
+                                     VkExtent2D{512u,288u};
     std::uint32_t count{};
     vkGetPhysicalDeviceQueueFamilyProperties(h.physical,&count,nullptr);
     std::vector<VkQueueFamilyProperties> queues(count);
@@ -202,10 +205,13 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
       for(unsigned x=0;x<source.width;++x){
         const auto base=(std::size_t(y)*source.width+x)*4u;
         // Uniform primary oracle + optional nonuniform edge-pattern fixture.
-        input[base]=gradient?0.2f+(x>=64u?0.36f:0.f)+
-                             float(x)*0.0013f:0.3f;
-        input[base+1u]=gradient?0.2f+float(y)*0.004f:0.45f;
-        input[base+2u]=gradient?0.25f+float(x+y)*0.0015f:0.6f;
+        input[base]=gradient?0.2f+
+            (x>=source.width/2u?0.36f:0.f)+
+            0.17f*float(x)/float(source.width):0.3f;
+        input[base+1u]=gradient?0.2f+
+            0.28f*float(y)/float(source.height):0.45f;
+        input[base+2u]=gradient?0.25f+
+            0.18f*float(x+y)/float(source.width+source.height):0.6f;
         input[base+3u]=1.f;
     }
     const auto upload=h.NewBuffer(input.size()*sizeof(float),
@@ -436,16 +442,19 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
     }
     std::cout<<"R09_AUTHENTIC_FSR1_EASU_RCAS_SGSR_GRAPHICS_GPU_PASS "
              <<"edge="<<edge<<" gradient="<<gradient
+             <<" full_720_to_4k="<<full720
              <<" actual_vendor_spirv=YES Khronos_errors=0"
                 " PS5=NO learned_neural=NO native_C++_owners=NO\n";
 }
 } // namespace
 
 int main(int argc,char** argv){
-    if(argc!=8){
+    const bool full720=argc==9&&
+        std::string(argv[8])=="--full720";
+    if(argc!=8&&!full720){
         std::cerr<<"Usage: native_witness <fsr.vert.spv> <easu.frag.spv> "
             "<rcas.frag.spv> <sgsr.vert.spv> <sgsr.frag.spv> "
-            "<normal|edge> <constant|gradient>\n";
+            "<normal|edge> <constant|gradient> [--full720]\n";
         return 2;
     }
     const std::string edge_arg=argv[6],data_arg=argv[7];
@@ -455,7 +464,7 @@ int main(int argc,char** argv){
         Host h;
         h.Init();
         RunNative(h,{argv[1],argv[2],argv[3],argv[4],argv[5]},
-                  edge_arg=="edge",data_arg=="gradient");
+                  edge_arg=="edge",data_arg=="gradient",full720);
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"R09_NATIVE_VENDOR_SHADER_GPU_FAIL "<<e.what()<<"\n";

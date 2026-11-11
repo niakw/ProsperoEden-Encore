@@ -2861,6 +2861,26 @@ if(PS5_NATIVE)
     message(STATUS "Encore C01 RomFS builder exact selected lifetime fix")
 endif()
 
+# R23 #131: PS5-only selected full controller applet TU from reviewed upstream.
+# Original Eden vendor remains immutable; fail if the selected owner moves.
+if(PS5_NATIVE)
+    set(eden_r23_controller_original "frontend/applets/controller.cpp")
+    set(eden_r23_controller_fixed "${EDEN_PORT_DIR}/r23_controller_applet_ps5.cpp")
+    if(NOT EXISTS "${eden_r23_controller_fixed}")
+        message(FATAL_ERROR "R23 #131 maintained controller applet missing")
+    endif()
+    get_target_property(eden_r23_controller_sources core SOURCES)
+    list(FIND eden_r23_controller_sources "${eden_r23_controller_original}"
+        eden_r23_controller_original_index)
+    if(eden_r23_controller_original_index LESS 0)
+        message(FATAL_ERROR "R23 #131 core owner changed; stop")
+    endif()
+    list(REMOVE_ITEM eden_r23_controller_sources "${eden_r23_controller_original}")
+    list(APPEND eden_r23_controller_sources "${eden_r23_controller_fixed}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_controller_sources}")
+    message(STATUS "Encore R23 #131: preserved-controller fallback selected")
+endif()
+
 # R23 #146 / #4406: one maintained native header for Maxwell channel cache.
 # The pinned vendor snapshot is immutable; do not copy a generated patch over it.
 if(PS5_NATIVE)

@@ -9,12 +9,22 @@ on:
       - "headless/r23_bcat_delivery_cache_file_ps5.cpp"
       - "headless/r23_ips_layer_ps5.cpp"
       - "headless/r23_audren_debug_ps5.cpp"
+      - "headless/r23_controller_applet_ps5.cpp"
+      - "tools/audit/check-r23-controller-applet-host.py"
       - "headless/CMakeLists.txt"
       - "tools/audit/check-r23-f2i-bcat-host.py"
       - "tools/audit/check-r23-ips-audren-host.py"
       - "tools/audit/check-r23-ips-long-line-host.py"
       - "tools/audit/check-r23-viewport-host.py"
       - "tools/prepare-vulkan-port.py"
+      - ".github/workflows/ab-ns1-r23-host.yml"
+  push:
+    branches:
+      - dev/ab-ns1-corrective-batches-2026-11-10
+    paths:
+      - "headless/r23_controller_applet_ps5.cpp"
+      - "tools/audit/check-r23-controller-applet-host.py"
+      - "headless/CMakeLists.txt"
       - ".github/workflows/ab-ns1-r23-host.yml"
   workflow_dispatch:
 
@@ -43,5 +53,6 @@ jobs:
           python3 -B tools/audit/check-r23-ips-long-line-host.py
           python3 -B tools/audit/check-r23-viewport-host.py
           python3 -B tools/audit/check-r23-channel-state-host.py
-          echo "7 reviewed R23 source changes (F2I, BCAT, IPS EOF, IPS >256-byte line, audren, viewport and GPU channel init): isolated source-extracted ASan/UBSan pass." >> "$GITHUB_STEP_SUMMARY"
+          python3 -B tools/audit/check-r23-controller-applet-host.py
+          echo "R23 source checks plus #131 extracted real applet method tested with mock HID under sanitizers. No PS5 test." >> "$GITHUB_STEP_SUMMARY"
           echo "No native PS5 ELF, real Maxwell header compiler include receipt, actual shader guest behavior, or BCAT title-level test." >> "$GITHUB_STEP_SUMMARY"

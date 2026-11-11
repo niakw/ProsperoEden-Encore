@@ -2101,10 +2101,13 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     # PUBLIC on core is NOT sufficient if another target's own includes put
     # pristine source/eden/src (4-core hardware_properties.h) first.
     # Force the same 6-core definition before each independent consumer's
-    # include root, and compile the real header probe in those targets.
+    # include root, and compile the real header probe in every independent KProcess consumer.
     target_include_directories(audio_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
-    foreach(eden_cpu6_abi_consumer IN ITEMS core audio_core video_core)
+    # hid_core has independent build units that also call KProcess::GetMemory.
+    # It must see the same member offsets as the constructing core target.
+    target_include_directories(hid_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    foreach(eden_cpu6_abi_consumer IN ITEMS core audio_core video_core hid_core)
         target_sources(${eden_cpu6_abi_consumer} PRIVATE
             "${EDEN_PORT_DIR}/ps5_cpu6_abi_probe.cpp")
     endforeach()

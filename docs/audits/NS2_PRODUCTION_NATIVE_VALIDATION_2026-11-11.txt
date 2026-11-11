@@ -1,0 +1,5 @@
+Eden Encore unified PS5 NS1/NS2 production native validation — 11 November 2026
+Production source integration (engine): 53a43f02f30fbe4e9772a2e5ce692aa6182b8066
+Production vendor submodule: f8f5d8ee3a94a4202886a40badb5c0203d05da30
+Included: R2 staging owners, R3 maintained GOB16, R4 active N60 volume + GPU retirement, sparse 12GiB guest physical backend, R457 six-core ABI, launcher.
+No separate research-mode feature build. Request exactly one canonical native PS5 application build from current main. No automatic release. No cached R457 replay.

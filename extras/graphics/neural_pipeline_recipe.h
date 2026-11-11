@@ -10,7 +10,9 @@
 
 namespace Eden::Graphics::PipelineComposer {
 
-inline constexpr std::uint32_t kRecipeVersion=1u;
+// Research schema v2 adds source raster-AA provenance. v1 must be migrated
+// explicitly rather than silently reinterpreting serialized MSAA settings.
+inline constexpr std::uint32_t kRecipeVersion=2u;
 struct RecipeStage {
     Kind kind{Kind::Spatial};
     int method{};
@@ -22,6 +24,7 @@ struct RecipeStage {
 struct Recipe {
     std::uint32_t version{kRecipeVersion};
     Extent source_extent{1280u,720u};
+    RasterAa source_raster_aa{RasterAa::None};
     std::array<RecipeStage,kMaxSteps> stages{};
     std::size_t count{};
 };
@@ -73,6 +76,13 @@ struct StageEvidence {
 };
 struct Bindings {
     std::uint64_t guest_image{},guest_view{};
+    // Source MSAA is measured at actual guest raster/resolve time, not
+    // claimed by an untrusted saved preset or inferred from the AA menu.
+    bool raster_resolve_and_owner_verified{};
+    bool raster_guest_attachment_safe{};
+    bool raster_format_and_sample_count_supported{};
+    bool raster_fences_retired{};
+    bool raster_gpu_budget_measured{};
     std::array<StageEvidence,kMaxSteps> stages{};
 };
 [[nodiscard]] constexpr bool BindRecipe(const Recipe& recipe,
@@ -85,6 +95,12 @@ struct Bindings {
     result.source_extent=recipe.source_extent;
     result.source_image=native.guest_image;
     result.source_view=native.guest_view;
+    result.source_raster_aa=recipe.source_raster_aa;
+    result.source_raster_resolve_and_owner_verified=native.raster_resolve_and_owner_verified;
+    result.source_raster_guest_attachment_safe=native.raster_guest_attachment_safe;
+    result.source_raster_format_and_sample_count_supported=native.raster_format_and_sample_count_supported;
+    result.source_raster_fences_retired=native.raster_fences_retired;
+    result.source_raster_gpu_budget_measured=native.raster_gpu_budget_measured;
     result.count=recipe.count;
     for(std::size_t i=0u;i<recipe.count;++i){
         const auto& spec=recipe.stages[i];

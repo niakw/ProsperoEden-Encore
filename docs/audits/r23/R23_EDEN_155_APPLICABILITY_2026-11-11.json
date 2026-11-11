@@ -5,14 +5,15 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 107,
+    "runtime-semantic-review-pending": 106,
     "asset-and-translation-package-review": 8,
     "not-applicable-to-native-runtime-source": 24,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 4,
     "native-build-or-dependency-review": 4,
     "test-only-upstream": 1,
-    "upstream-runtime-then-reverted-equivalent": 2
+    "upstream-runtime-then-reverted-equivalent": 2,
+    "reviewed-observability-only-no-NS1-behavioral-port": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1298,9 +1299,9 @@
       "sha": "b7c1ded1593c3c2dc58625824a04e30a63fe80c7",
       "title": "[file_sys] added log for newer keys needed error (#4519)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-observability-only-no-NS1-behavioral-port",
+      "scope": "Exact official diff adds only LOG_ERROR before the unchanged ErrorMissingKeyAreaKey status and return on a missing NCA key. Relevant diagnosis but not a missing functional decrypt path.",
+      "action": "No C++ source port required for NS1 correctness. Optional logging-only improvement tracked separately; do not claim any key/decryption fix or compiled console proof.",
       "paths": [
         "src/core/file_sys/content_archive.cpp"
       ]

@@ -154,6 +154,12 @@ def main()->None:
                 fake.parent.mkdir(parents=True,exist_ok=True)
                 fake.write_text('int cpu6_stub=1;\n')
             cmake_text='cmake_minimum_required(VERSION 3.20)\nproject(cpu6_selector LANGUAGES CXX)\nset(PORT_ROOT "@ROOT@")\nset(PORT_BUILD_DIR "@OUT@")\nset(PS5_NATIVE @ENABLED@)\nset(EDEN_REVIEWED_DUAL_NPDM @DUAL@)\nadd_library(core STATIC dummy.cpp\n    hle/kernel/global_scheduler_context.cpp\n    arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)\nadd_library(dynarmic STATIC dummy.cpp)\nadd_library(eden-headless STATIC dummy.cpp)\n'
+            # The shipping CPU6 block also guards the independent KProcess
+            # consumers. Declare them in this miniature CMake graph; otherwise
+            # a valid source change fails because the fixture omits real targets.
+            cmake_text += ('add_library(audio_core STATIC dummy.cpp)\n'
+                           'add_library(video_core STATIC dummy.cpp)\n'
+                           'add_library(hid_core STATIC dummy.cpp)\n')
             cmake_text=cmake_text.replace(
                 'arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)',
                 '"${EDEN_G11_A32_SELECTED}"\n    "${EDEN_N76_NATIVE_JIT_SOURCE}")')

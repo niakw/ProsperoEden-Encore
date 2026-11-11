@@ -10,6 +10,8 @@ on:
       - '.github/workflows/r09-composable-pipeline-host.yml'
       - 'extras/graphics/neural_pipeline_composer.h'
       - 'extras/graphics/test_neural_pipeline_composer.cpp'
+      - 'extras/graphics/neural_pipeline_recipe.h'
+      - 'extras/graphics/test_neural_pipeline_recipe.cpp'
   workflow_dispatch:
 
 permissions:
@@ -38,14 +40,17 @@ jobs:
           set -euo pipefail
           mkdir -p .build-local/r09-composable
           for cxx in g++ clang++; do
-            "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
-              -fsanitize=undefined -fno-sanitize-recover=all \
-              -Iextras/graphics \
-              extras/graphics/test_neural_pipeline_composer.cpp \
-              -o ".build-local/r09-composable/pipeline-${cxx}"
-            UBSAN_OPTIONS=halt_on_error=1 \
-              ".build-local/r09-composable/pipeline-${cxx}"
-            echo "R09_COMPOSABLE_VIDEO_GRAPH_CXX_PASS compiler=${cxx}"
+            for test_name in test_neural_pipeline_composer test_neural_pipeline_recipe; do
+              "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
+                -fsanitize=undefined -fno-sanitize-recover=all \
+                -Iextras/graphics \
+                "extras/graphics/${test_name}.cpp" \
+                -o ".build-local/r09-composable/${test_name}-${cxx}"
+              UBSAN_OPTIONS=halt_on_error=1 \
+                ".build-local/r09-composable/${test_name}-${cxx}"
+              echo "R09_COMPOSABLE_VIDEO_GRAPH_CXX_PASS ${test_name} compiler=${cxx}"
+            done
           done
           echo R09_ORDERED_NEURAL_SPATIAL_COMPOSE_FG_PRESENT_CONTRACTS_PASS
+          echo R09_VERSIONED_SEQUENCE_WITH_REAL_GPU_BINDING_GATE_PASS
           echo R09_COMPOSABLE_PS5_RUNTIME_DEFAULT_OFF_NO_GPU_EXECUTION

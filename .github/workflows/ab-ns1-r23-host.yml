@@ -8,9 +8,7 @@ on:
       - "tools/audit/check-r23-channel-state-host.py"
       - "headless/r23_bcat_delivery_cache_file_ps5.cpp"
       - "headless/r23_audren_debug_ps5.cpp"
-      - "headless/r23_controller_applet_ps5.cpp"
       - "headless/r23_am_frontend_applets_ps5.cpp"
-      - "headless/r23_am_library_applet_creator_ps5.cpp"
       - "tools/audit/check-r23-controller-applet-host.py"
       - "headless/CMakeLists.txt"
       - "tools/audit/check-r23-f2i-bcat-host.py"
@@ -24,9 +22,7 @@ on:
       - dev/ab-ns1-corrective-batches-2026-11-10
     paths:
       - "headless/CMakeLists.txt"
-      - "headless/r23_controller_applet_ps5.cpp"
       - "headless/r23_am_frontend_applets_ps5.cpp"
-      - "headless/r23_am_library_applet_creator_ps5.cpp"
       - "headless/r23_audren_debug_ps5.cpp"
       - "headless/r23_channel_state_cache_ps5.h"
       - "tools/audit/check-r23-*.py"

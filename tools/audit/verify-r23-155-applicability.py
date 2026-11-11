@@ -56,7 +56,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 40,
+        "runtime-semantic-review-pending": 33,
+        "reviewed-std-overwrite-coallocation-refactor-deferred": 1,
+        "reviewed-lock-contention-policy-deferred-native": 1,
+        "reviewed-depth-sampler-fallback-preserved-test-open": 1,
         "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64": 1,
         "reviewed-Android-only-LA-EOW-SPIRV-bloom-option": 1,
         "reviewed-ReShade-applet-postprocess-not-native-selected": 1,
@@ -89,7 +92,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 18,
+        "verified-relevant-source-gap-awaiting-native-proof": 22,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -403,6 +406,32 @@ def validate(root: Path, app: dict | None = None) -> dict:
                        "9686e4fc047f78d0863df3ccb5149c8ecc9dc484"):
         if source_pin not in doc15:
             raise ValueError("R23 pass15 pinned source proof missing")
+    # R23 pass16: deliberately separate actual runtime gaps from optional
+    # allocation / scheduler / depth sampler policy refactors.
+    pass16 = {
+        17: "verified-relevant-source-gap-awaiting-native-proof",
+        48: "verified-relevant-source-gap-awaiting-native-proof",
+        96: "reviewed-std-overwrite-coallocation-refactor-deferred",
+        103: "verified-relevant-source-gap-awaiting-native-proof",
+        119: "verified-relevant-source-gap-awaiting-native-proof",
+        124: "reviewed-lock-contention-policy-deferred-native",
+        130: "reviewed-depth-sampler-fallback-preserved-test-open",
+    }
+    for idx, category in pass16.items():
+        item = by_index[idx]
+        if item["classification"] != category or not item.get("source_evidence_level", "").startswith("E1"):
+            raise ValueError(f"R23 pass16 source decision #${idx} drifted")
+    pass16_doc = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS16_2026-11-11.md").read_text()
+    for receipt in (
+        "1588eca6168bdcaf04229d6aa4115c3acb624081",
+        "dcc6261e5c79d30f083426d39251d417aa65b017",
+        "8c1f566301495d7c05b674b20771a04755072b8f",
+        "827944fb08c02cd0d3ebec9f253c23c7a5cdbd96",
+        "0af4a7bd0ee5b31af7c9cc49eb613352c4ab74b6",
+        "97c11bebf775b2139f87f3a8d22e4d06446df14e",
+    ):
+        if receipt not in pass16_doc:
+            raise ValueError("R23 pass16 pinned owner evidence missing")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -572,7 +601,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 40
+    assert validate(root)["runtime_semantic_cases_pending"] == 33
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -581,7 +610,7 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
-    for case in (29, 32, 49, 54, 58, 63, 74, 76, 83, 89, 98, 108, 130, 135, 150):
+    for case in (16, 29, 32, 47, 49, 54, 58, 63, 74, 76, 83, 89, 95, 98, 102, 108, 118, 123, 129, 130, 135, 150):
         bad = copy.deepcopy(current)
         bad["individual_commits"][case]["classification"] = "runtime-semantic-review-pending"
         try:

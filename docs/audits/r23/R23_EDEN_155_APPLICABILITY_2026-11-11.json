@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 18,
-    "runtime-semantic-review-pending": 40,
+    "verified-relevant-source-gap-awaiting-native-proof": 22,
+    "runtime-semantic-review-pending": 33,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -53,7 +53,10 @@
     "reviewed-Android-only-LA-EOW-SPIRV-bloom-option": 1,
     "reviewed-ReShade-applet-postprocess-not-native-selected": 1,
     "source-equivalent-native-GPU-worker-stop-lifecycle": 1,
-    "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64": 1
+    "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64": 1,
+    "reviewed-std-overwrite-coallocation-refactor-deferred": 1,
+    "reviewed-lock-contention-policy-deferred-native": 1,
+    "reviewed-depth-sampler-fallback-preserved-test-open": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -690,15 +693,16 @@
       "sha": "c769b33e01882a04375c24406150097a2e124ece",
       "title": "[dynarmic] A64: Flush deferred emits on long basic blocks and align page table sign bit (#4659)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream corrects PageTable::SIGN_BIT from 57 to 55, matching top bit of 44-bit ATTRIBUTE_MASK shifted 12. Pinned common/page_table.h still says 45+12=57, while ARM64 Dynarmic deferred emission changes do not run on PS5 x64. Source gap affects page-table pointer metadata/host A32/x64 consumer and must be paired with #136 sign-extension reasoning.",
+      "action": "Stage scoped page SIGN_BIT vendor hunk, validate 55-bit host pointer mask and A32/PS5 native page-table consumers, selected include provenance and real title memory faults. Do not cherry-pick ARM64 emitter.",
       "paths": [
         "src/common/page_table.h",
         "src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp",
         "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64.cpp",
         "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream c769b33e01882a04375c24406150097a2e124ece, pinned common/page_table.h Git blob 1588eca6168bdcaf04229d6aa4115c3acb624081; no native x64 compile/PS5 test."
     },
     {
       "index": 18,
@@ -1280,13 +1284,14 @@
       "sha": "0731f40f4d86227f05da3fffbc44831065b53a8a",
       "title": "[video_core/host1x] VP9 Video Playback Fixes (#4590)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream #48 moves VP9 segmentation and per-frame entropy probabilities into Vp9PictureInfo and switches WriteSegmentation to current_frame_info. Pinned host1x/vp9.cpp still reads current_picture_info.segmentation directly and late GMMU entropy for current frame, with no seg_tree_probs in pinned codec_types.h. Relevant to native video playback but not proof of boot-crash cause.",
+      "action": "Qualify paired VP9 struct ABI and decoder changes, segmentation enabled/temporal map and frame replay, host video unit and PS5 libavcodec integration. Avoid partial one-file port.",
       "paths": [
         "src/video_core/host1x/codec_types.h",
         "src/video_core/host1x/codecs/vp9.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 0731f40f4d86227f05da3fffbc44831065b53a8a, pinned vp9.cpp blob dcc6261e5c79d30f083426d39251d417aa65b017 and codec_types.h b2f80c822a7fa8cafb86fc395dcded5d517edda0; no video decode test."
     },
     {
       "index": 49,
@@ -3069,9 +3074,9 @@
       "sha": "bebc19da3253f13ceb5abfe8560cdbdc32ea7d8a",
       "title": "[common] Use `std::make_unique_for_overwrite<T>` in ScratchBuffer, remove polyfill (#4432)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-std-overwrite-coallocation-refactor-deferred",
+      "scope": "Upstream #96 replaces Common::make_unique_for_overwrite<T[]> with C++20 std library API and new/free shared pointer allocation with make_shared, also changes constructor accessibility. Pinned ScratchBuffer still compiles with polyfill; this is broader allocation/lifetime/FS change, not a mandatory PS5 performance or crash correction.",
+      "action": "Keep current polyfill and FS allocation semantics until C++ toolchain warning/benchmark proves need. Future port must compile full common and VFS TUs, profile allocations/RefList ownership and run guest file path tests.",
       "paths": [
         "src/common/CMakeLists.txt",
         "src/common/make_unique_for_overwrite.h",
@@ -3079,7 +3084,8 @@
         "src/core/file_sys/vfs/vfs_real.cpp",
         "src/core/file_sys/vfs/vfs_real.h",
         "src/core/hle/service/psc/ovln/receiver_service.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream bebc19da3253f13ceb5abfe8560cdbdc32ea7d8a, pinned scratch_buffer.h Git blob 8c1f566301495d7c05b674b20771a04755072b8f; no allocator performance proof."
     },
     {
       "index": 97,
@@ -3173,13 +3179,14 @@
       "sha": "38df54edfe7b861d0a0a1ee305836049a39d42ef",
       "title": "[common/sparse_large_vector] decommit unused pages + fix first page in zeroed region (#4471)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream #103 corrects first-page IsCommittedPage index (start bytes rather than start/sizeof(T)), and adds page DecommitVectorPage on whole-page zero. Pinned common/sparse_large_vector.h still has old first-page expression and no DecommitPage, and .cpp lacks OS decommit implementation. Native FreeBSD MADV_FREE and PS5 page-ownership semantics require scrutiny.",
+      "action": "Treat indexing bug and optional decommit as separable acceptance gates; first-page unit across T sizes and offsets, free/recommit readback, decommit race, PS5 SDK madvise support and memory pressure. No blind host-only port of MADV_FREE.",
       "paths": [
         "src/common/sparse_large_vector.cpp",
         "src/common/sparse_large_vector.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 38df54edfe7b861d0a0a1ee305836049a39d42ef, pinned sparse_large_vector.h 827944fb08c02cd0d3ebec9f253c23c7a5cdbd96 and .cpp ce6455a235f28fb7ec6acebb1fd107bb82c41c93; no native allocator test."
     },
     {
       "index": 104,
@@ -3439,15 +3446,16 @@
       "sha": "f7b8ade40ec28b35309de0f86391ee7507affa36",
       "title": "[hle] stpl:sys, stpl:u initial implementation (#4435)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream #119 adds firmware>=23 stpl:sys and stpl:u NGC-derived services with IPC NotSupported, plus missing FSP 820/830/831 command table entries and Account::Uid. Current pinned ngc.cpp registers ngc:u but no stpl services; it's a firmwares-23 HLE API gap, not a generic NS1 title crash fix.",
+      "action": "Qualify precise 23.0.0 FW version branching and required service stubs/IPC wire format, Account Uid struct and FSP commands before port; test legacy firmware and 23.0.0 on PS5, retain missing features as explicit stubs.",
       "paths": [
         "src/core/hle/service/acc/profile_manager.h",
         "src/core/hle/service/filesystem/fsp/fsp_srv.cpp",
         "src/core/hle/service/ipc_helpers.h",
         "src/core/hle/service/ngc/ngc.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream f7b8ade40ec28b35309de0f86391ee7507affa36, pinned ngc.cpp blob 0af4a7bd0ee5b31af7c9cc49eb613352c4ab74b6; no PS5 firmware IPC test."
     },
     {
       "index": 120,
@@ -3506,15 +3514,16 @@
       "sha": "ac35358b3ffed74aaac56b0e99b09e81bb60d2e1",
       "title": "[common] Replace `Common::SpinLock` with `std::mutex` (#4436)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-lock-contention-policy-deferred-native",
+      "scope": "Upstream #124 substitutes std::mutex for Common::SpinLock in KThread and KSlabHeap and removes local SpinLock type. This changes scheduling/contended thread blocking and construction constexpr semantics. Not an unconditionally safe optimization for native PS5 guest scheduler without measurements.",
+      "action": "Retain original spinlock while runtime audit continues; reopen on CPU load/lock contention measurements, tested scheduler reentrancy and real PS5 multi-core context switch stress. Avoid hiding this as source equivalence.",
       "paths": [
         "src/common/CMakeLists.txt",
         "src/common/spin_lock.h",
         "src/core/hle/kernel/k_slab_heap.h",
         "src/core/hle/kernel/k_thread.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream ac35358b3ffed74aaac56b0e99b09e81bb60d2e1, pinned SpinLock and KThread uses reviewed; no native perf/scheduler trace."
     },
     {
       "index": 125,
@@ -3589,13 +3598,14 @@
       "sha": "fa4e7c699243dae407a09fc3c54e7a0a822329b5",
       "title": "[vk_texture_cache] drop depth comparison sampler fallback (#4408)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-depth-sampler-fallback-preserved-test-open",
+      "scope": "Upstream #130 removes depth-comparison sampler fallback and VariantKey bit. PS5 maintained Vulkan vk_texture_cache_cost.cpp retains drop_depth_comparison and its safety behavior when a sampled depth image cannot support comparison; removal may change Vulkan validation/rendering and should not be ported solely for fewer sampler variants.",
+      "action": "Retain native fallback; measure Vulkan depth sampling and image compatibility with/without comparison across NS1 titles, check active Vulkan owner and parent header ABI. Reopen when device/driver policy changes.",
       "paths": [
         "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
         "src/video_core/renderer_vulkan/vk_texture_cache.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream fa4e7c699243dae407a09fc3c54e7a0a822329b5, maintained Vulkan cost owner blob 97c11bebf775b2139f87f3a8d22e4d06446df14e and pinned vk_texture_cache.h blob 5b8c4287c3804c557fc333767533484b901a4132; no native graphics trace."
     },
     {
       "index": 131,

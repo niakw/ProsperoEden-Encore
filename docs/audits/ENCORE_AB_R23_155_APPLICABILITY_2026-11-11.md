@@ -220,3 +220,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 15 — four source-reviewed decisions (11 Nov)
 
 [Exact pin and semantic report](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS15_2026-11-11.md): #90 scope-excludes ARM64 NCE-only NRO patch on x64; #33 x64 ConstantPool, #109 frontend lifecycle, #136 Dynarmic x64 page-table addressing remain source-proven gaps. **40** generic semantic reviews, **18** gaps, **2** scoped policies, **17** native changed-header receipts and **7** corrective batches remain.
+
+## R23 pass16 — seven remaining upstream semantic cases (11 Nov)
+
+[Source pin and decision matrix](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS16_2026-11-11.md). Four source gaps added (#17 PageTable sign bit, #48 VP9 segmentation probabilities, #103 sparse page indexing and decommit, #119 FW23 stpl services). Three source-reviewed changes retained for targeted policy/benchmark checks (#96 C++ overwrite+FS allocation, #124 lock contention, #130 depth comparison sampler fallback). **33 generic semantic reviews**, **22 source gaps**, **5 scoped policy/refactor records**, **17** header receipts and **7** corrective batches remain. No release/console qualification.

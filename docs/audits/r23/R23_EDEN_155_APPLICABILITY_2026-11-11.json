@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 24,
-    "runtime-semantic-review-pending": 26,
+    "verified-relevant-source-gap-awaiting-native-proof": 26,
+    "runtime-semantic-review-pending": 24,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -2768,9 +2768,9 @@
       "sha": "67bada77f8a43a90da2e94e89b8e7da73c256989",
       "title": "[video_core] Skip fragment shaders with known issues on non-NVIDIA drivers (#4503)",
       "file_count": 7,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 source-confirmed: native RADV shader IR / maintained pipeline cache lacks upstream HasBrokenPattern fragment-drop policy; not a safe blind port.",
+      "action": "Compare IR pattern and shader output on PS5 RADV; avoid unconditional drop/null pipelines and test fallback, shader/SPIR-V/present combinations. See pass22.",
       "paths": [
         "src/common/settings.h",
         "src/qt_common/config/shared_translation.cpp",
@@ -2779,7 +2779,9 @@
         "src/shader_recompiler/ir_opt/rescaling_pass.cpp",
         "src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
         "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream diff + current original/maintained owner blobs; no native ELF/device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS22_2026-11-11.md"
     },
     {
       "index": 81,
@@ -3870,9 +3872,9 @@
       "sha": "099547b3f4578bf1fc0b39988aefbe2d54b540cc",
       "title": "[android] Add LSFG UI to quick settings (#4393)",
       "file_count": 26,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 source-confirmed: native selected LSFG processing, cache variants and Vulkan presentation storage lifecycle differ from upstream, despite Android-only UI title.",
+      "action": "Compare native versioned Vulkan/LSFG owners, shader FP16/FP32 support, dynamic storage allocation and frame lifetime; test on/off/resize and full FG graph. See pass22.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/dialogs/QuickSettings.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
@@ -3900,7 +3902,9 @@
         "src/video_core/renderer_vulkan/vk_blit_screen.cpp",
         "src/video_core/renderer_vulkan/vk_present_manager.cpp",
         "src/video_core/renderer_vulkan/vk_present_manager.h"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream diff + current original/maintained owner blobs; no native ELF/device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS22_2026-11-11.md"
     },
     {
       "index": 145,

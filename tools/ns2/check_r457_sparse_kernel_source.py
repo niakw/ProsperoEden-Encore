@@ -17,6 +17,18 @@ def read(path): return (root/path).read_text()
 cmake=read("headless/CMakeLists.txt")
 kernel_rel="vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"
 kernel=read(kernel_rel)
+# Preserve every upstream kernel behavior except the four PS5 residency
+# precommit guards. A new unreviewed kernel semantic delta blocks admission.
+import re
+baseline=read("vendor/sources/eden/src/core/hle/kernel/k_memory_manager.cpp")
+guarded=(r"^#if defined\(PS5_NATIVE\) && "
+         r"defined\(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING\)\n"
+         r"[\s\S]*?^#endif\n")
+assert len(re.findall(guarded,kernel,flags=re.MULTILINE))==4
+stripped=re.sub(guarded,"",kernel,flags=re.MULTILINE)
+stripped=stripped.replace("#include <new>\n#include <limits>\n","")
+normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
+assert normalize(stripped)==normalize(baseline), "kernel semantics drift"
 assert "option(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING" in cmake
 assert 'EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING "Research-only 12GiB NS2 sparse direct backing" OFF)' in cmake
 assert kernel_rel.replace("vendor/","") in cmake

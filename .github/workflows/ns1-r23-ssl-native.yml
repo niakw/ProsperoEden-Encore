@@ -1,0 +1,38 @@
+name: NS1 R23 coherent SSL native source owners (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-ssl-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-ssl-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ssl-source-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check isolated vendor pin and two compiled SSL source owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "ecc8a181f1e2505ffe84261141b09170c595cf0a"
+          python3 -B vendor/tests/ns1_r23_120_ssl_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(FIND eden_r23_ssl_units' in s
+          assert 'list(REMOVE_ITEM eden_r23_ssl_units "hle/service/ssl/${eden_r23_ssl_unit}")' in s
+          assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_R23_SSL_OVERLAY}")' in s
+          r=Path('vendor/encore-active/eden-core/src/core/hle/service/ssl')
+          assert all((r/x).is_file() for x in ('ssl.cpp','ssl_backend_openssl.cpp','ssl_backend.h'))
+          print('NS1_SSL_NATIVE_SOURCE_AND_HEADER_OWNERS_PASS two_tus=2')
+          PY

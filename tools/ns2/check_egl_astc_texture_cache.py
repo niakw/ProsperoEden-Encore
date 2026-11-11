@@ -103,21 +103,20 @@ if current_vendor == r4_pin:
         "R4 modified N60 owner outside reviewed native candidate", r4_sha
     )
     for addition in (
-        "#include <algorithm>\\n",
-        "#include <iterator>\\n",
-        "#include <span>\\n",
-        "#include <type_traits>\\n",
-        '#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)\\n'
-        '#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"\\n'
-        '#endif\\n',
-        "namespace Vulkan { class TextureCacheRuntime; }\\n\\n",
+        "#include <algorithm>\n",
+        "#include <iterator>\n",
+        "#include <span>\n",
+        "#include <type_traits>\n",
+        '#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)\n'
+        '#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"\n'
+        '#endif\n',
+        "namespace Vulkan { class TextureCacheRuntime; }\n\n",
     ):
-        addition = addition.replace("\\\\n", "\\n")
         assert legacy_tex.count(addition) == 1, ("R4 preamble drift", addition)
         legacy_tex = legacy_tex.replace(addition, "", 1)
-    start = ("#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)\\n"
-             "    // Vulkan-only candidate, isolated from shared NS1 and OpenGL template instantiations.\\n")
-    stop = "\\n#endif\\n    const auto result = GetBlitImages(dst, src, copy);"
+    start = ("#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)\n"
+             "    // Vulkan-only candidate, isolated from shared NS1 and OpenGL template instantiations.\n")
+    stop = "\n#endif\n    const auto result = GetBlitImages(dst, src, copy);"
     assert legacy_tex.count(start) == legacy_tex.count(stop) == 1, "R4 BlitImage block drift"
     before, rest = legacy_tex.split(start, 1)
     candidate, after = rest.split(stop, 1)

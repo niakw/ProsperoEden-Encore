@@ -119,6 +119,37 @@ int main(){
     fg_then_compose.steps[2].processes_real_and_generated=false;
     Reject(fg_then_compose,R::GeneratedFramesNotProcessed);
 
+    // Every A4K/Original engine with all 7x7 ordered spatial pairs
+    // and each FG method. The first upscaler can be BEFORE the neural
+    // engine; both later filters may repeat and operate at 4K.
+    // This is strictly CPU topology/ownership evidence, not GPU FPS.
+    unsigned order_matrix=0u;
+    for(int neural=1;neural<=4;++neural)
+      for(int before=0;before<=6;++before)
+        for(int after=0;after<=6;++after)
+          for(int fg_method=1;fg_method<=3;++fg_method){
+          const E neural_extent=neural<=3?p1440:p720;
+          auto c=MakeChain(p360,{
+              Make(K::Spatial,before,p720,1),
+              Make(K::Neural,neural,neural_extent,2),
+              Make(K::Spatial,after,p4k,3),
+              Make(K::Spatial,4,p4k,4),
+              Make(K::ComposeRealFrame,0,p4k,5),
+              Make(K::FrameGeneration,fg_method,p4k,6),
+              End(p4k)});
+          Accept(c,p4k,3u,true,true);
+          ++order_matrix;
+        }
+    assert(order_matrix==588u);
+    // A build may declare many stages but may not alias an earlier
+    // VkImage/VkImageView even if the current stage has moved on.
+    auto stale_reuse=MakeChain(p720,{
+        Make(K::Spatial,1,p1440,1),
+        Make(K::Spatial,2,p4k,2),
+        Make(K::Spatial,4,p4k,3),End(p4k)});
+    stale_reuse.steps[2].image=stale_reuse.steps[0].image;
+    Reject(stale_reuse,R::MissingNativeVkImageAndView);
+
     // Shape, nonduplicated model and denoiser ordering failures.
     Reject(MakeChain(p1440,{Make(K::Neural,4,p1440,1),End(p1440)}),
            R::NeuralInputNot720);
@@ -193,6 +224,7 @@ int main(){
     std::cout<<"R09_COMPOSABLE_VIDEO_GRAPH_HOST_PASS "
                 "spatial_only=YES neural_after_spatial=YES "
                 "repeated_spatial=YES post_FG_spatial=CONDITIONAL "
-                "a4k_spatial_fg_matrix=63 unsafe_orderings=REJECTED "
+                "a4k_spatial_fg_matrix=63 ordered_permutations="<<order_matrix
+             <<" unsafe_orderings=REJECTED "
                 "ps5_runtime=OFF\n";
 }

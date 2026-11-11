@@ -1,0 +1,34 @@
+name: A/B NS1 C01 RomFS destructor host qualification
+
+on:
+  pull_request:
+    paths:
+      - "headless/c01_romfs_builder_ps5.cpp"
+      - "headless/CMakeLists.txt"
+      - "tools/audit/check-c01-romfs-destructor-host.py"
+      - ".github/workflows/ab-ns1-c01-romfs-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  romfs-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout corrective PR head and pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+      - name: Check exact source and execute destructor on 256KiB stack under sanitizers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "22b69d6053db41b74edac2633c012f925b84f69e"
+          python3 -B tools/audit/check-c01-romfs-destructor-host.py
+          echo "C01 RomFS source-extracted destructor: 32,768 owning nodes and 256 KiB pthread stack under ASan/UBSan." >> "$GITHUB_STEP_SUMMARY"
+          echo "Full native RomFS Build(), PS5 ELF and guest tests are not certified." >> "$GITHUB_STEP_SUMMARY"

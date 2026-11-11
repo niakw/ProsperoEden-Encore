@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 69,
+        "runtime-semantic-review-pending": 68,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -66,7 +66,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
-        "native-build-or-dependency-review": 6,
+        "native-build-or-dependency-review": 5,
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
@@ -83,6 +83,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "upstream-opus-ffmpeg-migration-reverted": 2,
         "source-equivalent-native-PS5-sink-volume-lifetime": 1,
         "verified-absent-GPU-null-initialization-candidate": 1,
+        "reviewed-include-only-no-native-behavioral-port": 1,
+        "ci-only-ffmpeg-artifact-not-selected-native": 1,
     }
     if dict(categories) != mandatory:
         raise ValueError("R23 dated classification changed without reviewed baseline bump")
@@ -92,6 +94,32 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or any(by_index[i]["classification"] != "runtime-semantic-review-pending"
                    for i in (30, 123))):
         raise ValueError("semantically guarded source cases silently reclassified")
+    # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
+    # FFmpeg artifact. Neither alters the PS5 native runtime contract.
+    if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
+            or by_index[79]["paths"] != [
+                "src/core/hle/service/bcat/backend/backend.h",
+                "src/hid_core/resources/npad/npad_types.h",
+                "src/input_common/helpers/joycon_protocol/joycon_types.h",
+                "src/input_common/helpers/joycon_protocol/poller.cpp"]):
+        raise ValueError("R23 #79 includes-only upstream source proof changed")
+    if (by_index[86]["classification"] != "ci-only-ffmpeg-artifact-not-selected-native"
+            or by_index[86]["paths"] != ["cpmfile.json"]):
+        raise ValueError("R23 #86 FFmpeg CI package path changed")
+    source_deps = json.loads((root / "tools/deps.json").read_text())
+    native_ffmpeg = [i for i in source_deps["items"] if i["name"] == "ffmpeg"]
+    if (len(native_ffmpeg) != 1 or
+            "FFmpeg/FFmpeg/archive/c7b5f1537d" not in native_ffmpeg[0]["url"]):
+        raise ValueError("Native FFmpeg source provenance changed; reopen R23 #86")
+    # Android-marketed #144 modifies shared Vulkan/frame-generation code;
+    # it must NOT be misclassified as Android-only without source comparison.
+    if (by_index[144]["classification"] != "runtime-semantic-review-pending"
+            or "src/video_core/frame_gen/lossless_dll.cpp" not in by_index[144]["paths"]
+            or "src/video_core/renderer_vulkan/vk_present_manager.cpp" not in by_index[144]["paths"]):
+        raise ValueError("R23 #144 native framegen change falsely excluded")
+    # #123 Windows roots also refactors the non-Windows sanitizer path.
+    if by_index[123]["classification"] != "runtime-semantic-review-pending":
+        raise ValueError("R23 #123 shared path sanitizer semantic change falsely excluded")
     # #93: selected PS5 sparse physical memory commits fail-stop rather than
     # upstream mprotect; source equivalence is not a PS5 device test.
     if by_index[93]["classification"] != "source-equivalent-native-PS5-sparse-commit-failstop":
@@ -208,7 +236,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 69
+    assert validate(root)["runtime_semantic_cases_pending"] == 68
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

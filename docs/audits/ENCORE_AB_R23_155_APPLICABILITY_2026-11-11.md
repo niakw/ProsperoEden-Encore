@@ -4,8 +4,10 @@
 
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/shared still open | **69** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| Native build/dependency | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Runtime NS1/shared still open | **68** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native build/dependency | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Include-only C++ portability (#79) | **1** | E1; aucun changement de fonction exécutable, compilation PS5 restant à prouver |
+| FFmpeg CI upstream-only (#86) | **1** | E1; runtime FFmpeg source pin séparé, pas de changement native ABI |
 | Staged host fixes | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Declared native Dynarmic x64 source-equivalent fixes (E1 only) | **3** | Source-level #117/#122/#125 matched; #136 remains open; no JIT execution/depfile proof |
 | IPSwitch long-line full source staged, untested at current HEAD | **1** | Source E1 prepared in corrective PR #46; no new exact-source-HEAD host proof |
@@ -30,7 +32,7 @@
 | NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| **Total** | **155** | **69 avis runtime encore ouverts** |
+| **Total** | **155** | **68 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 
@@ -166,4 +168,4 @@ Voir [les deux décisions source exactes](ENCORE_AB_R23_IPS_LONG_LINE_AND_HLE_MS
 
 ## 11 Nov — autres distinctions de compatibilité compilateur
 
-La [comparaison #115 MSVC et #118 PageTable](ENCORE_AB_R23_MSVC_PAGETABLE_COMPILE_ONLY_2026-11-11.md) vérifie les diffs exacts : des casts source/MSVC et trois spécificateurs `constexpr` retirés, sans nouvelle opération runtime pour le chemin compilateur PS5 actuel. Il reste **69** revues sémantiques; aucune preuve E4 n'est déduite de cette exclusion fonctionnelle.
+La [comparaison #115 MSVC et #118 PageTable](ENCORE_AB_R23_MSVC_PAGETABLE_COMPILE_ONLY_2026-11-11.md) vérifie les diffs exacts : des casts source/MSVC et trois spécificateurs `constexpr` retirés, sans nouvelle opération runtime pour le chemin compilateur PS5 actuel. Il reste **68** revues sémantiques; aucune preuve E4 n'est déduite de cette exclusion fonctionnelle.

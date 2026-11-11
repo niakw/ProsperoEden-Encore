@@ -1,0 +1,42 @@
+name: NS1 R23 applet SGSR skip and z-order source qualification
+on:
+  push:
+    branches:
+      - research/ns1-r23-applet-sgsr-overlay-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/vulkan_present_layer_r24.cpp"
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-applet-sgsr.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  applet-sgsr-host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Native applet stack bypass, source-owned z-index, sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "e2b30d2a9169300f481d1d15ba33b02852fc733c"
+          python3 -B vendor/tests/ns1_r23_97_overlay_z.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/vulkan_present_layer_r24.cpp').read_text()
+          c=Path('headless/CMakeLists.txt').read_text()
+          assert s.count('LayerStackId::Recording')==1
+          assert 'if (!is_applet) {' in s
+          assert s.index('if (!is_applet) {') < s.index('sgsr->Draw')
+          assert 'core/hle/service/nvnflinger/hwc_layer.h' in s
+          assert 'list(REMOVE_ITEM eden_r23_window_units "hle/service/am/window_system.cpp")' in c
+          assert Path('vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp').is_file()
+          print('R23_APPLET_SGSR_NATIVE_OWNER_HOST_PASS zorder=1 bypass=1')
+          PY
+          echo 'Host tests only; PS5 Vulkan/guest applet evidence not yet available' >> "$GITHUB_STEP_SUMMARY"

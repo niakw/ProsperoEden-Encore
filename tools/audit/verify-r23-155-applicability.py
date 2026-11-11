@@ -54,15 +54,18 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # This dated pin is a frozen audit decision, not permission to silently
     # drop pending counts without exact source and owner proof.
     mandatory = {
-        "runtime-semantic-review-pending": 105,
+        "runtime-semantic-review-pending": 97,
         "asset-and-translation-package-review": 8,
-        "not-applicable-to-native-runtime-source": 25,
+        "not-applicable-to-native-runtime-source": 26,
         "staged-host-source-fix": 5,
-        "not-applicable-PS5-x64-execution": 4,
-        "native-build-or-dependency-review": 4,
+        "not-applicable-PS5-x64-execution": 6,
+        "native-build-or-dependency-review": 5,
         "test-only-upstream": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
         "reviewed-observability-only-no-NS1-behavioral-port": 1,
+        "source-equivalent-current-openssl-native-build": 1,
+        "upstream-opus-ffmpeg-migration-reverted": 2,
+        "verified-absent-GPU-null-initialization-candidate": 1,
     }
     if dict(categories) != mandatory:
         raise ValueError("R23 dated classification changed without reviewed baseline bump")
@@ -72,6 +75,17 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or any(by_index[i]["classification"] != "runtime-semantic-review-pending"
                    for i in (30, 93, 123, 141))):
         raise ValueError("semantically guarded source cases silently reclassified")
+    # Additional reviewed source-level regressions and de-duplication decisions.
+    for i in (142, 148):
+        if by_index[i]["classification"] != "upstream-opus-ffmpeg-migration-reverted":
+            raise ValueError(f"R23 upstream Opus migration pair #{i} was silently reintroduced")
+    if by_index[138]["classification"] != "source-equivalent-current-openssl-native-build":
+        raise ValueError("R23 SSL platform source decision changed without review")
+    if by_index[146]["classification"] != "verified-absent-GPU-null-initialization-candidate":
+        raise ValueError("R23 GPU init candidate proof changed without review")
+    for i in (30, 93, 123, 141):
+        if by_index[i]["classification"] != "runtime-semantic-review-pending":
+            raise ValueError(f"R23 common/native semantic case #{i} was closed without proof")
     if by_index[44]["classification"] != "staged-host-source-fix":
         raise ValueError("viewport is a proposed host fix, not tested native behavior")
     return {
@@ -89,7 +103,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 105
+    assert validate(root)["runtime_semantic_cases_pending"] == 97
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

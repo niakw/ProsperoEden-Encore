@@ -5,6 +5,7 @@ on:
     paths:
       - "docs/audits/patchsets/**"
       - "tools/audit/verify-ab-ns1-corrective-patchsets.py"
+      - "tools/audit/check-c04-page-signbits-host.py"
       - ".github/workflows/ab-ns1-corrective-patchsets.yml"
   workflow_dispatch:
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - ".github/workflows/ab-ns1-corrective-patchsets.yml"
       - "tools/audit/verify-ab-ns1-corrective-patchsets.py"
+      - "tools/audit/check-c04-page-signbits-host.py"
       - "docs/audits/patchsets/**"
 
 permissions:
@@ -53,7 +55,7 @@ jobs:
                      not row["tested_on_ps5"] for row in note["units"].values())
           with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as out:
               out.write("## A/B NS1 patchset integrity\n")
-              out.write("C01/C02/C04 and R23 viewport/path-root/glslang/FW23 NS cmd23 git apply --check passed with exact pinned vendor Git blobs.\n")
+              out.write("C01/C02/C04, including A32 sign-extension and PageTable bit55 patches, plus R23 context checks passed with exact pinned vendor Git blobs.\n")
               out.write("C03 RADV three-source SHA provenance confirmed. R23 viewport exists in generator only, not active maintained native rasterizer.\n")
               out.write("**No vendor source edits, compiler invocation, ELF or PS5 test.**\n")
           PY

@@ -12,7 +12,7 @@ sources = {
 }
 for name, digest in sources.items():
     data = (root / "vendor" / name).read_bytes()
-    h = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\\0" + data).hexdigest()
+    h = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
     assert h == digest, (name, h)
 
 page = (root / "vendor/sources/eden/src/common/page_table.h").read_text()

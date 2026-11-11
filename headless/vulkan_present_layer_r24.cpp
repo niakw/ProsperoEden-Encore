@@ -254,6 +254,11 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                 configured,extracted);
             neural_model_failed=true;
         }else {
+            // A post-neural FSR error must NEVER leave its partially
+            // recorded image view selected for presentation. The neural
+            // owner is retained until this frame slot's GPU tick retires.
+            const VkImageView preserved_guest_view=source_image_view;
+            const auto preserved_guest_crop=crop_rect;
             try {
                 // Allocated on the same Vulkan device, on the exact slot
                 // whose previous GPU tick was waited for above.
@@ -424,10 +429,13 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                             auto* fsr=std::get_if<FSR>(&sr_filter);
                             if(!fsr)throw std::runtime_error(
                                 "R09 post-neural FSR owner missing");
-                            source_image_view=fsr->Draw(
+                            const VkImageView upscaled=fsr->Draw(
                                 device,scheduler,image_index,
                                 target,*neural_views[image_index],
                                 neural_extent,crop_rect);
+                            if(!upscaled)throw std::runtime_error(
+                                "R09 FSR EASU/RCAS output view missing");
+                            source_image_view=upscaled;
 #endif
                         }
                     }else {
@@ -445,6 +453,8 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
                 LOG_WARNING(Render_Vulkan,
                     "R09 DLSS-NR session failed safely: {}",error.what());
                 neural_model_failed=true;
+                source_image_view=preserved_guest_view;
+                crop_rect=preserved_guest_crop;
             }
         }
     }

@@ -777,7 +777,10 @@ endif()
                 decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
                 assert decl_end < point
                 reviewed = maintained[:point] + maintained[call_end:]
-                reviewed = reviewed[:decl_start] + reviewed[decl_end:]
+                # The research declaration adds one blank separator after
+                # #endif. Remove it too, preserving exact historical parity.
+                assert reviewed[decl_end:decl_end+1] == "\n", owner
+                reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
                 reviewed = reviewed.replace("#include <new>\n", "", 1)
                 maintained = reviewed
         assert maintained == baseline, (

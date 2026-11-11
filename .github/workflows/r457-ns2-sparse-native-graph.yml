@@ -27,7 +27,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Restore real cached native PS5 graph
+      - name: Restore exact cached native compile graph
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |

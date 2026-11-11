@@ -36,6 +36,9 @@ def main():
     vendor_rows=[r for r in db if Path(r["file"]).resolve() in variants]
     if len(vendor_rows)!=1: raise RuntimeError(f"Expected one real PTE TU, got {len(vendor_rows)}")
     selected.append(("native_guest_pte",vendor_rows[0]))
+    # Qualify existing source owners first even when the new sparse TU has a
+    # target-SDK header problem; never stop before recording their verdict.
+    selected.sort(key=lambda pair: pair[0] == "ns2_sparse_guest.cpp")
     subprocess.run(["ninja","-C",str(native),"-t","targets","all"],
                    check=True,stdout=subprocess.DEVNULL,timeout=30)
     for label,row in selected:

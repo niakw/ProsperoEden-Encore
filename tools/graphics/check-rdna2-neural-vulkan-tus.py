@@ -35,12 +35,13 @@ R09_MIN_DUAL=os.environ.get("R09_MIN_VIT_NATIVE_TU_DUAL","")
 R09_FSWIN_DUAL=os.environ.get("R09_FSWIN_NATIVE_TU_DUAL","")
 R09_HOST_720_DUAL=os.environ.get("R09_MIN_720_HOST_RUNNER_DUAL","")
 R09_PRESENT_720_DUAL=os.environ.get("R09_MIN_720_PRESENT_TU_DUAL","")
+R09_A4K_OWNER_DUAL=os.environ.get("R09_A4K_NATIVE_OUTPUT_DUAL","")
 assert all(v in ("","1") for v in
            (R09_MIN_DUAL,R09_FSWIN_DUAL,R09_HOST_720_DUAL,
-            R09_PRESENT_720_DUAL))
+            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL))
 assert sum(v=="1" for v in
            (R09_MIN_DUAL,R09_FSWIN_DUAL,R09_HOST_720_DUAL,
-            R09_PRESENT_720_DUAL))<=1
+            R09_PRESENT_720_DUAL,R09_A4K_OWNER_DUAL))<=1
 if R09_MIN_DUAL=="1":
     chosen={"nr_rdna2_frame_session.cpp","nr_rdna2_vit_run.cpp",
             "nr_rdna2_vit_block.cpp","nr_rdna2_vit_projection_stage.cpp",
@@ -55,7 +56,7 @@ elif R09_FSWIN_DUAL=="1":
             "nr_rdna2_fswin_chain.cpp"}
     assert chosen.issubset(FILES)
     FILES=tuple(sorted(chosen))
-elif R09_HOST_720_DUAL=="1" or R09_PRESENT_720_DUAL=="1":
+elif R09_HOST_720_DUAL=="1" or R09_PRESENT_720_DUAL=="1" or R09_A4K_OWNER_DUAL=="1":
     # Compile either the host runner or real PS5 presenter in both macro
     # states: syntax-only, no execution or runtime opt-in.
     FILES=()
@@ -253,6 +254,12 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     elif R09_PRESENT_720_DUAL=="1":
         tasks=(("__present_layer_r09__","r0"),
                ("__present_layer_r09__","r1"))
+    elif R09_A4K_OWNER_DUAL=="1":
+        # Requires ONLY the separate vendor A4K image+view research API.
+        # Test script must run in an ephemeral vendor checkout; the
+        # production pin and branch remain unchanged.
+        tasks=(("__present_layer_r09__","a0"),
+               ("__present_layer_r09__","a1"))
     else:
         tasks=tuple((name,None) for name in
                     (*FILES,"__present_layer_r09__","__r09_full_gpu_host__"))
@@ -262,7 +269,9 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
                 if name=="__present_layer_r09__" else
                 ROOT/"tools/graphics/r09_full_gpu_host.cpp"
                 if name=="__r09_full_gpu_host__" else ACTIVE/name)
-        flags=(["-DEDEN_R09_MIN_720_PRESENT_RESEARCH="+mode[1:]]
+        flags=(["-DEDEN_R09_A4K_DUAL_IMAGE_RESEARCH="+mode[1:]]
+                if mode is not None and mode.startswith("a")
+                else ["-DEDEN_R09_MIN_720_PRESENT_RESEARCH="+mode[1:]]
                if mode is not None and mode.startswith("r")
                else ["-DEDEN_R09_MIN_720_HOST_EXPERIMENTAL="+mode[1:]]
                if mode is not None and mode.startswith("h")
@@ -298,5 +307,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     elif R09_PRESENT_720_DUAL=="1":
         assert len(results)==2
         print("R09_MIN_720_REAL_POST_NEURAL_FSR_PRESENTER_MACRO_OFF_ON_SYNTAX_PASS",flush=True)
+    elif R09_A4K_OWNER_DUAL=="1":
+        assert len(results)==2
+        print("R09_A4K_NATIVE_X2_POST_SPATIAL_PRESENTER_MACRO_OFF_ON_SYNTAX_PASS",flush=True)
     else:
         print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

@@ -24,6 +24,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Verify exact canonical FTP and release ZIP naming before costly cache replay
+        run: |
+          set -euo pipefail
+          python3 -B tools/ci/check-ftp-archive-root.py --self-test
+          echo "P5_REPLAY_ZIP_NAME_CONTRACT_PASS"
+
       - name: Restore completed objects from twelfth failed native build
         id: restore
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

@@ -63,7 +63,7 @@ La commande GCC du run natif #42942150990 utilise `-DHAVE_FUNC_ATTRIBUTE_PACKED=
 
 ### Propriété des sauvegardes OpenGL/PSBC
 
-- `eeb75f3b` déplace le `trap cleanup EXIT` avant toute modification du cross-file PS5 ; les sauvegardes des deux fichiers PSBC utilisent le PID Bash `$`.
+- `eeb75f3b` déplace le `trap cleanup EXIT` avant toute modification du cross-file PS5 ; les sauvegardes des deux fichiers PSBC utilisent le PID de processus Bash `$`.
 - Le test hôte `tools/check-psbc-noreturn-host.py` exécute désormais **la véritable fonction de nettoyage extraite du script**, contre des fichiers temporaires, en simulant un échec précoce et un échec après les modifications PSBC. Il vérifie les quatre restaurations et la disparition de tous les backups et du répertoire de staging.
 - [Fast gate #42989520055](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42989520055) : **SUCCESS** au commit `6cdf2278`. Cela ne constitue pas une construction complète de Mesa/PSBC ni un test physique.
 
@@ -97,3 +97,26 @@ Le journal [#42924336057](https://github.com/niakw/ProsperoEden-Encore/actions/r
 2. Garder `main` et `vendor` inchangés tant que le correctif de packaging et les tests ciblés ne sont pas validés sur branche.
 3. **Aucune release publiée** ; le brouillon R2 reste séparé et sans assets.
 4. Actualiser ce rapport et les preuves après exécution des CI de branche ; ne pas écrire « tous warnings réglés » avant validation.
+
+
+## Registre de sortie — qualification hôte du correctif P5
+
+**Référence** : PR #47, correctifs P5, packaging, SDL/ALSA et PSBC ; branche distincte de `main`, `vendor` inchangé.
+
+| Bloc | État | Preuve / limite |
+| --- | --- | --- |
+| Métadonnées de crash et `link.map` | **Host qualifié** | Manifeste, SHA-256 et cohérence des symboles testés ; le ZIP R457 historique reste inchangé |
+| ImageMagick 6/7 et profil PNG | **Host qualifié** | Fallback convertisseur et CRC PNG vérifiés hors réseau |
+| SDL/ALSA ciblé PS5 | **Host qualifié** | Contrat CMake et chemin audio PS5 vérifiés ; disparition réelle du warning non encore mesurée |
+| Mesa SPIR-V / PSBC `NORETURN` | **Host qualifié** | Témoin GCC et restauration de vrais fichiers temporaires sur échecs précoce/tardif ; build natif non effectué |
+| Version Opus épinglée | **Host qualifié** | Identité `1.6.1-6-ga3f0ec02b342` et extraction CMake testées ; configuration PS5 réelle non exécutée |
+| Déclencheurs du fast gate | **Qualifié** | Les 13 chemins de fichiers sont identiques sur événements PR et `push` depuis `dfdce22c` |
+| Traductions / polices console | **Inventorié, non clos** | 125 alertes heuristiques sur 31 catalogues, sept locales à vérifier avec les polices PS5 |
+| Mesa NIR hors `NORETURN` | **Inventorié, non clos** | Risque d'affichage tronqué de `nir_print.c`, aucun patch tiers |
+| NS2 Ampere | **Renvoyé à la recherche NS2** | 35 coordonnées distinctes, aucun cast ajouté ni changement vendor |
+
+**CI de référence, commit `d6822e57`** : [P5 #42990957077](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42990957077), [P0–P4 #42990957151](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42990957151) et [sécurité #42990957113](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42990957113) ont tous terminé **SUCCESS**.
+
+**Contrôle ciblé de la correction suivante `dfdce22c`** : [P5 push #42993272464](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42993272464) et [P5 PR #42993280057](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42993280057) **SUCCESS**. Les autres CI de cette tête restent à qualifier séparément selon leurs verdicts, jamais déduits de l'ancienne tête.
+
+**Verdict** : l'audit et les garde-fous hôtes P5 sont terminés sur la branche. Les vérifications natives manquantes ne sont pas assimilées à un succès, ni prétextes à lancer maintenant un nouveau build global ; elles seront effectuées lors d'une prochaine configuration/construction native planifiée. **Aucun merge, aucune release publiée et aucune validation console prétendue.**

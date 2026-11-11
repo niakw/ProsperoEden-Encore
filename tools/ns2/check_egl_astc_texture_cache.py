@@ -86,6 +86,43 @@ assert impl_native == native_block(
     (VULKAN / "texture_cache.h").read_text(), impl_footer
 ), "N60 ASTC native implementation ABI diverged from shared Vulkan owner"
 legacy_tex = tex.replace(impl_native + "\n", "", 1)
+# R4 research deliberately modifies the real N60 TextureCache. Preserve the
+# immutable N60 SHA gate by removing ONLY the exact, SHA-pinned R4 additions
+# before replaying the historical parity test. Other edits still fail.
+r4_pin = "51af925b6f89f2750a1eea3406f615eb22f687af"
+current_vendor = subprocess.check_output([
+    "git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"
+], text=True).strip()
+if current_vendor == r4_pin:
+    assert "EDEN_RESEARCH_NS2_R4_VOLUME" in CMAKE
+    assert "option(EDEN_RESEARCH_NS2_R4_VOLUME" in CMAKE
+    r4_sha = subprocess.check_output([
+        "git", "hash-object", str(OWNER / "texture_cache.h")
+    ], text=True).strip()
+    assert r4_sha == "e1feabd488455632315f1d788b73718a6b01bbde", (
+        "R4 modified N60 owner outside reviewed native candidate", r4_sha
+    )
+    for addition in (
+        "#include <algorithm>\\n",
+        "#include <iterator>\\n",
+        "#include <span>\\n",
+        "#include <type_traits>\\n",
+        '#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)\\n'
+        '#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"\\n'
+        '#endif\\n',
+        "namespace Vulkan { class TextureCacheRuntime; }\\n\\n",
+    ):
+        addition = addition.replace("\\\\n", "\\n")
+        assert legacy_tex.count(addition) == 1, ("R4 preamble drift", addition)
+        legacy_tex = legacy_tex.replace(addition, "", 1)
+    start = ("#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)\\n"
+             "    // Vulkan-only candidate, isolated from shared NS1 and OpenGL template instantiations.\\n")
+    stop = "\\n#endif\\n    const auto result = GetBlitImages(dst, src, copy);"
+    assert legacy_tex.count(start) == legacy_tex.count(stop) == 1, "R4 BlitImage block drift"
+    before, rest = legacy_tex.split(start, 1)
+    candidate, after = rest.split(stop, 1)
+    assert "copy_native_volume_slice" in candidate and "IsGraphicsCurrent" in candidate
+    legacy_tex = before + "    const auto result = GetBlitImages(dst, src, copy);" + after
 legacy_sha = subprocess.run(
     ["git", "hash-object", "--stdin"], input=legacy_tex,
     text=True, check=True, capture_output=True

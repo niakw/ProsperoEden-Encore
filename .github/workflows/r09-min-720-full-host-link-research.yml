@@ -42,7 +42,7 @@ jobs:
             echo "R09_APT_DNS_HOST_OK host=$host"
           done
   r09-real-host-link:
-    needs: apt-network-preflight:
+    needs: apt-network-preflight
     name: Build Linux Vulkan R09 executable (no private model)
     runs-on: ubuntu-24.04
     timeout-minutes: 75

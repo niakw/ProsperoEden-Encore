@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 82,
+    "runtime-semantic-review-pending": 80,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -15,8 +15,10 @@
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
     "verified-relevant-source-gap-awaiting-native-proof": 6,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
+    "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
     "source-equivalent-hle-handler-revert-cosmetic-only": 2,
+    "source-implemented-native-PS5-ZBIC-NSO": 1,
     "source-equivalent-native-PS5-sparse-commit-failstop": 1,
     "source-equivalent-pinned-savedata-post-revert": 1,
     "source-equivalent-current-openssl-native-build": 1,
@@ -1412,9 +1414,9 @@
       "sha": "58968bd1274d8ebb1f159ad31500dde8d74abea6",
       "title": "[core] Support block-compressed NSZ and XCZ (#4552)",
       "file_count": 18,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ",
+      "scope": "Upstream #60 adds block-compressed NCZ and XCZ. Encore current headless/ncz.h (blob 85ced346) already parses NCZBLOCK section headers (bounded block exponent and counts), maps per-block offsets and reads block-compressed NSZ/XCZ on demand; headless/ncz.cpp (blob 7deff2ea) mounts the representation as NCA VFS and has a solid-stream fallback. Native headless/CMakeLists.txt explicitly selects maintained NCZ source replacements in core and links headless/ncz.cpp; zstd reuse is explicit.",
+      "action": "No reimport of upstream NCZBLOCK module or parallel decoder. Qualify actual positive/negative malformed NCZ/XCZ, update+DLC, ciphers, FS edges and PS5 I/O in native/dev tests; source-level intent already implemented and selected.",
       "paths": [
         "cpmfile.json",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
@@ -1434,7 +1436,8 @@
         "src/qt_common/game_list/worker.cpp",
         "src/qt_common/qt_common.cpp",
         "src/yuzu/main_window.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 native source implementation + CMake selection, no E3/E4 device"
     },
     {
       "index": 61,
@@ -2944,9 +2947,9 @@
       "sha": "815325cceca948030cf476dce7c46d901e4e4df5",
       "title": "[loader] add ZBIC (zstd variant) NSO decompression support for Switch 22.0+ (#4482)",
       "file_count": 7,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-implemented-native-PS5-ZBIC-NSO",
+      "scope": "Upstream #92 adds Switch 22+ ZBIC compressed NSO support. Current PS5 headless/CMakeLists.txt selects reviewed complete maintained vendor/encore-active/eden-core/src/core/loader/nso.cpp (blob e938e017) instead of pinned loader/nso.cpp. Maintained loader reads ((nso_header.flags >> 7) & 1) and calls Common::Compression::DecompressDataZBIC for compressed segments; headless/zbic_compression.cpp (blob b980c2b5) embeds pinned ZBIC zstd implementation from .deps/zbic-11b08f27/src, selected by native CMake. This is the same dispatch/decompression intent as upstream #92; no proof of device runtime compatibility claimed.",
+      "action": "No second ZBIC port or dependency version bump; existing native source implementation already has the correct byte-format dispatch. Preserve native NSO/ExeFS error and decompression tests and current selected source receipts; E3/E4 required for device acceptance.",
       "paths": [
         "cpmfile.json",
         "externals/CMakeLists.txt",
@@ -2955,7 +2958,8 @@
         "src/common/zbic_compression.h",
         "src/core/loader/nso.cpp",
         "src/core/loader/nso.h"
-      ]
+      ],
+      "source_evidence_level": "E1 native source implementation + CMake selection, no E3/E4 device"
     },
     {
       "index": 93,

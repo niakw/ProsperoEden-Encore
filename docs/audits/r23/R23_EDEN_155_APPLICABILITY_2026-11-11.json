@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 78,
+    "runtime-semantic-review-pending": 76,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -13,6 +13,7 @@
     "native-build-or-dependency-review": 6,
     "test-only-upstream": 1,
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
+    "source-equivalent-GPU-NCE-readback-reverted": 2,
     "verified-relevant-source-gap-awaiting-native-proof": 7,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
@@ -1231,9 +1232,9 @@
       "sha": "b4d5760014176bfc42b60b7dc5661240c97c8e3b",
       "title": "[video_core] Revert 4490 and 4531 (#4584)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-GPU-NCE-readback-reverted",
+      "scope": "Net exact Git compare between parent of #88 (f8b7651104...) and after #47 (b4d5760014...) for all six code files touched by #88/#47: five files are exact Git blobs (core/memory.cpp, video_core/gpu.cpp/h, renderer_vulkan/vk_rasterizer.cpp/h), sixth rasterizer_interface.h differs only by an added three-line Eden SPDX notice, no executable source changes. Upstream NCE readback experiment was subsequently removed. Does not cover ancillary settings of #57.",
+      "action": "Do not import reverted GPU/NCE readback code into PS5 x64; preserved baseline executable source for inspected six TUs. #57 settings/Android toggles remain separately pending; PS5 GPU tests not claimed.",
       "paths": [
         "src/core/memory.cpp",
         "src/video_core/gpu.cpp",
@@ -1241,7 +1242,8 @@
         "src/video_core/rasterizer_interface.h",
         "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
         "src/video_core/renderer_vulkan/vk_rasterizer.h"
-      ]
+      ],
+      "source_evidence_level": "E1 individual six-file Git blob equality plus SPDX-only difference"
     },
     {
       "index": 48,
@@ -1368,8 +1370,8 @@
       "title": "[video_core, settings] readback for nce invalidations (#4490) optimization and nuke toggles (#4502) (#4531)",
       "file_count": 12,
       "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "scope": "Partially disposed: its GPU readback pieces in video_core/gpu.cpp, rasterizer_interface.h and renderer_vulkan/vk_rasterizer.cpp/h are undone by upstream #47; upstream #88 core/memory and gpu changes also restored. Only remaining settings/Android/Qt configuration semantics need inspection; do not reimport the reverted GPU readback path.",
+      "action": "Audit current PS5 settings consumers separately and confirm no other runtime toggle/ABI change; do not port NCE readback or assume all #57 changes are irrelevant.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
@@ -2867,14 +2869,15 @@
       "sha": "8e2d26c272681d6cafe6d5e703dafdc8200c7b65",
       "title": "[video_core] buffer cache readback for nce invalidations (#4490)",
       "file_count": 3,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-GPU-NCE-readback-reverted",
+      "scope": "Net exact Git compare between parent of #88 (f8b7651104...) and after #47 (b4d5760014...) for all six code files touched by #88/#47: five files are exact Git blobs (core/memory.cpp, video_core/gpu.cpp/h, renderer_vulkan/vk_rasterizer.cpp/h), sixth rasterizer_interface.h differs only by an added three-line Eden SPDX notice, no executable source changes. Upstream NCE readback experiment was subsequently removed. Does not cover ancillary settings of #57.",
+      "action": "Do not import reverted GPU/NCE readback code into PS5 x64; preserved baseline executable source for inspected six TUs. #57 settings/Android toggles remain separately pending; PS5 GPU tests not claimed.",
       "paths": [
         "src/core/memory.cpp",
         "src/video_core/gpu.cpp",
         "src/video_core/gpu.h"
-      ]
+      ],
+      "source_evidence_level": "E1 individual six-file Git blob equality plus SPDX-only difference"
     },
     {
       "index": 89,

@@ -2,29 +2,30 @@
 
 **État : audit PR #45, en lecture seule.** L'inventaire des 155 diffs par commit est complet; ce registre applique maintenant une catégorie explicite à **chaque** commit et n'importe aucun code. Un commit classé *runtime à examiner* n'est pas déclaré intégré ou absent sans vraie preuve; un fix testé sur hôte n'est pas validé PS5.
 
-| Catégorie R23 à jour | Commits | Action restante |
+| R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/partagé : avis sémantique encore ouvert | **78** | Code, propriétaire, tests |
-| Build/dépendance non validés | **6** | CI/toolchain/ABI |
-| Correctifs source préparés/testés hôte | **5** | E3/E4 à obtenir |
-| Source gaps établis à vérifier natif | **8** | Test/compile/PS5 |
-| Non applicable au code PS5 natif | **27** | Pas de portage |
-| Non exécutable PS5 x64 (ARM64/NCE) | **6** | Non transposable |
-| Assets/langues non packagés | **8** | Aucun code runtime |
-| Test amont seulement | **1** | Corpus de référence |
-| Affinité GPU à mesurer | **1** | Trace PS5 |
-| Observabilité/logs uniquement | **2** | Pas de portage |
-| Joycon revert exact | **2** | Source vérifiée |
-| HLE grand revert source restaurée | **2** | Preuve Git |
-| Savedata revert exact | **1** | Source vérifiée |
-| OpenSSL natif équivalent | **1** | Déjà sélectionné |
-| Migration Opus/FFmpeg annulée | **2** | Aucun import |
-| PS5 sparse fail-stop équivalent | **1** | Source E1 |
-| PS5 volume persistant | **1** | Source E1 |
-| ZBIC natif intégré | **1** | Source E1 |
-| NCZBLOCK natif intégré | **1** | Source E1 |
-| Scheduler PS5 par sémaphore, pas de lazy mutex | **1** | Source E1 |
-| **Total** | **155** | **78 avis runtime encore ouverts** |
+| Runtime NS1/shared still open | **76** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native build/dependency | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Staged host fixes | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Verified source gaps | **8** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Not native runtime | **27** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Not x64 host backend | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Unpackaged assets/languages | **8** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Upstream test only | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| GPU affinity awaiting PS5 trace | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Observability/log only | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Reverted Joycon | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Giant HLE revert | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Savedata revert | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native OpenSSL same path | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Opus FFmpeg revert | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Sparse commit fail-stop | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native audio device volume | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| ZBIC already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| **Total** | **155** | **76 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 

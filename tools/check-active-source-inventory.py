@@ -954,10 +954,12 @@ assert not post_f07_c00_audioin_owners & (
     post_f07_p5_headless_owners | post_f07_feature_headless_owners |
     post_f07_r09_headless_owners)
 assert 'audio_device_session_ps5.cpp' in (root / "headless/CMakeLists.txt").read_text()
-print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=2 historical_headless=193")
+print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=4 historical_headless=193")
 post_f07_r23_fixed_source_owners = {
     "headless/r23_f2i_conversion_ps5.cpp",
     "headless/r23_bcat_delivery_cache_file_ps5.cpp",
+    "headless/r23_ips_layer_ps5.cpp",
+    "headless/r23_audren_debug_ps5.cpp",
 }
 assert all((root / path).is_file() for path in post_f07_r23_fixed_source_owners)
 r23_cmake = (root / "headless/CMakeLists.txt").read_text()
@@ -965,7 +967,7 @@ assert all(path.rsplit("/", 1)[-1] in r23_cmake for path in post_f07_r23_fixed_s
 assert post_f07_r23_fixed_source_owners.isdisjoint(
     post_f07_c00_audioin_owners | post_f07_p5_headless_owners |
     post_f07_feature_headless_owners | post_f07_r09_headless_owners)
-print("ENCORE_POST_F07_R23_TWO_SELECTED_OWNERS_PASS", "owners=2 historical_headless=193")
+print("ENCORE_POST_F07_R23_FOUR_SELECTED_OWNERS_PASS", "owners=2 historical_headless=193")
 assert all((root / p).is_file() for p in post_f07_p5_headless_owners)
 assert not post_f07_p5_headless_owners & (
     post_f07_feature_headless_owners | post_f07_r09_headless_owners)

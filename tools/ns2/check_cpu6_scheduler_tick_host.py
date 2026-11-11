@@ -157,7 +157,7 @@ def main()->None:
             # The shipping CPU6 block also guards the independent KProcess
             # consumers. Declare them in this miniature CMake graph; otherwise
             # a valid source change fails because the fixture omits real targets.
-            cmake_text += 'set(EDEN_PORT_DIR "' + (ROOT/'headless').as_posix() + '")\\n'
+            cmake_text += 'set(EDEN_PORT_DIR "' + (ROOT/'headless').as_posix() + '")\n'
             cmake_text += ('add_library(audio_core STATIC dummy.cpp)\n'
                            'add_library(video_core STATIC dummy.cpp)\n'
                            'add_library(hid_core STATIC dummy.cpp)\n')

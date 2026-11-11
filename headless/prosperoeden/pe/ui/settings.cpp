@@ -1137,18 +1137,20 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         // BELOW the two action rows (last row ends at y=610), including on
         // the light theme. Never let summary/notes blend into or hide behind
         // actionable buttons.
-        list.rounded_rect({592.0f, 648.0f, 736.0f, 224.0f}, 18.0f,
+        // The controller-hint footer begins at y=811. Keep both copy
+        // blocks above it and beneath the second button (bottom y=610).
+        list.rounded_rect({592.0f, 632.0f, 736.0f, 160.0f}, 18.0f,
                           Color::rgb(0x10121d, 0.96f));
-        list.bordered_rect({592.0f, 648.0f, 736.0f, 224.0f}, 18.0f,
+        list.bordered_rect({592.0f, 632.0f, 736.0f, 160.0f}, 18.0f,
                            Color::rgb(0x10121d, 0.0f), 1.0f,
                            theme::kPanelEdge.with_alpha(0.72f));
         text_block(c, update_info_.summary, 608.0f,
-                   baseline(686.0f, 30.0f, theme::kSmall), theme::kSmall,
-                   30.0f, Color::rgb(0xf4f2f8), 704.0f, 2, kShrink);
+                   baseline(652.0f, 25.0f, theme::kSmall), theme::kSmall,
+                   25.0f, Color::rgb(0xf4f2f8), 704.0f, 2, kShrink);
         if (!update_info_.notes.empty())
             text_block(c, update_info_.notes, 608.0f,
-                       baseline(775.0f, 26.0f, theme::kSmall), theme::kSmall,
-                       28.0f, Color::rgb(0xddd9e8), 704.0f, 2, kShrink);
+                       baseline(718.0f, 24.0f, theme::kSmall), theme::kSmall,
+                       24.0f, Color::rgb(0xddd9e8), 704.0f, 2, kShrink);
         break;
     case Modal::accessibility:
     {

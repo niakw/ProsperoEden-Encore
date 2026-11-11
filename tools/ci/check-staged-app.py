@@ -57,6 +57,42 @@ legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md", "legal/LIBWEB
 }
 expected = base | ui_expected | legal_expected
 actual = {p.relative_to(app).as_posix() for p in app.rglob("*") if p.is_file()}
+# Daily rotating artwork is an OPTIONAL bounded, build-time generated family.
+# Do not accept arbitrary extra art, forgotten temp files or truncated JPEGs.
+# On network outage a valid release may have no daily snapshot at all.
+daily_root = "ui/art/daily/"
+daily = {name for name in actual if name.startswith(daily_root)}
+if daily:
+    manifest_name = daily_root + "index.json"
+    assert manifest_name in daily, "daily wallpaper JPEGs without index"
+    manifest_path = app / manifest_name
+    assert not manifest_path.is_symlink() and 16 <= manifest_path.stat().st_size <= 64 * 1024
+    daily_index = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert isinstance(daily_index, dict) and daily_index.get("schema") == 1
+    assert isinstance(daily_index.get("sources"), list) and len(daily_index["sources"]) == 2
+    entries = daily_index.get("entries")
+    assert isinstance(entries, list) and 1 <= len(entries) <= 16
+    expected_daily = {manifest_name}
+    for number, entry in enumerate(entries):
+        assert isinstance(entry, dict) and entry.get("approved") is True
+        assert isinstance(entry.get("title"), str) and 0 < len(entry["title"]) <= 160
+        assert entry.get("platform") in ("NS1", "NS2", "Switch", "Switch 2", "ns1", "ns2", "switch1", "switch2")
+        assert isinstance(entry.get("release_date"), str) and len(entry["release_date"]) == 10
+        filename = f"wall-{number:02d}.jpg"
+        assert entry.get("filename") == filename, "noncanonical daily wallpaper index"
+        relative = daily_root + filename
+        source = app / relative
+        assert source.is_file() and not source.is_symlink()
+        size = source.stat().st_size
+        assert 4000 <= size <= 7 * 1024 * 1024
+        with source.open("rb") as image:
+            assert image.read(3) == b"\\xff\\xd8\\xff"
+            image.seek(-2, os.SEEK_END)
+            assert image.read(2) == b"\\xff\\xd9"
+        expected_daily.add(relative)
+    assert daily == expected_daily, (
+        "unexpected or missing daily assets", sorted(daily ^ expected_daily))
+    expected |= expected_daily
 missing = sorted(expected - actual)
 extra = sorted(actual - expected)
 assert not missing and not extra, f"package inventory mismatch missing={missing} extra={extra}"

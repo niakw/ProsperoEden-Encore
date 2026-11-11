@@ -2967,3 +2967,23 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     set_property(TARGET core PROPERTY SOURCES
         "${eden_r457_sparse_kernel_units}")
 endif()
+
+# R23 #97: match applet overlay compositor to the selected native SGSR bypass.
+if(PS5_NATIVE)
+    set(EDEN_R23_APPLET_WINDOW_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp")
+    if(NOT EXISTS "${EDEN_R23_APPLET_WINDOW_SOURCE}")
+        message(FATAL_ERROR "R23 #97 matched applet WindowSystem source missing")
+    endif()
+    get_target_property(eden_r23_applet_window_units core SOURCES)
+    list(FIND eden_r23_applet_window_units
+         "hle/service/am/window_system.cpp" eden_r23_applet_old)
+    if(eden_r23_applet_old EQUAL -1)
+        message(FATAL_ERROR "R23 #97 selected native applet window owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_applet_window_units
+         "hle/service/am/window_system.cpp")
+    list(APPEND eden_r23_applet_window_units "${EDEN_R23_APPLET_WINDOW_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_applet_window_units}")
+    message(STATUS "R23 #97: one applet z-order TU and selected SGSR bypass")
+endif()

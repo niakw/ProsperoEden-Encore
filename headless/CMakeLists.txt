@@ -815,6 +815,46 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #119 HOS23: two HLE backport TUs and two new guest IPC
+# headers must have the same versioned owner; no extra service target.
+if(PS5_NATIVE)
+    set(EDEN_R23_STPL_BACKPORT
+        "${PORT_ROOT}/vendor/encore-active/eden-backports/src/core/hle/service")
+    set(EDEN_R23_STPL_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/core/hle/service")
+    set(EDEN_R23_STPL_INCLUDE "${PORT_BUILD_DIR}/r23-stpl/include")
+    foreach(eden_r23_stpl_name IN ITEMS
+            "ngc/ngc.cpp" "filesystem/fsp/fsp_srv.cpp")
+        if(NOT EXISTS "${EDEN_R23_STPL_BACKPORT}/${eden_r23_stpl_name}")
+            message(FATAL_ERROR "R23 #119 missing maintained HOS23 service ${eden_r23_stpl_name}")
+        endif()
+    endforeach()
+    foreach(eden_r23_stpl_header IN ITEMS
+            "acc/profile_manager.h" "ipc_helpers.h")
+        if(NOT EXISTS "${EDEN_R23_STPL_HEADER}/${eden_r23_stpl_header}")
+            message(FATAL_ERROR "R23 #119 missing service header ${eden_r23_stpl_header}")
+        endif()
+        configure_file("${EDEN_R23_STPL_HEADER}/${eden_r23_stpl_header}"
+            "${EDEN_R23_STPL_INCLUDE}/core/hle/service/${eden_r23_stpl_header}" COPYONLY)
+    endforeach()
+    get_target_property(eden_r23_stpl_units core SOURCES)
+    foreach(eden_r23_stpl_source IN ITEMS
+            "ngc/ngc.cpp" "filesystem/fsp/fsp_srv.cpp")
+        list(FIND eden_r23_stpl_units
+             "hle/service/${eden_r23_stpl_source}" eden_r23_stpl_old)
+        if(eden_r23_stpl_old LESS 0)
+            message(FATAL_ERROR "R23 #119 original stpl source owner drift")
+        endif()
+        list(REMOVE_ITEM eden_r23_stpl_units
+             "hle/service/${eden_r23_stpl_source}")
+        list(APPEND eden_r23_stpl_units
+             "${EDEN_R23_STPL_BACKPORT}/${eden_r23_stpl_source}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_stpl_units}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STPL_INCLUDE}")
+    message(STATUS "R23 #119: two supported HOS23 service TUs and coherent IPC headers")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

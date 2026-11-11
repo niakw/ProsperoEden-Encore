@@ -216,8 +216,16 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
         input[base]=gradient?0.2f+
             (x>=source.width/2u?0.36f:0.f)+
             0.17f*float(x)/float(source.width):0.3f;
-        input[base+1u]=gradient?0.2f+
-            0.28f*float(y)/float(source.height):0.45f;
+        // Both Qualcomm kernels use GREEN (channel 1) for edge
+        // detection. A red-only discontinuity gave identical normal/
+        // Edge outputs; introduce independently sharp green boundaries,
+        // with a small checker pattern to exercise directional weights.
+        const float green_checker=
+            (((x/9u)+(y/7u))&1u)?0.12f:0.f;
+        input[base+1u]=gradient?0.12f+
+            (x>=source.width/2u?0.39f:0.f)+
+            0.15f*float(y)/float(source.height)+
+            green_checker:0.45f;
         input[base+2u]=gradient?0.25f+
             0.18f*float(x+y)/float(source.width+source.height):0.6f;
         input[base+3u]=1.f;

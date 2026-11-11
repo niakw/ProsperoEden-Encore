@@ -73,7 +73,7 @@ if daily:
     assert isinstance(daily_index, dict) and daily_index.get("schema") == 1
     assert isinstance(daily_index.get("sources"), list) and len(daily_index["sources"]) == 2
     entries = daily_index.get("entries")
-    assert isinstance(entries, list) and 1 <= len(entries) <= 8
+    assert isinstance(entries, list) and 1 <= len(entries) <= 16
     expected_daily = {manifest_name}
     for number, entry in enumerate(entries):
         assert isinstance(entry, dict) and entry.get("approved") is True

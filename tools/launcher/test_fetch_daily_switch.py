@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Hermetic R25 daily-art tests: no network, console or proprietary game data."""
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
@@ -86,14 +86,14 @@ class DailyWallpaperTests(TestCase):
                 request.assert_not_called()  # cached WebPs are reused
             self.assertEqual((folder/"index.json").read_bytes(), before)
 
-    def test_eight_newest_releases_displace_older_webp(self):
-        # A calendar-controlled replay proves 8, descending release order,
+    def test_sixteen_newest_releases_displace_older_webp(self):
+        # A calendar-controlled replay proves 16, descending release order,
         # and no preorders or releases older than the admission window.
         recent = [
-            {"title": f"New {i}", "day": date(2026, 11, 11 - i),
+            {"title": f"New {i}", "day": date(2026, 11, 11) - timedelta(days=i),
              "platform": "ns1" if i % 2 else "ns2",
              "art": f"https://www.nintendo.com/eu/art-{i}.jpg"}
-            for i in range(11)
+            for i in range(19)
         ]
         recent += [
             {"title": "Future", "day": date(2026, 11, 12),
@@ -112,27 +112,27 @@ class DailyWallpaperTests(TestCase):
             with patch.object(daily, "fetch", return_value=b"fixture"), \
                  patch.object(daily, "convert_art", side_effect=fake_convert):
                 self.assertEqual(daily.build(folder, date(2026, 11, 11),
-                                             list(reversed(recent))), 8)
+                                             list(reversed(recent))), 16)
             manifest = json.loads((folder / "index.json").read_text())
             self.assertEqual([e["title"] for e in manifest["entries"]],
-                             [f"New {i}" for i in range(8)])
+                             [f"New {i}" for i in range(16)])
             self.assertEqual([e["filename"] for e in manifest["entries"]],
-                             [f"wall-{i:02d}.webp" for i in range(8)])
+                             [f"wall-{i:02d}.webp" for i in range(16)])
             self.assertFalse(list(folder.glob("*.jpg")))
             # A newly released title replaces the oldest cached title;
-            # seven unchanged WebPs stay in the pool without re-downloading.
+            # fifteen unchanged WebPs stay in the pool without re-downloading.
             next_title = {"title": "Brand New", "day": date(2026, 11, 12),
                           "platform": "ns2",
                           "art": "https://www.nintendo.com/eu/new.jpg"}
             with patch.object(daily, "fetch", return_value=b"fixture") as request, \
                  patch.object(daily, "convert_art", side_effect=fake_convert):
                 self.assertEqual(daily.build(folder, date(2026, 11, 12),
-                                             [next_title]), 8)
+                                             [next_title]), 16)
                 request.assert_called_once()
             updated = json.loads((folder / "index.json").read_text())
             self.assertEqual(updated["entries"][0]["title"], "Brand New")
-            self.assertNotIn("New 7", [e["title"] for e in updated["entries"]])
-            self.assertEqual(len(list(folder.glob("wall-*.webp"))), 8)
+            self.assertNotIn("New 15", [e["title"] for e in updated["entries"]])
+            self.assertEqual(len(list(folder.glob("wall-*.webp"))), 16)
 
     def test_rejects_unapproved_hosts(self):
         for url in ("http://api.nlib.cc/x", "https://attacker.example/x",

@@ -101,13 +101,13 @@
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "historical_reviewed_git_blob": "6c5d76341ef2c97b7db7fff23545ee21333037da",
-      "post_snapshot_git_blob": "0ebb971bc81291d0a0c08b0d83c5b4a3fdb45d5f",
+      "post_snapshot_git_blob": "8a05367f31369a4d1316bdc336e01064574281c8",
       "original_disposition": "new_source_issue_corrected",
       "source_scope": "FolderInfo probes firmware/ns1 and firmware/ns2 aliases through the existing validated firmware format classifier without following unsafe symlink directories",
       "review_kind": "host_source_service",
       "required_source_fragment": "Eden::DetectFirmwareFormat(folder)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified.\n2026-11-11 reviewed follow-up: Allow user-imported PNG/JPEG/TGA plus safe WebP (existing bounded decoder); shipped daily wallpapers remain constrained by an indexed WebP-only package snapshot. Source Git blob c012f4c87e6974d8bfa37c81bb3e060eb4d6c86a. Historical F07 digest untouched.\n2026-11-11: Daily snapshot is now restricted to eight newest verified release dates, with zero package-time promotional downloads by default; no application API change beyond this count. Built-in art stays WebP, user-file formats unaffected. New approved source blob 0ebb971bc81291d0a0c08b0d83c5b4a3fdb45d5f; native PS5 visual qualification outstanding."
+      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified.\n2026-11-11 reviewed follow-up: Allow user-imported PNG/JPEG/TGA plus safe WebP (existing bounded decoder); shipped daily wallpapers remain constrained by an indexed WebP-only package snapshot. Source Git blob c012f4c87e6974d8bfa37c81bb3e060eb4d6c86a. Historical F07 digest untouched.\n2026-11-11: Daily snapshot is now restricted to eight newest verified release dates, with zero package-time promotional downloads by default; no application API change beyond this count. Built-in art stays WebP, user-file formats unaffected. New approved source blob 0ebb971bc81291d0a0c08b0d83c5b4a3fdb45d5f; native PS5 visual qualification outstanding.\n2026-11-11 daily-art contract: admission up to 16 indexed WebPs (package-time revalidation); imported personal PNG/JPEG/TGA/WebP unchanged, on-console day-based rotation continues with no synchronous network. No real PS5 orientation/boot claim."
     },
     {
       "path": "headless/prosperoeden/eden_services.h",

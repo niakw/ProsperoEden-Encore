@@ -50,12 +50,13 @@ cp "$root/assets/icon0.png" "$app/sce_sys/icon0.png"
 cp "$root/assets/icon0.dds" "$app/sce_sys/icon0.dds"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
-# Zero built-in daily images and zero daily-art downloads by default.
-# Only an explicit, reviewed packaging opt-in enables automatic catalog
-# snapshot fetching. The console-side Daily option remains off by default.
-# Never allow source-tree art to silently re-enable a disabled snapshot.
+# Refresh up to 16 recently released Switch 1/2 artwork images in WebP
+# on each build, preserving an opt-out for offline/restricted redistribution.
+# Console selection rotates the cached snapshot daily without UI networking.
+# Publishing third-party game art still requires a rights review.
+# Never permit source-tree media to bypass this explicit build-time staging.
 rm -rf "$app/ui/art/daily"
-if [[ ${EDEN_BAKE_DAILY_SWITCH_ART:-0} == 1 ]]; then
+if [[ ${EDEN_BAKE_DAILY_SWITCH_ART:-1} == 1 ]]; then
     python3 "$root/tools/launcher/fetch_daily_switch.py" \
         --output "$app/ui/art/daily" ||
         echo "Daily Switch artwork unavailable; keep the original Encore background" >&2

@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 import tempfile
 
@@ -53,10 +54,39 @@ def checked(root: Path) -> dict:
                 count += 1
         count_match = count == record["files"]
         bytes_match = total == record["bytes"]
+        # If a recorded lock does not agree with the checkout, compare the
+        # exact pinned Git object sizes WITHOUT scanning a remote repository.
+        # This distinguishes stale lock statistics from checkout transforms.
+        git_counts = None
+        if (count != record["files"] or total != record["bytes"]) and (root / "vendor/.git").exists():
+            candidate = subprocess.run(
+                ["git", "-C", str(root / "vendor"), "ls-tree", "-r", "-l",
+                 "HEAD", "--", f"sources/eden-cpm/{name}"],
+                capture_output=True, text=True, check=True)
+            objects_count, objects_bytes, git_links = 0, 0, 0
+            for line in candidate.stdout.splitlines():
+                info, _, _ = line.partition("\t")
+                parts = info.split()
+                if len(parts) != 4 or parts[1] != "blob":
+                    continue
+                if parts[0] == "120000":
+                    git_links += 1
+                elif parts[3].isdigit():
+                    objects_count += 1
+                    objects_bytes += int(parts[3])
+            git_counts = {
+                "tracked_regular_files": objects_count,
+                "tracked_regular_blob_bytes": objects_bytes,
+                "tracked_symlink_blobs": git_links,
+                "checkout_regular_count_equals_git": count == objects_count,
+                "checkout_regular_bytes_equal_git_blobs": total == objects_bytes,
+                "lock_bytes_minus_git_blobs": record["bytes"] - objects_bytes,
+            }
         paths[name] = {
             "files": count, "file_bytes": total, "symlinks_excluded_from_regular_files": links,
             "symlink_target_bytes_excluded": link_target_bytes,
             "symlink_examples": symlink_examples,
+            "pinned_git_object_comparison_on_mismatch": git_counts,
             "lock_files": record["files"], "lock_file_bytes": record["bytes"],
             "file_count_matches_lock": count_match,
             "byte_count_matches_lock": bytes_match,
@@ -80,7 +110,8 @@ def checked(root: Path) -> dict:
                    "lock_files": row["lock_files"], "lock_bytes": row["lock_file_bytes"],
                    "byte_difference": row["byte_difference_vs_lock"],
                    "symlinks_excluded": row["symlinks_excluded_from_regular_files"],
-                   "symlink_target_bytes_excluded": row["symlink_target_bytes_excluded"]}
+                   "symlink_target_bytes_excluded": row["symlink_target_bytes_excluded"],
+                   "pinned_git_object_comparison": row["pinned_git_object_comparison_on_mismatch"]}
             for name, row in paths.items()
             if not row["file_count_matches_lock"] or not row["byte_count_matches_lock"]
         },

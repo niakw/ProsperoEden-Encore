@@ -815,6 +815,25 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #49: the Vulkan buffer cache's descriptor-buffer and legacy
+# paths are inline in its public header. The correct vendor header must
+# precede the pinned original for all three consumers, without another TU.
+if(PS5_NATIVE)
+    set(EDEN_R23_TEXEL_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h")
+    set(EDEN_R23_TEXEL_INCLUDE "${PORT_BUILD_DIR}/r23-texel/include")
+    if(NOT EXISTS "${EDEN_R23_TEXEL_HEADER}")
+        message(FATAL_ERROR "R23 #49 maintained Vulkan texel buffer header missing")
+    endif()
+    configure_file("${EDEN_R23_TEXEL_HEADER}"
+        "${EDEN_R23_TEXEL_INCLUDE}/video_core/renderer_vulkan/vk_buffer_cache.h" COPYONLY)
+    foreach(eden_r23_texel_target IN ITEMS video_core core)
+        target_include_directories(${eden_r23_texel_target} BEFORE PRIVATE
+            "${EDEN_R23_TEXEL_INCLUDE}")
+    endforeach()
+    message(STATUS "R23 #49: one reviewed Vulkan texel buffer header for native consumers")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

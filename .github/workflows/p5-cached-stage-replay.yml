@@ -1,12 +1,8 @@
 name: P5 recovered native package from cached objects (no full rebuild)
 
+# Cached R457 replay remains available manually, but must never publish an
+# outdated cached binary automatically when NS2 native source changes.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/p5-cached-stage-replay.yml'
-      - 'tools/package-headless-native.sh'
-      - 'headless/check_package.py'
   workflow_dispatch:
 
 permissions:

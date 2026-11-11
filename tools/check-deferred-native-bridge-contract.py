@@ -759,9 +759,9 @@ endif()
         # PR #53 adds a PS5-only precommit hook to the two real native
         # memory owners. Remove ONLY that exact gated addition when checking
         # immutable G13/M12 history, then independently assert its placement
-        # before MapPages. Untouched research-off branches retain parity.
+        # before MapPages. The unrelated historical paths retain parity.
         if owner.startswith("eden-core/src/core/memory_native_"):
-            marker = "#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING)"
+            marker = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)"
             if marker in maintained:
                 declaration = (
                     "#include <new>\n"
@@ -777,7 +777,7 @@ endif()
                 decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
                 assert decl_end < point
                 reviewed = maintained[:point] + maintained[call_end:]
-                # The research declaration adds one blank separator after
+                # The production declaration adds one blank separator after
                 # #endif. Remove it too, preserving exact historical parity.
                 assert reviewed[decl_end:decl_end+1] == "\n", owner
                 reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]

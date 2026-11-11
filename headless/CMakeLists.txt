@@ -2780,3 +2780,38 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         "${EDEN_NATIVE_TASK_MESH_ROOT}" "${EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
 endif()
+
+# P5 link parity: native shader atomic CAS owners
+# The cached original source builds successfully but does not define all
+# CAS symbols referenced by the pinned Task/Mesh opcode/dispatch headers.
+# Select the COMPLETE audited implementations from the same pinned Eden
+# source snapshot, including real SPIR-V OpAtomicCompareExchange, GLSL,
+# GLASM fail-closed semantics, and the Maxwell ATOM.CAS translator.
+# This is an NS1/NS2 shared compiler fix; no generated stubs or fake symbols.
+if(PS5_NATIVE)
+    set(EDEN_PINNED_SHADER_CAS_ROOT
+        "${PORT_ROOT}/vendor/sources/eden/src/shader_recompiler")
+    set(eden_native_cas_paths
+        backend/spirv/emit_spirv_atomic.cpp
+        frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp)
+    if(ENABLE_OPENGL)
+        list(APPEND eden_native_cas_paths
+            backend/glasm/emit_glasm_memory.cpp
+            backend/glsl/emit_glsl_atomic.cpp)
+    endif()
+    get_target_property(eden_native_cas_sources shader_recompiler SOURCES)
+    foreach(eden_cas_path IN LISTS eden_native_cas_paths)
+        set(eden_cas_impl "${EDEN_PINNED_SHADER_CAS_ROOT}/${eden_cas_path}")
+        if(NOT EXISTS "${eden_cas_impl}")
+            message(FATAL_ERROR "Missing pinned shader CAS owner: ${eden_cas_path}")
+        endif()
+        list(FIND eden_native_cas_sources "${eden_cas_path}" eden_cas_original)
+        if(eden_cas_original LESS 0)
+            message(FATAL_ERROR "Missing native shader CAS source: ${eden_cas_path}")
+        endif()
+        list(REMOVE_ITEM eden_native_cas_sources "${eden_cas_path}")
+        list(APPEND eden_native_cas_sources "${eden_cas_impl}")
+    endforeach()
+    set_property(TARGET shader_recompiler PROPERTY SOURCES
+        "${eden_native_cas_sources}")
+endif()

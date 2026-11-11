@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R09 Min host-only post-neural FRAME GENERATION bridge.
+// Unified A4K x2 / DLSS-NR Original host-only post-neural FG bridge.
 // Neural denoise, spatial FSR and frame interpolation are distinct passes.
 // Does not invoke Vulkan, load user DLLs, synthesize frames, or enable PS5 FG.
 #pragma once
@@ -24,12 +24,15 @@ struct FramegenBridgeInput {
     FG::FrameGeneration method{FG::FrameGeneration::Off};
     FG::GraphicsCapabilities graphics{};
     // All IDs refer to REAL VkImage/view objects, not CPU timestamps.
-    Present720Image guest{},neural{},post_fsr{};
+    Present720Image guest{},neural{},post_spatial{};
+    int spatial_filter{}; // stable existing 0..6 (no A4K as spatial)
     bool original_152_model_authenticated{};
     bool original_152_gpu_recorded{};
+    bool a4k_native_x2_gpu_recorded{};
+    bool a4k_output_image_and_view_identified{};
     bool neural_result_submitted{};
-    bool post_neural_easu_rcas_recorded{};
-    bool real_frame_composited_after_fsr{};
+    bool post_spatial_filter_recorded{};
+    bool final_post_spatial_frame_composited{};
     bool stable_real_frame_pair{};
     bool independent_guest_hud_or_explicitly_verified{};
     bool same_graphics_queue{};
@@ -45,7 +48,8 @@ struct FramegenBridgeInput {
 struct FramegenBridgeCandidate {
     FramegenBridgeReason reason{FramegenBridgeReason::NoNeuralSelection};
     FG::FrameGeneration downstream{FG::FrameGeneration::Off};
-    Present720Image post_fsr_source{};
+    Present720Image post_spatial_source{};
+    bool a4k_source{};
     bool host_shape_qualified{};
     bool ps5_runtime_enabled{};
 };
@@ -66,7 +70,9 @@ struct FramegenBridgeCandidate {
 [[nodiscard]] constexpr FramegenBridgeCandidate
 AssessPostNeuralFramegen(const FramegenBridgeInput& e) noexcept {
     FramegenBridgeCandidate result{};
-    if(e.neural_mode!=4&&e.neural_mode!=5)return result;
+    const bool a4k=e.neural_mode>=1&&e.neural_mode<=3;
+    const bool original=e.neural_mode==4;
+    if(!a4k&&!original)return result;
     if(e.method==FG::FrameGeneration::Off){
         result.reason=FramegenBridgeReason::Disabled;return result;
     }
@@ -75,24 +81,28 @@ AssessPostNeuralFramegen(const FramegenBridgeInput& e) noexcept {
        e.method!=FG::FrameGeneration::LosslessScaling){
         result.reason=FramegenBridgeReason::UnsupportedBackend;return result;
     }
-    if(e.neural_mode!=4||!e.original_152_model_authenticated||
-       !e.original_152_gpu_recorded){
+    if((original&&(!e.original_152_model_authenticated||
+                   !e.original_152_gpu_recorded))||
+       (a4k&&(!e.a4k_native_x2_gpu_recorded||
+              !e.a4k_output_image_and_view_identified))){
         result.reason=FramegenBridgeReason::MissingOriginal;return result;
     }
     if(!e.guest.image||!e.guest.view||!e.neural.image||!e.neural.view||
-       !e.post_fsr.image||!e.post_fsr.view||
-       e.guest.image==e.neural.image||e.guest.image==e.post_fsr.image||
-       e.neural.image==e.post_fsr.image||
-       e.guest.view==e.neural.view||e.guest.view==e.post_fsr.view||
-       e.neural.view==e.post_fsr.view){
+       !e.post_spatial.image||!e.post_spatial.view||
+       e.guest.image==e.neural.image||e.guest.image==e.post_spatial.image||
+       e.neural.image==e.post_spatial.image||
+       e.guest.view==e.neural.view||e.guest.view==e.post_spatial.view||
+       e.neural.view==e.post_spatial.view){
         result.reason=FramegenBridgeReason::MissingGuestOrNeuralImage;
         return result;
     }
     if(e.guest.extent.width!=1280u||e.guest.extent.height!=720u||
-       e.neural.extent.width!=1280u||e.neural.extent.height!=720u||
-       !ValidPresent720Output(e.post_fsr.extent)||
-       !e.post_neural_easu_rcas_recorded||
-       !e.real_frame_composited_after_fsr){
+       e.neural.extent.width!=(a4k?2560u:1280u)||
+       e.neural.extent.height!=(a4k?1440u:720u)||
+       !ValidPresent720Output(e.post_spatial.extent)||
+       !ValidSpatialFilter(e.spatial_filter)||
+       !e.post_spatial_filter_recorded||
+       !e.final_post_spatial_frame_composited){
         result.reason=FramegenBridgeReason::WrongOrderOrExtent;return result;
     }
     if(!e.neural_result_submitted||!e.same_graphics_queue||
@@ -119,13 +129,15 @@ AssessPostNeuralFramegen(const FramegenBridgeInput& e) noexcept {
     }
     result.reason=FramegenBridgeReason::HostCandidateOnly;
     result.downstream=e.method;
-    result.post_fsr_source=e.post_fsr;
+    result.post_spatial_source=e.post_spatial;
+    result.a4k_source=a4k;
     result.host_shape_qualified=true;
     // Cannot be enabled by toggling the UI, providing a DLL or merely
     // compiling the research code. The PS5 neural+FG proof is absent.
-    result.ps5_runtime_enabled=kPs5MinRuntimeQualified&&
-                               kPostNeuralFsrRuntimeWired&&
-                               kNeuralToFramegenRuntimeWired;
+    result.ps5_runtime_enabled=kNeuralToFramegenRuntimeWired&&
+        kPostNeuralSpatialRuntimeWired&&
+        (a4k?kA4kNeuralToSpatialRuntimeQualified:
+             kPs5MinRuntimeQualified);
     return result;
 }
 } // namespace Eden::Graphics::DlssNrMin

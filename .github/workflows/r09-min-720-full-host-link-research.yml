@@ -71,24 +71,46 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # GitHub-hosted Ubuntu's mirror+file list was selecting
-          # azure.archive.ubuntu.com, whose DNS failed for multiple runs.
-          # Use the official signed Ubuntu archive/security APT endpoints.
+          # Avoid the GitHub mirror+file Azure archive DNS failure observed
+          # before CMake was reached. Ubuntu's APT signing stays enforced.
           sudo python3 - <<'PY'
           from pathlib import Path
           import re
-          file=Path('/etc/apt/sources.list.d/ubuntu.sources')
-          if not file.exists():
+          source = Path('/etc/apt/sources.list.d/ubuntu.sources')
+          if not source.is_file():
               raise SystemExit('R09_APT_SOURCES_FILE_MISSING')
-          blocks=file.read_text().split('\n\n')
-          changed=0
-          for i,block in enumerate(blocks):
+          blocks = source.read_text().split('\n\n')
+          changed = 0
+          for i, block in enumerate(blocks):
               if 'URIs: mirror+file:' not in block:
                   continue
-              mirror=('http://security.ubuntu.com/ubuntu'
-                      if 'noble-security' in block
-                      else 'http://archive.ubuntu.com/ubuntu')
-              blocks[i]=re.sub(r'^URIs: .*
+              mirror = ('http://security.ubuntu.com/ubuntu'
+                        if 'noble-security' in block
+                        else 'http://archive.ubuntu.com/ubuntu')
+              blocks[i] = re.sub(r'^URIs: .*$', 'URIs: ' + mirror,
+                                 block, flags=re.M)
+              changed += 1
+          source.write_text('\n\n'.join(blocks))
+          print('R09_APT_OFFICIAL_SIGNED_UBUNTU_MIRRORS blocks=' + str(changed))
+          PY
+          timeout 210 sudo apt-get update -qq \
+            -o Acquire::Retries=1 -o Acquire::http::Timeout=20
+          timeout 360 sudo env DEBIAN_FRONTEND=noninteractive \
+            apt-get install -y -qq --no-install-recommends \
+            -o Acquire::Retries=1 -o Acquire::http::Timeout=20 \
+            clang ninja-build pkg-config glslang-tools spirv-tools \
+            libvulkan-dev mesa-vulkan-drivers \
+            libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev \
+            libswresample-dev libswscale-dev libssl-dev libopus-dev \
+            liblz4-dev libzstd-dev libusb-1.0-0-dev libasound2-dev \
+            libunwind-dev libx11-dev libxcb1-dev libxext-dev \
+            libxrandr-dev libxrender-dev libxfixes-dev libxi-dev \
+            libxkbcommon-dev libwayland-dev
+          python3 -m venv .build-r09-cmake-venv
+          timeout 150 .build-r09-cmake-venv/bin/pip install \
+            --disable-pip-version-check --retries 2 --timeout 15 cmake==3.31.10
+          echo "$GITHUB_WORKSPACE/.build-r09-cmake-venv/bin" >> "$GITHUB_PATH"
+          echo R09_REAL_LINUX_NATIVE_DEPENDENCIES_READY
       - name: Configure pinned Eden Linux runtime with R09 owner injection
         shell: bash
         run: |

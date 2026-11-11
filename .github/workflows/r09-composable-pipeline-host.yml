@@ -104,5 +104,11 @@ jobs:
             .build-local/r09-composable-gpu/chain \
               .build-local/r09-composable-gpu/resample.spv "$passes"
           done
+          # Non-toy 16:9 320x180 -> 640x360 -> 960x540 -> 1280x720,
+          # real VkImage and VkImageView from GPU owners bound to the
+          # versioned Recipe then fail-closed if a fence proof is removed.
+          .build-local/r09-composable-gpu/chain \
+            .build-local/r09-composable-gpu/resample.spv 3 --recipe-720p
           echo R09_REAL_GPU_MULTI_IMAGE_1_2_3_SPATIAL_STAGES_AND_ORACLE_PASS
+          echo R09_REAL_VKIMAGE_BOUND_VERSIONED_RECIPE_720P_HOST_PASS
           echo R09_ONLY_PUBLIC_HOST_SHADERS_NO_TRAINED_NEURAL_NO_PS5

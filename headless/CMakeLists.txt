@@ -2095,6 +2095,19 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
     target_include_directories(dynarmic BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
     target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    # The R457 unstripped ELF proves an ODR layout mismatch: core constructs
+    # KProcess::m_memory at +0x1b0 (6 cores), while AudioOut accesses +0x160
+    # (4 cores). Five per-core arrays × two extra 8-byte entries = 0x50.
+    # PUBLIC on core is NOT sufficient if another target's own includes put
+    # pristine source/eden/src (4-core hardware_properties.h) first.
+    # Force the same 6-core definition before each independent consumer's
+    # include root, and compile the real header probe in those targets.
+    target_include_directories(audio_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    foreach(eden_cpu6_abi_consumer IN ITEMS audio_core video_core)
+        target_sources(${eden_cpu6_abi_consumer} PRIVATE
+            "${EDEN_PORT_DIR}/ps5_cpu6_abi_probe.cpp")
+    endforeach()
     # The original 4-core scheduler table defaults the two added preemption
     # priorities to zero; the original Dynarmic AddTicks divides even NS1
     # cycles by six. Both defects must be fixed before CPU6 can be exercised.

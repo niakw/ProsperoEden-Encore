@@ -89,6 +89,15 @@ AssessPostNeuralSpatial(const SpatialBridgeEvidence& e) noexcept {
        !ValidPresent720Output(e.output.extent)){
         out.reason=SpatialBridgeReason::InvalidRasterOrOutput;return out;
     }
+    // A4K 720p already produces 1440p. FSR1 EASU and SGSR are
+    // upscale shaders; do not pass 1440p to them for a 1080p target.
+    // Native samplers may downsample safely at final composition.
+    if(a4k&&backend!=SpatialBackend::NativeSampler&&
+       (e.output.extent.width<source_width||
+        e.output.extent.height<source_height)){
+        out.reason=SpatialBridgeReason::InvalidRasterOrOutput;
+        return out;
+    }
     if(!e.antialiasing_disabled||!e.no_pre_neural_scaling||
        !e.original_neural_image_completed||
        !e.compute_to_fragment_barrier||

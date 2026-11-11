@@ -5,6 +5,7 @@
 #include "neural_pipeline_recipe.h"
 #include <cassert>
 #include <cstdint>
+#include <initializer_list>
 #include <iostream>
 using namespace Eden::Graphics::PipelineComposer;
 using K=Kind;

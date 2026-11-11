@@ -90,10 +90,22 @@ legacy_sha = subprocess.run(
     ["git", "hash-object", "--stdin"], input=legacy_tex,
     text=True, check=True, capture_output=True
 ).stdout.strip()
-assert legacy_sha == "fc3125dc06e288b122cee6f11ed750f14068fbb8", (
-    "N60 maintained ASTC implementation changed outside reviewed native ABI",
-    legacy_sha
+# The original N60 baseline was fc3125dc... before R4's independently
+# reviewed native volume-copy path. Require the exact integrated R4 owner and
+# its guarded source, rather than treating R4 as a source-parity regression.
+owner_full_sha = subprocess.check_output([
+    "git", "hash-object", str(OWNER / "texture_cache.h")
+], text=True).strip()
+assert owner_full_sha == "5ad7f02ff58260bf330265d6a9e49db3bd778ea4", (
+    "N60/R4 ASTC selected source owner drift", owner_full_sha
 )
+assert legacy_sha == "77f6051ea65933df920669ad61499f5847ad7516", (
+    "N60/R4 normalized selected ASTC implementation changed", legacy_sha
+)
+assert tex.count("#if defined(PS5_NATIVE) && defined(EDEN_NS2_VOLUME_COPY)") == 2
+assert tex.count("copy_native_volume_slice") == 2
+assert "registry.IsGraphicsCurrent(maxwell3d, *ticket)" in tex
+assert "if (copy_native_volume_slice()) {\n        return true;" in tex
 bridge_sha = subprocess.check_output([
     "git", "hash-object", str(OWNER / "ns2_astc_texture_cache_bridge.inc")
 ], text=True).strip()

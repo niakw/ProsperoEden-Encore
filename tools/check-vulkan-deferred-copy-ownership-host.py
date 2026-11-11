@@ -143,6 +143,13 @@ captures = []
 for module, changes in edits.items():
     current = (active / (module + '_cost.cpp')).read_text()
     previous = current
+    if module == 'vk_buffer_cache':
+        # Production R2 added a separate GPU-tick retirement queue and
+        # staging-copy source owner. Replay only those four individually
+        # reviewed SHA-pinned hunks BEFORE reconstructing immutable F07.
+        # The actual current source remains in "current" for runtime checks.
+        from ns2.r2_source_normalizer import normalized
+        previous = normalized(ROOT, 'vk_buffer_cache_cost.cpp')
     if module == 'vk_texture_cache':
         # The NS2 research vendor adds 8 reviewed, opt-in texture/view/
         # sparse-admission changes to this unit. Pin BOTH exact Git blobs;

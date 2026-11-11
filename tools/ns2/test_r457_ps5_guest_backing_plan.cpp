@@ -61,6 +61,6 @@ int main() {
     assert(budget.ReleaseAcknowledged(*partial, 0, 0));
     assert(budget.FinishAbort(*partial));
     assert(budget.UsedBytes() == 0);
-    assert(!Plan(D + G, D).Valid()); // validation rejects improper budgets
+    assert(!Plan(D, D + G).Valid()); // impossible budget > virtual size
     std::cout << "R457_NS2_GUEST_BACKING_ACCOUNTING_PASS\n";
 }

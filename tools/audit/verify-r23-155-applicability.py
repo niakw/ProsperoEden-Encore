@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 56,
+        "runtime-semantic-review-pending": 55,
+        "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1,
         "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
         "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
@@ -256,6 +257,25 @@ def validate(root: Path, app: dict | None = None) -> dict:
     ):
         if frozen_ns not in ns_readme:
             raise ValueError("R23 #147 exact pinned NS/AM source proof missing")
+    # #29 is not a safe codegen modernization to port blindly: malformed
+    # Unicode has a reproducible source-derived host behavior difference.
+    utf = by_index[29]
+    if (utf["classification"] != "reviewed-UTF-conversion-non-equivalence-deferred-host-differential"
+            or utf["paths"] != ["src/common/string_util.cpp"]
+            or not utf.get("source_evidence_level", "").startswith("E1")):
+        raise ValueError("R23 #29 UTF source-level non-equivalence disposition lost")
+    utf_doc = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS10_2026-11-11.md").read_text()
+    utf_test = (root / "tests/audit_r23_utf_conversion_host.cpp").read_text()
+    for witness in (
+        "9543a6234376dc4e85ce035a653b41805b8aa072",
+        "c6fa5c1f77ba40bcb091b1a53492230f40d97ded",
+        "R23_UTF_EXTRACTED_HOST_DIVERGENCE_PASS",
+    ):
+        if witness not in utf_doc + utf_test:
+            raise ValueError("R23 #29 source-tested Unicode evidence missing")
+    if ("PinnedUtf8ToUtf16" not in utf_test
+            or "UpstreamUtf8ToUtf16" not in utf_test):
+        raise ValueError("R23 #29 source-extracted host input shapes absent")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -424,7 +444,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 56
+    assert validate(root)["runtime_semantic_cases_pending"] == 55
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -433,6 +453,14 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
+    bad = copy.deepcopy(current)
+    bad["individual_commits"][28]["classification"] = "runtime-semantic-review-pending"
+    try:
+        validate(root, bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("R23 #29 unsafe Unicode migration accepted without provenance")
     bad = copy.deepcopy(current)
     bad["individual_commits"][146]["classification"] = "runtime-semantic-review-pending"
     try:

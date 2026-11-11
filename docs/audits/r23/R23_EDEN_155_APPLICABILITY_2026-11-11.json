@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 12,
-    "runtime-semantic-review-pending": 56,
+    "runtime-semantic-review-pending": 55,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -43,7 +43,8 @@
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
     "verified-absent-GPU-null-initialization-candidate": 1,
     "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
-    "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1
+    "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
+    "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -936,12 +937,13 @@
       "sha": "c6fa5c1f77ba40bcb091b1a53492230f40d97ded",
       "title": "[common] use handrolled string utility conversions instead of wstring codecvt (#3773)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-UTF-conversion-non-equivalence-deferred-host-differential",
+      "scope": "E1 source/host differential: upstream replaces std::wstring_convert<codecvt_utf8_utf16> with an unchecked manual UTF-8 decoder. Invalid overlong NUL bytes C0 80 are rejected by pinned conversion but accepted as U+0000 by upstream code in Clang17/libstdc++ host; unicode scalar validation therefore is not equivalent.",
+      "action": "Do NOT backport this C++ warning/deprecation refactor into common PS5 runtime. Keep pinned implementation; revisit on a toolchain/API requirement only with strict Unicode validation contract, valid/invalid input corpus, source-compiled selected common owner, guest path/file handling and localization regression.",
       "paths": [
         "src/common/string_util.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned common/string_util.cpp blob 9543a6234376dc4e85ce035a653b41805b8aa072, common CMake blob 61e0e64aa8b926a86041b0420ab67f2ece9f0c68, official upstream c6fa5c1f77ba40bcb091b1a53492230f40d97ded, isolated source-body host ASan/UBSan only; not PS5 runtime."
     },
     {
       "index": 30,

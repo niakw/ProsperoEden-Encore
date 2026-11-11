@@ -196,3 +196,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 9 — #147 NS command 23 present in upstream, absent in pinned PS5 core (11 novembre)
 
 [Full source receipt](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS9_2026-11-11.md) isolates two independent NS1 code topics from the same four-file upstream change. The selected pinned NS service has `GetApplicationControlData3` at IPC command **19** but no handler **23**; upstream explicitly aliases **23** to that method. Its separate AM display-layer changes alter overlay visibility, stack mask, blend/z and managed-layer registration and must not be cherry-picked with the NS alias. No console proof or build modification; R23 now has **56** generic semantic reviews, **1** conditional OpenGL policy gate and **12** relevant source-level gaps, plus 17 headers and 7 corrective batches.
+
+## R23 pass 10 — #29 Unicode conversion upstream is not equivalent (11 novembre)
+
+[Exact source and host evidence](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS10_2026-11-11.md). Source-extracted `UTF8ToUTF16` comparison shows upstream's hand-coded conversion accepts malformed overlong `C0 80` as NUL while the pinned `std::wstring_convert` path rejects it on Clang17/libstdc++. Importing blindly could affect filenames/paths and guest-controlled string handling. The reviewed port decision is **defer**, not 'fixed': **55** generic runtime cases, **2** separately open policy/test gates (Vulkan/OpenGL and UTF), 12 gaps, 17 headers, seven corrective batches. No production source change.

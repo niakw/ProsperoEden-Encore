@@ -2967,3 +2967,36 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     set_property(TARGET core PROPERTY SOURCES
         "${eden_r457_sparse_kernel_units}")
 endif()
+
+# NS1 #19 guest HID ABI: matched atomic orientation and reload mutex must be
+# compiled for ALL consumers of HIDCore, not just NPad. The currently
+# selected maintained rumble and NPad TUs are preserved intact.
+if(PS5_NATIVE)
+    set(EDEN_R23_HIDCORE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_HIDCORE_CPP
+        "${EDEN_R23_HIDCORE_ROOT}/src/hid_core/hid_core.cpp")
+    set(EDEN_R23_HIDCORE_HEADER
+        "${EDEN_R23_HIDCORE_ROOT}/include/hid_core/hid_core.h")
+    if(NOT EXISTS "${EDEN_R23_HIDCORE_CPP}" OR NOT EXISTS "${EDEN_R23_HIDCORE_HEADER}")
+        message(FATAL_ERROR "R23 #19 native HIDCore ABI pair is missing")
+    endif()
+    set(EDEN_R23_HIDCORE_INCLUDE "${PORT_BUILD_DIR}/r23-hidcore/include")
+    configure_file("${EDEN_R23_HIDCORE_HEADER}"
+        "${EDEN_R23_HIDCORE_INCLUDE}/hid_core/hid_core.h" COPYONLY)
+    get_target_property(eden_r23_hidcore_units hid_core SOURCES)
+    list(FIND eden_r23_hidcore_units "hid_core.cpp" eden_r23_hidcore_old)
+    if(eden_r23_hidcore_old EQUAL -1)
+        message(FATAL_ERROR "R23 #19 native HIDCore original source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_hidcore_units "hid_core.cpp")
+    list(APPEND eden_r23_hidcore_units "${EDEN_R23_HIDCORE_CPP}")
+    set_property(TARGET hid_core PROPERTY SOURCES "${eden_r23_hidcore_units}")
+    foreach(eden_r23_hid_consumer IN ITEMS hid_core core video_core input_common eden-headless)
+        if(TARGET ${eden_r23_hid_consumer})
+            target_include_directories(${eden_r23_hid_consumer}
+                BEFORE PRIVATE "${EDEN_R23_HIDCORE_INCLUDE}")
+        endif()
+    endforeach()
+    message(STATUS "R23 #19: one native HIDCore ABI and retained maintained NPad owner")
+endif()

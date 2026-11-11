@@ -87,7 +87,7 @@ assert "handoff_attempts < 3u" in frontend
 assert "++handoff_attempts;" in frontend
 assert "handoff_captured = true;" in frontend
 assert "EDEN_LAUNCH_GL_PRIOR_ERROR" in frontend
-assert frontend.index("EDEN_LAUNCH_GL_PRIOR_ERROR") < frontend.index("glReadPixels(0, 0, width, height, GL_RGBA")
+assert frontend.index("EDEN_LAUNCH_GL_PRIOR_ERROR") < frontend.index("glReadPixels(0, 0, width, height, GL_RGBA", frontend.index("EDEN_LAUNCH_GL_PRIOR_ERROR"))
 assert "mixer->active_voices()" not in frontend
 assert "mixer->set_bus_gain(pe::audio::Bus::ui, 0.0f);" in frontend
 

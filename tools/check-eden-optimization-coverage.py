@@ -1101,6 +1101,8 @@ print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
       "new_owner_consoles_qualified=0")
 # Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.
 ns2_production_blobs = {
+    # Reviewed final jacket EGL -> Vulkan handoff: bounded capture and no audio wait.
+    "headless/prosperoeden/frontend.cpp": "3f06a9a9c66eee09270fbe4919e6be98620b0bf5",
     "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp": "318cb932c496c09853c2d9ba333d726cf7f820cd",
     "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp": "91463583eec9cfcbd180a56662cda072553787e0",
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "469eddd0ea9e0a3498446bf08ab473caac3b76f9",

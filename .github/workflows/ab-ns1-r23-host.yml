@@ -25,6 +25,7 @@ on:
     paths:
       - "headless/r23_controller_applet_ps5.cpp"
       - "tools/audit/check-r23-controller-applet-host.py"
+      - "tools/audit/check-r23-ips-audren-host.py"
       - "headless/CMakeLists.txt"
       - ".github/workflows/ab-ns1-r23-host.yml"
   workflow_dispatch:

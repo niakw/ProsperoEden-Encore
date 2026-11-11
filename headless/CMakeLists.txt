@@ -1130,6 +1130,46 @@ if(NOT EDEN_PS5_VULKAN)
 else()
     include("${EDEN_PORT_DIR}/vulkan.cmake")
 endif()
+# R2 research-only staging provenance. This selects real maintained source
+# owner/header together; OFF leaves the pinned legacy staging owner intact.
+# It deliberately does NOT activate Vulkan upload-batch scheduling.
+option(EDEN_RESEARCH_NS2_STAGE_BACKING
+       "Stage authentic physical-memory metadata for NS2 upload research" OFF)
+set(EDEN_R2_STAGE_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_staging_buffer_pool.h")
+set(EDEN_R2_BOUNDS_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h")
+set(EDEN_R2_RETIREMENT_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h")
+if(EDEN_RESEARCH_NS2_STAGE_BACKING)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR "R2 staging backing needs explicit PS5 native Vulkan")
+    endif()
+    set(EDEN_R2_STAGING_CPP "${PORT_BUILD_DIR}/vk_staging_buffer_pool.cpp")
+    if(NOT EXISTS "${EDEN_R2_STAGE_HEADER}" OR
+       NOT EXISTS "${EDEN_R2_BOUNDS_HEADER}" OR
+       NOT EXISTS "${EDEN_R2_RETIREMENT_HEADER}" OR
+       NOT EXISTS "${EDEN_R2_STAGING_CPP}")
+        message(FATAL_ERROR "R2 source/header pair missing from maintained vendor")
+    endif()
+    list(FIND video_sources "renderer_vulkan/vk_staging_buffer_pool.cpp"
+         EDEN_R2_ORIGINAL_STAGING_INDEX)
+    if(EDEN_R2_ORIGINAL_STAGING_INDEX LESS 0)
+        message(FATAL_ERROR "R2 original staging owner moved; re-audit CMake")
+    endif()
+    list(REMOVE_ITEM video_sources "renderer_vulkan/vk_staging_buffer_pool.cpp")
+    list(APPEND video_sources "${EDEN_R2_STAGING_CPP}")
+    target_compile_definitions(video_core PRIVATE EDEN_RESEARCH_NS2_STAGE_BACKING=1)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_R2_STAGE_HEADER}" "${EDEN_R2_BOUNDS_HEADER}"
+                 "${EDEN_R2_RETIREMENT_HEADER}" "${EDEN_R2_STAGING_CPP}")
+else()
+    # Vulkan's shared overlay-copy step copies this optional header too.
+    # Explicitly remove it when OFF so the old public staging ABI wins.
+    file(REMOVE "${EDEN_R2_STAGE_HEADER}" "${EDEN_R2_BOUNDS_HEADER}"
+                "${EDEN_R2_RETIREMENT_HEADER}")
+endif()
+
 list(REMOVE_ITEM video_sources video_core.cpp gpu.cpp)
 if(EDEN_PS5_VULKAN)
     list(APPEND video_sources video_core.cpp)
@@ -1350,6 +1390,36 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_LAYER_DECODE=1)
 endif()
 
+# R4 native research-only: compile the actual N60 ASTC TextureCache
+# implementation (the source used by the PS5 renderer), NOT the shadowed
+# eden-vulkan/vulkan-cache copy. Explicit opt-in, default OFF on all builds.
+option(EDEN_RESEARCH_NS2_R4_VOLUME
+       "Qualify native 3D cached volume-slice copy in active NS1/NS2 TextureCache" OFF)
+if(EDEN_RESEARCH_NS2_R4_VOLUME)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR "R4 volume-slice research requires PS5 native Vulkan")
+    endif()
+    set(EDEN_R4_ACTIVE_TEXTURE_CACHE
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h")
+    if(NOT EXISTS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
+        message(FATAL_ERROR "R4 N60 maintained TextureCache owner missing")
+    endif()
+    file(STRINGS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}" EDEN_R4_ACTIVE_OWNER_SOURCE
+         REGEX "copy_native_volume_slice")
+    if(NOT EDEN_R4_ACTIVE_OWNER_SOURCE MATCHES
+           "copy_native_volume_slice")
+        message(FATAL_ERROR "R4 wrong active TextureCache owner selected")
+    endif()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp"
+         EDEN_R4_CONSUMER_INDEX)
+    if(EDEN_R4_CONSUMER_INDEX LESS 0)
+        message(FATAL_ERROR "R4 active Vulkan cache consumer missing from native graph")
+    endif()
+    target_compile_definitions(video_core PRIVATE EDEN_RESEARCH_NS2_R4_VOLUME=1)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
+endif()
+
 # Sparse native GPU probes were diagnostic paths without a production
 # consumer. Keep the supported dense Vulkan texture cache until sparse
 # mapping integrates with the same normal scheduler and memory ownership.
@@ -1402,6 +1472,38 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     target_include_directories(video_core BEFORE PRIVATE
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
+endif()
+# R3: research-only selection of the maintained GOB16 decoder TU. Never
+# mutate the pinned Eden source tree or include TWO definitions of the public
+# SwizzleTexture/UnswizzleTexture/SwizzleSubrect API in a single binary.
+# Disabled unless an explicit isolated NS2 source-review build opts in.
+option(EDEN_RESEARCH_NS2_GOB16
+       "Select reviewed maintained GOB16 texture decoder in an isolated PS5 Vulkan build" OFF)
+if(EDEN_RESEARCH_NS2_GOB16)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR
+            "R3 GOB16 requires an explicit native PS5 Vulkan research configuration")
+    endif()
+    set(EDEN_NS2_GOB16_DECODER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp")
+    if(NOT EXISTS "${EDEN_NS2_GOB16_DECODER}")
+        message(FATAL_ERROR
+            "R3 GOB16 maintained decoder missing at the checked out vendor pin")
+    endif()
+    list(FIND video_sources "textures/decoders.cpp" EDEN_NS2_GOB16_PINNED_INDEX)
+    if(EDEN_NS2_GOB16_PINNED_INDEX LESS 0)
+        message(FATAL_ERROR
+            "R3 GOB16 original translation unit changed; re-audit source selection")
+    endif()
+    list(FIND video_sources "${EDEN_NS2_GOB16_DECODER}" EDEN_NS2_GOB16_DUPLICATE_INDEX)
+    if(NOT EDEN_NS2_GOB16_DUPLICATE_INDEX EQUAL -1)
+        message(FATAL_ERROR
+            "R3 GOB16 maintained decoder already selected; refusing duplicate TU")
+    endif()
+    list(REMOVE_ITEM video_sources "textures/decoders.cpp")
+    list(APPEND video_sources "${EDEN_NS2_GOB16_DECODER}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_NS2_GOB16_DECODER}")
 endif()
 set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")
 

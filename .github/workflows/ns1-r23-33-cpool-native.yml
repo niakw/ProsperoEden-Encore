@@ -1,0 +1,38 @@
+name: NS1 R23 indexed ConstantPool single native source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-constant-pool-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-33-cpool-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-cpool-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Assert candidate vendor, matched header, one compiled owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "8ca427a4757b85dc85404248d6d640382a82e4ed"
+          python3 -B vendor/tests/ns1_r23_33_cpool_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          c=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_pool_units "backend/x64/constant_pool.cpp")' in c
+          assert 'list(APPEND eden_r23_pool_units "${EDEN_R23_POOL_UNIT}")' in c
+          assert 'target_include_directories(dynarmic BEFORE PUBLIC "${PORT_BUILD_DIR}/include")' in c
+          assert Path("vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp").is_file()
+          assert Path("vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h").is_file()
+          print("NS1_R23_CONSTPOOL_NATIVE_SINGLE_OWNER_HOST_PASS")
+          PY

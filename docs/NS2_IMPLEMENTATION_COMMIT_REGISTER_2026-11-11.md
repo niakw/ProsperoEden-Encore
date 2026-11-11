@@ -1,5 +1,7 @@
 # NS2 — source commit checkpoint (2026-11-11)
 
+**Verdict courant (11 novembre 2026) :** lire d'abord [NS2_R2_R3_R4_SOURCE_EXIT_2026-11-11.md](NS2_R2_R3_R4_SOURCE_EXIT_2026-11-11.md). Source/compilation native ciblée clôturées ; 11 critères GPU/console non validés. Les sections ci-dessous sont le journal chronologique et peuvent inclure des statuts anciens remplacés.
+
 ## R4 / shared N60: real Vulkan image-retirement hook was inactive — 11 November 2026
 
 **New confirmed real source-owner defect:** PS5 CMake selects `encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h`. Its actual `TextureCache<P>::DeleteImage` still called only the legacy eight-frame `sentenced_image_view.Push` / `sentenced_images.Push` (or immediate destruction), not the GPU-timeline owner-retention API. By contrast, inactive `encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h` already uses `runtime.RetireGpuImageView` and `runtime.RetireGpuImage` for the PS5/Vulkan template. Actual `TextureCacheRuntime` in maintained `eden-vulkan/vk_texture_cache_cost.cpp` already implements both APIs, holding strong native image/view owners until GPU completed tick, minimum frame age and final native GPU pin retirement; its destructor handles pending retirement with an explicit scheduler finish. The earlier R4 source mismatch therefore also hid a real source-owner integration gap in **shared NS1/NS2** texture retirement; this is plausible crash/lifetime risk but **not evidence of a specific console crash**.

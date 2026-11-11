@@ -11,7 +11,7 @@
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 6,
-    "native-build-or-dependency-review": 2,
+    "reviewed-native-glslang-argv-no-space-current-build": 1,
     "reviewed-inactive-native-static-LZ4-option": 2,
     "test-only-upstream": 1,
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
@@ -25,6 +25,7 @@
     "reviewed-Qt-applet-picker-no-current-headless-port": 1,
     "source-implemented-native-PS5-ZBIC-NSO": 1,
     "source-equivalent-native-PS5-sparse-commit-failstop": 1,
+    "reviewed-clang23-only-glsl-backend-no-current-PS5-port": 1,
     "source-equivalent-pinned-savedata-post-revert": 1,
     "MSVC-portability-only-no-current-PS5-runtime-port": 1,
     "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -626,9 +627,9 @@
       "sha": "895d8ede2c69f5f8061b04afaf247c2c5e04c08d",
       "title": "[cmake] Correct the -I quoting in the glslangValidator commands (#4632)",
       "file_count": 1,
-      "classification": "native-build-or-dependency-review",
-      "scope": "Upstream modifies exactly two glslangValidator CMake -I command argument quoting locations in src/video_core/host_shaders/CMakeLists.txt, not C++ runtime. PS5 has a shader compile toolchain and requires native command-line/ABI receipt.",
-      "action": "Compare actual PS5 native shader generator command and glslangValidator output; do not touch C++ runtime or mark build flag parity proven.",
+      "classification": "reviewed-native-glslang-argv-no-space-current-build",
+      "scope": "Two glslangValidator -I quoting changes remain absent in pinned shader CMake. Native recovery build uses whitespace-free checkout/SDK path and succeeded; portability issue remains conditional on paths with spaces.",
+      "action": "No current native port. See ENCORE_AB_R23_FINAL_TWO_BUILD_CASES_2026-11-11.md; reopen with real glslang argv/path-space CMake smoke test.",
       "paths": [
         "src/video_core/host_shaders/CMakeLists.txt"
       ],
@@ -3119,9 +3120,9 @@
       "sha": "3d37a816c6adc2708a7be70f5a7fbe0af36b8227",
       "title": "[glsl] fix clang 23 build error for unused function `SetDefinition` (#4389)",
       "file_count": 1,
-      "classification": "native-build-or-dependency-review",
-      "scope": "Exact Eden #101 changes only backend/glsl/emit_glsl.cpp. Pinned shader_recompiler CMake target includes that translation unit exclusively under if(ENABLE_OPENGL). Headless host sets ENABLE_OPENGL=OFF; native PS5 script optionally enables OpenGL with graphics profile. No Vulkan SPIR-V semantic change, but optional PS5 OpenGL GLSL build remains untested.",
-      "action": "Keep as optional OpenGL Clang23 syntax/semantic case; compile actual selected GLSL TU with native compiler before accepting. No general Vulkan patch.",
+      "classification": "reviewed-clang23-only-glsl-backend-no-current-PS5-port",
+      "scope": "Upstream removes GLSL backend template and simplifies Invoke to address a Clang23 warning. Native SDK in successful run uses Clang18.1.3; PS5 renderer uses Vulkan/SPIR-V. Future clang23/GL requires new tests.",
+      "action": "Do not blindly copy new GLSL dispatch semantics; retest if Clang23 or native GL backend chosen. See ENCORE_AB_R23_FINAL_TWO_BUILD_CASES_2026-11-11.md.",
       "paths": [
         "src/shader_recompiler/backend/glsl/emit_glsl.cpp"
       ],

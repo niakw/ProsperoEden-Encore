@@ -1,0 +1,31 @@
+# R23 pass23 — selected x64 Dynarmic #32 hint-config semantic drift and core cheat parser/runtime #46
+
+**11 November 2026 — E1 source-level audit only, PR #45.** Source owner/current pinned SHA comparison and official upstream file diff, **not** a host instruction trace, native ELF validation, guest boot, exploit demonstration or PS5 device run.
+
+## #32 — Dynarmic `UserConfig` forwarding is NOT automatically semantically neutral
+
+Official Eden [`2bec66c0922673844bc761a0784e89cde7869f00`](https://github.com/eden-emulator/mirror/commit/2bec66c0922673844bc761a0784e89cde7869f00), 22 changed files, removes the separate A32/A64 `TranslationOptions` objects and forwards the full A32/A64 `UserConfig` to frontend translation. On x64 A64, prior `backend/x64/a64_interface.cpp` did:
+
+```cpp
+const auto get_code = [this](u64 vaddr) { return conf.callbacks->MemoryReadCode(vaddr); };
+A64::Translate(ir_block, arch_descriptor, get_code,
+               {conf.define_unpredictable_behaviour, conf.wall_clock_cntpct});
+```
+
+The old `frontend/A64/translate/a64_translate.h` **`TranslationOptions`** defines `hook_hint_instructions = true` by default. That aggregate forwards only the first two fields, and leaves hint hooking **true**. Meanwhile, the current pinned original `interface/A64/config.h` blob **`818aed73e71936dadf4d84c535145ee6022604cd`** defines **`A64::UserConfig::hook_hint_instructions = false` by default**. The selected native G11 A64 owner `vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp` blob **`b03c862e9e2d54adaa49e4200bd980ec6d605c0b`** creates `Dynarmic::A64::UserConfig config`, sets `callbacks`, `define_unpredictable_behaviour`, `wall_clock_cntpct` but does **not** override `hook_hint_instructions`.
+
+The upstream new `A64::Translate(..., conf)` obtains instructions via `conf.callbacks->MemoryReadCode(pc)` and the visitor reads `conf.hook_hint_instructions` instead of its old temporary options. The original pinned translator implementation `backend/x64/a64_interface.cpp` blob **`bb072129e78c1c3e92106ce99b1cae9c629354b9`**, `frontend/A64/translate/a64_translate.cpp` blob **`7840c63d794d81d9a63100023cdcb3dd9eafdd36`**, header `a64_translate.h` blob **`61033eb530c672d438e2fd468473454d6c0d453e`**, and `frontend/A64/translate/impl/system.cpp` blob **`c60fdc3ae0d29af28ae04c56c06fed84c9ac27f7`** show the old path: WFE/WFI/SEV/YIELD hint processing checks `options.hook_hint_instructions`. This changes whether those instructions generate host exception/hint events or are treated as non-hooked hints, **even though the commit is titled a configure-struct removal**. A32's old construction already forwarded `conf.hook_hint_instructions`, so A32 is not automatically the same difference.
+
+**Disposition:** E1 source-verified behavioral difference / missing upstream A64 hint-policy forwarding on the **real x64 JIT backend**; release-gap OPEN. This is **not proof** that it causes current startup crashes, and not a request to replace the optimized native G11 compiler. Owner must decide the correct NS1 guest scheduler/event contract: compare WFE/WFI/SEV/YIELD traces and callbacks with true/false config, run positive/negative A64 guest instruction tests, wake-up/no-spin regressions, CPU6/multi-core clock behavior, and actual PS5 boot. Keep original callback ABI and optimized N76/G11 owner. Backend arm64/riscv64 changes must not be accidentally used to rewrite x64 native source.
+
+## #46 — cheats/master runtime toggles include a genuine old parser boundary problem
+
+Official Eden [`69665063a9b1`](https://github.com/eden-emulator/mirror/commit/69665063a9b1) changes 24 files. The changes are **not merely Android/Qt menus**: they add runtime master-code metadata, thread-safe cheat toggles, new `CheatEngine::GetCheats`/`SetCheatEnabled`, dynamic opcode sequences, and a bounded `ExtractName` parser. The selected `sources/eden/src/core/CMakeLists.txt` blob **`508ace350173f5068bd7531f37e70199134fde3a`** includes `memory/cheat_engine.cpp`, `memory/dmnt_cheat_vm.cpp` and `file_sys/patch_manager.cpp`; no maintained `encore-active/eden-core/src/core/memory/cheat_engine.cpp` override exists in the checked path.
+
+Pinned old `sources/eden/src/core/memory/cheat_engine.cpp` blob **`e14147f5c9f71a0f5a94a6e14bd03c74a00a3226`** has `ExtractName` performing `while (data[end_index] != match)` and checking `end_index > data.size()` only *after* increment. When the delimiter is absent, the next iteration can read `data[data.size()]`, **outside the guaranteed `string_view` bounds**. This is a source-level bounds defect, not a demonstrated security exploit. The old `TextCheatParser` still uses fixed `num_opcodes` and does not expose master-code toggles. Types blob **`64c072d3ded53f9487a2c1c790686d2a071bb29e`**, VM `dmnt_cheat_vm.cpp` blob **`caceeec4fc46e26537e1fade8bdcf3f02fd9713f`**, VM header **`de5e81add2fdbc194a3f1454a29b7cb727a4cbed`**, and current patch manager **`ada8c44e785dbf1b4f2cdfe20ce50de3dd92ac62`** retain the old behavior.
+
+**Disposition:** E1 verified shared-NS1 **source gap**, unported. Prioritize independently testable **bounded string_view parser correction** and matching parser regression cases before any broad cheat UI/VM ABI change; the upstream replacement removes a 0x400 opcode limit and changes memory/lifetime and synchronization semantics. No automatic limit relaxation or master cheats-on policy until specified. Tests: missing/empty/unclosed delimiters, 1/7/8/9-digit opcodes, non-ASCII bytes and signed-char `isxdigit`, max fixed program length, same-title duplicate uppercase/lowercase cheat files, master disabled vs ordinary toggle, racing guest pause/resume/reload, no memory write outside guest allowed regions, ASan/UBSan host and PS5 launch.
+
+## Count and release boundaries
+
+Two more generic upstream reviews (#32, #46) are now **classified as E1 native source gaps but NOT ported**. Generic semantic reviews **24 → 22**; verified relevant source gaps **26 → 28**. Other gates remain **8** policy/refactor, **17** changed-header compiled-owner receipts, **0/7** fully PS5-qualified release batches and R18 provenance/SBOM/security unresolved. There is no evidence that a source gap automatically fixes NS1/NS2 launch crashes.

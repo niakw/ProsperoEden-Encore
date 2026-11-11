@@ -1,0 +1,38 @@
+name: NS1 C03 exact 14-source RADV host preflight (no PS5 build)
+on:
+  push:
+    branches:
+      - research/ns1-c03-radv-native-selected-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "tools/install-vendored-radv.py"
+      - "tools/radv-active-inputs.py"
+      - "tools/check-vendored-radv-fork.py"
+      - "tools/check-active-source-inventory.py"
+      - "tools/check-eden-optimization-coverage.py"
+      - ".github/workflows/ns1-c03-radv-14-source-host.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  c03-selected-sources:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source and exact isolated vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Fail closed on vendor mismatch and qualify 14 Mesa owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "e6c01d40e8260fa7e81a4f7b877c8bf4c5a18da9"
+          python3 -B vendor/tests/c03_radv_transfer_split.py
+          python3 -B tools/check-vendored-radv-fork.py
+          python3 -B tools/radv-active-inputs.py --self-test
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-eden-optimization-coverage.py
+          echo "C03 source/host only: no Meson native object, PS5 GPU, or game boot proof" >> "$GITHUB_STEP_SUMMARY"

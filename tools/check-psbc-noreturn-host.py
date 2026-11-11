@@ -34,8 +34,8 @@ assert "psbc_configs=()" in build
 assert build.index("trap cleanup EXIT") < build.index("if ! grep -q")
 # The PSBC config backups must be per-process: a fixed ".backup.$" path can
 # be overwritten by overlapping builds and silently restore the wrong input.
-assert build.count('${cfg}.encore-backup.$"') == 4
-assert '${cfg}.encore-backup.$"' not in build
+assert build.count('${cfg}.encore-backup.' + chr(36) * 2 + '"') == 4
+assert build.count('${cfg}.encore-backup.' + chr(36) + '"') == 0
 syntax = subprocess.run(["bash", "-n", str(root / "tools/build-opengl-sdk.sh")],
                         capture_output=True, text=True)
 assert syntax.returncode == 0, syntax.stderr

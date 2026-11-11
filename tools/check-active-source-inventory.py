@@ -676,8 +676,27 @@ assert "UnregisterProcessIfPresent(" in h01_process
 print("ENCORE_POST_F07_H01_FS_ROLLBACK_OWNER_PASS", "owners=1",
       "historical_F07_unchanged=1")
 
+# New native NS2 production source owners are separately verified; the
+# historical 337-file F07 catalogue remains immutable and independently audited.
+ns2_production_added_owners = {
+    "eden-core/src/video_core/textures/decoders.cpp",
+    "eden-core/tests/test_ns2_gob16_decoder_public_api.cpp",
+    "eden-vulkan/include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h",
+    "eden-vulkan/include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h",
+    "eden-vulkan/include/video_core/renderer_vulkan/ns2_verified_upload_batch.h",
+    "eden-vulkan/include/video_core/renderer_vulkan/vk_staging_buffer_pool.h",
+    "eden-vulkan/tests/test_ns2_cache_shutdown_order.cpp",
+    "eden-vulkan/tests/test_ns2_gpu_retirement_hold.cpp",
+    "eden-vulkan/tests/test_ns2_verified_upload_batch.cpp",
+    "eden-vulkan/vk_staging_buffer_pool.cpp",
+    "ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
+}
+assert ns2_production_added_owners <= set(physical_all), (
+    "NS2 production source missing", sorted(ns2_production_added_owners - set(physical_all)))
+assert not ns2_production_added_owners.intersection(research_paths)
+
 physical = [p for p in physical_all
-            if p not in set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |

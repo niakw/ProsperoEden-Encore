@@ -974,6 +974,41 @@ list(REMOVE_ITEM core_sources hle/kernel/kernel.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_KERNEL_SOURCE}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #153 — exactly two maintained Opus decoder compiler units on PS5.
+# Don't replace the vendor source tree or compile both old/new units.
+# Overlay only the two changed public headers, not the whole maintained root.
+if(PS5_NATIVE)
+    set(EDEN_OPUS_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden-core/src")
+    set(EDEN_OPUS_HEADER_ROOT "${PORT_BUILD_DIR}/r23-opus/include")
+    foreach(eden_opus_header IN ITEMS
+            "audio_core/opus/hardware_opus.h"
+            "core/hle/service/audio/errors.h")
+        if(NOT EXISTS "${EDEN_OPUS_ACTIVE}/${eden_opus_header}")
+            message(FATAL_ERROR "R23 #153 maintained Opus header missing: ${eden_opus_header}")
+        endif()
+        configure_file("${EDEN_OPUS_ACTIVE}/${eden_opus_header}"
+                       "${EDEN_OPUS_HEADER_ROOT}/${eden_opus_header}" COPYONLY)
+    endforeach()
+    get_target_property(eden_opus_sources audio_core SOURCES)
+    foreach(eden_opus_relative IN ITEMS
+            "opus/hardware_opus.cpp" "opus/decoder.cpp")
+        list(FIND eden_opus_sources "${eden_opus_relative}" eden_opus_original)
+        if(eden_opus_original LESS 0)
+            message(FATAL_ERROR "R23 #153 pinned Opus TU absent: ${eden_opus_relative}")
+        endif()
+        if(NOT EXISTS "${EDEN_OPUS_ACTIVE}/audio_core/${eden_opus_relative}")
+            message(FATAL_ERROR "R23 #153 maintained Opus TU absent: ${eden_opus_relative}")
+        endif()
+        list(REMOVE_ITEM eden_opus_sources "${eden_opus_relative}")
+        list(APPEND eden_opus_sources
+             "${EDEN_OPUS_ACTIVE}/audio_core/${eden_opus_relative}")
+    endforeach()
+    set_property(TARGET audio_core PROPERTY SOURCES "${eden_opus_sources}")
+    target_include_directories(audio_core BEFORE PRIVATE "${EDEN_OPUS_HEADER_ROOT}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_OPUS_HEADER_ROOT}")
+    message(STATUS "R23 #153: one PS5-maintained Opus owner per TU and two exact headers")
+endif()
+
 # Replace SDL audio with the optional native sink; the renderer stays null.
 get_target_property(audio_sources audio_core SOURCES)
 list(FILTER audio_sources EXCLUDE REGEX "sink/sdl3_sink\\.")

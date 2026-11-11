@@ -8,11 +8,12 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-VENDOR="0940d6ef9d120fb3a39afadad5de690b0f0f4133"
+VENDOR="ded9ac92ef1997d160bba3e546ad6861be7286c4"
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
               ROOT/"vendor/encore-active/eden-core/src/core/memory_native_standard.cpp")
+NATIVE_KERNEL=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"
 
 def args(row):
     return list(row["arguments"]) if "arguments" in row else shlex.split(row["command"])
@@ -36,6 +37,9 @@ def main():
     vendor_rows=[r for r in db if Path(r["file"]).resolve() in variants]
     if len(vendor_rows)!=1: raise RuntimeError(f"Expected one real PTE TU, got {len(vendor_rows)}")
     selected.append(("native_guest_pte",vendor_rows[0]))
+    kernel_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_KERNEL.resolve()]
+    if len(kernel_rows)!=1: raise RuntimeError(f"Expected exactly one real native kernel direct owner, got {len(kernel_rows)}")
+    selected.append(("native_kernel_direct",kernel_rows[0]))
     # Qualify existing source owners first even when the new sparse TU has a
     # target-SDK header problem; never stop before recording their verdict.
     selected.sort(key=lambda pair: pair[0] == "ns2_sparse_guest.cpp")

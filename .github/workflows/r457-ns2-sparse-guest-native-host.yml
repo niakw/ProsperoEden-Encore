@@ -7,6 +7,8 @@ on:
       - 'src/host_memory.cpp'
       - 'headless/CMakeLists.txt'
       - 'tools/ns2/test_r457_native_sparse_owner.cpp'
+      - 'tools/ns2/check_r457_sparse_kernel_source.py'
+      - vendor
       - '.github/workflows/r457-ns2-sparse-guest-native-host.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +29,7 @@ jobs:
             -Isrc -Iheadless src/ns2_sparse_guest.cpp \
             tools/ns2/test_r457_native_sparse_owner.cpp -o /tmp/r457-native-owner
           /tmp/r457-native-owner
+          python3 -B tools/ns2/check_r457_sparse_kernel_source.py
       - name: Verify disabled by default and exact maintained guest PTE owner
         run: |
           set -euo pipefail
@@ -34,3 +37,4 @@ jobs:
           grep -F 'if(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING)' headless/CMakeLists.txt
           grep -F 'EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING' src/host_memory.cpp
           test "$(git ls-tree HEAD vendor | cut -d ' ' -f 3)" != 90c9c8a203a27181e23349a889a8f2a7d1cd9dd2
+

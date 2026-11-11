@@ -2844,3 +2844,27 @@ if(PS5_NATIVE)
     set_property(TARGET shader_recompiler PROPERTY SOURCES
         "${eden_native_cas_sources}")
 endif()
+
+# R457 NS2 sparse residency: the guest kernel directly writes optimized
+# management metadata and page-fill spans BEFORE any process PTE exists.
+# The original compiled kernel source would dereference uncommitted 12GiB
+# virtual holes. Select one reviewed research-only source with precommit guards.
+if(PS5_NATIVE AND EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING)
+    set(EDEN_R457_SPARSE_KERNEL_SRC
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp")
+    if(NOT EXISTS "${EDEN_R457_SPARSE_KERNEL_SRC}")
+        message(FATAL_ERROR "R457 sparse physical native kernel owner missing")
+    endif()
+    get_target_property(eden_r457_sparse_kernel_units core SOURCES)
+    list(FIND eden_r457_sparse_kernel_units
+         "hle/kernel/k_memory_manager.cpp" eden_r457_sparse_kernel_original)
+    if(eden_r457_sparse_kernel_original EQUAL -1)
+        message(FATAL_ERROR "R457 sparse kernel must replace exactly the active KMemoryManager TU")
+    endif()
+    list(REMOVE_ITEM eden_r457_sparse_kernel_units
+         "hle/kernel/k_memory_manager.cpp")
+    list(APPEND eden_r457_sparse_kernel_units
+         "${EDEN_R457_SPARSE_KERNEL_SRC}")
+    set_property(TARGET core PROPERTY SOURCES
+        "${eden_r457_sparse_kernel_units}")
+endif()

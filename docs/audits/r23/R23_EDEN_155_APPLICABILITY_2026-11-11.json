@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 13,
-    "runtime-semantic-review-pending": 52,
+    "verified-relevant-source-gap-awaiting-native-proof": 14,
+    "runtime-semantic-review-pending": 48,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -46,7 +46,10 @@
     "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
     "reviewed-UTF-conversion-non-equivalence-deferred-host-differential": 1,
     "reviewed-current-Boost190-ADL-compat-wrapper-retained": 1,
-    "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected": 1
+    "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected": 1,
+    "reviewed-nonAndroid-optimized-vertex-branch-only": 1,
+    "reviewed-Qualcomm-driver-flag-outside-PS5-RADV": 1,
+    "source-equivalent-selected-Vulkan-TFB-end-buffer-order": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1368,12 +1371,13 @@
       "sha": "a3debcf731143aabd6eefee406d511551d3c9a73",
       "title": "[buffer_cashe] use old logic when Optimized Vertex Buffers is disabled (#4528)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-nonAndroid-optimized-vertex-branch-only",
+      "scope": "E1 current PS5 non-Android path: upstream #55 adds Android-only opt-out fallback, while the native build always has use_optimized_vertex_buffers constexpr true. Maintained active header adds PS5 dirty-region fast path, which must be preserved; not an ABI or performance equivalence proof.",
+      "action": "No Android legacy fallback port on current PS5. Reopen with PS5 opt-out toggle, header owner switch or compiler macro change; positive/negative GPU upload tests for any changed path.",
       "paths": [
         "src/video_core/buffer_cache/buffer_cache.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream a3debcf731143aabd6eefee406d511551d3c9a73, pinned buffer header 4c345dd21362521dcee4a6a410e2d4b00035c439, maintained header 3d1cba92005617c96a15af481133513ff3feef1b; no PS5 compiled macro dump."
     },
     {
       "index": 56,
@@ -1428,12 +1432,13 @@
       "sha": "a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1",
       "title": "[vulkan] Fix TOTK dark squares (#4565)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-Qualcomm-driver-flag-outside-PS5-RADV",
+      "scope": "E1 upstream #59 adds VK_DRIVER_ID_QUALCOMM_PROPRIETARY and VK_DRIVER_ID_MESA_TURNIP to host subgroup workaround flag. Native PS5 is configured RADV, not Qualcomm/Turnip; maintained vk_pipeline_cache_cost.cpp retains other driver predicates.",
+      "action": "Do not import Qualcomm-only branch into native RADV profile. Reopen if active Vulkan driver ID changes or subgroup compilation differs; require actual driver ID readback and shader rendering on PS5 for correctness.",
       "paths": [
         "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1, active Vulkan pipeline blob 9358b81ab6b8d43e1ae524a159fd5082d4a8cab2, current native build recipe uses RADV; no console device-driver proof."
     },
     {
       "index": 60,
@@ -2703,12 +2708,13 @@
       "sha": "6352612425ae0765802eaa8c5904ff652b97222a",
       "title": "[vk] Return the corrections made for buffer update logic #3690 (#4499)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-selected-Vulkan-TFB-end-buffer-order",
+      "scope": "E1 upstream #77 removes UpdateBuffers() immediately after has_flushed_end_pending=false in TFBCounterStreamer::End; selected native maintained vulkan_query_cache.cpp already omits that refresh and retains UpdateBuffers in Begin. No missing code change at the selected source location.",
+      "action": "Retain maintained query source; check real transform feedback counters and driver barriers on PS5 before asserting full rendering parity; reopen if CMake query owner changes.",
       "paths": [
         "src/video_core/renderer_vulkan/vk_query_cache.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream 6352612425ae0765802eaa8c5904ff652b97222a, selected native query blob ed5655c70176ee85c90c7cd0a26ae947b3689bdd, frozen CMake include file; no console trace."
     },
     {
       "index": 78,
@@ -2845,12 +2851,13 @@
       "sha": "d16735f5b618942136d6ab53466e3be0a382c30a",
       "title": "[am] Properly handle None frontend applet (#4500)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 pinned selected core AM frontend appletholder GetApplet lacks AppletId::None case and falls through to StubApplet. Upstream #84 explicitly returns nullptr for None and changes unknown-case diagnostic. This changes runtime null/placeholder behavior, so no blind cherry-pick.",
+      "action": "Treat missing None handler as confirmed source divergence only. Inspect GetApplet call sites for null safety, separate guest service applet lifecycle, and test None/unknown valid IDs with full native compile/PS5 applet transitions before port.",
       "paths": [
         "src/core/hle/service/am/frontend/applets.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream d16735f5b618942136d6ab53466e3be0a382c30a, pinned selected core AM frontend blob 407ca10602a1fe9107d13aa8393f4145ac7d715a, core CMake listed source; no guest applet test."
     },
     {
       "index": 85,

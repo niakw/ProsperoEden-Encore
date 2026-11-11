@@ -208,3 +208,7 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ## R23 pass 12 — #30 native network source selected and Darwin-only change excluded (11 novembre)
 
 [Source-level decision](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS12_2026-11-11.md). The PS5 profile selects a maintained native FreeBSD interface enumerator using `getifaddrs`, not the upstream new Darwin path nor the legacy FreeBSD route helper. No native game networking claim; **52** generic semantic reviews remain, **13** gaps, **2** scoped policies, 17 headers and seven corrective batches.
+
+## R23 pass 13 — four selected runtime owner decisions (11 Nov)
+
+[Exact report](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS13_2026-11-11.md) compares #55 Optimized Vertex Buffer Android fallback, #59 Qualcomm/Turnip driver flags, #77 native maintained Vulkan query semantics, #84 AM None applet missing dispatch. Source-scoped categories reduce the general queue to **48**; AM #84 adds a **14th** source gap requiring guest/ABI tests, without claiming it causes a current PS5 launch crash. Other gates remain: 2 GL/UTF policies, 17 native headers, 7 corrective batches.

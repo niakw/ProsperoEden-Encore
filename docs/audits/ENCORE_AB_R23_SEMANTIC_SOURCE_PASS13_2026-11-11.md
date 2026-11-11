@@ -1,0 +1,23 @@
+# R23 pass 13 — source-owner review of #55 #59 #77 #84
+
+**11 Nov 2026; read-only PR #45. E1/source-only.** Four upstream commits were compared against the immutable original vendor `22b69d6053db41b74edac2633c012f925b84f69e` and the actual PS5-selected maintained code. No PS5 C++ compilation or device runtime proof; no vendor or main source changes.
+
+## #55 — Android-disabled optimized vertex fallback, not PS5 GPU policy
+
+Official [`a3debcf731143aabd6eefee406d511551d3c9a73`](https://github.com/eden-emulator/mirror/commit/a3debcf731143aabd6eefee406d511551d3c9a73) modifies only `src/video_core/buffer_cache/buffer_cache.h`, adding `#ifdef __ANDROID__` option gating and a legacy upload fallback when optimized buffers are disabled. Native PS5 is non-Android; for this profile `constexpr bool use_optimized_vertex_buffers = true` selects the upstream optimized arm, not the new fallback. Pinned original header blob `4c345dd21362521dcee4a6a410e2d4b00035c439`; maintained native header `encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h` blob **`3d1cba92005617c96a15af481133513ff3feef1b`** contains independent `#ifdef PS5_NATIVE` dirty-region optimization and the original optimized upload policy. **Decision:** no import of Android fallback; retain PS5 customized cache and reopen if non-Android toggle or target/header macro selection changes. No speed equivalence or current PS5 behavior test claimed.
+
+## #59 — Qualcomm/Turnip-specific TOTK flag, not RADV branch
+
+Official [`a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1`](https://github.com/eden-emulator/mirror/commit/a95efaf18f50721aa6f5cdce8b5b94e858ffd8d1) adds only `VK_DRIVER_ID_QUALCOMM_PROPRIETARY` and `VK_DRIVER_ID_MESA_TURNIP` to a shader pipeline driver predicate. Native build recipe uses `-DEDEN_VULKAN_DRIVER=RADV`, distinct from Qualcomm/Turnip. Active PS5 `encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp` blob **`9358b81ab6b8d43e1ae524a159fd5082d4a8cab2`** retains the older predicate. **Decision:** conditional driver-ID exclusion for current RADV; reopen on driver-ID spoofing/other profile or actual shader workaround needs. A RADV build flag is not a device runtime ID capture, nor a demonstration that TOTK dark squares are absent.
+
+## #77 — maintained native Vulkan query already contains upstream end-side fix
+
+Official [`6352612425ae0765802eaa8c5904ff652b97222a`](https://github.com/eden-emulator/mirror/commit/6352612425ae0765802eaa8c5904ff652b97222a) removes `UpdateBuffers()` immediately after `has_flushed_end_pending = false;` in `TFBCounterStreamer` end transform feedback, plus whitespace. Pinned original `vk_query_cache.cpp` Git blob `2b5aa24053d881975904bd17111a48f34cb7547d` **still calls** `UpdateBuffers()` at that location. PS5 source `encore-active/eden-vulkan/vulkan_query_cache.cpp` blob **`ed5655c70176ee85c90c7cd0a26ae947b3689bdd`** has **no** end-side `UpdateBuffers()`, while retaining start-side refresh. `headless/vulkan.cmake` explicitly selects `"${PORT_BUILD_DIR}/vulkan_query_cache.cpp"` after copying maintained renderer. **Decision:** source-equivalent at the exact changed end-side method; no port needed. Full Vulkan transform feedback counter/state and GPU barrier runtime still need device tests; the whole file has unrelated modifications.
+
+## #84 — AppletId::None source gap must not be ported blind
+
+Official [`d16735f5b618942136d6ab53466e3be0a382c30a`](https://github.com/eden-emulator/mirror/commit/d16735f5b618942136d6ab53466e3be0a382c30a) changes `FrontendAppletHolder::GetApplet`: adds `case AppletId::None: return nullptr;` and replaces unknown-app ID diagnostic with `UNIMPLEMENTED_MSG`. Pinned original `sources/eden/src/core/hle/service/am/frontend/applets.cpp` Git blob **`407ca10602a1fe9107d13aa8393f4145ac7d715a`** has no None case: it falls to `StubApplet` and logs. The frozen `src/core/CMakeLists.txt` includes this unit, and `headless/CMakeLists.txt` has no replacement for it. **Decision:** confirmed guest-observable source divergence, not a reproduced crash. Investigate callers' `nullptr` acceptance, guest AM lifecycle/service contract and None/unknown applet positive+negative tests before choosing an implementation. Other applet IDs must not be changed by an unsafe whole-file port.
+
+## Result and separate gates
+
+All four 155-entry dispositions updated with exact source limit and re-open conditions. **48** generic semantic reviews pending; **14** verified source gaps; **2** separate GL/UTF scoped policies; 0 unreviewed current-profile upstream build cases; **17** native changed-header inclusion receipts and **7** corrective release batches remain. No native PS5 ELF, runtime, vendor repin or `main` edit.

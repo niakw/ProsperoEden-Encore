@@ -361,6 +361,33 @@ list(FILTER jit_sources EXCLUDE REGEX "(^|/)emit_x64\\.cpp$")
 set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
 target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/emit_x64.cpp")
 
+# R23 #33 — ConstantPool C++ and header must agree on mapped slot type.
+# Keep the code cache W^X writableAddress semantics from maintained PS5.
+if(PS5_NATIVE)
+    set(EDEN_R23_POOL_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_POOL_UNIT
+        "${EDEN_R23_POOL_ROOT}/src/dynarmic/backend/x64/constant_pool.cpp")
+    set(EDEN_R23_POOL_HEADER
+        "${EDEN_R23_POOL_ROOT}/include/dynarmic/backend/x64/constant_pool.h")
+    if(NOT EXISTS "${EDEN_R23_POOL_UNIT}" OR NOT EXISTS "${EDEN_R23_POOL_HEADER}")
+        message(FATAL_ERROR "Missing coherent R23 #33 native W^X constant pool pair")
+    endif()
+    configure_file("${EDEN_R23_POOL_HEADER}"
+        "${PORT_BUILD_DIR}/include/dynarmic/backend/x64/constant_pool.h" COPYONLY)
+    get_target_property(eden_r23_pool_units dynarmic SOURCES)
+    list(FIND eden_r23_pool_units
+         "backend/x64/constant_pool.cpp" eden_r23_pool_old)
+    if(eden_r23_pool_old LESS 0)
+        message(FATAL_ERROR "R23 #33 original native ConstantPool TU changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_pool_units "backend/x64/constant_pool.cpp")
+    list(APPEND eden_r23_pool_units "${EDEN_R23_POOL_UNIT}")
+    set_property(TARGET dynarmic PROPERTY SOURCES "${eden_r23_pool_units}")
+    target_include_directories(dynarmic BEFORE PUBLIC "${PORT_BUILD_DIR}/include")
+    message(STATUS "R23 #33: one maintained indexed W^X ConstantPool C++ and header")
+endif()
+
 # Dynarmic scalar translation and optimizer are tracked complete sources.
 # impl/impl.cpp is included once by its adjacent translator.
 set(EDEN_MAINTAINED_SCALAR_IMPL

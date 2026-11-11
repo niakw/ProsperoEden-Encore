@@ -47,8 +47,8 @@ if [[ "$research_720" != 0 && "$research_720" != 1 ]]; then
   exit 64
 fi
 if [[ "$research_720" == 1 ]]; then
-  linked_run="${R09_HOST_LINKED_RUN_ID:-43029338449}"
-  expected_engine="${R09_HOST_EXPECTED_ENGINE_SHA:-7f5ea90ad29a5562161e8cb9aae1406b1bc9a2de}"
+  linked_run="${R09_HOST_LINKED_RUN_ID:-43034547912}"
+  expected_engine="${R09_HOST_EXPECTED_ENGINE_SHA:-7d4d8d6fde7da31ab03b9b091714e59a55699054}"
   expected_vendor="b26075ab190460014cbffd6c744faf897088375c"
   artifact_name="r09-min-720-authentic-linux-host-vulkan-runner-public-only"
   capture_width=1280

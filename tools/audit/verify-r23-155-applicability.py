@@ -93,7 +93,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     if (by_index[53]["classification"] != "reviewed-observability-only-no-NS1-behavioral-port"
             or by_index[5]["classification"] != "not-applicable-to-native-runtime-source"
             or any(by_index[i]["classification"] != "runtime-semantic-review-pending"
-                   for i in (30, 123))):
+                   for i in (30,))):
         raise ValueError("semantically guarded source cases silently reclassified")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
@@ -118,7 +118,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or "src/video_core/frame_gen/lossless_dll.cpp" not in by_index[144]["paths"]
             or "src/video_core/renderer_vulkan/vk_present_manager.cpp" not in by_index[144]["paths"]):
         raise ValueError("R23 #144 native framegen change falsely excluded")
-    # #123 Windows roots also refactors the non-Windows sanitizer path.
+    # #123 keeps its tested root-preservation E1 disposition; its PS5 behavior still requires validation.
     if by_index[123]["classification"] != "source-verified-shared-FS-root-preservation-awaiting-PS5-decision":
         raise ValueError("R23 #123 exact source-root-difference lost, missing native behavior proof")
     path_test = (root / "tests/audit_r23_path_sanitizer_host.cpp").read_text()
@@ -140,7 +140,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         raise ValueError("R23 SSL platform source decision changed without review")
     if by_index[146]["classification"] != "verified-absent-GPU-null-initialization-candidate":
         raise ValueError("R23 GPU init candidate proof changed without review")
-    for i in (30, 123):
+    for i in (30,):
         if by_index[i]["classification"] != "runtime-semantic-review-pending":
             raise ValueError(f"R23 common/native semantic case #{i} was closed without proof")
     # Exact upstream source reversion receipts were reviewed separately.

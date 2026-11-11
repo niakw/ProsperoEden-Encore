@@ -1,5 +1,14 @@
 # NS2 production-owner commit queue — implementation and qualification
 
+## R2 — bounded stream-ring final-region scan (11 Nov 2026)
+
+**Research commit:** [vendor `38a6c1b6`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/38a6c1b6b00db4cc9b26f0dbd993822b727b752d), draft [PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38), **39 commits**. In `StagingBufferPool::GetStreamBuffer`, a cursor exactly at `stream_buffer_size` previously computed `Region(free_iterator)+1` as **17** for a **16-entry** GPU-sync array, and could supply an inverted iterator range to `std::any_of`. The `PS5_NATIVE && EDEN_RESEARCH_NS2_STAGE_BACKING` path now bounds both scan endpoints to `NUM_SYNCS` and only probes if begin < end. The existing mandatory wrapped-region-zero and repeat-retry safety tests remain, and the new source-derived boundary case covers an **exactly exhausted ring**, blocked region-zero reuse, and subsequent post-GPU-completion admission. Non-research production sources remain unchanged.
+
+**Final host evidence:** [vendor exact-source CI #42952401186](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42952401186) **PASS**, [vendor quality #42952401177](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42952401177) **PASS**. Research-only Encore vendor pointer [`db815262`](https://github.com/niakw/ProsperoEden-Encore/commit/db8152624fcc60a5af7f2cb0e9eff86efceba21c) pins exactly `38a6c1b6`; [CMake selection #42952688038](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42952688038) **PASS 10/10**, [strict vendor/Vulkan parity #42952688002](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42952688002) **PASS**.
+
+**Qualification boundary remains:** actual PS5-native Vulkan include-graph compilation, GPU queue/fence, channel/queue epochs and NS1 console regression remain unproven. Inter-command batching is still OFF, and native R2 PS5/NS1, R3, R4 qualification is **3/3 tracks open**. No PS5 build, production `main` change, merge or release.
+
+
 ## R2 latest green gate — resident cache teardown and stream-ring retry (11 Nov 2026)
 
 **Vendor research PR #38: 38 commits, HEAD [`e58e2d8b`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/e58e2d8bca98f14776eee75cbd8476ec586f8579).** Two new guarded source changes, OFF by default:

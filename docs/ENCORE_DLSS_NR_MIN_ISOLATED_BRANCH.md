@@ -515,3 +515,13 @@ A4K is **not** a denoising-only 720p engine: its existing pinned Vulkan CNN alwa
 
 **Next engineering boundary:** expose a stage-list preset, bind each actual node to native independent spatial/Neural/FG Vulkan owners, manage intermediate VkImage+VkImageView per stage and multi-slot timeline, validate authentic per-stage outputs and GPU costs (including double-pass cost after FG), then safely add UI controls. Never count more displayed synthetic frames as reducing original neural inference cost.
 
+### Versioned, editable pipeline recipe v1 — explicit native evidence binding
+
+The stage-list planner is now also usable as a future **per-game preset data model** without embedding GPU handles or credentials in saved options:
+
+- `extras/graphics/neural_pipeline_recipe.h`: `Recipe` version 1 stores only source extent and ordered `RecipeStage` nodes (`Kind`, method ID, target raster, whether post-FG processing consumes the entire real+generated stream). `InsertStep()` and `RemoveStep()` support editing any position, with a strict 12-step cap.
+- The separate `Bindings` object **must** be provided by actual Vulkan stage owners at execution time. Its per-stage evidence includes real image/view identity, queue compatibility, producer→consumer visibility, GPU lifetime, model verification and FG history/provider/budget evidence. `BindRecipe()` never manufactures or stores these values; `QualifyBoundRecipe()` delegates to the strict multi-stage `Plan()` and always leaves PS5 runtime OFF.
+- `extras/graphics/test_neural_pipeline_recipe.cpp`: versions, insertion/removal, FSR1→Original→SGSR→Lanczos→Compose→Mihawk→Present graph, optional insert and removal of an extra spatial pass, post-FG spatial (both real and synthetic streams), absent/native invalid images, missing model, missing budget or fence, invalid final Present, full capacity and future-version denial.
+
+[Isolated GCC+Clang UBSan CI #42990544734](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42990544734) passed the 588 ordered pipeline shape permutations and the **editable recipe and explicit real-evidence binding tests**. This is a host policy and type-validation gate, **not** an executable Vulkan graph, menu setting, real trained neural output, or PS5 FPS validation. Existing legacy settings remain unchanged and feature flags stay false.
+

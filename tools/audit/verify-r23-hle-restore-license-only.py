@@ -81,7 +81,7 @@ def inspect(repo: Path) -> dict:
     cosmetic_ignored = git(
         repo, "diff", "--no-ext-diff", "--no-renames",
         "--ignore-all-space", "--ignore-blank-lines",
-        "-I", r"^[[:space:]]*// SPDX-",
+        "-I", r"^([[:space:]]*// SPDX-.*|[[:space:]]*)$",
         "--unified=0", BEFORE, AFTER, "--", SUBTREE
     )
     remaining_code_paths = []

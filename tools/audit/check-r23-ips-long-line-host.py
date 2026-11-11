@@ -25,7 +25,7 @@ def main() -> None:
     for required in (
         "std::vector<uint8_t> data;",
         "r.data.push_back(",
-        "r.data.resize(hs.size());",
+        "r.data.assign(hs.begin(), hs.end());",
         "auto replace_size = record.second.data.size();",
     ):
         assert required in source, "missing real source implementation " + required

@@ -825,6 +825,9 @@ assert 'EDEN_NS2_SPARSE_BACKING' in (ROOT/"headless/CMakeLists.txt").read_text()
 print("ENCORE_POST_F07_R457_SPARSE_RUNTIME_ISOLATION_PASS", "owners=2 historical_F07=518")
 # Newly integrated maintained NS2 owners, not the frozen F07 518-source set.
 post_f07_ns2_production_owners = {
+    "vendor/encore-active/eden-vulkan/include/rdna2_nr_vit_min_pool_policy.h",
+    "vendor/encore-active/eden-vulkan/include/rdna2_nr_fswin_scratch_pool_policy.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_readback_dimensions.h",
     "vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp",
     "vendor/encore-active/eden-core/tests/test_ns2_gob16_decoder_public_api.cpp",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h",

@@ -679,6 +679,9 @@ print("ENCORE_POST_F07_H01_FS_ROLLBACK_OWNER_PASS", "owners=1",
 # New native NS2 production source owners are separately verified; the
 # historical 337-file F07 catalogue remains immutable and independently audited.
 ns2_production_added_owners = {
+    "eden-vulkan/include/rdna2_nr_vit_min_pool_policy.h",
+    "eden-vulkan/include/rdna2_nr_fswin_scratch_pool_policy.h",
+    "eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_readback_dimensions.h",
     "eden-core/src/video_core/textures/decoders.cpp",
     "eden-core/tests/test_ns2_gob16_decoder_public_api.cpp",
     "eden-vulkan/include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h",

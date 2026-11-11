@@ -950,13 +950,27 @@ assert not post_f07_p5_headless_owners & (
 assert 'ns2_astc_texture_cache_scope_bridge.h' in (
     root / "headless/vulkan.cmake").read_text()
 print("ENCORE_POST_F07_P5_NATIVE_HEADER_SOURCE_PASS", "owners=1 historical_headless=193")
+# R457 console diagnostic owners were created after the immutable F07
+# 193-source snapshot. The ABI probe is selected in the native PS5 CMake
+# graph; the NS2 planner is research-only and must NOT be in HostMemory.
+post_f07_r457_owners = {
+    "headless/ps5_cpu6_abi_probe.cpp",
+    "headless/ps5_ns2_guest_backing_plan.h",
+}
+assert all((root / p).is_file() for p in post_f07_r457_owners)
+assert not post_f07_r457_owners & (
+    post_f07_feature_headless_owners | post_f07_r09_headless_owners |
+    post_f07_p5_headless_owners)
+assert 'ps5_cpu6_abi_probe.cpp' in native_cmake
+assert 'ps5_ns2_guest_backing_plan.h' not in (root / "src/host_memory.cpp").read_text()
+print("ENCORE_POST_F07_R457_RESEARCH_SOURCE_PASS", "owners=2 historical_headless=193")
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

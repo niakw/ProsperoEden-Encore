@@ -815,6 +815,40 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# NS1 R23 #113: one coherent FS parent-sharing header API for the three
+# already selected maintained compiler units. Keep all current NCZ, IPS,
+# mod-root-null, and save owner selections above: no duplicate TU compilation.
+if(PS5_NATIVE)
+    set(EDEN_R23_PARENT_FS_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_PARENT_FS_INCLUDES
+        "${PORT_BUILD_DIR}/r23-parent-fs/include")
+    foreach(eden_r23_fs_name IN ITEMS
+            "patch_manager"
+            "registered_cache"
+            "savedata_factory")
+        set(eden_r23_fs_header
+            "${EDEN_R23_PARENT_FS_SOURCE}/include/core/file_sys/${eden_r23_fs_name}.h")
+        set(eden_r23_fs_cpp
+            "${EDEN_R23_PARENT_FS_SOURCE}/src/core/file_sys/${eden_r23_fs_name}.cpp")
+        if(NOT EXISTS "${eden_r23_fs_header}" OR NOT EXISTS "${eden_r23_fs_cpp}")
+            message(FATAL_ERROR
+                "R23 #113 full maintained FS owner missing: ${eden_r23_fs_name}")
+        endif()
+        configure_file("${eden_r23_fs_header}"
+            "${EDEN_R23_PARENT_FS_INCLUDES}/core/file_sys/${eden_r23_fs_name}.h"
+            COPYONLY)
+        get_target_property(eden_r23_fs_units core SOURCES)
+        list(FIND eden_r23_fs_units "${eden_r23_fs_cpp}" eden_r23_fs_existing)
+        if(eden_r23_fs_existing LESS 0)
+            message(FATAL_ERROR
+                "R23 #113 native FS TU source owner drift: ${eden_r23_fs_name}")
+        endif()
+    endforeach()
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_PARENT_FS_INCLUDES}")
+    message(STATUS "R23 #113: three native FS TUs selected once with matched maintained headers")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

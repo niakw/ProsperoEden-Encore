@@ -129,11 +129,19 @@ jobs:
               assert commands, target
               return commands[-1]
 
-          archive = final_command("src/shader_recompiler/libshader_recompiler.a")
-          assert "libshader_recompiler.a" in archive and " -E rm -f " in archive, archive[-600:]
-          subprocess.run(archive, cwd=native, shell=True, executable="/bin/bash",
-                         check=True)
-          print("P5_REPLAY_SHADER_ARCHIVE_REPACK_PASS", flush=True)
+          for owner in (
+              "src/shader_recompiler/libshader_recompiler.a",
+              "src/video_core/libvideo_core.a",
+          ):
+              # Both owners changed: CAS implementations are in shader_recompiler;
+              # namespaced FSR3 symbols live in video_core. Repack each static
+              # archive from cached objects, otherwise the link would still
+              # resolve the OLD ps5_framegen.cpp.o from the failed run.
+              archive = final_command(owner)
+              assert owner in archive and " -E rm -f " in archive, archive[-600:]
+              subprocess.run(archive, cwd=native, shell=True,
+                             executable="/bin/bash", check=True)
+              print("P5_REPLAY_NATIVE_ARCHIVE_REPACK_PASS", owner, flush=True)
 
           # Explicitly resolve every native Vulkan dispatch reference from the
           # real FrameGen object through namespace-isolated volk pointers.

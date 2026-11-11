@@ -4,13 +4,13 @@
 
 | Catégorie | Commits | Action |
 |---|---:|---|
-| Aucune source d'émulation PS5/NS1 (Android/Qt/docs/SDL non sélectionné) | **24** | Exclusion du portage runtime; packaging/légal hors de cette décision |
+| Source ne modifiant pas le runtime PS5 (Android/Qt/docs/SDL, updater NIGHTLY) | **25** | Exclusion du portage runtime; packaging/légal hors de cette décision |
 | Assets et langues de la distribution | **8** | Vérifier les assets effectivement packagés |
 | CMake / CPM / versions dépendances | **4** | Vérifier les pins et la compilation PS5 |
 | NCE ARM / Dynarmic ARM64 host uniquement | **4** | Exclusion explicite du PS5 x64 |
 | Commit modifiant uniquement un test Dynarmic | **1** | Conserver comme référence de tests, pas de patch runtime |
 | Correctif de code NS1/partagé préparé sur PR #46 | **5** | F2I, BCAT, viewport, IPS, `audren:d` : hôte ciblé; compilation native/console en attente |
-| Autres changements NS1/partagés | **106** | Révision sémantique à faire, pas seulement les chemins |
+| Autres changements NS1/partagés | **105** | Révision sémantique à faire, pas seulement les chemins |
 | Fonction Joycon modifiée puis intégralement rétablie | **2** | #70 et #65 : méthode `ScanThread()` byte-identique avant/après, aucun portage de l'essai SDL |
 | Diagnostic NCA, changement de journal seulement | **1** | Décision sémantique source établie, portage fonctionnel inutile |
 | **Total** | **155** | **0 commit manquant à l'inventaire** |
@@ -43,7 +43,7 @@ Les commits **#25** (`9c3bdef`, X11/Wayland), **#133** (`c540525`, interfaces de
 
 **#150** (`301da63a15de8cfbe752ac44784db9b58cdd2d87`) ne modifie que `src/audio_core/sink/sdl3_sink.cpp` : le PS5 `headless/CMakeLists.txt` exclut explicitement cette unité du target `audio_core` et utilise le sink PS5 natif. La base CMake historique n'a pas cette unité. **Exclu du portage runtime PS5**, sans nier les changements SDL3 de la version amont.
 
-Ces décisions ne dispensent pas d'auditer les composants Qt/Android et SDL3 si de nouvelles cibles les utilisent. Il reste **106** commits en attente d'un avis sémantique, **5** corrections source hôte préparées, **8** assets et **4** changements de dépendances/build à qualifier.
+Ces décisions ne dispensent pas d'auditer les composants Qt/Android et SDL3 si de nouvelles cibles les utilisent. Il reste **105** commits en attente d'un avis sémantique, **5** corrections source hôte préparées, **8** assets et **4** changements de dépendances/build à qualifier.
 
 ## Point de vigilance : introduction puis retour arrière HLE
 
@@ -57,11 +57,17 @@ Deux contre-exemples de triage hâtif restent ouverts :
 - **#30** [`2c40328`](https://github.com/eden-emulator/mirror/commit/2c40328a23630353f4dd20778eb587e586cd83a5) paraît consacré à macOS, mais son diff comporte aussi un chemin `__FreeBSD__` et une condition de version FreeBSD `< 15`. Sans preuve d'ABI de la libc PS5, ne pas l'exclure.
 - **#93** [`37fe911`](https://github.com/eden-emulator/mirror/commit/37fe9119526c03ca064166130cc983c55b9a9e86) corrige le gestionnaire Win32 **mais aussi** `sparse_large_vector.h` avec `CommitPage` booléen et contrôle `mprotect` non-Windows. Il est pertinent pour la mémoire PS5 ; ne pas l'exclure sur le titre.
 
-**Catégories restantes :** 106 changements runtime à décider par propriétaire/équivalence, cinq changements testés/préparés (dont viewport uniquement proposé), 12 modifications assets/dépendances à qualifier, 17 en-têtes de la divergence Eden sans reçu d'inclusion, sept lots correctifs sans preuve console complète.
+**Catégories restantes :** 105 changements runtime à décider par propriétaire/équivalence, cinq changements testés/préparés (dont viewport uniquement proposé), 12 modifications assets/dépendances à qualifier, 17 en-têtes de la divergence Eden sans reçu d'inclusion, sept lots correctifs sans preuve console complète.
+
+## Décision supplémentaire — #5 updater Nightly uniquement
+
+Le commit **#5** [`ae60f8e7f85915a2b79d98b49e3134bbdbeca471`](https://github.com/eden-emulator/mirror/commit/ae60f8e7f85915a2b79d98b49e3134bbdbeca471) change exactement `boost::algorithm::split(result, tag, ...)` en `boost::algorithm::split(result, r.tag_name, ...)` dans `src/common/net/net.cpp`, à l'intérieur de **`#ifdef NIGHTLY_BUILD`** du parseur des assets d'auto-mise-à-jour. Le fichier source épinglé, blob `5c45e1370184f72dc68dd5b6400177d48aef778d`, confirme cette condition. Il ne change aucune instruction de déchiffrement, CPU/GPU, HLE ou lancement de jeux Switch. **Exclu du portage du runtime PS5**, sans affirmer qu'une future distribution compilée en mode `NIGHTLY_BUILD` puisse l'ignorer : ce scénario devra avoir son propre test d'updater.
+
+**Deux vérifications conservatrices maintenues ouvertes** : **#123** (*Windows path roots*) réécrit aussi l'algorithme commun de `SanitizePath`, donc pas exclusivement Windows ; **#141** (*MSVC handler tables*) retire `constexpr` d'un constructeur de service commun, donc peut modifier l'initialisation sur d'autres compilateurs. Un titre ne suffit pas pour les exclure.
 
 ## Ce qui manque encore
 
-Les **106** entrées `runtime-semantic-review-pending` demandent une décision **unité compilée réellement sélectionnée + équivalence/régression**. Les **5** fixs hôte doivent recevoir un vrai CMake/compilateur natif puis une validation console. Les **12** assets et dépendances sont ouverts, tout comme les **17** en-têtes issus des 35 écarts Eden sans reçu d'inclusion native. Les **7** lots C00–C06 ne sont pas qualifiés de bout en bout.
+Les **105** entrées `runtime-semantic-review-pending` demandent une décision **unité compilée réellement sélectionnée + équivalence/régression**. Les **5** fixs hôte doivent recevoir un vrai CMake/compilateur natif puis une validation console. Les **12** assets et dépendances sont ouverts, tout comme les **17** en-têtes issus des 35 écarts Eden sans reçu d'inclusion native. Les **7** lots C00–C06 ne sont pas qualifiés de bout en bout.
 
 **Tests des cinq correctifs :** [CI hôte R23 #42929157123](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42929157123) — compilation de fonctions/structures extraites, pas des cinq unités natives PS5 complètes, ni de rendu ou service invité réel.
 

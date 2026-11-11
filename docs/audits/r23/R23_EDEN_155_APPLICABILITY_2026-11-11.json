@@ -5,9 +5,9 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 106,
+    "runtime-semantic-review-pending": 105,
     "asset-and-translation-package-review": 8,
-    "not-applicable-to-native-runtime-source": 24,
+    "not-applicable-to-native-runtime-source": 25,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 4,
     "native-build-or-dependency-review": 4,
@@ -416,9 +416,9 @@
       "sha": "ae60f8e7f85915a2b79d98b49e3134bbdbeca471",
       "title": "[common] Fix Nightly auto updater build (#4678)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "Change is restricted to the #ifdef NIGHTLY_BUILD release-asset parser in Common::Net::Release::GetPlatformAssets; it fixes updater tag splitting, not a Switch guest runtime, JIT, IPC or PS5 release-rendering behavior.",
+      "action": "Exclude from emulator runtime port. If Encore adopts NIGHTLY_BUILD automatic-update tooling, retest that separate distribution feature with tags containing dots.",
       "paths": [
         "src/common/net/net.cpp"
       ]

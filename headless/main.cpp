@@ -1673,15 +1673,16 @@ int main(int argc, char** argv) {
                 ? Eden::NeuralVideo::InternalA4kFilter(requested_nr)
                 : (selected_filter>=5&&profile_renderer==0?0:selected_filter);
             Settings::values.scaling_filter.SetValue(filters[mapped_filter]);
-            // The renderer receives ONLY a selected DLSS model. A4K is
-            // still handled by its independent native Vulkan filter.
-            // Model-pack validation remains fail closed inside R09.
+            // Preserve ALL selected neural modes (A4K 1/2/3 and DLSS 4/5)
+            // in runtime state. A4K remains implemented by its existing
+            // native Vulkan x2 filter; it is not instantiated a second time.
+            // Composite must be able to suppress stale FG for every neural
+            // mode, not just DLSS-NR.
             const int requested_nr_strength=safe_launch?65:
                 (game_video.neural_strength>=0?
                     game_video.neural_strength:launch_preferences.neural_strength);
             Eden::NeuralRuntime::Configure(
-                neural_selectable&&Eden::NeuralVideo::IsDlss(requested_nr)
-                    ? requested_nr:Eden::NeuralVideo::kOff,
+                neural_selectable ? requested_nr:Eden::NeuralVideo::kOff,
                 requested_nr_strength);
             if(neural_selectable&&Eden::NeuralVideo::IsDlss(requested_nr))
                 Eden::Report("neural",requested_nr==Eden::NeuralVideo::kDlssOriginal

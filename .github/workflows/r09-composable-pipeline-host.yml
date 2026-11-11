@@ -224,5 +224,22 @@ jobs:
             "$out/sgsr1_shader.vert.spv" \
             "$out/sgsr1_shader_mobile.frag.spv" \
             normal gradient --full720
-          echo R09_AUTHENTIC_PINNED_FSR1_SGSR_GPU_FULL_720P_TO_4K_PASS
+          "$out/native_gpu" \
+            "$out/vulkan_fidelityfx_fsr.vert.spv" \
+            "$out/vulkan_fidelityfx_fsr_easu_fp32.frag.spv" \
+            "$out/vulkan_fidelityfx_fsr_rcas_fp32.frag.spv" \
+            "$out/sgsr1_shader.vert.spv" \
+            "$out/sgsr1_shader_mobile_edge_direction.frag.spv" \
+            edge gradient --full720
+          echo R09_AUTHENTIC_PINNED_FSR1_SGSR_BOTH_VARIANTS_GPU_FULL_720P_TO_4K_PASS
+          # Missing EASU→RCAS attachment-write barrier must be caught
+          # by Khronos; never read the deliberately unsafe output.
+          "$out/native_gpu" \
+            "$out/vulkan_fidelityfx_fsr.vert.spv" \
+            "$out/vulkan_fidelityfx_fsr_easu_fp32.frag.spv" \
+            "$out/vulkan_fidelityfx_fsr_rcas_fp32.frag.spv" \
+            "$out/sgsr1_shader.vert.spv" \
+            "$out/sgsr1_shader_mobile.frag.spv" \
+            normal gradient --negative-missing-barrier
+          echo R09_NATIVE_VENDOR_GPU_KHRONOS_SYNC_NEGATIVE_PASS
           echo R09_HOST_LAVAPIPE_NOT_PS5_NOT_TRAINED_NEURAL_NOT_NATIVE_CPP_OWNER_CALL

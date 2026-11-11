@@ -33,7 +33,8 @@ assert active.count(cmd19) == 1 and active.count(cmd23) == 1
 assert icon_guard not in old and active.count(icon_guard) >= 2
 assert 'research/r23/fw23_ns_application_control_ps5.cpp' not in cmake
 assert 'EDEN_FW23_NS_CMD23_SOURCE' not in cmake
-for token in (cmd23, icon_guard, 'eden_r23_fw23_ns_prepared',
+for token in (cmd23, 'if (const auto control = pm.GetControlMetadata()',
+              'control.second)', 'eden_r23_fw23_ns_prepared',
               'Selected FW23 NS source lost installed cmd23 or icon null guard'):
     assert token in cmake, token
 print("R457_FW23_NS23_SELECTED_SHIPPING_BACKPORT_AND_ICON_GUARDS_PASS")

@@ -55,12 +55,54 @@ int main(){
             candidates++;
         }
     }
+    // A4K is an independent real Vulkan x2 CNN: 720p -> 1440p.
+    // Verify every A4K profile with every one of the SAME seven native
+    // spatial selectors at all three TV output dimensions. 1080p requires
+    // a DOWNscale from the A4K 1440p result.
+    unsigned a4k_candidates=0u,a4k_downscales=0u;
+    for(int mode=1;mode<=3;++mode){
+        for(const auto extent:{Extent{1920u,1080u},
+                               Extent{2560u,1440u},
+                               Extent{3840u,2160u}}){
+            for(int filter=0;filter<=6;++filter){
+                auto e=Fixture(filter,extent);
+                e.neural_mode=mode;
+                e.authenticated_original_model=false;
+                e.original_152_gpu_recorded=false;
+                e.a4k_native_x2_gpu_recorded=true;
+                e.a4k_output_image_and_view_identified=true;
+                e.neural.extent={2560u,1440u};
+                const auto r=AssessPostNeuralSpatial(e);
+                assert(r.host_shape_qualified&&!r.runtime_executable);
+                assert(r.reason==R::HostCandidateOnly);
+                assert(r.a4k_neural_source);
+                assert(r.filter_input.image==e.neural.image);
+                assert(r.filter_input.view==e.neural.view);
+                assert(r.filter_input.extent.width==2560u);
+                assert(r.backend==SelectSpatialBackend(filter));
+                assert(r.downstream_is_downscale==(extent.width<2560u));
+                a4k_downscales+=r.downstream_is_downscale;
+                a4k_candidates++;
+            }
+        }
+    }
+    assert(a4k_candidates==63u&&a4k_downscales==21u);
     auto valid=Fixture(1,{3840u,2160u});
     auto test=[&](SpatialBridgeEvidence e,R reason){
         Reject(e,reason);negative++;
     };
     {auto e=valid;e.neural_mode=0;test(e,R::NoOriginal);}
     {auto e=valid;e.neural_mode=5;test(e,R::NoOriginal);}
+    {auto e=valid;e.neural_mode=2;e.authenticated_original_model=false;
+     e.original_152_gpu_recorded=false;e.neural.extent={2560u,1440u};
+     test(e,R::NoOriginal);}
+    {auto e=valid;e.neural_mode=3;e.authenticated_original_model=false;
+     e.original_152_gpu_recorded=false;e.a4k_native_x2_gpu_recorded=true;
+     e.neural.extent={2560u,1440u};test(e,R::NoOriginal);}
+    {auto e=valid;e.neural_mode=1;e.authenticated_original_model=false;
+     e.original_152_gpu_recorded=false;e.a4k_native_x2_gpu_recorded=true;
+     e.a4k_output_image_and_view_identified=true;
+     test(e,R::InvalidRasterOrOutput);}
     {auto e=valid;e.authenticated_original_model=false;test(e,R::NoOriginal);}
     {auto e=valid;e.original_152_gpu_recorded=false;test(e,R::NoOriginal);}
     {auto e=valid;e.filter=-1;test(e,R::UnsupportedFilter);}
@@ -97,6 +139,8 @@ int main(){
         assert(!result.runtime_executable);
     }
     std::cout<<"R09_MIN_720_ALL_7_SPATIAL_BRIDGES_HOST_PASS candidates="
-             <<candidates<<" negative="<<negative
+             <<candidates<<" a4k_candidates="<<a4k_candidates
+             <<" a4k_downscale_candidates="<<a4k_downscales
+             <<" negative="<<negative
              <<" neural_runtime=OFF upscaler_runtime=OFF ps5=NO\n";
 }

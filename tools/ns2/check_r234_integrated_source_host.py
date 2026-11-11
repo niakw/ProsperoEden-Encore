@@ -46,8 +46,13 @@ def run():
     for name in ("EDEN_RESEARCH_NS2_STAGE_BACKING", "EDEN_RESEARCH_NS2_GOB16",
                  "EDEN_RESEARCH_NS2_R4_VOLUME"):
         assert text.count("option(" + name + "\n") == 1, ("CMake option drift", name)
+    # R2/R4 specialize existing native owners with C++ guarded code. R3
+    # selects an alternate decoders.cpp TU instead; it deliberately has no
+    # EDEN_RESEARCH_NS2_GOB16 compile define.
+    for name in ("EDEN_RESEARCH_NS2_STAGE_BACKING", "EDEN_RESEARCH_NS2_R4_VOLUME"):
         assert text.count("target_compile_definitions(video_core PRIVATE " +
                           name + "=1)") == 1, ("CMake research guard drift", name)
+    assert "if(EDEN_RESEARCH_NS2_GOB16)" in text
     assert "list(REMOVE_ITEM video_sources \"renderer_vulkan/vk_staging_buffer_pool.cpp\")" in text
     assert 'list(APPEND video_sources "${EDEN_R2_STAGING_CPP}")' in text
     assert "list(REMOVE_ITEM video_sources \"textures/decoders.cpp\")" in text

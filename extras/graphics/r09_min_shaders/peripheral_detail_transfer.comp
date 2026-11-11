@@ -1,0 +1,55 @@
+#version 450
+// SPDX-License-Identifier: MIT
+// R09 Min isolated shader; NOT linked into PS5 build.
+// Original full-resolution color survives; only the neural *difference*
+// is transferred from compressed work space to native pixels.
+// Formula follows the symmetric MIT peripheral geometry of
+// BeliyG3/optimizer-fps-dlss5 (Copyright (c) 2026 Yuri Grib).
+// See LICENSES/optimizer-fps-dlss5-MIT.txt.
+layout(local_size_x=8,local_size_y=8,local_size_z=1) in;
+layout(set=0,binding=0) uniform sampler2D originalColor;
+layout(set=0,binding=1) uniform sampler2D beforeModel;
+layout(set=0,binding=2) uniform sampler2D afterModel;
+layout(set=0,binding=3,rgba32f) writeonly uniform image2D resultColor;
+layout(push_constant) uniform Dimensions {
+    uvec2 originalExtent;
+    uvec2 workExtent;
+    vec2 centerFraction;
+    vec2 workFraction;
+} dims;
+
+float packRadius(float r,float c,float w) {
+    if(r<=c) return r;
+    float compression=(w-c)/(1.0-c);
+    float t=(r-c)/(1.0-c);
+    return c+(w-c)*t/(compression+(1.0-compression)*t);
+}
+float workPixel(float sourcePixel,float full,float work,float c,float w) {
+    float normalized=sourcePixel*2.0/full-1.0;
+    float radius=packRadius(abs(normalized),c,w);
+    float signedRadius=normalized<0.0?-radius:radius;
+    return (signedRadius/w+1.0)*0.5*work;
+}
+void main() {
+    uvec2 id=gl_GlobalInvocationID.xy;
+    if(any(greaterThanEqual(id,dims.originalExtent))) return;
+    vec2 originalPixel=vec2(id)+vec2(0.5);
+    vec2 packedPixel=vec2(
+        workPixel(originalPixel.x,float(dims.originalExtent.x),
+                  float(dims.workExtent.x),
+                  dims.centerFraction.x,dims.workFraction.x),
+        workPixel(originalPixel.y,float(dims.originalExtent.y),
+                  float(dims.workExtent.y),
+                  dims.centerFraction.y,dims.workFraction.y));
+    vec2 packedUv=packedPixel/vec2(dims.workExtent);
+    vec2 originalUv=originalPixel/vec2(dims.originalExtent);
+    vec4 native=textureLod(originalColor,originalUv,0.0);
+    vec3 before=textureLod(beforeModel,packedUv,0.0).rgb;
+    vec3 after=textureLod(afterModel,packedUv,0.0).rgb;
+    // Zero enhancement residual preserves the native pixel values for
+    // finite inputs (no blurred double-resampling replacement).
+    // Never replace native image with a blurred double-resampling copy.
+    // Alpha/HUD stays native; any temporal reuse is OUT OF SCOPE.
+    imageStore(resultColor,ivec2(id),
+               vec4(native.rgb+(after-before),native.a));
+}

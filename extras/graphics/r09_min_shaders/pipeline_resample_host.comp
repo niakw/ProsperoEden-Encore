@@ -1,0 +1,31 @@
+#version 450
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Isolated Vulkan host spatial-resampling experiment.
+// Real GPU sampling of previous stage's VkImage and VkImageView.
+// Not production Eden FSR1, SGSR, A4K, DLSS-NR or PS5 runtime shader.
+layout(local_size_x=8,local_size_y=8,local_size_z=1) in;
+layout(set=0,binding=0) uniform sampler2D previousStage;
+layout(set=0,binding=1,rgba32f) writeonly uniform image2D nextStage;
+layout(push_constant) uniform Params {
+    uvec2 sourceExtent;
+    uvec2 outputExtent;
+    float nearestMode;
+    float unused1;
+    float unused2;
+    float unused3;
+} params;
+void main(){
+    uvec2 p=gl_GlobalInvocationID.xy;
+    if(any(greaterThanEqual(p,params.outputExtent)))return;
+    vec2 coord=(vec2(p)+vec2(0.5))/
+        vec2(params.outputExtent);
+    vec4 pixel;
+    if(params.nearestMode>0.5){
+        ivec2 selected=ivec2(floor(coord*vec2(params.sourceExtent)));
+        selected=clamp(selected,ivec2(0),ivec2(params.sourceExtent)-1);
+        pixel=texelFetch(previousStage,selected,0);
+    }else{
+        pixel=textureLod(previousStage,coord,0.0);
+    }
+    imageStore(nextStage,ivec2(p),pixel);
+}

@@ -1,0 +1,47 @@
+#version 450
+// SPDX-License-Identifier: MIT
+// R09 Min isolated host shader; NOT linked to PS5 renderer.
+// Symmetric peripheral transform adapted from the MIT work of Yuri Grib
+// (BeliyG3/optimizer-fps-dlss5). Copyright (c) 2026 Yuri Grib.
+// See LICENSES/optimizer-fps-dlss5-MIT.txt and the isolated R09 Min docs.
+// Consume a full-resolution source; output smaller work image.
+// Vulkan 1.1 compatible, ordinary FP32 arithmetic, no NVIDIA extensions.
+layout(local_size_x=8,local_size_y=8,local_size_z=1) in;
+layout(set=0,binding=0) uniform sampler2D originalColor;
+layout(set=0,binding=1,rgba16f) writeonly uniform image2D workColor;
+layout(push_constant) uniform Dimensions {
+    uvec2 originalExtent;
+    uvec2 workExtent;
+    vec2 centerFraction;
+    vec2 workFraction;
+} dims;
+
+float unpackRadius(float r,float c,float w) {
+    if(r<=c) return r;
+    float compression=(w-c)/(1.0-c);
+    float y=(r-c)/(w-c);
+    return c+(1.0-c)*(compression*y)/
+        (1.0-(1.0-compression)*y);
+}
+float originalPixel(float workPixel,float full,float work,float c,float w) {
+    float normalized=(workPixel*2.0/work-1.0)*w;
+    float radius=unpackRadius(abs(normalized),c,w);
+    float signedRadius=normalized<0.0?-radius:radius;
+    return (signedRadius+1.0)*0.5*full;
+}
+void main() {
+    uvec2 id=gl_GlobalInvocationID.xy;
+    if(any(greaterThanEqual(id,dims.workExtent))) return;
+    // Host validates extents, center<work, finite values and FP16 range.
+    vec2 outputPixel=vec2(id)+vec2(0.5);
+    vec2 inputPixel=vec2(
+        originalPixel(outputPixel.x,float(dims.originalExtent.x),
+                      float(dims.workExtent.x),
+                      dims.centerFraction.x,dims.workFraction.x),
+        originalPixel(outputPixel.y,float(dims.originalExtent.y),
+                      float(dims.workExtent.y),
+                      dims.centerFraction.y,dims.workFraction.y));
+    vec2 uv=inputPixel/vec2(dims.originalExtent);
+    vec4 color=textureLod(originalColor,uv,0.0);
+    imageStore(workColor,ivec2(id),color);
+}

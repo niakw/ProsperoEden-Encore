@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 20,
+        "runtime-semantic-review-pending": 19,
+        "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
         "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1,
         "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
         "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
@@ -159,10 +160,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
             raise ValueError(f"R23 HLE case #{idx} source gap lost")
         if f"#{idx}" not in r23_hle_pass21:
             raise ValueError(f"R23 HLE case #{idx} evidence missing")
-    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_20_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
-    for token in ("20 upstream runtime-semantic", "20/20", "29", "SSL", "guest"):
+    current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_19_RUNTIME_EXIT_CROSSWALK_2026-11-11.md").read_text()
+    for token in ("19 upstream runtime-semantic", "19/19", "29", "SSL", "guest"):
         if token not in current_r23_crosswalk:
-            raise ValueError(f"R23 20-case exit crosswalk missing {token}")
+            raise ValueError(f"R23 19-case exit crosswalk missing {token}")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")
@@ -587,6 +588,27 @@ def validate(root: Path, app: dict | None = None) -> dict:
                   "922fc10440bad898f392b1f290ec18fd2e3cc5e7"):
         if token not in pass24:
             raise ValueError(f"R23 pass24 receipt not in report: {token}")
+    # Pass25: upstream ReShade additions are an optional feature, not an
+    # implicitly selected current native renderer; no UI/FX transplant.
+    pass25 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS25_2026-11-11.md").read_text()
+    if (by_index[155]["classification"] !=
+            "reviewed-optional-ReShade-native-PS5-not-selected-no-port"
+            or by_index[155].get("source_proof_document") !=
+            "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS25_2026-11-11.md"
+            or "src/video_core/renderer_vulkan/present/layer.cpp" not in by_index[155]["paths"]
+            or "#155" not in pass25):
+        raise ValueError("R23 #155 optional ReShade no-port owner proof missing")
+    for token in ("dea657ef3911828b9437aced16ec9863aeb3b30a",
+                  "ebf94c85b38c4d1d530cc67e07070b4e5c20cc54",
+                  "14935f92bb450973e85237fed52f8dea6d172688"):
+        if token not in pass25:
+            raise ValueError(f"R23 pass25 selected native source missing {token}")
+    native_vulkan = (root / "headless/vulkan.cmake").read_text()
+    if ('renderer_vulkan/present/layer.cpp' not in native_vulkan
+            or 'list(REMOVE_ITEM video_sources' not in native_vulkan
+            or 'vulkan_present_layer_r24.cpp' not in native_vulkan
+            or 'HAS_RESHADE' in native_vulkan):
+        raise ValueError("R23 pass25 selected layer or postFX build graph changed")
     # #123 keeps its tested root-preservation E1 disposition; its PS5 behavior still requires validation.
     if by_index[123]["classification"] != "source-verified-shared-FS-root-preservation-awaiting-PS5-decision":
         raise ValueError("R23 #123 exact source-root-difference lost, missing native behavior proof")
@@ -735,7 +757,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 20
+    assert validate(root)["runtime_semantic_cases_pending"] == 19
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

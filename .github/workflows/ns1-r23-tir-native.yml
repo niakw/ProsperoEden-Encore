@@ -1,0 +1,37 @@
+name: NS1 R23 TIR mixed sample native graph (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-tir-mixed-msaa-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/vulkan.cmake"
+      - ".github/workflows/ns1-r23-tir-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mixed-render-source-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check exact TIR Vulkan/NS2 header graph and source host fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "59f56cb5e24d80015fb1db0ad525d29aa7d8c9a9"
+          python3 -B vendor/tests/ns1_r23_18_tir_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          c=Path('headless/vulkan.cmake').read_text()
+          assert 'list(REMOVE_ITEM video_sources renderer_vulkan/fixed_pipeline_state.cpp)' in c
+          assert 'list(APPEND video_sources "${PORT_BUILD_DIR}/fixed_pipeline_state.cpp")' in c
+          assert Path('vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h').exists()
+          assert Path('vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_texture_cache.h').exists()
+          print('NS1_TIR_SELECTED_VULKAN_AND_NS2_ASTC_HEADER_GRAPH_PASS')
+          PY

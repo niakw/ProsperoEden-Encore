@@ -38,7 +38,12 @@ for file in (
     assert "gpu_memory->GpuToCpuAddress(image.gpu_addr)" in body, file
     assert "*mapped_base != image.cpu_addr" in body, file
     assert "image.flags |= ImageFlagBits::Remapped;" in body, file
-    assert body.index("*mapped_base != image.cpu_addr") < body.index("image.PinNativeGpu()"), file
+    # The "requires" capability probe mentions PinNativeGpu() before the
+    # physical mapping guard; only the actual pin acquisition matters.
+    # Never accept a GPU owner acquired ahead of the remap refusal.
+    assert body.count("auto image_pin = image.PinNativeGpu();") == 1, file
+    assert body.index("*mapped_base != image.cpu_addr") < body.index(
+        "auto image_pin = image.PinNativeGpu();"), file
 
 header = (VENDOR / "eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
 pipeline = (VENDOR / "eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()

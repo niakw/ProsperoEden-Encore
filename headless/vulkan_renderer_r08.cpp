@@ -33,6 +33,8 @@
 #include "fsr3_optical_session.h"
 #include "hud.h"
 #include "mihawk_native_session.h"
+#include "neural_runtime_state.h"
+#include "dlss_nr_min_720_framegen_bridge.h"
 #include "mihawk_session_resize.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/vk_blit_screen.h"
@@ -237,8 +239,15 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     // Keep Encore's own overlay out of BOTH interpolation backends, not only
     // MihawkGen. Draw once AFTER generating on each image; guest HUD pixels
     // remain inseparable without per-game hooks.
-    const int native_fg_method =
+    const int requested_fg_method =
         Eden::Display::frame_generation_method.load(std::memory_order_relaxed);
+    // Bridge R09 Min to the existing post-composite MihawkGen / optical
+    // FSR3 / LSFG backends without bypassing neural+FG exclusivity.
+    // No valid 720p Original+post-FSR GPU frame proof exists yet, so even
+    // stale per-title settings must not interpolate a partial neural frame.
+    const int native_fg_method =
+        Eden::Graphics::DlssNrMin::EffectiveCompositeFramegen(
+            Eden::NeuralRuntime::Current().mode,requested_fg_method);
     const bool mihawk_selected = native_fg_method == 1 && !framebuffers.empty();
     const bool postprocess_hud_required =
         (native_fg_method >= 1 && native_fg_method <= 3) && !framebuffers.empty();
@@ -252,7 +261,7 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 #ifdef HAS_LSFG
     // User-selected LSFG only. Do not mix a legacy generator with MihawkGen
     // or turn frame generation on merely because HAS_LSFG was compiled in.
-    if (Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 3) {
+    if (native_fg_method == 3) {
     void(frame_gen.WantedGenerations(present_manager.MaxExtraFrames()));
 
     frame_gen.Process(device, frame, present_manager.SwapchainImageFormat(), GuestExtent(framebuffers));

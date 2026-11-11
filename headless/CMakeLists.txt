@@ -2967,3 +2967,40 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     set_property(TARGET core PROPERTY SOURCES
         "${eden_r457_sparse_kernel_units}")
 endif()
+
+# R23 #54: a per-instance paced IStorage + matching service dispatcher
+# replaces the old 600us generic IPC sleep; never replace the native
+# process-refcounted NVDEC registry with an upstream global bool.
+if(PS5_NATIVE)
+    set(EDEN_R23_STORAGE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_STORAGE_HEADERS "${PORT_BUILD_DIR}/r23-storage/include")
+    foreach(eden_r23_storage_header IN ITEMS
+            "core/hle/service/service.h"
+            "core/hle/service/filesystem/fsp/fs_i_storage.h")
+        if(NOT EXISTS "${EDEN_R23_STORAGE_ROOT}/include/${eden_r23_storage_header}")
+            message(FATAL_ERROR "R23 #54 missing matched native storage header")
+        endif()
+        configure_file("${EDEN_R23_STORAGE_ROOT}/include/${eden_r23_storage_header}"
+            "${EDEN_R23_STORAGE_HEADERS}/${eden_r23_storage_header}" COPYONLY)
+    endforeach()
+    get_target_property(eden_r23_storage_units core SOURCES)
+    foreach(eden_r23_storage_source IN ITEMS
+            "hle/service/service.cpp"
+            "hle/service/filesystem/fsp/fs_i_storage.cpp")
+        list(FIND eden_r23_storage_units
+            "${eden_r23_storage_source}" eden_r23_storage_old)
+        if(eden_r23_storage_old EQUAL -1)
+            message(FATAL_ERROR "R23 #54 native core source owner changed: ${eden_r23_storage_source}")
+        endif()
+        if(NOT EXISTS "${EDEN_R23_STORAGE_ROOT}/src/core/${eden_r23_storage_source}")
+            message(FATAL_ERROR "R23 #54 missing reviewed storage source: ${eden_r23_storage_source}")
+        endif()
+        list(REMOVE_ITEM eden_r23_storage_units "${eden_r23_storage_source}")
+        list(APPEND eden_r23_storage_units
+            "${EDEN_R23_STORAGE_ROOT}/src/core/${eden_r23_storage_source}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_storage_units}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STORAGE_HEADERS}")
+    message(STATUS "R23 #54: one paced storage source and one normal service dispatcher")
+endif()

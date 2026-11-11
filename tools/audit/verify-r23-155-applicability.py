@@ -55,7 +55,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # drop pending counts without exact source and owner proof.
     mandatory = {
         "runtime-semantic-review-pending": 97,
-        "asset-and-translation-package-review": 8,
+        "not-applicable-to-PS5-native-packaging-assets": 8,
         "not-applicable-to-native-runtime-source": 26,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
@@ -86,6 +86,22 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for i in (30, 93, 123, 141):
         if by_index[i]["classification"] != "runtime-semantic-review-pending":
             raise ValueError(f"R23 common/native semantic case #{i} was closed without proof")
+    # All eight upstream UI/translation commits are outside the actual PS5 package:
+    # the separate launcher embeds its own ui/*.po, branded assets and artwork.
+    native_pkg = (root / "tools/package-headless-native.sh").read_text()
+    if ('cp -a "$root/headless/prosperoeden/ui" "$app/ui"' not in native_pkg
+            or 'for catalog in "$app/ui/lang/"*.po; do' not in native_pkg
+            or any(s in native_pkg for s in (
+                "dist/languages", "dist/icons", "src/android/app/src/main/res",
+                "tools/optimize-assets.sh"))):
+        raise ValueError("PS5 package source selection changed: re-open R23 assets")
+    for i in (4, 26, 34, 76, 83, 89, 105, 140):
+        row = by_index[i]
+        if row["classification"] != "not-applicable-to-PS5-native-packaging-assets":
+            raise ValueError(f"R23 launcher asset source #{i} was silently reclassified")
+        if not all(p.startswith(("dist/", "src/android/app/src/main/res/", "docs/"))
+                   or p == "tools/optimize-assets.sh" for p in row["paths"]):
+            raise ValueError(f"R23 asset source #{i} touches an unreviewed native path")
     if by_index[44]["classification"] != "staged-host-source-fix":
         raise ValueError("viewport is a proposed host fix, not tested native behavior")
     return {

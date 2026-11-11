@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "a88f28a8c8f727844d57734eba4544159ab4059b"
+          test "$(git -C vendor rev-parse HEAD)" = "ebeae4040c556a6a53354f6c506ffad22b63f457"
           python3 -B vendor/tests/ns1_r23_126_uuid_sha1.py
           python3 - <<'PY'
           from pathlib import Path

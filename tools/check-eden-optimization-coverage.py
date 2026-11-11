@@ -797,7 +797,49 @@ assert not post_f07_p5_astc_scope_bridge_owners.intersection(
     research_owners | post_f07_feature_stack_owners | post_f07_r09_overlay_owners)
 print("ENCORE_POST_F07_P5_ASTC_SCOPE_BRIDGE_PASS", "shipping_headers=1 historical_F07=518")
 
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners
+# Distinct R457 sources created for PS5 real-console triage: a compiled
+# KProcess 6-core ABI witness and a NOT-wired NS2 residency model. They are
+# separately gated; never retroactively count them as F07 shipping proof.
+post_f07_r457_console_owners = {
+    "headless/ps5_cpu6_abi_probe.cpp",
+    "headless/ps5_ns2_guest_backing_plan.h",
+}
+assert post_f07_r457_console_owners <= all_owners
+assert not post_f07_r457_console_owners & research_owners
+assert 'ps5_cpu6_abi_probe.cpp' in (ROOT/"headless/CMakeLists.txt").read_text()
+assert 'ps5_ns2_guest_backing_plan.h' not in (ROOT/"src/host_memory.cpp").read_text()
+print("ENCORE_R457_POST_F07_OWNER_ISOLATION_PASS", "owners=2 historical_F07=518")
+# R457 sparse guest direct-memory owner is isolated in PR #53 and
+# requires exact PS5 native syntax + physical/GPU alias proof before merge.
+# Do not claim two new research source files were in October F07.
+post_f07_r457_sparse_runtime_owners = {
+    "src/ns2_sparse_guest.cpp",
+    "src/ns2_sparse_guest.h",
+}
+assert post_f07_r457_sparse_runtime_owners <= all_owners
+assert not post_f07_r457_sparse_runtime_owners & research_owners
+sparse_header=(ROOT/"src/ns2_sparse_guest.h").read_text()
+sparse_impl=(ROOT/"src/ns2_sparse_guest.cpp").read_text()
+assert 'class Runtime {' in sparse_header and 'Plan plan;' in sparse_impl
+assert 'EDEN_NS2_SPARSE_BACKING' in (ROOT/"headless/CMakeLists.txt").read_text()
+print("ENCORE_POST_F07_R457_SPARSE_RUNTIME_ISOLATION_PASS", "owners=2 historical_F07=518")
+# Newly integrated maintained NS2 owners, not the frozen F07 518-source set.
+post_f07_ns2_production_owners = {
+    "vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp",
+    "vendor/encore-active/eden-core/tests/test_ns2_gob16_decoder_public_api.cpp",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/ns2_verified_upload_batch.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_staging_buffer_pool.h",
+    "vendor/encore-active/eden-vulkan/tests/test_ns2_cache_shutdown_order.cpp",
+    "vendor/encore-active/eden-vulkan/tests/test_ns2_gpu_retirement_hold.cpp",
+    "vendor/encore-active/eden-vulkan/tests/test_ns2_verified_upload_batch.cpp",
+    "vendor/encore-active/eden-vulkan/vk_staging_buffer_pool.cpp",
+    "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
+}
+assert post_f07_ns2_production_owners <= all_owners
+assert not post_f07_ns2_production_owners & research_owners
+owners=all_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1033,6 +1075,45 @@ assert len(post_entries) == 32
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
+# R457 only: keep the immutable 32-file November register unchanged. Track
+# the separately selected and unqualified 12GiB resident owner with its
+# own checked SHA/old F07 receipt. This must not hide arbitrary new deltas.
+sparse_receipt = json.loads(
+    (ROOT/"docs/audits/R457_NS2_SPARSE_RESEARCH_SOURCE_DELTA_2026-11-11.json").read_text())
+assert sparse_receipt["schema_version"] == 1
+assert sparse_receipt["historical_f07_snapshot_untouched"] is True
+assert sparse_receipt["production_default_enabled"] is True
+assert sparse_receipt["guest_boot_ps5_qualified"] is False
+assert sparse_receipt["ps5_gpu_alias_lifetime_qualified"] is False
+sparse_path = sparse_receipt["path"]
+assert sparse_path == "src/host_memory.cpp"
+assert sparse_path not in post_index
+assert sparse_path in drift_index
+sparse_drift = drift_index.pop(sparse_path)
+assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
+assert sparse_drift["actual"] == sparse_receipt["research_source_git_blob"]
+assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
+assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
+print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
+      "new_owner_consoles_qualified=0")
+# Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.
+ns2_production_blobs = {
+    "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp": "318cb932c496c09853c2d9ba333d726cf7f820cd",
+    "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp": "91463583eec9cfcbd180a56662cda072553787e0",
+    "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "469eddd0ea9e0a3498446bf08ab473caac3b76f9",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h": "08b0ad3a99c1509eb23bd6317fdbd9c4b3251b52",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h": "460b5d95453cb974eefff10c4af76c5b318e685f",
+    "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp": "1877d43aa8facfabf193dac16b8beea3ff7e188e",
+    "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp": "70bc538c71ba1327a0c2a51a6bcb57d1835db2e0",
+    "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": "5ad7f02ff58260bf330265d6a9e49db3bd778ea4"
+}
+for changed_path, expected_sha in ns2_production_blobs.items():
+    if changed_path in drift_index:
+        assert drift_index[changed_path]["actual"] == expected_sha, changed_path
+        if changed_path in post_index:
+            post_index[changed_path]["post_snapshot_git_blob"] = expected_sha
+        else:
+            drift_index.pop(changed_path)
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

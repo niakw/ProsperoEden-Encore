@@ -206,6 +206,22 @@ get_target_property(common_sources common SOURCES)
 list(REMOVE_ITEM common_sources host_memory.cpp sparse_large_vector.cpp)
 set_property(TARGET common PROPERTY SOURCES "${common_sources}")
 target_sources(common PRIVATE "${PORT_ROOT}/src/host_memory.cpp" "${PORT_ROOT}/src/memory_pages.cpp")
+# Isolated R457 NS2 12 GiB virtual / bounded 2 MiB physical resident owner.
+# Real native syscalls and guest PTE precommit; NOT included by default.
+# Do not turn this on in production until GPU coherency and PS5 boot pass.
+set(EDEN_NS2_SPARSE_BACKING OFF)
+if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
+    set(EDEN_NS2_SPARSE_BACKING ON)
+endif()
+if(EDEN_NS2_SPARSE_BACKING)
+    if(NOT PS5_NATIVE)
+        message(FATAL_ERROR "NS2 sparse PS5 direct-memory owner requires PS5_NATIVE")
+    endif()
+    target_sources(common PRIVATE "${PORT_ROOT}/src/ns2_sparse_guest.cpp")
+    target_include_directories(common PRIVATE "${PORT_ROOT}/headless")
+    target_compile_definitions(common PRIVATE EDEN_NS2_SPARSE_BACKING=1)
+    target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)
+endif()
 # Sparse JIT trim helpers are shared with Dynarmic. The native release
 # uses the one sparse JIT allocator path; these are compile-time helpers.
 target_include_directories(common PRIVATE "${EDEN_PORT_DIR}")
@@ -1130,6 +1146,44 @@ if(NOT EDEN_PS5_VULKAN)
 else()
     include("${EDEN_PORT_DIR}/vulkan.cmake")
 endif()
+# R2 production staging provenance. This selects real maintained source
+# owner/header together; OFF leaves the pinned legacy staging owner intact.
+# Upload scheduling retains the verified fail-closed lifetime controls.
+set(EDEN_R2_STAGE_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_staging_buffer_pool.h")
+set(EDEN_R2_BOUNDS_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h")
+set(EDEN_R2_RETIREMENT_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h")
+if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR "R2 staging backing needs explicit PS5 native Vulkan")
+    endif()
+    set(EDEN_R2_STAGING_CPP "${PORT_BUILD_DIR}/vk_staging_buffer_pool.cpp")
+    if(NOT EXISTS "${EDEN_R2_STAGE_HEADER}" OR
+       NOT EXISTS "${EDEN_R2_BOUNDS_HEADER}" OR
+       NOT EXISTS "${EDEN_R2_RETIREMENT_HEADER}" OR
+       NOT EXISTS "${EDEN_R2_STAGING_CPP}")
+        message(FATAL_ERROR "R2 source/header pair missing from maintained vendor")
+    endif()
+    list(FIND video_sources "renderer_vulkan/vk_staging_buffer_pool.cpp"
+         EDEN_R2_ORIGINAL_STAGING_INDEX)
+    if(EDEN_R2_ORIGINAL_STAGING_INDEX LESS 0)
+        message(FATAL_ERROR "R2 original staging owner moved; re-audit CMake")
+    endif()
+    list(REMOVE_ITEM video_sources "renderer_vulkan/vk_staging_buffer_pool.cpp")
+    list(APPEND video_sources "${EDEN_R2_STAGING_CPP}")
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_STAGE_BACKING=1)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_R2_STAGE_HEADER}" "${EDEN_R2_BOUNDS_HEADER}"
+                 "${EDEN_R2_RETIREMENT_HEADER}" "${EDEN_R2_STAGING_CPP}")
+else()
+    # Vulkan's shared overlay-copy step copies this optional header too.
+    # Explicitly remove it when OFF so the old public staging ABI wins.
+    file(REMOVE "${EDEN_R2_STAGE_HEADER}" "${EDEN_R2_BOUNDS_HEADER}"
+                "${EDEN_R2_RETIREMENT_HEADER}")
+endif()
+
 list(REMOVE_ITEM video_sources video_core.cpp gpu.cpp)
 if(EDEN_PS5_VULKAN)
     list(APPEND video_sources video_core.cpp)
@@ -1350,6 +1404,34 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_ASTC_LAYER_DECODE=1)
 endif()
 
+# R4 native production: compile the actual N60 ASTC TextureCache
+# implementation (the source used by the PS5 renderer), NOT the shadowed
+# eden-vulkan/vulkan-cache copy. Explicit opt-in, default OFF on all builds.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR "R4 volume-slice research requires PS5 native Vulkan")
+    endif()
+    set(EDEN_R4_ACTIVE_TEXTURE_CACHE
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h")
+    if(NOT EXISTS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
+        message(FATAL_ERROR "R4 N60 maintained TextureCache owner missing")
+    endif()
+    file(STRINGS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}" EDEN_R4_ACTIVE_OWNER_SOURCE
+         REGEX "copy_native_volume_slice")
+    if(NOT EDEN_R4_ACTIVE_OWNER_SOURCE MATCHES
+           "copy_native_volume_slice")
+        message(FATAL_ERROR "R4 wrong active TextureCache owner selected")
+    endif()
+    list(FIND video_sources "${PORT_BUILD_DIR}/vk_texture_cache_cost.cpp"
+         EDEN_R4_CONSUMER_INDEX)
+    if(EDEN_R4_CONSUMER_INDEX LESS 0)
+        message(FATAL_ERROR "R4 active Vulkan cache consumer missing from native graph")
+    endif()
+    target_compile_definitions(video_core PRIVATE EDEN_NS2_VOLUME_COPY=1)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
+endif()
+
 # Sparse native GPU probes were diagnostic paths without a production
 # consumer. Keep the supported dense Vulkan texture cache until sparse
 # mapping integrates with the same normal scheduler and memory ownership.
@@ -1402,6 +1484,36 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     target_include_directories(video_core BEFORE PRIVATE
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
+endif()
+# R3: production selection of the maintained GOB16 decoder TU. Never
+# mutate the pinned Eden source tree or include TWO definitions of the public
+# SwizzleTexture/UnswizzleTexture/SwizzleSubrect API in a single binary.
+# Disabled and select the maintained decoder for normal native PS5 operation.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
+    if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
+        message(FATAL_ERROR
+            "R3 GOB16 requires an explicit native PS5 Vulkan research configuration")
+    endif()
+    set(EDEN_NS2_GOB16_DECODER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp")
+    if(NOT EXISTS "${EDEN_NS2_GOB16_DECODER}")
+        message(FATAL_ERROR
+            "R3 GOB16 maintained decoder missing at the checked out vendor pin")
+    endif()
+    list(FIND video_sources "textures/decoders.cpp" EDEN_NS2_GOB16_PINNED_INDEX)
+    if(EDEN_NS2_GOB16_PINNED_INDEX LESS 0)
+        message(FATAL_ERROR
+            "R3 GOB16 original translation unit changed; re-audit source selection")
+    endif()
+    list(FIND video_sources "${EDEN_NS2_GOB16_DECODER}" EDEN_NS2_GOB16_DUPLICATE_INDEX)
+    if(NOT EDEN_NS2_GOB16_DUPLICATE_INDEX EQUAL -1)
+        message(FATAL_ERROR
+            "R3 GOB16 maintained decoder already selected; refusing duplicate TU")
+    endif()
+    list(REMOVE_ITEM video_sources "textures/decoders.cpp")
+    list(APPEND video_sources "${EDEN_NS2_GOB16_DECODER}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                 "${EDEN_NS2_GOB16_DECODER}")
 endif()
 set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")
 
@@ -2095,6 +2207,22 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
     target_include_directories(dynarmic BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")
     target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    # The R457 unstripped ELF proves an ODR layout mismatch: core constructs
+    # KProcess::m_memory at +0x1b0 (6 cores), while AudioOut accesses +0x160
+    # (4 cores). Five per-core arrays × two extra 8-byte entries = 0x50.
+    # PUBLIC on core is NOT sufficient if another target's own includes put
+    # pristine source/eden/src (4-core hardware_properties.h) first.
+    # Force the same 6-core definition before each independent consumer's
+    # include root, and compile the real header probe in every independent KProcess consumer.
+    target_include_directories(audio_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    # hid_core has independent build units that also call KProcess::GetMemory.
+    # It must see the same member offsets as the constructing core target.
+    target_include_directories(hid_core BEFORE PRIVATE "${EDEN_NS2_CPU6_ROOT}")
+    foreach(eden_cpu6_abi_consumer IN ITEMS core audio_core video_core hid_core)
+        target_sources(${eden_cpu6_abi_consumer} PRIVATE
+            "${EDEN_PORT_DIR}/ps5_cpu6_abi_probe.cpp")
+    endforeach()
     # The original 4-core scheduler table defaults the two added preemption
     # priorities to zero; the original Dynarmic AddTicks divides even NS1
     # cycles by six. Both defects must be fixed before CPU6 can be exercised.
@@ -2814,4 +2942,28 @@ if(PS5_NATIVE)
     endforeach()
     set_property(TARGET shader_recompiler PROPERTY SOURCES
         "${eden_native_cas_sources}")
+endif()
+
+# R457 NS2 sparse residency: the guest kernel directly writes optimized
+# management metadata and page-fill spans BEFORE any process PTE exists.
+# The original compiled kernel source would dereference uncommitted 12GiB
+# virtual holes. Select one reviewed research-only source with precommit guards.
+if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
+    set(EDEN_R457_SPARSE_KERNEL_SRC
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp")
+    if(NOT EXISTS "${EDEN_R457_SPARSE_KERNEL_SRC}")
+        message(FATAL_ERROR "R457 sparse physical native kernel owner missing")
+    endif()
+    get_target_property(eden_r457_sparse_kernel_units core SOURCES)
+    list(FIND eden_r457_sparse_kernel_units
+         "hle/kernel/k_memory_manager.cpp" eden_r457_sparse_kernel_original)
+    if(eden_r457_sparse_kernel_original EQUAL -1)
+        message(FATAL_ERROR "R457 sparse kernel must replace exactly the active KMemoryManager TU")
+    endif()
+    list(REMOVE_ITEM eden_r457_sparse_kernel_units
+         "hle/kernel/k_memory_manager.cpp")
+    list(APPEND eden_r457_sparse_kernel_units
+         "${EDEN_R457_SPARSE_KERNEL_SRC}")
+    set_property(TARGET core PROPERTY SOURCES
+        "${eden_r457_sparse_kernel_units}")
 endif()

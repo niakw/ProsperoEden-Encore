@@ -247,9 +247,10 @@ void Launcher::draw_files(Canvas &c)
     line(378.0f, tr("KEYS"), folder_info_.keys ? tr("prod.keys found") : tr("prod.keys missing"),
          state(folder_info_.keys));
     line(434.0f, tr("FIRMWARE"),
+         folder_info_.firmware_ready ? folder_info_.firmware_detail :
          folder_info_.firmware < 0 ? tr("No firmware folder") :
                                      counted(folder_info_.firmware, tr("{0} NCA file"), tr("{0} NCA files")),
-         state(folder_info_.firmware > 0));
+         state(folder_info_.firmware_ready));
     line(490.0f, tr("GAMES"),
          folder_info_.games < 0 ? tr("No roms folder") : counted(folder_info_.games, tr("{0} game"), tr("{0} games")),
          state(folder_info_.games > 0));

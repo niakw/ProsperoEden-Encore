@@ -3019,7 +3019,40 @@ bool EdenServices::folders(const std::string& directory, std::vector<std::string
 pe::ui::FolderInfo EdenServices::folder_info(const std::string& directory) {
     pe::ui::FolderInfo info;
     info.keys = Eden::FileExists(JoinPath(directory, "keys/prod.keys"));
-    info.firmware = CountFiles(JoinPath(directory, "firmware"), {".nca"});
+    // Match the same recognized formats and explicit family directory precedence
+    // as the actual firmware resolver; a folder alone is not a valid firmware.
+    // Never follow symlinked directories via DetectFirmwareFormat.
+    const std::filesystem::path fw_root = JoinPath(directory, "firmware");
+    info.firmware = CountFiles(fw_root.string(), {".nca"});
+    const auto format_name = [](Eden::FirmwareFormat f) -> const char* {
+        switch (f) {
+        case Eden::FirmwareFormat::Nca: return "NCA";
+        case Eden::FirmwareFormat::Extracted: return "EXEFS";
+        case Eden::FirmwareFormat::Zip: return "ZIP";
+        default: return nullptr;
+        }
+    };
+    const auto family = [&](std::initializer_list<const char*> names) {
+        for (const char* child : names) {
+            const auto folder = fw_root / child;
+            if (const char* format = format_name(Eden::DetectFirmwareFormat(folder))) {
+                const int nca = CountFiles(folder.string(), {".nca"});
+                if (nca > 0) info.firmware = std::max(info.firmware, 0) + nca;
+                return std::string(format);
+            }
+        }
+        return std::string{};
+    };
+    const std::string ns1 = family({"ns1", "switch1", "ns1-extracted", "switch1-extracted"});
+    const std::string ns2 = family({"ns2", "switch2", "ns2-extracted", "switch2-extracted"});
+    const auto flat = Eden::DetectFirmwareFormat(fw_root);
+    info.firmware_ready = !ns1.empty() || !ns2.empty() || flat != Eden::FirmwareFormat::None;
+    if (info.firmware_ready) {
+        info.firmware_detail = "NS1: " + (ns1.empty() ? "-" : ns1) +
+                               "  |  NS2: " + (ns2.empty() ? "-" : ns2);
+        if (const char* legacy = format_name(flat))
+            info.firmware_detail += std::string("  |  root: ") + legacy;
+    }
     const std::string roms_path = JoinPath(directory, "roms");
     const int regular = CountFiles(roms_path,
                                   {".nsp", ".xci", ".nsz", ".xcz", ".nro", ".nso",

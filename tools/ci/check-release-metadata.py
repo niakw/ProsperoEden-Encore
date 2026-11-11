@@ -105,7 +105,13 @@ packager = (root / "tools/package-headless-native.sh").read_text()
 assert "titleId='PPSA99008'" in packager, "packager title ID contract changed"
 assert "PROSPEROEDEN0001" in packager, "packager content ID contract changed"
 assert 'assets/icon0.png' in packager and 'assets/icon0.dds' in packager, "packager must stage both Encore icon formats"
-assert '-flip' in packager and 'brand.tga' in packager, "launcher logo orientation fix missing"
+# R457 PS5 console evidence: legacy ImageMagick -flip inverted the
+# packaged WebP logos and full-screen background. GPU-facing decode already
+# provides top-first rows, so do not flip again during package staging.
+assert '-flip -alpha off' not in packager and '-flip -alpha on' not in packager, (
+    "PS5 launcher background/branding must preserve original pixel orientation")
+assert 'brand.tga' in packager and 'brand.webp' in packager, (
+    "packager must retire legacy TGA and stage original-oriented WebP")
 assert 'encore-background.jpg' in packager and 'backdrop.webp' in packager, "Encore background packaging missing"
 assert 'eden-official.svg' not in packager, "packager must not fall back to the old upstream logo"
 assert "Prospero.Eden Encore" in packager, "package title-name contract changed"

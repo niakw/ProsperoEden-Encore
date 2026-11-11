@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "branch": "integration/ns2-main-production-20261111",
+  "path": "src/host_memory.cpp",
+  "historical_f07_git_blob": "ec24e06318667c63e5efaf5694c32eb9368594dd",
+  "research_source_git_blob": "4f109a0286a13afc93dcacd3b287b26b256d13f4",
+  "source_scope": "Production PS5 12GiB guest virtual reservation with bounded 2MiB physical residency before guest PTE publish or DRAM clear.",
+  "source_fragment": "if (requested == Ns2Dram) {",
+  "opt_in": "EDEN_NS2_SPARSE_BACKING",
+  "production_default_enabled": true,
+  "guest_boot_ps5_qualified": false,
+  "ps5_gpu_alias_lifetime_qualified": false,
+  "historical_f07_snapshot_untouched": true,
+  "note": "Included in normal PS5 dual-system integration. Console NS2 first frame, GPU alias/fence lifetime and performance remain awaiting hardware qualification."
+}

@@ -31,7 +31,12 @@ std::string LocalizedReleaseStatus(const AppUpdateInfo& info)
 {
     switch (info.state) {
     case AppUpdateInfo::State::up_to_date:
-        return pe::fill(tr("Already up to date: {0}"), {info.latest_version});
+        // The installed R-revision can be newer than the latest published
+        // stable release (e.g. a locally staged R457 against an older R1).
+        // Never mislabel the older release as the installed version.
+        return pe::fill(tr("Already up to date: {0}"),
+                        {info.installed_version.empty() ? info.latest_version
+                                                        : info.installed_version});
     case AppUpdateInfo::State::available:
         return std::string(tr("New Eden Encore release")) + ": " + info.latest_version;
     case AppUpdateInfo::State::newer_uninstallable:
@@ -647,7 +652,14 @@ void Launcher::press(Key key)
     if ((key == Key::l1 || key == Key::r1) &&
         (screen_ == Screen::home || screen_ == Screen::library ||
          screen_ == Screen::settings)) {
-        top_nav_focus_ = (active_main_tab_ + (key == Key::r1 ? 1 : 3)) % 4;
+        // Only physical destination tabs belong to shoulder navigation:
+        // Home=0, Library=1, Settings=4. Recent=2 and Update=3 remain
+        // accessible in the top row by D-pad, never through R1/L1.
+        static constexpr int kShoulderDestinations[] = {0, 1, 4};
+        const int current = active_main_tab_ == 1 ? 1 :
+                            active_main_tab_ == 3 ? 2 : 0;
+        const int next = (current + (key == Key::r1 ? 1 : 2)) % 3;
+        top_nav_focus_ = kShoulderDestinations[next];
         (void)press_top_nav(Key::cross);
         return;
     }
@@ -1066,9 +1078,15 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
         }
         if (focused > 0.001f)
             plate_focus(c, kNavPlate, r, focused);
-        const float gx = i == 3 ? r.x + r.w * 0.5f : r.x + 30.0f;
+        // Both utility icons live in 68px square-focus cells. Use the same
+        // geometric centre for the draw and the ring/hover target.
+        const float gx = i >= 3 ? r.x + r.w * 0.5f : r.x + 30.0f;
         const float gy = r.y + r.h * 0.5f;
-        const Color ink = active || focused > 0.01f ? theme::kTitle : theme::kMuted;
+        // Light-mode focused/active tabs sit on a dark violet selection
+        // plate; dark text vanished there. Idle tabs retain dark ink.
+        const bool selected = active || focused > 0.01f;
+        const Color ink = selected && prefs_.color_palette == 3
+                              ? kWhite : selected ? theme::kTitle : theme::kMuted;
         if (i == 0) {
             list.triangle({gx - 13.0f, gy - 16.0f, 26.0f, 17.0f}, ink);
             list.rounded_rect({gx - 10.0f, gy - 2.0f, 20.0f, 16.0f}, 2.0f, ink);

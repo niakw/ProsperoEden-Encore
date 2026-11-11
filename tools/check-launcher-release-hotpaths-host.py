@@ -15,6 +15,12 @@ cover=begin+src.split(begin,1)[1].split(end,1)[0]
 avatar_begin="bool IsProfileAvatarImage(std::string_view path)"
 assert src.count(avatar_begin)==1
 avatar=avatar_begin+src.split(avatar_begin,1)[1].split("\n}\n",1)[0]+"\n}"
+# R457 retail-box priority calls the real IsRetailBoxImage helper; copy
+# its full maintained body into the source-extracted host test.
+retail_begin="bool IsRetailBoxImage(std::string_view path)"
+assert src.count(retail_begin)==1
+retail=retail_begin+src.split(retail_begin,1)[1].split("\n}\n",1)[0]+"\n}"
+assert "box-front-" in retail and "box-back-" in retail
 assert 'EDEN_PROFILE_AVATAR_TEXTURE status=%s' in src
 assert 'EDEN_PROFILE_AVATAR_TEXTURE status=decode_failed' in src
 assert "double loaded_at_seconds = 0.0;" in hdr
@@ -106,7 +112,7 @@ class Textures {
  Cover cover(const std::string&,float);
  void tick(float dt){++frame_; uptime_seconds_+=static_cast<double>(dt);}
 };
-""" + avatar + "\n" + cover + r"""
+""" + avatar + "\n" + retail + "\n" + cover + r"""
 struct Game {std::string file;};
 struct Storage {bool available=true;bool game_storage_available()const{return available;}};
 struct Scanner {

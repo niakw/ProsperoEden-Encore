@@ -154,6 +154,13 @@ def main()->None:
                 fake.parent.mkdir(parents=True,exist_ok=True)
                 fake.write_text('int cpu6_stub=1;\n')
             cmake_text='cmake_minimum_required(VERSION 3.20)\nproject(cpu6_selector LANGUAGES CXX)\nset(PORT_ROOT "@ROOT@")\nset(PORT_BUILD_DIR "@OUT@")\nset(PS5_NATIVE @ENABLED@)\nset(EDEN_REVIEWED_DUAL_NPDM @DUAL@)\nadd_library(core STATIC dummy.cpp\n    hle/kernel/global_scheduler_context.cpp\n    arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)\nadd_library(dynarmic STATIC dummy.cpp)\nadd_library(eden-headless STATIC dummy.cpp)\n'
+            # The shipping CPU6 block also guards the independent KProcess
+            # consumers. Declare them in this miniature CMake graph; otherwise
+            # a valid source change fails because the fixture omits real targets.
+            cmake_text += 'set(EDEN_PORT_DIR "' + (ROOT/'headless').as_posix() + '")\n'
+            cmake_text += ('add_library(audio_core STATIC dummy.cpp)\n'
+                           'add_library(video_core STATIC dummy.cpp)\n'
+                           'add_library(hid_core STATIC dummy.cpp)\n')
             cmake_text=cmake_text.replace(
                 'arm/dynarmic/arm_dynarmic_32.cpp\n    arm/dynarmic/arm_dynarmic_64.cpp)',
                 '"${EDEN_G11_A32_SELECTED}"\n    "${EDEN_N76_NATIVE_JIT_SOURCE}")')
@@ -177,8 +184,15 @@ def main()->None:
                                        else '-DCMAKE_BUILD_TYPE=Debug'],
                                       capture_output=True,text=True,timeout=40)
             assert configured.returncode==0,(prj,configured.stderr[-3600:])
-            selected='CPU6_GENERATED_OWNER_INDEX=1' if selected_native else 'CPU6_GENERATED_OWNER_INDEX=-1'
-            assert selected in configured.stdout,(prj,configured.stdout[-2800:])
+            # R457 compiles the separate KProcess ABI witness into core.
+            # That adds an independently selected TU before this generated
+            # source; require exact ownership presence/absence, not an ordinal.
+            selected_match = re.search(r'CPU6_GENERATED_OWNER_INDEX=(-?\d+)',
+                                       configured.stdout)
+            assert selected_match, (prj, configured.stdout[-2800:])
+            selected_index = int(selected_match.group(1))
+            assert (selected_index >= 0) == selected_native, (
+                prj, selected_index, configured.stdout[-2800:])
             exists=(prj/'generated/ns2-cpu6/core/hle/kernel/global_scheduler_context.cpp').exists()
             assert exists==selected_native
             print('P0_2_UNIFIED_CPU6_CMAKE_SOURCE_SELECTOR_PASS',

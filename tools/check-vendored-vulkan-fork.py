@@ -133,6 +133,49 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert not set(actual) - set(expected), (
         'Generator emitted a Vulkan file absent from the active vendor',
         sorted(set(actual) - set(expected)))
+    # The isolated R2 branch carries exact SHA-pinned unmerged vendor
+    # research additions and source owners. Never add these to the production
+    # 238-path allowlist; the executable oracle remains byte-exact.
+    # GitHub Actions uses a merge ref for pull_request events; admit only
+    # this exact draft research head, and still pin every changed source SHA.
+    # Native production NS2 uses the reviewed vendor pin and preserves
+    # the generator oracle by reversing only exact, SHA-validated additions.
+    r2_production = (subprocess.check_output(
+        ['git', 'rev-parse', 'HEAD:vendor'], text=True).strip()
+        == 'f8f5d8ee3a94a4202886a40badb5c0203d05da30')
+    if r2_production:
+        r2_vendor = 'f8f5d8ee3a94a4202886a40badb5c0203d05da30'
+        assert subprocess.check_output(['git', 'rev-parse', 'HEAD:vendor'],
+                                       text=True).strip() == r2_vendor, (
+            'R2 research vendor pin drift')
+        r2_extra = {
+            'include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h':
+                '8905d42732b2d5848aa49b5800340e031cd214c9',
+            'include/video_core/renderer_vulkan/ns2_gpu_retirement_hold.h':
+                '33e077863e503a956cabf2b99edb73f8967b89a8',
+            'include/video_core/renderer_vulkan/ns2_verified_upload_batch.h':
+                'b12cc0489ebbb463b4ec9e4c39b2d2be41ab2376',
+            'include/video_core/renderer_vulkan/vk_staging_buffer_pool.h':
+                '10693299137d1d36aace5a2399f20ba3bbf4e49c',
+            'tests/test_ns2_verified_upload_batch.cpp':
+                '2bb3d3389565f06c7eb2ea46a57acae06c28c53a',
+            'tests/test_ns2_gpu_retirement_hold.cpp':
+                '0de5c2e112ce21a9736031879830ff377ba7f307',
+            'tests/test_ns2_cache_shutdown_order.cpp':
+                '472860e5ddc853197ec79b63d16800daffa372cc',
+            'vk_staging_buffer_pool.cpp':
+                '22cc2218f0ea78daee968dee275a2560e58e3930',
+        }
+        for name, sha in r2_extra.items():
+            assert subprocess.check_output(
+                ['git', 'hash-object', str(expected[name])],
+                text=True).strip() == sha, ('R2 research-only source blob drift', name)
+        approved_native_additions |= set(r2_extra)
+        core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
+        assert subprocess.check_output(
+            ['git', 'hash-object', str(core_owner)], text=True).strip() == (
+            '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
+            'R2 real deleted-buffer source owner changed')
     unexpected_additions = set(expected) - set(actual)
     assert unexpected_additions == approved_native_additions, (
         'Vulkan active native additive inventory drift',
@@ -396,6 +439,43 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # maintained vendor header/implementation, not by skipping those files.
     # The independent N65 compiled host oracle checks behavior and failures.
     normalized_expected = {}
+    # Both the scheduler header and active scheduler TU have branch-only
+    # epoch markers. Normalize their exact SHA-pinned R2 hunks BEFORE
+    # historic N72/P04 MSAA source-oracle checks. No production exemption.
+    if r2_production:
+        r2_scheduler_pre_msaa = {
+            'include/video_core/renderer_vulkan/vk_scheduler.h': (
+                '460b5d95453cb974eefff10c4af76c5b318e685f',
+                [
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '    // An owner-thread observation', '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '    // Producer-thread command chunk rollover', '#endif\\n'),
+                ]),
+            'vulkan_scheduler.cpp': (
+                '70bc538c71ba1327a0c2a51a6bcb57d1835db2e0',
+                [
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '        // The FIFO chunk moved', '#endif\\n'),
+                ]),
+        }
+        for name, (sha, edits) in r2_scheduler_pre_msaa.items():
+            source = expected[name].read_text()
+            observed = subprocess.check_output(
+                ['git', 'hash-object', str(expected[name])],
+                text=True).strip()
+            assert observed == sha, ('R2 real scheduler source changed', name)
+            for first, last in edits:
+                start = first.replace('\\n', '\n')
+                stop = last.replace('\\n', '\n')
+                assert source.count(start) == 1, ('R2 scheduler marker drift', name)
+                a = source.index(start)
+                b = source.index(stop, a) + len(stop)
+                source = source[:a] + source[b:]
+            normalized = temp/'normalized-vendor-r2-pre-msaa'/name
+            normalized.parent.mkdir(parents=True, exist_ok=True)
+            normalized.write_text(source)
+            normalized_expected[name] = normalized
     hname = 'include/video_core/vulkan_common/vulkan_wrapper.h'
     cname = 'vulkan_wrapper.cpp'
     # N66: keep the production generator deterministic. The one additive
@@ -921,6 +1001,68 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     print('ENCORE_G07_COMPUTE_LAYOUT_REVERSE_PARITY_PASS',
           'historical_generator=immutable', 'native_guard=fail_closed', flush=True)
 
+    # Reverse ONLY reviewed R2 additions on the isolated research pin. The
+    # immutable generator and historical shipping Vulkan parity remain strict.
+    if r2_production:
+        r2_replacements = {
+            'include/video_core/renderer_vulkan/vk_buffer_cache.h': (
+                '08b0ad3a99c1509eb23bd6317fdbd9c4b3251b52',
+                [
+                    ('#ifdef PS5_NATIVE\\n    // Passive source-owner snapshot',
+                     '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '    // Strong destination',
+                     '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '#include "video_core/renderer_vulkan/ns2_gpu_retirement_hold.h"',
+                     '#endif\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '    ~BufferCacheRuntime() noexcept;',
+                     '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '    // Strong owner type deliberately',
+                     '#endif\\n\\n'),
+                ]),
+            'vk_buffer_cache_cost.cpp': (
+                '1877d43aa8facfabf193dac16b8beea3ff7e188e',
+                [
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '#include "video_core/renderer_vulkan/ns2_staging_upload_bounds.h"',
+                     '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     'void BufferCacheRuntime::CopyStagingUpload',
+                     '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     'BufferCacheRuntime::~BufferCacheRuntime() noexcept',
+                     '#endif\\n\\n'),
+                    ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
+                     '    // Reclaim even with no resident buffers',
+                     '#endif\\n'),
+                ]),
+        }
+        for name, (sha, edits) in r2_replacements.items():
+            raw = expected[name].read_text()
+            assert subprocess.check_output(
+                ['git', 'hash-object', str(expected[name])],
+                text=True).strip() == sha, ('R2 maintained owner changed', name)
+            for first, last in edits:
+                # The delimiters are exact, nonnested source-owned blocks.
+                start = raw.index(first.replace('\\n', '\n'))
+                terminator = last.replace('\\n', '\n')
+                end = raw.index(terminator, start) + len(terminator)
+                assert raw.find(first.replace('\\n', '\n'), end) < 0
+                raw = raw[:start] + raw[end:]
+            if name == 'vk_buffer_cache_cost.cpp':
+                # The guarded include replaced the original blank separator.
+                # Restore that one byte-equivalent empty line for oracle parity.
+                inc = '#include "video_core/renderer_vulkan/vk_buffer_cache.h"\n'
+                after = '#include "video_core/renderer_vulkan/maxwell_to_vk.h"'
+                assert raw.count(inc + after) == 1
+                raw = raw.replace(inc + after, inc + '\n' + after, 1)
+            normalized = temp/'normalized-vendor-r2'/name
+            normalized.parent.mkdir(parents=True, exist_ok=True)
+            normalized.write_text(raw)
+            normalized_expected[name] = normalized
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

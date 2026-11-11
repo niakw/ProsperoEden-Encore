@@ -256,7 +256,9 @@ enum class SaveSource : std::uint8_t
 struct FolderInfo
 {
     bool keys = false;
-    int firmware = -1;
+    int firmware = -1; // Flat and family NCA file count, not firmware validity.
+    bool firmware_ready = false; // NCA, extracted or ZIP in a recognized family folder.
+    std::string firmware_detail; // Format per Switch generation, not a guessed NCA count.
     int games = -1;
 };
 

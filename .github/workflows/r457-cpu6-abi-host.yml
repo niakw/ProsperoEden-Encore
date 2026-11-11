@@ -1,0 +1,22 @@
+name: R457 PS5 6-core KProcess ABI host gate
+on:
+  pull_request:
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'headless/ps5_cpu6_abi_probe.cpp'
+      - 'tools/check-r457-ps5-cpu6-abi-host.py'
+      - '.github/workflows/r457-cpu6-abi-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  abi-layout-source-gate:
+    name: AudioOut KProcess 4-vs-6-core ABI regression (host-only)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 Node.js 24
+        with:
+          persist-credentials: false
+      - name: Source check and actual six-core C++ probe compile
+        run: python3 -B tools/check-r457-ps5-cpu6-abi-host.py

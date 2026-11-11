@@ -756,6 +756,33 @@ endif()
             assert maintained.count(native_span_guard) == 1, (
                 "PS5 early audio GetSpan null-table guard missing or duplicated", owner)
             baseline = baseline.replace(native_span_old, native_span_guard)
+        # PR #53 adds a PS5-only precommit hook to the two real native
+        # memory owners. Remove ONLY that exact gated addition when checking
+        # immutable G13/M12 history, then independently assert its placement
+        # before MapPages. Untouched research-off branches retain parity.
+        if owner.startswith("eden-core/src/core/memory_native_"):
+            marker = "#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING)"
+            if marker in maintained:
+                declaration = (
+                    "#include <new>\n"
+                )
+                assert maintained.count(marker) == 2, ("sparse gate count", owner)
+                assert maintained.count('extern "C" bool EdenNs2CommitGuestBacking(') == 1
+                call_start = marker + "\n        // The guest PTE contains a direct pointer into HostMemory."
+                point = maintained.index(call_start)
+                call_end = maintained.index("#endif\n", point) + len("#endif\n")
+                before_map = maintained.index("        MapPages(page_table", point)
+                assert call_end <= before_map, ("sparse admission after PTE", owner)
+                decl_start = maintained.index(marker)
+                decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
+                assert decl_end < point
+                reviewed = maintained[:point] + maintained[call_end:]
+                # The research declaration adds one blank separator after
+                # #endif. Remove it too, preserving exact historical parity.
+                assert reviewed[decl_end:decl_end+1] == "\n", owner
+                reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
+                reviewed = reviewed.replace("#include <new>\n", "", 1)
+                maintained = reviewed
         assert maintained == baseline, (
             "G13 X05 M12 historical source parity drift", owner)
     print("ENCORE_FOUR_NATIVE_GUEST_MEMORY_VARIANTS_PARITY_PASS")

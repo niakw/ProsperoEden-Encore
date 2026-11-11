@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "common/host_memory.h"
 #include "fastmem.h"
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+#include "ns2_sparse_guest.h"
+#endif
 #include <algorithm>
 #include <atomic>
 #include <bit>
@@ -550,10 +553,30 @@ public:
     u8* base{};
     size_t size;
     std::unique_ptr<Window> window;
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+    std::unique_ptr<Eden::PS5::GuestBacking::Runtime> sparse;
+#endif
 #ifndef PS5_NATIVE
     int fd = -1; // Host checks: a shared backing the window can alias.
 #endif
     Impl(size_t requested, bool fastmem) : size(requested) {
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        constexpr std::size_t Ns2Dram = 12ull << 30;
+        constexpr std::size_t PhysicalBudget = 6ull << 30;
+        if (requested == Ns2Dram) {
+            // Preserve the full 12 GiB guest-physical address range. The
+            // production backing commits independent 2 MiB direct mappings
+            // before a kernel PTE or ClearBackingRegion can expose them.
+            // A32 fastmem's single-PA alias is intentionally NOT created.
+            sparse = std::make_unique<Eden::PS5::GuestBacking::Runtime>(
+                requested, PhysicalBudget);
+            if (!sparse->Valid() || !sparse->Install())
+                throw std::system_error(ENOMEM, std::generic_category(),
+                                        "NS2 sparse guest VA reservation");
+            base = static_cast<u8*>(sparse->Base());
+            return;
+        }
+#endif
 #ifndef PS5_NATIVE
         if (fastmem) {
             fd = memfd_create("eden-backing", MFD_CLOEXEC);
@@ -577,6 +600,13 @@ public:
     }
     ~Impl() {
         window.reset();
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        if (sparse) {
+            sparse->Uninstall();
+            sparse.reset(); // unmap guest VA before freeing each owned PA
+            return;
+        }
+#endif
 #ifndef PS5_NATIVE
         if (fd >= 0) {
             if (munmap(base, size) != 0 || close(fd) != 0) std::abort();
@@ -611,7 +641,13 @@ HostMemory& HostMemory::operator=(HostMemory&& other) noexcept {
 void HostMemory::ClearBackingRegion(size_t offset, size_t length, u32 fill) {
     if (offset > backing_size || length > backing_size - offset)
         throw std::out_of_range("Backing clear range");
-    if (length) std::memset(backing_base + offset, fill, length);
+    if (length) {
+#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        if (impl->sparse && !impl->sparse->Commit(offset, length))
+            throw std::bad_alloc{}; // fail closed, not a virtual-hole write
+#endif
+        std::memset(backing_base + offset, fill, length);
+    }
 }
 // Eden calls these only while a page table uses VirtualBasePointer() as its fastmem
 // arena. Without a window they are rejected rather than presented as no-ops.

@@ -1,0 +1,40 @@
+name: R457 native sparse 12GiB owner qualification (host, no PS5 build)
+on:
+  pull_request:
+    paths:
+      - 'src/ns2_sparse_guest.cpp'
+      - 'src/ns2_sparse_guest.h'
+      - 'src/host_memory.cpp'
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/test_r457_native_sparse_owner.cpp'
+      - 'tools/ns2/check_r457_sparse_kernel_source.py'
+      - vendor
+      - '.github/workflows/r457-ns2-sparse-guest-native-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-syscall-owner-model:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Compile exact native owner and mock syscalls with Clang C++20 UBSan
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic \
+            -DPS5_NATIVE=1 -fsanitize=undefined -fno-sanitize-recover=all \
+            -Isrc -Iheadless src/ns2_sparse_guest.cpp \
+            tools/ns2/test_r457_native_sparse_owner.cpp -o /tmp/r457-native-owner
+          /tmp/r457-native-owner
+          python3 -B tools/ns2/check_r457_sparse_kernel_source.py
+      - name: Verify production PS5 sparse backing and maintained guest PTE owner
+        run: |
+          set -euo pipefail
+          grep -F 'set(EDEN_NS2_SPARSE_BACKING ON)' headless/CMakeLists.txt
+          grep -F 'target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)' headless/CMakeLists.txt
+          grep -F 'EDEN_NS2_SPARSE_BACKING' src/host_memory.cpp
+          test "$(git rev-parse HEAD:vendor)" = f8f5d8ee3a94a4202886a40badb5c0203d05da30
+

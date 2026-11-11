@@ -694,8 +694,14 @@ void Launcher::draw_home(Canvas &c)
     // One line only. The font scales to the measured title width, down to 45%
     // for exceptional long Nlib names, then falls back to a fitted ellipsis.
     // Never wrap the title into the description's vertical space.
+    // Light palette uses dark ink for pale panels, but game artwork has a
+    // dark cinematic scrim. Pick text contrast from this actual surface.
+    const bool dark_hero_surface = prefs_.color_palette == 3 &&
+                                   prefs_.show_game_background;
+    const Color hero_title_ink = dark_hero_surface ? Color::rgb(0xffffff) : theme::kTitle;
+    const Color hero_description_ink = dark_hero_surface ? Color::rgb(0xf2f5fb) : theme::kBody;
     text_shrink(c, title_label, kHeroX, baseline(165.0f, 62.0f, kTitleSize),
-                kTitleSize, theme::kTitle, kHeroContentWidth, Align::left, 0.0f, 0.45f);
+                kTitleSize, hero_title_ink, kHeroContentWidth, Align::left, 0.0f, 0.45f);
     const bool hero_caption_warning = hero_recent == nullptr && home_.last_caption_warning;
     // Use ONLY Nlib's long description. The one-line `intro` may be an
     // unrelated tagline; never show it as though it were the full synopsis.
@@ -710,7 +716,7 @@ void Launcher::draw_home(Canvas &c)
                      21.0f, 26.0f, theme::kWarning, kHeroContentWidth, 2, true);
     else
         text_block_semantic(c, hero_caption, kHeroX, baseline(282.0f, 27.0f, 22.0f),
-                            22.0f, 27.0f, theme::kBody, kHeroContentWidth, 2, 0.90f);
+                            22.0f, 27.0f, hero_description_ink, kHeroContentWidth, 2, 0.90f);
     int hero_mods = hero_recent == nullptr ? home_.last_mods : 0;
     int hero_mods_on = hero_recent == nullptr ? home_.last_mods_on : 0;
     for (const Game &game : games_)

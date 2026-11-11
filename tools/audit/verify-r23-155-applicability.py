@@ -56,7 +56,9 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 71,
+        "runtime-semantic-review-pending": 69,
+        "MSVC-portability-only-no-current-PS5-runtime-port": 1,
+        "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
         "MSVC-constexpr-only-no-current-PS5-runtime-port": 1,
         "source-equivalent-declared-native-x64-lookup": 3,
@@ -130,6 +132,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
         raise ValueError("R23 IPS >256B source is staged, NOT tested at exact corrective HEAD")
     if by_index[141]["classification"] != "MSVC-constexpr-only-no-current-PS5-runtime-port":
         raise ValueError("R23 MSVC-only constexpr constructor source decision changed")
+    if by_index[115]["classification"] != "MSVC-portability-only-no-current-PS5-runtime-port":
+        raise ValueError("R23 #115 MSVC-only source review disposition changed")
+    if by_index[118]["classification"] != "constexpr-atomic-page-methods-build-compat-only":
+        raise ValueError("R23 #118 atomic constexpr-only source review disposition changed")
     # All eight upstream UI/translation commits are outside the actual PS5 package:
     # the separate launcher embeds its own ui/*.po, branded assets and artwork.
     native_pkg = (root / "tools/package-headless-native.sh").read_text()
@@ -202,7 +208,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 71
+    assert validate(root)["runtime_semantic_cases_pending"] == 69
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

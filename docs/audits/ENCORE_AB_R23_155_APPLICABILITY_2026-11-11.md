@@ -4,12 +4,14 @@
 
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/shared still open | **71** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Runtime NS1/shared still open | **69** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native build/dependency | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Staged host fixes | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Declared native Dynarmic x64 source-equivalent fixes (E1 only) | **3** | Source-level #117/#122/#125 matched; #136 remains open; no JIT execution/depfile proof |
 | IPSwitch long-line full source staged, untested at current HEAD | **1** | Source E1 prepared in corrective PR #46; no new exact-source-HEAD host proof |
 | MSVC-only HLE constructor constexpr portability | **1** | Exact one-token removal; unchanged service runtime constructor body |
+| MSVC compiler-portability-only source #115 | **1** | No behavior-only PS5 port; unchanged numeric casts and current native sparse constraint |
+| Atomic PageTable constexpr-only change #118 | **1** | Three member qualifiers changed, atomic bodies unchanged (E1) |
 | Verified source gaps | **8** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Not native runtime | **27** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Not x64 host backend | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
@@ -28,7 +30,7 @@
 | NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| **Total** | **155** | **71 avis runtime encore ouverts** |
+| **Total** | **155** | **69 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 
@@ -161,3 +163,7 @@ Le [rapport de comparaison des quatre commits x64](ENCORE_AB_R23_DYNARMIC_X64_LO
 ## 11 Nov — IPSwitch + constructeur MSVC (E1)
 
 Voir [les deux décisions source exactes](ENCORE_AB_R23_IPS_LONG_LINE_AND_HLE_MSVC_2026-11-11.md). **#116** requiert toujours le test sur le blob correctif courant `5e01ee8...` et une compilation native du Core. **#141** ne change que `constexpr`, sans modifier le constructeur/dispatch sur PS5 Clang. Le registre contient **71** autres commits encore sans décision sémantique; une source préparée n'est ni fusionnée ni testée en jeu.
+
+## 11 Nov — autres distinctions de compatibilité compilateur
+
+La [comparaison #115 MSVC et #118 PageTable](ENCORE_AB_R23_MSVC_PAGETABLE_COMPILE_ONLY_2026-11-11.md) vérifie les diffs exacts : des casts source/MSVC et trois spécificateurs `constexpr` retirés, sans nouvelle opération runtime pour le chemin compilateur PS5 actuel. Il reste **69** revues sémantiques; aucune preuve E4 n'est déduite de cette exclusion fonctionnelle.

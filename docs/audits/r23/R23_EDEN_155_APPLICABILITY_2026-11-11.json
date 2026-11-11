@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 71,
+    "runtime-semantic-review-pending": 69,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -29,7 +29,9 @@
     "verified-absent-GPU-null-initialization-candidate": 1,
     "source-equivalent-declared-native-x64-lookup": 3,
     "staged-native-IPS-longline-awaiting-current-host-proof": 1,
-    "MSVC-constexpr-only-no-current-PS5-runtime-port": 1
+    "MSVC-constexpr-only-no-current-PS5-runtime-port": 1,
+    "MSVC-portability-only-no-current-PS5-runtime-port": 1,
+    "constexpr-atomic-page-methods-build-compat-only": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3348,9 +3350,9 @@
       "sha": "1203082a8f1211ad6ce4d95f0c6947f7ecd27a55",
       "title": "[msvc] fix build errors (#4451)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "MSVC-portability-only-no-current-PS5-runtime-port",
+      "scope": "Exact four-file Eden #115 patch changes a C++ trivially-copyable template constraint for MSVC, inserts integer type casts preserving existing values on Clang, and explicitly converts SSL file descriptor; the pinned SSL GetSocketDescriptor command remains nullptr, so no SSL feature is claimed. See ENCORE_AB_R23_MSVC_PAGETABLE_COMPILE_ONLY_2026-11-11.md.",
+      "action": "Source-level E1 build-portability disposition; do not delete native sparse constraints or import MSVC casts to fix an unproved PS5 issue. Full SSL feature and memory safety are separate gates.",
       "paths": [
         "src/common/sparse_large_vector.h",
         "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
@@ -3387,9 +3389,9 @@
       "sha": "73e004de6eb530567b3022531c11b92f55f265a6",
       "title": "[common/page_table] unmark non-constexpr functions (#4433)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "constexpr-atomic-page-methods-build-compat-only",
+      "scope": "Official upstream #118 changes exactly three PageEntryData methods' constexpr specifiers to inline but preserves their atomic Store/fetch_or and MarkDebug bodies, including all values and memory ordering. Pinned Git blob 1588eca6168bdcaf04229d6aa4115c3acb624081; final upstream blob 0368e498630344ab9e05f47f4c86776caa3ba6b0. See ENCORE_AB_R23_MSVC_PAGETABLE_COMPILE_ONLY_2026-11-11.md.",
+      "action": "No PS5 runtime page semantics to import from the keyword-only change; retain actual compiler header include receipts and separate PageTable layout/memory correctness tests.",
       "paths": [
         "src/common/page_table.h"
       ]

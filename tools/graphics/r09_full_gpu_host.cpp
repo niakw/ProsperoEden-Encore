@@ -174,7 +174,7 @@ void Run(const std::filesystem::path& original_model_or_dll,
             throw std::runtime_error(
                "R09_MIN_720_AUTHENTIC_MODEL_ADAPTER_PREFLIGHT_REJECTED");
         std::cout<<"R09_MIN_720_AUTHENTIC_152_ROW_CPU_PREFLIGHT_PASS"
-                    " raster=1280x720 HOST_ONLY\\n";
+                    " raster=1280x720 HOST_ONLY\n";
     }
     const auto source_pixels=ReadRawRgba8(input_path,extent,min_720);
     auto library = Vulkan::OpenLibrary();

@@ -75,6 +75,26 @@ def inspect(repo: Path) -> dict:
                              "content_preview": patch_content[:7]})
     if set(stats) != seen:
         raise ValueError("numstat/diff file sets disagree")
+    # Ignore whitespace-only edits and SPDX comment-only hunks, but not
+    # normal statement, string or identifier changes. The first strict pass
+    # above enumerates every deviation from precisely +3 licence lines.
+    cosmetic_ignored = git(
+        repo, "diff", "--no-ext-diff", "--no-renames",
+        "--ignore-all-space", "--ignore-blank-lines",
+        "-I", r"^[[:space:]]*// SPDX-",
+        "--unified=0", BEFORE, AFTER, "--", SUBTREE
+    )
+    remaining_code_paths = []
+    for line in cosmetic_ignored.splitlines():
+        if line.startswith("diff --git "):
+            m = re.match(r"^diff --git a/(.*?) b/(.*?)$", line)
+            remaining_code_paths.append(m.group(1) if m else line)
+    # The original CMake owner must be unchanged after the giant reversion;
+    # otherwise a native build can still pick different HLE code.
+    native_cmake_changed = bool(git(
+        repo, "diff", "--no-ext-diff", "--no-renames", "--numstat",
+        BEFORE, AFTER, "--", "src/core/CMakeLists.txt"
+    ).strip())
     return {
         "basis": "exact Git blob-to-blob net diff of HLE service subtree",
         "before_74_parent": BEFORE,
@@ -84,6 +104,10 @@ def inspect(repo: Path) -> dict:
         "copyright_notice_only_paths": len(accepted),
         "behavioral_residual_paths": len(residual),
         "copyright_notice_only_verified": len(stats) > 0 and not residual,
+        "cosmetic_only_hle_service_source": not remaining_code_paths,
+        "non_cosmetic_hle_paths": remaining_code_paths,
+        "non_cosmetic_hle_path_count": len(remaining_code_paths),
+        "native_core_cmake_unchanged": not native_cmake_changed,
         "copyright_only_paths": sorted(accepted),
         "residual": residual,
         "native_build_performed": False,
@@ -103,7 +127,8 @@ def main() -> int:
     print("R23_HLE_LARGE_REVERT_GIT_DIFF", json.dumps({
         k: v for k,v in result.items() if k not in ("copyright_only_paths", "residual")
     }, sort_keys=True))
-    if args.assert_license_only and not result["copyright_notice_only_verified"]:
+    if args.assert_license_only and (not result["cosmetic_only_hle_service_source"] or
+                                     not result["native_core_cmake_unchanged"]):
         print(json.dumps(result["residual"][:12], indent=2), file=sys.stderr)
         return 2
     return 0

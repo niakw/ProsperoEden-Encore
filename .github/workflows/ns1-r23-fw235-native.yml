@@ -1,0 +1,36 @@
+name: NS1 FW23.5 qlaunch native source contract (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-fw235-qlaunch-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-fw235-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qlaunch-selected-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exact qlaunch vendor, one source owner and IPC control event
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "3830fdba60ebec9772dd79bb41eaf9f1a99824e6"
+          python3 -B vendor/tests/ns1_r23_1_fw235_ns.py
+          python3 - <<'PY'
+          from pathlib import Path
+          t=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_fw235_ns_units "hle/service/ns/application_manager_interface.cpp")' in t
+          assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_R23_FW235_NS_INCLUDE}")' in t
+          assert 'application_manager_interface.h' in t
+          print('R23_FW235_ACTUAL_NS_OWNER_SOURCE_PASS')
+          PY

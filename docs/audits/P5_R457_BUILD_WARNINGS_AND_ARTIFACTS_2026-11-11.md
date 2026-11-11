@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | P0 | `crash-provenance.json` référence `link.map` (54 464 368 octets), mais l'artefact de symboles ne l'embarque pas | #42942150990 : bundle incomplet pour analyse avancée des crashs | Copier `build/headless-native/link.map` sous `build/symbols/link.map` et comparer taille et SHA-256 au reçu, bloquer si écart |
 | P1 | Fond quotidien optionnel : `fetch_daily_switch.py` exige `magick` ImageMagick 7, alors que l'Ubuntu runner expose `convert` et `identify` ImageMagick 6 | #42942150990 : repli sur le fond Encore | Choisir correctement les commandes 6/7, conserver limites mémoire et dimensions, vérification hôte sans réseau |
-| P2 | `iCCP` : profil ICC RGB incorrect sur une image PNG gris `switch-rear-footer.png` | #42942150990 : warning ImageMagick, conversion poursuivie | Recréer/normaliser **l'actif source** sans profil incohérent après vérification visuelle ; ne pas masquer stderr |
+| P2 | `iCCP` : profil ICC RGB incorrect sur un PNG gris `switch-rear-footer.png` | #42942150990 : warning ImageMagick, conversion poursuivie | **Corrigé sur cette branche** par suppression du seul chunk ancillaire `iCCP` (276 octets), IDAT inchangé ; contrôle PNG standard-library ajouté, sans masquer stderr |
 | Réglé en CI | ZIP de distribution inexistant / mauvais nom puis `SHA256SUMS` vérifié depuis mauvais répertoire | #42938625487, #42941245433 rouges | Correctifs déjà présents dans R457 : fichier attendu contrôlé et `(cd dist && sha256sum --check --strict SHA256SUMS)` |
 
 ## Inventaire exhaustif des douze tentatives natives lourdes de P5

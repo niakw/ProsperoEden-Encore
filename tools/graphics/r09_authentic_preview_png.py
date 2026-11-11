@@ -16,9 +16,10 @@ import struct
 import sys
 import zlib
 
-WIDTH, HEIGHT = 1920, 1080
-INPUT_SIZE = WIDTH * HEIGHT * 4
-OUTPUT_SIZE = WIDTH * HEIGHT * 4 * 4
+DEFAULT_WIDTH, DEFAULT_HEIGHT = 1920, 1080
+# Output geometry is determined by the same raster as the native GPU readback.
+# Do not let a wrong width/height silently reinterpret captured pixel bytes.
+SUPPORTED_RASTERS = frozenset({(1920, 1080), (1280, 720)})
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 def digest(data: bytes) -> str:
@@ -36,35 +37,35 @@ def chunk(tag: bytes, payload: bytes) -> bytes:
     return (struct.pack(">I", len(payload)) + tag + payload +
             struct.pack(">I", zlib.crc32(tag + payload) & 0xffffffff))
 
-def png(rows: list[bytes]) -> bytes:
-    if len(rows) != HEIGHT or any(len(row) != WIDTH * 3 for row in rows):
+def png(rows: list[bytes], width: int, height: int) -> bytes:
+    if len(rows) != height or any(len(row) != width * 3 for row in rows):
         raise ValueError("R09_REAL_PREVIEW_ROW_GEOMETRY_REJECTED")
     scanlines = b"".join(b"\0" + row for row in rows)
     compressed = zlib.compress(scanlines, 6)
-    header = struct.pack(">IIBBBBB", WIDTH, HEIGHT, 8, 2, 0, 0, 0)
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     return (PNG_SIGNATURE + chunk(b"IHDR", header) +
             chunk(b"IDAT", compressed) + chunk(b"IEND", b""))
 
-def source_rgb_rows(rgba8: bytes) -> list[bytes]:
+def source_rgb_rows(rgba8: bytes, width: int) -> list[bytes]:
     result = []
-    stride = WIDTH * 4
+    stride = width * 4
     for start in range(0, len(rgba8), stride):
         row = rgba8[start:start + stride]
-        rgb = bytearray(WIDTH * 3)
+        rgb = bytearray(width * 3)
         rgb[0::3] = row[0::4]
         rgb[1::3] = row[1::4]
         rgb[2::3] = row[2::4]
         result.append(bytes(rgb))
     return result
 
-def neural_rgb_rows(rgba32f: bytes) -> tuple[list[bytes], int, float, float]:
+def neural_rgb_rows(rgba32f: bytes, width: int, height: int) -> tuple[list[bytes], int, float, float]:
     rows = []
     clipped = 0
     minimum, maximum = math.inf, -math.inf
     values = struct.iter_unpack("<4f", rgba32f)
-    for y in range(HEIGHT):
-        row = bytearray(WIDTH * 3)
-        for x in range(WIDTH):
+    for y in range(height):
+        row = bytearray(width * 3)
+        for x in range(width):
             pixel = next(values)
             if not all(math.isfinite(value) for value in pixel):
                 raise ValueError(f"R09_REAL_PREVIEW_NONFINITE_OUTPUT at ({x},{y})")
@@ -81,22 +82,26 @@ def neural_rgb_rows(rgba32f: bytes) -> tuple[list[bytes], int, float, float]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--width", type=int, default=DEFAULT_WIDTH)
+    parser.add_argument("--height", type=int, default=DEFAULT_HEIGHT)
     parser.add_argument("--input-rgba8", required=True, type=Path)
     parser.add_argument("--output-rgba32f", required=True, type=Path)
     parser.add_argument("--before-png", required=True, type=Path)
     parser.add_argument("--after-png", required=True, type=Path)
     args = parser.parse_args()
     try:
+        if (args.width, args.height) not in SUPPORTED_RASTERS:
+            raise ValueError("R09_REAL_PREVIEW_RASTER_UNSUPPORTED")
         if args.before_png == args.after_png:
             raise ValueError("R09_REAL_PREVIEW_OUTPUT_PATH_ALIAS")
         if any(path.exists() for path in (args.before_png, args.after_png)):
             raise ValueError("R09_REAL_PREVIEW_WOULD_OVERWRITE")
-        original = read_exact(args.input_rgba8, INPUT_SIZE)
-        result = read_exact(args.output_rgba32f, OUTPUT_SIZE)
-        before_rows = source_rgb_rows(original)
-        after_rows, clipped, minimum, maximum = neural_rgb_rows(result)
-        before_image = png(before_rows)
-        after_image = png(after_rows)
+        original = read_exact(args.input_rgba8, args.width * args.height * 4)
+        result = read_exact(args.output_rgba32f, args.width * args.height * 16)
+        before_rows = source_rgb_rows(original, args.width)
+        after_rows, clipped, minimum, maximum = neural_rgb_rows(result, args.width, args.height)
+        before_image = png(before_rows, args.width, args.height)
+        after_image = png(after_rows, args.width, args.height)
         # Never write a preview for a non-finite or geometrically invalid
         # GPU result. A valid all-black capture remains a diagnostic image.
         args.before_png.write_bytes(before_image)

@@ -64,6 +64,8 @@ jobs:
           python3 -B tools/graphics/test_r09_native_digest_inventory.py
           python3 -B tools/graphics/test_r09_verify_model_pack.py
           python3 -B tools/graphics/test_r09_full_gpu_evidence.py
+          python3 -B tools/graphics/test_r09_authentic_preview_geometry.py
+          python3 -B tools/graphics/r09_official_apt_mirrors.py --self-test
       - name: Check local neural importer without private model inputs
         shell: bash
         run: |

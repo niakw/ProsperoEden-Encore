@@ -32,11 +32,21 @@ assert len(FILES)>=72 and REQUIRED.issubset(FILES), (
 # Restricted mode used ONLY by R09 Min's isolated native vendor CI.
 # The default whole-graph source inventory above remains mandatory.
 R09_MIN_DUAL=os.environ.get("R09_MIN_VIT_NATIVE_TU_DUAL","")
-assert R09_MIN_DUAL in ("","1")
+R09_FSWIN_DUAL=os.environ.get("R09_FSWIN_NATIVE_TU_DUAL","")
+assert R09_MIN_DUAL in ("","1") and R09_FSWIN_DUAL in ("","1")
+assert not (R09_MIN_DUAL=="1" and R09_FSWIN_DUAL=="1")
 if R09_MIN_DUAL=="1":
     chosen={"nr_rdna2_frame_session.cpp","nr_rdna2_vit_run.cpp",
             "nr_rdna2_vit_block.cpp","nr_rdna2_vit_projection_stage.cpp",
             "nr_rdna2_vit_epilogue.cpp","nr_rdna2_vit_qkv_attention_link.cpp"}
+    assert chosen.issubset(FILES)
+    FILES=tuple(sorted(chosen))
+elif R09_FSWIN_DUAL=="1":
+    # Only the three authentic C++ translation units modified by the
+    # separate vendor scratch-pool PR. Test both compile-time branches.
+    chosen={"nr_rdna2_fswin_gpu_tensors.cpp",
+            "nr_rdna2_fswin_layer_runtime.cpp",
+            "nr_rdna2_fswin_chain.cpp"}
     assert chosen.issubset(FILES)
     FILES=tuple(sorted(chosen))
 INCLUDES=[
@@ -222,6 +232,11 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
         tasks=tuple((name,mode) for name in FILES for mode in ("0","1"))+tuple(
             ("nr_rdna2_frame_session.cpp","p"+profile)
             for profile in ("4","5","6","8","12","16"))
+    elif R09_FSWIN_DUAL=="1":
+        # Run the exact real FSwin C++ owners in default AND scratch-pool
+        # mode. This is syntax-only with real emulator/Vulkan headers.
+        tasks=tuple((name,"f"+mode)
+                    for name in FILES for mode in ("0","1"))
     else:
         tasks=tuple((name,None) for name in
                     (*FILES,"__present_layer_r09__","__r09_full_gpu_host__"))
@@ -231,8 +246,10 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
                 if name=="__present_layer_r09__" else
                 ROOT/"tools/graphics/r09_full_gpu_host.cpp"
                 if name=="__r09_full_gpu_host__" else ACTIVE/name)
-        flags=(["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL=1",
-                "-DEDEN_R09_MIN_VIT_POOL_SCRATCH_PLANES="+mode[1:]]
+        flags=(["-DEDEN_R09_MIN_FSWIN_SCRATCH_POOL_EXPERIMENTAL="+mode[1:]]
+               if mode is not None and mode.startswith("f")
+               else ["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL=1",
+                     "-DEDEN_R09_MIN_VIT_POOL_SCRATCH_PLANES="+mode[1:]]
                if mode is not None and mode.startswith("p")
                else ["-DEDEN_R09_MIN_VIT_POOL_EXPERIMENTAL="+mode]
                if mode is not None else [])
@@ -252,5 +269,8 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     if R09_MIN_DUAL=="1":
         assert len(results)==18
         print("R09_MIN_VIT_NATIVE_CPP_BOTH_MODES_AND_ALL_SIX_SCRATCH_PROFILES_PASS",flush=True)
+    elif R09_FSWIN_DUAL=="1":
+        assert len(results)==6
+        print("R09_FSWIN_NATIVE_CPP_ALL_THREE_REAL_TUS_BOTH_MACRO_MODES_PASS",flush=True)
     else:
         print("R09_NEURAL_NATIVE_CPP_HOST_PASS owners="+str(len(FILES)),flush=True)

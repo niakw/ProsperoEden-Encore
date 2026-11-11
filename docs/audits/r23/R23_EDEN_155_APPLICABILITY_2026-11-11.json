@@ -5,9 +5,9 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 113,
+    "runtime-semantic-review-pending": 110,
     "asset-and-translation-package-review": 8,
-    "not-applicable-to-native-runtime-source": 20,
+    "not-applicable-to-native-runtime-source": 23,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 4,
     "native-build-or-dependency-review": 4,
@@ -810,9 +810,9 @@
       "sha": "9c3bdeffc019048478e3a4ca3b35fb217676e248",
       "title": "[desktop] Prefer X11, but allow Wayland (with a warning) (#4579)",
       "file_count": 10,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "Qt/desktop-only paths, absent from historical native PS5 CDB; PS5 uses independent headless/native launcher.",
+      "action": "No source patch import for PS5; desktop Qt feature is outside PS5 executable. Historic native-CDB witness #42932868839. UI/asset licences remain a separate package matter.",
       "paths": [
         "src/qt_common/CMakeLists.txt",
         "src/qt_common/config/shared_translation.cpp",
@@ -3556,9 +3556,9 @@
       "sha": "c5405250d179824cdcd55d2dbd0a484f516490af",
       "title": "[common, ui] Refining UI for FX shaders for PC (#4426)",
       "file_count": 5,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "Qt/desktop-only paths, absent from historical native PS5 CDB; PS5 uses independent headless/native launcher.",
+      "action": "No source patch import for PS5; desktop Qt feature is outside PS5 executable. Historic native-CDB witness #42932868839. UI/asset licences remain a separate package matter.",
       "paths": [
         "src/qt_common/config/shared_translation.cpp",
         "src/yuzu/configuration/configure_graphics.cpp",
@@ -3586,9 +3586,9 @@
       "sha": "505b1576470796db7e6d561f62ac392f613b9797",
       "title": "[qt common] use ConfigurationShared translation context (#4430)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "not-applicable-to-native-runtime-source",
+      "scope": "Qt/desktop-only paths, absent from historical native PS5 CDB; PS5 uses independent headless/native launcher.",
+      "action": "No source patch import for PS5; desktop Qt feature is outside PS5 executable. Historic native-CDB witness #42932868839. UI/asset licences remain a separate package matter.",
       "paths": [
         "src/qt_common/config/shared_translation.cpp"
       ]

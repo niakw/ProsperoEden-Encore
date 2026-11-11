@@ -4,13 +4,13 @@
 
 | Catégorie | Commits | Action |
 |---|---:|---|
-| Aucune source d'émulation PS5/NS1 (Android/Qt/docs) | **20** | Exclusion du portage runtime; packaging/légal hors de cette décision |
+| Aucune source d'émulation PS5/NS1 (Android/Qt/docs) | **23** | Exclusion du portage runtime; packaging/légal hors de cette décision |
 | Assets et langues de la distribution | **8** | Vérifier les assets effectivement packagés |
 | CMake / CPM / versions dépendances | **4** | Vérifier les pins et la compilation PS5 |
 | NCE ARM / Dynarmic ARM64 host uniquement | **4** | Exclusion explicite du PS5 x64 |
 | Commit modifiant uniquement un test Dynarmic | **1** | Conserver comme référence de tests, pas de patch runtime |
 | Correctif de code NS1/partagé préparé sur PR #46 | **5** | F2I, BCAT, viewport, IPS, `audren:d` : hôte ciblé; compilation native/console en attente |
-| Autres changements NS1/partagés | **113** | Révision sémantique à faire, pas seulement les chemins |
+| Autres changements NS1/partagés | **110** | Révision sémantique à faire, pas seulement les chemins |
 | **Total** | **155** | **0 commit manquant à l'inventaire** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
@@ -29,13 +29,19 @@
 - **#108** [`908b1e9a3`](https://github.com/eden-emulator/mirror/commit/908b1e9a3701f142de51e133d910aa058d4b071c) — Dynarmic backend/arm64 source only, not PS5 x64 JIT; `src/dynarmic/src/dynarmic/backend/arm64/a32_address_space.cpp`, `src/dynarmic/src/dynarmic/backend/arm64/a64_address_space.cpp`, `src/dynarmic/src/dynarmic/backend/arm64/address_space.cpp`, `src/dynarmic/src/dynarmic/backend/arm64/address_space.h`.
 - **#40** : commit limité à `src/dynarmic/tests/A64/a64.cpp` ; conserve une valeur comme jeu de tests, ne change pas le code JIT distribué.
 
+## Trois exclusions Qt supplémentaires prouvées par la compilation historique
+
+Les commits **#25** (`9c3bdef`, X11/Wayland), **#133** (`c540525`, interfaces de shaders FX PC) et **#135** (`505b157`, traduction Qt) modifient exclusivement `src/qt_common/` et `src/yuzu/`. Ils avaient été rangés parmi les 123 candidats par un classificateur de chemins trop large. Le [contrôle exact des 155 commits sur la base de compilation native historique #42932868839](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42932868839) ne retrouve **aucune unité de compilation de ces trois commits** parmi les 1 985 entrées, ce qui est cohérent avec le launcher PS5 headless indépendant du frontend Qt.
+
+**Décision : 3 changements de code exclus du portage du runtime PS5**, sans déclarer que leurs idées d'interface ou leurs licences sont auditées. Le compteur `runtime-semantic-review-pending` passe de **113 à 110**, le compteur `not-applicable-to-native-runtime-source` de **20 à 23**. Aucun portage de source ni merge.
+
 ## Point de vigilance : introduction puis retour arrière HLE
 
 Les commits **#74 (`218c6705d`)** et **#69 (`e255c20db`)** concernent une introduction de tables de dispatch HLE puis son revert. La comparaison par arbres Git entre le parent de #74 et le commit de revert #69 montre que le fichier `src/core/CMakeLists.txt` est revenu au même blob, **mais que le sous-arbre `src/core/hle/service` diffère encore**. Il serait donc faux de supprimer ces deux entrées sans contrôle sémantique par unité sélectionnée. Les 392 et 588 chemins archivés restent tracés et non importés en masse.
 
 ## Ce qui manque encore
 
-Les **113** entrées `runtime-semantic-review-pending` demandent une décision **unité compilée réellement sélectionnée + équivalence/régression**. Les **5** fixs hôte doivent recevoir un vrai CMake/compilateur natif puis une validation console. Les **12** assets et dépendances sont ouverts, tout comme les **17** en-têtes issus des 35 écarts Eden sans reçu d'inclusion native. Les **7** lots C00–C06 ne sont pas qualifiés de bout en bout.
+Les **110** entrées `runtime-semantic-review-pending` demandent une décision **unité compilée réellement sélectionnée + équivalence/régression**. Les **5** fixs hôte doivent recevoir un vrai CMake/compilateur natif puis une validation console. Les **12** assets et dépendances sont ouverts, tout comme les **17** en-têtes issus des 35 écarts Eden sans reçu d'inclusion native. Les **7** lots C00–C06 ne sont pas qualifiés de bout en bout.
 
 **Tests des cinq correctifs :** [CI hôte R23 #42929157123](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42929157123) — compilation de fonctions/structures extraites, pas des cinq unités natives PS5 complètes, ni de rendu ou service invité réel.
 

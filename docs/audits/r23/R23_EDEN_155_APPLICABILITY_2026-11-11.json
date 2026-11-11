@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 31,
-    "runtime-semantic-review-pending": 17,
+    "verified-relevant-source-gap-awaiting-native-proof": 33,
+    "runtime-semantic-review-pending": 13,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -63,7 +63,9 @@
     "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
     "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
     "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1,
-    "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1
+    "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
+    "reviewed-current-PS5-CXX26-fmt-migration-deferred": 1,
+    "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -105,9 +107,9 @@
       "sha": "d3ee883e538b0152c6be5dceb0e53b2d1172beb0",
       "title": "[*] fmt -> std::format, initial C++26 migration (#4677)",
       "file_count": 309,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-current-PS5-CXX26-fmt-migration-deferred",
+      "scope": "E1 upstream 300-file C++26 std::format migration, while selected PS5 native CMake still uses fmt linked dependencies and C++20 bridge; no isolated runtime fix or ABI proof.",
+      "action": "Do not bulk-port; separate SDK/compiler/linker/static ABI fmt-to-format evaluation before any product migration.",
       "paths": [
         "CMakeLists.txt",
         "cpmfile.json",
@@ -418,7 +420,9 @@
         "src/yuzu_cmd/emu_window/emu_window_sdl3_vk.cpp",
         "src/yuzu_cmd/yuzu.cpp",
         "tools/svc_generator.py"
-      ]
+      ],
+      "source_evidence_level": "E1 official upstream patch + exact selected main/vendor source; no PS5 native/console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS27_2026-11-11.md"
     },
     {
       "index": 4,
@@ -497,9 +501,9 @@
       "sha": "83fde0738cc819dc20196ba30fa7bc4313389b2b",
       "title": "[common] nlohmann -> jacinth, httplib -> hydrocarbon, rework auto-updater UX (#4412)",
       "file_count": 62,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-current-PS5-HTTP-JSON-module-migration-deferred",
+      "scope": "E1 upstream 62-file jacinth/hydrocarbon/module/updater conversion; current timestamp serialization and network pinned; no native module compiler qualification.",
+      "action": "Do not bulk-migrate HTTP/JSON modules; preserve established core timestamp cache behavior and R18 security/SBOM validation.",
       "paths": [
         ".patch/httplib/0001-mingw.patch",
         "CMakeLists.txt",
@@ -563,7 +567,9 @@
         "src/yuzu_cmd/CMakeLists.txt",
         "tools/cpm/cmake/ScriptUtils.cmake",
         "tools/cpm/cmake/package/add.cmake"
-      ]
+      ],
+      "source_evidence_level": "E1 official upstream patch + exact selected main/vendor source; no PS5 native/console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS27_2026-11-11.md"
     },
     {
       "index": 8,
@@ -1165,9 +1171,9 @@
       "sha": "a845100bf098a67c738934bbd48acc825275bc55",
       "title": "[cmake] Cleanup dynarmic's CMake (#4365)",
       "file_count": 11,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 upstream x64 cmpxchg16b XMM0 assertion absent in selected PS5 overlay emit_x64_memory.h; CMake modernization separable.",
+      "action": "Qualify x64 register allocation CMPXCHG16B 128-bit exclusives and W^X/CPU caps; no CMake refactor merge, see pass27.",
       "paths": [
         "src/dynarmic/CMakeLists.txt",
         "src/dynarmic/CMakeModules/TargetArchitectureSpecificSources.cmake",
@@ -1180,7 +1186,9 @@
         "src/dynarmic/src/dynarmic/common/spin_lock_x64.cpp",
         "src/dynarmic/src/dynarmic/frontend/decoder/decoder_detail.h",
         "src/dynarmic/tests/CMakeLists.txt"
-      ]
+      ],
+      "source_evidence_level": "E1 official upstream patch + exact selected main/vendor source; no PS5 native/console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS27_2026-11-11.md"
     },
     {
       "index": 42,
@@ -2235,9 +2243,9 @@
       "sha": "a594c8d60ef79280adc046760561912207e16e17",
       "title": "[shader_recompiler, vulkan, qcom, tu] Provide handling to missing shader subgroups on QCOM (#4508)",
       "file_count": 12,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 upstream QCOM change also affects shared SPIR-V shuffle/geometry/quad logic missing selected native IR emitters and shader profile.",
+      "action": "Driver-gate Turnip workarounds; test PS5 RADV subgroup capabilities, SPIR-V golden output 32/64-lane and AA/NR/FG paths, see pass27.",
       "paths": [
         "src/shader_recompiler/CMakeLists.txt",
         "src/shader_recompiler/backend/spirv/emit_spirv.cpp",
@@ -2251,7 +2259,9 @@
         "src/shader_recompiler/profile.h",
         "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
         "src/video_core/vulkan_common/vulkan_device.h"
-      ]
+      ],
+      "source_evidence_level": "E1 official upstream patch + exact selected main/vendor source; no PS5 native/console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS27_2026-11-11.md"
     },
     {
       "index": 73,

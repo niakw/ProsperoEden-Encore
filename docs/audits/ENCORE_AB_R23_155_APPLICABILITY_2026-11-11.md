@@ -116,3 +116,9 @@ Ces trois écarts sont **des décisions source E1**, pas des crashs PS5 prouvés
 - **#110, `NativeErrorToString` :** le code Eden original épinglé `vendor/sources/eden/src/common/error.cpp` (blob Git `070c9a5c7eb6a444c08e4e23c20f55351ae8f3ee`) traite déjà la libc FreeBSD avec `int second_err = strerror_r(...)` ; l'amont applique un template `HandleStrerrorR(int,char*)` qui renvoie le même texte sur succès et le même fallback sur échec. **Équivalent fonctionnel au niveau source pour la branche FreeBSD/XSI**, pas d'altération de guest IPC/JIT/GPU. Une vérification ABI sera requise si la libc de l'outil PS5 change.
 
 **Comptage actualisé : 95 revues sémantiques runtime ouvertes, 5 vérifications build/dépendances, 5 correctifs hôte préparés, 17 en-têtes à attester, 7 lots C00–C06 sans preuve console complète.**
+
+## Mise à jour des trois divergences source vérifiées (pas des correctifs fusionnés)
+
+Les audits de code ont qualifié **#114** (conversion RDTSC vers nanosecondes au-delà de 1 GHz), **#128** (`ListApplicationIcon` avec pointeur de métadonnées nul) et **#153** (plafond des décodeurs Opus et rollback des échecs). Ils passent de « à analyser » à **« écart source vérifié, test natif requis »**. Il faut encore préparer/tester les correctifs spécifiques, sans prétendre que le simple changement de catégorie a corrigé ces risques.
+
+**Compte R23 courant : 92 changements runtime dont la sémantique reste à trancher, 3 écarts source positivement identifiés à corriger/valider, 5 correctifs hôte préparés, 5 changements build/dépendances encore ouverts et 8 lots de ressources PS5 hors packaging.** La clôture globale NS1 nécessite toujours 17 preuves d'inclusion des en-têtes et 7 lots correctifs validés sur PS5.

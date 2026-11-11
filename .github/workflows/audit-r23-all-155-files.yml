@@ -49,13 +49,13 @@ jobs:
           assert not d["semantic_parity_complete"]
           application = json.loads(Path("r23-applicability-verdict.json").read_text())
           assert application["classified_commits"] == 155
-          assert application["runtime_semantic_cases_pending"] == 95
+          assert application["runtime_semantic_cases_pending"] == 92
           assert application["asset_and_dependency_cases_pending"] == 5
           assert not application["native_ELF_or_console_qualified"]
           with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as f:
               f.write("## R23 all 155 Eden changed-file lists verified\n")
               f.write("0 missing commit files and 0 GitHub 300-file caps.\n")
-              f.write("123 runtime-path candidates; 95 semantic reviews still pending after reviewed source-specific dispositions.\n")
+              f.write("123 runtime-path candidates; 92 semantic reviews still pending after reviewed source-specific dispositions.\n")
               f.write("5 staged fixes and 5 dependency/build cases require native qualification; 8 upstream Qt/Android assets are excluded from the pinned PS5 package via exact copy-path proof.\n")
               f.write("**No native build, tests of emulator semantics, or PS5 device proof.**\n")
           PY

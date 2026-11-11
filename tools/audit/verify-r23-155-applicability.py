@@ -54,7 +54,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # This dated pin is a frozen audit decision, not permission to silently
     # drop pending counts without exact source and owner proof.
     mandatory = {
-        "runtime-semantic-review-pending": 95,
+        "runtime-semantic-review-pending": 92,
         "not-applicable-to-PS5-native-packaging-assets": 8,
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
@@ -63,6 +63,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
+        "verified-relevant-source-gap-awaiting-native-proof": 3,
         "source-equivalent-current-openssl-native-build": 1,
         "upstream-opus-ffmpeg-migration-reverted": 2,
         "verified-absent-GPU-null-initialization-candidate": 1,
@@ -115,6 +116,11 @@ def validate(root: Path, app: dict | None = None) -> dict:
         raise ValueError("XSI strerror_r semantic parity was reclassified")
     if by_index[110]["paths"] != ["src/common/error.cpp"]:
         raise ValueError("strerror_r diagnostics commit contains another source")
+    # Confirm source-proven real deficiencies are never silently counted fixed:
+    # clock RDTSC >1GHz, NS ListApplicationIcon null, Opus 24/25 decoder limits.
+    for i in (114, 128, 153):
+        if by_index[i]["classification"] != "verified-relevant-source-gap-awaiting-native-proof":
+            raise ValueError(f"R23 confirmed source gap #{i} silently changed")
     if by_index[44]["classification"] != "staged-host-source-fix":
         raise ValueError("viewport is a proposed host fix, not tested native behavior")
     return {
@@ -132,7 +138,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 95
+    assert validate(root)["runtime_semantic_cases_pending"] == 92
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

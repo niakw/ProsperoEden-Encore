@@ -2833,16 +2833,26 @@ if(PS5_NATIVE)
 endif()
 
 
-# R23 #147 / FW23 NS compatibility: only the reviewed command 23 alias
-# to the existing command 19 handler. Leave unrelated AM visual overlays,
-# ARM64 host JIT and other NS services completely unchanged.
-# This branch is a research-only candidate; never infer console boot from it.
+# R23 #147 / firmware23 NS command 23 is already present in the
+# versioned shipping Eden backport. Never replace the installed full NS
+# source with the obsolete one-line research copy: it would drop the
+# already-shipped #128 missing-icon control null guards.
 if(PS5_NATIVE)
-    set(EDEN_FW23_NS_CMD23_SOURCE
-        "${PORT_ROOT}/research/r23/fw23_ns_application_control_ps5.cpp")
-    if(NOT EXISTS "${EDEN_FW23_NS_CMD23_SOURCE}")
-        message(FATAL_ERROR "FW23 NS command 23 maintained source missing")
+    file(READ
+        "${PROJECT_SOURCE_DIR}/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
+        eden_r23_fw23_ns_prepared)
+    string(FIND "${eden_r23_fw23_ns_prepared}"
+        "{23, D<&IReadOnlyApplicationControlDataInterface::GetApplicationControlData3>"
+        eden_r23_fw23_cmd23)
+    string(FIND "${eden_r23_fw23_ns_prepared}"
+        "if (const auto control = pm.GetControlMetadata(); control.second)"
+        eden_r23_fw23_null_icon)
+    if(eden_r23_fw23_cmd23 LESS 0 OR eden_r23_fw23_null_icon LESS 0)
+        message(FATAL_ERROR
+            "Selected FW23 NS source lost installed cmd23 or icon null guard")
     endif()
+    message(STATUS "FW23 NS23 and #128 icon guards already provided by shipping backport")
+endif()
     get_target_property(eden_fw23_ns_core_sources core SOURCES)
     list(FIND eden_fw23_ns_core_sources
         "hle/service/ns/read_only_application_control_data_interface.cpp" eden_fw23_original_index)

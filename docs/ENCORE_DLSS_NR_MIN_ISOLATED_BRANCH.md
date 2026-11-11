@@ -539,3 +539,15 @@ The abstract 12-stage `PipelineComposer::Recipe` now has an **independently veri
 
 **Still NOT implemented/qualified:** an actual **production FSR1/SGSR/A4K/Original** sequence driven by the arbitrary recipe, real framegen or real-and-generated dual stream, a saved game-profile UI stage list, genuine 152-step neural output, final present callback integration, physical PS5 memory/performance/quality and console activation. The current witness validates **the generic Vulkan stage handoff and stage-list resource-binding methodology**, not the final video processing algorithms. No PS5 build, main or pinned vendor changes; `kComposablePs5RuntimeQualified=false`.
 
+## Authentic pinned FSR1 EASU → RCAS → SGSR/Edge Vulkan GPU shader witness
+
+**First verified non-synthetic shader GPU execution**: `extras/graphics/r09_native_fsr_sgsr_gpu_witness.cpp` compiles and executes ORIGINAL, SHA-pinned vendor **FSR1 EASU FP32, FSR1 RCAS FP32, and Qualcomm SGSR/SGSR Edge fragment shaders** with their genuine vertex shaders, authentic push-constant layout and 16-bit float color attachment targets. It uses **three genuine graphics renderpasses** (not the earlier stand-in compute resampler), distinct `VkImage`+`VkImageView` for every pass, explicit color-write → fragment-sample/transfer-read barriers, per-intermediate `vkCmdCopyImageToBuffer` GPU readback and a GPU fence. A Khronos debug messenger and synchronization validation reject any validation error.
+
+[Dedicated GPU CI #43016352599](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43016352599) **GREEN** for both independent spatial-graph policy jobs and the authentic vendor native shader GPU job. [Original vendor shaders pinned to engine's existing vendor main SHA `22b69d6`](https://github.com/niakw/Prospero.Eden-Encore-vendor/tree/22b69d6053db41b74edac2633c012f925b84f69e/sources/eden/src/video_core/host_shaders). The six shader binaries are compiled by glslang and individually passed to `spirv-val` before executing.
+
+The four GPU runs independently used **normal SGSR and Edge SGSR**, each with uniform RGB and structural gradient/step inputs at the isolated test resolutions:
+
+`128×72 original guest image → 256×144 native EASU → 256×144 native RCAS → 512×288 native SGSR/Edge`.
+
+All **12 distinct intermediate output readbacks** passed: finite RGB, exact alpha, gradient propagation in every stage, a CPU uniform-color reference (maximum absolute RGB error about **0.00235** at RCAS/SGSR), and **ZERO Khronos-reported validation errors**. The GPU host graphics pipeline uses the actual vendor GLSL/SPIR-V; the C++ GPU harness is a standalone Vulkan harness, **not the integrated Eden Device/Scheduler/FSR/SGSR owners**. It is strictly **host Lavapipe software Vulkan**, not physical PS5 RDNA2, full 720p→4K/quality/fps proof, A4K or trained Original inference, or live dual-stream FG. The additively exposed real image/view owner API on vendor draft PR #40 still requires native game-frame execution and per-slot GPU lifetime qualification. All runtime flags remain FALSE; no main or vendor main merge, no gitlink advancement, no PS5 build.
+

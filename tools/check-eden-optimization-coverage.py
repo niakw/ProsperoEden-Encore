@@ -1059,6 +1059,27 @@ assert len(post_entries) == 32
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
+# R457 only: keep the immutable 32-file November register unchanged. Track
+# the separately selected and unqualified 12GiB resident owner with its
+# own checked SHA/old F07 receipt. This must not hide arbitrary new deltas.
+sparse_receipt = json.loads(
+    (ROOT/"docs/audits/R457_NS2_SPARSE_RESEARCH_SOURCE_DELTA_2026-11-11.json").read_text())
+assert sparse_receipt["schema_version"] == 1
+assert sparse_receipt["historical_f07_snapshot_untouched"] is True
+assert sparse_receipt["production_default_enabled"] is False
+assert sparse_receipt["guest_boot_ps5_qualified"] is False
+assert sparse_receipt["ps5_gpu_alias_lifetime_qualified"] is False
+sparse_path = sparse_receipt["path"]
+assert sparse_path == "src/host_memory.cpp"
+assert sparse_path not in post_index
+assert sparse_path in drift_index
+sparse_drift = drift_index.pop(sparse_path)
+assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
+assert sparse_drift["actual"] == sparse_receipt["research_source_git_blob"]
+assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
+assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
+print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
+      "new_owner_consoles_qualified=0")
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

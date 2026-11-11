@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "branch": "research/r457-ns2-sparse-physical-runtime-20261111",
+  "path": "src/host_memory.cpp",
+  "historical_f07_git_blob": "ec24e06318667c63e5efaf5694c32eb9368594dd",
+  "research_source_git_blob": "2b467b1fa97034597311ceac16a1e9930bf6aea2",
+  "source_scope": "Isolated, opt-in PS5 HostMemory direct-memory virtual reserve and 2MiB physical admission before native guest page-table mapping or DRAM clears.",
+  "source_fragment": "if (requested == Ns2Dram) {",
+  "opt_in": "EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING",
+  "production_default_enabled": false,
+  "guest_boot_ps5_qualified": false,
+  "ps5_gpu_alias_lifetime_qualified": false,
+  "historical_f07_snapshot_untouched": true,
+  "note": "Research candidate. Native physical mapping, PTE and GPU coherency must pass genuine PS5 device and real ROM execution tests before integration."
+}

@@ -1,0 +1,42 @@
+name: NS1 R23 Opus native source ownership (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-opus-native-owner-20261111
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - "vendor"
+      - ".github/workflows/ns1-r23-opus-native-source.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Assert exact branch-only vendor and selected compiler/headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "46403bcca7fad1095e9f1b40ee85025df3e2b642"
+          python3 -B vendor/tests/ns1_r23_opus_24_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("headless/CMakeLists.txt").read_text()
+          assert "if(PS5_NATIVE)" in s
+          assert 'get_target_property(eden_opus_sources audio_core SOURCES)' in s
+          assert 'list(REMOVE_ITEM eden_opus_sources "${eden_opus_relative}")' in s
+          assert 'target_include_directories(audio_core BEFORE PRIVATE "${EDEN_OPUS_HEADER_ROOT}")' in s
+          assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_OPUS_HEADER_ROOT}")' in s
+          paths=("audio_core/opus/hardware_opus.cpp","audio_core/opus/decoder.cpp",
+                 "audio_core/opus/hardware_opus.h","core/hle/service/audio/errors.h")
+          assert all((Path("vendor/encore-active/eden-core/src")/p).is_file() for p in paths)
+          print("R23_OPUS_HOST_SOURCE_OWNER_PASS four_units=4")
+          PY
+          echo 'Source selection and sanitizer tests only; native PS5 ELF/link and guest runtime not proven' >> "$GITHUB_STEP_SUMMARY"

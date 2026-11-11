@@ -30,6 +30,11 @@ SOURCES = {
         "f768235d3a6667f18ee5900311364c7d9a7853ba",
         "docs/audits/patchsets/C02-shared-spirv-nan.vendor.patch",
     ),
+    "R23-glslang-include": (
+        "sources/eden/src/video_core/host_shaders/CMakeLists.txt",
+        "c4e7ac3f6fe1778423db2933a82ba9febb53637b",
+        "docs/audits/patchsets/R23-glslang-include-quoting.vendor.patch",
+    ),
     "C03-command-buffer": (
         "encore-active/ps5-mesa/src/amd/vulkan/radv_cmd_buffer.c",
         "9dd12c19a1a277a2753432e1411a449fdf923c4a",
@@ -131,10 +136,10 @@ def main() -> int:
     if dirty_after != dirty_before:
         raise AssertionError("read-only audit changed vendor files")
     if not all(row["patch_staged_and_context_valid"] for key, row in results.items()
-               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root")):
+               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport", "R23-path-root", "R23-glslang-include")):
         raise AssertionError("all staged owner hunks must have valid context")
     print(json.dumps({
-        "scope": "C01/C02/C04/R23 viewport/path root patch contexts, C03 Git blobs (not compiled)",
+        "scope": "C01/C02/C04/R23 viewport/path root/glslang patch contexts, C03 Git blobs (not compiled)",
         "vendor_gitlink": PIN,
         "vendor_worktree_clean": True,
         "implementation_proof": False,

@@ -16,6 +16,10 @@
 | **C05 / vendor provenance** | 35 modified files in `vendor/sources/eden`; complete Git blobs and actual owner inventory in PR #45 | Every copied/mutated header/translation unit mapped to a single maintained selected owner before moving, restoring or deleting any source | **Audit manifest ready, migrations NOT applied.** 18 C++ units explained, 17 headers need compiler include receipts |
 | **C06 / R18/R23 dependency/security parity** | 26 source trees and 22 CPM locks; Eden 155-commit upstream register, Mesa diverged branch | Full reachable-source map, package files/licences, verified security alerts, no irrelevant upstream code imported | **Audit still open; no unreviewed dependency or fork auto-imported** |
 
+## R23 #13 — glslangValidator CMake input quoting (staged, not native-qualified)
+
+At pinned `vendor@22b69d6053db41b74edac2633c012f925b84f69e`, the original Eden `sources/eden/src/video_core/host_shaders/CMakeLists.txt` (Git blob `c4e7ac3f6fe1778423db2933a82ba9febb53637b`) still uses `-I"${FIDELITYFX_INCLUDE_DIR}"` in **two** glslangValidator custom commands. Eden upstream `895d8ede2c69f5f8061b04afaf247c2c5e04c08d` corrects both to the single quoted `"-I${FIDELITYFX_INCLUDE_DIR}"` argument. The exact two-hunk original-source patch is [staged](patchsets/R23-glslang-include-quoting.vendor.patch) and checked read-only via `git apply --check` in the patchset workflow. It is **not** applied to pristine `vendor/sources`, not integrated in `main`, and no claim is made about actual generated Ninja command-line argv, glslang runtime or PS5 shader binaries. Before release, reproduce the generated command with the pinned shader tool, including spaces in the include directory, and verify the generated shader headers/actual native compile graph. This source-level action reduces uncertainty for one of the five R23 build/dependency candidates; it does **not** close the PS5 build gate.
+
 ## Source-selection checkpoint — C02, R23 viewport and legacy generator
 
 **Exact branch diagnostic from P0–P4 #42931313784:**

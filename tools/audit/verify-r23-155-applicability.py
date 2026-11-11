@@ -140,8 +140,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     by_index = {item["index"]: item for item in rows}
     if (by_index[53]["classification"] != "reviewed-observability-only-no-NS1-behavioral-port"
             or by_index[5]["classification"] != "not-applicable-to-native-runtime-source"
-            or any(by_index[i]["classification"] != "runtime-semantic-review-pending"
-                   for i in (30,))):
+            or by_index[30]["classification"] != "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected"):
         raise ValueError("semantically guarded source cases silently reclassified")
     # R23 pass 6: preserve three exact source-only dispositions.
     pass6 = {
@@ -368,9 +367,10 @@ def validate(root: Path, app: dict | None = None) -> dict:
         raise ValueError("R23 SSL platform source decision changed without review")
     if by_index[146]["classification"] != "verified-absent-GPU-null-initialization-candidate":
         raise ValueError("R23 GPU init candidate proof changed without review")
-    for i in (30,):
-        if by_index[i]["classification"] != "runtime-semantic-review-pending":
-            raise ValueError(f"R23 common/native semantic case #{i} was closed without proof")
+    # The earlier FreeBSD-ifaddrs unresolved guard was superseded by the
+    # exact selected native owner and preprocessor decision in pass 12.
+    if by_index[30]["classification"] != "reviewed-current-PS5-native-ifaddrs-Mac-route-not-selected":
+        raise ValueError("R23 #30 reviewed native network scope was changed")
     # Exact upstream source reversion receipts were reviewed separately.
     # Do not accidentally reactivate either giant HLE pair or the NCE GPU
     # writeback sequence because the frozen class totals happen to match.

@@ -102,6 +102,13 @@ private:
     bool fxaa_enhanced_setting{}; // actual SPIR-V variant used by FXAA
     std::variant<std::monostate, FXAA, SMAA> anti_alias{};
     std::variant<std::monostate, SGSR, FSR, Anime4K3D> sr_filter{};
+#if defined(EDEN_R09_NATIVE_SPATIAL_CHAIN_RESEARCH) && EDEN_R09_NATIVE_SPATIAL_CHAIN_RESEARCH
+    // Independent real FSR1→SGSR chain. Each owner retains the real
+    // EASU/RCAS/SGSR images for ALL slots until scheduler ticks retire.
+    // This code is compiled only against vendor research PR #40.
+    std::unique_ptr<FSR> research_chain_first_fsr{};
+    std::unique_ptr<SGSR> research_chain_second_sgsr{};
+#endif
 #if defined(EDEN_R09_A4K_DUAL_IMAGE_RESEARCH) && EDEN_R09_A4K_DUAL_IMAGE_RESEARCH
     // Optional *second* neural stage only in the vendor-API research test.
     // Spatial sr_filter remains independent. Never active on a normal PS5.

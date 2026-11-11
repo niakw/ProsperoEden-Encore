@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 30,
+        "runtime-semantic-review-pending": 29,
+        "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
         "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
         "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
         "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
@@ -135,6 +136,13 @@ def validate(root: Path, app: dict | None = None) -> dict:
                 raise ValueError(f"R23 #82 audit evidence missing {token}")
     else:
         raise ValueError("R23 #82 missing from 155-commit register")
+    selected_81 = next((item for item in rows if item["index"] == 81), None)
+    if selected_81 is None or selected_81["classification"] != "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred":
+        raise ValueError("R23 #81 PS5 Vulkan presenter/default-policy disposition lost")
+    present_evidence = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS19_2026-11-11.md").read_text()
+    for token in ("#81", "3cdd2ce141", "5194b6b183cba24f7ab966c16437884ac75d284f", "d45f0b7bbca982f133dcabcd0621e40cff4f74e5", "29"):
+        if token not in present_evidence:
+            raise ValueError(f"R23 #81 source proof missing {token}")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")

@@ -73,6 +73,14 @@ int main(){
                 e.a4k_output_image_and_view_identified=true;
                 e.neural.extent={2560u,1440u};
                 const auto r=AssessPostNeuralSpatial(e);
+                const bool unsupported_downscale=extent.width<2560u &&
+                    SelectSpatialBackend(filter)!=SpatialBackend::NativeSampler;
+                if(unsupported_downscale){
+                    assert(r.reason==R::InvalidRasterOrOutput);
+                    assert(!r.host_shape_qualified);
+                    assert(!r.runtime_executable);
+                    continue;
+                }
                 assert(r.host_shape_qualified&&!r.runtime_executable);
                 assert(r.reason==R::HostCandidateOnly);
                 assert(r.a4k_neural_source);
@@ -86,7 +94,7 @@ int main(){
             }
         }
     }
-    assert(a4k_candidates==63u&&a4k_downscales==21u);
+    assert(a4k_candidates==54u&&a4k_downscales==12u);
     auto valid=Fixture(1,{3840u,2160u});
     auto test=[&](SpatialBridgeEvidence e,R reason){
         Reject(e,reason);negative++;

@@ -68,6 +68,15 @@ PINNED_CACHE_TARGETS = (
     # image/view/sampler GPU pin methods at compile time (no fake pins).
     "video_core/renderer_opengl/gl_texture_cache_base.cpp",
 )
+# Bounded NS1 applet qualification: two real prepared shipping backports and
+# one draft PS5 frontend overlay. These are not generated CMake sources.
+NS1_APPLET_PREPARED_TARGETS = (
+    "src/core/frontend/applets/controller.cpp",
+    "src/core/hle/service/am/service/library_applet_creator.cpp",
+)
+NS1_APPLET_OVERLAY_TARGETS = (
+    "headless/r23_am_frontend_applets_ps5.cpp",
+)
 GENERATED_TARGETS = (
     # Real PS5 PresentManager source compiled from the maintained Vulkan fork:
     # worker wakeups and waiter counters must match our selected header.
@@ -93,7 +102,8 @@ def main() -> int:
                         help="Local audit only: override cached source paths; never use for release CI")
     parser.add_argument("--only", action="append",
                         choices=(*TARGETS, *MAINTAINED_CORE_TARGETS, *NATIVE_GRAPHICS_TARGETS,
-                                 *GENERATED_TARGETS, *PINNED_CACHE_TARGETS),
+                                 *GENERATED_TARGETS, *PINNED_CACHE_TARGETS,
+                                 *NS1_APPLET_PREPARED_TARGETS, *NS1_APPLET_OVERLAY_TARGETS),
                         help="Compile just this real PS5 translation unit (repeatable)")
     args = parser.parse_args()
     db = args.native_build_dir.resolve() / "compile_commands.json"
@@ -106,6 +116,8 @@ def main() -> int:
         *GENERATED_TARGETS, *PINNED_CACHE_TARGETS)
     for relative in selected:
         source_root = (args.native_build_dir.resolve() if relative in GENERATED_TARGETS else
+                       args.native_build_dir.resolve().parent / "source"
+                       if relative in NS1_APPLET_PREPARED_TARGETS else
                        args.native_build_dir.resolve().parent / "source/src"
                        if relative in PINNED_CACHE_TARGETS else ROOT)
         source = source_root / relative
@@ -149,7 +161,8 @@ def main() -> int:
         # compile without -Werror, unlike the fork-owned launcher objects.
         argv = syntax_check_flags(
             argv, generated=relative in (*MAINTAINED_CORE_TARGETS, *NATIVE_GRAPHICS_TARGETS,
-                                   *GENERATED_TARGETS, *PINNED_CACHE_TARGETS))
+                                   *GENERATED_TARGETS, *PINNED_CACHE_TARGETS,
+                                   *NS1_APPLET_PREPARED_TARGETS, *NS1_APPLET_OVERLAY_TARGETS))
         try:
             check = subprocess.run(argv, cwd=entry["directory"], text=True,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)

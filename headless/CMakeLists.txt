@@ -2627,6 +2627,21 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         message(FATAL_ERROR "Pinned direct CBUF emitter owner changed: audit QMD3 selection")
     endif()
     list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_context_get_set.cpp")
+    # C02: shared NS1/NS2 float fragment output NaNs must not poison
+    # subsequent temporal passes. Keep all other QMD3 CBUF paths identical.
+    # The original vendor full-TU remains pinned and is never edited.
+    if(PS5_NATIVE)
+        set(EDEN_C02_PINNED_SPIRV_FULL_TU "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}")
+        if(NOT EDEN_C02_PINNED_SPIRV_FULL_TU STREQUAL
+            "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp")
+            message(FATAL_ERROR "C02 pinned shared fragment emitter owner changed")
+        endif()
+        if(NOT EXISTS "${EDEN_PORT_DIR}/c02_spirv_fragcolor_ps5.cpp")
+            message(FATAL_ERROR "C02 PS5 shared fragment emitter source missing")
+        endif()
+        set(EDEN_NS2_QMD_CBUF_DIRECT_SPIRV
+            "${EDEN_PORT_DIR}/c02_spirv_fragcolor_ps5.cpp")
+    endif()
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}")
     # Exactly one shared SPIR-V image emitter; remove the pinned owner
     # rather than adding a second translation unit or per-title shader.

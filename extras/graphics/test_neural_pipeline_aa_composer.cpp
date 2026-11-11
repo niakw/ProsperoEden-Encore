@@ -79,6 +79,7 @@ static StageEvidence NativeEvidence(unsigned i) {
     p.hud_history_safe=true;
     p.native_fg_provider_verified=true;
     p.measured_gpu_memory_and_time_budget=true;
+    p.processes_real_and_generated_verified=true;
     return p;
 }
 int main() {

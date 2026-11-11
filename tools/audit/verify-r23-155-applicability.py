@@ -54,16 +54,18 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # This dated pin is a frozen audit decision, not permission to silently
     # drop pending counts without exact source and owner proof.
     mandatory = {
-        "runtime-semantic-review-pending": 92,
+        "runtime-semantic-review-pending": 86,
         "not-applicable-to-PS5-native-packaging-assets": 8,
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
-        "native-build-or-dependency-review": 5,
+        "native-build-or-dependency-review": 6,
         "test-only-upstream": 1,
-        "upstream-runtime-then-reverted-equivalent": 2,
+        "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
+        "verified-relevant-source-gap-awaiting-native-proof": 6,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 3,
+        "upstream-runtime-then-reverted-equivalent": 2,
+        "source-equivalent-pinned-savedata-post-revert": 1,
         "source-equivalent-current-openssl-native-build": 1,
         "upstream-opus-ffmpeg-migration-reverted": 2,
         "verified-absent-GPU-null-initialization-candidate": 1,
@@ -121,6 +123,27 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for i in (114, 128, 153):
         if by_index[i]["classification"] != "verified-relevant-source-gap-awaiting-native-proof":
             raise ValueError(f"R23 confirmed source gap #{i} silently changed")
+    # Source-reviewed batches: do not label a missing feature as already shipped.
+    new_cases = {
+        42: "verified-native-GPU-thread-affinity-review-needs-PS5-trace",
+        49: "verified-relevant-source-gap-awaiting-native-proof",
+        107: "source-equivalent-pinned-savedata-post-revert",
+        126: "verified-relevant-source-gap-awaiting-native-proof",
+        139: "verified-relevant-source-gap-awaiting-native-proof",
+    }
+    for i, classification in new_cases.items():
+        if by_index[i]["classification"] != classification:
+            raise ValueError(f"R23 source-reviewed case #{i} silently changed")
+    native_cmake = (root / "headless/CMakeLists.txt").read_text()
+    if ('EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp"' not in native_cmake
+            or '"${PORT_BUILD_DIR}/gpu_thread.cpp"' not in native_cmake):
+        raise ValueError("Native GPU worker selection changed; re-review #42")
+    if by_index[139]["paths"] != ["src/core/hle/service/nfp/nfp.cpp"]:
+        raise ValueError("NFP register source proof changed")
+    if by_index[107]["paths"] != [
+            "src/core/file_sys/savedata_factory.cpp",
+            "src/core/file_sys/savedata_factory.h"]:
+        raise ValueError("SaveDataFactory revert source paths changed")
     if by_index[44]["classification"] != "staged-host-source-fix":
         raise ValueError("viewport is a proposed host fix, not tested native behavior")
     return {
@@ -138,7 +161,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 92
+    assert validate(root)["runtime_semantic_cases_pending"] == 86
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

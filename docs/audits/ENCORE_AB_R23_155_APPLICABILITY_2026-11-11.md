@@ -126,3 +126,15 @@ Les audits de code ont qualifié **#114** (conversion RDTSC vers nanosecondes au
 ## Passe sémantique 7 — compilation GLSL optionnelle
 
 **#101** ([commit source](https://github.com/eden-emulator/mirror/commit/3d37a816c6adc2708a7be70f5a7fbe0af36b8227)) concerne exclusivement `src/shader_recompiler/backend/glsl/emit_glsl.cpp` ; le CMake `shader_recompiler` épinglé n'ajoute cette unité que dans `if(ENABLE_OPENGL)`. Le build hôte headless a `ENABLE_OPENGL=OFF`, mais `tools/build-headless-native.sh` permet explicitement un profil PS5 OpenGL. Il ne s'agit **pas** d'un correctif du compilateur Vulkan/SPIR-V : revue runtime Vulkan fermée, **compilation Clang 23 et compatibilité de l'émetteur GLSL du profil OpenGL encore ouvertes** dans la file build. Aucun import de code ni attestation console. **Compteurs : 91 cas runtime sémantiques, 6 build/dépendances, 8 ressources hors package PS5, 4 écarts source vérifiés et 5 correctifs hôte préparés.**
+
+## Passe de clôture sémantique — cinq décisions vérifiées sans build PS5
+
+| Commit | Constat source épinglé | Décision à ce stade |
+|---|---|---|
+| **#42** | Le worker natif réellement sélectionné `encore-active/eden-gpu/gpu_thread_quiet.cpp` (blob `28eab249...`) appelle encore `SetCurrentThreadToPerformanceCores()`; amont `943f1fc` supprime cet appel après une régression BOTW | **Différence vérifiée**, pas une régression PS5 prouvée ; mesurer l'ordonnanceur PS5 avant changement |
+| **#49** | Le header maintenu Vulkan `eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h` (blob `64fc796c...`) appelle encore `TexelBufferFormat` sans branche `UsesDescriptorBuffer()`; l'amont corrige le cas format inconnu 255 | **Écart E1 identifié**, recibo d'inclusion du header et tests Vulkan/PS5 requis |
+| **#107** | Le `SaveDataFactory` épinglé (blobs `0ba839ec...`, `15dd4ec...`) a déjà `GetFullPath` directement pour Create/Open/Read/Write et aucun `GetSaveDataPath`, comme après le revert amont | **Équivalent pour les fonctions du factory**, pas de revert à importer. Le commit #113 sur d'autres unités reste ouvert |
+| **#126** | Les sources épinglées `common/uuid.cpp` (`51fe0abaa...`) et `application_functions.cpp` (`215d204...`) gardent `span<u8,20>` et le déréférencement non gardé du NACP absent | **Écart E1 pertinent**, corriger la signature UUID et le service AM ensemble, valider l'ABI |
+| **#139** | Le fichier épinglé `core/hle/service/nfp/nfp.cpp` (blob `b9922ce...`) ne déclare pas les trois commandes 25 `StartDetectionWithFilter`; l'amont les mappe à `StartDetection` | **Écart E1 pertinent**, 3 tables IPC à tester, pas de console confirmée |
+
+Ces décisions sont **source-review completed**, jamais des correctifs homologués. Le compteur devient **86 autres commits runtime à analyser**, **6 écarts source qualifiés avec intégration PS5 restante**, **1 cas d'affinité GPU à mesurer**, **5 correctifs hôte préparés**, **6 cas build/dépendances**, **17 en-têtes sans preuve native** et **7 lots C00–C06 à valider sur console**.

@@ -5,16 +5,18 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 91,
+    "runtime-semantic-review-pending": 86,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 6,
     "native-build-or-dependency-review": 6,
     "test-only-upstream": 1,
+    "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
+    "verified-relevant-source-gap-awaiting-native-proof": 6,
     "reviewed-observability-only-no-NS1-behavioral-port": 2,
     "upstream-runtime-then-reverted-equivalent": 2,
-    "verified-relevant-source-gap-awaiting-native-proof": 3,
+    "source-equivalent-pinned-savedata-post-revert": 1,
     "source-equivalent-current-openssl-native-build": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "verified-absent-GPU-null-initialization-candidate": 1
@@ -1132,9 +1134,9 @@
       "sha": "943f1fc76087adcfc893fb1ca3aea507df15d004",
       "title": "[gpu_thread] drop affinity pinning, fix BOTW perf regression (#4603)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-native-GPU-thread-affinity-review-needs-PS5-trace",
+      "scope": "Upstream 943f1fc removes SetCurrentThreadToPerformanceCores() on the GPU worker after a BOTW regression. Actual pinned PS5 CMake selects vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp (Git blob 28eab249dc8eefdcadb27ccfdb308743a95580ad), whose RunWorker still calls SetCurrentThreadToPerformanceCores(). Real selected-source behavioral delta, not a proven PS5 performance regression.",
+      "action": "Do not bulk transplant a mobile affinity policy. Obtain PS5 scheduling/queue-stall traces under BOTW and other NS1 games at exact native source SHA; compare pinning vs unpinned then change one reviewed worker owner only if beneficial.",
       "paths": [
         "src/video_core/gpu_thread.cpp"
       ]
@@ -1253,9 +1255,9 @@
       "sha": "3e6a5566cff1818c3a91e1824e6b672fd3eeb144",
       "title": "[vk] handles unreachable unknown format 255 error (#4591)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream 3e6a556 separates descriptor-buffer and legacy VkBufferView branches to avoid TexelBufferFormat(unknown PixelFormat 255) on a zero device address. Maintained vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h blob 64fc796c002168a7db59d4f09efba901f8857237 still calls buffer.View and TexelBufferFormat(format) unconditionally. Pinned original and backport likewise lack the split; effective header inclusion not E2 proven.",
+      "action": "Review native header selection and descriptor-buffer capability, then implement paired descriptor-buffer/legacy guarded bind with valid/invalid PixelFormat and zero/nonzero VkDeviceAddress unit tests, Vulkan negative tests and PS5 device proof.",
       "paths": [
         "src/video_core/renderer_vulkan/vk_buffer_cache.h"
       ]
@@ -3194,9 +3196,9 @@
       "sha": "a277b62fe4328dddaced9a97d324c6e5478d16a0",
       "title": "[fs] revert #4319 savedata_factory changes (#4462)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-pinned-savedata-post-revert",
+      "scope": "Upstream a277b62 reverts the SaveDataFactory GetSaveDataPath wrapper introduced after the pinned engine. Pinned vendor/sources/eden/src/core/file_sys/savedata_factory.cpp blob 0ba839ec14303a662f4d2bf74a1bcb61e161a594 and header blob 15dd4ec7de400df4f2b8bfa97ba16c08c1040786 already lack GetSaveDataPath and call GetFullPath directly in Create/Open/ReadSaveDataSize/WriteSaveDataSize, exactly as the upstream revert. Revert concerns this factory only; #113 touches additional files.",
+      "action": "No need to port a revert that restores existing pinned SaveDataFactory behavior. Keep #113 related parent-resource changes separate and unqualified until their own source review; not a device savedata regression test.",
       "paths": [
         "src/core/file_sys/savedata_factory.cpp",
         "src/core/file_sys/savedata_factory.h"
@@ -3473,9 +3475,9 @@
       "sha": "4ce45b3b37d162660f0e1ec829c4eab896fc4db4",
       "title": "[hle] Fix crash on MK8D and SM3DW LDN (#4417)",
       "file_count": 3,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream cb73a4d changes three selected shared sources: UUID::MakeRFC4122V5 signature from 20-byte to 16-byte span, and GetPseudoDeviceId to guard missing NACP control metadata and use a bounded 16-byte SHA1 input. Pinned common/uuid.cpp blob 51fe0abaa588c278646f5a2b61bbac9391a4aeda and application_functions.cpp blob 215d204098fdf796c238f9b217d4acc13ca4616f still have original 20-byte signature and res.first->raw access without null guard; source gap E1, no console reproduction.",
+      "action": "Port UUID.h+cpp and application_functions.cpp together in maintained owners, with SHA1/null NACP tests and exact guest result semantics. Check all other UUID callers for ABI and no partial signature update; native compile and MK8D/SM3DW device run required.",
       "paths": [
         "src/common/uuid.cpp",
         "src/common/uuid.h",
@@ -3654,9 +3656,9 @@
       "sha": "42642f8bad85a3f194c4bf878e512d68791d1634",
       "title": "[hle] Implement I{User,Debug,System}::StartDetectionWithFilter (#4425)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream commit #139 adds command ID 25 StartDetectionWithFilter in NFP IUser, ISystem and IDebug handler tables and maps to preexisting StartDetection. Pinned vendor/sources/eden/src/core/hle/service/nfp/nfp.cpp Git blob b9922ce024b11da6613c7c6fd70c121bc1e59e55 has no StartDetectionWithFilter registrations; sources/eden/src/core/CMakeLists.txt includes the NFP TU. Semantic missing command registration E1 only.",
+      "action": "Add three NFP cmd25 entries in selected full source owner without changing original vendor, test valid/invalid interface dispatch and state side effects; native compiled IPC and PS5 game proof remain required.",
       "paths": [
         "src/core/hle/service/nfp/nfp.cpp"
       ]

@@ -1010,6 +1010,22 @@ get_target_property(controller_sources hid_core SOURCES)
 list(FILTER controller_sources EXCLUDE REGEX "(^|/)emulated_controller\\.cpp$")
 list(APPEND controller_sources "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")
 set_property(TARGET hid_core PROPERTY SOURCES "${controller_sources}")
+# R23 #95 - the native maintained EmulatedController C++ source above
+# removes the stale 48-state controller_connected member. Its original header
+# must be replaced in exactly the same native source build graph.
+if(PS5_NATIVE)
+    set(EDEN_R23_HID_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/hid_core/frontend/emulated_controller.h")
+    if(NOT EXISTS "${EDEN_R23_HID_HEADER}")
+        message(FATAL_ERROR "R23 #95 missing matched HID controller header")
+    endif()
+    set(EDEN_R23_HID_ROOT "${PORT_BUILD_DIR}/r23-hid/include")
+    configure_file("${EDEN_R23_HID_HEADER}"
+        "${EDEN_R23_HID_ROOT}/hid_core/frontend/emulated_controller.h" COPYONLY)
+    target_include_directories(hid_core BEFORE PUBLIC "${EDEN_R23_HID_ROOT}")
+    message(STATUS "R23 #95: selected controller implementation/header in one HID native graph")
+endif()
+
 # A controller update reaches every applet resource that is assigned. One that is assigned but not
 # activated yet has no controllers set up (NPad::Activate fills them in), and upstream calls
 # through its null device. Buttons rarely changed in that window; the motion sensors change with

@@ -268,7 +268,7 @@ jobs:
           (cd dist && sha256sum --check --strict SHA256SUMS)
           echo "P5_REPLAY_DISTRIBUTION_ZIPS_PASS"
 
-      - name: Upload recovered, verified PS5 release bundle (no GitHub Release)
+      - name: Upload recovered, verified native release bundle (no GitHub Release)
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Prospero.Eden-Encore-recovered-bundle

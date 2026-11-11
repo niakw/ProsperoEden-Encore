@@ -31,7 +31,8 @@ assert 'text_block_semantic(c, hero_caption, kHeroX' in home
 assert 'kHeroX + kHeroContentWidth - chip_x' in home
 assert 'room / desired' in home
 assert 'list.image(hero_picture.texture, hero, uv' in home
-assert 'theme::kBody, kHeroContentWidth, 2, 0.90f' in home
+assert 'hero_description_ink, kHeroContentWidth, 2, 0.90f' in home
+assert 'const Color hero_description_ink = dark_hero_surface ? Color::rgb(0xf2f5fb) : theme::kBody;' in home
 assert 'constexpr float kChipGap = 9.0f' in home
 assert 90+1250 <= 1340
 

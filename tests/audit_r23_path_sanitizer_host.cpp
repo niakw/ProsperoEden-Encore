@@ -223,10 +223,11 @@ int main() {
     struct Case { const char* input; const char* pinned; const char* upstream; };
     constexpr Case corpus[] = {
         {"/", "", "/"},
-        {"/../etc", "/../etc", "/etc"},
-        {"/a/../../etc", "/../etc", "/etc"},
-        {"../a", "../a", "a"},
-        {"a/../../etc", "../etc", "etc"},
+        {"/../etc", "/etc", "/etc"},
+        {"/a/../../etc", "/etc", "/etc"},
+        {"../a", "a", "a"},
+        {"a/../../etc", "etc", "etc"},
+        {"/a/..", "", "/"},
         {"a/../b", "b", "b"},
         {"a//b", "a/b", "a/b"},
         {"", "", ""},
@@ -240,6 +241,6 @@ int main() {
             return 1;
         }
     }
-    std::cout << "R23_PS5_COMMON_FS_SANITIZE_EXACT_SOURCE_DIVERGENCE_PASS cases=8 "
+    std::cout << "R23_PS5_COMMON_FS_SANITIZE_EXACT_SOURCE_DIVERGENCE_PASS cases=9 "
               << "native_console_execution=false\n";
 }

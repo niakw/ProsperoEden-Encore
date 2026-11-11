@@ -178,61 +178,127 @@ def convert_art(source: Path, target: Path) -> None:
             data[12:16] in (b"VP8 ", b"VP8L", b"VP8X")):
         raise ValueError("Converted WebP invalid")
 
+def existing_catalog(out: Path, today: date) -> list[dict]:
+    """Read only a bounded, previously approved WebP catalog, never user paths."""
+    index = out / "index.json"
+    if index.is_symlink() or not index.is_file() or index.stat().st_size > 64 * 1024:
+        return []
+    try:
+        manifest = json.loads(index.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict) or manifest.get("schema") != 1:
+            return []
+        entries = manifest.get("entries", [])
+        if not isinstance(entries, list) or len(entries) > MAX_ITEMS:
+            return []
+        cached = []
+        for n, item in enumerate(entries):
+            if not isinstance(item, dict) or item.get("approved") is not True:
+                continue
+            if item.get("filename") != f"wall-{n:02d}.webp":
+                continue
+            if item.get("platform") not in ("ns1", "ns2"):
+                continue
+            title = item.get("title")
+            if not isinstance(title, str) or not (0 < len(title) <= 160):
+                continue
+            released = date.fromisoformat(item["release_date"])
+            if released > today:
+                continue
+            media = out / item["filename"]
+            if media.is_symlink() or not media.is_file():
+                continue
+            raw = media.read_bytes()
+            if not (4000 <= len(raw) <= MAX_IMAGE and
+                    raw[:4] == b"RIFF" and raw[8:12] == b"WEBP" and
+                    int.from_bytes(raw[4:8], "little") + 8 == len(raw) and
+                    raw[12:16] in (b"VP8 ", b"VP8L", b"VP8X")):
+                continue
+            cached.append(dict(title=title, platform=item["platform"],
+                               day=released, cached=raw))
+        return cached
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        return []
+
+
 def build(out: Path, today: date | None = None, candidates: list[dict] | None = None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     now = today or date.today()
-    batch = candidates if candidates is not None else gather(now)
-    # Even caller-supplied lists must obey chronological release order.
-    batch = sorted(
-        (item for item in batch if isinstance(item, dict) and
-         isinstance(item.get("day"), date) and
-         now - timedelta(days=MAX_LOOKBACK) <= item["day"] <= now),
-        key=lambda item: (-item["day"].toordinal(),
-                          str(item.get("title", "")).casefold()))
+    prior = existing_catalog(out, now)
+    incoming = candidates if candidates is not None else gather(now)
+    # Recent verified games first, then old valid cached releases. Reuse
+    # old data rather than re-download the same game on every package build.
+    incoming = [x for x in incoming if isinstance(x, dict) and
+                isinstance(x.get("day"), date) and
+                now - timedelta(days=MAX_LOOKBACK) <= x["day"] <= now and
+                isinstance(x.get("title"), str) and x["title"].strip()]
+    cache_by_title = {(x["platform"], x["title"].casefold().strip()): x
+                      for x in prior}
+    ordered = sorted(incoming + prior, key=lambda x: (
+        -x["day"].toordinal(), x["title"].casefold(), x["platform"]))
     entries: list[dict] = []
+    media: list[bytes] = []
+    seen: set[str] = set()
     with tempfile.TemporaryDirectory(prefix="encore-wallpaper-") as temp:
         scratch = Path(temp)
-        for item in batch:
+        for item in ordered:
             if len(entries) >= MAX_ITEMS:
                 break
-            art = str(item.get("art", ""))
-            if urlsplit(art).hostname not in ART_HOSTS:
+            title = item["title"].strip()
+            key = title.casefold()
+            if key in seen:
                 continue
-            try:
-                raw = fetch(art, ART_HOSTS, MAX_IMAGE)
-                src = scratch / "input.media"
-                src.write_bytes(raw)
-                filename = f"wall-{len(entries):02d}.webp"
-                target = scratch / filename
-                convert_art(src, target)
-                # Staged copy: no partial WebP is ever visible to the console reader.
-                destination = out / filename
-                staged = out / (filename + ".tmp")
-                shutil.copyfile(target, staged)
-                os.replace(staged, destination)
-                entries.append({"title": item["title"][:160], "platform": item["platform"],
-                                "release_date": item["day"].isoformat(),
-                                "filename": filename, "approved": True})
-            except (OSError, ValueError, TimeoutError, subprocess.SubprocessError) as exc:
-                print(f"Artwork skipped ({item.get('title','?')}): {type(exc).__name__}",
-                      file=sys.stderr)
-    # A temporary outage must never delete the previous valid offline snapshot.
+            prior_item = cache_by_title.get((item["platform"], key))
+            # Never use yesterday's art for a changed release record.
+            reuse = prior_item if prior_item and prior_item["day"] == item["day"] else None
+            data = item.get("cached") or (reuse and reuse["cached"])
+            if not data:
+                art = item.get("art")
+                if not isinstance(art, str) or urlsplit(art).hostname not in ART_HOSTS:
+                    continue
+                try:
+                    raw = fetch(art, ART_HOSTS, MAX_IMAGE)
+                    src = scratch / "input.media"
+                    src.write_bytes(raw)
+                    target = scratch / "fresh.webp"
+                    convert_art(src, target)
+                    data = target.read_bytes()
+                except (OSError, ValueError, TimeoutError, subprocess.SubprocessError) as exc:
+                    print(f"Artwork skipped ({title}): {type(exc).__name__}", file=sys.stderr)
+                    continue
+            filename = f"wall-{len(entries):02d}.webp"
+            entries.append(dict(title=title[:160], platform=item["platform"],
+                                release_date=item["day"].isoformat(),
+                                filename=filename, approved=True))
+            media.append(data)
+            seen.add(key)
     if not entries:
-        print("No media fetched; keeping existing snapshot unchanged", file=sys.stderr)
+        print("No current or cached WebP art; existing snapshot unchanged", file=sys.stderr)
         return 0
+    # All image data is ready before overwriting the old catalog. Manifest
+    # publication is last so readers never observe a future incomplete set.
+    for entry, data in zip(entries, media):
+        dest = out / entry["filename"]
+        staged = out / (entry["filename"] + ".tmp")
+        try:
+            staged.write_bytes(data)
+            os.replace(staged, dest)
+        finally:
+            staged.unlink(missing_ok=True)
     manifest = {"schema": 1, "generated": now.isoformat(),
                 "sources": [NS1_SOURCE, NS2_SOURCE], "entries": entries}
     tmp = out / "index.json.tmp"
-    tmp.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, out / "index.json")
+    try:
+        tmp.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+                       encoding="utf-8")
+        os.replace(tmp, out / "index.json")
+    finally:
+        tmp.unlink(missing_ok=True)
     keep = {item["filename"] for item in entries}
-    # A successful refresh removes obsolete covers and legacy JPEGs.
-    # If every download fails, retain the previous complete snapshot.
     for pattern in ("wall-*.webp", "wall-*.jpg", "wall-*.jpeg"):
         for image in out.glob(pattern):
             if image.name not in keep:
                 image.unlink()
-    print(f"Prepared {len(entries)} audited Switch 1/2 images for offline daily rotation")
+    print(f"Prepared {len(entries)} audited Switch 1/2 WebPs, newest releases first")
     return len(entries)
 
 if __name__ == "__main__":

@@ -72,17 +72,18 @@ class DailyWallpaperTests(TestCase):
                  patch.object(daily, "convert_art", side_effect=fake_convert):
                 self.assertEqual(daily.build(folder, self.today, candidates), 2)
             manifest = json.loads((folder/"index.json").read_text())
-            self.assertEqual([x["platform"] for x in manifest["entries"]], ["ns1","ns2"])
+            self.assertEqual([x["platform"] for x in manifest["entries"]], ["ns2","ns1"])
             self.assertEqual([x["release_date"] for x in manifest["entries"]],
-                             ["2026-10-30","2026-11-03"])
+                             ["2026-11-03","2026-10-30"])
             self.assertTrue(all(x["approved"] is True for x in manifest["entries"]))
             self.assertEqual([x["filename"] for x in manifest["entries"]],
                              ["wall-00.webp", "wall-01.webp"])
             self.assertFalse(list(folder.glob("wall-*.jpg")))
             self.assertFalse((folder/"index.json.tmp").exists())
             before = (folder/"index.json").read_bytes()
-            with patch.object(daily, "fetch", side_effect=TimeoutError()):
-                self.assertEqual(daily.build(folder, self.today, candidates), 0)
+            with patch.object(daily, "fetch", side_effect=TimeoutError()) as request:
+                self.assertEqual(daily.build(folder, self.today, candidates), 2)
+                request.assert_not_called()  # cached WebPs are reused
             self.assertEqual((folder/"index.json").read_bytes(), before)
 
     def test_eight_newest_releases_displace_older_webp(self):
@@ -118,12 +119,20 @@ class DailyWallpaperTests(TestCase):
             self.assertEqual([e["filename"] for e in manifest["entries"]],
                              [f"wall-{i:02d}.webp" for i in range(8)])
             self.assertFalse(list(folder.glob("*.jpg")))
-            # A second successful refresh removes a stale eighth image.
-            with patch.object(daily, "fetch", return_value=b"fixture"), \
+            # A newly released title replaces the oldest cached title;
+            # seven unchanged WebPs stay in the pool without re-downloading.
+            next_title = {"title": "Brand New", "day": date(2026, 11, 12),
+                          "platform": "ns2",
+                          "art": "https://www.nintendo.com/eu/new.jpg"}
+            with patch.object(daily, "fetch", return_value=b"fixture") as request, \
                  patch.object(daily, "convert_art", side_effect=fake_convert):
-                self.assertEqual(daily.build(folder, date(2026, 11, 11),
-                                             recent[:7]), 7)
-            self.assertFalse((folder / "wall-07.webp").exists())
+                self.assertEqual(daily.build(folder, date(2026, 11, 12),
+                                             [next_title]), 8)
+                request.assert_called_once()
+            updated = json.loads((folder / "index.json").read_text())
+            self.assertEqual(updated["entries"][0]["title"], "Brand New")
+            self.assertNotIn("New 7", [e["title"] for e in updated["entries"]])
+            self.assertEqual(len(list(folder.glob("wall-*.webp"))), 8)
 
     def test_rejects_unapproved_hosts(self):
         for url in ("http://api.nlib.cc/x", "https://attacker.example/x",

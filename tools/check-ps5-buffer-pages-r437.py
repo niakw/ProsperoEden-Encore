@@ -159,6 +159,11 @@ no_channel_old = "    // Homebrew console apps don't create or bind any channels
 no_channel_new = "    // Homebrew console apps don't create or bind any channels, so this will be nullptr.\n    if (!channel_state) {\n#ifdef PS5_NATIVE\n        // The final channel can disappear while native Vulkan buffers and\n        // deferred staging remain alive. Advance the GPU lifetime scan and\n        // retirement rings even without uniform-cache statistics.\n        runtime.TickFrame(slot_buffers);\n        ++frame_tick;\n        delayed_destruction_ring.Tick();\n        for (auto& buffer : async_buffers_death_ring) {\n            runtime.FreeDeferredStagingBuffer(buffer);\n        }\n        async_buffers_death_ring.clear();\n#endif\n        return;\n    }\n    runtime.TickFrame(slot_buffers);"
 assert expected.count(no_channel_old) == 1
 expected = expected.replace(no_channel_old, no_channel_new)
+# Replay only the exact five production R2 changes in an isolated verifier.
+# Compare every older R437 safeguard byte-for-byte with its source model.
+from r437_stage_overlay import restore_r437_without_production_r2
+maintained = restore_r437_without_production_r2(
+    root/'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h')
 assert maintained == expected, "R437 maintained header differs from reviewed transforms"
 assert maintained.count('::Eden::BufferPages::Mark(buffer.CpuAddr(), size);') == 1
 assert 'buffer-pages/video_core/buffer_cache/buffer_cache.h' in cm

@@ -64,5 +64,5 @@ jobs:
           cmake -S "$scratch/source" -B "$native" -G Ninja \
             -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DEDEN_PS5_VULKAN=ON 
+            -DEDEN_PS5_VULKAN=ON
           python3 -B tools/ns2/check_r457_sparse_native_graph.py "$native"

@@ -206,10 +206,13 @@ assert 'it->second.loaded || it->second.failed_loads != 0' in textures_src
 # semantic Nlib description truncation instead of the removed 1680px rail.
 assert 'constexpr float kHeroX = 90.0f' in home
 assert 'constexpr float kHeroContentWidth = 1250.0f' in home
+assert 'const bool dark_hero_surface = prefs_.color_palette == 3 &&' in home
+assert 'const Color hero_title_ink = dark_hero_surface ? Color::rgb(0xffffff) : theme::kTitle;' in home
+assert 'const Color hero_description_ink = dark_hero_surface ? Color::rgb(0xf2f5fb) : theme::kBody;' in home
 assert 'text_shrink(c, title_label, kHeroX' in home
-assert 'kTitleSize, theme::kTitle, kHeroContentWidth, Align::left, 0.0f, 0.45f)' in home
+assert 'kTitleSize, hero_title_ink, kHeroContentWidth, Align::left, 0.0f, 0.45f)' in home
 assert 'text_block_semantic(c, hero_caption, kHeroX' in home
-assert 'theme::kBody, kHeroContentWidth, 2, 0.90f)' in home
+assert 'hero_description_ink, kHeroContentWidth, 2, 0.90f)' in home
 assert 'label_area.x + label_area.w * 0.5f' in home
 # Rear jacket remains in the lower details pane; its title begins at x=337,
 # clear of the printed scan and its focus highlight.

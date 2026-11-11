@@ -21,12 +21,11 @@ static void Check(std::string_view reference,bool original) {
     assert(fs.bytes_by_channels[0]==
            (original?450ull:225ull)*1048576ull);
     assert(fs.bytes_by_channels[1]==
-           (original?1035ull:517ull)*1048576ull/4ull+
-           (original?0ull:131072ull)); // 129.375MiB Compact
+           (original?258750ull:129375ull)*1048576ull/1000ull);
     assert(fs.bytes_by_channels[2]==
            (original?2025ull:675ull)*1048576ull/10ull);
     assert(fs.bytes_by_channels[3]==
-           (original?135ull:3375ull/100ull)*1048576ull);
+           (original?135000ull:33750ull)*1048576ull/1000ull);
     assert(fs.largest_buffer>0u&&fs.largest_buffer<=(256ull<<20));
     assert(fs.largest_layer>0u&&fs.largest_layer<=(512ull<<20));
     assert(!fs.includes_gpu_weights&&!fs.gpu_executable);

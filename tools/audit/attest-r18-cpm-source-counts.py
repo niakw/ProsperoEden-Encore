@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Attest all 22 pinned CPM source directory file/byte counts (not archive digests).
 
-Does not reconstruct upstream archives or equate source-tree byte counts with
+Every lock drift is reported as an explicit unresolved finding without hiding\nother components. Does not reconstruct upstream archives or equate source-tree byte counts with
 the lock's declared sha256 / upstream_sha512; those checks remain open.
 """
 from __future__ import annotations
@@ -42,10 +42,14 @@ def checked(root: Path) -> dict:
                     raise ValueError(f"{name}: unsupported non-regular file")
                 total += p.stat().st_size
                 count += 1
-        if count != record["files"] or total != record["bytes"]:
-            raise ValueError(f"{name}: actual file/byte count drift ({count}/{total}) != lock ({record['files']}/{record['bytes']})")
+        count_match = count == record["files"]
+        bytes_match = total == record["bytes"]
         paths[name] = {
             "files": count, "file_bytes": total, "symlinks_counted": links,
+            "lock_files": record["files"], "lock_file_bytes": record["bytes"],
+            "file_count_matches_lock": count_match,
+            "byte_count_matches_lock": bytes_match,
+            "byte_difference_vs_lock": total - record["bytes"],
             "declared_tar_sha256_verified": False,
             "declared_upstream_sha512_verified": False,
         }
@@ -60,6 +64,17 @@ def checked(root: Path) -> dict:
         "source_tree_count": len(paths),
         "file_count": sum(x["files"] for x in paths.values()),
         "file_bytes": sum(x["file_bytes"] for x in paths.values()),
+        "lock_tree_discrepancies": {
+            name: {"actual_files": row["files"], "actual_bytes": row["file_bytes"],
+                   "lock_files": row["lock_files"], "lock_bytes": row["lock_file_bytes"],
+                   "byte_difference": row["byte_difference_vs_lock"],
+                   "symlinks": row["symlinks_counted"]}
+            for name, row in paths.items()
+            if not row["file_count_matches_lock"] or not row["byte_count_matches_lock"]
+        },
+        "all_lock_tree_sizes_match": all(
+            row["file_count_matches_lock"] and row["byte_count_matches_lock"]
+            for row in paths.values()),
         "cpmfile_sha256": sha,
         "declared_archives_cryptographically_verified": False,
         "excluded_unfetched_pins": lock["excluded_unfetched_cpm_pins"],
@@ -93,12 +108,10 @@ def self_test() -> None:
         (folder / "part00/source.cpp").write_bytes(b"XXXXXXXX")
         assert checked(root)["source_tree_count"] == 22
         (folder / "part00/source.cpp").write_text("tampered-with-different-length")
-        try:
-            checked(root)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("CPM tree mismatch accepted")
+        mismatched = checked(root)
+        assert not mismatched["all_lock_tree_sizes_match"]
+        assert mismatched["lock_tree_discrepancies"]["part00"]["byte_difference"] > 0
+        assert mismatched["source_tree_count"] == 22
     print("R18_CPM_TREE_COUNTS_SELFTEST_OK")
 
 

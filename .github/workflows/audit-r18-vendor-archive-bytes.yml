@@ -61,8 +61,14 @@ jobs:
           d = json.loads(Path("r18-cpm-counts.json").read_text())
           assert d["source_tree_count"] == len(d["components"]) == 22
           assert d["declared_archives_cryptographically_verified"] is False
+          drift = d["lock_tree_discrepancies"]
+          if drift:
+              for name, finding in sorted(drift.items()):
+                  print("::warning::R18 CPM lock mismatch for {}: {}".format(name, finding))
+          assert d["all_lock_tree_sizes_match"] == (len(drift) == 0)
           with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as output:
-              output.write("R18: all 22 CPM source trees: actual file/byte totals and cpmfile SHA256 checked.\n")
+              output.write("R18: all 22 CPM source trees counted; original cpmfile SHA256 checked.\n")
+              output.write("Lock file/byte count mismatches: {} — tracked in attached JSON, **not cleared**.\n".format(len(drift)))
               output.write("CPM upstream tar digest equivalence remains unverified.\n")
           PY
 

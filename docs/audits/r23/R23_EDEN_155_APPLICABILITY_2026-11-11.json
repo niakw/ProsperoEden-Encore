@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 29,
-    "runtime-semantic-review-pending": 20,
+    "runtime-semantic-review-pending": 19,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -62,7 +62,8 @@
     "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
     "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
     "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
-    "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1
+    "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1,
+    "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -4112,9 +4113,9 @@
       "sha": "ed566919f468e45ecb56e4e61185d98142a2cd1c",
       "title": "[vulkan, android] Add feature of post-processing shaders on Android (#4348)",
       "file_count": 94,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-optional-ReShade-native-PS5-not-selected-no-port",
+      "scope": "E1 source/CMake proof: upstream optional ReShade FX chain and Android/Qt UI are absent from pinned CMake; PS5 selects Encore-owned present layer without HAS_RESHADE, no existing native shader regression fix to port.",
+      "action": "No automatic ReShade/FX chain import or duplicate renderer path; new optional feature requires separate scoped product/licence/perf decision and native combination tests; pass25.",
       "paths": [
         ".patch/reshade/0001-from-chars-fallback.patch",
         "CMakeLists.txt",
@@ -4210,7 +4211,9 @@
         "src/yuzu/main.ui",
         "src/yuzu/main_window.cpp",
         "src/yuzu/main_window.h"
-      ]
+      ],
+      "source_evidence_level": "E1 native graph and pinned original+maintained blob receipts; no native feature/console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS25_2026-11-11.md"
     }
   ]
 }

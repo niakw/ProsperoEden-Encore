@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 64,
+        "runtime-semantic-review-pending": 61,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -66,7 +66,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
-        "native-build-or-dependency-review": 2,
+        "reviewed-native-glslang-argv-no-space-current-build": 1,
+        "reviewed-clang23-only-glsl-backend-no-current-PS5-port": 1,
         "reviewed-Qt-applet-picker-no-current-headless-port": 1,
         "reviewed-upstream-NS-async-result-pure-rename": 1,
         "reviewed-upstream-Boost-repin-deferred-native-dependency": 1,
@@ -74,7 +75,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 8,
+        "verified-relevant-source-gap-awaiting-native-proof": 11,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -93,6 +94,30 @@ def validate(root: Path, app: dict | None = None) -> dict:
     }
     if dict(categories) != mandatory:
         raise ValueError("R23 dated classification changed without reviewed baseline bump")
+    # Exact E1 source receipts for newly classified firmware NS/OLSC and
+    # two conditional native build-only upstream differences. Neither means
+    # the tested PS5 application implements the new command/interface.
+    detail = (root / "docs/audits/ENCORE_AB_R23_FW23_NS_OLSC_SOURCE_GAPS_2026-11-11.md").read_text()
+    build = (root / "docs/audits/ENCORE_AB_R23_FINAL_TWO_BUILD_CASES_2026-11-11.md").read_text()
+    expected_new = {
+        1: "verified-relevant-source-gap-awaiting-native-proof",
+        132: "verified-relevant-source-gap-awaiting-native-proof",
+        137: "verified-relevant-source-gap-awaiting-native-proof",
+        13: "reviewed-native-glslang-argv-no-space-current-build",
+        101: "reviewed-clang23-only-glsl-backend-no-current-PS5-port",
+    }
+    for number, category in expected_new.items():
+        if next(x for x in rows if x["index"] == number)["classification"] != category:
+            raise ValueError(f"R23 new source-level proof #{number} lost")
+        if str(number) not in (detail if number in (1, 132, 137) else build):
+            raise ValueError(f"R23 source evidence document missing #{number}")
+    for blob in ("c3b2aee8a8e7b87b9dd0c6952538e0ffad9e0424",
+                 "f09ccf7b8180af08a501f295b3c7ce3dc4831ff2",
+                 "0f9042bf0189e8f7eb4dd305b7e38a2dc24a2f1f"):
+        if blob not in detail:
+            raise ValueError("R23 NS/OLSC pinned source Git blob receipts changed")
+    if "Clang 18.1.3" not in build or "glslangValidator" not in build:
+        raise ValueError("R23 #13/#101 current toolchain proof missing")
     by_index = {item["index"]: item for item in rows}
     if (by_index[53]["classification"] != "reviewed-observability-only-no-NS1-behavioral-port"
             or by_index[5]["classification"] != "not-applicable-to-native-runtime-source"
@@ -294,7 +319,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 64
+    assert validate(root)["runtime_semantic_cases_pending"] == 61
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

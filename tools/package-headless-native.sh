@@ -240,9 +240,8 @@ for experimental in ('EDEN_SHARED_JIT', 'EDEN_JIT_COMPILE_BATCH'):
 # The earlier cache-only assertion incorrectly rejected a successfully linked
 # PS5 title when no legacy BOOL entry existed.
 import shlex
-compiled_db = json.loads((root / '.local/headless-cache').read_text().strip()
-                   and (pathlib.Path((root / '.local/headless-cache').read_text().strip())
-                        / 'native-local/compile_commands.json').read_text())
+native_scratch = pathlib.Path((root / '.local/headless-cache').read_text().strip())
+compiled_db = json.loads((native_scratch / 'native-local/compile_commands.json').read_text())
 launcher_units = [entry for entry in compiled_db
                   if pathlib.Path(entry['file']).as_posix().endswith('/headless/main.cpp')]
 assert len(launcher_units) == 1, 'Cannot prove native launcher frontend selection'

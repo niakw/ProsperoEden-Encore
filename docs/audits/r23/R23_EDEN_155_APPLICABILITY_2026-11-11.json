@@ -10,7 +10,7 @@
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 6,
-    "native-build-or-dependency-review": 5,
+    "native-build-or-dependency-review": 3,
     "test-only-upstream": 1,
     "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
     "source-equivalent-GPU-NCE-readback-reverted": 2,
@@ -34,7 +34,8 @@
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
     "verified-absent-GPU-null-initialization-candidate": 1,
-    "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1
+    "source-verified-shared-FS-root-preservation-awaiting-PS5-decision": 1,
+    "reviewed-inactive-native-static-LZ4-option": 2
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -769,9 +770,9 @@
       "sha": "885b333c08760ccc406202a02a5b3d3fa5eab60b",
       "title": "[cmake] Fix build by forcing lz4 bundled (#4648)",
       "file_count": 1,
-      "classification": "native-build-or-dependency-review",
-      "scope": "Changes root CMake, CMakeModules, cpmfile/patch dependencies. No direct source runtime patch, but build linkage/ABI reproducibility may be affected.",
-      "action": "Check exact native project CMake/CPM selection and pinned lz4, ffmpeg, boost origin; native build owner must requalify before adapting.",
+      "classification": "reviewed-inactive-native-static-LZ4-option",
+      "scope": "Confirmed historical PS5 native CMakeCache.txt YUZU_STATIC_BUILD:BOOL=OFF (read-only audit run 43012467528). Upstream change is guarded by static mode; no static branch execution in this frozen profile, not current main ABI proof.",
+      "action": "No code port for historical nonstatic native profile. Reopen if the current production build sets YUZU_STATIC_BUILD=ON or lz4 target selection changes. Verify selected lz4 static/shared link separately.",
       "paths": [
         "CMakeLists.txt"
       ]
@@ -1516,9 +1517,9 @@
       "sha": "e0d47f2790e3f758fa2188926a0bb2f56af6b310",
       "title": "[cmake] fix macOS compilation by forcing lz4 to be static (#4540)",
       "file_count": 1,
-      "classification": "native-build-or-dependency-review",
-      "scope": "Changes root CMake, CMakeModules, cpmfile/patch dependencies. No direct source runtime patch, but build linkage/ABI reproducibility may be affected.",
-      "action": "Check exact native project CMake/CPM selection and pinned lz4, ffmpeg, boost origin; native build owner must requalify before adapting.",
+      "classification": "reviewed-inactive-native-static-LZ4-option",
+      "scope": "Confirmed historical PS5 native CMakeCache.txt YUZU_STATIC_BUILD:BOOL=OFF (read-only audit run 43012467528). Upstream change is guarded by static mode; no static branch execution in this frozen profile, not current main ABI proof.",
+      "action": "No code port for historical nonstatic native profile. Reopen if the current production build sets YUZU_STATIC_BUILD=ON or lz4 target selection changes. Verify selected lz4 static/shared link separately.",
       "paths": [
         "CMakeModules/find/Findlz4.cmake"
       ]

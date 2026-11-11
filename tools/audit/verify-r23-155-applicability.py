@@ -66,7 +66,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
         "not-applicable-PS5-x64-execution": 6,
-        "native-build-or-dependency-review": 5,
+        "native-build-or-dependency-review": 3,
+        "reviewed-inactive-native-static-LZ4-option": 2,
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
@@ -214,6 +215,17 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or "R23_HID_CONNECT_BRANCH_SOURCE_DIFFERENCE_PASS" not in
                 (root / "tools/audit/check-r23-hid-button-connection-host.py").read_text()):
         raise ValueError("R23 #95 HID connection source-policy proof missing")
+    # R23 #20/#66 are conditional native-static LZ4 paths. The historical
+    # ninth-run CMakeCache (read-only audit run 43012467528) recorded OFF.
+    # This disposition does not certify latest main or linker state.
+    if any(by_index[i]["classification"] != "reviewed-inactive-native-static-LZ4-option"
+           for i in (20, 66)):
+        raise ValueError("R23 #20/#66 native-static cache provenance changed")
+    if (by_index[20]["paths"] != ["CMakeLists.txt"] or
+        by_index[66]["paths"] != ["CMakeModules/find/Findlz4.cmake"] or
+        "R23_NATIVE_LZ4_STATIC_MODE_PARSER_SELFTEST_PASS" not in
+        (root / "tools/audit/attest-r23-native-lz4-static-mode.py").read_text()):
+        raise ValueError("R23 #20/#66 static-mode source receipts missing")
     # Source-reviewed batches: do not label a missing feature as already shipped.
     new_cases = {
         42: "verified-native-GPU-thread-affinity-review-needs-PS5-trace",

@@ -114,6 +114,10 @@ The corrective branch's **actual Git submodule pin** is the original `22b69d6053
 - Upstream #53 `b7c1ded` is **diagnostic-only**: one `LOG_ERROR` added before the unchanged NCA missing-key status and return. No change to guest decrypt/error semantics; no code import required. `runtime-semantic-review-pending` is now **106** of 155. Upstream #30 has FreeBSD host code and #93 has non-Windows sparse-memory header semantics: both **remain open** despite titles suggesting Mac/Win32-only.
 
 
+### R23 #20/#66 — LZ4 conditional mode byte receipts
+
+The [source and CMakeCache review](ENCORE_AB_R23_NATIVE_LZ4_MODE_2026-11-11.md) uses audit #43012467528 (native cache **present**, `YUZU_STATIC_BUILD=OFF`) to exclude two upstream changes that only affect static configurations **for that historical native profile**, not for latest main. Build/dependency reviews still open: **3**; 17 header inclusion receipts and real PS5 linked ELF proof remain open.
+
 ### R23 #95 — native HID source connection branch is divergent
 
 The [HID source policy report](ENCORE_AB_R23_HID_CONNECTION_POLICY_2026-11-11.md) records a real upstream change in button-triggered Connect() conditions which is absent from the maintained native PS5 HID unit. A 48-state source-model test is checked in read-only CI. This is **not** proof that new Connect logic is correct for PS5 or that a game fails. R23 general semantic cases **66**, explicit source gaps **8**; no imports.

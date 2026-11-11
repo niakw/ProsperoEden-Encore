@@ -5,7 +5,8 @@
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
 | Runtime NS1/shared still open | **66** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| Native build/dependency | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native build/dependency | **3** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Native-static LZ4 changes inactive in historical cache (#20/#66) | **2** | Effective CMakeCache `YUZU_STATIC_BUILD=OFF`; current main requires separate verification |
 | Include-only C++ portability (#79) | **1** | E1; aucun changement de fonction exécutable, compilation PS5 restant à prouver |
 | FFmpeg CI upstream-only (#86) | **1** | E1; runtime FFmpeg source pin séparé, pas de changement native ABI |
 | SanitizePath racine absolue (#123) | **1** | E1 tests hôte exacts ; effet et correction PS5 à décider |
@@ -174,3 +175,7 @@ La [comparaison #115 MSVC et #118 PageTable](ENCORE_AB_R23_MSVC_PAGETABLE_COMPIL
 ## R23 #95 — HID behavior is not merely cleanup
 
 The upstream [Eden #95](https://github.com/eden-emulator/mirror/commit/87d2f03c39bc441055d593a7913f63a017795359) changes the conditions for EmulatedController::Connect(), not just source formatting. The selected maintained PS5 HID owner (Git blob dba492c9d60e967cd051ff15e32ce2db0479830d) still uses the pinned !is_connected/Handheld/Player1/other-slot gate, while the upstream version uses player.connected. A [48-case source-state check](../../tools/audit/check-r23-hid-button-connection-host.py) demonstrates distinct connection decisions. This is E1 source evidence only: no physical pad, NPad callback, ELF or guest test. Classification: relevant source gap awaiting native regression proof. **66** generic semantic cases remain; **8** such gaps are explicitly classified.
+
+## R23 #20/#66 — effective native CMake static mode
+
+The pinned Eden source and [native build recipe](../../tools/build-headless-native.sh) were compared against the actual ninth-run CMake cache. [Read-only audit #43012467528](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43012467528) attests `YUZU_STATIC_BUILD:BOOL=OFF`: upstream #20 only sets `lz4_FORCE_BUNDLED` inside `if(YUZU_STATIC_BUILD)`, while #66 only changes the LZ4 shared-target selection condition when the option is ON. Neither new static-mode branch executes for this historical build input. **2** build cases are conditionally closed for this frozen profile; **3** native build cases remain. This does not prove the current `main` configuration, LZ4 link artifact or package runtime correctness. [Source/cache evidence](ENCORE_AB_R23_NATIVE_LZ4_MODE_2026-11-11.md).

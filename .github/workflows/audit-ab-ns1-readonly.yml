@@ -98,6 +98,9 @@ jobs:
           orphan = json.loads(Path("ab-ns1-witness/r18-orphan-pin-archives.json").read_text())
           lz4 = json.loads(Path("ab-ns1-witness/r23-lz4-static-mode.json").read_text())
           assert lz4["YUZU_STATIC_BUILD"] in ("ON", "OFF", "FALSE", "TRUE", "0", "1", "UNKNOWN")
+          assert lz4["native_cache_present"], "CMakeCache required for R23 #20/#66"
+          assert lz4["YUZU_STATIC_BUILD"] == "OFF"
+          assert lz4["both_lz4_changes_inert_in_this_cached_static_profile"]
           x64 = json.loads(Path("ab-ns1-witness/r23-x64-memory-source.json").read_text())
           assert x64["cases"]["136_A32_upstream_sign_extension"] == "still-divergent-test-required"
           assert all(x64["cases"][key] == "source-equivalent-E1"

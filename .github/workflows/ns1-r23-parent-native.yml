@@ -1,0 +1,40 @@
+name: NS1 R23 parent-program FS selected native 3+3 owners (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-parent-program-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-parent-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fs-sources-and-headers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Enforce exact six FS owners and exercise parent-save methods
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "23dddd6d7faffde8cdc2d0cfe840bc192a1da139"
+          python3 -B vendor/tests/ns1_r23_113_parent_programs.py
+          python3 - <<'PY'
+          from pathlib import Path
+          cmake=Path("headless/CMakeLists.txt").read_text()
+          mark=cmake.index("# R23 #113 — the three FS compiler inputs")
+          assert cmake.index("set(EDEN_MAINTAINED_PATCH_MANAGER") < mark
+          assert cmake.index("set(EDEN_MAINTAINED_SAVEDATA") < mark
+          assert "target_include_directories(core BEFORE PRIVATE \"${EDEN_R23_PARENT_INCLUDE}\")" in cmake
+          for file in ("registered_cache","savedata_factory","patch_manager"):
+              assert file+".cpp" in cmake[mark:mark+3000]
+              assert file+".h" in cmake[mark:mark+3000]
+          print("R23_PARENT_NATIVE_SOURCE_OWNER_HOST_PASS 3_cpp_3_headers")
+          PY

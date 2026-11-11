@@ -115,15 +115,15 @@ def main():
         explicit=out/"r4-blit-explicit-instantiation.cpp"
         preamble=(native/"headless"/"performance.h").resolve()
         explicit.write_text(
-            f'#include "{preamble.as_posix()}"\\n'
-            '#include "common/scope_exit.h"\\n'
-            '#include "video_core/renderer_vulkan/vk_texture_cache.h"\\n'
-            '#include "video_core/texture_cache/texture_cache.h"\\n'
-            'static_assert(!Vulkan::TextureCacheParams::FRAMEBUFFER_BLITS);\\n'
-            'template bool VideoCommon::TextureCache<Vulkan::TextureCacheParams>::BlitImage(\\n'
-            '    const Tegra::Engines::Fermi2D::Surface&,\\n'
-            '    const Tegra::Engines::Fermi2D::Surface&,\\n'
-            '    const Tegra::Engines::Fermi2D::Config&);\\n')
+            f'#include "{preamble.as_posix()}"\n'
+            '#include "common/scope_exit.h"\n'
+            '#include "video_core/renderer_vulkan/vk_texture_cache.h"\n'
+            '#include "video_core/texture_cache/texture_cache.h"\n'
+            'static_assert(!Vulkan::TextureCacheParams::FRAMEBUFFER_BLITS);\n'
+            'template bool VideoCommon::TextureCache<Vulkan::TextureCacheParams>::BlitImage(\n'
+            '    const Tegra::Engines::Fermi2D::Surface&,\n'
+            '    const Tegra::Engines::Fermi2D::Surface&,\n'
+            '    const Tegra::Engines::Fermi2D::Config&);\n')
         orig_source=str(record["file"])
         explicit_flags=[str(explicit) if flag==orig_source else flag for flag in flags]
         if explicit_flags.count(str(explicit))!=1:

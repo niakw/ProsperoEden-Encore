@@ -6,6 +6,8 @@ on:
       - "docs/audits/r23/**"
       - "docs/audits/R23_EDEN_ALL_155_COMMITS_2026-11-10.json"
       - "tools/audit/verify-r23-all-155-commit-files.py"
+      - "tools/audit/verify-r23-155-applicability.py"
+      - "docs/audits/ENCORE_AB_R23_155_APPLICABILITY_2026-11-11.md"
       - ".github/workflows/audit-r23-all-155-files.yml"
   workflow_dispatch:
 
@@ -35,6 +37,8 @@ jobs:
           set -euo pipefail
           python3 -B tools/audit/verify-r23-all-155-commit-files.py --self-test
           python3 -B tools/audit/verify-r23-all-155-commit-files.py > r23-all-155-verdict.json
+          python3 -B tools/audit/verify-r23-155-applicability.py --self-test
+          python3 -B tools/audit/verify-r23-155-applicability.py > r23-applicability-verdict.json
           python3 -B - <<'PY'
           import json
           from pathlib import Path
@@ -43,10 +47,16 @@ jobs:
           assert d["per_commit_file_changes"] == 2376
           assert d["runtime_or_shared_path_candidates_semantic_review_pending"] == 123
           assert not d["semantic_parity_complete"]
+          application = json.loads(Path("r23-applicability-verdict.json").read_text())
+          assert application["classified_commits"] == 155
+          assert application["runtime_semantic_cases_pending"] == 105
+          assert application["asset_and_dependency_cases_pending"] == 12
+          assert not application["native_ELF_or_console_qualified"]
           with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as f:
               f.write("## R23 all 155 Eden changed-file lists verified\n")
               f.write("0 missing commit files and 0 GitHub 300-file caps.\n")
-              f.write("123 runtime-path candidates require semantic/source-compiled parity.\n")
+              f.write("123 runtime-path candidates; 105 semantic reviews still pending after source-specific dispositions.\n")
+              f.write("5 staged fixes and 12 asset/dependency cases are not native PS5 qualified.\n")
               f.write("**No native build, tests of emulator semantics, or PS5 device proof.**\n")
           PY
 
@@ -54,6 +64,8 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: r23-eden-155-file-register-receipt
-          path: r23-all-155-verdict.json
+          path: |
+            r23-all-155-verdict.json
+            r23-applicability-verdict.json
           if-no-files-found: error
           retention-days: 30

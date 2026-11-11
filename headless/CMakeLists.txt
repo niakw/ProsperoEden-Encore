@@ -815,6 +815,34 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #120: SSL IPC API and OpenSSL implementation are inseparable.
+# One native source owner per original TU and one matching shared header.
+if(PS5_NATIVE)
+    set(EDEN_R23_SSL_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/ssl")
+    set(EDEN_R23_SSL_OVERLAY "${PORT_BUILD_DIR}/r23-ssl/include")
+    foreach(eden_r23_ssl_file IN ITEMS ssl.cpp ssl_backend.h ssl_backend_openssl.cpp)
+        if(NOT EXISTS "${EDEN_R23_SSL_ROOT}/${eden_r23_ssl_file}")
+            message(FATAL_ERROR "R23 #120 missing native SSL ${eden_r23_ssl_file}")
+        endif()
+    endforeach()
+    configure_file("${EDEN_R23_SSL_ROOT}/ssl_backend.h"
+        "${EDEN_R23_SSL_OVERLAY}/core/hle/service/ssl/ssl_backend.h" COPYONLY)
+    get_target_property(eden_r23_ssl_units core SOURCES)
+    foreach(eden_r23_ssl_unit IN ITEMS ssl.cpp ssl_backend_openssl.cpp)
+        list(FIND eden_r23_ssl_units
+            "hle/service/ssl/${eden_r23_ssl_unit}" eden_r23_ssl_pinned)
+        if(eden_r23_ssl_pinned LESS 0)
+            message(FATAL_ERROR "R23 #120 SSL source graph changed: ${eden_r23_ssl_unit}")
+        endif()
+        list(REMOVE_ITEM eden_r23_ssl_units "hle/service/ssl/${eden_r23_ssl_unit}")
+        list(APPEND eden_r23_ssl_units "${EDEN_R23_SSL_ROOT}/${eden_r23_ssl_unit}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_ssl_units}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_R23_SSL_OVERLAY}")
+    message(STATUS "R23 #120: exactly two SSL translation units and matched backend header")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

@@ -34,6 +34,22 @@ struct Recipe {
     ++r.count;
     return true;
 }
+// Move a saved stage to its NEW final position; preserved order of all
+// others. The caller must requalify the WHOLE graph after every move,
+// because a valid saved order may become unsafe (e.g. FG before compose).
+[[nodiscard]] constexpr bool MoveStep(Recipe& r,std::size_t from,
+                                      std::size_t to) noexcept {
+    if(r.version!=kRecipeVersion||from>=r.count||to>=r.count)
+        return false;
+    if(from==to)return true;
+    const auto moved=r.stages[from];
+    if(from<to)
+        for(std::size_t i=from;i<to;++i)r.stages[i]=r.stages[i+1u];
+    else
+        for(std::size_t i=from;i>to;--i)r.stages[i]=r.stages[i-1u];
+    r.stages[to]=moved;
+    return true;
+}
 [[nodiscard]] constexpr bool RemoveStep(Recipe& r,std::size_t pos) noexcept {
     if(r.version!=kRecipeVersion||pos>=r.count)return false;
     for(std::size_t i=pos+1u;i<r.count;++i)r.stages[i-1u]=r.stages[i];

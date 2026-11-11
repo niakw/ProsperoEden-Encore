@@ -15,8 +15,8 @@ TITLE = "PPSA99008"
 REQUIRED = {f"{TITLE}/eboot.bin", f"{TITLE}/sce_sys/param.json"}
 # Match the exact filename emitted by make-dist.py/resolve-encore-release.py.
 # Never silently accept an old/foreign title or a different R revision.
-FTP_NAME = re.compile(r"Eden-Encore-(R[1-9][0-9]{0,5})-([0-9a-f]{8})-FTP-PPSA99008\\.zip")
-FULL_NAME = re.compile(r"Prospero\\.Eden-Encore-(R[1-9][0-9]{0,5})\\.zip")
+FTP_NAME = re.compile(r"Eden-Encore-(R[1-9][0-9]{0,5})-([0-9a-f]{8})-FTP-PPSA99008[.]zip")
+FULL_NAME = re.compile(r"Prospero[.]Eden-Encore-(R[1-9][0-9]{0,5})[.]zip")
 LEGACY_FTP_NAME = "Eden-Encore-56293953-FTP-PPSA99008.zip"
 
 

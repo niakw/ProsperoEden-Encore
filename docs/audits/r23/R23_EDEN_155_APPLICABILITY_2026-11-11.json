@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 11,
-    "runtime-semantic-review-pending": 58,
+    "runtime-semantic-review-pending": 57,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -42,7 +42,8 @@
     "reviewed-mouse-Qt-SDL-frontend-timer-not-native": 1,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
     "verified-absent-GPU-null-initialization-candidate": 1,
-    "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1
+    "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
+    "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -1318,13 +1319,14 @@
       "sha": "26a03d2473787abf3223b2d0e65b291eee00c1e1",
       "title": "Revert \"[video_core] Improve asynchronous shader building (#2560)\" (#4512)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open",
+      "scope": "E1 source-level scoped decision: active PS5 Vulkan vk_pipeline_cache_cost.cpp returns pending graphics pipeline before desktop async depth/index guards; upstream #52 zeta_enable early skip cannot affect that PS5 branch. Native OpenGL remains selectable and uses original gl_shader_cache.cpp without upstream depth guard.",
+      "action": "No blind Vulkan cherry-pick. Preserve PS5 ordered pipeline wait; keep real PS5 OpenGL fallback depth-enabled async on/off behavioral comparison, active native compiled-owner and title visuals as explicit open gates. Reopen Vulkan on any policy/CMake/vendor change.",
       "paths": [
         "src/video_core/renderer_opengl/gl_shader_cache.cpp",
         "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream commit diff, pinned vendor GL df69eb97f5fc8f440465d698123ea00e274ee671 and active Vulkan 9358b81ab6b8d43e1ae524a159fd5082d4a8cab2, frozen native CMake source selection; no compiled PS5 behavior proof."
     },
     {
       "index": 53,

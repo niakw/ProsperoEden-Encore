@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 58,
+        "runtime-semantic-review-pending": 57,
+        "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open": 1,
         "reviewed-frontend-cli-only-no-current-headless-PS5-port": 1,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
@@ -187,6 +188,50 @@ def validate(root: Path, app: dict | None = None) -> dict:
             or "## #100" not in
                 (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS7_2026-11-11.md").read_text()):
         raise ValueError("R23 #100 headless CLI exclusion lost exact E1 proof")
+    # #52: current PS5 Vulkan policy returns the pipeline BEFORE the desktop
+    # async/depth branch, while OpenGL remains selectable and unqualified.
+    # E1 closed semantic triage != compiled OpenGL renderer correctness.
+    async_case = by_index[52]
+    if (async_case["classification"] != "reviewed-PS5-Vulkan-early-return-GL-depth-policy-open"
+            or async_case["paths"] != [
+                "src/video_core/renderer_opengl/gl_shader_cache.cpp",
+                "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp"]
+            or not async_case.get("source_evidence_level", "").startswith("E1")):
+        raise ValueError("R23 #52 source-level Vulkan/GL policy decision changed")
+    from subprocess import check_output, CalledProcessError
+    try:
+        gitlink = check_output(
+            ["git", "-C", str(root), "ls-tree", "HEAD", "vendor"],
+            text=True).strip()
+    except (OSError, CalledProcessError) as err:
+        raise ValueError("R23 #52 cannot attest frozen vendor gitlink") from err
+    if gitlink != ("160000 commit 22b69d6053db41b74edac2633c012f925b84f69e\\tvendor".replace("\\t", "\t")):
+        raise ValueError("R23 #52 pinned active Vulkan/GL source owner changed")
+    vkcmake = (root / "headless/vulkan.cmake").read_text()
+    active_selection = (
+        'list(REMOVE_ITEM video_sources renderer_vulkan/${name}.cpp)',
+        'list(APPEND video_sources "${PORT_BUILD_DIR}/${name}_cost.cpp")',
+        'vk_pipeline_cache'
+    )
+    if any(fragment not in vkcmake for fragment in active_selection):
+        raise ValueError("R23 #52 active Vulkan pipeline source selection changed")
+    hcmake = (root / "headless/CMakeLists.txt").read_text()
+    entry = (root / "headless/main.cpp").read_text()
+    if ('if(EDEN_PS5_OPENGL)' not in hcmake
+            or 'renderer_opengl/gl_shader_cache.cpp' in hcmake
+            or 'recovery_opengl = true' not in entry
+            or 'Settings::RendererBackend::OpenGL_GLSL' not in entry):
+        raise ValueError("R23 #52 OpenGL fallback selection changed")
+    async_note = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS8_2026-11-11.md").read_text()
+    for frozen_receipt in (
+        "9358b81ab6b8d43e1ae524a159fd5082d4a8cab2",
+        "df69eb97f5fc8f440465d698123ea00e274ee671",
+        "642b9fa2236f9d66ba0b9144edab6a15b87fc4d6",
+        "26a03d2473787abf3223b2d0e65b291eee00c1e1",
+        "OpenGL remains open",
+    ):
+        if frozen_receipt not in async_note:
+            raise ValueError("R23 #52 exact source receipt/reopen contract missing")
     # #79 exact upstream diff is include/copyright-only; #86 is the CI-only
     # FFmpeg artifact. Neither alters the PS5 native runtime contract.
     if (by_index[79]["classification"] != "reviewed-include-only-no-native-behavioral-port"
@@ -355,7 +400,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 58
+    assert validate(root)["runtime_semantic_cases_pending"] == 57
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:
@@ -364,6 +409,14 @@ def self_test(root: Path) -> None:
         pass
     else:
         raise AssertionError("incorrect source classification was accepted")
+    bad = copy.deepcopy(current)
+    bad["individual_commits"][51]["classification"] = "runtime-semantic-review-pending"
+    try:
+        validate(root, bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("R23 #52 unproved Vulkan/OpenGL port accepted")
     bad = copy.deepcopy(current)
     bad["individual_commits"][0]["paths"][0] = "forged/source.cpp"
     try:

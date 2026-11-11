@@ -63,7 +63,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "runtime-semantic-review-pending": 0,
         "reviewed-current-PS5-x64-NCE-write-fault-path-not-selected": 1,
         "reviewed-current-PS5-JIT-callback-ABI-coalescence-deferred": 1,
-        "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 8,
+        "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 11,
         "reviewed-current-PS5-CXX26-fmt-migration-deferred": 1,
         "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1,
         "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
@@ -108,7 +108,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "test-only-upstream": 1,
         "verified-native-GPU-thread-affinity-review-needs-PS5-trace": 1,
         "source-equivalent-GPU-NCE-readback-reverted": 2,
-        "verified-relevant-source-gap-awaiting-native-proof": 36,
+        "verified-relevant-source-gap-awaiting-native-proof": 33,
         "reviewed-observability-only-no-NS1-behavioral-port": 2,
         "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
         "upstream-runtime-then-reverted-equivalent": 2,
@@ -170,7 +170,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         if f"#{idx}" not in r23_hle_pass21:
             raise ValueError(f"R23 HLE case #{idx} evidence missing")
     current_r23_crosswalk = (root / "docs/audits/ENCORE_AB_R23_ZERO_GENERIC_SOURCE_EXIT_2026-11-11.md").read_text()
-    for token in ("0 upstream runtime-semantic", "0/0", "36", "SSL", "guest"):
+    for token in ("0 upstream runtime-semantic", "0/0", "33", "SSL", "guest"):
         if token not in current_r23_crosswalk:
             raise ValueError(f"R23 zero-generic E1 exit crosswalk missing {token}")
     for number, category in expected_new.items():
@@ -294,19 +294,19 @@ def validate(root: Path, app: dict | None = None) -> dict:
     ):
         if frozen_receipt not in async_note:
             raise ValueError("R23 #52 exact source receipt/reopen contract missing")
-    # #147: NS cmd23 is missing in the frozen selected core HLE dispatcher,
+    # #147: historical pristine source lacks cmd23; selected shipping backport has it.
     # but cmd19 already names the required GetApplicationControlData3 handler.
     # The unrelated AM/overlay edits and ARM64-only JIT code MUST NOT be
     # considered qualified by that one-line IPC table difference.
     fw23 = by_index[147]
-    if (fw23["classification"] != "verified-relevant-source-gap-awaiting-native-proof"
+    if (fw23["classification"] != "source-covered-shipping-native-backport-E1-awaiting-PS5-proof"
             or fw23["paths"] != [
                 "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
                 "src/core/hle/service/am/display_layer_manager.cpp",
                 "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
                 "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_memory.cpp"]
             or not fw23.get("source_evidence_level", "").startswith("E1")):
-        raise ValueError("R23 #147 FW23 NS+AM semantic gap/source split lost")
+        raise ValueError("R23 #147 selected shipping backport/source split lost")
     ns_readme = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS9_2026-11-11.md").read_text()
     for frozen_ns in (
         "c7606a83bf771c9251ef8a44add72b72a2589870",
@@ -442,7 +442,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     cases15 = {
         90: "reviewed-NCE-only-runtime-NRO-patch-not-PS5-x64",
         33: "verified-relevant-source-gap-awaiting-native-proof",
-        109: "verified-relevant-source-gap-awaiting-native-proof",
+        109: "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
         136: "verified-relevant-source-gap-awaiting-native-proof",
     }
     for idx, klass in cases15.items():
@@ -741,6 +741,23 @@ def validate(root: Path, app: dict | None = None) -> dict:
                   "vendor/encore-active/eden-backports/"):
         if token not in gaps_doc:
             raise ValueError(f"R23 handoff lost selected source/release gate {token}")
+    # Pass30 supersedes *pristine-only* missing-source classifications for
+    # three actual shipping native owners. E1 means present, NOT PS5 tested.
+    pass30 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md").read_text()
+    for idx in (109, 128, 147):
+        rec = by_index[idx]
+        if (rec["classification"] != "source-covered-shipping-native-backport-E1-awaiting-PS5-proof"
+                or rec.get("source_proof_document") !=
+                "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md"
+                or not rec.get("source_evidence_level", "").startswith("E1")
+                or f"#{idx}" not in pass30):
+            raise ValueError(f"R23 pass30 selected native source owner #{idx} lost")
+    for sha in ("d622c7b7a790c4422febb406898cafc198fb3235",
+                "4ee92908b539c2ee1aad04b38523a297689ce016",
+                "1359cdbb9507fb7c22ca57459a0a03ab95e58f2f",
+                "cd9e26e8999b2b056d52304dc4ed9b1134beb794"):
+        if sha not in pass30:
+            raise ValueError(f"R23 pass30 installed source SHA missing: {sha}")
     # #123 keeps its tested root-preservation E1 disposition; its PS5 behavior still requires validation.
     if by_index[123]["classification"] != "source-verified-shared-FS-root-preservation-awaiting-PS5-decision":
         raise ValueError("R23 #123 exact source-root-difference lost, missing native behavior proof")
@@ -828,8 +845,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     if by_index[110]["paths"] != ["src/common/error.cpp"]:
         raise ValueError("strerror_r diagnostics commit contains another source")
     # Confirm source-proven real deficiencies are never silently counted fixed:
-    # clock RDTSC >1GHz, NS ListApplicationIcon null, Opus 24/25 decoder limits.
-    for i in (114, 128, 153):
+    # clock RDTSC >1GHz and Opus 24/25 decoder limits. NS icon null fixed in shipping backport.
+    for i in (114, 153):
         if by_index[i]["classification"] != "verified-relevant-source-gap-awaiting-native-proof":
             raise ValueError(f"R23 confirmed source gap #{i} silently changed")
     # #95 changes HID Connect() branch decisions despite the cleanup title.
@@ -922,7 +939,7 @@ def self_test(root: Path) -> None:
     except ValueError:
         pass
     else:
-        raise AssertionError("R23 #147 missing cmd23 semantic gap was accepted as closed")
+        raise AssertionError("R23 #147 selected source class changed without proof")
     bad = copy.deepcopy(current)
     bad["individual_commits"][51]["classification"] = "runtime-semantic-review-pending"
     try:

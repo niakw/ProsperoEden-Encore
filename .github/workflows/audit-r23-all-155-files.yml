@@ -55,7 +55,7 @@ jobs:
           with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as f:
               f.write("## R23 all 155 Eden changed-file lists verified\n")
               f.write("0 missing commit files and 0 GitHub 300-file caps.\n")
-              f.write("123 historical runtime-path candidates; 0 pending E1 source semantic reviews, 36 source gaps still awaiting implementation/PS5 qualification and 8 scoped policy/refactor decisions; 17 native header receipts and 7 corrective release gates remain. No PS5 device proof.\n")
+              f.write("123 historical runtime-path candidates; 0 pending E1 source semantic reviews, 33 source gaps still awaiting implementation/PS5 qualification and 8 scoped policy/refactor decisions; 17 native header receipts and 7 corrective release gates remain. No PS5 device proof.\n")
               f.write("5 staged fixes and 0 pending dependency/build upstream cases require a decision; R18 general ABI proof remains open; 8 upstream Qt/Android assets are excluded from the pinned PS5 package via exact copy-path proof.\n")
               f.write("**No native build, tests of emulator semantics, or PS5 device proof.**\n")
           PY

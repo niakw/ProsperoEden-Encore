@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 36,
+    "verified-relevant-source-gap-awaiting-native-proof": 33,
     "runtime-semantic-review-pending": 0,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
@@ -66,7 +66,7 @@
     "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
     "reviewed-current-PS5-CXX26-fmt-migration-deferred": 1,
     "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1,
-    "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 8,
+    "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 11,
     "reviewed-current-PS5-x64-NCE-write-fault-path-not-selected": 1,
     "reviewed-current-PS5-JIT-callback-ABI-coalescence-deferred": 1
   },
@@ -3341,14 +3341,15 @@
       "sha": "847e91c3a8ca2d699cc9ce0df68b733dd5f37b97",
       "title": "[applet] add post exit cleanups to frontend applets to avoid accumulation (#4457)",
       "file_count": 2,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "E1 upstream #109 fixes post-exit frontend applet lifecycle: move state signal under inner lock, remove completed applet from caller child_applets, request window update, and take caller lock on guest and frontend child append. Pinned core AM frontend Exit currently signals only, and CreateGuestApplet appends child without lock; selected native core files remain unpatched.",
-      "action": "Group source-correct #84 None and #109 applet exit/child lock in a single C06 corrective unit after checking call site null guards and child lock ordering. Run host lifecycle concurrency, repeated applet create/exit, display-update and guest application tests; do not backport a partial unlink under existing lock.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 actual installed backports frontend applet Exit releases child_applets under lock and requests window system update; library applet creator uses parent lock; no additional missing runtime source.",
+      "action": "Avoid duplicate upstream fix; require native compiled source, guest IPC / applet / title launch and PS5 runtime regression. See pass30.",
       "paths": [
         "src/core/hle/service/am/frontend/applets.cpp",
         "src/core/hle/service/am/service/library_applet_creator.cpp"
       ],
-      "source_evidence_level": "E1 upstream 847e91c3a8ca2d699cc9ce0df68b733dd5f37b97; original core frontend applets.cpp blob 407ca10602a1fe9107d13aa8393f4145ac7d715a and library_applet_creator.cpp c20a77f8c40c7fbf023411fd47a299662b798cb3; not PS5 applet test."
+      "source_evidence_level": "E1 actual installed 83-file shipping backport exact blob + selected current native CMake owner, not ELF/device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md"
     },
     {
       "index": 110,
@@ -3629,13 +3630,14 @@
       "sha": "d76f8f91c423841e131ad822ce26610585cca018",
       "title": "[hle] Fix nullptr on ListApplicationIcon (#4438)",
       "file_count": 1,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "Pinned NS read_only_application_control_data_interface.cpp blob c7606a83bf771c9251ef8a44add72b72a2589870 dereferences GetControlMetadata().second->GetSize() without a null check in ListApplicationIcon; upstream commit d76f8f91 guards absent icon metadata and bounds. Current audit CMake has no direct override for that NS service TU.",
-      "action": "Add selected maintained NS service full source with null icon/control and bounded output tests; verify actual guest memory writes, no duplicate command ownership, ASan and real PS5 load.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 actual installed read-only NS ListApplicationIcon uses conditional control.second guard at BOTH metadata/icon reads and bounds assertions; upstream nullptr source fix covered.",
+      "action": "Avoid duplicate upstream fix; require native compiled source, guest IPC / applet / title launch and PS5 runtime regression. See pass30.",
       "paths": [
         "src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
       ],
-      "source_evidence_level": "E1 exact source gap; E2 current build and E3/E4 behavior unproven"
+      "source_evidence_level": "E1 actual installed 83-file shipping backport exact blob + selected current native CMake owner, not ELF/device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md"
     },
     {
       "index": 129,
@@ -3998,16 +4000,17 @@
       "sha": "5d150cac5c6624fa6a0e94266846b75d91a6a5d0",
       "title": "[dynarmic, am, android, ns] Fixes the latest qlaunch regressions on Android and adds cmd23 for launching games on FW 23 (#4407)",
       "file_count": 4,
-      "classification": "verified-relevant-source-gap-awaiting-native-proof",
-      "scope": "E1 direct source deficiency: pinned compiled core NS dispatcher registers GetApplicationControlData3 at ID 19 but lacks FW23 command 23; Eden upstream #147 adds command 23 as the same handler. The same upstream commit also modifies AM overlay/layer stack policy and ARM64 Dynarmic, which must be separately scoped to PS5.",
-      "action": "Prepare one reviewable PS5 maintained NS dispatch alias with real guest IPC request/response tests and exact selected CMake owner, preserving cmd19; do NOT import AM overlay changes or ARM64 backend blindly. Overlay requires matching VI layer API/header, applet/stack visual and PS5 runtime tests.",
+      "classification": "source-covered-shipping-native-backport-E1-awaiting-PS5-proof",
+      "scope": "E1 selected current PS5 backports cover both non-Android/non-ARM64 source changes: DisplayLayerManager overlay stack and NS read-only control cmd23 handler, while ARM64 Dynarmic and Android UI not selected.",
+      "action": "Avoid duplicate upstream fix; require native compiled source, guest IPC / applet / title launch and PS5 runtime regression. See pass30.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/model/Game.kt",
         "src/core/hle/service/am/display_layer_manager.cpp",
         "src/core/hle/service/ns/read_only_application_control_data_interface.cpp",
         "src/dynarmic/src/dynarmic/backend/arm64/emit_arm64_memory.cpp"
       ],
-      "source_evidence_level": "E1 exact upstream 4-file diff, pinned NS blob c7606a83bf771c9251ef8a44add72b72a2589870, pinned AM blob 494e8a132b30962c5d13f20155eb00725652207a, core CMake blob 508ace350173f5068bd7531f37e70199134fde3a; not a compiled guest IPC test."
+      "source_evidence_level": "E1 actual installed 83-file shipping backport exact blob + selected current native CMake owner, not ELF/device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md"
     },
     {
       "index": 148,

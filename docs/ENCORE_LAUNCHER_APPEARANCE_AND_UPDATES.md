@@ -26,12 +26,12 @@ atomically written prosperoeden.json, with backwards-compatible defaults and
 range/type checks. They do not write any game configuration.
 
 Local personal wallpaper folder: <Eden::UserDir()>/wallpapers.
-Only regular PNG, JPEG and TGA files (up to 12 MiB and a basename no longer
-than 120 characters) are accepted. WebP imports must be converted to PNG or
-JPEG until a native PS5 WebP decoder is linked and tested. Decoding occurs
+Personal wallpapers remain in their original PNG, JPEG, TGA or WebP format
+(up to 12 MiB and a basename no longer than 120 characters). Packaged launcher
+art and downloaded cover caches use WebP. Decoding occurs
 on the existing launcher texture worker, never synchronously in draw().
 
-Daily Switch 1/2 mode rotates at most 16 verified, cached JPEGs by local
+Daily Switch 1/2 mode rotates at most 16 verified, cached WebPs by local
 console date; there is no network access in the UI loop. The app first
 checks the user override folder:
 <Eden::UserDir()>/wallpapers/daily/index.json
@@ -42,14 +42,18 @@ The package-time generator tools/launcher/fetch_daily_switch.py uses recent
 Switch 2 metadata and Switch 1 candidate IDs checked independently against
 Nlib release-date/type metadata. It only accepts already released titles,
 confirmed banners from allowlisted Nintendo/Nlib hosts, bounded input and
-output, and converts media to 1280x720 JPEG at quality 80. Portrait/square
+output, and converts media to 1280x720 lossy WebP at quality 80, normalizing
+EXIF orientation before discarding metadata. No redundant image flip is
+applied. Portrait/square
 art is placed on a blurred canvas; it is not distorted.
 
 Packaging prepares the snapshot best-effort by default. A packager can
 disable it with EDEN_BAKE_DAILY_SWITCH_ART=0 for offline reproducibility
 or media licensing review. Failed downloads never block launch or builds.
-The snapshot is refreshed on package builds (NiakPS5's architecture),
-while wallpaper selection rotates each day completely offline.
+The snapshot is refreshed on package builds (NiakPS5's architecture), while
+wallpaper selection rotates each day completely offline. The included catalog
+does NOT fetch new games daily after installation: a refreshed package or a
+separately validated updater is needed for future releases.
 Example manifest with a placeholder image supplied by the user:
 
 ~~~json
@@ -59,7 +63,7 @@ Example manifest with a placeholder image supplied by the user:
       "title": "Example audited released title",
       "platform": "ns2",
       "release_date": "2026-10-30",
-      "filename": "example.jpg",
+      "filename": "example.webp",
       "approved": true
     }
   ]

@@ -157,11 +157,20 @@ def convert_art(source: Path, target: Path) -> None:
                             "-gravity", "center", "-extent", "1280x720", "-blur", "0x22",
                             "(", str(source), "-auto-orient", "-resize", "480x670", ")",
                             "-gravity", "center", "-compose", "over", "-composite"]
-    command += ["-strip", "-interlace", "Plane", "-quality", "80", str(target)]
+    # Normalize EXIF orientation before stripping it. No double flip;
+    # built-in launcher images use lossy WebP, not JPEG.
+    command += ["-strip", "-quality", "80", "-define", "webp:method=5",
+                "-define", "webp:lossless=false", str(target)]
     subprocess.run(command, timeout=28, check=True, stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL)
-    if not target.exists() or target.stat().st_size > MAX_IMAGE or target.stat().st_size < 4000:
-        raise ValueError("Converted media invalid")
+    if target.suffix.lower() != ".webp" or not target.exists():
+        raise ValueError("Built-in wallpaper must be WebP")
+    data = target.read_bytes()
+    if not (4000 <= len(data) <= MAX_IMAGE and
+            data[:4] == b"RIFF" and data[8:12] == b"WEBP" and
+            int.from_bytes(data[4:8], "little") + 8 == len(data) and
+            data[12:16] in (b"VP8 ", b"VP8L", b"VP8X")):
+        raise ValueError("Converted WebP invalid")
 
 def build(out: Path, today: date | None = None, candidates: list[dict] | None = None) -> int:
     out.mkdir(parents=True, exist_ok=True)
@@ -180,10 +189,10 @@ def build(out: Path, today: date | None = None, candidates: list[dict] | None = 
                 raw = fetch(art, ART_HOSTS, MAX_IMAGE)
                 src = scratch / "input.media"
                 src.write_bytes(raw)
-                filename = f"wall-{len(entries):02d}.jpg"
+                filename = f"wall-{len(entries):02d}.webp"
                 target = scratch / filename
                 convert_art(src, target)
-                # Staged copy: no partial JPEG is ever visible to the console reader.
+                # Staged copy: no partial WebP is ever visible to the console reader.
                 destination = out / filename
                 staged = out / (filename + ".tmp")
                 shutil.copyfile(target, staged)
@@ -204,9 +213,12 @@ def build(out: Path, today: date | None = None, candidates: list[dict] | None = 
     tmp.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     os.replace(tmp, out / "index.json")
     keep = {item["filename"] for item in entries}
-    for image in out.glob("wall-*.jpg"):
-        if image.name not in keep:
-            image.unlink()
+    # A successful refresh removes obsolete covers and legacy JPEGs.
+    # If every download fails, retain the previous complete snapshot.
+    for pattern in ("wall-*.webp", "wall-*.jpg", "wall-*.jpeg"):
+        for image in out.glob(pattern):
+            if image.name not in keep:
+                image.unlink()
     print(f"Prepared {len(entries)} audited Switch 1/2 images for offline daily rotation")
     return len(entries)
 

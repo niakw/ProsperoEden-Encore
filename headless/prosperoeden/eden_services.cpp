@@ -2585,8 +2585,10 @@ bool ValidWallpaperName(const std::string& name) {
     std::string ext = name.substr(pos);
     std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c)); });
+    // Personal imports retain PNG/JPEG/TGA; packaged art uses WebP.
+    // The same bounded PS5 decoder accepts an imported WebP too.
     return ext == ".png" || ext == ".jpg" || ext == ".jpeg" ||
-           ext == ".tga";
+           ext == ".tga" || ext == ".webp";
 }
 std::string CheckedWallpaper(const std::filesystem::path& folder, const std::string& name) {
     if (!ValidWallpaperName(name)) return {};

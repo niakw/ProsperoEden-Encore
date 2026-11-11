@@ -20,9 +20,11 @@ def exercise(programs, expected_convert, expected_identify):
         return "1280 720"
     def convert(command, **kwargs):
         seen.append(command)
-        Path(command[-1]).write_bytes(b"J" * 4096)
+        payload = b"VP8 " + b"X" * 4092
+        Path(command[-1]).write_bytes(
+            b"RIFF" + (len(payload) + 4).to_bytes(4, "little") + b"WEBP" + payload)
     with tempfile.TemporaryDirectory() as tmp:
-        src, target = Path(tmp) / "source.jpg", Path(tmp) / "target.jpg"
+        src, target = Path(tmp) / "source.jpg", Path(tmp) / "target.webp"
         src.write_bytes(b"fixture")
         with patch.object(shutil, "which", side_effect=which), \
              patch.object(subprocess, "check_output", side_effect=identify), \
@@ -31,6 +33,10 @@ def exercise(programs, expected_convert, expected_identify):
         assert target.stat().st_size == 4096
     assert seen[0][:len(expected_identify)] == expected_identify, seen[0]
     assert seen[1][0] == expected_convert, seen[1]
+    assert "-auto-orient" in seen[1] and "-strip" in seen[1], seen[1]
+    assert "-flip" not in seen[1] and "-flop" not in seen[1], seen[1]
+    assert "webp:method=5" in seen[1] and "webp:lossless=false" in seen[1]
+    assert "-interlace" not in seen[1], "JPEG-only settings leaked into WebP"
 
 exercise({"magick", "convert", "identify"}, "/fake/magick", ["/fake/magick", "identify"])
 exercise({"convert", "identify"}, "/fake/convert", ["/fake/identify"])

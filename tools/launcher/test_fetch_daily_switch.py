@@ -66,7 +66,8 @@ class DailyWallpaperTests(TestCase):
         with TemporaryDirectory() as temp:
             folder = Path(temp)
             def fake_convert(_source, target):
-                target.write_bytes(b"\xff\xd8" + b"X"*4100 + b"\xff\xd9")
+                payload = b"VP8 " + b"X"*4100
+                target.write_bytes(b"RIFF" + (len(payload) + 4).to_bytes(4, "little") + b"WEBP" + payload)
             with patch.object(daily, "fetch", return_value=b"\xff\xd8" + b"J"*100), \
                  patch.object(daily, "convert_art", side_effect=fake_convert):
                 self.assertEqual(daily.build(folder, self.today, candidates), 2)
@@ -75,6 +76,9 @@ class DailyWallpaperTests(TestCase):
             self.assertEqual([x["release_date"] for x in manifest["entries"]],
                              ["2026-10-30","2026-11-03"])
             self.assertTrue(all(x["approved"] is True for x in manifest["entries"]))
+            self.assertEqual([x["filename"] for x in manifest["entries"]],
+                             ["wall-00.webp", "wall-01.webp"])
+            self.assertFalse(list(folder.glob("wall-*.jpg")))
             self.assertFalse((folder/"index.json.tmp").exists())
             before = (folder/"index.json").read_bytes()
             with patch.object(daily, "fetch", side_effect=TimeoutError()):

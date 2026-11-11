@@ -50,42 +50,6 @@ for stem in ("switch-logo", "switch-rear-footer", "ns2-head"):
 # run: the source-tree index is not regenerated during a stage resume.
 ui_expected.add("ui/box-art-index.tsv")
 
-# The native package step deliberately creates a bounded, offline daily-art
-# snapshot after checkout. It is not part of the committed source tree.
-# Inspect its manifest instead of accepting arbitrary ui/art/daily extras.
-daily = app / "ui/art/daily"
-if daily.exists():
-    manifest_path = daily / "index.json"
-    assert manifest_path.is_file() and not manifest_path.is_symlink(), (
-        "daily wallpaper manifest missing or unsafe"
-    )
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest.get("schema") == 1, "daily wallpaper schema drift"
-    entries = manifest.get("entries")
-    assert isinstance(entries, list) and 1 <= len(entries) <= 16, (
-        "daily wallpaper inventory out of bounds"
-    )
-    daily_files = set()
-    for index, item in enumerate(entries):
-        assert isinstance(item, dict) and item.get("approved") is True
-        filename = f"wall-{index:02d}.jpg"
-        assert item.get("filename") == filename, "daily wallpaper name/order drift"
-        assert item.get("platform") in ("NS1", "NS2", "Switch", "Switch 2", "ns1", "ns2"), (
-            "unexpected daily wallpaper platform"
-        )
-        path = daily / filename
-        assert path.is_file() and not path.is_symlink()
-        data = path.read_bytes()
-        assert 4000 <= len(data) <= 16 * 1024 * 1024
-        assert data.startswith(b"\xff\xd8\xff") and data.endswith(b"\xff\xd9"), (
-            f"invalid daily JPEG: {filename}"
-        )
-        daily_files.add(filename)
-        ui_expected.add(f"ui/art/daily/{filename}")
-    assert {p.name for p in daily.iterdir()} == daily_files | {"index.json"}, (
-        "daily wallpaper extras or missing files"
-    )
-    ui_expected.add("ui/art/daily/index.json")
 for source in (source_ui / "lang").glob("*.po"):
     ui_expected.add("ui/lang/" + source.with_suffix(".txt").name)
 legal_source = root / "LICENSES"
@@ -94,14 +58,15 @@ legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md", "legal/LIBWEB
 }
 expected = base | ui_expected | legal_expected
 actual = {p.relative_to(app).as_posix() for p in app.rglob("*") if p.is_file()}
-# Daily rotating artwork is an OPTIONAL bounded, build-time generated family.
-# Do not accept arbitrary extra art, forgotten temp files or truncated JPEGs.
+# Daily rotating artwork is an OPTIONAL bounded, build-time generated WebP family.
+# User-imported files in UserDir() may use PNG/JPEG/TGA/WebP.
+# Do not accept arbitrary extra art, forgotten temp files or truncated WebP.
 # On network outage a valid release may have no daily snapshot at all.
 daily_root = "ui/art/daily/"
 daily = {name for name in actual if name.startswith(daily_root)}
 if daily:
     manifest_name = daily_root + "index.json"
-    assert manifest_name in daily, "daily wallpaper JPEGs without index"
+    assert manifest_name in daily, "daily wallpaper WebPs without index"
     manifest_path = app / manifest_name
     assert not manifest_path.is_symlink() and 16 <= manifest_path.stat().st_size <= 64 * 1024
     daily_index = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -115,7 +80,7 @@ if daily:
         assert isinstance(entry.get("title"), str) and 0 < len(entry["title"]) <= 160
         assert entry.get("platform") in ("NS1", "NS2", "Switch", "Switch 2", "ns1", "ns2", "switch1", "switch2")
         assert isinstance(entry.get("release_date"), str) and len(entry["release_date"]) == 10
-        filename = f"wall-{number:02d}.jpg"
+        filename = f"wall-{number:02d}.webp"
         assert entry.get("filename") == filename, "noncanonical daily wallpaper index"
         relative = daily_root + filename
         source = app / relative
@@ -123,9 +88,10 @@ if daily:
         size = source.stat().st_size
         assert 4000 <= size <= 7 * 1024 * 1024
         with source.open("rb") as image:
-            assert image.read(3) == b"\xff\xd8\xff"
-            image.seek(-2, os.SEEK_END)
-            assert image.read(2) == b"\xff\xd9"
+            header = image.read(16)
+            assert header[:4] == b"RIFF" and header[8:12] == b"WEBP"
+            assert int.from_bytes(header[4:8], "little") + 8 == size
+            assert header[12:16] in (b"VP8 ", b"VP8L", b"VP8X")
         expected_daily.add(relative)
     assert daily == expected_daily, (
         "unexpected or missing daily assets", sorted(daily ^ expected_daily))

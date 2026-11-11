@@ -958,7 +958,7 @@ print("ENCORE_POST_F07_C00_AUDIOIN_SOURCE_PASS", "owners=2 historical_headless=1
 post_f07_r23_fixed_source_owners = {
     "headless/r23_f2i_conversion_ps5.cpp",
     "headless/r23_bcat_delivery_cache_file_ps5.cpp",
-    "headless/r23_ips_layer_ps5.cpp",
+    "headless/r23_controller_applet_ps5.cpp",
     "headless/r23_audren_debug_ps5.cpp",
     "headless/r23_channel_state_cache_ps5.h",
 }

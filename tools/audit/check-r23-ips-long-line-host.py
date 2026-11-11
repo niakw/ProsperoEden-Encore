@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "headless/r23_ips_layer_ps5.cpp"
+SOURCE = ROOT / "vendor/encore-active/eden-core/src/core/file_sys/ips_layer.cpp"
 
 def main() -> None:
     source = SOURCE.read_text()
@@ -29,7 +29,7 @@ def main() -> None:
         "auto replace_size = record.second.data.size();",
     ):
         assert required in source, "missing real source implementation " + required
-    assert "r.data.push_back(*it);" in source, "unescaped characters must be emitted"
+    assert "r.data.push_back(static_cast<uint8_t>(*it));" in source, "unescaped characters must be emitted"
     for forbidden in ("r.count", "r.data[r.count]", "std::array<uint8_t, 256 - sizeof(size_t)>"):
         assert forbidden not in source, "unsafe legacy buffer in selected source " + forbidden
     fixture = r"""

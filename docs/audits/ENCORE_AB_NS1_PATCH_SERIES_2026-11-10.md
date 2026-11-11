@@ -78,3 +78,7 @@ Official [Eden #131](https://github.com/eden-emulator/mirror/commit/b77308ced62a
 ### R23 IPS source bug caught by actual 4 KiB long-line test (11 Nov)
 
 The previously selected `headless/r23_ips_layer_ps5.cpp` long-line fix had a real regression in `EscapeStringSequences`: the ordinary-character branch advanced `it` without appending the byte. Host ASan's 4096-byte test caught it; this would silently discard plain text from IPSwitch patch data. The maintained source is now changed to `r.data.push_back(*it);` before advancing the cursor, and the exact original-to-maintained source validator and long-line regression gate are updated together. Do not consider this a successful native/PS5 test until the latest run passes.
+
+## R23 IPS native owner reconciliation — 11 Nov
+
+The first native CMake selector had already replaced the original IPS source by `vendor/encore-active/eden-core/src/core/file_sys/ips_layer.cpp`, Git blob `f6687abf25ef2874c06c2523c530b5ba197e6d45`. A second R23 selector incorrectly searched for the now-absent original, then tried to compile an older, less complete `headless/r23_ips_layer_ps5.cpp`. This was both a CMake stop and potential patch-parser regression. The secondary selection is removed, the existing maintained IPS owner remains active, the superseded research file is deleted, and host source-derived tests are redirected to the real owner. The maintained blob contains ordinary-byte preservation and separate patch-record validation. Audren remains its own full-TU override. No native or PS5 device build is claimed.

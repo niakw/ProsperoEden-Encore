@@ -4,7 +4,7 @@ on:
     branches:
       - release/encore-r2-draft-20261109
     paths:
-      - 'docs/releases/ENCORE_R2_DRAFT_2026-11-09.md'
+      - 'docs/releases/ENCORE_R457_DRAFT_2026-11-09.md'
       - '.github/workflows/prepare-encore-r2-draft.yml'
 permissions:
   contents: write
@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout draft release notes only
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node.js 24)
         with:
           persist-credentials: false
       - name: Checkout exact source candidate (documentation only)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node.js 24)
         with:
           persist-credentials: false
           ref: 'ec8b519182532d3864c5a67dd27aa41aa9d43ff3'
@@ -34,6 +34,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          notes_file=docs/releases/ENCORE_R457_DRAFT_2026-11-09.md
+          test -s "$notes_file"
+          grep -q "^# Eden Encore R457 — Development Preview" "$notes_file"
           # Draft releases have temporary "untagged-..." URLs; the stable
           # release ID is the only unambiguous way to update and verify them.
           release_id=438869174
@@ -42,7 +45,7 @@ jobs:
           gh api -X PATCH "repos/$GH_REPO/releases/$release_id" \
             -f tag_name="$RELEASE_TAG" -f target_commitish="$RELEASE_TARGET_SHA" \
             -f name='Eden Encore R2 Preview — R457 CI native candidate (draft)' \
-            -f body="$(cat docs/releases/ENCORE_R2_DRAFT_2026-11-09.md)" \
+            -f body="$(cat docs/releases/ENCORE_R457_DRAFT_2026-11-09.md)" \
             -F draft=true -F prerelease=true >/dev/null
           result="$(gh api "repos/$GH_REPO/releases/$release_id")"
           printf '%s' "$result" | jq -e '.id == 438869174 and .draft == true and .prerelease == true and (.assets | length) == 0' >/dev/null

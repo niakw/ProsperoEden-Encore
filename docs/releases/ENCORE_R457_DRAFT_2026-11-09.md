@@ -18,7 +18,7 @@
 - **Launcher and controller improvements.** Updated library, covers and 3D packaging, per-game settings, language support, controller mapping, faster startup presentation and a **touchpad-triggered Encore quick overlay**.
 - **Graphics and image processing.** Preserved spatial FSR 1 (EASU/RCAS and sharpening), revised presentation/AA/scaling policies, optional frame-interpolation source work and a separate neural-rendering R09 development path.
 - **Reliability and tooling.** Memory ownership, HLE/IPC, video queues, shader/graphics synchronization, more useful diagnostics, hardened release provenance and bounded code/host verification.
-- **International user documentation.** Six user-facing document types available across **all 29 application catalog locales**. The launcher source now exposes **exactly all 31 official PS5 system language/region choices**, backed by 31 catalogs (including distinct English US/UK variants), with no non-PS5 additions.
+- **International user documentation.** Six user-facing document types available across **29 documentation locales**. The launcher source now exposes **exactly all 31 official PS5 system language/region choices**, backed by 31 catalogs (including distinct English US/UK variants), with no non-PS5 additions.
 - **First R457 native PS5 candidate (CI only).** R457 linked, signed and packaged at exact engine SHA `ec8b5191`, with a verified release ZIP, FTP ZIP and SHA-256 manifest; no PS5 game test or public release is implied.
 - **Clean GitHub presentation.** Neutral workflow/job/step titles and non-essential brand mentions in owned source comments; required technical API names, provenance and third-party license notices stay intact.
 
@@ -197,7 +197,7 @@
 
 - Maintained **31 application gettext locale catalogs**, including both English variants,, including new graphics, neural and frame-generation settings.
 - Improved coverage of new option labels and preserved useful historical FSR translations as inactive references where needed.
-- Added practical **README, installation, settings, troubleshooting, support and accessibility guides for all 29 catalog locales** (174 localized pages in total).
+- Added practical **README, installation, settings, troubleshooting, support and accessibility guides for 29 documentation locales** (174 localized pages in total).
 - Preserved the existing detailed French and Spanish README/installation pages rather than replacing them with shorter copies.
 - Added a single language directory linking every one of the six user-facing pages for each locale.
 - Made the distinction explicit: the **launcher offers exactly 31 official PS5 system language/region choices**; all 31 catalog locales are selectable, and no extra languages are provided.
@@ -289,7 +289,7 @@ For ZIP/FTP, extract the complete `PPSA99008/` folder and install it under `/dat
 ## Documentation, sources and credits
 
 - [Main README and complete feature overview](https://github.com/niakw/ProsperoEden-Encore/blob/main/README.md)
-- [User documentation — 29 catalog languages](https://github.com/niakw/ProsperoEden-Encore/blob/main/LANGUAGES.md)
+- [User documentation — 29 localized guide sets; 31 launcher choices](https://github.com/niakw/ProsperoEden-Encore/blob/main/LANGUAGES.md)
 - [Installation](https://github.com/niakw/ProsperoEden-Encore/blob/main/INSTALL.md) · [Settings](https://github.com/niakw/ProsperoEden-Encore/blob/main/SETTINGS.md) · [Troubleshooting](https://github.com/niakw/ProsperoEden-Encore/blob/main/TROUBLESHOOTING.md)
 - [Accessibility](https://github.com/niakw/ProsperoEden-Encore/blob/main/ACCESSIBILITY.md) · [Support](https://github.com/niakw/ProsperoEden-Encore/blob/main/SUPPORT.md)
 - [Historical R1 and workflow audit](https://github.com/niakw/ProsperoEden-Encore/blob/main/docs/RELEASE_BASELINE_WORKFLOW_AUDIT_2026-11-09.md)
@@ -304,7 +304,7 @@ For ZIP/FTP, extract the complete `PPSA99008/` folder and install it under `/dat
 
 The documentation localization follow-up has been implemented on `main` **after the original draft notes were written**:
 
-- All **29 application catalog locales** now have six consumer-focused Markdown guides each: README/overview, installation and upgrading, settings, troubleshooting, support and accessibility (**174 localized pages**). These are practical native-language guides, **not** a claim that the longer English documentation has been translated line for line or independently proofread by 29 native speakers.
+- All **29 documentation locales** now have six consumer-focused Markdown guides each: README/overview, installation and upgrading, settings, troubleshooting, support and accessibility (**174 localized pages**). These are practical native-language guides, **not** a claim that the longer English documentation has been translated line for line or independently proofread by 29 native speakers.
 - The language index distinguishes the **31 translation catalogs** (including US/UK English) from the **29 non-English localized guide sets** under the **31 exact PS5 system language/region choices**. English remains the most detailed normative user reference. The [strict Sony 31-choice policy](../PS5_SYSTEM_LANGUAGE_POLICY.md) excludes all languages not on Sony's official console menu.
 - The [user documentation and local-link validation workflow](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42618975742) **passed** for the documentation changes, checking catalog coverage, internal links, preservation of save-data warnings and key localized help. It does not test PS5 rendering or certify linguistic quality.
 - Invalid French/Spanish guide links and obsolete feature/research branch links in the main and translated READMEs have been corrected.

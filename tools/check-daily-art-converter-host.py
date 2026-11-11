@@ -47,4 +47,22 @@ with patch.object(shutil, "which", return_value=None):
         assert "ImageMagick" in str(e)
     else:
         raise AssertionError("missing conversion tools accepted")
+# No promotional game-art downloads or assets without explicit opt-in.
+# The launcher preference is separately off by default and only the Daily
+# background path schedules the asynchronous local catalog lookup.
+root = Path(__file__).resolve().parents[1]
+pack = (root / "tools/package-headless-native.sh").read_text()
+settings = (root / "headless/settings_store.h").read_text()
+launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
+generator = (root / "tools/launcher/fetch_daily_switch.py").read_text()
+service = (root / "headless/prosperoeden/eden_services.cpp").read_text()
+assert 'EDEN_BAKE_DAILY_SWITCH_ART:-0' in pack
+assert 'rm -rf "$app/ui/art/daily"' in pack
+assert 'int background_style = 0;' in settings
+assert 'if (value.background == 5)' in launcher
+assert 'MAX_ITEMS = 8' in generator
+assert 'if (candidates.size() > 8) candidates.resize(8);' in service
+assert 'ext == ".tga" || ext == ".webp"' in service
+print("PASS zero-default daily art, eight newest WebPs, user import exception")
+
 print("PASS ImageMagick 7 and Ubuntu ImageMagick 6 conversion tool selection")

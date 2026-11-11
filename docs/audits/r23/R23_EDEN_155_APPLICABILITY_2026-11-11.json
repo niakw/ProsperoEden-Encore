@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 97,
+    "runtime-semantic-review-pending": 94,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 26,
     "staged-host-source-fix": 5,
@@ -14,6 +14,7 @@
     "test-only-upstream": 1,
     "reviewed-observability-only-no-NS1-behavioral-port": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
+    "verified-relevant-source-gap-awaiting-native-proof": 3,
     "source-equivalent-current-openssl-native-build": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "verified-absent-GPU-null-initialization-candidate": 1
@@ -3313,13 +3314,14 @@
       "sha": "0ce29be60874b24890ab9239cecf1bd67b924428",
       "title": "[common] Fix RDTSC nanosecond conversion (#4422)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Upstream fixes RDTSC nanosecond conversion by splitting integer GHz base and fixed-point remainder; selected PS5 maintained common/cpu_features.cpp blob f00fba4d5b21be3fc3f3089678d7714a57ae660e still uses GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den), and maintained common/cpu_features.h blob 4c3c975ec9af59bf07f0a2b2c37e0053546733bc lacks rdtsc_ns_integer. CMake selects the maintained clock and N76 shared counter header.",
+      "action": "Do not transplant original pair into mixed N76/G11 ABI; create reviewed full maintained clock source+header pair, test frequency >1 GHz (2,3,4 GHz) and 19.2 MHz guest conversion, compile exact PS5 common/core owner, verify monotonic clock and regressions.",
       "paths": [
         "src/common/cpu_features.cpp",
         "src/common/cpu_features.h"
-      ]
+      ],
+      "source_evidence_level": "E1 exact source gap; E2 current build and E3/E4 behavior unproven"
     },
     {
       "index": 115,
@@ -3497,12 +3499,13 @@
       "sha": "d76f8f91c423841e131ad822ce26610585cca018",
       "title": "[hle] Fix nullptr on ListApplicationIcon (#4438)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Pinned NS read_only_application_control_data_interface.cpp blob c7606a83bf771c9251ef8a44add72b72a2589870 dereferences GetControlMetadata().second->GetSize() without a null check in ListApplicationIcon; upstream commit d76f8f91 guards absent icon metadata and bounds. Current audit CMake has no direct override for that NS service TU.",
+      "action": "Add selected maintained NS service full source with null icon/control and bounded output tests; verify actual guest memory writes, no duplicate command ownership, ASan and real PS5 load.",
       "paths": [
         "src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 exact source gap; E2 current build and E3/E4 behavior unproven"
     },
     {
       "index": 129,
@@ -3970,15 +3973,16 @@
       "sha": "00a1c392e7252eaad82b50119037e01bf6b92a73",
       "title": "[opus] proper limit and error code for opus decoder instances (#4384)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "Pinned audio_core/opus/hardware_opus.h blob caa746840138b9ecb4472fff67e8a831fb89f236 has no decoder pool/register logic; upstream introduces max 24 active decoders and HwOpus ResultOutOfOpusDecoders, with scoped cleanup on decoder initialization errors. Historical audio_core owner must be checked at current main SHA.",
+      "action": "Full source-compiled positive/negative decoder registration to 24, 25th rejection, init failure rollback and guest result code; preserve libopus/FFmpeg native ABI; avoid relying on an isolated mock as real service proof.",
       "paths": [
         "src/audio_core/opus/decoder.cpp",
         "src/audio_core/opus/hardware_opus.cpp",
         "src/audio_core/opus/hardware_opus.h",
         "src/core/hle/service/audio/errors.h"
-      ]
+      ],
+      "source_evidence_level": "E1 exact source gap; E2 current build and E3/E4 behavior unproven"
     },
     {
       "index": 154,

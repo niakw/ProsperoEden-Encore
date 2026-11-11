@@ -5,7 +5,7 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 76,
+    "runtime-semantic-review-pending": 73,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -26,7 +26,8 @@
     "source-equivalent-current-openssl-native-build": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
-    "verified-absent-GPU-null-initialization-candidate": 1
+    "verified-absent-GPU-null-initialization-candidate": 1,
+    "source-equivalent-declared-native-x64-lookup": 3
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3372,9 +3373,9 @@
       "sha": "6374f7f51f0254358fc26a0b3a182f06a9d84ec9",
       "title": "Partial revert: [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) (#4448)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-declared-native-x64-lookup",
+      "scope": "Exact maintained Dynarmic x64 A64 page-table lookup uses the final upstream sign-extension shift amount (*page_table_sign_extension), after #117 reverted the intermediate 63-shift variant. CMake copies the maintained header; actual depfile, JIT execution and PS5 device verification remain outstanding. Evidence: docs/audits/ENCORE_AB_R23_DYNARMIC_X64_LOOKUP_PARITY_2026-11-11.md",
+      "action": "Source-level equivalent to the final upstream A64 #117 sign-extension choice. Do not import the intermediate #122 shift change. Maintain E3/E4 and effective header inclusion gates.",
       "paths": [
         "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h"
       ]
@@ -3438,9 +3439,9 @@
       "sha": "4fe5f62c38e71b045d425dc5f4cc4ab83feeafbe",
       "title": "[dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-declared-native-x64-lookup",
+      "scope": "Maintained PS5 Dynarmic A64 address lookup selects Xbyak LEA scale (1 << page_table_log2_stride) for values 0..3 and shifts an index for larger strides, matching the final net upstream A64 lookup after #117 reversion. Native CMake selects a maintained header overlay, not a runtime depfile receipt. Evidence: docs/audits/ENCORE_AB_R23_DYNARMIC_X64_LOOKUP_PARITY_2026-11-11.md",
+      "action": "No source port required for final A64 scaled lookup. Preserve JIT tests for page-table stride/marked page/invalid guest address and actual linked-header owner.",
       "paths": [
         "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h"
       ]
@@ -3478,9 +3479,9 @@
       "sha": "7bf95be2c29328a4cfeb8b2384ce34c6fb6d890c",
       "title": "[dynarmic] fix A32 crash due to wrong LEA encoding (#4444)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-declared-native-x64-lookup",
+      "scope": "Maintained Dynarmic A32 lookup uses (1 << page_table_log2_stride) for Xbyak LEA stride 0..3, correcting the earlier wrong raw log2 multiplier; larger strides use shifted index. Source is copied by pinned PS5 CMake; actual JIT behavior not tested. Evidence: docs/audits/ENCORE_AB_R23_DYNARMIC_X64_LOOKUP_PARITY_2026-11-11.md",
+      "action": "No source-port for the reviewed A32 LEA scale bug. Keep A32 sign extension #136 and actual compile/include/runtime tests open.",
       "paths": [
         "src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h"
       ]

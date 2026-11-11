@@ -4,9 +4,10 @@
 
 | R23 catégorie à jour | Commits | Critère |
 |---|---:|---|
-| Runtime NS1/shared still open | **76** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Runtime NS1/shared still open | **73** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native build/dependency | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Staged host fixes | **5** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
+| Declared native Dynarmic x64 source-equivalent fixes (E1 only) | **3** | Source-level #117/#122/#125 matched; #136 remains open; no JIT execution/depfile proof |
 | Verified source gaps | **8** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Not native runtime | **27** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Not x64 host backend | **6** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
@@ -25,7 +26,7 @@
 | NCZBLOCK already implemented | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | Native semaphore scheduler | **1** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
 | NCE GPU readback reverted | **2** | Source/contrat qualifié selon [registre exact](r23/R23_EDEN_155_APPLICABILITY_2026-11-11.json) |
-| **Total** | **155** | **76 avis runtime encore ouverts** |
+| **Total** | **155** | **73 avis runtime encore ouverts** |
 
 ## Cinq modifications ciblées déjà préparées (aucune fusion)
 
@@ -150,3 +151,7 @@ Les audits de code ont qualifié **#114** (conversion RDTSC vers nanosecondes au
 | **#139** | Le fichier épinglé `core/hle/service/nfp/nfp.cpp` (blob `b9922ce...`) ne déclare pas les trois commandes 25 `StartDetectionWithFilter`; l'amont les mappe à `StartDetection` | **Écart E1 pertinent**, 3 tables IPC à tester, pas de console confirmée |
 
 Ces décisions sont **source-review completed**, jamais des correctifs homologués. Le compteur devient **86 autres commits runtime à analyser**, **6 écarts source qualifiés avec intégration PS5 restante**, **1 cas d'affinité GPU à mesurer**, **5 correctifs hôte préparés**, **6 cas build/dépendances**, **17 en-têtes sans preuve native** et **7 lots C00–C06 à valider sur console**.
+
+## 11 Nov — contrôle Dynarmic x64 page-table (source E1, non E3/E4)
+
+Le [rapport de comparaison des quatre commits x64](ENCORE_AB_R23_DYNARMIC_X64_LOOKUP_PARITY_2026-11-11.md) et le garde-fou source en lecture seule distinguent **#125 A32 LEA**, **#122 A64 LEA** et **#117 restauration A64 sign extension** (trois équivalences E1) du cas **#136 A32 sign extension**, encore divergent. Le vrai chemin de l'en-tête dépend des reçus de compilation; ne pas déduire de FPS ou de correction console d'une copie CMake. **73 analyses sémantiques R23 restantes**, 17 en-têtes originaux à tracer, 7 lots correctifs à qualifier. Les anciens compteurs documentés dans les passes datées restent historiques.

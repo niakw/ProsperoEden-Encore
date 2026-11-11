@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 76,
+        "runtime-semantic-review-pending": 73,
+        "source-equivalent-declared-native-x64-lookup": 3,
         "not-applicable-to-PS5-native-packaging-assets": 8,
         "not-applicable-to-native-runtime-source": 27,
         "staged-host-source-fix": 5,
@@ -118,6 +119,11 @@ def validate(root: Path, app: dict | None = None) -> dict:
             "runtime-semantic-review-pending",
         ):
             raise ValueError(f"R23 compressed-content case #{i} changed silently")
+    for i in (117, 122, 125):
+        if by_index[i]["classification"] != "source-equivalent-declared-native-x64-lookup":
+            raise ValueError(f"R23 x64 page-table lookup #${i} lost E1 parity proof")
+    if by_index[136]["classification"] != "runtime-semantic-review-pending":
+        raise ValueError("R23 A32 sign-extension divergence #136 still requires JIT tests")
     # All eight upstream UI/translation commits are outside the actual PS5 package:
     # the separate launcher embeds its own ui/*.po, branded assets and artwork.
     native_pkg = (root / "tools/package-headless-native.sh").read_text()
@@ -190,7 +196,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 76
+    assert validate(root)["runtime_semantic_cases_pending"] == 73
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 22,
-    "runtime-semantic-review-pending": 30,
+    "runtime-semantic-review-pending": 29,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -59,7 +59,8 @@
     "reviewed-depth-sampler-fallback-preserved-test-open": 1,
     "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
     "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
-    "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1
+    "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
+    "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -2784,9 +2785,9 @@
       "sha": "3cdd2ce141224079ce1dc8bfb4be7edc113aca02",
       "title": "[android, renderer_vulkan] Сhange default settings (#4509)",
       "file_count": 14,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred",
+      "scope": "Source E1: selected maintained PS5 Vulkan presenter and R08 header/renderer already implement 3 bounded present retries, fallback DiscardFrame and atomic swapchain accessors; original upstream default changes NVDEC GPU->CPU and airplane false->true are distinct untested product policy.",
+      "action": "Do not duplicate the already maintained Vulkan present changes or silently alter defaults. See ENCORE_AB_R23_SEMANTIC_SOURCE_PASS19_2026-11-11.md; require current native compiled-owner and PS5 video/guest-network regression before changing default policy.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",

@@ -20,10 +20,10 @@ static FramegenBridgeInput Fixture(FG::FrameGeneration mode){
     x.original_152_gpu_recorded=true;
     x.guest={11u,12u,{1280u,720u}};
     x.neural={21u,22u,{1280u,720u}};
-    x.post_fsr={31u,32u,{3840u,2160u}};
+    x.post_spatial={31u,32u,{3840u,2160u}};
     x.neural_result_submitted=true;
-    x.post_neural_easu_rcas_recorded=true;
-    x.real_frame_composited_after_fsr=true;
+    x.post_spatial_filter_recorded=true;
+    x.final_post_spatial_frame_composited=true;
     x.stable_real_frame_pair=true;
     x.independent_guest_hud_or_explicitly_verified=true;
     x.same_graphics_queue=true;
@@ -47,10 +47,10 @@ int main(){
     static_assert(!kPs5MinRuntimeQualified);
     // Current user selection remains exclusive: no change to any
     // existing working framegen mode when neural is OFF.
-    for(int fg=0;fg<=3;++fg) {
+    for(int fg=0;fg<=3;++fg){
         assert(EffectiveCompositeFramegen(0,fg)==fg);
-        assert(EffectiveCompositeFramegen(4,fg)==0);
-        assert(EffectiveCompositeFramegen(5,fg)==0);
+        for(int neural=1;neural<=5;++neural)
+            assert(EffectiveCompositeFramegen(neural,fg)==0);
     }
     assert(EffectiveCompositeFramegen(0,4)==0);
     assert(EffectiveCompositeFramegen(4,-1)==0);
@@ -63,9 +63,9 @@ int main(){
         assert(candidate.host_shape_qualified);
         assert(!candidate.ps5_runtime_enabled);
         assert(candidate.downstream==method);
-        assert(candidate.post_fsr_source.image==x.post_fsr.image);
-        assert(candidate.post_fsr_source.view==x.post_fsr.view);
-        assert(candidate.post_fsr_source.extent.width==3840u);
+        assert(candidate.post_spatial_source.image==x.post_spatial.image);
+        assert(candidate.post_spatial_source.view==x.post_spatial.view);
+        assert(candidate.post_spatial_source.extent.width==3840u);
         // The established FPS/pacing authority remains FramegenPresentGate.
         // First REAL 30fps frame primes history; the next may permit 1
         // synthetic 60Hz display frame. Neither creates a neural frame.
@@ -88,6 +88,41 @@ int main(){
         std::cout<<"R09_MIN_720_POST_FSR_FRAMEGEN_HOST_AB_PASS method="
                  <<static_cast<unsigned>(method)<<" runtime=OFF\n";
     }
+    // Matrix: A4K Detail/Soft/Denoise × 7 spatial filters ×
+    // Mihawk, FSR3 and LSFG × 1080p/1440p/2160p. The native A4K
+    // x2 output is 2560x1440 before the spatial/composite stage.
+    // This certifies host gate logic only, never PS5 FG throughput.
+    unsigned a4k_fg_candidates=0u;
+    for(int neural_mode=1;neural_mode<=3;++neural_mode){
+        for(int spatial=0;spatial<=6;++spatial){
+            for(auto method:{FG::FrameGeneration::MihawkGen,
+                             FG::FrameGeneration::Fsr3Vulkan,
+                             FG::FrameGeneration::LosslessScaling}){
+                for(const auto output:{Extent{1920u,1080u},
+                                       Extent{2560u,1440u},
+                                       Extent{3840u,2160u}}){
+                    auto e=Fixture(method);
+                    e.neural_mode=neural_mode;
+                    e.original_152_model_authenticated=false;
+                    e.original_152_gpu_recorded=false;
+                    e.a4k_native_x2_gpu_recorded=true;
+                    e.a4k_output_image_and_view_identified=true;
+                    e.neural.extent={2560u,1440u};
+                    e.spatial_filter=spatial;
+                    e.post_spatial.extent=output;
+                    const auto candidate=AssessPostNeuralFramegen(e);
+                    assert(candidate.reason==R::HostCandidateOnly);
+                    assert(candidate.a4k_source);
+                    assert(candidate.post_spatial_source.extent.width==output.width);
+                    assert(candidate.post_spatial_source.image==e.post_spatial.image);
+                    assert(candidate.host_shape_qualified);
+                    assert(!candidate.ps5_runtime_enabled);
+                    a4k_fg_candidates++;
+                }
+            }
+        }
+    }
+    assert(a4k_fg_candidates==189u);
     auto q=Fixture(FG::FrameGeneration::MihawkGen);
     q.neural_mode=0;Expect(q,R::NoNeuralSelection);
     q=Fixture(FG::FrameGeneration::MihawkGen);
@@ -95,6 +130,19 @@ int main(){
     q=Fixture(FG::FrameGeneration::Off);Expect(q,R::Disabled);
     q=Fixture(FG::FrameGeneration::DlssPcOnlyUnsupported);
     Expect(q,R::UnsupportedBackend);
+    // A4K must fail unless a REAL native x2 image and its true VkImage
+    // owner have been verified. A disabled or stale A4K mode must never
+    // leak into a misleading framegen eligibility result.
+    q=Fixture(FG::FrameGeneration::MihawkGen);
+    q.neural_mode=1;q.neural.extent={2560u,1440u};
+    q.original_152_model_authenticated=false;
+    q.original_152_gpu_recorded=false;
+    Expect(q,R::MissingOriginal);
+    q.a4k_native_x2_gpu_recorded=true;
+    Expect(q,R::MissingOriginal);
+    q.a4k_output_image_and_view_identified=true;
+    q.neural.extent={1280u,720u};
+    Expect(q,R::WrongOrderOrExtent);
     q=Fixture(FG::FrameGeneration::MihawkGen);
     q.original_152_model_authenticated=false;Expect(q,R::MissingOriginal);
     q=Fixture(FG::FrameGeneration::MihawkGen);
@@ -102,18 +150,18 @@ int main(){
     q=Fixture(FG::FrameGeneration::MihawkGen);
     q.neural.image=0u;Expect(q,R::MissingGuestOrNeuralImage);
     q=Fixture(FG::FrameGeneration::MihawkGen);
-    q.post_fsr.view=0u;Expect(q,R::MissingGuestOrNeuralImage);
+    q.post_spatial.view=0u;Expect(q,R::MissingGuestOrNeuralImage);
     q=Fixture(FG::FrameGeneration::MihawkGen);
-    q.post_fsr.image=q.neural.image;Expect(q,R::MissingGuestOrNeuralImage);
+    q.post_spatial.image=q.neural.image;Expect(q,R::MissingGuestOrNeuralImage);
     q=Fixture(FG::FrameGeneration::MihawkGen);
-    q.post_fsr.extent={1280u,720u};Expect(q,R::WrongOrderOrExtent);
+    q.post_spatial.extent={1280u,720u};Expect(q,R::WrongOrderOrExtent);
     q=Fixture(FG::FrameGeneration::MihawkGen);
     q.neural.extent={1920u,1080u};Expect(q,R::WrongOrderOrExtent);
     q=Fixture(FG::FrameGeneration::MihawkGen);
-    q.post_neural_easu_rcas_recorded=false;
+    q.post_spatial_filter_recorded=false;
     Expect(q,R::WrongOrderOrExtent);
     q=Fixture(FG::FrameGeneration::MihawkGen);
-    q.real_frame_composited_after_fsr=false;
+    q.final_post_spatial_frame_composited=false;
     Expect(q,R::WrongOrderOrExtent);
     q=Fixture(FG::FrameGeneration::MihawkGen);
     q.neural_result_submitted=false;Expect(q,R::MissingGpuOwnership);
@@ -149,5 +197,5 @@ int main(){
     q=Fixture(FG::FrameGeneration::LosslessScaling);
     q.lossless_native_shaders_validated=false;Expect(q,R::InvalidProvider);
     std::cout<<"R09_MIN_720_MIHAWK_FSR3_LSFG_BRIDGE_PASS "
-                "28_NEGATIVE_GATES_NO_PS5_FG_ENABLE\n";
+                "A4K_189_MATRIX_CANDIDATES_NO_PS5_FG_ENABLE\n";
 }

@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 22,
-    "runtime-semantic-review-pending": 31,
+    "runtime-semantic-review-pending": 30,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -58,7 +58,8 @@
     "reviewed-lock-contention-policy-deferred-native": 1,
     "reviewed-depth-sampler-fallback-preserved-test-open": 1,
     "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
-    "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1
+    "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
+    "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -2808,9 +2809,9 @@
       "sha": "10bcd2d849843b146a79c61a21df615e1bdcfcde",
       "title": "[settings] add PR4490 & PR4492 toggles (#4502)",
       "file_count": 8,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-NCE-settings-toggle-no-PS5-x64-port",
+      "scope": "Source E1: upstream #82 adds a default-off NCE GPU readback option and an #ifdef HAS_NCE NRO control; the pinned Eden CMake enables HAS_NCE on ARM64 Android/Linux only, not PS5 x64 Dynarmic.",
+      "action": "Do not port unused NCE controls to PS5 x64. See ENCORE_AB_R23_SEMANTIC_SOURCE_PASS18_2026-11-11.md; upstream #6 shared GPU changes, #68 unconditional RO permission update and #149 HLE session limits remain independent unresolved cases.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",

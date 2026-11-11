@@ -2860,3 +2860,36 @@ if(PS5_NATIVE)
     set_property(TARGET core PROPERTY SOURCES "${eden_c01_romfs_sources}")
     message(STATUS "Encore C01 RomFS builder exact selected lifetime fix")
 endif()
+
+# R23 #146 / #4406: one maintained native header for Maxwell channel cache.
+# The pinned vendor snapshot is immutable; do not copy a generated patch over it.
+if(PS5_NATIVE)
+    set(eden_r23_channel_owner
+        "${PORT_ROOT}/vendor/sources/eden/src/video_core/control/channel_state_cache.h")
+    set(eden_r23_channel_maintained
+        "${EDEN_PORT_DIR}/r23_channel_state_cache_ps5.h")
+    if(NOT EXISTS "${eden_r23_channel_owner}" OR
+       NOT EXISTS "${eden_r23_channel_maintained}")
+        message(FATAL_ERROR "R23 pinned Maxwell channel cache header missing")
+    endif()
+    file(READ "${eden_r23_channel_owner}" eden_r23_channel_original)
+    string(FIND "${eden_r23_channel_original}"
+        "    P* channel_state;" eden_r23_channel_pre_fix)
+    if(eden_r23_channel_pre_fix EQUAL -1)
+        message(FATAL_ERROR "R23 original channel_state member changed: stop/requalify")
+    endif()
+    file(READ "${eden_r23_channel_maintained}" eden_r23_channel_fixed)
+    string(FIND "${eden_r23_channel_fixed}"
+        "    P* channel_state = nullptr;" eden_r23_channel_is_fixed)
+    if(eden_r23_channel_is_fixed EQUAL -1)
+        message(FATAL_ERROR "R23 channel_state pointer initializer missing")
+    endif()
+    file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/include/video_core/control")
+    configure_file("${eden_r23_channel_maintained}"
+        "${PORT_BUILD_DIR}/include/video_core/control/channel_state_cache.h" COPYONLY)
+    # A single consistent template layout must be visible to all native owners.
+    target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+    target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+    message(STATUS "Encore R23 Maxwell channel state pointer initialized (header overlay)")
+endif()
+

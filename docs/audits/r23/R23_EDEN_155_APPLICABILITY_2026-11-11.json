@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 28,
-    "runtime-semantic-review-pending": 22,
+    "verified-relevant-source-gap-awaiting-native-proof": 29,
+    "runtime-semantic-review-pending": 20,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -61,7 +61,8 @@
     "reviewed-upstream-NCZBLOCK-optimization-module-not-current-native-owner": 1,
     "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
     "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
-    "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1
+    "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
+    "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -592,9 +593,9 @@
       "sha": "656cdd948e097f20fcb72c3f5179e2744771f424",
       "title": "[dynarmic] Fix guest debugging with gdb-stub (#4620)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 partially equivalent current G11 A32/A64 cached-code invalidation; original shared A32 Dynarmic optimize still lacks debugger check_halt_on_memory_access guard.",
+      "action": "Only A32 optimized debugger watchpoint/halts need native test/fix; preserve G11 A32/A64 cache code and test source-differential GDB.",
       "paths": [
         "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
         "src/core/arm/dynarmic/arm_dynarmic_64.cpp",
@@ -602,7 +603,9 @@
         "src/dynarmic/tests/A32/test_invalidation.cpp",
         "src/dynarmic/tests/A32/test_mem_abort_context.cpp",
         "src/dynarmic/tests/CMakeLists.txt"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream diff + current native selected sources and CMake; no PS5 device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS24_2026-11-11.md"
     },
     {
       "index": 11,
@@ -1584,9 +1587,9 @@
       "sha": "aaa0bcb9bf5694d62538c361b210147294a5ce3d",
       "title": "[patcher, ro, settings] runtime tls patch (#4492) optimization and nuke toggle (#4502) (#4523)",
       "file_count": 9,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-PS5-native-x64-RO-perms-NCE-excluded",
+      "scope": "E1 PS5 x64 NCE code gated and not selected; native RO original already validates and sets permissions unconditionally.",
+      "action": "No NCE runtime patch import into PS5 x64 Dynarmic; test unchanged RO NRO perms/reload guest and re-open only for distinct NCE backend.",
       "paths": [
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/BooleanSetting.kt",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/features/settings/model/view/SettingsItem.kt",
@@ -1597,7 +1600,9 @@
         "src/core/arm/nce/patcher.h",
         "src/core/hle/service/ro/ro.cpp",
         "src/qt_common/config/shared_translation.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream diff + current native selected sources and CMake; no PS5 device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS24_2026-11-11.md"
     },
     {
       "index": 69,

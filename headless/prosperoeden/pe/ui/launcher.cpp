@@ -1078,7 +1078,9 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
         }
         if (focused > 0.001f)
             plate_focus(c, kNavPlate, r, focused);
-        const float gx = i == 3 ? r.x + r.w * 0.5f : r.x + 30.0f;
+        // Both utility icons live in 68px square-focus cells. Use the same
+        // geometric centre for the draw and the ring/hover target.
+        const float gx = i >= 3 ? r.x + r.w * 0.5f : r.x + 30.0f;
         const float gy = r.y + r.h * 0.5f;
         const Color ink = active || focused > 0.01f ? theme::kTitle : theme::kMuted;
         if (i == 0) {

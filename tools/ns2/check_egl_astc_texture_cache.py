@@ -89,7 +89,7 @@ legacy_tex = tex.replace(impl_native + "\n", "", 1)
 # R4 research deliberately modifies the real N60 TextureCache. Preserve the
 # immutable N60 SHA gate by removing ONLY the exact, SHA-pinned R4 additions
 # before replaying the historical parity test. Other edits still fail.
-r4_pin = "99fc3e73c97c99b48ed870fb26105e20f6cae944"
+r4_pin = "92d4200d34ce6d4bf21e2cb60f0ea28dbffcd9f5"
 current_vendor = subprocess.check_output([
     "git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"
 ], text=True).strip()
@@ -99,7 +99,7 @@ if current_vendor == r4_pin:
     r4_sha = subprocess.check_output([
         "git", "hash-object", str(OWNER / "texture_cache.h")
     ], text=True).strip()
-    assert r4_sha == "dccf7eab3485f69ce6bb31c0ea96a473349639e6", (
+    assert r4_sha == "b48a544156be57b0dfe21bdf3972399a4349941c", (
         "R4 modified N60 owner outside reviewed native candidate", r4_sha
     )
     for addition in (
@@ -122,6 +122,26 @@ if current_vendor == r4_pin:
     candidate, after = rest.split(stop, 1)
     assert "copy_native_volume_slice" in candidate and "IsGraphicsCurrent" in candidate
     legacy_tex = before + "    const auto result = GetBlitImages(dst, src, copy);" + after
+    # The actual N60 cache lacked the already-reviewed Vulkan GPU-retirement
+    # handoff present in the unselected shadow. Strip only these exact
+    # fingerprinted PS5-only additions to keep the original ABI audit strict.
+    retirement_view = '''#ifdef PS5_NATIVE
+        if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+            // Both GC and immediate eviction must retain the underlying
+            // Vulkan image view through actual GPU completion.
+            runtime.RetireGpuImageView(std::move(slot_image_views[image_view_id]));
+        } else
+#endif
+'''
+    retirement_image = '''#ifdef PS5_NATIVE
+    if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+        runtime.RetireGpuImage(std::move(slot_images[image_id]));
+    } else
+#endif
+'''
+    for addition in (retirement_view, retirement_image):
+        assert legacy_tex.count(addition) == 1, ("N60 native retirement owner drift", addition)
+        legacy_tex = legacy_tex.replace(addition, "", 1)
 legacy_sha = subprocess.run(
     ["git", "hash-object", "--stdin"], input=legacy_tex,
     text=True, check=True, capture_output=True

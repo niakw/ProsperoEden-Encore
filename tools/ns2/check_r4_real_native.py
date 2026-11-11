@@ -15,8 +15,8 @@ import subprocess
 import sys
 import tempfile
 
-VENDOR = "99fc3e73c97c99b48ed870fb26105e20f6cae944"
-HEADER_BLOB = "dccf7eab3485f69ce6bb31c0ea96a473349639e6"
+VENDOR = "92d4200d34ce6d4bf21e2cb60f0ea28dbffcd9f5"
+HEADER_BLOB = "b48a544156be57b0dfe21bdf3972399a4349941c"
 LIVE_HEADER = ("vendor/encore-active/ns2-astc/include/"
                "video_core/texture_cache/texture_cache.h")
 INACTIVE_HEADER = ("vendor/encore-active/eden-vulkan/vulkan-cache/"
@@ -124,7 +124,9 @@ def main():
             'template bool VideoCommon::TextureCache<Vulkan::TextureCacheParams>::BlitImage(\n'
             '    const Tegra::Engines::Fermi2D::Surface&,\n'
             '    const Tegra::Engines::Fermi2D::Surface&,\n'
-            '    const Tegra::Engines::Fermi2D::Config&);\n')
+            '    const Tegra::Engines::Fermi2D::Config&);\n'
+            'template void VideoCommon::TextureCache<Vulkan::TextureCacheParams>::DeleteImage(\n'
+            '    VideoCommon::ImageId, bool);\n')
         orig_source=str(record["file"])
         explicit_flags=[str(explicit) if flag==orig_source else flag for flag in flags]
         if explicit_flags.count(str(explicit))!=1:
@@ -140,8 +142,12 @@ def main():
         symbols=run([nm,"-C","--defined-only",str(native_blit)]).stdout
         if "TextureCache<Vulkan::TextureCacheParams>::BlitImage(" not in symbols:
             raise RuntimeError("R4 Vulkan BlitImage was not emitted by explicit instantiation")
+        if "TextureCache<Vulkan::TextureCacheParams>::DeleteImage(" not in symbols:
+            raise RuntimeError("R4 actual N60 Vulkan DeleteImage GPU retirement symbol missing")
         print("R4_NATIVE_EXPLICIT_BLIT_PASS: genuine Vulkan template instantiated and "
               "native BlitImage symbol emitted",flush=True)
+        print("R4_NATIVE_EXPLICIT_RETIRE_PASS: actual N60 Vulkan DeleteImage instantiated "
+              "and machine-code symbol emitted",flush=True)
         bc=out/"r4-texture-cache-lto.o"
         run([*flags,"-o",str(bc)],cwd=record["directory"],env=env,timeout=1200)
         binary=bc.read_bytes()

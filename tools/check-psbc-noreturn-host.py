@@ -62,4 +62,56 @@ with tempfile.TemporaryDirectory() as tmp:
                            "-DHAVE_FUNC_ATTRIBUTE_NORETURN=1",
                            "-c", str(src), "-o", str(out)], capture_output=True, text=True)
     assert good.returncode == 0, good.stderr
+
+# Exercise the real cleanup function against sandbox files on both early
+# and late simulated failure. Never invokes SDK builder or modifies vendor.
+import re
+cleanup = re.search(r"(?ms)^cleanup\(\) \{\n.*?^\}\ntrap cleanup EXIT\n", build)
+assert cleanup, "cleanup/trap must remain a contiguous shell function"
+for scenario in ("early", "late"):
+    with tempfile.TemporaryDirectory(prefix="encore-psbc-rollback-") as sandbox:
+        harness = r"""
+set -euo pipefail
+root="$1"
+stage="$root/stage"
+cross_file="$root/cross.ini"
+host_test="$root/host-test.c"
+psbc_host="$root/host.mak"
+psbc_ps5="$root/ps5.mak"
+cross_backup=""
+host_test_backup=""
+psbc_configs=()
+mkdir -p "$stage"
+printf 'original cross\n' > "$cross_file"
+printf 'original host test\n' > "$host_test"
+printf 'original host config\n' > "$psbc_host"
+printf 'original ps5 config\n' > "$psbc_ps5"
+""" + cleanup.group() + r"""
+cross_backup="${cross_file}.encore-backup.$"
+cp -p "$cross_file" "$cross_backup"
+printf 'mutated cross\n' > "$cross_file"
+if [[ "$2" == late ]]; then
+    host_test_backup="${host_test}.encore-backup.$"
+    cp -p "$host_test" "$host_test_backup"
+    printf 'mutated host test\n' > "$host_test"
+    for cfg in "$psbc_host" "$psbc_ps5"; do
+        cp -p "$cfg" "${cfg}.encore-backup.$"
+        psbc_configs+=("$cfg")
+        printf 'mutated compiler config\n' > "$cfg"
+    done
+fi
+exit 31
+"""
+        observed = subprocess.run(["bash", "-c", harness, "rollback-host", sandbox, scenario],
+                                  capture_output=True, text=True)
+        assert observed.returncode == 31, (scenario, observed.stderr)
+        expected = {"cross.ini": b"original cross\n",
+                    "host-test.c": b"original host test\n",
+                    "host.mak": b"original host config\n",
+                    "ps5.mak": b"original ps5 config\n"}
+        for filename, contents in expected.items():
+            assert (Path(sandbox) / filename).read_bytes() == contents, (scenario, filename)
+        assert not (Path(sandbox) / "stage").exists(), scenario
+        assert not list(Path(sandbox).glob("*.encore-backup.*")), scenario
+
 print("PASS PSBC host/PS5 noreturn attribute, compiler proof, guarded restoration")

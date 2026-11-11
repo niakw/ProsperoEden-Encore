@@ -18,6 +18,7 @@ on:
       - 'extras/graphics/test_dlss_nr_min_720_present_owners.py'
       - 'extras/graphics/test_dlss_nr_min_720_session_buffer_owners.py'
       - 'extras/graphics/test_dlss_nr_min_720_fswin_owners.py'
+      - 'extras/graphics/test_dlss_nr_min_720_fswin_scratch_owners.py'
   workflow_dispatch:
 
 permissions:
@@ -65,6 +66,7 @@ jobs:
           python3 extras/graphics/test_dlss_nr_min_720_present_owners.py --vendor vendor
           python3 extras/graphics/test_dlss_nr_min_720_session_buffer_owners.py --vendor vendor
           python3 extras/graphics/test_dlss_nr_min_720_fswin_owners.py --vendor vendor
+          python3 extras/graphics/test_dlss_nr_min_720_fswin_scratch_owners.py --vendor vendor
           echo R09_MIN_VIT_AND_720_NATIVE_LAUNCH_PINNED_SOURCE_GUARDS_PASS
 
       - name: C++20 host assertions with GCC and Clang under UBSan
@@ -89,7 +91,8 @@ jobs:
               test_dlss_nr_min_720_post_fsr_bytes \
               test_dlss_nr_min_720_session_buffer_audit \
               test_dlss_nr_min_720_full_owner_coverage \
-              test_dlss_nr_min_720_fswin_tensor_audit; do
+              test_dlss_nr_min_720_fswin_tensor_audit \
+              test_dlss_nr_min_720_fswin_scratch_pool; do
             test -f "extras/graphics/${unit}.cpp"
           done
           for cxx in g++ clang++; do
@@ -110,7 +113,8 @@ jobs:
               test_dlss_nr_min_720_post_fsr_bytes \
               test_dlss_nr_min_720_session_buffer_audit \
               test_dlss_nr_min_720_full_owner_coverage \
-              test_dlss_nr_min_720_fswin_tensor_audit; do
+              test_dlss_nr_min_720_fswin_tensor_audit \
+              test_dlss_nr_min_720_fswin_scratch_pool; do
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Iextras/graphics -Iheadless \

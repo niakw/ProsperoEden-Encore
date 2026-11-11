@@ -815,6 +815,32 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #1: the 23.5.0 NS qlaunch event/IPC dispatch needs the exact
+# prepared current backport and matching header. Never add a second NS TU.
+if(PS5_NATIVE)
+    set(EDEN_R23_FW235_NS_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-backports/src/core/hle/service/ns")
+    set(EDEN_R23_FW235_NS_INCLUDE "${PORT_BUILD_DIR}/r23-fw235-ns/include")
+    if(NOT EXISTS "${EDEN_R23_FW235_NS_SOURCE}/application_manager_interface.cpp"
+       OR NOT EXISTS "${EDEN_R23_FW235_NS_SOURCE}/application_manager_interface.h")
+        message(FATAL_ERROR "R23 #1 maintained FW23.5 NS source/header mismatch")
+    endif()
+    configure_file("${EDEN_R23_FW235_NS_SOURCE}/application_manager_interface.h"
+        "${EDEN_R23_FW235_NS_INCLUDE}/core/hle/service/ns/application_manager_interface.h" COPYONLY)
+    get_target_property(eden_r23_fw235_ns_units core SOURCES)
+    list(FIND eden_r23_fw235_ns_units
+         "hle/service/ns/application_manager_interface.cpp" eden_r23_fw235_ns_old)
+    if(eden_r23_fw235_ns_old LESS 0)
+        message(FATAL_ERROR "R23 #1 original NS application manager owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_fw235_ns_units "hle/service/ns/application_manager_interface.cpp")
+    list(APPEND eden_r23_fw235_ns_units
+         "${EDEN_R23_FW235_NS_SOURCE}/application_manager_interface.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_fw235_ns_units}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_R23_FW235_NS_INCLUDE}")
+    message(STATUS "R23 #1: one native qlaunch NS interface + matched 23.5 header")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

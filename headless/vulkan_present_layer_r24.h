@@ -101,6 +101,11 @@ private:
     bool fxaa_enhanced_setting{}; // actual SPIR-V variant used by FXAA
     std::variant<std::monostate, FXAA, SMAA> anti_alias{};
     std::variant<std::monostate, SGSR, FSR, Anime4K3D> sr_filter{};
+#if defined(EDEN_R09_A4K_DUAL_IMAGE_RESEARCH) && EDEN_R09_A4K_DUAL_IMAGE_RESEARCH
+    // Optional *second* neural stage only in the vendor-API research test.
+    // Spatial sr_filter remains independent. Never active on a normal PS5.
+    std::unique_ptr<Anime4K3D> research_a4k_neural{};
+#endif
     std::vector<u64> resource_ticks{};
     // Each model session is single-use. On a slot's next presentation,
     // scheduler.Wait(resource_ticks[slot]) retires its GPU commands before

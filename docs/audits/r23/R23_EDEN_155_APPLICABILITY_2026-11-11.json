@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 28,
-    "runtime-semantic-review-pending": 10,
+    "verified-relevant-source-gap-awaiting-native-proof": 36,
+    "runtime-semantic-review-pending": 0,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -66,7 +66,9 @@
     "reviewed-optional-ReShade-native-PS5-not-selected-no-port": 1,
     "reviewed-current-PS5-CXX26-fmt-migration-deferred": 1,
     "reviewed-current-PS5-HTTP-JSON-module-migration-deferred": 1,
-    "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 8
+    "source-covered-shipping-native-backport-E1-awaiting-PS5-proof": 8,
+    "reviewed-current-PS5-x64-NCE-write-fault-path-not-selected": 1,
+    "reviewed-current-PS5-JIT-callback-ABI-coalescence-deferred": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -88,9 +90,9 @@
       "sha": "6a767ac43a089fe988526bf7f8477ccc43277fb1",
       "title": "[vulkan]EDS3 Depth Clamp Fixes and Async Shader Fixes (#4639)",
       "file_count": 9,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: native fixed_pipeline_state and maintained Vulkan graphics pipeline lack upstream depth-clamp/clip EDS3 and async shader storage-write side effect flags.",
+      "action": "Test Vulkan depth clamp, stage storage writes, pipeline cache version and game/AA/FG combinations on PS5 RADV. See pass29.",
       "paths": [
         "src/video_core/renderer_vulkan/fixed_pipeline_state.cpp",
         "src/video_core/renderer_vulkan/fixed_pipeline_state.h",
@@ -101,7 +103,9 @@
         "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
         "src/video_core/vulkan_common/vulkan_device.cpp",
         "src/video_core/vulkan_common/vulkan_device.h"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 3,
@@ -483,9 +487,9 @@
       "sha": "bfa72a22a34591453326dc1468fb9604fb86421f",
       "title": "[core, video_core] Preserve GPU writes during NCE fault handling (#4604)",
       "file_count": 8,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-current-PS5-x64-NCE-write-fault-path-not-selected",
+      "scope": "E1 upstream NCE host fault handler and GPU dirty-preservation keep_tracking are exercised by NCE; PS5 x64 Dynarmic does not select HAS_NCE.",
+      "action": "No NCE runtime transplant; preserve current normal CPU buffer writeback and test overlapping dirty GPU/CPU pages under PS5 RADV. See pass29.",
       "paths": [
         "src/core/arm/nce/arm_nce.cpp",
         "src/core/memory.cpp",
@@ -495,7 +499,9 @@
         "src/video_core/buffer_cache/word_manager.h",
         "src/video_core/gpu.cpp",
         "src/video_core/gpu.h"
-      ]
+      ],
+      "source_evidence_level": "E1 selected PS5 native architecture/ABI ownership and upstream changes; no E4 device behavior proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 7,
@@ -620,9 +626,9 @@
       "sha": "35f0dd7c1ca064ec95ab7efd9981b00f8dcfb989",
       "title": "[dynarmic] fix seven A32 and x64 defects (#4598)",
       "file_count": 17,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: pinned x64 emitters lack upstream divide-by-zero, FP rounding, SM4 address, vector pack/shift and A32 SHA decoders.",
+      "action": "Validate each seven upstream A32/x64 instruction fixes under test vectors, Zen2 host flags and PS5 native guest. See pass29.",
       "paths": [
         "src/dynarmic/CMakeLists.txt",
         "src/dynarmic/src/dynarmic/CMakeLists.txt",
@@ -641,7 +647,9 @@
         "src/dynarmic/tests/A64/a64.cpp",
         "src/dynarmic/tests/CMakeLists.txt",
         "src/dynarmic/tests/x64_cpu_info.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 12,
@@ -725,24 +733,26 @@
       "sha": "d85005b2b27ebdbe785316886cdf04c2894d550e",
       "title": "Fixed Civilization VII - added TIR mixed samples support (#4553)",
       "file_count": 4,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: selected PS5 maintained vk_texture_cache_cost and ns2-astc texture_cache.h lack new TIR raster/color mixed-sample scratch handling.",
+      "action": "Validate TIR raster-depth/color sample mismatch, Vk scratch lifetime, resolve and display with mixed MSAA. See pass29.",
       "paths": [
         "src/video_core/renderer_vulkan/fixed_pipeline_state.cpp",
         "src/video_core/renderer_vulkan/vk_texture_cache.cpp",
         "src/video_core/renderer_vulkan/vk_texture_cache.h",
         "src/video_core/texture_cache/texture_cache.h"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 19,
       "sha": "873fde41d03742db5e8e6a9f203385969b3f6e73",
       "title": "[common, controller] [AI] Controller assignment modes, Controllers tab, Steam Gamemode/Gamescope fixes (gyroscope, controller) (#4583)",
       "file_count": 57,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: upstream guest HID Joy-Con hold orientation/assignment changes absent from pinned HIDCore and selected maintained NPad; Qt/Steam menus excluded.",
+      "action": "Test real DualSense-to-NPAD mapping, handheld/console mode changes, gyro, reconnect and multi-controller applets. See pass29.",
       "paths": [
         "dist/qt_themes/qdarkstyle_midnight_blue/style.qss",
         "src/common/controller_console_state.h",
@@ -801,7 +811,9 @@
         "src/yuzu/util/gamescope.cpp",
         "src/yuzu/util/gamescope.h",
         "src/yuzu/util/overlay_dialog.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 20,
@@ -1085,9 +1097,9 @@
       "sha": "3d3ed4b7d15b9fac14f2ea255b56f486c34bfa81",
       "title": "[shader_recompiler, renderer_vulkan] draw sprites whose texture handle comes from a vertex attribute (#4566)",
       "file_count": 8,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: shared shader texture descriptor IR lacks ATTRIBUTE_HANDLE_CBUF_INDEX and selected maintained Vulkan graphics/rasterizer lacks attribute-texture draw-run split.",
+      "action": "Test attribute-driven texture handle sprite draws, descriptors, IR phi/run split and SPIR-V shader output. See pass29.",
       "paths": [
         "src/shader_recompiler/host_translate_info.h",
         "src/shader_recompiler/ir_opt/texture_pass.cpp",
@@ -1097,7 +1109,9 @@
         "src/video_core/renderer_vulkan/vk_pipeline_cache.cpp",
         "src/video_core/renderer_vulkan/vk_rasterizer.cpp",
         "src/video_core/renderer_vulkan/vk_rasterizer.h"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 36,
@@ -1388,9 +1402,9 @@
       "sha": "cbd4cf2d8ce9b66936bff8a19be4715e770e0c71",
       "title": "[hle][core] Hang Freeze Fix - Video Fixes - Revert Microsleep (#4316) (#4525)",
       "file_count": 7,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: native maintained IStorage source lacks upstream FS per-read pacing and pinned NVDEC service lacks SetNVDECActive global handoff; host service microsleep was independently removed upstream.",
+      "action": "Validate NS1 video decoder, FS storage pacing, service wait fairness, hangs and crash-free boot, without blind sleep injection. See pass29.",
       "paths": [
         "src/core/core.cpp",
         "src/core/core.h",
@@ -1399,7 +1413,9 @@
         "src/core/hle/service/nvdrv/devices/nvhost_nvdec.cpp",
         "src/core/hle/service/service.cpp",
         "src/core/hle/service/service.h"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 55,
@@ -1454,13 +1470,15 @@
       "sha": "0689f73147ebeddb9ac5fb8b0edf2625425f8d71",
       "title": "[ir] resolve conditional Phi inputs when tracking bindless texture handles (#4551)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: pinned shared shader texture_pass.cpp lacks ConditionalHeader for conditional Phi predecessor tracking; no selected native shader override.",
+      "action": "Test diamond/loop conditional Phi bindless descriptors and non-dominant branch cases with Vulkan SPIR-V validation. See pass29.",
       "paths": [
         "src/shader_recompiler/frontend/ir/breadth_first_search.h",
         "src/shader_recompiler/ir_opt/texture_pass.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 59,
@@ -3349,9 +3367,9 @@
       "sha": "9a30172e45fcb7833cc49ba4d6450211449b14df",
       "title": "[dynarmic] Coalesce non-exclusive Write/Read fallback functions (#4158)",
       "file_count": 25,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-current-PS5-JIT-callback-ABI-coalescence-deferred",
+      "scope": "E1 upstream 25-file unified Dynarmic callback interface and ordered-fence changes are major ABI/codegen refactor; current x64 maintained JIT uses existing per-size callbacks.",
+      "action": "No bulk callback ABI migration or barrier removal; require codegen/zen2 performance and memory ordering tests if ever considered. See pass29.",
       "paths": [
         "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
         "src/core/arm/dynarmic/arm_dynarmic_32.h",
@@ -3378,7 +3396,9 @@
         "src/dynarmic/tests/print_info.cpp",
         "src/dynarmic/tests/unicorn_emu/a32_unicorn.cpp",
         "src/dynarmic/tests/unicorn_emu/a64_unicorn.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 selected PS5 native architecture/ABI ownership and upstream changes; no E4 device behavior proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 112,
@@ -3402,9 +3422,9 @@
       "sha": "3c38afad74c751a949de0bcca9a51cfc11797f68",
       "title": "[fs] share parent resources with bundled programs (#4319)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1: selected original/maintained FS registry and save-data factories lack upstream GetParentApplicationId / per-bundled-program resource inheritance.",
+      "action": "Test bundled multi-program content, parent program IDs, SaveDataFactory identity and file permissions across NS1 titles. See pass29.",
       "paths": [
         "src/core/file_sys/patch_manager.cpp",
         "src/core/file_sys/patch_manager.h",
@@ -3412,7 +3432,9 @@
         "src/core/file_sys/registered_cache.h",
         "src/core/file_sys/savedata_factory.cpp",
         "src/core/file_sys/savedata_factory.h"
-      ]
+      ],
+      "source_evidence_level": "E1 pinned upstream diff + actual native original/maintained source identities; no compiled PS5 ELF/device regression",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS29_2026-11-11.md"
     },
     {
       "index": 114,

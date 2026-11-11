@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:vendor)" = 51af925b6f89f2750a1eea3406f615eb22f687af
-          test "$(git -C vendor rev-parse HEAD)" = 51af925b6f89f2750a1eea3406f615eb22f687af
+          test "$(git rev-parse HEAD:vendor)" = 99fc3e73c97c99b48ed870fb26105e20f6cae944
+          test "$(git -C vendor rev-parse HEAD)" = 99fc3e73c97c99b48ed870fb26105e20f6cae944
       - name: Restore isolated native compiler dependency cache read-only
         id: cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

@@ -89,7 +89,7 @@ legacy_tex = tex.replace(impl_native + "\n", "", 1)
 # R4 research deliberately modifies the real N60 TextureCache. Preserve the
 # immutable N60 SHA gate by removing ONLY the exact, SHA-pinned R4 additions
 # before replaying the historical parity test. Other edits still fail.
-r4_pin = "51af925b6f89f2750a1eea3406f615eb22f687af"
+r4_pin = "99fc3e73c97c99b48ed870fb26105e20f6cae944"
 current_vendor = subprocess.check_output([
     "git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"
 ], text=True).strip()
@@ -99,7 +99,7 @@ if current_vendor == r4_pin:
     r4_sha = subprocess.check_output([
         "git", "hash-object", str(OWNER / "texture_cache.h")
     ], text=True).strip()
-    assert r4_sha == "e1feabd488455632315f1d788b73718a6b01bbde", (
+    assert r4_sha == "dccf7eab3485f69ce6bb31c0ea96a473349639e6", (
         "R4 modified N60 owner outside reviewed native candidate", r4_sha
     )
     for addition in (

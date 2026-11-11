@@ -1,0 +1,39 @@
+name: NS1 R23 cheat parser PS5 native source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-cheat-parser-native-20261111
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - "vendor"
+      - ".github/workflows/ns1-r23-cheats-native-owner.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-cheat-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exact pinned source, native TU replacement and source sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "3e96ac7f77552c756d98d8db8a47d88b26c71fea"
+          python3 -B vendor/tests/ns1_r23_46_cheat_parser_fuzz.py
+          python3 - <<'PY'
+          from pathlib import Path
+          t=Path('headless/CMakeLists.txt').read_text()
+          required=('if(PS5_NATIVE)','get_target_property(eden_r23_cheat_sources core SOURCES)',
+                    'list(REMOVE_ITEM eden_r23_cheat_sources "memory/cheat_engine.cpp")',
+                    'list(APPEND eden_r23_cheat_sources "${EDEN_R23_CHEATS}")')
+          assert all(x in t for x in required)
+          assert Path('vendor/encore-active/eden-core/src/core/memory/cheat_engine.cpp').is_file()
+          print('NS1_R23_CHEATS_REAL_SELECTED_SOURCE_PASS one_TU=1')
+          PY
+          echo 'Host AST, source and sanitizers only, not linked PS5 EBOOT or game-boot evidence' >> "$GITHUB_STEP_SUMMARY"

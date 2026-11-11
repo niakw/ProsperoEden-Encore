@@ -163,7 +163,8 @@ float HalfToFloat(std::uint16_t v){
     return sign*std::ldexp(float(mantissa+1024u),int(exponent)-25);
 }
 void RunNative(Host& h,const std::array<const char*,5u>& shaders,
-               bool edge,bool gradient,bool full720){
+               bool edge,bool gradient,bool full720,
+               bool negative_missing_barrier){
     // 1280×720->1440p->4K needs real PS5 qualification; use smaller
     // but exact ratio on software Vulkan for non-toy shader correctness.
     const VkExtent2D source=full720?VkExtent2D{1280u,720u}:
@@ -358,13 +359,15 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
         vkCmdEndRenderPass(h.cmd);
         // Real color-attachment writes from EASU/RCAS/SGSR must be
         // visible to NEXT shader's sampler and to verification readback.
-        ImageBarrier(h.cmd,Transition(images[i+1u].image,
-            VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,
-            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_TRANSFER_READ_BIT),
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|
-            VK_PIPELINE_STAGE_TRANSFER_BIT);
+        if(!(negative_missing_barrier&&i==0u)){
+            ImageBarrier(h.cmd,Transition(images[i+1u].image,
+                VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_TRANSFER_READ_BIT),
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|
+                VK_PIPELINE_STAGE_TRANSFER_BIT);
+        }
         VkBufferImageCopy output_copy{};
         output_copy.imageSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0u,0u,1u};
         output_copy.imageExtent={pass.output.width,pass.output.height,1u};
@@ -390,6 +393,17 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
     Check(vkWaitForFences(h.device,1u,&fence,VK_TRUE,20'000'000'000ull),
           "wait native GPU readback fence");
     vkDestroyFence(h.device,fence,nullptr);
+    if(negative_missing_barrier){
+        // Deliberately violated native EASU color-write barrier.
+        // Do NOT inspect, compare or present undefined GPU pixels.
+        if(h.validation_errors==0u)
+            throw std::runtime_error(
+                "Khronos failed to detect native EASU/RCAS missing barrier");
+        std::cout<<"R09_AUTHENTIC_NATIVE_KHRONOS_NEGATIVE_BARRIER_REJECTED "
+                 <<"errors="<<h.validation_errors
+                 <<" no_undefined_readback=YES\n";
+        return;
+    }
     if(h.validation_errors!=0u)
         throw std::runtime_error("Khronos reported native GPU pipeline hazards");
     std::array<float,3u> maxDelta{};
@@ -451,10 +465,13 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
 int main(int argc,char** argv){
     const bool full720=argc==9&&
         std::string(argv[8])=="--full720";
-    if(argc!=8&&!full720){
+    const bool negative=argc==9&&
+        std::string(argv[8])=="--negative-missing-barrier";
+    if(argc!=8&&!full720&&!negative){
         std::cerr<<"Usage: native_witness <fsr.vert.spv> <easu.frag.spv> "
             "<rcas.frag.spv> <sgsr.vert.spv> <sgsr.frag.spv> "
-            "<normal|edge> <constant|gradient> [--full720]\n";
+            "<normal|edge> <constant|gradient> "
+            "[--full720|--negative-missing-barrier]\n";
         return 2;
     }
     const std::string edge_arg=argv[6],data_arg=argv[7];
@@ -464,7 +481,8 @@ int main(int argc,char** argv){
         Host h;
         h.Init();
         RunNative(h,{argv[1],argv[2],argv[3],argv[4],argv[5]},
-                  edge_arg=="edge",data_arg=="gradient",full720);
+                  edge_arg=="edge",data_arg=="gradient",
+                  full720,negative);
         return 0;
     }catch(const std::exception& e){
         std::cerr<<"R09_NATIVE_VENDOR_SHADER_GPU_FAIL "<<e.what()<<"\n";

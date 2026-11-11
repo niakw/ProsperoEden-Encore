@@ -10,9 +10,10 @@
 
 namespace Eden::Graphics::PipelineComposer {
 
-// Research schema v2 adds source raster-AA provenance. v1 must be migrated
-// explicitly rather than silently reinterpreting serialized MSAA settings.
-inline constexpr std::uint32_t kRecipeVersion=2u;
+// Research schema v3 adds per-stage strength (NR intensity / FSR/SGSR).
+// Previous v1/v2 formats must be migrated explicitly; never silently
+// reinterpret missing percent or source MSAA fields.
+inline constexpr std::uint32_t kRecipeVersion=3u;
 struct RecipeStage {
     Kind kind{Kind::Spatial};
     int method{};
@@ -20,6 +21,7 @@ struct RecipeStage {
     // Explicit when a later pass must transform ALL generated and real
     // surfaces rather than accidentally filtering just the real frame.
     bool processes_real_and_generated{};
+    std::int16_t strength_percent{-1};
 };
 struct Recipe {
     std::uint32_t version{kRecipeVersion};
@@ -113,6 +115,7 @@ struct Bindings {
         s.kind=spec.kind;
         s.method=spec.method;
         s.output=spec.output;
+        s.strength_percent=spec.strength_percent;
         if(spec.kind==Kind::Present) {
             // Terminal Present binds existing frame; it must not supply
             // a fabricated extra output resource.

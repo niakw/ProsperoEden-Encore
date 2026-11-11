@@ -205,5 +205,7 @@ int main(){
     q=Fixture(FG::FrameGeneration::LosslessScaling);
     q.lossless_native_shaders_validated=false;Expect(q,R::InvalidProvider);
     std::cout<<"R09_MIN_720_MIHAWK_FSR3_LSFG_BRIDGE_PASS "
-                "A4K_189_MATRIX_CANDIDATES_NO_PS5_FG_ENABLE\n";
+             <<"A4K_matrix_total=189 host_candidate="<<a4k_fg_candidates
+             <<" shader_downscale_rejected="<<(189u-a4k_fg_candidates)
+             <<" no_PS5_FG_enable=YES\n";
 }

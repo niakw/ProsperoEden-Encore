@@ -5,15 +5,18 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "runtime-semantic-review-pending": 105,
+    "runtime-semantic-review-pending": 101,
     "asset-and-translation-package-review": 8,
     "not-applicable-to-native-runtime-source": 25,
     "staged-host-source-fix": 5,
     "not-applicable-PS5-x64-execution": 4,
     "native-build-or-dependency-review": 4,
     "test-only-upstream": 1,
+    "reviewed-observability-only-no-NS1-behavioral-port": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
-    "reviewed-observability-only-no-NS1-behavioral-port": 1
+    "source-equivalent-current-openssl-native-build": 1,
+    "upstream-opus-ffmpeg-migration-reverted": 2,
+    "verified-absent-GPU-null-initialization-candidate": 1
   },
   "fully_semantic_and_runtime_qualified": false,
   "individual_commits": [
@@ -3628,14 +3631,15 @@
       "sha": "ee73920d288586103491d3e2af003b5c40bf4a1c",
       "title": "[hle/services/ssl] Remove deprecated SecureTransport and SChannel backends (#4392)",
       "file_count": 3,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "source-equivalent-current-openssl-native-build",
+      "scope": "Pinned core CMake unconditionally selects ssl_backend_openssl.cpp and links OpenSSL::SSL/OpenSSL::Crypto. Upstream only adds conditional OpenSSL::SSL fallback and removes unselected SChannel/SecureTransport source. Native source runtime unchanged if mandatory OpenSSL target exists.",
+      "action": "No SSL backend source port. Preserve OpenSSL dependency/ABI gate; optional no-OpenSSL fallback belongs separate build qualification, not PS5 guest runtime.",
       "paths": [
         "src/core/CMakeLists.txt",
         "src/core/hle/service/ssl/ssl_backend_schannel.cpp",
         "src/core/hle/service/ssl/ssl_backend_securetransport.cpp"
-      ]
+      ],
+      "source_evidence": "paired upstream individual commit diff + original pinned vendor source + exact parent-to-revert comparison; E1 only"
     },
     {
       "index": 139,
@@ -3726,9 +3730,9 @@
       "sha": "2b4184dd2bb33da081702263d59c3eadb299e673",
       "title": "Revert \"[audio] Replace libopus with FFmpeg (#4169)\" (#4419)",
       "file_count": 22,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "upstream-opus-ffmpeg-migration-reverted",
+      "scope": "Paired with #148. Exact net compare from parent of #148 (8a22f1845b8b7ec19fbb518b696513e36d42b317) to #142 returns unchanged core CMake and cpmfile, unchanged opus_decoder.cpp, and exactly four Opus files differing only in added Eden 2026 SPDX notice; intervening audio sink edits (#145) are distinct.",
+      "action": "Do not reintroduce abandoned FFmpeg-for-libopus migration. Retain copyright/legal notice check under R18, codec behavior of existing pinned decoder remains separate.",
       "paths": [
         ".patch/opus/0001-disable-clang-runtime-neon.patch",
         ".patch/opus/0002-no-install.patch",
@@ -3752,7 +3756,8 @@
         "src/audio_core/opus/hardware_opus.h",
         "src/core/CMakeLists.txt",
         "src/video_core/CMakeLists.txt"
-      ]
+      ],
+      "source_evidence": "paired upstream individual commit diff + original pinned vendor source + exact parent-to-revert comparison; E1 only"
     },
     {
       "index": 143,
@@ -3828,12 +3833,13 @@
       "sha": "9b649444803bc95423035eba335a1e11c1871793",
       "title": "[video_core/control] Fix SIGBUS due to uninit channel_state (#4406)",
       "file_count": 1,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-absent-GPU-null-initialization-candidate",
+      "scope": "Upstream one-line change src/video_core/control/channel_state_cache.h `P* channel_state;` => `P* channel_state = nullptr;`; original vendor/sources/eden blob 6d70e9be559cc74d88e1204cea909168b4b2d686 retains uninitialized member. No selected PS5 compiler header depfile available, so guest reachability and SIGBUS regression are NOT proven.",
+      "action": "Stage exact maintained header source selection once owner proven; host default-init negative/positive check, native syntax/include provenance, PS5 capture and NS1 regression before acceptance.",
       "paths": [
         "src/video_core/control/channel_state_cache.h"
-      ]
+      ],
+      "source_evidence": "paired upstream individual commit diff + original pinned vendor source + exact parent-to-revert comparison; E1 only"
     },
     {
       "index": 147,
@@ -3855,9 +3861,9 @@
       "sha": "ff8368c6066faf3962e2f77af7da4954e2ff6a43",
       "title": "[audio] Replace libopus with FFmpeg (#4169)",
       "file_count": 22,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "upstream-opus-ffmpeg-migration-reverted",
+      "scope": "Original migration reverted by #142. Before/after net compare shows no remaining CMake/cpmfile/opus decoder code differences; four Opus files have additional SPDX notice only, other audio sink changes from independent commit #145 must be reviewed on their own.",
+      "action": "Do not port canceled FFmpeg-for-libopus feature; native Opus/FFmpeg compatibility still independently gated.",
       "paths": [
         ".patch/opus/0001-disable-clang-runtime-neon.patch",
         ".patch/opus/0002-no-install.patch",
@@ -3881,7 +3887,8 @@
         "src/audio_core/opus/hardware_opus.h",
         "src/core/CMakeLists.txt",
         "src/video_core/CMakeLists.txt"
-      ]
+      ],
+      "source_evidence": "paired upstream individual commit diff + original pinned vendor source + exact parent-to-revert comparison; E1 only"
     },
     {
       "index": 149,

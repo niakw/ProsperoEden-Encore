@@ -3,7 +3,7 @@
 // Neural denoise, spatial FSR and frame interpolation are distinct passes.
 // Does not invoke Vulkan, load user DLLs, synthesize frames, or enable PS5 FG.
 #pragma once
-#include "dlss_nr_min_720_present_handoff.h"
+#include "dlss_nr_min_720_spatial_bridge.h"
 #include "framegen_capabilities.h"
 #include "framegen_present_gate.h"
 #include <cstdint>

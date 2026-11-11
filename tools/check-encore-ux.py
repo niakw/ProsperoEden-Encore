@@ -391,6 +391,18 @@ assert 'if (it->second.path == path)' in retail_textures
 # R457 real-console update dialog: ensure status cannot be painted underneath
 # the two 94px buttons (row 2 ends at 516+94 = 610 virtual pixels).
 r457_dialog = read('headless/prosperoeden/pe/ui/settings.cpp')
-assert 'list.rounded_rect({592.0f, 648.0f, 736.0f, 224.0f}' in r457_dialog
+assert 'list.rounded_rect({592.0f, 632.0f, 736.0f, 160.0f}' in r457_dialog
+assert 'baseline(652.0f, 25.0f, theme::kSmall)' in r457_dialog
+assert 'baseline(718.0f, 24.0f, theme::kSmall)' in r457_dialog
+# 632+160 = 792, before footer y=811; status and notes cannot overlap it.
+assert 632 + 160 < 811
+# Palette-specific white labels only on the dark focus plate; idle light
+# surface labels remain dark, otherwise unselected tabs disappear.
+assert 'selected && prefs_.color_palette == 3' in launcher
+assert '? kWhite : selected ? theme::kTitle : theme::kMuted' in launcher
+r457_home = read('headless/prosperoeden/pe/ui/home.cpp')
+assert 'const bool dark_hero_surface = prefs_.color_palette == 3 &&' in r457_home
+assert 'hero_title_ink' in r457_home and 'hero_description_ink' in r457_home
+assert '22.0f, 27.0f, hero_description_ink, kHeroContentWidth' in r457_home
 assert 'Color::rgb(0x10121d, 0.96f)' in r457_dialog
 assert 'Color::rgb(0xf4f2f8)' in r457_dialog
